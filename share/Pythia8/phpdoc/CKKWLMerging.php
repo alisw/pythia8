@@ -1122,6 +1122,14 @@ Allow clustering of W boson, if interpreted as a final state emission. This
 switch should not be used until electro-weak showers become available. 
    
  
+<br/><br/><strong>Merging:useShowerPlugin</strong>  <input type="radio" name="40" value="on"><strong>On</strong>
+<input type="radio" name="40" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Use the splitting probabilities, evolution variables and phase space mappings 
+of an external shower plugin. This will become possible as soon as new 
+showers containing the necessary ingredients are available in Pythia. 
+   
+ 
 <input type="hidden" name="saved" value="1"/>
 
 <?php
@@ -1330,6 +1338,11 @@ fwrite($handle,$data);
 if($_POST["39"] != "off")
 {
 $data = "Merging:allowWClustering = ".$_POST["39"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["40"] != "off")
+{
+$data = "Merging:useShowerPlugin = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);

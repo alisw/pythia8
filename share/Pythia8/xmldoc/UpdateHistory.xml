@@ -12,32 +12,55 @@ but this should only affect a small part of the user code.
  
 <ul> 
  
+<li>8.211: 10 July 2015 
+<ul> 
+ 
+<li>Possibility to enhance the rate of rare initial-state shower 
+branchings, while preserving correct Sudakov form factors, introduced 
+by a new <code>UserHooks</code> functionality.</li> 
+ 
+<li>Changes to allow for MEPS merging when using a shower plugin. 
+Several additional M&M changes, mostly to make the reclustering in the 
+merging numerically more stable, and to make UN2LOPS possible. 
+More documentation to come.</li> 
+ 
+<li>New possibility, via <code>UserHooks</code>, to access hadronization 
+parameters in each step in the hadronization process, and to veto 
+individual hadrons. Thanks to Christian Bierlich.</li> 
+ 
+<li>Minor fix for the <code>configure</code> script, for the case 
+of building a shared library on Mac OS X. Thanks to Mikhail Kirsanov. 
+</li> 
+ 
+</ul> 
+</li> 
+ 
 <li>8.210: 29 June 2015 
 <ul> 
-
-<li>Bug fix in CKKW-L merging for LHE files, such that the factorization
-  and renormalization scales are set by the <code>SCALUP</code> value if 
-the <code>muf2</code> and  <code>mur2</code> LHEF3 attributes have not
+ 
+<li>Bug fix in CKKW-L merging for LHE files, such that the factorization 
+and renormalization scales are set by the <code>SCALUP</code> value if 
+the <code>muf2</code> and  <code>mur2</code> LHEF3 attributes have not 
 been set, and the user has not set any explicit values. This change 
 restores the PYTHIA 8.1 behaviour.</li> 
  
 <li>Various technical improvements in the machinery for hard 
 diffraction.</li> 
-
+ 
 <li>Correct quark flavour selection when a string spanned directly 
 between two junctions is split up.</li> 
  
-<li>Check that SK-I and SK-II colour reconnection machineries only
+<li>Check that SK-I and SK-II colour reconnection machineries only 
 are called for event topologies they are set up to handle.</li> 
-
-<li>Bug fixes in partial widths of the <ei>W'</ei> boson. Results are
+ 
+<li>Bug fixes in partial widths of the <ei>W'</ei> boson. Results are 
 correct when the <ei>W'</ei> is a simply rescaled copy of the <ei>W</ei>, 
 but not for more general couplings. Thanks to Mihail Chizhov. </li> 
  
-<li>Minor fix in default location of PDF data files in the constructors.
+<li>Minor fix in default location of PDF data files in the constructors. 
 No practical consequence since correct non-default values are used.</li> 
-
-<li>Tiny fix in the <code>configure</code> script, so that CXX options
+ 
+<li>Tiny fix in the <code>configure</code> script, so that CXX options 
 containing an equal sign are parsed correctly.</li> 
  
 </ul> 

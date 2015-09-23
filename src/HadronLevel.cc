@@ -21,7 +21,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
   Couplings* couplingsPtrIn, TimeShower* timesDecPtr,
   RHadrons* rHadronsPtrIn, DecayHandler* decayHandlePtr,
-  vector<int> handledParticles) {
+  vector<int> handledParticles, UserHooks* userHooksPtrIn) {
 
   // Save pointers.
   infoPtr         = infoPtrIn;
@@ -29,6 +29,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   rndmPtr         = rndmPtrIn;
   couplingsPtr    = couplingsPtrIn;
   rHadronsPtr     = rHadronsPtrIn;
+  userHooksPtr    = userHooksPtrIn;
 
   // Main flags.
   doHadronize     = settings.flag("HadronLevel:Hadronize");
@@ -61,7 +62,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
 
   // Initialize string and ministring fragmentation.
   stringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
-    &flavSel, &pTSel, &zSel);
+    &flavSel, &pTSel, &zSel, userHooksPtr);
   ministringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
     &flavSel, &pTSel, &zSel);
 

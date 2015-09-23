@@ -18,6 +18,7 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
+#include "Pythia8/UserHooks.h"
 
 namespace Pythia8 {
 
@@ -91,7 +92,8 @@ public:
   // Initialize and save pointers.
   void init(Info* infoPtrIn, Settings& settings,
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn, StringZ* zSelPtrIn);
+    StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn, StringZ* zSelPtrIn,
+    UserHooks* userHooksPtrIn = NULL);
 
   // Do the fragmentation: driver routine.
   bool fragment( int iSub, ColConfig& colConfig, Event& event);
@@ -121,6 +123,9 @@ private:
   StringFlav*   flavSelPtr;
   StringPT*     pTSelPtr;
   StringZ*      zSelPtr;
+
+  // Pointer to the User Hooks class for user intervention
+  UserHooks*    userHooksPtr;
 
   // Initialization data, read from Settings.
   double stopMass, stopNewFlav, stopSmear, eNormJunction,

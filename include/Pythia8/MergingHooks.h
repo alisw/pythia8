@@ -22,7 +22,10 @@
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
+
 namespace Pythia8 {
+
+class PartonLevel;
 
 //==========================================================================
 
@@ -391,6 +394,26 @@ public:
   // the matrix element, as needed for cut-based merging scale definition
   double cutbasedms( const Event& event );
 
+  //----------------------------------------------------------------------//
+  // Functions to steer shower evolution (public to allow for PS plugin)
+  //----------------------------------------------------------------------//
+
+  // Flag to indicate trial shower usage.
+  void doIgnoreEmissions( bool doIgnoreIn ) {
+    doIgnoreEmissionsSave = doIgnoreIn;
+  }
+  // Function to allow not counting a trial emission.
+  bool canVetoEmission() { return !doIgnoreEmissionsSave; }
+  // Function to check if emission should be rejected.
+  bool doVetoEmission( const Event& );
+
+ //----------------------------------------------------------------------//
+  // Functions used as clusterings / probabilities
+  //----------------------------------------------------------------------//
+
+  bool useShowerPluginSave;
+  virtual bool useShowerPlugin() { return useShowerPluginSave; }
+
 protected:
 
   //----------------------------------------------------------------------//
@@ -408,6 +431,9 @@ protected:
 
   // Pointer to the particle systems.
   PartonSystems* partonSystemsPtr;
+
+  PartonLevel* showers;
+  void setShowerPointer(PartonLevel* psIn ) {showers = psIn;}
 
   // AlphaS objects for alphaS reweighting use
   AlphaStrong AlphaS_FSRSave;
@@ -624,28 +650,23 @@ protected:
   double muR() { return (muRSave > 0.) ? muRSave : infoPtr->QRen();}
   // Store / get factorisation scale used in matrix element calculation.
   double muFinME() {
-    double mu = atof((char*)infoPtr->getEventAttribute("muf2",true).c_str());
-    return (muFinMESave > 0.) ? muFinMESave
-      : (mu > 0.) ? sqrt(mu) : infoPtr->QFac();
+    string mus = infoPtr->getEventAttribute("muf2",true);
+    double mu  = (mus.empty()) ? 0. : atof((char*)mus.c_str());
+    mu = sqrt(mu);
+    if (infoPtr->scales) mu = infoPtr->getScalesAttribute("muf");
+    return (mu > 0.) ? mu : (muFinMESave > 0.) ? muFinMESave : infoPtr->QFac();
   }
   double muRinME() {
-    double mu = atof((char*)infoPtr->getEventAttribute("mur2",true).c_str());
-    return (muRinMESave > 0.) ? muRinMESave
-      : (mu > 0.) ? sqrt(mu) : infoPtr->QRen();
+    string mus = infoPtr->getEventAttribute("mur2",true);
+    double mu  = (mus.empty()) ? 0. : atof((char*)mus.c_str());
+    mu = sqrt(mu);
+    if (infoPtr->scales) mu = infoPtr->getScalesAttribute("mur");
+    return (mu > 0.) ? mu : (muRinMESave > 0.) ? muRinMESave : infoPtr->QRen();
   }
 
   //----------------------------------------------------------------------//
-  // Functions to steer shower evolution
+  // Functions to steer merging code
   //----------------------------------------------------------------------//
-
-  // Flag to indicate trial shower usage.
-  void doIgnoreEmissions( bool doIgnoreIn ) {
-    doIgnoreEmissionsSave = doIgnoreIn;
-  }
-  // Function to allow not counting a trial emission.
-  bool canVetoEmission() { return !doIgnoreEmissionsSave; }
-  // Function to check if emission should be rejected.
-  bool doVetoEmission( const Event& );
 
   // Flag to indicate if events should be vetoed.
   void doIgnoreStep( bool doIgnoreIn ) { doIgnoreStepSave = doIgnoreIn; }
@@ -676,9 +697,11 @@ protected:
   double kTdurham(const Particle& RadAfterBranch,
     const Particle& EmtAfterBranch, int Type, double D );
   // Function to compute "pythia pT separation" from Particle input
+
   double rhoPythia(const Particle& RadAfterBranch,
     const Particle& EmtAfterBranch, const Particle& RecAfterBranch,
     int ShowerType);
+
   // Function to find a colour (anticolour) index in the input event,
   // used to find colour-connected recoilers
   int findColour(int col, int iExclude1, int iExclude2,

@@ -116,7 +116,7 @@ public:
 
   // Select next pT in downwards evolution.
   virtual double pTnext( Event& event, double pTbegAll, double pTendAll,
-    int nRadIn = -1);
+    int nRadIn = -1, bool doTrialIn = false);
 
   // ME corrections and kinematics that may give failure.
   virtual bool branch( Event& event);
@@ -132,6 +132,33 @@ public:
 
   // Print dipole list; for debug mainly.
   virtual void list(ostream& os = cout) const;
+
+  // Functions to allow usage of shower kinematics, evolution variables,
+  // and splitting probabilities outside of shower.
+  // Virtual so that shower plugins can overwrite these functions.
+  // This makes it possible for another piece of the code to request
+  // these - which is very convenient for merging.
+  // Clustering kinematics - as needed form merging.
+  virtual Event clustered( const Event&, string, int, int, int)
+    { return Event();}
+  // State after a branching, as needed to evaluate more complicated kernels.
+  virtual Event branched( const Event&, int, int, int, int, double,
+    double, double, double)
+   { return Event();}
+  // Easy access to evolution variable.
+  virtual double pT2Space ( const Particle&, const Particle&,
+    const Particle&)
+    { return 0.;}
+  // Easy access to auxiliary variable.
+  virtual double zSpace ( const Particle&, const Particle&,
+    const Particle&)
+    { return 0.;}
+  // Easy access to identifier of a splitting.
+  virtual string getSplittingName( const Event&, int, int)
+    { return "";}
+  // Easy access to splitting probability.
+  virtual double getSplittingProb( const Event&, int, int, int )
+    { return 0.;}
 
 protected:
 
@@ -183,7 +210,8 @@ private:
   bool   doQCDshower, doQEDshowerByQ, doQEDshowerByL, useSamePTasMPI,
          doWeakShower, doMEcorrections, doMEafterFirst, doPhiPolAsym,
          doPhiIntAsym, doRapidityOrder, useFixedFacScale, doSecondHard,
-         canVetoEmission, alphaSuseCMW, singleWeakEmission, vetoWeakJets;
+         canVetoEmission, hasUserHooks, alphaSuseCMW, singleWeakEmission,
+         vetoWeakJets;
   int    pTmaxMatch, pTdampMatch, alphaSorder, alphaSnfmax, alphaEMorder,
          nQuarkIn, enhanceScreening, weakMode;
   double pTdampFudge, mc, mb, m2c, m2b, renormMultFac, factorMultFac,
@@ -202,6 +230,13 @@ private:
   bool   sideA, dopTlimit1, dopTlimit2, dopTdamp, hasWeaklyRadiated, tChannel;
   int    iNow, iRec, idDaughter, nRad, idResFirst, idResSecond;
   double xDaughter, x1Now, x2Now, m2Dip, m2Rec, pT2damp, pTbegRef, pdfScale2;
+
+  // Bookkeeping of enhanced  actual or trial emissions (see EPJC (2013) 73).
+  bool doTrialNow, canEnhanceEmission, canEnhanceTrial, canEnhanceET;
+  string splittingNameNow, splittingNameSel;
+  map< double, pair<string,double> > enhanceFactors;
+  void storeEnhanceFactor(double pT2, string name, double enhanceFactorIn)
+    { enhanceFactors.insert(make_pair(pT2,make_pair(name,enhanceFactorIn)));}
 
   // List of emissions in different sides in different systems:
   vector<int> nRadA,nRadB;

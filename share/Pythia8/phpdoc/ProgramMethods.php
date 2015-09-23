@@ -27,6 +27,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual bool</td>
+<td><a href="UserHooks.php#method45" target="page">canChangeFragPar()</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
 <td>friend double</td>
 <td><a href="FourVectors.php#method25" target="page">cosphi(...)</a></td>
 <td>Four-Vectors</td>
@@ -51,9 +57,27 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual bool</td>
+<td><a href="UserHooks.php#method46" target="page">doChangeFragPar(...)</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
 <td>friend double</td>
 <td><a href="FourVectors.php#method22" target="page">dot3(...)</a></td>
 <td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
+<td><a href="UserHooks.php#method47" target="page">doVetoFragmentation(...)</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="UserHooks.php#method43" target="page">getEnhancedEventWeight()</a></td>
+<td>User Hooks</td>
 </tr>
 
 <tr>
@@ -5758,6 +5782,18 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
+<td><a href="UserHooks.php#method40" target="page">UserHooks::canEnhanceEmission()</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
+<td><a href="UserHooks.php#method44" target="page">UserHooks::canEnhanceTrial()</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
 <td><a href="UserHooks.php#method28" target="page">UserHooks::canModifySigma()</a></td>
 <td>User Hooks</td>
 </tr>
@@ -5901,6 +5937,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual double</td>
+<td><a href="UserHooks.php#method41" target="page">UserHooks::enhanceFactor(...)</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
 <td>virtual bool</td>
 <td><a href="UserHooks.php#method6" target="page">UserHooks::initAfterBeams()</a></td>
 <td>User Hooks</td>
@@ -5957,6 +5999,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 <tr>
 <td> </td>
 <td><a href="UserHooks.php#method1" target="page">UserHooks::UserHooks()</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
+<td>virtual double</td>
+<td><a href="UserHooks.php#method42" target="page">UserHooks::vetoProbability(...)</a></td>
 <td>User Hooks</td>
 </tr>
 

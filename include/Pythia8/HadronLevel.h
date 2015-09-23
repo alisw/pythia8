@@ -27,6 +27,7 @@
 #include "Pythia8/Settings.h"
 #include "Pythia8/StringFragmentation.h"
 #include "Pythia8/TimeShower.h"
+#include "Pythia8/UserHooks.h"
 
 namespace Pythia8 {
 
@@ -47,7 +48,7 @@ public:
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
     Couplings* couplingsPtrIn, TimeShower* timesDecPtr,
     RHadrons* rHadronsPtrIn, DecayHandler* decayHandlePtr,
-    vector<int> handledParticles);
+    vector<int> handledParticles, UserHooks* userHooksPtrIn);
 
   // Get pointer to StringFlav instance (needed by BeamParticle).
   StringFlav* getStringFlavPtr() {return &flavSel;}
@@ -75,6 +76,9 @@ private:
 
   // Pointer to the random number generator.
   Rndm*         rndmPtr;
+
+  // Pointer to the user hooks object.
+  UserHooks*    userHooksPtr;
 
   // Pointers to Standard Model couplings.
   Couplings*    couplingsPtr;

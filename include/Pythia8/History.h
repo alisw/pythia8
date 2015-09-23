@@ -65,13 +65,9 @@ public:
 
   // Constructor with input
   Clustering( int emtIn, int radIn, int recIn, int partnerIn,
-    double pTscaleIn ){
-    emitted  = emtIn;
-    emittor  = radIn;
-    recoiler = recIn;
-    partner  = partnerIn;
-    pTscale  = pTscaleIn;
-  }
+    double pTscaleIn)
+    : emitted(emtIn), emittor(radIn), recoiler(recIn), partner(partnerIn),
+      pTscale(pTscaleIn) {}
 
   // Function to return pythia pT scale of clustering
   double pT() const { return pTscale; }
@@ -120,6 +116,7 @@ public:
            BeamParticle beamBIn,
            ParticleData* particleDataPtrIn,
            Info* infoPtrIn,
+           PartonLevel* showersIn,
            bool isOrdered,
            bool isStronglyOrdered,
            bool isAllowed,
@@ -163,11 +160,13 @@ public:
 
   // For unitary NL3:
   double weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN);
+                    AlphaStrong * asISR, double RN, int depth = -1);
   double weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN);
-  double weight_UNLOPS_LOOP(PartonLevel* trial, double RN);
-  double weight_UNLOPS_SUBTNLO(PartonLevel* trial, double RN);
+                    AlphaStrong * asISR, double RN, int depth = -1);
+  double weight_UNLOPS_LOOP(PartonLevel* trial, AlphaStrong * asFSR,
+                    AlphaStrong * asISR, double RN, int depth = -1);
+  double weight_UNLOPS_SUBTNLO(PartonLevel* trial, AlphaStrong * asFSR,
+                    AlphaStrong * asISR, double RN, int depth = -1);
   double weight_UNLOPS_CORRECTION( int order, PartonLevel* trial,
                   AlphaStrong* asFSR, AlphaStrong* asISR,
                   double RN, Rndm* rndmPtr );
@@ -346,9 +345,9 @@ private:
 
   // Function to return the \alpha_s-ratio part of the CKKWL weight.
   double weightTreeALPHAS( double as0, AlphaStrong * asFSR,
-    AlphaStrong * asISR );
+    AlphaStrong * asISR, int njetMax = -1 );
   // Function to return the PDF-ratio part of the CKKWL weight.
-  double weightTreePDFs( double maxscale, double pdfScale );
+  double weightTreePDFs( double maxscale, double pdfScale, int njetMax = -1 );
   // Function to return the no-emission probability part of the CKKWL weight.
   double weightTreeEmissions( PartonLevel* trial, int type, int njetMin,
     int njetMax, double maxscale );
@@ -443,20 +442,24 @@ private:
   //              causing a 2 -> 3 dipole splitting
   //     Event : event record to be checked for ptential partners
   // OUT vector of all allowed radiator+recoiler+emitted triples
-  vector<Clustering> findQCDTriple (int EmtTagIn, int colTopIn,
-                       const Event& event, vector<int> PosFinalPartn,
-                       vector <int> PosInitPartn );
+  vector<Clustering> findQCDTriple (int emtTagIn, int colTopIn,
+                       const Event& event, vector<int> posFinalPartn,
+                       vector <int> posInitPartn );
 
   vector<Clustering> getAllEWClusterings();
   vector<Clustering> getEWClusterings( const Event& event);
-  vector<Clustering> findEWTriple( int EmtTagIn, const Event& event,
-                       vector<int> PosFinalPartn );
+  vector<Clustering> findEWTriple( int emtTagIn, const Event& event,
+                       vector<int> posFinalPartn, vector<int> posInitPartn );
 
   vector<Clustering> getAllSQCDClusterings();
   vector<Clustering> getSQCDClusterings( const Event& event);
-  vector<Clustering> findSQCDTriple (int EmtTagIn, int colTopIn,
-                       const Event& event, vector<int> PosFinalPartn,
-                       vector <int> PosInitPartn );
+  vector<Clustering> findSQCDTriple (int emtTagIn, int colTopIn,
+                       const Event& event, vector<int> posFinalPartn,
+                       vector <int> posInitPartn );
+
+  // Function to attach (spin-dependent duplicates of) a clustering.
+  void attachClusterings (vector<Clustering>& clus, int iEmt, int iRad,
+    int iRec, int iPartner, double pT, const Event& event);
 
   // Calculate and return the probability of a clustering.
   // IN  Clustering : rad,rec,emt - System for which the splitting
@@ -487,7 +490,7 @@ private:
   // clustered state.
   // IN Clustering : rad,rec,emt triple to be clustered to two partons
   // OUT clustered state
-  Event cluster(const Clustering & inSystem);
+  Event cluster( Clustering & inSystem);
 
   // Function to get the flavour of the radiator before the splitting
   // for clustering
@@ -495,7 +498,7 @@ private:
   //     int   : Position of the emitted after the splitting, in the event
   //     Event : Reference event
   // OUT int   : Flavour of the radiator before the splitting
-  int getRadBeforeFlav(const int RadAfter, const int EmtAfter,
+  int getRadBeforeFlav(const int radAfter, const int emtAfter,
         const Event& event);
 
   // Function to get the colour of the radiator before the splitting
@@ -504,7 +507,7 @@ private:
   //     int   : Position of the emitted after the splitting, in the event
   //     Event : Reference event
   // OUT int   : Colour of the radiator before the splitting
-  int getRadBeforeCol(const int RadAfter, const int EmtAfter,
+  int getRadBeforeCol(const int radAfter, const int emtAfter,
         const Event& event);
 
   // Function to get the anticolour of the radiator before the splitting
@@ -513,7 +516,7 @@ private:
   //     int   : Position of the emitted after the splitting, in the event
   //     Event : Reference event
   // OUT int   : Anticolour of the radiator before the splitting
-  int getRadBeforeAcol(const int RadAfter, const int EmtAfter,
+  int getRadBeforeAcol(const int radAfter, const int emtAfter,
         const Event& event);
 
   // Function to get the parton connected to in by a colour line
@@ -584,8 +587,8 @@ private:
   //     false              : Radiator could not be connected to the
   //                          event or the resulting event was
   //                          non-valid
-  bool connectRadiator( Particle& Radiator, const int RadType,
-                        const Particle& Recoiler, const int RecType,
+  bool connectRadiator( Particle& radiator, const int radType,
+                        const Particle& recoiler, const int recType,
                         const Event& event );
 
   // Function to find a colour (anticolour) index in the input event
@@ -657,12 +660,9 @@ private:
   double getCurrentZ(const int rad, const int rec, const int emt) const;
 
   // Function to compute "pythia pT separation" from Particle input
-  double pTLund(const Particle& RadAfterBranch,const Particle& EmtAfterBranch,
-                const Particle& RecAfterBranch, int ShowerType);
-
-  // Function to return the position of the initial line before (or after)
-  // a single (!) splitting.
-  int posChangedIncoming(const Event& event, bool before);
+  double pTLund(const Particle& radAfterBranch,const Particle& emtAfterBranch,
+                const Particle& recAfterBranch, int showerType,
+                bool massive=true);
 
   // Function to give back the ratio of PDFs and PDF * splitting kernels
   // needed to convert a splitting at scale pdfScale, chosen with running
@@ -769,6 +769,9 @@ private:
 
   // Info object to have access to all information read from LHE file
   Info* infoPtr;
+
+  // Pointer to showers, to simplify external clusterings.
+  PartonLevel* showers;
 
   // Minimal scalar sum of pT used in Herwig to choose history
   double sumScalarPT;

@@ -334,6 +334,9 @@ bool PartonLevel::next( Event& process, Event& event) {
   if ( hasMergingHooks && canRemoveEvent )
     mergingHooksPtr->storeWeights(infoPtr->getWeightCKKWL());
 
+  // Reset event weight coming from enhanced branchings.
+  if (userHooksPtr != 0) userHooksPtr->setEnhancedEventWeight(1.);
+
   // Loop to set up diffractive system if run with MPI veto.
   for (int iHardDiffLoop = 1; iHardDiffLoop <= nHardDiffLoop;
     ++iHardDiffLoop) {
@@ -477,7 +480,7 @@ bool PartonLevel::next( Event& process, Event& event) {
         ? multiPtr->pTnext( pTmaxMPI, pTgen, event) : -1.;
       pTgen = max( pTgen, pTmulti);
       double pTspace = (doISR)
-        ? spacePtr->pTnext( event, pTmaxISR, pTgen, nRad) : -1.;
+        ? spacePtr->pTnext( event, pTmaxISR, pTgen, nRad, doTrial) : -1.;
       double pTnow = max( pTtimes, max( pTmulti, pTspace));
 
       // Update information.

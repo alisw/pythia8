@@ -23,7 +23,7 @@ namespace Pythia8 {
 
 // The current Pythia (sub)version number, to agree with XML version.
 const double Pythia::VERSIONNUMBERHEAD = PYTHIA_VERSION;
-const double Pythia::VERSIONNUMBERCODE = 8.210;
+const double Pythia::VERSIONNUMBERCODE = 8.211;
 
 //--------------------------------------------------------------------------
 
@@ -697,6 +697,10 @@ bool Pythia::init() {
     return false;
   }
 
+  // Make pointer to shower available for merging machinery.
+  if ( doMerging && (hasMergingHooks || hasOwnMergingHooks) )
+    mergingHooksPtr->setShowerPointer(&partonLevel);
+
   // Alternatively only initialize final-state showers in resonance decays.
   if ( !doProcessLevel || !doPartonLevel) partonLevel.init( &info, settings,
     &particleData, &rndm, 0, 0, 0, 0, couplingsPtr, &partonSystems, 0,
@@ -706,7 +710,7 @@ bool Pythia::init() {
   if ( doMerging && !trialPartonLevel.init( &info, settings, &particleData,
       &rndm, &beamA, &beamB, &beamPomA, &beamPomB, couplingsPtr,
       &partonSystems, &sigmaTot, timesDecPtr, timesPtr, spacePtr, &rHadrons,
-      NULL, mergingHooksPtr, true) ) {
+      userHooksPtr, mergingHooksPtr, true) ) {
     info.errorMsg("Abort from Pythia::init: "
       "trialPartonLevel initialization failed");
     return false;
@@ -720,7 +724,7 @@ bool Pythia::init() {
   // Note: forceHadronLevel() can come, so we must always initialize.
   if ( !hadronLevel.init( &info, settings, &particleData, &rndm,
     couplingsPtr, timesDecPtr, &rHadrons, decayHandlePtr,
-    handledParticles) ) {
+    handledParticles, userHooksPtr) ) {
     info.errorMsg("Abort from Pythia::init: "
       "hadronLevel initialization failed");
     return false;
@@ -826,11 +830,13 @@ bool Pythia::checkBeams() {
                 || (idBabs == 211)  || (idB == 990);
   if (isHadronA && isHadronB) return true;
 
-  // Lepton-hadron collisions OK for DIS processes, although still primitive.
+  // Lepton-hadron collisions OK for DIS processes or LHEF input,
+  // although still primitive.
   if ( (isLeptonA && isHadronB) || (isHadronA && isLeptonB) ) {
     bool doDIS = settings.flag("WeakBosonExchange:all")
               || settings.flag("WeakBosonExchange:ff2ff(t:gmZ)")
-              || settings.flag("WeakBosonExchange:ff2ff(t:W)");
+              || settings.flag("WeakBosonExchange:ff2ff(t:W)")
+              || (frameType == 4);
     if (doDIS) return true;
   }
 
@@ -1113,12 +1119,15 @@ bool Pythia::next() {
     if (doMerging) {
       int veto = merging.mergeProcess( process );
       // Apply possible merging scale cut.
-      if ( veto == -1 ) {
+      if (veto == -1) {
         hasVetoed = true;
         if (abortIfVeto) return false;
         continue;
       // Exit because of vanishing no-emission probability.
-      } else if ( veto == 0 ) break;
+      } else if (veto == 0) {
+        event = process;
+        break;
+      }
 
       // Redo resonance decays after the merging, in case the resonance
       // structure has been changed because of reclusterings.

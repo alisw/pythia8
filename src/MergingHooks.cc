@@ -8,6 +8,7 @@
 // MergingHooks classes.
 
 #include "Pythia8/MergingHooks.h"
+#include "Pythia8/PartonLevel.h"
 
 namespace Pythia8 {
 
@@ -1474,10 +1475,15 @@ void HardProcess::storeCandidates( const Event& event, string process){
     for(int j=0; j < int(outgoing2.size()); ++j){
       // Do nothing if this particle has already be found,
       // or if this particle is a jet, lepton container or lepton
+
       if (  outgoing2[j] == 99
         || outgoing2[j] == 2212
-        || abs(outgoing2[j]) > 10)
+        || (abs(outgoing2[j]) > 10 && abs(outgoing2[j]) < 20)
+        || outgoing2[j] == 1100
+        || outgoing2[j] == 1200
+        || outgoing2[j] == 2400 )
         continue;
+
       // If the particle matches an outgoing quark, save it
       if (event[i].id() == outgoing2[j]){
         // Save parton
@@ -1485,6 +1491,7 @@ void HardProcess::storeCandidates( const Event& event, string process){
         // remove entry form lists
         outgoing2[j] = 99;
         iPosChecked.push_back(i);
+        break;
       }
     }
 
@@ -1494,7 +1501,10 @@ void HardProcess::storeCandidates( const Event& event, string process){
       // or if this particle is a jet, lepton container or lepton
       if (  outgoing1[j] == 99
         || outgoing1[j] == 2212
-        || abs(outgoing1[j]) > 10)
+        || (abs(outgoing1[j]) > 10 && abs(outgoing1[j]) < 20)
+        || outgoing1[j] == 1100
+        || outgoing1[j] == 1200
+        || outgoing1[j] == 2400 )
         continue;
       // If the particle matches an outgoing antiquark, save it
       if (event[i].id() == outgoing1[j]){
@@ -1503,6 +1513,7 @@ void HardProcess::storeCandidates( const Event& event, string process){
         // Remove parton from list
         outgoing1[j] = 99;
         iPosChecked.push_back(i);
+        break;
       }
     }
   }
@@ -1557,6 +1568,9 @@ bool HardProcess::matchesAnyOutgoing(int iPos, const Event& event){
   if ( event[iPos].mother1()*event[iPos].mother2() == 12
       // Or particle has taken recoil from first splitting
       || (  event[iPos].status() == 44
+         && event[event[iPos].mother1()].mother1()
+           *event[event[iPos].mother1()].mother2() == 12 )
+      || (  event[iPos].status() == 48
          && event[event[iPos].mother1()].mother1()
            *event[event[iPos].mother1()].mother2() == 12 )
       // Or particle has on-shell resonace as mother
@@ -2000,6 +2014,7 @@ void MergingHooks::init( Settings settings, Info* infoPtrIn,
   infoPtr               = infoPtrIn;
   particleDataPtr       = particleDataPtrIn;
   partonSystemsPtr      = partonSystemsPtrIn;
+  showers               = 0;
 
   // Initialise AlphaS objects for reweighting
   double alphaSvalueFSR = settings.parm("TimeShower:alphaSvalue");
@@ -2171,6 +2186,9 @@ void MergingHooks::init( Settings settings, Info* infoPtrIn,
     nJetMaxNLOSave  = settings.mode("Merging:nJetMaxNLO");
   }
 
+  // Check if external shower plugin should be used.
+  useShowerPluginSave = settings.flag("Merging:useShowerPlugin");
+
   bool writeBanner =  doKTMergingSave || doMGMergingSave
                    || doUserMergingSave
                    || doNL3 || doUNLOPS || doUMEPS
@@ -2308,7 +2326,7 @@ bool MergingHooks::doVetoEmission( const Event& event) {
   // Get number of clustering steps
   int nSteps  = getNumberOfClusteringSteps(event);
   // Get merging scale in current event
-  double tnow = rhoms( event, false);
+  double tnow = tmsNow( event);
 
   // Get maximal number of additional jets
   int nJetMax = nMaxJets();
@@ -3021,7 +3039,7 @@ double MergingHooks::tmsNow( const Event& event ) {
   else if ( doUNLOPSMerging() )
     tnow = rhoms(event, false);
   // Use UMEPS (Lund PT) merging scale definition.
-  else if ( doUMEPSMerging() )
+  else if ( doUMEPSMerging())
     tnow = rhoms(event, false);
   // Use user-defined merging scale.
   else
@@ -3292,6 +3310,7 @@ double MergingHooks::rhoms( const Event& event, bool withColour){
   // Find minimal pythia pt in event
   double ptmin = event[0].e();
   for(int i=0; i < int(FinalPartPos.size()); ++i){
+
     double pt12  = ptmin;
     // Compute pythia ISR separation i-jet and first incoming
     if (event[in1].colType() != 0) {
@@ -3372,6 +3391,10 @@ double MergingHooks::rhoms( const Event& event, bool withColour){
                               event[FinalPartPos[j]],
                               event[FinalPartPos[k]], 1 );
             pt12 = min(pt12, temp);
+            temp = rhoPythia( event[FinalPartPos[j]],
+                              event[FinalPartPos[i]],
+                              event[FinalPartPos[k]], 1 );
+            pt12 = min(pt12, temp);
           }
         }
       }
@@ -3414,6 +3437,18 @@ double MergingHooks::rhoPythia(const Particle& RadAfterBranch,
               const Particle& EmtAfterBranch,
               const Particle& RecAfterBranch, int ShowerType){
 
+  // Ask showers for evolution variable.
+  if ( useShowerPlugin() ) {
+    double pT2 = 0.;
+    if (ShowerType ==  1) pT2 =
+      showers->timesPtr->pT2Times(RadAfterBranch, EmtAfterBranch,
+      RecAfterBranch);
+    if (ShowerType == -1) pT2 =
+      showers->spacePtr->pT2Space(RadAfterBranch, EmtAfterBranch,
+      RecAfterBranch);
+    return sqrt(pT2);
+  }
+
   // Save type: 1 = FSR pT definition, else ISR definition
   int Type   = ShowerType;
   // Calculate virtuality of splitting
@@ -3421,8 +3456,9 @@ double MergingHooks::rhoPythia(const Particle& RadAfterBranch,
   Vec4 Q(RadAfterBranch.p() + sign*EmtAfterBranch.p());
   double Qsq = sign * Q.m2Calc();
   // Mass term of radiator
+  int flavMassive = 4;
   double m2Rad = ( includeMassive()
-               && abs(RadAfterBranch.id()) >= 4
+               && abs(RadAfterBranch.id()) >= flavMassive
                && abs(RadAfterBranch.id()) < 7)
                ? pow(particleDataPtr->m0(RadAfterBranch.id()), 2)
                : 0.;

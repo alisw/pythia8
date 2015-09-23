@@ -184,6 +184,32 @@ public:
   // Value of PartonLevel:earlyResDec determines where method is called.
   virtual bool doReconnectResonanceSystems( int, Event &) {return true;}
 
+  // Enhance emission rates (sec. 4 in EPJC (2013) 73).
+  virtual bool canEnhanceEmission() {return false;}
+  virtual double enhanceFactor( string ) {return 1.;}
+  virtual double vetoProbability( string ) {return 0.;}
+  void setEnhancedEventWeight(double wt) { enhancedEventWeight = wt;}
+  double getEnhancedEventWeight() { return enhancedEventWeight;}
+
+  // Bookkeeping of weights for enhanced actual or trial emissions
+  // (sec. 3 in EPJC (2013) 73).
+  virtual bool canEnhanceTrial() {return false;}
+  void setEnhancedTrial( double pTIn, double wtIn) { pTEnhanced = pTIn;
+    wtEnhanced = wtIn; }
+  double getEnhancedTrialPT() { return pTEnhanced;}
+  double getEnhancedTrialWeight() { return wtEnhanced;}
+
+  // Can change fragmentation parameters.
+  virtual bool canChangeFragPar() { return false;}
+
+  // Do change fragmentation parameters.
+  // Input: flavPtr, zPtr, pTPtr, idEnd, m2Had, iParton.
+  virtual bool doChangeFragPar( StringFlav*, StringZ*, StringPT*, int,
+    double, vector<int>) { return false;}
+
+ // Do a veto on a hadron just before it is added to the final state.
+  virtual bool doVetoFragmentation( Particle) { return false;}
+
 protected:
 
   // Constructor.
@@ -229,6 +255,9 @@ protected:
 
   // User-imposed selection bias.
   double selBias;
+
+  // Bookkept quantities for boosted event weights.
+  double enhancedEventWeight, pTEnhanced, wtEnhanced;
 
 };
 

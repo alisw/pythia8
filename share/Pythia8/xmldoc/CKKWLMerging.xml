@@ -1093,6 +1093,12 @@ Allow clustering of W boson, if interpreted as a final state emission. This
 switch should not be used until electro-weak showers become available. 
 </flag> 
  
+<flag name="Merging:useShowerPlugin" default="off"> 
+Use the splitting probabilities, evolution variables and phase space mappings 
+of an external shower plugin. This will become possible as soon as new 
+showers containing the necessary ingredients are available in Pythia. 
+</flag> 
+ 
 </chapter> 
  
 <!-- Copyright (C) 2015 Torbjorn Sjostrand --> 

@@ -150,6 +150,33 @@ public:
   // Print dipole list; for debug mainly.
   virtual void list( ostream& os = cout) const;
 
+  // Functions to allow usage of shower kinematics, evolution variables,
+  // and splitting probabilities outside of shower.
+  // Virtual so that shower plugins can overwrite these functions.
+  // This makes it possible for another piece of the code to request
+  // these - which is very convenient for merging.
+  // Clustering kinematics - as needed form merging.
+  virtual Event clustered( const Event&, string, int, int, int)
+    { return Event();}
+  // State after a branching, as needed to evaluate more complicated kernels.
+  virtual Event branched( const Event&, int, int, int, int, double,
+    double, double)
+    { return Event();}
+  // Easy access to evolution variable.
+  virtual double pT2Times ( const Particle&, const Particle&,
+    const Particle&)
+    { return 0.;}
+  // Easy access to auxiliary variable.
+  virtual double zTimes ( const Particle&, const Particle&,
+    const Particle&)
+    { return 0.;}
+  // Easy access to identifier of a splitting.
+  virtual string getSplittingName( const Event&, int, int)
+    { return "";}
+  // Easy access to splitting probability.
+  virtual double getSplittingProb( const Event&, int, int, int )
+    { return 0.;}
+
 protected:
 
   // Pointer to various information on the generation.

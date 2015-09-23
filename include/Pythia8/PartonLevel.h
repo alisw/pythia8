@@ -32,7 +32,6 @@
 #include "Pythia8/TimeShower.h"
 #include "Pythia8/UserHooks.h"
 
-
 namespace Pythia8 {
 
 //==========================================================================
@@ -87,6 +86,11 @@ public:
   double pTLastInShower(){ return pTLastBranch; }
   // Provide the type of the last branching in the shower.
   int typeLastInShower(){ return typeLastBranch; }
+
+  // Make History and MergingHooks friends for access to private functions.
+  // This is helpful when merging with an external shower plugin.
+  friend class History;
+  friend class MergingHooks;
 
 private:
 

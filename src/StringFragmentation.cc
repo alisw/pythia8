@@ -314,7 +314,7 @@ const int    StringFragmentation::NTRYJRFEQ     = 40;
 
 void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, StringFlav* flavSelPtrIn,
-  StringPT* pTSelPtrIn, StringZ* zSelPtrIn) {
+  StringPT* pTSelPtrIn, StringZ* zSelPtrIn, UserHooks* userHooksPtrIn) {
 
   // Save pointers.
   infoPtr         = infoPtrIn;
@@ -323,6 +323,7 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   flavSelPtr      = flavSelPtrIn;
   pTSelPtr        = pTSelPtrIn;
   zSelPtr         = zSelPtrIn;
+  userHooksPtr    = userHooksPtrIn;
 
   // Initialize the StringFragmentation class.
   stopMass        = zSelPtr->stopMass();
@@ -418,6 +419,9 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
     // Variables used to help identifying baryons from junction splittings.
     bool usedPosJun = false, usedNegJun = false;
 
+    // Keep track of the momentum of hadrons taken from left and right.
+    Vec4 hadMomPos, hadMomNeg;
+
     for ( ; ; ) {
 
       // Take a step either from the positive or the negative end.
@@ -426,6 +430,16 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
 
       // Construct trial hadron and check that energy remains.
       nowEnd.newHadron();
+
+    // Possibility for a user to change the fragmentation parameters.
+     if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
+       if ( !userHooksPtr->doChangeFragPar( flavSelPtr, zSelPtr, pTSelPtr,
+         (fromPos ? idPos : idNeg),
+         (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton) )
+         infoPtr->errorMsg("Error in StringFragmentation::fragment: "
+           "failed to change hadronisation parameters.");
+      }
+
       if ( energyUsedUp(fromPos) ) break;
 
       // Construct kinematics of the new hadron and store it.
@@ -447,6 +461,18 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
           usedNegJun = true;
         }
       }
+
+      // Possibility for a user to veto the hadron production.
+      if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
+        // Provide full particle info for veto decision.
+        if ( userHooksPtr->doVetoFragmentation( Particle( nowEnd.idHad,
+          statusHad, iPos, iNeg, 0, 0, 0, 0, pHad, nowEnd.mHad) ) )
+          continue;
+        // Bookkeeping of momentum taken away.
+        if (fromPos) hadMomPos += pHad;
+        else         hadMomNeg += pHad;
+      }
+
       hadrons.append( nowEnd.idHad, statusHad, iPos, iNeg,
         0, 0, 0, 0, pHad, nowEnd.mHad);
       if (pHad.e() < 0.) break;

@@ -224,12 +224,27 @@ void SpaceShower::init( BeamParticle* beamAPtrIn,
   if (!useSamePTasMPI) enhanceScreening = 0;
 
   // Possibility to allow user veto of emission step.
-  canVetoEmission    = (userHooksPtr != 0)
-                     ? userHooksPtr->canVetoISREmission() : false;
+  hasUserHooks       = (userHooksPtr != 0);
+  canVetoEmission    = hasUserHooks && userHooksPtr->canVetoISREmission();
 
   // Default values for the weak shower.
   hasWeaklyRadiated  = false;
   weakMaxWt          = 1.;
+
+  // Disallow simultaneous splitting and trial emission enhancements.
+  canEnhanceEmission = hasUserHooks && userHooksPtr->canEnhanceEmission();
+  canEnhanceTrial    = hasUserHooks && userHooksPtr->canEnhanceTrial();
+  if (canEnhanceEmission && canEnhanceTrial) {
+    infoPtr->errorMsg("Error in SpaceShower::init: Enhance for both actual "
+    "and trial emissions not possible. Both switched off.");
+    canEnhanceEmission = false;
+    canEnhanceTrial    = false;
+  }
+
+  // Properties for enhanced emissions.
+  splittingNameSel   = "";
+  splittingNameNow   = "";
+  enhanceFactors.clear();
 
 }
 
@@ -434,7 +449,7 @@ void SpaceShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
 // Select next pT in downwards evolution of the existing dipoles.
 
 double SpaceShower::pTnext( Event& event, double pTbegAll, double pTendAll,
-  int nRadIn) {
+  int nRadIn, bool doTrialIn) {
 
   // Current cm energy, in case it varies between events.
   sCM           = m2( beamAPtr->p(), beamBPtr->p());
@@ -447,6 +462,17 @@ double SpaceShower::pTnext( Event& event, double pTbegAll, double pTendAll,
   iDipSel       = 0;
   iSysSel       = 0;
   dipEndSel     = 0;
+
+  // Check if enhanced emissions should be applied.
+  doTrialNow    = doTrialIn;
+  canEnhanceET  = (!doTrialNow && canEnhanceEmission)
+               || ( doTrialNow && canEnhanceTrial);
+
+  // Starting values for enhanced emissions.
+  splittingNameSel = "";
+  splittingNameNow = "";
+  enhanceFactors.clear();
+  if (hasUserHooks) userHooksPtr->setEnhancedTrial(0., 1.);
 
   // Loop over all possible dipole ends.
   for (int iDipEnd = 0; iDipEnd < int(dipEnd.size()); ++iDipEnd) {
@@ -500,6 +526,7 @@ double SpaceShower::pTnext( Event& event, double pTbegAll, double pTendAll,
           iDipSel   = iDipNow;
           iSysSel   = iSysNow;
           dipEndSel = dipEndNow;
+          splittingNameSel = splittingNameNow;
         }
       }
     }
@@ -583,11 +610,22 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
   double pT2PDF         = pT2;
   bool   needNewPDF     = true;
 
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QG, isEnhancedG2QQ, isEnhancedQ2GQ, isEnhancedG2GG;
+  isEnhancedQ2QG = isEnhancedG2QQ = isEnhancedQ2GQ = isEnhancedG2GG = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
+
   // Begin evolution loop towards smaller pT values.
   int    loopTinyPDFdau = 0;
   bool   hasTinyPDFdau  = false;
   do {
+
+    // Default values for current tentative emission.
     wt = 0.;
+    isEnhancedQ2QG = isEnhancedG2QQ = isEnhancedQ2GQ = isEnhancedG2GG = false;
+    enhanceNow = 1.;
+    nameNow = "";
 
     // Bad sign if repeated looping with small daughter PDF, so fail.
     // (Example: if all PDF's = 0 below Q_0, except for c/b companion.)
@@ -622,6 +660,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         b0        = 27./6.;
         Lambda2   = Lambda3flav2;
       }
+
       // A change of renormalization scale expressed by a change of Lambda.
       Lambda2    /= renormMultFac;
       zMaxAbs     = 1. - 0.5 * (pT2minNow / m2Dip) *
@@ -649,9 +688,13 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         g2gInt = HEADROOMG2G * 6.
           * log(zMaxAbs * (1.-zMinAbs) / (zMinAbs * (1.-zMaxAbs)));
         if (doMEcorrections) g2gInt *= calcMEmax(MEtype, 21, 21);
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) g2gInt *= userHooksPtr->enhanceFactor("isr:G2GG");
         q2gInt = HEADROOMQ2G * (16./3.)
           * (1./sqrt(zMinAbs) - 1./sqrt(zMaxAbs));
         if (doMEcorrections) q2gInt *= calcMEmax(MEtype, 1, 21);
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) q2gInt *= userHooksPtr->enhanceFactor("isr:Q2GQ");
 
         // Parton density of potential quark mothers to a g.
         xPDFmotherSum = 0.;
@@ -674,6 +717,8 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         zRootMax = (1. + sqrt(zMaxAbs)) / (1. - sqrt(zMaxAbs));
         q2qInt = (8./3.) * log( zRootMax / zRootMin );
         if (doMEcorrections) q2qInt *= calcMEmax(MEtype, 1, 1);
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) q2qInt *= userHooksPtr->enhanceFactor("isr:Q2QG");
         kernelPDF = q2qInt;
 
       // Integrals of splitting kernels for quarks: q -> q, g -> q.
@@ -681,8 +726,12 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         q2qInt = HEADROOMQ2Q * (8./3.)
           * log( (1. - zMinAbs) / (1. - zMaxAbs) );
         if (doMEcorrections) q2qInt *= calcMEmax(MEtype, 1, 1);
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) q2qInt *= userHooksPtr->enhanceFactor("isr:Q2QG");
         g2qInt = HEADROOMG2Q * 0.5 * (zMaxAbs - zMinAbs);
         if (doMEcorrections) g2qInt *= calcMEmax(MEtype, 21, 1);
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) g2qInt *= userHooksPtr->enhanceFactor("isr:G2QQ");
 
         // Increase estimated upper weight for g -> Q + Qbar.
         if (isMassive) {
@@ -773,6 +822,15 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         wt = pow2( 1. - z * (1. - z));
         // Account for headroom factor used to enhance trial probability
         wt /= HEADROOMG2G;
+        // Optionally enhanced branching rate.
+        nameNow = "isr:G2GG";
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedG2GG = true;
+          }
+        }
       } else {
       // q -> g (+ q): also select flavour.
         double temp = xPDFmotherSum * rndmPtr->flat();
@@ -786,6 +844,15 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
           * xPDFdaughter / xPDFmother[idMother + 10];
         // Account for headroom factor used to enhance trial probability
         wt /= HEADROOMQ2G;
+        // Optionally enhanced branching rate.
+        nameNow = "isr:Q2GQ";
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedQ2GQ = true;
+          }
+        }
       }
 
     // Select z value of branching to q, and corrective weight.
@@ -813,6 +880,15 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         if (isValence) wt *= sqrt(z);
         // Account for headroom factor for sea quarks
         else wt /= HEADROOMQ2Q;
+        // Optionally enhanced branching rate.
+        nameNow = "isr:Q2QG";
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedQ2QG = true;
+          }
+        }
       // g -> q (+ qbar).
       } else {
         idMother = 21;
@@ -826,6 +902,15 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         }
         // Account for headroom factor for gluons
         wt /= HEADROOMG2Q;
+        // Optionally enhanced branching rate.
+        nameNow = "isr:G2QQ";
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedG2QQ = true;
+          }
+        }
       }
     }
 
@@ -880,6 +965,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
       beam.xfISR(iSysNow, idDaughter, xDaughter, pdfScale2) );
     double xPDFmotherNew =
       beam.xfISR(iSysNow, idMother, xMother, pdfScale2);
+
     wt *= xPDFmotherNew / xPDFdaughterNew;
 
     // Check that valence step does not cause problem.
@@ -888,6 +974,15 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
   // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat()) ;
+
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET) {
+    if (isEnhancedQ2QG) storeEnhanceFactor(pT2,"isr:Q2QG", enhanceNow);
+    if (isEnhancedG2QQ) storeEnhanceFactor(pT2,"isr:G2QQ", enhanceNow);
+    if (isEnhancedQ2GQ) storeEnhanceFactor(pT2,"isr:Q2GQ", enhanceNow);
+    if (isEnhancedG2QQ) storeEnhanceFactor(pT2,"isr:G2GG", enhanceNow);
+  }
 
   // Save values for (so far) acceptable branching.
   dipEndNow->store( idDaughter,idMother, idSister, x1Now, x2Now, m2Dip,
@@ -1025,6 +1120,12 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
   double m2Sister = 0.;
   double pT2corr  = 0.;
 
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QA, isEnhancedQ2AQ;
+  isEnhancedQ2QA = isEnhancedQ2AQ = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
+
   // QED evolution of fermions
   if (!isPhoton) {
 
@@ -1044,9 +1145,16 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
     double fudge = (isLeptonBeam) ? LEPTONFUDGE * log(m2Dip/m2Lepton) : 1.;
     kernelPDF *= fudge;
     if (kernelPDF < TINYKERNELPDF) return;
+    // Optionally enhanced branching rate.
+    if (canEnhanceET) kernelPDF *= userHooksPtr->enhanceFactor("isr:Q2QA");
 
     // Begin evolution loop towards smaller pT values.
     do {
+
+      // Default values for current tentative emission.
+      isEnhancedQ2QA = false;
+      enhanceNow = 1.;
+      nameNow = "";
 
       // Pick pT2 (in overestimated z range).
       // For l -> l gamma include extrafactor 1 / ln(pT2 / m2l) in evolution.
@@ -1076,6 +1184,16 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
           * pow( (1. - zMaxAbs) / (1. - zMinAbs), rndmPtr->flat() );
       }
       wt *= 0.5 * (1. + pow2(z));
+
+      // Optionally enhanced branching rate.
+      nameNow      = "isr:Q2QA";
+      if (canEnhanceET) {
+        double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (enhance != 1.) {
+          enhanceNow = enhance;
+          isEnhancedQ2QA = true;
+        }
+      }
 
       // Derive Q2 and x of mother from pT2 and z.
       Q2      = pT2 / (1. - z);
@@ -1149,7 +1267,12 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
     int    loopTinyPDFdau = 0;
     bool   hasTinyPDFdau  = false;
     do {
+
+      // Default values for current tentative emission.
       wt = 0.;
+      isEnhancedQ2AQ = false;
+      enhanceNow = 1.;
+      nameNow = "";
 
       // Bad sign if repeated looping with small daughter PDF, so fail.
       if (hasTinyPDFdau) ++loopTinyPDFdau;
@@ -1195,6 +1318,9 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
         // Normalized so: 4/3 aS/2pi P(z) -> eq^2 * aEM/2pi P(z).
         // (Charge-weighting happens below.)
         double q2gInt = 4. * (1./sqrt(zMinAbs) - 1./sqrt(zMaxAbs));
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) q2gInt *= userHooksPtr->enhanceFactor("isr:Q2QA");
+
 
         // Charge-weighted Parton density of potential quark mothers.
         xPDFmotherSum = 0.;
@@ -1258,6 +1384,15 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
       // Trial weight: running alpha_EM
       double alphaEMnow = alphaEM.alphaEM(renormMultFac * pT2);
       wt *= (alphaEMnow / alphaEMmax);
+      // Optionally enhanced branching rate.
+      nameNow      = "isr:Q2AQ";
+      if (canEnhanceET) {
+        double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (enhance != 1.) {
+          enhanceNow = enhance;
+          isEnhancedQ2AQ = true;
+        }
+      }
 
       // Derive Q2 and x of mother from pT2 and z
       Q2      = pT2 / (1. - z);
@@ -1304,6 +1439,13 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
 
     // Iterate until acceptable pT (or have fallen below pTmin).
     } while (wt < rndmPtr->flat()) ;
+  }
+
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET) {
+    if (isEnhancedQ2QA) storeEnhanceFactor(pT2,"isr:Q2QA", enhanceNow);
+    if (isEnhancedQ2AQ) storeEnhanceFactor(pT2,"isr:Q2AQ", enhanceNow);
   }
 
   // Save values for (so far) acceptable branching.
@@ -1370,6 +1512,12 @@ void SpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
   double zMaxMassive =  1. / (m2R1 + pT2endDip/m2Dip);
   if (zMaxMassive < zMaxAbs) zMaxAbs = zMaxMassive;
   if (zMaxAbs < zMinAbs) return;
+
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QW;
+  isEnhancedQ2QW = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
 
   // Weak evolution of fermions.
   // Integrals of splitting kernels for fermions: f -> f.
@@ -1447,9 +1595,16 @@ void SpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
   double fudge = (isLeptonBeam) ? LEPTONFUDGE * log(m2Dip/m2Lepton) : 1.;
   kernelPDF *= fudge;
   if (kernelPDF < TINYKERNELPDF) return;
+  // Optionally enhanced branching rate.
+  if (canEnhanceET) kernelPDF *= userHooksPtr->enhanceFactor("isr:Q2QW");
 
   // Begin evolution loop towards smaller pT values.
   do {
+
+    // Default values for current tentative emission.
+    isEnhancedQ2QW = false;
+    enhanceNow = 1.;
+    nameNow = "";
 
     // Pick pT2 (in overestimated z range).
     // For l -> l gamma include extrafactor 1 / ln(pT2 / m2l) in evolution.
@@ -1490,6 +1645,15 @@ void SpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
         / (1. - zMinAbs * m2R1), rndmPtr->flat() ) ) / m2R1;
     }
     wt *= (1. + pow2(z * m2R1)) / (1. + pow2(zMaxAbs * m2R1));
+    // Optionally enhanced branching rate.
+    nameNow      = "isr:Q2QW";
+    if (canEnhanceET) {
+      double enhance = userHooksPtr->enhanceFactor(nameNow);
+      if (enhance != 1.) {
+        enhanceNow = enhance;
+        isEnhancedQ2QW = true;
+      }
+    }
 
     // Derive Q2 and x of mother from pT2 and z.
     Q2      = pT2 / (1. - z);
@@ -1559,6 +1723,11 @@ void SpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
 
     // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat()) ;
+
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET && isEnhancedQ2QW)
+    storeEnhanceFactor(pT2,"isr:Q2QW", enhanceNow);
 
   // Save values for (so far) acceptable branching.
   dipEndNow->store( idDaughter, idMother, idSister, x1Now, x2Now, m2Dip,
@@ -1660,7 +1829,9 @@ bool SpaceShower::branch( Event& event) {
   // Check if the first emission shoild be checked for removal
   bool canMergeFirst = (mergingHooksPtr != 0)
                      ? mergingHooksPtr->canVetoEmission() : false;
-  if (canVetoEmission || canMergeFirst || doWeakShower) {
+
+  // Save further properties to be restored.
+  if (canVetoEmission || canMergeFirst || canEnhanceET || doWeakShower) {
     for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
       int iOldCopy    = partonSystemsPtr->getAll(iSysSel, iCopy);
       statusV.push_back( event[iOldCopy].status());
@@ -1986,6 +2157,60 @@ bool SpaceShower::branch( Event& event) {
       event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
     }
     return false;
+  }
+
+  // Calculate event weight for enhanced emission rate.
+  if (canEnhanceET) {
+
+    // Check if emission weight was enhanced. Get enhance weight factor.
+    bool foundEnhance = false;
+    double weight = 1.;
+    double vp = 0.;
+    // Move backwards as last elements have highest pT, thus are chosen
+    // splittings.
+    for ( map<double,pair<string,double> >::reverse_iterator
+          it = enhanceFactors.rbegin();
+          it != enhanceFactors.rend(); ++it ){
+      if (it->second.first.find(splittingNameSel) != string::npos
+        && abs(it->second.second-1.0) > 1e-9) {
+        foundEnhance = true;
+        weight     = it->second.second;
+        vp         = userHooksPtr->vetoProbability(it->second.first);
+        break;
+      }
+    }
+
+    // Check emission veto.
+    bool vetoedEnhancedEmission = false;
+    if (foundEnhance && rndmPtr->flat() < vp ) vetoedEnhancedEmission = true;
+    // Calculate new event weight.
+    double rwgt = 1.;
+    if (foundEnhance && vetoedEnhancedEmission) rwgt *= (1.-1./weight)/vp;
+    else if (foundEnhance) rwgt *= 1./((1.-vp)*weight);
+
+    // Reset weight enhance factors after usage.
+    enhanceFactors.clear();
+
+    // Set events weights, so that these could be used externally.
+    double wtOld = userHooksPtr->getEnhancedEventWeight();
+    if (!doTrialNow && canEnhanceEmission)
+      userHooksPtr->setEnhancedEventWeight(wtOld*rwgt);
+    if ( doTrialNow && canEnhanceTrial)
+      userHooksPtr->setEnhancedTrial(sqrt(pT2), weight);
+
+    // Veto if necessary.
+    if (vetoedEnhancedEmission && canEnhanceEmission) {
+      event.popBack( event.size() - eventSizeOld);
+      event[beamOff1].daughter1( ev1Dau1V);
+      event[beamOff2].daughter1( ev2Dau1V);
+      for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
+        int iOldCopy = partonSystemsPtr->getAll(iSysSel, iCopy);
+        event[iOldCopy].status( statusV[iCopy]);
+        event[iOldCopy].mothers( mother1V[iCopy], mother2V[iCopy]);
+        event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
+      }
+      return false;
+    }
   }
 
   // Update list of partons in system; adding newly produced one.
