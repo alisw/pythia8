@@ -1,5 +1,5 @@
 // HadronScatter.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -168,8 +168,7 @@ bool SigmaPartialWave::readFile(string xmlPath, string filename) {
   while (ifs.good()) {
     // Get line, convert to lowercase and strip leading whitespace
     getline(ifs, line);
-    for (unsigned int i = 0; i < line.length(); i++)
-      line[i] = tolower(line[i]);
+    toLowerRep(line, false);
     string::size_type startPos = line.find_first_not_of("  ");
     if (startPos != string::npos) line = line.substr(startPos);
     // Skip blank lines and lines that start with '#'
@@ -707,8 +706,21 @@ bool HadronScatter::init(Info* infoPtrIn, Settings& settings,
   infoPtr = infoPtrIn;
   rndmPtr = rndmPtrIn;
 
-  // Main settings
-  doHadronScatter = settings.flag("HadronScatter:scatter");
+  // Settings for new model.
+  scatterMode     = settings.mode("HadronScatter:mode");
+  p2max           = pow2(settings.parm("HadronScatter:pMax"));
+  yDiffMax        = settings.parm("HadronScatter:yDiffMax");
+  Rmax            = settings.parm("HadronScatter:Rmax");
+  scatSameString  = settings.flag("HadronScatter:scatterSameString");
+  scatMultTimes   = settings.flag("HadronScatter:scatterMultipleTimes");
+  maxProbDS       = settings.parm("HadronScatter:maxProbDS");
+  neighNear       = double(settings.mode("HadronScatter:neighbourNear"));
+  neighFar        = double(settings.mode("HadronScatter:neighbourFar"));
+  minProbSS       = settings.parm("HadronScatter:minProbSS");
+  maxProbSS       = settings.parm("HadronScatter:maxProbSS");
+
+  // Settings for old model.
+  doOldScatter    = (scatterMode == 2);
   afterDecay      = settings.flag("HadronScatter:afterDecay");
   allowDecayProd  = settings.flag("HadronScatter:allowDecayProd");
   scatterRepeat   = settings.flag("HadronScatter:scatterRepeat");
@@ -733,57 +745,59 @@ bool HadronScatter::init(Info* infoPtrIn, Settings& settings,
   double eCMnow   = infoPtr->eCM();
   pT0MPI          = pT0ref * pow(eCMnow / eCMref, eCMpow);
 
-  // Tiling
-  double mp2 = particleDataPtr->m0(111) * particleDataPtr->m0(111);
-  double eA  = infoPtr->eA();
-  double eB  = infoPtr->eB();
-  double pzA =  sqrt(eA * eA - mp2);
-  double pzB = -sqrt(eB * eB - mp2);
-  yMax = 0.5 * log((eA + pzA) / (eA - pzA));
-  yMin = 0.5 * log((eB + pzB) / (eB - pzB));
-  // Size in y and phi
-  if (doTile) {
-    ytMax  = int((yMax - yMin) / rMax);
-    ytSize = (yMax - yMin) / double(ytMax);
-    ptMax  = int(2. * M_PI / rMax);
-    ptSize = 2. * M_PI / double(ptMax);
-  } else {
-    ytMax  = 1;
-    ytSize = yMax - yMin;
-    ptMax  = 1;
-    ptSize = 2. * M_PI;
+  if (doOldScatter) {
+    // Tiling
+    double mp2 = particleDataPtr->m0(111) * particleDataPtr->m0(111);
+    double eA  = infoPtr->eA();
+    double eB  = infoPtr->eB();
+    double pzA =  sqrt(eA * eA - mp2);
+    double pzB = -sqrt(eB * eB - mp2);
+    yMax = 0.5 * log((eA + pzA) / (eA - pzA));
+    yMin = 0.5 * log((eB + pzB) / (eB - pzB));
+    // Size in y and phi
+    if (doTile) {
+      ytMax  = int((yMax - yMin) / rMax);
+      ytSize = (yMax - yMin) / double(ytMax);
+      ptMax  = int(2. * M_PI / rMax);
+      ptSize = 2. * M_PI / double(ptMax);
+    } else {
+      ytMax  = 1;
+      ytSize = yMax - yMin;
+      ptMax  = 1;
+      ptSize = 2. * M_PI;
+    }
+    // Initialise tiles
+    tile.resize(ytMax);
+    for (int yt = 0; yt < ytMax; yt++) tile[yt].resize(ptMax);
+
+    // Find path to data files, i.e. xmldoc directory location.
+    // Environment variable takes precedence, else use constructor input.
+    // XXX - as in Pythia.cc, but not passed around in e.g. Info/Settings,
+    //       so redo here
+    string xmlPath = "";
+    const char* PYTHIA8DATA = "PYTHIA8DATA";
+    char* envPath = getenv(PYTHIA8DATA);
+    if (envPath != 0 && *envPath != '\0') {
+      int i = 0;
+      while (*(envPath+i) != '\0') xmlPath += *(envPath+(i++));
+    } else xmlPath = "../xmldoc";
+    if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+
+    // Hadron scattering partial wave cross sections
+    if ( !sigmaPW[0].init(0, xmlPath, "pipi-Froggatt.dat",
+      infoPtr, particleDataPtr, rndmPtr) ) return false;
+    if ( !sigmaPW[1].init(1, xmlPath, "piK-Estabrooks.dat",
+      infoPtr, particleDataPtr, rndmPtr) ) return false;
+    if ( !sigmaPW[2].init(2, xmlPath, "piN-SAID-WI08.dat",
+      infoPtr, particleDataPtr, rndmPtr) ) return false;
+    sigElMax = 0.;
+    sigElMax = max(sigElMax, sigmaPW[0].getSigmaElMax());
+    sigElMax = max(sigElMax, sigmaPW[1].getSigmaElMax());
+    sigElMax = max(sigElMax, sigmaPW[2].getSigmaElMax());
+
+    // DEBUG
+    debugOutput();
   }
-  // Initialise tiles
-  tile.resize(ytMax);
-  for (int yt = 0; yt < ytMax; yt++) tile[yt].resize(ptMax);
-
-  // Find path to data files, i.e. xmldoc directory location.
-  // Environment variable takes precedence, else use constructor input.
-  // XXX - as in Pythia.cc, but not passed around in e.g. Info/Settings,
-  //       so redo here
-  string xmlPath = "";
-  const char* PYTHIA8DATA = "PYTHIA8DATA";
-  char* envPath = getenv(PYTHIA8DATA);
-  if (envPath != 0 && *envPath != '\0') {
-    int i = 0;
-    while (*(envPath+i) != '\0') xmlPath += *(envPath+(i++));
-  } else xmlPath = "../xmldoc";
-  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
-
-  // Hadron scattering partial wave cross sections
-  if ( !sigmaPW[0].init(0, xmlPath, "pipi-Froggatt.dat",
-                        infoPtr, particleDataPtr, rndmPtr) ) return false;
-  if ( !sigmaPW[1].init(1, xmlPath, "piK-Estabrooks.dat",
-                        infoPtr, particleDataPtr, rndmPtr) ) return false;
-  if ( !sigmaPW[2].init(2, xmlPath, "piN-SAID-WI08.dat",
-                        infoPtr, particleDataPtr, rndmPtr) ) return false;
-  sigElMax = 0.;
-  sigElMax = max(sigElMax, sigmaPW[0].getSigmaElMax());
-  sigElMax = max(sigElMax, sigmaPW[1].getSigmaElMax());
-  sigElMax = max(sigElMax, sigmaPW[2].getSigmaElMax());
-
-  // DEBUG
-  debugOutput();
 
   return true;
 }
@@ -796,7 +810,7 @@ bool HadronScatter::init(Info* infoPtrIn, Settings& settings,
 void HadronScatter::debugOutput() {
   // Print settings
   cout << "Hadron scattering:" << endl
-       << " scatter        = " << ((doHadronScatter) ? "on" : "off") << endl
+       << " scatter        = " << ((doOldScatter)    ? "on" : "off") << endl
        << " afterDecay     = " << ((afterDecay)      ? "on" : "off") << endl
        << " allowDecayProd = " << ((allowDecayProd)  ? "on" : "off") << endl
        << " scatterRepeat  = " << ((scatterRepeat)   ? "on" : "off") << endl
@@ -828,9 +842,137 @@ void HadronScatter::debugOutput() {
 
 //--------------------------------------------------------------------------
 
-// Perform hadron scattering
+// Perform hadron scattering - new version. Collective flow.
+// Option 0: inv mass cut + probability based on rapidity difference.
+// Option 1: probability based on difference in rapidity & azimuthal angle.
 
 void HadronScatter::scatter(Event& event) {
+
+  // Fill a list with iHadron and rapidity.
+  vector< pair<int,double> > hadronRapidity;
+  for (int i = 0; i < int(event.size()); i++) {
+    if (event[i].isFinal() && event[i].isHadron())
+      hadronRapidity.push_back( pair<int,double>( i, event[i].y() ) );
+  }
+  // Sort in rapidity.
+  mergeSortCollFlow(hadronRapidity);
+
+  // Fill list with possible hadron combinations.
+  vector< pair<int,int> > hadCombis;
+  for (int i1 = 0; i1 < int(hadronRapidity.size()) - 1; i1++) {
+    int iHad1 = hadronRapidity[i1].first;
+    // Go to increasing rapidity until yDiffMax/Rmax is reached.
+    for (int i2 = i1 + 1; i2 < int(hadronRapidity.size()); i2++) {
+      int iHad2 = hadronRapidity[i2].first;
+      // Safety: Skip the same hadron.
+      if (iHad1 == iHad2) continue;
+
+      // For hadrons in the same string, decide if scattering should be done.
+      bool sameStr = ( (event[iHad1].mother1() == event[iHad2].mother1()) &&
+                       (event[iHad1].mother2() == event[iHad2].mother2()) );
+      if (sameStr) {
+        if (!scatSameString) continue;
+        int indxDiff = abs(iHad1 - iHad2);
+        if (indxDiff < neighNear) continue;
+        double probNow = maxProbSS;
+        if (indxDiff < neighFar) {
+          if (neighFar == neighNear) probNow = max(maxProbSS,minProbSS);
+          else {
+            double grad = (maxProbSS - minProbSS) / (neighFar - neighNear);
+            double yint = maxProbSS - grad * neighFar;
+            probNow = grad * indxDiff + yint;
+          }
+        }
+        if (rndmPtr->flat() > probNow) continue;
+      }
+
+      // Rapidity difference.
+      double yDiff = abs( hadronRapidity[i1].second
+                   - hadronRapidity[i2].second );
+
+      // Option 0:
+      if (scatterMode == 0) {
+        // Done once we went far enough in rapidity difference.
+        if (yDiff > yDiffMax) break;
+        // Check if invariant mass is small enough.
+        Vec4 pHad[2] = { event[iHad1].p(), event[iHad2].p() };
+        double m2max = pow2( sqrt(pHad[0].m2Calc() + p2max) +
+                             sqrt(pHad[1].m2Calc() + p2max) );
+        if ( (pHad[0] + pHad[1]).m2Calc() > m2max ) continue;
+        // Probability linear between max and 0 for rapidity difference
+        // between 0 and yDiffMax.
+        if (rndmPtr->flat() > maxProbDS * (1.0 - yDiff / yDiffMax) ) continue;
+      }
+
+      // Option 1:
+      else if (scatterMode == 1) {
+        // sqrt(yDiff^2+aDiff^2) >= yDiff; if yDiff > Rmax we went far enough.
+        if (yDiff > Rmax) break;
+        double aDiff = abs( event[iHad1].phi() - event[iHad2].phi() );
+        if (aDiff > M_PI) aDiff = 2. * M_PI - aDiff;
+        double Rdiff = sqrt( pow2(yDiff) + pow2(aDiff) );
+        // Probability linear between max and 0 for R difference
+        // between 0 and Rmax.
+        if (rndmPtr->flat() > maxProbDS * (1.0 - Rdiff / Rmax)) continue;
+      }
+
+      // Save hadron pair.
+      hadCombis.push_back( pair<int,int>(iHad1,iHad2) );
+      // Done with loop over partners in case hadrons can scatter only once.
+      if (!scatMultTimes) break;
+    }
+  }
+
+  // Now loop through the hadron pairs that will be changed, in random order.
+  int nPair = hadCombis.size();
+  for (int iPair = 0; iPair < nPair; ++iPair) {
+    int iPnow = min( int( rndmPtr->flat() * (nPair - iPair) ),
+      nPair - iPair - 1);
+    int iHad[2]  = { hadCombis[iPnow].first, hadCombis[iPnow].second };
+
+    // In case the hadrons already scattered, we need to get the new momenta.
+    bool hasScat[2] = {!event[iHad[0]].isFinal(), !event[iHad[1]].isFinal()};
+    for (int i = 0; i < 2; i++) if (hasScat[i]) {
+      bool found = false;
+      while (!found) {
+        iHad[i] = event[iHad[i]].daughter1();
+        if (event[iHad[i]].isFinal()) found = true;
+      }
+    }
+
+    // Boost into CMS frame of hadron pair, rotate at random and boost back.
+    Vec4 pHad[2] = { event[iHad[0]].p(), event[iHad[1]].p() };
+    Vec4 pSumHad = pHad[0] + pHad[1];
+    double thetaRndm = acos( 2. * rndmPtr->flat() - 1.);
+    double phiRndm   = 2. * M_PI * rndmPtr->flat();
+    for (int i = 0; i < 2; i++) {
+      pHad[i].bstback( pSumHad);
+      pHad[i].rot( thetaRndm, phiRndm);
+      pHad[i].bst( pSumHad);
+    }
+
+    // Put new momenta into event record as new, copied particles.
+    for (int i = 0; i < 2; i++) {
+      // Copy old hadron.
+      int iNew = event.copy( iHad[i], (hasScat[i] ? 112 : 111));
+      // Change momentum.
+      event[iNew].p(pHad[i]);
+    }
+
+    // Remove already considered pair fromn list.
+    hadCombis[iPnow] = hadCombis.back();
+    hadCombis.pop_back();
+  }
+
+  // Done.
+  return;
+}
+
+//--------------------------------------------------------------------------
+
+// Perform hadron scattering - old version.
+
+void HadronScatter::scatterOld(Event& event) {
   // Reset tiles
   for (int yt = 0; yt < ytMax; yt++)
     for (int pt = 0; pt < ptMax; pt++)
@@ -1137,6 +1279,70 @@ bool HadronScatter::tileIntProb(vector < HadronScatterPair > &hsp,
   }
 
   return pairAdded;
+}
+
+//--------------------------------------------------------------------------
+
+// Functions for presorting the hadrons for collective flow.
+
+void HadronScatter::mergeSortCollFlow(vector< pair<int,double> >& sort,
+  int iStart, int iEnd) {
+
+  // For default arguments, use the range of the whole vector.
+  if (iEnd < 0) {
+    iStart = 1;
+    iEnd   = int(sort.size());
+  }
+
+  // Only need sorting if more than one entry.
+  if (iStart < iEnd) {
+    // Divide into two pieces, sort both iteratively and merge afterwards.
+    int iDivide = (iEnd-iStart)/2;
+    mergeSortCollFlow( sort, iStart, iStart + iDivide);
+    mergeSortCollFlow( sort, iStart + iDivide + 1, iEnd);
+    mergeCollFlow( sort, iStart, iDivide, iEnd);
+  }
+}
+
+void HadronScatter::mergeCollFlow(vector< pair<int,double> >& sort,
+  int iStart, int iDivide, int iEnd) {
+
+  // Set both starting and ending points.
+  int iStart1 = iStart - 1;
+  int iEnd1   = iStart + iDivide - 1;
+  int iStart2 = iStart + iDivide;
+  int iEnd2   = iEnd - 1;
+  // New, merged vector.
+  vector< pair<int,double> > out;
+
+  // Add in case we do not start with the first entry.
+  for (int i = 0; i < iStart - 1; i++) out.push_back( sort[i] );
+
+  // Merge two sequences.
+  int iNow1 = iStart1;
+  int iNow2 = iStart2;
+  while ( (iNow1 <= iEnd1) && (iNow2 <= iEnd2) ) {
+    if (sort[iNow1].second < sort[iNow2].second) {
+      out.push_back(sort[iNow1]);
+      iNow1++;
+    } else {
+      out.push_back(sort[iNow2]);
+      iNow2++;
+    }
+  }
+
+  // Add the leftover entries.
+  if (iNow1 <= iEnd1) {
+    for (int i = iNow1; i <= iEnd1; i++) out.push_back( sort[i] );
+  } else if (iNow2 <= iEnd2) {
+    for (int i = iNow2; i <= iEnd2; i++) out.push_back( sort[i] );
+  }
+
+  // Add in case we do not end with the last entry.
+  for (int i = iEnd; i < int(sort.size()); i++) out.push_back( sort[i] );
+
+  // Overwrite input.
+  sort = out;
 }
 
 //==========================================================================

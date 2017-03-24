@@ -270,4 +270,4 @@ to <code>include/ResonanceWidths.h</code> and
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

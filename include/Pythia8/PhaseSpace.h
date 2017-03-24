@@ -1,5 +1,5 @@
 // PhaseSpace.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,6 +24,7 @@
 #include "Pythia8/Settings.h"
 #include "Pythia8/StandardModel.h"
 #include "Pythia8/UserHooks.h"
+#include "Pythia8/GammaKinematics.h"
 
 namespace Pythia8 {
 
@@ -86,6 +87,9 @@ public:
   Vec4   p(int i)   const {return pH[i];}
   double m(int i)   const {return mH[i];}
 
+  // Reset the four-momentum.
+  void   setP(int i, Vec4 pNew) { pH[i] = pNew; }
+
   // Give back other event properties.
   double ecm()      const {return eCM;}
   double x1()       const {return x1H;}
@@ -102,6 +106,14 @@ public:
 
   // Inform whether beam particles are resolved in partons or scatter directly.
   virtual bool isResolved() const {return true;}
+
+  // Functions to rescale momenta and cross section for new sHat.
+  // Currently implemented only for PhaseSpace2to2tauyz class.
+  virtual void rescaleSigma( double){}
+  virtual void rescaleMomenta( double){}
+
+  // Set the GammaKinematics pointer. Implemented for non-diffractive gm+gm.
+  virtual void setGammaKinPtr( GammaKinematics*){}
 
 protected:
 
@@ -139,7 +151,7 @@ protected:
   BeamParticle* beamBPtr;
 
   // Pointer to Standard Model couplings.
-  Couplings*         couplingsPtr;
+  Couplings*    couplingsPtr;
 
   // Pointer to the total/elastic/diffractive cross section object.
   SigmaTotal*   sigmaTotPtr;
@@ -160,10 +172,11 @@ protected:
   // Information on incoming beams.
   int    idA, idB;
   double mA, mB, eCM, s;
-  bool   hasLeptonBeamA, hasLeptonBeamB, hasOneLeptonBeam,
-         hasTwoLeptonBeams, hasOnePointLepton, hasTwoPointLeptons;
+  bool   hasLeptonBeamA, hasLeptonBeamB, hasOneLeptonBeam, hasTwoLeptonBeams,
+         hasPointGammaA, hasPointGammaB, hasOnePointParticle,
+         hasTwoPointParticles;
 
- // Cross section information.
+  // Cross section information.
   bool   newSigmaMx, canModifySigma, canBiasSelection, canBias2Sel;
   int    gmZmode;
   double bias2SelPow, bias2SelRef, wtBW, sigmaNw, sigmaMx, sigmaPos,
@@ -186,11 +199,10 @@ protected:
 
   // Determine how phase space should be sampled.
   void setup3Body();
-  bool setupSampling123(bool is2, bool is3, ostream& os = cout);
+  bool setupSampling123(bool is2, bool is3);
 
   // Select a trial kinematics phase space point.
-  bool trialKin123(bool is2, bool is3, bool inEvent = true,
-    ostream& os = cout);
+  bool trialKin123(bool is2, bool is3, bool inEvent = true);
 
   // Presence and properties of any s-channel resonances.
   int    idResA, idResB;
@@ -225,15 +237,15 @@ protected:
 
   // Solve equation system for better phase space coefficients in 2 -> 1/2/3.
   void solveSys( int n, int bin[8], double vec[8], double mat[8][8],
-    double coef[8], ostream& os = cout);
+    double coef[8]);
 
   // Properties specific to resonance mass selection in 2 -> 2 and 2 -> 3.
   bool   useBW[6];
   int    idMass[6];
   double mPeak[6], sPeak[6], mWidth[6], mMin[6], mMax[6], mw[6], wmRat[6],
-         mLower[6], mUpper[6], sLower[6], sUpper[6], fracFlat[6], fracInv[6],
-         fracInv2[6], atanLower[6], atanUpper[6], intBW[6], intFlat[6],
-         intInv[6], intInv2[6];
+         mLower[6], mUpper[6], sLower[6], sUpper[6], fracFlatS[6],
+         fracFlatM[6], fracInv[6], fracInv2[6], atanLower[6], atanUpper[6],
+         intBW[6], intFlatS[6], intFlatM[6], intInv[6], intInv2[6];
 
   // Setup mass selection for one resonance at a time. Split in two parts.
   void   setupMass1(int iM);
@@ -302,6 +314,13 @@ public:
 
   // Construct the final event kinematics.
   virtual bool finalKin();
+
+  // Rescales the momenta of incoming and outgoing partons according to
+  // new sHat.
+  virtual void rescaleMomenta ( double sHatNew);
+
+  // Recalculates cross section with rescaled sHat.
+  virtual void rescaleSigma ( double sHatNew);
 
 private:
 
@@ -450,6 +469,40 @@ public:
   virtual bool finalKin() {return true;}
 
 private:
+
+};
+
+//==========================================================================
+
+// A derived class for nondiffractive events in l+l- -> gm+gm.
+// The process is still generated in MultipartonInteraction but the sampling
+// of the sub-collision is done here to allow cuts for the phase space.
+
+class PhaseSpace2to2nondiffractiveGamma : public PhaseSpace {
+
+public:
+
+  // Constructor.
+  PhaseSpace2to2nondiffractiveGamma() {}
+
+  // Construct the trial or final event kinematics.
+  virtual bool setupSampling();
+  virtual bool trialKin(bool inEvent = true, bool = false);
+  virtual bool finalKin() {gammaKinPtr->finalize(); return true;}
+
+  // Set the pointer to GammaKinematics.
+  virtual void setGammaKinPtr( GammaKinematics* gammaKinPtrIn) {
+    gammaKinPtr = gammaKinPtrIn; }
+
+private:
+
+  // Pointer to object that samples photon kinematics from leptons.
+  GammaKinematics* gammaKinPtr;
+
+  // Parameters.
+  double Q2maxGamma, Wmin, sigmaNDestimate, sigmaNDmax, sCM, alphaEM,
+    m2BeamA, m2BeamB, m2sA, m2sB, log2xMinA, log2xMaxA, log2xMinB, log2xMaxB,
+    xGamma1, xGamma2, Q2gamma1, Q2gamma2, mGmGm, Q2min1, Q2min2;
 
 };
 

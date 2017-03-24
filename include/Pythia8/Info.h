@@ -1,5 +1,5 @@
 // Info.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,6 +11,7 @@
 
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/LHEF3.h"
+#include "Pythia8/Basics.h"
 
 namespace Pythia8 {
 
@@ -33,10 +34,10 @@ public:
     weights_detailed(NULL), weights_compressed(NULL), scales(NULL),
     weights(NULL), rwgt(NULL), eCMSave(0.), lowPTmin(false), a0MPISave(0.),
     abortPartonLevel(false), weightCKKWLSave(1.), weightFIRSTSave(0.) {
-    for (int i = 0; i < 40; ++i) counters[i] = 0;}
+    for (int i = 0; i < 40; ++i) counters[i] = 0; setNWeights(1);}
 
   // Listing of most available information on current event.
-  void   list(ostream& os = cout) const;
+  void   list() const;
 
   // Beam particles (in rest frame). CM energy of event.
   int    idA()                const {return idASave;}
@@ -102,6 +103,16 @@ public:
   double Q2Ren(int i = 0)     const {return Q2RenSave[i];}
   double scalup(int i = 0)    const {return scalupSave[i];}
 
+  // Kinematics of photons from lepton beams.
+  double xGammaA()            const {return x1GammaSave;}
+  double xGammaB()            const {return x2GammaSave;}
+  double Q2GammaA()           const {return Q2Gamma1Save;}
+  double Q2GammaB()           const {return Q2Gamma2Save;}
+  double eCMsub()             const {return eCMsubSave;}
+  double thetaScatLepA()      const {return thetaLepton1;}
+  double thetaScatLepB()      const {return thetaLepton2;}
+  double sHatNew()            const {return sHatNewSave;}
+
   // Mandelstam variables (notation as if subcollision).
   double mHat(int i = 0)      const {return sqrt(sH[i]);}
   double sHat(int i = 0)      const {return sH[i];}
@@ -116,10 +127,18 @@ public:
 
   // Weight of current event; normally 1, but used for Les Houches events
   // or when reweighting phase space selection. Conversion from mb to pb
-  // for LHA strategy +-4. Also cumulative sum.
-  double weight()             const;
+  // for LHA strategy +-4. Uncertainty variations can be accessed by
+  // providing an index >= 1 (0 = no variations). Also cumulative sum.
+  double weight(int i=0)      const;
   double weightSum()          const;
   double lhaStrategy()        const {return lhaStrategySave;}
+
+  // Further access to uncertainty weights: number and labels
+  int nWeights() { return weightSave.size(); }
+  string weightLabel(int iWeight) {
+    if (iWeight >= 0 && iWeight < (int)weightLabelSave.size())
+      return weightLabelSave[iWeight];
+    else return "";}
 
   // Number of times other steps have been carried out.
   int    nISR()               const {return nISRSave;}
@@ -141,6 +160,8 @@ public:
   double bMPI()               const {return (bIsSet) ? bMPISave : 1.;}
   double enhanceMPI()         const {return (bIsSet) ? enhanceMPISave : 1.;}
   double eMPI(int i)          const {return (bIsSet) ? eMPISave[i] : 1.;}
+  double bMPIold()            const {return (bIsSet) ? bMPIoldSave : 1.;}
+  double enhanceMPIold()      const {return (bIsSet) ? enhanceMPIoldSave : 1.;}
 
   // Number of multiparton interactions, with code and pT for them.
   int    nMPI()               const {return nMPISave;}
@@ -171,13 +192,13 @@ public:
 
   // Print a message the first few times. Insert in database.
   void   errorMsg(string messageIn, string extraIn = " ",
-    bool showAlways = false, ostream& os = cout);
+    bool showAlways = false);
 
   // Provide total number of errors/aborts/warnings experienced to date.
   int    errorTotalNumber();
 
   // Print statistics on errors/aborts/warnings.
-  void   errorStatistics(ostream& os = cout);
+  void   errorStatistics();
 
   // Set initialization warning flag when too low pTmin in ISR/FSR/MPI.
   void   setTooLowPTmin(bool lowPTminIn) {lowPTmin = lowPTminIn;}
@@ -194,6 +215,9 @@ public:
   double zNowISR() {return zNowISRSave;}
   void   pT2NowISR( double pT2NowIn) {pT2NowISRSave = pT2NowIn;}
   double pT2NowISR() {return pT2NowISRSave;}
+
+  // Update a particular event weight, first entry by default.
+  void updateWeight( double weightIn, int i=0) { weightSave[i] = weightIn;}
 
   // Return CKKW-L weight.
   double getWeightCKKWL() const { return weightCKKWLSave;}
@@ -260,19 +284,28 @@ public:
   // Contents of the LHArwgt tag (detailed format)
   LHArwgt *rwgt;
 
+  // Vectorized version of LHArwgt tag, for easy and ordered access.
+  vector<double> weights_detailed_vector;
+
+  // Value of the unit event weight read from a Les Houches event, necessary
+  // if additional weights in an otherwise unweighted input file are in
+  // relation to this number.
+  double eventWeightLHEF;
+
   // Set the LHEF3 objects read from the init and header blocks.
   void setLHEF3InitInfo();
   void setLHEF3InitInfo( int LHEFversionIn, LHAinitrwgt *initrwgtIn,
     vector<LHAgenerator> *generatorsIn,
     map<string,LHAweightgroup> *weightgroupsIn,
-    map<string,LHAweight> *init_weightsIn );
+    map<string,LHAweight> *init_weightsIn, string headerBlockIn );
   // Set the LHEF3 objects read from the event block.
   void setLHEF3EventInfo();
   void setLHEF3EventInfo( map<string, string> *eventAttributesIn,
     map<string, double > *weights_detailedIn,
     vector<double > *weights_compressedIn,
     LHAscales *scalesIn, LHAweights *weightsIn,
-    LHArwgt *rwgtIn );
+    LHArwgt *rwgtIn, vector<double> weights_detailed_vecIn,
+    string eventCommentsIn, double eventWeightLHEFIn );
 
   // Retrieve events tag information.
   string getEventAttribute(string key, bool doRemoveWhitespace = false);
@@ -305,6 +338,11 @@ public:
   string getScalesValue(bool doRemoveWhitespace = false);
   double getScalesAttribute(string key);
 
+  // Retrieve complete header block and event comments
+  // Retrieve scales tag information.
+  string getHeaderBlock() { return headerBlock;}
+  string getEventComments() { return eventComments;}
+
   // Set LHEF headers
   void setHeader(const string &key, const string &val)
     { headers[key] = val; }
@@ -315,6 +353,7 @@ public:
 
   // Get information on hard diffractive events.
   bool   hasUnresolvedBeams() const {return hasUnresBeams;}
+  bool   hasPomPsystem()      const {return hasPomPsys;}
   bool   isHardDiffractive()  const {return isHardDiffA || isHardDiffB;}
   bool   isHardDiffractiveA() const {return isHardDiffA;}
   bool   isHardDiffractiveB() const {return isHardDiffB;}
@@ -322,6 +361,19 @@ public:
   double xPomeronB()          const {return xPomB;}
   double tPomeronA()          const {return tPomA;}
   double tPomeronB()          const {return tPomB;}
+
+  // History information needed to setup the weak shower for 2 -> n.
+  vector<int> getWeakModes() {return weakModes;}
+  vector<pair<int,int> > getWeakDipoles() {return weakDipoles;}
+  vector<Vec4> getWeakMomenta() {return weakMomenta;}
+  vector<int> getWeak2to2lines() {return weak2to2lines;}
+  void setWeakModes(vector<int> weakModesIn) {weakModes = weakModesIn;}
+  void setWeakDipoles(vector<pair<int,int> > weakDipolesIn)
+    {weakDipoles = weakDipolesIn;}
+  void setWeakMomenta(vector<Vec4> weakMomentaIn)
+    {weakMomenta = weakMomentaIn;}
+  void setWeak2to2lines(vector<int> weak2to2linesIn)
+    {weak2to2lines = weak2to2linesIn;}
 
 private:
 
@@ -352,19 +404,26 @@ private:
   // Store current-event quantities.
   bool   isRes, isDiffA, isDiffB, isDiffC, isND, isLH, hasSubSave[4],
          bIsSet, evolIsSet, atEOF, isVal1, isVal2, hasHistorySave,
-         abortPartonLevel, isHardDiffA, isHardDiffB, hasUnresBeams;
+         abortPartonLevel, isHardDiffA, isHardDiffB, hasUnresBeams,
+         hasPomPsys;
   int    codeSave, codeSubSave[4], nFinalSave, nFinalSubSave[4], nTotal,
          id1Save[4], id2Save[4], id1pdfSave[4], id2pdfSave[4], nMPISave,
          nISRSave, nFSRinProcSave, nFSRinResSave;
   double x1Save[4], x2Save[4], x1pdfSave[4], x2pdfSave[4], pdf1Save[4],
          pdf2Save[4], Q2FacSave[4], alphaEMSave[4], alphaSSave[4],
          Q2RenSave[4], scalupSave[4], sH[4], tH[4], uH[4], pTH[4], m3H[4],
-         m4H[4], thetaH[4], phiH[4], weightSave, bMPISave, enhanceMPISave,
-         pTmaxMPISave, pTmaxISRSave, pTmaxFSRSave, pTnowSave,
-         zNowISRSave, pT2NowISRSave, xPomA, xPomB, tPomA, tPomB;
+         m4H[4], thetaH[4], phiH[4], bMPISave, enhanceMPISave,
+         bMPIoldSave, enhanceMPIoldSave, pTmaxMPISave, pTmaxISRSave,
+         pTmaxFSRSave, pTnowSave, zNowISRSave, pT2NowISRSave, xPomA, xPomB,
+         tPomA, tPomB;
   string nameSave, nameSubSave[4];
   vector<int>    codeMPISave, iAMPISave, iBMPISave;
-  vector<double> pTMPISave, eMPISave;
+  vector<double> pTMPISave, eMPISave, weightSave;
+  vector<string> weightLabelSave;
+
+  // Variables related to photon kinematics.
+  double x1GammaSave, x2GammaSave, Q2Gamma1Save, Q2Gamma2Save, eCMsubSave,
+    thetaLepton1, thetaLepton2, sHatNewSave;
 
   // Vector of various loop counters.
   int    counters[50];
@@ -372,8 +431,11 @@ private:
   // Map for all error messages.
   map<string, int> messages;
 
-  // Map for LHEF headers
+  // Map for LHEF headers.
   map<string, string> headers;
+
+  // Strings for complete header block and event comments.
+  string headerBlock, eventComments;
 
   // Map for plugin libraries.
   map<string, pair<void*, int> > plugins;
@@ -387,6 +449,10 @@ private:
   friend class LHAup;
   friend class LHAPDF;
   friend class Diffraction;
+  friend class Settings;
+  friend class TimeShower;
+  friend class SpaceShower;
+  friend class GammaKinematics;
 
   // Set info on the two incoming beams: only from Pythia class.
   void setBeamA( int idAin, double pzAin, double eAin, double mAin) {
@@ -395,14 +461,25 @@ private:
     idBSave = idBin; pzBSave = pzBin; eBSave = eBin; mBSave = mBin;}
   void setECM( double eCMin) {eCMSave = eCMin; sSave = eCMSave * eCMSave;}
 
+  // Set info related to gamma+gamma subcollision.
+  void setX1Gamma( double x1GammaIn)  { x1GammaSave  = x1GammaIn; }
+  void setX2Gamma( double x2GammaIn)  { x2GammaSave  = x2GammaIn; }
+  void setQ2Gamma1( double Q2gammaIn) { Q2Gamma1Save = Q2gammaIn; }
+  void setQ2Gamma2( double Q2gammaIn) { Q2Gamma2Save = Q2gammaIn; }
+  void setTheta1( double theta1In)    { thetaLepton1 = theta1In;  }
+  void setTheta2( double theta2In)    { thetaLepton2 = theta2In;  }
+  void setECMsub( double eCMsubIn)    { eCMsubSave   = eCMsubIn;  }
+  void setsHatNew( double sHatNewIn)  { sHatNewSave  = sHatNewIn; }
+
   // Reset info for current event: only from Pythia class.
   void clear() {
     isRes = isDiffA = isDiffB = isDiffC = isND = isLH = bIsSet
       = evolIsSet = atEOF = isVal1 = isVal2 = hasHistorySave
-      = hasUnresBeams = false;
+      = isHardDiffA = isHardDiffB = hasUnresBeams = hasPomPsys = false;
     codeSave = nFinalSave = nTotal = nMPISave = nISRSave = nFSRinProcSave
       = nFSRinResSave = 0;
-    weightSave = bMPISave = enhanceMPISave = weightCKKWLSave = 1.;
+    bMPISave = enhanceMPISave = bMPIoldSave = enhanceMPIoldSave
+      = weightCKKWLSave = 1.;
     pTmaxMPISave = pTmaxISRSave = pTmaxFSRSave = pTnowSave = zNowISRSave
       = pT2NowISRSave = weightFIRSTSave = 0.;
     nameSave = " ";
@@ -417,7 +494,8 @@ private:
       nameSubSave[i] = " ";
     }
     codeMPISave.resize(0); iAMPISave.resize(0); iBMPISave.resize(0);
-    pTMPISave.resize(0); eMPISave.resize(0); setHardDiff();}
+    pTMPISave.resize(0); eMPISave.resize(0); setHardDiff();
+    for (int i = 0; i < nWeights(); ++i) weightSave[i]=1.;}
 
   // Reset info arrays only for parton and hadron level.
   int sizeMPIarrays() const { return codeMPISave.size(); }
@@ -477,7 +555,9 @@ private:
     sigErrM[i] = sqrtpos(sigErrM[i]*sigErrM[i] + sigErrIn*sigErrIn); }
 
   // Set info on impact parameter: from PartonLevel.
-  void setImpact( double bMPIIn, double enhanceMPIIn, bool bIsSetIn = true) {
+  void setImpact( double bMPIIn, double enhanceMPIIn, bool bIsSetIn = true,
+    bool pushBack = false) {
+    if (pushBack) {bMPIoldSave = bMPISave; enhanceMPIoldSave = enhanceMPISave;}
     bMPISave = bMPIIn; enhanceMPISave = eMPISave[0] = enhanceMPIIn,
     bIsSet = bIsSetIn;}
 
@@ -500,28 +580,53 @@ private:
   // Set info whether reading of Les Houches Accord file at end.
   void setEndOfFile( bool atEOFin) {atEOF = atEOFin;}
 
-  // Set event weight; currently only for Les Houches description.
-  void setWeight( double weightIn, int lhaStrategyIn) {
-    weightSave = weightIn; lhaStrategySave = lhaStrategyIn; }
+  // Set number and labels of weights (for uncertainty evaluations).
+  void setNWeights(int mWeights) {
+    mWeights = max(1,mWeights);
+    weightSave.resize(mWeights);
+    weightLabelSave.resize(mWeights);
+    for (int i=1; i<mWeights; ++i) weightLabelSave[i]="";
+  }
+  void setWeightLabel(int iWeight, string labelIn) {
+    if (iWeight >= 0 && iWeight < (int)weightLabelSave.size())
+      weightLabelSave[iWeight] = labelIn;
+  }
 
-  // Save merging weight (i.e.  CKKW-L-type weight, summed O(\alpha_s) weight)
+  // Set event weight, either for LHEF3 or for uncertainty bands.
+  void setWeight( double weightIn, int lhaStrategyIn) {
+    for (int i=0; i<nWeights(); ++i) weightSave[i] = weightIn;
+    if (nWeights() == 0) weightSave.push_back(weightIn);
+    lhaStrategySave = lhaStrategyIn;}
+
+  // Apply weight modification (used for automated uncertainty variations).
+  void reWeight( int iWeight, double rwIn) {
+    if (iWeight >= 0 || iWeight < nWeights()) weightSave[iWeight] *= rwIn;}
+
+  // Save merging weight (i.e.  CKKW-L-type weight, summed O(\alpha_s) weight).
   double weightCKKWLSave, weightFIRSTSave;
 
   // Set info on resolved processes.
   void setIsResolved(bool isResIn) {isRes = isResIn;}
 
   // Set info on hard diffraction.
-  void setHardDiff( bool hasUnresBeamsIn = false,
+  void setHardDiff( bool hasUnresBeamsIn = false, bool hasPomPsysIn = false,
     bool isHardDiffAIn = false, bool isHardDiffBIn = false,
     double xPomAIn = 0., double xPomBIn = 0., double tPomAIn = 0.,
     double tPomBIn = 0.) { hasUnresBeams = hasUnresBeamsIn;
-      isHardDiffA = isHardDiffAIn; isHardDiffB = isHardDiffBIn;
-      xPomA = xPomAIn; xPomB = xPomBIn;
-      tPomA = tPomAIn; tPomB = tPomBIn;}
+    hasPomPsys = hasPomPsysIn; isHardDiffA = isHardDiffAIn;
+    isHardDiffB = isHardDiffBIn;
+    xPomA = xPomAIn; xPomB = xPomBIn;
+    tPomA = tPomAIn; tPomB = tPomBIn;}
 
   // Set information in hard diffractive events.
   void setHasUnresolvedBeams(bool hasUnresBeamsIn)
     {hasUnresBeams = hasUnresBeamsIn;}
+  void setHasPomPsystem(bool hasPomPsysIn) {hasPomPsys = hasPomPsysIn;}
+
+  // Variables for weak shower setup.
+  vector<int> weakModes, weak2to2lines;
+  vector<Vec4> weakMomenta;
+  vector<pair<int, int> > weakDipoles;
 
 };
 

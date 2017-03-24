@@ -68,34 +68,22 @@ are stored in the range <ei>0 &lt;= i &lt; size()</ei>. See comment
 above about the (ir)relevance of entry 0. 
 </method> 
  
-<method name="void Event::list(int precision = 3)"> 
-</method> 
-<methodmore name="void Event::list(ostream& os, int precision = 3)"> 
-</methodmore> 
-<methodmore name="void Event::list(bool showScaleAndVertex, 
+<method name="void Event::list(bool showScaleAndVertex = false, 
 bool showMothersAndDaughters = false, int precision = 3)"> 
-</methodmore> 
-<methodmore name="void Event::list(bool showScaleAndVertex, 
-bool showMothersAndDaughters, ostream& os, int precision = 3)"> 
 Provide a listing of the whole event, i.e. of the 
-<code>vector&lt;Particle&gt;</code>. The methods with fewer arguments 
-call the final one with the respective default values, and are 
-non-inlined so they can be used in a debugger. The basic identity 
+<code>vector&lt;Particle&gt;</code>. The basic identity 
 code, status, mother, daughter, colour, four-momentum and mass data 
 are always given, but the methods can also be called with a few 
 optional arguments for further information: 
-<argument name="showScaleAndVertex" default="false"> optionally give a 
+<argument name="showScaleAndVertex" default="off"> optionally give a 
 second line for each particle, with the production scale (in GeV), 
 the particle polarization (dimensionless), the production vertex 
 (in mm or mm/c) and the invariant lifetime (also in mm/c). 
 </argument> 
-<argument name="showMothersAndDaughters" default="false"> 
+<argument name="showMothersAndDaughters" default="off"> 
 gives a list of all daughters and mothers of a particle, as defined by 
 the <code>motherList(i)</code> and <code>daughterList(i)</code> methods 
 described below. It is mainly intended for debug purposes. 
-</argument> 
-<argument name="os" default="cout"> a reference to the <code>ostream</code> 
-object to which the event listing will be directed. 
 </argument> 
 <argument name="precision" default="3"> the number of digits to the right 
 of the decimal point shown for momenta, energies andf masses. Can be set 
@@ -103,7 +91,6 @@ above 3, but reducing it below 3 will have no effect. This option is
 intended for expert users, e.g. for debugging purposes, and so no effort 
 has been made to stretch header and footer to match. 
 </argument> 
- 
 </method> 
  
 <h3>Further output methods</h3> 
@@ -217,11 +204,16 @@ number. History (and other) information of remaning entries is
 untouched, and so may be internally inconsistent. 
 </method> 
  
-<method name="void Event::remove(int iFirst, int iLast)"> 
+<method name="void Event::remove(int iFirst, int iLast, 
+bool shiftHistory = true)"> 
 removes particles in the range between indices <code>iFirst</code> 
-and <code>iLast</code>, including the endpoints. History (and other) 
-information of remaning entries is untouched, and so may be internally 
-inconsistent. 
+and <code>iLast</code>, including the endpoints. By default all mother 
+and daughter indices above the removed range are shifted down by the 
+number of removed entries, while indices in the removed range are put 
+zero. Optionally these shifts can be omitted. Other information remains 
+unchanged, which may lead to inconsistencies. If the decay products of 
+a particle are removed, e.g., the mother particle status should be set 
+positive, cf. <code>Particle::undoDecay()</code>. 
 </method> 
  
 <method name="int Event::append(Particle entryIn)"> 
@@ -256,7 +248,7 @@ int acol, Vec4 p, double m = 0., double scale = 0., double pol = 9.)">
 appends a particle to the bottom of the event record and 
 returns the index of this position, as above but with vanishing 
 (i.e. zero) mother and daughter indices. 
-</method> 
+</methodmore> 
  
 <method name="int Event::setEvtPtr(int iSet = -1)"> 
 send in the <code>this</code> pointer of the current <code>Event</code> 
@@ -389,4 +381,4 @@ It is intended to be accessed only by experts, such as implementors of
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

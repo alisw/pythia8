@@ -1,5 +1,5 @@
 // WeakShowerMEs.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -17,6 +17,11 @@ namespace Pythia8 {
 //==========================================================================
 
 // The WeakShowerMEs provides ME's needed for W/Z emission in ISR or FSR.
+// The 2 -> 2 MEs contain the correct kinematics, but for some of
+// the 2 -> 3 MEs some couplings have been switched off.
+// This class is used for ME corrections in the weak shower and for merging
+// whenever weak reclusterings are allowed.
+// Also be aware that no phase-space factors are included.
 
 class WeakShowerMEs {
 
@@ -25,21 +30,30 @@ public:
   // Constructor.
   WeakShowerMEs() {}
 
-  // Calculate the 2 to 2 ME uG -> uG, up to a known overall factor.
-  double getTchanneluGuGME(double sHat,double tHat,double uHat);
+  // Calculate the 2 to 2 ME qg -> qg, up to a known overall factor.
+  double getMEqg2qg(double sH, double tH, double uH);
 
-  // Calculate the 2 to 2 ME ud -> ud, up to a known overall factor.
-  double getTchannelududME(double sHat,double tHat,double uHat);
+  // Calculate the 2 to 2 ME qq -> qq, up to a known overall factor.
+  double getMEqq2qq(double sH, double tH, double uH, bool sameID);
 
-  // Calculate the 2 to 2 ME uu -> uu, up to a known overall factor.
-  double getTchanneluuuuME(double sHat,double tHat,double uHat);
+  // Calculate the 2 to 2 ME gg -> gg, up to a known overall factor.
+  double getMEgg2gg(double sH, double tH, double uH);
+
+  // Calculate the 2 to 2 ME gg -> qqbar, up to a known overall factor.
+  double getMEgg2qqbar(double sH, double tH, double uH);
+
+  // Calculate the 2 to 2 ME qqbar -> gg, up to a known overall factor.
+  double getMEqqbar2gg(double sH, double tH, double uH);
+
+  // Calculate the 2 to 2 ME qqbar -> qqbar, up to a known overall factor.
+  double getMEqqbar2qqbar(double sH, double tH, double uH, bool sameID);
 
   // Calculate the 2 to 3 ME uG -> uGZ, up to a known overall factor.
-  double getTchanneluGuGZME(Vec4 p1,Vec4 p2,Vec4 p3,Vec4 p4,Vec4 p5);
+  double getMEqg2qgZ(Vec4 p1,Vec4 p2,Vec4 p3,Vec4 p4,Vec4 p5);
 
   // Calculate the 2 to 3 ME ud -> udZ, up to a known overall factor,
   // and with the coupling between Z and d set to zero.
-  double getTchannelududZME(Vec4 p1,Vec4 p2,Vec4 p3,Vec4 p4,Vec4 p5);
+  double getMEqq2qqZ(Vec4 p1,Vec4 p2,Vec4 p3,Vec4 p4,Vec4 p5);
 
 };
 

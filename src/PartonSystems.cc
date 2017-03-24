@@ -1,5 +1,5 @@
 // PartonSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -88,28 +88,28 @@ int PartonSystems::getIndexOfOut(int iSys, int iPos) const {
 
 // Print members in systems; for debug mainly.
 
-void PartonSystems::list(ostream& os) const {
+void PartonSystems::list() const {
 
   // Header.
-  os << "\n --------  PYTHIA Parton Systems Listing  -------------------"
-     << "--------------------------------- "
-     << "\n \n  no  inA  inB  out members  \n";
+  cout << "\n --------  PYTHIA Parton Systems Listing  -------------------"
+       << "--------------------------------- "
+       << "\n \n  no  inA  inB  out members  \n";
 
   // Loop over system list and over members in each system.
   for (int iSys = 0; iSys < sizeSys(); ++iSys) {
-    os << " " << setw(3) << iSys << " " << setw(4) << systems[iSys].iInA
-       << " " << setw(4) << systems[iSys].iInB;
+    cout << " " << setw(3) << iSys << " " << setw(4) << systems[iSys].iInA
+         << " " << setw(4) << systems[iSys].iInB;
     for (int iMem = 0; iMem < sizeOut(iSys); ++iMem) {
-      if (iMem%16 == 0 && iMem > 0) os << "\n              ";
-      os << " " << setw(4) << systems[iSys].iOut[iMem];
+      if (iMem%16 == 0 && iMem > 0) cout << "\n              ";
+      cout << " " << setw(4) << systems[iSys].iOut[iMem];
     }
-    os << "\n";
+    cout << "\n";
   }
 
   // Alternative if no systems. Done.
-  if (sizeSys() == 0) os << "    no systems defined \n";
-  os << "\n --------  End PYTHIA Parton Systems Listing  ---------------"
-     << "---------------------------------" << endl;
+  if (sizeSys() == 0) cout << "    no systems defined \n";
+  cout << "\n --------  End PYTHIA Parton Systems Listing  ---------------"
+       << "---------------------------------" << endl;
 
 }
 

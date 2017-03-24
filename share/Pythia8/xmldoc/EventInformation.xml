@@ -328,13 +328,13 @@ expanded with an optional argument to address properties of diffractive
 subsystems. This argument can take four values: 
 <ul> 
 <li>0 : default argument, used for normal nondiffractive events or 
-the primary elastic/diffractive process (see above); 
+the primary elastic/diffractive process (see above); </li> 
 <li>1 : the <ei>X1</ei> system in single diffraction 
-<ei>A B &rarr; X1 B</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>; 
+<ei>A B &rarr; X1 B</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>; </li> 
 <li>2 : the <ei>X2</ei> system in single diffraction 
-<ei>A B &rarr; A X2</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>; 
+<ei>A B &rarr; A X2</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>; </li> 
 <li>3 : the <ei>X</ei> system in central diffraction 
-<ei>A B &rarr; A X B</ei>. 
+<ei>A B &rarr; A X B</ei>. </li> 
 </ul> 
 The argument is defined for all of the methods in the three sections above, 
 "Hard process initiators", "Hard process parton densities and scales" and 
@@ -365,6 +365,29 @@ diffractive process.
 </method> 
 <methodmore name="double Info::tPomeronB()"> 
 The momentum transfer <ei>t</ei> in the hard diffractive process. 
+</methodmore> 
+ 
+<h3>Photon-photon in lepton-lepton</h3> 
+ 
+Information about the kinematics of photon-photon collisions from lepton 
+beams. 
+<method name="double Info::eCMsub()"> 
+Collision energy of the <ei>gamma-gamma</ei> sub-system. 
+</method> 
+<method name="double Info::xGammaA()"> 
+</method> 
+<methodmore name="double Info::xGammaB()"> 
+<ei>x</ei> fractions of lepton momenta carried by the photons. 
+</methodmore> 
+<method name="double Info::Q2GammaA()"> 
+</method> 
+<methodmore name="double Info::Q2GammaB()"> 
+Virtualities of the photons emitted by the leptons. 
+</methodmore> 
+<method name="double Info::thetaScatLepA()"> 
+</method> 
+<methodmore name="double Info::thetaScatLepB()"> 
+Scattering angles of the leptons wrt. the beam direction. 
 </methodmore> 
  
 <h3>Event weight and activity</h3> 
@@ -513,6 +536,18 @@ subprocess. Is primarily of interest for the
 size of the proton depends on the <ei>x</ei> values of the colliding 
 partons. Note that <code>eMPI(0) = enhanceMPI()</code>. 
 </method> 
+ 
+<method name="double Info::bMPIold()"> 
+</method> 
+ <methodmore name="double Info::enhanceMPIold()"> 
+These methods are only relevant for hard diffraction with the requirement 
+of no MPI in the hadron-hadron collision. Then an impact parameter 
+and associated enhancement factor is picked for this collision, but 
+afterwards overwritten when the Pomeron-hadron subcollision is considered. 
+In such cases the old hadron-hadron values can be found here, while 
+<code>bMPI</code> and <code>enhanceMPI</code> provide the new 
+Pomeron-hadron ones. 
+</methodmore> 
  
 <h3>Cross sections</h3> 
  
@@ -722,7 +757,7 @@ Les Houches Event files can conform to version 1.0 and version 3.0
 of the standard (version 2.0 having been extended to 3.0). The LHEF version 
 of an input file can can be accessed by 
 <br/><methodmore name="int Info::LHEFversion()"> 
-</methodmorer> 
+</methodmore> 
  
 <p/> 
 The <code>Info</code> class also provides a suitable interface to 
@@ -730,15 +765,18 @@ the information stored after reading Les Houches Event files in the
 updated format <ref>But14</ref>. An example main program using LHEF 3.0 
 information is <code>main38.cc</code>. 
  
-</p> 
+<p/> 
 LHEF 3.0 offers new features both in the initialisation and the event sections 
 of the input files. Possible information include extended 
 use of XML tags in the <code>&lt;header&gt;</code> and 
-<code>&lt;init&gt;</code> blocks: 
+<code>&lt;init&gt;</code> blocks.  The LHEF 3.0 information is stored 
+in a series <code>struct</code>'s: 
  
 <p/> 
  -- &nbsp; &nbsp; The <code>&lt;initrwgt&gt;</code> tag is a container 
- tag for weight and weightgroup tags. Currently, there is no dedicated 
+ tag for weight and weightgroup tags.   This information is stored 
+ internally in <code>LHAinitrwgt</code>. 
+ Currently, there is no dedicated 
  output for this tag. However, all the information stored in the tag can 
  be retrieved by using the <code>Info</code> class member pointer 
  <code>LHAinitrwgt Info::initrwgt</code>. 
@@ -772,6 +810,10 @@ use of XML tags in the <code>&lt;header&gt;</code> and
  output functions are available. The size of this vector can be obtained from 
 <br/><methodmore name="int Info::getGeneratorSize()"> 
 </methodmore> 
+ 
+<p/> 
+The complete header can be obtained with the <code>Info</code> class 
+member <code>string getHeaderBlock()</code>. 
  
 <p/> 
 The contents of a <code>&lt;generator&gt;</code> tag can be accessed through 
@@ -821,6 +863,13 @@ Possible information also includes extended use of XML tags in the
  can be obtained from 
 <br/><methodmore name="unsigned int Info::getWeightsDetailedSize()"> 
 </methodmore> 
+ 
+<p/> 
+A convenient access point to the information stored in the 
+<code>&lt;wgt&gt;</code> tags is the <code>Info</code> class member 
+<code>vector&lt;double&gt; Info::weights_detailed_vector</code>. The 
+entries of this vector are ordered according to how <code>&lt;wgt&gt;</code> 
+tags appear in the event block. 
  
 <p/> 
 The contents of a <code>&lt;wgt&gt;</code> tag can be accessed through the 
@@ -896,6 +945,11 @@ any whitespace. An empty string is returned if the attribute named
 <code>key</code> does not exist. 
 </methodmore> 
  
+<p/> 
+Additional comments appearing in the <code>&lt;event&gt;</code> tag 
+can be obtained with the <code>Info</code> class member 
+<code>string getEventComments()</code>. 
+ 
 <h3>Header information</h3> 
  
 A simple string key/value store, mainly intended for accessing 
@@ -920,4 +974,4 @@ set the header named <code>key</code> with the contents of <code>val</code>
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

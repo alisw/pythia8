@@ -158,11 +158,12 @@ method should be provided with the list of relevant particles.</li>
  
 <li><code>isVisible</code>: a flag telling whether a particle species 
 is to be considered as visible in a detector or not, as used e.g. in 
-analysis routines. By default this includes neutrinos and a few BSM 
-particles (gravitino, sneutrinos, neutralinos) that have neither strong 
-nor electromagnetic charge, and are not made up of constituents that 
-have it. The value of this flag is only relevant if a particle is 
-long-lived enough actually to make it to a detector.</li> 
+analysis routines. By default the invisibles include neutrinos, 
+Dark Matter particles (codes 51 - 60) and a few BSM particles (gravitino, 
+sneutrinos, neutralinos) that have neither strong nor electromagnetic 
+charge, and are not made up of constituents that have it. The value of 
+this flag is only relevant if a particle is long-lived enough actually 
+to make it to a detector.</li> 
  
 <li><code>doForceWidth</code>: a flag applicable only for resonances 
 (see <code>isResonance</code> above), whereby it is possible to force 
@@ -587,27 +588,46 @@ the constructor has no arguments and does not do anything. Internal.
    
  
 <a name="method2"></a>
+<p/><strong>ParticleData& operator=( const ParticleData& particleDataIn) &nbsp;</strong> <br/>
+copy the database from an existing <code>ParticleData</code> object. 
+Can be useful when running with multiple <code>Pythia</code> instances. 
+Does not include the links to the resonance decay handling set up by 
+<code>initWidths(...)</code>. 
+   
+ 
+<a name="method3"></a>
 <p/><strong>void ParticleData::initPtr(Info* infoPtr, Settings* settingsPtrIn, Rndm* rndmPtrIn, CoupSM* coupSMPtrIn) &nbsp;</strong> <br/>
 initialize pointers to a few other classes. Internal. 
    
  
-<a name="method3"></a>
-<p/><strong>bool ParticleData::init(string startFile = &quot;../xmldoc/ParticleData.xml&quot;) &nbsp;</strong> <br/>
+<a name="method4"></a>
+<p/><strong>bool ParticleData::init(string startFile = &quot;../share/Pythia8/xmldoc/ParticleData.xml&quot;) &nbsp;</strong> <br/>
 read in an XML-style file with particle data and initialize the 
 particle data tables accordingly. This command is executed 
 in the <code>Pythia</code> constructor, i.e. is mainly for 
 internal use. 
-<br/><code>argument</code><strong> startFile </strong> (<code>default = <strong>../xmldoc/ParticleData.xml</strong></code>) :  
+<br/><code>argument</code><strong> startFile </strong> (<code>default = <strong>../share/Pythia8/xmldoc/ParticleData.xml</strong></code>) :  
 the name of the data file to be read. When called from the 
 <code>Pythia</code> constructor the directory is provided by the 
 <code><?php $filepath = $_GET["filepath"];
 echo "<a href='ProgramFlow.php?filepath=".$filepath."' target='page'>";?>PYTHIA8DATA</a></code> 
 environment variable, if set, else by the argument of this constructor, 
-which has the default value &quot;../xmldoc&quot;. 
+which has the default value &quot;../share/Pythia8/xmldoc&quot;. 
    
    
  
-<a name="method4"></a>
+<a name="method5"></a>
+<p/><strong>bool ParticleData::init(const ParticleData& particleDataIn &nbsp;</strong> <br/>
+copy particle data from information stored in an existing 
+<code>ParticleData</code> instance. 
+   
+ 
+<a name="method6"></a>
+<p/><strong>bool ParticleData::init(istream& is &nbsp;</strong> <br/>
+copy particle data from a stream (rather than from a file). 
+   
+ 
+<a name="method7"></a>
 <p/><strong>bool ParticleData::reInit(string startFile, bool xmlFormat = true) &nbsp;</strong> <br/>
 overwrite the existing database by reading from the specified file. 
 Unlike <code>init</code> above this method is not called by the 
@@ -622,7 +642,7 @@ specifying in which order properties are stored).
    
    
  
-<a name="method5"></a>
+<a name="method8"></a>
 <p/><strong>void ParticleData::initWidths( vector&lt;ResonanceWidths*&gt; resonancePtrs) &nbsp;</strong> <br/>
 initialize Breit-Wigner shape parameters for all particles, 
 and the detailed handling of resonances, i.e. particles with 
@@ -631,7 +651,7 @@ obtain a mass-dependent Breit-Wigner and a dynamic choice of
 decay channels. Called from <code>Pythia::init()</code>. 
    
  
-<a name="method6"></a>
+<a name="method9"></a>
 <p/><strong>bool ParticleData::readXML(string inFile, bool reset = true) &nbsp;</strong> <br/>
    
 <strong>void ParticleData::listXML(string outFile) &nbsp;</strong> <br/>
@@ -641,7 +661,7 @@ or only overwrite those particles in the file. The former method is
 used by <code>init</code> and <code>reInit</code> above. 
    
  
-<a name="method7"></a>
+<a name="method10"></a>
 <p/><strong>bool ParticleData::readFF(string inFile, bool reset = true) &nbsp;</strong> <br/>
    
 <strong>void ParticleData::listFF(string outFile) &nbsp;</strong> <br/>
@@ -651,8 +671,8 @@ scratch, or only overwrite those particles in the file. The former
 method is used by <code>reInit</code> above. 
    
  
-<a name="method8"></a>
-<p/><strong>bool ParticleData::readString(string line, bool warn = true, ostream& os = cout) &nbsp;</strong> <br/>
+<a name="method11"></a>
+<p/><strong>bool ParticleData::readString(string line, bool warn = true) &nbsp;</strong> <br/>
 read in a string and interpret is as a new or changed particle data. 
 The possibilities are extensively described above. It is normally 
 used indirectly, via <code>Pythia::readString(...)</code> and 
@@ -660,47 +680,40 @@ used indirectly, via <code>Pythia::readString(...)</code> and
 <br/><code>argument</code><strong> line </strong>  :  
 the string to be interpreted as an instruction. 
    
-<br/><code>argument</code><strong> warn </strong> (<code>default = <strong>true</strong></code>) :  
+<br/><code>argument</code><strong> warn </strong> (<code>default = <strong>on</strong></code>) :  
 write a warning message or not whenever the instruction does not make 
 sense, e.g. if the particle does not exist in the database. 
-   
-<br/><code>argument</code><strong> os </strong> (<code>default = <strong>cout</strong></code>) :  
-stream for error printout. 
    
 <br/><b>Note:</b> the method returns false if it fails to 
 make sense out of the input string. 
    
  
-<a name="method9"></a>
-<p/><strong>void ParticleData::listAll(ostream& os = cout) &nbsp;</strong> <br/>
+<a name="method12"></a>
+<p/><strong>void ParticleData::listAll() &nbsp;</strong> <br/>
    
-<strong>void ParticleData::listChanged(ostream& os = cout) &nbsp;</strong> <br/>
+<strong>void ParticleData::listChanged(bool changedRes = false) &nbsp;</strong> <br/>
    
-<strong>void ParticleData::listChangedAndRes(ostream& os = cout) &nbsp;</strong> <br/>
-   
-<strong>void ParticleData::list(bool changedOnly = false, bool changedRes = true, ostream& os = cout) &nbsp;</strong> <br/>
+<strong>void ParticleData::list(bool changedOnly = false, bool changedRes = true) &nbsp;</strong> <br/>
 methods intended to present a listing of particle data in a readable 
-format. The first three are special cases of the fourth. The first 
+format. The first two are special cases of the third. The first 
 lists all particle data, the second only data for those particles that 
 were changed after the original creation of the particle data table. 
 Resonances are a special case since they can get their data changed 
 by being linked to an object that does the calculation of branching 
-ratios. The second method does not count such resonances as changed, 
-whereas the third does and thus lists all resonances. 
+ratios. By default the second method does not count such resonances 
+as changed, whereas the third does and thus lists all resonances. 
    
  
-<a name="method10"></a>
-<p/><strong>void ParticleData::list(int idList, ostream& os = cout) &nbsp;</strong> <br/>
+<a name="method13"></a>
+<p/><strong>void ParticleData::list(int idList) &nbsp;</strong> <br/>
    
-<strong>void ParticleData::list(vector&lt;int&gt; idList, ostream& os = cout) &nbsp;</strong> <br/>
+<strong>void ParticleData::list(vector&lt;int&gt; idList) &nbsp;</strong> <br/>
 list particle data for one single particle, with the identity code as 
 input, or for a set of particles, with an input vector of identity codes. 
    
  
-<a name="method11"></a>
-<p/><strong>void ParticleData::checkTable(ostream& os = cout) &nbsp;</strong> <br/>
-   
-<strong>void ParticleData::checkTable(int verbosity, ostream& os = cout) &nbsp;</strong> <br/>
+<a name="method14"></a>
+<p/><strong>void ParticleData::checkTable(int verbosity) &nbsp;</strong> <br/>
 check that the particle decay table makes sense, especially for decays. 
 <br/><code>argument</code><strong> verbosity </strong>  :  level of checks. 0 is only minimal, 
 e.g. if a particle has no open decay channels. 1, which is the level 
@@ -711,7 +724,7 @@ but also include resonances in the detailed checks.
    
    
  
-<a name="method12"></a>
+<a name="method15"></a>
 <p/><strong>void ParticleData::addParticle(int id, string name = &quot; &quot;, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0., double tau0 = 0.) &nbsp;</strong> <br/>
    
 <strong>void ParticleData::addParticle(int id, string name, string antiName, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0., double tau0 = 0.) &nbsp;</strong> <br/>
@@ -719,31 +732,31 @@ add a particle to the decay table; in the first form a particle which is
 its own antiparticle, in the second where a separate antiparticle exists. 
    
  
-<a name="method13"></a>
+<a name="method16"></a>
 <p/><strong>void ParticleData::setAll(int id, string name, string antiName, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0.,double tau0 = 0.) &nbsp;</strong> <br/>
 change all the properties of the particle associated with a given 
 identity code. 
    
  
-<a name="method14"></a>
+<a name="method17"></a>
 <p/><strong>bool ParticleData::isParticle(int id) &nbsp;</strong> <br/>
 query whether the particle data table contains the particle of the 
 identity code. 
    
  
-<a name="method15"></a>
+<a name="method18"></a>
 <p/><strong>int ParticleData::nextId(int id) &nbsp;</strong> <br/>
 return the identity code of the sequentially next particle stored in table. 
    
  
-<a name="method16"></a>
+<a name="method19"></a>
 <p/><strong>bool ParticleData::hasAnti(int id) &nbsp;</strong> <br/>
 bool whether a distinct antiparticle exists or not. Is true if an 
 antiparticle name has been set (and is different from 
 <code>void</code>). 
    
  
-<a name="method17"></a>
+<a name="method20"></a>
 <p/><strong>void ParticleData::name(int id, string name) &nbsp;</strong> <br/>
    
 <strong>void ParticleData::antiName(int id, string antiName) &nbsp;</strong> <br/>
@@ -756,7 +769,7 @@ particle and antiparticle names are stored separately, the sign of
 <code>void</code> used to indicate the absence of an antiparticle. 
    
  
-<a name="method18"></a>
+<a name="method21"></a>
 <p/><strong>void ParticleData::spinType(int id, int spinType) &nbsp;</strong> <br/>
    
 <strong>int ParticleData::spinType(int id) &nbsp;</strong> <br/>
@@ -764,7 +777,7 @@ the spin type, of the form <i>2 s + 1</i>, with special code 0
 for entries of unknown or indeterminate spin. 
    
  
-<a name="method19"></a>
+<a name="method22"></a>
 <p/><strong>void ParticleData::chargeType(int id, int chargeType) &nbsp;</strong> <br/>
    
 <strong>int ParticleData::chargeType(int id) &nbsp;</strong> <br/>
@@ -772,13 +785,13 @@ three times the charge (to make it an integer), taking into account
 the sign of <code>id</code>. 
    
  
-<a name="method20"></a>
+<a name="method23"></a>
 <p/><strong>double ParticleData::charge(int id) &nbsp;</strong> <br/>
 the electrical charge of a particle, equal to 
 <code>chargeType(id)/3</code>. 
    
  
-<a name="method21"></a>
+<a name="method24"></a>
 <p/><strong>void ParticleData::colType(int id, int colType) &nbsp;</strong> <br/>
    
 <strong>int ParticleData::colType(int id) &nbsp;</strong> <br/>
@@ -786,21 +799,21 @@ the colour type, with 0 uncoloured, 1 triplet, -1 antitriplet and 2
 octet, taking into account the sign of <code>id</code>. 
    
  
-<a name="method22"></a>
+<a name="method25"></a>
 <p/><strong>void ParticleData::m0(int id, double m0) &nbsp;</strong> <br/>
    
 <strong>double ParticleData::m0(int id) &nbsp;</strong> <br/>
 the nominal mass <i>m_0</i> (in GeV). 
    
  
-<a name="method23"></a>
+<a name="method26"></a>
 <p/><strong>void ParticleData::mWidth(int id, double mWidth) &nbsp;</strong> <br/>
    
 <strong>double ParticleData::mWidth(int id) &nbsp;</strong> <br/>
 the width <i>Gamma</i> of the Breit-Wigner distribution (in GeV). 
    
  
-<a name="method24"></a>
+<a name="method27"></a>
 <p/><strong>void ParticleData::mMin(int id, double mMin) &nbsp;</strong> <br/>
    
 <strong>double ParticleData::mMin(int id) &nbsp;</strong> <br/>
@@ -809,7 +822,7 @@ the lower limit of the allowed mass range generated by the Breit-Wigner
 typically be 0 there. 
    
  
-<a name="method25"></a>
+<a name="method28"></a>
 <p/><strong>void ParticleData::mMax(int id, double mMax) &nbsp;</strong> <br/>
    
 <strong>double ParticleData::mMax(int id) &nbsp;</strong> <br/>
@@ -819,26 +832,26 @@ Has no meaning for particles without width, and would typically
 be 0 there. 
    
  
-<a name="method26"></a>
+<a name="method29"></a>
 <p/><strong>double ParticleData::m0Min(int id) &nbsp;</strong> <br/>
 similar to <code>mMin()</code> above, except that for particles with 
 no width the <code>m0(id)</code> value is returned. 
    
  
-<a name="method27"></a>
+<a name="method30"></a>
 <p/><strong>double ParticleData::m0Max(int id) &nbsp;</strong> <br/>
 similar to <code>mMax()</code> above, except that for particles with 
 no width the <code>m0(id)</code> value is returned. 
    
  
-<a name="method28"></a>
+<a name="method31"></a>
 <p/><strong>void ParticleData::tau0(int id, double tau0) &nbsp;</strong> <br/>
    
 <strong>double ParticleData::tau0(int id) &nbsp;</strong> <br/>
 the nominal proper lifetime <i>tau_0</i> (in mm/c). 
    
  
-<a name="method29"></a>
+<a name="method32"></a>
 <p/><strong>void ParticleData::isResonance(int id, bool isResonance) &nbsp;</strong> <br/>
    
 <strong>bool ParticleData::isResonance(int id) &nbsp;</strong> <br/>
@@ -858,7 +871,7 @@ All particles with <code>m0</code> above 20 GeV are by default
 initialized to be considered as resonances. 
    
  
-<a name="method30"></a>
+<a name="method33"></a>
 <p/><strong>void ParticleData::mayDecay(int id, bool mayDecay) &nbsp;</strong> <br/>
    
 <strong>bool ParticleData::mayDecay(int id) &nbsp;</strong> <br/>
@@ -873,7 +886,7 @@ All particles with <code>tau0</code> below 1000 mm are
 by default initialized to allow decays. 
    
  
-<a name="method31"></a>
+<a name="method34"></a>
 <p/><strong>void ParticleData::doExternalDecays(int id, bool doExternalDecays) &nbsp;</strong> <br/>
    
 <strong>bool ParticleData::doExternalDecay(int id) &nbsp;</strong> <br/>
@@ -885,20 +898,21 @@ echo "<a href='ExternalDecays.php?filepath=".$filepath."' target='page'>";?>pyth
 method should be provided with the list of relevant particles. 
    
  
-<a name="method32"></a>
+<a name="method35"></a>
 <p/><strong>void ParticleData::isVisible(int id, bool isVisible) &nbsp;</strong> <br/>
    
 <strong>bool ParticleData::isVisible(int id) &nbsp;</strong> <br/>
 a flag telling whether a particle species is to be considered as 
 visible in a detector or not, as used e.g. in analysis routines. 
-By default this includes neutrinos and a few BSM particles 
-(gravitino, sneutrinos, neutralinos) that have neither strong nor 
-electromagnetic charge, and are not made up of constituents that 
-have it. The value of this flag is only relevant if a particle is 
-long-lived enough actually to make it to a detector. 
+By default the invisibles include neutrinos, Dark Matter particles 
+(codes 51 - 60) and a few BSM particles (gravitino, sneutrinos, 
+neutralinos) that have neither strong nor electromagnetic charge, 
+and are not made up of constituents that have it. The value of this 
+flag is only relevant if a particle is long-lived enough actually 
+to make it to a detector. 
    
  
-<a name="method33"></a>
+<a name="method36"></a>
 <p/><strong>void ParticleData::doForceWidth(int id, bool doForceWidth) &nbsp;</strong> <br/>
    
 <strong>bool ParticleData::doForceWidth(int id) &nbsp;</strong> <br/>
@@ -910,7 +924,7 @@ for details. The normal behaviour is <code>false</code>, i.e. the width
 is based on hardcoded calculations whenever available. 
    
  
-<a name="method34"></a>
+<a name="method37"></a>
 <p/><strong>void ParticleData::hasChanged(int id, bool hasChanged) &nbsp;</strong> <br/>
    
 <strong>bool ParticleData::hasChanged(int id) &nbsp;</strong> <br/>
@@ -920,7 +934,7 @@ Is used e.g. by the <code>listChanged</code> method to determine
 which particles to list. 
    
  
-<a name="method35"></a>
+<a name="method38"></a>
 <p/><strong>bool ParticleData::useBreitWigner(int id) &nbsp;</strong> <br/>
 tells whether a particle will have a Breit-Wigner mass distribution or 
 not. Is determined by an internal logic based on the particle width and 
@@ -930,7 +944,7 @@ echo "<a href='ParticleData.php?filepath=".$filepath."' target='page'>";?>Partic
 switch. 
    
  
-<a name="method36"></a>
+<a name="method39"></a>
 <p/><strong>double ParticleData::constituentMass(int id) &nbsp;</strong> <br/>
 is the constituent mass for a quark, hardcoded as 
 <i>m_u = m_d = 0.325</i>, <i>m_s = 0.50</i>, <i>m_c = 1.60</i> 
@@ -938,14 +952,14 @@ and <i>m_b = 5.0</i> GeV, for a diquark the sum of quark constituent
 masses, and for everything else the same as the ordinary mass. 
    
  
-<a name="method37"></a>
+<a name="method40"></a>
 <p/><strong>double ParticleData::mSel(int id) &nbsp;</strong> <br/>
 returns a mass distributed according to a truncated Breit-Wigner, 
 with parameters as described here. Is equal to <code>m0(id)</code> for 
 particles without width. 
    
  
-<a name="method38"></a>
+<a name="method41"></a>
 <p/><strong>double ParticleData::mRun(int id, double mH) &nbsp;</strong> <br/>
 calculate the running mass of species <code>id</code> when probed at a 
 hard mass scale of <code>mH</code>. Only applied to obtain the 
@@ -953,54 +967,54 @@ running quark masses; for all other particle the normal fixed mass
 is used. 
    
  
-<a name="method39"></a>
+<a name="method42"></a>
 <p/><strong>bool ParticleData::canDecay(int id) &nbsp;</strong> <br/>
 true for a particle with at least one decay channel defined. 
    
  
-<a name="method40"></a>
+<a name="method43"></a>
 <p/><strong>bool ParticleData::isLepton(int id) &nbsp;</strong> <br/>
 true for a lepton or an antilepton (including neutrinos). 
    
  
-<a name="method41"></a>
+<a name="method44"></a>
 <p/><strong>bool ParticleData::isQuark(int id) &nbsp;</strong> <br/>
 true for a quark or an antiquark. 
    
  
-<a name="method42"></a>
+<a name="method45"></a>
 <p/><strong>bool ParticleData::isGluon(int id) &nbsp;</strong> <br/>
 true for a gluon. 
    
  
-<a name="method43"></a>
+<a name="method46"></a>
 <p/><strong>bool ParticleData::isDiquark(int id) &nbsp;</strong> <br/>
 true for a diquark or antidiquark. 
    
  
-<a name="method44"></a>
+<a name="method47"></a>
 <p/><strong>bool ParticleData::isParton() &nbsp;</strong> <br/>
 true for a gluon, a quark or antiquark up to the b (but excluding top), 
 and a diquark or antidiquark consisting of quarks up to the b. 
    
  
-<a name="method45"></a>
+<a name="method48"></a>
 <p/><strong>bool ParticleData::isHadron(int id) &nbsp;</strong> <br/>
 true for a hadron (made up out of normal quarks and gluons, 
 i.e. not for R-hadrons and other exotic states). 
    
  
-<a name="method46"></a>
+<a name="method49"></a>
 <p/><strong>bool ParticleData::isMeson(int id) &nbsp;</strong> <br/>
 true for a meson. 
    
  
-<a name="method47"></a>
+<a name="method50"></a>
 <p/><strong>bool ParticleData::isBaryon(int id) &nbsp;</strong> <br/>
 true for a baryon or antibaryon. 
    
  
-<a name="method48"></a>
+<a name="method51"></a>
 <p/><strong>bool ParticleData::isOctetHadron(int id) &nbsp;</strong> <br/>
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
@@ -1008,25 +1022,25 @@ as used in the colour octet model for
 echo "<a href='OniaProcesses.php?filepath=".$filepath."' target='page'>";?>onia</a> production. 
    
  
-<a name="method49"></a>
+<a name="method52"></a>
 <p/><strong>int ParticleData::heaviestQuark(int id) &nbsp;</strong> <br/>
 extracts the heaviest quark or antiquark, i.e. one with largest 
 <code>id</code> number, for a hadron. 
    
  
-<a name="method50"></a>
+<a name="method53"></a>
 <p/><strong>int ParticleData::baryonNumberType(int id) &nbsp;</strong> <br/>
 is 1 for a quark, 2 for a diquark, 3 for a baryon, the same with a 
 minus sign for antiparticles, and else zero. 
    
  
-<a name="method51"></a>
+<a name="method54"></a>
 <p/><strong>void ParticleData::rescaleBR(int id, double newSumBR = 1.) &nbsp;</strong> <br/>
 rescales all partial branching ratios by a common factor, such that 
 the sum afterward becomes <code>newSumBR</code>. 
    
  
-<a name="method52"></a>
+<a name="method55"></a>
 <p/><strong>void setResonancePtr(int id, ResonanceWidths* resonancePtr) &nbsp;</strong> <br/>
 set a pointer for a particle kind to a <code>ResonanceWidths</code> object. 
 This is done, from inside <code>ParticleData::initWidths</code>, only for 
@@ -1036,12 +1050,12 @@ of such an object will allow a more dynamic calculation of partial and
 total widths, as illustrated by the following methods. 
    
  
-<a name="method53"></a>
+<a name="method56"></a>
 <p/><strong>void ParticleData::resInit(int id) &nbsp;</strong> <br/>
 initialize the treatment of a resonance. 
    
  
-<a name="method54"></a>
+<a name="method57"></a>
 <p/><strong>double ParticleData::resWidth(int id, double mHat, int idInFlav = 0, bool openOnly = false, bool setBR = false) &nbsp;</strong> <br/>
 calculate the total with for a resonance of a given current mass, 
 optionally including coupling to incoming flavour state (consider 
@@ -1050,19 +1064,19 @@ channels that have been closed by the user, and optionally storing
 the results in the normal decay table. 
    
  
-<a name="method55"></a>
+<a name="method58"></a>
 <p/><strong>double ParticleData::resWidthOpen(int id, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, but results are not stored in the normal decay table. 
    
  
-<a name="method56"></a>
+<a name="method59"></a>
 <p/><strong>double ParticleData::resWidthStore(int id, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, and results are stored in the normal decay table. 
    
  
-<a name="method57"></a>
+<a name="method60"></a>
 <p/><strong>double ParticleData::resOpenFrac(int id1, int id2 = 0, int id3 = 0) &nbsp;</strong> <br/>
 calculate the fraction of the full branching ratio that is left 
 open by the user choice of allowed decay channels. Can be applied 
@@ -1070,24 +1084,29 @@ to a final state with up to three resonances. Since the procedure
 is multiplicative, it would be easy to generalize also to more. 
    
  
-<a name="method58"></a>
+<a name="method61"></a>
 <p/><strong>double ParticleData::resWidthRescaleFactor(int id) &nbsp;</strong> <br/>
 the factor used to rescale all partial widths in case the total 
 width is being forced to a specific value by the user. 
    
  
-<a name="method59"></a>
+<a name="method62"></a>
 <p/><strong>double ParticleData::resWidthChan(int id, double mHat, int idAbs1 = 0, int idAbs2 = 0) &nbsp;</strong> <br/>
 special case to calculate one final-state width; currently only used 
 for Higgs decay to <i>q qbar</i>, <i>g g</i> or 
 <i>gamma gamma</i>. 
    
  
-<a name="method60"></a>
+<a name="method63"></a>
 <p/><strong>ParticleDataEntry* ParticleData::particleDataEntryPtr(int id) &nbsp;</strong> <br/>
 returns a pointer to the <code>ParticleDataEntry</code> object. 
 The methods in the next section can then be used to manipulate 
 this object. 
+   
+ 
+<a name="method64"></a>
+<p/><strong>bool ParticleData::getIsInit() &nbsp;</strong> <br/>
+return true if the database has been initialized, else false. 
    
  
 <h3>The ParticleDataEntry methods</h3> 
@@ -1102,7 +1121,7 @@ There are a few methods that are unique to each class, however.
 Furthermore, to avoid some naming ambiguities, many methods that 
 set values begin with <code>set</code>. 
  
-<a name="method61"></a>
+<a name="method65"></a>
 <p/><strong>ParticleDataEntry::ParticleDataEntry(int id = 0, string name = &quot; &quot;, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0., double tau0 = 0.) &nbsp;</strong> <br/>
    
 <strong>ParticleDataEntry::ParticleDataEntry(int id, string name, string antiName, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0., double tau0 = 0.) &nbsp;</strong> <br/>
@@ -1113,42 +1132,48 @@ particle-antiparticle pair (but if the antiparticle name is
 <code>void</code> one reverts back to the particle-only case). 
    
  
-<a name="method62"></a>
+<a name="method66"></a>
+<p/><strong>ParticleDataEntry& operator=( const ParticleDataEntry& particleDataEntryIn) &nbsp;</strong> <br/>
+copy the values stored in an existing <code>ParticleDataEntry</code> 
+object. 
+   
+ 
+<a name="method67"></a>
 <p/><strong>ParticleDataEntry::~ParticleDataEntry &nbsp;</strong> <br/>
 the destructor is needed to delete any <code>ResonanceWidths</code> 
 objects that have been created and linked to the respective particle. 
    
  
-<a name="method63"></a>
+<a name="method68"></a>
 <p/><strong>void ParticleDataEntry::setDefaults() &nbsp;</strong> <br/>
 initialize some particle flags with default values, e.g. whether 
 a particle is a resonance, may decay, or is visible. Is called from the 
 constructors and from <code>setAll</code>. 
    
  
-<a name="method64"></a>
+<a name="method69"></a>
 <p/><strong>void ParticleDataEntry::initPtr(ParticleData* particleDataPtrIn) &nbsp;</strong> <br/>
 initialize pointer back to the whole database (so that masses of 
 decay products can be accessed, e.g.). 
    
  
-<a name="method65"></a>
+<a name="method70"></a>
 <p/><strong>void ParticleDataEntry::setAll( string name, string antiName, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0.,double tau0 = 0.) &nbsp;</strong> <br/>
 change all the properties of the particle associated with a given 
 identity code. 
    
  
-<a name="method66"></a>
+<a name="method71"></a>
 <p/><strong>int ParticleDataEntry::id() &nbsp;</strong> <br/>
 the PDG identity code. 
    
  
-<a name="method67"></a>
+<a name="method72"></a>
 <p/><strong>bool ParticleDataEntry::hasAnti() &nbsp;</strong> <br/>
 tell whether a separate antiparticle exists. 
    
  
-<a name="method68"></a>
+<a name="method73"></a>
 <p/><strong>void ParticleDataEntry::setName(string name) &nbsp;</strong> <br/>
    
 <strong>void ParticleDataEntry::setAntiName(string antiName) &nbsp;</strong> <br/>
@@ -1160,7 +1185,7 @@ set or get the particle or antiparticle name. Only the sign of
 <code>id</code> is needed to distinguish particle/antiparticle. 
    
  
-<a name="method69"></a>
+<a name="method74"></a>
 <p/><strong>void ParticleDataEntry::setSpinType(int spinType) &nbsp;</strong> <br/>
    
 <strong>int ParticleDataEntry::spinType() &nbsp;</strong> <br/>
@@ -1168,7 +1193,7 @@ set or get the particle spin type, i.e. <i>2 s + 1</i>, or 0 in some
 special cases. 
    
  
-<a name="method70"></a>
+<a name="method75"></a>
 <p/><strong>void ParticleDataEntry::setChargeType(int chargeType) &nbsp;</strong> <br/>
    
 <strong>int ParticleDataEntry::chargeType(int id = 1) &nbsp;</strong> <br/>
@@ -1179,7 +1204,7 @@ or the charge itself. Only the sign of <code>id</code> is needed
 to distinguish particle/antiparticle. 
    
  
-<a name="method71"></a>
+<a name="method76"></a>
 <p/><strong>void ParticleDataEntry::setColType(int colType) &nbsp;</strong> <br/>
    
 <strong>int ParticleDataEntry::colType(int id = 1) &nbsp;</strong> <br/>
@@ -1188,21 +1213,21 @@ set or get the particle colour type, 0 for singlet, 1 for triplet,
 is needed to distinguish particle/antiparticle. 
    
  
-<a name="method72"></a>
+<a name="method77"></a>
 <p/><strong>void ParticleDataEntry::setM0(double m0) &nbsp;</strong> <br/>
    
 <strong>double ParticleDataEntry::m0() &nbsp;</strong> <br/>
 the nominal mass <i>m_0</i> (in GeV). 
    
  
-<a name="method73"></a>
+<a name="method78"></a>
 <p/><strong>void ParticleDataEntry::setMWidth(double mWidth) &nbsp;</strong> <br/>
    
 <strong>double ParticleDataEntry::mWidth() &nbsp;</strong> <br/>
 the width <i>Gamma</i> of the Breit-Wigner distribution (in GeV). 
    
  
-<a name="method74"></a>
+<a name="method79"></a>
 <p/><strong>void ParticleDataEntry::setMMin(double mMin) &nbsp;</strong> <br/>
    
 <strong>double ParticleDataEntry::mMin() &nbsp;</strong> <br/>
@@ -1211,7 +1236,7 @@ the lower limit of the allowed mass range generated by the Breit-Wigner
 typically be 0 there. 
    
  
-<a name="method75"></a>
+<a name="method80"></a>
 <p/><strong>void ParticleDataEntry::setMMax(double mMax) &nbsp;</strong> <br/>
    
 <strong>double ParticleDataEntry::mMax() &nbsp;</strong> <br/>
@@ -1221,26 +1246,26 @@ Has no meaning for particles without width, and would typically
 be 0 there. 
    
  
-<a name="method76"></a>
+<a name="method81"></a>
 <p/><strong>double ParticleDataEntry::m0Min() &nbsp;</strong> <br/>
 similar to <code>mMin()</code> above, except that for particles with 
 no width the <code>m0(id)</code> value is returned. 
    
  
-<a name="method77"></a>
+<a name="method82"></a>
 <p/><strong>double ParticleDataEntry::m0Max() &nbsp;</strong> <br/>
 similar to <code>mMax()</code> above, except that for particles with 
 no width the <code>m0(id)</code> value is returned. 
    
  
-<a name="method78"></a>
+<a name="method83"></a>
 <p/><strong>void ParticleDataEntry::setTau0(double tau0) &nbsp;</strong> <br/>
    
 <strong>double ParticleDataEntry::tau0() &nbsp;</strong> <br/>
 the nominal proper lifetime <i>tau_0</i> (in mm/c). 
    
  
-<a name="method79"></a>
+<a name="method84"></a>
 <p/><strong>void ParticleDataEntry::setIsResonance(bool isResonance) &nbsp;</strong> <br/>
    
 <strong>bool ParticleDataEntry::isResonance() &nbsp;</strong> <br/>
@@ -1260,7 +1285,7 @@ All particles with <code>m0</code> above 20 GeV are by default
 initialized to be considered as resonances. 
    
  
-<a name="method80"></a>
+<a name="method85"></a>
 <p/><strong>void ParticleDataEntry::setMayDecay(bool mayDecay) &nbsp;</strong> <br/>
    
 <strong>bool ParticleDataEntry::mayDecay() &nbsp;</strong> <br/>
@@ -1275,7 +1300,7 @@ All particles with <code>tau0</code> below 1000 mm are
 by default initialized to allow decays. 
    
  
-<a name="method81"></a>
+<a name="method86"></a>
 <p/><strong>void ParticleDataEntry::setDoExternalDecays(bool doExternalDecays) &nbsp;</strong> <br/>
    
 <strong>bool ParticleDataEntry::doExternalDecay() &nbsp;</strong> <br/>
@@ -1287,20 +1312,21 @@ echo "<a href='ExternalDecays.php?filepath=".$filepath."' target='page'>";?>pyth
 method should be provided with the list of relevant particles. 
    
  
-<a name="method82"></a>
+<a name="method87"></a>
 <p/><strong>void ParticleDataEntry::setIsVisible(bool isVisible) &nbsp;</strong> <br/>
    
 <strong>bool ParticleDataEntry::isVisible() &nbsp;</strong> <br/>
 a flag telling whether a particle species is to be considered as 
 visible in a detector or not, as used e.g. in analysis routines. 
-By default this includes neutrinos and a few BSM particles 
-(gravitino, sneutrinos, neutralinos) that have neither strong nor 
-electromagnetic charge, and are not made up of constituents that 
-have it. The value of this flag is only relevant if a particle is 
-long-lived enough actually to make it to a detector. 
+By default the invisibles include neutrinos, Dark Matter particles 
+(codes 51 - 60) and a few BSM particles (gravitino, sneutrinos, 
+neutralinos) that have neither strong nor electromagnetic charge, 
+and are not made up of constituents that have it. The value of this 
+flag is only relevant if a particle is long-lived enough actually 
+to make it to a detector. 
    
  
-<a name="method83"></a>
+<a name="method88"></a>
 <p/><strong>void ParticleDataEntry::setDoForceWidth(bool doForceWidth) &nbsp;</strong> <br/>
    
 <strong>bool ParticleDataEntry::doForceWidth() &nbsp;</strong> <br/>
@@ -1312,10 +1338,10 @@ for details. The normal behaviour is <code>false</code>, i.e. the width
 is based on hardcoded calculations whenever available. 
    
  
-<a name="method84"></a>
+<a name="method89"></a>
 <p/><strong>void ParticleDataEntry::setHasChanged(bool hasChanged) &nbsp;</strong> <br/>
    
-<a name="method85"></a>
+<a name="method90"></a>
 <p/><strong>void ParticleDataEntry::hasChanged(bool hasChanged) &nbsp;</strong> <br/>
 keep track of whether the data for a particle has been changed 
 in any respect between initialization and the current status. 
@@ -1323,13 +1349,13 @@ Is used e.g. by the <code>ParticleData::listChanged</code> method
 to determine which particles to list. 
    
  
-<a name="method86"></a>
+<a name="method91"></a>
 <p/><strong>void ParticleDataEntry::initBWmass() &nbsp;</strong> <br/>
 Prepare the Breit-Wigner mass selection by precalculating 
 frequently-used expressions. 
    
  
-<a name="method87"></a>
+<a name="method92"></a>
 <p/><strong>double ParticleDataEntry::constituentMass() &nbsp;</strong> <br/>
 is the constituent mass for a quark, hardcoded as 
 <i>m_u = m_d = 0.325</i>, <i>m_s = 0.50</i>, <i>m_c = 1.60</i> 
@@ -1337,19 +1363,19 @@ and <i>m_b = 5.0</i> GeV, for a diquark the sum of quark constituent
 masses, and for everything else the same as the ordinary mass. 
    
  
-<a name="method88"></a>
+<a name="method93"></a>
 <p/><strong>double ParticleDataEntry::mSel() &nbsp;</strong> <br/>
 give the mass of a particle, either at the nominal value 
 or picked according to a (linear or quadratic) Breit-Wigner. 
    
  
-<a name="method89"></a>
+<a name="method94"></a>
 <p/><strong>double ParticleDataEntry::mRun(double mH) &nbsp;</strong> <br/>
 calculate the running quark mass at a hard scale <code>mH</code>. 
 For other particles the on-shell mass is given. 
    
  
-<a name="method90"></a>
+<a name="method95"></a>
 <p/><strong>bool ParticleDataEntry::useBreitWigner() &nbsp;</strong> <br/>
 tells whether a particle will have a Breit-Wigner mass distribution or 
 not. Is determined by an internal logic based on the particle width and 
@@ -1358,54 +1384,54 @@ echo "<a href='ParticleData.php?filepath=".$filepath."' target='page'>";?>
 ParticleData:modeBreitWigner</a></code> switch. 
    
  
-<a name="method91"></a>
+<a name="method96"></a>
 <p/><strong>bool ParticleDataEntry::canDecay(int id) &nbsp;</strong> <br/>
 true for a particle with at least one decay channel defined. 
    
  
-<a name="method92"></a>
+<a name="method97"></a>
 <p/><strong>bool ParticleDataEntry::isLepton() &nbsp;</strong> <br/>
 true for a lepton or an antilepton (including neutrinos). 
    
  
-<a name="method93"></a>
+<a name="method98"></a>
 <p/><strong>bool ParticleDataEntry::isQuark() &nbsp;</strong> <br/>
 true for a quark or an antiquark. 
    
  
-<a name="method94"></a>
+<a name="method99"></a>
 <p/><strong>bool ParticleDataEntry::isGluon() &nbsp;</strong> <br/>
 true for a gluon. 
    
  
-<a name="method95"></a>
+<a name="method100"></a>
 <p/><strong>bool ParticleDataEntry::isDiquark() &nbsp;</strong> <br/>
 true for a diquark or antidiquark. 
    
  
-<a name="method96"></a>
+<a name="method101"></a>
 <p/><strong>bool ParticleDataEntry::isParton() &nbsp;</strong> <br/>
 true for a gluon, a quark or antiquark up to the b (but excluding top), 
 and a diquark or antidiquark consisting of quarks up to the b. 
    
  
-<a name="method97"></a>
+<a name="method102"></a>
 <p/><strong>bool ParticleDataEntry::isHadron() &nbsp;</strong> <br/>
 true for a hadron (made up out of normal quarks and gluons, 
 i.e. not for R-hadrons and other exotic states). 
    
  
-<a name="method98"></a>
+<a name="method103"></a>
 <p/><strong>bool ParticleDataEntry::isMeson() &nbsp;</strong> <br/>
 true for a meson. 
    
  
-<a name="method99"></a>
+<a name="method104"></a>
 <p/><strong>bool ParticleDataEntry::isBaryon() &nbsp;</strong> <br/>
 true for a baryon or antibaryon. 
    
  
-<a name="method100"></a>
+<a name="method105"></a>
 <p/><strong>bool ParticleDataEntry::isOctetHadron() &nbsp;</strong> <br/>
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
@@ -1413,60 +1439,60 @@ as used in the colour octet model for
 echo "<a href='OniaProcesses.php?filepath=".$filepath."' target='page'>";?>onia</a> production. 
    
  
-<a name="method101"></a>
+<a name="method106"></a>
 <p/><strong>int ParticleDataEntry::heaviestQuark(int id) &nbsp;</strong> <br/>
 extracts the heaviest quark or antiquark, i.e. one with largest 
 <code>id</code> number, for a hadron. Only the sign of the input 
 argument is relevant. 
    
  
-<a name="method102"></a>
+<a name="method107"></a>
 <p/><strong>int ParticleDataEntry::baryonNumberType(int id) &nbsp;</strong> <br/>
 is 1 for a quark, 2 for a diquark, 3 for a baryon, the same with a 
 minus sign for antiparticles, and else zero. Only the sign of the 
 input argument is relevant. 
    
  
-<a name="method103"></a>
+<a name="method108"></a>
 <p/><strong>void ParticleDataEntry::clearChannels() &nbsp;</strong> <br/>
 resets to an empty decay table. 
    
  
-<a name="method104"></a>
+<a name="method109"></a>
 <p/><strong>void ParticleDataEntry::addChannel(int onMode = 0, double bRatio = 0., int meMode = 0, int prod0 = 0, int prod1 = 0, int prod2 = 0, int prod3 = 0, int prod4 = 0, int prod5 = 0, int prod6 = 0,  int prod7 = 0,) &nbsp;</strong> <br/>
 adds a decay channel with up to 8 products. 
    
  
-<a name="method105"></a>
+<a name="method110"></a>
 <p/><strong>int ParticleDataEntry::sizeChannels() &nbsp;</strong> <br/>
 returns the number of decay channels for a particle. 
    
  
-<a name="method106"></a>
+<a name="method111"></a>
 <p/><strong>DecayChannel& ParticleDataEntry::channel(int i) &nbsp;</strong> <br/>
    
 <strong>const DecayChannel& ParticleDataEntry::channel(int i) &nbsp;</strong> <br/>
 gain access to a specified channel in the decay table. 
    
  
-<a name="method107"></a>
+<a name="method112"></a>
 <p/><strong>void ParticleDataEntry::rescaleBR(double newSumBR = 1.) &nbsp;</strong> <br/>
 rescales all partial branching ratios by a common factor, such that 
 the sum afterward becomes <code>newSumBR</code>. 
    
  
-<a name="method108"></a>
+<a name="method113"></a>
 <p/><strong>bool ParticleDataEntry::preparePick(int idSgn, double mHat = 0., int idInFlav = 0) &nbsp;</strong> <br/>
 prepare to pick a decay channel. 
    
  
-<a name="method109"></a>
+<a name="method114"></a>
 <p/><strong>DecayChannel& ParticleDataEntry::pickChannel() &nbsp;</strong> <br/>
 pick a decay channel according to branching ratios from 
 <code>preparePick</code>. 
    
  
-<a name="method110"></a>
+<a name="method115"></a>
 <p/><strong>void ParticleDataEntry::setResonancePtr(ResonanceWidths* resonancePtr) &nbsp;</strong> <br/>
    
 <strong>ResonanceWidths* ParticleDataEntry::getResonancePtr() &nbsp;</strong> <br/>
@@ -1476,12 +1502,12 @@ such as top, <i>Z^0</i>, <i>W^+-</i>, Higgs, and new unstable states
 beyond the Standard Model. 
    
  
-<a name="method111"></a>
+<a name="method116"></a>
 <p/><strong>void ParticleDataEntry::resInit(Info* infoPtrIn, Settings* settingsPtrIn, ParticleData* particleDataPtrIn, CoupSM* coupSMPtrIn) &nbsp;</strong> <br/>
 initialize the treatment of a resonance. 
    
  
-<a name="method112"></a>
+<a name="method117"></a>
 <p/><strong>double ParticleDataEntry::resWidth(int idSgn, double mHat, int idInFlav = 0, bool openOnly = false, bool setBR = false) &nbsp;</strong> <br/>
 calculate the total with for a resonance of a given current mass, 
 optionally including coupling to incoming flavour state (consider 
@@ -1491,31 +1517,31 @@ the results in the normal decay table. For the first argument only
 the sign is relevant. 
    
  
-<a name="method113"></a>
+<a name="method118"></a>
 <p/><strong>double ParticleDataEntry::resWidthOpen(int idSgn, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, but results are not stored in the normal decay table. 
    
  
-<a name="method114"></a>
+<a name="method119"></a>
 <p/><strong>double ParticleDataEntry::resWidthStore(int idSgn, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, and results are stored in the normal decay table. 
    
  
-<a name="method115"></a>
+<a name="method120"></a>
 <p/><strong>double ParticleDataEntry::resOpenFrac(int idSgn) &nbsp;</strong> <br/>
 calculate the fraction of the full branching ratio that is left 
 open by the user choice of allowed decay channels. 
    
  
-<a name="method116"></a>
+<a name="method121"></a>
 <p/><strong>double ParticleDataEntry::resWidthRescaleFactor() &nbsp;</strong> <br/>
 the factor used to rescale all partial widths in case the total 
 width is being forced to a specific value by the user. 
    
  
-<a name="method117"></a>
+<a name="method122"></a>
 <p/><strong>double ParticleDataEntry::resWidthChan(double mHat, int idAbs1 = 0, int idAbs2 = 0) &nbsp;</strong> <br/>
 special case to calculate one final-state width; currently only used 
 for Higgs decay to <i>q qbar</i>, <i>g g</i> or 
@@ -1527,12 +1553,17 @@ for Higgs decay to <i>q qbar</i>, <i>g g</i> or
 The properties stored in an individual decay channel can be set or get 
 by the methods in this section. 
  
-<a name="method118"></a>
+<a name="method123"></a>
 <p/><strong>DecayChannel::DecayChannel(int onMode = 0, double bRatio = 0., int meMode = 0, int prod0 = 0, int prod1 = 0, int prod2 = 0, int prod3 = 0, int prod4 = 0, int prod5 = 0, int prod6 = 0, int prod7 = 0) &nbsp;</strong> <br/>
 the constructor for a decay channel. Internal. 
    
  
-<a name="method119"></a>
+<a name="method124"></a>
+<p/><strong>DecayChannel& operator=( const DecayChannel& decayChannelIn) &nbsp;</strong> <br/>
+copy the values stored in an existing <code>DecayChannel</code> object. 
+   
+ 
+<a name="method125"></a>
 <p/><strong>void DecayChannel::onMode(int onMode) &nbsp;</strong> <br/>
    
 <strong>int DecayChannel::onMode() &nbsp;</strong> <br/>
@@ -1549,7 +1580,7 @@ B decays, or to let the <i>W</i>'s in a <i>q qbar &rarr; W^+ W^-</i>
 process decay in different channels. 
    
  
-<a name="method120"></a>
+<a name="method126"></a>
 <p/><strong>void DecayChannel::bRatio(double bRatio, bool countAsChanged = true) &nbsp;</strong> <br/>
    
 <strong>double DecayChannel::bRatio() &nbsp;</strong> <br/>
@@ -1557,12 +1588,12 @@ set or get the branching ratio of the channel. Second argument only
 for internal use. 
    
  
-<a name="method121"></a>
+<a name="method127"></a>
 <p/><strong>void DecayChannel::rescaleBR(double fac) &nbsp;</strong> <br/>
 multiply the current branching ratio by <code>fac</code>. 
    
  
-<a name="method122"></a>
+<a name="method128"></a>
 <p/><strong>void DecayChannel::meMode(int meMode) &nbsp;</strong> <br/>
    
 <strong>int DecayChannel::meMode() &nbsp;</strong> <br/>
@@ -1573,7 +1604,7 @@ and <?php $filepath = $_GET["filepath"];
 echo "<a href='ResonanceDecays.php?filepath=".$filepath."' target='page'>";?>resonance decays</a> descriptions). 
    
  
-<a name="method123"></a>
+<a name="method129"></a>
 <p/><strong>void DecayChannel::multiplicity(int multiplicity) &nbsp;</strong> <br/>
    
 <strong>int DecayChannel::multiplicity() &nbsp;</strong> <br/>
@@ -1582,7 +1613,7 @@ set or get the number of decay products in a channel, at most 8.
 updated whenever the products list is changed.) 
    
  
-<a name="method124"></a>
+<a name="method130"></a>
 <p/><strong>void DecayChannel::product(int i, int product) &nbsp;</strong> <br/>
    
 <strong>int DecayChannel::product(int i) &nbsp;</strong> <br/>
@@ -1590,14 +1621,14 @@ set or get a list of the decay products, 8 products 0 &lt;= i &lt; 8,
 with trailing unused ones set to 0. 
    
  
-<a name="method125"></a>
+<a name="method131"></a>
 <p/><strong>void DecayChannel::setHasChanged(bool hasChanged) &nbsp;</strong> <br/>
    
 <strong>bool DecayChannel::hasChanged() &nbsp;</strong> <br/>
 used for internal purposes, to know which decay modes have been changed. 
    
  
-<a name="method126"></a>
+<a name="method132"></a>
 <p/><strong>bool DecayChannel::contains(int id1) &nbsp;</strong> <br/>
    
 <strong>bool DecayChannel::contains(int id1, int id2) &nbsp;</strong> <br/>
@@ -1608,7 +1639,7 @@ identities provided. If the same code is repeated then so must it be in
 the products list. Matching also requires correct sign. 
    
  
-<a name="method127"></a>
+<a name="method133"></a>
 <p/><strong>void DecayChannel::currentBR(double currentBR) &nbsp;</strong> <br/>
    
 <strong>double DecayChannel::currentBR() &nbsp;</strong> <br/>
@@ -1616,7 +1647,7 @@ set or get the current branching ratio, taking into account on/off
 switches and dynamic width for resonances. For internal use. 
    
  
-<a name="method128"></a>
+<a name="method134"></a>
 <p/><strong>void DecayChannel::onShellWidth(double onShellWidth) &nbsp;</strong> <br/>
    
 <strong>double DecayChannel::onShellWidth() &nbsp;</strong> <br/>
@@ -1625,12 +1656,12 @@ resonances where the widths are recalculated based on the current
 resonance mass. For internal use. 
    
  
-<a name="method129"></a>
+<a name="method135"></a>
 <p/><strong>void DecayChannel::onShellWidthFactor(double factor) &nbsp;</strong> <br/>
 multiply the current partial width by <code>factor</code>. 
    
  
-<a name="method130"></a>
+<a name="method136"></a>
 <p/><strong>void DecayChannel::openSec(int idSgn, double openSecIn) &nbsp;</strong> <br/>
    
 <strong>double DecayChannel::openSec(nt idSgn) &nbsp;</strong> <br/>
@@ -1641,4 +1672,4 @@ positive and negative particles. For internal use.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

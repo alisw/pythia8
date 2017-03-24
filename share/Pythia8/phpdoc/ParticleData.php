@@ -56,10 +56,11 @@ considered separately.
  
 <br/><br/><table><tr><td><strong>ParticleData:maxEnhanceBW </td><td></td><td> <input type="text" name="2" value="2.5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.5</strong></code>; <code>minimum = 1.</code>; <code>maximum = 5.</code>)</td></tr></table>
 The modifications in options 2 and 4 above enhance the large-mass tail 
-of the Breit-Wigner distributions (the mass spectrum develops a dm/m divergence). 
+of the Breit-Wigner distributions (the mass spectrum develops a 
+<i>dm/m</i> divergence). 
 However, we expect form factors to dampen this tail at masses some distance 
 above the nominal one, so cut off the rise by requiring the actual 
-Breit-Wigner weight not to be more than a factor <code> maxEnhanceBW</code> 
+Breit-Wigner weight not to be more than a factor <code>maxEnhanceBW</code> 
 above the one obtained with options 1 or 3, respectively. This also 
 opens up for a simpler technical handling of mass selection in options 
 2 and 4, by using standard hit-and-miss Monte Carlo. 
@@ -634,6 +635,84 @@ echo "<a href='ParticleDecays.php?filepath=".$filepath."' target='page'>";?>here
  
 <p/>particle: id="46" name="A_2" spinType="1" chargeType="0" colType="0" 
           m0="500.00000" 
+ 
+<p/>particle: id="51" name="DM(s=0)" antiName="DMbar(s=0)" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="52" name="DM(s=1/2)" antiName="DMbar(s=1/2)" spinType="2" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="53" name="DM(s=1)" antiName="DMbar(s=1)" spinType="3" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="54" name="DMmed(s=0)" antiName="DMmedbar(s=0)" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" mWidth="0.1" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 1  -1" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 2  -2" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 3  -3" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 4  -4" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 5  -5" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 6  -6" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="11 -11" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="12 -12" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="13 -13" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="14 -14" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="15 -15" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="16 -16" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="21  21" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="22  22" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="22  23" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="23  23" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="24 -24" 
+ <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="25  25" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="51 -51" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="51  51" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="52 -52" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="52  52" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="53 -53" 
+ <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="53  53" 
+ 
+<p/>particle: id="55" name="DMmed(s=1)" antiName="DMmedbar(s=1)" spinType="3" chargeType="0" colType="0" 
+          m0="100.00000" mWidth="0.1" 
+ <br/>      channel: onMode="1" bRatio="0.050" products=" 1  -1" 
+ <br/>      channel: onMode="1" bRatio="0.050" products=" 2  -2" 
+ <br/>      channel: onMode="1" bRatio="0.050" products=" 3  -3" 
+ <br/>      channel: onMode="1" bRatio="0.050" products=" 4  -4" 
+ <br/>      channel: onMode="1" bRatio="0.050" products=" 5  -5" 
+ <br/>      channel: onMode="1" bRatio="0.050" products=" 6  -6" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="11 -11" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="12 -12" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="13 -13" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="14 -14" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="15 -15" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="16 -16" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="21  21" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="22  22" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="22  23" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="23  23" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="24 -24" 
+ <br/>      channel: onMode="1" bRatio="0.050" products="25  25" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="51 -51" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="51  51" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="52 -52" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="52  52" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="53 -53" 
+ <br/>      channel: onMode="1" bRatio="0.025" products="53  53" 
+ 
+<p/>particle: id="56" name="DM?1" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="57" name="DM?2" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="58" name="DM?3" antiName="DMbar?3" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="59" name="DM?4" antiName="DMbar?4" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" 
+ 
+<p/>particle: id="60" name="DM?5" antiName="DMbar?5" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" 
  
 <p/>particle: id="81" name="specflav" spinType="0" chargeType="0" colType="0" 
           m0="0.00000" 
@@ -3156,7 +3235,7 @@ echo "<a href='ParticleDecays.php?filepath=".$filepath."' target='page'>";?>here
  <br/>      channel: onMode="1" bRatio="1.0000000" products="531 22" 
  
 <p/>particle: id="535" name="B*_2s0" antiName="B*_2sbar0" spinType="5" chargeType="0" colType="0" 
-          m0="5.83970" mWidth="0.02000" mMin="5.87000" mMax="6.27000" 
+          m0="5.83970" mWidth="0.02000" mMin="5.81970" mMax="5.85970" 
  <br/>      channel: onMode="1" bRatio="0.1700000" products="513 311" 
  <br/>      channel: onMode="1" bRatio="0.1700000" products="523 -321" 
  <br/>      channel: onMode="1" bRatio="0.3300000" products="511 311" 
@@ -4354,7 +4433,7 @@ echo "<a href='ParticleDecays.php?filepath=".$filepath."' target='page'>";?>here
  <br/>      channel: onMode="1" bRatio="0.5000000" products="511 -311" 
  
 <p/>particle: id="10533" name="B_1s0" antiName="B_1sbar0" spinType="3" chargeType="0" colType="0" 
-          m0="5.97000" mWidth="0.05000" mMin="5.87000" mMax="6.07000" 
+          m0="5.82900" mWidth="0.05000" mMin="5.77900" mMax="5.87900" 
  <br/>      channel: onMode="1" bRatio="0.5000000" products="523 -321" 
  <br/>      channel: onMode="1" bRatio="0.5000000" products="513 -311" 
  
@@ -9134,4 +9213,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

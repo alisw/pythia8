@@ -1,5 +1,5 @@
 // HadronScatter.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,6 +13,8 @@
 #include "Pythia8/PythiaComplex.h"
 
 namespace Pythia8 {
+
+//==========================================================================
 
 class SigmaPartialWave {
 public:
@@ -38,6 +40,7 @@ public:
   double getSigmaElMax() { return sigElMax; }
 
 private:
+
   // Pointers
   Info         *infoPtr;
   ParticleData *particleDataPtr;
@@ -91,7 +94,6 @@ private:
 
 };
 
-
 //==========================================================================
 
 // HadronScatterPair class
@@ -103,7 +105,8 @@ typedef pair < int, int > HSIndex;
 
 class HadronScatterPair {
 public:
-  // Constructor
+  // Constructors.
+  HadronScatterPair() {}
   HadronScatterPair(const HSIndex &i1in, int yt1in, int pt1in,
                     const HSIndex &i2in, int yt2in, int pt2in,
                     double measureIn) :
@@ -141,8 +144,11 @@ public:
   bool init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
             ParticleData *particleDataPtr);
 
-  // Perform all hadron scatterings
+  // Perform all hadron scatterings - new version. Collective flow.
   void scatter(Event&);
+
+  // Perform all hadron scatterings - old version.
+  void scatterOld(Event&);
 
 private:
 
@@ -150,40 +156,47 @@ private:
   Info* infoPtr;
   Rndm* rndmPtr;
 
-  // Settings
-  bool   doHadronScatter, afterDecay, allowDecayProd,
+  // Settings for new model.
+  bool   scatSameString, scatMultTimes;
+  int    scatterMode;
+  double p2max, yDiffMax, Rmax, maxProbDS, neighNear, neighFar,
+         minProbSS, maxProbSS;
+
+  // Settings for old model.
+  bool   doOldScatter, afterDecay, allowDecayProd,
          scatterRepeat, doTile;
   int    hadronSelect, scatterProb;
   double Npar, kPar, pPar, jPar, rMax, rMax2;
   double pTsigma, pTsigma2, pT0MPI;
 
-  // Tiling
+  // Methods for the old model.
+  // Tiling.
   int    ytMax, ptMax;
   double yMin, yMax, ytSize, ptSize;
   vector < vector < set < HSIndex > > > tile;
 
-  // Keep track of scattered pairs
+  // Keep track of scattered pairs.
   set < HSIndex > scattered;
 
-  // Partial wave amplitudes
+  // Partial wave amplitudes.
   SigmaPartialWave sigmaPW[3];
 
-  // Maximum sigma elastic
+  // Maximum sigma elastic.
   double sigElMax;
 
-  // Decide if a hadron can scatter
+  // Decide if a hadron can scatter.
   bool canScatter(Event &, int);
 
-  // Probability for a pair of hadrons to scatter
+  // Probability for a pair of hadrons to scatter.
   bool doesScatter(Event &, const HSIndex &, const HSIndex &);
 
-  // Calculate measure for ordering of scatterings
+  // Calculate measure for ordering of scatterings.
   double measure(Event &, int, int);
 
   // Perform a single hadron scattering
   bool hadronScatter(Event &, HadronScatterPair &);
 
-  // Tiling functions
+  // Tiling functions.
   bool tileIntProb(vector < HadronScatterPair > &, Event &,
                    const HSIndex &, int, int, bool);
   int yTile(Event& event, int idx) {
@@ -192,6 +205,13 @@ private:
   int pTile(Event& event, int idx) {
     return (doTile) ? int((event[idx].phi() + M_PI) / ptSize) : 0;
   }
+
+  // Methods for the new model.
+  // Functions for presorting the hadrons according to rapidity.
+  void mergeSortCollFlow(vector< pair<int,double> >& sort,
+    int iStart = 1, int iEnd = -1);
+  void mergeCollFlow(vector< pair<int,double> >& sort, int iStart,
+    int iDivide, int iEnd);
 
   // Debug
   void debugOutput();

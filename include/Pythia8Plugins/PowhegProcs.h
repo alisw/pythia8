@@ -1,5 +1,5 @@
 // PowhegProcs.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Philip Ilten, May 2015.
@@ -17,6 +17,13 @@ namespace Pythia8 {
 // A class to generate events with hard processes from POWHEGBOX
 // matrix elements. See http://powhegbox.mib.infn.it/ for further
 // details on POWHEGBOX.
+
+// WARNING: If one wishes to use LHAPDF with both POWHEGBOX and
+// Pythia, only LHAPDF 6 configured with the option
+// "--with-lhapdf6-plugin=LHAPDF6.h" for Pythia should be used. If
+// not, and differing PDF sets are used between POWHEGBOX and Pythia,
+// POWHEGBOX will not re-initialize the PDF set and consequently will
+// use the PDF set last used by Pythia.
 
 class PowhegProcs {
 
@@ -160,8 +167,7 @@ bool PowhegProcs::readString(string line) {
 
   // Find the key.
   firstChar = line.find_first_of("  \t\f\v\n\r");
-  string key = line.substr(0, firstChar);
-  for (int i = 0; i < int(key.length()); ++i) key[i] = tolower(key[i]);
+  string key = toLower( line.substr(0, firstChar), false);
 
   // Add the setting.
   if (key.size() > 0

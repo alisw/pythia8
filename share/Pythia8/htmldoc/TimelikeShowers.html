@@ -21,9 +21,13 @@ in the standard model and its minimal supersymmetric extension
  
 <p/> 
 The normal user is not expected to call <code>TimeShower</code> directly, 
-but only have it called from <code>Pythia</code>. Some of the parameters 
+but only have it called from <code>Pythia</code>. Nonetheless, 
+some of the parameters 
 below, in particular <code>TimeShower:alphaSvalue</code>, would be of 
-interest for a tuning exercise, however. 
+interest for uncertainty estimates and tuning exercises. Note that 
+PYTHIA also incorporates an 
+<a href="Variations.html" target="page">automated framework</a> 
+for shower uncertainty variations. 
  
 <h3>Main variables</h3> 
  
@@ -203,9 +207,9 @@ can be applied to the <i>alpha_strong</i> values used for
 timelike showers. Note that tunes using this option need lower values of 
 <i>alpha_strong(m_Z^2)</i> than tunes that do not. 
 <p/><code>flag&nbsp; </code><strong> TimeShower:alphaSuseCMW &nbsp;</strong> 
- (<code>default = <strong>false</strong></code>)<br/>
-<br/><code>option </code><strong> false</strong> : Do not apply the CMW rescaling.    
-<br/><code>option </code><strong> true</strong> : Apply the CMW rescaling, increasing 
+ (<code>default = <strong>off</strong></code>)<br/>
+<br/><code>option </code><strong> off</strong> : Do not apply the CMW rescaling.    
+<br/><code>option </code><strong> on</strong> : Apply the CMW rescaling, increasing 
  <i>Lambda_QCD</i> for timelike showers by a factor roughly 1.6. 
    
    
@@ -232,7 +236,10 @@ at the <i>Z^0</i> mass.
 The natural scale for couplings, and PDFs for dipoles stretching out 
 to the beam remnants, is <i>pT^2</i>. To explore uncertainties it 
 is possibly to vary around this value, however, in analogy with what 
-can be done for <a href="CouplingsAndScales.html" target="page">hard processes</a>. 
+can be done for <a href="CouplingsAndScales.html" target="page">hard 
+processes</a>. (Note that there is also an 
+<a href="Variations.html" target="page">automated framework</a> for shower 
+uncertainties.) 
  
 <p/><code>parm&nbsp; </code><strong> TimeShower:renormMultFac &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.</code>)<br/>
@@ -726,6 +733,24 @@ Extra scale parameter <i>k</i> for
 alike. 
    
  
+<p/><code>flag&nbsp; </code><strong> TimeShower:recoilDeadCone &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+For topologies where a gluon recoils against a massive quark (or another 
+massive coloured particle) there are no suitable ME corrections implemented 
+into PYTHIA. When the dipole radiation pattern is split into two ends, 
+with a smooth transition between the two, this means that the  gluon end 
+can radiate into the quark hemisphere as if the quark were massless. The 
+"dead cone" effect, that radiation collinear with a massive quark is 
+strongly suppressed, thereby is not fully respected. (Unlike  radiation 
+from the quark end itself, where mass effects are included.) With this 
+switch on, a further suppression is therefore introduced for 
+<i>g &rarr; g g</i> branchings, derived as the massive/massless ratio 
+of the eikonal expression for dipole radiation, which kills radiation 
+collinear with the quark. The <i>g &rarr; q qbar</i> branchings currently 
+are not affected; the absence of a soft singularity implies that there 
+is hardly any radiation into the recoiler hemisphere anyway. 
+   
+ 
 <p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByQ &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow quarks to radiate photons, i.e. branchings <i>q &rarr; q gamma</i>; 
@@ -736,6 +761,13 @@ on/off = true/false.
  (<code>default = <strong>on</strong></code>)<br/>
 Allow leptons to radiate photons, i.e. branchings <i>l &rarr; l gamma</i>; 
 on/off = true/false. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByOther &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+Allow charged resonances to radiate photons, i.e. branchings 
+<i>q&sim; &rarr; q&sim; gamma</i>; on/off = true/false. This will 
+also allow the W boson to radiate. 
    
  
 <p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByGamma &nbsp;</strong> 
@@ -765,6 +797,16 @@ Number of allowed lepton flavours in <i>gamma &rarr; l+ l-</i> branchings
 Use of matrix element corrections where available; on/off = true/false. 
    
  
+<p/><code>flag&nbsp; </code><strong> TimeShower:MEextended &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+Use matrix element corrections also for <i>1 &rarr; n</i> and 
+<i>2 &rarr; n</i> processes where no matrix elements are encoded, 
+by an attempt to match on to one of the <i>1 &rarr; 2</i> processes 
+that are implemented. This should at least provide relevant mass dampening 
+for massive radiators and recoilers. Only has a meaning if 
+<code>MEcorrections</code> above is switched on. 
+   
+ 
 <p/><code>flag&nbsp; </code><strong> TimeShower:MEafterFirst &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use of matrix element corrections also after the first emission, 
@@ -776,6 +818,12 @@ switched on.
 <p/><code>flag&nbsp; </code><strong> TimeShower:phiPolAsym &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Azimuthal asymmetry induced by gluon polarization; on/off = true/false. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> TimeShower:phiPolAsymHard &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+Extend the above azimuthal asymmetry (if on) also back to gluons produced 
+in the hard process itself, where feasible; on/off = true/false. 
    
  
 <p/><code>flag&nbsp; </code><strong> TimeShower:recoilToColoured &nbsp;</strong> 
@@ -813,4 +861,4 @@ evaluation of parton densities if the <code>flag</code> above is on.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

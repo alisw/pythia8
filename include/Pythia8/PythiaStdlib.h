@@ -1,11 +1,11 @@
 // PythiaStdlib.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for functionality pulled in from Stdlib,
 // plus a few useful utilities (small powers; positive square root,
-// Gamma function).
+// convert strings to lowercase, Gamma function).
 
 #ifndef Pythia8_PythiaStdlib_H
 #define Pythia8_PythiaStdlib_H
@@ -102,6 +102,14 @@ inline double pow6(const double& x) {return x*x*x*x*x*x;}
 
 // Avoid problem with negative square root argument (from roundoff).
 inline double sqrtpos(const double& x) {return sqrt( max( 0., x));}
+
+// Convert a string to lowercase for case-insensitive comparisons.
+// By default remove any initial and trailing blanks or escape characters.
+string toLower(const string& name, bool trim = true);
+
+// Variant of above, with in-place replacement.
+inline void toLowerRep(string& name, bool trim = true) {
+  name = toLower( name, trim);}
 
 // The Gamma function for real argument.
 double GammaReal(double x);

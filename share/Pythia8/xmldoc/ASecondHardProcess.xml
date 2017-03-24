@@ -43,15 +43,19 @@ Standard QCD <ei>2 &rarr; 2</ei> processes involving gluons and
  
 <flag name="SecondHard:PhotonAndJet" default="off"> 
 A prompt photon recoiling against a quark or gluon jet. 
+</flag> 
  
 <flag name="SecondHard:TwoPhotons" default="off"> 
 Two prompt photons recoiling against each other. 
+</flag> 
  
 <flag name="SecondHard:Charmonium" default="off"> 
 Production of charmonium via colour singlet and colour octet channels. 
+</flag> 
  
 <flag name="SecondHard:Bottomonium" default="off"> 
 Production of bottomonium via colour singlet and colour octet channels. 
+</flag> 
  
 <flag name="SecondHard:SingleGmZ" default="off"> 
 Scattering <ei>q qbar &rarr; gamma^*/Z^0</ei>, with full interference 
@@ -420,4 +424,4 @@ anyway less relevant, since systematical errors are likely to dominate.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

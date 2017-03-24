@@ -1,5 +1,5 @@
 // StringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -37,26 +37,34 @@ public:
 
   // Save pointers.
   void init( ParticleData* particleDataPtrIn, StringFlav* flavSelPtrIn,
-    StringPT* pTSelPtrIn, StringZ* zSelPtrIn) {
+    StringPT* pTSelPtrIn, StringZ* zSelPtrIn, Settings& settings) {
     particleDataPtr = particleDataPtrIn; flavSelPtr = flavSelPtrIn;
-    pTSelPtr = pTSelPtrIn; zSelPtr = zSelPtrIn;}
+    pTSelPtr = pTSelPtrIn; zSelPtr = zSelPtrIn;
+    bLund = zSelPtr->bAreaLund(); aLund = zSelPtr->aAreaLund();
+    thermalModel   = settings.flag("StringPT:thermalModel");
+    mT2suppression = settings.flag("StringPT:mT2suppression"); }
 
   // Set up initial endpoint values from input.
   void setUp(bool fromPosIn, int iEndIn, int idOldIn, int iMaxIn,
     double pxIn, double pyIn, double GammaIn, double xPosIn, double xNegIn);
 
   // Fragment off one hadron from the string system, in flavour and pT.
-  void newHadron();
+  void newHadron(double nNSP = 0.0);
 
   // Fragment off one hadron from the string system, in momentum space,
   // by taking steps either from positive or from negative end.
   Vec4 kinematicsHadron(StringSystem& system);
 
+  // Generate momentum for some possible next hadron, based on mean values
+  // to get an estimate for rapidity and pT.
+  Vec4 kinematicsHadronTmp(StringSystem system, Vec4 pRem, double phi,
+    double mult);
+
   // Update string end information after a hadron has been removed.
   void update();
 
   // Constants: could only be changed in the code itself.
-  static const double TINY, PT2SAME;
+  static const double TINY, PT2SAME, MEANMMIN, MEANM, MEANPT;
 
   // Pointer to the particle data table.
   ParticleData* particleDataPtr;
@@ -67,11 +75,11 @@ public:
   StringZ*      zSelPtr;
 
   // Data members.
-  bool   fromPos;
+  bool   fromPos, thermalModel, mT2suppression;
   int    iEnd, iMax, idHad, iPosOld, iNegOld, iPosNew, iNegNew;
   double pxOld, pyOld, pxNew, pyNew, pxHad, pyHad, mHad, mT2Had, zHad,
          GammaOld, GammaNew, xPosOld, xPosNew, xPosHad, xNegOld, xNegNew,
-         xNegHad;
+         xNegHad, aLund, bLund;
   FlavContainer flavOld, flavNew;
   Vec4   pHad, pSoFar;
 
@@ -108,7 +116,7 @@ private:
                       NTRYJNMATCH, NTRYJRFEQ;
   static const double FACSTOPMASS, CLOSEDM2MAX, CLOSEDM2FRAC, EXPMAX,
                       MATCHPOSNEG, EJNWEIGHTMAX, CONVJNREST, M2MAXJRF,
-                      EEXTRAJNMATCH, MDIQUARKMIN, CONVJRFEQ;
+                      M2MINJRF, EEXTRAJNMATCH, MDIQUARKMIN, CONVJRFEQ;
 
   // Pointer to various information on the generation.
   Info*         infoPtr;
@@ -128,9 +136,10 @@ private:
   UserHooks*    userHooksPtr;
 
   // Initialization data, read from Settings.
+  bool   closePacking;
   double stopMass, stopNewFlav, stopSmear, eNormJunction,
          eBothLeftJunction, eMaxLeftJunction, eMinLeftJunction,
-         mJoin, bLund;
+         mJoin, bLund, pT20;
 
   // Data members.
   bool   hasJunction, isClosed;
@@ -151,7 +160,7 @@ private:
   StringEnd posEnd, negEnd;
 
   // Find region where to put first string break for closed gluon loop.
-  vector<int> findFirstRegion(vector<int>& iPartonIn, Event& event);
+  vector<int> findFirstRegion(int iSub, ColConfig& colConfig, Event& event);
 
   // Set flavours and momentum position for initial string endpoints.
   void setStartEnds(int idPos, int idNeg, StringSystem systemNow);
@@ -160,7 +169,8 @@ private:
   bool energyUsedUp(bool fromPos);
 
   // Produce the final two partons to complete the system.
-  bool finalTwo(bool fromPos, Event& event, bool usedPosJun, bool usedNegJun);
+  bool finalTwo(bool fromPos, Event& event, bool usedPosJun, bool usedNegJun,
+    double nNSP);
 
   // Construct a special joining region for the final two hadrons.
   StringRegion finalRegion();
@@ -173,6 +183,10 @@ private:
 
   // Join extra nearby partons when stuck.
   int extraJoin(double facExtra, Event& event);
+
+  // Get the number of nearby strings given the energies.
+  double nearStringPieces(StringEnd end,
+    vector< vector< pair<double,double> > >& rapPairs);
 
 };
 

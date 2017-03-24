@@ -1,5 +1,5 @@
 // SLHAinterface.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -138,14 +138,14 @@ bool SLHAinterface::initSLHA(Settings& settings,
   // ifail = 0 : MODSEL found, spectrum OK
   else if (ifailSpc == 0) {
     // Print spectrum. Done.
-    slha.printSpectrum(0);
+    slha.listSpectrum(0);
   }
   else if (ifailSpc < 0) {
     infoPtr->errorMsg(warnPref + "Problem with SLHA spectrum.",
       "\n Only using masses and switching off SUSY.");
     settings.flag("SUSY:all", false);
     couplingsPtr->isSUSY = false;
-    slha.printSpectrum(ifailSpc);
+    slha.listSpectrum(ifailSpc);
   }
 
   // SLHA1 : SLHA2 compatibility
@@ -377,12 +377,13 @@ bool SLHAinterface::initSLHA(Settings& settings,
 
     // Start at beginning of mass array
     int    id = slha.mass.first();
+    vector<int> ignoreMassKeepSM;
+    vector<int> ignoreMassM0;
+    vector<int> importMass;
     // Loop through to update particle data.
     for (int i = 1; i <= slha.mass.size() ; i++) {
       // Step to next mass entry
       if (i>1) id = slha.mass.next();
-      ostringstream idCode;
-      idCode << id;
       double mass = abs(slha.mass(id));
 
       // Check if this ID was added by qnumbers
@@ -393,23 +394,58 @@ bool SLHAinterface::initSLHA(Settings& settings,
       // Ignore masses for known SM particles or particles with
       // default masses < minMassSM; overwrite masses for rest.
       if (keepSM && (id < 25 || (id > 80 && id < 1000000)) && isInternal)
-        infoPtr->errorMsg(warnPref + "ignoring MASS entry", "for id = "
-          + idCode.str()
-          + " (SLHA:keepSM. Use id > 1000000 for new particles)", true);
+        ignoreMassKeepSM.push_back(id);
       else if (id < 1000000 && particleDataPtr->m0(id) < minMassSM
-        && isInternal) {
-        infoPtr->errorMsg(warnPref + "ignoring MASS entry", "for id = "
-          + idCode.str() + " (m0 < SLHA:minMassSM)", true);
-      }
+        && isInternal)
+        ignoreMassM0.push_back(id);
       else {
         particleDataPtr->m0(id,mass);
         idModified.push_back(id);
+        importMass.push_back(id);
       }
     };
-
+    // Give summary of any imported/ignored MASS entries, and state reason
+    if (importMass.size() >= 1) {
+      string idImport;
+      for (unsigned int i=0; i<importMass.size(); ++i) {
+        ostringstream idCode;
+        idCode << importMass[i];
+        if (i != 0) idImport +=",";
+        idImport += idCode.str();
+      }
+      infoPtr->errorMsg(infoPref + "importing MASS entries","for id = ["
+        + idImport + "]", true);
+    }
+    if (ignoreMassKeepSM.size() >= 1) {
+      string idIgnore;
+      for (unsigned int i=0; i<ignoreMassKeepSM.size(); ++i) {
+        ostringstream idCode;
+        idCode << ignoreMassKeepSM[i];
+        if (i != 0) idIgnore +=",";
+        idIgnore += idCode.str();
+      }
+      infoPtr->errorMsg(warnPref + "ignoring MASS entries", "for id = ["
+        + idIgnore + "]"
+        + " (SLHA:keepSM. Use id > 1000000 for new particles)", true);
+    }
+    if (ignoreMassM0.size() >= 1) {
+      string idIgnore;
+      for (unsigned int i=0; i<ignoreMassM0.size(); ++i) {
+        ostringstream idCode;
+        idCode << ignoreMassM0[i];
+        if (i != 0) idIgnore +=",";
+        idIgnore += idCode.str();
+      }
+      infoPtr->errorMsg(warnPref + "ignoring MASS entries", "for id = ["
+        + idIgnore + "]" + " (m0 < SLHA:minMassSM)", true);
+    }
   }
 
   // Update decay data.
+  vector<int> ignoreDecayKeepSM;
+  vector<int> ignoreDecayM0;
+  vector<int> ignoreDecayBR;
+  vector<int> importDecay;
   for (int iTable=0; iTable < int(slha.decays.size()); iTable++) {
 
     // Pointer to this SLHA table
@@ -431,24 +467,14 @@ bool SLHAinterface::initSLHA(Settings& settings,
     // default masses < minMassSM; overwrite masses for rest.
     if (keepSM && (idRes < 25 || (idRes > 80 && idRes < 1000000))
         && isInternal) {
-      infoPtr->errorMsg(warnPref + "ignoring DECAY table", "for id = "
-        + idCode.str()
-        + " (SLHA:keepSM. Use id > 1000000 for new particles)", true);
+      ignoreDecayKeepSM.push_back(idRes);
       continue;
     }
     else if (idRes < 1000000 && particleDataPtr->m0(idRes) < minMassSM
              && isInternal) {
-      infoPtr->errorMsg(warnPref + "ignoring DECAY table", "for id = "
-        + idCode.str() + " (m0 < SLHA:minMassSM)", true);
+      ignoreDecayM0.push_back(idRes);
       continue;
     }
-
-    // Verbose output. Let user know we are using these tables.
-    if (verboseSLHA <= 1)
-      infoPtr->errorMsg(infoPref + "importing SLHA decay table(s)","");
-    else
-      infoPtr->errorMsg(infoPref + "importing SLHA decay table","for id = "
-        +idCode.str(),true);
 
     // Extract and store total width (absolute value, neg -> switch off)
     double widRes         = abs(slhaTable->getWidth());
@@ -471,12 +497,12 @@ bool SLHAinterface::initSLHA(Settings& settings,
         particlePtr->clearChannels();
         particleDataPtr->mayDecay(idRes,true);
         particleDataPtr->isResonance(idRes,true);
-      } else {
-        infoPtr->errorMsg(warnPref + "empty DECAY table ","for id = "
-          + idCode.str() + " (total width provided but no branching"
-          + " fractions)", true);
-      }
+        // Let user know we are using these tables.
+        importDecay.push_back(idRes);
+      } else
+        ignoreDecayBR.push_back(idRes);
     }
+
     // Reset to stable if width <= 0.0
     else {
       particlePtr->clearChannels();
@@ -496,9 +522,11 @@ bool SLHAinterface::initSLHA(Settings& settings,
       double brat      = slhaChannel.getBrat();
       vector<int> idDa = slhaChannel.getIdDa();
       if (idDa.size() >= 9) {
-        infoPtr->errorMsg(errPref + "max number of DECAY products is 8");
+        infoPtr->errorMsg(errPref + "max number of DECAY products is 8 ",
+          "for id = "+idCode.str(), true);
       } else if (idDa.size() <= 1) {
-        infoPtr->errorMsg(errPref + "min number of DECAY products is 2");
+        infoPtr->errorMsg(errPref + "min number of DECAY products is 2 ",
+          "for id = "+idCode.str(), true);
       }
       else {
         int onMode = 1;
@@ -568,6 +596,54 @@ bool SLHAinterface::initSLHA(Settings& settings,
     // Add to list of particles that have been modified
     idModified.push_back(idRes);
 
+  }
+
+  // Give summary of imported/ignored DECAY tables, and state reason
+  if (importDecay.size() >= 1) {
+    string idImport;
+    for (unsigned int i=0; i<importDecay.size(); ++i) {
+      ostringstream idCode;
+      idCode << importDecay[i];
+      if (i != 0) idImport +=",";
+      idImport += idCode.str();
+    }
+    infoPtr->errorMsg(infoPref + "importing DECAY tables","for id = ["
+      + idImport + "]", true);
+  }
+  if (ignoreDecayKeepSM.size() >= 1) {
+    string idIgnore;
+    for (unsigned int i=0; i<ignoreDecayKeepSM.size(); ++i) {
+      ostringstream idCode;
+      idCode << ignoreDecayKeepSM[i];
+      if (i != 0) idIgnore +=",";
+      idIgnore += idCode.str();
+    }
+    infoPtr->errorMsg(warnPref + "ignoring DECAY tables", "for id = ["
+      + idIgnore + "]"
+      + " (SLHA:keepSM. Use id > 1000000 for new particles)", true);
+  }
+  if (ignoreDecayM0.size() >= 1) {
+    string idIgnore;
+    for (unsigned int i=0; i<ignoreDecayM0.size(); ++i) {
+      ostringstream idCode;
+      idCode << ignoreDecayM0[i];
+      if (i != 0) idIgnore +=",";
+      idIgnore += idCode.str();
+    }
+    infoPtr->errorMsg(warnPref + "ignoring DECAY tables", "for id = ["
+      + idIgnore + "]" + " (m0 < SLHA:minMassSM)", true);
+  }
+  if (ignoreDecayBR.size() >= 1) {
+    string idIgnore;
+    for (unsigned int i=0; i<ignoreDecayBR.size(); ++i) {
+      ostringstream idCode;
+      idCode << ignoreDecayBR[i];
+      if (i != 0) idIgnore +=",";
+      idIgnore += idCode.str();
+    }
+    infoPtr->errorMsg(warnPref + "ignoring empty DECAY tables", "for id = ["
+      + idIgnore + "]" + " (total width provided but no Branching Ratios)",
+      true);
   }
 
   // Sanity check of all decay tables with modified MASS or DECAY info

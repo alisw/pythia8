@@ -116,7 +116,7 @@ The input LHE files are also part of the (command line) input of
 names are of the form <i>name_tree_#nAdditionalJets.lhe</i>. If you want to 
 e.g. use the LHE files that are shipped with the Pythia distribution, you can 
 execute <code>main86.exe</code> with the command 
-</p> 
+<p> 
 <code>./main86.exe ./main86.cmnd ./w_production ./myhepmc.hepmc</code> 
 </p> 
  
@@ -266,4 +266,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

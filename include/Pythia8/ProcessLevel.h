@@ -1,5 +1,5 @@
 // ProcessLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -46,10 +46,10 @@ public:
   bool init( Info* infoPtrIn, Settings& settings,
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
     Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn, bool doLHAin,
     SLHAinterface* slhaInterfacePtrIn, UserHooks* userHooksPtrIn,
-    vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs,
-    ostream& os = cout);
+    vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs);
 
   // Store or replace Les Houches pointer.
   void setLHAPtr( LHAup* lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;
@@ -62,10 +62,10 @@ public:
   bool nextLHAdec( Event& process);
 
   // Accumulate and update statistics (after possible user veto).
-  void accumulate();
+  void accumulate( bool doAccumulate = true);
 
   // Print statistics on cross sections and number of events.
-  void statistics(bool reset = false, ostream& os = cout);
+  void statistics(bool reset = false);
 
   // Reset statistics.
   void resetStatistics();
@@ -87,7 +87,7 @@ private:
 
   // Generic info for process generation.
   bool   doSecondHard, doSameCuts, allHardSame, noneHardSame,
-         someHardSame, cutsAgree, cutsOverlap, doResDecays;
+         someHardSame, cutsAgree, cutsOverlap, doResDecays, doISR, doMPI;
   int    nImpact, startColTag;
   double mHatMin1, mHatMax1, pTHatMin1, pTHatMax1, mHatMin2, mHatMax2,
          pTHatMin2, pTHatMax2, sigmaND, sumImpactFac, sum2ImpactFac;
@@ -118,6 +118,10 @@ private:
   BeamParticle*   beamAPtr;
   BeamParticle*   beamBPtr;
 
+  // Pointers to the two possible photon beams inside the incoming beams.
+  BeamParticle*   beamGamAPtr;
+  BeamParticle*   beamGamBPtr;
+
   // Pointer to Standard Model couplings, including alphaS and alphaEM.
   Couplings*      couplingsPtr;
 
@@ -136,11 +140,17 @@ private:
   // ResonanceDecay object does sequential resonance decays.
   ResonanceDecays resonanceDecays;
 
+  // Samples photon kinematics from leptons.
+  GammaKinematics gammaKin;
+
   // Generate the next event with one interaction.
   bool nextOne( Event& process);
 
   // Generate the next event with two hard interactions.
   bool nextTwo( Event& process);
+
+  // Check that enough room for beam remnants in photon beam.
+  bool roomForRemnants();
 
   // Append the second to the first process list.
   void combineProcessRecords( Event& process, Event& process2);
@@ -149,7 +159,7 @@ private:
   bool checkColours( Event& process);
 
   // Print statistics when two hard processes allowed.
-  void statistics2(bool reset, ostream& os = cout);
+  void statistics2(bool reset);
 
 };
 

@@ -150,7 +150,7 @@ to <code>gauss()</code>.
    
  
 <a name="method10"></a>
-<p/><strong>int Rndm::pick(const vector<double>& prob) &nbsp;</strong> <br/>
+<p/><strong>int Rndm::pick(const vector&lt;double&gt;&amp; prob) &nbsp;</strong> <br/>
 pick one option among vector of (positive) probabilities. 
    
  
@@ -179,4 +179,4 @@ to give a random number between 0 and 1.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

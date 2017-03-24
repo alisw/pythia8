@@ -1,5 +1,5 @@
 // LHAPowheg.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Philip Ilten, May 2015.
@@ -120,7 +120,7 @@ bool LHAupPowheg::fillHepRup() {
   resetcnt_("upper bound failures in generation of radiation", 47);
   resetcnt_("vetoed radiation", 16);
   chdir(cwd);
-  return true;
+  return fillHepEup();
 
 }
 

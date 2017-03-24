@@ -91,7 +91,7 @@ set by the user, alternatively by the current default values, see
 warning above. 
    
  
-<p> 
+<p/> 
 One setting is specific to the Standard Model: 
  
 <br/><br/><strong>HiggsSM:NLOWidths</strong>  <input type="radio" name="5" value="on" checked="checked"><strong>On</strong>
@@ -237,8 +237,8 @@ but is obtained from showering off the lowest-order process. It does not
 contain any <i>b</i> at large <i>pT</i>, however, so is less 
 interesting for many applications. 
 Code 911. 
- 
    
+ 
 <br/><br/><strong>HiggsSM:gg2Hbbbar</strong>  <input type="radio" name="17" value="on"><strong>On</strong>
 <input type="radio" name="17" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
@@ -437,7 +437,7 @@ fusion (or, alternatively put, Higgs radiation off a top line).
 Warning: unfortunately this process is rather slow, owing to a 
 lengthy cross-section expression and inefficient phase-space selection. 
 Code 1009. 
- 
+   
  
 <h4>2) <i>H^0(H_2^0)</i> processes</h4> 
  
@@ -520,6 +520,7 @@ fusion (or, alternatively put, Higgs radiation off a top line).
 Warning: unfortunately this process is rather slow, owing to a 
 lengthy cross-section expression and inefficient phase-space selection. 
 Code 1029. 
+   
  
 <h4>3) <i>A^0(H_3^0)</i> processes</h4> 
  
@@ -601,6 +602,7 @@ fusion (or, alternatively put, Higgs radiation off a top line).
 Warning: unfortunately this process is rather slow, owing to a 
 lengthy cross-section expression and inefficient phase-space selection. 
 Code 1049. 
+   
  
 <h4>4) <i>H+-</i> processes</h4> 
  
@@ -1749,4 +1751,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

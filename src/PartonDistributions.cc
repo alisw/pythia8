@@ -1,11 +1,11 @@
 // PartonDistributions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the PDF, LHAPDF,
 // GRV94L, CTEQ5L,  MSTWpdf, CTEQ6pdf, GRVpiL, PomFix, PomH1FitAB,
-// PomH1Jets, Lepton and NNPDF classes.
+// PomH1Jets, Lepton, NNPDF and CJKL classes.
 
 #include "Pythia8/PartonDistributions.h"
 
@@ -44,6 +44,13 @@ void PDF::setValenceContent() {
     idVal1 =  1;
     idVal2 = -1;
   }
+
+  // Photon not fixed until at Process-/PartonLevel.
+  if (idBeamAbs == 22) {
+    idVal1 =  10;
+    idVal2 = -10;
+  }
+
 }
 
 //--------------------------------------------------------------------------
@@ -102,6 +109,33 @@ double PDF::xf(int id, double x, double Q2) {
     if (idAbs == 22) return max(0., xgamma);
     return 0.;
 
+  // Photon beam.
+  } else if (idBeam == 22) {
+    int idAbs = abs(id);
+    if (id ==  0 || idAbs == 21) return max(0., xg);
+    if (id ==  1)    return max(0., xd);
+    if (id == -1)    return max(0., xdbar);
+    if (id ==  2)    return max(0., xu);
+    if (id == -2)    return max(0., xubar);
+    if (id ==  3)    return max(0., xs);
+    if (id == -3)    return max(0., xsbar);
+    if (idAbs ==  4) return max(0., xc);
+    if (idAbs ==  5) return max(0., xb);
+    if (idAbs == 22) return max(0., xgamma);
+    return 0.;
+
+  // Photon beam inside lepton beam.
+  } else if ( ( idBeamAbs == 11 || idBeamAbs == 13 || idBeamAbs == 15 )
+    && hasGammaInLepton ) {
+    int idAbs = abs(id);
+    if (idAbs ==  0 || idAbs == 21) return max(0., xg);
+    if (idAbs ==  1) return max(0., xd);
+    if (idAbs ==  2) return max(0., xu);
+    if (idAbs ==  3) return max(0., xs);
+    if (idAbs ==  4) return max(0., xc);
+    if (idAbs ==  5) return max(0., xb);
+    if (idAbs == 22) return max(0., xgamma);
+    return 0.;
 
   // Lepton beam.
   } else {
@@ -143,6 +177,18 @@ double PDF::xfVal(int id, double x, double Q2) {
   // Diagonal meson beams: only pi0, Pomeron for now.
   } else if (idBeam == 111 || idBeam == 990) {
     if (id == idVal1 || id == idVal2) return max(0., xuVal);
+    return 0.;
+
+  // Photon beam.
+  } else if (idBeam == 22) {
+    int idAbs = abs(id);
+    if (id == idVal1 || id == idVal2) {
+      if (idAbs == 1) return max(0., xdVal);
+      if (idAbs == 2) return max(0., xuVal);
+      if (idAbs == 3) return max(0., xsVal);
+      if (idAbs == 4) return max(0., xcVal);
+      if (idAbs == 5) return max(0., xbVal);
+    }
     return 0.;
 
   // Lepton beam.
@@ -188,6 +234,29 @@ double PDF::xfSea(int id, double x, double Q2) {
     if (idAbs ==  4) return max(0., xc);
     if (idAbs ==  5) return max(0., xb);
     if (idAbs == 22) return max(0., xgamma);
+    return 0.;
+
+  // Photon beam.
+  } else if (idBeamAbs == 22) {
+    int idAbs = abs(id);
+    if ( id == 0 || idAbs == 21 ) return max(0., xg);
+    if ( idAbs == 22 ) return max(0., xgamma);
+
+    // If a valence parton return only the sea part.
+    // Otherwise return the total PDF.
+    if ( id == idVal1 || id == idVal2 ) {
+      if (idAbs ==  1) return max(0., xdSea);
+      if (idAbs ==  2) return max(0., xuSea);
+      if (idAbs ==  3) return max(0., xsSea);
+      if (idAbs ==  4) return max(0., xcSea);
+      if (idAbs ==  5) return max(0., xbSea);
+    } else {
+      if (idAbs ==  1) return max(0., xd);
+      if (idAbs ==  2) return max(0., xu);
+      if (idAbs ==  3) return max(0., xs);
+      if (idAbs ==  4) return max(0., xc);
+      if (idAbs ==  5) return max(0., xb);
+    }
     return 0.;
 
   // Lepton beam.
@@ -570,12 +639,49 @@ const double MSTWpdf::qqInit[49] = {0., 1.0, 1.25, 1.5, 0., 0., 2.5, 3.2,
 
 //--------------------------------------------------------------------------
 
-// Initialize PDF: read in data grid from file and set up interpolation.
+// Initialize PDF: select data file and open stream.
 
 void MSTWpdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
 
-  // Choice of fit among possibilities. Counters and temporary variables.
+  // Choice of fit among possibilities.
   iFit = iFitIn;
+
+  // Select which data file to read for current fit.
+  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+  string fileName = "  ";
+  if (iFit == 1) fileName = "mrstlostar.00.dat";
+  if (iFit == 2) fileName = "mrstlostarstar.00.dat";
+  if (iFit == 3) fileName = "mstw2008lo.00.dat";
+  if (iFit == 4) fileName = "mstw2008nlo.00.dat";
+
+  // Open data file.
+  ifstream data_file( (xmlPath + fileName).c_str() );
+  if (!data_file.good()) {
+    printErr("Error in MSTWpdf::init: did not find data file ", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Initialization with a stream.
+  init(data_file, infoPtr);
+  data_file.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: read in data grid from stream and set up interpolation.
+
+void MSTWpdf::init(istream& data_file, Info* infoPtr) {
+
+  // Check that data stream is available.
+  if (!data_file.good()) {
+    printErr("Error in MSTWpdf::init: cannot read from stream", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Counters and temporary variables.
   int i,n,m,k,l,j;
   double dtemp;
 
@@ -603,25 +709,6 @@ void MSTWpdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
                   {4,-4,4,-4,2,2,-2,-2,2,-2,-2,2,1,1,1,1}};
   double xxd,d1d2,cl[16],x[16],d1,d2,y[5],y1[5],y2[5],y12[5];
   double mc2,mb2,eps=1e-6; // q^2 grid points at mc2+eps, mb2+eps
-
-    // Select which data file to read for current fit.
-  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
-  string fileName = "  ";
-  if (iFit == 1) fileName = "mrstlostar.00.dat";
-  if (iFit == 2) fileName = "mrstlostarstar.00.dat";
-  if (iFit == 3) fileName = "mstw2008lo.00.dat";
-  if (iFit == 4) fileName = "mstw2008nlo.00.dat";
-
-  // Open data file.
-  ifstream data_file( (xmlPath + fileName).c_str() );
-  if (!data_file.good()) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from MSTWpdf::init: "
-      "did not find parametrization file ", fileName);
-    else cout << " Error from MSTWpdf::init: "
-      << "did not find parametrization file " << fileName << endl;
-    isSet = false;
-    return;
-  }
 
   // Read distance, tolerance, heavy quark masses
   // and alphaS values from file.
@@ -651,16 +738,12 @@ void MSTWpdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
 
   // Check that the heavy quark masses are sensible.
   if (mc2 < qq[3] || mc2 > qq[6]) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from MSTWpdf::init: "
-      "invalid mCharm");
-    else cout << " Error from MSTWpdf::init: invalid mCharm" << endl;
+    printErr("Error in MSTWpdf::init: invalid mCharm", infoPtr);
     isSet = false;
     return;
   }
   if (mb2 < qq[13] || mb2 > qq[16]) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from MSTWpdf::init: "
-      "invalid mBottom");
-    else cout << " Error from MSTWpdf::init: invalid mBottom" << endl;
+    printErr("Error in MSTWpdf::init: invalid mBottom", infoPtr);
     isSet = false;
     return;
   }
@@ -669,9 +752,7 @@ void MSTWpdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
   // with future grids where, for example, a photon distribution
   // might be provided (cf. the MRST2004QED PDFs).
   if (nExtraFlavours < 0 || nExtraFlavours > 1) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from MSTWpdf::init: "
-      "invalid nExtraFlavours");
-    else cout << " Error from MSTWpdf::init: invalid nExtraFlavours" << endl;
+    printErr("Error in MSTWpdf::init: invalid nExtraFlavours", infoPtr);
     isSet = false;
     return;
   }
@@ -694,10 +775,8 @@ void MSTWpdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
       else
         f[12][n][m] = 0.; // photon
       if (data_file.eof()) {
-        if (infoPtr != 0) infoPtr->errorMsg("Error from MSTWpdf::init: "
-          "failed to read in data file");
-        else cout << " Error from MSTWpdf::init: failed to read in data file"
-          << endl;
+        printErr("Error in MSTWpdf::init: could not read data stream",
+          infoPtr);
         isSet = false;
         return;
       }
@@ -706,16 +785,10 @@ void MSTWpdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
   // Check that ALL the file contents have been read in.
   data_file >> dtemp;
   if (!data_file.eof()) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from MSTWpdf::init: "
-      "failed to read in data file");
-    else cout << " Error from MSTWpdf::init: failed to read in data file"
-      << endl;
+    printErr("Error in MSTWpdf::init: could not read data stream", infoPtr);
     isSet = false;
     return;
   }
-
-  // Close the datafile.
-  data_file.close();
 
   // PDFs are identically zero at x = 1.
   for (i=1;i<=np;i++)
@@ -1170,7 +1243,8 @@ double MSTWpdf::polderivative3(double x1, double x2, double x3, double y1,
 //==========================================================================
 
 // The CTEQ6pdf class.
-// Code for handling CTEQ6L, CTEQ6L1, CTEQ66.00, CT09MC1, CT09MC2, (CT09MCS?).
+// Code for handling CTEQ6L, CTEQ6L1, CTEQ66.00, CT09MC1, CT09MC2, CT09MCS.
+// Also handles ACTW Pomeron sets B, D and SG (alpha = 1.14) and D (= 1.19).
 
 // Constants: could be changed here if desired, but normally should not.
 // These are of technical nature, as described for each.
@@ -1183,7 +1257,7 @@ const double CTEQ6pdf::XPOWER = 0.3;
 
 //--------------------------------------------------------------------------
 
-// Initialize PDF: read in data grid from file.
+// Initialize PDF: select data file and open stream.
 
 void CTEQ6pdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
 
@@ -1199,15 +1273,36 @@ void CTEQ6pdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
   if (iFit == 4) fileName = "ct09mc1.pds";
   if (iFit == 5) fileName = "ct09mc2.pds";
   if (iFit == 6) fileName = "ct09mcs.pds";
+  // Ditto for current Pomeron fit.
+  if (iFit == 11) fileName = "pomactwb14.pds";
+  if (iFit == 12) fileName = "pomactwd14.pds";
+  if (iFit == 13) fileName = "pomactwsg14.pds";
+  if (iFit == 14) fileName = "pomactwd19.pds";
   bool isPdsGrid = (iFit > 2);
 
   // Open data file.
   ifstream pdfgrid( (xmlPath + fileName).c_str() );
   if (!pdfgrid.good()) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from CTEQ6pdf::init: "
-      "did not find parametrization file ", fileName);
-    else cout << " Error from CTEQ6pdf::init: "
-      << "did not find parametrization file " << fileName << endl;
+    printErr("Error in CTEQ6pdf::init: did not find data file", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Initialization with a stream.
+  init( pdfgrid, isPdsGrid, infoPtr);
+  pdfgrid.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: read in data grid from stream and set up interpolation.
+
+void CTEQ6pdf::init(istream& pdfgrid, bool isPdsGrid, Info* infoPtr) {
+
+  // Check that data stream is available.
+  if (!pdfgrid.good()) {
+    printErr("Error in CTEQ6pdf::init: cannot read from stream", infoPtr);
     isSet = false;
     return;
   }
@@ -1328,14 +1423,14 @@ void CTEQ6pdf::init(int iFitIn, string xmlPath, Info* infoPtr) {
 void CTEQ6pdf::xfUpdate(int , double x, double Q2) {
 
   // Update using CTEQ6 routine, within allowed (x, q) range.
-  double xEps = max( xMinEps, x);
+  double xEps = doExtraPol ? x : max( xMinEps, x);
   double qEps = max( qMinEps, min( qMaxEps, sqrtpos(Q2) ) );
 
   // Gluon:
   double glu  = xEps * parton6( 0, xEps, qEps);
-  // Sea quarks (note wrong order u, d):
-  double bot  = xEps * parton6( 5, xEps, qEps);
-  double chm  = xEps * parton6( 4, xEps, qEps);
+  // Sea quarks (note wrong order u, d). ACTW has no s, c, b.
+  double bot  = (iFit > 10) ? 0. : xEps * parton6( 5, xEps, qEps);
+  double chm  = (iFit > 10) ? 0. : xEps * parton6( 4, xEps, qEps);
   double str  = xEps * parton6( 3, xEps, qEps);
   double usea = xEps * parton6(-1, xEps, qEps);
   double dsea = xEps * parton6(-2, xEps, qEps);
@@ -1343,23 +1438,26 @@ void CTEQ6pdf::xfUpdate(int , double x, double Q2) {
   double upv  = xEps * parton6( 1, xEps, qEps) - usea;
   double dnv  = xEps * parton6( 2, xEps, qEps) - dsea;
 
+  // Check that rescaling *only* occurs for ACTW Pomeron PDF sets.
+  if (iFit < 10) rescale = 1.;
+
   // Transfer to Pythia notation.
-  xg     = glu;
-  xu     = upv + usea;
-  xd     = dnv + dsea;
-  xubar  = usea;
-  xdbar  = dsea;
-  xs     = str;
-  xsbar  = str;
-  xc     = chm;
-  xb     = bot;
+  xg     = rescale * glu;
+  xu     = rescale * (upv + usea);
+  xd     = rescale * (dnv + dsea);
+  xubar  = rescale * usea;
+  xdbar  = rescale * dsea;
+  xs     = rescale * str;
+  xsbar  = rescale * str;
+  xc     = rescale * chm;
+  xb     = rescale * bot;
   xgamma = 0.;
 
   // Subdivision of valence and sea.
-  xuVal  = upv;
-  xuSea  = usea;
-  xdVal  = dnv;
-  xdSea  = dsea;
+  xuVal  = rescale * upv;
+  xuSea  = rescale * usea;
+  xdVal  = rescale * dnv;
+  xdSea  = rescale * dsea;
 
   // idSav = 9 to indicate that all flavours reset.
   idSav  = 9;
@@ -1424,6 +1522,10 @@ double CTEQ6pdf::parton6(int iParton, double x, double q) {
       xConst[5]    = (s1213 * xConst[6] - s12 * xConst[7]) * tmp / s34;
     }
 
+    // Expression for extrapolation in x Grid.
+    dlx = (iGridLX == 0 && doExtraPol)
+        ? log(x / xv[1]) / log(xv[2] / xv[1]) : 1.;
+
     // Binary search in Q grid.
     iGridQ  = 0;
     iGridLQ = -1;
@@ -1473,9 +1575,12 @@ double CTEQ6pdf::parton6(int iParton, double x, double q) {
   int jtmp = ( (iP + nfMx) * (nT + 1) + (iGridQ - 1) ) * (nX + 1) + iGridX + 1;
 
   // Interpolate in x space for four different q values.
+  // Also option for extrapolation to small x values.
   for(int it = 1; it <= 4; ++it) {
     int j1 = jtmp + it * (nX + 1);
-    if (iGridX == 0) {
+    if (iGridLX == 0 && doExtraPol) {
+      fVec[it] = upd[j1+1] * pow( upd[j1+2] / upd[j1+1], dlx );
+    } else if (iGridX == 0) {
       double fij[5];
       fij[1] = 0.;
       fij[2] = upd[j1+1] * pow2(xv[1]);
@@ -1594,10 +1699,9 @@ void ProtonPoint::xfUpdate(int , double x, double /*Q2*/ ) {
   double phiMax = phiFunc(x, Q2MAX / Q20);
   double phiMin = phiFunc(x, tmpQ2Min / Q20);
 
-  double fgm = 0;
-  if (phiMax < phiMin && m_infoPtr != 0) {
-    m_infoPtr->errorMsg("Error from ProtonPoint::xfUpdate: "
-      "phiMax - phiMin < 0!");
+  double fgm = 0.;
+  if (phiMax < phiMin) {
+    printErr("Error in ProtonPoint::xfUpdate: phiMax - phiMin < 0!", infoPtr);
   } else {
     // Corresponds to: x*f(x)
     fgm = (ALPHAEM / M_PI) * (1 - x) * (phiMax - phiMin);
@@ -1770,6 +1874,8 @@ void PomFix::xfUpdate(int , double x, double) {
 
 //--------------------------------------------------------------------------
 
+// Initialize PDF: select data file and open stream.
+
 void PomH1FitAB::init( int iFit, string xmlPath, Info* infoPtr) {
 
   // Open files from which grids should be read in.
@@ -1779,10 +1885,26 @@ void PomH1FitAB::init( int iFit, string xmlPath, Info* infoPtr) {
   if (iFit == 2) dataFile = "pomH1FitB.data";
   ifstream is( (xmlPath + dataFile).c_str() );
   if (!is.good()) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from PomH1FitAB::init: "
-      "the H1 Pomeron parametrization file was not found");
-    else cout << " Error from PomH1FitAB::init: "
-      << "the H1 Pomeron parametrization file was not found" << endl;
+    printErr("Error in PomH1FitAB::init: did not find data file", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Initialization with a stream.
+  init( is, infoPtr );
+  is.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: read in data grid from stream and set up interpolation.
+
+void PomH1FitAB::init( istream& is, Info* infoPtr) {
+
+  // Check that data stream is available.
+  if (!is.good()) {
+    printErr("Error in PomH1FitAB::init: cannot read from stream", infoPtr);
     isSet = false;
     return;
   }
@@ -1809,10 +1931,7 @@ void PomH1FitAB::init( int iFit, string xmlPath, Info* infoPtr) {
 
   // Check for errors during read-in of file.
   if (!is) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from PomH1FitAB::init: "
-      "the H1 Pomeron parametrization files could not be read");
-    else cout << " Error from PomH1FitAB::init: "
-      << "the H1 Pomeron parametrization files could not be read" << endl;
+    printErr("Error in PomH1FitAB::init: could not read data stream", infoPtr);
     isSet = false;
     return;
   }
@@ -1820,6 +1939,7 @@ void PomH1FitAB::init( int iFit, string xmlPath, Info* infoPtr) {
   // Done.
   isSet = true;
   return;
+
 }
 
 //--------------------------------------------------------------------------
@@ -1838,17 +1958,32 @@ void PomH1FitAB::xfUpdate(int , double x, double Q2) {
   int j       = min( nQ2 - 2, int(dlQ2) );
   dlQ2       -= j;
 
-  // Interpolate to derive quark PDF.
-  double qu = (1. - dlx) * (1. - dlQ2) * quarkGrid[i][j]
-            +       dlx  * (1. - dlQ2) * quarkGrid[i + 1][j]
-            + (1. - dlx) *       dlQ2  * quarkGrid[i][j + 1]
-            +       dlx  *       dlQ2  * quarkGrid[i + 1][j + 1];
+  // Extrapolate to small x values for quark and gluon PDF.
+  double qu, gl;
+  if (x < xlow && doExtraPol) {
+    dlx = log( x / xlow) / dx;
+    qu = (1. - dlQ2) * quarkGrid[0][j]
+       * pow( quarkGrid[1][j] / quarkGrid[0][j], dlx)
+       +        dlQ2 * quarkGrid[0][j + 1]
+       * pow( quarkGrid[1][j + 1] / quarkGrid[0][j + 1], dlx);
+    gl = (1. - dlQ2) * gluonGrid[0][j]
+       * pow( gluonGrid[1][j] / gluonGrid[0][j], dlx)
+       +        dlQ2 * gluonGrid[0][j + 1]
+       * pow( gluonGrid[1][j + 1] / gluonGrid[0][j + 1], dlx);
 
-  // Interpolate to derive gluon PDF.
-  double gl = (1. - dlx) * (1. - dlQ2) * gluonGrid[i][j]
-            +       dlx  * (1. - dlQ2) * gluonGrid[i + 1][j]
-            + (1. - dlx) *       dlQ2  * gluonGrid[i][j + 1]
-            +       dlx  *       dlQ2  * gluonGrid[i + 1][j + 1];
+  } else {
+    // Interpolate to derive quark PDF.
+    qu = (1. - dlx) * (1. - dlQ2) * quarkGrid[i][j]
+       +       dlx  * (1. - dlQ2) * quarkGrid[i + 1][j]
+       + (1. - dlx) *       dlQ2  * quarkGrid[i][j + 1]
+       +       dlx  *       dlQ2  * quarkGrid[i + 1][j + 1];
+
+    // Interpolate to derive gluon PDF.
+    gl = (1. - dlx) * (1. - dlQ2) * gluonGrid[i][j]
+       +       dlx  * (1. - dlQ2) * gluonGrid[i + 1][j]
+       + (1. - dlx) *       dlQ2  * gluonGrid[i][j + 1]
+       +       dlx  *       dlQ2  * gluonGrid[i + 1][j + 1];
+  }
 
   // Update values.
   xg    = rescale * gl;
@@ -1878,72 +2013,78 @@ void PomH1FitAB::xfUpdate(int , double x, double Q2) {
 
 //--------------------------------------------------------------------------
 
-void PomH1Jets::init( string xmlPath, Info* infoPtr) {
+// Initialize PDF: select data file and open stream.
+
+void PomH1Jets::init( int , string xmlPath, Info* infoPtr) {
 
   // Open files from which grids should be read in.
   if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
-  ifstream isg( (xmlPath + "pomH1JetsGluon.data").c_str() );
-  ifstream isq( (xmlPath + "pomH1JetsSinglet.data").c_str() );
-  ifstream isc( (xmlPath + "pomH1JetsCharm.data").c_str() );
-  if (!isg.good() || !isq.good() || !isc.good()) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from PomH1Jets::init: "
-      "the H1 Pomeron parametrization files were not found");
-    else cout << " Error from PomH1Jets::init: "
-      << "the H1 Pomeron parametrization files were not found" << endl;
+  ifstream is( (xmlPath + "pomH1Jets.data").c_str() );
+  if (!is.good()) {
+    printErr("Error in PomH1Jets::init: did not find data file", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Initialization with a stream.
+  init( is, infoPtr);
+  is.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: read in data grid from stream and set up interpolation.
+
+void PomH1Jets::init( istream& is, Info* infoPtr) {
+
+  // Check that data stream is available.
+  if (!is.good()) {
+    printErr("Error in PomH1Jets::init: cannot read from stream", infoPtr);
     isSet = false;
     return;
   }
 
   // Read in x and Q grids. Do interpolation logarithmically in Q2.
   for (int i = 0; i < 100; ++i) {
-    isg >> setw(13) >> xGrid[i];
+    is >> setw(13) >> xGrid[i];
   }
   for (int j = 0; j < 88; ++j) {
-    isg >> setw(13) >> Q2Grid[j];
+    is >> setw(13) >> Q2Grid[j];
     Q2Grid[j] = log( Q2Grid[j] );
   }
 
   // Read in  gluon data grid.
   for (int j = 0; j < 88; ++j) {
     for (int i = 0; i < 100; ++i) {
-      isg >> setw(13) >> gluonGrid[i][j];
+      is >> setw(13) >> gluonGrid[i][j];
     }
   }
-
-  // Identical x and Q2 grid for singlet, so skip ahead.
-  double dummy;
-  for (int i = 0; i < 188; ++i) isq >> setw(13) >> dummy;
 
   // Read in singlet data grid.
   for (int j = 0; j < 88; ++j) {
     for (int i = 0; i < 100; ++i) {
-      isq >> setw(13) >> singletGrid[i][j];
+      is >> setw(13) >> singletGrid[i][j];
     }
   }
-
-  // Identical x and Q2 grid for charm, so skip ahead.
-  for (int i = 0; i < 188; ++i) isc >> setw(13) >> dummy;
 
   // Read in charm data grid.
   for (int j = 0; j < 88; ++j) {
     for (int i = 0; i < 100; ++i) {
-      isc >> setw(13) >> charmGrid[i][j];
+      is >> setw(13) >> charmGrid[i][j];
     }
   }
 
   // Check for errors during read-in of files.
-  if (!isg || !isq || !isc) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from PomH1Jets::init: "
-      "the H1 Pomeron parametrization files could not be read");
-    else cout << " Error from PomH1Jets::init: "
-      << "the H1 Pomeron parametrization files could not be read" << endl;
+  if (!is) {
+    printErr("Error in PomH1Jets::init: could not read data file", infoPtr);
     isSet = false;
     return;
   }
 
   // Done.
   isSet = true;
-  return;
+
 }
 
 //--------------------------------------------------------------------------
@@ -1978,23 +2119,42 @@ void PomH1Jets::xfUpdate(int , double x, double Q2) {
     dQ2 = (Q2Log - Q2Grid[j]) / (Q2Grid[j + 1] - Q2Grid[j]);
   }
 
-  // Interpolate to derive gluon PDF.
-  double gl = (1. - dx) * (1. - dQ2) * gluonGrid[i][j]
-            +       dx  * (1. - dQ2) * gluonGrid[i + 1][j]
-            + (1. - dx) *       dQ2  * gluonGrid[i][j + 1]
-            +       dx  *       dQ2  * gluonGrid[i + 1][j + 1];
+  // Extrapolate to small x values for gluon, singlet and charm PDF.
+  double gl, sn, ch;
+  if (xLog < xGrid[0] && doExtraPol) {
+    double dlx = (xLog - xGrid[0]) / (xGrid[1] - xGrid[0]) ;
+    gl = (1. - dQ2) * gluonGrid[0][j]
+       * pow( gluonGrid[1][j] / gluonGrid[0][j], dlx)
+       +        dQ2 * gluonGrid[0][j + 1]
+       * pow( gluonGrid[1][j + 1] / gluonGrid[0][j + 1], dlx);
+    sn = (1. - dQ2) * singletGrid[0][j]
+       * pow( singletGrid[1][j] / singletGrid[0][j], dlx)
+       +        dQ2 * singletGrid[0][j + 1]
+       * pow( singletGrid[1][j + 1] / singletGrid[0][j + 1], dlx);
+    ch = (1. - dQ2) * charmGrid[0][j]
+       * pow( charmGrid[1][j] / charmGrid[0][j], dlx)
+       +        dQ2 * charmGrid[0][j + 1]
+       * pow( charmGrid[1][j + 1] / charmGrid[0][j + 1], dlx);
 
-  // Interpolate to derive singlet PDF. (Sum of u, d, s, ubar, dbar, sbar.)
-  double sn = (1. - dx) * (1. - dQ2) * singletGrid[i][j]
-            +       dx  * (1. - dQ2) * singletGrid[i + 1][j]
-            + (1. - dx) *       dQ2  * singletGrid[i][j + 1]
-            +       dx  *       dQ2  * singletGrid[i + 1][j + 1];
+  } else {
+    // Interpolate to derive gluon PDF.
+    gl = (1. - dx) * (1. - dQ2) * gluonGrid[i][j]
+       +       dx  * (1. - dQ2) * gluonGrid[i + 1][j]
+       + (1. - dx) *       dQ2  * gluonGrid[i][j + 1]
+       +       dx  *       dQ2  * gluonGrid[i + 1][j + 1];
 
-  // Interpolate to derive charm PDF. (Charge-square times c and cbar.)
-  double ch = (1. - dx) * (1. - dQ2) * charmGrid[i][j]
-            +       dx  * (1. - dQ2) * charmGrid[i + 1][j]
-            + (1. - dx) *       dQ2  * charmGrid[i][j + 1]
-            +       dx  *       dQ2  * charmGrid[i + 1][j + 1];
+    // Interpolate to derive singlet PDF. (Sum of u, d, s, ubar, dbar, sbar.)
+    sn = (1. - dx) * (1. - dQ2) * singletGrid[i][j]
+       +       dx  * (1. - dQ2) * singletGrid[i + 1][j]
+       + (1. - dx) *       dQ2  * singletGrid[i][j + 1]
+       +       dx  *       dQ2  * singletGrid[i + 1][j + 1];
+
+    // Interpolate to derive charm PDF. (Charge-square times c and cbar.)
+    ch = (1. - dx) * (1. - dQ2) * charmGrid[i][j]
+       +       dx  * (1. - dQ2) * charmGrid[i + 1][j]
+       + (1. - dx) *       dQ2  * charmGrid[i][j + 1]
+       +       dx  *       dQ2  * charmGrid[i + 1][j + 1];
+  }
 
   // Update values.
   xg    = rescale * gl;
@@ -2057,8 +2217,13 @@ void Lepton::xfUpdate(int id, double x, double Q2) {
   else if (x > 1. - 1e-7) fPrel *= pow(1000.,beta) / (pow(1000.,beta) - 1.);
   xlepton = x * fPrel;
 
-  // Photon inside electron (one possible scheme - primitive).
-  xgamma = (0.5 * ALPHAEM / M_PI) * Q2Log * (1. + pow2(1. - x));
+  // Photons with restricted virtuality.
+  double sCM = infoPtr->s();
+  double m2s = 4 * m2Lep / sCM;
+  double Q2minGamma = 2. * m2Lep * pow2(x)
+    / ( 1. - x - m2s + sqrt(1. - m2s) * sqrt( pow2(1. - x) - m2s ) );
+  xgamma = (0.5 * ALPHAEM / M_PI) * (1. + pow2(1. - x))
+         * log( Q2maxGamma / Q2minGamma );
 
   // idSav = 9 to indicate that all flavours reset.
   idSav = 9;
@@ -2078,7 +2243,7 @@ const double NNPDF::fXMINGRID = 1e-9;
 
 //--------------------------------------------------------------------------
 
-// Initialize PDF: read in data grid from file.
+// Initialize PDF: select data file and open stream.
 
 void NNPDF::init(int iFitIn, string xmlPath, Info* infoPtr) {
 
@@ -2100,9 +2265,26 @@ void NNPDF::init(int iFitIn, string xmlPath, Info* infoPtr) {
   fstream f;
   f.open( (xmlPath + fileName).c_str(),ios::in);
   if (f.fail()) {
-    if (infoPtr != 0) infoPtr->errorMsg("Error from NNPDF::init: "
-      "did not find data file ", fileName);
-    else cout << "Error: cannot open file " << (xmlPath + fileName) << endl;
+    printErr("Error in NNPDF::init: did not find data file ", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Initialization with a stream.
+  init(f, infoPtr);
+  f.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: read in data grid from stream and set up interpolation.
+
+void NNPDF::init(istream& f, Info* infoPtr) {
+
+  // Check that data stream is available.
+  if (!f.good()) {
+    printErr("Error in NNPDF::init: cannot read from stream", infoPtr);
     isSet = false;
     return;
   }
@@ -2157,7 +2339,6 @@ void NNPDF::init(int iFitIn, string xmlPath, Info* infoPtr) {
     for (int iq = 0; iq < fNQ2; iq++)
       for (int fl = 0; fl < fNFL; fl++)
         f >> fPDFGrid[fl][ix][iq];
-  f.close();
 
   // Other vectors.
   fRes = new double[fNFL];
@@ -2358,12 +2539,12 @@ LHAPDF::LHAPDF(int idIn, string pSet, Info* infoPtrIn) :
 
   // Determine the plugin library name.
   if (pSet.size() < 8) {
-    infoPtr->errorMsg("Error from LHAPDF::LHAPDF: invalid pSet " + pSet);
+    printErr("Error in LHAPDF::LHAPDF: invalid pSet " + pSet, infoPtr);
     return;
   }
   libName = pSet.substr(0, 7);
   if (libName != "LHAPDF5" && libName != "LHAPDF6") {
-    infoPtr->errorMsg("Error from LHAPDF::LHAPDF: invalid pSet " + pSet);
+    printErr("Error in LHAPDF::LHAPDF: invalid pSet " + pSet, infoPtr);
     return;
   }
   libName = "libpythia8lhapdf" + libName.substr(6) + ".so";
@@ -2429,7 +2610,7 @@ LHAPDF::Symbol LHAPDF::symbol(string symName) {
     error = dlerror();
   }
   if (error) {
-    infoPtr->errorMsg("Error from LHAPDF::symbol: " + string(error));
+    printErr("Error in LHAPDF::symbol: " + string(error), infoPtr);
     return sym;
   }
   if (plugin == infoPtr->plugins.end())
@@ -2443,10 +2624,1058 @@ LHAPDF::Symbol LHAPDF::symbol(string symName) {
   // Load the symbol.
   sym = (Symbol)dlsym(lib, symName.c_str());
   error = dlerror();
-  if (error) infoPtr->errorMsg("Error from LHAPDF::symbol: " + string(error));
+  if (error) printErr("Error in LHAPDF::symbol: " + string(error), infoPtr);
   dlerror();
   return sym;
 
+}
+
+//==========================================================================
+
+// Gives the CJKL leading order parton distribution function set
+// in parametrized form for the real photons. Authors: F.Cornet, P.Jankowski,
+// M.Krawczyk and A.Lorca, Phys. Rev. D68: 014010, 2003.
+// Valid for 10^(-5) < x < 1 and 1 < Q^2 < 2*10^5 GeV^2.
+// Below Q^2 = 1 a logarithmic approximation in Q^2 is used.
+
+// Constants related to the fit.
+const double CJKL::ALPHAEM = 0.007297353080;
+const double CJKL::Q02     = 0.25;
+const double CJKL::Q2MIN   = 0.05;
+const double CJKL::Q2REF   = 1.0;
+const double CJKL::LAMBDA  = 0.221;
+const double CJKL::MC      = 1.3;
+const double CJKL::MB      = 4.3;
+
+//--------------------------------------------------------------------------
+
+void CJKL::xfUpdate(int , double x, double Q2) {
+
+  // Parameters:
+  double lambda2 = pow2(LAMBDA);
+
+  // When below reference scale calculate first with the reference scale and
+  // later scale with log(Q^2).
+  double Q2Save = Q2;
+  bool belowRef = (Q2 < Q2REF);
+  if ( belowRef) Q2 = Q2REF;
+
+  // Evolution variable.
+  double s = log( log(Q2/lambda2)/log(Q02/lambda2) );
+  double plLog = 9.0/(4.0*M_PI)*log(Q2/lambda2);
+
+  // Point-like contributions.
+  double plGluon   = pointlikeG(x,s);
+  double plUp      = pointlikeU(x,s);
+  double plDown    = pointlikeD(x,s);
+  double plStrange = plDown;
+
+  // Hadron-like contributions.
+  double hlGluon   = hadronlikeG(x,s);
+  double hlVal     = hadronlikeVal(x,s);
+  double hlSea     = hadronlikeSea(x,s);
+
+  // Heavy quarks. Undo the ACOT_X rescaling for DIS kinematics.
+  double xMaxC     = 1 - 6.76/(6.76 + Q2);
+  double xMaxB     = 1 - 73.96/(73.96 + Q2);
+  double plCharm   = pointlikeC(x*xMaxC,s,Q2)*xMaxC;
+  double plBottom  = pointlikeB(x*xMaxB,s,Q2)*xMaxB;
+  double hlCharm   = hadronlikeC(x*xMaxC,s,Q2)*xMaxC;
+  double hlBottom  = hadronlikeB(x*xMaxB,s,Q2)*xMaxB;
+
+  // Sum different contributions together.
+  xg     = ALPHAEM*( plLog*plGluon   + hlGluon );
+  xu     = ALPHAEM*( plLog*plUp      + 0.5*hlVal + hlSea );
+  xd     = ALPHAEM*( plLog*plDown    + 0.5*hlVal + hlSea );
+  xubar  = xu;
+  xdbar  = xd;
+  xs     = ALPHAEM*( plLog*plStrange + hlSea );
+  xsbar  = xs;
+  xc     = ALPHAEM*( plLog*plCharm   + hlCharm );
+  xb     = ALPHAEM*( plLog*plBottom  + hlBottom );
+  xgamma = 0;
+
+  // Subdivision of valence and sea.
+  xuVal = ALPHAEM*( plLog*plUp + 0.5*hlVal );
+  xuSea = ALPHAEM*( hlSea );
+  xdVal = ALPHAEM*( plLog*plDown + 0.5*hlVal );
+  xdSea = ALPHAEM*( hlSea );
+  xsVal = ALPHAEM*( plLog*plStrange );
+  xsSea = ALPHAEM*( hlSea );
+  xcVal = ALPHAEM*( plLog*plCharm );
+  xcSea = ALPHAEM*( hlCharm );
+  xbVal = ALPHAEM*( plLog*plBottom );
+  xbSea = ALPHAEM*( hlBottom );
+
+  // When below valid Q^2 values approximate scale evolution with log(Q^2).
+  // Approximation derived by integrating xf over x and calculating the
+  // derivative at Q2REF.
+  if ( belowRef) {
+    double logApprox = max( log(Q2Save/Q2MIN) / log(Q2REF/Q2MIN ), 0.);
+
+    // Scale the PDFs according to log(Q^2) approx.
+    xg    *= logApprox;
+    xd    *= logApprox;
+    xu    *= logApprox;
+    xubar *= logApprox;
+    xdbar *= logApprox;
+    xs    *= logApprox;
+    xsbar *= logApprox;
+    xc    *= logApprox;
+    xb    *= logApprox;
+    xuVal *= logApprox;
+    xuSea *= logApprox;
+    xdVal *= logApprox;
+    xdSea *= logApprox;
+    xsVal *= logApprox;
+    xsSea *= logApprox;
+    xcVal *= logApprox;
+    xcSea *= logApprox;
+    xbVal *= logApprox;
+    xbSea *= logApprox;
+  }
+
+  // idSav = 9 to indicate that all flavours reset.
+  idSav  = 9;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the x-dependence decoupled from the logarithmic scale
+// dependence to approximate the PDFs from below for ISR.
+// Currently flat in x (no second argument), could be improved.
+
+double CJKL::gammaPDFxDependence(int id, double) {
+  if      (abs(id) == 1) return 0.013 * ALPHAEM;
+  else if (abs(id) == 2) return 0.026 * ALPHAEM;
+  else if (abs(id) == 3) return 0.010 * ALPHAEM;
+  else if (abs(id) == 4) return 0.020 * ALPHAEM;
+  else if (abs(id) == 5) return 0.010 * ALPHAEM;
+  else                   return 0;
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the reference scale for the logarithmic scale dependence to
+// approximate the PDFs in ISR. Mass squared for heavy quarks and 0.2
+// for others.
+
+double CJKL::gammaPDFRefScale(int id) {
+  if      (abs(id) == 4) return pow2(MC);
+  else if (abs(id) == 5) return pow2(MB);
+  else                   return 0.20;
+}
+
+//--------------------------------------------------------------------------
+
+// Set valence content of the photon beam using parametrized Q2-dependence.
+
+int CJKL::sampleGammaValFlavor(double Q2) {
+
+  // Freeze the scale below the initial scale.
+  if(Q2 < Q02) Q2 = Q02;
+
+  // Calculate the x-integrated valence part of hadron-like contribution.
+  double lambda2 = pow2(LAMBDA);
+  double s  = log( log(Q2/lambda2)/log(Q02/lambda2) );
+  double a  =  1.0898  + 0.38087 * s;
+  double b  =  0.42654 - 1.2128  * s;
+  double c  = -1.6576  + 1.7075  * s;
+  double d  =  0.96155 + 1.8441  * s;
+  double aa =  0.78391 - 0.06872 * s;
+  double a1 = tgamma(1+aa)*tgamma(1+d)/tgamma(2+aa+d);
+  double b1 = tgamma(1.5+aa)*tgamma(1+d)/tgamma(2.5+aa+d);
+  double c1 = tgamma(2+aa)*tgamma(1+d)/tgamma(3+aa+d);
+  double xfValHad = ALPHAEM*a*(a1 + b*b1 + c*c1);
+
+  // Set the reference scales and charges.
+  double mq2[5] = { Q02, Q02, Q02, pow2(MC), pow2(MB) };
+  double eq2[5] = { 1.0/9.0, 4.0/9.0, 1.0/9.0, 4.0/9.0, 1.0/9.0 };
+
+  // For u- and d-quarks valence contribution from hadron-like part.
+  double qEvo[5] = { xfValHad/2, xfValHad/2, 0, 0, 0 };
+  double qEvoTot = 0;
+
+  // Normalization of the point-like part.
+  double plNorm = 0.000936;
+
+  // Logarithmic Q^2 evolution of gamma -> qqbar splitting for each flavor.
+  for(int i = 0;i < 5;++i) {
+    qEvo[i] += plNorm*eq2[i]*max(0.0,log(Q2/mq2[i]));
+    qEvoTot += qEvo[i];
+  }
+
+  // Sample the valence flavor.
+  double qEvoRand = qEvoTot*rndmPtr->flat();
+  for(int i = 0; i < 5; ++i) {
+    qEvoRand -= qEvo[i];
+    if(qEvoRand <= 0.0) {
+      idVal1 = i+1;
+      idVal2 = -idVal1;
+      break;
+    }
+  }
+
+  return idVal1;
+}
+
+//--------------------------------------------------------------------------
+
+// Sum of integrated PDFs \int dx x f(x,Q^2) at given scale Q^2.
+// Integrals parametrized as a0 + a1*log(Q^2/Q0^2).
+
+double CJKL::xfIntegratedTotal(double Q2){
+
+  // Freeze the scale below the initial scale.
+  if(Q2 < Q02) Q2 = Q02;
+
+  // Set the reference scales and relative contributions.
+  // Gluons and u/d quarks has some non-perturbative contribution, others
+  // only radiative contributions. Derived by fitting by eye to
+  // a0 + a1*log(Q^2/Q0^2).
+  double fq0[6] = { 0.0018, 0.0006, 0.0006, 0., 0., 0. };
+  double mq2[6] = { Q02, Q02, Q02, Q02, pow2(MC), pow2(MB) };
+  double eq2[6] = { 3.0/9.0, 1.0/9.0, 4.0/9.0, 1.0/9.0, 4.0/9.0, 1.0/9.0 };
+  double a1 = 0.000981;
+
+  // Logarithmic Q^2 evolution for each flavor. quarks two times, gluon
+  // coefficents scaled appropriately.
+  double xIntegrated = 0;
+  for(int i = 0;i < 6;++i) {
+    xIntegrated += fq0[i] + 2*a1*eq2[i]*max(0.0,log(Q2/mq2[i]));
+  }
+
+  return xIntegrated;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the point-like part of the gluon.
+
+double CJKL::pointlikeG(double x, double s) {
+
+  // Exponents.
+  double alpha1 = -0.43865;
+  double alpha2 =  2.7174;
+  double beta   =  0.36752;
+
+  // Scale dependent parameters.
+  double a  =  0.086893 - 0.34992  * s;
+  double b  =  0.010556 + 0.049525 * s;
+  double c  = -0.099005 + 0.34830  * s;
+  double d  =  1.0648   + 0.143421 * s;
+  double e  =  3.6717   + 2.5071   * s;
+  double f  =  2.1944   + 1.9358   * s;
+  double aa =  0.23679  - 0.11849  * s;
+  double bb = -0.19994  + 0.028124 * s;
+
+  // Point-like gluon parametrization.
+  return max(0.0,( pow(s,alpha1)*pow(x,aa)*( a + b*sqrt(x) + c*pow(x,bb) )
+    + pow(s,alpha2)*exp( -e + sqrt( f*pow(s,beta)*log(1.0/x) ) ) )
+    * pow(1-x,d) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the point-like part of the u-quark.
+
+double CJKL::pointlikeU(double x, double s) {
+
+  // Exponents.
+  double alpha1 = -1.0711;
+  double alpha2 =  3.1320;
+  double beta   =  0.69243;
+
+  // Scale dependent parameters.
+  double a  = -0.058266  + 0.20506  * s;
+  double b  =  0.0097377 - 0.10617  * s;
+  double c  = -0.0068345 + 0.15211  * s;
+  double d  =  0.22297   + 0.013567 * s;
+  double e  =  6.4289    + 2.2802   * s;
+  double f  =  1.7302    + 0.76997  * s;
+  double aa =  0.87940   - 0.110241 * s;
+  double bb =  2.6878    - 0.040252 * s;
+
+  // Point-like u-quark parametrization.
+  return max(0.0, ( pow(s,alpha1)*pow(x,aa)*( a + b*sqrt(x) + c*pow(x,bb) )
+    + pow(s,alpha2)*exp( -e + sqrt( f*pow(s,beta)*log(1.0/x) ) ) )
+    * pow(1-x,d) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the point-like part of the d-quark.
+
+double CJKL::pointlikeD(double x, double s) {
+
+  // Exponents.
+  double alpha1 = -1.1357;
+  double alpha2 =  3.1187;
+  double beta   =  0.66290;
+
+  // Scale dependent parameters.
+  double a  =  0.098814  - 0.067300  * s;
+  double b  = -0.092892  + 0.049949  * s;
+  double c  = -0.0066140 + 0.020427  * s;
+  double d  = -0.31385   - 0.0037558 * s;
+  double e  =  6.4671    + 2.2834    * s;
+  double f  =  1.6996    + 0.84262   * s;
+  double aa =  11.777    + 0.034760  * s;
+  double bb = -11.124    - 0.20135   * s;
+
+  // Regulate the x->1 divergence of (1-x)^d in the parameterization.
+  if(x > 0.995) x = 0.995;
+
+  // Point-like d-quark parametrization.
+  return max( 0.0, ( pow(s,alpha1)*pow(x,aa)*( a + b*sqrt(x) + c*pow(x,bb) )
+    + pow(s,alpha2)*exp( -e + sqrt( f*pow(s,beta)*log(1.0/x) ) ) )
+    * pow(1-x,d) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the point-like part of the c-quark.
+
+double CJKL::pointlikeC(double x, double s, double Q2) {
+
+  // Scaled variable for c quarks with m = 1.3 GeV.
+  double y = x + 1 - Q2/(Q2 + 6.76);
+
+  // Kinematic boundary.
+  if (y >= 1.0) return 0;
+
+  // Declaration of parameters.
+  double alpha1, alpha2, beta, a, b, c, d, e, f, aa, bb;
+
+  // Parameters for Q^2 <= 10 GeV^2.
+  if (Q2 <= 10) {
+
+    // Exponents.
+    alpha1 = 2.9808;
+    alpha2 = 28.682;
+    beta   = 2.4863;
+
+    // Scale dependent parameters.
+    a  = -0.18826   + 0.13565  * s;
+    b  =  0.18508   - 0.11764  * s;
+    c  = -0.0014153 - 0.011510 * s;
+    d  = -0.48961   + 0.18810  * s;
+    e  =  0.20911   - 2.8544   * s + 14.256 *s*s;
+    f  =  2.7644    + 0.93717  * s;
+    aa = -7.6307    + 5.6807   * s;
+    bb =  394.58    - 541.82   * s + 200.82 *s*s;
+
+  // Parameters for Q^2 > 10 GeV^2.
+  } else {
+
+    // Exponents.
+    alpha1 = -1.8095;
+    alpha2 =  7.9399;
+    beta   =  0.041563;
+
+    // Scale dependent parameters.
+    a  = -0.54831  + 0.33412  * s;
+    b  =  0.19484  + 0.041562 * s;
+    c  = -0.39046  + 0.37194  * s;
+    d  =  0.12717  + 0.059280 * s;
+    e  =  8.7191   + 3.0194   * s;
+    f  =  4.2616   + 0.73993  * s;
+    aa = -0.30307  + 0.29430  * s;
+    bb =  7.2383   - 1.5995   * s;
+  }
+
+  // Point-like c-quark parametrization.
+  return max( 0.0, ( pow(s,alpha1)*pow(y,aa)*( a + b*sqrt(y) + c*pow(y,bb) )
+    + pow(s,alpha2)*exp( -e + sqrt( f*pow(s,beta)*log(1.0/x) ) ) )
+    * pow(1-y,d) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the point-like part of the b-quark.
+
+double CJKL::pointlikeB(double x, double s, double Q2) {
+
+  //Scaled variable for b quarks with m = 4.3 GeV.
+  double y = x + 1 - Q2/(Q2 + 73.96);
+
+  // Kinematic boundary.
+  if (y >= 1.0) return 0;
+
+  // Declaration of parameters.
+  double alpha1, alpha2, beta, a, b, c, d, e, f, aa, bb;
+
+  // Parameters for Q^2 <= 100 GeV^2.
+  if (Q2 <= 100) {
+
+    // Exponents.
+    alpha1 =  2.2849;
+    alpha2 =  6.0408;
+    beta   = -0.11577;
+
+    // Scale dependent parameters.
+    a  = -0.26971   + 0.17942   * s;
+    b  =  0.27033   - 0.18358   * s + 0.0061059 *s*s;
+    c  =  0.0022862 - 0.0016837 * s;
+    d  =  0.30807   - 0.10490   * s;
+    e  =  14.812    - 1.2977    * s;
+    f  =  1.7148    + 2.3532    * s + 0.053734  *sqrt(s);
+    aa =  3.8140    - 1.0514    * s;
+    bb =  2.2292    + 20.194    * s;
+
+  // Parameters for Q^2 > 100 GeV^2.
+  } else {
+
+    // Exponents.
+    alpha1 = -5.0607;
+    alpha2 =  16.590;
+    beta   =  0.87190;
+
+    // Scale dependent parameters.
+    a  = -0.72790  + 0.36549  * s;
+    b  = -0.62903  + 0.56817  * s;
+    c  = -2.4467   + 1.6783   * s;
+    d  =  0.56575  - 0.19120  * s;
+    e  =  1.4687   + 9.6071   * s;
+    f  =  1.1706   + 0.99674  * s;
+    aa = -0.084651 - 0.083206 * s;
+    bb =  9.6036   - 3.4864   * s;
+  }
+
+  // Point-like b-quark parametrization.
+  return max( 0.0, ( pow(s,alpha1)*pow(y,aa)*( a + b*sqrt(y) + c*pow(y,bb) )
+    + pow(s,alpha2)*exp( -e + sqrt( f*pow(s,beta)*log(1.0/x) ) ) )
+    * pow(1-y,d) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the hadron-like part of the gluon pdf.
+
+double CJKL::hadronlikeG(double x, double s) {
+
+  // Exponents.
+  double alpha = 0.59945;
+  double beta  = 1.1285;
+
+  // Scale dependent parameters.
+  double a  = -0.19898 + 0.57414 * s;
+  double b  =  1.9942  - 1.8306  * s;
+  double c  = -1.9848  + 1.4136  * s;
+  double d  =  0.21294 + 2.7450  * s;
+  double e  =  1.2287  + 2.4447  * s;
+  double f  =  4.9230  + 0.18526 * s;
+  double aa = -0.34948 + 0.47058 * s;
+
+  // Hadron-like gluon parametrization.
+  return max( 0.0, pow(1-x,d)*( pow(x,aa)*( a + b*sqrt(x) + c*x )
+    + pow(s,alpha)*exp( -e + sqrt( f*pow(s,beta)*log(1.0/x) ) ) ) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the hadron-like part of the valence quarks.
+
+double CJKL::hadronlikeVal(double x, double s) {
+
+  // Scale dependent parameters.
+  double a  =  1.0898  + 0.38087  * s;
+  double b  =  0.42654 - 1.2128   * s;
+  double c  = -1.6576  + 1.7075   * s;
+  double d  =  0.96155 + 1.8441   * s;
+  double aa =  0.78391 - 0.068720 * s;
+
+  // Hadron-like valence quarks parametrization.
+  return max( 0.0, pow(1-x,d)*pow(x,aa)*a*( 1 + b*sqrt(x) + c*x ) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the hadron-like part of the sea quarks.
+
+double CJKL::hadronlikeSea(double x, double s) {
+
+  // Exponents.
+  double alpha = 0.71660;
+  double beta  = 1.0497;
+
+  // Scale dependent parameters.
+  double a  =  0.60478 + 0.036160 * s;
+  double b  =  4.2106  - 0.85835  * s;
+  double d  =  4.1494  + 0.34866  * s;
+  double e  =  4.5179  + 1.9219   * s;
+  double f  =  5.2812  - 0.15200  * s;
+  double aa =  0.72289 - 0.21562  * s;
+
+  // Pre-calculate the logarithm.
+  double logx = log(1.0/x);
+
+  // Hadron-like sea quark parametrization.
+  return max( 0.0, pow(1-x,d)*pow(s,alpha)*( 1 + a*sqrt(x) + b*x )
+    * exp( -e + sqrt( f*pow(s,beta)*logx ) )*pow(logx,-aa) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the hadron-like part of the c-quarks.
+
+double CJKL::hadronlikeC(double x, double s, double Q2) {
+
+  //Scaled variable for c quarks with m = 1.3 GeV.
+  double y = x + 1 - Q2/(Q2 + 6.76);
+
+  // Kinematic boundary.
+  if (y >= 1.0) return 0;
+
+  // Pre-calculate the logarithm.
+  double logx = log(1.0/x);
+
+  // Declaration of parameters.
+  double alpha, beta, a, b, d, e, f, aa;
+
+  // Parameters for Q^2 <= 10 GeV^2.
+  if (Q2 <= 10) {
+
+    // Exponents.
+    alpha = 5.6729;
+    beta  = 1.4575;
+
+    // Scale dependent parameters.
+    a  = -2586.4 + 1910.1  * s;
+    b  =  2695.0 - 1688.2  * s;
+    d  =  1.5146 + 3.1028  * s;
+    e  = -3.9185 + 11.738  * s;
+    f  =  3.6126 - 1.0291  * s;
+    aa =  1.6248 - 0.70433 * s;
+
+  // Parameters for Q^2 > 10 GeV^2.
+  } else {
+
+    // Exponents.
+    alpha = -1.6470;
+    beta  =  0.72738;
+
+    // Scale dependent parameters.
+    a  = -2.0561  + 0.75576 * s;
+    b  =  2.1266  + 0.66383 * s;
+    d  =  3.0301  - 1.7499  * s + 1.6466  *s*s;
+    e  =  4.1282  + 1.6929  * s - 0.26292 *s*s;
+    f  =  0.89599 + 1.2761  * s - 0.15061 *s*s;
+    aa = -0.78809 + 0.90278 * s;
+
+  }
+
+  // Hadron-like c-quark parametrization. Note typo in the CJKL paper.
+  return max( 0.0, pow(1-y,d)*pow(s,alpha)*( 1 + a*sqrt(y) + b*y )
+    * exp( -e + f*sqrt( pow(s,beta)*logx ) )*pow(logx,-aa) );
+}
+
+//--------------------------------------------------------------------------
+
+// Returns the hadron-like part of the b-quarks.
+
+double CJKL::hadronlikeB(double x, double s, double Q2) {
+
+  // Scaled variable for b quarks with m = 4.3 GeV.
+  double y = x + 1 - Q2/(Q2 + 73.96);
+
+  // Kinematic boundary.
+  if (y >= 1.0) return 0;
+
+  // Pre-calculate the logarithm.
+  double logx = log(1.0/x);
+
+  // Declaration of parameters.
+  double alpha, beta, a, b, d, e, f, aa;
+
+  // Parameters for Q^2 <= 100 GeV^2.
+  if (Q2 <= 100) {
+
+    // Exponents.
+    alpha = -10.210;
+    beta  = -2.2296;
+
+    // Scale dependent parameters.
+    a  = -99.613  + 171.25   * s;
+    b  =  492.61  - 420.45   * s;
+    d  =  3.3917  + 0.084256 * s;
+    e  =  5.6829  - 0.23571  * s;
+    f  = -2.0137  + 4.6955   * s;
+    aa =  0.82278 + 0.081818 * s;
+
+  // Parameters for Q^2 > 100 GeV^2.
+  } else {
+
+    // Exponents.
+    alpha = 2.4198;
+    beta  = 0.40703;
+
+    // Scale dependent parameters.
+    a  = -2.1109  + 1.2711  * s;
+    b  =  9.0196  - 3.6082  * s;
+    d  =  3.6455  - 4.1353  * s + 2.3615  *s*s;
+    e  =  4.6196  + 2.4212  * s;
+    f  =  0.66454 + 1.1109  * s;
+    aa = -0.98933 + 0.42366 * s + 0.15817 *s*s;
+  }
+
+  // Hadron-like b-quark parametrization. Note typo in the CJKL paper.
+  return max( 0.0, pow(1-y,d)*pow(s,alpha)*( 1 + a*sqrt(y) + b*y )
+    * exp( -e + f*sqrt( pow(s,beta)*logx ) )*pow(logx,-aa) );
+}
+
+//==========================================================================
+
+// The LHAGrid1 class.
+// Codes to read files i the LHAPDF6 lhagrid1 format,
+// assuming that the same x grid is used for all Q subgrids.
+// Results are not identical with LHAPDF6, owing do different interpolation.
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: select data file and open stream.
+
+void LHAGrid1::init(string pdfWord, string xmlPath, Info* infoPtr) {
+
+  // Identify whether file number or name.
+  if (pdfWord.length() > 9 && toLower(pdfWord).substr(0,9) == "lhagrid1:")
+    pdfWord = pdfWord.substr(9, pdfWord.length() - 9);
+  istringstream pdfStream(pdfWord);
+  int pdfSet = 0;
+  pdfStream >> pdfSet;
+
+  // Input is file name.
+  string dataFile = "";
+  if ( xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+  if (pdfWord[0] == '/') dataFile = pdfWord;
+  else if (pdfSet == 0) dataFile = xmlPath + pdfWord;
+
+  // Input is fit number. Current selection for tryout only.
+  //else if (pdfSet == 1) dataFile = xmlPath+"hf_pdf_0000.dat";
+  //else if (pdfSet == 2) dataFile = xmlPath+"NNPDF23_lo_as_0119_qed_0000.dat";
+
+  // Open files from which grids should be read in.
+  ifstream is( dataFile.c_str() );
+  if (!is.good()) {
+    printErr("Error in LHAGrid1::init: did not find data file", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Initialization with a stream.
+  init( is, infoPtr);
+  is.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize PDF: read in data grid from stream and set up interpolation.
+
+void LHAGrid1::init(istream& is, Info* infoPtr) {
+
+  // Check that data stream is available.
+  if (!is.good()) {
+    printErr("Error in LHAGrid1::init: cannot read from stream", infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Some local variables.
+  string line;
+  vector<string> idlines, pdflines;
+  int nqNow, idNow, idNowMap;
+  double xNow, qNow, pdfNow;
+
+  // Skip lines of header, until ---. Probe for next subgrid in Q space.
+  nqSub = 0;
+  do getline( is, line);
+  while (line.find("---") == string::npos);
+  if (!is.good()) {
+    printErr("Error in LHAGrid1::init: could not read data file", infoPtr);
+    isSet = false;
+    return;
+  }
+  while (getline( is, line)) {
+    ++nqSub;
+
+    // Read in x grid; save for first, check it matches for later ones.
+    istringstream isx(line);
+    if (nqSub == 1) {
+      while (isx >> xNow) {
+        xGrid.push_back( xNow);
+        lnxGrid.push_back( log(xNow));
+      }
+      nx   = xGrid.size();
+      xMin = xGrid.front();
+      xMax = xGrid.back();
+    } else {
+      int ixc = -1;
+      while (isx >> xNow)
+      if ( abs(log(xNow) - lnxGrid[++ixc]) > 1e-5) {
+        printErr("Error in LHAGrid1::init: mismatched subgrid x spacing",
+          infoPtr);
+        isSet = false;
+        return;
+      }
+    }
+
+    // Read in Q grid; append as needed. Check that subgrids match.
+    getline( is, line);
+    istringstream isq(line);
+    nqNow = 0;
+    while (isq >> qNow) {
+      ++nqNow;
+      qGrid.push_back( qNow);
+      lnqGrid.push_back( log(qNow));
+    }
+    if (nqSub > 1) {
+      if (abs(qGrid[nq] / qGrid[nq-1] - 1.) > 1e-5) {
+        printErr("Error in LHAGrid1::init: mismatched subgrid Q borders",
+          infoPtr);
+        isSet = false;
+        return;
+      }
+      qGrid[nq-1] = 0.5 * (qGrid[nq-1] + qGrid[nq]);
+      qGrid[nq]   = qGrid[nq-1];
+    }
+    nq   = qGrid.size();
+    qMin = qGrid.front();
+    qMax = qGrid.back();
+    nqSum.push_back(nq);
+    qDiv.push_back(qMax);
+
+    // Read in and store flavour mapping and pdf data. Separator line.
+    getline( is, line);
+    idlines.push_back( line);
+    for (int ixq = 0; ixq < nx * nqNow; ++ixq) {
+      getline( is, line);
+      pdflines.push_back( line);
+    }
+    getline( is, line);
+  }
+
+  // Create array big enough to hold (flavour, x, Q) grid.
+  pdfGrid = new double**[12];
+  for (int iid = 0; iid < 12; ++iid) {
+    pdfGrid[iid] = new double*[nx];
+    for (int ix = 0; ix < nx; ++ix) {
+      pdfGrid[iid][ix] = new double[nq];
+      for (int iq = 0; iq < nq; ++iq) pdfGrid[iid][ix][iq] = 0.;
+    }
+  }
+
+  // Second pass through the Q subranges.
+  int iln = -1;
+  for (int iqSub = 0; iqSub < nqSub; ++iqSub) {
+    vector<int> idGridMap;
+
+    // Study flavour grid and decide flavour mapping.
+    istringstream isid( idlines[iqSub] );
+    while (isid >> idNow) {
+      idNowMap = -1;
+      if (idNow == 21 || idNow == 0) idNowMap = 0;
+      if (idNow > 0 && idNow < 6) idNowMap = idNow;
+      if (idNow < 0 && idNow > -6) idNowMap = 5 - idNow;
+      if (idNow == 22) idNowMap = 11;
+      idGridMap.push_back( idNowMap);
+    }
+    int nid = idGridMap.size();
+
+    // Read in data grid, line by line.
+    int iq0 = (iqSub == 0) ? 0 : nqSum[iqSub - 1];
+    for (int ix = 0; ix < nx; ++ix)
+    for (int iq = iq0; iq < nqSum[iqSub]; ++iq) {
+      istringstream ispdf( pdflines[++iln] );
+      for (int iid = 0; iid < nid; ++iid) {
+        ispdf >> pdfNow;
+        if (idGridMap[iid] >= 0) pdfGrid[idGridMap[iid]][ix][iq] = pdfNow;
+      }
+    }
+  }
+
+  // For extrapolation to small x: create array for b values of x^b shape.
+  pdfSlope = new double*[12];
+  for (int iid = 0; iid < 12; ++iid) {
+    pdfSlope[iid] = new double[nq];
+    for (int iq = 0; iq < nq; ++iq) { pdfSlope[iid][iq] =
+      ( min( pdfGrid[iid][0][iq], pdfGrid[iid][1][iq]) > 1e-5)
+      ? ( log(pdfGrid[iid][1][iq]) - log(pdfGrid[iid][0][iq]) )
+      / (lnxGrid[1] - lnxGrid[0]) : 0.;
+    }
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+void LHAGrid1::xfUpdate(int , double x, double Q2) {
+
+  // No PDF values if not properly set up.
+  if (!isSet) {
+    xg = xu = xd = xubar = xdbar = xs = xsbar = xc = xb = xgamma
+    = xuVal = xuSea = xdVal = xdSea = 0.;
+    return;
+  }
+
+  // Update within allowed (x, q) range.
+  xfxevolve( x, Q2);
+
+  // Then transfer to Pythia8 notation.
+  xg     = pdfVal[0];
+  xu     = pdfVal[2];
+  xd     = pdfVal[1];
+  xubar  = pdfVal[7];
+  xdbar  = pdfVal[6];
+  xs     = pdfVal[3];
+  xsbar  = pdfVal[8];
+  xc     = 0.5 * (pdfVal[4] + pdfVal[9]);
+  xb     = 0.5 * (pdfVal[5] + pdfVal[10]);
+  xgamma = pdfVal[11];
+
+  // Subdivision of valence and sea.
+  xuVal  = xu - xubar;
+  xuSea  = xubar;
+  xdVal  = xd - xdbar;
+  xdSea  = xdbar;
+
+  // idSav = 9 to indicate that all flavours reset.
+  idSav  = 9;
+
+}
+
+//--------------------------------------------------------------------------
+
+void LHAGrid1::xfxevolve(double x, double Q2) {
+
+  // Find if (x, Q) inside our outside grid.
+  double q = sqrt(Q2);
+  int inx  = (x <= xMin) ? -1 : ((x >= xMax) ? 1 : 0);
+  int inq  = (q <= qMin) ? -1 : ((q >= qMax) ? 1 : 0);
+
+  // Set up default for x interpolation.
+  int    minx  = 0;
+  int    maxx  = nx - 1;
+  int    m3x   = 0;
+  double wx[4] = {1., 1., 1., 1.};
+
+  // Find grid value on either side of x.
+  if (inx == 0) {
+    int midx;
+    while (maxx - minx > 1) {
+      midx = (minx + maxx) / 2;
+      if (x < xGrid[midx]) maxx = midx;
+      else                 minx = midx;
+    }
+
+    // Weights for cubic interpolation in ln(x).
+    double lnx = log(x);
+    if      (minx == 0)      m3x = 0;
+    else if (maxx == nx - 1) m3x = nx - 4;
+    else                     m3x = minx - 1;
+    for (int i3 = 0; i3 < 4; ++i3)
+    for (int j = 0; j < 4; ++j) if (j != i3)
+      wx[i3] *= (lnx - lnxGrid[m3x+j]) / (lnxGrid[m3x+i3] - lnxGrid[m3x+j]);
+  }
+
+  // Find q subgrid and set up default for q interpolation.
+  int    iqDiv = 0;
+  for (int iqSub = 1; iqSub < nqSub; ++iqSub)
+    if (q > qDiv[iqSub - 1]) iqDiv = iqSub;
+  int    minS  = (iqDiv == 0) ? 0 : nqSum[iqDiv - 1];
+  int    maxS  = nqSum[iqDiv] - 1;
+  int    minq  = minS;
+  int    maxq  = maxS;
+  int    n3q   = 4;
+  int    m3q   = 0.;
+  double wq[4] = {1., 1., 1., 1.};
+
+  // Find grid value on either side of q.
+  if (inq == 0) {
+    int midq;
+    while (maxq - minq > 1) {
+      midq = (minq + maxq) / 2;
+      if (q < qGrid[midq]) maxq = midq;
+      else                 minq = midq;
+    }
+
+    // Weights for linear or cubic interpolation in ln(q).
+    double lnq = log(q);
+    if (maxS - minS < 3) {
+      n3q = 2;
+      m3q = minq;
+      wq[1] = (lnq - lnqGrid[minq]) / (lnqGrid[maxq] - lnqGrid[minq]);
+      wq[0] = 1. - wq[1];
+    } else {
+      if      (minq == minS) m3q = minS;
+      else if (maxq == maxS) m3q = maxS - 3;
+      else                   m3q = minq - 1;
+      for (int i3 = 0; i3 < 4; ++i3)
+      for (int j = 0; j < 4; ++j) if (j != i3)
+        wq[i3] *= (lnq - lnqGrid[m3q+j]) / (lnqGrid[m3q+i3] - lnqGrid[m3q+j]);
+    }
+
+  // Freeze at border of q range.
+  } else {
+    n3q = 1;
+    if (inq == 1) m3q = nq - 1;
+  }
+
+  // Interpolate between grid elements, normally bicubic, or simpler in ln(q).
+  for (int iid = 0; iid < 12; ++iid) pdfVal[iid] = 0.;
+  if (inx == 0) {
+    for (int iid = 0; iid < 12; ++iid)
+    for (int i3x = 0; i3x < 4; ++i3x)
+    for (int i3q = 0; i3q < n3q; ++i3q)
+      pdfVal[iid] += wx[i3x] * wq[i3q] * pdfGrid[iid][m3x+i3x][m3q+i3q];
+
+  // Special: extrapolate to small x. (Let vanish at large x, so no such code.)
+  } else if (inx == -1) {
+    for (int iid = 0; iid < 12; ++iid)
+    for (int i3q = 0; i3q < n3q; ++i3q)
+      pdfVal[iid] += wq[i3q] * pdfGrid[iid][0][m3q+i3q]
+        * (doExtraPol ? pow( x / xMin, pdfSlope[iid][m3q+i3q]) : 1.);
+  }
+
+}
+
+//==========================================================================
+
+// Convolution with photon flux from leptons and photon PDFs.
+// Contains a pointer to a photon PDF set and samples the
+// convolution integral event-by-event basis.
+// Includes also a overestimate for the PDF set in order to set up
+// the phase-space sampling correctly.
+
+// Constants related to the fit.
+const double Lepton2gamma::ALPHAEM = 0.007297353080;
+const double Lepton2gamma::Q2MIN   = 1.;
+
+//--------------------------------------------------------------------------
+
+// Update PDFs and sample a value for x_gamma.
+
+void Lepton2gamma::xfUpdate(int , double x, double Q2){
+
+  // Find the maximum x value at given Q2max and sqrt(s).
+  double sCM = infoPtr->s();
+  double xGamMax = Q2max / (2. * m2lepton)
+    * (sqrt( (1. + 4. * m2lepton / Q2max) * (1. - 4. * m2lepton / sCM) ) - 1.);
+
+  // If outside allowed x values set PDFs to zero.
+  if ( x > xGamMax ) {
+    xg     = 0.;
+    xd     = 0.;
+    xu     = 0.;
+    xs     = 0.;
+    xc     = 0.;
+    xb     = 0.;
+    xubar  = 0.;
+    xdbar  = 0.;
+    xsbar  = 0.;
+    xGm    = 1.;
+    return;
+  }
+
+  // Pre-calculate some logs.
+  double log2x    = pow2( log( Q2max / (m2lepton * pow2(x)) ) );
+  double log2xMax = pow2( log( Q2max / (m2lepton * pow2(xGamMax)) ) );
+
+  // Sample x_gamma.
+  if ( sampleXgamma) {
+    xGm = sqrt( (Q2max / m2lepton)
+      * exp( -sqrt( log2x + rndmPtr->flat() * (log2xMax - log2x) ) ) );
+  }
+
+  // Evaluate the PDFs at x/x_gamma.
+  double xInGamma = x/xGm;
+  double xgGm = gammaPDFPtr->xf(21, xInGamma, Q2);
+  double xdGm = gammaPDFPtr->xf(1 , xInGamma, Q2);
+  double xuGm = gammaPDFPtr->xf(2 , xInGamma, Q2);
+  double xsGm = gammaPDFPtr->xf(3 , xInGamma, Q2);
+  double xcGm = gammaPDFPtr->xf(4 , xInGamma, Q2);
+  double xbGm = gammaPDFPtr->xf(5 , xInGamma, Q2);
+
+  // Calculate the Q^2_min for sampled x_gamma.
+  double m2s   = 4. * m2lepton / sCM;
+  double Q2min = 2. * m2lepton * pow2(xGm)
+    / ( 1. - xGm - m2s + sqrt(1. - m2s) * sqrt( pow2(1. - xGm) - m2s ) );
+
+  // Correct with weight.
+  double alphaLog = (ALPHAEM / (2. * M_PI)) * (1. + pow2(1. - xGm) )
+    * 0.25 * (log2x - log2xMax) * log(Q2max / Q2min)
+    / log( Q2max / ( m2lepton * pow2(xGm) ) );
+
+  // Calculate the PDF value.
+  xg = alphaLog * xgGm;
+  xd = alphaLog * xdGm;
+  xu = alphaLog * xuGm;
+  xs = alphaLog * xsGm;
+  xc = alphaLog * xcGm;
+  xb = alphaLog * xbGm;
+  xubar  = xu;
+  xdbar  = xd;
+  xsbar  = xs;
+
+  // Photon inside electron not currently implemented (Use point-like lepton).
+  xgamma = 0;
+
+  // idSav = 9 to indicate that all flavours reset.
+  idSav = 9;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Approximate the maximum of convoluted PDF to correctly set up the
+// sampling of the phase space.
+
+double Lepton2gamma::xfMax(int id, double x, double Q2){
+
+  // Find the maximum x value at given Q2max and sqrt(s).
+  double sCM = infoPtr->s();
+  double xGamMax = Q2max / (2. * m2lepton)
+    * (sqrt( (1. + 4. * m2lepton / Q2max) * (1. - 4. * m2lepton / sCM) ) - 1.);
+
+  // Set PDFs to zero outside allowed x values.
+  if ( x > xGamMax ) return 0;
+
+  // Pre-calculate some logs.
+  double log2x    = pow2( log( Q2max / (m2lepton * pow2(x)) ) );
+  double log2xMax = pow2( log( Q2max / (m2lepton * pow2(xGamMax)) ) );
+
+  // Find approximate x-behaviour for each flavour. Optimized for CJKL.
+  double xApprox = 0.;
+  int idAbs = abs(id);
+  if      (idAbs == 21 || idAbs == 0) xApprox = 2.35;
+  else if (idAbs == 1) xApprox = (pow(x, 0.2) + pow(1. - x, -0.15)) * 0.8;
+  else if (idAbs == 2) xApprox = (pow(x, 1.0) + pow(1. - x, -0.4))  * 0.4;
+  else if (idAbs == 3) xApprox = (pow(x, 0.2) + pow(1. - x, -0.5))  * 0.5;
+  else if (idAbs == 4) xApprox = (pow(x, 1.0) + pow(1. - x, -0.4))  * 0.7;
+  else if (idAbs == 5) xApprox = (pow(x, 0.2) + pow(1.  -x, -0.5))  * 0.5;
+  else xApprox = 0.;
+
+  // Direct photons in usual lepton PDFs.
+  if ( idAbs == 22 ) return 0;
+
+  // Return the approximation.
+  return (ALPHAEM / (2. * M_PI)) * (log2x - log2xMax) * 0.5
+    * gammaPDFPtr->xf(id, x, Q2) / xApprox;
+}
+
+//--------------------------------------------------------------------------
+
+// Return PDF without sampling x_gamma values to compute cross section with
+// rescaled sHat. Not very elegant but no need to modify the xfUpdate call.
+
+double Lepton2gamma::xfSame(int id, double x, double Q2){
+  sampleXgamma = false;
+  xfUpdate(id, x, Q2);
+  double xfNow = xf(id, x, Q2);
+  sampleXgamma = true;
+  return xfNow;
 }
 
 //==========================================================================

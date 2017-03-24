@@ -55,11 +55,11 @@ inputs is
 <p/> 
  &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>SpaceShower:pTmaxMatch = 1</code> 
 <p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>SpaceShower:pTmaxFudge = 1</code> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>SpaceShower:pTmaxFudge = 1.</code> 
 <p/> 
  &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>TimeShower:pTmaxMatch = 1</code> 
 <p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>TimeShower:pTmaxFudge = 1</code> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>TimeShower:pTmaxFudge = 1.</code> 
 <p/> 
  &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; 
 <code>SpaceShower:MEcorrections = off</code> 
@@ -67,7 +67,10 @@ inputs is
  &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; 
 <code>TimeShower:MEcorrections = off</code> 
 <p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;  <code>TimeShower:globalRecoil = on</code> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>TimeShower:globalRecoil = on</code> 
+<p/> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; 
+<code>TimeShower:weightGluonToQuark = 1</code> 
 <p/> 
  
 and further (process-specific) settings related global recoils. 
@@ -75,10 +78,10 @@ and further (process-specific) settings related global recoils.
 <p/> 
 Some comments are in order. The settings 
 <code>SpaceShower:pTmaxMatch = 1</code>, 
-<code>SpaceShower:pTmaxFudge = 1</code>, 
+<code>SpaceShower:pTmaxFudge = 1.</code>, 
 <code>TimeShower:pTmaxMatch = 1</code>, 
-<code>TimeShower:pTmaxFudge = 1</code> are included to ensure that the correct 
-parton shower startig scale (i.e. the scale set when generating the 
+<code>TimeShower:pTmaxFudge = 1.</code> are included to ensure that the 
+correct parton shower starting scale (i.e. the scale set when generating the 
 subtractions in MC@NLO) is used within Pythia. Note that the last three 
 options are default in Pythia8, and that the first option differs from the 
 default only if the input state does not contain final state partons. 
@@ -92,7 +95,7 @@ global recoil scheme, and because it is not viable to include process-specific
 shower probabilities in an automatic framewrok like aMC@NLO. 
  
 <p/> 
-Finally, <code>TimeShower:globalRecoil = on</code> is necessary. Formally, it 
+<code>TimeShower:globalRecoil = on</code> is necessary. Formally, it 
 is allowed to switch back to a local recoil treatment beyond the first 
 proposed emission of any of the hard scattering partons in Born-type events. 
 Pythia offers three choices at which stage the global recoil is dropped in 
@@ -104,8 +107,12 @@ echo "<a href='TimelikeShowers.php?filepath=".$filepath."' target='page'>";?>Tim
 for details on these options. 
 <p/> 
  
+<p/> 
+Finally, <code>TimeShower:weightGluonToQuark = 1</code> is not default any 
+longer, but was it at the time the subtractions were first implemented, 
+and so is required  for consistency until further notice. 
  
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

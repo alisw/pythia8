@@ -178,9 +178,9 @@ All settings can be transferred to <code>main89.cc</code> through an input
 file. The input file is part of the command line input of 
 <code>main89.cc</code>, i.e. you can execute <code>main89</code> with the 
 command 
-</p> 
+<p/> 
 <code>./main89 myInputFile.cmnd myhepmc.hepmc</code> 
-</p> 
+<p/> 
  
 to read the input <code>myInputFile.cmnd</code> and produce the output file 
 <code>myhepmc.hepmc</code> . Since <code>main89.cc</code> is currently a 
@@ -281,4 +281,4 @@ consult <aloc href="UNLOPSMerging">UMEPS merging</aloc> and
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

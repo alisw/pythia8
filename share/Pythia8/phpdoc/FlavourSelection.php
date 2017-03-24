@@ -27,16 +27,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 
 <form method='post' action='FlavourSelection.php'>
  
-<h2>Flavour Selection</h2> 
+<h2>Flavour Selection for Gaussian <i>pT</i> Distribution</h2> 
  
 The <code>StringFlav</code> class handles the choice of a new flavour 
 in the fragmentation process, and the production of a new hadron 
 from a set of input flavours. It is mainly used by the string 
 fragmentation machinery (including ministrings), but also e.g. 
 in some particle decays and for some beam-remnant cases. The basic 
-concepts are in agreement with [<a href="Bibliography.php" target="page">And83</a>]. The baryon-sector 
-implementation is based on the <code>MSTJ(12)=3</code> option of 
-PYTHIA 6, i.e. new SU(6) weights scheme with at most one popcorn meson. 
+concepts are in agreement with [<a href="Bibliography.php" target="page">And83</a>]. An alternative 
+"thermal model" is described further below. 
  
 <p/> 
 The relative production rates of different particle species is 
@@ -393,6 +392,70 @@ jet, i.e. <i>c</i> or <i>b</i>, when
 production at all, while 1 means full rate. 
    
  
+<h2>Flavour Selection for Thermal <i>pT</i> Distribution</h2> 
+ 
+If the hadronic <i>pT</i> is generated according to the non-default 
+thermal distribution, i.e. if <code>StringPT:thermalModel = on</code>, 
+the choice of a new flavour in the fragmentation process, and the 
+production of a new hadron from a set of input flavours, depends mainly on 
+the hadron mass [<a href="Bibliography.php" target="page">Fis16</a>]. For a given <i>pT</i> value the new 
+flavour is chosen according to 
+<br/><i> 
+  exp( -mT_had/T) = exp( - sqrt( pT_had^2 + mT_had^2 )/T). 
+</i><br/> 
+Here <i>T</i> is primarily given by <code>StringPT:temperature</code>, 
+but can be further modified in the context of closely packed strings, 
+<code>StringPT:closePacking = on</code>. 
+Additional factors are included from theory arguments, for instance 
+the ratio of vector-to-pseudocalar meson production is set according 
+to spin-counting rules. 
+Note that the octet-singlet mixing angles in the light-quark meson 
+nonets are taken from the parameters above. 
+Currently popcorn production has not been implemented, i.e. a baryon 
+and an antibaryon are nearest neighbours in the flavour fragmentation 
+chain, and share the flavours of one diquark. 
+In addition the following two factors are introduced to provide an 
+improved description of the flavour composition, although not as good 
+as obtained in the default Gaussian scenario, with its bigger selection 
+of free parameters. 
+ 
+<p/> 
+<br/><br/><table><tr><td><strong>StringFlav:BtoMratio </td><td></td><td> <input type="text" name="41" value="0.357" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.357</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.0</code>)</td></tr></table>
+Ratio of the relative rate of baryon to meson production, i.e. every 
+baryon Clebsch-Gordan coefficient gets multiplied by this factor. 
+   
+ 
+<p/> 
+<br/><br/><table><tr><td><strong>StringFlav:StrangeSuppression </td><td></td><td> <input type="text" name="42" value="0.5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.5</strong></code>; <code>minimum = 0.01</code>; <code>maximum = 1.0</code>)</td></tr></table>
+Extra suppression factor for strange quarks. Note that in case of more 
+than one strange quark in the hadron the factor gets squared or tripled 
+respectively. 
+   
+ 
+<p/> 
+The following parameters are used to determine which hadrons to choose 
+from. By default only the pseudoscalar and vector meson nonet (L=0) 
+and baryons with u/d/s quarks are included. For an already-existing 
+heavier flavour, say c or b, this corresponds to picking only u/d/s 
+for the new quark(s). 
+<br/><b>Note:</b> The computer time for selecting the flavour of new 
+hadrons goes linearly with the number of hadrons included. Therefore 
+we recommend sticking to the default options as heavier hadrons are 
+produced less likely anyway. 
+ 
+<p/><code>mode&nbsp; </code><strong> StringFlav:nQuark &nbsp;</strong> 
+ (<code>default = <strong>3</strong></code>; <code>minimum = 3</code>; <code>maximum = 5</code>)<br/>
+Selects the newly produced quark flavours that may be included in hadrons. 
+The default corresponds to only include u/d/s quarks. 
+   
+ 
+<br/><br/><strong>StringFlav:mesonNonetL1</strong>  <input type="radio" name="43" value="on"><strong>On</strong>
+<input type="radio" name="43" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Switch on to include the pseudovector, scalar, pseudovector, and tensor 
+nonet (L=1). 
+   
+ 
 <input type="hidden" name="saved" value="1"/>
 
 <?php
@@ -608,6 +671,21 @@ if($_POST["40"] != "0.9")
 $data = "StringFlav:heavyLeadingBSup = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
+if($_POST["41"] != "0.357")
+{
+$data = "StringFlav:BtoMratio = ".$_POST["41"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["42"] != "0.5")
+{
+$data = "StringFlav:StrangeSuppression = ".$_POST["42"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["43"] != "off")
+{
+$data = "StringFlav:mesonNonetL1 = ".$_POST["43"]."\n";
+fwrite($handle,$data);
+}
 fclose($handle);
 }
 
@@ -615,4 +693,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

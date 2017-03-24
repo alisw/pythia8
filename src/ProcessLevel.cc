@@ -1,5 +1,5 @@
 // ProcessLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -44,10 +44,10 @@ ProcessLevel::~ProcessLevel() {
 bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
   BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+  BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
   Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn, bool doLHA,
   SLHAinterface* slhaInterfacePtrIn, UserHooks* userHooksPtrIn,
-  vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs,
-  ostream& os) {
+  vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs) {
 
   // Store input pointers for future use.
   infoPtr          = infoPtrIn;
@@ -60,6 +60,17 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   userHooksPtr     = userHooksPtrIn;
   slhaInterfacePtr = slhaInterfacePtrIn;
 
+  // Check whether photon inside lepton.
+  bool isLepton2gamma = settings.flag("PDF:lepton2gamma");
+
+  // initialize gammaKinematics when relevant.
+  if (isLepton2gamma)
+    gammaKin.init(infoPtr, &settings, rndmPtr, beamAPtr, beamBPtr);
+
+  // Initialize variables related photon-inside-lepton.
+  beamGamAPtr      = beamGamAPtrIn;
+  beamGamBPtr      = beamGamBPtrIn;
+
   // Send on some input pointers.
   resonanceDecays.init( infoPtr, particleDataPtr, rndmPtr);
 
@@ -68,7 +79,8 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   int    idA = infoPtr->idA();
   int    idB = infoPtr->idB();
   double eCM = infoPtr->eCM();
-  sigmaTotPtr->calc( idA, idB, eCM);
+  if (isLepton2gamma) sigmaTotPtr->calc( 22, 22, eCM);
+  else sigmaTotPtr->calc( idA, idB, eCM);
   sigmaND = sigmaTotPtr->sigmaND();
 
   // Options to allow second hard interaction and resonance decays.
@@ -76,6 +88,12 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   doSameCuts    = settings.flag("PhaseSpace:sameForSecond");
   doResDecays   = settings.flag("ProcessLevel:resonanceDecays");
   startColTag   = settings.mode("Event:startColTag");
+
+  // Check whether ISR or MPI applied. Affects processes with photon beams.
+  doISR         = ( settings.flag("PartonLevel:ISR")
+                &&  settings.flag("PartonLevel:all") );
+  doMPI         = ( settings.flag("PartonLevel:MPI")
+                &&  settings.flag("PartonLevel:all") );
 
   // Second interaction not to be combined with biased phase space.
   if (doSecondHard && userHooksPtr != 0
@@ -165,7 +183,7 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
     if (containerPtrs[i]->isSUSY()) hasSUSY = true;
 
   // If SUSY processes requested but no SUSY couplings present
-  if(hasSUSY && !couplingsPtr->isSUSY) {
+  if (hasSUSY && !couplingsPtr->isSUSY) {
     infoPtr->errorMsg("Error in ProcessLevel::init: "
       "SUSY process switched on but no SUSY couplings found");
     return false;
@@ -179,7 +197,8 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   for (int i = 0; i < int(containerPtrs.size()); ++i)
     if (containerPtrs[i]->init(true, infoPtr, settings, particleDataPtr,
       rndmPtr, beamAPtr, beamBPtr, couplingsPtr, sigmaTotPtr,
-      &resonanceDecays, slhaInterfacePtr, userHooksPtr)) ++numberOn;
+      &resonanceDecays, slhaInterfacePtr, userHooksPtr, &gammaKin))
+      ++numberOn;
 
   // Sum maxima for Monte Carlo choice.
   sigmaMaxSum = 0.;
@@ -198,7 +217,9 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
     for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
       if (container2Ptrs[i2]->init(false, infoPtr, settings, particleDataPtr,
         rndmPtr, beamAPtr, beamBPtr, couplingsPtr, sigmaTotPtr,
-        &resonanceDecays, slhaInterfacePtr, userHooksPtr)) ++number2On;
+        &resonanceDecays, slhaInterfacePtr, userHooksPtr, &gammaKin))
+        ++number2On;
+
     sigma2MaxSum = 0.;
     for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
       sigma2MaxSum += container2Ptrs[i2]->sigmaMax();
@@ -213,28 +234,28 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
     string pad( 51 - collision.length(), ' ');
 
     // Print initialization information: header.
-    os << "\n *-------  PYTHIA Process Initialization  ---------"
-       << "-----------------*\n"
-       << " |                                                   "
-       << "               |\n"
-       << " | " << collision << scientific << setprecision(3)
-       << setw(9) << eCM << " GeV" << pad << " |\n"
-       << " |                                                   "
-       << "               |\n"
-       << " |---------------------------------------------------"
-       << "---------------|\n"
-       << " |                                                   "
-       << " |             |\n"
-       << " | Subprocess                                    Code"
-       << " |   Estimated |\n"
-       << " |                                                   "
-       << " |    max (mb) |\n"
-       << " |                                                   "
-       << " |             |\n"
-       << " |---------------------------------------------------"
-       << "---------------|\n"
-       << " |                                                   "
-       << " |             |\n";
+    cout << "\n *-------  PYTHIA Process Initialization  ---------"
+         << "-----------------*\n"
+         << " |                                                   "
+         << "               |\n"
+         << " | " << collision << scientific << setprecision(3)
+         << setw(9) << eCM << " GeV" << pad << " |\n"
+         << " |                                                   "
+         << "               |\n"
+         << " |---------------------------------------------------"
+         << "---------------|\n"
+         << " |                                                   "
+         << " |             |\n"
+         << " | Subprocess                                    Code"
+         << " |   Estimated |\n"
+         << " |                                                   "
+         << " |    max (mb) |\n"
+         << " |                                                   "
+         << " |             |\n"
+         << " |---------------------------------------------------"
+         << "---------------|\n"
+         << " |                                                   "
+         << " |             |\n";
 
     // Loop over existing processes: print individual process info.
     map<int, double> sigmaMaxM;
@@ -246,19 +267,19 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
         containerPtrs[i]->sigmaMax() : sigmaMaxM[code];
     }
     for (map<int, string>::iterator i = nameM.begin(); i != nameM.end(); ++i)
-      os << " | " << left << setw(45) << i->second
-         << right << setw(5) << i->first << " | "
-         << scientific << setprecision(3) << setw(11)
-         << sigmaMaxM[i->first] << " |\n";
+      cout << " | " << left << setw(45) << i->second
+           << right << setw(5) << i->first << " | "
+           << scientific << setprecision(3) << setw(11)
+           << sigmaMaxM[i->first] << " |\n";
 
     // Loop over second hard processes, if any, and repeat as above.
     if (doSecondHard) {
-      os << " |                                                   "
-         << " |             |\n"
-         << " |---------------------------------------------------"
-         <<"---------------|\n"
-         << " |                                                   "
-         <<" |             |\n";
+      cout << " |                                                   "
+           << " |             |\n"
+           << " |---------------------------------------------------"
+           <<"---------------|\n"
+           << " |                                                   "
+           <<" |             |\n";
       sigmaMaxM.clear();
       nameM.clear();
       for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2) {
@@ -269,17 +290,17 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
       }
       for (map<int, string>::iterator i2 = nameM.begin(); i2 != nameM.end();
            ++i2)
-        os << " | " << left << setw(45) << i2->second
-           << right << setw(5) << i2->first << " | "
-           << scientific << setprecision(3) << setw(11)
-           << sigmaMaxM[i2->first] << " |\n";
+        cout << " | " << left << setw(45) << i2->second
+             << right << setw(5) << i2->first << " | "
+             << scientific << setprecision(3) << setw(11)
+             << sigmaMaxM[i2->first] << " |\n";
     }
 
     // Listing finished.
-    os << " |                                                     "
-       << "             |\n"
-       << " *-------  End PYTHIA Process Initialization ----------"
-       <<"-------------*" << endl;
+    cout << " |                                                     "
+         << "             |\n"
+         << " *-------  End PYTHIA Process Initialization ----------"
+         <<"-------------*" << endl;
   }
 
   // If sum of maxima vanishes then refuse to do anything.
@@ -378,10 +399,10 @@ bool ProcessLevel::nextLHAdec( Event& process) {
 
 // Accumulate and update statistics (after possible user veto).
 
-void ProcessLevel::accumulate() {
+void ProcessLevel::accumulate( bool doAccumulate) {
 
   // Increase number of accepted events.
-  containerPtrs[iContainer]->accumulate();
+  if (doAccumulate) containerPtrs[iContainer]->accumulate();
 
   // Provide current generated cross section estimate.
   long   nTrySum    = 0;
@@ -401,9 +422,9 @@ void ProcessLevel::accumulate() {
     nTryNow         = containerPtrs[i]->nTried();
     nSelNow         = containerPtrs[i]->nSelected();
     nAccNow         = containerPtrs[i]->nAccepted();
-    sigmaNow        = containerPtrs[i]->sigmaMC();
-    deltaNow        = containerPtrs[i]->deltaMC();
-    sigSelNow       = containerPtrs[i]->sigmaSelMC();
+    sigmaNow        = containerPtrs[i]->sigmaMC(doAccumulate);
+    deltaNow        = containerPtrs[i]->deltaMC(doAccumulate);
+    sigSelNow       = containerPtrs[i]->sigmaSelMC(doAccumulate);
     weightNow       = containerPtrs[i]->weightSum();
     nTrySum        += nTryNow;
     nSelSum        += nSelNow;
@@ -432,7 +453,7 @@ void ProcessLevel::accumulate() {
   }
 
   // Increase counter for a second hard interaction.
-  container2Ptrs[i2Container]->accumulate();
+  if (doAccumulate) container2Ptrs[i2Container]->accumulate();
 
   // Update statistics on average impact factor.
   ++nImpact;
@@ -445,8 +466,8 @@ void ProcessLevel::accumulate() {
   for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
   if (container2Ptrs[i2]->sigmaMax() != 0.) {
     nTrySum        += container2Ptrs[i2]->nTried();
-    sigma2Sum      += container2Ptrs[i2]->sigmaMC();
-    sig2SelSum     += container2Ptrs[i2]->sigmaSelMC();
+    if (doAccumulate) sigma2Sum  += container2Ptrs[i2]->sigmaMC();
+    if (doAccumulate) sig2SelSum += container2Ptrs[i2]->sigmaSelMC();
   }
 
   // Average impact-parameter factor and error.
@@ -471,29 +492,29 @@ void ProcessLevel::accumulate() {
 
 // Print statistics on cross sections and number of events.
 
-void ProcessLevel::statistics(bool reset, ostream& os) {
+void ProcessLevel::statistics(bool reset) {
 
   // Special processing if two hard interactions selected.
   if (doSecondHard) {
-    statistics2(reset, os);
+    statistics2(reset);
     return;
   }
 
   // Header.
-  os << "\n *-------  PYTHIA Event and Cross Section Statistics  ------"
-     << "-------------------------------------------------------*\n"
-     << " |                                                            "
-     << "                                                     |\n"
-     << " | Subprocess                                    Code |       "
-     << "     Number of events       |      sigma +- delta    |\n"
-     << " |                                                    |       "
-     << "Tried   Selected   Accepted |     (estimated) (mb)   |\n"
-     << " |                                                    |       "
-     << "                            |                        |\n"
-     << " |------------------------------------------------------------"
-     << "-----------------------------------------------------|\n"
-     << " |                                                    |       "
-     << "                            |                        |\n";
+  cout << "\n *-------  PYTHIA Event and Cross Section Statistics  ------"
+       << "-------------------------------------------------------*\n"
+       << " |                                                            "
+       << "                                                     |\n"
+       << " | Subprocess                                    Code |       "
+       << "     Number of events       |      sigma +- delta    |\n"
+       << " |                                                    |       "
+       << "Tried   Selected   Accepted |     (estimated) (mb)   |\n"
+       << " |                                                    |       "
+       << "                            |                        |\n"
+       << " |------------------------------------------------------------"
+       << "-----------------------------------------------------|\n"
+       << " |                                                    |       "
+       << "                            |                        |\n";
 
   // Reset sum counters.
   long   nTrySum   = 0;
@@ -538,45 +559,45 @@ void ProcessLevel::statistics(bool reset, ostream& os) {
   // Print internal process info.
   for (map<int, string>::iterator i = nameM.begin(); i != nameM.end(); ++i) {
     int code = i->first;
-    os << " | " << left << setw(45) << i->second
-       << right << setw(5) << code << " | "
-       << setw(11) << nTryM[code] << " " << setw(10) << nSelM[code] << " "
-       << setw(10) << nAccM[code] << " | " << scientific << setprecision(3)
-       << setw(11) << sigmaM[code]
-       << setw(11) << sqrtpos(delta2M[code]) << " |\n";
+    cout << " | " << left << setw(45) << i->second
+         << right << setw(5) << code << " | "
+         << setw(11) << nTryM[code] << " " << setw(10) << nSelM[code] << " "
+         << setw(10) << nAccM[code] << " | " << scientific << setprecision(3)
+         << setw(11) << sigmaM[code]
+         << setw(11) << sqrtpos(delta2M[code]) << " |\n";
   }
 
   // Print Les Houches process info.
   for (int i = 0; i < int(lheContainerPtrs.size()); ++i) {
     ProcessContainer *ptr = lheContainerPtrs[i];
-    os << " | " << left << setw(45) << ptr->name()
-       << right << setw(5) << ptr->code() << " | "
-       << setw(11) << ptr->nTried() << " " << setw(10) << ptr->nSelected()
-       << " " << setw(10) << ptr->nAccepted() << " | " << scientific
-       << setprecision(3) << setw(11) << ptr->sigmaMC() << setw(11)
-       << ptr->deltaMC() << " |\n";
+    cout << " | " << left << setw(45) << ptr->name()
+         << right << setw(5) << ptr->code() << " | "
+         << setw(11) << ptr->nTried() << " " << setw(10) << ptr->nSelected()
+         << " " << setw(10) << ptr->nAccepted() << " | " << scientific
+         << setprecision(3) << setw(11) << ptr->sigmaMC() << setw(11)
+         << ptr->deltaMC() << " |\n";
 
     // Print subdivision by user code for Les Houches process.
     for (int j = 0; j < ptr->codeLHASize(); ++j)
-      os << " |    ... whereof user classification code " << setw(10)
-         << ptr->subCodeLHA(j) << " | " << setw(11) << ptr->nTriedLHA(j)
-         << " " << setw(10) << ptr->nSelectedLHA(j) << " " << setw(10)
-         << ptr->nAcceptedLHA(j) << " |                        | \n";
+      cout << " |    ... whereof user classification code " << setw(10)
+           << ptr->subCodeLHA(j) << " | " << setw(11) << ptr->nTriedLHA(j)
+           << " " << setw(10) << ptr->nSelectedLHA(j) << " " << setw(10)
+           << ptr->nAcceptedLHA(j) << " |                        | \n";
   }
 
   // Print summed process info.
-  os << " |                                                    |       "
-     << "                            |                        |\n"
-     << " | " << left << setw(50) << "sum" << right << " | " << setw(11)
-     << nTrySum << " " << setw(10) << nSelSum << " " << setw(10)
-     << nAccSum << " | " << scientific << setprecision(3) << setw(11)
-     << sigmaSum << setw(11) << sqrtpos(delta2Sum) << " |\n";
+  cout << " |                                                    |       "
+       << "                            |                        |\n"
+       << " | " << left << setw(50) << "sum" << right << " | " << setw(11)
+       << nTrySum << " " << setw(10) << nSelSum << " " << setw(10)
+       << nAccSum << " | " << scientific << setprecision(3) << setw(11)
+       << sigmaSum << setw(11) << sqrtpos(delta2Sum) << " |\n";
 
   // Listing finished.
-  os << " |                                                            "
-     << "                                                     |\n"
-     << " *-------  End PYTHIA Event and Cross Section Statistics -----"
-     << "-----------------------------------------------------*" << endl;
+  cout << " |                                                            "
+       << "                                                     |\n"
+       << " *-------  End PYTHIA Event and Cross Section Statistics -----"
+       << "-----------------------------------------------------*" << endl;
 
   // Optionally reset statistics contants.
   if (reset) resetStatistics();
@@ -658,6 +679,19 @@ bool ProcessLevel::nextOne( Event& process) {
 
     // Add any junctions to the process event record list.
     if (physical) findJunctions( process);
+
+    // Check that enough room for beam remnants in the photon beams and
+    // set the valence content for photon beams.
+    // Do not check for softQCD processes since no initiators yet.
+    if ( ( ( ( beamAPtr->isGamma() && !(beamAPtr->isUnresolved()) )
+          || ( beamBPtr->isGamma() && !(beamBPtr->isUnresolved()) ) )
+        || ( beamAPtr->hasResGamma() || beamBPtr->hasResGamma() ) )
+        && !(containerPtrs[iContainer]->isNonDiffractive()) ) {
+      if ( !roomForRemnants() ) {
+        physical = false;
+        continue;
+      }
+    }
 
     // Outer loop should normally work first time around.
     if (physical) break;
@@ -825,6 +859,172 @@ bool ProcessLevel::nextTwo( Event& process) {
   }
 
   // Done.
+  return physical;
+}
+
+//--------------------------------------------------------------------------
+
+// Check that enough room for beam remnants is left and fix the valence
+// content for photon beams.
+
+bool ProcessLevel::roomForRemnants() {
+
+  // Set the beamParticle pointers to photon beams.
+  bool beamAhasResGamma = beamAPtr->hasResGamma();
+  bool beamBhasResGamma = beamBPtr->hasResGamma();
+  bool beamHasResGamma  = beamAhasResGamma || beamBhasResGamma;
+  BeamParticle* tmpBeamAPtr = beamAhasResGamma ? beamGamAPtr : beamAPtr;
+  BeamParticle* tmpBeamBPtr = beamBhasResGamma ? beamGamBPtr : beamBPtr;
+
+  // Check whether photons are unresolved.
+  bool resGammaA = !(beamGamAPtr->isUnresolved());
+  bool resGammaB = !(beamGamBPtr->isUnresolved());
+
+  // Get the x_gamma values from beam particle.
+  double xGamma1 = beamAPtr->xGamma();
+  double xGamma2 = beamBPtr->xGamma();
+
+  // Clear the previous choice.
+  tmpBeamAPtr->posVal(-1);
+  tmpBeamBPtr->posVal(-1);
+
+  // Store the relevant information.
+  int id1 = containerPtrs[iContainer]->id1();
+  int id2 = containerPtrs[iContainer]->id2();
+  double x1 = containerPtrs[iContainer]->x1();
+  double x2 = containerPtrs[iContainer]->x2();
+  double Q2 = containerPtrs[iContainer]->Q2Fac();
+
+  // Invariant mass of gamma-gamma system.
+  double eCMgmgm  = infoPtr->eCM();
+
+  // If photon(s) from beam particle(s) use the derived gmgm CM energy.
+  if (beamHasResGamma) eCMgmgm = infoPtr->eCMsub();
+
+  // Calculate the mT left for the beams after hard interaction.
+  double mTRem = 0;
+
+  // Direct-resolved processes with photons from lepton beams.
+  if ( ( (resGammaA && !resGammaB) || (!resGammaA && resGammaB) )
+    && beamHasResGamma ){
+    double wTot   = infoPtr->eCMsub();
+    double w2scat = infoPtr->sHatNew();
+    mTRem = wTot - sqrt(w2scat);
+
+  // Direct-resolved processes with photons beams.
+  } else if ( tmpBeamAPtr->isUnresolved() && !tmpBeamBPtr->isUnresolved() ) {
+    mTRem = eCMgmgm*( 1. - sqrt( x2) );
+  } else if ( !tmpBeamAPtr->isUnresolved() && tmpBeamBPtr->isUnresolved() ) {
+    mTRem = eCMgmgm*( 1. - sqrt( x1) );
+
+  // Resolved-resolved processes.
+  } else {
+
+    // Photons from lepton beams.
+    if ( beamAhasResGamma && beamAhasResGamma){
+
+      // Rescale the x_gamma values according to the new invariant mass
+      // of the gamma+gamma system and rescale x values.
+      double sCM      = infoPtr->s();
+      x1 /= xGamma1 * pow2(eCMgmgm) / ( xGamma1 * xGamma2 * sCM);
+      x2 /= xGamma2 * pow2(eCMgmgm) / ( xGamma1 * xGamma2 * sCM);
+    }
+
+    // Invariant mass left with resolved photons.
+    mTRem = eCMgmgm * sqrt( (1. - x1)*(1. - x2) );
+  }
+
+  // Initial values.
+  double m1 = 0, m2 = 0;
+  bool physical = false;
+
+  // If no ISR or MPI decide the valence content according to the hard process.
+  if ( !doISR && !doMPI ) {
+
+    // For physical process a few tries for the valence content should suffice.
+    int nTry = 0, maxTry = 4;
+
+    while (!physical) {
+
+      // Check whether the hard parton is a valence quark and if not use the
+      // parametrization for the valence flavor ratios.
+      bool init1Val = tmpBeamAPtr->gammaInitiatorIsVal(0, id1, x1, Q2);
+      bool init2Val = tmpBeamBPtr->gammaInitiatorIsVal(0, id2, x2, Q2);
+
+      // If no ISR is generated must leave room for beam remnants.
+      // Calculate the required amount of energy for three different cases:
+      // Hard parton is a valence quark:   Remnant mass = m_val.
+      // Hard parton is a gluon:           Remnant mass = 2*m_val.
+      // Hard parton is not valence quark: Remnant mass = 2*m_val + m_hard.
+      // Unresolved photon:                Remnant mass = 0.
+      if ( !resGammaA) {
+        m1 = 0;
+      } else if (init1Val) {
+        m1 = particleDataPtr->m0(id1);
+      } else {
+        m1 = 2*( particleDataPtr->m0( tmpBeamAPtr->getGammaValFlavour() ) );
+        if (id1 != 21) m1 += particleDataPtr->m0(id1);
+      }
+      if ( !resGammaB) {
+        m2 = 0;
+      } else if (init2Val) {
+        m2 = particleDataPtr->m0(id2);
+      } else {
+        m2 = 2*( particleDataPtr->m0( tmpBeamBPtr->getGammaValFlavour() ) );
+        if (id2 != 21) m2 += particleDataPtr->m0(id2);
+      }
+
+      // Check whether room for remnants.
+      physical = ( (m1 + m2) < mTRem );
+
+      // Check that maximum number of trials not exceeded.
+      ++nTry;
+      if (nTry == maxTry) {
+        if ( abs(id1) == 5 || abs(id2) == 5 ) {
+          infoPtr->errorMsg("Warning in ProcessLevel::roomForRemnants: "
+            "No room for bottom quarks in beam remnants");
+        } else if ( abs(id1) == 4 || abs(id2) == 4 ) {
+          infoPtr->errorMsg("Warning in ProcessLevel::roomForRemnants: "
+            "No room for charm quarks in beam remnants");
+        } else {
+          infoPtr->errorMsg("Warning in ProcessLevel::roomForRemnants: "
+            "No room for light quarks in beam remnants");
+        }
+        break;
+      }
+    }
+
+  // With ISR or MPI the initiator list can change so reject only
+  // process which will surely fail.
+  } else {
+
+    // Do not allow processes that ISR cannot turn into physical one.
+    int idLight = 2;
+    m1 = (id1 == 21) ? 2*( particleDataPtr->m0( idLight ) ) :
+      particleDataPtr->m0( id1 );
+    m2 = (id2 == 21) ? 2*( particleDataPtr->m0( idLight ) ) :
+      particleDataPtr->m0( id2 );
+
+    // No remnants needed for direct photons.
+    if ( !resGammaA) m1 = 0;
+    if ( !resGammaB) m2 = 0;
+
+    // Check whether room for remnants.
+    physical = ( (m1 + m2) < mTRem );
+    if (physical == false) {
+      if ( abs(id1) == 5 || abs(id2) == 5 ) {
+        infoPtr->errorMsg("Warning in ProcessLevel::roomForRemnants: "
+          "No room for bottom quarks in beam remnants");
+      } else if ( abs(id1) == 4 || abs(id2) == 4 ) {
+        infoPtr->errorMsg("Warning in ProcessLevel::roomForRemnants: "
+          "No room for charm quarks in beam remnants");
+      } else {
+        infoPtr->errorMsg("Warning in ProcessLevel::roomForRemnants: "
+          "No room for light quarks in beam remnants");
+      }
+    }
+  }
+
   return physical;
 }
 
@@ -1173,7 +1373,7 @@ bool ProcessLevel::checkColours( Event& process) {
 
 // Print statistics when two hard processes allowed.
 
-void ProcessLevel::statistics2(bool reset, ostream& os) {
+void ProcessLevel::statistics2(bool reset) {
 
   // Average impact-parameter factor and error.
   double invN          = 1. / max(1, nImpact);
@@ -1203,24 +1403,24 @@ void ProcessLevel::statistics2(bool reset, ostream& os) {
   double rel2Err       = sqrt(1. / max(1, n1SelSum) + impactErr2);
 
   // Header.
-  os << "\n *-------  PYTHIA Event and Cross Section Statistics  ------"
-     << "--------------------------------------------------*\n"
-     << " |                                                            "
-     << "                                                |\n"
-     << " | Subprocess                               Code |            "
-     << "Number of events       |      sigma +- delta    |\n"
-     << " |                                               |       Tried"
-     << "   Selected   Accepted |     (estimated) (mb)   |\n"
-     << " |                                               |            "
-     << "                       |                        |\n"
-     << " |------------------------------------------------------------"
-     << "------------------------------------------------|\n"
-     << " |                                               |            "
-     << "                       |                        |\n"
-     << " | First hard process:                           |            "
-     << "                       |                        |\n"
-     << " |                                               |            "
-     << "                       |                        |\n";
+  cout << "\n *-------  PYTHIA Event and Cross Section Statistics  ------"
+       << "--------------------------------------------------*\n"
+       << " |                                                            "
+       << "                                                |\n"
+       << " | Subprocess                               Code |            "
+       << "Number of events       |      sigma +- delta    |\n"
+       << " |                                               |       Tried"
+       << "   Selected   Accepted |     (estimated) (mb)   |\n"
+       << " |                                               |            "
+       << "                       |                        |\n"
+       << " |------------------------------------------------------------"
+       << "------------------------------------------------|\n"
+       << " |                                               |            "
+       << "                       |                        |\n"
+       << " | First hard process:                           |            "
+       << "                       |                        |\n"
+       << " |                                               |            "
+       << "                       |                        |\n";
 
   // Reset sum counters.
   long   nTrySum   = 0;
@@ -1257,34 +1457,34 @@ void ProcessLevel::statistics2(bool reset, ostream& os) {
   // Print first process info.
   for (map<int, string>::iterator i = nameM.begin(); i != nameM.end(); ++i) {
     int code = i->first;
-    os << " | " << left << setw(40) << i->second
-       << right << setw(5) << code << " | "
-       << setw(11) << nTryM[code] << " " << setw(10) << nSelM[code] << " "
-       << setw(10) << nAccM[code] << " | " << scientific << setprecision(3)
-       << setw(11) << sigmaM[code]
-       << setw(11) << sqrtpos(delta2M[code]) << " |\n";
+    cout << " | " << left << setw(40) << i->second
+         << right << setw(5) << code << " | "
+         << setw(11) << nTryM[code] << " " << setw(10) << nSelM[code] << " "
+         << setw(10) << nAccM[code] << " | " << scientific << setprecision(3)
+         << setw(11) << sigmaM[code]
+         << setw(11) << sqrtpos(delta2M[code]) << " |\n";
   }
 
   // Print summed info for first processes.
   delta2Sum       += pow2( sigmaSum * rel1Err );
-  os << " |                                               |            "
-     << "                       |                        |\n"
-     << " | " << left << setw(45) << "sum" << right << " | " << setw(11)
-     << nTrySum << " " << setw(10) << nSelSum << " " << setw(10)
-     << nAccSum << " | " << scientific << setprecision(3) << setw(11)
-     << sigmaSum << setw(11) << sqrtpos(delta2Sum) << " |\n";
+  cout << " |                                               |            "
+       << "                       |                        |\n"
+       << " | " << left << setw(45) << "sum" << right << " | " << setw(11)
+       << nTrySum << " " << setw(10) << nSelSum << " " << setw(10)
+       << nAccSum << " | " << scientific << setprecision(3) << setw(11)
+       << sigmaSum << setw(11) << sqrtpos(delta2Sum) << " |\n";
 
   // Separation lines to second hard processes.
-  os << " |                                               |            "
-     << "                       |                        |\n"
-     << " |------------------------------------------------------------"
-     << "------------------------------------------------|\n"
-     << " |                                               |            "
-     << "                       |                        |\n"
-     << " | Second hard process:                          |            "
-     << "                       |                        |\n"
-     << " |                                               |            "
-     << "                       |                        |\n";
+  cout << " |                                               |            "
+       << "                       |                        |\n"
+       << " |------------------------------------------------------------"
+       << "------------------------------------------------|\n"
+       << " |                                               |            "
+       << "                       |                        |\n"
+       << " | Second hard process:                          |            "
+       << "                       |                        |\n"
+       << " |                                               |            "
+       << "                       |                        |\n";
 
   // Reset sum counters.
   nTrySum   = 0;
@@ -1325,42 +1525,42 @@ void ProcessLevel::statistics2(bool reset, ostream& os) {
   for (map<int, string>::iterator i2 = nameM.begin(); i2 != nameM.end();
     ++i2) {
     int code = i2->first;
-    os << " | " << left << setw(40) << i2->second
-       << right << setw(5) << code << " | "
-       << setw(11) << nTryM[code] << " " << setw(10) << nSelM[code] << " "
-       << setw(10) << nAccM[code] << " | " << scientific << setprecision(3)
-       << setw(11) << sigmaM[code]
-       << setw(11) << sqrtpos(delta2M[code]) << " |\n";
+    cout << " | " << left << setw(40) << i2->second
+         << right << setw(5) << code << " | "
+         << setw(11) << nTryM[code] << " " << setw(10) << nSelM[code] << " "
+         << setw(10) << nAccM[code] << " | " << scientific << setprecision(3)
+         << setw(11) << sigmaM[code]
+         << setw(11) << sqrtpos(delta2M[code]) << " |\n";
   }
 
   // Print summed info for second processes.
   delta2Sum       += pow2( sigmaSum * rel2Err );
-  os << " |                                               |            "
-     << "                       |                        |\n"
-     << " | " << left << setw(45) << "sum" << right << " | " << setw(11)
-     << nTrySum << " " << setw(10) << nSelSum << " " << setw(10)
-     << nAccSum << " | " << scientific << setprecision(3) << setw(11)
-     << sigmaSum << setw(11) << sqrtpos(delta2Sum) << " |\n";
+  cout << " |                                               |            "
+       << "                       |                        |\n"
+       << " | " << left << setw(45) << "sum" << right << " | " << setw(11)
+       << nTrySum << " " << setw(10) << nSelSum << " " << setw(10)
+       << nAccSum << " | " << scientific << setprecision(3) << setw(11)
+       << sigmaSum << setw(11) << sqrtpos(delta2Sum) << " |\n";
 
   // Print information on how the two processes were combined.
-  os << " |                                               |            "
-     << "                       |                        |\n"
-     << " |------------------------------------------------------------"
-     << "------------------------------------------------|\n"
-     << " |                                                            "
-     << "                                                |\n"
-     << " | Uncombined cross sections for the two event sets were "
-     << setw(10) << sigma1SelSum << " and " << sigma2SelSum << " mb, "
-     << "respectively, combined  |\n"
-     << " | using a sigma(nonDiffractive) of " << setw(10) << sigmaND
-     << " mb and an impact-parameter enhancement factor of "
-     << setw(10) << impactFac << ".   |\n";
+  cout << " |                                               |            "
+       << "                       |                        |\n"
+       << " |------------------------------------------------------------"
+       << "------------------------------------------------|\n"
+       << " |                                                            "
+       << "                                                |\n"
+       << " | Uncombined cross sections for the two event sets were "
+       << setw(10) << sigma1SelSum << " and " << sigma2SelSum << " mb, "
+       << "respectively, combined  |\n"
+       << " | using a sigma(nonDiffractive) of " << setw(10) << sigmaND
+       << " mb and an impact-parameter enhancement factor of "
+       << setw(10) << impactFac << ".   |\n";
 
   // Listing finished.
-  os << " |                                                            "
-     << "                                                |\n"
-     << " *-------  End PYTHIA Event and Cross Section Statistics -----"
-     << "------------------------------------------------*" << endl;
+  cout << " |                                                            "
+       << "                                                |\n"
+       << " *-------  End PYTHIA Event and Cross Section Statistics -----"
+       << "------------------------------------------------*" << endl;
 
   // Optionally reset statistics contants.
   if (reset) resetStatistics();

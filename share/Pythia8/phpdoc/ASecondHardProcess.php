@@ -79,21 +79,25 @@ Standard QCD <i>2 &rarr; 2</i> processes involving gluons and
 <input type="radio" name="3" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 A prompt photon recoiling against a quark or gluon jet. 
+   
  
 <br/><br/><strong>SecondHard:TwoPhotons</strong>  <input type="radio" name="4" value="on"><strong>On</strong>
 <input type="radio" name="4" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Two prompt photons recoiling against each other. 
+   
  
 <br/><br/><strong>SecondHard:Charmonium</strong>  <input type="radio" name="5" value="on"><strong>On</strong>
 <input type="radio" name="5" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Production of charmonium via colour singlet and colour octet channels. 
+   
  
 <br/><br/><strong>SecondHard:Bottomonium</strong>  <input type="radio" name="6" value="on"><strong>On</strong>
 <input type="radio" name="6" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Production of bottomonium via colour singlet and colour octet channels. 
+   
  
 <br/><br/><strong>SecondHard:SingleGmZ</strong>  <input type="radio" name="7" value="on"><strong>On</strong>
 <input type="radio" name="7" value="off" checked="checked"><strong>Off</strong>
@@ -566,4 +570,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

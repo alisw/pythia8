@@ -127,11 +127,12 @@ method should be provided with the list of relevant particles.</li>
  
 <li><code>isVisible</code>: a flag telling whether a particle species 
 is to be considered as visible in a detector or not, as used e.g. in 
-analysis routines. By default this includes neutrinos and a few BSM 
-particles (gravitino, sneutrinos, neutralinos) that have neither strong 
-nor electromagnetic charge, and are not made up of constituents that 
-have it. The value of this flag is only relevant if a particle is 
-long-lived enough actually to make it to a detector.</li> 
+analysis routines. By default the invisibles include neutrinos, 
+Dark Matter particles (codes 51 - 60) and a few BSM particles (gravitino, 
+sneutrinos, neutralinos) that have neither strong nor electromagnetic 
+charge, and are not made up of constituents that have it. The value of 
+this flag is only relevant if a particle is long-lived enough actually 
+to make it to a detector.</li> 
  
 <li><code>doForceWidth</code>: a flag applicable only for resonances 
 (see <code>isResonance</code> above), whereby it is possible to force 
@@ -550,24 +551,40 @@ quantity of the expected type.
 the constructor has no arguments and does not do anything. Internal. 
 </method> 
  
+<method name="ParticleData& operator=( const ParticleData& particleDataIn)"> 
+copy the database from an existing <code>ParticleData</code> object. 
+Can be useful when running with multiple <code>Pythia</code> instances. 
+Does not include the links to the resonance decay handling set up by 
+<code>initWidths(...)</code>. 
+</method> 
+ 
 <method name="void ParticleData::initPtr(Info* infoPtr, 
 Settings* settingsPtrIn, Rndm* rndmPtrIn, CoupSM* coupSMPtrIn)"> 
 initialize pointers to a few other classes. Internal. 
 </method> 
  
 <method name="bool ParticleData::init(string 
-startFile = &quot;../xmldoc/ParticleData.xml&quot;)"> 
+startFile = &quot;../share/Pythia8/xmldoc/ParticleData.xml&quot;)"> 
 read in an XML-style file with particle data and initialize the 
 particle data tables accordingly. This command is executed 
 in the <code>Pythia</code> constructor, i.e. is mainly for 
 internal use. 
-<argument name="startFile" default ="../xmldoc/ParticleData.xml"> 
+<argument name="startFile" default ="../share/Pythia8/xmldoc/ParticleData.xml"> 
 the name of the data file to be read. When called from the 
 <code>Pythia</code> constructor the directory is provided by the 
 <code><aloc href="ProgramFlow">PYTHIA8DATA</aloc></code> 
 environment variable, if set, else by the argument of this constructor, 
-which has the default value &quot;../xmldoc&quot;. 
+which has the default value &quot;../share/Pythia8/xmldoc&quot;. 
 </argument> 
+</method> 
+ 
+<method name="bool ParticleData::init(const ParticleData& particleDataIn"> 
+copy particle data from information stored in an existing 
+<code>ParticleData</code> instance. 
+</method> 
+ 
+<method name="bool ParticleData::init(istream& is"> 
+copy particle data from a stream (rather than from a file). 
 </method> 
  
 <method name="bool ParticleData::reInit(string startFile, 
@@ -615,7 +632,7 @@ method is used by <code>reInit</code> above.
 </methodmore> 
  
 <method name="bool ParticleData::readString(string line, 
-bool warn = true, ostream& os = cout)"> 
+bool warn = true)"> 
 read in a string and interpret is as a new or changed particle data. 
 The possibilities are extensively described above. It is normally 
 used indirectly, via <code>Pythia::readString(...)</code> and 
@@ -623,48 +640,38 @@ used indirectly, via <code>Pythia::readString(...)</code> and
 <argument name="line"> 
 the string to be interpreted as an instruction. 
 </argument> 
-<argument name="warn" default="true"> 
+<argument name="warn" default="on"> 
 write a warning message or not whenever the instruction does not make 
 sense, e.g. if the particle does not exist in the database. 
-</argument> 
-<argument name="os" default="cout"> 
-stream for error printout. 
 </argument> 
 <note>Note:</note> the method returns false if it fails to 
 make sense out of the input string. 
 </method> 
  
-<method name="void ParticleData::listAll(ostream& os = cout)"> 
+<method name="void ParticleData::listAll()"> 
 </method> 
-<methodmore name="void ParticleData::listChanged(ostream& os = cout)"> 
-</methodmore> 
-<methodmore name="void ParticleData::listChangedAndRes(ostream& os 
-= cout)"> 
+<methodmore name="void ParticleData::listChanged(bool changedRes = false)"> 
 </methodmore> 
 <methodmore name="void ParticleData::list(bool changedOnly = false, 
-bool changedRes = true, ostream& os = cout)"> 
+bool changedRes = true)"> 
 methods intended to present a listing of particle data in a readable 
-format. The first three are special cases of the fourth. The first 
+format. The first two are special cases of the third. The first 
 lists all particle data, the second only data for those particles that 
 were changed after the original creation of the particle data table. 
 Resonances are a special case since they can get their data changed 
 by being linked to an object that does the calculation of branching 
-ratios. The second method does not count such resonances as changed, 
-whereas the third does and thus lists all resonances. 
+ratios. By default the second method does not count such resonances 
+as changed, whereas the third does and thus lists all resonances. 
 </methodmore> 
  
-<method name="void ParticleData::list(int idList, ostream& os = cout)"> 
+<method name="void ParticleData::list(int idList)"> 
 </method> 
-<methodmore name="void ParticleData::list(vector&lt;int&gt; idList, 
-ostream& os = cout)"> 
+<methodmore name="void ParticleData::list(vector&lt;int&gt; idList)"> 
 list particle data for one single particle, with the identity code as 
 input, or for a set of particles, with an input vector of identity codes. 
 </methodmore> 
  
-<method name="void ParticleData::checkTable(ostream& os = cout)"> 
-</method> 
-<methodmore name="void ParticleData::checkTable(int verbosity, 
-ostream& os = cout)"> 
+<method name="void ParticleData::checkTable(int verbosity)"> 
 check that the particle decay table makes sense, especially for decays. 
 <argument name="verbosity"> level of checks. 0 is only minimal, 
 e.g. if a particle has no open decay channels. 1, which is the level 
@@ -673,7 +680,7 @@ closed, except for resonances. 2 also prints the
 branching-ratio-averaged threshold mass. 11 and 12 are like 1 and 2, 
 but also include resonances in the detailed checks. 
 </argument> 
-</methodmore> 
+</method> 
  
 <method name="void ParticleData::addParticle(int id, 
 string name = &quot; &quot;, int spinType = 0, int chargeType = 0, 
@@ -841,11 +848,12 @@ method should be provided with the list of relevant particles.
 <methodmore name="bool ParticleData::isVisible(int id)"> 
 a flag telling whether a particle species is to be considered as 
 visible in a detector or not, as used e.g. in analysis routines. 
-By default this includes neutrinos and a few BSM particles 
-(gravitino, sneutrinos, neutralinos) that have neither strong nor 
-electromagnetic charge, and are not made up of constituents that 
-have it. The value of this flag is only relevant if a particle is 
-long-lived enough actually to make it to a detector. 
+By default the invisibles include neutrinos, Dark Matter particles 
+(codes 51 - 60) and a few BSM particles (gravitino, sneutrinos, 
+neutralinos) that have neither strong nor electromagnetic charge, 
+and are not made up of constituents that have it. The value of this 
+flag is only relevant if a particle is long-lived enough actually 
+to make it to a detector. 
 </methodmore> 
  
 <method name="void ParticleData::doForceWidth(int id, bool doForceWidth)"> 
@@ -865,7 +873,7 @@ keep track of whether the data for a particle has been changed
 in any respect between initialization and the current status. 
 Is used e.g. by the <code>listChanged</code> method to determine 
 which particles to list. 
-</method> 
+</methodmore> 
  
 <method name="bool ParticleData::useBreitWigner(int id)"> 
 tells whether a particle will have a Breit-Wigner mass distribution or 
@@ -1015,6 +1023,10 @@ The methods in the next section can then be used to manipulate
 this object. 
 </method> 
  
+<method name="bool ParticleData::getIsInit()"> 
+return true if the database has been initialized, else false. 
+</method> 
+ 
 <h3>The ParticleDataEntry methods</h3> 
  
 Most of the methods that can be applied to a single 
@@ -1042,6 +1054,12 @@ is only one particle, the latter that there is a
 particle-antiparticle pair (but if the antiparticle name is 
 <code>void</code> one reverts back to the particle-only case). 
 </methodmore> 
+ 
+<method name="ParticleDataEntry& operator=( const ParticleDataEntry& 
+particleDataEntryIn)"> 
+copy the values stored in an existing <code>ParticleDataEntry</code> 
+object. 
+</method> 
  
 <method name="ParticleDataEntry::~ParticleDataEntry"> 
 the destructor is needed to delete any <code>ResonanceWidths</code> 
@@ -1204,11 +1222,12 @@ method should be provided with the list of relevant particles.
 <methodmore name="bool ParticleDataEntry::isVisible()"> 
 a flag telling whether a particle species is to be considered as 
 visible in a detector or not, as used e.g. in analysis routines. 
-By default this includes neutrinos and a few BSM particles 
-(gravitino, sneutrinos, neutralinos) that have neither strong nor 
-electromagnetic charge, and are not made up of constituents that 
-have it. The value of this flag is only relevant if a particle is 
-long-lived enough actually to make it to a detector. 
+By default the invisibles include neutrinos, Dark Matter particles 
+(codes 51 - 60) and a few BSM particles (gravitino, sneutrinos, 
+neutralinos) that have neither strong nor electromagnetic charge, 
+and are not made up of constituents that have it. The value of this 
+flag is only relevant if a particle is long-lived enough actually 
+to make it to a detector. 
 </methodmore> 
  
 <method name="void ParticleDataEntry::setDoForceWidth(bool 
@@ -1420,6 +1439,10 @@ int prod6 = 0, int prod7 = 0)">
 the constructor for a decay channel. Internal. 
 </method> 
  
+<method name="DecayChannel& operator=( const DecayChannel& decayChannelIn)"> 
+copy the values stored in an existing <code>DecayChannel</code> object. 
+</method> 
+ 
 <method name="void DecayChannel::onMode(int onMode)"> 
 </method> 
 <methodmore name="int DecayChannel::onMode()"> 
@@ -1515,4 +1538,4 @@ positive and negative particles. For internal use.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

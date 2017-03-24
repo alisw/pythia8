@@ -1,5 +1,5 @@
 // Analysis.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -37,7 +37,7 @@ const double Sphericity::EIGENVALUEMIN = 1e-10;
 
 // Analyze event.
 
-bool Sphericity::analyze(const Event& event, ostream& os) {
+bool Sphericity::analyze(const Event& event) {
 
   // Initial values, tensor and counters zero.
   eVal1 = eVal2 = eVal3 = 0.;
@@ -71,8 +71,8 @@ bool Sphericity::analyze(const Event& event, ostream& os) {
 
   // Very low multiplicities (0 or 1) not considered.
   if (nStudy < NSTUDYMIN) {
-    if (nFew < TIMESTOPRINT) os << " PYTHIA Error in " <<
-    "Sphericity::analyze: too few particles" << endl;
+    if (nFew < TIMESTOPRINT) cout << " PYTHIA Error in "
+      << "Sphericity::analyze: too few particles" << endl;
     ++nFew;
     return false;
   }
@@ -178,25 +178,25 @@ bool Sphericity::analyze(const Event& event, ostream& os) {
 
 // Provide a listing of the info.
 
-void Sphericity::list(ostream& os) const {
+void Sphericity::list() const {
 
   // Header.
-  os << "\n --------  PYTHIA Sphericity Listing  -------- \n";
-  if (powerInt !=2) os << "      Nonstandard momentum power = "
-     << fixed << setprecision(3) << setw(6) << power << "\n";
-  os << "\n  no     lambda      e_x       e_y       e_z \n";
+  cout << "\n --------  PYTHIA Sphericity Listing  -------- \n";
+  if (powerInt !=2) cout<< "      Nonstandard momentum power = "
+       << fixed << setprecision(3) << setw(6) << power << "\n";
+  cout << "\n  no     lambda      e_x       e_y       e_z \n";
 
   // The three eigenvalues and eigenvectors.
-  os << setprecision(5);
-  os << "   1" << setw(11) << eVal1 << setw(11) << eVec1.px()
-     << setw(10) << eVec1.py() << setw(10) << eVec1.pz() << "\n";
-  os << "   2" << setw(11) << eVal2 << setw(11) << eVec2.px()
-     << setw(10) << eVec2.py() << setw(10) << eVec2.pz() << "\n";
-  os << "   3" << setw(11) << eVal3 << setw(11) << eVec3.px()
-     << setw(10) << eVec3.py() << setw(10) << eVec3.pz() << "\n";
+  cout << setprecision(5);
+  cout << "   1" << setw(11) << eVal1 << setw(11) << eVec1.px()
+       << setw(10) << eVec1.py() << setw(10) << eVec1.pz() << "\n";
+  cout << "   2" << setw(11) << eVal2 << setw(11) << eVec2.px()
+       << setw(10) << eVec2.py() << setw(10) << eVec2.pz() << "\n";
+  cout << "   3" << setw(11) << eVal3 << setw(11) << eVec3.px()
+       << setw(10) << eVec3.py() << setw(10) << eVec3.pz() << "\n";
 
   // Listing finished.
-  os << "\n --------  End PYTHIA Sphericity Listing  ----" << endl;
+  cout << "\n --------  End PYTHIA Sphericity Listing  ----" << endl;
 
 }
 
@@ -224,7 +224,7 @@ const double Thrust::MAJORMIN     = 1e-10;
 
 // Analyze event.
 
-bool Thrust::analyze(const Event& event, ostream& os) {
+bool Thrust::analyze(const Event& event) {
 
   // Initial values and counters zero.
   eVal1 = eVal2 = eVal3 = 0.;
@@ -249,8 +249,8 @@ bool Thrust::analyze(const Event& event, ostream& os) {
 
   // Very low multiplicities (0 or 1) not considered.
   if (nStudy < NSTUDYMIN) {
-    if (nFew < TIMESTOPRINT) os << " PYTHIA Error in " <<
-    "Thrust::analyze: too few particles" << endl;
+    if (nFew < TIMESTOPRINT) cout << " PYTHIA Error in "
+      << "Thrust::analyze: too few particles" << endl;
     ++nFew;
     return false;
   }
@@ -341,23 +341,23 @@ bool Thrust::analyze(const Event& event, ostream& os) {
 
 // Provide a listing of the info.
 
-void Thrust::list(ostream& os) const {
+void Thrust::list() const {
 
   // Header.
-  os << "\n --------  PYTHIA Thrust Listing  ------------ \n"
-     << "\n          value      e_x       e_y       e_z \n";
+  cout << "\n --------  PYTHIA Thrust Listing  ------------ \n"
+       << "\n          value      e_x       e_y       e_z \n";
 
   // The thrust, major and minor values and related event axes.
-  os << setprecision(5);
-  os << " Thr" << setw(11) << eVal1 << setw(11) << eVec1.px()
-     << setw(10) << eVec1.py() << setw(10) << eVec1.pz() << "\n";
-  os << " Maj" << setw(11) << eVal2 << setw(11) << eVec2.px()
-     << setw(10) << eVec2.py() << setw(10) << eVec2.pz() << "\n";
-  os << " Min" << setw(11) << eVal3 << setw(11) << eVec3.px()
-     << setw(10) << eVec3.py() << setw(10) << eVec3.pz() << "\n";
+  cout << setprecision(5);
+  cout << " Thr" << setw(11) << eVal1 << setw(11) << eVec1.px()
+       << setw(10) << eVec1.py() << setw(10) << eVec1.pz() << "\n";
+  cout << " Maj" << setw(11) << eVal2 << setw(11) << eVec2.px()
+       << setw(10) << eVec2.py() << setw(10) << eVec2.pz() << "\n";
+  cout << " Min" << setw(11) << eVal3 << setw(11) << eVec3.px()
+       << setw(10) << eVec3.py() << setw(10) << eVec3.pz() << "\n";
 
   // Listing finished.
-  os << "\n --------  End PYTHIA Thrust Listing  --------" << endl;
+  cout << "\n --------  End PYTHIA Thrust Listing  --------" << endl;
 
 }
 
@@ -426,7 +426,7 @@ const double ClusterJet::PRECLUSTERSTEP = 0.8;
 // Analyze event.
 
 bool ClusterJet::analyze(const Event& event, double yScaleIn,
-  double pTscaleIn, int nJetMinIn, int nJetMaxIn, ostream& os) {
+  double pTscaleIn, int nJetMinIn, int nJetMaxIn) {
 
   // Input values. Initial values zero.
   yScale  = yScaleIn;
@@ -459,8 +459,8 @@ bool ClusterJet::analyze(const Event& event, double yScaleIn,
   // Very low multiplicities not considered.
   nParticles = particles.size();
   if (nParticles < nJetMin) {
-    if (nFew < TIMESTOPRINT) os << " PYTHIA Error in " <<
-    "ClusterJet::analyze: too few particles" << endl;
+    if (nFew < TIMESTOPRINT) cout << " PYTHIA Error in "
+      << "ClusterJet::analyze: too few particles" << endl;
     ++nFew;
     return false;
   }
@@ -683,28 +683,28 @@ void ClusterJet::reassign() {
 
 // Provide a listing of the info.
 
-void ClusterJet::list(ostream& os) const {
+void ClusterJet::list() const {
 
   // Header.
   string method = (measure == 1) ? "Lund pT"
         : ( (measure == 2) ? "JADE m" : "Durham kT" ) ;
-  os << "\n --------  PYTHIA ClusterJet Listing, " << setw(9) <<  method
-     << " =" << fixed << setprecision(3) << setw(7) << sqrt(dist2Join)
-     << " GeV  --- \n \n  no  mult      p_x        p_y        p_z    "
-     << "     e          m \n";
+  cout << "\n --------  PYTHIA ClusterJet Listing, " << setw(9) <<  method
+       << " =" << fixed << setprecision(3) << setw(7) << sqrt(dist2Join)
+       << " GeV  --- \n \n  no  mult      p_x        p_y        p_z    "
+       << "     e          m \n";
 
   // The jets.
   for (int i = 0; i < int(jets.size()); ++i) {
-    os << setw(4) << i << setw(6) << jets[i].multiplicity << setw(11)
-       << jets[i].pJet.px() << setw(11) << jets[i].pJet.py()
-       << setw(11) << jets[i].pJet.pz() << setw(11)
-       << jets[i].pJet.e() << setw(11) << jets[i].pJet.mCalc()
-       << "\n";
+    cout << setw(4) << i << setw(6) << jets[i].multiplicity << setw(11)
+         << jets[i].pJet.px() << setw(11) << jets[i].pJet.py()
+         << setw(11) << jets[i].pJet.pz() << setw(11)
+         << jets[i].pJet.e() << setw(11) << jets[i].pJet.mCalc()
+         << "\n";
   }
 
   // Listing finished.
-  os << "\n --------  End PYTHIA ClusterJet Listing  ---------------"
-     << "--------" << endl;
+  cout << "\n --------  End PYTHIA ClusterJet Listing  ---------------"
+       << "--------" << endl;
 }
 
 //==========================================================================
@@ -725,7 +725,7 @@ const int CellJet::TIMESTOPRINT = 1;
 // Analyze event.
 
 bool CellJet::analyze(const Event& event, double eTjetMinIn,
-  double coneRadiusIn, double eTseedIn, ostream& ) {
+  double coneRadiusIn, double eTseedIn) {
 
   // Input values. Initial values zero.
   eTjetMin   = eTjetMinIn;
@@ -862,32 +862,32 @@ bool CellJet::analyze(const Event& event, double eTjetMinIn,
 
 // Provide a listing of the info.
 
-void CellJet::list(ostream& os) const {
+void CellJet::list() const {
 
   // Header.
-  os << "\n --------  PYTHIA CellJet Listing, eTjetMin = "
-     << fixed << setprecision(3) << setw(8) << eTjetMin
-     << ", coneRadius = " << setw(5) << coneRadius
-     << "  ------------------------------ \n \n  no    "
-     << " eTjet  etaCtr  phiCtr   etaWt   phiWt mult      p_x"
-     << "        p_y        p_z         e          m \n";
+  cout << "\n --------  PYTHIA CellJet Listing, eTjetMin = "
+       << fixed << setprecision(3) << setw(8) << eTjetMin
+       << ", coneRadius = " << setw(5) << coneRadius
+       << "  ------------------------------ \n \n  no    "
+       << " eTjet  etaCtr  phiCtr   etaWt   phiWt mult      p_x"
+       << "        p_y        p_z         e          m \n";
 
   // The jets.
   for (int i = 0; i < int(jets.size()); ++i) {
-    os << setw(4) << i << setw(10) << jets[i].eTjet << setw(8)
-       << jets[i].etaCenter << setw(8) << jets[i].phiCenter << setw(8)
-       << jets[i].etaWeighted << setw(8) << jets[i].phiWeighted
-       << setw(5) << jets[i].multiplicity << setw(11)
-       << jets[i].pMassive.px() << setw(11) << jets[i].pMassive.py()
-       << setw(11) << jets[i].pMassive.pz() << setw(11)
-       << jets[i].pMassive.e() << setw(11)
-       << jets[i].pMassive.mCalc() << "\n";
+    cout << setw(4) << i << setw(10) << jets[i].eTjet << setw(8)
+         << jets[i].etaCenter << setw(8) << jets[i].phiCenter << setw(8)
+         << jets[i].etaWeighted << setw(8) << jets[i].phiWeighted
+         << setw(5) << jets[i].multiplicity << setw(11)
+         << jets[i].pMassive.px() << setw(11) << jets[i].pMassive.py()
+         << setw(11) << jets[i].pMassive.pz() << setw(11)
+         << jets[i].pMassive.e() << setw(11)
+         << jets[i].pMassive.mCalc() << "\n";
   }
 
   // Listing finished.
-  os << "\n --------  End PYTHIA CellJet Listing  ------------------"
-     << "-------------------------------------------------"
-     << endl;
+  cout << "\n --------  End PYTHIA CellJet Listing  ------------------"
+       << "-------------------------------------------------"
+       << endl;
 }
 
 //==========================================================================
@@ -1087,42 +1087,42 @@ bool SlowJet::doStep() {
 
 // Provide a listing of the info.
 
-void SlowJet::list(bool listAll, ostream& os) const {
+void SlowJet::list(bool listAll) const {
 
   // Header.
-  if (useFJcore) os << "\n --  PYTHIA SlowJet(fjcore) Listing, p = ";
-  else           os << "\n --  PYTHIA SlowJet(native) Listing, p = ";
-  os << setw(2) << power << ", R = " << fixed << setprecision(3) << setw(5)
-     << R << ", pTjetMin =" << setw(8) << pTjetMin << ", etaMax = "
-     << setw(6) << etaMax << "  -- \n \n   no      pTjet      y       phi"
-     << "   mult      p_x        p_y        p_z         e          m \n";
+  if (useFJcore) cout << "\n --  PYTHIA SlowJet(fjcore) Listing, p = ";
+  else           cout << "\n --  PYTHIA SlowJet(native) Listing, p = ";
+  cout << setw(2) << power << ", R = " << fixed << setprecision(3) << setw(5)
+       << R << ", pTjetMin =" << setw(8) << pTjetMin << ", etaMax = "
+       << setw(6) << etaMax << "  -- \n \n   no      pTjet      y       phi"
+       << "   mult      p_x        p_y        p_z         e          m \n";
 
   // The jets.
   for (int i = 0; i < jtSize; ++i) {
-    os << setw(5) << i << setw(11) << sqrt(jets[i].pT2) << setw(9)
-       << jets[i].y << setw(9) << jets[i].phi << setw(6)
-       << jets[i].mult << setw(11) << jets[i].p.px() << setw(11)
-       << jets[i].p.py() << setw(11) << jets[i].p.pz() << setw(11)
-       << jets[i].p.e() << setw(11) << jets[i].p.mCalc() << "\n";
+    cout << setw(5) << i << setw(11) << sqrt(jets[i].pT2) << setw(9)
+         << jets[i].y << setw(9) << jets[i].phi << setw(6)
+         << jets[i].mult << setw(11) << jets[i].p.px() << setw(11)
+         << jets[i].p.py() << setw(11) << jets[i].p.pz() << setw(11)
+         << jets[i].p.e() << setw(11) << jets[i].p.mCalc() << "\n";
   }
 
   // Optionally list also clusters not yet jets.
   if (listAll && clSize > 0) {
-    os << " --------  Below this line follows remaining clusters,"
-       << " still pT-unordered  -------------------\n";
+    cout << " --------  Below this line follows remaining clusters,"
+         << " still pT-unordered  -------------------\n";
     for (int i = 0; i < clSize; ++i) {
-      os << setw(5) << i + jtSize << setw(11) << sqrt(clusters[i].pT2)
-         << setw(9) << clusters[i].y << setw(9) << clusters[i].phi
-         << setw(6) << clusters[i].mult << setw(11) << clusters[i].p.px()
-         << setw(11) << clusters[i].p.py() << setw(11) << clusters[i].p.pz()
-         << setw(11) << clusters[i].p.e() << setw(11)
-         << clusters[i].p.mCalc() << "\n";
+      cout << setw(5) << i + jtSize << setw(11) << sqrt(clusters[i].pT2)
+           << setw(9) << clusters[i].y << setw(9) << clusters[i].phi
+           << setw(6) << clusters[i].mult << setw(11) << clusters[i].p.px()
+           << setw(11) << clusters[i].p.py() << setw(11) << clusters[i].p.pz()
+           << setw(11) << clusters[i].p.e() << setw(11)
+           << clusters[i].p.mCalc() << "\n";
     }
   }
 
   // Listing finished.
-  os << "\n --------  End PYTHIA SlowJet Listing  ------------------"
-     << "--------------------------------------" << endl;
+  cout << "\n --------  End PYTHIA SlowJet Listing  ------------------"
+       << "--------------------------------------" << endl;
 
 }
 

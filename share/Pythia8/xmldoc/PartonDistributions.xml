@@ -91,8 +91,7 @@ CTEQ/CT group that have been implemented.</li>
 <li><code>NNPDF</code> gives four distributions from the NNPDF 2.3 
 QCD+QED sets that have been implemented.</li> 
 </ul> 
-The current default is CTEQ 5L, which has been used in most studies 
-to date. 
+The current default is NNPDF 2.3. 
  
 <p/> 
 For charged pions: 
@@ -111,6 +110,12 @@ parametrizations.</li>
 </ul> 
  
 <p/> 
+For photons: 
+<ul> 
+<li><code>CJKL</code> gives the CJKL parametrization <ref>Cor03</ref>.</li> 
+</ul> 
+ 
+<p/> 
 For charged leptons (e, mu, tau): 
 <ul> 
 <li><code>Lepton</code> gives a QED parametrization <ref>Kle89</ref>. 
@@ -123,6 +128,8 @@ made to vanish for <ei>x > 1 - 10^{-10}</ei>, and scaled up in the range
 total area under the pdf is preserved.</li> 
 <li><code>LeptonPoint</code> gives the trivial distribution of a 
 pointlike (i.e. unresolved) charged lepton.</li> 
+<li><code>Lepton2gamma</code> gives the convolution between photon 
+flux from leptons and photon PDFs.</li> 
 </ul> 
  
 <p/> 
@@ -150,8 +157,10 @@ The MRST/MSTW, CTEQ/CT, NNPDF and H1 PDF routines are based on the
 interpolation in <ei>(x, Q)</ei> grids. The grid files are stored in the 
 <code>xmldoc</code> subdirectory, like settings and particle data. 
 Only PDF sets that will be used are read in during the initialization 
-stage. 
+stage. Just as input streams can be used to initialize the settings 
+and particle data, so can the individual PDFs be constructed.   See 
+the header files for explicit constructor descriptions. 
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

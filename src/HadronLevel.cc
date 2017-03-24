@@ -1,5 +1,5 @@
 // HadronLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,6 +12,13 @@ namespace Pythia8 {
 //==========================================================================
 
 // The HadronLevel class.
+
+//--------------------------------------------------------------------------
+
+// Constants: could be changed here if desired, but normally should not.
+
+// Small safety mass used in string-end rapidity calculations.
+const double HadronLevel::MTINY = 0.1;
 
 //--------------------------------------------------------------------------
 
@@ -33,6 +40,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
 
   // Main flags.
   doHadronize     = settings.flag("HadronLevel:Hadronize");
+  doHadronScatter = settings.flag("hadronLevel:HadronScatter");
   doDecay         = settings.flag("HadronLevel:Decay");
   doBoseEinstein  = settings.flag("HadronLevel:BoseEinstein");
 
@@ -48,14 +56,17 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   // Particles that should decay or not before Bose-Einstein stage.
   widthSepBE      = settings.parm("BoseEinstein:widthSep");
 
-  // Hadron scattering --rjc
-  doHadronScatter = settings.flag("HadronScatter:scatter");
+  // Need string density information be collected?
+  closePacking     = settings.flag("StringPT:closePacking");
+
+  // Hadron scattering.
+  hadronScatMode  = settings.mode("HadronScatter:mode");
   hsAfterDecay    = settings.flag("HadronScatter:afterDecay");
 
   // Initialize auxiliary fragmentation classes.
-  flavSel.init(settings, rndmPtr);
-  pTSel.init(settings, *particleDataPtr, rndmPtr);
-  zSel.init(settings, *particleDataPtr, rndmPtr);
+  flavSel.init(settings,  particleDataPtr, rndmPtr, infoPtr);
+  pTSel.init(  settings,  particleDataPtr, rndmPtr, infoPtr);
+  zSel.init(   settings, *particleDataPtr, rndmPtr);
 
   // Initialize auxiliary administrative class.
   colConfig.init(infoPtr, settings, &flavSel);
@@ -73,7 +84,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   // Initialize BoseEinstein.
   boseEinstein.init(infoPtr, settings, *particleDataPtr);
 
-  // Initialize HadronScatter --rjc
+  // Initialize HadronScatter.
   if (doHadronScatter)
     hadronScatter.init(infoPtr, settings, rndmPtr, particleDataPtr);
 
@@ -134,6 +145,13 @@ bool HadronLevel::next( Event& event) {
       if (allowRH && !rHadronsPtr->produce( colConfig, event))
         return false;
 
+      // Save list with rapidity pairs of the different string pieces.
+      if (closePacking) {
+        vector< vector< pair<double,double> > > rapPairs =
+          rapidityPairs(event);
+        colConfig.rapPairs = rapPairs;
+      }
+
       // Process all colour singlet (sub)systems.
       for (int iSub = 0; iSub < colConfig.size(); ++iSub) {
 
@@ -153,9 +171,14 @@ bool HadronLevel::next( Event& event) {
       }
     }
 
-    // Hadron scattering --rjc
-    if (doHadronScatter && !hsAfterDecay && firstPass)
-      hadronScatter.scatter(event);
+    // Hadron scattering.
+    if (doHadronScatter) {
+      // New model.
+      if (hadronScatMode < 2) hadronScatter.scatter(event);
+      // Old model, before dacys.
+      else if ((hadronScatMode == 2) && !hsAfterDecay && firstPass)
+        hadronScatter.scatterOld(event);
+    }
 
     // Second part: sequential decays of short-lived particles (incl. K0).
     if (doDecay) {
@@ -172,9 +195,9 @@ bool HadronLevel::next( Event& event) {
       } while (++iDec < event.size());
     }
 
-    // Hadron scattering --rjc
-    if (doHadronScatter && hsAfterDecay && firstPass)
-      hadronScatter.scatter(event);
+    // Hadron scattering, old model, after decays.
+    if (doHadronScatter && (hadronScatMode == 2) && hsAfterDecay && firstPass)
+      hadronScatter.scatterOld(event);
 
     // Third part: include Bose-Einstein effects among current particles.
     if (doBoseEinsteinNow) {
@@ -308,6 +331,54 @@ bool HadronLevel::findSinglets(Event& event) {
   // Done.
   return true;
 
+}
+
+//--------------------------------------------------------------------------
+
+// Extract rapidity pairs of string pieces.
+
+vector< vector< pair<double,double> > > HadronLevel::rapidityPairs(
+  Event& event) {
+
+  // Loop over all string systems in the event.
+  vector< vector< pair<double,double> > > rapPairs;
+  for (int iSub = 0; iSub < int(colConfig.size()); iSub++) {
+    vector< pair<double,double> > rapsNow;
+    vector<int> iPartons = colConfig[iSub].iParton;
+
+    // Special treatment for junction systems.
+    if (colConfig[iSub].hasJunction) {
+      // Pick smallest and largest rapidity parton.
+      double ymi = 1e10;
+      double yma = -1e10;
+      for (int iP = 0; iP < int(iPartons.size()); iP++) {
+        int iQ = iPartons[iP];
+        if (iQ < 0) continue;
+        if (event[iQ].id() == 21) continue;
+        double yNow = yMax(event[iQ], MTINY);
+        if (yNow > yma) yma = yNow;
+        if (yNow < ymi) ymi = yNow;
+      }
+      rapsNow.push_back( make_pair(ymi, yma) );
+
+    // Normal strings. For closed gluon loop include first-last pair.
+    } else {
+      int size = int(iPartons.size());
+      int end  = size - (colConfig[iSub].isClosed ? 0 : 1);
+      for (int iP = 0; iP < end; iP++) {
+        int    i1  = iPartons[iP];
+        int    i2  = iPartons[(iP+1)%size];
+        double y1  = yMax(event[i1], MTINY);
+        double y2  = yMax(event[i2], MTINY);
+        double ymi = min(y1, y2);
+        double yma = max(y1, y2);
+        rapsNow.push_back( make_pair(ymi, yma) );
+      }
+    }
+    rapPairs.push_back(rapsNow);
+  }
+  // Done.
+  return rapPairs;
 }
 
 //==========================================================================

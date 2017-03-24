@@ -258,8 +258,13 @@ this is not already done. Also a few simple inline methods:
 <code>pow5(x)</code> and <code>pow6(x)</code> for small integer 
 powers, and <code>sqrtpos(x)</code> where a <code>max(0., x)</code> 
 ensures that one does not take the square root of a negative number. 
-Also non-inlined <code>GammaReal(x)</code> for the <i>Gamma</i> 
-function value of a real argument. 
+The non-inlined <code>string toLower(const string, bool trim = true)</code> 
+converts a strimg to lowercase, and by default also removes initial and 
+trailing blanks or escape characters. It returns a new string, while the 
+inlined extension <code>void toLowerRep(string, bool trim = true)</code> 
+replaces the string in place. Finally the non-inlined 
+<code>GammaReal(x)</code> gives the <i>Gamma</i> function value of 
+a real argument. 
    
  
 <p/><code>file&nbsp; </code><strong> ResonanceDecays &nbsp;</strong> <br/>
@@ -424,4 +429,4 @@ parton showers.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

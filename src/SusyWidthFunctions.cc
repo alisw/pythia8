@@ -1,5 +1,5 @@
 // SusyWidthFunctions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand
+// Copyright (C) 2017 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -33,7 +33,8 @@ void WidthFunction::setPointers( ParticleData* particleDataPtrIn,
 
 double WidthFunction::function(double) {
 
-  cout << "Warning using dummy width function" << endl;
+  infoPtr->errorMsg("Error in WidthFunction::function: "
+    "using dummy width function");
   return 0.;
 }
 
@@ -69,15 +70,14 @@ double WidthFunction::integrateGauss(double xlo, double xhi, double tol) {
                        0.16915651939500254,
                        0.18260341504492359,
                        0.18945061045506850};
+
   // Boundary checks.
-  if (xlo == xhi) {
-    cerr<<"xlo = xhi"<<endl;
+  if (xlo >= xhi) {
+  infoPtr->errorMsg("Error in WidthFunction::integrateGauss: "
+    "xlo >= xhi");
     return 0.0;
   }
-  if ( xlo > xhi ) {
-    cerr<<" (integrateGauss:) -> xhi < xlo"<<endl;
-    return 0.0;
-  }
+
   // Initialize.
   double sum = 0.0;
   double c = 0.001/abs(xhi-xlo);
@@ -85,7 +85,6 @@ double WidthFunction::integrateGauss(double xlo, double xhi, double tol) {
   double zhi = xhi;
 
   bool nextbin = true;
-
   while ( nextbin ) {
 
     double zmi = 0.5*(zhi+zlo); // midpoint
@@ -115,7 +114,8 @@ double WidthFunction::integrateGauss(double xlo, double xhi, double tol) {
     } else {
       // Precision in this bin not OK, subdivide.
       if (1.0 + c*abs(zmr) == 1.0) {
-        cerr << " (integrateGauss:) too high accuracy required"<<endl;
+        infoPtr->errorMsg("Error in WidthFunction::integrateGauss: "
+          "too high accuracy required");
         sum = 0.0 ;
         break;
       }

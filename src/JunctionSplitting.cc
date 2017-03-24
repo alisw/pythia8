@@ -1,5 +1,5 @@
 // JunctionSplitting.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,6 +32,9 @@ const int JunctionSplitting::NTRYJNREST        = 20;
 // Typical average transvere primary hadron mass <mThad>.
 const double JunctionSplitting::MTHAD          = 0.9;
 
+// Minimum angle between two partons, to avoid problems with infinities.
+const double JunctionSplitting::MINANGLE       = 1e-7;
+
 //--------------------------------------------------------------------------
 
 // Initialize the class and all the created classes.
@@ -47,9 +50,9 @@ void JunctionSplitting::init( Info* infoPtrIn, Settings& settings,
   stringLength.init(infoPtrIn, settings);
 
   // Initialize auxiliary fragmentation classes.
-  flavSel.init(settings, rndmPtr);
-  pTSel.init(settings, *particleDataPtrIn, rndmPtr);
-  zSel.init(settings, *particleDataPtrIn, rndmPtr);
+  flavSel.init(settings,  particleDataPtrIn, rndmPtr, infoPtr);
+  pTSel.init(  settings,  particleDataPtrIn, rndmPtr, infoPtr);
+  zSel.init(   settings, *particleDataPtrIn, rndmPtr);
 
   // Initialize string and ministring fragmentation.
   stringFrag.init(infoPtr, settings, particleDataPtrIn, rndmPtr,
@@ -82,8 +85,8 @@ bool JunctionSplitting::checkColours( Event& event) {
   for (int i  = 0; i < event.size(); ++i) {
     if (event[i].isFinal() && event[i].col() != 0 &&
         event[i].col() == event[i].acol()) {
-      infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours:"
-      "Made a gluon colour singlet. Redoing colour configuration");
+      infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
+      "Made a gluon colour singlet; redoing colours");
       return false;
     }
   }
@@ -96,23 +99,23 @@ bool JunctionSplitting::checkColours( Event& event) {
 
   // Try to split up the junction chains by splitting gluons
   if (!splitJunGluons(event, iPartonJun, iPartonAntiJun) ) {
-    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours:"
-      "Not possible to split junctions. Making new colour configuration");
+    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
+      "Not possible to split junctions; making new colours");
     return false;
   }
 
   // Remove junctions if more than 2 are connected.
   if (!splitJunChains(event) ) {
-    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours:"
-      "Not possible to split junctions. Making new colour configuration");
+    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
+      "Not possible to split junctions; making new colours");
     return false;
   }
 
   // Split up junction pairs.
   getPartonLists(event, iPartonJun, iPartonAntiJun);
   if (!splitJunPairs(event, iPartonJun, iPartonAntiJun) ) {
-    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours:"
-      "Not possible to split junctions. Making new colour configuration");
+    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
+      "Not possible to split junctions; making new colours");
     return false;
   }
 
@@ -162,6 +165,9 @@ bool JunctionSplitting::splitJunGluons(Event& event,
       // quark-anti quark system.
       if ( iJunLegs[i].size() == 3) {
 
+        // Verify that intermediate particle is a gluon (not a gluino).
+        if (event[ iJunLegs[i][1] ].idAbs() != 21) continue;
+
         // Store the new q qbar pair, sharing gluon colour and momentum.
         colQ = event[ iJunLegs[i][1] ].col();
         acolQ = event[ iJunLegs[i][1] ].acol();
@@ -176,7 +182,7 @@ bool JunctionSplitting::splitJunGluons(Event& event,
         event[ iJunLegs[i][1] ].statusNeg();
         event[ iJunLegs[i][1] ].daughters( iQ, iQbar);
 
-        // Update junction and anti junction list.
+        // Update junction and antijunction list.
         identAntiJun = iJunLegs[i].back();
         int iOld = iJunLegs[i][1];
         bool erasing = false;
@@ -193,21 +199,21 @@ bool JunctionSplitting::splitJunGluons(Event& event,
           }
         }
 
-        // Find the connected anti junction from the list of anti junctions.
+        // Find the connected antijunction from the list of antijunctions.
         int iAntiJun = -1;
         for (int j = 0; j < int(iPartonAntiJun.size()); j++)
           if ( iPartonAntiJun[j][0]/10 == identAntiJun/10) {
             iAntiJun = j;
             break;
           }
-        // If no anti junction found, something went wrong earlier.
+        // If no antijunction found, something went wrong earlier.
         if (iAntiJun == -1) {
            infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunChain:"
-                             "Something went wrong in finding anti junction");
+                             "Something went wrong in finding antijunction");
            return false;
         }
 
-        // Update the anti junction list.
+        // Update the antijunction list.
         erasing = false;
         for (int j = 0; j < int(iPartonAntiJun[iAntiJun].size()); ++j) {
           if ( iPartonAntiJun[iAntiJun][j] / 10 == identAntiJun / 10)
@@ -251,6 +257,10 @@ bool JunctionSplitting::splitJunGluons(Event& event,
           xNeg = m2Temp / (zTemp * m2Reg);
         } while (xNeg > 1.);
         if (rndmPtr->flat() > 0.5) swap(xPos, xNeg);
+
+        // Verify that intermediate particles are gluons (not gluinos).
+        if ( event[ iJunLegs[i][iReg] ].idAbs() != 21
+          || event[ iJunLegs[i][iReg + 1] ].idAbs() != 21 ) continue;
 
         // Pick up two "mother" gluons of breakup. Mark them decayed.
         Particle& gJun = event[ iJunLegs[i][iReg] ];
@@ -310,21 +320,21 @@ bool JunctionSplitting::splitJunGluons(Event& event,
           }
         }
 
-        // Find the connected anti junction from the list of anti junctions.
+        // Find the connected antijunction from the list of antijunctions.
         int iAntiJun = -1;
         for (int j = 0; j < int(iPartonAntiJun.size());j++)
           if ( iPartonAntiJun[j][0]/10 == identAntiJun/10) {
             iAntiJun = j;
             break;
           }
-        // If no anti junction found, something went wrong earlier.
+        // If no antijunction found, something went wrong earlier.
         if (iAntiJun == -1) {
            infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunChain:"
-                             "Something went wrong in finding anti junction");
+                             "Something went wrong in finding antijunction");
            return false;
         }
 
-        // Update the anti junction list to reflect the splitting
+        // Update the antijunction list to reflect the splitting
         for (int j = 0; j < int(iPartonAntiJun[iAntiJun].size()); ++j) {
           if ( iPartonAntiJun[iAntiJun][j] / 10 == identAntiJun / 10)
             iAntiLeg++;
@@ -413,7 +423,7 @@ bool JunctionSplitting::splitJunChains(Event& event) {
     }
 
     // If we have more than two colour anti colour pairs
-    // form junction anti junction pair.
+    // form junction antijunction pair.
     while (int(acols.size()) > 1) {
       int i1 = int(rndmPtr->flat() *cols.size());
       int col1 = cols[i1];
@@ -552,13 +562,17 @@ bool JunctionSplitting::splitJunPairs(Event& event,
           if (- iPartonJun[l][0]/10 - 1 == iJun) {
             iJunList = l;
             break;
-          }
-
+        }
         for (int l = 0;l < int(iPartonAntiJun.size()); ++l)
           if (- iPartonAntiJun[l][0]/10 - 1 == iAnti) {
             iAntiList = l;
             break;
-          }
+        }
+        if (iJunList == -1 || iAntiList == -1) {
+          infoPtr->errorMsg("Error in JunctionSplitting::SplitJunChain:"
+            " failed to find junctions in the parton list");
+          return false;
+        }
 
         // Fill in vector of the legs content.
         vector<vector <int> > iJunLegs;
@@ -586,11 +600,27 @@ bool JunctionSplitting::splitJunPairs(Event& event,
         vector<int>& iAntiLeg0 = (iAntiLeg == 0) ? iAntiLegs[1] : iAntiLegs[0];
         vector<int>& iAntiLeg1 = (iAntiLeg == 2) ? iAntiLegs[1] : iAntiLegs[2];
 
+        // Check that the anti-leg is not stored as a junction.
+        // This should only happen for gluinos, which are not split.
+        if (iAntiLeg0[1] < 0 || iAntiLeg1[1] < 0)  continue;
+
         // Simplified procedure: mainly study first parton on each leg.
         Vec4 pJunLeg0 = event[ iJunLeg0[1] ].p();
         Vec4 pJunLeg1 = event[ iJunLeg1[1] ].p();
         Vec4 pAntiLeg0 = event[ iAntiLeg0[1] ].p();
         Vec4 pAntiLeg1 = event[ iAntiLeg1[1] ].p();
+
+        // Check that no two legs are parallel.
+        if ( theta(pJunLeg0,pJunLeg1)   < MINANGLE
+          || theta(pAntiLeg0,pAntiLeg1) < MINANGLE
+          || theta(pJunLeg0,pAntiLeg0)  < MINANGLE
+          || theta(pJunLeg0,pAntiLeg1)  < MINANGLE
+          || theta(pJunLeg1,pAntiLeg0)  < MINANGLE
+          || theta(pJunLeg1,pAntiLeg1)  < MINANGLE) {
+          infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunPairs: "
+            "parallel junction state not allowed.");
+          return false;
+        }
 
       // Starting frame hopefully intermediate to two junction directions.
       Vec4 pStart = pJunLeg0 / pJunLeg0.e() + pJunLeg1 / pJunLeg1.e()
@@ -763,7 +793,7 @@ bool JunctionSplitting::splitJunPairs(Event& event,
       int iNewA = event.append( -idQ, 76, junMother2, junMother1, 0, 0,
         0, acolQ, pFromJun, pFromJun.mCalc() );
 
-      // Copy anti junction partons with scaled-down momenta and update legs.
+      // Copy antijunction partons with scaled-down momenta and update legs.
       int iAntiNew1 = event.copy(iAntiLeg0[1], 76);
       event[iAntiNew1].rescale5(1. - fracA0);
       iAntiLeg0[1] = iAntiNew1;
@@ -817,7 +847,7 @@ bool JunctionSplitting::getPartonLists(Event& event,
   iPartonAntiJun.clear();
 
   // Loop over junctions and collect all junctions.
-  // Then afterwards collect all anti junctions.
+  // Then afterwards collect all antijunctions.
   // This ensures that all gluons are collected on the junctions.
   for (int iJun = 0; iJun < event.sizeJunction(); ++iJun)
   if (event.remainsJunction(iJun)) {
@@ -837,15 +867,13 @@ bool JunctionSplitting::getPartonLists(Event& event,
         return false;
     }
 
-    // Store the anti junction and junction list.
+    // Store the antijunction and junction list.
     int nNeg = 0;
-    for (int i = 0; i < int(iParton.size()); ++i) if (iParton[i] < 0)
-      ++nNeg;
-    if (nNeg > 3 )
-      iPartonJun.push_back(iParton);
+    for (int i = 0; i < int(iParton.size()); ++i) if (iParton[i] < 0) ++nNeg;
+    if (nNeg > 3) iPartonJun.push_back(iParton);
   }
 
-  // Loop over all anti junctions.
+  // Loop over all antijunctions.
   for (int iJun = 0; iJun < event.sizeJunction(); ++iJun)
   if (event.remainsJunction(iJun)) {
 
@@ -865,7 +893,7 @@ bool JunctionSplitting::getPartonLists(Event& event,
         return false;
     }
 
-    // Store the anti junction and junction list.
+    // Store the antijunction and junction list.
     int nNeg = 0;
     for (int i = 0; i < int(iParton.size()); ++i) if (iParton[i] < 0)
       ++nNeg;
@@ -891,7 +919,7 @@ bool JunctionSplitting::setAcol(Event& event, int col, int acol) {
       event[iNew].acol(col);
       return true;
     }
-  // Check if anti junction is connected to a junction.
+  // Check if antijunction is connected to a junction.
   for (int j = 0;j < event.sizeJunction(); ++j)
     for (int jLeg = 0;jLeg < 3; ++jLeg)
       if (event.colJunction(j, jLeg) == acol) {

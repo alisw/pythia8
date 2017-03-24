@@ -22,9 +22,13 @@ element for <i>Z^0</i>, <i>W^+-</i> and Higgs (in the
 <p/> 
 The normal user is not expected to call <code>SpaceShower</code> 
 directly, but only have it called from <code>Pythia</code>, 
-via <code>PartonLevel</code>. Some of the parameters below, 
+via <code>PartonLevel</code>. Nonetheless, some of the parameters below, 
 in particular <code>SpaceShower:alphaSvalue</code>, 
-would be of interest for a tuning exercise, however. 
+would be of interest for uncertainty estimates and tuning exercises. 
+Note that 
+PYTHIA also incorporates an 
+<a href="Variations.html" target="page">automated framework</a> for shower 
+uncertainty variations. 
  
 <h3>Main variables</h3> 
  
@@ -175,7 +179,6 @@ The amount of QCD radiation in the shower is determined by
 <p/><code>parm&nbsp; </code><strong> SpaceShower:alphaSvalue &nbsp;</strong> 
  (<code>default = <strong>0.1365</strong></code>; <code>minimum = 0.06</code>; <code>maximum = 0.25</code>)<br/>
 The <i>alpha_strong</i> value at scale <code>M_Z^2</code>. 
-Default value is picked equal to the one used in CTEQ 5L. 
    
  
 <p/> 
@@ -199,9 +202,9 @@ can be applied to the <i>alpha_strong</i> values used for spacelike showers.
 Note that tunes using this option need lower values of 
 <i>alpha_strong(m_Z^2)</i> than tunes that do not. 
 <p/><code>flag&nbsp; </code><strong> SpaceShower:alphaSuseCMW &nbsp;</strong> 
- (<code>default = <strong>false</strong></code>)<br/>
-<br/><code>option </code><strong> false</strong> : Do not apply the CMW rescaling.    
-<br/><code>option </code><strong> true</strong> : Apply the CMW rescaling, increasing 
+ (<code>default = <strong>off</strong></code>)<br/>
+<br/><code>option </code><strong> off</strong> : Do not apply the CMW rescaling.    
+<br/><code>option </code><strong> on</strong> : Apply the CMW rescaling, increasing 
 <i>Lambda_QCD</i> for spacelike showers by a factor roughly 1.6. 
    
    
@@ -228,7 +231,9 @@ at the <i>Z^0</i> mass.
 The natural scale for couplings and PDFs is <i>pT^2</i>. To explore 
 uncertainties it is possibly to vary around this value, however, in 
 analogy with what can be done for 
-<a href="CouplingsAndScales.html" target="page">hard processes</a>. 
+<a href="CouplingsAndScales.html" target="page">hard processes</a>. (Note that 
+there is also an <a href="Variations.html" target="page">automated framework</a> for shower 
+uncertainties.) 
  
 <p/><code>parm&nbsp; </code><strong> SpaceShower:renormMultFac &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.</code>)<br/>
@@ -329,7 +334,17 @@ Assumed smaller than (or equal to) <i>pTminChgQ</i>.
 Force emissions, after the first,  to be ordered in rapidity, 
 i.e. in terms of decreasing angles in a backwards-evolution sense. 
 Could be used to probe sensitivity to unordered emissions. 
-Only affects QCD emissions. 
+Only affects QCD emissions, and only the hard subcollision of an event. 
+(For the case "soft QCD" processes the first MPI counts as the hard 
+subcollision.) 
+ 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> SpaceShower:rapidityOrderMPI &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+Same as the last switch, but this time only emissions in secondary 
+scattering systems from MPIs are forced to be ordered in rapidity. 
+Each MPI is ordered separately from the others. 
    
  
 <h3>Weak showers</h3> 
@@ -357,6 +372,7 @@ Determine which branchings are allowed.
 <p/><code>parm&nbsp; </code><strong> SpaceShower:pTminWeak &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off <i>pT</i> for weak branchings. 
+   
  
 <h3>Further variables</h3> 
  
@@ -401,6 +417,12 @@ switched on.
 <p/><code>flag&nbsp; </code><strong> SpaceShower:phiPolAsym &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Azimuthal asymmetry induced by gluon polarization; on/off = true/false. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> SpaceShower:phiPolAsymHard &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+Extend the above azimuthal asymmetry (if on) also back to gluons produced 
+in the hard process itself, where feasible; on/off = true/false. 
    
  
 <p/><code>flag&nbsp; </code><strong> SpaceShower:phiIntAsym &nbsp;</strong> 
@@ -485,4 +507,4 @@ photon backwards-evolution in lepton beams.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

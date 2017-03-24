@@ -180,11 +180,26 @@ mass without the need for a user intervention.
 <h3>Fragmentation <ei>pT</ei></h3> 
  
 The <code>StringPT</code> class handles the choice of fragmentation 
-<ei>pT</ei>. At each string breaking the quark and antiquark of the pair are 
-supposed to receive opposite and compensating <ei>pT</ei> kicks according 
-to a Gaussian distribution in <ei>p_x</ei> and <ei>p_y</ei> separately. 
-Call <ei>sigma_q</ei> the width of the <ei>p_x</ei> and <ei>p_y</ei> 
-distributions separately, i.e. 
+<ei>pT</ei>. At each string breaking the quark and antiquark of the pair 
+are supposed to receive opposite and compensating <ei>pT</ei> kicks. 
+How they are distributed depends on the following flag: 
+ 
+<flag name="StringPT:thermalModel" default="off"> 
+If switched off the quark <ei>pT</ei> is generated according to 
+the traditional Gaussion distribution in <ei>p_x</ei> and <ei>p_y</ei> 
+separately. If switched on, the new "thermal model" <ref>Fis16</ref> 
+is instead used, wherein the quark <ei>pT</ei> is generated such that the 
+resulting hadron receives a <ei>pT</ei> according to an exponential 
+distribution. Also the hadronic composition is affected, see further 
+below. 
+</flag> 
+ 
+<h4>Gaussian Distribution</h4> 
+ 
+For <code>StringPT:thermalModel = off</code> the quarks receive <ei>pT</ei> 
+kicks according to a Gaussian distribution in <ei>p_x</ei> and <ei>p_y</ei> 
+separately. Call <ei>sigma_q</ei> the width of the <ei>p_x</ei> and 
+<ei>p_y</ei> distributions separately, i.e. 
 <eq> 
     d(Prob) = exp( -(p_x^2 + p_y^2) / 2 sigma_q^2). 
 </eq> 
@@ -219,6 +234,80 @@ width.
  
 <parm name="StringPT:enhancedWidth" default="2.0" min="1.0" max="10.0"> 
 <ei>enhancedWidth</ei>,the enhancement of the width in this fraction. 
+</parm> 
+ 
+<p/> 
+In the context of some toy studies <ref>Fis16</ref> the following three 
+options have also been introduced, but are not part of any recommended 
+framework. 
+ 
+<parm name="StringPT:widthPreStrange" default="1.0" min="1.0" max="10.0"> 
+Prefactor multiplying the Gaussian width for strange quarks. 
+</parm> 
+ 
+<parm name="StringPT:widthPreDiquark" default="1.0" min="1.0" max="10.0"> 
+Prefactor multiplying the Gaussian width for diquarks. In case of 
+diquarks with one or two strange quarks the prefactor is calculated by 
+multiplying <ei>widthPreDiquark</ei> once or twice respectively with 
+<ei>widthPreStrange</ei>. 
+</parm> 
+ 
+<flag name="StringPT:mT2suppression" default="off"> 
+If switched on the flavour composition is chosen based on the hadronic 
+transverse mass, <ei>mT^2_had</ei>, and not based on the quark masses. 
+This implies a mass suppression factor <ei>exp(-m_had^2 / 2 sigma^2) </ei>. 
+</flag> 
+ 
+<h4>Thermal Distribution</h4> 
+ 
+For <code>StringPT:thermalModel = on</code> the quark <ei>pT</ei> 
+is generated such that the resulting hadron <ei>pT</ei> follows 
+a thermal distribution 
+<eq> 
+    d(Prob) = exp( -pT_had/T) d^2pT_had 
+</eq> 
+with temperature <ei>T</ei>, whose value is given by 
+<parm name="StringPT:temperature" default="0.21" min="0.1" max="0.5"> 
+the temperature <ei>T</ei> in the fragmentation process. 
+</parm> 
+<parm name="StringPT:tempPreFactor" default="1.21" min="1.0" max="1.5"> 
+Temperature prefactor for strange quarks and diquarks. Default is 
+determined to have the same average <ei>pT</ei> in <ei>u/d &rarr; s</ei> 
+and <ei>s &rarr; u/d</ei> transistions. 
+</parm> 
+ 
+<h4>Common setup for enhanced width</h4> 
+ 
+If strings are closely packed, e.g. as a consequence of MPIs, it is 
+likely that they receive an increased string tension, which translates 
+into a broader <ei>pT</ei> spectrum, see further <ref>Fis16</ref>. 
+It also means an enhanced rate (or rather reduced suppression) of 
+heavy-particle production relative to pions. This can be regulated by 
+the flag and parameters below. 
+ 
+<flag name="StringPT:closePacking" default="off"> 
+If switched on then the two following parameters modify either 
+<code>StringPT:sigma</code> or <code>StringPT:temperature</code>, 
+respectively. Normally only one of the options below would be used, 
+but technically both are allowed and then combine multiplicatively. 
+</flag> 
+ 
+<parm name="StringPT:expMPI" default="0.0" min="0.0" max="1.0"> 
+Exponent to the number of MPIs. The width/temparture will get the 
+prefactor <ei>N(MPI)^expMPI</ei>. 
+</parm> 
+ 
+<parm name="StringPT:expNSP" default="0.13" min="0.0" max="1.0"> 
+Exponent for the number of effective nearby string pieces, calculated as 
+<eq> 
+    N(NSP) =1 + (N<sub>string</sub>-1)/(1+p<sup>2</sup><sub>T had</sub>/ 
+    p<sup>2</sup><sub>T 0</sub>) , 
+</eq> 
+where <ei>p<sup>2</sup><sub>T had</sub> </ei> is the transverse 
+momentum of the next produced hadron, estimated based on an educated 
+guess of its momentum, and <ei>p<sup>2</sup><sub>T 0</sub></ei> is the 
+MPI regularization parameter <code>MultipartonInteractions:pT0Ref</code>. 
+The width/temperature will get the prefactor <ei>N(NSP)^expNSP</ei>. 
 </parm> 
  
 <h3>Jet joining procedure</h3> 
@@ -280,7 +369,7 @@ to the string region under consideration. (Note that, for technical
 reasons, the 0.2 GeV lower limit is de facto hardcoded.) 
 </parm> 
  
-<parm name="FragmentationSystems:mJoinJunction" default="1.0"min="0.5" 
+<parm name="FragmentationSystems:mJoinJunction" default="1.0" min="0.5" 
 max="2."> 
 When the invariant mass of two of the quarks in a three-quark junction 
 string system becomes too small, the system is simplified to a 
@@ -368,4 +457,4 @@ junction rest frame).
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

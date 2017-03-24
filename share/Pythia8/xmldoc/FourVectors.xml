@@ -216,6 +216,16 @@ the <ei>R</ei> distance measure, in <ei>(y, phi)</ei> or
 <ei>R^2 = (y_1 - y_2)^2 + (phi_1 - phi_2)^2</ei> and equivalent. 
 </methodmore> 
  
+<method name="friend bool pShift( Vec4& p1Move, Vec4& p2Move, 
+double m1New, double m2New)"> 
+transfer four-momentum between the two four-vectors so that they get 
+the masses <code>m1New</code> and <code>m2New</code>, respectively. 
+Note that <code>p1Move</code> and <code>p2Move</code> act both as 
+input and output arguments. The method will return false if the invariant 
+mass of the four-vectors is too small to accommodate the new masses, 
+and then the four-vectors are not changed. 
+</method> 
+ 
 <h3>Operations with four-vectors</h3> 
  
 Of course one should be able to add, subtract and scale four-vectors, 
@@ -355,6 +365,12 @@ such that the matrix encodes the full sequence of operations.
 The order in which you do these calls must agree with the imagined 
 order in which the rotations/boosts should be applied to a 
 four-momentum, since in general the operations do not commute. 
+<br/>(Mathematically you would e.g. define <ei>M = M_3 M_2 M_1</ei> 
+in that <ei>M p = M_3( M_2( M_1 p) ) )</ei>. That is, operations 
+on the four-vector <ei>p</ei> are carried out in the order first 
+<ei>M_1</ei>, then <ei>M_2</ei> and finally <ei>M_3</ei>. Thus 
+<ei>M_1, M_2, M_3</ei> is also the order in which you should input 
+rotations and boosts to <ei>M</ei>.) 
  
 <method name="RotBstMatrix::RotBstMatrix()"> 
 creates a diagonal unit matrix, i.e. one that leaves a four-vector 
@@ -436,4 +452,4 @@ ended with a newline.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

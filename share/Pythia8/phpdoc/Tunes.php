@@ -258,7 +258,7 @@ having to use LHAPDF, if you set <code>Tune:preferLHAPDF =
 <input type="radio" name="2" value="1" checked="checked"><strong>1 </strong>:  Use LHAPDF5 PDFs.  <br/>
 <input type="radio" name="2" value="2"><strong>2 </strong>:  Use LHAPDF6 PDFs.  <br/>
  
-<br/><br/><table><tr><td><strong>Tune:pp  </td><td>  &nbsp;&nbsp;(<code>default = <strong>14</strong></code>; <code>minimum = -1</code>; <code>maximum = 32</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Tune:pp  </td><td>  &nbsp;&nbsp;(<code>default = <strong>14</strong></code>; <code>minimum = -1</code>; <code>maximum = 34</code>)</td></tr></table>
 Choice of tune to <ei>pp/ppbar</ei> data, mainly for the 
 initial-state-radiation, multiparton-interactions and  beam-remnants 
 aspects of PYTHIA. You should study the 
@@ -304,6 +304,8 @@ the wanted behaviour.
 <input type="radio" name="3" value="30"><strong>30 </strong>: "ATLAS A14 variation 3b-" of tune 21.  <br/>
 <input type="radio" name="3" value="31"><strong>31 </strong>: "ATLAS A14 variation 3c+" of tune 21.  <br/>
 <input type="radio" name="3" value="32"><strong>32 </strong>: "ATLAS A14 variation 3c-" of tune 21.  <br/>
+<input type="radio" name="3" value="33"><strong>33 </strong>: tune that includes close-packing of strings and  hadron rescattering, Gaussian model for pT and flavour selection  <ref>Fis16</ref>. Based on Monash tune, mainly tuned to pT spectra.  <br/>
+<input type="radio" name="3" value="34"><strong>34 </strong>: tune that includes close-packing of strings and  hadron rescattering, thermodynamical model for pT and flavour selection  <ref>Fis16</ref>. Based on Monash tune, mainly tuned to pT spectra.  <br/>
  
  
 <input type="hidden" name="saved" value="1"/>
@@ -343,4 +345,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

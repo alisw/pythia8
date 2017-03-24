@@ -1,5 +1,5 @@
 // FragmentationSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -277,6 +277,10 @@ bool ColConfig::joinJunction( vector<int>& iPartonIn, Event& event,
       int iNew = event.append( event[iQ].id(), 74, iQ, iG, 0, 0,
         colNew, acolNew, pNew, pNew.mCalc() );
 
+      // Displaced lifetime/vertex.
+      event[iNew].tau( event[iQ].tau() );
+      if (event[iQ].hasVertex()) event[iNew].vProd( event[iQ].vProd() );
+
       // Mark joined partons and update iLeg end.
       event[iQ].statusNeg();
       event[iG].statusNeg();
@@ -298,6 +302,10 @@ bool ColConfig::joinJunction( vector<int>& iPartonIn, Event& event,
   Vec4 pNew   = pLeg[legA] + pLeg[legB];
   int iNew    = event.append( idNew, 74, min(iQA, iQB), max( iQA, iQB),
      0, 0, colNew, acolNew, pNew, pNew.mCalc() );
+
+  // Displaced lifetime/vertex; assume both quarks carry same info.
+  event[iNew].tau( event[iQA].tau() );
+  if (event[iQA].hasVertex()) event[iNew].vProd( event[iQA].vProd() );
 
   // Mark joined partons and reduce remaining system.
   event[iQA].statusNeg();
@@ -384,17 +392,17 @@ int ColConfig::findSinglet(int i) {
 
 // List all currently identified singlets.
 
-void ColConfig::list(ostream& os) const {
+void ColConfig::list() const {
 
   // Header. Loop over all individual singlets.
-  os << "\n --------  Colour Singlet Systems Listing -------------------\n";
+  cout << "\n --------  Colour Singlet Systems Listing -------------------\n";
   for (int iSub = 0; iSub < int(singlets.size()); ++iSub) {
 
     // List all partons belonging to each singlet.
-    os << " singlet " << iSub << " contains " ;
+    cout << " singlet " << iSub << " contains " ;
     for (int i = 0; i < singlets[iSub].size(); ++i)
-      os << singlets[iSub].iParton[i] << " ";
-    os << "\n";
+      cout << singlets[iSub].iParton[i] << " ";
+    cout << "\n";
 
   // Done.
   }
@@ -464,6 +472,8 @@ void StringRegion::setUp(Vec4 p1, Vec4 p2, bool isMassless) {
     double k2 = 0.5 * ( (m1Sq + p1p2) / root - 1.);
     pPos = (1. + k1) * p1 - k2 * p2;
     pNeg = (1. + k2) * p2 - k1 * p1;
+    if (pPos.e() < TINY || pNeg.e() < TINY)
+      {isSetUp = true; isEmpty = true; return;}
   }
 
   // Find two spacelike transverse four-vector directions.

@@ -1,5 +1,5 @@
 // BeamParticle.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -127,7 +127,7 @@ public:
   void init( int idIn, double pzIn, double eIn, double mIn,
     Info* infoPtrIn, Settings& settings, ParticleData* particleDataPtrIn,
     Rndm* rndmPtrIn, PDF* pdfInPtr, PDF* pdfHardInPtr, bool isUnresolvedIn,
-    StringFlav* flavSelPtrIn);
+    StringFlav* flavSelPtrIn, bool hasResGammaIn = false);
 
   // Initialize only the two pdf pointers.
   void initPDFPtr(PDF* pdfInPtr, PDF* pdfHardInPtr) {
@@ -138,6 +138,9 @@ public:
 
   // Set new pZ and E, but keep the rest the same.
   void newPzE( double pzIn, double eIn) {pBeam = Vec4( 0., 0., pzIn, eIn);}
+
+  // Set new mass. Used with photons when virtuality is sampled.
+  void newM( double mIn) { mBeam = mIn; }
 
   // Member functions for output.
   int id() const {return idBeam;}
@@ -150,9 +153,11 @@ public:
   bool isLepton() const {return isLeptonBeam;}
   bool isUnresolved() const {return isUnresolvedBeam;}
   // As hadrons here we only count those we know how to handle remnants for.
-  bool isHadron() const {return isHadronBeam;}
-  bool isMeson() const {return isMesonBeam;}
-  bool isBaryon() const {return isBaryonBeam;}
+  bool isHadron()    const {return isHadronBeam;}
+  bool isMeson()     const {return isMesonBeam;}
+  bool isBaryon()    const {return isBaryonBeam;}
+  bool isGamma()     const {return isGammaBeam;}
+  bool hasResGamma() const {return hasResGammaInBeam;}
 
   // Maximum x remaining after previous MPI and ISR, plus safety margin.
   double xMax(int iSkip = -1);
@@ -160,6 +165,15 @@ public:
   // Special hard-process parton distributions (can agree with standard ones).
   double xfHard(int idIn, double x, double Q2)
     {return pdfHardBeamPtr->xf(idIn, x, Q2);}
+
+  // Overestimate for PDFs. Same as normal except photons inside leptons.
+  double xfMax(int idIn, double x, double Q2)
+    {return pdfHardBeamPtr->xfMax(idIn, x, Q2);}
+
+  // Do not sample the x_gamma value to get correct cross section with
+  // possible second call.
+  double xfSame(int idIn, double x, double Q2)
+    {return pdfHardBeamPtr->xfSame(idIn, x, Q2);}
 
   // Standard parton distributions.
   double xf(int idIn, double x, double Q2)
@@ -203,15 +217,27 @@ public:
   int sizeInit() const {return nInit;}
 
   // Clear list of resolved partons.
-  void clear() {resolved.resize(0); nInit = 0;}
+  void clear() {resolved.resize(0); nInit = 0;;}
+
+  // Reset variables related to photon beam.
+  void resetGamma() {iGamVal = -1; iPosVal = -1; isResolvedGamma = isGammaBeam;
+    pT2gm2qqbar = 0.;}
+
+  // Reset variables related to photon beam inside a lepton.
+  void resetGammaInLepton() {xGm = 1.; kTgamma = 0.; phiGamma = 0.;}
 
   // Add a resolved parton to list.
   int append( int iPos, int idIn, double x, int companion = -1)
     {resolved.push_back( ResolvedParton( iPos, idIn, x, companion) );
     return resolved.size() - 1;}
 
+  // Remove the last particle from the beam. Reset companion code if needed.
+  void popBack() { int iComp = resolved.back().companion();
+    resolved.pop_back(); if ( iComp >= 0 ) { iSkipSave = iComp;
+      idSave = resolved[iComp].id(); pickValSeaComp(); } }
+
   // Print extracted parton list; for debug mainly.
-  void list(ostream& os = cout) const;
+  void list() const;
 
   // How many different flavours, and how many quarks of given flavour.
   int nValenceKinds() const {return nValKinds;}
@@ -263,10 +289,57 @@ public:
 
   vector<pair <int,int> > getColUpdates() {return colUpdates;}
 
+  // Set valence content for photon beams and position of first valence quark.
+  bool gammaInitiatorIsVal(int iResolved, int id, double x, double Q2);
+  bool gammaInitiatorIsVal(int iResolved, double Q2);
+  int  getGammaValFlavour() { return abs(idVal[0]); }
+  int  gammaValSeaComp(int iResolved);
+  void posVal(int iPosValIn)          { iPosVal = iPosValIn; }
+  void gamVal(int iGamValIn)          { iGamVal = iGamValIn; }
+  int  gamVal()                       { return iGamVal; }
+  void resolvedGamma(bool isResolved) { isResolvedGamma = isResolved; }
+  bool resolvedGamma()                { return isResolvedGamma; }
+
+  // Store the pT2 value of gamma->qqbar splitting.
+  void   pT2gamma2qqbar(double pT2in) { pT2gm2qqbar = pT2in; }
+  double pT2gamma2qqbar()             { return pT2gm2qqbar; }
+
+  // Store the pT value for the latest MPI.
+  void   pTMPI(double pTminMPIin)     { pTminMPI = pTminMPIin; }
+
+  // Check whether room for beam remnants.
+  bool roomFor1Remnant(double eCM);
+  bool roomFor1Remnant(int id1, double x1, double eCM);
+  bool roomFor2Remnants(int id1, double x1, double eCM);
+  bool roomForRemnants(BeamParticle beamOther);
+
+  // Functions to approximate pdfs for ISR.
+  double gammaPDFxDependence(int flavour, double x)
+    { return pdfBeamPtr->gammaPDFxDependence(flavour, x); }
+  double gammaPDFRefScale(int flavour)
+    { return pdfBeamPtr->gammaPDFRefScale(flavour); }
+  double xIntegratedPDFs(double Q2)
+    { return pdfBeamPtr->xfIntegratedTotal(Q2); }
+
+  // Save the x_gamma value after latest PDF call or set it later if ND.
+  void xGammaPDF()            { xGm = pdfHardBeamPtr->xGamma(); }
+  void xGamma(double xGmIn)   { xGm = xGmIn; }
+  void Q2Gamma(double Q2GmIn) { Q2gm = Q2GmIn; }
+  void newGammaKTPhi(double kTIn, double phiIn)
+    { kTgamma = kTIn; phiGamma = phiIn; }
+
+  // Get the kinematics related photons form lepton beams.
+  double xGamma()   const { return xGm; }
+  double Q2Gamma()  const { return Q2gm; }
+  double gammaKTx() const { return kTgamma*cos(phiGamma); }
+  double gammaKTy() const { return kTgamma*sin(phiGamma); }
+  double gammaKT()  const { return kTgamma; }
+  double gammaPhi() const { return phiGamma; }
+
 private:
 
   // Constants: could only be changed in the code itself.
-  static const double XMINUNRESOLVED, POMERONMASS;
+  static const double XMINUNRESOLVED, POMERONMASS, XMAXCOMPANION;
   static const int NMAX, NRANDOMTRIES;
 
   // Pointer to various information on the generation.
@@ -297,14 +370,23 @@ private:
   int    idBeam, idBeamAbs;
   Vec4   pBeam;
   double mBeam;
+
   // Beam kind. Valence flavour content for hadrons.
   bool   isUnresolvedBeam, isLeptonBeam, isHadronBeam, isMesonBeam,
-         isBaryonBeam;
+         isBaryonBeam, isGammaBeam;
   int    nValKinds, idVal[3], nVal[3];
 
   // Current parton density, by valence, sea and companion.
   int    idSave, iSkipSave, nValLeft[3];
   double xqgTot, xqVal, xqgSea, xqCompSum;
+
+  // Variables related to photon beams (also inside lepton).
+  bool   doISR, doMPI, doND, isResolvedGamma, hasResGammaInBeam;
+  double pTminISR, pTminMPI, pT2gm2qqbar;
+  int    iGamVal, iPosVal;
+
+  // Variables for photon from lepton.
+  double xGm, Q2gm, kTgamma, phiGamma;
 
   // The list of resolved partons.
   vector<ResolvedParton> resolved;

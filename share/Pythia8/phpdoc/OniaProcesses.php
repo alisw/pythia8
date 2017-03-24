@@ -43,7 +43,7 @@ which specifies the Fock state through which the process occurs,
 where <i>(1)</i> indicates a colour-singlet state and <i>(8)</i> a 
 colour-octet state. 
  
-<p> The unphysical colour-octet states follow the <code>id</code> 
+<p/> The unphysical colour-octet states follow the <code>id</code> 
 scheme of <i>99 n_q n_s n_r n_L n_J</i> where <i>n_q</i> is the 
 quark flavour of the state and <i>n_s</i> is the colour-octet state 
 type. Here <i>0</i> is <i>3S1</i>, <i>1</i> is <i>1S0</i>, 
@@ -90,12 +90,24 @@ are extracted from [<a href="Bibliography.php" target="page">Yua98</a>].
  
 <p/> 
 Note that states that differ only by the radial excitation number 
-<i>n_r</i> share the same short-dinstence matrix elements. The 
-program has therefore been written such that further radial excitations 
-can be easily added by editing this file, without requiring a recompilation 
-of the code. All related arrays must be expanded in exactly the same way, 
-however, i.e. the code of the colour singlet state, the long-distance 
-matrix elements and the individual process on/off switches. 
+<i>n_r</i> share the same short-distance matrix elements. The 
+program has therefore been written such that further radial 
+excitations can be easily added by editing this file, without 
+requiring a recompilation of the code. All related arrays must be 
+expanded in exactly the same way, however, i.e. the code of the colour 
+singlet state, the long-distance matrix elements and the individual 
+process on/off switches. 
+ 
+<p/> 
+Double production of charmonium and bottomonium <i>3S1</i> states is 
+also available, but with only the colour-singlet processes 
+included. The short-distance matrix elements for these processes can 
+be found in [<a href="Bibliography.php" target="page">Hum83</a>] and [<a href="Bibliography.php" target="page">Qia02</a>]. Arrays seperate to 
+those used for single charmonium and bottomonium production set the 
+long-distance NRQCD matrix elements. For consistency these values 
+should be the same as those provided for single charmonium and 
+bottomonium production, but are seperated to allow further control by 
+the user if needed. 
  
 <p/> 
 The description of 
@@ -115,13 +127,13 @@ echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>SuppressS
 reweighting that cancels the low-<i>pT</i> divergence. 
  
 <p/> 
-An eikonalized description of these processes is included in the 
-multiparton-interactions framework. Here the low-<i>pT</i> dampening 
-is automatic, and additionally the framework is more consistent 
-(e.g. with respect to energy-momentum constraints and the 
-impact-parameter description) for events where the onium production 
-is not the hardest subprocess, as would often be the case in the 
-low-<i>pT</i> limit. 
+An eikonalized description of these processes, excluding double onia 
+production, is included in the multiparton-interactions 
+framework. Here the low-<i>pT</i> damping is automatic, and 
+additionally the framework is more consistent (e.g. with respect to 
+energy-momentum constraints and the impact-parameter description) for 
+events where the onium production is not the hardest subprocess, as 
+would often be the case in the low-<i>pT</i> limit. 
  
 <br/><br/><strong>Onia:forceMassSplit</strong>  <input type="radio" name="1" value="on" checked="checked"><strong>On</strong>
 <input type="radio" name="1" value="off"><strong>Off</strong>
@@ -382,97 +394,139 @@ Colour-octet production of <i>3DJ</i> charmonium states via
 Code 420. 
    
  
+<h3>Double Charmonium 3S1 States</h3> 
+ 
+<b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
+<code>pvec</code> values must be provided as a comma-separated list 
+with the right number of elements, without any blanks inside the list. 
+ 
+<br/><br/><table><tr><td><strong>Charmonium:states(3S1)1  </td><td></td><td> <input type="text" name="40" value="443,443,100443" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>443,443,100443</strong></code>)</td></tr></table>
+The first <i>3S1</i> charmonium states of the charmonium pairs that 
+can be produced from the following processes. Note that all vectors 
+within this section, either of modes, flags, or parameters, must be 
+the same length as this vector. 
+   
+ 
+<br/><br/><table><tr><td><strong>Charmonium:states(3S1)2  </td><td></td><td> <input type="text" name="41" value="443,100443,100443" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>443,100443,100443</strong></code>)</td></tr></table>
+The second <i>3S1</i> charmonium states of the charmonium pairs that 
+can be produced from the following processes. 
+   
+ 
+<br/><br/><table><tr><td><strong>Charmonium:O(3S1)[3S1(1)]1 </td><td></td><td> <input type="text" name="42" value="1.16,1.16,0.76" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.16,1.16,0.76</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the first <i>3S1</i> charmonium 
+states. 
+   
+ 
+<br/><br/><table><tr><td><strong>Charmonium:O(3S1)[3S1(1)]2 </td><td></td><td> <input type="text" name="43" value="1.16,0.76,0.76" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.16,0.76,0.76</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the second <i>3S1</i> charmonium 
+states. 
+   
+ 
+<br/><br/><table><tr><td><strong>Charmonium:gg2doubleccbar(3S1)[3S1(1)]  </td><td></td><td> <input type="text" name="44" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+Colour-singlet production of <i>3S1</i> charmonium state pairs via 
+<i>g g &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </i>. 
+Code 421. 
+   
+ 
+<br/><br/><table><tr><td><strong>Charmonium:qqbar2doubleccbar(3S1)[3S1(1)]  </td><td></td><td> <input type="text" name="45" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+Colour-singlet production of <i>3S1</i> charmonium state pairs via 
+<i>q qbar &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </i>. 
+Code 422. 
+   
+ 
 <h3>Bottomonium 3S1 States</h3> 
  
 <b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<br/><br/><table><tr><td><strong>Bottomonium:states(3S1)  </td><td></td><td> <input type="text" name="40" value="553,100553,200553" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>553,100553,200553</strong></code>; <code>minimum = 0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:states(3S1)  </td><td></td><td> <input type="text" name="46" value="553,100553,200553" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>553,100553,200553</strong></code>; <code>minimum = 0</code>)</td></tr></table>
 The <i>3S1</i> bottomonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
 vector. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3S1(1)] </td><td></td><td> <input type="text" name="41" value="9.28,4.63,3.54" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>9.28,4.63,3.54</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3S1(1)] </td><td></td><td> <input type="text" name="47" value="9.28,4.63,3.54" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>9.28,4.63,3.54</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The colour-singlet long-distance matrix 
 elements <i>&lt;O[3S1(1)]&gt;</i> for the <i>3S1</i> bottomonium states. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3S1(8)] </td><td></td><td> <input type="text" name="42" value="0.15,0.045,0.075" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.15,0.045,0.075</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3S1(8)] </td><td></td><td> <input type="text" name="48" value="0.15,0.045,0.075" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.15,0.045,0.075</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3S1(8)]&gt;</i> for the <i>3S1</i> bottomonium states. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[1S0(8)] </td><td></td><td> <input type="text" name="43" value="0.02,0.06,0.1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.02,0.06,0.1</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[1S0(8)] </td><td></td><td> <input type="text" name="49" value="0.02,0.006,0.01" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.02,0.006,0.01</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[1S0(8)]&gt;</i> for the <i>3S1</i> 
 bottomonium states. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3P0(8)] </td><td></td><td> <input type="text" name="44" value="0.02,0.06,0.1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.02,0.06,0.1</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3P0(8)] </td><td></td><td> <input type="text" name="50" value="0.02,0.006,0.01" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.02,0.006,0.01</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the <i>3S1</i> bottomonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
 are calculated from these long-distance matrix elements. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3S1(1)]g  </td><td></td><td> <input type="text" name="45" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3S1(1)]g  </td><td></td><td> <input type="text" name="51" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-singlet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[3S1(1)] g</i>. 
 Code 501. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3S1(8)]g  </td><td></td><td> <input type="text" name="46" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3S1(8)]g  </td><td></td><td> <input type="text" name="52" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[3S1(8)] g</i>. 
 Code 502. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3S1)[3S1(8)]q  </td><td></td><td> <input type="text" name="47" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3S1)[3S1(8)]q  </td><td></td><td> <input type="text" name="53" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q g &rarr; bbbar[3S1(8)] q</i>. 
 Code 503. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g  </td><td></td><td> <input type="text" name="48" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g  </td><td></td><td> <input type="text" name="54" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3S1(8)] g</i>. 
 Code 504. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[1S0(8)]g  </td><td></td><td> <input type="text" name="49" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[1S0(8)]g  </td><td></td><td> <input type="text" name="55" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[1S0(8)] g</i>. 
 Code 505. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3S1)[1S0(8)]q  </td><td></td><td> <input type="text" name="50" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3S1)[1S0(8)]q  </td><td></td><td> <input type="text" name="56" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q g &rarr; bbbar[1S0(8)] q</i>. 
 Code 506. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g  </td><td></td><td> <input type="text" name="51" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g  </td><td></td><td> <input type="text" name="57" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[1S0(8)] g</i>. 
 Code 507. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3PJ(8)]g  </td><td></td><td> <input type="text" name="52" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3PJ(8)]g  </td><td></td><td> <input type="text" name="58" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[3PJ(8)] g</i>. 
 Code 508. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3S1)[3PJ(8)]q  </td><td></td><td> <input type="text" name="53" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3S1)[3PJ(8)]q  </td><td></td><td> <input type="text" name="59" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q g &rarr; bbbar[3PJ(8)] q</i>. 
 Code 509. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g  </td><td></td><td> <input type="text" name="54" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g  </td><td></td><td> <input type="text" name="60" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3SJ(8)] g</i>. 
 Code 510. 
@@ -484,56 +538,56 @@ Code 510.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<br/><br/><table><tr><td><strong>Bottomonium:states(3PJ)  </td><td></td><td> <input type="text" name="55" value="10551,20553,555" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10551,20553,555</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:states(3PJ)  </td><td></td><td> <input type="text" name="61" value="10551,20553,555" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10551,20553,555</strong></code>)</td></tr></table>
 The <i>3PJ</i> bottomonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
 vector. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3PJ)[3P0(1)] </td><td></td><td> <input type="text" name="56" value="0.085,0.085,0.085" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.085,0.085,0.085</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3PJ)[3P0(1)] </td><td></td><td> <input type="text" name="62" value="0.085,0.085,0.085" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.085,0.085,0.085</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3P0(1)]&gt;/m_Q^2</i> for the <i>3PJ</i> bottomonium 
 states. The remaining <i>&lt;O[3PJ(1)]&gt;/m_Q^2</i> 
 are calculated from these long-distance matrix elements. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3PJ)[3S1(8)] </td><td></td><td> <input type="text" name="57" value="0.04,0.04,0.04" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.04,0.04,0.04</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3PJ)[3S1(8)] </td><td></td><td> <input type="text" name="63" value="0.04,0.04,0.04" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.04,0.04,0.04</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(8)]&gt;</i> for the <i>3PJ</i> bottomonium states. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g  </td><td></td><td> <input type="text" name="58" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g  </td><td></td><td> <input type="text" name="64" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3PJ(1)] g</i>. 
 Code 511. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q  </td><td></td><td> <input type="text" name="59" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q  </td><td></td><td> <input type="text" name="65" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>q g &rarr; bbbar[3PJ(1)] q</i>. 
 Code 512. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g  </td><td></td><td> <input type="text" name="60" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g  </td><td></td><td> <input type="text" name="66" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3PJ(1)] g</i>. 
 Code 513. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3PJ)[3S1(8)]g  </td><td></td><td> <input type="text" name="61" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3PJ)[3S1(8)]g  </td><td></td><td> <input type="text" name="67" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3PJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3S1(8)] g</i>. 
 Code 514. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3PJ)[3S1(8)]q  </td><td></td><td> <input type="text" name="62" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3PJ)[3S1(8)]q  </td><td></td><td> <input type="text" name="68" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3PJ</i> bottomonium states via 
 <i>q g &rarr; bbbar[3S1(8)] q</i>. 
 Code 515. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g  </td><td></td><td> <input type="text" name="63" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g  </td><td></td><td> <input type="text" name="69" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-octet production of <i>3PJ</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3S1(8)] g</i>. 
 Code 516. 
@@ -545,7 +599,7 @@ Code 516.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<br/><br/><table><tr><td><strong>Bottomonium:states(3DJ)  </td><td></td><td> <input type="text" name="64" value="" size="20"/> </td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:states(3DJ)  </td><td></td><td> <input type="text" name="70" value="" size="20"/> </td></tr></table>
 The <i>3DJ</i> bottomonium states that can be produced from the following 
 processes. Currently, no <i>3DJ</i> states are included in the 
 default <code>ParticleData</code> and so none are included here. Note 
@@ -553,7 +607,7 @@ that all vectors within this section, either of flags or parameters,
 must be the same length as this vector. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3DJ)[3D1(1)] </td><td></td><td> <input type="text" name="65" value="" size="20"/>  &nbsp;&nbsp;(; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3DJ)[3D1(1)] </td><td></td><td> <input type="text" name="71" value="" size="20"/>  &nbsp;&nbsp;(; <code>minimum = 0.0</code>)</td></tr></table>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3D1(1)]&gt;</i> for the <i>3PJ</i> bottomonium 
 states. For a <i>3DJ</i> bottomonium state where <i>J</i> is 
@@ -563,35 +617,77 @@ by <i>(2J+1)&lt;O[3D1(1)]/3&gt;</i> using leading order spin symmetry
 relations. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:O(3DJ)[3P0(8)] </td><td></td><td> <input type="text" name="66" value="" size="20"/>  &nbsp;&nbsp;(; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:O(3DJ)[3P0(8)] </td><td></td><td> <input type="text" name="72" value="" size="20"/>  &nbsp;&nbsp;(; <code>minimum = 0.0</code>)</td></tr></table>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the 3DJ bottomonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
 are calculated from these long-distance matrix elements. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g  </td><td></td><td> <input type="text" name="67" value="" size="20"/> </td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g  </td><td></td><td> <input type="text" name="73" value="" size="20"/> </td></tr></table>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3DJ(1)] g</i>. 
 Code 517. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g  </td><td></td><td> <input type="text" name="68" value="" size="20"/> </td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g  </td><td></td><td> <input type="text" name="74" value="" size="20"/> </td></tr></table>
 Colour-octet production of <i>3DJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3PJ(8)] g</i>. 
 Code 518. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q  </td><td></td><td> <input type="text" name="69" value="" size="20"/> </td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q  </td><td></td><td> <input type="text" name="75" value="" size="20"/> </td></tr></table>
 Colour-octet production of <i>3DJ</i> bottomonium states via 
 <i>q g &rarr; bbbar[3PJ(8)] q</i>. 
 Code 519. 
    
  
-<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g  </td><td></td><td> <input type="text" name="70" value="" size="20"/> </td></tr></table>
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g  </td><td></td><td> <input type="text" name="76" value="" size="20"/> </td></tr></table>
 Colour-octet production of <i>3DJ</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3PJ(8)] g</i>. 
 Code 520. 
+   
+ 
+<h3>Double Bottomonium 3S1 States</h3> 
+ 
+<b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
+<code>pvec</code> values must be provided as a comma-separated list 
+with the right number of elements, without any blanks inside the list. 
+ 
+<br/><br/><table><tr><td><strong>Bottomonium:states(3S1)1  </td><td></td><td> <input type="text" name="77" value="553,553,553,100553,100553,200553" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>553,553,553,100553,100553,200553</strong></code>)</td></tr></table>
+The first <i>3S1</i> bottomonium states of the bottomonium pairs 
+that can be produced from the following processes. Note that all 
+vectors within this section, either of modes, flags, or parameters, 
+must be the same length as this vector. 
+   
+ 
+<br/><br/><table><tr><td><strong>Bottomonium:states(3S1)2  </td><td></td><td> <input type="text" name="78" value="553,100553,200553,100553,200553,200553" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>553,100553,200553,100553,200553,200553</strong></code>)</td></tr></table>
+The second <i>3S1</i> bottomonium states of the bottomonium pairs that 
+can be produced from the following processes. 
+   
+ 
+<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3S1(1)]1 </td><td></td><td> <input type="text" name="79" value="9.28,9.28,9.28,4.63,4.63,3.54" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>9.28,9.28,9.28,4.63,4.63,3.54</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the first <i>3S1</i> bottomonium 
+states. 
+   
+ 
+<br/><br/><table><tr><td><strong>Bottomonium:O(3S1)[3S1(1)]2 </td><td></td><td> <input type="text" name="80" value="9.28,4.63,3.54,4.63,3.54,3.54" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>9.28,4.63,3.54,4.63,3.54,3.54</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the second <i>3S1</i> bottomonium 
+states. 
+   
+ 
+<br/><br/><table><tr><td><strong>Bottomonium:gg2doublebbbar(3S1)[3S1(1)]  </td><td></td><td> <input type="text" name="81" value="off,off,off,off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off,off,off,off</strong></code>)</td></tr></table>
+Colour-singlet production of <i>3S1</i> bottomonium state pairs via 
+<i>g g &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </i>. 
+Code 521. 
+   
+ 
+<br/><br/><table><tr><td><strong>Bottomonium:qqbar2doublebbbar(3S1)[3S1(1)]  </td><td></td><td> <input type="text" name="82" value="off,off,off,off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off,off,off,off</strong></code>)</td></tr></table>
+Colour-singlet production of <i>3S1</i> bottomonium state pairs via 
+<i>q qbar &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </i>. 
+Code 522. 
    
  
 <input type="hidden" name="saved" value="1"/>
@@ -804,159 +900,219 @@ if($_POST["39"] != "off")
 $data = "Charmonium:qqbar2ccbar(3DJ)[3PJ(8)]g = ".$_POST["39"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["40"] != "553,100553,200553")
+if($_POST["40"] != "443,443,100443")
 {
-$data = "Bottomonium:states(3S1) = ".$_POST["40"]."\n";
+$data = "Charmonium:states(3S1)1 = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["41"] != "9.28,4.63,3.54")
+if($_POST["41"] != "443,100443,100443")
 {
-$data = "Bottomonium:O(3S1)[3S1(1)] = ".$_POST["41"]."\n";
+$data = "Charmonium:states(3S1)2 = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["42"] != "0.15,0.045,0.075")
+if($_POST["42"] != "1.16,1.16,0.76")
 {
-$data = "Bottomonium:O(3S1)[3S1(8)] = ".$_POST["42"]."\n";
+$data = "Charmonium:O(3S1)[3S1(1)]1 = ".$_POST["42"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["43"] != "0.02,0.06,0.1")
+if($_POST["43"] != "1.16,0.76,0.76")
 {
-$data = "Bottomonium:O(3S1)[1S0(8)] = ".$_POST["43"]."\n";
+$data = "Charmonium:O(3S1)[3S1(1)]2 = ".$_POST["43"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["44"] != "0.02,0.06,0.1")
+if($_POST["44"] != "off,off,off")
 {
-$data = "Bottomonium:O(3S1)[3P0(8)] = ".$_POST["44"]."\n";
+$data = "Charmonium:gg2doubleccbar(3S1)[3S1(1)] = ".$_POST["44"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["45"] != "off,off,off")
 {
-$data = "Bottomonium:gg2bbbar(3S1)[3S1(1)]g = ".$_POST["45"]."\n";
+$data = "Charmonium:qqbar2doubleccbar(3S1)[3S1(1)] = ".$_POST["45"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["46"] != "off,off,off")
+if($_POST["46"] != "553,100553,200553")
 {
-$data = "Bottomonium:gg2bbbar(3S1)[3S1(8)]g = ".$_POST["46"]."\n";
+$data = "Bottomonium:states(3S1) = ".$_POST["46"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["47"] != "off,off,off")
+if($_POST["47"] != "9.28,4.63,3.54")
 {
-$data = "Bottomonium:qg2bbbar(3S1)[3S1(8)]q = ".$_POST["47"]."\n";
+$data = "Bottomonium:O(3S1)[3S1(1)] = ".$_POST["47"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["48"] != "off,off,off")
+if($_POST["48"] != "0.15,0.045,0.075")
 {
-$data = "Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g = ".$_POST["48"]."\n";
+$data = "Bottomonium:O(3S1)[3S1(8)] = ".$_POST["48"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["49"] != "off,off,off")
+if($_POST["49"] != "0.02,0.006,0.01")
 {
-$data = "Bottomonium:gg2bbbar(3S1)[1S0(8)]g = ".$_POST["49"]."\n";
+$data = "Bottomonium:O(3S1)[1S0(8)] = ".$_POST["49"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["50"] != "off,off,off")
+if($_POST["50"] != "0.02,0.006,0.01")
 {
-$data = "Bottomonium:qg2bbbar(3S1)[1S0(8)]q = ".$_POST["50"]."\n";
+$data = "Bottomonium:O(3S1)[3P0(8)] = ".$_POST["50"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["51"] != "off,off,off")
 {
-$data = "Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g = ".$_POST["51"]."\n";
+$data = "Bottomonium:gg2bbbar(3S1)[3S1(1)]g = ".$_POST["51"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["52"] != "off,off,off")
 {
-$data = "Bottomonium:gg2bbbar(3S1)[3PJ(8)]g = ".$_POST["52"]."\n";
+$data = "Bottomonium:gg2bbbar(3S1)[3S1(8)]g = ".$_POST["52"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["53"] != "off,off,off")
 {
-$data = "Bottomonium:qg2bbbar(3S1)[3PJ(8)]q = ".$_POST["53"]."\n";
+$data = "Bottomonium:qg2bbbar(3S1)[3S1(8)]q = ".$_POST["53"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["54"] != "off,off,off")
 {
-$data = "Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g = ".$_POST["54"]."\n";
+$data = "Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g = ".$_POST["54"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["55"] != "10551,20553,555")
+if($_POST["55"] != "off,off,off")
 {
-$data = "Bottomonium:states(3PJ) = ".$_POST["55"]."\n";
+$data = "Bottomonium:gg2bbbar(3S1)[1S0(8)]g = ".$_POST["55"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["56"] != "0.085,0.085,0.085")
+if($_POST["56"] != "off,off,off")
 {
-$data = "Bottomonium:O(3PJ)[3P0(1)] = ".$_POST["56"]."\n";
+$data = "Bottomonium:qg2bbbar(3S1)[1S0(8)]q = ".$_POST["56"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["57"] != "0.04,0.04,0.04")
+if($_POST["57"] != "off,off,off")
 {
-$data = "Bottomonium:O(3PJ)[3S1(8)] = ".$_POST["57"]."\n";
+$data = "Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g = ".$_POST["57"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["58"] != "off,off,off")
 {
-$data = "Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g = ".$_POST["58"]."\n";
+$data = "Bottomonium:gg2bbbar(3S1)[3PJ(8)]g = ".$_POST["58"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["59"] != "off,off,off")
 {
-$data = "Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q = ".$_POST["59"]."\n";
+$data = "Bottomonium:qg2bbbar(3S1)[3PJ(8)]q = ".$_POST["59"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["60"] != "off,off,off")
 {
-$data = "Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g = ".$_POST["60"]."\n";
+$data = "Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g = ".$_POST["60"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["61"] != "off,off,off")
+if($_POST["61"] != "10551,20553,555")
 {
-$data = "Bottomonium:gg2bbbar(3PJ)[3S1(8)]g = ".$_POST["61"]."\n";
+$data = "Bottomonium:states(3PJ) = ".$_POST["61"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["62"] != "off,off,off")
+if($_POST["62"] != "0.085,0.085,0.085")
 {
-$data = "Bottomonium:qg2bbbar(3PJ)[3S1(8)]q = ".$_POST["62"]."\n";
+$data = "Bottomonium:O(3PJ)[3P0(1)] = ".$_POST["62"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["63"] != "off,off,off")
+if($_POST["63"] != "0.04,0.04,0.04")
 {
-$data = "Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g = ".$_POST["63"]."\n";
+$data = "Bottomonium:O(3PJ)[3S1(8)] = ".$_POST["63"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["64"] != "")
+if($_POST["64"] != "off,off,off")
 {
-$data = "Bottomonium:states(3DJ) = ".$_POST["64"]."\n";
+$data = "Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g = ".$_POST["64"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["65"] != "")
+if($_POST["65"] != "off,off,off")
 {
-$data = "Bottomonium:O(3DJ)[3D1(1)] = ".$_POST["65"]."\n";
+$data = "Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q = ".$_POST["65"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["66"] != "")
+if($_POST["66"] != "off,off,off")
 {
-$data = "Bottomonium:O(3DJ)[3P0(8)] = ".$_POST["66"]."\n";
+$data = "Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g = ".$_POST["66"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["67"] != "")
+if($_POST["67"] != "off,off,off")
 {
-$data = "Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g = ".$_POST["67"]."\n";
+$data = "Bottomonium:gg2bbbar(3PJ)[3S1(8)]g = ".$_POST["67"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["68"] != "")
+if($_POST["68"] != "off,off,off")
 {
-$data = "Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g = ".$_POST["68"]."\n";
+$data = "Bottomonium:qg2bbbar(3PJ)[3S1(8)]q = ".$_POST["68"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["69"] != "")
+if($_POST["69"] != "off,off,off")
 {
-$data = "Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q = ".$_POST["69"]."\n";
+$data = "Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g = ".$_POST["69"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["70"] != "")
 {
-$data = "Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g = ".$_POST["70"]."\n";
+$data = "Bottomonium:states(3DJ) = ".$_POST["70"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["71"] != "")
+{
+$data = "Bottomonium:O(3DJ)[3D1(1)] = ".$_POST["71"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["72"] != "")
+{
+$data = "Bottomonium:O(3DJ)[3P0(8)] = ".$_POST["72"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["73"] != "")
+{
+$data = "Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g = ".$_POST["73"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["74"] != "")
+{
+$data = "Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g = ".$_POST["74"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["75"] != "")
+{
+$data = "Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q = ".$_POST["75"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["76"] != "")
+{
+$data = "Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g = ".$_POST["76"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["77"] != "553,553,553,100553,100553,200553")
+{
+$data = "Bottomonium:states(3S1)1 = ".$_POST["77"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["78"] != "553,100553,200553,100553,200553,200553")
+{
+$data = "Bottomonium:states(3S1)2 = ".$_POST["78"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["79"] != "9.28,9.28,9.28,4.63,4.63,3.54")
+{
+$data = "Bottomonium:O(3S1)[3S1(1)]1 = ".$_POST["79"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["80"] != "9.28,4.63,3.54,4.63,3.54,3.54")
+{
+$data = "Bottomonium:O(3S1)[3S1(1)]2 = ".$_POST["80"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["81"] != "off,off,off,off,off,off")
+{
+$data = "Bottomonium:gg2doublebbbar(3S1)[3S1(1)] = ".$_POST["81"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["82"] != "off,off,off,off,off,off")
+{
+$data = "Bottomonium:qqbar2doublebbbar(3S1)[3S1(1)] = ".$_POST["82"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -966,4 +1122,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

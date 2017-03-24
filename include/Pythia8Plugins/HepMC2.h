@@ -1,15 +1,18 @@
 // HepMC2.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Author: Mikhail Kirsanov, Mikhail.Kirsanov@cern.ch
+// Eexception classes provided by James Monk, with minor changes.
 // Header file and function definitions for the Pythia8ToHepMC class,
 // which converts a PYTHIA event record to the standard HepMC format.
 
 #ifndef Pythia8_HepMC2_H
 #define Pythia8_HepMC2_H
 
+#include <exception>
+#include <sstream>
 #include <vector>
 #include "HepMC/IO_BaseClass.h"
 #include "HepMC/IO_GenEvent.h"
@@ -21,6 +24,48 @@ namespace HepMC {
 
 //==========================================================================
 
+// Base exception for all exceptions that Pythia8ToHepMC might throw.
+
+class Pythia8ToHepMCException : public std::exception {
+
+public:
+  virtual const char* what() const throw() { return "Pythia8ToHepMCException";}
+
+};
+
+//--------------------------------------------------------------------------
+
+// Exception thrown when an undecayed parton is written into the record.
+
+class PartonEndVertexException : public Pythia8ToHepMCException {
+
+public:
+
+  // Constructor and destructor.
+  PartonEndVertexException(int i, int pdg_idIn) : Pythia8ToHepMCException() {
+    iSave  = i;
+    idSave = pdg_idIn;
+    std::stringstream ss;
+    ss << "Bad end vertex at " << i << " for flavour " << pdg_idIn;
+    msg = ss.str();
+  }
+  virtual ~PartonEndVertexException() throw() {}
+
+  // Throw exception.
+  virtual const char* what() const throw() {return msg.c_str();}
+
+  // Return info on location and flavour of bad parton.
+  int index() const {return iSave;}
+  int pdg_id() const {return idSave;}
+
+protected:
+
+  std::string msg;
+  int iSave, idSave;
+};
+
+//==========================================================================
+
 // The Pythia8ToHepMC class.
 
 class Pythia8ToHepMC : public IO_BaseClass {
@@ -28,9 +73,8 @@ class Pythia8ToHepMC : public IO_BaseClass {
 public:
 
   // Constructor and destructor.
-  Pythia8ToHepMC() : m_internal_event_number(0),
-    m_print_inconsistency(true), m_free_parton_warnings(true),
-    m_crash_on_problem(false),   m_convert_gluon_to_0(false),
+  Pythia8ToHepMC() : m_internal_event_number(0), m_print_inconsistency(true),
+    m_free_parton_exception(true), m_convert_gluon_to_0(false),
     m_store_pdf(true), m_store_proc(true), m_store_xsec(true) {;}
   virtual ~Pythia8ToHepMC() {;}
 
@@ -47,22 +91,20 @@ public:
     GenParticle* rootParticle = 0, int iBarcode = -1);
 
   // Read out values for some switches.
-  bool print_inconsistency()  const {return m_print_inconsistency;}
-  bool free_parton_warnings() const {return m_free_parton_warnings;}
-  bool crash_on_problem()     const {return m_crash_on_problem;}
-  bool convert_gluon_to_0()   const {return m_convert_gluon_to_0;}
-  bool store_pdf()            const {return m_store_pdf;}
-  bool store_proc()           const {return m_store_proc;}
-  bool store_xsec()           const {return m_store_xsec;}
+  bool print_inconsistency()   const {return m_print_inconsistency;}
+  bool free_parton_exception() const {return m_free_parton_exception;}
+  bool convert_gluon_to_0()    const {return m_convert_gluon_to_0;}
+  bool store_pdf()             const {return m_store_pdf;}
+  bool store_proc()            const {return m_store_proc;}
+  bool store_xsec()            const {return m_store_xsec;}
 
   // Set values for some switches.
-  void set_print_inconsistency(bool b = true)  {m_print_inconsistency = b;}
-  void set_free_parton_warnings(bool b = true) {m_free_parton_warnings = b;}
-  void set_crash_on_problem(bool b = false)    {m_crash_on_problem = b;}
-  void set_convert_gluon_to_0(bool b = false)  {m_convert_gluon_to_0 = b;}
-  void set_store_pdf(bool b = true)            {m_store_pdf = b;}
-  void set_store_proc(bool b = true)           {m_store_proc = b;}
-  void set_store_xsec(bool b = true)           {m_store_xsec = b;}
+  void set_print_inconsistency(bool b = true)   {m_print_inconsistency = b;}
+  void set_free_parton_exception(bool b = true) {m_free_parton_exception = b;}
+  void set_convert_gluon_to_0(bool b = false)   {m_convert_gluon_to_0 = b;}
+  void set_store_pdf(bool b = true)             {m_store_pdf = b;}
+  void set_store_proc(bool b = true)            {m_store_proc = b;}
+  void set_store_xsec(bool b = true)            {m_store_xsec = b;}
 
 private:
 
@@ -75,8 +117,7 @@ private:
 
   // Data members.
   int  m_internal_event_number;
-  bool m_print_inconsistency, m_free_parton_warnings,
-       m_crash_on_problem, m_convert_gluon_to_0,
+  bool m_print_inconsistency, m_free_parton_exception, m_convert_gluon_to_0,
        m_store_pdf, m_store_proc, m_store_xsec;
 
 };
@@ -93,7 +134,7 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
 
   // 1. Error if no event passed.
   if (!evt) {
-    std::cerr << "Pythia8ToHepMC::fill_next_event error - passed null event."
+    std::cout << " Pythia8ToHepMC::fill_next_event error: passed null event."
               << std::endl;
     return 0;
   }
@@ -120,7 +161,7 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   int newBarcode = 0;
   if (append) {
     if (!rootParticle) {
-      std::cerr << "Pythia8ToHepMC::fill_next_event error - passed null "
+      std::cout << " Pythia8ToHepMC::fill_next_event error: passed null "
                 << "root particle in append mode." << std::endl;
       return 0;
     }
@@ -210,8 +251,8 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
       // Note: we could provide a fix by joining the two vertices with a
       // dummy particle if the problem arises often.
       } else if (ppp->end_vertex() != prod_vtx ) {
-       if ( m_print_inconsistency ) std::cerr
-          << "HepMC::Pythia8ToHepMC: inconsistent mother/daugher "
+       if ( m_print_inconsistency ) std::cout
+          << " Pythia8ToHepMC::fill_next_event: inconsistent mother/daugher "
           << "information in Pythia8 event " << std::endl
           << "i = " << i << " mother = " << mother
           << "\n This warning can be turned off with the "
@@ -224,7 +265,7 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   }
 
   // If hadronization switched on then no final coloured particles.
-  bool doHadr = (pyset == 0) ? m_free_parton_warnings
+  bool doHadr = (pyset == 0) ? m_free_parton_exception
     : pyset->flag("HadronLevel:all") && pyset->flag("HadronLevel:Hadronize");
 
   // 4. Check for particles which come from nowhere, i.e. are without
@@ -233,24 +274,19 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   for (int i = iStart; i < pyev.size(); ++i) {
     if ( !hepevt_particles[i]->end_vertex() &&
          !hepevt_particles[i]->production_vertex() ) {
-      std::cerr << "hanging particle " << i << std::endl;
+      std::cout << " Pythia8ToHepMC::fill_next_event error: "
+        << "hanging particle " << i << std::endl;
       GenVertex* prod_vtx = new GenVertex();
       prod_vtx->add_particle_out( hepevt_particles[i] );
       evt->add_vertex( prod_vtx );
     }
 
     // Also check for free partons (= gluons and quarks; not diquarks?).
-    if ( doHadr && m_free_parton_warnings ) {
-      if ( hepevt_particles[i]->pdg_id() == 21 &&
-        !hepevt_particles[i]->end_vertex() ) {
-        std::cerr << "gluon without end vertex " << i << std::endl;
-        if ( m_crash_on_problem ) exit(1);
-      }
-      if ( abs(hepevt_particles[i]->pdg_id()) <= 6 &&
-        !hepevt_particles[i]->end_vertex()         ) {
-        std::cerr << "quark without end vertex " << i << std::endl;
-        if ( m_crash_on_problem ) exit(1);
-      }
+    if ( doHadr && m_free_parton_exception ) {
+      int pdg_tmp = hepevt_particles[i]->pdg_id();
+      if ( (abs(pdg_tmp) <= 6 || pdg_tmp == 21)
+        && !hepevt_particles[i]->end_vertex() )
+        throw PartonEndVertexException(i, pdg_tmp);
     }
   }
 

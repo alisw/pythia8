@@ -235,11 +235,11 @@ models for colour reconnection are implemented, see
 <?php $filepath = $_GET["filepath"];
 echo "<a href='ColourReconnection.php?filepath=".$filepath."' target='page'>";?>Colour Reconection</a>. 
  
-<br/><br/><table><tr><td><strong>BeamRemnants:remnantMode  </td><td></td><td> <input type="text" name="9" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>BeamRemnants:remnantMode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
 Switch to choose between the two different colour models for the beam remnant. 
-<br/><code>option </code><strong> 0</strong> :  The old beam remnant model.    
-<br/><code>option </code><strong> 1</strong> :  The new beam remnant model.    
-   
+<br/>
+<input type="radio" name="9" value="0" checked="checked"><strong>0 </strong>:  The old beam remnant model. <br/>
+<input type="radio" name="9" value="1"><strong>1 </strong>:  The new beam remnant model. <br/>
  
 <br/><br/><table><tr><td><strong>BeamRemnants:saturation </td><td></td><td> <input type="text" name="10" value="5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 100000</code>)</td></tr></table>
 Controls the suppresion due to saturation in the new model. The exact formula 
@@ -346,6 +346,17 @@ This parameter is only relevant if the new Beam remnant model is used.
 This parameter tells whether to allow the formation of junction structures 
 in the colour configuration of the scattered partons. 
    
+ 
+<br/><br/><table><tr><td><strong>BeamRemnants:unresolvedHadron  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)</td></tr></table>
+Switch to to force either or both of the beam remnants to collapse to a 
+single hadron, namely the original incoming one. Must only be used when this 
+is physically meaningful, e.g. when a photon can be viewed as emitted from 
+a proton that does not break up in the process. 
+<br/>
+<input type="radio" name="22" value="0" checked="checked"><strong>0 </strong>:  Both hadronic beams are resolved. <br/>
+<input type="radio" name="22" value="1"><strong>1 </strong>:  Beam A is unresolved, beam B resolved. <br/>
+<input type="radio" name="22" value="2"><strong>2 </strong>:  Beam A is resolved, beam B unresolved. <br/>
+<input type="radio" name="22" value="3"><strong>3 </strong>:  Both hadronic beams are unresolved. <br/>
  
 <input type="hidden" name="saved" value="1"/>
 
@@ -467,6 +478,11 @@ if($_POST["21"] != "on")
 $data = "BeamRemnants:allowBeamJunction = ".$_POST["21"]."\n";
 fwrite($handle,$data);
 }
+if($_POST["22"] != "0")
+{
+$data = "BeamRemnants:unresolvedHadron = ".$_POST["22"]."\n";
+fwrite($handle,$data);
+}
 fclose($handle);
 }
 
@@ -474,4 +490,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

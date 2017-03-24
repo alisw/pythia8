@@ -1,15 +1,14 @@
 <chapter name="Flavour Selection"> 
  
-<h2>Flavour Selection</h2> 
+<h2>Flavour Selection for Gaussian <ei>pT</ei> Distribution</h2> 
  
 The <code>StringFlav</code> class handles the choice of a new flavour 
 in the fragmentation process, and the production of a new hadron 
 from a set of input flavours. It is mainly used by the string 
 fragmentation machinery (including ministrings), but also e.g. 
 in some particle decays and for some beam-remnant cases. The basic 
-concepts are in agreement with <ref>And83</ref>. The baryon-sector 
-implementation is based on the <code>MSTJ(12)=3</code> option of 
-PYTHIA 6, i.e. new SU(6) weights scheme with at most one popcorn meson. 
+concepts are in agreement with <ref>And83</ref>. An alternative 
+"thermal model" is described further below. 
  
 <p/> 
 The relative production rates of different particle species is 
@@ -364,6 +363,67 @@ jet, i.e. <ei>c</ei> or <ei>b</ei>, when
 production at all, while 1 means full rate. 
 </parm> 
  
+<h2>Flavour Selection for Thermal <ei>pT</ei> Distribution</h2> 
+ 
+If the hadronic <ei>pT</ei> is generated according to the non-default 
+thermal distribution, i.e. if <code>StringPT:thermalModel = on</code>, 
+the choice of a new flavour in the fragmentation process, and the 
+production of a new hadron from a set of input flavours, depends mainly on 
+the hadron mass <ref>Fis16</ref>. For a given <ei>pT</ei> value the new 
+flavour is chosen according to 
+<eq> 
+  exp( -mT_had/T) = exp( - sqrt( pT_had^2 + mT_had^2 )/T). 
+</eq> 
+Here <ei>T</ei> is primarily given by <code>StringPT:temperature</code>, 
+but can be further modified in the context of closely packed strings, 
+<code>StringPT:closePacking = on</code>. 
+Additional factors are included from theory arguments, for instance 
+the ratio of vector-to-pseudocalar meson production is set according 
+to spin-counting rules. 
+Note that the octet-singlet mixing angles in the light-quark meson 
+nonets are taken from the parameters above. 
+Currently popcorn production has not been implemented, i.e. a baryon 
+and an antibaryon are nearest neighbours in the flavour fragmentation 
+chain, and share the flavours of one diquark. 
+In addition the following two factors are introduced to provide an 
+improved description of the flavour composition, although not as good 
+as obtained in the default Gaussian scenario, with its bigger selection 
+of free parameters. 
+ 
+<p/> 
+<parm name="StringFlav:BtoMratio" default="0.357" min="0.1" max="10.0"> 
+Ratio of the relative rate of baryon to meson production, i.e. every 
+baryon Clebsch-Gordan coefficient gets multiplied by this factor. 
+</parm> 
+ 
+<p/> 
+<parm name="StringFlav:StrangeSuppression" default="0.5" min="0.01" max="1.0"> 
+Extra suppression factor for strange quarks. Note that in case of more 
+than one strange quark in the hadron the factor gets squared or tripled 
+respectively. 
+</parm> 
+ 
+<p/> 
+The following parameters are used to determine which hadrons to choose 
+from. By default only the pseudoscalar and vector meson nonet (L=0) 
+and baryons with u/d/s quarks are included. For an already-existing 
+heavier flavour, say c or b, this corresponds to picking only u/d/s 
+for the new quark(s). 
+<note>Note:</note> The computer time for selecting the flavour of new 
+hadrons goes linearly with the number of hadrons included. Therefore 
+we recommend sticking to the default options as heavier hadrons are 
+produced less likely anyway. 
+ 
+<mode name="StringFlav:nQuark" default="3" min="3" max="5"> 
+Selects the newly produced quark flavours that may be included in hadrons. 
+The default corresponds to only include u/d/s quarks. 
+</mode> 
+ 
+<flag name="StringFlav:mesonNonetL1" default="off"> 
+Switch on to include the pseudovector, scalar, pseudovector, and tensor 
+nonet (L=1). 
+</flag> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

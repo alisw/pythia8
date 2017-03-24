@@ -41,13 +41,14 @@ should be specified using the settings in this section.
 Note that, if nothing is done, you will default to LHC at 14 TeV. 
  
 <p/> 
-Currently the beam particles must be either a hadron pair or a lepton 
-pair. In the former category <i>p p</i> and <i>pbar p</i> 
+Currently the beam particles must be either a hadron pair, a lepton 
+pair or a photon pair. In the first category <i>p p</i> and <i>pbar p</i> 
 combinations dominate, but it is also possible to combine with 
-<i>pi^+</i>, <i>pi^-</i> and <i>pi^0</i>. In the latter 
+<i>pi^+</i>, <i>pi^-</i> and <i>pi^0</i>. In the second 
 <i>e^+ e^-</i> and <i>mu^+ mu^-</i> would be the most useful 
 combinations, but also others should work if combined with an 
-appropriate hard process. 
+appropriate hard process. With the last combination collisions of two 
+resolved photons can be generated. 
  
 <br/><br/><table><tr><td><strong>Beams:idA  </td><td></td><td> <input type="text" name="1" value="2212" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2212</strong></code>)</td></tr></table>
 The PDG <code>id</code> code for the first incoming particle. 
@@ -57,6 +58,9 @@ Allowed codes include
 <br/><i>211 = pi^+</i>, <i>-211 = pi^-</i>, <i>111 = pi^0</i>, 
 <br/><i>990 = Pomeron</i> (used in diffractive machinery; 
 here mainly for debug purposes), 
+<br/><i>22 = gamma</i> (for resolved <i>gamma-gamma</i> interactions, 
+more info <?php $filepath = $_GET["filepath"];
+echo "<a href='PhotonPhoton.php?filepath=".$filepath."' target='page'>";?>here</a>), 
 <br/><i>11 = e^-</i>, <i>-11 = e^+</i>, 
 <br/><i>13 = mu^-</i>, <i>-13 = mu^+</i>, 
 <br/>and a few more leptons/neutrinos in a few combinations. 
@@ -242,7 +246,7 @@ a maximal total deviation from the nominal values <i>(p_x0, p_y0, p_z0)</i>
 for the first incoming particle, like 
 <br/><i> 
 (p_x - p_x0)^2/sigma_px^2 + (p_y - p_y0)^2/sigma_py^2 + 
-(p_z - p_z0)^2/sigma_pz^2 < maxDev^2 
+(p_z - p_z0)^2/sigma_pz^2 &lt; maxDev^2 
 </i><br/> 
 (Note the absence of a factor 2 in the denominator, unlike the Gaussians 
 used to pick <i>(p_x, p_y, p_z)</i>.) 
@@ -269,7 +273,7 @@ a maximal total deviation from the nominal values <i>(p_x0, p_y0, p_z0)</i>,
 for the second incoming particle, like 
 <br/><i> 
 (p_x - p_x0)^2/sigma_px^2 + (p_y - p_y0)^2/sigma_py^2 + 
-(p_z - p_z0)^2/sigma_pz^2 < maxDev^2 
+(p_z - p_z0)^2/sigma_pz^2 &lt; maxDev^2 
 </i><br/> 
 (Note the absence of a factor 2 in the denominator, unlike the Gaussians 
 used to pick <i>(p_x, p_y, p_z)</i>.) 
@@ -310,7 +314,7 @@ The triply Gaussian distribution of interaction vertex position
 <i>(x, y, z)</i> is restricted to a maximal total deviation from the 
 origin, like 
 <br/><i> 
-x^2/sigma_x^2 + y^2/sigma_y^2 + z^2/sigma_z^2 < maxDevVertex^2 
+x^2/sigma_x^2 + y^2/sigma_y^2 + z^2/sigma_z^2 &lt; maxDevVertex^2 
 </i><br/> 
 (Note the absence of a factor 2 in the denominator, unlike the Gaussians 
 used to pick <i>(x, y, z)</i>.) 
@@ -565,4 +569,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

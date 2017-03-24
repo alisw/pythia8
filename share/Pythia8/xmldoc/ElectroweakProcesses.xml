@@ -100,14 +100,14 @@ or <ei>W^+-</ei> exchange between two fermions.
 </flag> 
  
 <flag name="WeakBosonExchange:ff2ff(t:gmZ)" default="off"> 
-Scattering <ei>f f' &rarr; f f'</ei> via </ei>gamma^*/Z^0</ei> 
+Scattering <ei>f f' &rarr; f f'</ei> via <ei>gamma^*/Z^0</ei> 
 <ei>t</ei>-channel exchange, with full interference 
 between the <ei>gamma^*</ei> and <ei>Z^0</ei>. 
 Code 211. 
 </flag> 
  
 <flag name="WeakBosonExchange:ff2ff(t:W)" default="off"> 
-Scattering <ei>f_1 f_2 &rarr; f_3 f_4</ei> via </ei>W^+-</ei> 
+Scattering <ei>f_1 f_2 &rarr; f_3 f_4</ei> via <ei>W^+-</ei> 
 <ei>t</ei>-channel exchange. 
 Code 212. 
 </flag> 
@@ -256,8 +256,9 @@ Code 254.
  
 A few electroweak two-photon production processes are available. 
 To use them, photon PDFs have to be defined for the incoming 
-beam particles. For proton beams an appropriate set would be 
-MRST QED 2004 <ref>Mar05</ref>, available in the LHAPDF library. 
+beam particles. This is the case for the internal NNPDF 2.3 QCD+QED 
+sets, as well as some further ones available in the LHAPDF library, 
+but not for all PDFs. 
  
 <flag name="PhotonCollision:all" default="off"> 
 Common switch for the group of six processes presented below. 
@@ -294,6 +295,36 @@ Scattering <ei>gamma gamma &rarr; tau+ tau-</ei>.
 Code 266. 
 </flag> 
  
+<h3> Photon-Parton Processes</h3> 
+ 
+Photon-parton production processes. See comment related to PDFs above. 
+Also relevant for direct-resolved processes in photon-photon collisions. 
+ 
+<flag name="PhotonParton:all" default="off"> 
+Common switch for the group of two processes presented below. 
+</flag> 
+ 
+<flag name="PhotonParton:ggm2qqbar" default="off"> 
+Scattering <ei>g gamma &rarr; q qbar</ei>, where <ei>q</ei> 
+is a light quark (<ei>u, d, s</ei>). 
+Code 271. 
+</flag> 
+ 
+<flag name="PhotonParton:ggm2ccbar" default="off"> 
+Scattering <ei>g gamma &rarr; c cbar</ei>. 
+Code 272. 
+</flag> 
+ 
+<flag name="PhotonParton:ggm2bbbar" default="off"> 
+Scattering <ei>g gamma &rarr; b bbar</ei>. 
+Code 273. 
+</flag> 
+ 
+<flag name="PhotonParton:qgm2qg" default="off"> 
+Scattering <ei>q gamma &rarr; q g</ei>. 
+Code 274. 
+</flag> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SigmaExtraDim.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -287,7 +287,7 @@ void Sigma1ffbar2GravitonStar::sigmaKin() {
   double widthOut = gStarPtr->resWidthOpen(idGstar, mH);
 
   // Modify cross section in wings of peak. Done.
-  sigma0          = widthIn * sigBW * widthOut * sH / m2Res;
+  sigma0          = widthIn * sigBW * widthOut;
 }
 
 //--------------------------------------------------------------------------

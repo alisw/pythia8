@@ -1,5 +1,5 @@
 // Event.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -148,6 +148,7 @@ public:
   int    idAbs()     const {return abs(idSave);}
   int    statusAbs() const {return abs(statusSave);}
   bool   isFinal()   const {return (statusSave > 0);}
+  int    intPol()    const;
   bool   isRescatteredIncoming() const {return
     (statusSave == -34 || statusSave == -45 ||
      statusSave == -46 || statusSave == -54);}
@@ -193,6 +194,7 @@ public:
   int iBotCopyId(bool simplify = false) const;
   vector<int> motherList()   const;
   vector<int> daughterList() const;
+  vector<int> daughterListRecursive() const;
   vector<int> sisterList(bool traceTopBot = false) const;
   bool isAncestor(int iAncestor) const;
   int statusHepMC()  const;
@@ -456,23 +458,17 @@ public:
   int copy(int iCopy, int newStatus = 0);
 
   // List the particles in an event.
-  void list(int precision = 3) const;
-  void list(ostream& os, int precision = 3) const;
-  void list(bool showScaleAndVertex, bool showMothersAndDaughters = false,
-    int precision = 3) const;
-  void list(bool showScaleAndVertex, bool showMothersAndDaughters,
-    ostream& os, int precision = 3) const;
+  void list(bool showScaleAndVertex = false,
+    bool showMothersAndDaughters = false, int precision = 3) const;
 
   // Remove last n entries.
   void popBack(int nRemove = 1) { if (nRemove ==1) entry.pop_back();
     else {int newSize = max( 0, size() - nRemove);
     entry.resize(newSize);} }
 
-  // Remove entries from iFirst to iLast, including endpoints.
-  void remove(int iFirst, int iLast) {
-    if (iFirst < 0 || iLast >= int(entry.size()) || iLast < iFirst) return;
-    entry.erase( entry.begin() + iFirst, entry.begin() + iLast + 1);
-  }
+  // Remove entries from iFirst to iLast, including endpoints, anf fix history.
+  // (To the extent possible; history pointers in removed range are zeroed.)
+  void remove(int iFirst, int iLast, bool shiftHistory = true);
 
   // Restore all ParticleDataEntry* pointers in the Particle vector.
   // Useful when a persistent copy of the event record is read back in.
@@ -543,7 +539,7 @@ public:
   void restoreJunctionSize() {junction.resize(savedJunctionSize);}
 
   // List any junctions in the event; for debug mainly.
-  void listJunctions(ostream& os = cout) const;
+  void listJunctions() const;
 
   // Save event record size at Parton Level, i.e. before hadronization.
   void savePartonLevelSize() {savedPartonLevelSize = entry.size();}

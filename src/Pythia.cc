@@ -1,5 +1,5 @@
 // Pythia.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -23,7 +23,7 @@ namespace Pythia8 {
 
 // The current Pythia (sub)version number, to agree with XML version.
 const double Pythia::VERSIONNUMBERHEAD = PYTHIA_VERSION;
-const double Pythia::VERSIONNUMBERCODE = 8.211;
+const double Pythia::VERSIONNUMBERCODE = 8.223;
 
 //--------------------------------------------------------------------------
 
@@ -42,18 +42,202 @@ const int Pythia::SUBRUNDEFAULT = -999;
 
 Pythia::Pythia(string xmlDir, bool printBanner) {
 
+  // Initialise / reset pointers and global variables.
+  initPtrs();
+
+  // Find path to data files, i.e. xmldoc directory location.
+  // Environment variable takes precedence, then constructor input,
+  // and finally the pre-processor constant XMLDIR.
+  xmlPath = "";
+  const char* PYTHIA8DATA = "PYTHIA8DATA";
+  char* envPath = getenv(PYTHIA8DATA);
+  if (envPath != 0 && *envPath != '\0') {
+    int i = 0;
+    while (*(envPath+i) != '\0') xmlPath += *(envPath+(i++));
+  } else {
+    if (xmlDir[ xmlDir.length() - 1 ] != '/') xmlDir += "/";
+    xmlPath = xmlDir;
+    ifstream xmlFile((xmlPath + "Index.xml").c_str());
+    if (!xmlFile.good()) xmlPath = XMLDIR;
+    xmlFile.close();
+  }
+  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+
+  // Read in files with all flags, modes, parms and words.
+  settings.initPtr( &info);
+  string initFile = xmlPath + "Index.xml";
+  isConstructed = settings.init( initFile);
+  if (!isConstructed) {
+    info.errorMsg("Abort from Pythia::Pythia: settings unavailable");
+    return;
+  }
+
+  // Save XML path in settings.
+  settings.addWord( "xmlPath", xmlPath);
+
+  // Check that XML and header version numbers match code version number.
+  if (!checkVersion()) return;
+
+  // Read in files with all particle data.
+  particleData.initPtr( &info, &settings, &rndm, couplingsPtr);
+  string dataFile = xmlPath + "ParticleData.xml";
+  isConstructed = particleData.init( dataFile);
+  if (!isConstructed) {
+    info.errorMsg("Abort from Pythia::Pythia: particle data unavailable");
+    return;
+  }
+
+  // Write the Pythia banner to output.
+  if (printBanner) banner();
+
+  // Not initialized until at the end of the init() call.
+  isInit = false;
+  info.addCounter(0);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Constructor from pre-initialised ParticleData and Settings objects.
+
+Pythia::Pythia(Settings& settingsIn,ParticleData& particleDataIn,
+  bool printBanner) {
+
+  // Initialise / reset pointers and global variables.
+  initPtrs();
+
+  // Copy XML path from existing Settings database.
+  xmlPath = settingsIn.word("xmlPath");
+
+  // Copy settings database and redirect pointers.
+  settings = settingsIn;
+  settings.initPtr( &info);
+  isConstructed = settings.getIsInit();
+  if (!isConstructed) {
+    info.errorMsg("Abort from Pythia::Pythia: settings unavailable");
+    return;
+  }
+
+  // Check XML and header version numbers match code version number.
+  if (!checkVersion()) return;
+
+  // Copy particleData database and redirect pointers.
+  particleData = particleDataIn;
+  particleData.initPtr( &info, &settings, &rndm, couplingsPtr);
+  isConstructed = particleData.getIsInit();
+  if (!isConstructed) {
+    info.errorMsg("Abort from Pythia::Pythia: particle data unavailable");
+    return;
+  }
+
+  // Write the Pythia banner to output.
+  if (printBanner) banner();
+
+  // Not initialized until at the end of the init() call.
+  isInit = false;
+  info.addCounter(0);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Constructor from string streams.
+
+Pythia::Pythia( istream& settingsStrings, istream& particleDataStrings,
+  bool printBanner) {
+
+  // Initialise / reset pointers and global variables.
+  initPtrs();
+
+  // Copy settings database
+  settings.init( settingsStrings );
+
+  // Reset pointers to pertain to this PYTHIA object.
+  settings.initPtr( &info);
+  isConstructed = settings.getIsInit();
+  if (!isConstructed) {
+    info.errorMsg("Abort from Pythia::Pythia: settings unavailable");
+    return;
+  }
+
+  // Check XML and header version numbers match code version number.
+  if (!checkVersion()) return;
+
+  // Read in files with all particle data.
+  particleData.initPtr( &info, &settings, &rndm, couplingsPtr);
+  isConstructed = particleData.init( particleDataStrings );
+  if (!isConstructed) {
+    info.errorMsg("Abort from Pythia::Pythia: particle data unavailable");
+    return;
+  }
+
+  // Write the Pythia banner to output.
+  if (printBanner) banner();
+
+  // Not initialized until at the end of the init() call.
+  isInit = false;
+  info.addCounter(0);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Destructor.
+
+Pythia::~Pythia() {
+
+  // Delete the PDF's created with new.
+  if (useNewPdfHard && pdfHardAPtr != pdfAPtr) delete pdfHardAPtr;
+  if (useNewPdfHard && pdfHardBPtr != pdfBPtr) delete pdfHardBPtr;
+  if (useNewPdfA) delete pdfAPtr;
+  if (useNewPdfB) delete pdfBPtr;
+  if (useNewPdfPomA) delete pdfPomAPtr;
+  if (useNewPdfPomB) delete pdfPomBPtr;
+  if (useNewPdfGamA) delete pdfGamAPtr;
+  if (useNewPdfGamB) delete pdfGamBPtr;
+
+  // Delete the Les Houches object created with new.
+  if (useNewLHA) delete lhaUpPtr;
+
+  // Delete the MergingHooks object created with new.
+  if (hasOwnMergingHooks) delete mergingHooksPtr;
+
+  // Delete the BeamShape object created with new.
+  if (useNewBeamShape) delete beamShapePtr;
+
+  // Delete the timelike and spacelike showers created with new.
+  if (useNewTimesDec) delete timesDecPtr;
+  if (useNewTimes && !useNewTimesDec) delete timesPtr;
+  if (useNewSpace) delete spacePtr;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialise new Pythia object (common code called by constructors).
+
+void Pythia::initPtrs() {
+
   // Initial values for pointers to PDF's.
-  useNewPdfA      = false;
-  useNewPdfB      = false;
-  useNewPdfHard   = false;
-  useNewPdfPomA   = false;
-  useNewPdfPomB   = false;
-  pdfAPtr         = 0;
-  pdfBPtr         = 0;
-  pdfHardAPtr     = 0;
-  pdfHardBPtr     = 0;
-  pdfPomAPtr      = 0;
-  pdfPomBPtr      = 0;
+  useNewPdfA        = false;
+  useNewPdfB        = false;
+  useNewPdfHard     = false;
+  useNewPdfPomA     = false;
+  useNewPdfPomB     = false;
+  useNewPdfGamA     = false;
+  useNewPdfGamB     = false;
+  useNewPdfHardGamA = false;
+  useNewPdfHardGamB = false;
+  pdfAPtr           = 0;
+  pdfBPtr           = 0;
+  pdfHardAPtr       = 0;
+  pdfHardBPtr       = 0;
+  pdfPomAPtr        = 0;
+  pdfPomBPtr        = 0;
+  pdfGamAPtr        = 0;
+  pdfGamBPtr        = 0;
+  pdfHardGamAPtr    = 0;
+  pdfHardGamBPtr    = 0;
 
   // Initial values for pointers to Les Houches Event objects.
   doLHA           = false;
@@ -87,32 +271,13 @@ Pythia::Pythia(string xmlDir, bool printBanner) {
   timesPtr        = 0;
   spacePtr        = 0;
 
-  // Find path to data files, i.e. xmldoc directory location.
-  // Environment variable takes precedence, then constructor input,
-  // and finally the pre-processor constant XMLDIR.
-  xmlPath = "";
-  const char* PYTHIA8DATA = "PYTHIA8DATA";
-  char* envPath = getenv(PYTHIA8DATA);
-  if (envPath != 0 && *envPath != '\0') {
-    int i = 0;
-    while (*(envPath+i) != '\0') xmlPath += *(envPath+(i++));
-  } else {
-    if (xmlDir[ xmlDir.length() - 1 ] != '/') xmlDir += "/";
-    xmlPath = xmlDir;
-    ifstream xmlFile((xmlPath + "Index.xml").c_str());
-    if (!xmlFile.good()) xmlPath = XMLDIR;
-    xmlFile.close();
-  }
-  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+}
 
-  // Read in files with all flags, modes, parms and words.
-  settings.initPtr( &info);
-  string initFile = xmlPath + "Index.xml";
-  isConstructed = settings.init( initFile);
-  if (!isConstructed) {
-    info.errorMsg("Abort from Pythia::Pythia: settings unavailable");
-    return;
-  }
+//--------------------------------------------------------------------------
+
+// Check for consistency of version numbers (called by constructors).
+
+bool Pythia::checkVersion() {
 
   // Check that XML version number matches code version number.
   double versionNumberXML = parm("Pythia:versionNumber");
@@ -123,7 +288,7 @@ Pythia::Pythia(string xmlDir, bool printBanner) {
             << " but in XML " << versionNumberXML;
     info.errorMsg("Abort from Pythia::Pythia: unmatched version numbers",
       errCode.str());
-    return;
+    return false;
   }
 
   // Check that header version number matches code version number.
@@ -134,54 +299,11 @@ Pythia::Pythia(string xmlDir, bool printBanner) {
             << " but in header " << VERSIONNUMBERHEAD;
     info.errorMsg("Abort from Pythia::Pythia: unmatched version numbers",
       errCode.str());
-    return;
+    return false;
   }
 
-  // Read in files with all particle data.
-  particleData.initPtr( &info, &settings, &rndm, couplingsPtr);
-  string dataFile = xmlPath + "ParticleData.xml";
-  isConstructed = particleData.init( dataFile);
-  if (!isConstructed) {
-    info.errorMsg("Abort from Pythia::Pythia: particle data unavailable");
-    return;
-  }
-
-  // Write the Pythia banner to output.
-  if (printBanner) banner();
-
-  // Not initialized until at the end of the init() call.
-  isInit = false;
-  info.addCounter(0);
-
-}
-
-//--------------------------------------------------------------------------
-
-// Destructor.
-
-Pythia::~Pythia() {
-
-  // Delete the PDF's created with new.
-  if (useNewPdfHard && pdfHardAPtr != pdfAPtr) delete pdfHardAPtr;
-  if (useNewPdfHard && pdfHardBPtr != pdfBPtr) delete pdfHardBPtr;
-  if (useNewPdfA) delete pdfAPtr;
-  if (useNewPdfB) delete pdfBPtr;
-  if (useNewPdfPomA) delete pdfPomAPtr;
-  if (useNewPdfPomB) delete pdfPomBPtr;
-
-  // Delete the Les Houches object created with new.
-  if (useNewLHA) delete lhaUpPtr;
-
-  // Delete the MergingHooks object created with new.
-  if (hasOwnMergingHooks) delete mergingHooksPtr;
-
-  // Delete the BeamShape object created with new.
-  if (useNewBeamShape) delete beamShapePtr;
-
-  // Delete the timelike and spacelike showers created with new.
-  if (useNewTimesDec) delete timesDecPtr;
-  if (useNewTimes && !useNewTimesDec) delete timesPtr;
-  if (useNewSpace) delete spacePtr;
+  // All is well that ends well.
+  return true;
 
 }
 
@@ -196,6 +318,9 @@ bool Pythia::readString(string line, bool warn) {
 
   // If empty line then done.
   if (line.find_first_not_of(" \n\t\v\b\r\f\a") == string::npos) return true;
+
+  // If Settings input stretches over several lines then continue with it.
+  if (settings.unfinishedInput()) return settings.readString(line, warn);
 
   // If first character is not a letter/digit, then taken to be a comment.
   int firstChar = line.find_first_not_of(" \n\t\v\b\r\f\a");
@@ -279,7 +404,9 @@ bool Pythia::readFile(istream& is, bool warn, int subrun) {
 // Routine to pass in pointers to PDF's. Usage optional.
 
 bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
-  PDF* pdfHardBPtrIn, PDF* pdfPomAPtrIn, PDF* pdfPomBPtrIn) {
+  PDF* pdfHardBPtrIn, PDF* pdfPomAPtrIn, PDF* pdfPomBPtrIn,
+  PDF* pdfGamAPtrIn, PDF* pdfGamBPtrIn, PDF* pdfHardGamAPtrIn,
+  PDF* pdfHardGamBPtrIn) {
 
   // Delete any PDF's created in a previous init call.
   if (useNewPdfHard && pdfHardAPtr != pdfAPtr) delete pdfHardAPtr;
@@ -288,19 +415,31 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
   if (useNewPdfB) delete pdfBPtr;
   if (useNewPdfPomA) delete pdfPomAPtr;
   if (useNewPdfPomB) delete pdfPomBPtr;
+  if (useNewPdfGamA) delete pdfGamAPtr;
+  if (useNewPdfGamB) delete pdfGamBPtr;
+  if (useNewPdfHardGamA && pdfHardGamAPtr != pdfGamAPtr) delete pdfHardGamAPtr;
+  if (useNewPdfHardGamB && pdfHardGamBPtr != pdfGamBPtr) delete pdfHardGamBPtr;
 
   // Reset pointers to be empty.
-  useNewPdfA    = false;
-  useNewPdfB    = false;
-  useNewPdfHard = false;
-  useNewPdfPomA = false;
-  useNewPdfPomB = false;
-  pdfAPtr       = 0;
-  pdfBPtr       = 0;
-  pdfHardAPtr   = 0;
-  pdfHardBPtr   = 0;
-  pdfPomAPtr    = 0;
-  pdfPomBPtr    = 0;
+  useNewPdfA        = false;
+  useNewPdfB        = false;
+  useNewPdfHard     = false;
+  useNewPdfPomA     = false;
+  useNewPdfPomB     = false;
+  useNewPdfGamA     = false;
+  useNewPdfGamB     = false;
+  useNewPdfHardGamA = false;
+  useNewPdfHardGamB = false;
+  pdfAPtr           = 0;
+  pdfBPtr           = 0;
+  pdfHardAPtr       = 0;
+  pdfHardBPtr       = 0;
+  pdfPomAPtr        = 0;
+  pdfPomBPtr        = 0;
+  pdfGamAPtr        = 0;
+  pdfGamBPtr        = 0;
+  pdfHardGamAPtr    = 0;
+  pdfHardGamBPtr    = 0;
 
   // Switch off external PDF's by zero as input.
   if (pdfAPtrIn == 0 && pdfBPtrIn == 0) return true;
@@ -330,6 +469,20 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
     pdfPomBPtr  = pdfPomBPtrIn;
   }
 
+  // Optionally allow pointers for Gammas in the leptons.
+  if (pdfGamAPtrIn != 0 && pdfGamBPtrIn != 0) {
+    if (pdfGamAPtrIn == pdfGamBPtrIn) return false;
+    pdfGamAPtr  = pdfGamAPtrIn;
+    pdfGamBPtr  = pdfGamBPtrIn;
+  }
+
+  // Optionally allow pointers for Hard PDFs for photons in the leptons.
+  if (pdfHardGamAPtrIn != 0 && pdfHardGamBPtrIn != 0) {
+    if (pdfHardGamAPtrIn == pdfHardGamBPtrIn) return false;
+    pdfHardGamAPtr  = pdfHardGamAPtrIn;
+    pdfHardGamBPtr  = pdfHardGamBPtrIn;
+  }
+
   // Done.
   return true;
 }
@@ -352,6 +505,11 @@ bool Pythia::init() {
   doProcessLevel = settings.flag("ProcessLevel:all");
 
   // Check that changes in Settings and ParticleData have worked.
+  if (settings.unfinishedInput()) {
+    info.errorMsg("Abort from Pythia::init: opening { not matched by "
+      "closing }");
+    return false;
+  }
   if (settings.readingFailed()) {
     info.errorMsg("Abort from Pythia::init: some user settings "
       "did not make sense");
@@ -363,7 +521,11 @@ bool Pythia::init() {
     return false;
   }
 
-  // Begin initialization. Find which frame type to use.
+  // Initialize the random number generator.
+  if ( settings.flag("Random:setSeed") )
+    rndm.init( settings.mode("Random:seed") );
+
+  // Find which frame type to use.
   info.addCounter(1);
   frameType = mode("Beams:frameType");
 
@@ -397,14 +559,16 @@ bool Pythia::init() {
     // For file input: renew file stream or (re)new Les Houches object.
     if (frameType == 4) {
       const char* cstring1 = lhef.c_str();
-      if (useNewLHA && skipInit) lhaUpPtr->newEventFile(cstring1);
-      else {
+      bool useExternal = (lhaUpPtr && !useNewLHA && lhaUpPtr->useExternal());
+      if (!useExternal && useNewLHA && skipInit)
+        lhaUpPtr->newEventFile(cstring1);
+      else if (!useExternal) {
         if (useNewLHA) delete lhaUpPtr;
         // Header is optional, so use NULL pointer to indicate no value.
         const char* cstring2 = (lhefHeader == "void")
           ? NULL : lhefHeader.c_str();
-        lhaUpPtr   = new LHAupLHEF(&info, cstring1, cstring2,
-          readHeaders, setScales);
+        lhaUpPtr   = new LHAupLHEF(&info, cstring1, cstring2, readHeaders,
+                         setScales);
         useNewLHA  = true;
       }
 
@@ -473,7 +637,7 @@ bool Pythia::init() {
 
       // Set up MergingHooks object.
       bool inputMergingHooks = (mergingHooksPtr != 0);
-      if (doMerging && !inputMergingHooks){
+      if (doMerging && !inputMergingHooks) {
         if (hasOwnMergingHooks && mergingHooksPtr) delete mergingHooksPtr;
         mergingHooksPtr = new MergingHooks();
         hasOwnMergingHooks = true;
@@ -490,6 +654,7 @@ bool Pythia::init() {
         string lhefIn = (frameType == 4) ? lhef : "";
         mergingHooksPtr->setLHEInputFile( lhefIn);
       }
+
       // Initialise counting of Les Houches Events significantly above the
       // merging scale.
       info.setCounter(41,0);
@@ -562,13 +727,17 @@ bool Pythia::init() {
   mTolErr          = settings.parm("Check:mTolErr");
   mTolWarn         = settings.parm("Check:mTolWarn");
 
+  // Find out if beam is or has a resolved photon beam.
+  beamHasGamma     = settings.flag("PDF:lepton2gamma");
+  int gammaMode    = settings.mode("Photon:ProcessType");
+  beamAisResGamma  = (gammaMode == 1) || (gammaMode == 2);
+  beamBisResGamma  = (gammaMode == 1) || (gammaMode == 3);
+  beamAhasResGamma = beamAisResGamma && beamHasGamma;
+  beamBhasResGamma = beamBisResGamma && beamHasGamma;
+
   // Initialise merging hooks.
   if ( doMerging && (hasMergingHooks || hasOwnMergingHooks) )
-    mergingHooksPtr->init( settings, &info, &particleData, &partonSystems );
-
-  // Initialize the random number generator.
-  if ( settings.flag("Random:setSeed") )
-    rndm.init( settings.mode("Random:seed") );
+    mergingHooksPtr->init( settings, &info, &particleData, &partonSystems);
 
   // Check that combinations of settings are allowed; change if not.
   checkSettings();
@@ -578,8 +747,8 @@ bool Pythia::init() {
 
   // Initialize SLHA interface (including SLHA/BSM couplings).
   bool useSLHAcouplings = false;
+  slhaInterface = SLHAinterface();
   slhaInterface.setPtr( &info );
-
   slhaInterface.init( settings, &rndm, couplingsPtr, &particleData,
     useSLHAcouplings, particleDataBuffer );
   if (useSLHAcouplings) couplingsPtr = slhaInterface.couplingsPtr;
@@ -618,14 +787,13 @@ bool Pythia::init() {
     useNewSpace = true;
   }
 
-  // Initialize showers, especially for simple showers in decays.
+  // Initialize pointers in showers.
   timesPtr->initPtr( &info, &settings, &particleData, &rndm, couplingsPtr,
     &partonSystems, userHooksPtr, mergingHooksPtr);
   timesDecPtr->initPtr( &info, &settings, &particleData, &rndm, couplingsPtr,
     &partonSystems, userHooksPtr, mergingHooksPtr);
   spacePtr->initPtr( &info, &settings, &particleData, &rndm, couplingsPtr,
     &partonSystems, userHooksPtr, mergingHooksPtr);
-  timesDecPtr->init( 0, 0);
 
   // Set up values related to beam shape.
   if (beamShapePtr == 0) {
@@ -638,6 +806,13 @@ bool Pythia::init() {
   if (!checkBeams()) {
     info.errorMsg("Abort from Pythia::init: "
       "checkBeams initialization failed");
+    return false;
+  }
+
+  // Further checks for photon-photon events as not all features included yet.
+  if ( ( idA == 22 && idB == 22 ) && ( doDiffraction || doHardDiff ) ) {
+    info.errorMsg("Abort from Pythia::init: "
+      "Diffractive events not implemented for photon-photon collisions");
     return false;
   }
 
@@ -661,9 +836,9 @@ bool Pythia::init() {
     // Set up the two beams and the common remnant system.
     StringFlav* flavSelPtr = hadronLevel.getStringFlavPtr();
     beamA.init( idA, pzAcm, eA, mA, &info, settings, &particleData, &rndm,
-      pdfAPtr, pdfHardAPtr, isUnresolvedA, flavSelPtr);
+      pdfAPtr, pdfHardAPtr, isUnresolvedA, flavSelPtr, beamAhasResGamma);
     beamB.init( idB, pzBcm, eB, mB, &info, settings, &particleData, &rndm,
-      pdfBPtr, pdfHardBPtr, isUnresolvedB, flavSelPtr);
+      pdfBPtr, pdfHardBPtr, isUnresolvedB, flavSelPtr, beamBhasResGamma);
 
     // Optionally set up new alternative beams for these Pomerons.
     if ( doDiffraction || doHardDiff) {
@@ -672,16 +847,39 @@ bool Pythia::init() {
       beamPomB.init( 990, -0.5 * eCM, 0.5 * eCM, 0., &info, settings,
         &particleData, &rndm, pdfPomBPtr, pdfPomBPtr, false, flavSelPtr);
     }
+
+    // Optionally set up photon beams from lepton beams if resolved photons.
+    if (beamAhasResGamma || beamBhasResGamma) {
+      beamGamA.init( 22,  0.5 * eCM, 0.5 * eCM, 0., &info, settings,
+        &particleData, &rndm, pdfGamAPtr, pdfHardGamAPtr, !beamAisResGamma,
+        flavSelPtr);
+      beamGamB.init( 22,  0.5 * eCM, 0.5 * eCM, 0., &info, settings,
+        &particleData, &rndm, pdfGamBPtr, pdfHardGamBPtr, !beamBisResGamma,
+        flavSelPtr);
+    }
+
+    // No diffraction for resolved photon+photon in e+e-.
+    if ( beamA.hasResGamma() || beamB.hasResGamma() ) {
+      if ( doDiffraction || doHardDiff ) {
+        info.errorMsg("Abort from Pythia::init: "
+          "Diffractive events not implemented for photon-photon collisions");
+        return false;
+      }
+    }
   }
 
   // Send info/pointers to process level for initialization.
   if ( doProcessLevel && !processLevel.init( &info, settings, &particleData,
-    &rndm, &beamA, &beamB, couplingsPtr, &sigmaTot, doLHA, &slhaInterface,
-    userHooksPtr, sigmaPtrs, phaseSpacePtrs) ) {
+    &rndm, &beamA, &beamB, &beamGamA, &beamGamB, couplingsPtr, &sigmaTot,
+    doLHA, &slhaInterface, userHooksPtr, sigmaPtrs, phaseSpacePtrs) ) {
     info.errorMsg("Abort from Pythia::init: "
       "processLevel initialization failed");
     return false;
   }
+
+  // Initialize timelike showers already here, since needed in decays.
+  // The pointers to the beams are needed by some external plugin showers.
+  timesDecPtr->init( &beamA, &beamB);
 
   // Alternatively only initialize resonance decays.
   if ( !doProcessLevel) processLevel.initDecays( &info, &particleData,
@@ -689,9 +887,9 @@ bool Pythia::init() {
 
   // Send info/pointers to parton level for initialization.
   if ( doPartonLevel && doProcessLevel && !partonLevel.init( &info, settings,
-    &particleData, &rndm, &beamA, &beamB, &beamPomA, &beamPomB, couplingsPtr,
-    &partonSystems, &sigmaTot, timesDecPtr, timesPtr, spacePtr, &rHadrons,
-    userHooksPtr, mergingHooksPtr, false) ) {
+    &particleData, &rndm, &beamA, &beamB, &beamPomA, &beamPomB, &beamGamA,
+    &beamGamB, couplingsPtr, &partonSystems, &sigmaTot, timesDecPtr, timesPtr,
+    spacePtr, &rHadrons, userHooksPtr, mergingHooksPtr, false) ) {
     info.errorMsg("Abort from Pythia::init: "
       "partonLevel initialization failed" );
     return false;
@@ -703,14 +901,14 @@ bool Pythia::init() {
 
   // Alternatively only initialize final-state showers in resonance decays.
   if ( !doProcessLevel || !doPartonLevel) partonLevel.init( &info, settings,
-    &particleData, &rndm, 0, 0, 0, 0, couplingsPtr, &partonSystems, 0,
+    &particleData, &rndm, 0, 0, 0, 0, 0, 0, couplingsPtr, &partonSystems, 0,
     timesDecPtr, 0, 0, &rHadrons, 0, 0, false);
 
   // Send info/pointers to parton level for trial shower initialization.
   if ( doMerging && !trialPartonLevel.init( &info, settings, &particleData,
-      &rndm, &beamA, &beamB, &beamPomA, &beamPomB, couplingsPtr,
-      &partonSystems, &sigmaTot, timesDecPtr, timesPtr, spacePtr, &rHadrons,
-      userHooksPtr, mergingHooksPtr, true) ) {
+      &rndm, &beamA, &beamB, &beamPomA, &beamPomB, &beamGamA, &beamGamB,
+      couplingsPtr, &partonSystems, &sigmaTot, timesDecPtr, timesPtr,
+      spacePtr, &rHadrons, userHooksPtr, mergingHooksPtr, true) ) {
     info.errorMsg("Abort from Pythia::init: "
       "trialPartonLevel initialization failed");
     return false;
@@ -718,7 +916,7 @@ bool Pythia::init() {
 
   // Initialise the merging wrapper class.
   if (doMerging ) merging.init( &settings, &info, &particleData, &rndm,
-    &beamA, &beamB, mergingHooksPtr, &trialPartonLevel );
+    &beamA, &beamB, mergingHooksPtr, &trialPartonLevel, couplingsPtr );
 
   // Send info/pointers to hadron level for initialization.
   // Note: forceHadronLevel() can come, so we must always initialize.
@@ -789,6 +987,30 @@ void Pythia::checkSettings() {
     settings.flag("MultipartonInteractions:allowDoubleRescatter", false);
   }
 
+  // Photon-photon collisions with direct photon(s).
+  if ( ( (idA == 22) && (idB == 22) )
+    && ( !beamAisResGamma || !beamBisResGamma ) ) {
+
+    // Turn MPIs off.
+    if ( settings.flag("PartonLevel:MPI") ) {
+      info.errorMsg("Warning in Pythia::checkSettings: "
+        "MPIs turned off for photon-photon collision with unresolved photon");
+      settings.flag("PartonLevel:MPI", false);
+    }
+  }
+
+  // Lepton-lepton collisions with direct photon(s).
+  if ( ( (abs(idA) > 10 && abs(idA) < 17) && (abs(idB) > 10 && abs(idB) < 17) )
+    && ( !beamAhasResGamma || !beamBhasResGamma ) && beamHasGamma ) {
+
+    // Turn MPIs off.
+    if ( settings.flag("PartonLevel:MPI") ) {
+      info.errorMsg("Warning in Pythia::checkSettings: MPIs turned off for "
+                    "lepton-lepton collision with unresolved photon");
+      settings.flag("PartonLevel:MPI", false);
+    }
+  }
+
 }
 
 //--------------------------------------------------------------------------
@@ -803,14 +1025,51 @@ bool Pythia::checkBeams() {
   if (!doProcessLevel) return true;
 
   // Neutrino beams always unresolved, charged lepton ones conditionally.
-  bool isLeptonA  = (idAabs > 10 && idAabs < 17);
-  bool isLeptonB  = (idBabs > 10 && idBabs < 17);
-  bool isUnresLep = !settings.flag("PDF:lepton");
-  isUnresolvedA   = isLeptonA && (idAabs%2 == 0 || isUnresLep);
-  isUnresolvedB   = isLeptonB && (idBabs%2 == 0 || isUnresLep);
+  bool isLeptonA    = (idAabs > 10 && idAabs < 17);
+  bool isLeptonB    = (idBabs > 10 && idBabs < 17);
+  bool isUnresLep   = !settings.flag("PDF:lepton");
+  isUnresolvedA     = ( isLeptonA && (idAabs%2 == 0 || isUnresLep) );
+  isUnresolvedB     = ( isLeptonB && (idBabs%2 == 0 || isUnresLep) );
 
-  // Lepton-lepton collisions OK (including neutrinos) if both (un)resolved.
-  if (isLeptonA && isLeptonB && isUnresolvedA == isUnresolvedB) return true;
+  // Also photons may be unresolved.
+  if ( idAabs == 22 && !beamAisResGamma ) isUnresolvedA = true;
+  if ( idBabs == 22 && !beamBisResGamma ) isUnresolvedB = true;
+
+  // If photons from beam particle, beam not unresolved.
+  if ( beamAhasResGamma ) isUnresolvedA = false;
+  if ( beamBhasResGamma ) isUnresolvedB = false;
+
+  // Equate Dark Matter "beams" with incoming neutrinos.
+  if (idAabs > 50 && idAabs < 61) isLeptonA = isUnresolvedA = true;
+  if (idBabs > 50 && idBabs < 61) isLeptonB = isUnresolvedB = true;
+
+  // Lepton-lepton collisions.
+  if (isLeptonA && isLeptonB ) {
+
+    // Photon-photon collision from lepton beams.
+    if (beamHasGamma) {
+
+      // Non-diffractive events only for resolved photon-photon.
+      if ( (!beamAhasResGamma || !beamBhasResGamma)
+        && settings.flag("SoftQCD:nonDiffractive") ) {
+        info.errorMsg("Error in Pythia::init: Soft QCD only with resolved"
+          " photons with lepton beams.");
+        return false;
+
+      // No diffraction with photons.
+      } else if ( doDiffraction || doHardDiff ) {
+        info.errorMsg("Error from Pythia::init: "
+          "Diffractive events not implemented for photon-photon collisions");
+        return false;
+      }
+
+      // Otherwise photon-photon within lepton beams OK.
+      else return true;
+    }
+
+    // Lepton-lepton collisions OK (including neutrinos) if both (un)resolved
+    else if (isUnresolvedA == isUnresolvedB) return true;
+  }
 
   // MBR model only implemented for pp/ppbar/pbarp collisions.
   int PomFlux     = settings.mode("Diffraction:PomFlux");
@@ -828,16 +1087,56 @@ bool Pythia::checkBeams() {
                 || (idAabs == 211)  || (idA == 990);
   bool isHadronB = (idBabs == 2212) || (idBabs == 2112) || (idB == 111)
                 || (idBabs == 211)  || (idB == 990);
-  if (isHadronA && isHadronB) return true;
+  int modeUnresolvedHadron = settings.mode("BeamRemnants:unresolvedHadron");
+  if (isHadronA && modeUnresolvedHadron%2 == 1) isUnresolvedA = true;
+  if (isHadronB && modeUnresolvedHadron > 1)    isUnresolvedB = true;
+  if (isHadronA && isHadronB) {
+    // lepton2gamma flag with hadron beams may cause problems.
+    if (beamHasGamma) {
+      info.errorMsg("Error in Pythia::init: lepton2gamma should be off for"
+        " hadron+hadron collision");
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  // Photon-photon collisions.
+  if ( (idAabs == 22) && (idBabs == 22) ) {
+
+    // No non-diffractive events for unresolved photon-photon.
+    if ( ( !beamAisResGamma || !beamBisResGamma )
+         && settings.flag("SoftQCD:nonDiffractive") ) {
+      info.errorMsg("Error in Pythia::init: Soft QCD only with resolved"
+        " photons.");
+    }
+
+    else if ( doDiffraction || doHardDiff ) {
+      info.errorMsg("Error from Pythia::init: "
+        "Diffractive events not implemented for photon-photon collisions");
+      return false;
+    }
+
+    // lepton2gamma flag with photon beams may cause problems.
+    if (beamHasGamma) {
+      info.errorMsg("Error in Pythia::init: lepton2gamma should be off for"
+        " hadron+hadron collision");
+      return false;
+    }
+
+    // Otherwise OK.
+    else return true;
+  }
 
   // Lepton-hadron collisions OK for DIS processes or LHEF input,
   // although still primitive.
+  // Photon beam inside lepton not yet included for lepton-hadron.
   if ( (isLeptonA && isHadronB) || (isHadronA && isLeptonB) ) {
     bool doDIS = settings.flag("WeakBosonExchange:all")
               || settings.flag("WeakBosonExchange:ff2ff(t:gmZ)")
               || settings.flag("WeakBosonExchange:ff2ff(t:W)")
               || (frameType == 4);
-    if (doDIS) return true;
+    if (doDIS && !beamHasGamma ) return true;
   }
 
   // If no case above then failed.
@@ -959,6 +1258,60 @@ bool Pythia::initPDFs() {
     useNewPdfPomB = false;
     pdfPomBPtr    = 0;
   }
+  if (useNewPdfGamA) {
+    delete pdfGamAPtr;
+    useNewPdfGamA = false;
+    pdfGamAPtr    = 0;
+  }
+  if (useNewPdfGamB) {
+    delete pdfGamBPtr;
+    useNewPdfGamB = false;
+    pdfGamBPtr    = 0;
+  }
+  if (useNewPdfHardGamA) {
+    delete pdfHardGamAPtr;
+    useNewPdfHardGamA = false;
+    pdfHardGamAPtr    = 0;
+  }
+  if (useNewPdfHardGamB) {
+    delete pdfHardGamBPtr;
+    useNewPdfHardGamB = false;
+    pdfHardGamBPtr    = 0;
+  }
+
+  // Optionally set up photon PDF's for lepton -> gamma collisions. Done before
+  // the main PDFs so that the gamma pointer can be used for the main PDF
+  // (lepton). Both set also in case that only one of the photons is resolved.
+  bool setupGammaBeams = (settings.flag("PDF:lepton2gamma")
+    && (beamAhasResGamma || beamBhasResGamma) );
+  if (setupGammaBeams) {
+    if ( (abs(idA) == 11 || abs(idA) == 13 || abs(idA) == 15)
+        && pdfGamAPtr == 0 ) {
+      pdfGamAPtr = getPDFPtr(22, 1, "A");
+      if (!pdfGamAPtr->isSetup()) return false;
+      useNewPdfGamA = true;
+
+      // Set up optional hard photon PDF pointers.
+      if (settings.flag("PDF:useHard")){
+        pdfHardGamAPtr = getPDFPtr(22, 2);
+        if (!pdfHardGamAPtr->isSetup()) return false;
+        useNewPdfHardGamA = true;
+      } else pdfHardGamAPtr = pdfGamAPtr;
+    }
+    if ( (abs(idB) == 11 || abs(idB) == 13 || abs(idB) == 15)
+        && pdfGamBPtr == 0 ) {
+      pdfGamBPtr = getPDFPtr(22, 1, "B");
+      if (!pdfGamBPtr->isSetup()) return false;
+      useNewPdfGamB = true;
+
+      // Set up optional hard photon PDF pointers.
+      if (settings.flag("PDF:useHard")){
+        pdfHardGamBPtr = getPDFPtr(22, 2, "B");
+        if (!pdfHardGamBPtr->isSetup()) return false;
+        useNewPdfHardGamB = true;
+      } else pdfHardGamBPtr = pdfGamBPtr;
+    }
+  }
 
   // Set up the PDF's, if not already done.
   if (pdfAPtr == 0) {
@@ -1063,6 +1416,8 @@ bool Pythia::next() {
   beamB.clear();
   beamPomA.clear();
   beamPomB.clear();
+  beamGamA.clear();
+  beamGamB.clear();
 
   // Pick current beam valence flavours (for pi0, K0S, K0L, Pomeron).
   beamA.newValenceContent();
@@ -1095,6 +1450,11 @@ bool Pythia::next() {
     // Provide the hard process that starts it off. Only one try.
     info.clear();
     process.clear();
+    partonSystems.clear();
+
+    // Reset the event information. Necessary if the previous event was read
+    // from LHEF, while the current event is not read from LHEF.
+    info.setLHEF3EventInfo();
 
     if ( !processLevel.next( process) ) {
       if (doLHA && info.atEndOfFile()) info.errorMsg("Abort from "
@@ -1105,6 +1465,10 @@ bool Pythia::next() {
     }
 
     info.addCounter(11);
+
+    // Update tried and selected events immediately after next event was
+    // generated. Note: This does not accumulate cross section.
+    processLevel.accumulate(false);
 
     // Possibility for a user veto of the process-level event.
     if (doVetoProcess) {
@@ -1169,6 +1533,8 @@ bool Pythia::next() {
       beamB.clear();
       beamPomA.clear();
       beamPomB.clear();
+      beamGamA.clear();
+      beamGamB.clear();
       partonSystems.clear();
 
       // Parton-level evolution: ISR, FSR, MPI.
@@ -1338,7 +1704,7 @@ bool Pythia::forceHadronLevel(bool findJunctions) {
       partonSystems.addSys();
       for (int i = 5;i < event.size();++i) {
         if (event[i].mother1() - 3 < 0 || event[i].mother1() - 3 > 1) {
-          info.errorMsg("Error from Pythia::forceHadronLevel: "
+          info.errorMsg("Error in Pythia::forceHadronLevel: "
             " Event is not setup correctly for SK-I or SK-II CR");
           return false;
         }
@@ -1549,7 +1915,7 @@ void Pythia::stat() {
 
 // Write the Pythia banner, with symbol and version information.
 
-void Pythia::banner(ostream& os) {
+void Pythia::banner() {
 
   // Read in version number and last date of change.
   double versionNumber = settings.parm("Pythia:versionNumber");
@@ -1564,126 +1930,138 @@ void Pythia::banner(ostream& os) {
   char timeNow[9];
   strftime(timeNow,9,"%H:%M:%S",localtime(&t));
 
-  os << "\n"
-     << " *-------------------------------------------"
-     << "-----------------------------------------* \n"
-     << " |                                           "
-     << "                                         | \n"
-     << " |  *----------------------------------------"
-     << "--------------------------------------*  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   PPP   Y   Y  TTTTT  H   H  III    A  "
-     << "    Welcome to the Lund Monte Carlo!  |  | \n"
-     << " |  |   P  P   Y Y     T    H   H   I    A A "
-     << "    This is PYTHIA version " << fixed << setprecision(3)
-     << setw(5) << versionNumber << "      |  | \n"
-     << " |  |   PPP     Y      T    HHHHH   I   AAAAA"
-     << "    Last date of change: " << setw(2) << versionDate%100
-     << " " << month[ (versionDate/100)%100 - 1 ]
-     << " " << setw(4) << versionDate/10000 <<  "  |  | \n"
-     << " |  |   P       Y      T    H   H   I   A   A"
-     << "                                      |  | \n"
-     << " |  |   P       Y      T    H   H  III  A   A"
-     << "    Now is " << dateNow << " at " << timeNow << "    |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   Torbjorn Sjostrand;  Department of As"
-     << "tronomy and Theoretical Physics,      |  | \n"
-     << " |  |      Lund University, Solvegatan 14A, S"
-     << "E-223 62 Lund, Sweden;                |  | \n"
-     << " |  |      e-mail: torbjorn@thep.lu.se       "
-     << "                                      |  | \n"
-     << " |  |   Jesper Roy Christiansen;  Department "
-     << "of Astronomy and Theoretical Physics, |  | \n"
-     << " |  |      Lund University, Solvegatan 14A, S"
-     << "E-223 62 Lund, Sweden;                |  | \n"
-     << " |  |      e-mail: Jesper.Roy.Christiansen@th"
-     << "ep.lu.se                              |  | \n"
-     << " |  |   Nishita Desai;  Institut fuer Theoret"
-     << "ische Physik,                         |  | \n"
-     << " |  |     Universitaet Heidelberg, Philosophe"
-     << "nweg 16, D-69120 Heidelberg, Germany; |  | \n"
-     << " |  |      e-mail: n.desai@thphys.uni-heidelb"
-     << "erg.de                                |  | \n"
-     << " |  |   Philip Ilten;  Massachusetts Institut"
-     << "e of Technology,                      |  | \n"
-     << " |  |      stationed at CERN, CH-1211 Geneva "
-     << "23, Switzerland;                      |  | \n"
-     << " |  |      e-mail: philten@cern.ch           "
-     << "                                      |  | \n"
-     << " |  |   Stephen Mrenna;  Computing Division, "
-     << "Simulations Group,                    |  | \n"
-     << " |  |      Fermi National Accelerator Laborat"
-     << "ory, MS 234, Batavia, IL 60510, USA;  |  | \n"
-     << " |  |      e-mail: mrenna@fnal.gov           "
-     << "                                      |  | \n"
-     << " |  |   Stefan Prestel;  Theoretical Physics "
-     << "Group,                                |  | \n"
-     << " |  |      SLAC National Accelerator Laborato"
-     << "ry, Menlo Park, CA 94025, USA;        |  | \n"
-     << " |  |      e-mail: prestel@slac.stanford.edu "
-     << "                                      |  | \n"
-     << " |  |   Christine O. Rasmussen;  Department o"
-     << "f Astronomy and Theoretical Physics,  |  | \n"
-     << " |  |      Lund University, Solvegatan 14A, S"
-     << "E-223 62 Lund, Sweden;                |  | \n"
-     << " |  |      e-mail: christine.rasmussen@thep.l"
-     << "u.se                                  |  | \n"
-     << " |  |   Peter Skands;  School of Physics,    "
-     << "                                      |  | \n"
-     << " |  |      Monash University, PO Box 27, 3800"
-     << " Melbourne, Australia;                |  | \n"
-     << " |  |      e-mail: peter.skands@monash.edu   "
-     << "                                      |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   The main program reference is 'An Int"
-     << "roduction to PYTHIA 8.2',             |  | \n"
-     << " |  |   T. Sjostrand et al, Comput. Phys. Com"
-     << "mun. 191 (2005) 159                   |  | \n"
-     << " |  |   [arXiv:1410.3012 [hep-ph]]           "
-     << "                                      |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   The main physics reference is the 'PY"
-     << "THIA 6.4 Physics and Manual',         |  | \n"
-     << " |  |   T. Sjostrand, S. Mrenna and P. Skands"
-     << ", JHEP05 (2006) 026 [hep-ph/0603175]  |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   An archive of program versions and do"
-     << "cumentation is found on the web:      |  | \n"
-     << " |  |   http://www.thep.lu.se/Pythia         "
-     << "                                      |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   This program is released under the GN"
-     << "U General Public Licence version 2.   |  | \n"
-     << " |  |   Please respect the MCnet Guidelines f"
-     << "or Event Generator Authors and Users. |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   Disclaimer: this program comes withou"
-     << "t any guarantees.                     |  | \n"
-     << " |  |   Beware of errors and use common sense"
-     << " when interpreting results.           |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |   Copyright (C) 2015 Torbjorn Sjostrand"
-     << "                                      |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  |                                        "
-     << "                                      |  | \n"
-     << " |  *----------------------------------------"
-     << "--------------------------------------*  | \n"
-     << " |                                           "
-     << "                                         | \n"
-     << " *-------------------------------------------"
-     << "-----------------------------------------* \n" << endl;
+  cout << "\n"
+       << " *-------------------------------------------"
+       << "-----------------------------------------* \n"
+       << " |                                           "
+       << "                                         | \n"
+       << " |  *----------------------------------------"
+       << "--------------------------------------*  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   PPP   Y   Y  TTTTT  H   H  III    A  "
+       << "    Welcome to the Lund Monte Carlo!  |  | \n"
+       << " |  |   P  P   Y Y     T    H   H   I    A A "
+       << "    This is PYTHIA version " << fixed << setprecision(3)
+       << setw(5) << versionNumber << "      |  | \n"
+       << " |  |   PPP     Y      T    HHHHH   I   AAAAA"
+       << "    Last date of change: " << setw(2) << versionDate%100
+       << " " << month[ (versionDate/100)%100 - 1 ]
+       << " " << setw(4) << versionDate/10000 <<  "  |  | \n"
+       << " |  |   P       Y      T    H   H   I   A   A"
+       << "                                      |  | \n"
+       << " |  |   P       Y      T    H   H  III  A   A"
+       << "    Now is " << dateNow << " at " << timeNow << "    |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   Torbjorn Sjostrand;  Department of As"
+       << "tronomy and Theoretical Physics,      |  | \n"
+       << " |  |      Lund University, Solvegatan 14A, S"
+       << "E-223 62 Lund, Sweden;                |  | \n"
+       << " |  |      e-mail: torbjorn@thep.lu.se       "
+       << "                                      |  | \n"
+       << " |  |   Nishita Desai;  Laboratoire Charles C"
+       << "oulomb (L2C),                         |  | \n"
+       << " |  |      CNRS-Universite de Montpellier, 34"
+       << "090 Montpellier, France;              |  | \n"
+       << " |  |      e-mail: nishita.desai@umontpellier"
+       << ".fr                                   |  | \n"
+       << " |  |   Nadine Fischer;  School of Physics,  "
+       << "                                      |  | \n"
+       << " |  |      Monash University, PO Box 27, 3800"
+       << " Melbourne, Australia;                |  | \n"
+       << " |  |      e-mail: nadine.fischer@monash.edu "
+       << "                                      |  | \n"
+       << " |  |   Ilkka Helenius;  Institute for Theore"
+       << "tical Physics,                        |  | \n"
+       << " |  |     Tuebingen University, Auf der Morge"
+       << "nstelle 14, 72076 Tuebingen, Germany; |  | \n"
+       << " |  |      e-mail: ilkka.helenius@uni-tuebing"
+       << "en.de                                 |  | \n"
+       << " |  |   Philip Ilten;  Massachusetts Institut"
+       << "e of Technology,                      |  | \n"
+       << " |  |      77 Massachusetts Ave, Cambridge, M"
+       << "A 02139, USA;                         |  | \n"
+       << " |  |      e-mail: philten@cern.ch           "
+       << "                                      |  | \n"
+       << " |  |   Leif Lonnblad;  Department of Astrono"
+       << "my and Theoretical Physics,           |  | \n"
+       << " |  |      Lund University, Solvegatan 14A, S"
+       << "E-223 62 Lund, Sweden;                |  | \n"
+       << " |  |      e-mail: leif.lonnblad@thep.lu.se  "
+       << "                                      |  | \n"
+       << " |  |   Stephen Mrenna;  Computing Division, "
+       << "Simulations Group,                    |  | \n"
+       << " |  |      Fermi National Accelerator Laborat"
+       << "ory, MS 234, Batavia, IL 60510, USA;  |  | \n"
+       << " |  |      e-mail: mrenna@fnal.gov           "
+       << "                                      |  | \n"
+       << " |  |   Stefan Prestel;  Theoretical Physics "
+       << "Department,                           |  | \n"
+       << " |  |      Fermi National Accelerator Laborat"
+       << "ory, MS 106, Batavia, IL 60510, USA;  |  | \n"
+       << " |  |      e-mail: sprestel@fnal.gov         "
+       << "                                      |  | \n"
+       << " |  |   Christine O. Rasmussen;  Department o"
+       << "f Astronomy and Theoretical Physics,  |  | \n"
+       << " |  |      Lund University, Solvegatan 14A, S"
+       << "E-223 62 Lund, Sweden;                |  | \n"
+       << " |  |      e-mail: christine.rasmussen@thep.l"
+       << "u.se                                  |  | \n"
+       << " |  |   Peter Skands;  School of Physics,    "
+       << "                                      |  | \n"
+       << " |  |      Monash University, PO Box 27, 3800"
+       << " Melbourne, Australia;                |  | \n"
+       << " |  |      e-mail: peter.skands@monash.edu   "
+       << "                                      |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   The main program reference is 'An Int"
+       << "roduction to PYTHIA 8.2',             |  | \n"
+       << " |  |   T. Sjostrand et al, Comput. Phys. Com"
+       << "mun. 191 (2015) 159                   |  | \n"
+       << " |  |   [arXiv:1410.3012 [hep-ph]]           "
+       << "                                      |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   The main physics reference is the 'PY"
+       << "THIA 6.4 Physics and Manual',         |  | \n"
+       << " |  |   T. Sjostrand, S. Mrenna and P. Skands"
+       << ", JHEP05 (2006) 026 [hep-ph/0603175]  |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   An archive of program versions and do"
+       << "cumentation is found on the web:      |  | \n"
+       << " |  |   http://www.thep.lu.se/Pythia         "
+       << "                                      |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   This program is released under the GN"
+       << "U General Public Licence version 2.   |  | \n"
+       << " |  |   Please respect the MCnet Guidelines f"
+       << "or Event Generator Authors and Users. |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   Disclaimer: this program comes withou"
+       << "t any guarantees.                     |  | \n"
+       << " |  |   Beware of errors and use common sense"
+       << " when interpreting results.           |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |   Copyright (C) 2017 Torbjorn Sjostrand"
+       << "                                      |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  |                                        "
+       << "                                      |  | \n"
+       << " |  *----------------------------------------"
+       << "--------------------------------------*  | \n"
+       << " |                                           "
+       << "                                         | \n"
+       << " *-------------------------------------------"
+       << "-----------------------------------------* \n" << endl;
 
 }
 
@@ -1691,7 +2069,7 @@ void Pythia::banner(ostream& os) {
 
 // Check for lines in file that mark the beginning of new subrun.
 
-int Pythia::readSubrun(string line, bool warn, ostream& os) {
+int Pythia::readSubrun(string line, bool warn) {
 
   // If empty line then done.
   int subrunLine = SUBRUNDEFAULT;
@@ -1720,17 +2098,13 @@ int Pythia::readSubrun(string line, bool warn, ostream& os) {
     name.replace(firstColonColon, 2, ":");
   }
 
-
-  // Convert to lowercase.
-  for (int i = 0; i < int(name.length()); ++i) name[i] = tolower(name[i]);
-
-  // If no match then done.
-  if (name != "main:subrun") return subrunLine;
+  // Convert to lowercase. If no match then done.
+  if (toLower(name) != "main:subrun") return subrunLine;
 
   // Else find new subrun number and return it.
   splitLine >> subrunLine;
   if (!splitLine) {
-    if (warn) os << "\n PYTHIA Warning: Main:subrun number not"
+    if (warn) cout << "\n PYTHIA Warning: Main:subrun number not"
         << " recognized; skip:\n   " << line << endl;
     subrunLine = SUBRUNDEFAULT;
   }
@@ -1764,7 +2138,7 @@ int Pythia::readCommented(string line) {
 // Check that the final event makes sense: no unknown id codes;
 // charge and energy-momentum conserved.
 
-bool Pythia::check(ostream& os) {
+bool Pythia::check() {
 
   // Reset.
   bool physical     = true;
@@ -1832,18 +2206,21 @@ bool Pythia::check(ostream& os) {
       }
     }
 
+    // Some intermediate shower partons excepted from (E, p, m) consistency.
+    bool checkMass = event[i].statusAbs() != 49 && event[i].statusAbs() != 59;
+
     // Look for particles with mismatched or not-a-number energy/momentum/mass.
     if (abs(event[i].px()) >= 0. && abs(event[i].py()) >= 0.
       && abs(event[i].pz()) >= 0.  && abs(event[i].e()) >= 0.
       && abs(event[i].m()) >= 0.) {
       double errMass = abs(event[i].mCalc() - event[i].m())
         / max( 1.0, event[i].e());
-      if (errMass > mTolErr) {
+      if (checkMass && errMass > mTolErr) {
         info.errorMsg("Error in Pythia::check: "
           "unmatched particle energy/momentum/mass");
         physical = false;
         iErrEpm.push_back(i);
-      } else if (errMass > mTolWarn) {
+      } else if (checkMass && errMass > mTolWarn) {
         info.errorMsg("Warning in Pythia::check: "
           "not quite matched particle energy/momentum/mass");
       }
@@ -1989,56 +2366,56 @@ bool Pythia::check(ostream& os) {
 
   // Print (the first few) flawed events: local info.
   if (nErrEvent < nErrList) {
-    os << "\n PYTHIA erroneous event info: \n";
+    cout << "\n PYTHIA erroneous event info: \n";
     if (iErrId.size() > 0) {
-      os << " unknown particle codes in lines ";
+      cout << " unknown particle codes in lines ";
       for (int i = 0; i < int(iErrId.size()); ++i)
-        os << iErrId[i] << " ";
-      os << "\n";
+        cout << iErrId[i] << " ";
+      cout << "\n";
     }
     if (iErrCol.size() > 0) {
-      os << " incorrect colour assignments in lines ";
+      cout << " incorrect colour assignments in lines ";
       for (int i = 0; i < int(iErrCol.size()); ++i)
-        os << iErrCol[i] << " ";
-      os << "\n";
+        cout << iErrCol[i] << " ";
+      cout << "\n";
     }
     if (iErrEpm.size() > 0) {
-      os << " mismatch between energy/momentum/mass in lines ";
+      cout << " mismatch between energy/momentum/mass in lines ";
       for (int i = 0; i < int(iErrEpm.size()); ++i)
-        os << iErrEpm[i] << " ";
-      os << "\n";
+        cout << iErrEpm[i] << " ";
+      cout << "\n";
     }
     if (iErrNan.size() > 0) {
-      os << " not-a-number energy/momentum/mass in lines ";
+      cout << " not-a-number energy/momentum/mass in lines ";
       for (int i = 0; i < int(iErrNan.size()); ++i)
-        os << iErrNan[i] << " ";
-      os << "\n";
+        cout << iErrNan[i] << " ";
+      cout << "\n";
     }
     if (iErrNanVtx.size() > 0) {
-      os << " not-a-number vertex/lifetime in lines ";
+      cout << " not-a-number vertex/lifetime in lines ";
       for (int i = 0; i < int(iErrNanVtx.size()); ++i)
-        os << iErrNanVtx[i] << " ";
-      os << "\n";
+        cout << iErrNanVtx[i] << " ";
+      cout << "\n";
     }
-    if (epDev > epTolErr * eLab) os << scientific << setprecision(3)
+    if (epDev > epTolErr * eLab) cout << scientific << setprecision(3)
       << " total energy-momentum non-conservation = " << epDev << "\n";
-    if (abs(chargeSum) > 0.1) os << fixed << setprecision(2)
+    if (abs(chargeSum) > 0.1) cout << fixed << setprecision(2)
       << " total charge non-conservation = " << chargeSum << "\n";
     if (noMot.size() > 0) {
-      os << " missing mothers for particles ";
-      for (int i = 0; i < int(noMot.size()); ++i) os << noMot[i] << " ";
-      os << "\n";
+      cout << " missing mothers for particles ";
+      for (int i = 0; i < int(noMot.size()); ++i) cout << noMot[i] << " ";
+      cout << "\n";
     }
     if (noDau.size() > 0) {
-      os << " missing daughters for particles ";
-      for (int i = 0; i < int(noDau.size()); ++i) os << noDau[i] << " ";
-      os << "\n";
+      cout << " missing daughters for particles ";
+      for (int i = 0; i < int(noDau.size()); ++i) cout << noDau[i] << " ";
+      cout << "\n";
     }
     if (noMotDau.size() > 0) {
-      os << " inconsistent history for (mother,daughter) pairs ";
+      cout << " inconsistent history for (mother,daughter) pairs ";
       for (int i = 0; i < int(noMotDau.size()); ++i)
-        os << "(" << noMotDau[i].first << "," << noMotDau[i].second << ") ";
-      os << "\n";
+        cout << "(" << noMotDau[i].first << "," << noMotDau[i].second << ") ";
+      cout << "\n";
     }
 
     // Print (the first few) flawed events: standard listings.
@@ -2065,58 +2442,77 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam) {
   PDF* tempPDFPtr = 0;
 
   // One option is to treat a Pomeron like a pi0.
-  if (idIn == 990 && settings.mode("PDF:PomSet") == 2) idIn = 111;
+  if (idIn == 990 && settings.word("PDF:PomSet") == "2") idIn = 111;
 
   // Proton beam, normal or hard choice. Also used for neutron.
   if (abs(idIn) == 2212 || abs(idIn) == 2112) {
-    string pSet = settings.word("PDF:p"
+    string pWord = settings.word("PDF:p"
       + string(sequence == 1 ? "" : "Hard") + "Set" + beam);
-    if (pSet == "void" && sequence != 1 && beam == "B")
-      pSet = settings.word("PDF:pHardSet");
-    if (pSet == "void") pSet = settings.word("PDF:pSet");
-    istringstream pSetStream(pSet);
-    int pSetInt(0);
-    pSetStream >> pSetInt;
+    if (pWord == "void" && sequence != 1 && beam == "B")
+      pWord = settings.word("PDF:pHardSet");
+    if (pWord == "void") pWord = settings.word("PDF:pSet");
+    istringstream pStream(pWord);
+    int pSet = 0;
+    pStream >> pSet;
+
+    // Use internal LHAgrid1 implementation for LHAPDF6 files.
+    if (pSet == 0 && pWord.length() > 9
+      && toLower(pWord).substr(0,9) == "lhagrid1:")
+      tempPDFPtr = new LHAGrid1(idIn, pWord, xmlPath, &info);
 
     // Use sets from LHAPDF.
-    if (pSetInt == 0)
-      tempPDFPtr = new LHAPDF(idIn, pSet, &info);
+    else if (pSet == 0) tempPDFPtr = new LHAPDF(idIn, pWord, &info);
 
     // Use internal sets.
-    else if (pSetInt == 1) tempPDFPtr = new GRV94L(idIn);
-    else if (pSetInt == 2) tempPDFPtr = new CTEQ5L(idIn);
-    else if (pSetInt <= 6)
-      tempPDFPtr = new MSTWpdf(idIn, pSetInt - 2, xmlPath, &info);
-    else if (pSetInt <= 12)
-      tempPDFPtr = new CTEQ6pdf(idIn, pSetInt - 6, xmlPath, &info);
-    else if (pSetInt <= 16)
-      tempPDFPtr = new NNPDF(idIn, pSetInt - 12, xmlPath, &info);
+    else if (pSet == 1) tempPDFPtr = new GRV94L(idIn);
+    else if (pSet == 2) tempPDFPtr = new CTEQ5L(idIn);
+    else if (pSet <= 6)
+      tempPDFPtr = new MSTWpdf(idIn, pSet - 2, xmlPath, &info);
+    else if (pSet <= 12)
+      tempPDFPtr = new CTEQ6pdf(idIn, pSet - 6, 1., xmlPath, &info);
+    else if (pSet <= 16)
+      tempPDFPtr = new NNPDF(idIn, pSet - 12, xmlPath, &info);
     else tempPDFPtr = 0;
   }
 
   // Pion beam (or, in one option, Pomeron beam).
   else if (abs(idIn) == 211 || idIn == 111) {
-    string pSet = settings.word("PDF:piSet" + beam);
-    istringstream pSetStream(pSet);
-    int pSetInt(0);
-    pSetStream >> pSetInt;
+    string piWord = settings.word("PDF:piSet" + beam);
+    istringstream piStream(piWord);
+    int piSet = 0;
+    piStream >> piSet;
+
+    // Use internal LHAgrid1 implementation for LHAPDF6 files.
+    if (piSet == 0 && piWord.length() > 9
+      && toLower(piWord).substr(0,9) == "lhagrid1:")
+      tempPDFPtr = new LHAGrid1(idIn, piWord, xmlPath, &info);
 
     // Use sets from LHAPDF.
-    if (pSetInt == 0)
-      tempPDFPtr = new LHAPDF(idIn, pSet, &info);
+    else if (piSet == 0) tempPDFPtr = new LHAPDF(idIn, piWord, &info);
 
     // Use internal set.
-    else if (pSetInt == 1) tempPDFPtr = new GRVpiL(idIn);
+    else if (piSet == 1) tempPDFPtr = new GRVpiL(idIn);
     else tempPDFPtr = 0;
   }
 
   // Pomeron beam, if not treated like a pi0 beam.
   else if (idIn == 990) {
-    int    pomSet  = settings.mode("PDF:PomSet");
+    string pomWord = settings.word("PDF:PomSet");
     double rescale = settings.parm("PDF:PomRescale");
+    istringstream pomStream(pomWord);
+    int pomSet = 0;
+    pomStream >> pomSet;
+
+    // Use internal LHAgrid1 implementation for LHAPDF6 files.
+    if (pomSet == 0 && pomWord.length() > 9
+      && toLower(pomWord).substr(0,9) == "lhagrid1:")
+      tempPDFPtr = new LHAGrid1(idIn, pomWord, xmlPath, &info);
+
+    // Use sets from LHAPDF.
+    else if (pomSet == 0) tempPDFPtr = new LHAPDF(idIn, pomWord, &info);
 
     // A generic Q2-independent parametrization.
-    if (pomSet == 1) {
+    else if (pomSet == 1) {
       double gluonA      = settings.parm("PDF:PomGluonA");
       double gluonB      = settings.parm("PDF:PomGluonB");
       double quarkA      = settings.parm("PDF:PomQuarkA");
@@ -2131,15 +2527,104 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam) {
     else if (pomSet == 3 || pomSet == 4)
       tempPDFPtr = new PomH1FitAB( 990, pomSet - 2, rescale, xmlPath, &info);
     else if (pomSet == 5)
-      tempPDFPtr = new PomH1Jets( 990, rescale, xmlPath, &info);
+      tempPDFPtr = new PomH1Jets( 990, 1, rescale, xmlPath, &info);
     else if (pomSet == 6)
       tempPDFPtr = new PomH1FitAB( 990, 3, rescale, xmlPath, &info);
+    // The parametrizations of Alvero, Collins, Terron and Whitmore.
+    else if (pomSet > 6 && pomSet < 11)  {
+      tempPDFPtr = new CTEQ6pdf( 990, pomSet + 4, rescale, xmlPath, &info);
+      info.errorMsg("Warning: Pomeron flux parameters forced for ACTW PDFs");
+      settings.mode("Diffraction:PomFlux", 4);
+      double pomFluxEps = (pomSet == 10) ? 0.19 : 0.14;
+      settings.parm("Diffraction:PomFluxEpsilon", pomFluxEps);
+      settings.parm("Diffraction:PomFluxAlphaPrime", 0.25);
+    }
+    else tempPDFPtr = 0;
+  }
+
+  // Photon beam, either point-like (unresolved) or resolved.
+  else if (abs(idIn) == 22) {
+
+    int gammaSet = settings.mode("PDF:GammaSet");
+
+    bool beamIsPoint = ( !beamAisResGamma && !(beam == "B") )
+                    || ( !beamBisResGamma &&  (beam == "B") );
+
+    // Use different PDFs for hard process.
+    if ( sequence == 2) {
+
+      // Find the name or number of the hard PDF set.
+      string gmWord = settings.word("PDF:GammaHardSet");
+      int gmSet     = 0;
+      if (gmWord == "void") gmSet = settings.mode("PDF:GammaSet");
+      else {
+        istringstream gmStream(gmWord);
+        gmStream >> gmSet;
+      }
+
+      // Use sets from LHAPDF. Only available for hard processes.
+      if (gmSet == 0 && !beamIsPoint) {
+        tempPDFPtr = new LHAPDF(idIn, gmWord, &info);
+        return tempPDFPtr;
+      }
+
+      // Or set up an internal set (though currently only one).
+      gammaSet = gmSet;
+    }
+
+    // Set up the PDF.
+    if      (beamIsPoint)   tempPDFPtr = new GammaPoint(idIn);
+    else if (gammaSet == 1) tempPDFPtr = new CJKL(idIn, &rndm);
+    else                    tempPDFPtr = 0;
   }
 
   // Lepton beam: neutrino, resolved charged lepton or unresolved ditto.
+  // Also photon inside lepton PDFs.
   else if (abs(idIn) > 10 && abs(idIn) < 17) {
     if (abs(idIn)%2 == 0) tempPDFPtr = new NeutrinoPoint(idIn);
-    else if (settings.flag("PDF:lepton")) tempPDFPtr = new Lepton(idIn);
+
+    // Set up resolved photon inside lepton for beam A.
+    if  ( beamAhasResGamma && !(beam == "B") ) {
+
+      // Find the pre-set photon PDF, hard or normal.
+      PDF* tempGammaPDFPtr = 0;
+      if ( sequence == 2) tempGammaPDFPtr = pdfHardGamAPtr;
+      else                tempGammaPDFPtr = pdfGamAPtr;
+
+      // Get the mass of lepton and maximum virtuality of the photon.
+      double m2lepton   = pow2(particleData.m0(idIn));
+      double Q2maxGamma = settings.parm("Photon:Q2max");
+
+      // Initialize the gamma-inside-lepton PDFs.
+      int lepton2gammaSet = settings.mode("PDF:lepton2gammaSet");
+      if (lepton2gammaSet == 1) {
+        tempPDFPtr = new Lepton2gamma(idIn, m2lepton, Q2maxGamma,
+          tempGammaPDFPtr, &info, &rndm);
+      } else tempPDFPtr = 0;
+
+    // Set up resolved photon inside lepton for beam B.
+    } else if ( beamBhasResGamma && (beam == "B") ) {
+
+      // Find the pre-set photon PDF, hard or normal.
+      PDF* tempGammaPDFPtr = 0;
+      if ( sequence == 2) tempGammaPDFPtr = pdfHardGamBPtr;
+      else                tempGammaPDFPtr = pdfGamBPtr;
+
+      // Get the mass of lepton and maximum virtuality of the photon.
+      double m2lepton   = pow2(particleData.m0(idIn));
+      double Q2maxGamma = settings.parm("Photon:Q2max");
+
+      // Initialize the gamma-inside-lepton PDFs.
+      int lepton2gammaSet  = settings.mode("PDF:lepton2gammaSet");
+      if (lepton2gammaSet == 1) {
+        tempPDFPtr = new Lepton2gamma(idIn, m2lepton, Q2maxGamma,
+          tempGammaPDFPtr, &info, &rndm);
+      } else tempPDFPtr = 0;
+
+    } else if (settings.flag("PDF:lepton")) {
+      double Q2maxGamma = settings.parm("Photon:Q2max");
+      tempPDFPtr = new Lepton(idIn, Q2maxGamma, &info);
+    }
     else tempPDFPtr = new LeptonPoint(idIn);
   }
 

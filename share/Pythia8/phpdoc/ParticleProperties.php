@@ -33,6 +33,10 @@ A <code>Particle</code> corresponds to one entry/slot in the
 event record. Its properties therefore is a mix of ones belonging 
 to a particle-as-such, like its identity code or four-momentum, 
 and ones related to the event-as-a-whole, like which mother it has. 
+Recall that energies, momenta and masses are all given in GeV, and 
+space-time coordinates all in mm, i.e. units are chosen such that 
+the speed of light <i>c</i> is unity. In particular, times are 
+also in mm, <b>not</b> in seconds. 
  
 <p/> 
 What is stored for each particle is 
@@ -116,6 +120,8 @@ In detail, the list of used or foreseen status codes is:
            parton (cf. status 42)</li> 
   <li>47 : a <i>W</i> or <i>Z</i> gauge boson produced in the 
            shower evolution</li> 
+  <li>49 : a special state in the evolution, where 
+           <i>E^2 - p^2 = m^2</i> is not fulfilled</li> 
   </ul> 
 <li>51 - 59 : particles produced by final-state-showers</li> 
   <ul> 
@@ -129,6 +135,8 @@ In detail, the list of used or foreseen status codes is:
            different system from the radiator</li> 
   <li>56 : a <i>W</i> or <i>Z</i> gauge boson produced in a 
            shower branching (special case of 51)</li> 
+  <li>59 : a special state in the evolution, where 
+           <i>E^2 - p^2 = m^2</i> is not fulfilled</li> 
   </ul> 
 <li>61 - 69 : particles produced by beam-remnant treatment</li> 
   <ul> 
@@ -180,8 +188,11 @@ In detail, the list of used or foreseen status codes is:
   <li>91 : normal decay products</li> 
   <li>92 : decay products after oscillation <i>B0 &harr; B0bar</i> or 
            <i>B_s0 &harr; B_s0bar</i></li> 
-  <li>93, 94 : decay handled by external program, normally 
+  <li>93, 94 : decay handled by an external program, normally 
            or with oscillation</li> 
+  <li>95, 96 : a forced decay handled by an external program, i.e. picked 
+           from a subset of the possible channels to enhance the rate 
+           of rare signals, normally or with oscillation</li> 
   <li>99 : particles with momenta shifted by Bose-Einstein effects 
            (not a proper decay, but bookkept as an <i>1 &rarr; 1</i> such, 
            happening after decays of short-lived resonances but before 
@@ -204,13 +215,18 @@ In detail, the list of used or foreseen status codes is:
   <li>105 : partons or particles formed together with the R-hadron during 
             the fragmentation treatment</li> 
   <li>106 : subdivision of an R-hadron into its flavour content, with 
-           momentum split accordingly, in preparation of the decay of 
-           the heavy new particle, if it is unstable</li> 
+            momentum split accordingly, in preparation of the decay of 
+            the heavy new particle, if it is unstable</li> 
   <li>107 : two temporary leftover gluons joined into one in the formation 
-          of a gluino-gluon R-hadron.</li> 
+            of a gluino-gluon R-hadron</li> 
   </ul> 
-<li>111 - 199 : reserved for future expansion</li> 
-<li>201 - : free to be used by anybody</li> 
+<li>111 - 119 : hadrons with changed momentum due to hadron (re)scattering</li> 
+  <ul> 
+  <li>111 : first time scattering</li> 
+  <li>112 : second or more time scattering</li> 
+  </ul> 
+<li>121 - 199 : reserved for future expansion</li> 
+<li>201 - : free to be used by anybody.</li> 
 </ul> 
 <br/><b>Note:</b> a clarification on the role of the "hardest" vs. the 
 "subsequent" subprocesses, the 20'ies and 30'ies status code series, 
@@ -359,7 +375,8 @@ not <i>Q^2</i>).
 <a name="method10"></a>
 <p/><strong>double Particle::pol() &nbsp;</strong> <br/>
 the polarization/spin/helicity of a particle. Currently Pythia does not 
-use this variable for any internal operations, so its meaning is not 
+use this variable for internal operations, except for <i>W/Z</i> 
+polarization states in weak showers, so its meaning is not 
 uniquely defined. The LHA standard sets <code>SPINUP</code> to be the 
 cosine of the angle between the spin vector and the 3-momentum of the 
 decaying particle in the lab frame, i.e. restricted to be between +1 
@@ -389,11 +406,12 @@ which of course then should be reinterpreted as above.
  
 <a name="method13"></a>
 <p/><strong>double Particle::tau() &nbsp;</strong> <br/>
-the proper lifetime, in mm/c. It is assigned for all hadrons with 
-positive nominal <i>tau</i>, <i>tau_0 > 0</i>, because it can be used 
-by PYTHIA to decide whether a particle should or should not be allowed 
-to decay, e.g. based on the decay vertex distance to the primary interaction 
-vertex. 
+the proper lifetime, in mm/c. (Since c = 3 * 10^11 mm/s, 
+<code>Particle::tau()</code>/(3 * 10^11) is the lifetime in seconds.) 
+It is assigned for all hadrons with positive nominal <i>tau</i>, 
+<i>tau_0 > 0</i>, because it can be used by PYTHIA to decide whether 
+a particle should or should not be allowed to decay, e.g. based on 
+the decay vertex distance to the primary interaction vertex. 
    
  
 <h3>Input methods</h3> 
@@ -468,6 +486,14 @@ considered final may well decay later.)
    
  
 <a name="method24"></a>
+<p/><strong>int Particle::intPol() &nbsp;</strong> <br/>
+if the polarization value is within 1e-10 of an integer 0, +-1, +-2 or 
+9 then this integer is returned, else -9. Is useful when the 
+double-precision value returned by <code>pol()</code> is really intended 
+to represent an integer, e.g. a helicity eigenstate. 
+   
+ 
+<a name="method25"></a>
 <p/><strong>bool Particle::isRescatteredIncoming() &nbsp;</strong> <br/>
 true for particles with a status code -34, -45, -46 or -54, else false. 
 This singles out partons that have been created in a previous 
@@ -475,18 +501,18 @@ scattering but here are bookkept as belonging to the incoming state
 of another scattering. 
    
  
-<a name="method25"></a>
+<a name="method26"></a>
 <p/><strong>bool Particle::hasVertex() &nbsp;</strong> <br/>
 production vertex has been set; if false then production at the origin 
 is assumed. 
    
  
-<a name="method26"></a>
+<a name="method27"></a>
 <p/><strong>double Particle::m2() &nbsp;</strong> <br/>
 squared mass, which can be negative for spacelike partons. 
    
  
-<a name="method27"></a>
+<a name="method28"></a>
 <p/><strong>double Particle::mCalc() &nbsp;</strong> <br/>
    
 <strong>double Particle::m2Calc() &nbsp;</strong> <br/>
@@ -495,7 +521,7 @@ with <code>m(), m2()</code> up to roundoff. Negative for spacelike
 virtualities. 
    
  
-<a name="method28"></a>
+<a name="method29"></a>
 <p/><strong>double Particle::eCalc() &nbsp;</strong> <br/>
 energy calculated from the mass and three-momentum; should agree 
 with <code>e()</code> up to roundoff. For spacelike partons a 
@@ -503,14 +529,14 @@ positive-energy  solution is picked. This need not be the correct
 one, so it is recommended not to use the method in such cases. 
    
  
-<a name="method29"></a>
+<a name="method30"></a>
 <p/><strong>double Particle::pT() &nbsp;</strong> <br/>
    
 <strong>double Particle::pT2() &nbsp;</strong> <br/>
 (squared) transverse momentum. 
    
  
-<a name="method30"></a>
+<a name="method31"></a>
 <p/><strong>double Particle::mT() &nbsp;</strong> <br/>
    
 <strong>double Particle::mT2() &nbsp;</strong> <br/>
@@ -520,14 +546,14 @@ for a spacelike parton, then <code>mT()</code> returns
 spacelike masses. 
    
  
-<a name="method31"></a>
+<a name="method32"></a>
 <p/><strong>double Particle::pAbs() &nbsp;</strong> <br/>
    
 <strong>double Particle::pAbs2() &nbsp;</strong> <br/>
 (squared) three-momentum size. 
    
  
-<a name="method32"></a>
+<a name="method33"></a>
 <p/><strong>double Particle::eT() &nbsp;</strong> <br/>
    
 <strong>double Particle::eT2() &nbsp;</strong> <br/>
@@ -535,34 +561,34 @@ spacelike masses.
 <i>eT = e * sin(theta) = e * pT / pAbs</i>. 
    
  
-<a name="method33"></a>
+<a name="method34"></a>
 <p/><strong>double Particle::theta() &nbsp;</strong> <br/>
    
 <strong>double Particle::phi() &nbsp;</strong> <br/>
 polar and azimuthal angle. 
    
  
-<a name="method34"></a>
+<a name="method35"></a>
 <p/><strong>double Particle::thetaXZ() &nbsp;</strong> <br/>
 angle in the <i>(p_x, p_z)</i> plane, between <i>-pi</i> and 
 <i>+pi</i>, with 0 along the <i>+z</i> axis 
    
  
-<a name="method35"></a>
+<a name="method36"></a>
 <p/><strong>double Particle::pPos() &nbsp;</strong> <br/>
    
 <strong>double Particle::pNeg() &nbsp;</strong> <br/>
 <i>E +- p_z</i>. 
    
  
-<a name="method36"></a>
+<a name="method37"></a>
 <p/><strong>double Particle::y() &nbsp;</strong> <br/>
    
 <strong>double Particle::eta() &nbsp;</strong> <br/>
 rapidity and pseudorapidity. 
    
  
-<a name="method37"></a>
+<a name="method38"></a>
 <p/><strong>double Particle::xDec() &nbsp;</strong> <br/>
    
 <strong>double Particle::yDec() &nbsp;</strong> <br/>
@@ -583,7 +609,7 @@ and thus is defined also for particles which PYTHIA did not let decay.
 Not part of the <code>Particle</code> class proper, but obviously tightly 
 linked, are the two methods 
  
-<a name="method38"></a>
+<a name="method39"></a>
 <p/><strong>double m(const Particle& pp1, const Particle& pp2) &nbsp;</strong> <br/>
    
 <strong>double m2(const Particle& pp1, const Particle& pp2) &nbsp;</strong> <br/>
@@ -606,49 +632,49 @@ echo "<a href='EventRecord.php?filepath=".$filepath."' target='page'>";?>Event::
 if your persistency scheme bypasses the normal methods.) This pointer is 
 used by the following member functions: 
  
-<a name="method39"></a>
+<a name="method40"></a>
 <p/><strong>string Particle::name() &nbsp;</strong> <br/>
 the name of the particle. 
    
  
-<a name="method40"></a>
+<a name="method41"></a>
 <p/><strong>string Particle::nameWithStatus() &nbsp;</strong> <br/>
 as above, but for negative-status particles the name is given in 
 brackets to emphasize that they are intermediaries. 
    
  
-<a name="method41"></a>
+<a name="method42"></a>
 <p/><strong>int Particle::spinType() &nbsp;</strong> <br/>
 <i>2 *spin + 1</i> when defined, else 0. 
    
  
-<a name="method42"></a>
+<a name="method43"></a>
 <p/><strong>double Particle::charge() &nbsp;</strong> <br/>
    
 <strong>int Particle::chargeType() &nbsp;</strong> <br/>
 charge, and three times it to make an integer. 
    
  
-<a name="method43"></a>
+<a name="method44"></a>
 <p/><strong>bool Particle::isCharged() &nbsp;</strong> <br/>
    
 <strong>bool Particle::isNeutral() &nbsp;</strong> <br/>
 charge different from or equal to 0. 
    
  
-<a name="method44"></a>
+<a name="method45"></a>
 <p/><strong>int Particle::colType() &nbsp;</strong> <br/>
 0 for colour singlets, 1 for triplets, 
 -1 for antitriplets and 2 for octets. (A preliminary implementation of 
 colour sextets also exists, using 3 for sextets and -3 for antisextets.) 
    
  
-<a name="method45"></a>
+<a name="method46"></a>
 <p/><strong>double Particle::m0() &nbsp;</strong> <br/>
 the nominal mass of the particle, according to the data tables. 
    
  
-<a name="method46"></a>
+<a name="method47"></a>
 <p/><strong>double Particle::mWidth() &nbsp;</strong> <br/>
    
 <strong>double Particle::mMin() &nbsp;</strong> <br/>
@@ -658,7 +684,7 @@ the width of the particle, and the minimum and maximum allowed mass value
 for particles with a width, according to the data tables. 
    
  
-<a name="method47"></a>
+<a name="method48"></a>
 <p/><strong>double Particle::mSel() &nbsp;</strong> <br/>
 the mass of the particle, picked according to a Breit-Wigner 
 distribution for particles with width. It is different each time called, 
@@ -666,80 +692,80 @@ and is therefore only used once per particle to set its mass
 <code>m()</code>. 
    
  
-<a name="method48"></a>
+<a name="method49"></a>
 <p/><strong>double Particle::constituentMass() &nbsp;</strong> <br/>
 will give the constituent masses for quarks and diquarks, 
 else the same masses as with <code>m0()</code>. 
    
  
-<a name="method49"></a>
+<a name="method50"></a>
 <p/><strong>double Particle::tau0() &nbsp;</strong> <br/>
 the nominal lifetime <i>tau_0 > 0</i>, in mm/c, of the particle species. 
 It is used to assign the actual lifetime <i>tau</i>. 
    
  
-<a name="method50"></a>
+<a name="method51"></a>
 <p/><strong>bool Particle::mayDecay() &nbsp;</strong> <br/>
 flag whether particle has been declared unstable or not, offering 
 the main user switch to select which particle species to decay. 
    
  
-<a name="method51"></a>
+<a name="method52"></a>
 <p/><strong>bool Particle::canDecay() &nbsp;</strong> <br/>
 flag whether decay modes have been declared for a particle, 
 so that it could be decayed, should that be requested. 
    
  
-<a name="method52"></a>
+<a name="method53"></a>
 <p/><strong>bool Particle::doExternalDecay() &nbsp;</strong> <br/>
 particles that are decayed by an external program. 
    
  
-<a name="method53"></a>
+<a name="method54"></a>
 <p/><strong>bool Particle::isResonance() &nbsp;</strong> <br/>
 particles where the decay is to be treated as part of the hard process, 
 typically with nominal mass above 20 GeV (<i>W^+-, Z^0, t, ...</i>). 
    
  
-<a name="method54"></a>
+<a name="method55"></a>
 <p/><strong>bool Particle::isVisible() &nbsp;</strong> <br/>
 particles with strong or electric charge, or composed of ones having it, 
 which thereby should be considered visible in a normal detector. 
    
  
-<a name="method55"></a>
+<a name="method56"></a>
 <p/><strong>bool Particle::isLepton() &nbsp;</strong> <br/>
 true for a lepton or an antilepton (including neutrinos). 
    
  
-<a name="method56"></a>
+<a name="method57"></a>
 <p/><strong>bool Particle::isQuark() &nbsp;</strong> <br/>
 true for a quark or an antiquark. 
    
  
-<a name="method57"></a>
+<a name="method58"></a>
 <p/><strong>bool Particle::isGluon() &nbsp;</strong> <br/>
 true for a gluon. 
    
  
-<a name="method58"></a>
+<a name="method59"></a>
 <p/><strong>bool Particle::isDiquark() &nbsp;</strong> <br/>
 true for a diquark or an antidiquark. 
    
  
-<a name="method59"></a>
+<a name="method60"></a>
 <p/><strong>bool Particle::isParton() &nbsp;</strong> <br/>
 true for a gluon, a quark or antiquark up to the b (but excluding top), 
 and a diquark or antidiquark consisting of quarks up to the b. 
    
  
-<a name="method60"></a>
+<a name="method61"></a>
 <p/><strong>bool Particle::isHadron() &nbsp;</strong> <br/>
 true for a hadron (made up out of normal quarks and gluons, 
 i.e. not for R-hadrons and other exotic states). 
    
  
-<a name="method61"></a>
+<a name="method62"></a>
 <p/><strong>ParticleDataEntry& particleDataEntry() &nbsp;</strong> <br/>
 a reference to the ParticleDataEntry. 
    
@@ -754,12 +780,12 @@ defined, these will return an appropriate "null" value, this being -1
 for an integer, false for a bool, and empty for a vector, unless otherwise 
 specified. 
  
-<a name="method62"></a>
+<a name="method63"></a>
 <p/><strong>void Particle::index() &nbsp;</strong> <br/>
 the index of the particle itself in the event record. 
    
  
-<a name="method63"></a>
+<a name="method64"></a>
 <p/><strong>int Particle::iTopCopy() &nbsp;</strong> <br/>
    
 <strong>int Particle::iBotCopy() &nbsp;</strong> <br/>
@@ -770,7 +796,7 @@ when the "same" particle appears several times in the event record, but
 with changed momentum owing to recoil effects. 
    
  
-<a name="method64"></a>
+<a name="method65"></a>
 <p/><strong>int Particle::iTopCopyId(bool simplify = false) &nbsp;</strong> <br/>
    
 <strong>int Particle::iBotCopyId(bool simplify = false) &nbsp;</strong> <br/>
@@ -788,7 +814,7 @@ By default all mothers and daughters are studied in each step, but with
 are checked, which saves time and almost always gives the same result. 
    
  
-<a name="method65"></a>
+<a name="method66"></a>
 <p/><strong>vector&lt;int&gt; Particle::motherList() &nbsp;</strong> <br/>
 returns a vector of all the mother indices of the particle. This is 
 derived from the <code>mother1</code>, <code>mother2</code> and 
@@ -801,10 +827,10 @@ Many particles may have the same <code>motherList</code>.
 Mothers are listed in ascending order. 
    
  
-<a name="method66"></a>
+<a name="method67"></a>
 <p/><strong>vector&lt;int&gt; Particle::daughterList() &nbsp;</strong> <br/>
 returns a vector of all the daughter indices of the particle. This is 
-derived from the <codedaughter1</code>, <code>daughter2</code> and 
+derived from the <code>daughter1</code>, <code>daughter2</code> and 
 <code>status</code> information as explained above. This list is empty 
 for a particle that did not decay (or, if the evolution is stopped 
 early enough, a parton that did not branch), while otherwise it can 
@@ -817,7 +843,19 @@ may have the same <code>daughterList</code>. Daughters are listed in
 ascending order. 
    
  
-<a name="method67"></a>
+<a name="method68"></a>
+<p/><strong>vector&lt;int&gt; Particle::daughterListRecursive() &nbsp;</strong> <br/>
+returns a vector of all the daughter indices of the particle, recursively 
+including all subsequent decay generations. It is based on the 
+<code>daughterList()</code> method, so obeys the rules given there, 
+except that the listing does not necessarily have to be in ascending 
+order. Its primary application is for the decay of a hadron, or of a 
+resonance in the <code>process</code> record. It is less convenient 
+e.g. for the full parton-shower evolution, and should there only be 
+used with caution. 
+   
+ 
+<a name="method69"></a>
 <p/><strong>vector&lt;int&gt; Particle::sisterList(bool traceTopBot = false) &nbsp;</strong> <br/>
 returns a vector of all the sister indices of the particle, i.e. all the 
 daughters of the first mother, except the particle itself. If the argument 
@@ -829,7 +867,7 @@ The method is not meaningful for the 0 entry, with status code -11, and
 there returns an empty list. 
    
  
-<a name="method68"></a>
+<a name="method70"></a>
 <p/><strong>bool Particle::isAncestor(int iAncestor) &nbsp;</strong> <br/>
 traces the particle upwards through mother, grandmother, and so on, until 
 either <i>iAncestor</i> is found or the top of the record is reached. 
@@ -842,7 +880,7 @@ Currently also ministrings that collapsed to one single hadron and
 junction topologies give <code>false</code>. 
    
  
-<a name="method69"></a>
+<a name="method71"></a>
 <p/><strong>bool Particle::isFinalPartonLevel() &nbsp;</strong> <br/>
 is true if the particle belonged to the final state (i.e. with positive 
 status code) right before hadronization is invoked. This is intended to 
@@ -856,7 +894,7 @@ machinery, even though a subsequent R-hadron decay could well give rise
 to new activity on the parton level, which thereby is missed. 
    
  
-<a name="method70"></a>
+<a name="method72"></a>
 <p/><strong>int Particle::statusHepMC() &nbsp;</strong> <br/>
 returns the status code according to the HepMC conventions agreed in 
 February 2009. This convention does not preserve the full information 
@@ -884,7 +922,7 @@ event, codes 1 and 4 can still be inferred from its status code, while
 everythg else is assigned code 0. 
    
  
-<a name="method71"></a>
+<a name="method73"></a>
 <p/><strong>bool Particle::undoDecay() &nbsp;</strong> <br/>
 removes the decay chain of the particle and thus restores 
 it to its undecayed state. It is only intended for "normal" particle 
@@ -902,61 +940,61 @@ There are some further methods, some of them inherited from
 <code>Vec4</code>, to modify the properties of a particle. 
 They are of little interest to the normal user. 
  
-<a name="method72"></a>
+<a name="method74"></a>
 <p/><strong>void Particle::rescale3(double fac) &nbsp;</strong> <br/>
 multiply the three-momentum components by <code>fac</code>. 
    
  
-<a name="method73"></a>
+<a name="method75"></a>
 <p/><strong>void Particle::rescale4(double fac) &nbsp;</strong> <br/>
 multiply the four-momentum components by <code>fac</code>. 
    
  
-<a name="method74"></a>
+<a name="method76"></a>
 <p/><strong>void Particle::rescale5(double fac) &nbsp;</strong> <br/>
 multiply the four-momentum components and the mass by <code>fac</code>. 
    
  
-<a name="method75"></a>
+<a name="method77"></a>
 <p/><strong>void Particle::rot(double theta, double phi) &nbsp;</strong> <br/>
 rotate three-momentum and production vertex by these polar and azimuthal 
 angles. 
    
  
-<a name="method76"></a>
+<a name="method78"></a>
 <p/><strong>void Particle::bst(double betaX, double betaY, double betaZ) &nbsp;</strong> <br/>
 boost four-momentum and production vertex by this three-vector. 
    
  
-<a name="method77"></a>
+<a name="method79"></a>
 <p/><strong>void Particle::bst(double betaX, double betaY, double betaZ, double gamma) &nbsp;</strong> <br/>
 as above, but also input the <i>gamma</i> value, to reduce roundoff errors. 
    
  
-<a name="method78"></a>
+<a name="method80"></a>
 <p/><strong>void Particle::bst(const Vec4& pBst) &nbsp;</strong> <br/>
 boost four-momentum and production vertex by 
 <i>beta = (px/e, py/e, pz/e)</i>. 
    
  
-<a name="method79"></a>
+<a name="method81"></a>
 <p/><strong>void Particle::bst(const Vec4& pBst, double mBst) &nbsp;</strong> <br/>
 as above, but also use <i>gamma> = e/m</i> to reduce roundoff errors. 
    
  
-<a name="method80"></a>
+<a name="method82"></a>
 <p/><strong>void Particle::bstback(const Vec4& pBst) &nbsp;</strong> <br/>
    
 <strong>void Particle::bstback(const Vec4& pBst, double mBst) &nbsp;</strong> <br/>
 as above, but with sign of boost flipped. 
    
  
-<a name="method81"></a>
+<a name="method83"></a>
 <p/><strong>void Particle::rotbst(const RotBstMatrix& M) &nbsp;</strong> <br/>
 combined rotation and boost of the four-momentum and production vertex. 
    
  
-<a name="method82"></a>
+<a name="method84"></a>
 <p/><strong>void Particle::offsetHistory( int minMother, int addMother, int minDaughter, int addDaughter)) &nbsp;</strong> <br/>
 add a positive offset to the mother and daughter indices, i.e. 
 if <code>mother1</code> is above <code>minMother</code> then 
@@ -965,7 +1003,7 @@ if <code>daughter1</code> is above <code>minDaughter</code> then
 <code>addDaughter</code> is added to it, same with <code>daughter2</code>. 
    
  
-<a name="method83"></a>
+<a name="method85"></a>
 <p/><strong>void Particle::offsetCol( int addCol) &nbsp;</strong> <br/>
 add a positive offset to colour indices, i.e. if <code>col</code> is 
 positive then <code>addCol</code> is added to it, same with <code>acol</code>. 
@@ -976,42 +1014,42 @@ positive then <code>addCol</code> is added to it, same with <code>acol</code>.
 Normally a user would not need to create new particles. However, if 
 necessary, the following constructors and methods may be of interest. 
  
-<a name="method84"></a>
+<a name="method86"></a>
 <p/><strong>Particle::Particle() &nbsp;</strong> <br/>
 constructs an empty particle, i.e. where all properties have been set 0 
 or equivalent. 
    
  
-<a name="method85"></a>
+<a name="method87"></a>
 <p/><strong>Particle::Particle(int id, int status = 0, int mother1 = 0, int mother2 = 0, int daughter1 = 0, int daughter2 = 0, int col = 0, int acol = 0, double px = 0., double py = 0., double pz = 0., double e = 0., double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
 constructs a particle with the input properties provided, and non-provided 
 ones set 0 (9 for <code>pol</code>). 
    
  
-<a name="method86"></a>
+<a name="method88"></a>
 <p/><strong>Particle::Particle(int id, int status, int mother1, int mother2, int daughter1, int daughter2, int col, int acol, Vec4 p, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
 constructs a particle with the input properties provided, and non-provided 
 ones set 0 (9 for <code>pol</code>). 
    
  
-<a name="method87"></a>
+<a name="method89"></a>
 <p/><strong>Particle::Particle(const Particle& pt) &nbsp;</strong> <br/>
 constructs an particle that is a copy of the input one. 
    
  
-<a name="method88"></a>
+<a name="method90"></a>
 <p/><strong>Particle& Particle::operator=(const Particle& pt) &nbsp;</strong> <br/>
 copies the input particle. 
    
  
-<a name="method89"></a>
+<a name="method91"></a>
 <p/><strong>void Particle::setEvtPtr(Event* evtPtr) &nbsp;</strong> <br/>
 sets the pointer to the <code>Event</code> object the particle 
 belongs to. This method is automatically called when a particle 
 is appended to an event record. Also calls <code>setPDEPtr</code> below. 
    
  
-<a name="method90"></a>
+<a name="method92"></a>
 <p/><strong>void Particle::setPDEPtr(ParticleDataEntry* pdePtr = 0) &nbsp;</strong> <br/>
 sets the pointer to the <code>ParticleDataEntry</code> object of the 
 particle, based on its current <code>id</code> code. If the particle 
@@ -1024,4 +1062,4 @@ particle species.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

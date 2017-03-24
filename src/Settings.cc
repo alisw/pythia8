@@ -1,5 +1,5 @@
 // Settings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -21,7 +21,7 @@ namespace Pythia8 {
 
 // Read in database from specific file.
 
-bool Settings::init(string startFile, bool append, ostream& os) {
+bool Settings::init(string startFile, bool append) {
 
   // Don't initialize if it has already been done and not in append mode.
   if (isInit && !append) return true;
@@ -43,8 +43,8 @@ bool Settings::init(string startFile, bool append, ostream& os) {
 
     // Check that instream is OK.
     if (!is.good()) {
-      os << "\n PYTHIA Error: settings file " << files[i]
-         << " not found" << endl;
+      cout << "\n PYTHIA Error: settings file " << files[i]
+           << " not found" << endl;
       return false;
     }
 
@@ -63,7 +63,8 @@ bool Settings::init(string startFile, bool append, ostream& os) {
          && tag != "<parm" && tag != "<parmfix" && tag != "<word"
          && tag != "<wordfix" && tag != "<fvec" && tag != "<fvecfix"
          && tag != "<mvec" && tag != "<mvecfix"
-         && tag != "<pvec" && tag != "<pvecfix" && tag != "<aidx") continue;
+         && tag != "<pvec" && tag != "<pvecfix"
+         && tag != "<wvec" && tag != "<wvecfix" && tag != "<aidx") continue;
 
       // Read and append continuation line(s) if line does not contain >.
       while (line.find(">") == string::npos) {
@@ -79,8 +80,8 @@ bool Settings::init(string startFile, bool append, ostream& os) {
       if (tag == "<aidx") {
         string name = attributeValue( line, "href");
         if (name == "") {
-          os << " PYTHIA Error: failed to find name attribute in line "
-             << line << endl;
+          cout << " PYTHIA Error: failed to find name attribute in line "
+               << line << endl;
           ++nError;
           continue;
         }
@@ -91,16 +92,16 @@ bool Settings::init(string startFile, bool append, ostream& os) {
       // Find name attribute.
       string name = attributeValue( line, "name=");
       if (name == "") {
-        os << " PYTHIA Error: failed to find name attribute in line "
-           << line << endl;
+        cout << " PYTHIA Error: failed to find name attribute in line "
+             << line << endl;
         ++nError;
         continue;
       }
 
       // Check that default value attribute present, and whether max and min.
       if (line.find("default=") == string::npos) {
-        os << " PYTHIA Error: failed to find default value token in line "
-           << line << endl;
+        cout << " PYTHIA Error: failed to find default value token in line "
+             << line << endl;
         ++nError;
         continue;
       }
@@ -160,6 +161,11 @@ bool Settings::init(string startFile, bool append, ostream& os) {
         double minVal = doubleAttributeValue( line, "min=");
         double maxVal = doubleAttributeValue( line, "max=");
         addPVec( name, value, hasMin, hasMax, minVal, maxVal);
+
+      // Check for occurence of a string vector and add to wvec map.
+      } else if (tag == "<wvec" || tag == "<wvecfix") {
+        vector<string> value = stringVectorAttributeValue( line, "default=");
+        addWVec( name, value);
       }
 
     // End of loop over lines in input file and loop over files.
@@ -179,11 +185,152 @@ bool Settings::init(string startFile, bool append, ostream& os) {
 
 }
 
+
+//--------------------------------------------------------------------------
+
+// Read in database from specific stream.
+
+bool Settings::init(istream& is, bool append) {
+
+  // Don't initialize if it has already been done and not in append mode.
+  if (isInit && !append) return true;
+  int nError = 0;
+
+  // Check that instream is OK.
+  if (!is.good()) {
+    cout << "\n PYTHIA Error: settings stream not found " << endl;
+    return false;
+  }
+
+  // Read in one line at a time.
+  string line;
+  while ( getline(is, line) ) {
+
+    // Get first word of a line, to interpret it as tag.
+    istringstream getfirst(line);
+    string tag;
+    getfirst >> tag;
+
+    // Skip ahead if not interesting. Only look for new files in startfile.
+    if (tag != "<flag" && tag != "<flagfix" && tag != "<mode"
+       && tag != "<modeopen" && tag != "<modepick" && tag != "<modefix"
+       && tag != "<parm" && tag != "<parmfix" && tag != "<word"
+       && tag != "<wordfix" && tag != "<fvec" && tag != "<fvecfix"
+       && tag != "<mvec" && tag != "<mvecfix"
+       && tag != "<pvec" && tag != "<pvecfix"
+       && tag != "<wvec" && tag != "<wvecfix" && tag != "<aidx") continue;
+
+    // Read and append continuation line(s) if line does not contain >.
+    while (line.find(">") == string::npos) {
+      string addLine;
+      getline(is, addLine);
+      line += " " + addLine;
+    }
+
+    // Remove extra blanks before an = sign.
+    while (line.find(" =") != string::npos) line.erase( line.find(" ="), 1);
+
+    // Find name attribute.
+    string name = attributeValue( line, "name=");
+    if (name == "") {
+      cout << " PYTHIA Error: failed to find name attribute in line "
+           << line << endl;
+      ++nError;
+      continue;
+    }
+
+    // Check that default value attribute present, and whether max and min.
+    if (line.find("default=") == string::npos) {
+      cout << " PYTHIA Error: failed to find default value token in line "
+           << line << endl;
+      ++nError;
+      continue;
+    }
+    bool hasMin = (line.find("min=") != string::npos);
+    bool hasMax = (line.find("max=") != string::npos);
+
+    // Check for occurence of a bool and add to flag map.
+    if (tag == "<flag" || tag == "<flagfix") {
+      bool value = boolAttributeValue( line, "default=");
+      addFlag( name, value);
+
+    // Check for occurence of an int and add to mode map.
+    } else if (tag == "<mode" || tag == "<modeopen"
+      || tag == "<modepick" || tag == "<modefix") {
+      int value    = intAttributeValue( line, "default=");
+      int minVal   = intAttributeValue( line, "min=");
+      int maxVal   = intAttributeValue( line, "max=");
+
+      // Enforce check that only allowed options are accepted.
+      bool optOnly = false;
+      if (tag == "<modepick" && hasMin && hasMax) optOnly = true;
+      if (tag == "<modefix") {
+        hasMin  = true;
+        hasMax  = true;
+        minVal  = value;
+        maxVal  = value;
+        optOnly = true;
+      }
+      addMode( name, value, hasMin, hasMax, minVal, maxVal, optOnly);
+
+    // Check for occurence of a double and add to parm map.
+    } else if (tag == "<parm" || tag == "<parmfix") {
+      double value  = doubleAttributeValue( line, "default=");
+      double minVal = doubleAttributeValue( line, "min=");
+      double maxVal = doubleAttributeValue( line, "max=");
+      addParm( name, value, hasMin, hasMax, minVal, maxVal);
+
+    // Check for occurence of a string and add to word map.
+    } else if (tag == "<word" || tag == "<wordfix") {
+      string value = attributeValue( line, "default=");
+      addWord( name, value);
+
+    // Check for occurence of a bool vector and add to fvec map.
+    } else if (tag == "<fvec" || tag == "<fvecfix") {
+      vector<bool> value = boolVectorAttributeValue( line, "default=");
+      addFVec( name, value);
+
+    // Check for occurence of an int vector and add to mvec map.
+    } else if (tag == "<mvec" || tag == "<mvecfix") {
+      vector<int> value = intVectorAttributeValue( line, "default=");
+      int minVal = intAttributeValue( line, "min=");
+      int maxVal = intAttributeValue( line, "max=");
+      addMVec( name, value, hasMin, hasMax, minVal, maxVal);
+
+    // Check for occurence of a double vector and add to pvec map.
+    } else if (tag == "<pvec" || tag == "<pvecfix") {
+      vector<double> value = doubleVectorAttributeValue( line, "default=");
+      double minVal = doubleAttributeValue( line, "min=");
+      double maxVal = doubleAttributeValue( line, "max=");
+      addPVec( name, value, hasMin, hasMax, minVal, maxVal);
+
+    // Check for occurence of a string vector and add to word map.
+    } else if (tag == "<wvec" || tag == "<wvecfix") {
+      vector<string> value = stringVectorAttributeValue( line, "default=");
+      addWVec( name, value);
+    }
+
+  // End of loop over lines in input file and loop over files.
+  };
+
+  // Set up default e+e- and pp tunes, if positive.
+  int eeTune = mode("Tune:ee");
+  if (eeTune > 0) initTuneEE( eeTune);
+  int ppTune = mode("Tune:pp");
+  if (ppTune > 0) initTunePP( ppTune);
+
+  // Done.
+  if (nError > 0) return false;
+  isInit = true;
+  return true;
+
+}
+
 //--------------------------------------------------------------------------
 
 // Overwrite existing database by reading from specific file.
 
-bool Settings::reInit(string startFile, ostream& os) {
+bool Settings::reInit(string startFile) {
 
   // Reset maps to empty.
   flags.clear();
@@ -193,10 +340,11 @@ bool Settings::reInit(string startFile, ostream& os) {
   fvecs.clear();
   mvecs.clear();
   pvecs.clear();
+  wvecs.clear();
 
   // Then let normal init do the rest.
   isInit = false;
-  return init(startFile, false, os);
+  return init(startFile, false);
 
 }
 
@@ -205,18 +353,24 @@ bool Settings::reInit(string startFile, ostream& os) {
 // Read in updates from a character string, like a line of a file.
 // Is used by readString (and readFile) in Pythia.
 
-bool Settings::readString(string line, bool warn, ostream& os) {
+bool Settings::readString(string line, bool warn) {
 
   // If empty line then done.
   if (line.find_first_not_of(" \n\t\v\b\r\f\a") == string::npos) return true;
 
+  // If unfinished line then add new to existing, else use input line as is.
+  string lineNow = (lineSaved) ? savedLine + line : line;
+  lineSaved = false;
+
   // If first character is not a letter, then taken to be a comment line.
-  string lineNow = line;
   int firstChar = lineNow.find_first_not_of(" \n\t\v\b\r\f\a");
   if (!isalpha(lineNow[firstChar])) return true;
 
-  // Replace an equal sign by a blank to make parsing simpler.
-  while (lineNow.find("=") != string::npos) {
+  // Replace an equal sign by a blank to make parsing simpler, except after {.
+  size_t iBrace = (line.find_first_of("{") == string::npos) ? line.size()
+    : line.find_first_of("{");
+  while (lineNow.find("=") != string::npos
+    && lineNow.find_first_of("=") < iBrace) {
     int firstEqual = lineNow.find_first_of("=");
     lineNow.replace(firstEqual, 1, " ");
   }
@@ -241,6 +395,7 @@ bool Settings::readString(string line, bool warn, ostream& os) {
   else if (isFVec(name)) inDataBase = 5;
   else if (isMVec(name)) inDataBase = 6;
   else if (isPVec(name)) inDataBase = 7;
+  else if (isWVec(name)) inDataBase = 8;
 
   // For backwards compatibility: old (parts of) names mapped onto new ones.
   // This code currently has no use, but is partly preserved for the day
@@ -262,13 +417,14 @@ bool Settings::readString(string line, bool warn, ostream& os) {
       else if (isFVec(name)) inDataBase = 5;
       else if (isMVec(name)) inDataBase = 6;
       else if (isPVec(name)) inDataBase = 7;
+      else if (isWVec(name)) inDataBase = 8;
     }
   }
   */
 
   // Warn and done if not in database.
   if (inDataBase == 0) {
-    if (warn) os << "\n PYTHIA Error: input string not found in settings"
+    if (warn) cout << "\n PYTHIA Error: input string not found in settings"
       << " databases::\n   " << line << endl;
     readingFailedSave = true;
     return false;
@@ -278,7 +434,7 @@ bool Settings::readString(string line, bool warn, ostream& os) {
   string valueString;
   splitLine >> valueString;
   if (!splitLine) {
-    if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+    if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
       << " not meaningful:\n   " << line << endl;
     readingFailedSave = true;
     return false;
@@ -286,8 +442,21 @@ bool Settings::readString(string line, bool warn, ostream& os) {
 
   // If value is a ? then echo the current value.
   if (valueString == "?") {
-    os << output(name);
+    cout << output(name);
     return true;
+  }
+
+  // If string begins with { then find matching } and extract contents.
+  if (valueString[0] == '{') {
+    size_t openBrace  = lineNow.find_first_of("{");
+    size_t closeBrace = lineNow.find_first_of("}");
+    // If not } on same line then must append next line and try again.
+    if (closeBrace == string::npos) {
+      lineSaved = true;
+      savedLine = lineNow;
+      return true;
+    }
+    valueString = lineNow.substr( openBrace + 1, closeBrace - openBrace - 1);
   }
 
   // Update flag map; allow many ways to say yes.
@@ -301,13 +470,13 @@ bool Settings::readString(string line, bool warn, ostream& os) {
     int value;
     modeData >> value;
     if (!modeData) {
-      if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " not meaningful:\n   " << line << endl;
       readingFailedSave = true;
       return false;
     }
     if (!mode(name, value)) {
-      if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " non-existing option:\n   " << line << endl;
       readingFailedSave = true;
       return false;
@@ -319,7 +488,7 @@ bool Settings::readString(string line, bool warn, ostream& os) {
     double value;
     parmData >> value;
     if (!parmData) {
-      if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " not meaningful:\n   " << line << endl;
       readingFailedSave = true;
       return false;
@@ -336,7 +505,7 @@ bool Settings::readString(string line, bool warn, ostream& os) {
     vector<bool> value(boolVectorAttributeValue(
       "value=\"" + valueString + "\"", "value="));
     if (!fvecData) {
-      if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " not meaningful:\n   " << line << endl;
       readingFailedSave = true;
       return false;
@@ -349,7 +518,7 @@ bool Settings::readString(string line, bool warn, ostream& os) {
     vector<int> value(intVectorAttributeValue(
       "value=\"" + valueString + "\"", "value="));
     if (!mvecData) {
-      if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " not meaningful:\n   " << line << endl;
       readingFailedSave = true;
       return false;
@@ -362,12 +531,25 @@ bool Settings::readString(string line, bool warn, ostream& os) {
     vector<double> value(doubleVectorAttributeValue(
       "value=\"" + valueString + "\"", "value="));
     if (!pvecData) {
-      if (warn) os << "\n PYTHIA Error: variable recognized, but its value"
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " not meaningful:\n   " << line << endl;
       readingFailedSave = true;
       return false;
     }
     pvec(name, value);
+
+  // Update wvec map.
+  } else if (inDataBase == 8) {
+    istringstream wvecData(valueString);
+    vector<string> value(stringVectorAttributeValue(
+      "value=\"" + valueString + "\"", "value="));
+    if (!wvecData) {
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
+        << " not meaningful:\n   " << line << endl;
+      readingFailedSave = true;
+      return false;
+    }
+    wvec(name, value);
   }
 
   // Done.
@@ -414,12 +596,13 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
   map<string, FVec>::iterator fvecEntry = fvecs.begin();
   map<string, MVec>::iterator mvecEntry = mvecs.begin();
   map<string, PVec>::iterator pvecEntry = pvecs.begin();
+  map<string, WVec>::iterator wvecEntry = wvecs.begin();
 
   // Loop while there is something left to do.
   while (flagEntry != flags.end() || modeEntry != modes.end()
       || parmEntry != parms.end() || wordEntry != words.end()
       || fvecEntry != fvecs.end() || mvecEntry != mvecs.end()
-      || pvecEntry != pvecs.end() ) {
+      || pvecEntry != pvecs.end() || wvecEntry != wvecs.end() ) {
 
     // Check if a flag is next in lexigraphical order; if so print it.
     if ( flagEntry != flags.end()
@@ -429,6 +612,7 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
       && ( fvecEntry == fvecs.end() || flagEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || flagEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || flagEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || flagEntry->first < wvecEntry->first )
       ) {
       string state[2] = {"off", "on"};
       bool valNow = flagEntry->second.valNow;
@@ -444,6 +628,7 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
       && ( fvecEntry == fvecs.end() || modeEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || modeEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || modeEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || modeEntry->first < wvecEntry->first )
       ) {
       int valNow = modeEntry->second.valNow;
       int valDefault = modeEntry->second.valDefault;
@@ -451,13 +636,13 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
         os << modeEntry->second.name << " = " << valNow << "\n";
       ++modeEntry;
 
-    // Else check if parm is next, and if so print it;
-    // fixed or scientific depending on value.
+    // Else check if parm is next, and if so print it; fixed or scientific.
     } else if ( parmEntry != parms.end()
       && ( wordEntry == words.end() || parmEntry->first < wordEntry->first )
       && ( fvecEntry == fvecs.end() || parmEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || parmEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || parmEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || parmEntry->first < wvecEntry->first )
       ) {
       double valNow = parmEntry->second.valNow;
       double valDefault = parmEntry->second.valDefault;
@@ -478,6 +663,7 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
       && ( fvecEntry == fvecs.end() || wordEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || wordEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || wordEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || wordEntry->first < wvecEntry->first )
       ) {
       string valNow = wordEntry->second.valNow;
       string valDefault = wordEntry->second.valDefault;
@@ -489,6 +675,7 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
     } else if ( fvecEntry != fvecs.end()
       && ( mvecEntry == mvecs.end() || fvecEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || fvecEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || fvecEntry->first < wvecEntry->first )
       ) {
       string state[2] = {"off", "on"};
       vector<bool> valNow = fvecEntry->second.valNow;
@@ -504,6 +691,7 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
     // Else check if mvec is next, and if so print it.
     } else if ( mvecEntry != mvecs.end()
       && ( pvecEntry == pvecs.end() || mvecEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || mvecEntry->first < wvecEntry->first )
       ) {
       vector<int> valNow = mvecEntry->second.valNow;
       vector<int> valDefault = mvecEntry->second.valDefault;
@@ -515,8 +703,10 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
       }
       ++mvecEntry;
 
-    // Else print pvec; fixed or scientific depending on value.
-    } else {
+    // Else check if pvec is next; print fixed or scientific.
+    } else if ( pvecEntry != pvecs.end()
+      && ( wvecEntry == wvecs.end() || pvecEntry->first < wvecEntry->first )
+      ) {
       vector<double> valNow = pvecEntry->second.valNow;
       vector<double> valDefault = pvecEntry->second.valDefault;
       if ( writeAll || valNow != valDefault ) {
@@ -533,7 +723,219 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
         } os << *(--valNow.end()) << "\n";
       }
       ++pvecEntry;
+
+    // Else print wvec.
+    } else {
+      vector<string> valNow = wvecEntry->second.valNow;
+      vector<string> valDefault = wvecEntry->second.valDefault;
+      if ( writeAll || valNow != valDefault ) {
+        os  << wvecEntry->second.name << " = ";
+        for (vector<string>::iterator val = valNow.begin();
+             val != --valNow.end(); ++val) os << *val << ",";
+        os << *(--valNow.end()) << "\n";
+      }
+      ++wvecEntry;
     }
+  } ;
+
+  // Done.
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+  // Write updates or everything to user-defined stream (or file).
+
+bool Settings::writeFileXML(ostream& os) {
+
+  // Iterators for the flag, mode and parm tables.
+  map<string, Flag>::iterator flagEntry = flags.begin();
+  map<string, Mode>::iterator modeEntry = modes.begin();
+  map<string, Parm>::iterator parmEntry = parms.begin();
+  map<string, Word>::iterator wordEntry = words.begin();
+  map<string, FVec>::iterator fvecEntry = fvecs.begin();
+  map<string, MVec>::iterator mvecEntry = mvecs.begin();
+  map<string, PVec>::iterator pvecEntry = pvecs.begin();
+  map<string, WVec>::iterator wvecEntry = wvecs.begin();
+
+  // Loop while there is something left to do.
+  while (flagEntry != flags.end() || modeEntry != modes.end()
+      || parmEntry != parms.end() || wordEntry != words.end()
+      || fvecEntry != fvecs.end() || mvecEntry != mvecs.end()
+      || pvecEntry != pvecs.end() || wvecEntry != wvecs.end() ) {
+
+    // Check if a flag is next in lexigraphical order; if so print it.
+    if ( flagEntry != flags.end()
+      && ( modeEntry == modes.end() || flagEntry->first < modeEntry->first )
+      && ( parmEntry == parms.end() || flagEntry->first < parmEntry->first )
+      && ( wordEntry == words.end() || flagEntry->first < wordEntry->first )
+      && ( fvecEntry == fvecs.end() || flagEntry->first < fvecEntry->first )
+      && ( mvecEntry == mvecs.end() || flagEntry->first < mvecEntry->first )
+      && ( pvecEntry == pvecs.end() || flagEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || flagEntry->first < wvecEntry->first )
+       ) {
+      string state[2] = {"off", "on"};
+      bool valDefault = flagEntry->second.valDefault;
+      os << "<flag name=\"" << flagEntry->second.name << "\" default=\""
+         << state[valDefault] << "\"></flag>" << endl;
+      ++flagEntry;
+
+    // Else check if mode is next, and if so print it.
+    } else if ( modeEntry != modes.end()
+      && ( parmEntry == parms.end() || modeEntry->first < parmEntry->first )
+      && ( wordEntry == words.end() || modeEntry->first < wordEntry->first )
+      && ( fvecEntry == fvecs.end() || modeEntry->first < fvecEntry->first )
+      && ( mvecEntry == mvecs.end() || modeEntry->first < mvecEntry->first )
+      && ( pvecEntry == pvecs.end() || modeEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || modeEntry->first < wvecEntry->first )
+      ) {
+      int valDefault = modeEntry->second.valDefault;
+      os << "<mode name=\"" << modeEntry->second.name << "\" default=\""
+         << valDefault << "\">";
+      if (modeEntry->second.hasMin ) os << " min=\""
+        << modeEntry->second.valMin << "\"";
+      if (modeEntry->second.hasMax ) os << " max=\""
+        << modeEntry->second.valMax << "\"";
+      os << "</mode>" << endl;
+      ++modeEntry;
+
+    // Else check if parm is next, and if so print it; fixed or scientific.
+    } else if ( parmEntry != parms.end()
+      && ( wordEntry == words.end() || parmEntry->first < wordEntry->first )
+      && ( fvecEntry == fvecs.end() || parmEntry->first < fvecEntry->first )
+      && ( mvecEntry == mvecs.end() || parmEntry->first < mvecEntry->first )
+      && ( pvecEntry == pvecs.end() || parmEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || parmEntry->first < wvecEntry->first )
+      ) {
+      double valDefault = parmEntry->second.valDefault;
+      os << "<parm name=\"" << parmEntry->second.name << "\" default=\"";
+      if ( valDefault == 0. ) os << fixed << setprecision(1);
+      else if ( abs(valDefault) < 0.001 ) os << scientific << setprecision(4);
+      else if ( abs(valDefault) < 0.1 ) os << fixed << setprecision(7);
+      else if ( abs(valDefault) < 1000. ) os << fixed << setprecision(5);
+      else if ( abs(valDefault) < 1000000. ) os << fixed << setprecision(3);
+      else os << scientific << setprecision(4);
+      os << valDefault << "\">";
+      if (parmEntry->second.hasMin) {
+        os << " min=\"";
+        valDefault = parmEntry->second.valMin;
+        if ( valDefault == 0. ) os << fixed << setprecision(1);
+        else if ( abs(valDefault) < 0.001) os << scientific << setprecision(4);
+        else if ( abs(valDefault) < 0.1 ) os << fixed << setprecision(7);
+        else if ( abs(valDefault) < 1000. ) os << fixed << setprecision(5);
+        else if ( abs(valDefault) < 1000000. ) os << fixed << setprecision(3);
+        else os << scientific << setprecision(4);
+        os << valDefault << "\">";
+      }
+      if (parmEntry->second.hasMax) {
+        os << " max=\"";
+        valDefault = parmEntry->second.valMax;
+        if ( valDefault == 0. ) os << fixed << setprecision(1);
+        else if ( abs(valDefault) < 0.001) os << scientific << setprecision(4);
+        else if ( abs(valDefault) < 0.1 ) os << fixed << setprecision(7);
+        else if ( abs(valDefault) < 1000. ) os << fixed << setprecision(5);
+        else if ( abs(valDefault) < 1000000. ) os << fixed << setprecision(3);
+        else os << scientific << setprecision(4);
+        os << valDefault << "\">";
+      }
+      os << "</parm>" << endl;
+      ++parmEntry;
+
+    // Else check if word is next, and if so print it.
+    } else  if ( wordEntry != words.end()
+      && ( fvecEntry == fvecs.end() || wordEntry->first < fvecEntry->first )
+      && ( mvecEntry == mvecs.end() || wordEntry->first < mvecEntry->first )
+      && ( pvecEntry == pvecs.end() || wordEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || wordEntry->first < wvecEntry->first )
+      ) {
+      string valDefault = wordEntry->second.valDefault;
+      os << "<word name=\"" << wordEntry->second.name << "\" default=\""
+         << valDefault << "\"></word>" << endl;
+      ++wordEntry;
+
+    // Else check if fvec is next, and if so print it.
+    } else if ( fvecEntry != fvecs.end()
+      && ( mvecEntry == mvecs.end() || fvecEntry->first < mvecEntry->first )
+      && ( pvecEntry == pvecs.end() || fvecEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || fvecEntry->first < wvecEntry->first )
+      ) {
+      string state[2] = {"off", "on"};
+      vector<bool> valDefault = fvecEntry->second.valDefault;
+      os << "<fvec name=\"" << fvecEntry->second.name << "\" default=\"";
+      for (vector<bool>::iterator val = valDefault.begin();
+           val != --valDefault.end(); ++val) os << state[*val] << ",";
+      os << state[*(--valDefault.end())] << "\"></fvec>" << endl;
+      ++fvecEntry;
+
+    // Else check if mvec is next, and if so print it.
+    } else if ( mvecEntry != mvecs.end()
+      && ( pvecEntry == pvecs.end() || mvecEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || mvecEntry->first < wvecEntry->first )
+      ) {
+      vector<int> valDefault = mvecEntry->second.valDefault;
+      os << "<mvec name=\"" << mvecEntry->second.name << "\" default=\"";
+      for (vector<int>::iterator val = valDefault.begin();
+           val != --valDefault.end(); ++val) os << *val << ",";
+      os << *(--valDefault.end())        << "\">";
+      if (mvecEntry->second.hasMin ) os << " min=\""
+        << mvecEntry->second.valMin << "\"";
+      if (mvecEntry->second.hasMax ) os << " max=\""
+        << mvecEntry->second.valMax << "\"";
+      os << "</mvec>" << endl;
+      ++mvecEntry;
+
+    // Else check if pvec is next; print fixed or scientific.
+    } else if ( pvecEntry != pvecs.end()
+      && ( wvecEntry == wvecs.end() || pvecEntry->first < wvecEntry->first )
+      ) {
+      vector<double> valDefault = pvecEntry->second.valDefault;
+      os << "<pvec name=\"" << pvecEntry->second.name << "\" default=\"";
+      for (vector<double>::iterator val = valDefault.begin();
+           val != --valDefault.end(); ++val) {
+          if ( *val == 0. ) os << fixed << setprecision(1);
+          else if ( abs(*val) < 0.001 ) os << scientific << setprecision(4);
+          else if ( abs(*val) < 0.1 ) os << fixed << setprecision(7);
+          else if ( abs(*val) < 1000. ) os << fixed << setprecision(5);
+          else if ( abs(*val) < 1000000. ) os << fixed << setprecision(3);
+          else os << scientific << setprecision(4);
+          os << *val << ",";
+      }
+      os << *(--valDefault.end())        << "\">";
+      if (pvecEntry->second.hasMin ) {
+        double valLocal = pvecEntry->second.valMin;
+        os << " min=\"";
+        if ( valLocal == 0. ) os << fixed << setprecision(1);
+        else if ( abs(valLocal) < 0.001 ) os << scientific << setprecision(4);
+        else if ( abs(valLocal) < 0.1 ) os << fixed << setprecision(7);
+        else if ( abs(valLocal) < 1000. ) os << fixed << setprecision(5);
+        else if ( abs(valLocal) < 1000000. ) os << fixed << setprecision(3);
+        else os << scientific << setprecision(4);
+        os << valLocal << "\">";
+      }
+      if (pvecEntry->second.hasMax ) {
+        double valLocal = pvecEntry->second.valMax;
+        os << " max=\"";
+        if ( valLocal == 0. ) os << fixed << setprecision(1);
+        else if ( abs(valLocal) < 0.001 ) os << scientific << setprecision(4);
+        else if ( abs(valLocal) < 0.1 ) os << fixed << setprecision(7);
+        else if ( abs(valLocal) < 1000. ) os << fixed << setprecision(5);
+        else if ( abs(valLocal) < 1000000. ) os << fixed << setprecision(3);
+        else os << scientific << setprecision(4);
+        os << valLocal << "\">";
+      }
+      os << "</pvec>" <<       endl;
+      ++pvecEntry;
+
+    // Else print wvec.
+    } else {
+      vector<string> valDefault = wvecEntry->second.valDefault;
+      os << "<wvec name=\"" << wvecEntry->second.name << "\" default=\"";
+      for (vector<string>::iterator val = valDefault.begin();
+           val != --valDefault.end(); ++val) os << *val << ",";
+      os << *(--valDefault.end())        << "\">";
+      os << "</wvec>" << endl;
+      ++wvecEntry;
+   }
   } ;
 
   // Done.
@@ -544,28 +946,27 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
 
 // Print out table of database in lexigraphical order.
 
-void Settings::list(bool doListAll,  bool doListString, string match,
-  ostream& os) {
+void Settings::list(bool doListAll,  bool doListString, string match) {
 
   // Table header; output for bool as off/on.
   if (doListAll)
-    os << "\n *-------  PYTHIA Flag + Mode + Parm + Word + FVec + MVec + PVec "
-       << "Settings (all)  ----------------------------------* \n";
+    cout << "\n *-------  PYTHIA Flag + Mode + Parm + Word + FVec + MVec "
+       << "+ PVec + WVec Settings (all)  ---------------------------* \n";
   else if (!doListString)
-    os << "\n *-------  PYTHIA Flag + Mode + Parm + Word + FVec + MVec + PVec "
-       << "Settings (changes only)  -------------------------* \n" ;
+    cout << "\n *-------  PYTHIA Flag + Mode + Parm + Word + FVec + MVec "
+       << "+ PVec + WVec Settings (changes only)  ------------------* \n" ;
   else
-    os << "\n *-------  PYTHIA Flag + Mode + Parm + Word + FVec + MVec + PVec "
-       << "Settings (with requested string) -----------------* \n" ;
-  os << " |                                                           "
-     << "                                                      | \n"
-     << " | Name                                          |           "
-     << "           Now |      Default         Min         Max | \n"
-     << " |                                               |           "
-     << "               |                                      | \n";
+    cout << "\n *-------  PYTHIA Flag + Mode + Parm + Word + FVec + MVec "
+       << "+ PVec + WVec Settings (with requested string) ----------* \n" ;
+  cout << " |                                                           "
+       << "                                                      | \n"
+       << " | Name                                          |           "
+       << "           Now |      Default         Min         Max | \n"
+       << " |                                               |           "
+       << "               |                                      | \n";
 
   // Convert input string to lowercase for match.
-  match = toLower(match);
+  toLowerRep(match);
   if (match == "") match = "             ";
 
   // Iterators for the flag, mode and parm tables.
@@ -576,12 +977,13 @@ void Settings::list(bool doListAll,  bool doListString, string match,
   map<string, FVec>::iterator fvecEntry = fvecs.begin();
   map<string, MVec>::iterator mvecEntry = mvecs.begin();
   map<string, PVec>::iterator pvecEntry = pvecs.begin();
+  map<string, WVec>::iterator wvecEntry = wvecs.begin();
 
   // Loop while there is something left to do.
   while (flagEntry != flags.end() || modeEntry != modes.end()
       || parmEntry != parms.end() || wordEntry != words.end()
       || fvecEntry != fvecs.end() || mvecEntry != mvecs.end()
-      || pvecEntry != pvecs.end() ) {
+      || pvecEntry != pvecs.end() || wvecEntry != wvecs.end() ) {
 
     // Check if a flag is next in lexigraphical order; if so print it.
     if ( flagEntry != flags.end()
@@ -591,16 +993,17 @@ void Settings::list(bool doListAll,  bool doListString, string match,
       && ( fvecEntry == fvecs.end() || flagEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || flagEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || flagEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || flagEntry->first < wvecEntry->first )
       ) {
       string state[2] = {"off", "on"};
       bool valNow = flagEntry->second.valNow;
       bool valDefault = flagEntry->second.valDefault;
       if ( doListAll || (!doListString && valNow != valDefault)
         || (doListString && flagEntry->first.find(match) != string::npos) )
-        os << " | " << setw(45) << left
-           << flagEntry->second.name << " | " << setw(24) << right
-           << state[valNow] << " | " << setw(12) << state[valDefault]
-           << "                         | \n";
+        cout << " | " << setw(45) << left
+             << flagEntry->second.name << " | " << setw(24) << right
+             << state[valNow] << " | " << setw(12) << state[valDefault]
+             << "                         | \n";
       ++flagEntry;
 
     // Else check if mode is next, and if so print it.
@@ -610,60 +1013,61 @@ void Settings::list(bool doListAll,  bool doListString, string match,
       && ( fvecEntry == fvecs.end() || modeEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || modeEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || modeEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || modeEntry->first < wvecEntry->first )
       ) {
       int valNow = modeEntry->second.valNow;
       int valDefault = modeEntry->second.valDefault;
       if ( doListAll || (!doListString && valNow != valDefault)
         || (doListString && modeEntry->first.find(match) != string::npos) ) {
-        os << " | " << setw(45) << left
-           << modeEntry->second.name << " | " << setw(24) << right
-           << valNow << " | " << setw(12) << valDefault;
+        cout << " | " << setw(45) << left
+             << modeEntry->second.name << " | " << setw(24) << right
+             << valNow << " | " << setw(12) << valDefault;
         if (modeEntry->second.hasMin)
-          os << setw(12) << modeEntry->second.valMin;
-        else os << "            ";
+          cout << setw(12) << modeEntry->second.valMin;
+        else cout << "            ";
         if (modeEntry->second.hasMax)
-          os << setw(12) << modeEntry->second.valMax;
-        else os << "            ";
-        os << " | \n";
+          cout << setw(12) << modeEntry->second.valMax;
+        else cout << "            ";
+        cout << " | \n";
       }
       ++modeEntry;
 
-    // Else check if parm is next, and if so print it;
-    // fixed or scientific depending on value.
+    // Else check if parm is next, and if so print it; fixed or scientific.
     } else if ( parmEntry != parms.end()
       && ( wordEntry == words.end() || parmEntry->first < wordEntry->first )
       && ( fvecEntry == fvecs.end() || parmEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || parmEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || parmEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || parmEntry->first < wvecEntry->first )
       ) {
       double valNow = parmEntry->second.valNow;
       double valDefault = parmEntry->second.valDefault;
       if ( doListAll || (!doListString && valNow != valDefault )
         || (doListString && parmEntry->first.find(match) != string::npos) ) {
-        os << " | " << setw(45) << left
-           << parmEntry->second.name << right << " |             ";
+        cout << " | " << setw(45) << left
+             << parmEntry->second.name << right << " |             ";
         for (int i = 0; i < 4; ++i) {
           if (i == 1) valNow = valDefault;
           if (i == 2) valNow = parmEntry->second.valMin;
           if (i == 3) valNow = parmEntry->second.valMax;
           if ( (i == 2 && !parmEntry->second.hasMin)
             || (i == 3 && !parmEntry->second.hasMax) )
-            os << "            ";
+            cout << "            ";
           else if ( valNow == 0. )
-            os << fixed << setprecision(1) << setw(12) << valNow;
+            cout << fixed << setprecision(1) << setw(12) << valNow;
           else if ( abs(valNow) < 0.001 )
-            os << scientific << setprecision(4) << setw(12) << valNow;
+            cout << scientific << setprecision(4) << setw(12) << valNow;
           else if ( abs(valNow) < 0.1 )
-            os << fixed << setprecision(7) << setw(12) << valNow;
+            cout << fixed << setprecision(7) << setw(12) << valNow;
           else if ( abs(valNow) < 1000. )
-            os << fixed << setprecision(5) << setw(12) << valNow;
+            cout << fixed << setprecision(5) << setw(12) << valNow;
           else if ( abs(valNow) < 1000000. )
-            os << fixed << setprecision(3) << setw(12) << valNow;
+            cout << fixed << setprecision(3) << setw(12) << valNow;
           else
-            os << scientific << setprecision(4) << setw(12) << valNow;
-          if (i == 0) os << " | ";
+            cout << scientific << setprecision(4) << setw(12) << valNow;
+          if (i == 0) cout << " | ";
         }
-        os << " | \n";
+        cout << " | \n";
       }
       ++parmEntry;
 
@@ -672,6 +1076,7 @@ void Settings::list(bool doListAll,  bool doListString, string match,
       && ( fvecEntry == fvecs.end() || wordEntry->first < fvecEntry->first )
       && ( mvecEntry == mvecs.end() || wordEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || wordEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || wordEntry->first < wvecEntry->first )
       ) {
       string valNow = wordEntry->second.valNow;
       string valDefault = wordEntry->second.valDefault;
@@ -680,16 +1085,17 @@ void Settings::list(bool doListAll,  bool doListString, string match,
       string blankPad( blankLeft, ' ');
       if ( doListAll || (!doListString && valNow != valDefault)
         || (doListString && wordEntry->first.find(match) != string::npos) )
-        os << " | " << setw(45) << left
-           << wordEntry->second.name << " | " << setw(24) << right
-           << valNow << " | " << setw(12) << valDefault << blankPad
-           << " | \n";
+        cout << " | " << setw(45) << left
+             << wordEntry->second.name << " | " << setw(24) << right
+             << valNow << " | " << setw(12) << valDefault << blankPad
+             << " | \n";
       ++wordEntry;
 
     // Else check if fvec is next, and if so print it.
     } else if ( fvecEntry != fvecs.end()
       && ( mvecEntry == mvecs.end() || fvecEntry->first < mvecEntry->first )
       && ( pvecEntry == pvecs.end() || fvecEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || fvecEntry->first < wvecEntry->first )
       ) {
       string state[2] = {"off", "on"};
       vector<bool> valsNow = fvecEntry->second.valNow;
@@ -700,21 +1106,21 @@ void Settings::list(bool doListAll,  bool doListString, string match,
         for (unsigned int i = 0; i < valsNow.size() || i < valsDefault.size();
              ++i) {
           if ( i == 0 )
-            os << " | " << setw(45) << left
-               << fvecEntry->second.name << right << " |             ";
+            cout << " | " << setw(45) << left
+                 << fvecEntry->second.name << right << " |             ";
           else
-            os << " | " << setw(45) << " " << right << " |             ";
+            cout << " | " << setw(45) << " " << right << " |             ";
           for (int j = 0; j < 4; ++j) {
             if (i < valsNow.size()) valNow = valsNow[i];
             if (i < valsDefault.size()) valDefault = valsDefault[i];
             if (j == 1) valNow = valDefault;
             if ( (j == 0 && i >= valsNow.size())
                  || (j == 1 && i >= valsDefault.size()) || (j > 1) )
-              os << "            ";
-            else os << setw(12) << state[valNow];
-            if (j == 0) os << " | ";
+              cout << "            ";
+            else cout << setw(12) << state[valNow];
+            if (j == 0) cout << " | ";
           }
-          os << " | \n";
+          cout << " | \n";
         }
       }
       ++fvecEntry;
@@ -722,6 +1128,7 @@ void Settings::list(bool doListAll,  bool doListString, string match,
     // Else check if mvec is next, and if so print it.
     } else if ( mvecEntry != mvecs.end()
       && ( pvecEntry == pvecs.end() || mvecEntry->first < pvecEntry->first )
+      && ( wvecEntry == wvecs.end() || mvecEntry->first < wvecEntry->first )
       ) {
       vector<int> valsNow = mvecEntry->second.valNow;
       vector<int> valsDefault = mvecEntry->second.valDefault;
@@ -731,10 +1138,10 @@ void Settings::list(bool doListAll,  bool doListString, string match,
         for (unsigned int i = 0; i < valsNow.size() || i < valsDefault.size();
              ++i) {
           if ( i == 0 )
-            os << " | " << setw(45) << left
-               << mvecEntry->second.name << right << " |             ";
+            cout << " | " << setw(45) << left
+                 << mvecEntry->second.name << right << " |             ";
           else
-            os << " | " << setw(45) << " " << right << " |             ";
+            cout << " | " << setw(45) << " " << right << " |             ";
           for (int j = 0; j < 4; ++j) {
             if (i < valsNow.size()) valNow = valsNow[i];
             if (i < valsDefault.size()) valDefault = valsDefault[i];
@@ -745,17 +1152,19 @@ void Settings::list(bool doListAll,  bool doListString, string match,
                  || (j == 1 && i >= valsDefault.size())
                  || (j == 2 && !mvecEntry->second.hasMin)
                  || (j == 3 && !mvecEntry->second.hasMax) )
-              os << "            ";
-            else os << setw(12) << valNow;
-            if (j == 0) os << " | ";
+              cout << "            ";
+            else cout << setw(12) << valNow;
+            if (j == 0) cout << " | ";
           }
-          os << " | \n";
+          cout << " | \n";
         }
       }
       ++mvecEntry;
 
-    // Else print pvec; fixed or scientific depending on value.
-    } else {
+    // Else check if pvec is next; print fixed or scientific.
+    } else if ( pvecEntry != pvecs.end()
+      && ( wvecEntry == wvecs.end() || pvecEntry->first < wvecEntry->first )
+      ) {
       vector<double> valsNow = pvecEntry->second.valNow;
       vector<double> valsDefault = pvecEntry->second.valDefault;
       double valNow(0), valDefault(0);
@@ -764,10 +1173,10 @@ void Settings::list(bool doListAll,  bool doListString, string match,
         for (unsigned int i = 0; i < valsNow.size() || i < valsDefault.size();
              ++i) {
           if ( i == 0 )
-            os << " | " << setw(45) << left
-               << pvecEntry->second.name << right << " |             ";
+            cout << " | " << setw(45) << left
+                 << pvecEntry->second.name << right << " |             ";
           else
-            os << " | " << setw(45) << " " << right << " |             ";
+            cout << " | " << setw(45) << " " << right << " |             ";
           for (int j = 0; j < 4; ++j) {
             if (i < valsNow.size()) valNow = valsNow[i];
             if (i < valsDefault.size()) valDefault = valsDefault[i];
@@ -778,34 +1187,57 @@ void Settings::list(bool doListAll,  bool doListString, string match,
                  || (j == 1 && i >= valsDefault.size())
                  || (j == 2 && !pvecEntry->second.hasMin)
                  || (j == 3 && !pvecEntry->second.hasMax) )
-              os << "            ";
+              cout << "            ";
             else if ( valNow == 0. )
-              os << fixed << setprecision(1) << setw(12) << valNow;
+              cout << fixed << setprecision(1) << setw(12) << valNow;
             else if ( abs(valNow) < 0.001 )
-              os << scientific << setprecision(4) << setw(12) << valNow;
+              cout << scientific << setprecision(4) << setw(12) << valNow;
             else if ( abs(valNow) < 0.1 )
-              os << fixed << setprecision(7) << setw(12) << valNow;
+              cout << fixed << setprecision(7) << setw(12) << valNow;
             else if ( abs(valNow) < 1000. )
-              os << fixed << setprecision(5) << setw(12) << valNow;
+              cout << fixed << setprecision(5) << setw(12) << valNow;
             else if ( abs(valNow) < 1000000. )
-              os << fixed << setprecision(3) << setw(12) << valNow;
+              cout << fixed << setprecision(3) << setw(12) << valNow;
             else
-              os << scientific << setprecision(4) << setw(12) << valNow;
-            if (j == 0) os << " | ";
+              cout << scientific << setprecision(4) << setw(12) << valNow;
+            if (j == 0) cout << " | ";
           }
-          os << " | \n";
+          cout << " | \n";
         }
       }
       ++pvecEntry;
 
+    // Else print wvec.
+    } else {
+      vector<string> valsNow = wvecEntry->second.valNow;
+      vector<string> valsDefault = wvecEntry->second.valDefault;
+      if ( doListAll || (!doListString && valsNow != valsDefault )
+        || (doListString && wvecEntry->first.find(match) != string::npos) ) {
+        for (unsigned int i = 0; i < valsNow.size() || i < valsDefault.size();
+             ++i) {
+          if ( i == 0 )
+            cout << " | " << setw(45) << left
+                 << wvecEntry->second.name << right << " | ";
+          else
+            cout << " | " << setw(45) << " " << right << " | ";
+          string valNow =  (i < valsNow.size()) ? valsNow[i] : " ";
+          string valDefault = (i < valsDefault.size()) ? valsDefault[i] : " ";
+          int blankLeft = max(0, 60 - max(24, int(valNow.length()) )
+            - max(12, int(valDefault.length()) ) );
+          string blankPad( blankLeft, ' ');
+          cout << setw(24) << right << valNow << " | " << setw(12)
+               << valDefault << blankPad << " | \n";
+        }
+      }
+      ++wvecEntry;
     }
   } ;
 
   // End of loop over database contents.
-  os << " |                                                           "
-     << "                                                      | \n"
-     << " *-------  End PYTHIA Flag + Mode + Parm + Word + FVec + MVec + PVec "
-     << "Settings  ------------------------------------* " << endl;
+  cout << " |                                                           "
+       << "                                                      | \n"
+       << " *-------  End PYTHIA Flag + Mode + Parm + Word + FVec + MVec "
+       << "+ PVec + WVec Settings  -----------------------------* " << endl;
 
 }
 
@@ -832,7 +1264,7 @@ string Settings::output(string keyIn, bool fullLine) {
   } else if (isWord(keyIn)) {
     outVal += word(keyIn);
 
-  // Identify fvec, mvec or pvec, and convert to string.
+  // Identify fvec, mvec, pvec or wvec, and convert to string.
   } else if (isFVec(keyIn)) {
     vector<bool> outVec = fvec(keyIn);
     for (int i = 0; i < int(outVec.size()); ++i) {
@@ -853,6 +1285,12 @@ string Settings::output(string keyIn, bool fullLine) {
       ostringstream ostr;
       ostr << scientific << setprecision(5) << outVec[i];
       outVal +=  ostr.str();
+      if (i != int(outVec.size()) - 1) outVal += "  ";
+    }
+  } else if (isWVec(keyIn)) {
+    vector<string> outVec = wvec(keyIn);
+    for (int i = 0; i < int(outVec.size()); ++i) {
+      outVal +=  outVec[i];
       if (i != int(outVec.size()) - 1) outVal += "  ";
     }
 
@@ -918,6 +1356,13 @@ void Settings::resetAll() {
     resetPVec(name);
   }
 
+  // Loop through the wvecs table, resetting all entries.
+  for (map<string, WVec>::iterator wvecEntry = wvecs.begin();
+    wvecEntry != wvecs.end(); ++wvecEntry) {
+    string name = wvecEntry->first;
+    resetWVec(name);
+  }
+
 }
 
 //--------------------------------------------------------------------------
@@ -966,6 +1411,12 @@ vector<double> Settings::pvec(string keyIn) {
   return vector<double>(1, 0.);
 }
 
+vector<string> Settings::wvec(string keyIn) {
+  if (isWVec(keyIn)) return wvecs[toLower(keyIn)].valNow;
+  infoPtr->errorMsg("Error in Settings::wvec: unknown key", keyIn);
+  return vector<string>(1, " ");
+}
+
 //--------------------------------------------------------------------------
 
 // Give back default value, with check that key exists.
@@ -1012,13 +1463,19 @@ vector<double> Settings::pvecDefault(string keyIn) {
   return vector<double>(1, 0.);
 }
 
+vector<string> Settings::wvecDefault(string keyIn) {
+  if (isWVec(keyIn)) return wvecs[toLower(keyIn)].valDefault;
+  infoPtr->errorMsg("Error in Settings::wvecDefault: unknown key", keyIn);
+  return vector<string>(1, " ");
+}
+
 //--------------------------------------------------------------------------
 
 // Get a map of entries whose names contain the string "match".
 
 map<string, Flag> Settings::getFlagMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, Flag> flagMap;
   // Loop over the flag map (using iterator).
   for (map<string,Flag>::iterator flagEntry = flags.begin();
@@ -1030,7 +1487,7 @@ map<string, Flag> Settings::getFlagMap(string match) {
 
 map<string, Mode> Settings::getModeMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, Mode> modeMap;
   // Loop over the mode map (using iterator).
   for (map<string,Mode>::iterator modeEntry = modes.begin();
@@ -1042,7 +1499,7 @@ map<string, Mode> Settings::getModeMap(string match) {
 
 map<string, Parm> Settings::getParmMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, Parm> parmMap;
   // Loop over the parm map (using iterator).
   for (map<string,Parm>::iterator parmEntry = parms.begin();
@@ -1054,7 +1511,7 @@ map<string, Parm> Settings::getParmMap(string match) {
 
 map<string, Word> Settings::getWordMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, Word> wordMap;
   // Loop over the word map (using iterator).
   for (map<string,Word>::iterator wordEntry = words.begin();
@@ -1066,7 +1523,7 @@ map<string, Word> Settings::getWordMap(string match) {
 
 map<string, FVec> Settings::getFVecMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, FVec> fvecMap;
   // Loop over the fvec map (using iterator).
   for (map<string,FVec>::iterator fvecEntry = fvecs.begin();
@@ -1078,7 +1535,7 @@ map<string, FVec> Settings::getFVecMap(string match) {
 
 map<string, MVec> Settings::getMVecMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, MVec> mvecMap;
   // Loop over the mvec map (using iterator).
   for (map<string,MVec>::iterator mvecEntry = mvecs.begin();
@@ -1090,7 +1547,7 @@ map<string, MVec> Settings::getMVecMap(string match) {
 
 map<string, PVec> Settings::getPVecMap(string match) {
   // Make the match string lower case. Start with an empty map.
-  match = toLower(match);
+  toLowerRep(match);
   map<string, PVec> pvecMap;
   // Loop over the pvec map (using iterator).
   for (map<string,PVec>::iterator pvecEntry = pvecs.begin();
@@ -1098,6 +1555,18 @@ map<string, PVec> Settings::getPVecMap(string match) {
     if (pvecEntry->first.find(match) != string::npos)
       pvecMap[pvecEntry->first] = pvecEntry->second;
   return pvecMap;
+}
+
+map<string, WVec> Settings::getWVecMap(string match) {
+  // Make the match string lower case. Start with an empty map.
+  toLowerRep(match);
+  map<string, WVec> wvecMap;
+  // Loop over the wvec map (using iterator).
+  for (map<string,WVec>::iterator wvecEntry = wvecs.begin();
+       wvecEntry != wvecs.end(); ++wvecEntry)
+    if (wvecEntry->first.find(match) != string::npos)
+      wvecMap[wvecEntry->first] = wvecEntry->second;
+  return wvecMap;
 }
 
 //--------------------------------------------------------------------------
@@ -1150,7 +1619,7 @@ void Settings::fvec(string keyIn, vector<bool> nowIn) {
   if (isFVec(keyIn)) {
     FVec& fvecNow = fvecs[toLower(keyIn)];
     fvecNow.valNow.clear();
-    for(vector<bool>::iterator now = nowIn.begin();
+    for (vector<bool>::iterator now = nowIn.begin();
         now != nowIn.end(); now++)
       fvecNow.valNow.push_back(*now);
   }
@@ -1160,7 +1629,7 @@ void Settings::mvec(string keyIn, vector<int> nowIn) {
   if (isMVec(keyIn)) {
     MVec& mvecNow = mvecs[toLower(keyIn)];
     mvecNow.valNow.clear();
-    for(vector<int>::iterator now = nowIn.begin();
+    for (vector<int>::iterator now = nowIn.begin();
         now != nowIn.end(); now++) {
       if (mvecNow.hasMin && *now < mvecNow.valMin)
         mvecNow.valNow.push_back(mvecNow.valMin);
@@ -1175,7 +1644,7 @@ void Settings::pvec(string keyIn, vector<double> nowIn) {
   if (isPVec(keyIn)) {
     PVec& pvecNow = pvecs[toLower(keyIn)];
     pvecNow.valNow.clear();
-    for(vector<double>::iterator now = nowIn.begin();
+    for (vector<double>::iterator now = nowIn.begin();
         now != nowIn.end(); now++) {
       if (pvecNow.hasMin && *now < pvecNow.valMin)
         pvecNow.valNow.push_back(pvecNow.valMin);
@@ -1183,6 +1652,16 @@ void Settings::pvec(string keyIn, vector<double> nowIn) {
         pvecNow.valNow.push_back(pvecNow.valMax);
       else pvecNow.valNow.push_back(*now);
     }
+  }
+}
+
+void Settings::wvec(string keyIn, vector<string> nowIn) {
+  if (isWVec(keyIn)) {
+    WVec& wvecNow = wvecs[toLower(keyIn)];
+    wvecNow.valNow.clear();
+    for (vector<string>::iterator now = nowIn.begin();
+        now != nowIn.end(); now++)
+      wvecNow.valNow.push_back(*now);
   }
 }
 
@@ -1254,6 +1733,11 @@ void Settings::resetMVec(string keyIn) {
 void Settings::resetPVec(string keyIn) {
   if (isPVec(keyIn)) pvecs[toLower(keyIn)].valNow
     = pvecs[toLower(keyIn)].valDefault ;
+}
+
+void Settings::resetWVec(string keyIn) {
+  if (isWVec(keyIn)) wvecs[toLower(keyIn)].valNow
+    = wvecs[toLower(keyIn)].valDefault ;
 }
 
 //--------------------------------------------------------------------------
@@ -1375,6 +1859,7 @@ void Settings::resetTunePP() {
   resetParm("SpaceShower:pTmaxFudge");
   resetParm("SpaceShower:pTdampFudge");
   resetFlag("SpaceShower:rapidityOrder");
+  resetFlag("SpaceShower:rapidityOrderMPI");
   resetFlag("SpaceShower:phiPolAsym");
   resetFlag("SpaceShower:phiIntAsym");
 
@@ -1676,6 +2161,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           false );
+    flag("SpaceShower:rapidityOrderMPI",        false );
     flag("SpaceShower:phiPolAsym",              false );
     flag("SpaceShower:phiIntAsym",              false );
     parm("MultipartonInteractions:alphaSvalue", 0.127 );
@@ -1712,6 +2198,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           false );
+    flag("SpaceShower:rapidityOrderMPI",        false );
     flag("SpaceShower:phiPolAsym",              false );
     flag("SpaceShower:phiIntAsym",              false );
     parm("MultipartonInteractions:alphaSvalue", 0.127 );
@@ -1748,6 +2235,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true  );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.135 );
@@ -1784,6 +2272,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true  );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.127 );
@@ -1823,6 +2312,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true  );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.135 );
@@ -1862,6 +2352,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true  );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.135 );
@@ -1901,6 +2392,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true  );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.130 );   // same as PDF
@@ -1939,6 +2431,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.135 );
@@ -1965,6 +2458,7 @@ void Settings::initTunePP( int ppTune) {
         word("PDF:pSet",             "LHAPDF6:cteq6l1");
       else word("PDF:pSet",                     "8"   );
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    2.18  );
       parm("MultipartonInteractions:ecmPow",    0.22  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -1981,6 +2475,7 @@ void Settings::initTunePP( int ppTune) {
         word("PDF:pSet",      "LHAPDF6:MSTW2008lo68cl");
       else word("PDF:pSet",                     "5"   );
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    1.90  );
       parm("MultipartonInteractions:ecmPow",    0.30  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -1997,6 +2492,7 @@ void Settings::initTunePP( int ppTune) {
         word("PDF:pSet",             "LHAPDF6:cteq6l1");
       else word("PDF:pSet",                     "8"   );
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    2.13  );
       parm("MultipartonInteractions:ecmPow",    0.21  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -2013,6 +2509,7 @@ void Settings::initTunePP( int ppTune) {
         word("PDF:pSet",      "LHAPDF6:MSTW2008lo68cl");
       else word("PDF:pSet",                     "5"   );
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    1.87  );
       parm("MultipartonInteractions:ecmPow",    0.28  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -2028,6 +2525,7 @@ void Settings::initTunePP( int ppTune) {
       else
         word("PDF:pSet",         "LHAPDF5:CT10.LHgrid");
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    1.70  );
       parm("MultipartonInteractions:ecmPow",    0.16  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -2044,6 +2542,7 @@ void Settings::initTunePP( int ppTune) {
         word("PDF:pSet",       "LHAPDF6:MRST2007lomod");
       else word("PDF:pSet",                     "3"   );
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    2.39  );
       parm("MultipartonInteractions:ecmPow",    0.24  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -2060,6 +2559,7 @@ void Settings::initTunePP( int ppTune) {
         word("PDF:pSet",            "LHAPDF6:MRSTMCal");
       else word("PDF:pSet",                     "4"   );
       flag("SpaceShower:rapidityOrder",         false );
+      flag("SpaceShower:rapidityOrderMPI",      false );
       parm("MultipartonInteractions:pT0Ref",    2.57  );
       parm("MultipartonInteractions:ecmPow",    0.23  );
       mode("MultipartonInteractions:bProfile",  4     );
@@ -2103,11 +2603,12 @@ void Settings::initTunePP( int ppTune) {
       parm("SpaceShower:alphaSvalue",           0.1237);
       parm("SpaceShower:pT0Ref",                0.59  );
       parm("MultipartonInteractions:pT0Ref",    2.18  );
-      parm("BeamRemnants:primordialKThard",     2.0   );
+      parm("BeamRemnants:primordialKThard",     1.71  );
     }
   }
 
-  // Several ATLAS and CMS tunes start out from Monash 2013 tune.
+  // Several ATLAS and CMS tunes and tunes close-packing of strings
+  // and hadron rescattering with start out from Monash 2013 tune.
   else if (ppTune >= 18) {
     word("PDF:pSet",                            "13"  );   // NNPDF
     parm("SigmaProcess:alphaSvalue",            0.130 );   // same as PDF
@@ -2129,6 +2630,7 @@ void Settings::initTunePP( int ppTune) {
     parm("SpaceShower:pTmaxFudge",              1.0   );
     parm("SpaceShower:pTdampFudge",             1.0   );
     flag("SpaceShower:rapidityOrder",           true  );
+    flag("SpaceShower:rapidityOrderMPI",        true  );
     flag("SpaceShower:phiPolAsym",              true  );
     flag("SpaceShower:phiIntAsym",              true  );
     parm("MultipartonInteractions:alphaSvalue", 0.130 );   // same as PDF
@@ -2149,7 +2651,7 @@ void Settings::initTunePP( int ppTune) {
     // See R.D. Field, presentation at MPI@LHC 2014, Krakow, Poland.
     if (ppTune == 18) {
       parm("MultipartonInteractions:pT0Ref",    2.4024);
-      parm("MultipartonInteractions:ecmPow",    0.2521);
+      parm("MultipartonInteractions:ecmPow",    0.25208);
       parm("MultipartonInteractions:expPow",    1.60  );
     }
 
@@ -2378,26 +2880,42 @@ void Settings::initTunePP( int ppTune) {
       parm("ColourReconnection:range",          1.71  );
     }
 
+    // Tune with close-packing of strings and rescattering (November 2016).
+    // Gaussian pT.
+    else if (ppTune == 33) {
+      parm("MultipartonInteractions:pT0Ref",    2.34 );
+      parm("ColourReconnection:range",          1.8  );
+      flag("StringPT:thermalModel",             false);
+      parm("StringPT:sigma",                    0.33 );
+      parm("StringPT:widthPreStrange",          1.2  );
+      parm("StringPT:widthPreDiquark",          1.2  );
+      parm("StringPT:enhancedFraction",         0.0  );
+      flag("StringPT:closePacking",             true );
+      parm("StringPT:expNSP",                   0.01 );
+      parm("StringPT:expMPI",                   0.0  );
+      flag("HadronLevel:HadronScatter",         true );
+      mode("HadronScatter:mode",                0    );
+      parm("HadronScatter:maxProbDS",           0.25 );
+    }
+
+    // Tune with close-packing of strings and rescattering (November 2016).
+    // Thermodynamical pT.
+    else if (ppTune == 34) {
+      parm("MultipartonInteractions:pT0Ref",    2.5  );
+      parm("ColourReconnection:range",          1.1  );
+      flag("StringPT:thermalModel",             true );
+      parm("StringPT:temperature",              0.21 );
+      parm("StringFlav:BtoMratio",              0.357);
+      parm("StringFlav:StrangeSuppression",     0.5  );
+      flag("StringPT:closePacking",             true );
+      parm("StringPT:expNSP",                   0.13 );
+      parm("StringPT:expMPI",                   0.0  );
+      flag("HadronLevel:HadronScatter",         true );
+      mode("HadronScatter:mode",                0    );
+      parm("HadronScatter:maxProbDS",           0.5  );
+    }
+
   }
-
-}
-
-//--------------------------------------------------------------------------
-
-// Convert string to lowercase for case-insensitive comparisons.
-// Also remove initial and trailing blanks, if any.
-
-string Settings::toLower(const string& name) {
-
-  // Copy string without initial and trailing blanks.
-  if (name.find_first_not_of(" \n\t\v\b\r\f\a") == string::npos) return "";
-  int firstChar = name.find_first_not_of(" \n\t\v\b\r\f\a");
-  int lastChar  = name.find_last_not_of(" \n\t\v\b\r\f\a");
-  string temp   = name.substr( firstChar, lastChar + 1 - firstChar);
-
-  // Convert to lowercase letter by letter.
-  for (int i = 0; i < int(temp.length()); ++i) temp[i] = tolower(temp[i]);
-  return temp;
 
 }
 
@@ -2526,6 +3044,28 @@ vector<double> Settings::doubleVectorAttributeValue(string line,
     valString = valString.substr(stringPos + 1);
     valStream >> doubleVal;
     vectorVal.push_back(doubleVal);
+  }
+  return vectorVal;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Extract XML string vector value following XML attribute.
+
+vector<string> Settings::stringVectorAttributeValue(string line,
+  string attribute) {
+  string valString = attributeValue(line, attribute);
+  if (valString == "") return vector<string>(1, " ");
+  string         stringVal;
+  vector<string> vectorVal;
+  size_t         stringPos(0);
+  while (stringPos != string::npos) {
+    stringPos = valString.find(",");
+    if (stringPos != string::npos) {
+      vectorVal.push_back(valString.substr(0, stringPos));
+      valString = valString.substr(stringPos + 1);
+    } else vectorVal.push_back(valString);
   }
   return vectorVal;
 

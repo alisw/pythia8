@@ -1,5 +1,5 @@
 // HiddenValleyFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -36,10 +36,10 @@ public:
   ~HVStringFlav() {}
 
   // Initialize data members.
-  void init(Settings& settings, Rndm* rndmPtrIn);
+  void init(Settings& settings, ParticleData*, Rndm* rndmPtrIn, Info*);
 
   // Pick a new flavour (including diquarks) given an incoming one.
-  FlavContainer pick(FlavContainer& flavOld);
+  FlavContainer pick(FlavContainer& flavOld, double, double);
 
   // Combine two flavours (including diquarks) to produce a hadron.
   int combine(FlavContainer& flav1, FlavContainer& flav2);
@@ -67,7 +67,8 @@ public:
   ~HVStringPT() {}
 
   // Initialize data members.
-  void init(Settings& settings, ParticleData& particleData, Rndm* rndmPtrIn);
+  void init(Settings& settings, ParticleData* particleDataPtrIn,
+    Rndm* rndmPtrIn, Info* infoPtrIn);
 
 };
 

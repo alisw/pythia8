@@ -1,5 +1,5 @@
 // SusyLesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -10,30 +10,16 @@
 // SLHA interface.
 // (The Pythia-specific components reside in the SLHAinterface class.)
 
-#ifndef SLHA_H
-#define SLHA_H
+#ifndef Pythia8_SLHA_H
+#define Pythia8_SLHA_H
 
-// Stdlib header files for string and character manipulation.
-#include <string>
-#include <cctype>
-// Stdlib header files for containers.
-#include <vector>
-#include <map>
-// Stdlib header files for input/output.
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-// Stdlib header files for mathematics.
-#include <cmath>
-#include <cstdlib>
-
-// Stdlib namespace
-using namespace std;
-
-//************************* SLHA AUX CLASSES *****************************//
+#include "Pythia8/PythiaStdlib.h"
 
 namespace Pythia8 {
+
+//==========================================================================
+
+//************************* SLHA AUX CLASSES *****************************//
 
   //class LHblock: the generic SLHA block (see below for matrices)
   //Explicit typing required, e.g. block<double> minpar;
@@ -99,7 +85,7 @@ namespace Pythia8 {
     };
 
     // Simple print utility
-    void print() {
+    void list() {
       bool finished=false;
       int ibegin=first();
       i=ibegin;
@@ -197,7 +183,7 @@ namespace Pythia8 {
     double q() { return qDRbar; }
 
     // Simple print utility, to be elaborated on.
-    void print() {
+    void list() {
       for (i=1;i<=size;i++) {
         cout << "   "<<i << " " ;
         for (j=1;j<=size;j++) cout << entry[i][j] << " ";
@@ -273,7 +259,7 @@ namespace Pythia8 {
     double q() { return qDRbar; }
 
     // Simple print utility, to be elaborated on.
-    void print() {
+    void list() {
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
           cout << "   "<<i << " "<<j << " " ;
@@ -416,9 +402,9 @@ public:
   //int writeFile(string filename): write SLHA file on filename
 
   //Output utilities
-  void printHeader();   // print Header
-  void printFooter();   // print Footer
-  void printSpectrum(int ifail=0); // print Spectrum
+  void listHeader();   // print Header
+  void listFooter();   // print Footer
+  void listSpectrum(int ifail=0); // print Spectrum
 
   // Check spectrum and decays
   int checkSpectrum();
@@ -645,10 +631,6 @@ public:
   // Output of messages from SLHA interface
   void message(int, string,string ,int line=0);
 
-  // Convert string to lowercase, removing junk characters
-  // Copied from PYTHIA 8 Settings class
-  void toLower(string& name);
-
   //***************************** SLHA PRIVATE *****************************//
 private:
   //SLHA I/O
@@ -665,7 +647,7 @@ private:
 template <class T> int SusyLesHouches::set(string blockName, T val) {
 
   // Make sure everything is interpreted as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Add new generic block if not already existing
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -683,7 +665,7 @@ template <class T> int SusyLesHouches::set(string blockName, T val) {
 template <class T> int SusyLesHouches::set(string blockName, int indx, T val) {
 
   // Make sure everything is interpreted as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Add new generic block if not already existing
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -702,7 +684,7 @@ template <class T> int SusyLesHouches::set(string blockName, int indx,
                                            int jndx, T val) {
 
   // Make sure everything is interpreted as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Add new generic block if not already existing
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -721,7 +703,7 @@ template <class T> int SusyLesHouches::set(string blockName, int indx,
                                            int jndx, int kndx, T val) {
 
   // Make sure everything is interpreted as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Add new generic block if not already existing
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -741,7 +723,7 @@ template <class T> int SusyLesHouches::set(string blockName, int indx,
 template <class T> bool SusyLesHouches::getEntry(string blockName, T& val) {
 
   // Make sure everything is interpret as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Safety checks
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -777,7 +759,7 @@ template <class T> bool SusyLesHouches::getEntry(string blockName, int indx,
                                                  T& val) {
 
   // Make sure everything is interpret as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Safety checks
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -815,7 +797,7 @@ template <class T> bool SusyLesHouches::getEntry(string blockName, int indx,
                                                  int jndx, T& val) {
 
   // Make sure everything is interpret as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Safety checks
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -853,7 +835,7 @@ template <class T> bool SusyLesHouches::getEntry(string blockName, int indx,
                                                  int jndx, int kndx, T& val) {
 
   // Make sure everything is interpret as lower case (for safety)
-  toLower(blockName);
+  toLowerRep(blockName);
 
   // Safety checks
   if (genericBlocks.find(blockName) == genericBlocks.end()) {
@@ -887,6 +869,9 @@ template <class T> bool SusyLesHouches::getEntry(string blockName, int indx,
   return false;
  }
 
+//==========================================================================
+
+
 } // end of namespace Pythia8
 
-#endif
+#endif // end Pythia8_SLHA_H

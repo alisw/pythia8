@@ -1,5 +1,5 @@
 // ResonanceWidths.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -164,6 +164,7 @@ bool ResonanceWidths::init(Info* infoPtrIn, Settings* settingsPtrIn,
       if (mult > 2) {
         mf3     = particleDataPtr->m0(id3Abs);
         mr3     = pow2(mf3 / mHat);
+        ps      = (mHat < mf1 + mf2 + mf3 + MASSMARGIN) ? 0. : 1.;
       }
 
       // Let derived class calculate width for channel provided.
@@ -325,6 +326,7 @@ double ResonanceWidths::width(int idSgn, double mHatIn, int idInFlavIn,
       if (mult > 2) {
         mf3     = particleDataPtr->m0(id3Abs);
         mr3     = pow2(mf3 / mHat);
+        ps      = (mHat < mf1 + mf2 + mf3 + MASSMARGIN) ? 0. : 1.;
       }
 
       // Let derived class calculate width for channel provided.
@@ -1741,11 +1743,25 @@ void ResonanceExcited::calcWidth(bool) {
   else {
     if (id1Abs < 17 && id2Abs < 17 && id3Abs > 0 && id3Abs < 17 ) {
       widNow = preFac * pow2(contactDec * mHat) / (pow2(Lambda) * 96. * M_PI);
+      if (mHat < mf1 + mf2 + mf3 ) widNow = 0.;
       if (id3Abs < 10) widNow *= 3.;
       if (id1Abs == id2Abs && id1Abs == id3Abs) {
         if (idRes - 4000000 < 10) widNow *= 4./3.;
         else                      widNow *= 2.;
       }
+    }
+
+    // 3-particle phase-space factor integrated with squared contact
+    // ME  = 2 * \bar f_L \gamma^\mu f_L^*  \bar q_L \gamma_\mu q_L;
+    // quark mass correction for f^* -> t tbar f (code by Oleg Zenin).
+    double a2 = 0.;
+    if ( (id1Abs == id2Abs && id1Abs != id3Abs)
+      || (id1Abs == id3Abs && id1Abs != id2Abs) )  a2 = 4. * mr1;
+    else if (id2Abs == id3Abs && id2Abs != id1Abs) a2 = 4. * mr2;
+    if (a2 > 0.) {
+      widNow *= sqrt(1. - a2) * ( 1. - (7./2.) * a2 - (1./8.) * pow2(a2)
+        - (3./16.) * pow3(a2) ) + 3. * pow2(a2) * (1. - (1./16.) * pow2(a2))
+        * log( sqrt(1./a2) * (1. + sqrt(1. - a2)) ) ;
     }
   }
 

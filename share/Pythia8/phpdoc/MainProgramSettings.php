@@ -59,7 +59,7 @@ to print an event, i.e. all the particles belonging to it. Given the
 length of these listings one would list only a few events at the 
 beginning of the run, to get some feeling for the character of events. 
 This could be achieved e.g. with a main-program statement<br/> 
-<code>   if (iEvent < 3) pythia.event.list()</code><br/> 
+<code>   if (iEvent &lt; 3) pythia.event.list()</code><br/> 
 to list the first three events in a loop over <code>iEvent</code>, 
 after <code>pythia.next()</code> has been used to generate the next 
 event. Alternatively a <code>Next:numberListEvent = 3</code> 
@@ -144,6 +144,7 @@ identity code. Default means that no particle is printed.
 Print a line telling how many events have been generated so far, 
 once every <code>numberCount</code> events. If set zero then no 
 lines are ever printed. 
+   
  
 <br/><br/><table><tr><td><strong>Next:numberShowLHA  </td><td></td><td> <input type="text" name="10" value="1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>)</td></tr></table>
 The number of events to list the Les Houches input information for, 
@@ -226,7 +227,22 @@ important and would be a standard feature of any separate command file.
 The number of events to be generated. 
    
  
-<br/><br/><table><tr><td><strong>Main:timesAllowErrors  </td><td></td><td> <input type="text" name="21" value="10" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:numberOfTriedEvents  </td><td></td><td> <input type="text" name="21" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)</td></tr></table>
+The number of events to be tried during generation. Any number smaller than one 
+means that the setting will be ignored. 
+   
+ 
+<br/><br/><table><tr><td><strong>Main:numberOfSelectedEvents  </td><td></td><td> <input type="text" name="22" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)</td></tr></table>
+The number of events to be selected during generation. Any number smaller than 
+one means that the setting will be ignored. 
+   
+ 
+<br/><br/><table><tr><td><strong>Main:numberOfAcceptedEvents  </td><td></td><td> <input type="text" name="23" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)</td></tr></table>
+The number of events to be accepted during generation. Any number smaller than 
+one means that the setting will be ignored. 
+   
+ 
+<br/><br/><table><tr><td><strong>Main:timesAllowErrors  </td><td></td><td> <input type="text" name="24" value="10" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10</strong></code>)</td></tr></table>
 Allow this many times that <code>pythia.next()</code> returns false, 
 i.e. that an event is flawed, before aborting the run. 
    
@@ -255,13 +271,13 @@ several tasks in the same run. In that case you will need repeated
 instances of the first setting below in your command file, and could 
 additionally use the second and third as well. 
  
-<br/><br/><table><tr><td><strong>Main:subrun  </td><td></td><td> <input type="text" name="22" value="-999" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-999</strong></code>; <code>minimum = 0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:subrun  </td><td></td><td> <input type="text" name="25" value="-999" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-999</strong></code>; <code>minimum = 0</code>)</td></tr></table>
 The number of the current subrun, a non-negative integer, put as 
 first line in a section of lines to be read for this particular subrun. 
    
  
-<br/><br/><strong>Main:LHEFskipInit</strong>  <input type="radio" name="23" value="on"><strong>On</strong>
-<input type="radio" name="23" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Main:LHEFskipInit</strong>  <input type="radio" name="26" value="on"><strong>On</strong>
+<input type="radio" name="26" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If you read several Les Houches Event Files that you want to see 
 considered as one single combined event sample you can set this flag 
@@ -269,7 +285,7 @@ considered as one single combined event sample you can set this flag
 (re-)initialization step. 
    
  
-<br/><br/><table><tr><td><strong>Main:numberOfSubruns  </td><td></td><td> <input type="text" name="24" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:numberOfSubruns  </td><td></td><td> <input type="text" name="27" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
 The number of subruns you intend to use in your current run. 
 Unlike the two settings above, <code>Pythia</code> itself will not 
 interpret this number, but you could e.g. have a loop in your main 
@@ -283,46 +299,46 @@ For currently unforeseen purposes, a few dummy settings are made
 available here. The user can set the desired value in a "cards file" 
 and then use that value in the main program as desired. 
  
-<br/><br/><strong>Main:spareFlag1</strong>  <input type="radio" name="25" value="on"><strong>On</strong>
-<input type="radio" name="25" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Main:spareFlag1</strong>  <input type="radio" name="28" value="on"><strong>On</strong>
+<input type="radio" name="28" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
    
  
-<br/><br/><strong>Main:spareFlag2</strong>  <input type="radio" name="26" value="on"><strong>On</strong>
-<input type="radio" name="26" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Main:spareFlag2</strong>  <input type="radio" name="29" value="on"><strong>On</strong>
+<input type="radio" name="29" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
    
  
-<br/><br/><strong>Main:spareFlag3</strong>  <input type="radio" name="27" value="on"><strong>On</strong>
-<input type="radio" name="27" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Main:spareFlag3</strong>  <input type="radio" name="30" value="on"><strong>On</strong>
+<input type="radio" name="30" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
    
  
-<br/><br/><table><tr><td><strong>Main:spareMode1  </td><td></td><td> <input type="text" name="28" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareMode1  </td><td></td><td> <input type="text" name="31" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareMode2  </td><td></td><td> <input type="text" name="29" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareMode2  </td><td></td><td> <input type="text" name="32" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareMode3  </td><td></td><td> <input type="text" name="30" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareMode3  </td><td></td><td> <input type="text" name="33" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareParm1 </td><td></td><td> <input type="text" name="31" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareParm1 </td><td></td><td> <input type="text" name="34" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareParm2 </td><td></td><td> <input type="text" name="32" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareParm2 </td><td></td><td> <input type="text" name="35" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareParm3 </td><td></td><td> <input type="text" name="33" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareParm3 </td><td></td><td> <input type="text" name="36" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareWord1  </td><td></td><td> <input type="text" name="34" value="void" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>void</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareWord1  </td><td></td><td> <input type="text" name="37" value="void" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>void</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareWord2  </td><td></td><td> <input type="text" name="35" value="void" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>void</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareWord2  </td><td></td><td> <input type="text" name="38" value="void" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>void</strong></code>)</td></tr></table>
    
  
-<br/><br/><table><tr><td><strong>Main:spareWord3  </td><td></td><td> <input type="text" name="36" value="void" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>void</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Main:spareWord3  </td><td></td><td> <input type="text" name="39" value="void" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>void</strong></code>)</td></tr></table>
    
  
 <input type="hidden" name="saved" value="1"/>
@@ -440,84 +456,99 @@ if($_POST["20"] != "1000")
 $data = "Main:numberOfEvents = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["21"] != "10")
+if($_POST["21"] != "0")
 {
-$data = "Main:timesAllowErrors = ".$_POST["21"]."\n";
+$data = "Main:numberOfTriedEvents = ".$_POST["21"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["22"] != "-999")
+if($_POST["22"] != "0")
 {
-$data = "Main:subrun = ".$_POST["22"]."\n";
+$data = "Main:numberOfSelectedEvents = ".$_POST["22"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["23"] != "off")
+if($_POST["23"] != "0")
 {
-$data = "Main:LHEFskipInit = ".$_POST["23"]."\n";
+$data = "Main:numberOfAcceptedEvents = ".$_POST["23"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["24"] != "0")
+if($_POST["24"] != "10")
 {
-$data = "Main:numberOfSubruns = ".$_POST["24"]."\n";
+$data = "Main:timesAllowErrors = ".$_POST["24"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["25"] != "off")
+if($_POST["25"] != "-999")
 {
-$data = "Main:spareFlag1 = ".$_POST["25"]."\n";
+$data = "Main:subrun = ".$_POST["25"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["26"] != "off")
 {
-$data = "Main:spareFlag2 = ".$_POST["26"]."\n";
+$data = "Main:LHEFskipInit = ".$_POST["26"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["27"] != "off")
+if($_POST["27"] != "0")
 {
-$data = "Main:spareFlag3 = ".$_POST["27"]."\n";
+$data = "Main:numberOfSubruns = ".$_POST["27"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["28"] != "0")
+if($_POST["28"] != "off")
 {
-$data = "Main:spareMode1 = ".$_POST["28"]."\n";
+$data = "Main:spareFlag1 = ".$_POST["28"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["29"] != "0")
+if($_POST["29"] != "off")
 {
-$data = "Main:spareMode2 = ".$_POST["29"]."\n";
+$data = "Main:spareFlag2 = ".$_POST["29"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["30"] != "0")
+if($_POST["30"] != "off")
 {
-$data = "Main:spareMode3 = ".$_POST["30"]."\n";
+$data = "Main:spareFlag3 = ".$_POST["30"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["31"] != "0.")
+if($_POST["31"] != "0")
 {
-$data = "Main:spareParm1 = ".$_POST["31"]."\n";
+$data = "Main:spareMode1 = ".$_POST["31"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["32"] != "0.")
+if($_POST["32"] != "0")
 {
-$data = "Main:spareParm2 = ".$_POST["32"]."\n";
+$data = "Main:spareMode2 = ".$_POST["32"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["33"] != "0.")
+if($_POST["33"] != "0")
 {
-$data = "Main:spareParm3 = ".$_POST["33"]."\n";
+$data = "Main:spareMode3 = ".$_POST["33"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["34"] != "void")
+if($_POST["34"] != "0.")
 {
-$data = "Main:spareWord1 = ".$_POST["34"]."\n";
+$data = "Main:spareParm1 = ".$_POST["34"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["35"] != "void")
+if($_POST["35"] != "0.")
 {
-$data = "Main:spareWord2 = ".$_POST["35"]."\n";
+$data = "Main:spareParm2 = ".$_POST["35"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["36"] != "void")
+if($_POST["36"] != "0.")
 {
-$data = "Main:spareWord3 = ".$_POST["36"]."\n";
+$data = "Main:spareParm3 = ".$_POST["36"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["37"] != "void")
+{
+$data = "Main:spareWord1 = ".$_POST["37"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["38"] != "void")
+{
+$data = "Main:spareWord2 = ".$_POST["38"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["39"] != "void")
+{
+$data = "Main:spareWord3 = ".$_POST["39"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -527,4 +558,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

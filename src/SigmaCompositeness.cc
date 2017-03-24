@@ -1,5 +1,5 @@
 // SigmaCompositeness.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -101,6 +101,7 @@ double Sigma1qg2qStar::weightDecay( Event& process, int iResBeg,
 
   // q* should sit in entry 5. Sequential Z/W decay assumed isotropic.
   if (iResBeg != 5 || iResEnd != 5) return 1.;
+  if (process[5].daughter1() != 6 || process[5].daughter2() != 7) return 1.;
 
   // Sign of asymmetry.
   int sideIn    = (process[3].idAbs() < 20) ? 1 : 2;
@@ -224,6 +225,7 @@ double Sigma1lgm2lStar::weightDecay( Event& process, int iResBeg,
 
   // l* should sit in entry 5. Sequential Z/W decay assumed isotropic.
   if (iResBeg != 5 || iResEnd != 5) return 1.;
+  if (process[5].daughter1() != 6 || process[5].daughter2() != 7) return 1.;
 
   // Sign of asymmetry.
   int sideIn    = (process[3].idAbs() < 20) ? 1 : 2;

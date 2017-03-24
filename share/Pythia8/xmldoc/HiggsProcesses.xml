@@ -58,7 +58,7 @@ set by the user, alternatively by the current default values, see
 warning above. 
 </parm> 
  
-<p> 
+<p/> 
 One setting is specific to the Standard Model: 
  
 <flag name="HiggsSM:NLOWidths" default="on"> 
@@ -180,8 +180,8 @@ but is obtained from showering off the lowest-order process. It does not
 contain any <ei>b</ei> at large <ei>pT</ei>, however, so is less 
 interesting for many applications. 
 Code 911. 
- 
 </flag> 
+ 
 <flag name="HiggsSM:gg2Hbbbar" default="off"> 
 Scattering <ei>g g &rarr; H^0 b bbar</ei>. This process is yet one order 
 higher of the <ei>b bbar &rarr; H^0</ei> and <ei>b g &rarr; H^0 b</ei> chain, 
@@ -346,7 +346,7 @@ fusion (or, alternatively put, Higgs radiation off a top line).
 Warning: unfortunately this process is rather slow, owing to a 
 lengthy cross-section expression and inefficient phase-space selection. 
 Code 1009. 
- 
+</flag> 
  
 <h4>2) <ei>H^0(H_2^0)</ei> processes</h4> 
  
@@ -409,6 +409,7 @@ fusion (or, alternatively put, Higgs radiation off a top line).
 Warning: unfortunately this process is rather slow, owing to a 
 lengthy cross-section expression and inefficient phase-space selection. 
 Code 1029. 
+</flag> 
  
 <h4>3) <ei>A^0(H_3^0)</ei> processes</h4> 
  
@@ -470,6 +471,7 @@ fusion (or, alternatively put, Higgs radiation off a top line).
 Warning: unfortunately this process is rather slow, owing to a 
 lengthy cross-section expression and inefficient phase-space selection. 
 Code 1049. 
+</flag> 
  
 <h4>4) <ei>H+-</ei> processes</h4> 
  
@@ -990,4 +992,4 @@ The <ei>phi</ei> value of CP-mixing in the
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

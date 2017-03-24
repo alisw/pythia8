@@ -38,7 +38,7 @@ by PYTHIA. However, it is also possible to implement a
 new process in exactly the same way as the internal PYTHIA 
 ones, thus making use of the internal phase space selection machinery 
 to sample an externally provided cross-section expression. 
-The MadGraph 5 program [<a href="Bibliography.php" target="page">Alw11</a>] allows you to do exactly that, 
+The MadGraph5 program [<a href="Bibliography.php" target="page">Alw11</a>] allows you to do exactly that, 
 i.e. it can be used to generate C++ code that can be linked into 
 the existing PYTHIA framework, see 
 <?php $filepath = $_GET["filepath"];
@@ -663,7 +663,7 @@ already there. The basic structure is
 <br/>(ii) create an instance of the matrix-element class, 
 <br/>(iii)create a container for the matrix element and its associated 
 phase-space handling, and 
-<br>(iv) add the container to the existing process list. 
+<br/>(iv) add the container to the existing process list. 
  
 <p/> 
 Two minor variations are possible. One is that a set of related 
@@ -783,4 +783,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

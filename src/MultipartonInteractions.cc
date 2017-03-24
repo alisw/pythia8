@@ -1,5 +1,5 @@
 // MultipartonInteractions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -341,7 +341,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   Info* infoPtrIn, Settings& settings, ParticleData* particleDataPtr,
   Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
   Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
-  SigmaTotal* sigmaTotPtrIn, UserHooks* userHooksPtrIn, ostream& os) {
+  SigmaTotal* sigmaTotPtrIn, UserHooks* userHooksPtrIn, bool hasGammaIn) {
 
   // Store input pointers for future use. Done if no initialization.
   iDiffSys         = iDiffSysIn;
@@ -353,6 +353,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   partonSystemsPtr = partonSystemsPtrIn;
   sigmaTotPtr      = sigmaTotPtrIn;
   userHooksPtr     = userHooksPtrIn;
+  hasGamma         = hasGammaIn;
   if (!doMPIinit) return false;
 
   // If both beams are baryons then softer PDF's than for mesons/Pomerons.
@@ -397,6 +398,13 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
     expPow       = max(EXPPOWMIN, expPow);
   }
 
+  // No x-dependent impact-parameter profile for diffraction.
+  if ((iDiffSys > 0 || settings.flag("Diffraction:doHard")) && bProfile == 4) {
+    infoPtr->errorMsg("Error in MultipartonInteractions::init:"
+      " chosen b profile not allowed for diffraction");
+    return false;
+  }
+
   // Common choice of "pT" scale for determining impact parameter.
   bSelScale      = settings.mode("MultipartonInteractions:bSelScale");
 
@@ -430,6 +438,10 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   mPomP          = settings.parm("Diffraction:mRefPomP");
   pPomP          = settings.parm("Diffraction:mPowPomP");
   mMinPertDiff   = settings.parm("Diffraction:mMinPert");
+  bSelHard       = settings.mode("Diffraction:bSelHard");
+
+  // Beam particles might not be found from the usual positions.
+  beamOffset = 0;
 
   // Possibility to allow user veto of MPI
   canVetoMPI = (userHooksPtr != 0) ? userHooksPtr->canVetoMPIEmission()
@@ -472,6 +484,11 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   mMaxPertDiff = eCM;
   eCMsave      = eCM;
 
+  // Limits on invariant mass of gm+gm system.
+  mGmGmMin     = settings.parm("Photon:Wmin");
+  mGmGmMax     = settings.parm("Photon:Wmax");
+  if ( mGmGmMax < mGmGmMin ) mGmGmMax = eCM;
+
   // Get the total inelastic and nondiffractive cross section.
   if (!sigmaTotPtr->hasSigmaTot()) return false;
   bool isNonDiff = (iDiffSys == 0);
@@ -481,42 +498,67 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   // Output initialization info - first part.
   bool showMPI = settings.flag("Init:showMultipartonInteractions");
   if (showMPI) {
-    os << "\n *-------  PYTHIA Multiparton Interactions Initialization  "
-       << "---------* \n"
-       << " |                                                        "
-       << "          | \n";
-    if (isNonDiff)
-      os << " |                   sigmaNonDiffractive = " << fixed
-         << setprecision(2) << setw(7) << sigmaND << " mb               | \n";
+    cout << "\n *-------  PYTHIA Multiparton Interactions Initialization  "
+         << "---------* \n"
+         << " |                                                        "
+         << "          | \n";
+    if (isNonDiff && !hasGamma)
+      cout << " |                   sigmaNonDiffractive = " << setprecision(2)
+           << ((sigmaND > 1.) ? fixed : scientific) << setw(8) << sigmaND
+           << " mb              | \n";
     else if (iDiffSys == 1)
-      os << " |                          diffraction XB                "
-         << "          | \n";
+      cout << " |                          diffraction XB                "
+           << "          | \n";
     else if (iDiffSys == 2)
-      os << " |                          diffraction AX                "
-         << "          | \n";
+      cout << " |                          diffraction AX                "
+           << "          | \n";
     else if (iDiffSys == 3)
-      os << " |                          diffraction AXB               "
+      cout << " |                          diffraction AXB               "
+           << "          | \n";
+    else if (hasGamma)
+      cout << " |                       l+l- -> gamma+gamma -> X         "
+           << "          | \n";
+    cout << " |                                                        "
          << "          | \n";
-    os << " |                                                        "
-       << "          | \n";
   }
 
   // For diffraction need to cover range of diffractive masses.
   nStep     = (iDiffSys == 0) ? 1 : 5;
   eStepSize = (nStep < 2) ? 1.
             : log(mMaxPertDiff / mMinPertDiff) / (nStep - 1.);
+
+  // For photons from lepton cover range of gm+gm invariant masses.
+  if (hasGamma){
+    nStep     = 5;
+    eStepSize = log(mGmGmMax / mGmGmMin) / (nStep - 1.);
+  }
+
   for (int iStep = 0; iStep < nStep; ++iStep) {
 
     // Update and output current diffractive mass and
     // fictitious Pomeron-proton cross section for normalization.
     if (nStep > 1) {
-      eCM = mMinPertDiff * pow( mMaxPertDiff / mMinPertDiff,
-            iStep / (nStep - 1.) );
+      if (!hasGamma) eCM = mMinPertDiff * pow( mMaxPertDiff / mMinPertDiff,
+                           iStep / (nStep - 1.) );
+      else eCM = mGmGmMin * pow( mGmGmMax / mGmGmMin, iStep / (nStep - 1.) );
       sCM = eCM * eCM;
-      sigmaND = sigmaPomP * pow( eCM / mPomP, pPomP);
-      if (showMPI) os << " |    diffractive mass = " << scientific
-        << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
-        << fixed << setw(6) << sigmaND << " mb    | \n";
+
+      // MPI for Diffractive events.
+      if (!hasGamma) {
+        sigmaND = sigmaPomP * pow( eCM / mPomP, pPomP);
+        if (showMPI) cout << " |    diffractive mass = " << scientific
+          << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
+          << fixed << setw(6) << sigmaND << " mb    | \n";
+
+      // MPI with gamma+gamma in l+l-.
+      } else {
+        sigmaTotPtr->calc( 22, 22, eCM );
+        sigmaND = sigmaTotPtr->sigmaND();
+        if (showMPI) cout << " |    gamma+gamma eCM = " << scientific
+          << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
+          << scientific << setw(6) << sigmaND << " mb  | \n";
+      }
+
     }
 
     // Set current pT0 scale.
@@ -561,7 +603,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
 
       // Sufficiently big SigmaInt or reduce pT0; maybe also pTmin.
       if (sigmaInt > SIGMASTEP * sigmaND) break;
-      if (showMPI) os << fixed << setprecision(2) << " |    pT0 = "
+      if (showMPI) cout << fixed << setprecision(2) << " |    pT0 = "
         << setw(5) << pT0 << " gives sigmaInteraction = " << setw(7)
         << sigmaInt << " mb: rejected     | \n";
       if (pTmin > pT0) pTmin *= PT0STEP;
@@ -577,9 +619,10 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
     }
 
     // Output for accepted pT0.
-    if (showMPI) os << fixed << setprecision(2) << " |    pT0 = "
-      << setw(5) << pT0 << " gives sigmaInteraction = "<< setw(7)
-      << sigmaInt << " mb: accepted     | \n";
+    if (showMPI) cout << fixed << setprecision(2) << " |    pT0 = "
+      << setw(5) << pT0 << " gives sigmaInteraction = "<< setw(8)
+      << ((sigmaInt > 1.) ? fixed : scientific) << sigmaInt
+      << " mb: accepted    | \n";
 
     // Calculate factor relating matter overlap and interaction rate.
     overlapInit();
@@ -608,20 +651,20 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
       cMaxSave[iStep]         = cMax;
    }
 
-  // End of loop over diffractive masses.
+  // End of loop over diffractive/invariant gamma+gamma masses.
   }
 
   // Output details for x-dependent matter profile.
   if (bProfile == 4 && showMPI)
-    os << " |                                              "
-       << "                    | \n"
-       << fixed << setprecision(2)
-       << " |  x-dependent matter profile: a1 = " << a1 << ", "
-       << "a0 = " << a0now * XDEP_SMB2FM << ", bStep = "
-       << bstepNow << "  | \n";
+    cout << " |                                              "
+         << "                    | \n"
+         << fixed << setprecision(2)
+         << " |  x-dependent matter profile: a1 = " << a1 << ", "
+         << "a0 = " << a0now * XDEP_SMB2FM << ", bStep = "
+         << bstepNow << "  | \n";
 
   // End initialization printout.
-  if (showMPI) os << " |                                              "
+  if (showMPI) cout << " |                                              "
      << "                    | \n"
      << " *-------  End PYTHIA Multiparton Interactions Initialization"
      << "  -----* " << endl;
@@ -676,11 +719,17 @@ void MultipartonInteractions::reset( ) {
   if (nStep == 1 || abs( eCM / eCMsave - 1.) < ECMDEV) return;
 
   // Set fictitious Pomeron-proton cross section for diffractive system.
-  sigmaND = sigmaPomP * pow( eCM / mPomP, pPomP);
+  if (!hasGamma) sigmaND = sigmaPomP * pow( eCM / mPomP, pPomP);
+  // For photons from leptons calculate sigmaND at updated CM energy.
+  else {
+    sigmaTotPtr->calc( 22, 22, eCM );
+    sigmaND = sigmaTotPtr->sigmaND();
+  }
 
   // Current interpolation point.
   eCMsave   = eCM;
-  eStepSave = log(eCM / mMinPertDiff) / eStepSize;
+  if (!hasGamma) eStepSave = log(eCM / mMinPertDiff) / eStepSize;
+  else eStepSave = log(eCM / mGmGmMin) / eStepSize;
   iStepFrom = max( 0, min( nStep - 2, int( eStepSave) ) );
   iStepTo   = iStepFrom + 1;
   eStepTo   = max( 0., min( 1., eStepSave - iStepFrom) );
@@ -876,6 +925,7 @@ void MultipartonInteractions::pTfirst() {
           else swap(dSigmaDtSel, dSigmaDtSelSave);
 
           // Accept.
+          bNow  /= bAvg;
           bIsSet = true;
           break;
         }
@@ -946,7 +996,8 @@ void MultipartonInteractions::setupFirstSys( Event& process) {
     enhanceB / zeroIntCorr);
 
   // Further standard info on process.
-  infoPtr->setPDFalpha( iDiffSys, id1, id2, x1, x2, xPDF1now, xPDF2now,
+  infoPtr->setPDFalpha( iDiffSys, id1, id2, x1, x2,
+    (id1 == 21 ? 4./9. : 1.) * xPDF1now, (id2 == 21 ? 4./9. : 1.) * xPDF2now,
     pT2Fac, alpEM, alpS, pT2Ren, 0.);
   double m3    = dSigmaDtSel->m(3);
   double m4    = dSigmaDtSel->m(4);
@@ -972,23 +1023,27 @@ bool MultipartonInteractions::limitPTmax( Event& event) {
     || infoPtr->isDiffractiveB() || infoPtr->isDiffractiveC() ) return true;
 
   // Look if only quarks (u, d, s, c, b), gluons and photons in final state.
-  bool onlyQGP1 = true;
-  bool onlyQGP2 = true;
-  int  n21      = 0;
-  int iBegin = 5;
-  if (infoPtr->isHardDiffractive()) iBegin = 9;
+  bool onlyQGP1      = true;
+  bool onlyQGP2      = true;
+  double scaleLimit1 = 0.;
+  double scaleLimit2 = 0.;
+  int  n21           = 0;
+  int iBegin         = 5 + beamOffset;
   for (int i = iBegin; i < event.size(); ++i) {
     if (event[i].status() == -21) ++n21;
     else if (n21 == 0) {
+      scaleLimit1 += 0.5 * event[i].pT();
       int idAbs = event[i].idAbs();
       if (idAbs > 5 && idAbs != 21 && idAbs != 22) onlyQGP1 = false;
     } else if (n21 == 2) {
+      scaleLimit2 += 0.5 * event[i].pT();
       int idAbs = event[i].idAbs();
       if (idAbs > 5 && idAbs != 21 && idAbs != 22) onlyQGP2 = false;
     }
   }
 
   // If two hard interactions then limit if one only contains q/g/gamma.
+  scaleLimitPTsave = (n21 == 2) ? min( scaleLimit1, scaleLimit2) : scaleLimit1;
   bool onlyQGP = (n21 == 2) ? (onlyQGP1 || onlyQGP2) : onlyQGP1;
   return (onlyQGP);
 
@@ -1271,6 +1326,29 @@ bool MultipartonInteractions::scatter( Event& event) {
       if (event[i].acol() == colLost) event[i].acol( colLeft );
     }
   }
+
+  // With gamma+gamma check that room for beam remnants for current scattering.
+  // Otherwise take the partons out from event record.
+  // roomForRemnants treats both beam equally so need to do only once.
+  if ( beamAPtr->isGamma() && beamBPtr->isGamma() ) {
+    if ( !beamAPtr->roomForRemnants(*beamBPtr) ) {
+
+      // Remove the partons associated to the latest scattering from the
+      // event record.
+      event.popBack(4);
+      beamAPtr->popBack();
+      beamBPtr->popBack();
+      partonSystemsPtr->popBack();
+
+      infoPtr->errorMsg("Warning in MultipartonInteractions::scatter:"
+          " No room for remnants for given scattering");
+      return false;
+    }
+  }
+
+  // Store the pT value for valence decision of resolved photons.
+  beamA.pTMPI(sqrtpos(pT2));
+  beamB.pTMPI(sqrtpos(pT2));
 
   // Store info on subprocess code and rescattered partons.
   int    codeMPI = dSigmaDtSel->code();
@@ -2146,7 +2224,7 @@ void MultipartonInteractions::overlapFirst() {
 
   // Trivial values if no impact parameter dependence.
   if (bProfile <= 0 || bProfile > 4) {
-    bNow     = bAvg;
+    bNow     = 1.;
     enhanceB = zeroIntCorr;
     bIsSet   = true;
     isAtLowB = true;
@@ -2226,6 +2304,7 @@ void MultipartonInteractions::overlapFirst() {
   enhanceB = enhanceBmax = enhanceBnow = (normOverlap / normPi) * overlapNow;
 
   // Done.
+  bNow  /= bAvg;
   bIsSet = true;
 
 }
@@ -2235,7 +2314,37 @@ void MultipartonInteractions::overlapFirst() {
 // Pick impact parameter and interaction rate enhancement afterwards,
 // i.e. after a hard interaction is known but before rest of MPI treatment.
 
-void MultipartonInteractions::overlapNext(Event& event, double pTscale) {
+void MultipartonInteractions::overlapNext(Event& event, double pTscale,
+  bool rehashB) {
+
+  // Special case for hard diffraction if unchanged/related b.
+  if (rehashB && bSelHard < 3) {
+
+    // One option: bring b closer to its average value.
+    bNow = infoPtr->bMPI();
+    if (bSelHard == 2) bNow = sqrt(bNow);
+    bNow *= bAvg;
+    double b2 = bNow * bNow;
+
+    // Caclulate new overlap enhancement factor.
+    if (bProfile == 1) {
+      double expb2 = exp( -min(EXPMAX, b2));
+      enhanceB = enhanceBmax = enhanceBnow = normOverlap * expb2;
+    } else if (bProfile == 2) {
+      enhanceB = enhanceBmax = enhanceBnow = normOverlap *
+        ( fracA * exp( -min(EXPMAX, b2))
+        + fracB * exp( -min(EXPMAX, b2 / radius2B)) / radius2B
+        + fracC * exp( -min(EXPMAX, b2 / radius2C)) / radius2C );
+    } else {
+      double cNow = pow( bNow, expPow);
+      enhanceB = enhanceBmax = enhanceBnow = normOverlap * exp(-cNow);
+    }
+
+    // Done for simple cases.
+    bNow  /= bAvg;
+    bIsSet = true;
+    return;
+  }
 
   // Default, valid for bProfile = 0. Also initial Sudakov.
   enhanceB = zeroIntCorr;
@@ -2276,6 +2385,7 @@ void MultipartonInteractions::overlapNext(Event& event, double pTscale) {
       // Trial interaction. Keep going until pTtrial < pTscale.
       pTtrial = pTnext(pTmax, pTmin, event);
     } while (pTtrial > pTscale);
+    bNow  /= bAvg;
     bIsSet = true;
     return;
   }
@@ -2348,32 +2458,33 @@ void MultipartonInteractions::overlapNext(Event& event, double pTscale) {
   } while (sudakov(pT2scale, enhanceB) < rndmPtr->flat());
 
   // Done.
+  bNow  /= bAvg;
   bIsSet = true;
 }
 
 //--------------------------------------------------------------------------
 
-// Printe statistics on number of multiparton-interactions processes.
+// Print statistics on number of multiparton-interactions processes.
 
-void MultipartonInteractions::statistics(bool resetStat, ostream& os) {
+void MultipartonInteractions::statistics(bool resetStat) {
 
   // Header.
-  os << "\n *-------  PYTHIA Multiparton Interactions Statistics  -----"
-     << "---*\n"
-     << " |                                                            "
-     << " |\n"
-     << " |  Note: excludes hardest subprocess if already listed above "
-     << " |\n"
-     << " |                                                            "
-     << " |\n"
-     << " | Subprocess                               Code |       Times"
-     << " |\n"
-     << " |                                               |            "
-     << " |\n"
-     << " |------------------------------------------------------------"
-     << "-|\n"
-     << " |                                               |            "
-     << " |\n";
+  cout << "\n *-------  PYTHIA Multiparton Interactions Statistics  -----"
+       << "---*\n"
+       << " |                                                            "
+       << " |\n"
+       << " |  Note: excludes hardest subprocess if already listed above "
+       << " |\n"
+       << " |                                                            "
+       << " |\n"
+       << " | Subprocess                               Code |       Times"
+       << " |\n"
+       << " |                                               |            "
+       << " |\n"
+       << " |------------------------------------------------------------"
+       << "-|\n"
+       << " |                                               |            "
+       << " |\n";
 
   // Loop over existing processes. Sum of all subprocesses.
   int numberSum = 0;
@@ -2402,21 +2513,21 @@ void MultipartonInteractions::statistics(bool resetStat, ostream& os) {
     }
 
     // Print individual process info.
-    os << " | " << left << setw(40) << name << right << setw(5) << code
-       << " | " << setw(11) << number << " |\n";
+    cout << " | " << left << setw(40) << name << right << setw(5) << code
+         << " | " << setw(11) << number << " |\n";
   }
 
   // Print summed process info.
-  os << " |                                                            "
-     << " |\n"
-     << " | " << left << setw(45) << "sum" << right << " | " << setw(11)
+  cout << " |                                                            "
+       << " |\n"
+       << " | " << left << setw(45) << "sum" << right << " | " << setw(11)
        << numberSum  << " |\n";
 
     // Listing finished.
-  os << " |                                               |            "
-     << " |\n"
-     << " *-------  End PYTHIA Multiparton Interactions Statistics ----"
-     << "-*" << endl;
+  cout << " |                                               |            "
+       << " |\n"
+       << " *-------  End PYTHIA Multiparton Interactions Statistics ----"
+       << "-*" << endl;
 
   // Optionally reset statistics contents.
   if (resetStat) resetStatistics();

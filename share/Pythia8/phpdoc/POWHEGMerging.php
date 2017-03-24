@@ -188,7 +188,8 @@ Master switch to perform vetoing or not.
  
 <br/><br/><table><tr><td><strong>POWHEG:vetoCount  </td><td></td><td> <input type="text" name="3" value="3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>3</strong></code>; <code>minimum = 0</code>)</td></tr></table>
 After this many accepted emissions in a row, no more emissions 
-are checked. Value 0 means that all emissions are checked. 
+are checked. Value 0 means that no emissions are checked. Using a very 
+large value (e.g. 100000) will mean that all emissions are checked. 
    
  
 <br/><br/><table><tr><td><strong>POWHEG:pThard  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
@@ -196,7 +197,7 @@ Selection of the <ei>pThard</ei> scale. For events where there is no
 radiation, <ei>pThard</ei> is always set to be the <code>SCALUP</code> 
 value of the LHA/LHEF standard. 
 <br/>
-<input type="radio" name="4" value="0" checked="checked"><strong>0 </strong>: Set <ei>pThard</ei> equal to <code>SCALUP</code>.<br/>
+<input type="radio" name="4" value="0" checked="checked"><strong>0 </strong>: Set <ei>pThard</ei> equal to <code>SCALUP</code>.  <br/>
 <input type="radio" name="4" value="1"><strong>1 </strong>: The <ei>pT</ei> of the POWHEG emission is tested against  all other incoming and outgoing partons, with the minimal value chosen.  <br/>
 <input type="radio" name="4" value="2"><strong>2 </strong>: The <ei>pT</ei> of all final-state partons is tested  against all other incoming and outgoing partons, with the minimal value  chosen.<br/>
  
@@ -234,7 +235,8 @@ MPI vetoing.
 Treatment of non-QCD radiation. 
 <br/>
 <input type="radio" name="9" value="0" checked="checked"><strong>0 </strong>: Colorless partons are not included in <ei> pT </ei>    calculated from the shower for <ei> pTemt>0 </ei>.<br/>
-<input type="radio" name="9" value="1"><strong>1 </strong>: Colorless partons ARE included for <ei> pTemt>0 </ei>.  <option value="2">Colorless partons ARE included for <ei> pTemt>0 </ei>.    Additionally, if a colorless parton is emitted with <ei> pT > pThard </ei>    in Born-level events, then the entire event is accepted.    This is relevant for all values of <ei> pTemt </ei>.  <br/>
+<input type="radio" name="9" value="1"><strong>1 </strong>: Colorless partons ARE included for <ei> pTemt>0 </ei>.    <br/>
+<input type="radio" name="9" value="2"><strong>2 </strong>: Colorless partons ARE included for <ei> pTemt>0 </ei>.    Additionally, if a colorless parton is emitted with <ei> pT > pThard </ei>    in Born-level events, then the entire event is accepted.    This is relevant for all values of <ei> pTemt </ei>.  <br/>
  
 <input type="hidden" name="saved" value="1"/>
 
@@ -303,4 +305,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

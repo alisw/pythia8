@@ -1,5 +1,5 @@
 // Pythia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -10,7 +10,8 @@
 #define Pythia8_Pythia_H
 
 // Version number defined for use in macros and for consistency checks.
-#define PYTHIA_VERSION 8.211
+#define PYTHIA_VERSION 8.223
+#define PYTHIA_VERSION_INTEGER 8223
 
 // Header files for the Pythia class and for what else the user may need.
 #include "Pythia8/Analysis.h"
@@ -56,8 +57,23 @@ public:
   // Constructor. (See Pythia.cc file.)
   Pythia(string xmlDir = "../share/Pythia8/xmldoc", bool printBanner = true);
 
+  // Constructor to copy settings and particle database from another Pythia
+  // object instead of XML files (to speed up multiple initialisations).
+  Pythia(Settings& settingsIn, ParticleData& particleDataIn,
+    bool printBanner = true);
+
+  // Constructor taking input from streams instead of files.
+  Pythia( istream& settingsStrings, istream& particleDataStrings,
+    bool printBanner = true);
+
   // Destructor. (See Pythia.cc file.)
   ~Pythia();
+
+  // Initialise new Pythia object (called by constructors).
+  void initPtrs();
+
+  // Check consistency of version numbers (called by constructors).
+  bool checkVersion();
 
   // Read in one update for a setting or particle data from a single line.
   bool readString(string, bool warn = true);
@@ -74,7 +90,9 @@ public:
 
   // Possibility to pass in pointers to PDF's.
   bool setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn = 0,
-    PDF* pdfHardBPtrIn = 0, PDF* pdfPomAPtrIn = 0, PDF* pdfPomBPtrIn = 0);
+    PDF* pdfHardBPtrIn = 0, PDF* pdfPomAPtrIn = 0, PDF* pdfPomBPtrIn = 0,
+    PDF* pdfGamAPtrIn = 0, PDF* pdfGamBPtrIn = 0, PDF* pdfHardGamAPtrIn = 0,
+    PDF* pdfHardGamBPtrIn = 0);
 
   // Possibility to pass in pointer to external LHA-interfaced generator.
   bool setLHAupPtr( LHAup* lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn; return true;}
@@ -139,8 +157,7 @@ public:
   bool forceRHadronDecays() {return doRHadronDecays();}
 
   // List the current Les Houches event.
-  void LHAeventList(ostream& os = cout) {
-    if (lhaUpPtr != 0) lhaUpPtr->listEvent(os);}
+  void LHAeventList() { if (lhaUpPtr != 0) lhaUpPtr->listEvent();}
 
   // Skip a number of Les Houches events at input.
   bool LHAeventSkip(int nSkip) {
@@ -181,7 +198,7 @@ public:
   Couplings*     couplingsPtr;
 
   // SLHA Interface
-  SLHAinterface slhaInterface;
+  SLHAinterface  slhaInterface;
 
   // The partonic content of each subcollision system (auxiliary to event).
   PartonSystems  partonSystems;
@@ -211,6 +228,10 @@ private:
   int    nErrList;
   double epTolErr, epTolWarn, mTolErr, mTolWarn;
 
+  // Initialization data related to photon-photon interactions.
+  bool   beamHasGamma, beamAisResGamma, beamBisResGamma, beamAhasResGamma,
+         beamBhasResGamma;
+
   // Initialization data, extracted from init(...) call.
   bool   isConstructed, isInit, isUnresolvedA, isUnresolvedB, showSaV,
          showMaD, doReconnect, forceHadronLevelCR;
@@ -237,8 +258,17 @@ private:
   PDF* pdfPomAPtr;
   PDF* pdfPomBPtr;
 
+  // Extra Photon PDF pointers to be used in lepton -> gamma processes.
+  PDF* pdfGamAPtr;
+  PDF* pdfGamBPtr;
+
+  // Extra PDF pointers to be used in hard lepton -> gamma processes.
+  PDF* pdfHardGamAPtr;
+  PDF* pdfHardGamBPtr;
+
   // Keep track when "new" has been used and needs a "delete" for PDF's.
-  bool useNewPdfA, useNewPdfB, useNewPdfHard, useNewPdfPomA, useNewPdfPomB;
+  bool useNewPdfA, useNewPdfB, useNewPdfHard, useNewPdfPomA, useNewPdfPomB,
+    useNewPdfGamA, useNewPdfGamB, useNewPdfHardGamA, useNewPdfHardGamB;
 
   // The two incoming beams.
   BeamParticle beamA;
@@ -247,6 +277,10 @@ private:
   // Alternative Pomeron beam-inside-beam.
   BeamParticle beamPomA;
   BeamParticle beamPomB;
+
+  // Alternative photon beam-inside-beam.
+  BeamParticle beamGamA;
+  BeamParticle beamGamB;
 
   // LHAup object for generating external events.
   bool   doLHA, useNewLHA;
@@ -308,10 +342,10 @@ private:
   RHadrons   rHadrons;
 
   // Write the Pythia banner, with symbol and version information.
-  void banner(ostream& os = cout);
+  void banner();
 
   // Check for lines in file that mark the beginning of new subrun.
-  int readSubrun(string line, bool warn = true, ostream& os = cout);
+  int readSubrun(string line, bool warn = true);
 
   // Check for lines that mark the beginning or end of commented section.
   int readCommented(string line);
@@ -338,11 +372,12 @@ private:
   bool doRHadronDecays();
 
   // Check that the final event makes sense.
-  bool check(ostream& os = cout);
+  bool check();
 
   // Initialization of SLHA data.
   bool initSLHA ();
   stringstream particleDataBuffer;
+
 };
 
 //==========================================================================

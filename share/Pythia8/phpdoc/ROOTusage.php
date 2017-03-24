@@ -92,8 +92,12 @@ provides an example of this and is comprised of the following files:
  
 <br/> 
 The example may be compiled and run with as usual. Afterwards, the new 
-<code>pytree.root</code> file will contain the PYTHIA events. Note that 
-files can become quite large when many events are generated. 
+<code>pytree.root</code> file will contain the PYTHIA events. Note 
+that files can become quite large when many events are generated. To 
+open these files within the ROOT interpreter the PYTHIA class 
+dictionary must be loaded, <code>.L main92.so</code>. In compiled 
+code, the PYTHIA class dictionary <code>main92.so</code> must be 
+linked against, to either read or write PYTHIA events to a ROOT file. 
  
 <h4>Error notice</h4> 
  
@@ -105,7 +109,7 @@ your <code>PythiaStdlib.h</code> file:
    // Stdlib header file for dynamic library loading. 
    #ifndef __CINT__ 
    #define dlsym __ 
-   #include <dlfcn.h> 
+   #include &lt;dlfcn.h&gt; 
    #undef dlsym 
    #endif 
 </pre> 
@@ -171,7 +175,7 @@ The two interfaces are
     <code><a href="http://root.cern.ch/root/html/TClonesArray.html"> 
     TClonesArray</a></code> of 
     <code><a href="http://root.cern.ch/root/html/TParticle.html"> 
-    TParticles</a></code>. 
+    TParticles</a></code>.</li> 
   </ul> 
  
   In addition, some methods that are directly related to corresponding 
@@ -247,7 +251,7 @@ Note that before executing this script
   <pre> 
     export PYTHIA8=/path_to_PYTHIA_installation 
     export PYTHIA8DATA=$PYTHIA8/share/Pythia8/xmldoc 
-  <pre></li> 
+  </pre></li> 
   <li>your LD_LIBRARY_PATH must contain the location of the 
   PYTHIA 8 shared library, e.g. 
   <pre> 
@@ -282,4 +286,4 @@ functionality, e.g. in an interactive session
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

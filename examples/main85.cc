@@ -1,5 +1,5 @@
 // main85.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -45,7 +45,7 @@ int main( int argc, char* argv[] ){
   HepMC::IO_GenEvent ascii_io(argv[3], std::ios::out);
   // Switch off warnings for parton-level events.
   ToHepMC.set_print_inconsistency(false);
-  ToHepMC.set_free_parton_warnings(false);
+  ToHepMC.set_free_parton_exception(false);
   // Do not store cross section information, as this will be done manually.
   ToHepMC.set_store_pdf(false);
   ToHepMC.set_store_proc(false);
@@ -62,7 +62,7 @@ int main( int argc, char* argv[] ){
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-  // Switch off all showering and MPI when extimating the cross section after
+  // Switch off all showering and MPI when estimating the cross section after
   // the merging scale cut.
   bool fsr = pythia.flag("PartonLevel:FSR");
   bool isr = pythia.flag("PartonLevel:ISR");
@@ -82,6 +82,8 @@ int main( int argc, char* argv[] ){
   // Save estimates in vectors.
   vector<double> xsecLO;
   vector<double> nAcceptLO;
+  vector<double> nSelectedLO;
+  vector<int> strategyLO;
 
   cout << endl << endl << endl;
   cout << "Start estimating ckkwl tree level cross section" << endl;
@@ -115,7 +117,9 @@ int main( int argc, char* argv[] ){
     pythia.stat();
 
     xsecLO.push_back(pythia.info.sigmaGen());
+    nSelectedLO.push_back(pythia.info.nSelected());
     nAcceptLO.push_back(pythia.info.nAccepted());
+    strategyLO.push_back(pythia.info.lhaStrategy());
 
     // Restart with ME of a reduced the number of jets
     if( njetcounterLO > 0 )
@@ -186,11 +190,15 @@ int main( int argc, char* argv[] ){
 
       // Do not print zero-weight events.
       if ( weight == 0. ) continue;
-
       // Construct new empty HepMC event.
       HepMC::GenEvent* hepmcevt = new HepMC::GenEvent();
       // Get correct cross section from previous estimate.
       double normhepmc = xsecLO[iNow] / nAcceptLO[iNow];
+
+      // weighted events
+      if( abs(strategyLO[iNow]) == 4)
+        normhepmc = 1. / (1e9*nSelectedLO[iNow]);
+
       // Set event weight
       hepmcevt->weights().push_back(weight*normhepmc);
       // Fill HepMC event

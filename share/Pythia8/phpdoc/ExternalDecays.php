@@ -44,8 +44,8 @@ echo "<a href='ParticleDataScheme.php?filepath=".$filepath."' target='page'>";?>
 method. 
  
 <p/> 
-There is only one pure virtual method in <code>DecayHandler</code>, 
-to do the decay: 
+The main pure virtual method in <code>DecayHandler</code> 
+to do the decay is: 
 <a name="method1"></a>
 <p/><strong>virtual bool DecayHandler::decay(vector&lt;int&gt;&amp; idProd, vector&lt;double&gt;&amp; mProd, vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) &nbsp;</strong> <br/>
 where 
@@ -92,6 +92,62 @@ of <code>event[iDec].id()</code>, where the latter provides the code at
 production. 
  
 <p/> 
+One limitation of the method above is that it is only intended for one 
+decay step, not for a sequential decay chain. (At least not for 
+displaying such intermediate steps.) That is, the control for any 
+subsequent decays returns to PYTHIA. If you want to avoid this another 
+method exists, with one extra argument: 
+<a name="method2"></a>
+<p/><strong>virtual bool DecayHandler::chainDecay( vector&lt;int&gt;&amp; idProd, vector&lt;int&gt;&amp; motherProd, vector&lt;double&gt;&amp; mProd, vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) &nbsp;</strong> <br/>
+where 
+<br/><code>argument</code><strong> motherProd </strong>  :  is a list of the indices of the mother, 
+   
+<br/>and the other arguments are as above. 
+   
+ 
+<p/> 
+Here the new <code>motherProd</code> vector also has size one at input, 
+with <code>motherProd[0] = 0</code>. At output it should have increaed in 
+size in the same way as the other arrays. Particles that come directly 
+from the mother should have value 0, whereas secondary decay products 
+should have the index of the mother in the arrays. To simplify parsing, 
+particles having the same mother should be placed consecutively in the 
+arrays, and daughters can not be put before their mothers. When the 
+particles are transferred to the standard event record, the full 
+mother-daughter relations will be reconstructed from the new array, 
+and any particle with daughters will be considered to have decayed. 
+For long-lived intermediate particles also vertex information will take 
+this into account. User-selected secondary decay channels will be 
+accepted as they are, however, without any knowledge whether the user 
+has allowed for particle-antiparticle oscillations before that decay. 
+Therefore a simple exponential decay time will be used to find secondary 
+vertices. 
+ 
+<p/> 
+While primarily intended for sequential decays, of course the 
+<code>chainDecay</code> method can be used also for simple decays 
+in one step, and is then equivalent with <code>decay</code> one. 
+This is useful if a particle species has some decay channels that 
+lead to sequential decays whereas others do not. During code execution 
+it is first checked whether <code>chainDecay</code> can do the decay, 
+and if not <code>decay</code> is offered to. By default 
+<code>chainDecay</code> returns false, so if you only overload 
+<code>decay</code> it will be called. If you want to you can choose to 
+handle the decays of some particles in one of the methods and other 
+particles in the other method, so long as you return false for those 
+decays you do not handle. 
+ 
+<p/> 
+The choice of which method to use can be done by the user in the method 
+<a name="method3"></a>
+<p/><strong>virtual bool doChainDecay(int idMother) {return false;} &nbsp;</strong> <br/>
+if true then <code>chainDecay</code> is called, else <code>decay</code>. 
+This method is called for each particle that is to be decayed externally. 
+<br/><code>argument</code><strong> idMother </strong>  :  is the PDG identity code of the decaying mother. 
+   
+   
+ 
+<p/> 
 A sample test program is available in <code>main17.cc</code>, providing 
 a simple example of how to use this facility. 
  
@@ -105,8 +161,10 @@ class. A special class, <code>EvtGenDecays</code>, is provided
 in <code>Pythia8Plugins</code> which can be called after an event has 
 been generated, to perform all remaining decays via EvtGen. An example 
 of how to use this class is provided in <code>main48.cc</code>. 
- 
+A more detailed discussion of some physics considerations, notably 
+event weights for forced decays, can be found in 
+<a href="../pdfdoc/evtgen.pdf">this note</a>. 
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

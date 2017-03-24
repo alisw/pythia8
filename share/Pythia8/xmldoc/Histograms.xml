@@ -151,18 +151,18 @@ is the upper edge of the histogram.
 </argument> 
 </method> 
  
-<method name="Hist::Hist(const Hist& h)"> 
+<method name="Hist::Hist(const Hist&amp; h)"> 
 creates an identical copy of the histogram in the argument, 
 including bin contents. 
 </method> 
  
-<method name="Hist::Hist(string title, const Hist& h)"> 
+<method name="Hist::Hist(string title, const Hist&amp; h)"> 
 creates an identical copy of the histogram in the argument, 
 including bin contents, except that a new title is provided 
 as first argument. 
 </method> 
  
-<method name="Hist& Hist::operator=(const Hist& h)"> 
+<method name="Hist&amp; Hist::operator=(const Hist&amp; h)"> 
 copies all properties of the histogram in the argument, 
 except that the original histogram title is retained. 
 </method> 
@@ -173,7 +173,7 @@ define a histogram that previously was only declared;
 see above for the meaning of the arguments. 
 </method> 
  
-<method name="void Hist::name(string title)"> 
+<method name="void Hist::title(string title)"> 
 change the title of a histogram, but keep other properties unchanged. 
 </method> 
  
@@ -191,7 +191,7 @@ is the amount of weight to be added at this <ei>x</ei> value.
 </argument> 
 </method> 
  
-<method name="friend ostream& operator<<(ostream& os, const Hist& h)"> 
+<method name="friend ostream& operator&lt;&lt;(ostream&amp; os, const Hist&amp; h)"> 
 appends a simple histogram printout (see above for format) to the 
 <code>ostream</code>, while leaving the histogram object itself 
 unchanged. At most 100 columns are allowed to be displayed. 
@@ -201,7 +201,7 @@ up to 200 bins, three by three up to 300, and so on, with the very
 last column possibly summing fewer rows than the others.) 
 </method> 
  
-<method name="void Hist::table(ostream& os = cout, 
+<method name="void Hist::table(ostream&amp; os = cout, 
 bool printOverUnder = false, bool xMidBin = true)"> 
 </method> 
 <methodmore name="void Hist::table(string fileName, 
@@ -222,10 +222,29 @@ just below or above the regular histogram bins.)
 default midpoint value. 
 </methodmore> 
  
-<method name="friend void table(const Hist& h1, const Hist& h2, 
+<method name="void Hist::rivetTable(ostream&amp; os = cout, 
+bool printError = false)"> 
+</method> 
+<methodmore name="void Hist::rivetTable(string fileName, 
+bool printError = false)"> 
+print a five-column table, where the first two columns give the lower 
+and upper borders of each bin, the third one the bin contents, and the 
+fourth and fifth the error (up and down) associated with the contents. 
+This format matches the one that Rivet uses for its histograms. 
+The choice between the two methods is the same as above for the 
+<code>table</code> methods. 
+<br/>The error bins are put to zero by default, since the PYTHIA 
+histogramming is not sophisticated enough to compensate for rescalings 
+or other operations, or for weighted events. With the optional 
+<code>printError = true</code> the error will be taken as the 
+square root of the bin content, as is relevant if this content has 
+the same unit weight for each entry to it. 
+</methodmore> 
+ 
+<method name="friend void table(const Hist&amp; h1, const Hist&amp; h2, 
 ostream& os = cout, bool printOverUnder = false, bool xMidBin = true)"> 
 </method> 
-<methodmore name="friend void table(const Hist& h1, const Hist& h2, 
+<methodmore name="friend void table(const Hist&amp; h1, const Hist&amp; h2, 
 string fileName, bool printOverUnder = false, bool xMidBin = true)"> 
 print a three-column table, where the first column gives the center of 
 each bin and the second and third ones the corresponding bin contents 
@@ -235,6 +254,10 @@ The optional last two arguments allows also underflow and overflow
 contents to be printed, and the <ei>x</ei> to refer to the beginning 
 of the bin rather than the center; see above. 
 </methodmore> 
+ 
+<method name="string Hist::getTitle()"> 
+return the title of the histogram. 
+</method> 
  
 <method name="double Hist::getBinContent(int iBin)"> 
 return the value in bin <code>iBin</code>, ranging from 1 through 
@@ -247,7 +270,7 @@ return the number of entries, i.e. the number of time that
 <code>fill(...)</code> has been called. 
 </method> 
  
-<method name="bool Hist::sameSize(const Hist& h)"> 
+<method name="bool Hist::sameSize(const Hist&amp; h)"> 
 checks that the number of bins and upper and lower limits are the 
 same as in the histogram in the argument. 
 </method> 
@@ -264,69 +287,69 @@ take square root of current contents bin by bin, with negative contents
 set to zero. 
 </method> 
  
-<method name="Hist& Hist::operator+=(const Hist& h)"> 
+<method name="Hist&amp; Hist::operator+=(const Hist&amp; h)"> 
 </method> 
-<methodmore name="Hist& Hist::operator-=(const Hist& h)"> 
+<methodmore name="Hist&amp; Hist::operator-=(const Hist&amp; h)"> 
 adds or subtracts the current histogram by the contents of the 
 histogram in the argument if <code>sameSize(...)</code> is true, 
 else does nothing. 
 </methodmore> 
  
-<method name="Hist& Hist::operator*=(const Hist& h)"> 
+<method name="Hist&amp; Hist::operator*=(const Hist&amp; h)"> 
 </method> 
-<methodmore name="Hist& Hist::operator/=(const Hist& h)"> 
+<methodmore name="Hist&amp; Hist::operator/=(const Hist&amp; h)"> 
 multiplies or divides the current histogram by the contents of the 
 histogram in the argument if <code>sameSize(...)</code> is true, 
 else does nothing. 
 </methodmore> 
  
-<method name="Hist& Hist::operator+=(double f)"> 
+<method name="Hist&amp; Hist::operator+=(double f)"> 
 </method> 
-<methodmore name="Hist& Hist::operator-=(double f)"> 
+<methodmore name="Hist&amp; Hist::operator-=(double f)"> 
 adds or subtracts each bin content by the common offset <ei>f</ei>. 
 </methodmore> 
  
-<method name="Hist& Hist::operator*=(double f)"> 
+<method name="Hist&amp; Hist::operator*=(double f)"> 
 </method> 
-<methodmore name="Hist& Hist::operator*=(double f)"> 
+<methodmore name="Hist&amp; Hist::operator*=(double f)"> 
 multiplies or divides each bin content by the common factor <ei>f</ei>. 
 </methodmore> 
  
-<method name="friend Hist operator+(double f, const Hist& h1)"> 
+<method name="friend Hist operator+(double f, const Hist&amp; h1)"> 
 </method> 
-<methodmore name="friend Hist operator+(const Hist& h1, double f)"> 
+<methodmore name="friend Hist operator+(const Hist&amp; h1, double f)"> 
 </methodmore> 
-<methodmore name="friend Hist operator+(const Hist& h1, const Hist h2)"> 
+<methodmore name="friend Hist operator+(const Hist&amp; h1, const Hist h2)"> 
 add a constant to a histogram or two histograms to each other, bin by bin. 
 </methodmore> 
  
-<method name="friend Hist operator-(double f, const Hist& h1)"> 
+<method name="friend Hist operator-(double f, const Hist&amp; h1)"> 
 </method> 
-<methodmore name="friend Hist operator-(const Hist& h1, double f)"> 
+<methodmore name="friend Hist operator-(const Hist&amp; h1, double f)"> 
 </methodmore> 
-<methodmore name="friend Hist operator-(const Hist& h1, const Hist h2)"> 
+<methodmore name="friend Hist operator-(const Hist&amp; h1, const Hist h2)"> 
 subtract a histogram from a constant, a constant from a histogram, 
 or two histograms from each other, bin by bin. 
 </methodmore> 
  
-<method name="friend Hist operator*(double f, const Hist& h1)"> 
+<method name="friend Hist operator*(double f, const Hist&amp; h1)"> 
 </method> 
-<methodmore name="friend Hist operator*(const Hist& h1, double f)"> 
+<methodmore name="friend Hist operator*(const Hist&amp; h1, double f)"> 
 </methodmore> 
-<methodmore name="friend Hist operator*(const Hist& h1, const Hist h2)"> 
+<methodmore name="friend Hist operator*(const Hist&amp; h1, const Hist h2)"> 
 multiply a constant by a histogram or two histograms by each other, 
 bin by bin. 
 </methodmore> 
  
-<method name="friend Hist operator/(double f, const Hist& h1)"> 
+<method name="friend Hist operator/(double f, const Hist&amp; h1)"> 
 </method> 
-<methodmore name="friend Hist operator/(const Hist& h1, double f)"> 
+<methodmore name="friend Hist operator/(const Hist&amp; h1, double f)"> 
 </methodmore> 
-<methodmore name="friend Hist operator/(const Hist& h1, const Hist h2)"> 
+<methodmore name="friend Hist operator/(const Hist&amp; h1, const Hist h2)"> 
 divide a constant by a histogram, a histogram by a constant, 
 or two histograms by each other, bin by bin. 
 </methodmore> 
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

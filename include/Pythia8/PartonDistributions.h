@@ -1,5 +1,5 @@
 // PartonDistributions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,6 +18,7 @@
 // Lepton: derived class for parton densities inside a lepton.
 // LeptonPoint: derived class for unresolved lepton (mainly dummy).
 // NNPDF: derived class for the NNPDF2.3 QCD+QED PDF sets.
+// CJKL: derived class for CJKL parton densities for photons.
 
 #ifndef Pythia8_PartonDistributions_H
 #define Pythia8_PartonDistributions_H
@@ -42,7 +43,8 @@ public:
     setValenceContent(); idSav = 9; xSav = -1.; Q2Sav = -1.;
     xu = 0.; xd = 0.; xs = 0.; xubar = 0.; xdbar = 0.; xsbar = 0.; xc = 0.;
     xb = 0.; xg = 0.; xlepton = 0.; xgamma = 0.; xuVal = 0.; xuSea = 0.;
-    xdVal = 0.; xdSea = 0.; isSet = true; isInit = false;}
+    xdVal = 0.; xdSea = 0.; isSet = true; isInit = false;
+    hasGammaInLepton = false; }
 
   // Destructor.
   virtual ~PDF() {}
@@ -57,7 +59,7 @@ public:
   // Allow extrapolation beyond boundaries. This is optional.
   virtual void setExtrapolate(bool) {}
 
-  // Read out parton density
+  // Read out parton density.
   virtual double xf(int id, double x, double Q2);
 
   // Read out valence and sea part of parton densities.
@@ -73,6 +75,27 @@ public:
   // Return quark masses used in the PDF fit (LHAPDF6 only).
   virtual double mQuarkPDF(int) { return -1.;}
 
+  // Approximate photon PDFs by decoupling the scale and x-dependence.
+  virtual double gammaPDFxDependence(int, double) { return 0.; }
+
+  // Provide the reference scale for logarithmic Q^2 evolution for photons.
+  virtual double gammaPDFRefScale(int) { return 0.; }
+
+  // Sample the valence content for photons.
+  virtual int sampleGammaValFlavor(double) { return 0.; }
+
+  // The total x-integrated PDFs. Relevant for MPIs with photon beams.
+  virtual double xfIntegratedTotal(double) { return 0.; }
+
+  // Return the sampled value for x_gamma.
+  virtual double xGamma(){ return 1.; }
+
+  // Normal PDFs unless gamma inside lepton -> an overestimate for sampling.
+  virtual double xfMax(int id, double x, double Q2) { return xf( id, x, Q2); }
+
+  // Normal PDFs unless gamma inside lepton -> Do not sample x_gamma.
+  virtual double xfSame(int id, double x, double Q2) { return xf( id, x, Q2); }
+
 protected:
 
   // Allow the LHAPDF class to access these methods.
@@ -85,11 +108,23 @@ protected:
          xuVal, xuSea, xdVal, xdSea;
   bool   isSet, isInit;
 
+  // More valence and sea flavors for photon PDFs.
+  double xsVal, xcVal, xbVal, xsSea, xcSea, xbSea;
+
+  // True if a photon beam inside a lepton beam, otherwise set false.
+  bool hasGammaInLepton;
+
   // Resolve valence content for assumed meson. Possibly modified later.
   void setValenceContent();
 
   // Update parton densities.
   virtual void xfUpdate(int id, double x, double Q2) = 0;
+
+  // Small routine for error printout, depending on infoPtr existing or not.
+  void printErr(string errMsg, Info* infoPtr = 0) {
+    if (infoPtr !=0) infoPtr->errorMsg(errMsg);
+    else cout << errMsg << endl;
+  }
 
 };
 
@@ -160,6 +195,10 @@ public:
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
     : PDF(idBeamIn) {init( iFitIn,  xmlPath, infoPtr);}
 
+  // Constructor with a stream.
+  MSTWpdf(int idBeamIn, istream& is, Info* infoPtr = 0)
+    : PDF(idBeamIn) {init( is, infoPtr);}
+
 private:
 
   // Constants: could only be changed in the code itself.
@@ -173,6 +212,9 @@ private:
 
   // Initialization of data array.
   void init( int iFitIn, string xmlPath, Info* infoPtr);
+
+  // Initialization through a stream.
+  void init( istream& is, Info* infoPtr);
 
   // Update PDF values.
   void xfUpdate(int , double x, double Q2);
@@ -196,22 +238,36 @@ private:
 //==========================================================================
 
 // The CTEQ6pdf class.
-// Sets available:
+// Proton sets available:
 // iFit = 1 : CTEQ6L
 // iFit = 2 : CTEQ6L1
 // iFit = 3 : CTEQ66.00 (NLO, central member)
 // iFit = 4 : CT09MC1
 // iFit = 5 : CT09MC2
-// iFit = 6 : CT09MCS (not yet implemented)
+// iFit = 6 : CT09MCS
+// Pomeron sets available (uses same .pds file format as CTEQ6pdf) :
+// iFit = 11: ACTWB14
+// iFit = 12: ACTWD14
+// iFit = 13: ACTWSG14
+// iFit = 14: ACTWD19
 
 class CTEQ6pdf : public PDF {
 
 public:
 
   // Constructor.
-  CTEQ6pdf(int idBeamIn = 2212, int iFitIn = 1,
+  CTEQ6pdf(int idBeamIn = 2212, int iFitIn = 1, double rescaleIn = 1.,
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-    : PDF(idBeamIn) {init( iFitIn, xmlPath, infoPtr);}
+    : PDF(idBeamIn), doExtraPol(false) {rescale = rescaleIn,
+    init( iFitIn, xmlPath, infoPtr);}
+
+  // Constructor with a stream.
+  CTEQ6pdf(int idBeamIn, istream& is, bool isPdsGrid = false,
+    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false) {
+    init( is, isPdsGrid, infoPtr);}
+
+  // Allow extrapolation beyond boundaries. This is optional.
+  void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
 
 private:
 
@@ -219,14 +275,18 @@ private:
   static const double EPSILON, XPOWER;
 
   // Data read in from grid file or set at initialization.
+  bool   doExtraPol;
   int    iFit, order, nQuark, nfMx, mxVal, nX, nT, nG,
          iGridX, iGridQ, iGridLX, iGridLQ;
-  double lambda, mQ[7], qIni, qMax, tv[26], xMin, xv[202], upd[57773],
+  double rescale, lambda, mQ[7], qIni, qMax, tv[26], xMin, xv[202], upd[57773],
          xvpow[202], xMinEps, xMaxEps, qMinEps, qMaxEps, fVec[5],
-         tConst[9], xConst[9], xLast, qLast;
+         tConst[9], xConst[9], dlx, xLast, qLast;
 
   // Initialization of data array.
   void init( int iFitIn, string xmlPath, Info* infoPtr);
+
+  // Initialization through a stream.
+  void init( istream& is, bool isPdsGrid, Info* infoPtr);
 
   // Update PDF values.
   void xfUpdate(int id, double x, double Q2);
@@ -250,8 +310,8 @@ class ProtonPoint : public PDF {
 public:
 
   // Constructor.
-  ProtonPoint(int idBeamIn = 2212, Info* infoPtrIn = 0) :
-              PDF(idBeamIn), m_infoPtr(infoPtrIn) {}
+  ProtonPoint(int idBeamIn = 2212, Info* infoPtrIn = 0)
+    : PDF(idBeamIn), infoPtr(infoPtrIn) {}
 
 private:
 
@@ -265,7 +325,7 @@ private:
   double phiFunc(double x, double Q);
 
   // Info and errors
-  Info* m_infoPtr;
+  Info* infoPtr;
 
 };
 
@@ -334,11 +394,21 @@ public:
   // Constructor.
  PomH1FitAB(int idBeamIn = 990, int iFit = 1, double rescaleIn = 1.,
    string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-   : PDF(idBeamIn) {rescale = rescaleIn; init( iFit, xmlPath, infoPtr);}
+   : PDF(idBeamIn), doExtraPol(false)  {rescale = rescaleIn;
+   init( iFit, xmlPath, infoPtr);}
+
+  // Constructor with a stream.
+ PomH1FitAB(int idBeamIn, double rescaleIn, istream& is,
+   Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false) {
+   rescale = rescaleIn; init( is, infoPtr);}
+
+  // Allow extrapolation beyond boundaries. This is optional.
+  void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
 
 private:
 
   // Limits for grid in x, in Q2, and data in (x, Q2).
+  bool   doExtraPol;
   int    nx, nQ2;
   double rescale, xlow, xupp, dx, Q2low, Q2upp, dQ2;
   double gluonGrid[100][30];
@@ -346,6 +416,9 @@ private:
 
   // Initialization of data array.
   void init( int iFit, string xmlPath, Info* infoPtr);
+
+  // Initialization through a stream.
+  void init( istream& is, Info* infoPtr);
 
   // Update PDF values.
   void xfUpdate(int , double x, double );
@@ -364,13 +437,23 @@ class PomH1Jets : public PDF {
 public:
 
   // Constructor.
-  PomH1Jets(int idBeamIn = 990,  double rescaleIn = 1.,
-   string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-   : PDF(idBeamIn) {rescale = rescaleIn; init( xmlPath, infoPtr);}
+  PomH1Jets(int idBeamIn = 990, int iFit = 1, double rescaleIn = 1.,
+    string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
+    : PDF(idBeamIn), doExtraPol(false) {rescale = rescaleIn;
+    init( iFit, xmlPath, infoPtr);}
+
+  // Constructor with a stream.
+  PomH1Jets(int idBeamIn, double rescaleIn, istream& is,
+    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false) {rescale = rescaleIn;
+    init( is, infoPtr);}
+
+  // Allow extrapolation beyond boundaries. This is optional.
+  void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
 
 private:
 
   // Arrays for grid in x, in Q2, and data in (x, Q2).
+  bool   doExtraPol;
   double rescale;
   double xGrid[100];
   double Q2Grid[88];
@@ -379,7 +462,10 @@ private:
   double charmGrid[100][88];
 
   // Initialization of data array.
-  void init( string xmlPath, Info* infoPtr);
+  void init( int iFit, string xmlPath, Info* infoPtr);
+
+  // Initialization through a stream.
+  void init( istream& is, Info* infoPtr);
 
   // Update PDF values.
   void xfUpdate(int id, double x, double );
@@ -397,6 +483,10 @@ public:
   // Constructor.
   Lepton(int idBeamIn = 11) : PDF(idBeamIn) {}
 
+  // Constructor with further info.
+  Lepton(int idBeamIn, double Q2maxGammaIn, Info* infoPtrIn) : PDF(idBeamIn) {
+    Q2maxGamma = Q2maxGammaIn; infoPtr = infoPtrIn; }
+
 private:
 
   // Constants: could only be changed in the code itself.
@@ -406,7 +496,10 @@ private:
   void xfUpdate(int id, double x, double Q2);
 
   // The squared lepton mass, set at initialization.
-  double m2Lep;
+  double m2Lep, Q2maxGamma;
+
+  // Pointer to info, needed to get sqrt(s) to fix x_gamma limits.
+  Info* infoPtr;
 
 };
 
@@ -470,6 +563,11 @@ public:
     fQ2Grid(NULL), fLogQ2Grid(NULL), fRes(NULL) {
     init( iFitIn, xmlPath, infoPtr); };
 
+  // Constructor with a stream.
+  NNPDF(int idBeamIn, istream& is, Info* infoPtr = 0)
+    : PDF(idBeamIn), fPDFGrid(NULL), fXGrid(NULL), fLogXGrid(NULL),
+    fQ2Grid(NULL), fLogQ2Grid(NULL), fRes(NULL) { init( is, infoPtr); };
+
   // Destructor.
   ~NNPDF() {
     if (fPDFGrid) {
@@ -508,6 +606,9 @@ private:
 
   // Initialization of data array.
   void init( int iFitIn, string xmlPath, Info* infoPtr);
+
+  // Initialization through a stream.
+  void init( istream& is, Info* infoPtr);
 
   // Update PDF values.
   void xfUpdate(int id, double x, double Q2);
@@ -589,6 +690,177 @@ private:
   PDF   *pdfPtr;
   Info  *infoPtr;
   string libName;
+
+};
+
+//==========================================================================
+
+// Gives the CJKL leading order parton distribution function set
+// in parametrized form for the real photons. Authors: F.Cornet, P.Jankowski,
+// M.Krawczyk and A.Lorca, Phys. Rev. D68: 014010, 2003.
+
+class CJKL : public PDF {
+
+public:
+
+  // Constructor. Needs the randon number generator to sample valence content.
+  CJKL(int idBeamIn = 22, Rndm* rndmPtrIn = 0 ) : PDF(idBeamIn) {
+    rndmPtr = rndmPtrIn; }
+
+  // Functions to approximate pdfs for ISR.
+  double gammaPDFxDependence(int id, double);
+  double gammaPDFRefScale(int);
+
+  // Set the valence content for photons.
+  int sampleGammaValFlavor(double Q2);
+
+  // The total x-integrated PDFs. Relevant for MPIs with photon beams.
+  double xfIntegratedTotal(double Q2);
+
+private:
+
+  // Parameters related to the fit.
+  static const double ALPHAEM, Q02, Q2MIN, Q2REF, LAMBDA, MC, MB;
+
+  // Pointer to random number generator used for valence sampling.
+  Rndm *rndmPtr;
+
+  // Update PDF values.
+  void xfUpdate(int , double x, double Q2);
+
+  // Functions for updating the point-like part.
+  double pointlikeG(double x, double s);
+  double pointlikeU(double x, double s);
+  double pointlikeD(double x, double s);
+  double pointlikeC(double x, double s, double Q2);
+  double pointlikeB(double x, double s, double Q2);
+
+  // Functions for updating the hadron-like part.
+  double hadronlikeG(double x, double s);
+  double hadronlikeSea(double x, double s);
+  double hadronlikeVal(double x, double s);
+  double hadronlikeC(double x, double s, double Q2);
+  double hadronlikeB(double x, double s, double Q2);
+
+};
+
+//==========================================================================
+
+// The LHAGrid1 can be used to read files in the LHAPDF6 lhagrid1 format,
+// assuming that the same x grid is used for all Q subgrids.
+// Results are not identical with LHAPDF6, owing do different interpolation.
+
+class LHAGrid1 : public PDF {
+
+public:
+
+  // Constructor.
+  LHAGrid1(int idBeamIn = 2212, string pdfWord = "void",
+    string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
+    : PDF(idBeamIn), doExtraPol(false), pdfGrid(NULL), pdfSlope(NULL) {
+    init( pdfWord, xmlPath, infoPtr); };
+
+  // Constructor with a stream.
+  LHAGrid1(int idBeamIn, istream& is, Info* infoPtr = 0)
+    : PDF(idBeamIn), doExtraPol(false), pdfGrid(NULL), pdfSlope(NULL) {
+    init( is, infoPtr); };
+
+  // Destructor.
+  ~LHAGrid1() { if (pdfGrid) { for (int iid = 0; iid < 12; ++iid) {
+    for (int ix = 0; ix < nx; ++ix) delete[] pdfGrid[iid][ix];
+    delete[] pdfGrid[iid]; } delete[] pdfGrid; }
+    if (pdfSlope) { for (int iid = 0; iid < 12; ++iid) delete[] pdfSlope[iid];
+    delete[] pdfSlope;} };
+
+  // Allow extrapolation beyond boundaries. This is optional.
+  void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
+
+private:
+
+  // Variables to be set during code initialization.
+  bool   doExtraPol;
+  int    nx, nq, nqSub;
+  vector<int> nqSum;
+  double xMin, xMax, qMin, qMax, pdfVal[12];
+  vector<double> xGrid, lnxGrid, qGrid, lnqGrid, qDiv;
+  double*** pdfGrid;
+  double** pdfSlope;
+
+  // Initialization of data array.
+  void init( string pdfSet, string xmlPath, Info* infoPtr);
+
+  // Initialization through a stream.
+  void init( istream& is, Info* infoPtr);
+
+  // Update PDF values.
+  void xfUpdate(int id, double x, double Q2);
+
+  // Interpolation in the grid for a given PDF flavour.
+  void xfxevolve(double x, double Q2);
+
+};
+
+//==========================================================================
+
+// Convolution with photon flux from leptons and photon PDFs.
+// Photon flux from equivalent photon approximation (EPA).
+// Contains a pointer to a photon PDF set and samples the
+// convolution integral event-by-event basis.
+// Includes also a overestimate for the PDF set in order to set up
+// the phase-space sampling correctly.
+
+class Lepton2gamma : public PDF {
+
+public:
+
+  // Constructor.
+  Lepton2gamma(int idBeamIn, double m2leptonIn, double Q2maxGamma,
+    PDF* gammaPDFPtrIn, Info* infoPtrIn, Rndm* rndmPtrIn) : PDF(idBeamIn) {
+    m2lepton = m2leptonIn; Q2max = Q2maxGamma; gammaPDFPtr = gammaPDFPtrIn;
+    infoPtr = infoPtrIn; rndmPtr = rndmPtrIn; hasGammaInLepton = true;
+    sampleXgamma = true; }
+
+  // Overload the member function definitions where relevant.
+  void xfUpdate(int id, double x, double Q2);
+  double xGamma(){ return xGm; }
+  double xfMax(int id, double x, double Q2);
+  double xfSame(int id, double x, double Q2);
+
+private:
+
+  // Parameters for convolution.
+  static const double ALPHAEM, Q2MIN;
+  double m2lepton, Q2max, xGm;
+
+  // Sample new value for x_gamma.
+  bool sampleXgamma;
+
+  // Photon PDFs with the photon flux is convoluted with.
+  PDF* gammaPDFPtr;
+
+  // Pointer to random number generator used for sampling x_gamma.
+  Rndm* rndmPtr;
+
+  // Pointer to info, needed to get sqrt(s) to fix x_gamma limits.
+  Info* infoPtr;
+
+};
+
+//==========================================================================
+
+// Gives electron (or other lepton) parton distribution when unresolved.
+
+class GammaPoint : public PDF {
+
+public:
+
+  // Constructor.
+  GammaPoint(int idBeamIn = 22) : PDF(idBeamIn) {}
+
+private:
+
+  // Update PDF values in trivial way.
+  void xfUpdate(int , double , double ) { xgamma = 1.;}
 
 };
 

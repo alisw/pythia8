@@ -1,5 +1,5 @@
 // TimeShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -67,9 +67,9 @@ public:
   // Properties specific to current trial emission.
   int    flavour, iAunt;
   double mRad, m2Rad, mRec, m2Rec, mDip, m2Dip, m2DipCorr,
-         pT2, m2, z, mFlavour, asymPol, flexFactor;
+         pT2, m2, z, mFlavour, asymPol, flexFactor, pAccept;
 
-} ;
+};
 
 //==========================================================================
 
@@ -136,45 +136,63 @@ public:
 
   // Select next pT in downwards evolution.
   virtual double pTnext( Event& event, double pTbegAll, double pTendAll,
-    bool isFirstTrial = false);
+    bool isFirstTrial = false, bool doTrialIn = false);
 
   // ME corrections and kinematics that may give failure.
   virtual bool branch( Event& event, bool isInterleaved = false);
 
+  // Initialize data members for calculation of uncertainty bands.
+  bool initUncertainties();
+
+  // Calculate uncertainty-band weights for accepted/rejected trial branching.
+  void calcUncertainties(bool accept, double pAccept,
+    TimeDipoleEnd* dip, Particle* radPtr, Particle* emtPtr);
+
   // Tell which system was the last processed one.
-  int system() const {return iSysSel;};
+  virtual int system() const {return iSysSel;};
 
   // Tell whether FSR has done a weak emission.
   bool getHasWeaklyRadiated() {return hasWeaklyRadiated;}
 
   // Print dipole list; for debug mainly.
-  virtual void list( ostream& os = cout) const;
+  virtual void list() const;
 
   // Functions to allow usage of shower kinematics, evolution variables,
   // and splitting probabilities outside of shower.
   // Virtual so that shower plugins can overwrite these functions.
   // This makes it possible for another piece of the code to request
   // these - which is very convenient for merging.
-  // Clustering kinematics - as needed form merging.
-  virtual Event clustered( const Event&, string, int, int, int)
+  // Function variable names are not included to avoid compiler warnings.
+  // Please see the documentation under "Implement New Showers" for details.
+
+  // Return clustering kinematics - as needed for merging.
+  virtual Event clustered( const Event& , int , int , int , string )
     { return Event();}
-  // State after a branching, as needed to evaluate more complicated kernels.
-  virtual Event branched( const Event&, int, int, int, int, double,
-    double, double)
-    { return Event();}
-  // Easy access to evolution variable.
-  virtual double pT2Times ( const Particle&, const Particle&,
-    const Particle&)
-    { return 0.;}
-  // Easy access to auxiliary variable.
-  virtual double zTimes ( const Particle&, const Particle&,
-    const Particle&)
-    { return 0.;}
-  // Easy access to identifier of a splitting.
-  virtual string getSplittingName( const Event&, int, int)
+
+  // Return the evolution variable(s).
+  // Important note: this map must contain the following entries
+  // - a key "t" for the value of the shower evolution variable;
+  // - a key "tRS" for the value of the shower evolution variable
+  //   from which the shower would be restarted after a branching;
+  // - a key "scaleAS" for the argument of alpha_s used for the branching;
+  // - a key "scalePDF" for the argument of the PDFs used for the branching.
+  // Usage: getStateVariables( event, iRad, iEmt, iRec,  name)
+  virtual map<string, double> getStateVariables (const Event& , int , int ,
+    int , string ) { return map<string,double>();}
+
+  // Check if attempted clustering is handled by timelike shower
+  // Usage: isTimelike( event, iRad, iEmt, iRec, name)
+  virtual bool isTimelike(const Event& , int , int , int , string )
+    { return false; }
+
+  // Return a string identifier of a splitting.
+  // Usage: getSplittingName( event, iRad, iEmt, iRec)
+  virtual string getSplittingName( const Event& , int , int , int )
     { return "";}
-  // Easy access to splitting probability.
-  virtual double getSplittingProb( const Event&, int, int, int )
+
+  // Return the splitting probability.
+  // Usage: getSplittingProb( event, iRad, iEmt, iRec)
+  virtual double getSplittingProb( const Event& , int , int , int , string )
     { return 0.;}
 
 protected:
@@ -216,30 +234,34 @@ private:
 
   // Constants: could only be changed in the code itself.
   static const double MCMIN, MBMIN, SIMPLIFYROOT, XMARGIN, XMARGINCOMB,
-         TINYPDF, LARGEM2, THRESHM2, LAMBDA3MARGIN, WEAKPSWEIGHT, WG2QEXTRA;
+         TINYPDF, LARGEM2, THRESHM2, LAMBDA3MARGIN, WEAKPSWEIGHT, WG2QEXTRA,
+         REJECTFACTOR, PROBLIMIT;
   // Rescatter: try to fix up recoil between systems
   static const bool   FIXRESCATTER, VETONEGENERGY;
   static const double MAXVIRTUALITYFRACTION, MAXNEGENERGYFRACTION;
 
   // Initialization data, normally only set once.
-  bool   doQCDshower, doQEDshowerByQ, doQEDshowerByL, doQEDshowerByGamma,
-         doWeakShower, doMEcorrections, doMEafterFirst, doPhiPolAsym,
-         doInterleave, allowBeamRecoil, dampenBeamRecoil, recoilToColoured,
-         useFixedFacScale, allowRescatter, canVetoEmission, doHVshower,
-         brokenHVsym, globalRecoil, useLocalRecoilNow, doSecondHard,
-         singleWeakEmission, alphaSuseCMW, vetoWeakJets, allowMPIdipole;
+  bool   doQCDshower, doQEDshowerByQ, doQEDshowerByL, doQEDshowerByOther,
+         doQEDshowerByGamma, doWeakShower, doMEcorrections, doMEextended,
+         doMEafterFirst, doPhiPolAsym, doPhiPolAsymHard, doInterleave,
+         allowBeamRecoil, dampenBeamRecoil, recoilToColoured, useFixedFacScale,
+         allowRescatter, canVetoEmission, doHVshower, brokenHVsym,
+         globalRecoil, useLocalRecoilNow, doSecondHard, hasUserHooks,
+         singleWeakEmission, alphaSuseCMW, vetoWeakJets, allowMPIdipole,
+         weakExternal, recoilDeadCone, doUncertainties, uVarMuSoftCorr,
+         uVarMPIshowers;
   int    pTmaxMatch, pTdampMatch, alphaSorder, alphaSnfmax, nGluonToQuark,
          weightGluonToQuark, alphaEMorder, nGammaToQuark, nGammaToLepton,
-         nCHV, idHV, nMaxGlobalRecoil, weakMode;
+         nCHV, idHV, alphaHVorder, nMaxGlobalRecoil, weakMode;
   double pTdampFudge, mc, mb, m2c, m2b, renormMultFac, factorMultFac,
          fixedFacScale2, alphaSvalue, alphaS2pi, Lambda3flav, Lambda4flav,
          Lambda5flav, Lambda3flav2, Lambda4flav2, Lambda5flav2,
          scaleGluonToQuark, extraGluonToQuark, pTcolCutMin, pTcolCut,
          pT2colCut, pTchgQCut, pT2chgQCut, pTchgLCut, pT2chgLCut,
          pTweakCut, pT2weakCut, mMaxGamma, m2MaxGamma, octetOniumFraction,
-         octetOniumColFac, mZ, gammaZ, thetaWRat, mW, gammaW, CFHV,
-         alphaHVfix, pThvCut, pT2hvCut, mHV, pTmaxFudgeMPI,
-         weakEnhancement, vetoWeakDeltaR2;
+         octetOniumColFac, mZ, gammaZ, thetaWRat, mW, gammaW, CFHV, nFlavHV,
+         alphaHVfix, LambdaHV, pThvCut, pT2hvCut, mHV, pTmaxFudgeMPI,
+         weakEnhancement, vetoWeakDeltaR2, dASmax, cNSpTmin;
 
   // alphaStrong and alphaEM calculations.
   AlphaStrong alphaS;
@@ -248,6 +270,14 @@ private:
   // Some current values.
   bool   dopTlimit1, dopTlimit2, dopTdamp, hasWeaklyRadiated;
   double pT2damp, kRad, kEmt, pdfScale2;
+
+  // Bookkeeping of enhanced  actual or trial emissions (see EPJC (2013) 73).
+  bool doTrialNow, canEnhanceEmission, canEnhanceTrial, canEnhanceET,
+       doUncertaintiesNow;
+  string splittingNameNow, splittingNameSel;
+  map< double, pair<string,double> > enhanceFactors;
+  void storeEnhanceFactor(double pT2, string name, double enhanceFactorIn)
+    { enhanceFactors.insert(make_pair(pT2,make_pair(name,enhanceFactorIn)));}
 
   // All dipole ends and a pointer to the selected hardest dipole end.
   vector<TimeDipoleEnd> dipEnd;
@@ -261,6 +291,8 @@ private:
     bool limitPTmaxIn = true);
   void setupWeakdip( int iSys, int i,int weakType, Event& event,
     bool limitPTmaxIn = true);
+  // Special setup for weak dipoles if already specified in info ptr.
+  void setupWeakdipExternal(Event& event, bool limitPTmaxIn = true);
   void setupHVdip( int iSys, int i, Event& event, bool limitPTmaxIn = true);
 
   // Evolve a QCD dipole end.
@@ -322,6 +354,16 @@ private:
 
   // Pointer to MergingHooks object for NLO merging.
   MergingHooks* mergingHooksPtr;
+
+  // 2 -> 2 information needed for the external weak setup.
+  vector<Vec4> weakMomenta;
+  vector<int> weak2to2lines;
+  int weakHardSize;
+
+  // Store uncertainty variations relevant to TimeShower.
+  int nUncertaintyVariations, nVarQCD, uVarNflavQ;
+  map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varG2QQmuRfac, varX2XGmuRfac;
+  map<int,double> varG2GGcNS, varQ2QGcNS, varG2QQcNS, varX2XGcNS;
 
 };
 

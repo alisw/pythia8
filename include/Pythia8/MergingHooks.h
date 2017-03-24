@@ -1,5 +1,5 @@
 // MergingHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -183,10 +183,12 @@ public:
     doRemoveDecayProducts(false),
     doOrderHistoriesSave(true),
     doCutOnRecStateSave(false),
-    doWClusteringSave(false),
+    doWeakClusteringSave(false),
     doSQCDClusteringSave(false),
     doIgnoreEmissionsSave(true),
-    doIgnoreStepSave(true) {
+    doIgnoreStepSave(true),
+    hasJetMaxLocal(false),
+    includeWGTinXSECSave(false) {
       inputEvent = Event(); resonances.resize(0); infoPtr = 0;
       particleDataPtr = 0; partonSystemsPtr = 0;}
 
@@ -278,10 +280,11 @@ public:
     return ((tmsListSave.size() == 3) ? tmsListSave[2] : 0.);
   }
   // Function returning the value of the maximal number of merged jets.
-  int nMaxJets() { return nJetMaxSave;}
+  int nMaxJets() { return (hasJetMaxLocal) ? nJetMaxLocal : nJetMaxSave;}
   // Function returning the value of the maximal number of merged jets,
   // for which NLO corrections are available.
-  int nMaxJetsNLO() { return nJetMaxNLOSave;}
+  int nMaxJetsNLO()
+    { return (hasJetMaxLocal) ? nJetMaxNLOLocal : nJetMaxNLOSave;}
   // Function to return hard process string.
   string getProcessString() { return processSave;}
   // Function to return the number of outgoing partons in the core process
@@ -334,6 +337,9 @@ public:
   // Return the number clustering steps that have actually been done.
   int nRecluster() { return nReclusterSave;}
 
+  // Return number of requested additional jets on top of the Born process.
+  int nRequested() { return nRequestedSave;}
+
   //----------------------------------------------------------------------//
   // Output functions to analyse/prepare event for merging
   //----------------------------------------------------------------------//
@@ -356,7 +362,8 @@ public:
   bool isInHard( int iPos, const Event& event);
 
   // Function to return the number of clustering steps for the current event
-  int getNumberOfClusteringSteps(const Event& event);
+  int getNumberOfClusteringSteps(const Event& event,
+    bool resetNjetMax = false);
 
   //----------------------------------------------------------------------//
   // Functions to steer contruction of histories
@@ -372,9 +379,9 @@ public:
   void allowCutOnRecState( bool doCutOnRecStateIn) {
     doCutOnRecStateSave = doCutOnRecStateIn; }
 
-  // Function to allow final state clusterings of W-bosons
-  void doWClustering( bool doWClusteringIn ) {
-    doWClusteringSave = doWClusteringIn; }
+  // Function to allow final state clusterings of weak bosons
+  void doWeakClustering( bool doWeakClusteringIn ) {
+    doWeakClusteringSave = doWeakClusteringIn; }
 
   //----------------------------------------------------------------------//
   // Functions used as default merging scales
@@ -407,12 +414,29 @@ public:
   // Function to check if emission should be rejected.
   bool doVetoEmission( const Event& );
 
- //----------------------------------------------------------------------//
+  //----------------------------------------------------------------------//
   // Functions used as clusterings / probabilities
   //----------------------------------------------------------------------//
 
   bool useShowerPluginSave;
   virtual bool useShowerPlugin() { return useShowerPluginSave; }
+
+  //----------------------------------------------------------------------//
+  // Functions to retrieve if merging weight should countin the internal
+  // cross section and the event weight.
+  //----------------------------------------------------------------------//
+
+  bool includeWGTinXSEC() { return includeWGTinXSECSave;}
+
+  //----------------------------------------------------------------------//
+  // Functions to retrieve event veto information
+  //----------------------------------------------------------------------//
+
+  int nHardNow()      { return nHardNowSave; }
+  double tmsHardNow() { return tmsHardNowSave; }
+  int nJetsNow()      { return nJetNowSave; }
+  double tmsNow()     { return tmsNowSave;}
+
 
 protected:
 
@@ -439,6 +463,7 @@ protected:
   AlphaStrong AlphaS_FSRSave;
   AlphaStrong AlphaS_ISRSave;
   AlphaEM AlphaEM_FSRSave;
+  AlphaEM AlphaEM_ISRSave;
 
   // Saved path to LHE file for more automated merging
   string lheInputFile;
@@ -452,7 +477,7 @@ protected:
          resetHardQFacSave;
   int    unorderedScalePrescipSave, unorderedASscalePrescipSave,
          unorderedPDFscalePrescipSave, incompleteScalePrescipSave,
-         ktTypeSave, nReclusterSave, nQuarksMergeSave;
+         ktTypeSave, nReclusterSave, nQuarksMergeSave, nRequestedSave;
   double scaleSeparationFactorSave, nonJoinedNormSave,
          fsrInRecNormSave, herwigAcollFSRSave, herwigAcollISRSave,
          pT0ISRSave, pTcutSave;
@@ -463,6 +488,8 @@ protected:
 
   // Flag to only do phase space cut, rejecting events below the tms cut.
   bool   doEstimateXSection;
+
+  bool applyVeto;
 
   // Save input event in case decay products need to be detached.
   Event inputEvent;
@@ -481,6 +508,7 @@ protected:
   double tmsValueSave, DparameterSave;
   int nJetMaxSave;
   int nJetMaxNLOSave;
+
   string processSave;
 
   // List of cut values to used to define a merging scale. Ordering:
@@ -499,7 +527,7 @@ protected:
   bool doCutOnRecStateSave;
 
   // INTERNAL Hooks to allow clustering W bosons.
-  bool doWClusteringSave, doSQCDClusteringSave;
+  bool doWeakClusteringSave, doSQCDClusteringSave;
 
   // Store / get first scale in PDF's that Pythia should have used
   double muFSave;
@@ -520,6 +548,17 @@ protected:
   // Save CKKW-L weight / O(\alpha_s) weight.
   double weightCKKWLSave, weightFIRSTSave;
 
+  // Local copies of nJetMax inputs, if recalculation is necessary.
+  int nJetMaxLocal;
+  int nJetMaxNLOLocal;
+  bool hasJetMaxLocal;
+
+  // Event veto and hard process information, if veto should not applied be
+  // directly, but is up to the user.
+  bool includeWGTinXSECSave;
+  int nHardNowSave, nJetNowSave;
+  double tmsHardNowSave, tmsNowSave;
+
   //----------------------------------------------------------------------//
   // Generic setup functions
   //----------------------------------------------------------------------//
@@ -527,8 +566,7 @@ protected:
   // Functions for internal use inside Pythia source code
   // Initialize.
   void init( Settings settings, Info* infoPtrIn,
-    ParticleData* particleDataPtrIn, PartonSystems* partonSystemsPtrIn,
-    ostream& os = cout);
+    ParticleData* particleDataPtrIn, PartonSystems* partonSystemsPtrIn);
 
   // Function storing candidates for the hard process in the current event
   // Needed in order not to cluster members of the core process
@@ -552,6 +590,7 @@ protected:
   AlphaStrong* AlphaS_FSR() { return &AlphaS_FSRSave;}
   AlphaStrong* AlphaS_ISR() { return &AlphaS_ISRSave;}
   AlphaEM* AlphaEM_FSR() { return &AlphaEM_FSRSave;}
+  AlphaEM* AlphaEM_ISR() { return &AlphaEM_ISRSave;}
 
   // Functions to return advanced merging switches
   // Include masses in definition of evolution pT and splitting kernels
@@ -641,7 +680,7 @@ protected:
   bool allowCutOnRecState() { return doCutOnRecStateSave;}
 
   // INTERNAL Hooks to allow clustering W bosons.
-  bool doWClustering() { return doWClusteringSave;}
+  bool doWeakClustering() { return doWeakClusteringSave;}
   // INTERNAL Hooks to allow clustering clustering of gluons to squarks.
   bool doSQCDClustering() { return doSQCDClusteringSave;}
 
@@ -650,19 +689,24 @@ protected:
   double muR() { return (muRSave > 0.) ? muRSave : infoPtr->QRen();}
   // Store / get factorisation scale used in matrix element calculation.
   double muFinME() {
+    // Start with checking the event attribute called "muf".
     string mus = infoPtr->getEventAttribute("muf2",true);
     double mu  = (mus.empty()) ? 0. : atof((char*)mus.c_str());
     mu = sqrt(mu);
+    // Check the scales tag of the event.
     if (infoPtr->scales) mu = infoPtr->getScalesAttribute("muf");
     return (mu > 0.) ? mu : (muFinMESave > 0.) ? muFinMESave : infoPtr->QFac();
   }
   double muRinME() {
+    // Start with checking the event attribute called "mur2".
     string mus = infoPtr->getEventAttribute("mur2",true);
     double mu  = (mus.empty()) ? 0. : atof((char*)mus.c_str());
     mu = sqrt(mu);
+    // Check the scales tag of the event.
     if (infoPtr->scales) mu = infoPtr->getScalesAttribute("mur");
     return (mu > 0.) ? mu : (muRinMESave > 0.) ? muRinMESave : infoPtr->QRen();
   }
+
 
   //----------------------------------------------------------------------//
   // Functions to steer merging code
@@ -697,9 +741,7 @@ protected:
   double kTdurham(const Particle& RadAfterBranch,
     const Particle& EmtAfterBranch, int Type, double D );
   // Function to compute "pythia pT separation" from Particle input
-
-  double rhoPythia(const Particle& RadAfterBranch,
-    const Particle& EmtAfterBranch, const Particle& RecAfterBranch,
+  double rhoPythia(const Event& event, int rad, int emt, int rec,
     int ShowerType);
 
   // Function to find a colour (anticolour) index in the input event,
@@ -722,11 +764,24 @@ protected:
   // Set CKKW-L weight.
   void setWeightCKKWL( double weightIn){
     weightCKKWLSave = weightIn;
-    infoPtr->setWeightCKKWL(weightIn); }
+    if ( !includeWGTinXSEC() ) infoPtr->setWeightCKKWL(weightIn); }
   // Set O(\alpha_s) weight.
   void setWeightFIRST( double weightIn){
     weightFIRSTSave = weightIn;
     infoPtr->setWeightFIRST(weightIn); }
+
+
+  //----------------------------------------------------------------------//
+  // Functions and members to store the event veto information
+  //----------------------------------------------------------------------//
+
+  // Set CKKWL veto information.
+  void setEventVetoInfo(int nJetNowIn, double tmsNowIn) {
+    nJetNowSave = nJetNowIn; tmsNowSave = tmsNowIn; }
+
+  // Set the hard process information.
+  void setHardProcessInfo(int nHardNowIn, double tmsHardNowIn) {
+    nHardNowSave = nHardNowIn; tmsHardNowSave = tmsHardNowIn; }
 
 };
 

@@ -200,13 +200,13 @@ is needed. This is referred to as colour reconnection. Several different
 models for colour reconnection are implemented, see 
 <aloc href="ColourReconnection">Colour Reconection</aloc>. 
  
-<modeopen name="BeamRemnants:remnantMode" default="0" min="0" max="1"> 
+<modepick name="BeamRemnants:remnantMode" default="0" min="0" max="1"> 
 Switch to choose between the two different colour models for the beam remnant. 
 <option value="0"> The old beam remnant model. </option> 
 <option value="1"> The new beam remnant model. </option> 
-</modeopen> 
+</modepick> 
  
-<parm = name="BeamRemnants:saturation" default="5" min="0.1" max="100000"> 
+<parm name="BeamRemnants:saturation" default="5" min="0.1" max="100000"> 
 Controls the suppresion due to saturation in the new model. The exact formula 
 used is <ei>exp(-M / k)</ei>, where M is the multiplet size and k is this 
 parameter. Thus a small number will result in a large saturation. 
@@ -306,6 +306,17 @@ This parameter tells whether to allow the formation of junction structures
 in the colour configuration of the scattered partons. 
 </flag> 
  
+<modepick name="BeamRemnants:unresolvedHadron" default="0" min="0" max="3"> 
+Switch to to force either or both of the beam remnants to collapse to a 
+single hadron, namely the original incoming one. Must only be used when this 
+is physically meaningful, e.g. when a photon can be viewed as emitted from 
+a proton that does not break up in the process. 
+<option value="0"> Both hadronic beams are resolved. </option> 
+<option value="1"> Beam A is unresolved, beam B resolved. </option> 
+<option value="2"> Beam A is resolved, beam B unresolved. </option> 
+<option value="3"> Both hadronic beams are unresolved. </option> 
+</modepick> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

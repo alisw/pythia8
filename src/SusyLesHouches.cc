@@ -1,5 +1,5 @@
 // SusyLesHouches.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -78,7 +78,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
 
     //Rewrite string in lowercase, removing initial and tralining blanks
     //as well as garbage characters
-    toLower(line);
+    toLowerRep(line);
 
     //Detect whether read-in is from a Les Houches Event File (LHEF).
     if (line.find("<leshouches") != string::npos
@@ -101,7 +101,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
         lhefSlha     = true;
         foundSlhaTag = true;
         //Print header if not already done
-        if (! headerPrinted) printHeader();
+        if (! headerPrinted) listHeader();
       }
       //Stop looking when </header> or <init> tag reached
       if (line.find("</header>") != string::npos ||
@@ -139,7 +139,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
     if (line.find("block") <= 1) {
 
       //Print header if not already done
-      if (! headerPrinted) printHeader();
+      if (! headerPrinted) listHeader();
 
       blockIn=line ;
       decay="";
@@ -290,7 +290,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
     else if (line.find("decay") <= 1) {
 
       // Print header if not already done
-      if (! headerPrinted) printHeader();
+      if (! headerPrinted) listHeader();
 
       // If previous had zero length, print now
       if (decay != "" && ! decayPrinted) {
@@ -628,7 +628,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
   };
 
   //Print footer
-  printFooter();
+  listFooter();
 
   //Return 0 if read-in successful
   if ( lhefRead && !foundSlhaTag) {
@@ -642,7 +642,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
 
 // Print a header with information on version, last date of change, etc.
 
-void SusyLesHouches::printHeader() {
+void SusyLesHouches::listHeader() {
   if (verboseSav == 0) return;
   setprecision(3);
   if (! headerPrinted) {
@@ -661,7 +661,7 @@ void SusyLesHouches::printHeader() {
 
 // Print a footer
 
-void SusyLesHouches::printFooter() {
+void SusyLesHouches::listFooter() {
   if (verboseSav == 0) return;
   if (! footerPrinted) {
     //    cout << " *" << endl;
@@ -677,13 +677,13 @@ void SusyLesHouches::printFooter() {
 // Print the current spectrum on stdout.
 // Not yet fully implemented.
 
-void SusyLesHouches::printSpectrum(int ifail) {
+void SusyLesHouches::listSpectrum(int ifail) {
 
   // Exit if output switched off
   if (verboseSav <= 0) return;
 
   // Print header if not already done
-  if (! headerPrinted) printHeader();
+  if (! headerPrinted) listHeader();
   message(0,"","");
 
   // Print Calculator and File name
@@ -1236,7 +1236,7 @@ void SusyLesHouches::printSpectrum(int ifail) {
   // Print footer
   footerPrinted=false;
   message(0,"","");
-  printFooter();
+  listFooter();
 }
 
 //--------------------------------------------------------------------------
@@ -1245,7 +1245,7 @@ void SusyLesHouches::printSpectrum(int ifail) {
 
 int SusyLesHouches::checkSpectrum() {
 
-  if (! headerPrinted) printHeader();
+  if (! headerPrinted) listHeader();
   int ifail=0;
   bool foundModsel = modsel.exists();
   if (! foundModsel) {
@@ -1828,7 +1828,7 @@ int SusyLesHouches::checkSpectrum() {
     message(0,"checkSpectrum","one or more serious problems were found");
 
   //Print Footer
-  printFooter();
+  listFooter();
 
   //Return
   return ifail;
@@ -1841,9 +1841,11 @@ int SusyLesHouches::checkSpectrum() {
 void SusyLesHouches::message(int level, string place,string themessage,
   int line) {
   if (verboseSav == 0) return;
+  // By default all output to cout, but lines below allow finer control.
+  ostream* outstream = &cout;
   //Send normal messages and warnings to stdout, errors to stderr.
-  ostream* outstream = &cerr;
-  if (level <= 1) outstream = &cout;
+  //ostream* outstream = &cerr;
+  //if (level <= 1) outstream = &cout;
   // if (level == 2) { *outstream << endl; }
   if (place != "") *outstream  <<  " | (SLHA::"+place+") ";
   else *outstream  <<  " | ";
@@ -1854,31 +1856,6 @@ void SusyLesHouches::message(int level, string place,string themessage,
   //  if (level == 2) *outstream  << endl;
   footerPrinted=false;
   return;
-}
-
-//--------------------------------------------------------------------------
-
-// Convert string to lowercase for case-insensitive comparisons.
-// Also remove initial and trailing blanks and garbage characters, if any.
-// (eg removes DOS line break characters and similar)
-// Adapted from PYTHIA 8 Settings::toLower() method.
-
-void SusyLesHouches::toLower(string& name) {
-
-  // Copy string without initial and trailing blanks.
-  if (name.find_first_not_of(" \n\t\v\b\r\f\a") == string::npos) {
-    name = "";
-    return;
-  }
-  int firstChar = name.find_first_not_of(" \n\t\v\b\r\f\a");
-  int lastChar  = name.find_last_not_of(" \n\t\v\b\r\f\a");
-  string temp   = name.substr( firstChar, lastChar + 1 - firstChar);
-
-  // Convert to lowercase letter by letter.
-  for (int i = 0; i < int(temp.length()); ++i) temp[i] = tolower(temp[i]);
-  // Copy to input string and return
-  name=temp;
-
 }
 
 //==========================================================================

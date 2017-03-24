@@ -1,5 +1,5 @@
 // SusyResonanceWidths.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand
+// Copyright (C) 2017 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -46,7 +46,7 @@ bool SUSYResonanceWidths::allowCalc(){
   if (settingsPtr->flag("SLHA:useDecayTable") ) {
 
     // Next check if decay table was read in via SLHA and takes precedence
-    for ( int iDec = 1; iDec < int((coupSUSYPtr->slhaPtr)->decays.size());
+    for ( int iDec = 0; iDec < int((coupSUSYPtr->slhaPtr)->decays.size());
           ++iDec)
       if ( (coupSUSYPtr->slhaPtr)->decays[iDec].getId() == abs(idRes) ) {
         if (DBSUSY) cout<<"Using external decay table for:"<<idRes<<endl;

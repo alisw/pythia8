@@ -1,5 +1,5 @@
 // History.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,9 +15,11 @@
 #include "Pythia8/Event.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PartonLevel.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
-#include "Pythia8/PartonLevel.h"
+#include "Pythia8/StandardModel.h"
+#include "Pythia8/WeakShowerMEs.h"
 
 namespace Pythia8 {
 
@@ -41,14 +43,34 @@ public:
   int partner;
   // The scale associated with this clustering.
   double pTscale;
+  // The flavour of the radiator prior to the emission.
+  int flavRadBef;
+  // Spin of the radiator (-1 is left handed, +1 is right handed).
+  int spinRad;
+  // Spin of the emitted  (-1 is left handed, +1 is right handed).
+  int spinEmt;
+  // Spin of the recoiler (-1 is left handed, +1 is right handed).
+  int spinRec;
+  // Spin of the radiator before the splitting.
+  int spinRadBef;
+  // The radiator before the splitting.
+  int radBef;
+  // The recoiler before the splitting.
+  int recBef;
 
   // Default constructor
   Clustering(){
-    emitted   = 0;
-    emittor   = 0;
-    recoiler  = 0;
-    partner   = 0;
-    pTscale   = 0.0;
+    emitted    = 0;
+    emittor    = 0;
+    recoiler   = 0;
+    partner    = 0;
+    flavRadBef = 0;
+    spinRad    = 9;
+    spinEmt    = 9;
+    spinRec    = 9;
+    spinRadBef = 9;
+    recBef     = 0;
+    radBef     = 0;
   }
 
   // Default destructor
@@ -56,18 +78,29 @@ public:
 
   // Copy constructor
   Clustering( const Clustering& inSystem ){
-    emitted  = inSystem.emitted;
-    emittor  = inSystem.emittor;
-    recoiler = inSystem.recoiler;
-    partner  = inSystem.partner;
-    pTscale  = inSystem.pTscale;
+    emitted    = inSystem.emitted;
+    emittor    = inSystem.emittor;
+    recoiler   = inSystem.recoiler;
+    partner    = inSystem.partner;
+    pTscale    = inSystem.pTscale;
+    flavRadBef = inSystem.flavRadBef;
+    spinRad    = inSystem.spinRad;
+    spinEmt    = inSystem.spinEmt;
+    spinRec    = inSystem.spinRec;
+    spinRadBef = inSystem.spinRad;
+    radBef     = inSystem.radBef;
+    recBef     = inSystem.recBef;
   }
 
   // Constructor with input
   Clustering( int emtIn, int radIn, int recIn, int partnerIn,
-    double pTscaleIn)
+    double pTscaleIn, int flavRadBefIn = 0, int spinRadIn = 9,
+    int spinEmtIn = 9, int spinRecIn = 9, int spinRadBefIn = 9,
+    int radBefIn = 0, int recBefIn = 0)
     : emitted(emtIn), emittor(radIn), recoiler(recIn), partner(partnerIn),
-      pTscale(pTscaleIn) {}
+      pTscale(pTscaleIn), flavRadBef(flavRadBefIn), spinRad(spinRadIn),
+      spinEmt(spinEmtIn), spinRec(spinRecIn), spinRadBef(spinRadBefIn),
+      radBef(radBefIn), recBef(recBefIn) {}
 
   // Function to return pythia pT scale of clustering
   double pT() const { return pTscale; }
@@ -117,6 +150,7 @@ public:
            ParticleData* particleDataPtrIn,
            Info* infoPtrIn,
            PartonLevel* showersIn,
+           CoupSM* coupSMPtrIn,
            bool isOrdered,
            bool isStronglyOrdered,
            bool isAllowed,
@@ -143,33 +177,41 @@ public:
   //                      shower objects
   // OUT double         : (Sukadov) , (alpha_S ratios) , (PDF ratios)
   double weightTREE(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN);
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
+
 
   // For default NL3:
   // Return weight of virtual correction and subtractive for NL3 merging
   double weightLOOP(PartonLevel* trial, double RN);
   // Return O(\alpha_s)-term of CKKWL-weight for NL3 merging
   double weightFIRST(PartonLevel* trial, AlphaStrong* asFSR,
-                  AlphaStrong* asISR, double RN, Rndm* rndmPtr );
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
+    Rndm* rndmPtr);
+
 
   // For UMEPS:
   double weight_UMEPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN);
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
   double weight_UMEPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN);
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
+
 
   // For unitary NL3:
   double weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN, int depth = -1);
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
+    int depth = -1);
   double weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN, int depth = -1);
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
+    int depth = -1);
   double weight_UNLOPS_LOOP(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN, int depth = -1);
+     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
+     int depth = -1);
   double weight_UNLOPS_SUBTNLO(PartonLevel* trial, AlphaStrong * asFSR,
-                    AlphaStrong * asISR, double RN, int depth = -1);
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
+    int depth = -1);
   double weight_UNLOPS_CORRECTION( int order, PartonLevel* trial,
-                  AlphaStrong* asFSR, AlphaStrong* asISR,
-                  double RN, Rndm* rndmPtr );
+    AlphaStrong* asFSR, AlphaStrong * asISR, AlphaEM * aemFSR,
+    AlphaEM * aemISR, double RN, Rndm* rndmPtr );
 
   // Function to check if any allowed histories were found
   bool foundAllowedHistories() {
@@ -202,6 +244,27 @@ public:
   double getPDFratio( int side, bool forSudakov, bool useHardPDF,
                       int flavNum, double xNum, double muNum,
                       int flavDen, double xDen, double muDen);
+
+  // Envelope function that calls the recursive getWeakProb.
+  double getWeakProb();
+
+  // Recursive function that returns the weak probability for the given path.
+  // Mode refers to which ME correction to use, 1 = sChannel, 2 = gluon
+  // channel, 3 = double quark t-channel, 4 is double quark u-channel.
+  double getWeakProb(vector<int>& mode, vector<Vec4>& mom,
+     vector<int> fermionLines);
+
+  // return the weak probability of a single reclustering.
+  // Mode refers to which ME correction to use, 1 = sChannel, 2 = gluon
+  // channel, 3 = double quark t-channel, 4 is double quark u-channel.
+  double getSingleWeakProb(vector<int> &mode, vector<Vec4> &mom,
+    vector<int> fermionLines);
+
+  // Find map between indecies in the current state and the state after
+  // the splitting.
+  // NOT IMPLEMENTED FOR MULTIPLE W/Z/GAMMA (NEED TO HAVE A WAY TO
+  // IDENTIFY THEM).
+  void findStateTransfer(map<int,int> &transfer);
 
   // Function to print the history that would be chosen from the random number
   // RN. Mainly for debugging.
@@ -339,13 +402,17 @@ private:
   //                  ratio calculation
   //     AlphaStrong: Initialised shower alpha_s object for ISR alpha_s
   //                  ratio calculation (can be different from previous)
-  double weightTree(PartonLevel* trial, double as0, double maxscale,
-    double pdfScale, AlphaStrong * asFSR, AlphaStrong * asISR,
-    double& asWeight, double& pdfWeight);
+  double weightTree(PartonLevel* trial, double as0, double aem0,
+    double maxscale, double pdfScale, AlphaStrong * asFSR, AlphaStrong * asISR,
+    AlphaEM * aemFSR, AlphaEM * aemISR, double& asWeight, double& aemWeight,
+    double& pdfWeight);
 
   // Function to return the \alpha_s-ratio part of the CKKWL weight.
   double weightTreeALPHAS( double as0, AlphaStrong * asFSR,
     AlphaStrong * asISR, int njetMax = -1 );
+  // Function to return the \alpha_em-ratio part of the CKKWL weight.
+  double weightTreeALPHAEM( double aem0, AlphaEM * aemFSR,
+    AlphaEM * aemISR, int njetMax = -1 );
   // Function to return the PDF-ratio part of the CKKWL weight.
   double weightTreePDFs( double maxscale, double pdfScale, int njetMax = -1 );
   // Function to return the no-emission probability part of the CKKWL weight.
@@ -360,6 +427,10 @@ private:
   // appearing in the CKKWL-weight.
   double weightFirstALPHAS( double as0, double muR, AlphaStrong * asFSR,
     AlphaStrong * asISR);
+  // Function to generate the O(\alpha_em)-term of the \alpha_em-ratios
+  // appearing in the CKKWL-weight.
+  double weightFirstALPHAEM( double aem0, double muR, AlphaEM * aemFSR,
+    AlphaEM * aemISR);
   // Function to generate the O(\alpha_s)-term of the PDF-ratios
   // appearing in the CKKWL-weight.
   double weightFirstPDFs( double as0, double maxscale, double pdfScale,
@@ -448,7 +519,9 @@ private:
 
   vector<Clustering> getAllEWClusterings();
   vector<Clustering> getEWClusterings( const Event& event);
-  vector<Clustering> findEWTriple( int emtTagIn, const Event& event,
+  vector<Clustering> findEWTripleW( int emtTagIn, const Event& event,
+                       vector<int> posFinalPartn, vector<int> posInitPartn );
+  vector<Clustering> findEWTripleZ( int emtTagIn, const Event& event,
                        vector<int> posFinalPartn, vector<int> posInitPartn );
 
   vector<Clustering> getAllSQCDClusterings();
@@ -499,6 +572,14 @@ private:
   //     Event : Reference event
   // OUT int   : Flavour of the radiator before the splitting
   int getRadBeforeFlav(const int radAfter, const int emtAfter,
+        const Event& event);
+
+  // Function to get the spin of the radiator before the splitting
+  // IN int  : Spin of the radiator after the splitting
+  //    int  : Spin of the emitted after the splitting
+  // OUT int : Spin of the radiator before the splitting
+  int getRadBeforeSpin(const int radAfter, const int emtAfter,
+        const int spinRadAfter, const int spinEmtAfter,
         const Event& event);
 
   // Function to get the colour of the radiator before the splitting
@@ -657,12 +738,16 @@ private:
    // parton entering the hard interaction. Otherwise return 0.
   double getCurrentX(const int) const;
 
-  double getCurrentZ(const int rad, const int rec, const int emt) const;
+  double getCurrentZ(const int rad, const int rec, const int emt,
+    int idRadBef = 0) const;
 
   // Function to compute "pythia pT separation" from Particle input
-  double pTLund(const Particle& radAfterBranch,const Particle& emtAfterBranch,
-                const Particle& recAfterBranch, int showerType,
-                bool massive=true);
+  double pTLund(const Event& event, int radAfterBranch, int emtAfterBranch,
+    int recAfterBranch, int showerType, int idRadBef = 0);
+
+  // Function to return the position of the initial line before (or after)
+  // a single (!) splitting.
+  int posChangedIncoming(const Event& event, bool before);
 
   // Function to give back the ratio of PDFs and PDF * splitting kernels
   // needed to convert a splitting at scale pdfScale, chosen with running
@@ -675,6 +760,69 @@ private:
   // resulting flavour is given by flav. This is used as a helper routine
   // to dgauss
   double integrand(int flav, double x, double scaleInt, double z);
+
+  // Function providing a list of possible new flavours after a w emssion
+  // from the input flavour.
+  vector<int> posFlavCKM(int flav);
+
+  // Check if the new flavour structure is possible.
+  // If clusType is 1 final clustering is assumed, otherwise initial clustering
+  // is assumed.
+  bool checkFlavour(vector<int>& flavCounts, int flavRad, int flavRadBef,
+    int clusType);
+
+  // Check if the weak recoil structure is allowed.
+  bool checkWeakRecoils(map<int,int> &allowedRecoils, bool isFirst = false);
+
+  // Find the recoiler for an ISR scattered weak particle.
+
+  int findISRRecoiler();
+
+  // Reverse the boost carried out by the ISR.
+  // The three first momenta are given by the ME,
+  // the last two are filled in by this function.
+  void reverseBoostISR(Vec4& pMother, Vec4& pSister, Vec4& pPartner,
+    Vec4& pDaughter, Vec4& pRecoiler, int sign, double eCM, double& phi);
+
+  // Check if an event reclustered into a 2 -> 2 dijet.
+  // (Only enabled if W reclustering is used).
+  bool isQCD2to2(const Event& event);
+
+  // Check if an event reclustered into a 2 -> 1 Drell-Yan.
+  // (Only enabled if W reclustering is used).
+  bool isEW2to1(const Event& event);
+
+  // Set selected child indices.
+  void setSelectedChild();
+
+  // Setup the weak dipole showers.
+  void setupWeakShower(int nSteps);
+
+  // Update weak dipoles after an emission.
+  void transferWeakShower(vector<int> &mode, vector<Vec4> &mom,
+    vector<int> fermionLines, vector<pair<int,int> > &dipoles, int nSteps);
+
+  // Update the weak modes after an emission.
+  vector<int> updateWeakModes(vector<int>& weakModes,
+    map<int,int>& stateTransfer);
+
+  // Update the fermion lines for the 2 -> 2 process. This is needed for
+  // the weak probabilities.
+  vector<int> updateWeakFermionLines(vector<int> fermionLines,
+    map<int,int>& stateTransfer);
+
+  // Update the list of weak dipoles. This is needed to setup the PS correctly.
+  vector<pair<int,int> > updateWeakDipoles(vector<pair<int,int> > &dipoles,
+    map<int,int>& stateTransfer);
+
+  // Setup the hard process information needed for calculating weak
+  // probabilities and setting up the shower.
+  void setupWeakHard(vector<int>& mode, vector<int>& fermionLines,
+    vector<Vec4>& mom);
+
+  // Functions to retrieve scale information from external showers.
+  double getShowerPluginScale(const Event& event, int rad, int emt, int rec,
+    string key, double scalePythia);
 
   //----------------------------------------------------------------------//
   // Class members.
@@ -692,6 +840,9 @@ private:
   // The different steps corresponding to possible clusterings of this
   // state.
   vector<History *> children;
+
+  // After a path is selected, store the child index.
+  int selectedChild;
 
   // The different paths which have been reconstructed indexed with
   // the (incremental) corresponding probability. This map is empty
@@ -770,8 +921,14 @@ private:
   // Info object to have access to all information read from LHE file
   Info* infoPtr;
 
+  // Class for calculation weak shower ME.
+  WeakShowerMEs weakShowerMEs;
+
   // Pointer to showers, to simplify external clusterings.
   PartonLevel* showers;
+
+  // Pointer to standard model couplings.
+  CoupSM* coupSMPtr;
 
   // Minimal scalar sum of pT used in Herwig to choose history
   double sumScalarPT;

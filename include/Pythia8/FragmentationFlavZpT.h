@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -77,23 +77,54 @@ public:
   virtual ~StringFlav() {}
 
   // Initialize data members.
-  virtual void init(Settings& settings, Rndm* rndmPtrIn);
+  virtual void init(Settings& settings, ParticleData* particleDataPtrIn,
+    Rndm* rndmPtrIn, Info* infoPtrIn);
 
   // Pick a light d, u or s quark according to fixed ratios.
   int pickLightQ() { double rndmFlav = probQandS * rndmPtr->flat();
     if (rndmFlav < 1.) return 1; if (rndmFlav < 2.) return 2; return 3; }
 
-  // Pick a new flavour (including diquarks) given an incoming one.
-  virtual FlavContainer pick(FlavContainer& flavOld);
+  // Pick a new flavour (including diquarks) given an incoming one,
+  // either by old standard Gaussian or new alternative exponential.
+  virtual FlavContainer pick(FlavContainer& flavOld, double pT = -1.0,
+    double nNSP = 0.0) { hadronIDwin = 0; idNewWin = 0; hadronMassWin = -1.0;
+    if ( (thermalModel || mT2suppression) && (pT >= 0.0) )
+      return pickThermal(flavOld, pT, nNSP);
+    return pickGauss(flavOld); }
+  virtual FlavContainer pickGauss(FlavContainer& flavOld);
+  virtual FlavContainer pickThermal(FlavContainer& flavOld,
+    double pT, double nNSP);
 
   // Combine two flavours (including diquarks) to produce a hadron.
   virtual int combine(FlavContainer& flav1, FlavContainer& flav2);
 
   // Ditto, simplified input argument for simple configurations.
-  virtual int combine( int id1, int id2, bool keepTrying = true) {
+  virtual int combineId( int id1, int id2, bool keepTrying = true) {
     FlavContainer flag1(id1); FlavContainer flag2(id2);
     for (int i = 0; i < 100; ++i) { int idNew = combine( flag1, flag2);
       if (idNew != 0 || !keepTrying) return idNew;} return 0;}
+
+  // Return chosen hadron in case of thermal model.
+  virtual int getHadronIDwin() { return hadronIDwin; }
+
+  // Combine two flavours into hadron for last two remaining flavours
+  // for thermal model.
+  virtual int combineLastThermal(FlavContainer& flav1, FlavContainer& flav2,
+    double pT, double nNSP);
+
+  // General function, decides whether to just return the hadron id
+  // if thermal model was use or whether to combine the two flavours.
+  virtual int getHadronID(FlavContainer& flav1, FlavContainer& flav2,
+    double pT = -1.0, double nNSP = 0, bool finalTwo = false) {
+    if (finalTwo) return ((thermalModel || mT2suppression) ?
+      combineLastThermal(flav1, flav2, pT, nNSP) : combine(flav1, flav2));
+    if ((thermalModel || mT2suppression)&& (hadronIDwin != 0)
+      && (idNewWin != 0)) return getHadronIDwin();
+    return combine(flav1, flav2); }
+
+  // Return hadron mass. Used one if present, pick otherwise.
+  virtual double getHadronMassWin(int idHad) { return
+    ((hadronMassWin < 0.0) ? particleDataPtr->mSel(idHad) : hadronMassWin); }
 
   // Assign popcorn quark inside an original (= rank 0) diquark.
   void assignPopQ(FlavContainer& flav);
@@ -101,10 +132,33 @@ public:
   // Combine two quarks to produce a diquark.
   int makeDiquark(int id1, int id2, int idHad = 0);
 
+  // Check if quark-diquark combination should be added. If so add.
+  void addQuarkDiquark(vector< pair<int,int> >& quarkCombis,
+    int qID, int diqID, int hadronID) {
+    bool allowed = true;
+    for (int iCombi = 0; iCombi < int(quarkCombis.size()); iCombi++)
+      if ( (qID   == quarkCombis[iCombi].first ) &&
+           (diqID == quarkCombis[iCombi].second) ) allowed = false;
+    if (allowed) quarkCombis.push_back( (hadronID > 0) ?
+      make_pair( qID,  diqID) : make_pair(-qID, -diqID) ); }
+
+  // Get spin counter for mesons.
+  int getMesonSpinCounter(int hadronID) { hadronID = abs(hadronID);
+    int j = (hadronID % 10);
+    if (hadronID <  1000) return ((j==1) ? 0 : ( (j==3) ? 1 : 5 ));
+    if (hadronID < 20000) return ((j==1) ? 3 : 2);
+    if (hadronID > 20000) return 4; return -1; }
+
 protected:
 
   // Pointer to the random number generator.
   Rndm*  rndmPtr;
+
+  // Pointer to the particle data table.
+  ParticleData* particleDataPtr;
+
+  // Pointer to event information.
+  Info* infoPtr;
 
 private:
 
@@ -112,14 +166,40 @@ private:
   static const int    mesonMultipletCode[6];
   static const double baryonCGOct[6], baryonCGDec[6];
 
-  // Initialization data, to be read from Settings.
-  bool   suppressLeadingB;
+  // Settings for Gaussian model.
+  bool   suppressLeadingB, mT2suppression, useWidthPre;
   double probQQtoQ, probStoUD, probSQtoQQ, probQQ1toQQ0, probQandQQ,
          probQandS, probQandSinQQ, probQQ1corr, probQQ1corrInv, probQQ1norm,
          probQQ1join[4], mesonRate[4][6], mesonRateSum[4], mesonMix1[2][6],
          mesonMix2[2][6], etaSup, etaPrimeSup, decupletSup, baryonCGSum[6],
          baryonCGMax[6], popcornRate, popcornSpair, popcornSmeson, scbBM[3],
          popFrac, popS[3], dWT[3][7], lightLeadingBSup, heavyLeadingBSup;
+  double sigmaHad, widthPreStrange, widthPreDiquark;
+
+  // Settings for thermal model.
+  bool   thermalModel, mesonNonetL1;
+  double temperature, tempPreFactor;
+  int    nNewQuark;
+  double mesMixRate1[2][6], mesMixRate2[2][6], mesMixRate3[2][6];
+  double baryonOctWeight[6][6][6][2], baryonDecWeight[6][6][6][2];
+
+  // Settings used by both models.
+  bool   closePacking;
+  double exponentMPI, exponentNSP;
+
+  // Key = hadron id, value = list of constituent ids.
+  map< int, vector< pair<int,int> > > hadronConstIDs;
+  // Key = initial (di)quark id, value = list of possible hadron ids
+  //                                     + nr in hadronConstIDs.
+  map< int, vector< pair<int,int> > > possibleHadrons;
+  // Key = initial (di)quark id, value = prefactor to multiply rate.
+  map< int, vector<double> > possibleRatePrefacs;
+  // Similar, but for combining the last two (di)quarks. Key = (di)quark pair.
+  map< pair<int,int>, vector< pair<int,int> > > possibleHadronsLast;
+  map< pair<int,int>, vector<double> > possibleRatePrefacsLast;
+
+  int    hadronIDwin, idNewWin;
+  double hadronMassWin;
 
 };
 
@@ -149,7 +229,8 @@ public:
   virtual double stopNewFlav() {return stopNF;}
   virtual double stopSmear() {return stopS;}
 
-  // b fragmentation parameter needed to weight final two solutions.
+  // a and b fragmentation parameters needed in some operations.
+  virtual double aAreaLund() {return aLund;}
   virtual double bAreaLund() {return bLund;}
 
 protected:
@@ -188,14 +269,20 @@ public:
   virtual ~StringPT() {}
 
   // Initialize data members.
-  virtual void init(Settings& settings, ParticleData& particleData,
-    Rndm* rndmPtrIn);
+  virtual void init(Settings& settings, ParticleData* particleDataPtr,
+    Rndm* rndmPtrIn, Info* infoPtrIn);
 
-  // Return px and py as a pair in the same call.
-  pair<double, double>  pxy();
+  // General function, return px and py as a pair in the same call
+  // in either model.
+  pair<double, double>  pxy(int idIn, double nNSP = 0.0) {
+    return (thermalModel ? pxyThermal(idIn, nNSP) :
+    pxyGauss(idIn, nNSP)); }
+  pair<double, double>  pxyGauss(int idIn = 0, double nNSP = 0.0);
+  pair<double, double>  pxyThermal(int idIn, double nNSP = 0.0);
 
   // Gaussian suppression of given pT2; used in MiniStringFragmentation.
-  double suppressPT2(double pT2) { return exp( -pT2 / sigma2Had); }
+  double suppressPT2(double pT2) { return (thermalModel ?
+    exp(-sqrt(pT2)/temperature) : exp(-pT2/sigma2Had)); }
 
 protected:
 
@@ -203,10 +290,30 @@ protected:
   static const double SIGMAMIN;
 
   // Initialization data, to be read from Settings.
-  double sigmaQ, enhancedFraction, enhancedWidth, sigma2Had;
+  // Gaussian model.
+  bool   useWidthPre;
+  double sigmaQ, enhancedFraction, enhancedWidth, sigma2Had,
+         widthPreStrange, widthPreDiquark;
+  // Thermal model.
+  bool   thermalModel;
+  double temperature, tempPreFactor, fracSmallX;
+  // Both.
+  bool   closePacking;
+  double exponentMPI, exponentNSP;
+
+  // Pointer to the particle data table.
+  ParticleData* particleDataPtr;
 
   // Pointer to the random number generator.
   Rndm*  rndmPtr;
+
+  // Pointer to event information.
+  Info* infoPtr;
+
+private:
+
+  // Evaluate Bessel function K_{1/4}(x).
+  double BesselK14(double x);
 
 };
 

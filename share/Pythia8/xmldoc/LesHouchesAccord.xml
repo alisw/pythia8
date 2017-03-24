@@ -235,16 +235,14 @@ for the number of subprocesses.
 <methodmore name="double LHAup::xMax(i)"> 
 for process <code>i</code> in the range <code>0 &lt;= i &lt; 
 sizeProc()</code>. 
- 
-</method> 
-<method name="double LHAup::xSecSum()"> 
 </methodmore> 
+<method name="double LHAup::xSecSum()"/> 
 <methodmore name="double LHAup::xErrSum()"> 
 the sum of the cross sections and errors (the latter added quadratically). 
 Note that cross section errors are only meaningful for strategies +-3. 
 </methodmore> 
  
-<method name="void LHAup::listInit(ostream& os = cout)"> 
+<method name="void LHAup::listInit()"> 
 prints the above initialization information. This method is 
 automatically called from <code>Pythia::init()</code>, 
 so would normally not need to be called directly by the user. 
@@ -285,6 +283,7 @@ events in a file is exhausted. If so, no event is generated, and
 <code><aloc href="EventInformation">Info::atEndOfFile()</aloc></code> 
 to confirm that indeed the failure is caused in this method, and decide 
 to break out of the event generation loop. 
+</method> 
  
 <p/> 
 Inside a normal <code>setEvent(...)</code> call, information can be set 
@@ -381,7 +380,7 @@ This information is returned by the methods
 </methodmore> 
 <methodmore name="double LHAup::x1()"> 
 </methodmore> 
-<methodmore name="double LHAup::x2()" 
+<methodmore name="double LHAup::x2()"> 
 the flavour and <ei>x</ei> values of the two initiators. 
 </methodmore> 
  
@@ -391,7 +390,7 @@ include information on the parton densities of the colliding partons
 is suggested. This optional further information can be set by 
 <method name="void LHAup::setPdf( int id1pdf, int id2pdf, double x1pdf, 
 double x2pdf, double scalePDF, double pdf1, double pdf2, bool pdfIsSet)"> 
-which gives the flavours , the <ei>x</ei> and the <ie>Q</ei> scale 
+which gives the flavours , the <ei>x</ei> and the <ei>Q</ei> scale 
 (in GeV) at which the parton densities <ei>x*f_i(x, Q)</ei> have been 
 evaluated. The last argument is normally <code>true</code>. 
 </method> 
@@ -448,12 +447,11 @@ This information is returned by the method
 <code>double LHAup::scale(int i)</code>. When no such information 
 has been read from the LHEF, the scale defaults to -1. 
  
- 
 <p/> 
-<method name="void LHAup::listEvent(ostream& os = cout)"> 
+<method name="void LHAup::listEvent()"> 
 prints the above information for the current event.  In cases where the 
 <code>LHAup</code> object is not available to the user, the 
-<code>Pythia::LHAeventList(ostream& os = cout)</code> method can 
+<code>Pythia::LHAeventList()</code> method can 
 be used, which is a wrapper for the above. 
 </method> 
  
@@ -496,10 +494,11 @@ correlations implemented for internal processes are used. If part of
 the decay chain has already been set, however (e.g. <ei>H &rarr; WW/ZZ</ei> 
 or <ei>t &rarr; b W</ei>), then decay is still isotropic. 
  
-<p/> 
-There are four settings available for event input. They take effect when 
+<h3>Transfer to the PYTHIA process record</h3> 
+ 
+There are a few settings available for event input. They take effect when 
 the LHA event record is translated to the PYTHIA <code>process</code> 
-event record. 
+event record, but leaves the LHA event record itself unchanged. 
  
 <modeopen name="LesHouches:idRenameBeams" default="1000022" min="0"> 
 PYTHIA only implements a certain number of incoming beam particles. 
@@ -544,16 +543,72 @@ afflicted. Incoming leptons are not affected by this procedure.
 </option> 
 <option value="1"> if the input lepton mass deviates by more than 10% 
 from the PYTHIA (data table) mass then its mass is reset according to the 
-PYTHIA value, and the energy is recalculated from this mass and the 
-three-momentum. This should catch weird masses, while allowing sensible 
+PYTHIA value. This should catch weird masses, while allowing sensible 
 variations. 
 </option> 
-<option value="2"> each lepton mass is reset according to the PYTHIA value, 
-and the energy is recalculated from this mass and the three-momentum. 
+<option value="2"> each lepton mass is reset according to the PYTHIA value. 
 </option> 
-<note>Warning:</note> the change of masses and the resultant change of 
-energies can result in energy-momentum non-conservation warnings and, 
-in extreme cases, also to aborts. One possibility then is to change the 
+<note>Warning:</note> when the mass is changed, also energy and/or momentum 
+need to be shifted. This cannot be done for the lepton in isolation, 
+but should be made so as to preserve the energy and momentum of the event 
+as a whole. An attempt is therefore made to find another final-state 
+particle recoiler that can transfer the appropriate amount of energy 
+and momentum. The recoiler may be unstable, and if so the transfer is 
+inherited by its decay products. The choice is straightforward if only 
+two final-state particles exist, or in a two-body decay of an intermediate 
+resonance, else a matching (anti)neutrino or (anti)lepton is searched for. 
+These rules catch most of the standard cases for lepton production, such as 
+<ei>gamma^*/Z^0/W^+-</ei>, but not necessarily all. Should they all fail 
+the potential final-state recoiler with largest relative invariant mass 
+is picked. In either case, if the transfer fails because the intended 
+recoiler has too little energy to give up, then instead the energy is 
+recalculated for the new mass without any transfer. The energy violation 
+is partly compensated by changed energies for the incoming partons to 
+the hard collision if <code>LesHouches:matchInOut = on</code>, but not 
+always perfectly. One possibility then is to change the 
+<aloc href="ErrorChecks">tolerance</aloc> to such errors. 
+</modepick> 
+ 
+<modepick name="LesHouches:setQuarkMass" default="1" min="0" max="2"> 
+setting of mass for final-state quarks. The reason here is that some 
+matrix-element generators assume all quarks to be massless, except for 
+the top, so as to simplify calculations. Especially for <ei>c</ei> and 
+<ei>b</ei> quarks this is a poor approximation, although PYTHIA most of 
+the time still manages to shower and hadronize even such events. The 
+reason is the resilience of the string fragmentation model, where 
+the excess gluons near (in colour and momentum) to a massless <ei>b</ei> 
+are "eaten up" when string fragmentation needs to gather enough invariant 
+mass to give to the <ei>B</ei> hadron. Nevertheless it is an uncomfortable 
+situation, to be avoided where possible. For <ei>d</ei>, <ei>u</ei> and 
+<ei>s</ei> quarks the issue is less critical. Incoming or intermediate 
+quarks are not affected by this procedure. 
+<option value="0"> all quark masses are taken from the Les Houches input. 
+</option> 
+<option value="1"> if the input <ei>c</ei> or <ei>b</ei> mass is 
+more than 50% away from the PYTHIA (data table) mass then its mass is 
+reset according to the PYTHIA value. 
+</option> 
+<option value="2">if the input mass, for all quarks except the top, is 
+more than 50% away from the PYTHIA (data table) mass then its mass is 
+reset according to the PYTHIA value. 
+</option> 
+<note>Warning:</note> when the mass is changed, also energy and/or momentum 
+need to be shifted. This cannot be done for the quark in isolation, 
+but should be made so as to preserve the energy and momentum of the event 
+as a whole. An attempt is therefore made to find another final-state 
+particle recoiler that can transfer the appropriate amount of energy 
+and momentum. The recoiler may be unstable, and if so the transfer is 
+inherited by its decay products. The choice is straightforward if only 
+two final-state particles exist, or in a two-body decay of an intermediate 
+resonance. If no recoiler is found this way a matching opposite-coloured 
+parton is searched for. Should also this fail the potential final-state 
+recoiler with largest relative invariant mass is picked. In either case, 
+if the transfer fails because the intended recoiler has too little energy 
+to give up, then instead the energy is recalculated for the new mass 
+without any transfer. The energy violation is partly compensated by 
+changed energies for the incoming partons to the hard collision if 
+<code>LesHouches:matchInOut = true</code>, but not always perfectly. 
+One possibility then is to change the 
 <aloc href="ErrorChecks">tolerance</aloc> to such errors. 
 </modepick> 
  
@@ -582,8 +637,8 @@ The incoming partons are set massless. There are two main applications
 for this option. Firstly, if there is a mismatch in the Les Houches 
 input itself, e.g. owing to limited precision in the stored momenta. 
 Secondly, if a mismatch is induced by PYTHIA recalculations, notably when 
-an outgoing lepton is assigned a mass although assumed massles in the 
-Les Houches input. 
+an outgoing lepton or quark is assigned a mass although assumed massless 
+in the Les Houches input. 
 <note>Warning:</note> it is assumed that the incoming partons are along 
 the <ei>+-z</ei> axis; else the kinematics construction will fail. 
 </flag> 
@@ -786,12 +841,23 @@ used.) All parsing that is not strictly part of the LHEF format
 the <code>LHAupLHEF</code> methods. 
  
 <p/> 
-Two other small utility routines are: 
+Some other small utility routines are: 
  
 <method name="bool LHAup::fileFound()"> 
 always returns true in the base class, but in <code>LHAupLHEF</code> 
 it returns false if the LHEF provided in the constructor is not 
 found and opened correctly. 
+</method> 
+ 
+<method name="bool LHAup::useExternal()"> 
+always returns false in the base class, but in <code>LHAupLHEF</code> 
+it returns false if the <code>LHAupLHEF</code> instance is constructed to 
+work on an input LHE file, while it returns true if the <code>LHAupLHEF</code> 
+instance is constructed to use externally provided input streams instead. 
+For the latter, the <code>LHAupLHEF</code> instance should have been 
+constructed with the class constructor <code>LHAupLHEF(Info* infoPtrIn, 
+istream* isIn, istream* isHeadIn, bool readHeadersIn, bool setScalesFromLHEFIn) 
+</code> 
 </method> 
  
 <method name="void LHAup::setInfoHeader(const string &key, 
@@ -912,7 +978,7 @@ another process in between, the file will be corrupted.
 Return the name of the LHE file above. 
 </method> 
  
-<h3>PYTHIA 8 output to an LHEF</h3> 
+<h3>PYTHIA 8 output to a Les Houches Event File version 1.0</h3> 
  
 The above methods could be used by any program to write an LHEF. 
 For PYTHIA 8 to do this, a derived class already exists, 
@@ -959,6 +1025,71 @@ In addition, the <code>PartonLevel:all = off</code> command found in
 <code>main20.cc</code> obviously must be removed if one wants to 
 obtain complete events. 
  
+<h3>PYTHIA 8 output to a Les Houches Event File version 3.0</h3> 
+ 
+PYTHIA 8 also supports LHEF 3.0 output, and we include a 
+general LHEF3 writer (<code>Pythia::Writer</code> of LHEF3.h and 
+LHEF3.cc) for this purpose. The functions of this 
+file writer are used in the <code>LHEF3FromPYTHIA8</code>. 
+This latter class allows users to output PYTHIA events 
+in LHEF3 format from a PYTHIA main program. An example of how to use 
+<code>LHEF3FromPYTHIA8</code> is found in the 
+<code>main20lhef3.cc</code> example. Please note that, although 
+similar, the usage of <code>LHEF3FromPYTHIA8</code> differs from 
+the usage of <code>LHAupFromPYTHIA8</code>, with  <code>LHEF3FromPYTHIA8 
+</code> requiring fewer function calls. 
+ 
+<p/> 
+To print a comprehensive LHE file, <code>LHEF3FromPYTHIA8</code> 
+is constructed with pointers to an <code>Event</code> object, 
+as well as pointers to instances of <code>Settings</code>, 
+<code>Info</code> and <code>ParticleData</code>, giving e.g. 
+a constructor call 
+<br/><code>LHEF3FromPYTHIA8 myLHEF3(&pythia.event, &pythia.settings, 
+&pythia.info, &pythia.particleData);</code> 
+ 
+<p/> 
+As a next step, you should open the output file by using the 
+<code>LHAupFromPYTHIA8</code> member function 
+<br/><code>openLHEF(string name)</code> 
+<br/> 
+where <code>name</code> is the output file name. 
+ 
+<p/> 
+Then, the method <code>setInit()</code> should be called to store the 
+initialization information (read from <code>settings</code> and 
+<code>info</code>) and write the header and init blocks into the 
+output file. Note that at this stage, the cross section printed 
+in the init block is not sensible, as no integration has yet 
+taken place. The init block can be updated at the end of 
+the event generation (see below). 
+ 
+<p/> 
+During event generation, you should use <code>setEvent()</code> to 
+write the event information (as read from <code>info</code> and 
+<code>event</code>) to the output file. 
+ 
+<p/> 
+Finally, before leaving your main program, it is necessary to 
+close the output file by using the 
+<code>LHAupFromPYTHIA8</code> member function 
+<br/><code>closeLHEF( bool doUpdate = false)</code> 
+<br/> 
+The boolean variable <code>doUpdate</code> is optional. 
+If <code>doUpdate</code> is used, and if 
+<code>doUpdate = true</code>, then the init block of the output 
+file will be updated with the latest cross section information. 
+ 
+<p/> 
+Currently there are some limitations, that could be overcome if 
+necessary. Firstly, you may mix many processes in the same run, 
+but the cross-section information stored in <code>info</code> only 
+refers to the sum of them all, and therefore they are all classified 
+as a common process 9999. Secondly, you should generate your events 
+in the CM frame of the collision, since this is the assumed frame of 
+stored Les Houches events, and no boosts have been implemented 
+for the case that <code>Pythia::process</code> is not in this frame. 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

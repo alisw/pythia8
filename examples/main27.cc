@@ -1,5 +1,5 @@
 // main27.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -130,7 +130,7 @@ int main() {
       mHatHisto.fill( pythia.event[iZ].m() );
       pTmuHisto.fill( pythia.event[imu].pT() );
     }
-    if(iEvent%10 == 0) cout << "Event: " << iEvent << endl << flush;
+    if(iEvent%10 == 0) cout << "Event: " << iEvent << endl << std::flush;
   } // end for iEvent<500
 
   // Done. Print results.

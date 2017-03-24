@@ -165,8 +165,8 @@ When switched on, the merging parameters (see below) are set according to
 the ALPGEN hard process cuts: 
 <ul> 
 <li> <code>JetMatching:eTjetMin = min(ptjmin + 5., 1.2 * ptjmin)</code>, </li> 
-<li> <code>JetMatching:coneRadius = drjmin</code>, 
-<li> <code>JetMatching:etaJetMax = etajmax</code>. 
+<li> <code>JetMatching:coneRadius = drjmin</code>, </li> 
+<li> <code>JetMatching:etaJetMax = etajmax</code>.</li> 
 </ul> 
 where the <code>ptjmin</code>, <code>drjmin</code> and 
 <code>etajmax</code> are the incoming ALPGEN parameters. Note that any 
@@ -360,4 +360,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

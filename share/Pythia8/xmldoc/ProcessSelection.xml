@@ -134,6 +134,13 @@ several Large Extra Dimension processes, and a few related Unparticle
 processes. 
 <br/>Reserved code range: 5001 - 5099. 
  
+<h3><aloc href="DarkMatterProcesses">Dark Matter Processes</aloc></h3> 
+ 
+An area of increasing interest. Currently only represented by 
+a few basic processes. 
+<br/>Reserved code range: 6001 - 6099. 
+ 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

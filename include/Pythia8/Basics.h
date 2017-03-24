@@ -1,5 +1,5 @@
 // Basics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -180,24 +180,29 @@ public:
   void rotbst(const RotBstMatrix& M);
 
   // Operator overloading with member functions
-  Vec4 operator-() {Vec4 tmp; tmp.xx = -xx; tmp.yy = -yy; tmp.zz = -zz;
+  inline Vec4 operator-() {Vec4 tmp; tmp.xx = -xx; tmp.yy = -yy; tmp.zz = -zz;
     tmp.tt = -tt; return tmp;}
-  Vec4& operator+=(const Vec4& v) {xx += v.xx; yy += v.yy; zz += v.zz;
+  inline Vec4& operator+=(const Vec4& v) {xx += v.xx; yy += v.yy; zz += v.zz;
     tt += v.tt; return *this;}
-  Vec4& operator-=(const Vec4& v) {xx -= v.xx; yy -= v.yy; zz -= v.zz;
+  inline Vec4& operator-=(const Vec4& v) {xx -= v.xx; yy -= v.yy; zz -= v.zz;
     tt -= v.tt; return *this;}
-  Vec4& operator*=(double f) {xx *= f; yy *= f; zz *= f;
+  inline Vec4& operator*=(double f) {xx *= f; yy *= f; zz *= f;
     tt *= f; return *this;}
-  Vec4& operator/=(double f) {xx /= f; yy /= f; zz /= f;
+  inline Vec4& operator/=(double f) {xx /= f; yy /= f; zz /= f;
     tt /= f; return *this;}
+  inline Vec4 operator+(const Vec4& v) const {
+    Vec4 tmp = *this; return tmp += v;}
+  inline Vec4 operator-(const Vec4& v) const {
+    Vec4 tmp = *this; return tmp -= v;}
+  inline Vec4 operator*(double f) const {
+    Vec4 tmp = *this; return tmp *= f;}
+  inline Vec4 operator/(double f) const {
+    Vec4 tmp = *this; return tmp /= f;}
+  inline double operator*(const Vec4& v) const {
+    return tt*v.tt - xx*v.xx - yy*v.yy - zz*v.zz;}
 
   // Operator overloading with friends
-  friend Vec4 operator+(const Vec4& v1, const Vec4& v2);
-  friend Vec4 operator-(const Vec4& v1, const Vec4& v2);
   friend Vec4 operator*(double f, const Vec4& v1);
-  friend Vec4 operator*(const Vec4& v1, double f);
-  friend Vec4 operator/(const Vec4& v1, double f);
-  friend double operator*(const Vec4& v1, const Vec4& v2);
 
   // Invariant mass of a pair and its square.
   friend double m(const Vec4& v1, const Vec4& v2);
@@ -226,6 +231,9 @@ public:
   // Print a four-vector.
   friend ostream& operator<<(ostream&, const Vec4& v) ;
 
+  // Shift four-momenta within pair from old to new masses.
+  friend bool pShift( Vec4& p1Move, Vec4& p2Move, double m1New, double m2New);
+
 private:
 
   // Constants: could only be changed in the code itself.
@@ -241,24 +249,8 @@ private:
 // Namespace function declarations; friends of Vec4 class.
 
 // Implementation of operator overloading with friends.
-
-inline Vec4 operator+(const Vec4& v1, const Vec4& v2)
-  {Vec4 v = v1 ; return v += v2;}
-
-inline Vec4 operator-(const Vec4& v1, const Vec4& v2)
-  {Vec4 v = v1 ; return v -= v2;}
-
 inline Vec4 operator*(double f, const Vec4& v1)
   {Vec4 v = v1; return v *= f;}
-
-inline Vec4 operator*(const Vec4& v1, double f)
-  {Vec4 v = v1; return v *= f;}
-
-inline Vec4 operator/(const Vec4& v1, double f)
-  {Vec4 v = v1; return v /= f;}
-
-inline double operator*(const Vec4& v1, const Vec4& v2)
-  {return v1.tt*v2.tt - v1.xx*v2.xx - v1.yy*v2.yy - v1.zz*v2.zz;}
 
 // Invariant mass of a pair and its square.
 double m(const Vec4& v1, const Vec4& v2);
@@ -286,6 +278,9 @@ double REtaPhi(const Vec4& v1, const Vec4& v2);
 
 // Print a four-vector.
 ostream& operator<<(ostream&, const Vec4& v) ;
+
+// Shift four-momenta within pair from old to new masses.
+bool pShift( Vec4& p1Move, Vec4& p2Move, double m1New, double m2New);
 
 //==========================================================================
 
@@ -361,11 +356,11 @@ public:
     double xMaxIn = 1.) {
     book(titleIn, nBinIn, xMinIn, xMaxIn);}
   Hist(const Hist& h)
-    : title(h.title), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
+    : titleSave(h.titleSave), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
     xMax(h.xMax), dx(h.dx), under(h.under), inside(h.inside),
     over(h.over), res(h.res) { }
   Hist(string titleIn, const Hist& h)
-    : title(titleIn), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
+    : titleSave(titleIn), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
     xMax(h.xMax), dx(h.dx), under(h.under), inside(h.inside),
     over(h.over), res(h.res) { }
   Hist& operator=(const Hist& h) { if(this != &h) {
@@ -378,7 +373,7 @@ public:
     double xMaxIn = 1.) ;
 
   // Set title of a histogram.
-  void name(string titleIn = "  ") {title = titleIn; }
+  void title(string titleIn = "  ") {titleSave = titleIn; }
 
   // Reset bin contents.
   void null() ;
@@ -389,18 +384,24 @@ public:
   // Print a histogram with overloaded << operator.
   friend ostream& operator<<(ostream& os, const Hist& h) ;
 
-  // Print histogram contents as a table (e.g. for Gnuplot).
+  // Print histogram contents as a table (e.g. for Gnuplot or Rivet).
   void table(ostream& os = cout, bool printOverUnder = false,
     bool xMidBin = true) const ;
   void table(string fileName, bool printOverUnder = false,
     bool xMidBin = true) const { ofstream streamName(fileName.c_str());
     table(streamName, printOverUnder, xMidBin);}
+  void rivetTable(ostream& os = cout, bool printError = false) const ;
+  void rivetTable(string fileName, bool printError = false) const {
+    ofstream streamName(fileName.c_str()); rivetTable(streamName, printError);}
 
   // Print a table out of two histograms with same x axis.
   friend void table(const Hist& h1, const Hist& h2, ostream& os,
     bool printOverUnder, bool xMidBin) ;
   friend void table(const Hist& h1, const Hist& h2, string fileName,
     bool printOverUnder, bool xMidBin) ;
+
+  // Return title of histogram.
+  string getTitle() const {return titleSave;}
 
   // Return content of specific bin: 0 gives underflow and nBin+1 overflow.
   double getBinContent(int iBin) const;
@@ -426,20 +427,20 @@ public:
   Hist& operator-=(double f) ;
   Hist& operator*=(double f) ;
   Hist& operator/=(double f) ;
+  Hist operator+(double f) const;
+  Hist operator+(const Hist& h2) const;
+  Hist operator-(double f) const;
+  Hist operator-(const Hist& h2) const;
+  Hist operator*(double f) const;
+  Hist operator*(const Hist& h2) const;
+  Hist operator/(double f) const;
+  Hist operator/(const Hist& h2) const;
 
   // Operator overloading with friends
   friend Hist operator+(double f, const Hist& h1);
-  friend Hist operator+(const Hist& h1, double f);
-  friend Hist operator+(const Hist& h1, const Hist& h2);
   friend Hist operator-(double f, const Hist& h1);
-  friend Hist operator-(const Hist& h1, double f);
-  friend Hist operator-(const Hist& h1, const Hist& h2);
   friend Hist operator*(double f, const Hist& h1);
-  friend Hist operator*(const Hist& h1, double f);
-  friend Hist operator*(const Hist& h1, const Hist& h2);
   friend Hist operator/(double f, const Hist& h1);
-  friend Hist operator/(const Hist& h1, double f);
-  friend Hist operator/(const Hist& h1, const Hist& h2);
 
 private:
 
@@ -449,7 +450,7 @@ private:
   static const char   NUMBER[];
 
   // Properties and contents of a histogram.
-  string title;
+  string titleSave;
   int    nBin, nFill;
   double xMin, xMax, dx, under, inside, over;
   vector<double> res;
@@ -471,17 +472,9 @@ void table(const Hist& h1, const Hist& h2, string fileName,
 
 // Operator overloading with friends
 Hist operator+(double f, const Hist& h1);
-Hist operator+(const Hist& h1, double f);
-Hist operator+(const Hist& h1, const Hist& h2);
 Hist operator-(double f, const Hist& h1);
-Hist operator-(const Hist& h1, double f);
-Hist operator-(const Hist& h1, const Hist& h2);
 Hist operator*(double f, const Hist& h1);
-Hist operator*(const Hist& h1, double f);
-Hist operator*(const Hist& h1, const Hist& h2);
 Hist operator/(double f, const Hist& h1);
-Hist operator/(const Hist& h1, double f);
-Hist operator/(const Hist& h1, const Hist& h2);
 
 //==========================================================================
 

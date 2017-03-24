@@ -1,5 +1,5 @@
 // ParticleDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -34,9 +34,15 @@ public:
   // Destructor.
   virtual ~DecayHandler() {}
 
-  // A pure virtual method, wherein the derived class method does a decay.
-  virtual bool decay(vector<int>& idProd, vector<double>& mProd,
-    vector<Vec4>& pProd, int iDec, const Event& event) = 0;
+  // A virtual method, wherein the derived class method does a decay.
+  // Usage: decay( idProd, mProd, pProd, iDec, event).
+  virtual bool decay(vector<int>& , vector<double>& , vector<Vec4>& ,
+   int , const Event& ) {return false;}
+
+  // A virtual method, to do sequential decay chains.
+  // Usage: decay( idProd, motherProd, mProd, pProd, iDec, event).
+  virtual bool chainDecay(vector<int>& , vector<int>& , vector<double>& ,
+    vector<Vec4>& , int , const Event& ) {return false;}
 
 };
 
@@ -103,7 +109,7 @@ private:
   bool   hasPartons, keepPartons;
   int    idDec, meMode, mult;
   double scale;
-  vector<int>    iProd, idProd, cols, acols, idPartons;
+  vector<int>    iProd, idProd, motherProd, cols, acols, idPartons;
   vector<double> mProd, mInv, rndmOrd;
   vector<Vec4>   pInv, pProd;
   vector<FlavContainer> flavEnds;

@@ -1,5 +1,5 @@
 // PartonLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -51,6 +51,7 @@ public:
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
     BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
+    BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
     Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
     SigmaTotal* sigmaTotPtr, TimeShower* timesDecPtrIn,
     TimeShower* timesPtrIn, SpaceShower* spacePtrIn,
@@ -104,7 +105,8 @@ private:
          hasTwoLeptonBeams, hasPointLeptons, canVetoPT, canVetoStep,
          canVetoMPIStep, canVetoEarly, canSetScale, allowRH, earlyResDec,
          vetoWeakJets, canReconResSys, doReconnect, doHardDiff,
-         forceResonanceCR;
+         forceResonanceCR, doNDgamma, doMPIgmgm, showUnresGamma;
+  int    pTmaxMatchMPI;
   double mMinDiff, mWidthDiff, pMaxDiff, vetoWeakDeltaR2;
 
   // Event generation strategy. Number of steps. Maximum pT scales.
@@ -118,11 +120,15 @@ private:
   bool   isNonDiff, isDiffA, isDiffB, isDiffC, isDiff, isSingleDiff,
          isDoubleDiff, isCentralDiff, isResolved, isResolvedA,
          isResolvedB, isResolvedC, isHardDiffA, isHardDiffB, isHardDiff,
-         isSetupDiff, doDiffVeto;
+         doDiffVeto;
   int    sizeProcess, sizeEvent, nHardDone, nHardDoneRHad, iDS;
   double eCMsave;
   vector<bool> inRHadDecay;
   vector<int>  iPosBefShow;
+
+  // Variables for photon inside electron.
+  bool   beamHasGamma, beamAhasResGamma, beamBhasResGamma, beamHasResGamma;
+  int    gammaMode;
 
   // Pointer to various information on the generation.
   Info*          infoPtr;
@@ -142,6 +148,10 @@ private:
   BeamParticle*  beamHadBPtr;
   BeamParticle*  beamPomAPtr;
   BeamParticle*  beamPomBPtr;
+
+  // Pointers to photon beams inside lepton beams.
+  BeamParticle*  beamGamAPtr;
+  BeamParticle*  beamGamBPtr;
 
   // Pointers to Standard Model couplings.
   Couplings*     couplingsPtr;
@@ -165,6 +175,7 @@ private:
   MultipartonInteractions  multiSDB;
   MultipartonInteractions  multiCD;
   MultipartonInteractions* multiPtr;
+  MultipartonInteractions  multiGmGm;
 
   // The generator class to construct beam-remnant kinematics.
   BeamRemnants remnants;
@@ -204,6 +215,17 @@ private:
 
   // Hard diffraction: leave the process record.
   void leaveHardDiff( Event& process, Event& event);
+
+  // Photon beam inside lepton beam: set up the parton level generation.
+  bool setupResolvedLeptonGamma( Event& process);
+
+  // Photon beam inside lepton beam: recover the whole event and
+  // add scattered leptons.
+  void leaveResolvedLeptonGamma( Event& process, Event& event,
+    bool physical = true);
+
+  // Photon beam inside lepton beam: set up the parton level generation.
+  void cleanEventFromGamma( Event& event);
 
   // Pointer to MergingHooks object for user interaction with the merging.
   MergingHooks* mergingHooksPtr;

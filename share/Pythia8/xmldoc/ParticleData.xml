@@ -49,10 +49,11 @@ considered separately.
  
 <parm name="ParticleData:maxEnhanceBW" default="2.5" min="1." max="5."> 
 The modifications in options 2 and 4 above enhance the large-mass tail 
-of the Breit-Wigner distributions (the mass spectrum develops a dm/m divergence). 
+of the Breit-Wigner distributions (the mass spectrum develops a 
+<ei>dm/m</ei> divergence). 
 However, we expect form factors to dampen this tail at masses some distance 
 above the nominal one, so cut off the rise by requiring the actual 
-Breit-Wigner weight not to be more than a factor <code> maxEnhanceBW</code> 
+Breit-Wigner weight not to be more than a factor <code>maxEnhanceBW</code> 
 above the one obtained with options 1 or 3, respectively. This also 
 opens up for a simpler technical handling of mass selection in options 
 2 and 4, by using standard hit-and-miss Monte Carlo. 
@@ -658,6 +659,94 @@ The meaning of the various properties and the format used are explained
  
 <particle id="46" name="A_2" spinType="1" chargeType="0" colType="0" 
           m0="500.00000"> 
+</particle> 
+ 
+<particle id="51" name="DM(s=0)" antiName="DMbar(s=0)" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="52" name="DM(s=1/2)" antiName="DMbar(s=1/2)" spinType="2" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="53" name="DM(s=1)" antiName="DMbar(s=1)" spinType="3" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="54" name="DMmed(s=0)" antiName="DMmedbar(s=0)" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000" mWidth="0.1"> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products=" 1  -1"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products=" 2  -2"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products=" 3  -3"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products=" 4  -4"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products=" 5  -5"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products=" 6  -6"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="11 -11"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="12 -12"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="13 -13"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="14 -14"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="15 -15"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="16 -16"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="21  21"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="22  22"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="22  23"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="23  23"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="24 -24"/> 
+ <channel onMode="1" bRatio="0.050" meMode="101" products="25  25"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="51 -51"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="51  51"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="52 -52"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="52  52"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="53 -53"/> 
+ <channel onMode="1" bRatio="0.025" meMode="101" products="53  53"/> 
+</particle> 
+ 
+<particle id="55" name="DMmed(s=1)" antiName="DMmedbar(s=1)" spinType="3" chargeType="0" colType="0" 
+          m0="100.00000" mWidth="0.1"> 
+ <channel onMode="1" bRatio="0.050" products=" 1  -1"/> 
+ <channel onMode="1" bRatio="0.050" products=" 2  -2"/> 
+ <channel onMode="1" bRatio="0.050" products=" 3  -3"/> 
+ <channel onMode="1" bRatio="0.050" products=" 4  -4"/> 
+ <channel onMode="1" bRatio="0.050" products=" 5  -5"/> 
+ <channel onMode="1" bRatio="0.050" products=" 6  -6"/> 
+ <channel onMode="1" bRatio="0.050" products="11 -11"/> 
+ <channel onMode="1" bRatio="0.050" products="12 -12"/> 
+ <channel onMode="1" bRatio="0.050" products="13 -13"/> 
+ <channel onMode="1" bRatio="0.050" products="14 -14"/> 
+ <channel onMode="1" bRatio="0.050" products="15 -15"/> 
+ <channel onMode="1" bRatio="0.050" products="16 -16"/> 
+ <channel onMode="1" bRatio="0.025" products="21  21"/> 
+ <channel onMode="1" bRatio="0.025" products="22  22"/> 
+ <channel onMode="1" bRatio="0.050" products="22  23"/> 
+ <channel onMode="1" bRatio="0.050" products="23  23"/> 
+ <channel onMode="1" bRatio="0.050" products="24 -24"/> 
+ <channel onMode="1" bRatio="0.050" products="25  25"/> 
+ <channel onMode="1" bRatio="0.025" products="51 -51"/> 
+ <channel onMode="1" bRatio="0.025" products="51  51"/> 
+ <channel onMode="1" bRatio="0.025" products="52 -52"/> 
+ <channel onMode="1" bRatio="0.025" products="52  52"/> 
+ <channel onMode="1" bRatio="0.025" products="53 -53"/> 
+ <channel onMode="1" bRatio="0.025" products="53  53"/> 
+</particle> 
+ 
+<particle id="56" name="DM?1" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="57" name="DM?2" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="58" name="DM?3" antiName="DMbar?3" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="59" name="DM?4" antiName="DMbar?4" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000"> 
+</particle> 
+ 
+<particle id="60" name="DM?5" antiName="DMbar?5" spinType="1" chargeType="0" colType="0" 
+          m0="100.00000"> 
 </particle> 
  
 <particle id="81" name="specflav" spinType="0" chargeType="0" colType="0" 
@@ -3228,7 +3317,7 @@ The meaning of the various properties and the format used are explained
 </particle> 
  
 <particle id="535" name="B*_2s0" antiName="B*_2sbar0" spinType="5" chargeType="0" colType="0" 
-          m0="5.83970" mWidth="0.02000" mMin="5.87000" mMax="6.27000"> 
+          m0="5.83970" mWidth="0.02000" mMin="5.81970" mMax="5.85970"> 
  <channel onMode="1" bRatio="0.1700000" products="513 311"/> 
  <channel onMode="1" bRatio="0.1700000" products="523 -321"/> 
  <channel onMode="1" bRatio="0.3300000" products="511 311"/> 
@@ -4561,7 +4650,7 @@ The meaning of the various properties and the format used are explained
 </particle> 
  
 <particle id="10533" name="B_1s0" antiName="B_1sbar0" spinType="3" chargeType="0" colType="0" 
-          m0="5.97000" mWidth="0.05000" mMin="5.87000" mMax="6.07000"> 
+          m0="5.82900" mWidth="0.05000" mMin="5.77900" mMax="5.87900"> 
  <channel onMode="1" bRatio="0.5000000" products="523 -321"/> 
  <channel onMode="1" bRatio="0.5000000" products="513 -311"/> 
 </particle> 
@@ -9388,115 +9477,115 @@ The meaning of the various properties and the format used are explained
 </particle> 
  
 <particle id="9940003" name="J/psi[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.29692" mWidth="0.0" mMin="3.29692" mMax="3.29692"/> 
+          m0="3.29692" mWidth="0.0" mMin="3.29692" mMax="3.29692"> 
  <channel onMode="1" bRatio="1.0000000" products="443 21"/> 
 </particle> 
  
 <particle id="9940005" name="chi_2c[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.7562" mWidth="0.0" mMin="3.7562" mMax="3.7562"/> 
+          m0="3.7562" mWidth="0.0" mMin="3.7562" mMax="3.7562"> 
  <channel onMode="1" bRatio="1.0000000" products="445 21"/> 
 </particle> 
  
 <particle id="9940011" name="chi_0c[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.61475" mWidth="0.0" mMin="3.61475" mMax="3.61475"/> 
+          m0="3.61475" mWidth="0.0" mMin="3.61475" mMax="3.61475"> 
  <channel onMode="1" bRatio="1.0000000" products="10441 21"/> 
 </particle> 
  
 <particle id="9940023" name="chi_1c[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.71066" mWidth="0.0" mMin="3.71066" mMax="3.71066"/> 
+          m0="3.71066" mWidth="0.0" mMin="3.71066" mMax="3.71066"> 
  <channel onMode="1" bRatio="1.0000000" products="20443 21"/> 
 </particle> 
  
 <particle id="9940103" name="psi(2S)[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.88611" mWidth="0.0" mMin="3.88611" mMax="3.88611"/> 
+          m0="3.88611" mWidth="0.0" mMin="3.88611" mMax="3.88611"> 
  <channel onMode="1" bRatio="1.0000000" products="100443 21"/> 
 </particle> 
  
 <particle id="9941003" name="J/psi[1S0(8)]" spinType="1" chargeType="0" colType="2" 
-          m0="3.29692" mWidth="0.0" mMin="3.29692" mMax="3.29692"/> 
+          m0="3.29692" mWidth="0.0" mMin="3.29692" mMax="3.29692"> 
  <channel onMode="1" bRatio="1.0000000" products="443 21"/> 
 </particle> 
  
 <particle id="9941103" name="psi(2S)[1S0(8)]" spinType="1" chargeType="0" colType="2" 
-          m0="3.88611" mWidth="0.0" mMin="3.88611" mMax="3.88611"/> 
+          m0="3.88611" mWidth="0.0" mMin="3.88611" mMax="3.88611"> 
  <channel onMode="1" bRatio="1.0000000" products="100443 21"/> 
 </particle> 
  
 <particle id="9942003" name="J/psi[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.29692" mWidth="0.0" mMin="3.29692" mMax="3.29692"/> 
+          m0="3.29692" mWidth="0.0" mMin="3.29692" mMax="3.29692"> 
  <channel onMode="1" bRatio="1.0000000" products="443 21"/> 
 </particle> 
  
 <particle id="9942033" name="psi(3770)[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.97315" mWidth="0.0" mMin="3.97315" mMax="3.97315"/> 
+          m0="3.97315" mWidth="0.0" mMin="3.97315" mMax="3.97315"> 
  <channel onMode="1" bRatio="1.0000000" products="30443 21"/> 
 </particle> 
  
 <particle id="9942103" name="psi(2S)[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="3.88611" mWidth="0.0" mMin="3.88611" mMax="3.88611"/> 
+          m0="3.88611" mWidth="0.0" mMin="3.88611" mMax="3.88611"> 
  <channel onMode="1" bRatio="1.0000000" products="100443 21"/> 
 </particle> 
  
 <particle id="9950003" name="Upsilon[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="9.6603" mWidth="0.0" mMin="9.6603" mMax="9.6603"/> 
+          m0="9.6603" mWidth="0.0" mMin="9.6603" mMax="9.6603"> 
  <channel onMode="1" bRatio="1.0000000" products="553 21"/> 
 </particle> 
  
 <particle id="9950005" name="chi_2b[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.1122" mWidth="0.0" mMin="10.1122" mMax="10.1122"/> 
+          m0="10.1122" mWidth="0.0" mMin="10.1122" mMax="10.1122"> 
  <channel onMode="1" bRatio="1.0000000" products="555 21"/> 
 </particle> 
  
 <particle id="9950011" name="chi_0b[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.0594" mWidth="0.0" mMin="10.0594" mMax="10.0594"/> 
+          m0="10.0594" mWidth="0.0" mMin="10.0594" mMax="10.0594"> 
  <channel onMode="1" bRatio="1.0000000" products="10551 21"/> 
 </particle> 
  
 <particle id="9950023" name="chi_1b[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.09280" mWidth="0.0" mMin="10.09280" mMax="10.09280"/> 
+          m0="10.09280" mWidth="0.0" mMin="10.09280" mMax="10.09280"> 
  <channel onMode="1" bRatio="1.0000000" products="20553 21"/> 
 </particle> 
  
 <particle id="9950103" name="Upsilon(2S)[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.22326" mWidth="0.0" mMin="10.22326" mMax="10.22326"/> 
+          m0="10.22326" mWidth="0.0" mMin="10.22326" mMax="10.22326"> 
  <channel onMode="1" bRatio="1.0000000" products="100553 21"/> 
 </particle> 
  
 <particle id="9950203" name="Upsilon(3S)[3S1(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"/> 
+          m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"> 
  <channel onMode="1" bRatio="1.0000000" products="200553 21"/> 
 </particle> 
  
 <particle id="9951003" name="Upsilon[1S0(8)]" spinType="1" chargeType="0" colType="2" 
-          m0="9.6603" mWidth="0.0" mMin="9.6603" mMax="9.6603"/> 
+          m0="9.6603" mWidth="0.0" mMin="9.6603" mMax="9.6603"> 
  <channel onMode="1" bRatio="1.0000000" products="553 21"/> 
 </particle> 
  
 <particle id="9951103" name="Upsilon(2S)[1S0(8)]" spinType="1" chargeType="0" colType="2" 
-          m0="10.22326" mWidth="0.0" mMin="10.22326" mMax="10.22326"/> 
+          m0="10.22326" mWidth="0.0" mMin="10.22326" mMax="10.22326"> 
  <channel onMode="1" bRatio="1.0000000" products="100553 21"/> 
 </particle> 
  
 <particle id="9951203" name="Upsilon(3S)[1S0(8)]" spinType="1" chargeType="0" colType="2" 
-          m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"/> 
+          m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"> 
  <channel onMode="1" bRatio="1.0000000" products="200553 21"/> 
 </particle> 
  
 <particle id="9952003" name="Upsilon[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="9.6603" mWidth="0.0" mMin="9.6603" mMax="9.6603"/> 
+          m0="9.6603" mWidth="0.0" mMin="9.6603" mMax="9.6603"> 
  <channel onMode="1" bRatio="1.0000000" products="553 21"/> 
 </particle> 
  
 <particle id="9952103" name="Upsilon(2S)[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.22326" mWidth="0.0" mMin="10.22326" mMax="10.22326"/> 
+          m0="10.22326" mWidth="0.0" mMin="10.22326" mMax="10.22326"> 
  <channel onMode="1" bRatio="1.0000000" products="100553 21"/> 
 </particle> 
  
 <particle id="9952203" name="Upsilon(3S)[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
-          m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"/> 
+          m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"> 
  <channel onMode="1" bRatio="1.0000000" products="200553 21"/> 
 </particle> 
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

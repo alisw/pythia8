@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pythia8-config is a part of the PYTHIA event generator.
-# Copyright (C) 2015 Torbjorn Sjostrand.
+# Copyright (C) 2017 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 # Author: Philip Ilten, October 2014.
@@ -16,7 +16,7 @@
 #     CFG_FILE: The Makefile configuration file.
 #     USAGE:    Text printed when the --help option is passed.
 ################################################################################
-CFG_FILE=/scratch/galette/bierlich/work/pythiaSVN/trunk/share/Pythia8/examples/Makefile.inc
+CFG_FILE=/usr/share/Pythia8/examples/Makefile.inc
 read -d "" USAGE << "BLOCKTEXT"
 Usage: ./pythia8-config [OPTIONS]
 
@@ -27,6 +27,7 @@ PYTHIA configuration script are also valid for this script. See
 
 Available options.
 --help       : Print this help message (also -h, --h, and -help).
+--config     : Print the argument(s) used to configure Pythia.
 --prefix     : Installation prefix (cf. autoconf). Note that if the installation
                is spread over multiple directories, the binary directory with
                the trailing "bin" removed is then returned.
@@ -67,9 +68,14 @@ if [ -f $PREFIX/Makefile.inc ]; then CFG_FILE="$PREFIX/Makefile.inc"
 elif [ ! -f $CFG_FILE ]; then
     echo "Error: cannot find valid configuration for Pythia 8"; exit; fi
 while read LINE; do
+    if [[ $LINE == \#\ --* ]]; then CONFIG+=${LINE#?}; fi
     if [[ $LINE != *=* ]]; then continue; fi
     VAR=${LINE%=*}; VAL=${LINE#$KEY}; VAL=${VAL#*=};
     eval $VAR=\"$VAL\"; done < $CFG_FILE
+
+# Check if configuration is requested.
+for VAR in "$@"; do
+    if [ "$VAR" = "--config" ]; then echo "./configure$CONFIG"; exit; fi; done
 
 # Change the prefixes if local version.
 if [ "$CFG_FILE" = "$PREFIX/Makefile.inc" ]; then

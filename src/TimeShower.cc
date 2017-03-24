@@ -1,5 +1,5 @@
 // TimeShower.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -60,6 +60,12 @@ const double TimeShower::WEAKPSWEIGHT = 5.;
 // Extra overestimate of g -> q qbar branching rate for DGLAP comparison.
 const double TimeShower::WG2QEXTRA = 20.;
 
+// Limit on size of number of rejections for uncertainty variations.
+const double TimeShower::REJECTFACTOR = 0.1;
+
+// Limit on probability for uncertainty variations.
+const double TimeShower::PROBLIMIT = 0.99;
+
 //--------------------------------------------------------------------------
 
 // Initialize alphaStrong, alphaEM and related pTmin parameters.
@@ -75,11 +81,14 @@ void TimeShower::init( BeamParticle* beamAPtrIn,
   doQCDshower        = settingsPtr->flag("TimeShower:QCDshower");
   doQEDshowerByQ     = settingsPtr->flag("TimeShower:QEDshowerByQ");
   doQEDshowerByL     = settingsPtr->flag("TimeShower:QEDshowerByL");
+  doQEDshowerByOther = settingsPtr->flag("TimeShower:QEDshowerByOther");
   doQEDshowerByGamma = settingsPtr->flag("TimeShower:QEDshowerByGamma");
   doWeakShower       = settingsPtr->flag("TimeShower:weakShower");
   doMEcorrections    = settingsPtr->flag("TimeShower:MEcorrections");
+  doMEextended       = settingsPtr->flag("TimeShower:MEextended");
   doMEafterFirst     = settingsPtr->flag("TimeShower:MEafterFirst");
   doPhiPolAsym       = settingsPtr->flag("TimeShower:phiPolAsym");
+  doPhiPolAsymHard   = settingsPtr->flag("TimeShower:phiPolAsymHard");
   doInterleave       = settingsPtr->flag("TimeShower:interleave");
   allowBeamRecoil    = settingsPtr->flag("TimeShower:allowBeamRecoil");
   dampenBeamRecoil   = settingsPtr->flag("TimeShower:dampenBeamRecoil");
@@ -128,6 +137,7 @@ void TimeShower::init( BeamParticle* beamAPtrIn,
   weightGluonToQuark = settingsPtr->mode("TimeShower:weightGluonToQuark");
   scaleGluonToQuark  = settingsPtr->parm("TimeShower:scaleGluonToQuark");
   extraGluonToQuark  = (weightGluonToQuark%4 == 3) ? WG2QEXTRA : 1.;
+  recoilDeadCone     = settingsPtr->flag("TimeShower:recoilDeadCone");
   pTcolCutMin        = settingsPtr->parm("TimeShower:pTmin");
   if (pTcolCutMin > LAMBDA3MARGIN * Lambda3flav / sqrt(renormMultFac))
     pTcolCut         = pTcolCutMin;
@@ -165,6 +175,7 @@ void TimeShower::init( BeamParticle* beamAPtrIn,
   singleWeakEmission = settingsPtr->flag("WeakShower:singleEmission");
   vetoWeakJets       = settingsPtr->flag("WeakShower:vetoWeakJets");
   vetoWeakDeltaR2    = pow2(settingsPtr->parm("WeakShower:vetoWeakDeltaR"));
+  weakExternal       = settingsPtr->flag("WeakShower:externalSetup");
 
   // Consisteny check for gamma -> f fbar variables.
   if (nGammaToQuark <= 0 && nGammaToLepton <= 0) doQEDshowerByGamma = false;
@@ -201,19 +212,30 @@ void TimeShower::init( BeamParticle* beamAPtrIn,
   doHVshower         = settingsPtr->flag("HiddenValley:FSR");
   nCHV               = settingsPtr->mode("HiddenValley:Ngauge");
   alphaHVfix         = settingsPtr->parm("HiddenValley:alphaFSR");
+  alphaHVorder       = (nCHV > 1 )
+                     ? settingsPtr->mode("HiddenValley:alphaOrder") : 0;
+  nFlavHV            = settingsPtr->mode("HiddenValley:nFlav");
+  LambdaHV           = settingsPtr->parm("HiddenValley:Lambda");
   pThvCut            = settingsPtr->parm("HiddenValley:pTminFSR");
-  pT2hvCut           = pThvCut * pThvCut;
   CFHV               = (nCHV == 1) ? 1. : (nCHV * nCHV - 1.)/(2. * nCHV);
   idHV               = (nCHV == 1) ? 4900022 : 4900021;
   mHV                = particleDataPtr->m0(idHV);
   brokenHVsym        = (nCHV == 1 && mHV > 0.);
+  if (pThvCut < LambdaHV) {
+    pThvCut         = LAMBDA3MARGIN * LambdaHV;
+    ostringstream newPTcolCut;
+    newPTcolCut << fixed << setprecision(3) << pThvCut;
+    infoPtr->errorMsg("Warning in TimeShower::init: Hidden Valley pTmin ",
+                      "too low, raised to " + newPTcolCut.str() );
+  }
+  pT2hvCut           = pThvCut * pThvCut;
 
   // Possibility of two predetermined hard emissions in event.
   doSecondHard    = settingsPtr->flag("SecondHard:generate");
 
   // Possibility to allow user veto of emission step.
-  canVetoEmission    = (userHooksPtr != 0)
-                     ? userHooksPtr->canVetoFSREmission() : false;
+  hasUserHooks       = (userHooksPtr != 0);
+  canVetoEmission    = hasUserHooks && userHooksPtr->canVetoFSREmission();
 
   // Set initial value, just in case.
   dopTdamp           = false;
@@ -221,6 +243,30 @@ void TimeShower::init( BeamParticle* beamAPtrIn,
 
   // Default values for the weak shower.
   hasWeaklyRadiated  = false;
+
+  // Disallow simultaneous splitting and trial emission enhancements.
+  canEnhanceEmission = hasUserHooks && userHooksPtr->canEnhanceEmission();
+  canEnhanceTrial    = hasUserHooks && userHooksPtr->canEnhanceTrial();
+  if (canEnhanceEmission && canEnhanceTrial) {
+    infoPtr->errorMsg("Error in SpaceShower::init: Enhance for both actual "
+    "and trial emissions not possible. Both switched off.");
+    canEnhanceEmission = false;
+    canEnhanceTrial    = false;
+  }
+
+  // Properties for enhanced emissions.
+  splittingNameSel   = "";
+  splittingNameNow   = "";
+  enhanceFactors.clear();
+
+  // Enable automated uncertainty variations.
+  nVarQCD            = 0;
+  doUncertainties    = settingsPtr->flag("UncertaintyBands:doVariations")
+                    && initUncertainties();
+  doUncertaintiesNow = doUncertainties;
+  uVarNflavQ         = settingsPtr->mode("UncertaintyBands:nFlavQ");
+  uVarMPIshowers     = settingsPtr->flag("UncertaintyBands:MPIshowers");
+  cNSpTmin           = settingsPtr->parm("UncertaintyBands:cNSpTmin");
 
 }
 
@@ -616,8 +662,9 @@ void TimeShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
       // Find "charge-dipole" and "photon-dipole" ends.
       int  chgType  = event[iRad].chargeType();
       bool doChgDip = (chgType != 0)
-                       && ( ( doQEDshowerByQ && event[iRad].isQuark()  )
-                         || ( doQEDshowerByL && event[iRad].isLepton() ) );
+                   && ( ( doQEDshowerByQ && event[iRad].isQuark() )
+                     || ( doQEDshowerByL && event[iRad].isLepton() )
+                     || ( doQEDshowerByOther && event[iRad].isResonance() ) );
       int  gamType  = (idRad == 22) ? 1 : 0;
       bool doGamDip = (gamType == 1) && doQEDshowerByGamma;
       if (doChgDip || doGamDip) setupQEDdip( iSys, i, chgType, gamType,
@@ -625,7 +672,8 @@ void TimeShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
 
       // Find weak diple ends.
       if (doWeakShower && (iSys == 0 || !partonSystemsPtr->hasInAB(iSys))
-        && (event[iRad].isQuark()  || event[iRad].isLepton())) {
+        && (event[iRad].isQuark()  || event[iRad].isLepton())
+          && (!weakExternal || iSys != 0)  ) {
         if (weakMode == 0 || weakMode == 1)
           setupWeakdip( iSys, i, 1, event, limitPTmaxIn);
         if (weakMode == 0 || weakMode == 2)
@@ -641,6 +689,10 @@ void TimeShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
     // End loop over system final state. Have now found the dipole ends.
     }
   }
+
+  // Special setup for weak dipoles if they are setup externally.
+  if (doWeakShower && weakExternal && iSys == 0)
+    setupWeakdipExternal(event, limitPTmaxIn);
 
   // Loop through dipole ends to find matrix element corrections.
   for (int iDip = dipEndSizeBeg; iDip < int(dipEnd.size()); ++iDip)
@@ -1619,35 +1671,35 @@ void TimeShower::setupWeakdip( int iSys, int i, int weakType, Event& event,
     // Find correct helicity.
     int weakPol = (rndmPtr->flat() > 0.5) ? -1 : 1;
     // Check if particle has already gotten a helicity.
-    if (event[iRad].pol() == 1 || event[iRad].pol() == -1)
-      weakPol = event[iRad].pol();
+    if (event[iRad].intPol() == 1 || event[iRad].intPol() == -1)
+      weakPol = event[iRad].intPol();
     // If particle come from ISR radiation.
     else if (event[iRad].statusAbs() > 40) {
       if (event[event[iRad].mother1()].idAbs() < 20)
-        weakPol = event[event[iRad].mother1()].pol();
+        weakPol = event[event[iRad].mother1()].intPol();
       else if (int(event[iRad].sisterList(true).size()) != 0)
-        weakPol = event[event[iRad].sisterList(true)[0]].pol();
+        weakPol = event[event[iRad].sisterList(true)[0]].intPol();
     }
     // If it is not a 2 to 2 process, always use recoiler.
     else if (infoPtr->nFinal() != 2) {
-      if (event[iRec].pol() == 1 || event[iRec].pol() == -1)
-        weakPol = event[iRec].pol();
+      if (event[iRec].intPol() == 1 || event[iRec].intPol() == -1)
+        weakPol = event[iRec].intPol();
     }
     // If s-channel, choose same spin as recoiler.
     else if (idRad == - event[iRec].id()) {
-      if (event[iRec].pol() == 1 || event[iRec].pol() == -1)
-        weakPol = event[iRec].pol();
+      if (event[iRec].intPol() == 1 || event[iRec].intPol() == -1)
+        weakPol = event[iRec].intPol();
     }
     // if W-decay, choose always left handed.
     else if (event[event[iRad].mother1()].idAbs() == 24) weakPol = -1;
     // If four particles of the same type.
     else if (idRad == event[iRec].id()) {
-      if (uHat*uHat/(tHat*tHat + uHat*uHat) > 0.5) weakPol = event[3].pol();
-      else weakPol = event[4].pol();
+      if (uHat*uHat/(tHat*tHat + uHat*uHat) > 0.5) weakPol = event[3].intPol();
+      else weakPol = event[4].intPol();
     }
     // For different particle types, choose correct fermion line.
-    else if (event[3].id() == idRad) weakPol = event[3].pol();
-    else if (event[4].id() == idRad) weakPol = event[4].pol();
+    else if (event[3].id() == idRad) weakPol = event[3].intPol();
+    else if (event[4].id() == idRad) weakPol = event[4].intPol();
     // If weak ISR is turned off, this would try to use polarization
     // that is not set as expected. In this case use random polarization.
     if (weakPol > 1) weakPol = (rndmPtr->flat() > 0.5) ? -1 : 1;
@@ -1681,6 +1733,87 @@ void TimeShower::setupWeakdip( int iSys, int i, int weakType, Event& event,
     infoPtr->errorMsg("Error in TimeShower::setupWeakdip: "
       "failed to locate any recoiling partner");
   }
+}
+
+//--------------------------------------------------------------------------
+
+// Special setup for weak dipoles if already specified in info ptr.
+void TimeShower::setupWeakdipExternal(Event& event, bool limitPTmaxIn) {
+
+  // Get information.
+  vector<pair<int,int> > weakDipoles = infoPtr->getWeakDipoles();
+  vector<int> weakModes = infoPtr->getWeakModes();
+  weakMomenta = infoPtr->getWeakMomenta();
+  weak2to2lines = infoPtr->getWeak2to2lines();
+  weakHardSize = int(weakModes.size());
+
+  // Loop over dipoles.
+  for (int i = 0; i < int(weakDipoles.size()); ++i) {
+    // Only consider FSR dipoles.
+    if (event[weakDipoles[i].first].status() > 0) {
+      // Find ME.
+      int iRad = weakDipoles[i].first;
+      int iRec = weakDipoles[i].second;
+
+      // Find MEtype.
+      int MEtypeWeak = 0;
+      if (weakModes[weakDipoles[i].first] == 1) MEtypeWeak = 200;
+      else if (weakModes[weakDipoles[i].first] == 2) MEtypeWeak = 201;
+      else if (weakModes[weakDipoles[i].first] == 3) MEtypeWeak = 202;
+      else MEtypeWeak = 203;
+
+      // Find correct polarization, if it is already set use it.
+      // Otherwise pick randomly.
+      int weakPol = (rndmPtr->flat() > 0.5) ? -1 : 1;
+      if (event[weakDipoles[i].first].intPol() != 9)
+        weakPol = event[weakDipoles[i].first].intPol();
+      else if (event[weakDipoles[i].second].intPol() != 9) {
+        if (event[weakDipoles[i].second].status() < 0)
+          weakPol = event[weakDipoles[i].second].intPol();
+        else
+          weakPol = -event[weakDipoles[i].second].intPol();
+      }
+      event[weakDipoles[i].first].pol(weakPol);
+
+      // Max scale either by parton scale or by half dipole mass.
+      double pTmax = event[iRad].scale();
+
+      if (limitPTmaxIn) {
+        pTmax *= pTmaxFudge;
+      } else pTmax = 0.5 * m( event[iRad], event[iRec]);
+
+      // Recoiler is always final state.
+      int isrType = 0;
+
+      // No right-handed W emission.
+      // Add the dipoles.
+      if ( (weakMode == 0 || weakMode == 1) && weakPol == -1)
+        dipEnd.push_back( TimeDipoleEnd(iRad, iRec, pTmax,
+          0, 0, 0, 1, isrType, 0, MEtypeWeak, -1, weakPol) );
+
+      if (weakMode == 0 || weakMode == 2)
+         dipEnd.push_back( TimeDipoleEnd(iRad, iRec, pTmax,
+          0, 0, 0, 2, isrType, 0, MEtypeWeak +5, -1, weakPol) );
+
+    }
+  }
+
+  for (int i = 0;i < int(dipEnd.size()); ++i) {
+    Vec4 p3weak, p4weak;
+    if (dipEnd[i].MEtype > 200) {
+      int i2to2Mother = dipEnd[i].iRadiator;
+      while (i2to2Mother >= weakHardSize)
+        i2to2Mother = event[i2to2Mother].mother1();
+      if (weak2to2lines[2] == i2to2Mother) {
+        p3weak = weakMomenta[0];
+        p4weak = weakMomenta[1];
+      } else {
+        p3weak = weakMomenta[1];
+        p4weak = weakMomenta[0];
+      }
+    }
+  }
+
 }
 
 //--------------------------------------------------------------------------
@@ -1740,15 +1873,27 @@ void TimeShower::setupHVdip( int iSys, int i, Event& event,
 // Select next pT in downwards evolution of the existing dipoles.
 
 double TimeShower::pTnext( Event& event, double pTbegAll, double pTendAll,
-  bool isFirstTrial) {
+  bool isFirstTrial, bool doTrialIn) {
 
   // Begin loop over all possible radiating dipole ends.
   dipSel  = 0;
   iDipSel = -1;
   double pT2sel = pTendAll * pTendAll;
 
+  // Check if enhanced emissions should be applied.
+  doTrialNow    = doTrialIn;
+  canEnhanceET  = (!doTrialNow && canEnhanceEmission)
+               || ( doTrialNow && canEnhanceTrial);
+
+  // Starting values for enhanced emissions.
+  splittingNameSel = "";
+  splittingNameNow = "";
+  enhanceFactors.clear();
+  if (hasUserHooks) userHooksPtr->setEnhancedTrial(0., 1.);
+
   for (int iDip = 0; iDip < int(dipEnd.size()); ++iDip) {
     TimeDipoleEnd& dip = dipEnd[iDip];
+    dip.pAccept        = 1.0;
 
     // Check if this system is part of the hard scattering
     // (including resonance decay products).
@@ -1874,6 +2019,7 @@ double TimeShower::pTnext( Event& event, double pTbegAll, double pTendAll,
         pT2sel  = dip.pT2;
         dipSel  = &dip;
         iDipSel = iDip;
+        splittingNameSel = splittingNameNow;
       }
     }
   }
@@ -1925,8 +2071,26 @@ void TimeShower::pT2nextQCD(double pT2begDip, double pT2sel,
   double wt            = 0.;
   bool   mustFindRange = true;
 
+  // Add more headRoom if doing uncertainty variations
+  // (to ensure at least a minimal number of failed branchings).
+  doUncertaintiesNow   = doUncertainties;
+  if (!uVarMPIshowers && dip.system != 0
+    && partonSystemsPtr->getInA(dip.system) != 0) doUncertaintiesNow = false;
+  double overFac       = doUncertaintiesNow ? 2.0 : 1.0;
+
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QG, isEnhancedG2QQ, isEnhancedG2GG;
+  isEnhancedQ2QG = isEnhancedG2QQ = isEnhancedG2GG = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
+
   // Begin evolution loop towards smaller pT values.
   do {
+
+    // Default values for current tentative emission.
+    isEnhancedQ2QG = isEnhancedG2QQ = isEnhancedG2GG = false;
+    enhanceNow = 1.;
+    nameNow = "";
 
     // Initialize evolution coefficients at the beginning and
     // reinitialize when crossing c and b flavour thresholds.
@@ -1958,10 +2122,19 @@ void TimeShower::pT2nextQCD(double pT2begDip, double pT2sel,
       if (zMinAbs > 0.499) { dip.pT2 = 0.; return; }
 
       // Find emission coefficients for X -> X g and g -> q qbar.
-      emitCoefGlue = wtPSglue * colFac * log(1. / zMinAbs - 1.);
+      emitCoefGlue = overFac * wtPSglue * colFac * log(1. / zMinAbs - 1.);
+      // Optionally enhanced branching rate.
+      if (canEnhanceET && colTypeAbs == 2)
+        emitCoefGlue *= userHooksPtr->enhanceFactor("fsr:G2GG");
+      if (canEnhanceET && colTypeAbs == 1)
+        emitCoefGlue *= userHooksPtr->enhanceFactor("fsr:Q2QG");
+
       emitCoefTot  = emitCoefGlue;
       if (colTypeAbs == 2 && event[dip.iRadiator].id() == 21) {
-        emitCoefQqbar = wtPSqqbar * (1. - 2. * zMinAbs);
+        emitCoefQqbar = overFac * wtPSqqbar * (1. - 2. * zMinAbs);
+        // Optionally enhanced branching rate.
+        if (canEnhanceET)
+          emitCoefQqbar *= userHooksPtr->enhanceFactor("fsr:G2QQ");
         emitCoefTot  += emitCoefQqbar;
       }
 
@@ -2027,6 +2200,40 @@ void TimeShower::pT2nextQCD(double pT2begDip, double pT2sel,
           dip.mFlavour = particleDataPtr->m0(dip.flavour);
         }
 
+
+        if (dip.flavour == 21
+          && (colTypeAbs == 1 || colTypeAbs == 3) ) {
+          nameNow = "fsr:Q2QG";
+          // Optionally enhanced branching rate.
+          if (canEnhanceET) {
+            double enhance = userHooksPtr->enhanceFactor(nameNow);
+            if (enhance != 1.) {
+              enhanceNow = enhance;
+              isEnhancedQ2QG = true;
+            }
+          }
+        } else if (dip.flavour == 21) {
+          nameNow = "fsr:G2GG";
+          // Optionally enhanced branching rate.
+          if (canEnhanceET) {
+            double enhance = userHooksPtr->enhanceFactor(nameNow);
+            if (enhance != 1.) {
+              enhanceNow = enhance;
+              isEnhancedG2GG = true;
+            }
+          }
+        } else {
+          nameNow = "fsr:G2QQ";
+          // Optionally enhanced branching rate.
+          if (canEnhanceET) {
+            double enhance = userHooksPtr->enhanceFactor(nameNow);
+            if (enhance != 1.) {
+              enhanceNow = enhance;
+              isEnhancedG2QQ = true;
+            }
+          }
+        }
+
         // No z weight, except threshold, if to do ME corrections later on.
         if (dip.MEtype > 0) {
           wt = 1.;
@@ -2037,8 +2244,17 @@ void TimeShower::pT2nextQCD(double pT2begDip, double pT2sel,
         } else if (dip.flavour == 21
           && (colTypeAbs == 1 || colTypeAbs == 3) ) {
           wt = (1. + pow2(dip.z)) / wtPSglue;
+
+        // z weight for g -> g g; optional suppression for massive recoiler.
         } else if (dip.flavour == 21) {
           wt = (1. + pow3(dip.z)) / wtPSglue;
+          if (recoilDeadCone && dip.mRec > 0.) {
+            double r2G = dip.m2Rec / dip.m2Dip;
+            double x1G = (1. - r2G + dip.m2 / dip.m2Dip) * dip.z;
+            double x2G =  1. + r2G - dip.m2 / dip.m2Dip;
+            wt *= 1. - (r2G / max(XMARGIN, x1G + x2G - 1. - r2G))
+              * (max(XMARGIN, 1. + r2G - x2G) / max(XMARGIN,1. - r2G - x1G));
+          }
 
         // z weight for g -> q qbar: different options.
         } else {
@@ -2061,6 +2277,9 @@ void TimeShower::pT2nextQCD(double pT2begDip, double pT2sel,
             wt *= log(dip.pT2 / Lambda2)
                 / log(scaleGluonToQuark * dip.m2 / Lambda2);
         }
+
+        // Cancel out extra uncertainty-band headroom factors.
+        wt /= overFac;
 
         // Suppression factors for dipole to beam remnant.
         if (dip.isrType != 0 && useLocalRecoilNow) {
@@ -2106,8 +2325,22 @@ void TimeShower::pT2nextQCD(double pT2begDip, double pT2sel,
       }
     }
 
+    // If doing uncertainty variations, postpone accept/reject to branch().
+    if (wt > 0. && dip.pT2 > pT2min && doUncertaintiesNow) {
+      dip.pAccept = wt;
+      wt          = 1.0;
+    }
+
   // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat());
+
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET) {
+    if (isEnhancedQ2QG) storeEnhanceFactor(dip.pT2,"fsr:Q2QG", enhanceNow);
+    if (isEnhancedG2QQ) storeEnhanceFactor(dip.pT2,"fsr:G2QQ", enhanceNow);
+    if (isEnhancedG2GG) storeEnhanceFactor(dip.pT2,"fsr:G2GG", enhanceNow);
+  }
 
 }
 
@@ -2139,6 +2372,12 @@ void TimeShower::pT2nextQED(double pT2begDip, double pT2sel,
   double alphaEMmax  = alphaEM.alphaEM(renormMultFac * dip.m2DipCorr);
   double alphaEM2pi  = alphaEMmax / (2. * M_PI);
 
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QA, isEnhancedA2LL, isEnhancedA2QQ;
+  isEnhancedQ2QA = isEnhancedA2LL = isEnhancedA2QQ = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
+
   // Emission: upper estimate for matrix element weighting; charge factor.
   if (hasCharge) {
     wtPSgam     = 2.;
@@ -2148,6 +2387,8 @@ void TimeShower::pT2nextQED(double pT2begDip, double pT2sel,
     zMinAbs = 0.5 - sqrtpos( 0.25 - pT2endDip / dip.m2DipCorr );
     if (zMinAbs < SIMPLIFYROOT) zMinAbs = pT2endDip / dip.m2DipCorr;
     emitCoefTot = alphaEM2pi * chg2 * wtPSgam * log(1. / zMinAbs - 1.);
+    // Optionally enhanced branching rate.
+    if (canEnhanceET) emitCoefTot *= userHooksPtr->enhanceFactor("fsr:Q2QA");
 
   // Branching: sum of squared charge factors for lepton and quark daughters.
   } else {
@@ -2157,6 +2398,10 @@ void TimeShower::pT2nextQED(double pT2begDip, double pT2sel,
     else if (nGammaToQuark > 2) chg2SumQ =  6. / 9.;
     else if (nGammaToQuark > 1) chg2SumQ =  5. / 9.;
     else if (nGammaToQuark > 0) chg2SumQ =  1. / 9.;
+
+    // Optionally enhanced branching rate.
+    if (canEnhanceET) chg2SumL *= userHooksPtr->enhanceFactor("fsr:A2LL");
+    if (canEnhanceET) chg2SumQ *= userHooksPtr->enhanceFactor("fsr:A2QQ");
 
     // Total sum of squared charge factors. Find evolution coefficient.
     chg2Sum     = chg2SumL + 3. * chg2SumQ;
@@ -2169,6 +2414,12 @@ void TimeShower::pT2nextQED(double pT2begDip, double pT2sel,
 
   // Begin evolution loop towards smaller pT values.
   do {
+
+
+    // Default values for current tentative emission.
+    isEnhancedQ2QA = isEnhancedA2LL = isEnhancedA2QQ = false;
+    enhanceNow = 1.;
+    nameNow = "";
 
     // Pick pT2 (in overestimated z range).
     dip.pT2 = dip.pT2 * pow(rndmPtr->flat(), 1. / emitCoefTot);
@@ -2210,6 +2461,39 @@ void TimeShower::pT2nextQED(double pT2begDip, double pT2sel,
           else                  dip.flavour = 5;
         }
         dip.mFlavour = particleDataPtr->m0(dip.flavour);
+      }
+
+
+      if (hasCharge) {
+        nameNow = "fsr:Q2QA";
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedQ2QA = true;
+          }
+        }
+      } else if (dip.flavour > 10) {
+        nameNow = "fsr:A2LL";
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedA2LL = true;
+          }
+        }
+      } else {
+        nameNow = "fsr:A2QQ";
+        // Optionally enhanced branching rate.
+        if (canEnhanceET) {
+          double enhance = userHooksPtr->enhanceFactor(nameNow);
+          if (enhance != 1.) {
+            enhanceNow = enhance;
+            isEnhancedA2QQ = true;
+          }
+        }
       }
 
       // No z weight, except threshold, if to do ME corrections later on.
@@ -2294,6 +2578,14 @@ void TimeShower::pT2nextQED(double pT2begDip, double pT2sel,
   // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat());
 
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET) {
+    if (isEnhancedQ2QA) storeEnhanceFactor(dip.pT2,"fsr:Q2QA", enhanceNow);
+    if (isEnhancedA2LL) storeEnhanceFactor(dip.pT2,"fsr:A2LL", enhanceNow);
+    if (isEnhancedA2QQ) storeEnhanceFactor(dip.pT2,"fsr:A2QQ", enhanceNow);
+  }
+
 }
 
 //--------------------------------------------------------------------------
@@ -2337,6 +2629,12 @@ void TimeShower::pT2nextWeak(double pT2begDip, double pT2sel,
     weakCoupling = alphaEM2pi * thetaWRat
       * pow2(2. * coupSMPtr->rf( event[dip.iRadiator].idAbs() ));
 
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QW;
+  isEnhancedQ2QW = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
+
   // Variables used inside evolution loop.
   emitCoefTot = weakEnhancement * weakCoupling
     * wtPSgam * log(1. / zMinAbs - 1.);
@@ -2347,8 +2645,17 @@ void TimeShower::pT2nextWeak(double pT2begDip, double pT2sel,
   dip.pT2 = pT2begDip;
   double wt;
 
+  // Optionally enhanced branching rate.
+  if (canEnhanceET) emitCoefTot *= userHooksPtr->enhanceFactor("fsr:Q2QW");
+
   // Begin evolution loop towards smaller pT values.
   do {
+
+    // Default values for current tentative emission.
+    isEnhancedQ2QW = false;
+    enhanceNow = 1.;
+    nameNow = "";
+
     // Pick pT2 (in overestimated z range).
     dip.pT2 = dip.pT2 * pow(rndmPtr->flat(), 1. / emitCoefTot);
     wt = 0.;
@@ -2383,6 +2690,16 @@ void TimeShower::pT2nextWeak(double pT2begDip, double pT2sel,
       // Correct to current value of alpha_EM.
       double alphaEMnow = alphaEM.alphaEM(renormMultFac * dip.pT2);
       wt *= (alphaEMnow / alphaEMmax);
+
+      nameNow = "fsr:Q2QW";
+      // Optionally enhanced branching rate.
+      if (canEnhanceET) {
+        double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (enhance != 1.) {
+          enhanceNow = enhance;
+          isEnhancedQ2QW = true;
+        }
+      }
 
       // Suppression factors for dipole to beam remnant.
       if (dip.isrType != 0 && useLocalRecoilNow) {
@@ -2428,6 +2745,11 @@ void TimeShower::pT2nextWeak(double pT2begDip, double pT2sel,
     // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat());
 
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET && isEnhancedQ2QW)
+    storeEnhanceFactor(dip.pT2,"fsr:Q2QW", enhanceNow);
+
 }
 
 //--------------------------------------------------------------------------
@@ -2444,22 +2766,44 @@ void TimeShower::pT2nextHV(double pT2begDip, double pT2sel,
   // C_F * alpha_HV/2 pi.
   int    colvTypeAbs = abs(dip.colvType);
   double colvFac     = (colvTypeAbs == 1) ? CFHV : 0.5 * nCHV;
-  double alphaHV2pi  = colvFac * (alphaHVfix / (2. * M_PI));
+  double alphaHV2pi  = alphaHVfix / (2. * M_PI);
+  double b0HV        = (11. /6. * nCHV - 2. / 6. * nFlavHV);
 
   // Determine overestimated z range. Find evolution coefficient.
   double zMinAbs = 0.5 - sqrtpos( 0.25 - pT2endDip / dip.m2DipCorr );
   if (zMinAbs < SIMPLIFYROOT) zMinAbs = pT2endDip / dip.m2DipCorr;
-  double emitCoefTot = alphaHV2pi * 2. * log(1. / zMinAbs - 1.);
+  double emitCoefTot = colvFac * 2. * log(1. / zMinAbs - 1.);
+  double LambdaHV2 = pow2(LambdaHV);
 
   // Variables used inside evolution loop.
   dip.pT2 = pT2begDip;
   double wt;
 
+  // Set default values for enhanced emissions.
+  bool isEnhancedQ2QHV;
+  isEnhancedQ2QHV = false;
+  double enhanceNow = 1.;
+  string nameNow = "";
+
+  // Optionally enhanced branching rate.
+  if (canEnhanceET) emitCoefTot *= userHooksPtr->enhanceFactor("fsr:Q2QHV");
+
   // Begin evolution loop towards smaller pT values.
   do {
 
-    // Pick pT2 (in overestimated z range).
-    dip.pT2 = dip.pT2 * pow(rndmPtr->flat(), 1. / emitCoefTot);
+    // Default values for current tentative emission.
+    isEnhancedQ2QHV = false;
+    enhanceNow = 1.;
+    nameNow = "";
+
+    // Pick pT2 (in overestimated z range), fixed or first-order alpha_strong.
+    if (alphaHVorder == 0) {
+      dip.pT2 = dip.pT2 * pow( rndmPtr->flat(),
+        1. / (alphaHV2pi * emitCoefTot) );
+    } else if (alphaHVorder == 1) {
+      dip.pT2 = LambdaHV2 * pow( dip.pT2 / LambdaHV2,
+        pow( rndmPtr->flat(), b0HV / emitCoefTot) );
+    }
     wt = 0.;
 
     // Abort evolution if below cutoff scale, or below another branching.
@@ -2486,6 +2830,17 @@ void TimeShower::pT2nextHV(double pT2begDip, double pT2sel,
       // z weight for X -> X g_HV.
       else if (colvTypeAbs == 1) wt = (1. + pow2(dip.z)) / 2.;
       else wt = (1. + pow3(dip.z)) / 2.;
+
+      nameNow = "fsr:Q2QHV";
+      // Optionally enhanced branching rate.
+      if (canEnhanceET) {
+        double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (enhance != 1.) {
+          enhanceNow = enhance;
+          isEnhancedQ2QHV = true;
+        }
+      }
+
     }
 
     // Optional dampening of large pT values in hard system.
@@ -2494,6 +2849,11 @@ void TimeShower::pT2nextHV(double pT2begDip, double pT2sel,
 
   // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat());
+
+  // Store outcome of enhanced branching rate analysis.
+  splittingNameNow = nameNow;
+  if (canEnhanceET && isEnhancedQ2QHV)
+    storeEnhanceFactor(dip.pT2,"fsr:Q2QHV", enhanceNow);
 
 }
 
@@ -2557,6 +2917,15 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
   bool canMergeFirst = (mergingHooksPtr != 0)
                      ? mergingHooksPtr->canVetoEmission() : false;
 
+  int npartons = 0, nfinal = 0, nw = 0, nz = 0;
+  for ( int i = 0; i < event.size(); ++i) {if(event[i].isFinal() ) {
+      nfinal++;
+      if (event[i].colType() != 0) npartons++;
+      if (event[i].id() == 23) nz++;
+      if (event[i].idAbs() == 24) nw++;
+    }
+  }
+
   // Find initial radiator and recoiler particles in dipole branching.
   int iRadBef      = dipSel->iRadiator;
   int iRecBef      = dipSel->iRecoiler;
@@ -2595,22 +2964,35 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
   if ( dipSel->MEtype == 201 || dipSel->MEtype == 202
     || dipSel->MEtype == 203 || dipSel->MEtype == 206
     || dipSel->MEtype == 207 || dipSel->MEtype == 208) {
+    if (!weakExternal) {
+      // Trace back to original mother. MPI not allowed to radiate weakly.
+      int i2to2Mother = iRadBef;
+      while (i2to2Mother != 5 && i2to2Mother != 6 && i2to2Mother != 0)
+        i2to2Mother = event[i2to2Mother].mother1();
+      if (i2to2Mother == 0) return false;
 
-    // Trace back to original mother. MPI not allowed to radiate weakly.
-    int i2to2Mother = iRadBef;
-    while (i2to2Mother != 5 && i2to2Mother != 6 && i2to2Mother != 0)
-      i2to2Mother = event[i2to2Mother].mother1();
-    if (i2to2Mother == 0) return false;
-
-    // u d -> u d  && u g -> u g.
-    if (event[3].id() != event[4].id()) {
-      if (event[3].id() == event[i2to2Mother].id());
-      else if (event[4].id() == event[i2to2Mother].id()) swap(p3weak, p4weak);
-      // In case of no match, assign random combination.
+      // u d -> u d  && u g -> u g.
+      if (event[3].id() != event[4].id()) {
+        if (event[3].id() == event[i2to2Mother].id());
+        else if (event[4].id() == event[i2to2Mother].id())
+          swap(p3weak, p4weak);
+        // In case of no match, assign random combination.
+        else if (rndmPtr->flat() < 0.5) swap(p3weak, p4weak);
+      }
+      // u u -> u u, assign random combination.
       else if (rndmPtr->flat() < 0.5) swap(p3weak, p4weak);
+    } else {
+      int i2to2Mother = iRadBef;
+      while (i2to2Mother >= weakHardSize)
+        i2to2Mother = event[i2to2Mother].mother1();
+      if (weak2to2lines[2] == i2to2Mother) {
+        p3weak = weakMomenta[0];
+        p4weak = weakMomenta[1];
+      } else {
+        p3weak = weakMomenta[1];
+        p4weak = weakMomenta[0];
+      }
     }
-    // u u -> u u, assign random combination.
-    else if (rndmPtr->flat() < 0.5) swap(p3weak, p4weak);
   }
 
   // Default flavours and colour tags for new particles in dipole branching.
@@ -2730,6 +3112,10 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
   // Find rest frame and angles of original dipole.
   RotBstMatrix M;
   M.fromCMframe(pRadBef, pRecBef);
+  RotBstMatrix M1;
+  M1.fromCMframe(pRadBef, pRecBef);
+  RotBstMatrix M2;
+  M2.toCMframe(pRadBef, pRecBef);
 
   // Evaluate coefficient of azimuthal asymmetry from gluon polarization.
   findAsymPol( event, dipSel);
@@ -2817,17 +3203,37 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
     rad.pol( dipSel->weakPol );
   }
 
+  // Recover delayed shower-accept probability for uncertainty variations.
+  double pAccept = dipSel->pAccept;
+
   // ME corrections can lead to branching being rejected.
   if (dipSel->MEtype > 0) {
-    Particle& partner = (dipSel->iMEpartner == iRecBef)
-      ? rec : event[dipSel->iMEpartner];
-    if ( findMEcorr( dipSel, rad, partner, emt) < rndmPtr->flat() )
-      return false;
-    if (dipSel->MEtype >= 200 && dipSel->MEtype <= 210
-      && findMEcorrWeak( dipSel, rad.p(), partner.p(), emt.p(), p3weak, p4weak,
-      event[iRadBef].p(), event[iRecBef].p()) < rndmPtr->flat() )
-      return false;
+    double pMEC = 1.0;
+    if (dipSel->MEtype > 0) {
+      Particle& partner = (dipSel->iMEpartner == iRecBef)
+        ? rec : event[dipSel->iMEpartner];
+      pMEC = findMEcorr( dipSel, rad, partner, emt);
+      if (dipSel->MEtype >= 200 && dipSel->MEtype <= 210)
+        pMEC *= findMEcorrWeak( dipSel, rad.p(), partner.p(), emt.p(),
+          p3weak, p4weak, event[iRadBef].p(), event[iRecBef].p());
+    }
+    pAccept *= pMEC;
   }
+
+  // Decide if we are going to accept or reject this branching.
+  // (Without wasting time generating random numbers if pAccept = 1.)
+  bool acceptEvent = true;
+  if (pAccept < 1.0) acceptEvent = (rndmPtr->flat() < pAccept);
+
+  // If doing uncertainty variations, calculate accept/reject reweightings.
+  doUncertaintiesNow = doUncertainties;
+  if (!uVarMPIshowers && iSysSel != 0
+    && partonSystemsPtr->getInA(iSysSel) != 0) doUncertaintiesNow = false;
+  if (doUncertaintiesNow)
+    calcUncertainties( acceptEvent, pAccept, dipSel, &rad, &emt);
+
+  // Return false if we decided to reject this branching.
+  if( !acceptEvent ) return false;
 
   // Rescatter: if the recoiling partner is not in the same system
   //            as the radiator, fix up intermediate systems (can lead
@@ -2836,6 +3242,29 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
     && iSysSel != iSysSelRec) {
     Vec4 pNew = rad.p() + emt.p();
     if (!rescatterPropagateRecoil(event, pNew)) return false;
+  }
+
+  // For photon-beam recoiler check that room for remnants after branching.
+  if ( isrTypeNow != 0 ) {
+    BeamParticle& beamRec = (isrTypeNow == 1) ? *beamAPtr : *beamBPtr;
+    if ( beamRec.isGamma() ) {
+      // If recoiler kinematics fixed by ISR can't act as recoiler.
+      if ( !beamRec.resolvedGamma() ) return false;
+      BeamParticle& beamOther = (isrTypeNow == 1) ? *beamBPtr : *beamAPtr;
+      bool physical   = true;
+      double xRec     = 2. * pRec.e() / (beamRec.e() + beamOther.e());
+      double sCM      = m2( beamRec.p(), beamOther.p());
+      double eCM      = sqrt(sCM);
+      // One-remnant system.
+      if ( !beamOther.resolvedGamma() ) {
+        physical = beamRec.roomFor1Remnant(beamRec[0].id(), xRec, eCM);
+      // Two-remnants systems.
+      } else {
+        physical = beamOther.roomFor2Remnants(beamRec[0].id(), xRec, eCM);
+      }
+
+      if (!physical) return false;
+    }
   }
 
   // Save properties to be restored in case of user-hook veto of emission.
@@ -2926,6 +3355,68 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
     return false;
   }
 
+  // Calculate event weight for enhanced emission rate.
+  if (canEnhanceET) {
+
+    // Check if emission weight was enhanced. Get enhance weight factor.
+    bool foundEnhance = false;
+    double weight = 1.;
+    double vp = 0.;
+    // Move backwards as last elements have highest pT, thus are chosen
+    // splittings.
+    for ( map<double,pair<string,double> >::reverse_iterator
+          it = enhanceFactors.rbegin();
+          it != enhanceFactors.rend(); ++it ){
+      if (it->second.first.find(splittingNameSel) != string::npos
+        && abs(it->second.second-1.0) > 1e-9) {
+        foundEnhance = true;
+        weight       = it->second.second;
+        vp           = userHooksPtr->vetoProbability(it->second.first);
+        break;
+      }
+    }
+
+    // Check emission veto.
+    bool vetoedEnhancedEmission = false;
+    if (foundEnhance && rndmPtr->flat() < vp ) vetoedEnhancedEmission = true;
+    // Calculate new event weight.
+    double rwgt = 1.;
+    if (foundEnhance && vetoedEnhancedEmission) rwgt *= (1.-1./weight)/vp;
+    else if (foundEnhance) rwgt *= 1./((1.-vp)*weight);
+
+    // Reset enhance factors after usage.
+    enhanceFactors.clear();
+
+    // Set events weights, so that these could be used externally.
+    double wtOld = userHooksPtr->getEnhancedEventWeight();
+    if (!doTrialNow && canEnhanceEmission)
+      userHooksPtr->setEnhancedEventWeight(wtOld*rwgt);
+    if ( doTrialNow && canEnhanceTrial)
+      userHooksPtr->setEnhancedTrial(sqrt(dipSel->pT2), weight);
+
+    // Veto if necessary.
+    if (vetoedEnhancedEmission && canEnhanceEmission) {
+
+      event.popBack( event.size() - eventSizeOld);
+      event[iRadBef].status( iRadStatusV);
+      event[iRadBef].daughters( iRadDau1V, iRadDau2V);
+      if (useLocalRecoilNow && isrTypeNow == 0) {
+        event[iRecBef].status( iRecStatusV);
+        event[iRecBef].daughters( iRecDau1V, iRecDau2V);
+      } else if (useLocalRecoilNow) {
+        event[iRecBef].mothers( iRecMot1V, iRecMot2V);
+        if (iRecMot1V == beamOff1) event[beamOff1].daughter1( ev1Dau1V);
+        if (iRecMot1V == beamOff2) event[beamOff2].daughter1( ev2Dau1V);
+      } else {
+        for (int iG = 0; iG < int(iGRecBef.size()); ++iG) {
+          event[iGRecBef[iG]].statusPos();
+          event[iGRecBef[iG]].daughters( 0, 0);
+        }
+      }
+      return false;
+    }
+  }
+
   // For global recoil restore the one nominal recoiler, for bookkeeping.
   if (!useLocalRecoilNow) {
     iRec = iRecBef;
@@ -3010,6 +3501,7 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
         double m1 = (event[iRad].p()+event[dipEnd[i].iRadiator].p()).m2Calc();
         double m2 = (event[iEmt].p()+event[dipEnd[i].iRadiator].p()).m2Calc();
         dipEnd[i].iRecoiler = (m1 > m2) ? iRad : iEmt;
+        dipEnd[i].iMEpartner = dipEnd[i].iRecoiler;
       }
     }
     int colType = (dipSel->colType > 0) ? 2 : -2 ;
@@ -3052,6 +3544,7 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
         double m1 = (event[iRad].p()+event[dipEnd[i].iRadiator].p()).m2Calc();
         double m2 = (event[iEmt].p()+event[dipEnd[i].iRadiator].p()).m2Calc();
         dipEnd[i].iRecoiler = (m1 > m2) ? iRad : iEmt;
+        dipEnd[i].iMEpartner = dipEnd[i].iRecoiler;
       }
     }
     dipSel->iRadiator = iEmt;
@@ -3228,6 +3721,249 @@ bool TimeShower::branch( Event& event, bool isInterleaved) {
 }
 
 //--------------------------------------------------------------------------
+
+// Initialize the choices of uncertainty variations of the shower.
+
+bool TimeShower::initUncertainties() {
+
+  // Populate lists of uncertainty variations for TimeShower, by keyword.
+  uVarMuSoftCorr = settingsPtr->flag("UncertaintyBands:muSoftCorr");
+  dASmax         = settingsPtr->parm("UncertaintyBands:deltaAlphaSmax");
+
+  // Reset uncertainty variation maps.
+  varG2GGmuRfac.clear();    varG2GGcNS.clear();
+  varQ2QGmuRfac.clear();    varQ2QGcNS.clear();
+  varX2XGmuRfac.clear();    varX2XGcNS.clear();
+  varG2QQmuRfac.clear();    varG2QQcNS.clear();
+
+  // Get uncertainty variations from Settings (as list of strings to parse).
+  vector<string> uVars = settingsPtr->wvec("UncertaintyBands:List");
+  nUncertaintyVariations = int(uVars.size());
+  if (nUncertaintyVariations == 0) return false;
+  if (infoPtr->nWeights() <= 1.) {
+    infoPtr->setNWeights( nUncertaintyVariations + 1 );
+    infoPtr->setWeightLabel( 0, "Baseline");
+    for(int iWeight = 1; iWeight <= nUncertaintyVariations; ++iWeight) {
+      string uVarString = uVars[iWeight - 1];
+      int iEnd = uVarString.find(" ", 0);
+      string valueString = uVarString.substr(0, iEnd);
+      infoPtr->setWeightLabel(iWeight, valueString);
+    }
+  }
+
+  // List of keywords recognised by TimeShower.
+  vector<string> keys;
+  keys.push_back("fsr:muRfac");
+  keys.push_back("fsr:G2GG:muRfac");
+  keys.push_back("fsr:Q2QG:muRfac");
+  keys.push_back("fsr:X2XG:muRfac");
+  keys.push_back("fsr:G2QQ:muRfac");
+  keys.push_back("fsr:cNS");
+  keys.push_back("fsr:G2GG:cNS");
+  keys.push_back("fsr:Q2QG:cNS");
+  keys.push_back("fsr:X2XG:cNS");
+  keys.push_back("fsr:G2QQ:cNS");
+
+  // Store number of QCD variations (as separator to QED ones).
+  int nKeysQCD=keys.size();
+
+  // Parse each string in uVars to look for recognised keywords.
+  for (int iWeight = 1; iWeight <= int(uVars.size()); ++iWeight) {
+    // Convert to lowercase (to be case-insensitive). Also remove "=" signs
+    // and extra spaces, so "key=value", "key = value" mapped to "key value"
+    string uVarString = toLower(uVars[iWeight - 1]);
+    while (uVarString.find("=") != string::npos) {
+      int firstEqual = uVarString.find_first_of("=");
+      uVarString.replace(firstEqual, 1, " ");
+    }
+    while (uVarString.find("  ") != string::npos)
+      uVarString.erase( uVarString.find("  "), 1);
+    if (uVarString == "" || uVarString == " ") continue;
+
+    // Loop over all keywords.
+    int nRecognizedQCD = 0;
+    for (int iWord = 0; iWord < int(keys.size()); ++iWord) {
+      // Transform string to lowercase to avoid case-dependence.
+      string key = toLower(keys[iWord]);
+      // Skip if empty or keyword not found.
+      if (uVarString.find(key) == string::npos) continue;
+      // Extract variation value/factor.
+      int iKey = uVarString.find(key);
+      int iBeg = uVarString.find(" ", iKey) + 1;
+      int iEnd = uVarString.find(" ", iBeg);
+      string valueString = uVarString.substr(iBeg, iEnd - iBeg);
+      stringstream ss(valueString);
+      double value;
+      ss >> value;
+      if (!ss) continue;
+
+      // Store (iWeight,value) pairs
+      // RECALL: use lowercase for all keys here (since converted above).
+      if (key == "fsr:murfac" || key == "fsr:g2gg:murfac")
+        varG2GGmuRfac[iWeight] = value;
+      if (key == "fsr:murfac" || key == "fsr:q2qg:murfac")
+        varQ2QGmuRfac[iWeight] = value;
+      if (key == "fsr:murfac" || key == "fsr:x2xg:murfac")
+        varX2XGmuRfac[iWeight] = value;
+      if (key == "fsr:murfac" || key == "fsr:g2qq:murfac")
+        varG2QQmuRfac[iWeight] = value;
+       if (key == "fsr:cns" || key == "fsr:g2gg:cns")
+        varG2GGcNS[iWeight] = value;
+      if (key == "fsr:cns" || key == "fsr:q2qg:cns")
+        varQ2QGcNS[iWeight] = value;
+      if (key == "fsr:cns" || key == "fsr:x2xg:cns")
+        varX2XGcNS[iWeight] = value;
+      if (key == "fsr:cns" || key == "fsr:g2qq:cns")
+        varG2QQcNS[iWeight] = value;
+      // Tell that we found at least one recognized and parseable keyword.
+      if (iWord < nKeysQCD) nRecognizedQCD++;
+    } // End loop over QCD keywords
+
+    // Tell whether this uncertainty variation contained >= 1 QCD variation.
+    if (nRecognizedQCD > 0) ++nVarQCD;
+  } // End loop over UVars.
+
+  // Let the calling function know if we found anything.
+  return (nVarQCD > 0);
+}
+
+
+//==========================================================================
+
+// Calculate uncertainties for the current event.
+
+void TimeShower::calcUncertainties(bool accept, double pAccept,
+  TimeDipoleEnd* dip, Particle* radPtr, Particle* emtPtr) {
+
+  // Sanity check.
+  if (!doUncertainties || !doUncertaintiesNow || nUncertaintyVariations <= 0)
+    return;
+
+  // Define pointer and iterator to loop over the contents of each
+  // (iWeight,value) map.
+  map<int,double>* varPtr=0;
+  map<int,double>::iterator itVar;
+  // Make sure we have a dummy to point to if no map to be used.
+  map<int,double> dummy;     dummy.clear();
+
+  // Store uncertainty variation factors, initialised to unity.
+  // Make vector sizes + 1 since 0 = default and variations start at 1.
+  vector<double> uVarFac(nUncertaintyVariations + 1, 1.0);
+  vector<bool> doVar(nUncertaintyVariations + 1, false);
+
+  // Extract relevant quantities.
+  int idEmt = emtPtr->id();
+  int idRad = radPtr->id();
+
+  // QCD variations.
+  if (dip->colType != 0) {
+
+    // QCD renormalization-scale variations.
+    if (alphaSorder == 0) varPtr = &dummy;
+    else if (idEmt == 21 && idRad == 21) varPtr = &varG2GGmuRfac;
+    else if (idEmt == 21 && abs(idRad) <= uVarNflavQ)
+      varPtr = &varQ2QGmuRfac;
+    else if (idEmt == 21) varPtr = &varX2XGmuRfac;
+    else if (abs(idRad) <= nGluonToQuark && abs(idEmt) <= nGluonToQuark)
+      varPtr = &varG2QQmuRfac;
+    else varPtr = &dummy;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      double valFac = itVar->second;
+      double muR2 = renormMultFac * dip->pT2;
+      double alphaSbaseline = alphaS.alphaS(muR2);
+      // Correction-factor alphaS.
+      double muR2var = max(1.1 * Lambda3flav2, pow2(valFac) * muR2);
+      double alphaSratio = alphaS.alphaS(muR2var) / alphaSbaseline;
+      // Apply soft correction factor to X2XG.
+      double facCorr = 1.;
+      if (idEmt == 21 && uVarMuSoftCorr) {
+        // Use smallest alphaS and b0, to make the compensation conservative.
+        int nf = 5;
+        if (dip->pT2 < pow2(mc)) nf = 3;
+        else if (dip->pT2 < pow2(mb)) nf = 4;
+        double alphaScorr = alphaS.alphaS(dip->m2Dip);
+        double facSoft    = alphaScorr * (33. - 2. * nf) / (6. * M_PI);
+        double zeta = 1. - dip->z;
+        if (idRad == 21) zeta = min(dip->z, 1. - dip->z);
+        facCorr = 1. + (1. - zeta) * facSoft * log(valFac);
+      }
+      // Apply correction factor here for emission processes.
+      double alphaSfac   = alphaSratio * facCorr;
+      // Limit absolute variation to +/- deltaAlphaSmax.
+      if (alphaSfac > 1.)
+        alphaSfac = min(alphaSfac, (alphaSbaseline + dASmax) / alphaSbaseline);
+      else if (alphaSbaseline > dASmax)
+        alphaSfac = max(alphaSfac, (alphaSbaseline - dASmax) / alphaSbaseline);
+      uVarFac[iWeight] *= alphaSfac;
+      doVar[iWeight] = true;
+    }
+
+    // QCD finite-term variations (only when no MECs and above pT threshold).
+    if (dip->MEtype != 0 || dip->pT2 < pow2(cNSpTmin) ) varPtr = &dummy;
+    else if (idEmt == 21 && idRad == 21) varPtr = &varG2GGcNS;
+    else if (idEmt == 21 && abs(idRad) <= uVarNflavQ) varPtr = &varQ2QGcNS;
+    else if (idEmt == 21) varPtr = &varX2XGcNS;
+    else if (abs(idRad) <= nGluonToQuark && abs(idEmt) <= nGluonToQuark)
+      varPtr = &varG2QQcNS;
+    else varPtr = &dummy;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      double valFac = itVar->second;
+      // Correction-factor alphaS.
+      double z   = dip->z;
+      double Q2  = dip->m2;
+      // Virtuality for massive radiators.
+      if (abs(idRad) >= 4 && idRad != 21) Q2 = max(1., Q2-radPtr->m2());
+      double yQ  = Q2 / dip->m2Dip;
+      double num = yQ * valFac;
+      double denom = 1.;
+      // G->GG.
+      if (idEmt == 21 && idRad == 21)
+        denom = pow2(1. - z * (1.-z)) / (z*(1.-z));
+      // Q->QG.
+      else if (idEmt == 21)
+          denom = (1. + pow2(z)) / (1. - z);
+      // G->QQ.
+      else
+          denom = pow2(z) + pow2(1. - z);
+      // Compute reweight ratio.
+      uVarFac[iWeight] *= 1. + num / denom;
+      doVar[iWeight] = true;
+    }
+  }
+
+  // Ensure 0 < PacceptPrime < 1 (with small margins).
+  for (int iWeight = 1; iWeight<=nUncertaintyVariations; ++iWeight) {
+    if (!doVar[iWeight]) continue;
+    double pAcceptPrime = pAccept * uVarFac[iWeight];
+    if (pAcceptPrime > PROBLIMIT) uVarFac[iWeight] *= PROBLIMIT / pAcceptPrime;
+  }
+
+  // Apply reject or accept reweighting factors according to input decision.
+  for (int iWeight = 1; iWeight <= nUncertaintyVariations; ++iWeight) {
+    if (!doVar[iWeight]) continue;
+    // If trial accepted: apply ratio of accept probabilities.
+    if (accept) infoPtr->reWeight(iWeight, uVarFac[iWeight]);
+    // If trial rejected : apply Sudakov reweightings.
+    else {
+      // Check for near-singular denominators (indicates too few failures,
+      // and hence would need to increase headroom).
+      double denom = 1. - pAccept;
+      if (denom < REJECTFACTOR) {
+        stringstream message;
+        message << iWeight;
+        infoPtr->errorMsg("Warning in TimeShower: reject denom for iWeight = ",
+          message.str());
+      }
+      // Force reweighting factor > 0.
+      double reWtFail = max(0.01, (1. - uVarFac[iWeight] * pAccept) / denom);
+      infoPtr->reWeight(iWeight, reWtFail);
+    }
+  }
+}
+
+//==========================================================================
 
 // Rescatter: If a dipole stretches between two different systems, those
 //            systems will no longer locally conserve momentum. These
@@ -3562,14 +4298,11 @@ bool TimeShower::rescatterPropagateRecoil( Event& event, Vec4& pNew) {
 // Find class of QCD ME correction.
 // MEtype classification follow codes in Norrbin article,
 // additionally -1 = try to find type, 0 = no ME corrections.
-// Warning: not yet tried out to do a correct assignment in
-// arbitrary multiparton configurations! ??
 
 void TimeShower::findMEtype( Event& event, TimeDipoleEnd& dip) {
 
   // Initial value. Mark if no ME corrections to be applied.
-  bool setME = true;
-  if (!doMEcorrections) setME = false;
+  bool setME = doMEcorrections;
   int iMother  = event[dip.iRadiator].mother1();
   int iMother2 = event[dip.iRadiator].mother2();
 
@@ -3580,15 +4313,15 @@ void TimeShower::findMEtype( Event& event, TimeDipoleEnd& dip) {
   // Allow ME corrections for all weak branchings.
   else if (dip.weakType != 0);
 
-  // Else no ME corrections in 2 -> n processes.
-  else {
+  // Else optionally no ME corrections in 2 -> n processes.
+  else if (!doMEextended) {
     if (iMother2 != iMother && iMother2 != 0) setME = false;
     if (event[dip.iRecoiler].mother1() != iMother)  setME = false;
     if (event[dip.iRecoiler].mother2() != iMother2) setME = false;
   }
 
-  // No ME corrections for recoiler in initial state.
-  if (event[dip.iRecoiler].status() < 0) setME = false;
+  // Optionally no ME corrections for recoiler in initial state.
+  if (event[dip.iRecoiler].status() < 0) setME = doMEextended;
 
   // No ME corrections for recoiler not in same system
   if (dip.system != dip.systemRec) setME = false;
@@ -3599,8 +4332,32 @@ void TimeShower::findMEtype( Event& event, TimeDipoleEnd& dip) {
     return;
   }
 
+  // Pair "rare" particles, if possible.
+  if (dip.iMEpartner < 0) {
+    int idAbs1   = event[dip.iRadiator].idAbs();
+    int idAbs2   = event[dip.iRecoiler].idAbs();
+    bool isRare1 = (idAbs1 > 5 && idAbs1 < 11) || (idAbs1 > 16 && idAbs1 < 21)
+                 || idAbs1 > 22;
+    bool isRare2 = (idAbs2 > 5 && idAbs2 < 11) || (idAbs2 > 16 && idAbs2 < 21)
+                 || idAbs2 > 22;
+    if (isRare1 && !isRare2) {
+      vector<int> iSis = event[dip.iRadiator].sisterList();
+      // Prio on particle-(anti)particle pairs, else other rare.
+      for (int iS = 0; iS < int(iSis.size()); ++iS) {
+        idAbs2   = event[iSis[iS]].idAbs();
+        isRare2 = (idAbs2 > 5 && idAbs2 < 11) || (idAbs2 > 16 && idAbs2 < 21)
+                || idAbs2 > 22;
+        if (idAbs2 == idAbs1) dip.iMEpartner = iSis[iS];
+        if (isRare2 && dip.iMEpartner < 0) dip.iMEpartner = iSis[iS];
+      }
+    }
+  }
+
   // If no ME partner set, assume it is the recoiler.
   if (dip.iMEpartner < 0) dip.iMEpartner = dip.iRecoiler;
+
+  // If ME already set, assume everything is in order.
+  if (dip.MEtype != -1) return;
 
   // Now begin processing of colour dipole, including Hidden Valley.
   if (dip.colType != 0 || dip.colvType != 0) {
@@ -3629,12 +4386,13 @@ void TimeShower::findMEtype( Event& event, TimeDipoleEnd& dip) {
 
     // Find mother type.
     int idMother = 0;
-    if ( event[dip.iRecoiler].mother1() == iMother && iMother >= 0)
+    if ( event[dip.iRecoiler].mother1() == iMother && iMother >= 0
+      && (iMother2 == 0 || iMother2 == iMother) )
       idMother = event[iMother].id();
     int motherType = (idMother != 0)
       ? findMEparticle(idMother, isHiddenColour) : 0;
 
-    // When a mother if not known then use colour and spin content to guess.
+    // When a mother is not known then use colour and spin content to guess.
     if (motherType == 0) {
       int col1  = event[dip.iRadiator].col();
       int acol1 = event[dip.iRadiator].acol();
@@ -3679,7 +4437,7 @@ void TimeShower::findMEtype( Event& event, TimeDipoleEnd& dip) {
     if (minDauType == 1 && maxDauType == 1 &&
       (motherType == 4 || motherType == 7) ) {
       MEkind = 2;
-      if (idMother == 21 || idMother == 22) MEcombi = 1;
+      if (idMother == 21 || idMother == 22 || motherType == 4) MEcombi = 1;
       else if (idMother == 23 || idDau1 + idDau2 == 0) {
         MEcombi = 3;
         dip.MEmix = gammaZmix( event, iMother, dip.iRadiator, dip.iRecoiler );
@@ -3838,8 +4596,10 @@ double TimeShower::gammaZmix( Event& event, int iRes, int iDau1, int iDau2) {
   int idIn2 = 11;
   int iIn1  = (iRes >= 0) ? event[iRes].mother1() : -1;
   int iIn2  = (iRes >= 0) ? event[iRes].mother2() : -1;
+  if (iIn1 > 0 && iIn2 <= 0 && event[iDau1].mother2() > 0)
+    iIn2 = event[event[iDau1].mother2()].mother1();
   if (iIn1 >=0) idIn1 = event[iIn1].id();
-  if (iIn2 >=0) idIn2 = event[iIn1].id();
+  if (iIn2 >=0) idIn2 = event[iIn2].id();
 
   // In processes f + g/gamma -> f + Z only need find one fermion.
   if (idIn1 == 21 || idIn1 == 22) idIn1 = -idIn2;
@@ -4859,14 +5619,14 @@ double TimeShower::findMEcorrWeak(TimeDipoleEnd* dip,Vec4 rad,
   // ME weight. Prefactor mainly from Jacobian.
   double wt = 2. * pT2 / z * (Q2+sHat)/sHat * (1. - kRad - kEmt) / 4.;
   if (dip->MEtype == 201 || dip->MEtype == 206)
-    wt *= weakShowerMEs.getTchanneluGuGZME( p3, p4, rec, emt, rad)
-        / weakShowerMEs.getTchanneluGuGME( sHat, tHat, uHat);
+    wt *= weakShowerMEs.getMEqg2qgZ( p3, p4, rec, emt, rad)
+        / weakShowerMEs.getMEqg2qg( sHat, tHat, uHat);
   else if (dip->MEtype == 202 || dip->MEtype == 207)
-    wt *= weakShowerMEs.getTchannelududZME( p3, p4, emt, rec, rad)
-        / weakShowerMEs.getTchanneluuuuME( sHat, tHat, uHat);
+    wt *= weakShowerMEs.getMEqq2qqZ( p3, p4, emt, rec, rad)
+        / weakShowerMEs.getMEqq2qq( sHat, tHat, uHat, true);
   else if (dip->MEtype == 203 || dip->MEtype == 208)
-    wt *= weakShowerMEs.getTchannelududZME( p3, p4, emt, rec, rad)
-        / weakShowerMEs.getTchannelududME( sHat, tHat, uHat);
+    wt *= weakShowerMEs.getMEqq2qqZ( p3, p4, emt, rec, rad)
+        / weakShowerMEs.getMEqq2qq( sHat, tHat, uHat, false);
 
   // Split of ME into an ISR part and FSR part.
   wt *= abs((-emt + p3).m2Calc()) / ((emt + rad).m2Calc()
@@ -4897,10 +5657,11 @@ void TimeShower::findAsymPol( Event& event, TimeDipoleEnd* dip) {
   int iGrandM = event[iMother].mother1();
 
   // If grandmother in initial state of hard scattering,
-  // then only keep gg and qq initial states.
+  // then at most keep only gg and qq initial states.
   int statusGrandM = event[iGrandM].status();
   bool isHardProc  = (statusGrandM == -21 || statusGrandM == -31);
   if (isHardProc) {
+    if (!doPhiPolAsymHard) return;
     if (event[iGrandM + 1].status() != statusGrandM) return;
     if (event[iGrandM].isGluon() && event[iGrandM + 1].isGluon());
     else if (event[iGrandM].isQuark() && event[iGrandM + 1].isQuark());
@@ -4921,9 +5682,9 @@ void TimeShower::findAsymPol( Event& event, TimeDipoleEnd* dip) {
   else dip->asymPol = 2. * (1. - zProd) / (1. + pow2(1. - zProd) );
 
   // Coefficients from gluon decay.
-  if (dip->flavour == 21) dip->asymPol *= pow2( (1. - dip->z)
+  if (dip->flavour == 21) dip->asymPol *= pow2( dip->z * (1. - dip->z)
     / (1. - dip->z * (1. - dip->z) ) );
-  else  dip->asymPol *= -2. * dip->z *( 1. - dip->z )
+  else  dip->asymPol *= -2. * dip->z * ( 1. - dip->z )
     / (1. - 2. * dip->z * (1. - dip->z) );
 
 }
@@ -4932,32 +5693,32 @@ void TimeShower::findAsymPol( Event& event, TimeDipoleEnd* dip) {
 
 // Print the list of dipoles.
 
-void TimeShower::list(ostream& os) const {
+void TimeShower::list() const {
 
   // Header.
-  os << "\n --------  PYTHIA TimeShower Dipole Listing  ----------------"
-     << "------------------------------------------------------- \n \n  "
-     << "  i    rad    rec       pTmax  col  chg  gam weak  oni   hv  is"
-     << "r  sys sysR type  MErec     mix  ord  spl  ~gR  pol \n"
-     << fixed << setprecision(3);
+  cout << "\n --------  PYTHIA TimeShower Dipole Listing  ----------------"
+       << "------------------------------------------------------- \n \n  "
+       << "  i    rad    rec       pTmax  col  chg  gam weak  oni   hv  is"
+       << "r  sys sysR type  MErec     mix  ord  spl  ~gR  pol \n"
+       << fixed << setprecision(3);
 
   // Loop over dipole list and print it.
   for (int i = 0; i < int(dipEnd.size()); ++i)
-  os << setw(5) << i                     << setw(7) << dipEnd[i].iRadiator
-     << setw(7) << dipEnd[i].iRecoiler   << setw(12) << dipEnd[i].pTmax
-     << setw(5) << dipEnd[i].colType     << setw(5) << dipEnd[i].chgType
-     << setw(5) << dipEnd[i].gamType     << setw(5) << dipEnd[i].weakType
-     << setw(5) << dipEnd[i].isOctetOnium
-     << setw(5) << dipEnd[i].isHiddenValley << setw(5) << dipEnd[i].isrType
-     << setw(5) << dipEnd[i].system      << setw(5) << dipEnd[i].systemRec
-     << setw(5) << dipEnd[i].MEtype      << setw(7) << dipEnd[i].iMEpartner
-     << setw(8) << dipEnd[i].MEmix       << setw(5) << dipEnd[i].MEorder
-     << setw(5) << dipEnd[i].MEsplit     << setw(5) << dipEnd[i].MEgluinoRec
-     << setw(5) << dipEnd[i].weakPol << "\n";
+  cout << setw(5) << i                     << setw(7) << dipEnd[i].iRadiator
+       << setw(7) << dipEnd[i].iRecoiler   << setw(12) << dipEnd[i].pTmax
+       << setw(5) << dipEnd[i].colType     << setw(5) << dipEnd[i].chgType
+       << setw(5) << dipEnd[i].gamType     << setw(5) << dipEnd[i].weakType
+       << setw(5) << dipEnd[i].isOctetOnium
+       << setw(5) << dipEnd[i].isHiddenValley << setw(5) << dipEnd[i].isrType
+       << setw(5) << dipEnd[i].system      << setw(5) << dipEnd[i].systemRec
+       << setw(5) << dipEnd[i].MEtype      << setw(7) << dipEnd[i].iMEpartner
+       << setw(8) << dipEnd[i].MEmix       << setw(5) << dipEnd[i].MEorder
+       << setw(5) << dipEnd[i].MEsplit     << setw(5) << dipEnd[i].MEgluinoRec
+       << setw(5) << dipEnd[i].weakPol << "\n";
 
   // Done.
-  os << "\n --------  End PYTHIA TimeShower Dipole Listing  ------------"
-     << "-------------------------------------------------------" << endl;
+  cout << "\n --------  End PYTHIA TimeShower Dipole Listing  ------------"
+       << "-------------------------------------------------------" << endl;
 
 }
 

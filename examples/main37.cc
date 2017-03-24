@@ -1,5 +1,5 @@
 // main37.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -21,7 +21,8 @@ int main() {
   pythia.init();
 
   // Get number of event weights.
-  int ninitrwgt = pythia.info.getInitrwgtSize();
+  int ninitrwgt = 0;
+  if (pythia.info.initrwgt) ninitrwgt = pythia.info.initrwgt->size();
 
   // Initialise as many histograms as there are event weights.
   vector<Hist> pTw;
@@ -45,15 +46,14 @@ int main() {
     double pT = pythia.event[iW].pT();
 
     // Loop over the event weights in the detailed format and histogram.
-    unsigned int nwgt = pythia.info.getWeightsDetailedSize();
-    for (unsigned int iwgt = 0; iwgt < nwgt; ++iwgt) {
-      // The weights happen to have the identifiers 1001, 1002...
-      string key;
-      ostringstream convert;
-      convert << iwgt + 1001;
-      key = convert.str();
-      double w = pythia.info.getWeightsDetailedValue(key);
-      pTw[iwgt].fill( max(pT,0.5), w );
+    int iwgt = 0;
+    map<string,double> weights;
+    if ( pythia.info.weights_detailed )
+      weights = *(pythia.info.weights_detailed);
+    for ( map<string,double>::const_iterator it = weights.begin();
+      it != weights.end(); ++it ) {
+      pTw[iwgt].fill( max(pT,0.5), it->second );
+      ++iwgt;
     }
 
   // End of event loop.

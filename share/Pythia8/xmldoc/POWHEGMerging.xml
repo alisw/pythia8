@@ -164,14 +164,16 @@ See also <code>POWHEG:vetoCount</code> below.</option>
  
 <modeopen name="POWHEG:vetoCount" default="3" min="0"> 
 After this many accepted emissions in a row, no more emissions 
-are checked. Value 0 means that all emissions are checked. 
+are checked. Value 0 means that no emissions are checked. Using a very 
+large value (e.g. 100000) will mean that all emissions are checked. 
 </modeopen> 
  
 <modepick name="POWHEG:pThard" default="0" min="0" max="2"> 
 Selection of the <ei>pThard</ei> scale. For events where there is no 
 radiation, <ei>pThard</ei> is always set to be the <code>SCALUP</code> 
 value of the LHA/LHEF standard. 
-<option value="0">Set <ei>pThard</ei> equal to <code>SCALUP</code>.</option> 
+<option value="0">Set <ei>pThard</ei> equal to <code>SCALUP</code>. 
+</option> 
 <option value="1">The <ei>pT</ei> of the POWHEG emission is tested against 
 all other incoming and outgoing partons, with the minimal value chosen. 
 </option> 
@@ -227,6 +229,7 @@ Treatment of non-QCD radiation.
 <option value="0">Colorless partons are not included in <ei> pT </ei> 
   calculated from the shower for <ei> pTemt>0 </ei>.</option> 
 <option value="1">Colorless partons ARE included for <ei> pTemt>0 </ei>. 
+  </option> 
 <option value="2">Colorless partons ARE included for <ei> pTemt>0 </ei>. 
   Additionally, if a colorless parton is emitted with <ei> pT > pThard </ei> 
   in Born-level events, then the entire event is accepted. 
@@ -236,4 +239,4 @@ Treatment of non-QCD radiation.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

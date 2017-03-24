@@ -208,11 +208,27 @@ mass without the need for a user intervention.
 <h3>Fragmentation <i>pT</i></h3> 
  
 The <code>StringPT</code> class handles the choice of fragmentation 
-<i>pT</i>. At each string breaking the quark and antiquark of the pair are 
-supposed to receive opposite and compensating <i>pT</i> kicks according 
-to a Gaussian distribution in <i>p_x</i> and <i>p_y</i> separately. 
-Call <i>sigma_q</i> the width of the <i>p_x</i> and <i>p_y</i> 
-distributions separately, i.e. 
+<i>pT</i>. At each string breaking the quark and antiquark of the pair 
+are supposed to receive opposite and compensating <i>pT</i> kicks. 
+How they are distributed depends on the following flag: 
+ 
+<p/><code>flag&nbsp; </code><strong> StringPT:thermalModel &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+If switched off the quark <i>pT</i> is generated according to 
+the traditional Gaussion distribution in <i>p_x</i> and <i>p_y</i> 
+separately. If switched on, the new "thermal model" [<a href="Bibliography.html" target="page">Fis16</a>] 
+is instead used, wherein the quark <i>pT</i> is generated such that the 
+resulting hadron receives a <i>pT</i> according to an exponential 
+distribution. Also the hadronic composition is affected, see further 
+below. 
+   
+ 
+<h4>Gaussian Distribution</h4> 
+ 
+For <code>StringPT:thermalModel = off</code> the quarks receive <i>pT</i> 
+kicks according to a Gaussian distribution in <i>p_x</i> and <i>p_y</i> 
+separately. Call <i>sigma_q</i> the width of the <i>p_x</i> and 
+<i>p_y</i> distributions separately, i.e. 
 <br/><i> 
     d(Prob) = exp( -(p_x^2 + p_y^2) / 2 sigma_q^2). 
 </i><br/> 
@@ -250,6 +266,88 @@ width.
 <p/><code>parm&nbsp; </code><strong> StringPT:enhancedWidth &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)<br/>
 <i>enhancedWidth</i>,the enhancement of the width in this fraction. 
+   
+ 
+<p/> 
+In the context of some toy studies [<a href="Bibliography.html" target="page">Fis16</a>] the following three 
+options have also been introduced, but are not part of any recommended 
+framework. 
+ 
+<p/><code>parm&nbsp; </code><strong> StringPT:widthPreStrange &nbsp;</strong> 
+ (<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)<br/>
+Prefactor multiplying the Gaussian width for strange quarks. 
+   
+ 
+<p/><code>parm&nbsp; </code><strong> StringPT:widthPreDiquark &nbsp;</strong> 
+ (<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)<br/>
+Prefactor multiplying the Gaussian width for diquarks. In case of 
+diquarks with one or two strange quarks the prefactor is calculated by 
+multiplying <i>widthPreDiquark</i> once or twice respectively with 
+<i>widthPreStrange</i>. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> StringPT:mT2suppression &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+If switched on the flavour composition is chosen based on the hadronic 
+transverse mass, <i>mT^2_had</i>, and not based on the quark masses. 
+This implies a mass suppression factor <i>exp(-m_had^2 / 2 sigma^2) </i>. 
+   
+ 
+<h4>Thermal Distribution</h4> 
+ 
+For <code>StringPT:thermalModel = on</code> the quark <i>pT</i> 
+is generated such that the resulting hadron <i>pT</i> follows 
+a thermal distribution 
+<br/><i> 
+    d(Prob) = exp( -pT_had/T) d^2pT_had 
+</i><br/> 
+with temperature <i>T</i>, whose value is given by 
+<p/><code>parm&nbsp; </code><strong> StringPT:temperature &nbsp;</strong> 
+ (<code>default = <strong>0.21</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 0.5</code>)<br/>
+the temperature <i>T</i> in the fragmentation process. 
+   
+<p/><code>parm&nbsp; </code><strong> StringPT:tempPreFactor &nbsp;</strong> 
+ (<code>default = <strong>1.21</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 1.5</code>)<br/>
+Temperature prefactor for strange quarks and diquarks. Default is 
+determined to have the same average <i>pT</i> in <i>u/d &rarr; s</i> 
+and <i>s &rarr; u/d</i> transistions. 
+   
+ 
+<h4>Common setup for enhanced width</h4> 
+ 
+If strings are closely packed, e.g. as a consequence of MPIs, it is 
+likely that they receive an increased string tension, which translates 
+into a broader <i>pT</i> spectrum, see further [<a href="Bibliography.html" target="page">Fis16</a>]. 
+It also means an enhanced rate (or rather reduced suppression) of 
+heavy-particle production relative to pions. This can be regulated by 
+the flag and parameters below. 
+ 
+<p/><code>flag&nbsp; </code><strong> StringPT:closePacking &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+If switched on then the two following parameters modify either 
+<code>StringPT:sigma</code> or <code>StringPT:temperature</code>, 
+respectively. Normally only one of the options below would be used, 
+but technically both are allowed and then combine multiplicatively. 
+   
+ 
+<p/><code>parm&nbsp; </code><strong> StringPT:expMPI &nbsp;</strong> 
+ (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
+Exponent to the number of MPIs. The width/temparture will get the 
+prefactor <i>N(MPI)^expMPI</i>. 
+   
+ 
+<p/><code>parm&nbsp; </code><strong> StringPT:expNSP &nbsp;</strong> 
+ (<code>default = <strong>0.13</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
+Exponent for the number of effective nearby string pieces, calculated as 
+<br/><i> 
+    N(NSP) =1 + (N<sub>string</sub>-1)/(1+p<sup>2</sup><sub>T had</sub>/ 
+    p<sup>2</sup><sub>T 0</sub>) , 
+</i><br/> 
+where <i>p<sup>2</sup><sub>T had</sub> </i> is the transverse 
+momentum of the next produced hadron, estimated based on an educated 
+guess of its momentum, and <i>p<sup>2</sup><sub>T 0</sub></i> is the 
+MPI regularization parameter <code>MultipartonInteractions:pT0Ref</code>. 
+The width/temperature will get the prefactor <i>N(NSP)^expNSP</i>. 
    
  
 <h3>Jet joining procedure</h3> 
@@ -408,4 +506,4 @@ junction rest frame).
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

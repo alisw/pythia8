@@ -1,5 +1,5 @@
 // StringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -23,6 +23,12 @@ const double StringEnd::TINY = 1e-6;
 
 // Assume two (eX, eY) regions are related if pT2 differs by less.
 const double StringEnd::PT2SAME = 0.01;
+
+// Fictitious typical mass and pT used to look ahead for approximately where
+// the next hadron will be produced, to quantify string close-packing there.
+const double StringEnd::MEANMMIN = 0.2;
+const double StringEnd::MEANM    = 0.8;
+const double StringEnd::MEANPT   = 0.4;
 
 //--------------------------------------------------------------------------
 
@@ -50,23 +56,43 @@ void StringEnd::setUp(bool fromPosIn, int iEndIn, int idOldIn, int iMaxIn,
 
 // Fragment off one hadron from the string system, in flavour and pT.
 
-void StringEnd::newHadron() {
+void StringEnd::newHadron(double nNSP) {
 
-  // Pick new flavour and form a new hadron.
-  do {
-    flavNew = flavSelPtr->pick( flavOld);
-    idHad   = flavSelPtr->combine( flavOld, flavNew);
-  } while (idHad == 0);
+  // In case we are using the thermal model or Gaussian with
+  // mT2 suppression we have to pick the pT first.
+  if (thermalModel || mT2suppression) {
+    // Pick its transverse momentum.
+    pair<double, double> pxy = pTSelPtr->pxy(flavNew.id, nNSP);
+    pxNew = pxy.first;
+    pyNew = pxy.second;
+    pxHad = pxOld + pxNew;
+    pyHad = pyOld + pyNew;
+    double pT2Had = pow2(pxHad) + pow2(pyHad);
+    // Pick new flavour and form a new hadron.
+    do {
+      flavNew = flavSelPtr->pick( flavOld, sqrt(pT2Had), nNSP);
+      idHad   = flavSelPtr->getHadronID( flavOld, flavNew);
+    } while (idHad == 0);
+  }
 
-  // Pick its transverse momentum.
-  pair<double, double> pxy = pTSelPtr->pxy();
-  pxNew = pxy.first;
-  pyNew = pxy.second;
-  pxHad = pxOld + pxNew;
-  pyHad = pyOld + pyNew;
+  // In case of the Gaussian without mT2 suppression we pick
+  // the new flavour first to make the width flavour dependent.
+  else {
+    // Pick new flavour and form a new hadron.
+    do {
+      flavNew = flavSelPtr->pick( flavOld);
+      idHad   = flavSelPtr->combine( flavOld, flavNew);
+    } while (idHad == 0);
+    // Pick its transverse momentum.
+    pair<double, double> pxy = pTSelPtr->pxy(flavNew.id, nNSP);
+    pxNew = pxy.first;
+    pyNew = pxy.second;
+    pxHad = pxOld + pxNew;
+    pyHad = pyOld + pyNew;
+  }
 
-  // Pick its mass and thereby define its transverse mass.
-  mHad   = particleDataPtr->mSel(idHad);
+  // Get its mass and thereby define its transverse mass.
+  mHad   = flavSelPtr->getHadronMassWin(idHad);
   mT2Had = pow2(mHad) + pow2(pxHad) + pow2(pyHad);
 
 }
@@ -247,6 +273,219 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system) {
 
 //--------------------------------------------------------------------------
 
+// Generate momentum for some possible next hadron, based on mean values
+// to get an estimate for rapidity and pT.
+
+Vec4 StringEnd::kinematicsHadronTmp( StringSystem system, Vec4 pRem,
+  double phi, double mult) {
+
+  // Now estimate the energy the next hadron will take.
+  double mRem     = pRem.mCalc();
+  double meanM    = (mRem > 0.0) ? max( MEANMMIN, min( MEANM, mRem) ) : MEANM;
+  double meanMT2  = pow2(meanM) + pow2(MEANPT);
+  double GammaNow = (1.0 + aLund) / bLund;
+  // Modify Gamma value in case of ealier fails.
+  if (mult > 0.0) GammaNow *= mult;
+  double tmp      = ( GammaNow + meanMT2 - GammaOld ) / GammaOld;
+  double zPlus    = (-0.5 * tmp + sqrt(0.25 * pow2(tmp) + meanMT2 / GammaOld));
+  double zMinus   = (-0.5 * tmp - sqrt(0.25 * pow2(tmp) + meanMT2 / GammaOld));
+  // Special case of first hadron.
+  if (GammaOld < 1e-10) {
+    zPlus  = pow(1.0 + meanMT2 / GammaNow, -1.0);
+    zMinus = -1.0;
+  }
+  bool zPlusOk    = (zPlus < 1.0) && (zPlus > 0.0);
+  bool zMinusOk   = (zMinus < 1.0) && (zMinus > 0.0);
+  // Negative energy signals failure.
+  if ( (!zPlusOk) && (!zMinusOk) ) return Vec4(0., 0., 0., -1.);
+  double zHadTmp  = (zPlusOk ? zPlus : zMinus);
+
+  double pxHadTmp = cos(phi) * MEANPT;
+  double pyHadTmp = sin(phi) * MEANPT;
+
+  // First make a copy of all variables to not overwrite anything.
+  int    iPosOldTmp = iPosOld, iNegOldTmp = iNegOld;
+  int    iPosNewTmp = iPosNew, iNegNewTmp = iNegNew;
+  double xPosOldTmp = xPosOld, xNegOldTmp = xNegOld;
+  double xPosNewTmp = xPosNew, xNegNewTmp = xNegNew;
+  double xPosHadTmp = xPosHad, xNegHadTmp = xNegHad;
+  double pxNewTmp   = pxNew,   pxOldTmp   = pxOld;
+  double pyNewTmp   = pyNew,   pyOldTmp   = pyOld;
+
+  Vec4 pSoFarTmp = pSoFar;
+
+  // Set up references that are direction-neutral;
+  // ...Dir for direction of iteration and ...Inv for its inverse.
+  int&    iDirOld = (fromPos) ? iPosOldTmp : iNegOldTmp;
+  int&    iInvOld = (fromPos) ? iNegOldTmp : iPosOldTmp;
+  int&    iDirNew = (fromPos) ? iPosNewTmp : iNegNewTmp;
+  int&    iInvNew = (fromPos) ? iNegNewTmp : iPosNewTmp;
+  double& xDirOld = (fromPos) ? xPosOldTmp : xNegOldTmp;
+  double& xInvOld = (fromPos) ? xNegOldTmp : xPosOldTmp;
+  double& xDirNew = (fromPos) ? xPosNewTmp : xNegNewTmp;
+  double& xInvNew = (fromPos) ? xNegNewTmp : xPosNewTmp;
+  double& xDirHad = (fromPos) ? xPosHadTmp : xNegHadTmp;
+  double& xInvHad = (fromPos) ? xNegHadTmp : xPosHadTmp;
+
+  // Start search for new breakup in the old region.
+  iDirNew = iDirOld;
+  iInvNew = iInvOld;
+  Vec4 pTNew;
+
+  // Each step corresponds to trying a new string region.
+  for (int iStep = 0; ; ++iStep) {
+
+    // Referance to current string region.
+    StringRegion region = system.region( iPosNewTmp, iNegNewTmp);
+
+    // Now begin special section for rapid processing of low region.
+    if (iStep == 0 && iPosOldTmp + iNegOldTmp == iMax) {
+
+      // A first step within a low region is easy. Make sure we use this
+      // region in case it's the last one.
+      if ( (meanMT2 < zHadTmp * xDirOld * (1. - xInvOld) * region.w2) ||
+           ((iInvNew-1) < 0) ) {
+
+        if ((iInvNew-1) < 0)
+          zHadTmp = meanMT2 / xDirOld / (1. - xInvOld) / region.w2;
+
+        // Translate into x coordinates.
+        xDirHad = zHad * xDirOld;
+        xInvHad = meanMT2 / (xDirHad * region.w2);
+        xDirNew = xDirOld - xDirHad;
+        xInvNew = xInvOld + xInvHad;
+
+        // Find and return four-momentum of the produced particle.
+        return region.pHad( xPosHadTmp, xNegHadTmp, pxHadTmp, pyHadTmp);
+
+      // A first step out of a low region also OK, if there are more regions.
+      // Negative energy signals failure, i.e. in last region.
+      } else {
+        --iInvNew;
+        // Should be covered by the above check.
+        if (iInvNew < 0) return Vec4(0., 0., 0., -1.);
+
+        // Momentum taken by stepping out of region. Continue to next region.
+        xInvHad   = 1. - xInvOld;
+        xDirHad   = 0.;
+        pSoFarTmp = region.pHad( xPosHadTmp, xNegHadTmp, pxOldTmp, pyOldTmp);
+        continue;
+      }
+
+    // Else, for first step, take into account starting pT.
+    } else if (iStep == 0) {
+      pSoFarTmp = region.pHad( 0., 0., pxOldTmp, pyOldTmp);
+      pTNew     = region.pHad( 0., 0., pxNewTmp, pyNewTmp);
+    }
+
+    // Now begin normal treatment of nontrivial regions.
+    // Set up four-vectors in a region not visited before.
+    if (!region.isSetUp) region.setUp(
+      system.regionLowPos(iPosNewTmp).pPos,
+      system.regionLowNeg(iNegNewTmp).pNeg, true);
+
+    // If new region is vanishingly small, continue immediately to next.
+    // Negative energy signals failure to do this, i.e. moved too low.
+    if (region.isEmpty) {
+      xDirHad = (iDirNew == iDirOld) ? xDirOld : 1.;
+      xInvHad = 0.;
+      pSoFarTmp += region.pHad( xPosHadTmp, xNegHadTmp, 0., 0.);
+      ++iDirNew;
+      if (iDirNew + iInvNew > iMax) return Vec4(0., 0., 0., -1.);
+      continue;
+    }
+
+    // Reexpress pTNew w.r.t. base vectors in new region, if possible.
+    // Recall minus sign from normalization e_x^2 = e_y^2 = -1.
+    double pxNewRegNow = -pTNew * region.eX;
+    double pyNewRegNow = -pTNew * region.eY;
+    if (abs( pxNewRegNow * pxNewRegNow + pyNewRegNow * pyNewRegNow
+      - pxNewTmp * pxNewTmp - pyNewTmp * pyNewTmp) < PT2SAME) {
+      pxNewTmp = pxNewRegNow;
+      pyNewTmp = pyNewRegNow;
+    }
+
+    // Four-momentum taken so far, including new pT.
+    Vec4 pTemp = pSoFarTmp + region.pHad( 0., 0., pxNewTmp, pyNewTmp);
+
+    // Derive coefficients for m2 expression.
+    // cM2 * x+ + cM3 * x- + cM4 * x+ * x- = m^2 - cM1;
+    double cM1 = pTemp.m2Calc();
+    double cM2 = 2. * (pTemp * region.pPos);
+    double cM3 = 2. * (pTemp * region.pNeg);
+    double cM4 = region.w2;
+    if (!fromPos) swap( cM2, cM3);
+
+    // Derive coefficients for Gamma expression.
+    // cGam2 * x+ + cGam3 * x- + cGam4 * x+ * x- = Gamma_new - cGam1;
+    double cGam1 = 0.;
+    double cGam2 = 0.;
+    double cGam3 = 0.;
+    double cGam4 = 0.;
+    for (int iInv = iInvNew; iInv <= iMax - iDirNew; ++iInv) {
+      double xInv = 1.;
+      if (iInv == iInvNew) xInv = (iInvNew == iInvOld) ? xInvOld : 0.;
+      for (int iDir = iDirNew; iDir <= iMax - iInv; ++iDir) {
+        double xDir = (iDir == iDirOld) ? xDirOld : 1.;
+        int iPos = (fromPos) ? iDir : iInv;
+        int iNeg = (fromPos) ? iInv : iDir;
+        StringRegion regionGam =  system.region( iPos, iNeg);
+        if (!regionGam.isSetUp) regionGam.setUp(
+          system.regionLowPos(iPos).pPos,
+          system.regionLowNeg(iNeg).pNeg, true);
+        double w2 = regionGam.w2;
+        cGam1 += xDir * xInv * w2;
+        if (iDir == iDirNew) cGam2 -= xInv * w2;
+        if (iInv == iInvNew) cGam3 += xDir * w2;
+        if (iDir == iDirNew && iInv == iInvNew) cGam4 -= w2;
+      }
+    }
+
+    // Solve (m2, Gamma) equation system => r2 * x-^2 + r1 * x- + r0 = 0.
+    double cM0   = pow2(meanM) - cM1;
+    double cGam0 = GammaNow - cGam1;
+    double r2    = cM3 * cGam4 - cM4 * cGam3;
+    double r1    = cM4 * cGam0 - cM0 * cGam4 + cM3 * cGam2 - cM2 * cGam3;
+    double r0    = cM2 * cGam0 - cM0 * cGam2;
+    double root  = sqrtpos( r1*r1 - 4. * r2 * r0 );
+    if (abs(r2) < TINY || root < TINY) return Vec4(0., 0., 0., -1.);
+    xInvHad      = 0.5 * (root / abs(r2) - r1 / r2);
+    xDirHad      = (cM0 - cM3 * xInvHad) / (cM2 + cM4 * xInvHad);
+
+    // Define position of new trial vertex.
+    xDirNew = (iDirNew == iDirOld) ? xDirOld - xDirHad : 1. - xDirHad;
+    xInvNew = (iInvNew == iInvOld) ? xInvOld + xInvHad : xInvHad;
+
+    // Step up to new region if new x- > 1.
+    if (xInvNew > 1.) {
+      xInvHad = (iInvNew == iInvOld) ? 1. - xInvOld : 1.;
+      xDirHad = 0.;
+      pSoFarTmp += region.pHad( xPosHadTmp, xNegHadTmp, 0., 0.);
+      --iInvNew;
+      if (iInvNew < 0) return Vec4(0., 0., 0., -1.);
+      continue;
+
+    // Step down to new region if new x+ < 0.
+    } else if (xDirNew < 0.) {
+      xDirHad = (iDirNew == iDirOld) ? xDirOld : 1.;
+      xInvHad = 0.;
+      pSoFarTmp += region.pHad( xPosHadTmp, xNegHadTmp, 0., 0.);
+      ++iDirNew;
+      if (iDirNew + iInvNew > iMax) return Vec4(0., 0., 0., -1.);
+      continue;
+    }
+
+    // Else we have found the correct region, and can return four-momentum.
+    return pSoFarTmp + region.pHad( xPosHadTmp, xNegHadTmp, pxNewTmp,
+      pyNewTmp);
+
+  // End of "infinite" loop of stepping to new region.
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
 // Update string end information after a hadron has been removed.
 
 void StringEnd::update() {
@@ -304,6 +543,9 @@ const double StringFragmentation::MDIQUARKMIN   = -2.0;
 // Consider junction-leg parton as massless if m2 tiny.
 const double StringFragmentation::M2MAXJRF      = 1e-4;
 
+// Protect against numerical precision giving zero or negative m2.
+const double StringFragmentation::M2MINJRF      = 1e-4;
+
 // Iterate junction rest frame equation until convergence or too many tries.
 const double StringFragmentation::CONVJRFEQ     = 1e-12;
 const int    StringFragmentation::NTRYJRFEQ     = 40;
@@ -343,12 +585,18 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   // Initialize the b parameter of the z spectrum, used when joining jets.
   bLund           = zSelPtr->bAreaLund();
 
+  // MPI pT0, used for calculating effective number of strings.
+  pT20            = pow2(settings.parm("MultipartonInteractions:pT0Ref"));
+
   // Initialize the hadrons instance of an event record.
   hadrons.init( "(string fragmentation)", particleDataPtr);
 
   // Send on pointers to the two StringEnd instances.
-  posEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr);
-  negEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr);
+  posEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr, settings);
+  negEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr, settings);
+
+  // Check for number of nearby string pieces (nNSP) or not.
+  closePacking    = settings.flag("StringPT:closePacking");
 
 }
 
@@ -368,12 +616,15 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
   int idNeg          = event[iNeg].id();
   pSum               = colConfig[iSub].pSum;
 
+  // Rapidity pairs [yMin, yMax] of string piece ends.
+  vector< vector< pair<double,double> > > rapPairs = colConfig.rapPairs;
+
   // Reset the local event record.
   hadrons.clear();
 
   // For closed gluon string: pick first breakup region.
   isClosed = colConfig[iSub].isClosed;
-  if (isClosed) iParton = findFirstRegion(iParton, event);
+  if (isClosed) iParton = findFirstRegion(iSub, colConfig, event);
 
   // For junction topology: fragment off two of the string legs.
   // Then iParton overwritten to remaining leg + leftover diquark.
@@ -428,16 +679,19 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       fromPos           = (rndmPtr->flat() < 0.5);
       StringEnd& nowEnd = (fromPos) ? posEnd : negEnd;
 
-      // Construct trial hadron and check that energy remains.
-      nowEnd.newHadron();
+      // Check how many nearby string pieces there are for the next hadron.
+      double nNSP = (closePacking) ? nearStringPieces(nowEnd, rapPairs) : 0.;
 
-    // Possibility for a user to change the fragmentation parameters.
-     if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
-       if ( !userHooksPtr->doChangeFragPar( flavSelPtr, zSelPtr, pTSelPtr,
-         (fromPos ? idPos : idNeg),
-         (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton) )
-         infoPtr->errorMsg("Error in StringFragmentation::fragment: "
-           "failed to change hadronisation parameters.");
+      // Construct trial hadron and check that energy remains.
+      nowEnd.newHadron(nNSP);
+
+      // Possibility for a user to change the fragmentation parameters.
+      if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
+         if ( !userHooksPtr->doChangeFragPar( flavSelPtr, zSelPtr, pTSelPtr,
+           (fromPos ? idPos : idNeg),
+           (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton) )
+           infoPtr->errorMsg("Error in StringFragmentation::fragment: "
+             "failed to change hadronisation parameters.");
       }
 
       if ( energyUsedUp(fromPos) ) break;
@@ -484,8 +738,12 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
     // End of fragmentation loop.
     }
 
+    // Check how many nearby string pieces there are for the last hadron.
+    double nNSP = (closePacking) ? nearStringPieces(
+      ((rndmPtr->flat() < 0.5) ? posEnd : negEnd), rapPairs) : 0.;
+
     // When done, join in the middle. If this works, then really done.
-    if ( finalTwo(fromPos, event, usedPosJun, usedNegJun) ) break;
+    if ( finalTwo(fromPos, event, usedPosJun, usedNegJun, nNSP) ) break;
 
     // Else remove produced particles (except from first two junction legs)
     // and start all over.
@@ -513,8 +771,11 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
 
 // Find region where to put first string break for closed gluon loop.
 
-vector<int> StringFragmentation::findFirstRegion(vector<int>& iPartonIn,
-  Event& event) {
+vector<int> StringFragmentation::findFirstRegion(int iSub,
+  ColConfig& colConfig, Event& event) {
+
+  // Partons and their total four-momentum.
+  vector<int> iPartonIn = colConfig[iSub].iParton;
 
   // Evaluate mass-squared for all adjacent gluon pairs.
   vector<double> m2Pair;
@@ -547,7 +808,7 @@ vector<int> StringFragmentation::findFirstRegion(vector<int>& iPartonIn,
 
 // Set flavours and momentum position for initial string endpoints.
 
-void StringFragmentation::setStartEnds( int idPos, int idNeg,
+void StringFragmentation::setStartEnds(int idPos, int idNeg,
   StringSystem systemNow) {
 
   // Variables characterizing string endpoints: defaults for open string.
@@ -571,9 +832,9 @@ void StringFragmentation::setStartEnds( int idPos, int idNeg,
     } while (idPos == 0);
 
     // Also need pT and breakup vertex position in region.
-   pair<double, double> pxy = pTSelPtr->pxy();
-   px = pxy.first;
-   py = pxy.second;
+    pair<double, double> pxy = pTSelPtr->pxy(idPos);
+    px = pxy.first;
+    py = pxy.second;
     double m2Region = systemNow.regionLowPos(0).w2;
     double m2Temp   = min( CLOSEDM2MAX, CLOSEDM2FRAC * m2Region);
     do {
@@ -597,7 +858,7 @@ void StringFragmentation::setStartEnds( int idPos, int idNeg,
     flavSelPtr->assignPopQ(posEnd.flavOld);
     flavSelPtr->assignPopQ(negEnd.flavOld);
     if (rndmPtr->flat() < 0.5) posEnd.flavOld.nPop = 0;
-    else                    negEnd.flavOld.nPop = 0;
+    else                       negEnd.flavOld.nPop = 0;
     posEnd.flavOld.rank = 1;
     negEnd.flavOld.rank = 1;
   }
@@ -637,7 +898,7 @@ bool StringFragmentation::energyUsedUp(bool fromPos) {
 // Produce the final two partons to complete the system.
 
 bool StringFragmentation::finalTwo(bool fromPos, Event& event, bool usedPosJun,
-  bool usedNegJun) {
+  bool usedNegJun, double nNSP) {
 
   // Check whether we went too far in p+-.
   if (pRem.e() < 0.  || w2Rem < 0. || (hadrons.size() > 0
@@ -649,14 +910,26 @@ bool StringFragmentation::finalTwo(bool fromPos, Event& event, bool usedPosJun,
   if ( posEnd.iNegOld == negEnd.iNegOld && posEnd.xNegOld > negEnd.xNegOld)
     return false;
 
-  // Construct the final hadron from the leftover flavours.
-  // Impossible to join two diquarks. Also break if stuck for other reason.
+  // Impossible to join two diquarks.
   FlavContainer flav1 = (fromPos) ? posEnd.flavNew.anti() : posEnd.flavOld;
   FlavContainer flav2 = (fromPos) ? negEnd.flavOld : negEnd.flavNew.anti();
   if (flav1.isDiquark() && flav2.isDiquark()) return false;
+
+  // Construct preliminary hadron pT as if no region changes.
+  double pHadPrelim[2] = { 0.0, 0.0 };
+  if (fromPos) {
+    pHadPrelim[0] = negEnd.pxOld-posEnd.pxNew;
+    pHadPrelim[1] = negEnd.pyOld-posEnd.pyNew;
+  } else {
+    pHadPrelim[0] = posEnd.pxOld-negEnd.pxNew;
+    pHadPrelim[1] = posEnd.pyOld-negEnd.pyNew;
+  }
+  double pThadPrelim = sqrt( pow2(pHadPrelim[0]) + pow2(pHadPrelim[1]) );
+
+  // Construct the final hadron from the leftover flavours. Break if stuck.
   int idHad;
   for (int iTry = 0; iTry < NTRYFLAV; ++iTry) {
-    idHad = flavSelPtr->combine( flav1, flav2);
+    idHad = flavSelPtr->getHadronID( flav1, flav2, pThadPrelim, nNSP, true);
     if (idHad != 0) break;
   }
   if (idHad == 0) return false;
@@ -666,12 +939,12 @@ bool StringFragmentation::finalTwo(bool fromPos, Event& event, bool usedPosJun,
     negEnd.idHad = idHad;
     negEnd.pxNew = -posEnd.pxNew;
     negEnd.pyNew = -posEnd.pyNew;
-    negEnd.mHad  = particleDataPtr->mSel(idHad);
+    negEnd.mHad  = flavSelPtr->getHadronMassWin(idHad);
   } else {
     posEnd.idHad = idHad;
     posEnd.pxNew = -negEnd.pxNew;
     posEnd.pyNew = -negEnd.pyNew;
-    posEnd.mHad  = particleDataPtr->mSel(idHad);
+    posEnd.mHad  = flavSelPtr->getHadronMassWin(idHad);
   }
 
   // String region in which to do the joining.
@@ -922,14 +1195,14 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   // PS (4/10/2011) Protect against invalid systems
   if (iParton[0] > 0) {
     infoPtr->errorMsg("Error in StringFragmentation::fragment"
-                      "ToJunction: iParton[0] not a valid junctionNumber");
+      "ToJunction: iParton[0] not a valid junctionNumber");
     return false;
   }
   for (int i = 0; i < int(iParton.size()); ++i) {
     if (iParton[i] < 0) {
       if (leg == 2) {
         infoPtr->errorMsg("Error in StringFragmentation::fragment"
-                          "ToJunction: unprocessed multi-junction system");
+          "ToJunction: unprocessed multi-junction system");
         return false;
       }
       legBeg[++leg] = i + 1;
@@ -943,9 +1216,9 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   Vec4 pWTinJRF[3];
   int iter = 0;
   double errInCM = 0.;
+
   do {
     ++iter;
-
     // Find weighted sum of momenta on the three sides of the junction.
     for (leg = 0; leg < 3; ++ leg) {
       pWTinJRF[leg] = 0.;
@@ -964,6 +1237,16 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
       + pow2(costheta(pWTinJRF[0], pWTinJRF[2]) + 0.5)
       + pow2(costheta(pWTinJRF[1], pWTinJRF[2]) + 0.5);
 
+    // Check numerical instabilities in boost, use rest frame if it fails.
+    if ( (pWTinJRF[0] + pWTinJRF[1]).m2Calc() < M2MINJRF
+      || (pWTinJRF[0] + pWTinJRF[2]).m2Calc() < M2MINJRF
+      || (pWTinJRF[1] + pWTinJRF[2]).m2Calc() < M2MINJRF ) {
+      infoPtr->errorMsg("Warning in StringFragmentation::fragmentTo"
+      "Junction: Negative invariant masses in junction rest frame");
+      MtoJRF.reset();
+      MtoJRF.bstback(pSum);
+      break;
+    }
     // Find new JRF from the set of weighted momenta.
     Mstep = junctionRestFrame( pWTinJRF[0], pWTinJRF[1], pWTinJRF[2]);
     // Fortran code will not take full step after the first few
@@ -1282,7 +1565,8 @@ RotBstMatrix StringFragmentation::junctionRestFrame(Vec4& p0, Vec4& p1,
       double pkMin = sqrtpos( ekMin*ekMin - m2k );
       double fMin  = ejMin * ekMin + 0.5 * pjMin * pkMin - pjpk;
       // Maximum estimated when j + k is at rest, alternatively j at rest.
-      double eiMax = (pipj + pipk) / sqrt(m2j + m2k + 2. * pjpk);
+      double eiMax = (pipj + pipk)
+                   / sqrt( max( M2MINJRF, m2j + m2k + 2. * pjpk) );
       if (m2j > M2MAXJRF) eiMax = min( eiMax, pipj / sqrt(m2j) );
       double piMax = sqrtpos( eiMax*eiMax - m2i );
       double temp  = eiMax*eiMax - 0.25 *piMax*piMax;
@@ -1429,6 +1713,62 @@ int StringFragmentation::extraJoin(double facExtra, Event& event) {
   // Done.
   }
   return nJoin;
+}
+
+//--------------------------------------------------------------------------
+
+// When the next hadron is generated the temperature can be dependent on the
+// number of nearby string pieces with respect to the string piece the hadron
+// will be produced on.
+
+double StringFragmentation::nearStringPieces(StringEnd end,
+  vector< vector< pair<double,double> > >& rapPairs) {
+
+  // No modification for junctions.
+  if (hasJunction) return 1;
+
+  // Get temporary hadron momentum.
+  double phi      = 2.0 * M_PI * rndmPtr->flat();
+  double mult     = -1.0;
+  int    nTryMax  = 100;
+  double multStep = 5.0 / ((double)nTryMax/2);
+  double multNow  = 1.0 + multStep;
+  Vec4   pHad     = Vec4(0., 0., 0., -1.);
+  for (int i = 1; i <= nTryMax; i++) {
+    pHad = end.kinematicsHadronTmp(system, pRem, phi, mult);
+    // If valid momentum found, done.
+    if (pHad.e() > 0.0) break;
+    // Set mult as multiplicative factor. Alternate between adding and
+    // subtracting multStep.
+    mult = 1.0;
+    if (i%2 == 0) {
+      mult    *= multNow;
+      multNow += multStep;
+    } else mult /= multNow;
+  }
+
+  // In case of failure, use remnant momentum.
+  if (pHad.e() < 0.0) pHad = pRem;
+
+  // Now loop through the list of rapidity pairs and count strings
+  // sitting at the hadron rapidity.
+  Particle hadron = Particle();
+  hadron.p(pHad); hadron.m(pHad.mCalc());
+  double yHad = hadron.y();
+  int nString = -1;
+  for (int iSub = 0; iSub < int(rapPairs.size()); iSub++) {
+    vector< pair<double,double> > pairNow = rapPairs[iSub];
+    for (int iPair = 0; iPair < int(pairNow.size()); iPair++) {
+      double y1 = pairNow[iPair].first;
+      double y2 = pairNow[iPair].second;
+      if ( (y1 < yHad) && (yHad < y2) ) nString++;
+    }
+  }
+  // Effective number of strings takes pT into account.
+  double pT2Had     = pHad.pT2();
+  double nStringEff = double(nString) / (1.0 + pT2Had / pT20);
+
+  return (nStringEff+1.0);
 }
 
 //==========================================================================

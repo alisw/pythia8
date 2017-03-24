@@ -292,7 +292,7 @@ Corresponds to SLHA block MODSEL entry 3.
 <a name="generic"></a> 
 <h2>Using SLHA for generic BSM Models</h2> 
  
-</p> 
+<p> 
 Using the <code>QNUMBERS</code> extension [<a href="Bibliography.php" target="page">Alw07</a>], the SLHA 
 can also be used to define new particles, with arbitrary quantum 
 numbers. This already serves as a useful way to introduce new 
@@ -303,7 +303,7 @@ such decays. (If you want something better than isotropic, sorry, you'll
 have to do some actual work ...) 
 </p> 
  
-</p> 
+<p> 
 A more advanced further option is to make use of the possibility 
 in the SLHA to include user-defined blocks with arbitrary 
 names and contents. Obviously, standalone 
@@ -414,4 +414,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

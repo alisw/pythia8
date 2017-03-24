@@ -220,11 +220,28 @@ mass without the need for a user intervention.
 <h3>Fragmentation <i>pT</i></h3> 
  
 The <code>StringPT</code> class handles the choice of fragmentation 
-<i>pT</i>. At each string breaking the quark and antiquark of the pair are 
-supposed to receive opposite and compensating <i>pT</i> kicks according 
-to a Gaussian distribution in <i>p_x</i> and <i>p_y</i> separately. 
-Call <i>sigma_q</i> the width of the <i>p_x</i> and <i>p_y</i> 
-distributions separately, i.e. 
+<i>pT</i>. At each string breaking the quark and antiquark of the pair 
+are supposed to receive opposite and compensating <i>pT</i> kicks. 
+How they are distributed depends on the following flag: 
+ 
+<br/><br/><strong>StringPT:thermalModel</strong>  <input type="radio" name="23" value="on"><strong>On</strong>
+<input type="radio" name="23" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+If switched off the quark <i>pT</i> is generated according to 
+the traditional Gaussion distribution in <i>p_x</i> and <i>p_y</i> 
+separately. If switched on, the new "thermal model" [<a href="Bibliography.php" target="page">Fis16</a>] 
+is instead used, wherein the quark <i>pT</i> is generated such that the 
+resulting hadron receives a <i>pT</i> according to an exponential 
+distribution. Also the hadronic composition is affected, see further 
+below. 
+   
+ 
+<h4>Gaussian Distribution</h4> 
+ 
+For <code>StringPT:thermalModel = off</code> the quarks receive <i>pT</i> 
+kicks according to a Gaussian distribution in <i>p_x</i> and <i>p_y</i> 
+separately. Call <i>sigma_q</i> the width of the <i>p_x</i> and 
+<i>p_y</i> distributions separately, i.e. 
 <br/><i> 
     d(Prob) = exp( -(p_x^2 + p_y^2) / 2 sigma_q^2). 
 </i><br/> 
@@ -234,7 +251,7 @@ Then the total squared width is
 </i><br/> 
 It is this latter number that is stored in 
  
-<br/><br/><table><tr><td><strong>StringPT:sigma </td><td></td><td> <input type="text" name="23" value="0.335" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.335</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringPT:sigma </td><td></td><td> <input type="text" name="24" value="0.335" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.335</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)</td></tr></table>
 the width <i>sigma</i> in the fragmentation process. 
    
  
@@ -252,13 +269,91 @@ moment we stay with the current recipe, to boost the above <i>pT</i>
 by a factor <i>enhancedWidth</i> for a small fraction 
 <i>enhancedFraction</i> of the breakups, where 
  
-<br/><br/><table><tr><td><strong>StringPT:enhancedFraction </td><td></td><td> <input type="text" name="24" value="0.01" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.01</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringPT:enhancedFraction </td><td></td><td> <input type="text" name="25" value="0.01" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.01</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.</code>)</td></tr></table>
 <i>enhancedFraction</i>,the fraction of string breaks with enhanced 
 width. 
    
  
-<br/><br/><table><tr><td><strong>StringPT:enhancedWidth </td><td></td><td> <input type="text" name="25" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringPT:enhancedWidth </td><td></td><td> <input type="text" name="26" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 <i>enhancedWidth</i>,the enhancement of the width in this fraction. 
+   
+ 
+<p/> 
+In the context of some toy studies [<a href="Bibliography.php" target="page">Fis16</a>] the following three 
+options have also been introduced, but are not part of any recommended 
+framework. 
+ 
+<br/><br/><table><tr><td><strong>StringPT:widthPreStrange </td><td></td><td> <input type="text" name="27" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+Prefactor multiplying the Gaussian width for strange quarks. 
+   
+ 
+<br/><br/><table><tr><td><strong>StringPT:widthPreDiquark </td><td></td><td> <input type="text" name="28" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+Prefactor multiplying the Gaussian width for diquarks. In case of 
+diquarks with one or two strange quarks the prefactor is calculated by 
+multiplying <i>widthPreDiquark</i> once or twice respectively with 
+<i>widthPreStrange</i>. 
+   
+ 
+<br/><br/><strong>StringPT:mT2suppression</strong>  <input type="radio" name="29" value="on"><strong>On</strong>
+<input type="radio" name="29" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+If switched on the flavour composition is chosen based on the hadronic 
+transverse mass, <i>mT^2_had</i>, and not based on the quark masses. 
+This implies a mass suppression factor <i>exp(-m_had^2 / 2 sigma^2) </i>. 
+   
+ 
+<h4>Thermal Distribution</h4> 
+ 
+For <code>StringPT:thermalModel = on</code> the quark <i>pT</i> 
+is generated such that the resulting hadron <i>pT</i> follows 
+a thermal distribution 
+<br/><i> 
+    d(Prob) = exp( -pT_had/T) d^2pT_had 
+</i><br/> 
+with temperature <i>T</i>, whose value is given by 
+<br/><br/><table><tr><td><strong>StringPT:temperature </td><td></td><td> <input type="text" name="30" value="0.21" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.21</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 0.5</code>)</td></tr></table>
+the temperature <i>T</i> in the fragmentation process. 
+   
+<br/><br/><table><tr><td><strong>StringPT:tempPreFactor </td><td></td><td> <input type="text" name="31" value="1.21" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.21</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 1.5</code>)</td></tr></table>
+Temperature prefactor for strange quarks and diquarks. Default is 
+determined to have the same average <i>pT</i> in <i>u/d &rarr; s</i> 
+and <i>s &rarr; u/d</i> transistions. 
+   
+ 
+<h4>Common setup for enhanced width</h4> 
+ 
+If strings are closely packed, e.g. as a consequence of MPIs, it is 
+likely that they receive an increased string tension, which translates 
+into a broader <i>pT</i> spectrum, see further [<a href="Bibliography.php" target="page">Fis16</a>]. 
+It also means an enhanced rate (or rather reduced suppression) of 
+heavy-particle production relative to pions. This can be regulated by 
+the flag and parameters below. 
+ 
+<br/><br/><strong>StringPT:closePacking</strong>  <input type="radio" name="32" value="on"><strong>On</strong>
+<input type="radio" name="32" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+If switched on then the two following parameters modify either 
+<code>StringPT:sigma</code> or <code>StringPT:temperature</code>, 
+respectively. Normally only one of the options below would be used, 
+but technically both are allowed and then combine multiplicatively. 
+   
+ 
+<br/><br/><table><tr><td><strong>StringPT:expMPI </td><td></td><td> <input type="text" name="33" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)</td></tr></table>
+Exponent to the number of MPIs. The width/temparture will get the 
+prefactor <i>N(MPI)^expMPI</i>. 
+   
+ 
+<br/><br/><table><tr><td><strong>StringPT:expNSP </td><td></td><td> <input type="text" name="34" value="0.13" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.13</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)</td></tr></table>
+Exponent for the number of effective nearby string pieces, calculated as 
+<br/><i> 
+    N(NSP) =1 + (N<sub>string</sub>-1)/(1+p<sup>2</sup><sub>T had</sub>/ 
+    p<sup>2</sup><sub>T 0</sub>) , 
+</i><br/> 
+where <i>p<sup>2</sup><sub>T had</sub> </i> is the transverse 
+momentum of the next produced hadron, estimated based on an educated 
+guess of its momentum, and <i>p<sup>2</sup><sub>T 0</sub></i> is the 
+MPI regularization parameter <code>MultipartonInteractions:pT0Ref</code>. 
+The width/temperature will get the prefactor <i>N(NSP)^expNSP</i>. 
    
  
 <h3>Jet joining procedure</h3> 
@@ -271,19 +366,19 @@ parameters, but in a way too complicated to parametrize. The dependence
 is rather mild, however, so for a sensible range of variation the 
 parameters in this section should not be touched. 
  
-<br/><br/><table><tr><td><strong>StringFragmentation:stopMass </td><td></td><td> <input type="text" name="26" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:stopMass </td><td></td><td> <input type="text" name="35" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
 Is used to define a <i>W_min = m_q1 + m_q2 + stopMass</i>, 
 where <i>m_q1</i> and <i>m_q2</i> are the masses of the two 
 current endpoint quarks or diquarks. 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:stopNewFlav </td><td></td><td> <input type="text" name="27" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:stopNewFlav </td><td></td><td> <input type="text" name="36" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
 Add to <i>W_min</i> an amount <i>stopNewFlav * m_q_last</i>, 
 where <i>q_last</i> is the last <i>q qbar</i> pair produced 
 between the final two hadrons. 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:stopSmear </td><td></td><td> <input type="text" name="28" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:stopSmear </td><td></td><td> <input type="text" name="37" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)</td></tr></table>
 The <i>W_min</i> above is then smeared uniformly in the range 
 <i>W_min_smeared = W_min * [ 1 - stopSmear, 1 + stopSmear ]</i>. 
    
@@ -301,7 +396,7 @@ fragmentation process is started over.)
 There are a few situations when it is meaningful to simplify the 
 original task, one way or another. 
  
-<br/><br/><table><tr><td><strong>HadronLevel:mStringMin </td><td></td><td> <input type="text" name="29" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HadronLevel:mStringMin </td><td></td><td> <input type="text" name="38" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.5</code>)</td></tr></table>
 Decides whether a partonic system should be considered as a normal 
 string or a ministring, the latter only producing one or two primary 
 hadrons. The system mass should be above <i>mStringMin</i> plus the 
@@ -309,7 +404,7 @@ sum of quark/diquark constituent masses for a normal string description,
 else the ministring scenario is used. 
    
  
-<br/><br/><table><tr><td><strong>FragmentationSystems:mJoin </td><td></td><td> <input type="text" name="30" value="0.3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.3</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 1.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>FragmentationSystems:mJoin </td><td></td><td> <input type="text" name="39" value="0.3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.3</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 1.</code>)</td></tr></table>
 When two colour-connected partons are very nearby, with at least 
 one being a gluon, they can be joined into one, to avoid technical 
 problems of very small string regions. The requirement for joining is 
@@ -319,7 +414,7 @@ to the string region under consideration. (Note that, for technical
 reasons, the 0.2 GeV lower limit is de facto hardcoded.) 
    
  
-<br/><br/><table><tr><td><strong>FragmentationSystems:mJoinJunction </td><td></td><td> <input type="text" name="31" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 2.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>FragmentationSystems:mJoinJunction </td><td></td><td> <input type="text" name="40" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 2.</code>)</td></tr></table>
 When the invariant mass of two of the quarks in a three-quark junction 
 string system becomes too small, the system is simplified to a 
 quark-diquark simple string. The requirement for this simplification 
@@ -346,7 +441,7 @@ The current implementation does not completely abide to the scheme
 presented there, however, but has in part been simplified. (In part 
 for greater clarity, in part since the class is not quite finished yet.) 
  
-<br/><br/><table><tr><td><strong>MiniStringFragmentation:nTry  </td><td></td><td> <input type="text" name="32" value="2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>MiniStringFragmentation:nTry  </td><td></td><td> <input type="text" name="41" value="2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)</td></tr></table>
 Whenever the machinery is called, first this many attempts are made 
 to pick two hadrons that the system fragments to. If the hadrons are 
 too massive the attempt will fail, but a new subsequent try could 
@@ -368,7 +463,7 @@ the junction, where the baryon number topologically is located.
 The junction fragmentation scheme is described in [<a href="Bibliography.php" target="page">Sjo03</a>]. 
 The parameters in this section should not be touched except by experts. 
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eNormJunction </td><td></td><td> <input type="text" name="33" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eNormJunction </td><td></td><td> <input type="text" name="42" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)</td></tr></table>
 Used to find the effective rest frame of the junction, which is 
 complicated when the three string legs may contain additional 
 gluons between the junction and the endpoint. To this end, 
@@ -381,13 +476,13 @@ Should in principle be (close to) <i>sqrt((1 + a) / b)</i>, with
 fragmentation function. 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eBothLeftJunction </td><td></td><td> <input type="text" name="34" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eBothLeftJunction </td><td></td><td> <input type="text" name="43" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>)</td></tr></table>
 Retry (up to 10 times) when the first two considered strings in to a 
 junction both have a remaining energy (in the junction rest frame) 
 above this number. 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eMaxLeftJunction </td><td></td><td> <input type="text" name="35" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eMaxLeftJunction </td><td></td><td> <input type="text" name="44" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 Retry (up to 10 times) when the first two considered strings in to a 
 junction has a highest remaining energy (in the junction rest frame) 
 above a random energy evenly distributed between 
@@ -396,7 +491,7 @@ above a random energy evenly distributed between
 (drawn anew for each test). 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eMinLeftJunction </td><td></td><td> <input type="text" name="36" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eMinLeftJunction </td><td></td><td> <input type="text" name="45" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 Retry (up to 10 times) when the invariant mass-squared of the final leg 
 and the leftover momentum of the first two treated legs falls below 
 <i>eMinLeftJunction</i> times the energy of the final leg (in the 
@@ -528,74 +623,119 @@ if($_POST["22"] != "0.005")
 $data = "StringZ:epsilonH = ".$_POST["22"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["23"] != "0.335")
+if($_POST["23"] != "off")
 {
-$data = "StringPT:sigma = ".$_POST["23"]."\n";
+$data = "StringPT:thermalModel = ".$_POST["23"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["24"] != "0.01")
+if($_POST["24"] != "0.335")
 {
-$data = "StringPT:enhancedFraction = ".$_POST["24"]."\n";
+$data = "StringPT:sigma = ".$_POST["24"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["25"] != "2.0")
+if($_POST["25"] != "0.01")
 {
-$data = "StringPT:enhancedWidth = ".$_POST["25"]."\n";
+$data = "StringPT:enhancedFraction = ".$_POST["25"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["26"] != "1.0")
+if($_POST["26"] != "2.0")
 {
-$data = "StringFragmentation:stopMass = ".$_POST["26"]."\n";
+$data = "StringPT:enhancedWidth = ".$_POST["26"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["27"] != "2.0")
+if($_POST["27"] != "1.0")
 {
-$data = "StringFragmentation:stopNewFlav = ".$_POST["27"]."\n";
+$data = "StringPT:widthPreStrange = ".$_POST["27"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["28"] != "0.2")
+if($_POST["28"] != "1.0")
 {
-$data = "StringFragmentation:stopSmear = ".$_POST["28"]."\n";
+$data = "StringPT:widthPreDiquark = ".$_POST["28"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["29"] != "1.")
+if($_POST["29"] != "off")
 {
-$data = "HadronLevel:mStringMin = ".$_POST["29"]."\n";
+$data = "StringPT:mT2suppression = ".$_POST["29"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["30"] != "0.3")
+if($_POST["30"] != "0.21")
 {
-$data = "FragmentationSystems:mJoin = ".$_POST["30"]."\n";
+$data = "StringPT:temperature = ".$_POST["30"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["31"] != "1.0")
+if($_POST["31"] != "1.21")
 {
-$data = "FragmentationSystems:mJoinJunction = ".$_POST["31"]."\n";
+$data = "StringPT:tempPreFactor = ".$_POST["31"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["32"] != "2")
+if($_POST["32"] != "off")
 {
-$data = "MiniStringFragmentation:nTry = ".$_POST["32"]."\n";
+$data = "StringPT:closePacking = ".$_POST["32"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["33"] != "2.0")
+if($_POST["33"] != "0.0")
 {
-$data = "StringFragmentation:eNormJunction = ".$_POST["33"]."\n";
+$data = "StringPT:expMPI = ".$_POST["33"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["34"] != "1.0")
+if($_POST["34"] != "0.13")
 {
-$data = "StringFragmentation:eBothLeftJunction = ".$_POST["34"]."\n";
+$data = "StringPT:expNSP = ".$_POST["34"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["35"] != "10.0")
+if($_POST["35"] != "1.0")
 {
-$data = "StringFragmentation:eMaxLeftJunction = ".$_POST["35"]."\n";
+$data = "StringFragmentation:stopMass = ".$_POST["35"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["36"] != "0.2")
+if($_POST["36"] != "2.0")
 {
-$data = "StringFragmentation:eMinLeftJunction = ".$_POST["36"]."\n";
+$data = "StringFragmentation:stopNewFlav = ".$_POST["36"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["37"] != "0.2")
+{
+$data = "StringFragmentation:stopSmear = ".$_POST["37"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["38"] != "1.")
+{
+$data = "HadronLevel:mStringMin = ".$_POST["38"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["39"] != "0.3")
+{
+$data = "FragmentationSystems:mJoin = ".$_POST["39"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["40"] != "1.0")
+{
+$data = "FragmentationSystems:mJoinJunction = ".$_POST["40"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["41"] != "2")
+{
+$data = "MiniStringFragmentation:nTry = ".$_POST["41"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["42"] != "2.0")
+{
+$data = "StringFragmentation:eNormJunction = ".$_POST["42"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["43"] != "1.0")
+{
+$data = "StringFragmentation:eBothLeftJunction = ".$_POST["43"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["44"] != "10.0")
+{
+$data = "StringFragmentation:eMaxLeftJunction = ".$_POST["44"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["45"] != "0.2")
+{
+$data = "StringFragmentation:eMinLeftJunction = ".$_POST["45"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -605,4 +745,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

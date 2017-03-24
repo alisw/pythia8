@@ -1,5 +1,5 @@
 // LHEF3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -30,7 +30,7 @@ struct XMLTag {
   typedef string::size_type pos_t;
 
   // Convenient alias for npos.
-  static const pos_t end = string::npos;
+  static const pos_t end;
 
   // The destructor also destroys any sub-tags.
   ~XMLTag() {
@@ -108,7 +108,7 @@ struct XMLTag {
       pos_t begin = str.find("<", curr);
 
       // Skip comments.
-      if ( str.find("<!--", curr) == begin ) {
+      if ( begin != end && str.find("<!--", curr) == begin ) {
         pos_t endcom = str.find("-->", begin);
         if ( endcom == end ) {
           if ( leftover ) *leftover += str.substr(curr);
@@ -200,7 +200,7 @@ struct XMLTag {
   }
 
   // Print out this tag to a stream.
-  void print(ostream & os) const {
+  void list(ostream & os) const {
     os << "<" << name;
     for ( map<string,string>::const_iterator it = attr.begin();
           it != attr.end(); ++it )
@@ -211,7 +211,7 @@ struct XMLTag {
     }
     os << ">" << endl;
     for ( int i = 0, N = tags.size(); i < N; ++i )
-      tags[i]->print(os);
+      tags[i]->list(os);
 
     os << "````" << contents << "''''</" << name << ">" << endl;
   }
@@ -231,7 +231,7 @@ struct LHAweights {
   LHAweights(const XMLTag & tag);
 
   // Print out an XML tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -249,6 +249,9 @@ struct LHAweights {
   // The contents of the tag.
   string contents;
 
+  // Return number of weights.
+  int size() { return int(weights.size()); }
+
 };
 
 //==========================================================================
@@ -265,7 +268,7 @@ struct LHAscales {
   LHAscales(const XMLTag & tag, double defscale = -1.0);
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -309,7 +312,7 @@ struct LHAgenerator {
   LHAgenerator(const XMLTag & tag, string defname = "");
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -347,7 +350,7 @@ struct LHAwgt {
   LHAwgt(const XMLTag & tag, double defwgt = 1.0);
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -381,7 +384,7 @@ struct LHAweight {
   LHAweight(const XMLTag & tag, string defname = "");
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -415,7 +418,7 @@ struct LHAweightgroup {
   LHAweightgroup(const XMLTag & tag);
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -433,9 +436,13 @@ struct LHAweightgroup {
 
   // The vector of weights.
   map<string, LHAweight> weights;
+  vector<string> weightsKeys;
 
   // Any other attributes.
   map<string,string> attributes;
+
+  // Return number of weights.
+  int size() { return int(weights.size()); }
 
 };
 
@@ -453,7 +460,7 @@ struct LHArwgt {
   LHArwgt(const XMLTag & tag);
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -467,9 +474,13 @@ struct LHArwgt {
 
   // The map of weights.
   map<string, LHAwgt> wgts;
+  vector<string> wgtsKeys;
 
   // Any other attributes.
   map<string,string> attributes;
+
+  // Return number of weights.
+  int size() { return int(wgts.size()); }
 
 };
 
@@ -487,7 +498,7 @@ struct LHAinitrwgt {
   LHAinitrwgt(const XMLTag & tag);
 
   // Print out the corresponding XML-tag.
-  void print(ostream & file) const;
+  void list(ostream & file) const;
 
   // Function to reset this object.
   void clear() {
@@ -502,12 +513,20 @@ struct LHAinitrwgt {
 
   // The vector of weight's.
   map<string, LHAweight> weights;
+  vector<string> weightsKeys;
 
   // The vector of weightgroup's.
   map<string, LHAweightgroup> weightgroups;
+  vector<string> weightgroupsKeys;
 
   // Any other attributes.
   map<string,string> attributes;
+
+  // Return number of weights.
+  int size() { return int(weights.size());}
+
+  // Return number of weights.
+  int sizeWeightGroups() { return int(weightgroups.size()); }
 
 };
 
@@ -566,6 +585,9 @@ public:
     XMAXUP.resize(NPRUP);
     LPRUP.resize(NPRUP);
   }
+
+  // Clear all members.
+  void clear();
 
   // PDG id's of beam particles. (first/second is in +/-z direction).
   pair<long,long> IDBMUP;
@@ -743,13 +765,13 @@ public:
   vector<double> weights_compressed;
 
   // Contents of the LHAscales tag
-  LHAscales scales;
+  LHAscales scalesSave;
 
   // Contents of the LHAweights tag (compressed format)
-  LHAweights weights;
+  LHAweights weightsSave;
 
   // Contents of the LHArwgt tag (detailed format)
-  LHArwgt rwgt;
+  LHArwgt rwgtSave;
 
   // Any other attributes.
   map<string,string> attributes;
@@ -785,8 +807,37 @@ public:
   // filename: the name of the file to read from.
   //
   Reader(string filenameIn)
-    : filename(filenameIn), intstream(filename.c_str()), file(&intstream) {
+    : filename(filenameIn), intstream(NULL), file(NULL) {
+    intstream = new igzstream(filename.c_str());
+    file = intstream;
     isGood = init();
+  }
+
+  Reader(istream* is)
+    : filename(""), intstream(NULL), file(is) {
+    isGood = init();
+  }
+
+  // Clean up
+  ~Reader() {
+    if (intstream) delete intstream;
+  }
+
+
+
+  // (Re)initialize the Reader with a filename from which to read an event
+  // file. After this, all information from the header and init block is
+  // available.
+  //
+  // filename: File name (not used as the input file stream is given)
+  // isIn    : Name of the input file stream.
+  bool setup(string filenameIn) {
+    filename = filenameIn;
+    if (intstream) delete intstream;
+    intstream = new igzstream(filename.c_str());
+    file = intstream;
+    isGood = init();
+    return isGood;
   }
 
 private:
@@ -800,6 +851,14 @@ public:
   // object. Optional comment lines are stored in the eventComments
   // member variable.
   bool readEvent(HEPEUP * peup = 0);
+
+  // Reset values of all event-related members to their defaults.
+  void clearEvent() {
+   currentLine = "";
+   hepeup.clear();
+   eventComments = "";
+   weights_detailed_vec.resize(0);
+  }
 
 protected:
 
@@ -819,7 +878,7 @@ protected:
 
   // A local stream which is unused if a stream is supplied from the
   // outside.
-  igzstream intstream;
+  igzstream* intstream;
 
   // The stream we are reading from. This may be a pointer to an
   // external stream or the internal intstream.
@@ -856,6 +915,10 @@ public:
   // Additional comments found with the last read event.
   string eventComments;
 
+  // The detailed weights associated with this event, linearized to a vector.
+  vector<double> weights_detailed_vec;
+  vector<double> weights_detailed_vector() { return weights_detailed_vec; }
+
 private:
 
   // The default constructor should never be used.
@@ -874,7 +937,7 @@ private:
 // The Writer class is initialized with a stream to which to write a
 // version 1.0 or 3.0 Les Houches Accord event file. In the init() function of
 // the Writer object the main XML tag, header and init blocks are written,
-// with the corresponding end tag is written by print_end_tag().
+// with the corresponding end tag is written by list_end_tag().
 // After a Writer object (in the following called "writer") has been created,
 // it is possible to assign version (3 by default) information by
 //
@@ -942,7 +1005,7 @@ public:
   }
 
   // Write out the final XML end-tag.
-  void print_end_tag() {
+  void list_end_tag() {
     file << "</LesHouchesEvents>" << endl;
   }
 
@@ -952,7 +1015,9 @@ public:
 
   // Write out the event stored in hepeup, followed by optional
   // comment lines.
-  bool writeEvent(HEPEUP * peup = 0);
+  bool writeEvent(HEPEUP * peup = 0, int pDigits = 15);
+  // Write out an event as a string.
+  string getEventString(HEPEUP * peup = 0);
 
 protected:
 

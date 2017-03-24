@@ -129,15 +129,18 @@ parametrized as
 alpha(t) = 1 + epsilon + alpha' t 
 </i><br/> 
 The <i>epsilon</i> and <i>alpha'</i> parameters can be set 
-separately in options 3 and 4: 
+separately in options 3 and 4, and additionally <i>alpha'</i> 
+is set in option 1: 
  
 <br/><br/><table><tr><td><strong>Diffraction:PomFluxEpsilon </td><td></td><td> <input type="text" name="2" value="0.085" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.085</strong></code>; <code>minimum = 0.02</code>; <code>maximum = 0.15</code>)</td></tr></table>
-The Pomeron trajectory intercept <i>epsilon</i> above. For technical 
-reasons <i>epsilon &gt; 0</i> is necessary in the current implementation. 
+The Pomeron trajectory intercept <i>epsilon</i> above for the 3 and 4 
+flux options. For technical reasons <i>epsilon &gt; 0</i> is necessary 
+in the current implementation. 
    
  
 <br/><br/><table><tr><td><strong>Diffraction:PomFluxAlphaPrime </td><td></td><td> <input type="text" name="3" value="0.25" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.25</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 0.4</code>)</td></tr></table>
-The Pomeron trajectory slope <i>alpha'</i> above. 
+The Pomeron trajectory slope <i>alpha'</i> above for the 1, 3 and 4 
+flux options. 
    
  
 Values are fixed in options 6 and 7. 
@@ -435,15 +438,62 @@ Allows for the possibility to include hard diffraction tests in a run.
 There is also the possibility to select only a specific subset of events 
 in hard diffraction. 
  
-<br/><br/><table><tr><td><strong>Diffraction:sampleType  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Diffraction:sampleType  </td><td>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 4</code>)</td></tr></table>
 Type of process the user wants to generate. Depends strongly on how an event 
 is classified as diffractive. 
 <br/>
-<input type="radio" name="33" value="1" checked="checked"><strong>1 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-unchecked.  <br/>
-<input type="radio" name="33" value="2"><strong>2 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-checked.  <br/>
+<input type="radio" name="33" value="1"><strong>1 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-unchecked.  <br/>
+<input type="radio" name="33" value="2" checked="checked"><strong>2 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-checked.  <br/>
 <input type="radio" name="33" value="3"><strong>3 </strong>: Generate an exclusive diffractive sample, MPI-unchecked.  <br/>
 <input type="radio" name="33" value="4"><strong>4 </strong>: Generate an exclusive diffractive sample, MPI-checked.  <br/>
-<input type="radio" name="33" value="5"><strong>5 </strong>: Generate an exclusive sample, rejecting all diffractive  events, MPI-unchecked, so the complement of option 3.  <br/>
+ 
+<p/> 
+The Pomeron PDFs have not been scaled to unit momentum sum by the 
+H1 Collaboration, but instead they let the PDF normalization float 
+after the flux had been normalized to unity at <i>x_Pom=0.03</i>. 
+This means that the H1 Pomeron has a momentum sum that is about a half. 
+It could be brought to unit momentum sum by picking the parameter 
+<code>PDF:PomRescale</code> to be around 2. In order not to change the 
+convolution of the flux and the PDFs, the flux then needs to be rescaled 
+by the inverse. This introduces a new rescaling parameter: 
+ 
+<br/><br/><table><tr><td><strong>Diffraction:PomFluxRescale </td><td></td><td> <input type="text" name="34" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)</td></tr></table>
+Rescale the Pomeron flux by this uniform factor. It should be 
+<code>1 / PDF:PomRescale</code> to preserve the convolution of Pomeron 
+flux and PDFs, but for greater flxibility the two can be set separately. 
+   
+ 
+<p/> 
+When using the MBR flux, the model requires a renormalization of 
+the Pomeron flux. This suppresses the flux with approximately a factor 
+of ten, thus making it incompatible with the MPI suppression of the 
+hard diffraction framework. We have thus implemented an option to 
+renormalize the flux. If you wish to use the renormalized flux of the 
+MBR model, you must generate the MPI-unchecked samples, otherwise 
+diffractive events will be suppressed twice. 
+ 
+<br/><br/><strong>Diffraction:useMBRrenormalization</strong>  <input type="radio" name="35" value="on"><strong>On</strong>
+<input type="radio" name="35" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Use the renormalized MBR flux. 
+   
+ 
+<p/> 
+The transverse matter profile of the Pomeron, relative to that of the 
+proton, is not known. Generally a Pomeron is supposed to be a smaller 
+object in a localized part of the proton, but one should keep an open 
+mind. Therefore below you find three extreme scenarios, which can be 
+compared to gauge the impact of this uncertainty. 
+ 
+<br/><br/><table><tr><td><strong>Diffraction:bSelHard  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 3</code>)</td></tr></table>
+Selection of impact parameter <ei>b</ei> and the related enhancement 
+factor for the Pomeron-proton subsystem when the MPI check is carried 
+out. This affects the underlying-event activity in hard diffractive 
+events. 
+<br/>
+<input type="radio" name="36" value="1" checked="checked"><strong>1 </strong>: Use the same <ei>b</ei> as already assigned for the  proton-proton collision. This implicitly assumes that a Pomeron is  as big as a proton and centered in the same place. Since small  <ei>b</ei> values already have been suppressed, few events should  have high enhancement factors.  <br/>
+<input type="radio" name="36" value="2"><strong>2 </strong>: Use the square root of the <ei>b</ei> as already  assigned for the proton-proton collision, thereby making the  enhancement factor fluctuate less between events. If the Pomeron  is very tiny then what matters is where it strikes the other proton,  not the details of its shape. Thus the variation with <ei>b</ei> is  of one proton, not two, and so the square root of the normal variation,  loosely speaking. Tecnhically this is difficult to implement, but  the current simple recipe provides the main effect of reducing the  variation, bringing all <ei>b</ei> values closer to the average.  <br/>
+<input type="radio" name="36" value="3"><strong>3 </strong>: Pick a completely new <ei>b</ei>. This allows a broad  spread from central to peripheral values, and thereby also a more  varying MPI activity inside the diffractive system than the other two  options. This offers an extreme picture, even if not the most likely  one.  <br/>
  
 <input type="hidden" name="saved" value="1"/>
 
@@ -620,9 +670,24 @@ if($_POST["32"] != "off")
 $data = "Diffraction:doHard = ".$_POST["32"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["33"] != "1")
+if($_POST["33"] != "2")
 {
 $data = "Diffraction:sampleType = ".$_POST["33"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["34"] != "1.0")
+{
+$data = "Diffraction:PomFluxRescale = ".$_POST["34"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["35"] != "off")
+{
+$data = "Diffraction:useMBRrenormalization = ".$_POST["35"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["36"] != "1")
+{
+$data = "Diffraction:bSelHard = ".$_POST["36"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -632,4 +697,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

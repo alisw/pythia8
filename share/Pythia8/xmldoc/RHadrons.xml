@@ -3,8 +3,8 @@
 <h2>R-hadrons</h2> 
  
 When a coloured SUSY particle is longer-lived than typical 
-hadronization scales, i.e. around c*tau > 1 fm, or equivalently 
-width Gamma < 0.2 GeV, it will have time to hadronize into a colour 
+hadronization scales, i.e. around c*tau &gt; 1 fm, or equivalently 
+width Gamma &lt; 0.2 GeV, it will have time to hadronize into a colour 
 singlet hadronic state, a R-hadron. Currently a set of such 
 R-hadrons have been implemented for the case of a long-lived 
 gluino, stop or sbottom. Needless to say, the normal case would be 
@@ -64,7 +64,7 @@ octet particle, that then would be treated in the same spirit.
 Could be set to 0 to forbid any gluino R-hadron formation even when 
 the above two criteria, <code>RHadrons:allow</code> 
 and <code>RHadrons:maxWidth</code>, are met. 
-</flag> 
+</mode> 
  
 <mode name="RHadrons:idStop" default="1000006"> 
 The lightest stop identity code. For other scenarios than SUSY this 
@@ -72,7 +72,7 @@ code could be changed to represent another long-lived charge 2/3
 colour triplet particle, that then would be treated in the same 
 spirit. As above it could be set to 0 to forbid any stop R-hadron 
 formation. 
-</flag> 
+</mode> 
  
 <mode name="RHadrons:idSbottom" default="1000005"> 
 The lightest sbottom identity code. For other scenarios than SUSY this 
@@ -80,7 +80,7 @@ code could be changed to represent another long-lived charge -1/3
 colour triplet particle, that then would be treated in the same 
 spirit. As above it could be set to 0 to forbid any sbottom R-hadron 
 formation. 
-</flag> 
+</mode> 
  
 <flag name="RHadrons:allowDecay" default="on"> 
 Allows the R-hadrons to decay or not. If the gluino/stop/sbottom is 
@@ -147,4 +147,4 @@ issue.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

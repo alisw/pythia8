@@ -1,5 +1,5 @@
 // WeakShowerMEs.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,64 +13,107 @@ namespace Pythia8 {
 //==========================================================================
 
 // The WeakShowerMEs class.
+// The 2 -> 2 MEs contain the correct kinematics, but for some of
+// the 2 -> 3 MEs some couplings have been switched off.
+// This class is used for ME corrections in the weak shower and for merging
+// whenever weak reclusterings are allowed.
 
 //--------------------------------------------------------------------------
 
-// Calculate the 2 to 2 ME uG -> uG, with an overall factor of
-// g_s^4 / 9 was removed.
+// Calculate the 2->2 ME qg -> qg, omitting an overall factor of g_s^4 / 9.
 
-double WeakShowerMEs::getTchanneluGuGME(double sHat, double tHat,
-  double uHat) {
+double WeakShowerMEs::getMEqg2qg(double sH, double tH, double uH) {
 
-  double sH2 = sHat* sHat;
-  double sH3 = sH2 * sHat;
-  double tH2 = tHat * tHat;
-  double uH2 = uHat * uHat;
-  return (18.*sH3*uHat - 4*tH2*uH2 + 9*sHat*uH2*(tHat + 2*uHat) +
-    sH2*(-4.*tH2 + 9*tHat*uHat + 18*uH2))/(sHat*tH2*uHat);
+  double sH2 = sH * sH;
+  double tH2 = tH * tH;
+  double uH2 = uH * uH;
+  return (sH2 + uH2) * (9. / tH2 - 4. / (sH * uH));
 
 }
 
 //--------------------------------------------------------------------------
 
-// Calculate the 2 to 2 ME ud -> ud, with an overall factor of
-// g_s^4 / 9 was removed.
+// Calculate the 2->2 ME qq' -> qq', omitting an overall factor of g_s^4 / 9s.
 
-double WeakShowerMEs::getTchannelududME(double sHat, double tHat,
-  double uHat) {
+double WeakShowerMEs::getMEqq2qq(double sH, double tH, double uH,
+  bool sameID) {
 
-  double sH2 = sHat * sHat;
-  double tH2 = tHat * tHat;
-  double uH2 = uHat * uHat;
-  return 4.*(sH2+uH2)/tH2;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Calculate the 2 to 2 ME uu -> uu, with an overall factor of
-// g_s^4 / 9 was removed.
-
-double WeakShowerMEs::getTchanneluuuuME(double sHat, double tHat,
-  double uHat) {
-
-  double sH2 = sHat * sHat;
-  double tH2 = tHat * tHat;
-  double uH2 = uHat * uHat;
-  return 4./2.*((sH2+uH2)/tH2 + (sH2+tH2)/uH2 - 2.*sH2/(3.*tHat*uHat));
+  double sH2 = sH * sH;
+  double tH2 = tH * tH;
+  double uH2 = uH * uH;
+  if (sameID) return 2. * ( (sH2 + uH2) / tH2 + (sH2 + tH2) / uH2
+    - 2. * sH2 / (3. * tH * uH) );
+  else return 4. * (sH2 + uH2) / tH2;
 
 }
 
 //--------------------------------------------------------------------------
 
-// Calculate the 2 to 3 ME uG -> uGZ, with an overall factor of
-// \frac{(g_s^4 * 4\pi \alpha_{em} * (lU^2 + rU^2))}{
-// 9 * \cos^2(\theta_W) \sin^2(\theta_W)}$ was removed.
+// Calculate the 2->2 ME gg -> gg, omitting an overall factor of g_s^4 / 9.
+
+double WeakShowerMEs::getMEgg2gg(double sH, double tH, double uH) {
+
+  double sH2 = sH * sH;
+  double tH2 = tH * tH;
+  double uH2 = uH * uH;
+  return (81. / 8.) * ( (tH2 + uH2) / sH2 + (sH2 + uH2) / tH2
+    + (sH2 + tH2) / uH2 + 3. );
+
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate the 2->2 ME gg -> qqbar, omitting an overall factor of g_s^4 / 9.
+
+double WeakShowerMEs::getMEgg2qqbar(double sH, double tH, double uH) {
+
+  double sH2 = sH * sH;
+  double tH2 = tH * tH;
+  double uH2 = uH * uH;
+  return (tH2 + uH2) * ( 3. / (2. * tH * uH) - 27. / (8. * sH2) );
+
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate the 2->2 ME qqbar -> gg, omitting an overall factor of g_s^4 / 9.
+
+double WeakShowerMEs::getMEqqbar2gg(double sH, double tH, double uH) {
+
+  double sH2 = sH * sH;
+  double tH2 = tH * tH;
+  double uH2 = uH * uH;
+  return (tH2 + uH2) * ( 16. / (3. * tH * uH) - 12. / sH2 );
+
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate the 2->2 ME qqbar -> qqbar, omitting an overall factor of
+// g_s^4 / 9.
+
+double WeakShowerMEs::getMEqqbar2qqbar(double sH, double tH, double uH,
+  bool sameID) {
+
+  double sH2 = sH * sH;
+  double tH2 = tH * tH;
+  double uH2 = uH * uH;
+  if (sameID) return 4. * (tH2 + uH2) / sH2 - (8./3.) * uH2 / (sH * tH)
+    + 4. * (sH2 + uH2) / tH2;
+  else return 4. * (tH2 + uH2) / sH2;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate the 2->3 ME ug -> ugZ, omitting an overall factor of
+// \frac{(g_s^4 * 4\pi \alpha_{em} * (lU^2 + rU^2))}
+//      {9 * \cos^2(\theta_W) \sin^2(\theta_W)}.
 // p1 = incoming quark, p2 = incoming gluon, p3 = outgoing gluon,
 // p4 = outgoing Z, p5 = outgoing quark.
 
-double WeakShowerMEs::getTchanneluGuGZME(Vec4 p1, Vec4 p2, Vec4 p3,
-  Vec4 p4, Vec4 p5) {
+double WeakShowerMEs::getMEqg2qgZ(Vec4 p1, Vec4 p2, Vec4 p3, Vec4 p4,
+  Vec4 p5) {
 
   double p12  = p1*p2;
   double p13  = p1*p3;
@@ -307,15 +350,15 @@ double WeakShowerMEs::getTchanneluGuGZME(Vec4 p1, Vec4 p2, Vec4 p3,
 
 //--------------------------------------------------------------------------
 
-// Calculate the 2 to 3 ME ud -> udZ, with the coupling between Z and d
-// set to zero. An overall factor of
-// \frac{(g_s^4 * 4\pi \alpha_{em} * (lU^2 + rU^2))}{
-// 9 * \cos^2(\theta_W) \sin^2(\theta_W)}$ was removed.
+// Calculate the 2->3 ME ud -> udZ, with the coupling between Z and d
+// set to zero, and omitting an overall factor of
+// \frac{(g_s^4 * 4\pi \alpha_{em} * (lU^2 + rU^2))}
+//      {9 * \cos^2(\theta_W) \sin^2(\theta_W)}..
 // p1 = incoming u, p2 = incoming d, p3 = outgoing Z,
 // p4 = outgoing d, p5 = outgoing u.
 
-double WeakShowerMEs::getTchannelududZME(Vec4 p1,Vec4 p2,Vec4 p3,
-  Vec4 p4,Vec4 p5) {
+double WeakShowerMEs::getMEqq2qqZ(Vec4 p1, Vec4 p2, Vec4 p3, Vec4 p4,
+  Vec4 p5) {
 
   double p12  = p1*p2;
   double p13  = p1*p3;

@@ -1,5 +1,5 @@
 // main89.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -54,7 +54,7 @@ int main( int argc, char* argv[] ){
   HepMC::IO_GenEvent ascii_io(argv[2], std::ios::out);
   // Switch off warnings for parton-level events.
   ToHepMC.set_print_inconsistency(false);
-  ToHepMC.set_free_parton_warnings(false);
+  ToHepMC.set_free_parton_exception(false);
   // Do not store cross section information, as this will be done manually.
   ToHepMC.set_store_pdf(false);
   ToHepMC.set_store_proc(false);
@@ -82,7 +82,6 @@ int main( int argc, char* argv[] ){
   if (nEvent < 1) nEvent = 1000000000000000;
 
   // For jet matching, initialise the respective user hooks code.
-  CombineMatchingInput* combined = NULL;
   UserHooks* matching            = NULL;
 
   // Allow to set the number of addtional partons dynamically.
@@ -104,7 +103,8 @@ int main( int argc, char* argv[] ){
 
   // For jet matching, initialise the respective user hooks code.
   if (doMatch) {
-    matching = combined->getHook(pythia);
+    CombineMatchingInput combined;
+    matching = combined.getHook(pythia);
     if (!matching) {
       cerr << " Failed to initialise jet matching structures.\n"
            << " Program stopped.";
@@ -208,6 +208,10 @@ int main( int argc, char* argv[] ){
     cout << "Inclusive cross section: " << scientific << setprecision(8)
          << sigmaTotal << "  +-  " << sqrt(errorTotal) << " mb " << endl;
   cout << endl << endl << endl;
+
+  // Clean-up
+  if ( doMerge ) delete setting;
+  if ( doMatch ) delete matching;
 
   // Done
   return 0;

@@ -30,8 +30,8 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>R-hadrons</h2> 
  
 When a coloured SUSY particle is longer-lived than typical 
-hadronization scales, i.e. around c*tau > 1 fm, or equivalently 
-width Gamma < 0.2 GeV, it will have time to hadronize into a colour 
+hadronization scales, i.e. around c*tau &gt; 1 fm, or equivalently 
+width Gamma &lt; 0.2 GeV, it will have time to hadronize into a colour 
 singlet hadronic state, a R-hadron. Currently a set of such 
 R-hadrons have been implemented for the case of a long-lived 
 gluino, stop or sbottom. Needless to say, the normal case would be 
@@ -243,4 +243,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

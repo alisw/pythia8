@@ -27,7 +27,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 
 <form method='post' action='Index.php'>
  
-<img src='pythia99.gif' alt='Pythia logo' hspace=10/> 
+<img src="pythia99.gif" alt="Pythia logo" hspace="10"/> 
  
 <h2>PYTHIA 8 Index</h2> 
  
@@ -80,6 +80,8 @@ echo "<a href='SaveSettings.php?returning=1&filename=".$filename."' target='page
 <a href='HiddenValleyProcesses.php?filepath=".$filepath."' target='page'>Hidden Valleys</a><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <a href='ExtraDimensionalProcesses.php?filepath=".$filepath."' target='page'>Extra Dimensions</a><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
+<a href='DarkMatterProcesses.php?filepath=".$filepath."' target='page'>Dark Matter</a><br/> 
 <a href='ASecondHardProcess.php?filepath=".$filepath."' target='page'>A Second Hard Process</a><br/> 
 <a href='PhaseSpaceCuts.php?filepath=".$filepath."' target='page'>Phase Space Cuts</a><br/> 
 <a href='CouplingsAndScales.php?filepath=".$filepath."' target='page'>Couplings and Scales</a><br/> 
@@ -88,6 +90,7 @@ echo "<a href='SaveSettings.php?returning=1&filename=".$filename."' target='page
 <a href='ResonanceDecays.php?filepath=".$filepath."' target='page'>Resonance Decays</a><br/> 
 <a href='TimelikeShowers.php?filepath=".$filepath."' target='page'>Timelike Showers</a><br/> 
 <a href='SpacelikeShowers.php?filepath=".$filepath."' target='page'>Spacelike Showers</a><br/> 
+<a href='Variations.php?filepath=".$filepath."' target='page'>Automated Shower Variations</a><br/> 
 <a href='WeakShowers.php?filepath=".$filepath."' target='page'>Weak Showers</a><br/> 
 <a href='MultipartonInteractions.php?filepath=".$filepath."' target='page'>Multiparton Interactions</a><br/> 
 <a href='BeamRemnants.php?filepath=".$filepath."' target='page'>Beam Remnants</a><br/> 
@@ -98,6 +101,7 @@ echo "<a href='SaveSettings.php?returning=1&filename=".$filename."' target='page
 <a href='ParticleDecays.php?filepath=".$filepath."' target='page'>Particle Decays</a><br/> 
 <a href='RHadrons.php?filepath=".$filepath."' target='page'>R-hadrons</a><br/> 
 <a href='BoseEinsteinEffects.php?filepath=".$filepath."' target='page'>Bose-Einstein Effects</a><br/> 
+<a href='PhotonPhoton.php?filepath=".$filepath."' target='page'>Photon-photon Interactions</a><br/> 
 <a href='HadronScattering.php?filepath=".$filepath."' target='page'>Hadron Scattering</a><br/> 
 <a href='ParticleData.php?filepath=".$filepath."' target='page'>Particle Data</a><br/> 
 <a href='ErrorChecks.php?filepath=".$filepath."' target='page'>Error Checks</a><br/> 
@@ -132,7 +136,7 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>Les Ho
 <a href='ProMCFiles.php?filepath=".$filepath."' target='page'>ProMC Files</a><br/> 
 <a href='SemiInternalProcesses.php?filepath=".$filepath."' target='page'>Semi-Internal Processes</a><br/> 
 <a href='SemiInternalResonances.php?filepath=".$filepath."' target='page'>Semi-Internal Resonances</a><br/> 
-<a href='MadGraph5Processes.php?filepath=".$filepath."' target='page'>MadGraph 5 Processes</a><br/> 
+<a href='MadGraph5Processes.php?filepath=".$filepath."' target='page'>MadGraph5 Processes</a><br/> 
 <a href='AlpgenEventInterface.php?filepath=".$filepath."' target='page'>Alpgen Event Interface</a><br/> 
 <a href='MatchingAndMerging.php?filepath=".$filepath."' target='page'>Matching and Merging</a><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
@@ -157,6 +161,7 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>Les Ho
 <a href='ImplementNewShowers.php?filepath=".$filepath."' target='page'>Implement New Showers</a><br/> 
 <a href='RIVETusage.php?filepath=".$filepath."' target='page'>RIVET usage</a><br/> 
 <a href='ROOTusage.php?filepath=".$filepath."' target='page'>ROOT usage</a><br/> 
+<a href='PythonInterface.php?filepath=".$filepath."' target='page'>A Python Interface</a><br/> 
 
 ";?>
  
@@ -175,4 +180,4 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>Les Ho
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SigmaEW.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -3127,6 +3127,138 @@ void Sigma2gmgm2ffbar::setIdColAcol() {
   // Colour flow in singlet state.
   if (idNow < 10) setColAcol( 0, 0, 0, 0, 1, 0, 0, 1);
   else            setColAcol( 0, 0, 0, 0, 0, 0, 0, 0);
+
+}
+
+//==========================================================================
+
+// Sigma2ggm2qqbar class.
+// Cross section for g gamma -> q qbar.
+
+//--------------------------------------------------------------------------
+
+// Initialize process wrt flavour.
+
+void Sigma2ggm2qqbar::initProc() {
+
+  // Process name.
+  nameSave = "g gamma -> q qbar";
+  if (idNew ==  1) nameSave = "g gamma -> q qbar (uds)";
+  if (idNew ==  4) nameSave = "g gamma -> c cbar";
+  if (idNew ==  5) nameSave = "g gamma -> b bbar";
+  if (idNew ==  6) nameSave = "g gamma -> t tbar";
+
+  // Generate massive phase space, except for u+d+s.
+  idMass = 0;
+  if (idNew > 3) idMass = idNew;
+
+  // Charge and colour factor.
+  ef2 = 1.;
+  if (idNew == 1)               ef2 = pow2(2./3.) + 2. * pow2(1./3.);
+  if (idNew == 4 || idNew == 6) ef2 = pow2(2./3.);
+  if (idNew == 5)               ef2 = pow2(1./3.);
+
+  // Secondary open width fraction.
+  openFracPair = particleDataPtr->resOpenFrac(idNew, -idNew);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Evaluate d(sigmaHat)/d(tHat) - no incoming flavour dependence.
+
+void Sigma2ggm2qqbar::sigmaKin() {
+
+  // Pick current flavour for u+d+s mix by e_q^2 weights.
+  if (idNew == 1) {
+    double rId = 6. * rndmPtr->flat();
+    idNow = 1;
+    if (rId > 1.)  idNow = 2;
+    if (rId > 5.)  idNow = 3;
+    s34Avg = pow2(particleDataPtr->m0(idNow));
+  } else {
+    idNow = idNew;
+    s34Avg = 0.5 * (s3 + s4) - 0.25 * pow2(s3 - s4) / sH;
+  }
+
+  // Modified Mandelstam variables for massive kinematics with m3 = m4.
+  double tHQ    = -0.5 * (sH - tH + uH);
+  double uHQ    = -0.5 * (sH + tH - uH);
+  double tHQ2   = tHQ * tHQ;
+  double uHQ2   = uHQ * uHQ;
+
+  // Calculate kinematics dependence.
+  if (sH < 4. * s34Avg) sigTU = 0.;
+  else sigTU = (tHQ * uHQ - s34Avg * sH)
+    * (tHQ2 + uHQ2 + 2. * s34Avg * sH) / (tHQ2 * uHQ2);
+
+  // Answer.
+  sigma = (M_PI/sH2) * alpS * alpEM * ef2 * sigTU * openFracPair;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Select identity, colour and anticolour.
+
+void Sigma2ggm2qqbar::setIdColAcol() {
+
+  // Construct outgoing flavours.
+  setId( id1, id2, idNow, -idNow);
+
+  // Colour flow topology. Swap if first is gamma.
+  setColAcol( 1, 2, 0, 0, 1, 0, 0, 2);
+  if (id1 == 22) setColAcol( 0, 0, 1, 2, 1, 0, 0, 2);
+
+}
+
+//==========================================================================
+
+// Sigma2qgm2qg class.
+// Cross section for q gamma -> q g.
+
+//--------------------------------------------------------------------------
+
+// Evaluate d(sigmaHat)/d(tHat), part independent of incoming flavour.
+
+void Sigma2qgm2qg::sigmaKin() {
+
+  // Calculate kinematics dependence.
+  sigUS  = (8./3.) * (sH2 + uH2) / (-sH * uH);
+
+  // Answer.
+  sigma0 =  (M_PI/sH2) * alpS * alpEM * sigUS;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Evaluate d(sigmaHat)/d(tHat), including incoming flavour dependence.
+
+double Sigma2qgm2qg::sigmaHat() {
+
+  // Incoming flavour gives charge factor.
+  int idNow    = (id2 == 22) ? id1 : id2;
+  double eNow  = couplingsPtr->ef( abs(idNow) );
+  return sigma0 * pow2(eNow);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Select identity, colour and anticolour.
+
+void Sigma2qgm2qg::setIdColAcol() {
+
+  // Construct outgoing flavours.
+  id3 = (id1 == 22) ? 21 : id1;
+  id4 = (id2 == 22) ? 21 : id2;
+  setId( id1, id2, id3, id4);
+
+  // Colour flow topology. Swap if first is gamma, or when antiquark.
+  setColAcol( 1, 0, 0, 0, 2, 0, 1, 2);
+  if (id1 == 22) swapCol1234();
+  if (id1 < 0 || id2 < 0) swapColAcol();
 
 }
 

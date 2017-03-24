@@ -1,5 +1,5 @@
 // PartonSystems.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -82,7 +82,10 @@ public:
   int getIndexOfOut(int iSys, int iPos) const;
 
   // List all current systems.
-  void list(ostream& os = cout) const;
+  void list() const;
+
+  // Remove the last system.
+  void popBack() { systems.pop_back(); }
 
 private:
 

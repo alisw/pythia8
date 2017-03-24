@@ -1,5 +1,5 @@
 // ColourReconnection.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -57,7 +57,7 @@ public:
   double p1p2;
 
   // Printing function, mainly intended for debugging.
-  void print();
+  void list();
 
 };
 
@@ -90,7 +90,7 @@ public:
   void setColDip(int i, ColourDipole * dip) {dips[i] = dip;}
   ColourDipole * dips[3];
   ColourDipole * dipsOrig[3];
-  void print();
+  void list();
 
 };
 
@@ -115,7 +115,7 @@ public:
   void list() {
     cout << "mode: " << mode << " " << "lambdaDiff: " << lambdaDiff << endl;
     for (int i = 0;i < int(dips.size()) && dips[i] != 0;++i) {
-      cout << "   "; dips[i]->print(); }
+      cout << "   "; dips[i]->list(); }
   }
 
   vector<ColourDipole*> dips;
@@ -143,9 +143,9 @@ public:
   int junKind;
 
   // Printing functions, intended for debugging.
-  void  list();
+  void listParticle();
   void listActiveDips();
-  void print();
+  void listDips();
 
 };
 

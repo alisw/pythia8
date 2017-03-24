@@ -160,19 +160,16 @@ print a warning line, on <code>cerr</code>, when inconsistent mother
 and daughter information is encountered. 
 </methodmore> 
  
-<method name="void Pythia8ToHepMC::set_free_parton_warnings(bool b = true)"> 
+<method name="void Pythia8ToHepMC::set_free_parton_exception(bool b = true)"> 
 </method> 
-<methodmore name="bool Pythia8ToHepMC::free_parton_warnings()"> 
-check and print a warning line when unhadronized gluons or quarks are 
+<methodmore name="bool Pythia8ToHepMC::free_parton_exception()"> 
+check and throw an exception when unhadronized gluons or quarks are 
 encountered in the event record. Does not apply when Pythia hadronization 
-is switched off. Default is to do this check. 
-</methodmore> 
- 
-<method name="void Pythia8ToHepMC::set_crash_on_problem(bool b = false)"> 
-</method> 
-<methodmore name="bool Pythia8ToHepMC::crash_on_problem()"> 
-if problems (like the free partons above) are encountered then the run 
-is interrupted by an <code>exit(1)</code> command. Default is not to crash. 
+is switched off. Default is to do this check. If an exception is thrown the 
+<code>PartonEndVertexException</code> class will return a warning message. 
+The calling code can choose action to take, also having access to the 
+location (<code>index()</code>) and species (<code>pdg_id()</code>) of a 
+bad parton. 
 </methodmore> 
  
 <method name="void Pythia8ToHepMC::set_convert_gluon_to_0(bool b = false)"> 
@@ -210,4 +207,4 @@ like in some Les Houches strategies, this weight is in units of pb.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

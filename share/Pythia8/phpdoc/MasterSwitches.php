@@ -221,16 +221,25 @@ Further options are found <?php $filepath = $_GET["filepath"];
 echo "<a href='Fragmentation.php?filepath=".$filepath."' target='page'>";?>here</a>. 
    
  
-<br/><br/><strong>HadronLevel:Decay</strong>  <input type="radio" name="13" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="13" value="off"><strong>Off</strong>
+<br/><br/><strong>HadronLevel:HadronScatter</strong>  <input type="radio" name="13" value="on"><strong>On</strong>
+<input type="radio" name="13" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Master switch for hadron rescattering, following the hadronization; 
+on/off = true/false. 
+Further options are found <?php $filepath = $_GET["filepath"];
+echo "<a href='HadronScattering.php?filepath=".$filepath."' target='page'>";?>here</a>. 
+   
+ 
+<br/><br/><strong>HadronLevel:Decay</strong>  <input type="radio" name="14" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="14" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 Master switch for decays; on/off = true/false. 
 Further options are found <?php $filepath = $_GET["filepath"];
 echo "<a href='ParticleDecays.php?filepath=".$filepath."' target='page'>";?>here</a>. 
    
  
-<br/><br/><strong>HadronLevel:BoseEinstein</strong>  <input type="radio" name="14" value="on"><strong>On</strong>
-<input type="radio" name="14" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>HadronLevel:BoseEinstein</strong>  <input type="radio" name="15" value="on"><strong>On</strong>
+<input type="radio" name="15" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Master switch for the simulation of Bose-Einstein effects; 
 on/off = true/false. Further options are found 
@@ -240,8 +249,8 @@ echo "<a href='BoseEinsteinEffects.php?filepath=".$filepath."' target='page'>";?
  
 <h3>Printing</h3> 
  
-<br/><br/><strong>Print:quiet</strong>  <input type="radio" name="15" value="on"><strong>On</strong>
-<input type="radio" name="15" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Print:quiet</strong>  <input type="radio" name="16" value="on"><strong>On</strong>
+<input type="radio" name="16" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Can be set on to avoid the printing during program execution, to the 
 largest extent possible. This flag acts by setting the relevant values 
@@ -340,19 +349,24 @@ if($_POST["12"] != "on")
 $data = "HadronLevel:Hadronize = ".$_POST["12"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["13"] != "on")
+if($_POST["13"] != "off")
 {
-$data = "HadronLevel:Decay = ".$_POST["13"]."\n";
+$data = "HadronLevel:HadronScatter = ".$_POST["13"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["14"] != "off")
+if($_POST["14"] != "on")
 {
-$data = "HadronLevel:BoseEinstein = ".$_POST["14"]."\n";
+$data = "HadronLevel:Decay = ".$_POST["14"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["15"] != "off")
 {
-$data = "Print:quiet = ".$_POST["15"]."\n";
+$data = "HadronLevel:BoseEinstein = ".$_POST["15"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["16"] != "off")
+{
+$data = "Print:quiet = ".$_POST["16"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -362,4 +376,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

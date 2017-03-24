@@ -320,6 +320,16 @@ for exclusive mode, <i>clFact</i> &ge; 0, or
 <i>clFact</i> &lt; 0. 
    
  
+<br/><br/><strong>JetMatching:doVeto</strong>  <input type="radio" name="16" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="16" value="off"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
+If turned off, then no jet matching veto will be applied internally in Pythia. 
+Instead, it is assumed that the (expert) user enforces all necessary vetoes 
+externally by some other means. Do not change the default value unless 
+you are an expert in MLM jet matching and want to use your own code 
+to perform the necessary vetoes. 
+   
+ 
 <p/> 
 A preliminary implementation of the FxFx prescription for combining multiple 
 NLO calculations [<a href="Bibliography.php" target="page">Fre12</a>] is available. We would like to stress that 
@@ -328,8 +338,8 @@ shares most parameters with the leading-order (MadGraph-style) MLM
 prescriptions and can be activated by using the three additional settings 
 below. 
  
-<br/><br/><strong>JetMatching:doFxFx</strong>  <input type="radio" name="16" value="on"><strong>On</strong>
-<input type="radio" name="16" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>JetMatching:doFxFx</strong>  <input type="radio" name="17" value="on"><strong>On</strong>
+<input type="radio" name="17" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If turned on, then FxFx merging with aMC@NLO inputs is performed. Note that 
 this requires event samples that are specifically generated for this task. 
@@ -344,7 +354,7 @@ Real-emission-type events, then <code>JetMatching:nPartonsNow = 2</code>
 applies. 
    
  
-<br/><br/><table><tr><td><strong>JetMatching:qCutME </td><td></td><td> <input type="text" name="17" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>JetMatching:qCutME </td><td></td><td> <input type="text" name="18" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>)</td></tr></table>
 The cut applied to regulate multi-jet matrix elements. Note that this cut can 
 differ from the matching scale. 
    
@@ -422,6 +432,7 @@ system (ignoring all MPI systems) is then analysed:
         infrared-safe jet algorithm. 
       </li> 
     </ul> 
+  </li> 
   <li> 
     If there is a light ME parton remaining which has not been matched 
     to a jet, then the event is vetoed. If all ME partons have been 
@@ -438,6 +449,7 @@ system (ignoring all MPI systems) is then analysed:
         than the softest matched jet. This is typically used when 
         there is no ME sample with higher jet multiplicity, so the parton 
         shower should be allowed to give extra jets. 
+      </li> 
     </ul> 
   </li> 
   <li> 
@@ -568,6 +580,68 @@ still the responsibility of the user to add together the results from
 runs with different jet multiplicities. In the simplest case, when 
 the hard process parameters are used to guide the merging procedure, 
 events will be matched in the exclusive mode. 
+ 
+<h4>Madgraph-style jet matching with no internal vetoes (assuming an external 
+veto implementation)</h4> 
+ 
+<p/> 
+This section describes the facilities that allow expert users to use their own 
+veto code to perform a Madgraph-style jet matching. This can e.g. be useful 
+to assess jet matching uncertainties without having to process the same input 
+events multiple times. 
+ 
+<p/> As a first step, any vetoes in the Pythia Jet Matching need to be 
+disabled by using <code>JetMatching:doVeto = off</code>. In this mode, 
+Pythia only stores all the information that is necessary to check (and apply) 
+the shower-kT or kT-MLM vetoes externally by hand. This information can be 
+accessed by calling the functions 
+ 
+<a name="method1"></a>
+<p/><strong>Event JetMatchingMadgraph::getWorkEventJet() &nbsp;</strong> <br/>
+Return the event after parton showering, without resonance decay products and 
+particles that should not be included in the jet matching, as necessary to 
+implement the vetoes in the kT-MLM scheme. 
+   
+ 
+<a name="method2"></a>
+<p/><strong>Event JetMatchingMadgraph::getProcessSubset() &nbsp;</strong> <br/>
+Return the event record containing the hard process, without resonance decay 
+products and particles that should not be included in the jet matching, as 
+necessary to implement the vetoes in the shower-kT and kT-MLM schemes. In the 
+former, this event is needed to find the lowest pT in the ME inputs. In 
+the latter, the event record is used to count the number of hard-process 
+partons, minimal hard process pT, and to perform the matching of hard-process 
+particles to shower jets. 
+   
+ 
+<a name="method3"></a>
+<p/><strong>bool  JetMatchingMadgraph::getExclusive() &nbsp;</strong> <br/>
+Return flag to identify if exclusive or inclusive vetoes should be applied 
+to this event. 
+   
+ 
+<a name="method4"></a>
+<p/><strong>double JetMatchingMadgraph::getPTfirst() &nbsp;</strong> <br/>
+Return the transverse momentum (w.r.t. the beam) of the first parton 
+shower emission, as needed for the shower-kT scheme. 
+   
+ 
+<a name="method5"></a>
+<p/><strong>vector &lt;double&gt; JetMatchingMadgraph::getDJR() &nbsp;</strong> <br/>
+Return a vector of jet clustering scales produced by running the jet algorithm 
+used for jet matching on the event record without resonance decay products and 
+particles that should not be included in the matching. In this vector, 
+clustering scales for combining few jets appear before scales from combining 
+many jets. This function is useful for the 
+kT-MLM scheme, or to have quick access to this information for histogramming 
+and sanity checks. 
+   
+ 
+<p/> 
+We do not currently supply example code for this very advanced functionality. 
+Interested expert users should feel free to contact the Pythia authors for 
+further explanations. 
+ 
  
 <p/> 
  
@@ -715,14 +789,19 @@ if($_POST["15"] != "1.0")
 $data = "JetMatching:clFact = ".$_POST["15"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["16"] != "off")
+if($_POST["16"] != "on")
 {
-$data = "JetMatching:doFxFx = ".$_POST["16"]."\n";
+$data = "JetMatching:doVeto = ".$_POST["16"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["17"] != "10.0")
+if($_POST["17"] != "off")
 {
-$data = "JetMatching:qCutME = ".$_POST["17"]."\n";
+$data = "JetMatching:doFxFx = ".$_POST["17"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["18"] != "10.0")
+{
+$data = "JetMatching:qCutME = ".$_POST["18"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -732,4 +811,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

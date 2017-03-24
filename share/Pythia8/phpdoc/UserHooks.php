@@ -239,6 +239,7 @@ or remove particles that should not be analyzed.
 The <code>workEvent</code> can also be sent on to a 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='EventAnalysis.php?filepath=".$filepath."' target='page'>";?>jet clustering algorithm</a>. 
+   
  
 <h3>(i) Interrupt between the main generation levels</h3> 
  
@@ -368,6 +369,7 @@ not be included.
 is very similar to <code>doVetoPartonLevel(...)</code> above, but 
 the veto can be done earlier, as described for 
 <code>canVetoPartonLevelEarly()</code>. 
+   
  
 <h3>(ii) Interrupt during the parton-level evolution, at a 
 <i>pT</i> scale</h3> 
@@ -417,6 +419,7 @@ emissions.
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoPT(...)</code> will 
 interrupt the downward evolution at <code>scaleVetoPT()</code>. 
+   
  
 <a name="method14"></a>
 <p/><strong>virtual double UserHooks::scaleVetoPT() &nbsp;</strong> <br/>
@@ -486,6 +489,7 @@ In the base class this method returns false. If you redefine it
 to return true then the method <code>doVetoStep(...)</code> will 
 interrupt the downward ISR and FSR evolution the first 
 <code>numberVetoStep()</code> times. 
+   
  
 <a name="method17"></a>
 <p/><strong>virtual int UserHooks::numberVetoStep() &nbsp;</strong> <br/>
@@ -537,6 +541,7 @@ In the base class this method returns false. If you redefine it
 to return true then the method <code>doVetoMPIStep(...)</code> will 
 interrupt the downward MPI evolution the first 
 <code>numberVetoMPIStep()</code> times. 
+   
  
 <a name="method20"></a>
 <p/><strong>virtual int UserHooks::numberVetoMPIStep() &nbsp;</strong> <br/>
@@ -603,6 +608,7 @@ In the base class this method returns false. If you redefine it
 to return true then the method <code>doVetoISREmission(...)</code> 
 will interrupt the initial-state shower immediately after each 
 emission and allow that emission to be vetoed. 
+   
  
 <a name="method23"></a>
 <p/><strong>virtual bool UserHooks::doVetoISREmission( int sizeOld, const Event& event, int iSys) &nbsp;</strong> <br/>
@@ -634,6 +640,7 @@ In the base class this method returns false. If you redefine it
 to return true then the method <code>doVetoFSREmission(...)</code> 
 will interrupt the final-state shower immediately after each 
 emission and allow that emission to be vetoed. 
+   
  
 <a name="method25"></a>
 <p/><strong>virtual bool UserHooks::doVetoFSREmission( int sizeOld, const Event& event, int iSys, bool inResonance = false) &nbsp;</strong> <br/>
@@ -668,6 +675,7 @@ In the base class this method returns false. If you redefine it
 to return true then the method <code>doVetoMPIEmission(...)</code> 
 will interrupt the MPI machinery immediately after each multiparton 
 interaction and allow it to be vetoed. 
+   
  
 <a name="method27"></a>
 <p/><strong>virtual bool UserHooks::doVetoMPIEmission( int sizeOld, const Event& event) &nbsp;</strong> <br/>
@@ -788,6 +796,7 @@ as set for multiparton interactions (i.e. same starting value at
 instead the one for hard subprocesses. The denominator 
 <i>alpha_s(Q^2_ren)</i> is always the value used for the "original", 
 unweighted cross section. 
+   
    
    
  
@@ -1006,8 +1015,10 @@ compensatory weight. The advantages of obtaining higher statistics
 for rare branchings thus is mitigated, and the usefulness has to be 
 evaluated case by case. 
  
-<p/>Currently only enhancements of ISR branchings have been included, 
-but FSR will come soon. It should also be noted that the threshold 
+<p/>Currently enhancements of ISR and FSR branchings have been 
+included. These enhancements are currently not phase-space dependent, 
+i.e. emissions will be enhanced uniformly in phase space. 
+It should also be noted that the threshold 
 region for gluon branchings to a pair of heavy quarks, specifically 
 <i>g &rarr; c + cbar</i> and <i>g &rarr; b + bbar</i>, are not 
 enhanced in this algorithm. Technically it is because this case is 
@@ -1022,7 +1033,9 @@ the strategy of section 4 in [<a href="Bibliography.php" target="page">Lon13a</a
 <p/><strong>virtual bool UserHooks::canEnhanceEmission() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
 return true then the method <code>enhanceFactor(...)</code> will be 
-used to rescale an initial-state splitting probability. 
+used to rescale an initial-state splitting probability. Both 
+<code>enhanceFactor(...)</code> and <code>vetoProbability(...)</code> 
+will have to be derived to allow for a branching enhancement. 
    
  
 <a name="method41"></a>
@@ -1032,20 +1045,61 @@ probability with identifier <code>name</code>. It should return 1.
 by default, i.e. for all input strings it does not propose to handle. 
 <br/><code>argument</code><strong> name </strong>  :  the name of the splitting that can enhanced. 
 Currently, the following input names are recognized by the PYTHIA 
-initial-state shower, and can thus be used to enhance the respective 
-splittings: 
+showers, and can thus be used to enhance the respective 
+splittings. 
+<p/> 
+ISR QCD branchings: 
 <br/><code>isr:G2GG</code> for <i>g &rarr; g + g</i>, 
 <br/><code>isr:G2QQ</code> for <i>g &rarr; q + qbar</i>, 
 <br/><code>isr:Q2QG</code> for <i>q &rarr; q + g</i>, 
-<br/><code>isr:Q2GQ</code> for <i>q &rarr; g + q</i>, 
+<br/><code>isr:Q2GQ</code> for <i>q &rarr; g + q</i>; 
+<p/> 
+ISR QED branchings: 
 <br/><code>isr:Q2QA</code> for <i>q &rarr; q + photon</i>, 
-<br/><code>isr:Q2AQ</code> for <i>q &rarr; photon + q</i>, and 
+<br/><code>isr:Q2AQ</code> for <i>q &rarr; photon + q</i>; 
+<p/> 
+ISR weak shower branchings: 
 <br/><code>isr:Q2QW</code> for <i>q &rarr; q + W</i> or 
-<i>q &rarr; q + Z</i>. 
+<i>q &rarr; q + Z</i>; 
+<p/> 
+FSR QCD branchings: 
+<br/><code>fsr:G2GG</code> for <i>g &rarr; g + g</i>, 
+<br/><code>fsr:G2QQ</code> for <i>g &rarr; q + qbar</i>, 
+<br/><code>fsr:Q2QG</code> for <i>q &rarr; q + g</i>; 
+<p/> 
+FSR QED branchings: 
+<br/><code>fsr:Q2QA</code> for <i>q &rarr; q + photon</i>, 
+<br/><code>fsr:A2QQ</code> for <i>photon &rarr; q + qbar</i>, 
+<br/><code>fsr:A2LL</code> for <i>photon &rarr; lepton + antilepton</i>, 
+<p/> 
+FSR weak shower branchings: 
+<br/><code>fsr:Q2QW</code> for <i>q &rarr; q + W</i> or 
+<i>q &rarr; q + Z</i>; 
+<p/> 
+FSR hidden valley branchings: 
+<br/><code>fsr:Q2QHV</code> for all hidden valley branchings. 
+<br/> 
 <br/>Charge-conjugated branchings are included whenever relevant. 
 Note that the order of the daughters matters: in the backwards 
 evolution machinery the step is from the first daughter to the mother 
 by the emission of the second daughter. 
+ 
+<p/> 
+Let's consider some examples. 
+The evolution step changing the partonic state from 
+<i>q qbar &rarr; e+ e-</i> to <i>g qbar &rarr; e+ e- qbar</i> 
+through an initial state splitting can be enhanced 
+by allowing a non-unity return value for the splitting with 
+<code>name</code> equalling <code>isr:G2QQ</code>. Another evolution 
+step changing <i>g qbar &rarr; e+ e- qbar</i> to 
+<i>g qbar &rarr; e+ e- qbar gluon</i> through FSR (ISR) can be 
+enhanced by allowing a non-unity return value for the splitting with 
+<code>name</code> equalling <code>fsr:Q2QG</code> 
+(<code>isr:Q2QG</code>). Yet another ISR branching converting 
+<i>g qbar &rarr; e+ e- qbar</i> to <i>q qbar &rarr; e+ e- qbar q</i> can 
+be enhanced by non-unity return value for the splitting with 
+<code>name</code> equalling <code>isr:Q2GQ</code> 
+(note the ordering in the branching name). 
    
    
  
@@ -1111,7 +1165,7 @@ and <code>doVetoFragmentation(...)</code>.
    
  
 <a name="method46"></a>
-<p/><strong>virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, StringPT* pTPtr, int idEnd, double m2Had, vector<int> iParton) &nbsp;</strong> <br/>
+<p/><strong>virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton) &nbsp;</strong> <br/>
 This is the method for changing fragmentation parameters. If all 
 parameters are changed as they should, the method should return true. 
 In case of errors the method returns false and a warning is printed. 
@@ -1164,4 +1218,4 @@ just before it is added to the event record.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

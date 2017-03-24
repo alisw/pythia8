@@ -1,5 +1,5 @@
 // main88.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -49,7 +49,7 @@ int main( int argc, char* argv[] ){
   HepMC::IO_GenEvent ascii_io(argv[3], std::ios::out);
   // Switch off warnings for parton-level events.
   ToHepMC.set_print_inconsistency(false);
-  ToHepMC.set_free_parton_warnings(false);
+  ToHepMC.set_free_parton_exception(false);
   // Do not store cross section information, as this will be done manually.
   ToHepMC.set_store_pdf(false);
   ToHepMC.set_store_proc(false);

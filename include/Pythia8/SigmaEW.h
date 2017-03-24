@@ -1,5 +1,5 @@
 // SigmaEW.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -1137,6 +1137,78 @@ private:
   int    idNew, codeSave, idMass, idNow;
   string nameSave;
   double ef4, s34Avg, sigTU, sigma, openFracPair;
+
+};
+
+//==========================================================================
+
+// A derived class for g gamma -> q qbar (q = u, d, s, c, b).
+
+class Sigma2ggm2qqbar : public Sigma2Process {
+
+public:
+
+  // Constructor.
+  Sigma2ggm2qqbar(int idIn, int codeIn) : idNew(idIn), codeSave(codeIn) {}
+
+  // Initialize process.
+  virtual void initProc();
+
+  // Calculate flavour-independent parts of cross section.
+  virtual void sigmaKin();
+
+  // Evaluate d(sigmaHat)/d(tHat).
+  virtual double sigmaHat() {return sigma;}
+
+  // Select flavour, colour and anticolour.
+  virtual void setIdColAcol();
+
+  // Info on the subprocess.
+  virtual string name()    const {return nameSave;}
+  virtual int    code()    const {return codeSave;}
+  virtual string inFlux()  const {return "ggm";}
+  virtual int    id3Mass() const {return idMass;}
+  virtual int    id4Mass() const {return idMass;}
+
+private:
+
+  // Member variables.
+  int    idNew, codeSave, idMass, idNow;
+  string nameSave;
+  double ef2, s34Avg, sigTU, sigma, openFracPair;
+
+};
+
+//==========================================================================
+
+// A derived class for q gamma -> q g (q = u, d, s, c, b).
+// Use massless approximation also for Q since no alternative.
+
+class Sigma2qgm2qg : public Sigma2Process {
+
+public:
+
+  // Constructor.
+  Sigma2qgm2qg() {}
+
+  // Calculate flavour-independent parts of cross section.
+  virtual void sigmaKin();
+
+  // Evaluate d(sigmaHat)/d(tHat).
+  virtual double sigmaHat();
+
+  // Select flavour, colour and anticolour.
+  virtual void setIdColAcol();
+
+  // Info on the subprocess.
+  virtual string name()   const {return "q gamma -> q g (udscb)";}
+  virtual int    code()   const {return 274;}
+  virtual string inFlux() const {return "qgm";}
+
+private:
+
+  // Values stored for later use.
+  double sigUS, sigma0;
 
 };
 

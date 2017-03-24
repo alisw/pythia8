@@ -29,7 +29,12 @@ tested by the <code>canDecay()</code> method of <code>Event</code>
 <p/> 
 (ii) The main switch for allowing this particle kind to decay must 
 be on; tested by the <code>mayDecay()</code> method of <code>Event</code> 
-(and <code>ParticleData</code>). 
+(and <code>ParticleData</code>). By default this is defined as true for 
+all particles with <ei>tau0</ei> below 1000 mm, and false for ones above, 
+see the <aloc href="ParticleDataScheme">Particle Data Scheme</aloc>. 
+This means that <ei>mu^+-</ei>, <ei>pi^+-</ei>, <ei>K^+-</ei>, 
+<ei>K^0_L</ei> and  <ei>n/nbar</ei> always remain stable unless decays 
+are explicity switched on, e.g. <code>211:mayDecay  = true</code>. 
  
 <p/> 
 (iii) Particles may be requested to have a nominal proper lifetime 
@@ -191,7 +196,7 @@ decay is performed and a warning is issued.
  
 <p/> 
 Both the internal and external determination have advantages and 
-disadvantages. For example, if an LHEF <ei Z^0 &rarr; tau^+ tau^-</ei> 
+disadvantages. For example, if an LHEF <ei>Z^0 &rarr; tau^+ tau^-</ei> 
 event is passed with SPINUP provided for both <ei>tau</ei>s but 
 without SPINUP for the <ei>Z^0</ei> then 
 with <code>TauDecays:externalTau</code> set to <code>0</code> the 
@@ -315,7 +320,7 @@ virtual W mass should contribute to the production of new particles,
 rather than the full meson mass. 
 </parm> 
  
-<parm name="ParticleDecays:multRefMass" default="0.7"min="0.2" max="2.0"> 
+<parm name="ParticleDecays:multRefMass" default="0.7" min="0.2" max="2.0"> 
 The above <ei>multRefMass</ei> parameter. 
 </parm> 
  
@@ -332,7 +337,7 @@ the probability that this original assignment is not respected, and
 default corresponds to no memory of this original colour topology. 
 </parm> 
  
-<flag name="ParticleDecays:FSRinDecays" default="true"> 
+<flag name="ParticleDecays:FSRinDecays" default="on"> 
 When a particle decays to <ei>q qbar</ei>, <ei>g g</ei>, <ei>g g g</ei> 
 or <ei>gamma g g</ei>, with <code>meMode > 90</code>, allow or not a 
 shower to develop from it, before the partonic system is hadronized. 
@@ -417,4 +422,4 @@ multiplicity than the simple string assumed for 82, see the
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

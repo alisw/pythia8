@@ -101,32 +101,21 @@ above about the (ir)relevance of entry 0.
    
  
 <a name="method4"></a>
-<p/><strong>void Event::list(int precision = 3) &nbsp;</strong> <br/>
-   
-<strong>void Event::list(ostream& os, int precision = 3) &nbsp;</strong> <br/>
-   
-<strong>void Event::list(bool showScaleAndVertex, bool showMothersAndDaughters = false, int precision = 3) &nbsp;</strong> <br/>
-   
-<strong>void Event::list(bool showScaleAndVertex, bool showMothersAndDaughters, ostream& os, int precision = 3) &nbsp;</strong> <br/>
+<p/><strong>void Event::list(bool showScaleAndVertex = false, bool showMothersAndDaughters = false, int precision = 3) &nbsp;</strong> <br/>
 Provide a listing of the whole event, i.e. of the 
-<code>vector&lt;Particle&gt;</code>. The methods with fewer arguments 
-call the final one with the respective default values, and are 
-non-inlined so they can be used in a debugger. The basic identity 
+<code>vector&lt;Particle&gt;</code>. The basic identity 
 code, status, mother, daughter, colour, four-momentum and mass data 
 are always given, but the methods can also be called with a few 
 optional arguments for further information: 
-<br/><code>argument</code><strong> showScaleAndVertex </strong> (<code>default = <strong>false</strong></code>) :  optionally give a 
+<br/><code>argument</code><strong> showScaleAndVertex </strong> (<code>default = <strong>off</strong></code>) :  optionally give a 
 second line for each particle, with the production scale (in GeV), 
 the particle polarization (dimensionless), the production vertex 
 (in mm or mm/c) and the invariant lifetime (also in mm/c). 
    
-<br/><code>argument</code><strong> showMothersAndDaughters </strong> (<code>default = <strong>false</strong></code>) :  
+<br/><code>argument</code><strong> showMothersAndDaughters </strong> (<code>default = <strong>off</strong></code>) :  
 gives a list of all daughters and mothers of a particle, as defined by 
 the <code>motherList(i)</code> and <code>daughterList(i)</code> methods 
 described below. It is mainly intended for debug purposes. 
-   
-<br/><code>argument</code><strong> os </strong> (<code>default = <strong>cout</strong></code>) :  a reference to the <code>ostream</code> 
-object to which the event listing will be directed. 
    
 <br/><code>argument</code><strong> precision </strong> (<code>default = <strong>3</strong></code>) :  the number of digits to the right 
 of the decimal point shown for momenta, energies andf masses. Can be set 
@@ -134,7 +123,6 @@ above 3, but reducing it below 3 will have no effect. This option is
 intended for expert users, e.g. for debugging purposes, and so no effort 
 has been made to stretch header and footer to match. 
    
- 
    
  
 <h3>Further output methods</h3> 
@@ -263,11 +251,15 @@ untouched, and so may be internally inconsistent.
    
  
 <a name="method17"></a>
-<p/><strong>void Event::remove(int iFirst, int iLast) &nbsp;</strong> <br/>
+<p/><strong>void Event::remove(int iFirst, int iLast, bool shiftHistory = true) &nbsp;</strong> <br/>
 removes particles in the range between indices <code>iFirst</code> 
-and <code>iLast</code>, including the endpoints. History (and other) 
-information of remaning entries is untouched, and so may be internally 
-inconsistent. 
+and <code>iLast</code>, including the endpoints. By default all mother 
+and daughter indices above the removed range are shifted down by the 
+number of removed entries, while indices in the removed range are put 
+zero. Optionally these shifts can be omitted. Other information remains 
+unchanged, which may lead to inconsistencies. If the decay products of 
+a particle are removed, e.g., the mother particle status should be set 
+positive, cf. <code>Particle::undoDecay()</code>. 
    
  
 <a name="method18"></a>
@@ -466,4 +458,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SigmaProcess.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -140,7 +140,9 @@ public:
     return ( convert2mb() ? CONVERT2MB * sigmaHat() : sigmaHat() ); }
 
   // Convolute above with parton flux and K factor. Sum over open channels.
-  virtual double sigmaPDF();
+  // Possibly different PDF in initialization phase or no sampling for x_gamma
+  // (photons in leptons).
+  virtual double sigmaPDF(bool initPS = false, bool samexGamma = false);
 
   // Select incoming parton channel and extract parton densities (resolved).
   void pickInState(int id1in = 0, int id2in = 0);
@@ -414,7 +416,7 @@ public:
   virtual double sigmaHat() {return 0.;}
 
   // Since no PDF's there is no difference from above.
-  virtual double sigmaPDF() {return sigmaHat();}
+  virtual double sigmaPDF(bool, bool ) {return sigmaHat();}
 
   // Answer for these processes already in mb, so do not convert.
   virtual bool convert2mb() const {return false;}
@@ -594,7 +596,7 @@ public:
   virtual bool   initFlux() {return true;}
 
   // Dummy function: action is put in PhaseSpaceLHA.
-  virtual double sigmaPDF() {return 1.;}
+  virtual double sigmaPDF(bool, bool ) {return 1.;}
 
   // Evaluate weight for decay angular configuration, where relevant.
   virtual double weightDecay( Event& process, int iResBeg, int iResEnd);

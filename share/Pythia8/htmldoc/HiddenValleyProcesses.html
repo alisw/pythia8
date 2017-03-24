@@ -122,10 +122,10 @@ assigned codes 4900101 - 4900108. This gives a total of 64 possible
 lowest-lying mesons. We also include a duplication of that, into two 
 multiplets, corresponding to the pseudoscalar and vector mesons of 
 QCD. For now, again, these are assumed to have the same mass and 
-other properties. Only the flavour-diagonal ones can decay back into 
-the Standard-Model sector, however, while the rest remains in the 
-hidden sector. It is therefore only necessary to distinguish a few 
-states: 
+other properties. By default, only the flavour-diagonal ones can 
+decay back into the Standard-Model sector, however, while the rest 
+remains in the hidden sector. It is therefore only necessary to 
+distinguish a few states: 
 <br/><code>pivDiag</code>, identity 4900111, a flavour-diagonal 
 HV-meson with spin 0 that can decay back into the Standard-Model sector; 
 <br/><code>rhovDiag</code>, identity 4900113, a flavour-diagonal 
@@ -144,6 +144,10 @@ antiflavour;
 to handle cases where it is kinematically impossible to produce an 
 HV-meson on shell, and it therefore is assumed to de-excite by the 
 emission of invisible <i>gv-gv </i> v-glueball bound states. 
+ 
+<p/> 
+By changing ParticleData, it is possible to allow decays even for the 
+off-diagonal Up/Dn mesons. 
  
 <p/> 
 Only the spin of the HV-gluon or HV-photon is determined unambiguously 
@@ -407,10 +411,23 @@ functions or vertices; these are even less important.)
 in the visible sector by recoil effect, but this is a minor 
 effect relative to the primary emission of the <i>gv</i>. 
  
+<p/>While the default model has a fixed Hidden Valley coupling 
+<i> alpha_HV</i>, some further work [<a href="Bibliography.html" target="page">Scw15</a>] has considered 
+the impact of a running coupling. This is included as an option. 
+ 
 <p/><code>flag&nbsp; </code><strong> HiddenValley:FSR &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 switch on final-state shower of <i>gv</i> or <i>gammav</i> 
 in a HV production process. 
+   
+ 
+<p/><code>mode&nbsp; </code><strong> HiddenValley:alphaOrder &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
+Order at which <i>alpha_HV</i> runs, 
+<br/><code>option </code><strong> 0</strong> : zeroth order, i.e. <i>alpha_HV</i> is kept 
+fixed at the value <i>alphaFSR</i>.   
+<br/><code>option </code><strong> 1</strong> : first order,   with the beta function based 
+on <i>Ngauge</i> and <i>Nflav</i>. 
    
  
 <p/><code>parm&nbsp; </code><strong> HiddenValley:alphaFSR &nbsp;</strong> 
@@ -422,10 +439,16 @@ multiplied by <i>C_F = (N^2 - 1) / (2 * N)</i> for an
 <b>SU(N)</b> group and for <i>gv &rarr; gv + gv</i> by <i>N</i>. 
    
  
-<p/><code>parm&nbsp; </code><strong> HiddenValley:pTminFSR &nbsp;</strong> 
+<p/><code>parm&nbsp; </code><strong> HiddenValley:Lambda &nbsp;</strong> 
  (<code>default = <strong>0.4</strong></code>; <code>minimum = 0.1</code>)<br/>
-lowest allowed <i>pT</i> of emission. Chosen with same default 
-as in normal QCD showers. 
+the parameter used for the case of a running (first order) <i>alpha_HV</i>. 
+   
+ 
+<p/><code>parm&nbsp; </code><strong> HiddenValley:pTminFSR &nbsp;</strong> 
+ (<code>default = <strong>0.44</strong></code>; <code>minimum = 0.1</code>)<br/>
+lowest allowed <i>pT</i> of emission. Should be greater than 
+or equal to 1.1 times <i>Lambda</i>, or it will be reset 
+automatically. 
    
  
 <h3>Hadronization</h3> 
@@ -574,4 +597,4 @@ See the normal <a href="Fragmentation.html" target="page">fragmentation
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

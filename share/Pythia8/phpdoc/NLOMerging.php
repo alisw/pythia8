@@ -737,8 +737,8 @@ necessary to enforce two integrations on tree-level events (the
 achieved by adding the following code at the end of <code>main88.cc</code>. 
 <p/> 
 <pre> 
-  cout << endl << endl << endl; 
-  cout << "Shower subtractive events" << endl; 
+  cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl; 
+  cout &lt;&lt; "Shower subtractive events" &lt;&lt; endl; 
  
   // Switch on processing of counter-events. 
   pythia.settings.flag("Merging:doUNLOPSTree",false); 
@@ -755,12 +755,12 @@ achieved by adding the following code at the end of <code>main88.cc</code>.
  
     // From njet, choose LHE file 
     stringstream in; 
-    in   << "_" << njetcounterCT << ".lhe"; 
+    in   &lt;&lt; "_" &lt;&lt; njetcounterCT &lt;&lt; ".lhe"; 
     string LHEfile = iPathSubt + in.str(); 
  
-    cout << endl << endl << endl 
-         << "Start subtractive treatment for " << njetcounterCT << " jets\n" 
-         << "Recluster at least 2 times" << endl; 
+    cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl 
+         &lt;&lt; "Start subtractive treatment for " &lt;&lt; njetcounterCT &lt;&lt; " jets\n" 
+         &lt;&lt; "Recluster at least 2 times" &lt;&lt; endl; 
  
     pythia.readString("Beams:frameType = 4"); 
     pythia.settings.word("Beams:LHEF", LHEfile); 
@@ -770,7 +770,7 @@ achieved by adding the following code at the end of <code>main88.cc</code>.
     int iNow = sizeLO-1-njetcounterCT; 
  
     // Start generation loop 
-    for( int iEvent=0; iEvent < nEvent; ++iEvent ){ 
+    for( int iEvent=0; iEvent &lt; nEvent; ++iEvent ){ 
  
       // Generate next event 
       if( !pythia.next() ) { 
@@ -801,7 +801,7 @@ achieved by adding the following code at the end of <code>main88.cc</code>.
       xsec.set_cross_section( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 ); 
       hepmcevt->set_cross_section( xsec ); 
       // Write the HepMC event to file. Done with it. 
-      ascii_io << hepmcevt; 
+      ascii_io &lt;&lt; hepmcevt; 
       delete hepmcevt; 
  
     } // end loop over events to generate 
@@ -955,4 +955,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

@@ -267,60 +267,70 @@ the <i>R</i> distance measure, in <i>(y, phi)</i> or
 <i>R^2 = (y_1 - y_2)^2 + (phi_1 - phi_2)^2</i> and equivalent. 
    
  
+<a name="method28"></a>
+<p/><strong>friend bool pShift( Vec4& p1Move, Vec4& p2Move, double m1New, double m2New) &nbsp;</strong> <br/>
+transfer four-momentum between the two four-vectors so that they get 
+the masses <code>m1New</code> and <code>m2New</code>, respectively. 
+Note that <code>p1Move</code> and <code>p2Move</code> act both as 
+input and output arguments. The method will return false if the invariant 
+mass of the four-vectors is too small to accommodate the new masses, 
+and then the four-vectors are not changed. 
+   
+ 
 <h3>Operations with four-vectors</h3> 
  
 Of course one should be able to add, subtract and scale four-vectors, 
 and more: 
  
-<a name="method28"></a>
+<a name="method29"></a>
 <p/><strong>Vec4 Vec4::operator-() &nbsp;</strong> <br/>
 return a vector with flipped sign for all components, while leaving 
 the original vector unchanged. 
    
  
-<a name="method29"></a>
+<a name="method30"></a>
 <p/><strong>Vec4& Vec4::operator+=(const Vec4& v) &nbsp;</strong> <br/>
 add a four-vector to an existing one. 
    
  
-<a name="method30"></a>
+<a name="method31"></a>
 <p/><strong>Vec4& Vec4::operator-=(const Vec4& v) &nbsp;</strong> <br/>
 subtract a four-vector from an existing one. 
    
  
-<a name="method31"></a>
+<a name="method32"></a>
 <p/><strong>Vec4& Vec4::operator*=(double f) &nbsp;</strong> <br/>
 multiply all four-vector components by a real number. 
    
  
-<a name="method32"></a>
+<a name="method33"></a>
 <p/><strong>Vec4& Vec4::operator/=(double f) &nbsp;</strong> <br/>
 divide all four-vector components by a real number. 
    
  
-<a name="method33"></a>
+<a name="method34"></a>
 <p/><strong>friend Vec4 operator+(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 add two four-vectors. 
    
  
-<a name="method34"></a>
+<a name="method35"></a>
 <p/><strong>friend Vec4 operator-(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 subtract two four-vectors. 
    
  
-<a name="method35"></a>
+<a name="method36"></a>
 <p/><strong>friend Vec4 operator*(double f, const Vec4& v) &nbsp;</strong> <br/>
    
 <strong>friend Vec4 operator*(const Vec4& v, double f) &nbsp;</strong> <br/>
 multiply a four-vector by a real number. 
    
  
-<a name="method36"></a>
+<a name="method37"></a>
 <p/><strong>friend Vec4 operator/(const Vec4& v, double f) &nbsp;</strong> <br/>
 divide a four-vector by a real number. 
    
  
-<a name="method37"></a>
+<a name="method38"></a>
 <p/><strong>friend double operator*(const Vec4& v1, const Vec4 v2) &nbsp;</strong> <br/>
 four-vector product. 
    
@@ -328,24 +338,24 @@ four-vector product.
 <p/> 
 There are also a few related operations that are normal member methods: 
  
-<a name="method38"></a>
+<a name="method39"></a>
 <p/><strong>void Vec4::rescale3(double f) &nbsp;</strong> <br/>
 multiply the three-vector components by <i>f</i>, but keep the 
 fourth component unchanged. 
    
  
-<a name="method39"></a>
+<a name="method40"></a>
 <p/><strong>void Vec4::rescale4(double f) &nbsp;</strong> <br/>
 multiply all four-vector components by <i>f</i>. 
    
  
-<a name="method40"></a>
+<a name="method41"></a>
 <p/><strong>void Vec4::flip3() &nbsp;</strong> <br/>
 flip the sign of the three-vector components, but keep the 
 fourth component unchanged. 
    
  
-<a name="method41"></a>
+<a name="method42"></a>
 <p/><strong>void Vec4::flip4() &nbsp;</strong> <br/>
 flip the sign of all four-vector components. 
    
@@ -357,62 +367,62 @@ four-vector is affected the operation may be performed directly on it.
 However, in case many particles are affected, the helper class 
 <code>RotBstMatrix</code> can be used to speed up operations. 
  
-<a name="method42"></a>
+<a name="method43"></a>
 <p/><strong>void Vec4::rot(double theta, double phi) &nbsp;</strong> <br/>
 rotate the three-momentum with the polar angle <i>theta</i> 
 and the azimuthal angle <i>phi</i>. 
    
  
-<a name="method43"></a>
+<a name="method44"></a>
 <p/><strong>void Vec4::rotaxis(double phi, double nx, double ny, double nz) &nbsp;</strong> <br/>
 rotate the three-momentum with the azimuthal angle <i>phi</i> 
 around the direction defined by the <i>(n_x, n_y, n_z)</i> 
 three-vector. 
    
  
-<a name="method44"></a>
+<a name="method45"></a>
 <p/><strong>void Vec4::rotaxis(double phi, Vec4& n) &nbsp;</strong> <br/>
 rotate the three-momentum with the azimuthal angle <i>phi</i> 
 around the direction defined by the three-vector part of <i>n</i>. 
    
  
-<a name="method45"></a>
+<a name="method46"></a>
 <p/><strong>void Vec4::bst(double betaX, double betaY, double betaZ) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (beta_x, beta_y, beta_z)</i>. 
    
  
-<a name="method46"></a>
+<a name="method47"></a>
 <p/><strong>void Vec4::bst(double betaX, double betaY, double betaZ, double gamma) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (beta_x, beta_y, beta_z)</i>, 
 where the <i>gamma = 1/sqrt(1 - beta^2)</i> is also input to allow 
 better precision when <i>beta</i> is close to unity. 
    
  
-<a name="method47"></a>
+<a name="method48"></a>
 <p/><strong>void Vec4::bst(const Vec4& p) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (p_x/E, p_y/E, p_z/E)</i>. 
    
  
-<a name="method48"></a>
+<a name="method49"></a>
 <p/><strong>void Vec4::bst(const Vec4& p, double m) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (p_x/E, p_y/E, p_z/E)</i>, 
 where the <i>gamma = E/m</i> is also calculated from input to allow 
 better precision when <i>beta</i> is close to unity. 
    
  
-<a name="method49"></a>
+<a name="method50"></a>
 <p/><strong>void Vec4::bstback(const Vec4& p) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (-p_x/E, -p_y/E, -p_z/E)</i>. 
    
  
-<a name="method50"></a>
+<a name="method51"></a>
 <p/><strong>void Vec4::bstback(const Vec4& p, double m) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (-p_x/E, -p_y/E, -p_z/E)</i>, 
 where the <i>gamma = E/m</i> is also calculated from input to allow 
 better precision when <i>beta</i> is close to unity. 
    
  
-<a name="method51"></a>
+<a name="method52"></a>
 <p/><strong>void Vec4::rotbst(const RotBstMatrix& M) &nbsp;</strong> <br/>
 perform a combined rotation and boost; see below for a description 
 of the <code>RotBstMatrix</code>. 
@@ -428,83 +438,89 @@ such that the matrix encodes the full sequence of operations.
 The order in which you do these calls must agree with the imagined 
 order in which the rotations/boosts should be applied to a 
 four-momentum, since in general the operations do not commute. 
+<br/>(Mathematically you would e.g. define <i>M = M_3 M_2 M_1</i> 
+in that <i>M p = M_3( M_2( M_1 p) ) )</i>. That is, operations 
+on the four-vector <i>p</i> are carried out in the order first 
+<i>M_1</i>, then <i>M_2</i> and finally <i>M_3</i>. Thus 
+<i>M_1, M_2, M_3</i> is also the order in which you should input 
+rotations and boosts to <i>M</i>.) 
  
-<a name="method52"></a>
+<a name="method53"></a>
 <p/><strong>RotBstMatrix::RotBstMatrix() &nbsp;</strong> <br/>
 creates a diagonal unit matrix, i.e. one that leaves a four-vector 
 unchanged. 
    
  
-<a name="method53"></a>
+<a name="method54"></a>
 <p/><strong>RotBstMatrix::RotBstMatrix(const RotBstMatrix& Min) &nbsp;</strong> <br/>
 creates a copy of the input matrix. 
    
  
-<a name="method54"></a>
+<a name="method55"></a>
 <p/><strong>RotBstMatrix& RotBstMatrix::operator=(const RotBstMatrix4& Min) &nbsp;</strong> <br/>
 copies the input matrix. 
    
  
-<a name="method55"></a>
+<a name="method56"></a>
 <p/><strong>void RotBstMatrix::rot(double theta = 0., double phi = 0.) &nbsp;</strong> <br/>
 rotate by this polar and azimuthal angle. 
    
  
-<a name="method56"></a>
+<a name="method57"></a>
 <p/><strong>void RotBstMatrix::rot(const Vec4& p) &nbsp;</strong> <br/>
 rotate so that a vector originally along the <i>+z</i> axis becomes 
 parallel with <i>p</i>. More specifically, rotate by <i>-phi</i>, 
 <i>theta</i> and <i>phi</i>, with angles defined by <i>p</i>. 
    
  
-<a name="method57"></a>
+<a name="method58"></a>
 <p/><strong>void RotBstMatrix::bst(double betaX = 0., double betaY = 0., double betaZ = 0.) &nbsp;</strong> <br/>
 boost by this <i>beta</i> vector. 
    
  
-<a name="method58"></a>
+<a name="method59"></a>
 <p/><strong>void RotBstMatrix::bst(const Vec4&) &nbsp;</strong> <br/>
    
 <strong>void RotBstMatrix::bstback(const Vec4&) &nbsp;</strong> <br/>
 boost with a <i>beta = p/E</i> or <i>beta = -p/E</i>, respectively. 
    
  
-<a name="method59"></a>
+<a name="method60"></a>
 <p/><strong>void RotBstMatrix::bst(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 boost so that <i>p_1</i> is transformed to <i>p_2</i>. It is assumed 
 that the two vectors obey <i>p_1^2 = p_2^2</i>. 
    
  
-<a name="method60"></a>
+<a name="method61"></a>
 <p/><strong>void RotBstMatrix::toCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 boost and rotate to the rest frame of <i>p_1</i> and <i>p_2</i>, 
 with <i>p_1</i> along the <i>+z</i> axis. 
    
  
-<a name="method61"></a>
+<a name="method62"></a>
 <p/><strong>void RotBstMatrix::fromCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 rotate and boost from the rest frame of <i>p_1</i> and <i>p_2</i>, 
 with <i>p_1</i> along the <i>+z</i> axis, to the actual frame of 
 <i>p_1</i> and <i>p_2</i>, i.e. the inverse of the above. 
    
  
-<a name="method62"></a>
+<a name="method63"></a>
 <p/><strong>void RotBstMatrix::rotbst(const RotBstMatrix& Min); &nbsp;</strong> <br/>
 combine the current matrix with another one. 
    
  
-<a name="method63"></a>
+<a name="method64"></a>
 <p/><strong>void RotBstMatrix::invert() &nbsp;</strong> <br/>
 invert the matrix, which corresponds to an opposite sequence and sign 
 of rotations and boosts. 
    
  
-<a name="method64"></a>
+<a name="method65"></a>
 <p/><strong>void RotBstMatrix::reset() &nbsp;</strong> <br/>
 reset to no rotation/boost; i.e. the default at creation. 
    
  
-<a name="method65"></a>
+<a name="method66"></a>
 <p/><strong>double RotBstMatrix::deviation() &nbsp;</strong> <br/>
 crude estimate how much a matrix deviates from the unit matrix: 
 the sum of the absolute values of all non-diagonal matrix elements 
@@ -512,7 +528,7 @@ plus the sum of the absolute deviation of the diagonal matrix
 elements from unity. 
    
  
-<a name="method66"></a>
+<a name="method67"></a>
 <p/><strong>friend ostream& operator&lt;&lt;(ostream&, const RotBstMatrix& M) &nbsp;</strong> <br/>
 writes out the values of the sixteen components of a 
 <code>RotBstMatrix</code>, on four consecutive lines and 
@@ -522,4 +538,4 @@ ended with a newline.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SigmaTotal.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -95,7 +95,7 @@ private:
   bool   isCalc, setTotal, zeroAXB, doDampen, setElastic;
   double sigAXB2TeV, sigTotOwn, sigElOwn, sigXBOwn, sigAXOwn, sigXXOwn,
          sigAXBOwn, maxXBOwn, maxAXOwn, maxXXOwn, maxAXBOwn, bSlope, rho,
-         lambda, tAbsMin, alphaEM0, sigmaPomP, mPomP, pPomP;
+         lambda, tAbsMin, alphaEM0, sigmaPomP, mPomP, pPomP, fracSigmaNDgamma;
 
   // Parameters of MBR model.
   double MBReps, MBRalpha, MBRbeta0, MBRsigma0, m2min, dyminSDflux,

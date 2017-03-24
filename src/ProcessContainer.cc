@@ -1,5 +1,5 @@
 // ProcessContainer.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,6 +19,7 @@
 #include "Pythia8/SigmaNewGaugeBosons.h"
 #include "Pythia8/SigmaQCD.h"
 #include "Pythia8/SigmaSUSY.h"
+#include "Pythia8/SigmaDM.h"
 
 namespace Pythia8 {
 
@@ -45,9 +46,10 @@ const int ProcessContainer::N3SAMPLE  = 1000;
 
 bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   Settings& settings, ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  BeamParticle* beamAPtr, BeamParticle* beamBPtr, Couplings* couplingsPtr,
+  BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, Couplings* couplingsPtr,
   SigmaTotal* sigmaTotPtr, ResonanceDecays* resDecaysPtrIn,
-  SLHAinterface* slhaInterfacePtr, UserHooks* userHooksPtrIn) {
+  SLHAinterface* slhaInterfacePtr, UserHooks* userHooksPtrIn,
+  GammaKinematics* gammaKinPtrIn) {
 
   // Extract info about current process from SigmaProcess object.
   isLHA       = sigmaProcessPtr->isLHA();
@@ -62,15 +64,35 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   lhaStratAbs = abs(lhaStrat);
   allowNegSig = sigmaProcessPtr->allowNegativeSigma();
 
+  // Switch to ensure that the scales set in a LH input event are
+  // respected, even in resonance showers.
   useStrictLHEFscales = settings.flag("Beams:strictLHEFscale");
+
+  // Maximal number of events for more in-depth control of
+  // how many events are selected/tried/accepted.
+  nTryRequested = settings.mode("Main:numberOfTriedEvents");
+  nSelRequested = settings.mode("Main:numberOfSelectedEvents");
+  nAccRequested = settings.mode("Main:numberOfAcceptedEvents");
 
   // Flag for maximum violation handling.
   increaseMaximum = settings.flag("PhaseSpace:increaseMaximum");
 
+  // Store whether beam particle has a resolved photons.
+  beamAPtr         = beamAPtrIn;
+  beamBPtr         = beamBPtrIn;
+  gammaKinPtr      = gammaKinPtrIn;
+  beamHasGamma     = settings.flag("PDF:lepton2gamma");
+  beamAhasResGamma = beamAPtr->hasResGamma();
+  beamBhasResGamma = beamBPtr->hasResGamma();
+  beamHasResGamma  = beamAhasResGamma || beamBhasResGamma;
+
   // Pick and create phase space generator. Send pointers where required.
   if (phaseSpacePtr != 0) ;
   else if (isLHA)       phaseSpacePtr = new PhaseSpaceLHA();
-  else if (isNonDiff)   phaseSpacePtr = new PhaseSpace2to2nondiffractive();
+  else if (isNonDiff && !beamHasGamma)
+                        phaseSpacePtr = new PhaseSpace2to2nondiffractive();
+  else if (isNonDiff && beamAhasResGamma && beamBhasResGamma)
+    phaseSpacePtr = new PhaseSpace2to2nondiffractiveGamma();
   else if (!isResolved && !isDiffA  && !isDiffB  && !isDiffC )
                         phaseSpacePtr = new PhaseSpace2to2elastic();
   else if (!isResolved && !isDiffA  && !isDiffB && isDiffC)
@@ -100,6 +122,10 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
     particleDataPtr, rndmPtr, beamAPtr,  beamBPtr, couplingsPtr, sigmaTotPtr,
     userHooksPtr);
 
+  // Send the pointer to gammaKinematics for non-diffractive processes.
+  if ( beamAhasResGamma && beamBhasResGamma && isNonDiffractive() )
+    phaseSpacePtr->setGammaKinPtr( gammaKinPtr);
+
   // Reset cross section statistics.
   nTry      = 0;
   nSel      = 0;
@@ -113,6 +139,10 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   sigmaFin  = 0.;
   deltaFin  = 0.;
   wtAccSum  = 0.;
+
+  // Reset temporary cross section summand.
+  sigmaTemp   = 0.;
+  sigma2Temp  = 0.;
 
   // Initialize process and allowed incoming partons.
   sigmaProcessPtr->initProc();
@@ -143,12 +173,13 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   // Allow Pythia to overwrite incoming beams or parts of Les Houches input.
   idRenameBeams = settings.mode("LesHouches:idRenameBeams");
   setLifetime   = settings.mode("LesHouches:setLifetime");
+  setQuarkMass  = settings.mode("LesHouches:setQuarkMass");
   setLeptonMass = settings.mode("LesHouches:setLeptonMass");
   mRecalculate  = settings.parm("LesHouches:mRecalculate");
   matchInOut    = settings.flag("LesHouches:matchInOut");
-  idLep[0] = 11; mLep[0] = particleDataPtr->m0(11);
-  idLep[1] = 13; mLep[1] = particleDataPtr->m0(13);
-  idLep[2] = 15; mLep[2] = particleDataPtr->m0(15);
+  for (int i = 0; i < 6; ++i) idNewM[i] = i;
+  for (int i = 6; i < 9; ++i) idNewM[i] = 2 * i - 1;
+  for (int i = 1; i < 9; ++i) mNewM[i]  = particleDataPtr->m0(idNewM[i]);
 
   // Done.
   return physical;
@@ -169,10 +200,37 @@ bool ProcessContainer::trialProcess() {
     bool repeatSame = (iTry > 0);
     bool physical = phaseSpacePtr->trialKin(true, repeatSame);
 
+    // For acceptable kinematics sample also kT for photons from leptons.
+    if ( physical && !isNonDiffractive() && beamHasGamma ) {
+
+      // Save the x_gamma values for unresolved photons.
+      if ( !beamAhasResGamma ) beamAPtr->xGamma( x1());
+      if ( !beamBhasResGamma ) beamBPtr->xGamma( x2());
+
+      // Sample the kinematics of virtual photons.
+      if ( !gammaKinPtr->sampleKTgamma() ) physical = false;
+
+      // Processes with direct photons rescale momenta and cross section.
+      if ( physical && !(beamAhasResGamma && beamBhasResGamma) ) {
+        double sHatNew = gammaKinPtr->calcNewSHat( phaseSpacePtr->sHat() );
+        phaseSpacePtr->rescaleSigma( sHatNew);
+        phaseSpacePtr->rescaleMomenta( sHatNew);
+      }
+    }
+
+    // Flag to check if more events should be generated.
+    bool doTryNext = true;
+
     // Note if at end of Les Houches file, else do statistics.
     if (isLHA && !physical) infoPtr->setEndOfFile(true);
     else {
-      ++nTry;
+
+      // Check if the number of selected events should be limited.
+      if (nSelRequested > 0) doTryNext = (nTry < nSelRequested);
+
+      // Only add to counter if event should count towards cross section.
+      if (doTryNext) ++nTry;
+
       // Statistics for separate Les Houches process codes. Insert new codes.
       if (isLHA) {
         int codeLHANow = lhaUpPtr->idProcess();
@@ -180,7 +238,8 @@ bool ProcessContainer::trialProcess() {
         for (int i = 0; i < int(codeLHA.size()); ++i)
           if (codeLHANow == codeLHA[i]) iFill = i;
         if (iFill >= 0) {
-          ++nTryLHA[iFill];
+          // Only add to counter if event should count towards cross section.
+          if (doTryNext) ++nTryLHA[iFill];
         } else {
           codeLHA.push_back(codeLHANow);
           nTryLHA.push_back(1);
@@ -213,6 +272,10 @@ bool ProcessContainer::trialProcess() {
     // Also compensating weight from biased phase-space selection.
     double biasWeight = phaseSpacePtr->biasSelectionWeight();
     weightNow = sigmaWeight * biasWeight;
+
+    // Set event weight to zero if this event should not count.
+    if (!doTryNext) weightNow = 0.0;
+
     infoPtr->setWeight( weightNow, lhaStrat);
 
     // Check that not negative cross section when not allowed.
@@ -228,8 +291,24 @@ bool ProcessContainer::trialProcess() {
     // Cross section of process may come with a weight. Update sum.
     double sigmaAdd = sigmaNow * biasWeight;
     if (lhaStratAbs == 2 || lhaStratAbs == 3) sigmaAdd = sigmaSgn;
-    sigmaSum  += sigmaAdd;
-    sigma2Sum += pow2(sigmaAdd);
+
+    // Do not add event weight to the cross section if it should not count.
+    if (!doTryNext) {
+      sigmaAdd=0.;
+      // Reset stored weight.
+      sigmaTemp  = 0.;
+      sigma2Temp = 0.;
+    }
+
+    // Only update once an event is accepted, as is needed if the event weight
+    // can still change by a finite amount due to reweighting.
+    if (lhaStratAbs >= 3 ) {
+      sigmaTemp  = sigmaAdd;
+      sigma2Temp = pow2(sigmaAdd);
+    } else {
+      sigmaTemp  += sigmaAdd;
+      sigma2Temp += pow2(sigmaAdd);
+    }
 
     // Check if maximum violated.
     newSigmaMx = phaseSpacePtr->newSigmaMax();
@@ -240,13 +319,16 @@ bool ProcessContainer::trialProcess() {
     if (lhaStratAbs < 3) select
       = (newSigmaMx || rndmPtr->flat() * abs(sigmaMx) < abs(sigmaNow));
     if (select) {
-      ++nSel;
-      if (isLHA) {
+      // Only add to counter if event should count towards cross section.
+      if (doTryNext)               ++nSel;
+
+     if (isLHA) {
         int codeLHANow = lhaUpPtr->idProcess();
         int iFill = -1;
         for (int i = 0; i < int(codeLHA.size()); ++i)
           if (codeLHANow == codeLHA[i]) iFill = i;
-        if (iFill >= 0) ++nSelLHA[iFill];
+        // Only add to counter if event should count towards cross section.
+        if (iFill >= 0 && doTryNext) ++nSelLHA[iFill];
       }
     }
     if (select || lhaStratAbs != 2) return select;
@@ -261,14 +343,24 @@ bool ProcessContainer::trialProcess() {
 
 void ProcessContainer::accumulate() {
 
-  ++nAcc;
-  wtAccSum += weightNow;
-  if (isLHA) {
-    int codeLHANow = lhaUpPtr->idProcess();
-    int iFill = -1;
-    for (int i = 0; i < int(codeLHA.size()); ++i)
-      if (codeLHANow == codeLHA[i]) iFill = i;
-    if (iFill >= 0) ++nAccLHA[iFill];
+  // Only update for non-vanishing weight - vanishing weight means
+  // event should not count as accepted.
+  double wgtNow = infoPtr->weight();
+  if (wgtNow != 0.0) {
+
+    ++nAcc;
+
+    // infoPtr->weight() performs coversion to pb if lhaStratAbs = 4
+    if (lhaStratAbs == 4) wgtNow /= 1e9;
+
+    wtAccSum += wgtNow;
+    if (isLHA) {
+      int codeLHANow = lhaUpPtr->idProcess();
+      int iFill = -1;
+      for (int i = 0; i < int(codeLHA.size()); ++i)
+        if (codeLHANow == codeLHA[i]) iFill = i;
+      if (iFill >= 0) ++nAccLHA[iFill];
+    }
   }
 
 }
@@ -298,6 +390,9 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
   if (!phaseSpacePtr->finalKin()) return false;
   int nFin = sigmaProcessPtr->nFinal();
 
+  // Save sampled values for further use.
+  if ( beamHasGamma && !isNonDiffractive() ) gammaKinPtr->finalize();
+
   // Basic info on process.
   if (isHardest) infoPtr->setType( name(), code(), nFin, isNonDiff,
     isResolved, isDiffA, isDiffB, isDiffC, isLHA);
@@ -315,12 +410,29 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
   process.append( idB, -12, 0, 0, 0, 0, 0, 0,
     Vec4(0., 0., infoPtr->pzB(), infoPtr->eB()), infoPtr->mB(), 0. );
 
+  // Add intermediate gammas for lepton -> gamma -> parton processes
+  // for both non-diffractive and hard processes, including direct-resolved.
+  int nOffsetGamma = 0;
+  if ( beamHasResGamma) {
+    double xGm1 = beamAPtr->xGamma();
+    process.append( 22, -13, 1, 0, 0, 0, 0, 0,
+      Vec4(0., 0., xGm1*infoPtr->pzA(), xGm1*infoPtr->eA()), 0, 0. );
+    process[1].daughter1(3);
+    ++nOffsetGamma;
+    double xGm2 = beamBPtr->xGamma();
+    process.append( 22, -13, 2, 0, 0, 0, 0, 0,
+      Vec4(0., 0., xGm2*infoPtr->pzB(), xGm2*infoPtr->eB()), 0, 0. );
+    process[1 + nOffsetGamma].daughter1(3 + nOffsetGamma);
+    ++nOffsetGamma;
+  }
+
   // For nondiffractive process no interaction selected so far, so done.
   if (isNonDiff) return true;
 
   // Entries 3 and 4, now to be added, come from 1 and 2.
-  process[1].daughter1(3);
-  process[2].daughter1(4);
+  // Offset from normal locations possible due to intermediate photons.
+  process[1 + nOffsetGamma].daughter1(3 + nOffsetGamma);
+  process[2 + nOffsetGamma].daughter1(4 + nOffsetGamma);
   double scale  = 0.;
   double scalup = 0.;
 
@@ -367,6 +479,14 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
       int acol      = sigmaProcessPtr->acol(i);
       if      (acol > 0) acol += colOffset;
       else if (acol < 0) acol -= colOffset;
+
+      // If extra photons in event record, offset the mother/daughter list.
+      if ( beamAhasResGamma || beamBhasResGamma ) {
+        if (mother1 > 0)   mother1   += nOffsetGamma;
+        if (mother2 > 0)   mother2   += nOffsetGamma;
+        if (daughter1 > 0) daughter1 += nOffsetGamma;
+        if (daughter2 > 0) daughter2 += nOffsetGamma;
+      }
 
       // Append to process record.
       int iNow = process.append( id, status, mother1, mother2,
@@ -460,7 +580,7 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
     process.scale( scalePr);
 
     // Copy over info from LHA event to process, in proper order.
-    Vec4 pSumOut;
+    vector<int> iFinal;
     for (int i = 1; i < lhaUpPtr->sizePart(); ++i) {
       int iOld = newPos[i];
       int id = lhaUpPtr->id(iOld);
@@ -513,22 +633,15 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
       int col2   = (colType == -1 || colType == 2 || abs(colType) == 3)
                  ?  lhaUpPtr->col2(iOld) : 0;
 
-      // Copy momentum, ensure lepton masses and consistent (E, p m) set.
+      // Copy momentum and ensure consistent (E, p, m) set.
       double px  = lhaUpPtr->px(iOld);
       double py  = lhaUpPtr->py(iOld);
       double pz  = lhaUpPtr->pz(iOld);
       double e   = lhaUpPtr->e(iOld);
       double m   = lhaUpPtr->m(iOld);
-      for (int idL = 0; idL < 3; ++idL)
-        if (idAbs == idLep[idL] && setLeptonMass > 0 && (setLeptonMass == 2
-          || m < 0.9 * mLep[idL] || m > 1.1 * mLep[idL])) m = mLep[idL];
       if (mRecalculate > 0. && m > mRecalculate)
         m = sqrtpos( e*e - px*px - py*py - pz*pz);
       else e = sqrt( m*m + px*px + py*py + pz*pz);
-
-      // Momentum sum for outgoing particles.
-      if (matchInOut && i > 2 && lhaStatus == 1)
-        pSumOut += Vec4( px, py, pz, e);
 
       // Polarization.
       double pol = lhaUpPtr->spin(iOld);
@@ -550,10 +663,117 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
       if ( (setLifetime == 1 && idAbs == 15) || setLifetime == 2)
          tau = process[iNow].tau0() * rndmPtr->exp();
       if (tau > 0.) process[iNow].tau(tau);
+
+      // Track outgoing final particles.
+      if (status == 23) iFinal.push_back( iNow);
+    }
+
+    // Second pass to catch vanishing final lepton and quark masses.
+    int iFinalSz = iFinal.size();
+    for (int iF = 0; iF < iFinalSz; ++iF) {
+      int iMod = iFinal[iF];
+      int iQLmod  = 0;
+      double mOld = process[iMod].m();
+      for (int iQL = 1; iQL < 9; ++iQL)
+      if (process[iMod].idAbs() == idNewM[iQL]) {
+        if ( iQL < 6 && setQuarkMass > 0 && (iQL == 4 || iQL == 5
+          || setQuarkMass == 2) && (mOld < 0.5 * mNewM[iQL]
+          || mOld > 1.5 * mNewM[iQL]) ) iQLmod = iQL;
+        if ( iQL > 5 && setLeptonMass > 0 && (setLeptonMass == 2
+          || mOld < 0.9 * mNewM[iQL] || mOld > 1.1 * mNewM[iQL]) )
+          iQLmod = iQL;
+      }
+      if (iQLmod == 0) continue;
+      double mNew = mNewM[iQLmod];
+
+      // Find partner to exchange energy and momentum with: general.
+      int iRec = 0;
+      if (iFinalSz == 2) iRec = iFinal[1 - iF];
+      else if (process[iMod].mother1() > 2) {
+        int iMother = process[iMod].mother1();
+        int iMDau1  = process[iMother].daughter1();
+        int iMDau2  = process[iMother].daughter2();
+        if (iMDau2 == iMDau1 + 1 && iMod == iMDau1) iRec = iMDau2;
+        if (iMDau2 == iMDau1 + 1 && iMod == iMDau2) iRec = iMDau1;
+      }
+
+      // Find partner to exchange energy and momentum with: lepton.
+      if (iRec == 0 && iQLmod > 5) {
+        for (int iR = 0; iR < iFinalSz; ++iR) if (iR != iF) {
+          int iRtmp = iFinal[iR];
+          if (process[iRtmp].idAbs() == idNewM[iQLmod] + 1
+            && process[iRtmp].id() * process[iMod].id() < 0) iRec = iRtmp;
+        }
+      }
+      if (iRec == 0 && iQLmod > 5) {
+        for (int iR = 0; iR < iFinalSz; ++iR) if (iR != iF) {
+          int iRtmp = iFinal[iR];
+          if (process[iRtmp].id() == -process[iMod].id()) iRec = iRtmp;
+        }
+      }
+
+      // Find partner to exchange energy and momentum with: quark.
+      if (iRec == 0 && iQLmod < 6 && process[iMod].col() != 0) {
+        for (int iR = 0; iR < iFinalSz; ++iR) if (iR != iF) {
+          int iRtmp = iFinal[iR];
+          if (process[iRtmp].acol() == process[iMod].col()) iRec = iRtmp;
+        }
+      }
+      if (iRec == 0 && iQLmod < 6 && process[iMod].acol() != 0) {
+        for (int iR = 0; iR < iFinalSz; ++iR) if (iR != iF) {
+          int iRtmp = iFinal[iR];
+          if (process[iRtmp].col() == process[iMod].acol()) iRec = iRtmp;
+        }
+      }
+
+      // Find partner to exchange energy and momentum with: largest mass.
+      if (iRec == 0) {
+        double mMax = 0.;
+        for (int iR = 0; iR < iFinalSz; ++iR) if (iR != iF) {
+          int iRtmp   = iFinal[iR];
+          double mTmp = m( process[iMod], process[iRtmp]) - process[iRtmp].m();
+          if (mTmp > mMax) { iRec = iRtmp; mMax = mTmp;}
+        }
+      }
+
+      // Carry out exchange of energy and momentum, if possible.
+      bool doneShift = false;
+      Vec4 pMod   = process[iMod].p();
+      if (iRec != 0) {
+        Vec4 pRecOld = process[iRec].p();
+        Vec4 pRecNew = pRecOld;
+        double mRec  = process[iRec].m();
+        if ( pShift( pMod, pRecNew, mNew, mRec) ) {
+          process[iMod].p( pMod);
+          process[iMod].m( mNew);
+          process[iRec].p( pRecNew);
+          // Recursive boost of recoiler decay products, if necessary.
+          if (!process[iRec].isFinal()) {
+            vector<int> iDauRec = process[iRec].daughterListRecursive();
+            RotBstMatrix Mdau;
+            Mdau.bst( pRecOld, pRecNew);
+            for (int iD = 0; iD < int(iDauRec.size()); ++iD)
+              process[iDauRec[iD]].rotbst( Mdau);
+          }
+          doneShift = true;
+        }
+      }
+
+      // Emergency solution: just add energy as needed, => new incoming.
+      if (!doneShift) {
+        pMod.e( sqrtpos( pMod.pAbs2() + mNew * mNew) );
+        process[iMod].p( pMod);
+        process[iMod].m( mNew);
+        infoPtr->errorMsg("Warning in ProcessContainer::constructProcess: "
+          "unsuitable recoiler found");
+      }
     }
 
     // Reassign momenta and masses for incoming partons.
     if (matchInOut) {
+      Vec4 pSumOut;
+      for (int iF = 0; iF < iFinalSz; ++iF)
+        pSumOut += process[iFinal[iF]].p();
       double e1 = 0.5 * (pSumOut.e() + pSumOut.pz());
       double e2 = 0.5 * (pSumOut.e() - pSumOut.pz());
       process[3].pz( e1);
@@ -562,6 +782,11 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
       process[4].pz(-e2);
       process[4].e(  e2);
       process[4].m(  0.);
+      if (max (e1, e2) > 0.5 * process[0].e()) {
+        infoPtr->errorMsg("Error in ProcessContainer::constructProcess: "
+          "setting mass failed");
+        return false;
+      }
     }
   }
 
@@ -892,6 +1117,8 @@ void ProcessContainer::reset() {
   sigmaFin  = 0.;
   deltaFin  = 0.;
   wtAccSum  = 0.;
+  sigmaTemp = 0.;
+  sigma2Temp= 0.;
 
 }
 
@@ -908,14 +1135,38 @@ void ProcessContainer::sigmaDelta() {
   deltaFin = 0.;
   if (nAcc == 0) return;
 
+  // Only update once an event is accepted, as is needed if the event weight
+  // can still change by a finite amount due to reweighting.
+  double wgtNow = infoPtr->weight();
+  // infoPtr->weight() performs coversion to pb if lhaStratAbs = 4
+  if (lhaStrat    == 0) wgtNow  = sigmaTemp;
+  if (lhaStratAbs == 3) wgtNow *= sigmaTemp;
+  if (lhaStratAbs == 4) wgtNow /= 1e9;
+  sigmaSum += wgtNow;
+
+  double wgtNow2 = 1.0;
+  if (lhaStrat    == 0) wgtNow2 = sigma2Temp;
+  if (lhaStratAbs == 3) wgtNow2 = pow2(wgtNow)*sigma2Temp;
+  if (lhaStratAbs == 4) wgtNow2 = pow2(wgtNow/1e9);
+  sigma2Sum += wgtNow2;
+
+  sigmaTemp  = 0.0;
+  sigma2Temp = 0.0;
+
   // Average value. No error analysis unless at least two events.
   double nTryInv  = 1. / nTry;
   double nSelInv  = 1. / nSel;
   double nAccInv  = 1. / nAcc;
   sigmaAvg        = sigmaSum * nTryInv;
   double fracAcc  = nAcc * nSelInv;
+
+  // If Pythia should not perform the unweighting, always simply add accepted
+  // event weights.
+  if (lhaStratAbs >= 3 ) fracAcc = 1.;
+
   sigmaFin        = sigmaAvg * fracAcc;
   deltaFin        = sigmaFin;
+
   if (nAcc == 1) return;
 
   // Estimated error. Quadratic sum of cross section term and
@@ -1225,6 +1476,25 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
 
+  // Set up requested objects for photon-parton processes.
+  bool photonParton = settings.flag("PhotonParton:all");
+  if (photonParton || settings.flag("PhotonParton:ggm2qqbar")) {
+    sigmaPtr = new Sigma2ggm2qqbar(1, 271);
+    containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+  }
+  if (photonParton || settings.flag("PhotonParton:ggm2ccbar")) {
+    sigmaPtr = new Sigma2ggm2qqbar(4, 272);
+    containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+  }
+  if (photonParton || settings.flag("PhotonParton:ggm2bbbar")) {
+    sigmaPtr = new Sigma2ggm2qqbar(5, 273);
+    containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+  }
+  if (photonParton || settings.flag("PhotonParton:qgm2qg")) {
+    sigmaPtr = new Sigma2qgm2qg();
+    containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+  }
+
   // Set up requested objects for onia production.
   charmonium = SigmaOniaSetup(infoPtr, &settings, particleDataPtr, 4);
   bottomonium = SigmaOniaSetup(infoPtr, &settings, particleDataPtr, 5);
@@ -1232,9 +1502,11 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
   charmonium.setupSigma2gg(charmoniumSigmaPtrs);
   charmonium.setupSigma2qg(charmoniumSigmaPtrs);
   charmonium.setupSigma2qq(charmoniumSigmaPtrs);
+  charmonium.setupSigma2dbl(charmoniumSigmaPtrs);
   bottomonium.setupSigma2gg(bottomoniumSigmaPtrs);
   bottomonium.setupSigma2qg(bottomoniumSigmaPtrs);
   bottomonium.setupSigma2qq(bottomoniumSigmaPtrs);
+  bottomonium.setupSigma2dbl(bottomoniumSigmaPtrs);
   for (unsigned int i = 0; i < charmoniumSigmaPtrs.size(); ++i)
     containerPtrs.push_back( new ProcessContainer(charmoniumSigmaPtrs[i]) );
   for (unsigned int i = 0; i < bottomoniumSigmaPtrs.size(); ++i)
@@ -2133,15 +2405,15 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
   if (settings.flag("ContactInteractions:QCffbar2eebar")) {
-    sigmaPtr = new Sigma2QCffbar2llbar(11, 4003);
+    sigmaPtr = new Sigma2QCffbar2llbar(11, 4203);
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
   if (settings.flag("ContactInteractions:QCffbar2mumubar")) {
-    sigmaPtr = new Sigma2QCffbar2llbar(13, 4004);
+    sigmaPtr = new Sigma2QCffbar2llbar(13, 4204);
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
   if (settings.flag("ContactInteractions:QCffbar2tautaubar")) {
-    sigmaPtr = new Sigma2QCffbar2llbar(15, 4005);
+    sigmaPtr = new Sigma2QCffbar2llbar(15, 4205);
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
 
@@ -2468,6 +2740,12 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
   }
   if (settings.flag("ExtraDimensionsUnpart:gg2llbar")) {
     sigmaPtr = new Sigma2gg2LEDllbar( false );
+    containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+  }
+
+  // Set up requested objects for Dark Matter processes.
+  if (settings.flag("DM:ffbar2Zp2XX")) {
+    sigmaPtr = new Sigma2ffbar2Zp2XX();
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
 

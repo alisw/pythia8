@@ -51,7 +51,7 @@ will only contain one <code>Pythia</code> object. (But you can
 use several <code>Pythia</code> objects, which then will be 
 independent of each other.)<br/> 
 By default all output from <code>Pythia</code> will be on the 
-<code>cout</code> stream, but the <code>list</code> methods below do 
+<code>cout</code> stream, but a few methods do 
 allow output to alternative streams or files. 
 </li> 
  
@@ -141,7 +141,7 @@ is governed by the the beam parameters from the
 <code><aloc href="BeamParameters">Beams</aloc></code> 
 group of variables. If you don't change any of those you will 
 default to proton-proton collisions at 14 TeV, i.e. the nominal LHC 
-values. 
+values.</li> 
  
 <p/> 
 <li> 
@@ -220,7 +220,7 @@ default PYTHIA installation directory structure and run the main
 programs in the <code>examples</code> subdirectory. However, in the 
 general case, you must provide the path of the <code>xmldoc</code> 
 directory, where default settings and particle data are found. 
-This can be done in two ways. 
+This can be done in several ways. 
  
 <ol> 
  
@@ -229,11 +229,11 @@ You can set the environment variable <code>PYTHIA8DATA</code> to
 contain the location of the <code>xmldoc</code> directory. In the 
 <code>csh</code> and <code>tcsh</code> shells this could e.g. be 
 <pre> 
-     setenv PYTHIA8DATA /home/myname/pythia81xx/xmldoc 
+     setenv PYTHIA8DATA /home/myname/pythia82xx/share/Pythia8/xmldoc 
 </pre> 
 while in other shells it could be 
 <pre> 
-     export PYTHIA8DATA=/home/myname/pythia81xx/xmldoc 
+     export PYTHIA8DATA=/home/myname/pythia82xx/share/Pythia8/xmldoc 
 </pre> 
 where xx is the subversion number.<br/> 
 Recall that environment variables set locally are only defined in the 
@@ -247,14 +247,31 @@ if you want a more permanent assignment.
 You can provide the path as argument to the <code>Pythia</code> 
 constructor, e.g. 
 <pre> 
-     Pythia pythia("/home/myname/pythia81xx/xmldoc"); 
+     Pythia pythia("/home/myname/pythia82xx/share/Pythia8/xmldoc"); 
 </pre> 
-</li> 
-</ol> 
 where again xx is the subversion number.<br/> 
 When <code>PYTHIA8DATA</code> is set it takes precedence, else 
 the path in the constructor is used, else one defaults to the 
-<code>../xmldoc</code> directory. 
+<code>../share/Pythia8/xmldoc</code> directory. 
+</li> 
+ 
+<li> 
+You can provide references to existing Settings and ParticleData 
+(useful if several identical copies of Pythia8 are constructed): 
+<pre> 
+     Pythia(Settings& settingsIn, ParticleData& particleDataIn); 
+</pre> 
+</li> 
+ 
+<li> 
+You can take input from streams of Settings and ParticleData 
+information (which requires the user to create the streams with 
+the appropriate information): 
+<pre> 
+     Pythia(istream& settingsStrings, istream& particleDataStrings); 
+</pre> 
+</li> 
+</ol> 
  
 <p/> 
 B) You can override the default behaviour of PYTHIA not only by the 
@@ -501,16 +518,16 @@ first-read file, when the full initialization is performed.
 Here follows the complete survey of all public <code>Pythia</code> 
 methods and data members. 
  
-<h3>Constructor and destructor</h3> 
+<h3>Constructors and destructor</h3> 
  
-<method name="Pythia::Pythia(string xmlDir = &quot;../xmldoc&quot;, 
+<method name="Pythia::Pythia(string xmlDir = &quot;../share/Pythia8/xmldoc&quot;, 
 bool printBanner = true)"> 
 creates an instance of the <code>Pythia</code> event generators, 
 and sets initial default values, notably for all settings and 
 particle data. You may use several <code>Pythia</code> instances 
 in the same run; only when you want to access external static 
 libraries could this cause problems. (This includes in particular 
-Fortran libraries such as <aloc href="PDFSelection">LHAPDF</aloc>.) 
+Fortran libraries such as <aloc href="PDFSelection">LHAPDF5</aloc>.) 
 <argument name="xmlDir" default="../xmldoc">allows you to choose 
 from which directory the default settings and particle data values 
 are read in. If the <code>PYTHIA8DATA</code> environment variable 
@@ -520,7 +537,37 @@ that it is only the directory location you can change, its contents
 must be the ones of the <code>xmldoc</code> directory in the 
 standard distribution. 
 </argument> 
-<argument name="printBanner" default="true"> can be set 
+<argument name="printBanner" default="on"> can be set 
+<code>false</code> to stop the program from printing a banner. 
+The banner contains useful information, so this option is only 
+intended for runs with multiple <code>Pythia</code> instances, 
+where output needs to be restricted. 
+</argument> 
+</method> 
+ 
+<method name="Pythia::Pythia(Settings& settingsIn, 
+ParticleData& particleDataIn, bool printBanner = true)"> 
+creates an instance of the <code>Pythia</code> event generators, 
+and sets initial default values, notably for all settings and 
+particle data. This option is intended for runs with multiple 
+Pythia instances, where only the first one needs to read the 
+<code>xmldoc</code> files, while subsequent ones can "inherit" 
+this information. 
+<argument name="printBanner" default="on"> can be set 
+<code>false</code> to stop the program from printing a banner. 
+The banner contains useful information, so this option is only 
+intended for runs with multiple <code>Pythia</code> instances, 
+where output needs to be restricted. 
+</argument> 
+</method> 
+ 
+<method name="Pythia::Pythia( istream& settingsStrings, 
+istream& particleDataStrings, bool printBanner = true)"> 
+creates an instance of the <code>Pythia</code> event generators, 
+and sets initial default values, notably for all settings and 
+particle data. This option is intended for runs with multiple 
+Pythia instances, where input streams can avoid file read congestion. 
+<argument name="printBanner" default="on"> can be set 
 <code>false</code> to stop the program from printing a banner. 
 The banner contains useful information, so this option is only 
 intended for runs with multiple <code>Pythia</code> instances, 
@@ -530,6 +577,13 @@ where output needs to be restricted.
  
 <method name="Pythia::~Pythia"> 
 the destructor deletes the objects created by the constructor. 
+</method> 
+ 
+<method name="void Pythia::initPtrs()"> 
+</method> 
+<methodmore name="bool Pythia::checkVersion()"> 
+helper methods, that collects common tasks of the two constructors. 
+</methodmore> 
  
 <h3>Set up run</h3> 
  
@@ -541,7 +595,7 @@ above.
 <argument name="line"> 
 the string to be interpreted as an instruction. 
 </argument> 
-<argument name="warn" default="true"> 
+<argument name="warn" default="on"> 
 write a warning message or not whenever the instruction does not make 
 sense, e.g. if the variable does not exist in the databases. 
 </argument> 
@@ -571,7 +625,7 @@ the file from which instructions are read.
 <argument name="inStream"> 
 an istream from which instructions are read. 
 </argument> 
-<argument name="warn" default="true"> 
+<argument name="warn" default="on"> 
 write a warning message or not whenever the instruction does not make 
 sense, e.g. if the variable does not exist in the databases. In the 
 command forms where <code>warn</code> is omitted it is true. 
@@ -854,7 +908,7 @@ partonic level of the event - hard process, parton showers, multiparton
 interactions, beam remnants, colour flow, and so on - but not 
 hadronization. Further details are found 
 <aloc href="HadronLevelStandalone">here</aloc>. 
-<argument name="findJunctions" default = "true"> 
+<argument name="findJunctions" default = "on"> 
 normally this routine will search through the event record and try to 
 figure out if any colour junctions are present. If so, the colour 
 topology of such junctions must be sorted out. In tricky cases this 
@@ -889,14 +943,11 @@ its four-momentum is changed. Further details are found
 event record is then not consistent and should not be studied. 
 </method> 
  
-<method name="void Pythia::LHAeventList(ostream& os = cout)"> 
+<method name="void Pythia::LHAeventList()"> 
 list the Les Houches Accord information on the current event, see 
 <code><aloc href="LesHouchesAccord">LHAup::listEvent(...)</aloc></code>. 
 (Other listings are available via the class members below, so this 
 listing is a special case that would not fit elsewhere.) 
-<argument name="os" default = "cout"> 
-output stream where the listing occurs. 
-</argument> 
 </method> 
  
 <method name="bool Pythia::LHAeventSkip(int nSkip)"> 
@@ -1043,4 +1094,4 @@ see <aloc href="AdvancedUsage">here</aloc> for further details.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

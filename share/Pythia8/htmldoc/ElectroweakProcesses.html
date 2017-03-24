@@ -116,7 +116,7 @@ or <i>W^+-</i> exchange between two fermions.
  
 <p/><code>flag&nbsp; </code><strong> WeakBosonExchange:ff2ff(t:gmZ) &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
-Scattering <i>f f' &rarr; f f'</i> via </i>gamma^*/Z^0</i> 
+Scattering <i>f f' &rarr; f f'</i> via <i>gamma^*/Z^0</i> 
 <i>t</i>-channel exchange, with full interference 
 between the <i>gamma^*</i> and <i>Z^0</i>. 
 Code 211. 
@@ -124,7 +124,7 @@ Code 211.
  
 <p/><code>flag&nbsp; </code><strong> WeakBosonExchange:ff2ff(t:W) &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
-Scattering <i>f_1 f_2 &rarr; f_3 f_4</i> via </i>W^+-</i> 
+Scattering <i>f_1 f_2 &rarr; f_3 f_4</i> via <i>W^+-</i> 
 <i>t</i>-channel exchange. 
 Code 212. 
    
@@ -292,8 +292,9 @@ Code 254.
  
 A few electroweak two-photon production processes are available. 
 To use them, photon PDFs have to be defined for the incoming 
-beam particles. For proton beams an appropriate set would be 
-MRST QED 2004 [<a href="Bibliography.html" target="page">Mar05</a>], available in the LHAPDF library. 
+beam particles. This is the case for the internal NNPDF 2.3 QCD+QED 
+sets, as well as some further ones available in the LHAPDF library, 
+but not for all PDFs. 
  
 <p/><code>flag&nbsp; </code><strong> PhotonCollision:all &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
@@ -337,7 +338,42 @@ Scattering <i>gamma gamma &rarr; tau+ tau-</i>.
 Code 266. 
    
  
+<h3> Photon-Parton Processes</h3> 
+ 
+Photon-parton production processes. See comment related to PDFs above. 
+Also relevant for direct-resolved processes in photon-photon collisions. 
+ 
+<p/><code>flag&nbsp; </code><strong> PhotonParton:all &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of two processes presented below. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> PhotonParton:ggm2qqbar &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Scattering <i>g gamma &rarr; q qbar</i>, where <i>q</i> 
+is a light quark (<i>u, d, s</i>). 
+Code 271. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> PhotonParton:ggm2ccbar &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Scattering <i>g gamma &rarr; c cbar</i>. 
+Code 272. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> PhotonParton:ggm2bbbar &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Scattering <i>g gamma &rarr; b bbar</i>. 
+Code 273. 
+   
+ 
+<p/><code>flag&nbsp; </code><strong> PhotonParton:qgm2qg &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Scattering <i>q gamma &rarr; q g</i>. 
+Code 274. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

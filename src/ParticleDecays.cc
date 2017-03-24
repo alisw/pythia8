@@ -1,5 +1,5 @@
 // ParticleDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -156,24 +156,32 @@ bool ParticleDecays::decay( int iDec, Event& event) {
   // Optionally send on to external decay program.
   bool doneExternally = false;
   if (decDataPtr->doExternalDecay()) {
+    motherProd.resize(0);
+    motherProd.push_back( 0 );
     pProd.resize(0);
     pProd.push_back(decayer.p());
-    doneExternally = decayHandlePtr->decay(idProd, mProd, pProd,
-      iDec, event);
+    doneExternally = decayHandlePtr->chainDecay( idProd, motherProd,
+      mProd, pProd, iDec, event);
+    if (!doneExternally) doneExternally = decayHandlePtr->decay( idProd,
+      mProd, pProd, iDec, event);
 
     // If it worked, then store the decay products in the event record.
     if (doneExternally) {
+      int oldSize = event.size();
       mult = idProd.size() - 1;
+      while (int(motherProd.size()) <= mult) motherProd.push_back( 0 );
       int status = (hasOscillated) ? 94 : 93;
       for (int i = 1; i <= mult; ++i) {
-        int iPos = event.append( idProd[i], status, iDec, 0, 0, 0,
+        int iMo = (motherProd[i] == 0) ? iDec : oldSize + motherProd[i] - 1;
+        int iPos = event.append( idProd[i], status, iMo, 0, 0, 0,
         0, 0, pProd[i], mProd[i]);
         iProd.push_back( iPos);
-      }
 
-      // Also mark mother decayed and store daughters.
-      event[iDec].statusNeg();
-      event[iDec].daughters( iProd[1], iProd[mult]);
+        // Also mark mother(s) decayed and store daughters.
+        event[iMo].statusNeg();
+        if ( event[iMo].daughter1() == 0) event[iMo].daughter1( iPos);
+        else event[iMo].daughter2( iPos);
+      }
     }
   }
 
@@ -297,12 +305,19 @@ bool ParticleDecays::decay( int iDec, Event& event) {
   // Set decay vertex when this is displaced.
   if (event[iDec].hasVertex() || event[iDec].tau() > 0.) {
     Vec4 vDec = event[iDec].vDec();
-    for (int i = 1; i <= mult; ++i) event[iProd[i]].vProd( vDec );
+    for (int i = event[iDec].daughter1(); i <= event[iDec].daughter2(); ++i)
+      event[i].vProd( vDec );
   }
 
-  // Set lifetime of daughters.
-  for (int i = 1; i <= mult; ++i)
-    event[iProd[i]].tau( event[iProd[i]].tau0() * rndmPtr->exp() );
+  // Set lifetime of daughters. Check if they decayed in their turn.
+  for (int i = iProd[1]; i <= iProd[mult]; ++i) {
+    event[i].tau( event[i].tau0() * rndmPtr->exp() );
+    if (!event[i].isFinal() && (event[i].hasVertex() || event[i].tau() > 0.)) {
+      Vec4 vDecR = event[i].vDec();
+      for (int iR = event[i].daughter1(); iR <= event[i].daughter2(); ++iR)
+        event[iR].vProd( vDecR );
+    }
+  }
 
   // In a decay explicitly to partons then optionally do a shower,
   // and always flag that partonic system should be fragmented.
@@ -1154,7 +1169,8 @@ bool ParticleDecays::pickHadrons() {
     }
 
     // Optional: check that this decay mode is not explicitly defined.
-    if ( (meMode > 61 && meMode <= 80) && mDiff > mSafety && !diquarkClash ) {
+    if ( ( (meMode > 51 && meMode <= 60) || (meMode > 71 && meMode <= 80) )
+      && mDiff > mSafety && !diquarkClash ) {
       int idMatch[10], idPNow;
       usedChannel = false;
       bool matched = false;

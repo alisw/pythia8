@@ -1,5 +1,5 @@
 // Basics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -565,6 +565,35 @@ ostream& operator<<(ostream& os, const Vec4& v) {
   return os;
 }
 
+//--------------------------------------------------------------------------
+
+// Shift four-momenta within pair from old to new masses.
+// Note that p1Move and p2Move change values during operation.
+
+bool pShift( Vec4& p1Move, Vec4& p2Move, double m1New, double m2New) {
+
+  // Standard kinematics variables.
+  double sH  = (p1Move + p2Move).m2Calc();
+  double r1  = p1Move.m2Calc() / sH;
+  double r2  = p2Move.m2Calc() / sH;
+  double r3  = m1New * m1New / sH;
+  double r4  = m2New * m2New / sH;
+  double l12 = sqrtpos(pow2(1. - r1 - r2) - 4. * r1 * r2);
+  double l34 = sqrtpos(pow2(1. - r3 - r4) - 4. * r3 * r4);
+
+  // Check that shift operation possible.
+  if (sH <= pow2(m1New + m2New) || l12 < Vec4::TINY || l34 < Vec4::TINY)
+    return false;
+
+  // Calculate needed shift and apply it.
+  double c1  = 0.5 * ( (1. - r1 + r2) * l34 / l12 - (1. - r3 + r4) );
+  double c2  = 0.5 * ( (1. + r1 - r2) * l34 / l12 - (1. + r3 - r4) );
+  Vec4   pSh = c1 * p1Move - c2 * p2Move;
+  p1Move    += pSh;
+  p2Move    -= pSh;
+  return true;
+}
+
 //==========================================================================
 
 // RotBstMatrix class.
@@ -824,7 +853,7 @@ const char NUMBER[] = {'0', '1', '2', '3', '4', '5',
 void Hist::book(string titleIn, int nBinIn, double xMinIn,
   double xMaxIn) {
 
-  title = titleIn;
+  titleSave = titleIn;
   nBin  = nBinIn;
   if (nBinIn < 1) nBin = 1;
   if (nBinIn > NBINMAX) nBin = NBINMAX;
@@ -857,8 +886,10 @@ void Hist::null() {
 void Hist::fill(double x, double w) {
 
   ++nFill;
+  if (x < xMin) {under += w; return;}
+  if (x > xMax) {over  += w; return;}
   int iBin = int(floor((x - xMin)/dx));
-  if (iBin < 0)          under += w;
+  if      (iBin < 0)     under += w;
   else if (iBin >= nBin) over  += w;
   else                 {inside += w; res[iBin] += w; }
 
@@ -877,7 +908,7 @@ ostream& operator<<(ostream& os, const Hist& h) {
   time_t t = time(0);
   char date[18];
   strftime(date,18,"%Y-%m-%d %H:%M",localtime(&t));
-  os << "\n\n  " << date << "       " << h.title << "\n\n";
+  os << "\n\n  " << date << "       " << h.titleSave << "\n\n";
 
   // Group bins, where required, to make printout have fewer columns.
   // Avoid overflow.
@@ -1020,6 +1051,25 @@ void Hist::table(ostream& os, bool printOverUnder, bool xMidBin) const {
     os << setw(12) << xBeg + ix * dx << setw(12) << res[ix] << "\n";
   if (printOverUnder)
     os << setw(12) << xBeg + nBin * dx << setw(12) << over << "\n";
+
+}
+
+//--------------------------------------------------------------------------
+
+// Print histogram contents as a table, in Rivet's *.dat style.
+
+void Hist::rivetTable(ostream& os, bool printError) const {
+
+  // Print histogram vector bin by bin, with x range in first two columns
+  // and +- error in last two (assuming that contents is number of events).
+  os << scientific << setprecision(4);
+  double xBeg = xMin;
+  double xEnd = xMin+dx;
+  for (int ix = 0; ix < nBin; ++ix) {
+    double err = (printError) ? sqrtpos(res[ix]) : 0.0;
+    os << setw(12) << xBeg + ix * dx << setw(12) << xEnd + ix * dx
+       << setw(12) << res[ix] << setw(12) << err << setw(12) << err << "\n";
+  }
 
 }
 
@@ -1241,18 +1291,36 @@ Hist& Hist::operator/=(double f) {
   return *this;
 }
 
+Hist Hist::operator+(double f) const {
+  Hist h = *this; return h += f;}
+
+Hist Hist::operator+(const Hist& h2) const {
+  Hist h = *this; return h += h2;}
+
+Hist Hist::operator-(double f) const {
+  Hist h = *this; return h -= f;}
+
+Hist Hist::operator-(const Hist& h2) const {
+  Hist h = *this; return h -= h2;}
+
+Hist Hist::operator*(double f) const {
+  Hist h = *this; return h *= f;}
+
+Hist Hist::operator*(const Hist& h2) const {
+  Hist h = *this; return h *= h2;}
+
+Hist Hist::operator/(double f) const {
+  Hist h = *this; return h /= f;}
+
+Hist Hist::operator/(const Hist& h2) const {
+  Hist h = *this; return h /= h2;}
+
 //--------------------------------------------------------------------------
 
 // Implementation of operator overloading with friends.
 
 Hist operator+(double f, const Hist& h1) {
   Hist h = h1; return h += f;}
-
-Hist operator+(const Hist& h1, double f) {
-  Hist h = h1; return h += f;}
-
-Hist operator+(const Hist& h1, const Hist& h2) {
-  Hist h = h1; return h += h2;}
 
 Hist operator-(double f, const Hist& h1) {
   Hist h   = h1;
@@ -1262,20 +1330,8 @@ Hist operator-(double f, const Hist& h1) {
   for (int ix = 0; ix < h1.nBin; ++ix) h.res[ix] = f - h1.res[ix];
   return h;}
 
-Hist operator-(const Hist& h1, double f) {
-  Hist h = h1; return h -= f;}
-
-Hist operator-(const Hist& h1, const Hist& h2) {
-  Hist h = h1; return h -= h2;}
-
 Hist operator*(double f, const Hist& h1) {
   Hist h = h1; return h *= f;}
-
-Hist operator*(const Hist& h1, double f) {
-  Hist h = h1; return h *= f;}
-
-Hist operator*(const Hist& h1, const Hist& h2) {
-  Hist h = h1; return h *= h2;}
 
 Hist operator/(double f, const Hist& h1) {
   Hist h = h1;
@@ -1286,12 +1342,6 @@ Hist operator/(double f, const Hist& h1) {
     h.res[ix] = (abs(h1.res[ix]) < Hist::TINY) ? 0. : f/h1.res[ix];
   return h;
 }
-
-Hist operator/(const Hist& h1, double f) {
-  Hist h = h1; return h /= f;}
-
-Hist operator/(const Hist& h1, const Hist& h2) {
-  Hist h = h1; return h /= h2;}
 
 //==========================================================================
 

@@ -1,5 +1,5 @@
 // SigmaProcess.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -298,7 +298,7 @@ bool SigmaProcess::initFlux() {
   else if (fluxType == "fgm") {
     // Fermion from incoming side A.
     if ( isLeptonA ) {
-      addBeamA(idA);
+      addBeamA( idA);
       addPair(idA, 22);
     } else {
       for (int idNow = -nQuarkIn; idNow <= nQuarkIn; ++idNow)
@@ -323,7 +323,25 @@ bool SigmaProcess::initFlux() {
     addBeamB(22);
   }
 
-  // Case with gamma gamma incoming state.
+  // Case with quark gamma incoming state.
+  else if (fluxType == "qgm") {
+    for (int idNow = -nQuarkIn; idNow <= nQuarkIn; ++idNow)
+      if (idNow != 0) {
+        addBeamA(idNow);
+        addPair(idNow, 22);
+      }
+    for (int idNow = -nQuarkIn; idNow <= nQuarkIn; ++idNow)
+      if (idNow != 0) {
+        addBeamB(idNow);
+        addPair(22, idNow);
+      }
+
+    // Photons in the beams.
+    addBeamA(22);
+    addBeamB(22);
+  }
+
+  // Case with gluon gamma incoming state.
   else if (fluxType == "ggm") {
     addBeamA(21);
     addBeamA(22);
@@ -353,14 +371,31 @@ bool SigmaProcess::initFlux() {
 //--------------------------------------------------------------------------
 
 // Convolute matrix-element expression(s) with parton flux and K factor.
+// Possibly different PDFs for the phase-space initialization.
 
-double SigmaProcess::sigmaPDF() {
+double SigmaProcess::sigmaPDF(bool initPS, bool samexGamma) {
 
   // Evaluate and store the required parton densities.
-  for (int j = 0; j < sizeBeamA(); ++j)
-    inBeamA[j].pdf = beamAPtr->xfHard( inBeamA[j].id, x1Save, Q2FacSave);
-  for (int j = 0; j < sizeBeamB(); ++j)
-    inBeamB[j].pdf = beamBPtr->xfHard( inBeamB[j].id, x2Save, Q2FacSave);
+  for (int j = 0; j < sizeBeamA(); ++j) {
+    if ( initPS)
+      inBeamA[j].pdf = beamAPtr->xfMax( inBeamA[j].id, x1Save, Q2FacSave);
+    else if ( samexGamma)
+      inBeamA[j].pdf = beamAPtr->xfSame( inBeamA[j].id, x1Save, Q2FacSave);
+    else
+      inBeamA[j].pdf = beamAPtr->xfHard( inBeamA[j].id, x1Save, Q2FacSave);
+  }
+  for (int j = 0; j < sizeBeamB(); ++j){
+    if ( initPS)
+      inBeamB[j].pdf = beamBPtr->xfMax( inBeamB[j].id, x2Save, Q2FacSave);
+    else if ( samexGamma)
+      inBeamB[j].pdf = beamBPtr->xfSame( inBeamB[j].id, x2Save, Q2FacSave);
+    else
+      inBeamB[j].pdf = beamBPtr->xfHard( inBeamB[j].id, x2Save, Q2FacSave);
+  }
+
+  // Save the x_gamma values after PDFs are called if new value is sampled.
+  if ( !samexGamma && beamAPtr->hasResGamma() ) beamAPtr->xGammaPDF();
+  if ( !samexGamma && beamBPtr->hasResGamma() ) beamBPtr->xGammaPDF();
 
   // Loop over allowed incoming channels.
   sigmaSumSave = 0.;

@@ -1,5 +1,5 @@
 // LHEF3.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,6 +16,11 @@ namespace Pythia8 {
 // The XMLTag struct is used to represent all information within an XML tag.
 // It contains the attributes as a map, any sub-tags as a vector of pointers
 // to other XMLTag objects, and any other information as a single string.
+
+//--------------------------------------------------------------------------
+
+// Constants.
+const XMLTag::pos_t XMLTag::end = string::npos;
 
 //==========================================================================
 
@@ -43,12 +48,12 @@ LHAweights::LHAweights(const XMLTag & tag) {
 
 // Print out.
 
-void LHAweights::print(ostream & file) const {
+void LHAweights::list(ostream & file) const {
   file << "<weights";
   for ( map<string,string>::const_iterator it = attributes.begin();
         it != attributes.end(); ++it )
     file << " " << it->first << "=\"" << it->second << "\"";
-  file << " >";
+  file << ">";
   for ( int j = 0, M = weights.size(); j < M; ++j ) file << " " << weights[j];
   file << "</weights>" << endl;
 }
@@ -69,7 +74,7 @@ LHAscales::LHAscales(const XMLTag & tag, double defscale)
     if ( it->first == "muf" ) muf = v;
     else if ( it->first == "mur" ) mur = v;
     else if ( it->first == "mups" ) mups = v;
-    else attributes[it->first] = v;
+    else attributes.insert(make_pair(it->first, v));
   }
   contents = tag.contents;
 }
@@ -78,7 +83,7 @@ LHAscales::LHAscales(const XMLTag & tag, double defscale)
 
 // Print out the corresponding XML-tag.
 
-void LHAscales::print(ostream & file) const {
+void LHAscales::list(ostream & file) const {
   file << "<scales";
   file << " muf=\"" << muf << "\"";
   file << " mur=\"" << mur << "\"";
@@ -86,7 +91,7 @@ void LHAscales::print(ostream & file) const {
   for ( map<string,double>::const_iterator it = attributes.begin();
         it != attributes.end(); ++it )
     file << " " << it->first << "=\"" << it->second << "\"";
-  file << contents;
+  file << ">" << contents;
   file << "</scales>" << endl;
 }
 
@@ -102,10 +107,9 @@ LHAgenerator::LHAgenerator(const XMLTag & tag, string defname)
   : name(defname), version(defname), contents(defname) {
   for ( map<string,string>::const_iterator it = tag.attr.begin();
         it != tag.attr.end(); ++it ) {
-    string v = it->second.c_str();
-    if ( it->first == "name" ) name = v;
-    else if ( it->first == "version" ) version = v;
-    else attributes[it->first] = v;
+    if ( it->first == "name" ) name = it->second;
+    else if ( it->first == "version" ) version = it->second;
+    else attributes.insert(make_pair(it->first, it->second));
   }
   contents = tag.contents;
 }
@@ -114,7 +118,7 @@ LHAgenerator::LHAgenerator(const XMLTag & tag, string defname)
 
 // Print out the corresponding XML-tag.
 
-void LHAgenerator::print(ostream & file) const {
+void LHAgenerator::list(ostream & file) const {
   file << "<generator";
   if ( name    != "" ) file << " name=\""    << name    << "\"";
   if ( version != "" ) file << " version=\"" << version << "\"";
@@ -138,9 +142,8 @@ LHAwgt::LHAwgt(const XMLTag & tag, double defwgt)
   : id(""), contents(defwgt) {
   for ( map<string,string>::const_iterator it = tag.attr.begin();
         it != tag.attr.end(); ++it ) {
-    string v = it->second;
-    if ( it->first == "id" ) id = v;
-    else attributes[it->first] = v;
+    if ( it->first == "id" ) id = it->second;
+    else attributes.insert(make_pair(it->first, it->second));
   }
   contents = atof(tag.contents.c_str());
 }
@@ -149,7 +152,7 @@ LHAwgt::LHAwgt(const XMLTag & tag, double defwgt)
 
 // Print out the corresponding XML-tag.
 
-void LHAwgt::print(ostream & file) const {
+void LHAwgt::list(ostream & file) const {
   file << "<wgt";
   if ( id    != "" ) file << " id=\""    << id << "\"";
   for ( map<string,string>::const_iterator it = attributes.begin();
@@ -172,9 +175,8 @@ LHAweight::LHAweight(const XMLTag & tag, string defname)
   : id(defname), contents(defname) {
   for ( map<string,string>::const_iterator it = tag.attr.begin();
         it != tag.attr.end(); ++it ) {
-    string v = it->second;
-    if ( it->first == "id" ) id = v;
-    else attributes[it->first] = v;
+    if ( it->first == "id" ) id = it->second;
+    else attributes.insert(make_pair(it->first, it->second));
   }
   contents = tag.contents;
 }
@@ -183,7 +185,7 @@ LHAweight::LHAweight(const XMLTag & tag, string defname)
 
 // Print out the corresponding XML-tag.
 
-void LHAweight::print(ostream & file) const {
+void LHAweight::list(ostream & file) const {
   file << "<weight";
   if ( id  != "" ) file << " id=\""    << id << "\"";
   for ( map<string,string>::const_iterator it = attributes.begin();
@@ -208,9 +210,14 @@ LHAweightgroup::LHAweightgroup(const XMLTag & tag) {
 
   for ( map<string,string>::const_iterator it = tag.attr.begin();
         it != tag.attr.end(); ++it ) {
-    string v = it->second.c_str();
-    if ( it->first == "name" ) name = v;
-    else attributes[it->first] = v;
+    if ( it->first == "name" ) name = it->second;
+    else attributes.insert(make_pair(it->first,it->second));
+  }
+  if ( name=="" ) {
+    string key("type");
+    if( attributes.find(key) != attributes.end() ) {
+      name = attributes[key];
+    }
   }
 
   contents = tag.contents;
@@ -222,11 +229,13 @@ LHAweightgroup::LHAweightgroup(const XMLTag & tag) {
     const XMLTag & tagnow = *tags[i];
     LHAweight wt(tagnow);
     weights.insert(make_pair(wt.id, wt));
+    weightsKeys.push_back(wt.id);
   }
   for ( int i = 0, N = tag.tags.size(); i < N; ++i ) {
     const XMLTag & tagnow = *tag.tags[i];
     const LHAweight & wt(tagnow);
     weights.insert(make_pair(wt.id, wt));
+    weightsKeys.push_back(wt.id);
   }
 
   for ( int i = 0, N = tags.size(); i < N; ++i ) if (tags[i]) delete tags[i];
@@ -237,7 +246,7 @@ LHAweightgroup::LHAweightgroup(const XMLTag & tag) {
 
 // Print out the corresponding XML-tag.
 
-void LHAweightgroup::print(ostream & file) const {
+void LHAweightgroup::list(ostream & file) const {
   file << "<weightgroup";
   if ( name != "" ) file << " name=\"" << name << "\"";
   for ( map<string,string>::const_iterator it = attributes.begin();
@@ -245,7 +254,7 @@ void LHAweightgroup::print(ostream & file) const {
     file << " " << it->first << "=\"" << it->second << "\"";
   file << " >\n";
   for ( map<string,LHAweight>::const_iterator it = weights.begin();
-        it != weights.end(); ++it ) it->second.print(file);
+        it != weights.end(); ++it ) it->second.list(file);
   file << "</weightgroup>" << endl;
 }
 
@@ -274,11 +283,13 @@ LHArwgt::LHArwgt(const XMLTag & tag) {
     const XMLTag & tagnow = *tags[i];
     LHAwgt wt(tagnow);
     wgts.insert(make_pair(wt.id, wt));
+    wgtsKeys.push_back(wt.id);
   }
   for ( int i = 0, N = tag.tags.size(); i < N; ++i ) {
     const XMLTag & tagnow = *tag.tags[i];
     LHAwgt wt(tagnow);
     wgts.insert(make_pair(wt.id, wt));
+    wgtsKeys.push_back(wt.id);
   }
 
   for ( int i = 0, N = tags.size(); i < N; ++i ) if (tags[i]) delete tags[i];
@@ -289,15 +300,15 @@ LHArwgt::LHArwgt(const XMLTag & tag) {
 
 // Print out the corresponding XML-tag.
 
-void LHArwgt::print(ostream & file) const {
+void LHArwgt::list(ostream & file) const {
   file << "<rwgt";
   for ( map<string,string>::const_iterator it = attributes.begin();
         it != attributes.end(); ++it )
     file << " " << it->first << "=\"" << it->second << "\"";
   file << " >\n";
   for ( map<string,LHAwgt>::const_iterator it = wgts.begin();
-        it != wgts.end(); ++it ) it->second.print(file);
-  file << "</rgwt>" << endl;
+        it != wgts.end(); ++it ) it->second.list(file);
+  file << "</rwgt>" << endl;
 }
 
 //==========================================================================
@@ -325,7 +336,14 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
     if ( tagnow.name == "weightgroup" ) {
       LHAweightgroup wgroup(tagnow);
       string wgname = wgroup.name;
+      // if still no name, use integer as a key
+      if (wgname=="") {
+        stringstream iss;
+        iss << i;
+        wgname=iss.str();
+      }
       weightgroups.insert(make_pair(wgname, wgroup));
+      weightgroupsKeys.push_back(wgname);
       string ss;
       vector<XMLTag*> tags2 = XMLTag::findXMLTags(tagnow.contents, &ss);
       for ( int k = 0, M = tags2.size(); k < M; ++k ) {
@@ -334,6 +352,7 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
           LHAweight wt(tagnow2);
           string wtname = wt.id;
           weights.insert(make_pair(wtname, wt));
+          weightsKeys.push_back(wtname);
         }
       }
       for ( int j = 0, M = tags2.size(); j < M; ++j )
@@ -342,6 +361,7 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
       LHAweight wt(tagnow);
       string wtname = wt.id;
       weights.insert(make_pair(wtname, wt));
+      weightsKeys.push_back(wtname);
     }
   }
 
@@ -352,6 +372,7 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
       LHAweightgroup wgroup(tagnow);
       string wgname = wgroup.name;
       weightgroups.insert(make_pair(wgname, wgroup));
+      weightgroupsKeys.push_back(wgname);
       string ss;
       vector<XMLTag*> tags2 = XMLTag::findXMLTags(tagnow.contents, &ss);
       for ( int k = 0, M = tags2.size(); k < M; ++k ) {
@@ -360,6 +381,7 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
           LHAweight wt(tagnow2);
           string wtname = wt.id;
           weights.insert(make_pair(wtname, wt));
+          weightsKeys.push_back(wtname);
         }
       }
       for ( int k = 0, M = tagnow.tags.size(); k < M; ++k ) {
@@ -368,6 +390,7 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
           LHAweight wt(tagnow2);
           string wtname = wt.id;
           weights.insert(make_pair(wtname, wt));
+          weightsKeys.push_back(wtname);
         }
       }
       for ( int j = 0, M = tags2.size(); j < M; ++j )
@@ -376,6 +399,7 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
       LHAweight wt(tagnow);
       string wtname = wt.id;
       weights.insert(make_pair(wtname, wt));
+      weightsKeys.push_back(wtname);
     }
   }
 
@@ -387,17 +411,39 @@ LHAinitrwgt::LHAinitrwgt(const XMLTag & tag) {
 
 // Print out the corresponding XML-tag.
 
-void LHAinitrwgt::print(ostream & file) const {
+void LHAinitrwgt::list(ostream & file) const {
   file << "<initrwgt";
   for ( map<string,string>::const_iterator it = attributes.begin();
         it != attributes.end(); ++it )
     file << " " << it->first << "=\"" << it->second << "\"";
   file << " >\n";
   for ( map<string,LHAweightgroup>::const_iterator it = weightgroups.begin();
-        it != weightgroups.end(); ++it ) it->second.print(file);
+        it != weightgroups.end(); ++it ) it->second.list(file);
   for ( map<string,LHAweight>::const_iterator it = weights.begin();
-        it != weights.end(); ++it ) it->second.print(file);
-  file << "</initrgwt>" << endl;
+        it != weights.end(); ++it ) it->second.list(file);
+  file << "</initrwgt>" << endl;
+}
+
+//==========================================================================
+
+// The HEPRUP class is a simple container for the Les Houches file init block.
+
+void HEPRUP::clear() {
+  IDBMUP = make_pair(0,0);
+  EBMUP = make_pair(0,0);
+  PDFGUP = make_pair(0,0);
+  PDFSUP = make_pair(0,0);
+  IDWTUP = -1;
+  NPRUP = 0;
+  XSECUP.resize(0);
+  XERRUP.resize(0);
+  XMAXUP.resize(0);
+  LPRUP.resize(0);
+  initrwgt.clear();
+  generators.resize(0);
+  weightgroups.clear();
+  weights.clear();
+
 }
 
 //==========================================================================
@@ -415,27 +461,27 @@ void LHAinitrwgt::print(ostream & file) const {
 
 HEPEUP & HEPEUP::setEvent(const HEPEUP & x) {
 
-  NUP = x.NUP;
-  IDPRUP = x.IDPRUP;
-  XWGTUP = x.XWGTUP;
-  XPDWUP = x.XPDWUP;
-  SCALUP = x.SCALUP;
-  AQEDUP = x.AQEDUP;
-  AQCDUP = x.AQCDUP;
-  IDUP = x.IDUP;
-  ISTUP = x.ISTUP;
-  MOTHUP = x.MOTHUP;
-  ICOLUP = x.ICOLUP;
-  PUP = x.PUP;
-  VTIMUP = x.VTIMUP;
-  SPINUP = x.SPINUP;
-  heprup = x.heprup;
-  scales = x.scales;
-  weights = x.weights;
-  weights_detailed = x.weights_detailed;
+  NUP                = x.NUP;
+  IDPRUP             = x.IDPRUP;
+  XWGTUP             = x.XWGTUP;
+  XPDWUP             = x.XPDWUP;
+  SCALUP             = x.SCALUP;
+  AQEDUP             = x.AQEDUP;
+  AQCDUP             = x.AQCDUP;
+  IDUP               = x.IDUP;
+  ISTUP              = x.ISTUP;
+  MOTHUP             = x.MOTHUP;
+  ICOLUP             = x.ICOLUP;
+  PUP                = x.PUP;
+  VTIMUP             = x.VTIMUP;
+  SPINUP             = x.SPINUP;
+  heprup             = x.heprup;
+  scalesSave         = x.scalesSave;
+  weightsSave        = x.weightsSave;
+  weights_detailed   = x.weights_detailed;
   weights_compressed = x.weights_compressed;
-  rwgt = x.rwgt;
-  attributes = x.attributes;
+  rwgtSave           = x.rwgtSave;
+  attributes         = x.attributes;
   return *this;
 
 }
@@ -448,9 +494,9 @@ void HEPEUP::reset() {
   NUP = 0;
   weights_detailed.clear();
   weights_compressed.clear();
-  weights.clear();
-  rwgt.clear();
-  scales.clear();
+  weightsSave.clear();
+  rwgtSave.clear();
+  scalesSave.clear();
   attributes.clear();
 }
 
@@ -507,6 +553,15 @@ bool Reader::init() {
     version = 3;
   else
     return false;
+
+  // Clear all members.
+  outsideBlock="";
+  headerBlock="";
+  headerComments="";
+  heprup.clear();
+  initComments="";
+  hepeup.clear();
+  eventComments="";
 
   // Loop over all lines until we hit the </init> tag.
   while ( getLine() && currentLine.find("</init>") == string::npos ) {
@@ -650,6 +705,7 @@ bool Reader::readEvent(HEPEUP * peup) {
   HEPEUP & eup = (peup? *peup: hepeup);
   eup.clear();
   eup.heprup = &heprup;
+  weights_detailed_vec.clear();
 
   // Check if the initialization was successful. Otherwise we will
   // not read any events.
@@ -672,8 +728,7 @@ bool Reader::readEvent(HEPEUP * peup) {
     XMLTag & evtag = *evtags[0];
     for ( map<string,string>::const_iterator it = evtag.attr.begin();
           it != evtag.attr.end(); ++it ) {
-      string v = it->second.c_str();
-      eup.attributes[it->first] = v;
+      eup.attributes.insert(make_pair(it->first,it->second));
     }
     for ( int i = 0, N = evtags.size(); i < N; ++i )
       if (evtags[i]) delete evtags[i];
@@ -708,7 +763,7 @@ bool Reader::readEvent(HEPEUP * peup) {
 
   if ( file == NULL ) return false;
 
-  eup.scales = LHAscales(eup.SCALUP);
+  eup.scalesSave = LHAscales(eup.SCALUP);
 
   // Scan the init block for XML tags
   string leftovers;
@@ -733,7 +788,7 @@ bool Reader::readEvent(HEPEUP * peup) {
 
     if ( tag.name == "weights" ) {
       LHAweights wts(tag);
-      eup.weights = wts;
+      eup.weightsSave = wts;
 
       for ( int k = 0, M = int(wts.weights.size()); k < M; ++k ) {
         eup.weights_compressed.push_back(wts.weights[k]);
@@ -741,18 +796,19 @@ bool Reader::readEvent(HEPEUP * peup) {
 
     }
     else if ( tag.name == "scales" ) {
-      eup.scales = LHAscales(tag, eup.SCALUP);
+      eup.scalesSave = LHAscales(tag, eup.SCALUP);
     }
     else if ( tag.name == "rwgt" ) {
-      LHArwgt rwgt(tag);
-      eup.rwgt = rwgt;
+      LHArwgt rwgt0(tag);
+      eup.rwgtSave = rwgt0;
       string s;
-      vector<XMLTag*> tags2 = XMLTag::findXMLTags(rwgt.contents, &s);
+      vector<XMLTag*> tags2 = XMLTag::findXMLTags(rwgt0.contents, &s);
       for ( int k = 0, M = tags2.size(); k < M; ++k ) {
         const XMLTag & tagnow = *tags2[k];
         if ( tagnow.name == "wgt" ) {
           LHAwgt wt(tagnow);
           eup.weights_detailed.insert(make_pair(wt.id, wt.contents));
+          weights_detailed_vec.push_back(wt.contents);
         }
       }
       for ( int k = 0, M = tag.tags.size(); k < M; ++k ) {
@@ -760,6 +816,7 @@ bool Reader::readEvent(HEPEUP * peup) {
         if ( tagnow.name == "wgt" ) {
           LHAwgt wt(tagnow);
           eup.weights_detailed.insert(make_pair(wt.id, wt.contents));
+          weights_detailed_vec.push_back(wt.contents);
         }
       }
     }
@@ -794,7 +851,7 @@ void Writer::init() {
   // Print headercomments and header init information.
   file << "<header>" << endl;
   file << hashline(headerStream.str(),true) << std::flush;
-  if ( version != 1 ) heprup.initrwgt.print(file);
+  if ( version != 1 ) heprup.initrwgt.list(file);
   file << "</header>" << endl;
 
   file << "<init>"<< endl
@@ -823,7 +880,7 @@ void Writer::init() {
   }
 
   for ( int i = 0, N = heprup.generators.size(); i < N; ++i ) {
-    heprup.generators[i].print(file);
+    heprup.generators[i].list(file);
   }
 
   file << hashline(initStream.str(),true) << std::flush
@@ -836,7 +893,7 @@ void Writer::init() {
 // Write out the event stored in hepeup, followed by optional
 // comment lines.
 
-bool Writer::writeEvent(HEPEUP * peup) {
+bool Writer::writeEvent(HEPEUP * peup, int pDigits) {
 
   HEPEUP & eup = (peup? *peup: hepeup);
 
@@ -844,7 +901,7 @@ bool Writer::writeEvent(HEPEUP * peup) {
   for ( map<string,string>::const_iterator it = eup.attributes.begin();
         it != eup.attributes.end(); ++it )
     file << " " << it->first << "=\"" << it->second << "\"";
-  file << ">" << endl;
+  file << ">" << std::flush << endl;
   file << " " << setw(4) << eup.NUP
        << " " << setw(6) << eup.IDPRUP
        << " " << setw(14) << eup.XWGTUP
@@ -852,8 +909,6 @@ bool Writer::writeEvent(HEPEUP * peup) {
        << " " << setw(14) << eup.AQEDUP
        << " " << setw(14) << eup.AQCDUP << endl;
   eup.resize();
-
-  int pDigits = 18;
 
   for ( int i = 0; i < eup.NUP; ++i )
     file << " " << setw(8) << eup.IDUP[i]
@@ -875,9 +930,9 @@ bool Writer::writeEvent(HEPEUP * peup) {
   eventStream.str("");
 
   if ( version != 1 ) {
-    eup.rwgt.print(file);
-    eup.weights.print(file);
-    eup.scales.print(file);
+    eup.rwgtSave.list(file);
+    eup.weightsSave.list(file);
+    eup.scalesSave.list(file);
   }
 
   file << "</event>" << endl;
@@ -885,6 +940,66 @@ bool Writer::writeEvent(HEPEUP * peup) {
   if ( !file ) return false;
 
   return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Write out an event as a string.
+
+string Writer::getEventString(HEPEUP * peup) {
+
+  HEPEUP & eup = (peup? *peup: hepeup);
+
+  stringstream helper;
+
+  helper << "<event";
+  for ( map<string,string>::const_iterator it = eup.attributes.begin();
+        it != eup.attributes.end(); ++it )
+    helper << " " << it->first << "=\"" << it->second << "\"";
+  helper << ">" << std::flush << endl;
+  helper << " " << setw(4) << eup.NUP
+       << " " << setw(6) << eup.IDPRUP
+       << " " << setw(14) << eup.XWGTUP
+       << " " << setw(14) << eup.SCALUP
+       << " " << setw(14) << eup.AQEDUP
+       << " " << setw(14) << eup.AQCDUP << endl;
+  eup.resize();
+
+  for ( int i = 0; i < eup.NUP; ++i ) {
+    helper << " " << setw(8) << eup.IDUP[i]
+         << " " << setw(2) << eup.ISTUP[i]
+         << " " << setw(4) << eup.MOTHUP[i].first
+         << " " << setw(4) << eup.MOTHUP[i].second
+         << " " << setw(6) << eup.ICOLUP[i].first
+         << " " << setw(6) << eup.ICOLUP[i].second
+         << fixed
+         << setprecision(15)
+         << " " << setw(22) << eup.PUP[i][0]
+         << " " << setw(22) << eup.PUP[i][1]
+         << " " << setw(22) << eup.PUP[i][2]
+         << " " << setw(22) << eup.PUP[i][3]
+         << " " << setw(22) << eup.PUP[i][4]
+         << " " << setw(6) << eup.VTIMUP[i]
+         << " " << setw(6) << eup.SPINUP[i] << endl;
+  }
+
+  // Write event comments.
+  helper << hashline(eventStream.str()) << std::flush;
+  eventStream.str("");
+
+  if ( version != 1 ) {
+    eup.rwgtSave.list(helper);
+    eup.weightsSave.list(helper);
+    eup.scalesSave.list(helper);
+  }
+
+  helper << "</event>" << endl;
+
+  string helperString = helper.str();
+  //event = helperString.c_str();
+
+  return helperString;
 
 }
 

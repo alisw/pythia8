@@ -1,5 +1,5 @@
 // HiddenValleyFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,7 +18,8 @@ namespace Pythia8 {
 
 // Initialize data members of the flavour generation.
 
-void HVStringFlav::init(Settings& settings, Rndm* rndmPtrIn) {
+void HVStringFlav::init(Settings& settings, ParticleData*,
+  Rndm* rndmPtrIn, Info*) {
 
   // Save pointer.
   rndmPtr    = rndmPtrIn;
@@ -33,7 +34,7 @@ void HVStringFlav::init(Settings& settings, Rndm* rndmPtrIn) {
 
 // Pick a new HV-flavour given an incoming one.
 
-FlavContainer HVStringFlav::pick(FlavContainer& flavOld) {
+FlavContainer HVStringFlav::pick(FlavContainer& flavOld, double, double) {
 
   // Initial values for new flavour.
   FlavContainer flavNew;
@@ -82,15 +83,17 @@ int HVStringFlav::combine(FlavContainer& flav1, FlavContainer& flav2) {
 
 // Initialize data members of the string pT selection.
 
-void HVStringPT::init(Settings& settings, ParticleData& particleData,
-  Rndm* rndmPtrIn) {
+void HVStringPT::init(Settings& settings, ParticleData* particleDataPtrIn,
+  Rndm* rndmPtrIn, Info* infoPtrIn) {
 
   // Save pointer.
-  rndmPtr        = rndmPtrIn;
+  particleDataPtr = particleDataPtrIn;
+  rndmPtr         = rndmPtrIn;
+  infoPtr         = infoPtrIn;
 
   // Parameter of the pT width. No enhancement, since this is finetuning.
   double sigmamqv  = settings.parm("HiddenValley:sigmamqv");
-  double sigma     = sigmamqv * particleData.m0( 4900101);
+  double sigma     = sigmamqv * particleDataPtrIn->m0( 4900101);
   sigmaQ           = sigma / sqrt(2.);
   enhancedFraction = 0.;
   enhancedWidth    = 0.;
@@ -180,11 +183,11 @@ bool HiddenValleyFragmentation::init(Info* infoPtrIn, Settings& settings,
 
   // Create HVStringFlav instance for HV-flavour selection.
   hvFlavSelPtr = new HVStringFlav();
-  hvFlavSelPtr->init( settings, rndmPtr);
+  hvFlavSelPtr->init( settings, particleDataPtr, rndmPtr, infoPtr);
 
   // Create HVStringPT instance for pT selection in HV fragmentation.
   hvPTSelPtr = new HVStringPT();
-  hvPTSelPtr->init( settings, *particleDataPtr, rndmPtr);
+  hvPTSelPtr->init( settings, particleDataPtr, rndmPtr, infoPtr);
 
   // Create HVStringZ instance for z selection in HV fragmentation.
   hvZSelPtr = new HVStringZ();

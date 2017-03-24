@@ -78,8 +78,8 @@
 #define __FJCORE_DROP_CGAL    // disable CGAL support
 #ifndef __FJCORE_FASTJET_BASE_HH__
 #define __FJCORE_FASTJET_BASE_HH__
-#define FJCORE_BEGIN_NAMESPACE namespace fjcore {
-#define FJCORE_END_NAMESPACE   }
+#define FJCORE_BEGIN_NAMESPACE namespace Pythia8 { namespace fjcore {
+#define FJCORE_END_NAMESPACE   }}
 #endif // __FJCORE_FASTJET_BASE_HH__
 #ifndef __FJCORE_NUMCONSTS__
 #define __FJCORE_NUMCONSTS__

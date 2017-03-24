@@ -142,10 +142,10 @@ assigned codes 4900101 - 4900108. This gives a total of 64 possible
 lowest-lying mesons. We also include a duplication of that, into two 
 multiplets, corresponding to the pseudoscalar and vector mesons of 
 QCD. For now, again, these are assumed to have the same mass and 
-other properties. Only the flavour-diagonal ones can decay back into 
-the Standard-Model sector, however, while the rest remains in the 
-hidden sector. It is therefore only necessary to distinguish a few 
-states: 
+other properties. By default, only the flavour-diagonal ones can 
+decay back into the Standard-Model sector, however, while the rest 
+remains in the hidden sector. It is therefore only necessary to 
+distinguish a few states: 
 <br/><code>pivDiag</code>, identity 4900111, a flavour-diagonal 
 HV-meson with spin 0 that can decay back into the Standard-Model sector; 
 <br/><code>rhovDiag</code>, identity 4900113, a flavour-diagonal 
@@ -164,6 +164,10 @@ antiflavour;
 to handle cases where it is kinematically impossible to produce an 
 HV-meson on shell, and it therefore is assumed to de-excite by the 
 emission of invisible <i>gv-gv </i> v-glueball bound states. 
+ 
+<p/> 
+By changing ParticleData, it is possible to allow decays even for the 
+off-diagonal Up/Dn mesons. 
  
 <p/> 
 Only the spin of the HV-gluon or HV-photon is determined unambiguously 
@@ -450,6 +454,10 @@ functions or vertices; these are even less important.)
 in the visible sector by recoil effect, but this is a minor 
 effect relative to the primary emission of the <i>gv</i>. 
  
+<p/>While the default model has a fixed Hidden Valley coupling 
+<i> alpha_HV</i>, some further work [<a href="Bibliography.php" target="page">Scw15</a>] has considered 
+the impact of a running coupling. This is included as an option. 
+ 
 <br/><br/><strong>HiddenValley:FSR</strong>  <input type="radio" name="33" value="on"><strong>On</strong>
 <input type="radio" name="33" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
@@ -457,7 +465,14 @@ switch on final-state shower of <i>gv</i> or <i>gammav</i>
 in a HV production process. 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:alphaFSR </td><td></td><td> <input type="text" name="34" value="0.1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.1</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:alphaOrder  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
+Order at which <ei>alpha_HV</ei> runs, 
+<br/>
+<input type="radio" name="34" value="0" checked="checked"><strong>0 </strong>: zeroth order, i.e. <ei>alpha_HV</ei> is kept  fixed at the value <ei>alphaFSR</ei>.<br/>
+<input type="radio" name="34" value="1"><strong>1 </strong>: first order,<br/>
+on <ei>Ngauge</ei> and <ei>Nflav</ei>. 
+ 
+<br/><br/><table><tr><td><strong>HiddenValley:alphaFSR </td><td></td><td> <input type="text" name="35" value="0.1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.1</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 fixed alpha scale of <i>gv/gammav</i> emission; corresponds to 
 <i>alpha_strong</i> of QCD or <i>alpha_em</i> of QED. For 
 shower branchings such as <i>Dv &rarr; Dv + gv</i> the coupling is 
@@ -465,9 +480,14 @@ multiplied by <i>C_F = (N^2 - 1) / (2 * N)</i> for an
 <b>SU(N)</b> group and for <i>gv &rarr; gv + gv</i> by <i>N</i>. 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:pTminFSR </td><td></td><td> <input type="text" name="35" value="0.4" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.4</strong></code>; <code>minimum = 0.1</code>)</td></tr></table>
-lowest allowed <i>pT</i> of emission. Chosen with same default 
-as in normal QCD showers. 
+<br/><br/><table><tr><td><strong>HiddenValley:Lambda </td><td></td><td> <input type="text" name="36" value="0.4" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.4</strong></code>; <code>minimum = 0.1</code>)</td></tr></table>
+the parameter used for the case of a running (first order) <i>alpha_HV</i>. 
+   
+ 
+<br/><br/><table><tr><td><strong>HiddenValley:pTminFSR </td><td></td><td> <input type="text" name="37" value="0.44" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.44</strong></code>; <code>minimum = 0.1</code>)</td></tr></table>
+lowest allowed <i>pT</i> of emission. Should be greater than 
+or equal to 1.1 times <i>Lambda</i>, or it will be reset 
+automatically. 
    
  
 <h3>Hadronization</h3> 
@@ -561,47 +581,47 @@ behaviour. This does not mean that deviations from this set should
 not be explored, or that other scaling rules could be preferred 
 within alternative scenarios. These parameters are as follows. 
  
-<br/><br/><strong>HiddenValley:fragment</strong>  <input type="radio" name="36" value="on"><strong>On</strong>
-<input type="radio" name="36" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>HiddenValley:fragment</strong>  <input type="radio" name="38" value="on"><strong>On</strong>
+<input type="radio" name="38" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 switch on string fragmentation of the HV partonic system. 
 Only relevant for <b>SU(N)</b> scenarios. 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:nFlav  </td><td></td><td> <input type="text" name="37" value="1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 8</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:nFlav  </td><td></td><td> <input type="text" name="39" value="1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 8</code>)</td></tr></table>
 number of different flavours assumed to exist in the hadronization 
 description, leading to approximately <i>1/n_Flav</i> of the 
 produced HV-mesons being flavour-diagonal and capable to decay back 
 to Standard Model particles. 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:probVector </td><td></td><td> <input type="text" name="38" value="0.75" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.75</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:probVector </td><td></td><td> <input type="text" name="40" value="0.75" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.75</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)</td></tr></table>
 fraction of HV-mesons that are assigned spin 1 (vector), with the 
 remainder spin 0 (pseudoscalar). Assuming the <i>qv</i> have 
 spin <i>1/2</i> and the mass splitting is small, spin counting 
 predicts that <i>3/4</i> of the mesons should have spin 1. 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:aLund </td><td></td><td> <input type="text" name="39" value="0.3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:aLund </td><td></td><td> <input type="text" name="41" value="0.3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
 The <i>a</i> parameter of the Lund symmetric fragmentation function. 
 See the normal <?php $filepath = $_GET["filepath"];
 echo "<a href='Fragmentation.php?filepath=".$filepath."' target='page'>";?>fragmentation 
 function</a> description for the shape of this function.   
  
-<br/><br/><table><tr><td><strong>HiddenValley:bmqv2 </td><td></td><td> <input type="text" name="40" value="0.8" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.8</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:bmqv2 </td><td></td><td> <input type="text" name="42" value="0.8" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.8</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)</td></tr></table>
 The <i>b</i> parameter of the Lund symmetric fragmentation function, 
 multiplied by the square of the <i>qv</i> mass. This scaling ensures 
 that the fragmentation function keeps the same shape when the 
 <i>qv</i> mass is changed (neglecting transverse momenta). 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:rFactqv </td><td></td><td> <input type="text" name="41" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:rFactqv </td><td></td><td> <input type="text" name="43" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)</td></tr></table>
 <i>r_qv</i>, i.e. the Bowler correction factor to the Lund symmetric 
 fragmentation function, which could be made weaker or stronger than 
 its natural value. 
    
  
-<br/><br/><table><tr><td><strong>HiddenValley:sigmamqv </td><td></td><td> <input type="text" name="42" value="0.5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HiddenValley:sigmamqv </td><td></td><td> <input type="text" name="44" value="0.5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 the width <i>sigma</i> of transverse momenta in the HV fragmentation 
 process, normalized to the <i>qv</i> mass. This ensures that 
 <i>sigma</i> scales proportionately to <i>m_qv</i>. 
@@ -790,49 +810,59 @@ if($_POST["33"] != "off")
 $data = "HiddenValley:FSR = ".$_POST["33"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["34"] != "0.1")
+if($_POST["34"] != "0")
 {
-$data = "HiddenValley:alphaFSR = ".$_POST["34"]."\n";
+$data = "HiddenValley:alphaOrder = ".$_POST["34"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["35"] != "0.4")
+if($_POST["35"] != "0.1")
 {
-$data = "HiddenValley:pTminFSR = ".$_POST["35"]."\n";
+$data = "HiddenValley:alphaFSR = ".$_POST["35"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["36"] != "off")
+if($_POST["36"] != "0.4")
 {
-$data = "HiddenValley:fragment = ".$_POST["36"]."\n";
+$data = "HiddenValley:Lambda = ".$_POST["36"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["37"] != "1")
+if($_POST["37"] != "0.44")
 {
-$data = "HiddenValley:nFlav = ".$_POST["37"]."\n";
+$data = "HiddenValley:pTminFSR = ".$_POST["37"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["38"] != "0.75")
+if($_POST["38"] != "off")
 {
-$data = "HiddenValley:probVector = ".$_POST["38"]."\n";
+$data = "HiddenValley:fragment = ".$_POST["38"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["39"] != "0.3")
+if($_POST["39"] != "1")
 {
-$data = "HiddenValley:aLund = ".$_POST["39"]."\n";
+$data = "HiddenValley:nFlav = ".$_POST["39"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["40"] != "0.8")
+if($_POST["40"] != "0.75")
 {
-$data = "HiddenValley:bmqv2 = ".$_POST["40"]."\n";
+$data = "HiddenValley:probVector = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["41"] != "1.0")
+if($_POST["41"] != "0.3")
 {
-$data = "HiddenValley:rFactqv = ".$_POST["41"]."\n";
+$data = "HiddenValley:aLund = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["42"] != "0.5")
+if($_POST["42"] != "0.8")
 {
-$data = "HiddenValley:sigmamqv = ".$_POST["42"]."\n";
+$data = "HiddenValley:bmqv2 = ".$_POST["42"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["43"] != "1.0")
+{
+$data = "HiddenValley:rFactqv = ".$_POST["43"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["44"] != "0.5")
+{
+$data = "HiddenValley:sigmamqv = ".$_POST["44"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -842,4 +872,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

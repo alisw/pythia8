@@ -112,7 +112,7 @@ generate a pair of random numbers according to
 to <code>gauss()</code>. 
 </method> 
  
-<method name="int Rndm::pick(const vector<double>& prob)"> 
+<method name="int Rndm::pick(const vector&lt;double&gt;&amp; prob)"> 
 pick one option among vector of (positive) probabilities. 
 </method> 
  
@@ -137,4 +137,4 @@ to give a random number between 0 and 1.
  
 </chapter> 
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

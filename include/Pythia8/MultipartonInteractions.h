@@ -1,5 +1,5 @@
 // MultipartonInteractions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -105,7 +105,7 @@ public:
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
     Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
     SigmaTotal* sigmaTotPtrIn, UserHooks* userHooksPtrIn,
-    ostream& os = cout);
+    bool hasGammaIn = false);
 
   // Reset impact parameter choice and update the CM energy.
   void reset();
@@ -117,11 +117,13 @@ public:
   void setupFirstSys( Event& process);
 
   // Find whether to limit maximum scale of emissions.
+  // Provide sum pT / 2 as potential limit where relevant.
   bool limitPTmax( Event& event);
+  double scaleLimitPT() const {return scaleLimitPTsave;}
 
   // Prepare system for evolution.
-  void prepare(Event& event, double pTscale = 1000.) {
-    if (!bSetInFirst) overlapNext(event, pTscale); }
+  void prepare(Event& event, double pTscale = 1000., bool rehashB = false) {
+    if (!bSetInFirst) overlapNext(event, pTscale, rehashB); }
 
   // Select next pT in downwards evolution.
   double pTnext( double pTbegAll, double pTendAll, Event& event);
@@ -140,9 +142,9 @@ public:
   double x1H()        const {return x1;}
   double x2H()        const {return x2;}
   double Q2Fac()      const {return pT2Fac;}
-  double pdf1()       const {return xPDF1now;}
-  double pdf2()       const {return xPDF2now;}
-  double bMPI()       const {return (bIsSet) ? bNow / bAvg : 0.;}
+  double pdf1()       const {return (id1 == 21 ? 4./9. : 1.) * xPDF1now;}
+  double pdf2()       const {return (id2 == 21 ? 4./9. : 1.) * xPDF2now;}
+  double bMPI()       const {return (bIsSet) ? bNow : 0.;}
   double enhanceMPI() const {return (bIsSet) ? enhanceB / zeroIntCorr : 1.;}
 
   // For x-dependent matter profile, return incoming valence/sea
@@ -150,12 +152,17 @@ public:
   int    getVSC1()   const {return vsc1;}
   int    getVSC2()   const {return vsc2;}
 
+  // Set the offset wrt. to normal beam particle positions for hard diffraction
+  // and for photon beam from lepton.
+  int  getBeamOffset()       const {return beamOffset;}
+  void setBeamOffset(int offsetIn) {beamOffset = offsetIn;}
+
   // Update and print statistics on number of processes.
   // Note: currently only valid for nondiffractive systems, not diffraction??
   void accumulate() { int iBeg = (infoPtr->isNonDiffractive()) ? 0 : 1;
     for (int i = iBeg; i < infoPtr->nMPI(); ++i)
     ++nGen[ infoPtr->codeMPI(i) ];}
-  void statistics(bool resetStat = false, ostream& os = cout);
+  void statistics(bool resetStat = false);
   void resetStatistics() { for ( map<int, int>::iterator iter = nGen.begin();
     iter != nGen.end(); ++iter) iter->second = 0; }
 
@@ -201,7 +208,7 @@ private:
   int    id1Save, id2Save;
   double pT2Save, x1Save, x2Save, sHatSave, tHatSave, uHatSave,
          alpSsave, alpEMsave, pT2FacSave, pT2RenSave, xPDF1nowSave,
-         xPDF2nowSave;
+         xPDF2nowSave, scaleLimitPTsave;
   SigmaProcess *dSigmaDtSelSave;
 
   // vsc1, vsc2:     for minimum-bias events with trial interaction, store
@@ -210,7 +217,7 @@ private:
 
   // Other initialization data.
   bool   hasBaryonBeams, hasLowPow, globalRecoilFSR;
-  int    iDiffSys, nMaxGlobalRecoilFSR;
+  int    iDiffSys, nMaxGlobalRecoilFSR, bSelHard;
   double eCM, sCM, pT0, pT20, pT2min, pTmax, pT2max, pT20R, pT20minR,
          pT20maxR, pT20min0maxR, pT2maxmin, sigmaND, pT4dSigmaMax,
          pT4dProbMax, dSigmaApprox, sigmaInt, sudExpPT[101],
@@ -233,6 +240,11 @@ private:
          kNowSave[5], bAvgSave[5], bDivSave[5], probLowBSave[5],
          fracAhighSave[5], fracBhighSave[5], fracChighSave[5],
          fracABChighSave[5], cDivSave[5], cMaxSave[5];
+
+  // Beam offset wrt. normal situation and other photon-related parameters.
+  int    beamOffset;
+  double mGmGmMin, mGmGmMax;
+  bool   hasGamma;
 
   // Pointer to various information on the generation.
   Info*          infoPtr;
@@ -299,7 +311,7 @@ private:
   // Pick impact parameter and interaction rate enhancement,
   // either before the first interaction (for nondiffractive) or after it.
   void overlapFirst();
-  void overlapNext(Event& event, double pTscale);
+  void overlapNext(Event& event, double pTscale, bool rehashB);
 
 };
 

@@ -1,5 +1,5 @@
 // HelicityMatrixElements.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2017 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -323,7 +323,7 @@ complex HelicityMatrixElement::dBreitWigner(double m0, double m1, double s,
 void HMETwoFermions2W2TwoFermions::initConstants() {
 
   // Set the constants for the W'.
-  if (abs(pID[4]) == 34 && settingsPtr) {
+  if (pID.size() > 4 && abs(pID[4]) == 34 && settingsPtr) {
     if (abs(pID[0]) < 11) {
       p0CA = settingsPtr->parm("Wprime:aq");
       p0CV = settingsPtr->parm("Wprime:vq");

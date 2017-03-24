@@ -1,5 +1,5 @@
 // SigmaSUSY.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -1864,15 +1864,15 @@ void Sigma2gg2squarkantisquark::sigmaKin() {
 
   // Modified Mandelstam variables for massive kinematics with m3 = m4.
   // tHSq = tHat - m_squark^2; uHSq = uHat - m_squark^2.
-  //  double s34Avg = 0.5 * (s3 + s4) - 0.25 * pow2(s3 - s4) / sH;
-  double tHSq    = -0.5 * (sH - tH + uH);
-  double uHSq    = -0.5 * (sH + tH - uH);
+  double s34Avg = 0.5 * (s3 + s4) - 0.25 * pow2(s3 - s4) / sH;
+  double tHSq   = -0.5 * (sH - tH + uH);
+  double uHSq   = -0.5 * (sH + tH - uH);
   // ! (NEED TO CHECK THAT THESE APPLIED CORRECTLY BELOW)   !
   // ! (PRELIMINARY CROSS-CHECKS WITH PYTHIA 6 COME OUT OK) !
 
   // Helicity-independent prefactor
   double comFacHat = M_PI/sH2 * pow2(alpS) / 128.0
-    * ( 24.0 * (1.0 - 2*tHSq*uHSq/sH2) - 8.0/3.0 );
+    * ( 24.0 * (1.0 - 2*tHSq*uHSq/sH2) - 8.0/3.0 ) * openFracPair;
 
   // Helicity-dependent factors
   sigma = 0.0;
@@ -1881,8 +1881,8 @@ void Sigma2gg2squarkantisquark::sigmaKin() {
       // Divide by 4 for helicity average
       sigma += comFacHat / 4.0
         * ( (1.0-ha*hb)
-            - 2.0 * sH*m2Sq/tHSq/uHSq
-            * ( 1.0 - ha*hb - sH*m2Sq/tHSq/uHSq));
+            - 2.0 * sH*s34Avg/tHSq/uHSq
+            * ( 1.0 - ha*hb - sH*s34Avg/tHSq/uHSq));
     }
   }
 

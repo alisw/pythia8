@@ -31,7 +31,7 @@ users probably will have little interaction with.
  
 <h3>Concepts</h3> 
  
-We distinguish seven kinds of user-modifiable variables, by the way 
+We distinguish eight kinds of user-modifiable variables, by the way 
 they have to be stored: 
 <ol> 
 <li>Flags are on/off switches, and are stored as <code>bool</code>.</li> 
@@ -41,28 +41,41 @@ and are stored as <code>int</code>.</li>
 <code>double</code>. The shorthand notation parm is used in the C++ 
 code and XML tags.</li> 
 <li>Words are simple character strings and are stored as 
-<code>string</code>. No blanks or double quotation marks (&quot;) may 
-appear inside a word, the former to simplify parsing of an input file 
-and the latter not to cause conflicts with XML attribute delimiters. 
-Currently the main application is to store file names.</li> 
+<code>string</code>. No double quotation marks &quot; or braces { } 
+may appear inside a word, and commas , will take a spcial role next 
+so should also be avoided. Normally the input string is expected not to 
+contain any blanks or equal signs, but if it does it must be enclosed 
+in braces { }.</li> 
 <li>Vectors of flags take a variable length, and are stored as 
 <code>vector&lt;bool&gt;</code>. The shorthand notation fvec is used 
-in the C++ code and XML tags. When the vector is input as a string, 
-all the values have to be given as a comma-separated list with no blanks, 
-to simplify parsing.</li> 
+in the C++ code and XML tags. When the vector is input as a string 
+it should be given as a comma-separated list, either containing 
+no blanks or else enclosed in braces { }.</li> 
 <li>Vectors of modes take a variable length, and are stored as 
 <code>vector&lt;int&gt;</code>. The shorthand notation mvec is used 
-in the C++ code and XML tags. When the vector is input as a string, 
-all the values have to be given as a comma-separated list with no blanks, 
-to simplify parsing.</li> 
+in the C++ code and XML tags. When the vector is input as a string 
+it should be given as a comma-separated list, either containing 
+no blanks or else enclosed in braces { }.</li> 
 <li>Vectors of parameters take a variable length and for each element 
 a continuum of values, and are stored as <code>vector&lt;double&gt;</code>. 
 The shorthand notation pvec is used in the C++ code and XML tag. 
-When the vector is input as a string, all the values have to be given 
-as a comma-separated list with no blanks, to simplify parsing.</li> 
+When the vector is input as a string it should be given as a comma-separated 
+list, either containing no blanks or else enclosed in braces { }.</li> 
+<li>Vectors of words take a variable length, and are stored as 
+<code>vector&lt;string&gt;</code>. The shorthand notation wvec is used 
+in the C++ code and XML tags. When the vector is input as a string 
+it should be given as a comma-separated list, either containing 
+no blanks or else enclosed in braces { }.</li> 
 </ol> 
-Note that all shorthands have been chosen four letters long. 
- 
+Note the special role played by the braces { } to enclose words or lists 
+that are allowed to contain blanks and equal signs, and of commas , to 
+separate the fields of the list, in analogy with how C++ arrays can be 
+initialized. You should not be using these three characters for any other 
+purposes. Input of a vector can be split across several lines, until a 
+close brace } is found that matches the open brace {. If no such is found 
+the program will abort, so beware. The double quotation mark &quot; is 
+avoided since it is already used for other purposes. Also note that all 
+shorthands have been chosen four letters long. 
 <p/> 
 In general, each variable stored in <code>Settings</code> is associated 
 with four kinds of information: 
@@ -80,7 +93,8 @@ to represent a reasonable choice.</li>
 requests.</li> 
 <li>An allowed range of values, represented by meaningful 
 minimum and maximum values. This has no sense for a <code>flag</code>, 
-an <code>fvec</code> or a <code>word</code> (and is not used there), is 
+an <code>fvec</code> a <code>word</code> or a <code>wvec</code> 
+(and is not used there), is 
 usually rather well-defined for a <code>mode</code> or <code>mvec</code>, 
 but less so for a <code>parm</code> or <code>pvec</code>. Often the allowed 
 range exaggerates the degree of our current knowledge, so as not to restrict 
@@ -103,7 +117,7 @@ of being reset to fall into the allowed range, without any warnings.</li>
  
 <p/> 
 Technically, the <code>Settings</code> class is implemented with the 
-help of seven separate maps, one for each kind of variable, with the 
+help of eight separate maps, one for each kind of variable, with the 
 variable <code>name</code> used as key. 
  
 <h3>Operation</h3> 
@@ -121,10 +135,10 @@ subdirectory.
 <p/> 
 In all of the files scanned, lines beginning with 
 <code>&lt;flag</code>, <code>&lt;mode</code>, <code>&lt;parm</code>, 
-<code>&lt;word</code>, <code>&lt;fvec</code>, <code>&lt;mvec</code> or 
-<code>&lt;pvec</code> are identified, and the information on such a line 
-is used to define a new flag, mode, parameter, word, or vector of flags, 
-modes or parameters. To exemplify, consider a line 
+<code>&lt;word</code>, <code>&lt;fvec</code>, <code>&lt;mvec</code>, 
+<code>&lt;pvec</code> or <code>&lt;wvec</code> are identified, and the 
+information on such a line is used to define a new flag, mode, parameter, 
+word, or vector of flags, modes or parameters. To exemplify, consider a line 
 <pre> 
 &lt;parm name="TimeShower:pTmin" default="0.5" min="0.1" max="2.0"> 
 </pre> 
@@ -175,7 +189,10 @@ b) The <code>Pythia</code> <code>readString(string)</code> method
 actually does not do changes itself, but sends on the string either 
 to the <code>Settings</code> class or to <code>ParticleData</code>. 
 The former holds if the string begins with a letter, the latter 
-if it begins with a digit. If desired, it is possible to communicate 
+if it begins with a digit. (The exception is if an input list has been 
+begun by an open brace { but no matching close brace } was present; 
+then all subsequent non-empty input is directed to <code>Settings</code> 
+until the close brace is found.) If desired, it is possible to communicate 
 directly with the corresponding <code>Settings</code> method: 
 <pre> 
     pythia.settings.readString("TimeShower:pTmin = 1.0"); 
@@ -323,37 +340,40 @@ initialize pointer to error-message database. Internal.
    
  
 <a name="method3"></a>
-<p/><strong>bool Settings::init(string startFile = &quot;../xmldoc/Index.xml&quot;, bool append = false, ostream& os = cout) &nbsp;</strong> <br/>
+<p/><strong>bool Settings::init(string startFile = &quot;../share/Pythia8/xmldoc/Index.xml&quot;, bool append = false) &nbsp;</strong> <br/>
 read in the settings database. 
-<br/><code>argument</code><strong> startFile </strong> (<code>default = <strong>&quot;../xmldoc/Index.xml&quot;</strong></code>) :  
+<br/><code>argument</code><strong> startFile </strong>  : <argument name="startFile" 
+default="&quot;../share/Pythia8/xmldoc/Index.xml&quot;"> 
 read in the settings from all the files listed in this file, and 
 assumed to be located in the same subdirectory. 
    
-<br/><code>argument</code><strong> append </strong> (<code>default = <strong>false</strong></code>) :  
+<br/><code>argument</code><strong> append </strong> (<code>default = <strong>off</strong></code>) :  
 By default nothing is done if the method has already been called once. 
 If true the further settings read in are added to the current database. 
-   
-<br/><code>argument</code><strong> os </strong> (<code>default = <strong>cout</strong></code>) :  
-stream for error printout. 
    
 <br/><b>Note:</b> The method returns false if it fails. 
    
  
 <a name="method4"></a>
-<p/><strong>bool Settings::reInit(string startFile = &quot;../xmldoc/Index.xml&quot;, ostream& os = cout) &nbsp;</strong> <br/>
+<p/><strong>bool init(istream& is, bool append = false) &nbsp;</strong> <br/>
+read in the settings from an input stream. This allows initialization 
+without reading the xml files directly, which is useful for initialization 
+of multiple copies of Pythia8. 
+   
+ 
+<a name="method5"></a>
+<p/><strong>bool Settings::reInit(string startFile = &quot;../share/Pythia8/xmldoc/Index.xml&quot;) &nbsp;</strong> <br/>
 overwrite the existing database. 
-<br/><code>argument</code><strong> startFile </strong> (<code>default = <strong>&quot;../xmldoc/Index.xml&quot;</strong></code>) :  
+<br/><code>argument</code><strong> startFile </strong>  : <argument name="startFile" 
+default="&quot;../share/Pythia8/xmldoc/Index.xml&quot;"> 
 read in the settings from all the files listed in this file, and 
 assumed to be located in the same subdirectory. 
-   
-<br/><code>argument</code><strong> os </strong> (<code>default = <strong>cout</strong></code>) :  
-stream for error printout. 
    
 <br/><b>Note:</b> The method returns false if it fails. 
    
  
-<a name="method5"></a>
-<p/><strong>bool Settings::readString(string line, bool warn = true, ostream& os = cout) &nbsp;</strong> <br/>
+<a name="method6"></a>
+<p/><strong>bool Settings::readString(string line, bool warn = true) &nbsp;</strong> <br/>
 read in a string, and change the relevant quantity in the database. 
 It is normally used indirectly, via 
 <code>Pythia::readString(...)</code> and 
@@ -361,18 +381,15 @@ It is normally used indirectly, via
 <br/><code>argument</code><strong> line </strong>  :  
 the string to be interpreted as an instruction. 
    
-<br/><code>argument</code><strong> warn </strong> (<code>default = <strong>true</strong></code>) :  
+<br/><code>argument</code><strong> warn </strong> (<code>default = <strong>on</strong></code>) :  
 write a warning message or not whenever the instruction does not make 
 sense, e.g. if the variable does not exist in the databases. 
-   
-<br/><code>argument</code><strong> os </strong> (<code>default = <strong>cout</strong></code>) :  
-stream for error printout. 
    
 <br/><b>Note:</b> the method returns false if it fails to 
 make sense out of the input string. 
    
  
-<a name="method6"></a>
+<a name="method7"></a>
 <p/><strong>bool Settings::writeFile(string toFile, bool writeAll = false) &nbsp;</strong> <br/>
    
 <strong>bool Settings::writeFile(ostream& os = cout, bool writeAll = false) &nbsp;</strong> <br/>
@@ -380,48 +397,51 @@ write current settings to a file or to an <code>ostream</code>.
 <br/><code>argument</code><strong> toFile, os </strong>  :  
 file or stream on which settings are written. 
    
-<br/><code>argument</code><strong> writeAll </strong> (<code>default = <strong>false</strong></code>) :  
+<br/><code>argument</code><strong> writeAll </strong> (<code>default = <strong>off</strong></code>) :  
 normally only settings that have been changed are written, 
 but if true then all settings are output. 
    
 <br/><b>Note:</b> the method returns false if it fails. 
    
  
-<a name="method7"></a>
-<p/><strong>void Settings::listAll(ostream& os = cout) &nbsp;</strong> <br/>
+<a name="method8"></a>
+<p/><strong>bool writeFileXML(ostream& os = cout) &nbsp;</strong> <br/>
+write out the information stored in xmldoc to be used later to 
+initialize Settings through an input stream. 
    
-<strong>void Settings::listChanged(ostream& os = cout) &nbsp;</strong> <br/>
+ 
+<a name="method9"></a>
+<p/><strong>void Settings::listAll() &nbsp;</strong> <br/>
    
-<strong>void Settings::list(string match, ostream& os = cout) &nbsp;</strong> <br/>
+<strong>void Settings::listChanged() &nbsp;</strong> <br/>
+   
+<strong>void Settings::list(string match) &nbsp;</strong> <br/>
 list all or changed settings, or a group of them. 
 <br/><code>argument</code><strong> match </strong>  :  
 list all those settings where the name contains 
 the <code>match</code> (sub)string (case-insensitive). 
    
-<br/><code>argument</code><strong> os </strong> (<code>default = <strong>cout</strong></code>) :  
-output stream for the listing. 
-   
    
  
-<a name="method8"></a>
+<a name="method10"></a>
 <p/><strong>string Settings::output(string key, bool fullLine = true) &nbsp;</strong> <br/>
 provide the value of a variable as a character string, whatever the type. 
 If the variable does not exist then <code>unknown</code> is returned. 
 <br/><code>argument</code><strong> key </strong>  :  
 the name of the settings variable. 
    
-<br/><code>argument</code><strong> fullLine </strong> (<code>default = <strong>true</strong></code>) :  
+<br/><code>argument</code><strong> fullLine </strong> (<code>default = <strong>on</strong></code>) :  
 If true then a whole "line" is returned, " <code>key = value\n</code>", 
 while if false only the  <code>value</code> string. 
    
    
  
-<a name="method9"></a>
+<a name="method11"></a>
 <p/><strong>void Settings::resetAll() &nbsp;</strong> <br/>
 reset all current values to their defaults. 
    
  
-<a name="method10"></a>
+<a name="method12"></a>
 <p/><strong>bool Settings::isFlag(string key) &nbsp;</strong> <br/>
    
 <strong>bool Settings::isMode(string key) &nbsp;</strong> <br/>
@@ -435,11 +455,13 @@ reset all current values to their defaults.
 <strong>bool Settings::isMVec(string key) &nbsp;</strong> <br/>
    
 <strong>bool Settings::isPVec(string key) &nbsp;</strong> <br/>
+   
+<strong>bool Settings::isWVec(string key) &nbsp;</strong> <br/>
 return true if an entry of the given name and kind 
 exists, else false. 
    
  
-<a name="method11"></a>
+<a name="method13"></a>
 <p/><strong>void Settings::addFlag(string key, bool default) &nbsp;</strong> <br/>
    
 <strong>void Settings::addMode(string key, int default, bool hasMin, bool hasMax, int min, int max) &nbsp;</strong> <br/>
@@ -453,13 +475,15 @@ exists, else false.
 <strong>void Settings::addMVec(string key, vector&lt;int&gt; default, bool hasMin, bool hasMax, int min, int max) &nbsp;</strong> <br/>
    
 <strong>void Settings::addPVec(string key, vector&lt;double&gt; default, bool hasMin, bool hasMax, double min, double max) &nbsp;</strong> <br/>
+   
+<strong>void Settings::addWVec(string key, vector&lt;string&gt; default) &nbsp;</strong> <br/>
 add an entry of the respective kind to the database. The name and default 
 value(s) always has to be supplied, for <code>Mode</code>, <code>Parm</code>, 
 <code>MVec</code> and <code>PVec</code> additionally if lower and/or 
 upper limits are to be imposed and, if so, what those limit are. 
    
  
-<a name="method12"></a>
+<a name="method14"></a>
 <p/><strong>bool Settings::flag(string key) &nbsp;</strong> <br/>
    
 <strong>int Settings::mode(string key) &nbsp;</strong> <br/>
@@ -473,14 +497,16 @@ upper limits are to be imposed and, if so, what those limit are.
 <strong>vector&lt;int&gt; Settings::mvec(string key) &nbsp;</strong> <br/>
    
 <strong>vector&lt;double&gt; Settings::pvec(string key) &nbsp;</strong> <br/>
+   
+<strong>vector&lt;string&gt; Settings::wvec(string key) &nbsp;</strong> <br/>
 return the current value(s) of the respective setting. If the name 
 does not exist in the database, a value <code>false</code>, 
 <code>0</code>, <code>0.</code>, <code>&quot; &quot;</code>, or a 
-vector of length 1 and value <code>false</code>, <code>0</code> or 
-<code>0.</code>, respectively, is returned. 
+vector of length 1 and value <code>false</code>, <code>0</code>, 
+<code>0.</code> or <code>&quot; &quot;</code>, respectively, is returned. 
    
  
-<a name="method13"></a>
+<a name="method15"></a>
 <p/><strong>bool Settings::flagDefault(string key) &nbsp;</strong> <br/>
    
 <strong>int Settings::modeDefault(string key) &nbsp;</strong> <br/>
@@ -494,32 +520,36 @@ vector of length 1 and value <code>false</code>, <code>0</code> or
 <strong>vector&lt;int&gt; Settings::mvecDefault(string key) &nbsp;</strong> <br/>
    
 <strong>vector&lt;double&gt; Settings::pvecDefault(string key) &nbsp;</strong> <br/>
+   
+<strong>vector&lt;string&gt; Settings::wvecDefault(string key) &nbsp;</strong> <br/>
 return the default value(s) of the respective setting. If the name 
 does not exist in the database, a value <code>false</code>, 
 <code>0</code>, <code>0.</code>, <code>&quot; &quot;</code>, or a 
-vector of length 1 and value <code>false</code>, <code>0</code> or 
-<code>0.</code>, respectively, is returned. 
+vector of length 1 and value <code>false</code>, <code>0</code>, 
+<code>0.</code> or <code>&quot; &quot;</code>, respectively, is returned. 
    
  
-<a name="method14"></a>
-<p/><strong>map<string, Flag> Settings::getFlagMap(string match) &nbsp;</strong> <br/>
+<a name="method16"></a>
+<p/><strong>map&lt;string, Flag&gt; Settings::getFlagMap(string match) &nbsp;</strong> <br/>
    
-<strong>map<string, Mode> Settings::getModeMap(string match) &nbsp;</strong> <br/>
+<strong>map&lt;string, Mode&gt; Settings::getModeMap(string match) &nbsp;</strong> <br/>
    
-<strong>map<string, Parm> Settings::getParmMap(string match) &nbsp;</strong> <br/>
+<strong>map&lt;string, Parm&gt; Settings::getParmMap(string match) &nbsp;</strong> <br/>
    
-<strong>map<string, Word> Settings::getWordMap(string match) &nbsp;</strong> <br/>
+<strong>map&lt;string, Word&gt; Settings::getWordMap(string match) &nbsp;</strong> <br/>
    
-<strong>map<string, FVec> Settings::getFVecMap(string match) &nbsp;</strong> <br/>
+<strong>map&lt;string, FVec&gt; Settings::getFVecMap(string match) &nbsp;</strong> <br/>
    
-<strong>map<string, MVec> Settings::getMVecMap(string match) &nbsp;</strong> <br/>
+<strong>map&lt;string, MVec&gt; Settings::getMVecMap(string match) &nbsp;</strong> <br/>
    
-<strong>map<string, PVec> Settings::getPVecMap(string match) &nbsp;</strong> <br/>
+<strong>map&lt;string, PVec&gt; Settings::getPVecMap(string match) &nbsp;</strong> <br/>
+   
+<strong>map&lt;string, WVec&gt; Settings::getWVecMap(string match) &nbsp;</strong> <br/>
 return a map of all settings of the respective type that contain the 
 string "match" in its name. 
    
  
-<a name="method15"></a>
+<a name="method17"></a>
 <p/><strong>void Settings::flag(string key, bool now) &nbsp;</strong> <br/>
    
 <strong>void Settings::mode(string key, int now) &nbsp;</strong> <br/>
@@ -533,13 +563,15 @@ string "match" in its name.
 <strong>void Settings::mvec(string key, vector&lt;int&gt; now) &nbsp;</strong> <br/>
    
 <strong>void Settings::pvec(string key, vector&lt;double&gt; now) &nbsp;</strong> <br/>
+   
+<strong>void Settings::wvec(string key, vector&lt;string&gt; now) &nbsp;</strong> <br/>
 change the current value(s) of the respective setting to the provided 
 new value(s). If lower or upper limits have been set, input values 
 outside the allowed range are reinterpreted as being a the nearest 
 limit. 
    
  
-<a name="method16"></a>
+<a name="method18"></a>
 <p/><strong>void Settings::forceMode(string key, int now) &nbsp;</strong> <br/>
    
 <strong>void Settings::forceParm(string key, double now) &nbsp;</strong> <br/>
@@ -551,7 +583,7 @@ as above, but do not check lower and upper limits, so that the current
 value(s) can be put outside the intended borders. 
    
  
-<a name="method17"></a>
+<a name="method19"></a>
 <p/><strong>void Settings::resetFlag(string key) &nbsp;</strong> <br/>
    
 <strong>void Settings::resetMode(string key) &nbsp;</strong> <br/>
@@ -565,10 +597,29 @@ value(s) can be put outside the intended borders.
 <strong>void Settings::resetMVec(string key) &nbsp;</strong> <br/>
    
 <strong>void Settings::resetPVec(string key) &nbsp;</strong> <br/>
+   
+<strong>void Settings::resetWVec(string key) &nbsp;</strong> <br/>
 reset the current value to the default one. 
+   
+ 
+<a name="method20"></a>
+<p/><strong>bool Settings::getIsInit() &nbsp;</strong> <br/>
+return true if the database has been initialized, else false. 
+   
+ 
+<a name="method21"></a>
+<p/><strong>bool Settings::readingFailed() &nbsp;</strong> <br/>
+return true if some input could not be parsed, else false. 
+   
+ 
+<a name="method22"></a>
+<p/><strong>bool Settings::unfinishedInput() &nbsp;</strong> <br/>
+return true if input of a vector has been begun with am 
+open brace { but no matching closing brace } has been found 
+(so far), else false. 
    
  
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

@@ -1,10 +1,12 @@
 // main63.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Example how you can use UserHooks to enhance rare emission rates,
 // in this case q -> q gamma.
+// To concentrate on the photons from the showers, MPI and hadronization
+// are switched off by default.
 
 #include "Pythia8/Pythia.h"
 using namespace Pythia8;
@@ -15,13 +17,13 @@ using namespace Pythia8;
 
 class EnhanceHooks : public UserHooks {
 
-public:  
+public:
 
   // Constructor and destructor do nothing.
   EnhanceHooks() {}
   ~EnhanceHooks() {}
 
-  // Enhance real-emission rate. Thus no trial-emission enhancement. 
+  // Enhance real-emission rate. Thus no trial-emission enhancement.
   bool canEnhanceEmission() { return true;}
   bool canEnhanceTrial()    { return false;}
 
@@ -43,41 +45,29 @@ public:
 
 int main() {
 
-  // Number of events to generate.
-  int nEvent = 1000;
-
-    // Histogram pT spectrum of photons and event weights.
-    Hist gamNoEnh(   "gamma pT spectrum, no enhancement",   100, 0., 100.); 
-    Hist gamWithEnh( "gamma pT spectrum, with enhancement", 100, 0., 100.); 
-    Hist gamBefWt(   "gamma pT spectrum, without weight",   100, 0., 100.); 
-    Hist eventWt(   "log10(event weight)",               100, -7., 3.);
+  // Histogram pT spectrum of photons and event weights.
+  Hist gamNoEnh(   "gamma pT spectrum, no enhancement",   100, 0., 100.);
+  Hist gamWithEnh( "gamma pT spectrum, with enhancement", 100, 0., 100.);
+  Hist gamRatio("gamma pT spectrum, with/no enhancement", 100, 0., 100.);
+  Hist gamBefWt(   "gamma pT spectrum, without weight",   100, 0., 100.);
+  Hist eventWt(    "log10(event weight)",                 100, -7., 3.);
 
   // Compare generation without and with enhanced q -> q gamma emission.
   for (int iCase = 0; iCase < 2; ++iCase) {
 
-    // Generator. Default empty user hook.
+    // Generator.
     Pythia pythia;
-    UserHooks* enhanceHooks = 0;
-
-    //  Process selection. No need to study Z0 decay products or hadron level.
-    pythia.readString("WeakSingleBoson:ffbar2gmZ = on");
-    pythia.readString("23:mMin = 80.");
-    pythia.readString("23:mayDecay = off");
-    pythia.readString("HadronLevel:all = off");
-
-    // No event printout.
-    pythia.readString("Next:numberShowInfo = 0");
-    pythia.readString("Next:numberShowProcess = 0");
-    pythia.readString("Next:numberShowEvent = 0");
+    pythia.readFile("main63.cmnd");
+    int nEvent = pythia.mode("Main:numberOfEvents");
 
     // Set up a user hook and send it in.
+    UserHooks* enhanceHooks = 0;
     if (iCase == 1) {
       enhanceHooks = new EnhanceHooks();
       pythia.setUserHooksPtr( enhanceHooks);
     }
 
-    // 8 TeV LHC initialization.
-    pythia.readString("Beams:eCM = 8000.");
+    // LHC initialization.
     pythia.init();
 
     // Begin event loop.
@@ -86,13 +76,13 @@ int main() {
 
       // Generate events. Find and histogram event weight.
       pythia.next();
-      double weight = (iCase == 1) 
+      double weight = (iCase == 1)
                     ? enhanceHooks->getEnhancedEventWeight() : 1.;
       if (iCase == 1) eventWt.fill( log10(weight) );
       sumWt += weight;
 
       // Find all final-state photons and histogram them.
-      for (int i = 0; i < pythia.event.size(); ++i) 
+      for (int i = 0; i < pythia.event.size(); ++i)
       if (pythia.event[i].isFinal() && pythia.event[i].id() == 22) {
         double pT = pythia.event[i].pT();
         if (iCase == 0) gamNoEnh.fill(   pT, 1.);
@@ -100,20 +90,31 @@ int main() {
         if (iCase == 1) gamWithEnh.fill( pT, weight);
       }
 
-
     // End of event loop.
     }
 
     // Statistics.
     pythia.stat();
-    cout << "\n Average event weight = " << scientific 
-         << sumWt / nEvent << endl; 
+    cout << "\n Average event weight = " << scientific
+         << sumWt / nEvent << endl;
 
-    // End of case loop. 
+    // End of case loop.
     if (iCase == 1) delete enhanceHooks;
   }
 
-  // Histograms and done.
-  cout << gamNoEnh << gamWithEnh << gamBefWt << eventWt;
+  // Write histograms to output stream.
+  gamRatio = gamWithEnh / gamNoEnh;
+  cout << gamNoEnh << gamWithEnh << gamRatio << gamBefWt << eventWt;
+
+  // Write histogram data to files.
+  ofstream write;
+  write.open("PTA_0");
+  gamNoEnh.table(write);
+  write.close();
+  write.open("PTA_1");
+  gamWithEnh.table(write);
+  write.close();
+
+  // Done.
   return 0;
 }

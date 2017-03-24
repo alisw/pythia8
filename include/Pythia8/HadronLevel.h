@@ -1,5 +1,5 @@
 // HadronLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -61,12 +61,16 @@ public:
 
 private:
 
+  // Constants: could only be changed in the code itself.
+  static const double MTINY;
+
   // Initialization data, read from Settings.
-  bool   doHadronize, doDecay, doBoseEinstein, allowRH;
+  bool   doHadronize, doDecay, doBoseEinstein, allowRH, closePacking;
   double mStringMin, eNormJunction, widthSepBE;
 
-  // Settings for hadron scattering --rjc
+  // Settings for hadron scattering.
   bool   doHadronScatter, hsAfterDecay;
+  int    hadronScatMode;
 
   // Pointer to various information on the generation.
   Info*         infoPtr;
@@ -100,7 +104,7 @@ private:
   // The generator class for normal decays.
   ParticleDecays decays;
 
-  // The generator class for hadron scattering --rjc
+  // The generator class for hadron scattering.
   HadronScatter hadronScatter;
 
   // The generator class for Bose-Einstein effects.
@@ -129,6 +133,14 @@ private:
 
   // Trace colour flow in the event to form colour singlet subsystems.
   bool findSinglets(Event& event);
+
+  // Extract rapidity pairs.
+  vector< vector< pair<double,double> > > rapidityPairs(Event& event);
+
+  // Calculate the rapidity for string ends, protected against too large y.
+  double yMax(Particle pIn, double mTiny) {
+    double temp = log( ( pIn.e() + abs(pIn.pz()) ) / max( mTiny, pIn.mT()) );
+    return (pIn.pz() > 0) ? temp : -temp; }
 
 };
 

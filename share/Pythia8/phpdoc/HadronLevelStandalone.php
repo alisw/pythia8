@@ -63,7 +63,7 @@ main program therefore should be something like
   Event& event = pythia.event                  // Convenient shorthand. 
   pythia.readString("ProcessLevel:all = off"); // The trick! 
   pythia.init();                               // Initialization. 
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) { 
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) { 
     // Insert filling of event here! 
     pythia.next();                             // Do the hadron level. 
   } 
@@ -294,4 +294,4 @@ events.
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

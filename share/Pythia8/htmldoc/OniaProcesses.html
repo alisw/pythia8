@@ -22,7 +22,7 @@ which specifies the Fock state through which the process occurs,
 where <i>(1)</i> indicates a colour-singlet state and <i>(8)</i> a 
 colour-octet state. 
  
-<p> The unphysical colour-octet states follow the <code>id</code> 
+<p/> The unphysical colour-octet states follow the <code>id</code> 
 scheme of <i>99 n_q n_s n_r n_L n_J</i> where <i>n_q</i> is the 
 quark flavour of the state and <i>n_s</i> is the colour-octet state 
 type. Here <i>0</i> is <i>3S1</i>, <i>1</i> is <i>1S0</i>, 
@@ -69,12 +69,24 @@ are extracted from [<a href="Bibliography.html" target="page">Yua98</a>].
  
 <p/> 
 Note that states that differ only by the radial excitation number 
-<i>n_r</i> share the same short-dinstence matrix elements. The 
-program has therefore been written such that further radial excitations 
-can be easily added by editing this file, without requiring a recompilation 
-of the code. All related arrays must be expanded in exactly the same way, 
-however, i.e. the code of the colour singlet state, the long-distance 
-matrix elements and the individual process on/off switches. 
+<i>n_r</i> share the same short-distance matrix elements. The 
+program has therefore been written such that further radial 
+excitations can be easily added by editing this file, without 
+requiring a recompilation of the code. All related arrays must be 
+expanded in exactly the same way, however, i.e. the code of the colour 
+singlet state, the long-distance matrix elements and the individual 
+process on/off switches. 
+ 
+<p/> 
+Double production of charmonium and bottomonium <i>3S1</i> states is 
+also available, but with only the colour-singlet processes 
+included. The short-distance matrix elements for these processes can 
+be found in [<a href="Bibliography.html" target="page">Hum83</a>] and [<a href="Bibliography.html" target="page">Qia02</a>]. Arrays seperate to 
+those used for single charmonium and bottomonium production set the 
+long-distance NRQCD matrix elements. For consistency these values 
+should be the same as those provided for single charmonium and 
+bottomonium production, but are seperated to allow further control by 
+the user if needed. 
  
 <p/> 
 The description of 
@@ -92,13 +104,13 @@ which makes sense, since they are all dominated by the same kind of
 reweighting that cancels the low-<i>pT</i> divergence. 
  
 <p/> 
-An eikonalized description of these processes is included in the 
-multiparton-interactions framework. Here the low-<i>pT</i> dampening 
-is automatic, and additionally the framework is more consistent 
-(e.g. with respect to energy-momentum constraints and the 
-impact-parameter description) for events where the onium production 
-is not the hardest subprocess, as would often be the case in the 
-low-<i>pT</i> limit. 
+An eikonalized description of these processes, excluding double onia 
+production, is included in the multiparton-interactions 
+framework. Here the low-<i>pT</i> damping is automatic, and 
+additionally the framework is more consistent (e.g. with respect to 
+energy-momentum constraints and the impact-parameter description) for 
+events where the onium production is not the hardest subprocess, as 
+would often be the case in the low-<i>pT</i> limit. 
  
 <p/><code>flag&nbsp; </code><strong> Onia:forceMassSplit &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
@@ -384,6 +396,54 @@ Colour-octet production of <i>3DJ</i> charmonium states via
 Code 420. 
    
  
+<h3>Double Charmonium 3S1 States</h3> 
+ 
+<b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
+<code>pvec</code> values must be provided as a comma-separated list 
+with the right number of elements, without any blanks inside the list. 
+ 
+<p/><code>mvec&nbsp; </code><strong> Charmonium:states(3S1)1 &nbsp;</strong> 
+ (<code>default = <strong>443,443,100443</strong></code>)<br/>
+The first <i>3S1</i> charmonium states of the charmonium pairs that 
+can be produced from the following processes. Note that all vectors 
+within this section, either of modes, flags, or parameters, must be 
+the same length as this vector. 
+   
+ 
+<p/><code>mvec&nbsp; </code><strong> Charmonium:states(3S1)2 &nbsp;</strong> 
+ (<code>default = <strong>443,100443,100443</strong></code>)<br/>
+The second <i>3S1</i> charmonium states of the charmonium pairs that 
+can be produced from the following processes. 
+   
+ 
+<p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3S1(1)]1 &nbsp;</strong> 
+ (<code>default = <strong>1.16,1.16,0.76</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the first <i>3S1</i> charmonium 
+states. 
+   
+ 
+<p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3S1(1)]2 &nbsp;</strong> 
+ (<code>default = <strong>1.16,0.76,0.76</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the second <i>3S1</i> charmonium 
+states. 
+   
+ 
+<p/><code>fvec&nbsp; </code><strong> Charmonium:gg2doubleccbar(3S1)[3S1(1)] &nbsp;</strong> 
+ (<code>default = <strong>off,off,off</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> charmonium state pairs via 
+<i>g g &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </i>. 
+Code 421. 
+   
+ 
+<p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2doubleccbar(3S1)[3S1(1)] &nbsp;</strong> 
+ (<code>default = <strong>off,off,off</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> charmonium state pairs via 
+<i>q qbar &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </i>. 
+Code 422. 
+   
+ 
 <h3>Bottomonium 3S1 States</h3> 
  
 <b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
@@ -411,14 +471,14 @@ elements <i>&lt;O[3S1(8)]&gt;</i> for the <i>3S1</i> bottomonium states.
    
  
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[1S0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.02,0.06,0.1</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>0.02,0.006,0.01</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[1S0(8)]&gt;</i> for the <i>3S1</i> 
 bottomonium states. 
    
  
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3P0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.02,0.06,0.1</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>0.02,0.006,0.01</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the <i>3S1</i> bottomonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
@@ -622,7 +682,55 @@ Colour-octet production of <i>3DJ</i> bottomonium states via
 Code 520. 
    
  
+<h3>Double Bottomonium 3S1 States</h3> 
+ 
+<b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
+<code>pvec</code> values must be provided as a comma-separated list 
+with the right number of elements, without any blanks inside the list. 
+ 
+<p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3S1)1 &nbsp;</strong> 
+ (<code>default = <strong>553,553,553,100553,100553,200553</strong></code>)<br/>
+The first <i>3S1</i> bottomonium states of the bottomonium pairs 
+that can be produced from the following processes. Note that all 
+vectors within this section, either of modes, flags, or parameters, 
+must be the same length as this vector. 
+   
+ 
+<p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3S1)2 &nbsp;</strong> 
+ (<code>default = <strong>553,100553,200553,100553,200553,200553</strong></code>)<br/>
+The second <i>3S1</i> bottomonium states of the bottomonium pairs that 
+can be produced from the following processes. 
+   
+ 
+<p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3S1(1)]1 &nbsp;</strong> 
+ (<code>default = <strong>9.28,9.28,9.28,4.63,4.63,3.54</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the first <i>3S1</i> bottomonium 
+states. 
+   
+ 
+<p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3S1(1)]2 &nbsp;</strong> 
+ (<code>default = <strong>9.28,4.63,3.54,4.63,3.54,3.54</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the second <i>3S1</i> bottomonium 
+states. 
+   
+ 
+<p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2doublebbbar(3S1)[3S1(1)] &nbsp;</strong> 
+ (<code>default = <strong>off,off,off,off,off,off</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> bottomonium state pairs via 
+<i>g g &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </i>. 
+Code 521. 
+   
+ 
+<p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2doublebbbar(3S1)[3S1(1)] &nbsp;</strong> 
+ (<code>default = <strong>off,off,off,off,off,off</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> bottomonium state pairs via 
+<i>q qbar &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </i>. 
+Code 522. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2015 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 

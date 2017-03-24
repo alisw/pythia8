@@ -1,5 +1,5 @@
 // ParticleData.h is a part of the PYTHIA event generator.
-// Copyright (C) 2015 Torbjorn Sjostrand.
+// Copyright (C) 2017 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -35,6 +35,7 @@ class SUSYResonanceWidths;
 class DecayChannel {
 
 public:
+
   // Constructor.
   DecayChannel(int onModeIn = 0, double bRatioIn = 0., int meModeIn = 0,
     int prod0 = 0, int prod1 = 0, int prod2 = 0, int prod3 = 0,
@@ -45,6 +46,15 @@ public:
     prod[0] = prod0; prod[1] = prod1; prod[2] = prod2; prod[3] = prod3;
     prod[4] = prod4; prod[5] = prod5; prod[6] = prod6; prod[7] = prod7;
     for (int j = 0; j < 8; ++j) if (prod[j] != 0 && j == nProd) ++nProd; }
+
+  // Copy constructor.
+  DecayChannel& operator=( const DecayChannel& oldDC) { if (this != &oldDC) {
+    onModeSave = oldDC.onModeSave; bRatioSave = oldDC.bRatioSave;
+    currentBRSave = oldDC.currentBRSave;
+    onShellWidthSave = oldDC.onShellWidthSave; openSecPos = oldDC.openSecPos;
+    openSecNeg = oldDC.openSecNeg; meModeSave = oldDC.meModeSave;
+    nProd = oldDC.nProd; for (int j = 0; j < 8; ++j) prod[j] = oldDC.prod[j];
+    hasChangedSave = oldDC.hasChangedSave; } return *this; }
 
   // Member functions for input.
   void onMode(int onModeIn) {onModeSave = onModeIn; hasChangedSave = true;}
@@ -128,6 +138,26 @@ public:
     resonancePtr(0) {setDefaults();
     if (toLower(antiNameIn) == "void") hasAntiSave = false;}
 
+  // Copy constructor.
+  ParticleDataEntry& operator=( const ParticleDataEntry& oldPDE) {
+    if (this != &oldPDE) { idSave = oldPDE.idSave;
+    nameSave = oldPDE.nameSave; antiNameSave = oldPDE.antiNameSave;
+    spinTypeSave = oldPDE.spinTypeSave; chargeTypeSave = oldPDE.chargeTypeSave;
+    colTypeSave = oldPDE.colTypeSave; m0Save = oldPDE.m0Save;
+    mWidthSave = oldPDE.mWidthSave;  mMinSave = oldPDE.mMinSave;
+    mMaxSave = oldPDE.mMaxSave;  tau0Save = oldPDE.tau0Save;
+    constituentMassSave = oldPDE.constituentMassSave;
+    hasAntiSave = oldPDE.hasAntiSave; isResonanceSave = oldPDE.isResonanceSave;
+    mayDecaySave = oldPDE.mayDecaySave; doExternalDecaySave
+    = oldPDE.doExternalDecaySave; isVisibleSave = oldPDE.isVisibleSave;
+    doForceWidthSave = oldPDE.doForceWidthSave; hasChangedSave
+    = oldPDE.hasChangedSave; modeBWnow = oldPDE.modeBWnow;
+    atanLow = oldPDE.atanLow; atanDif = oldPDE.atanDif; mThr = oldPDE.mThr;
+    for (int i = 0; i < int(oldPDE.channels.size()); ++i) {
+      DecayChannel oldDC = oldPDE.channels[i]; channels.push_back(oldDC); }
+    currentBRSum = oldPDE.currentBRSum; resonancePtr = 0;
+    particleDataPtr = 0; } return *this; }
+
   // Destructor: delete any ResonanceWidths object.
   ~ParticleDataEntry();
 
@@ -154,10 +184,10 @@ public:
   // (Must use set here since else name+signature clash with get methods.)
   void setName(string nameIn) {nameSave = nameIn; hasChangedSave = true;}
   void setAntiName(string antiNameIn) {antiNameSave = antiNameIn;
-    hasChangedSave = true;}
+    hasAntiSave = (toLower(antiNameIn) != "void"); hasChangedSave = true;}
   void setNames(string nameIn, string antiNameIn) {nameSave = nameIn;
-    antiNameSave = antiNameIn; hasAntiSave = true; if (toLower(antiNameIn)
-    == "void") hasAntiSave = false; hasChangedSave = true;}
+    antiNameSave = antiNameIn; hasAntiSave = (toLower(antiNameIn) != "void");
+    hasChangedSave = true;}
   void setSpinType(int spinTypeIn) {spinTypeSave = spinTypeIn;
     hasChangedSave = true;}
   void setChargeType(int chargeTypeIn) {chargeTypeSave = chargeTypeIn;
@@ -245,6 +275,7 @@ public:
       && idSave < 9960000; }
   int    heaviestQuark(int idIn = 1)    const;
   int    baryonNumberType(int idIn = 1) const;
+  int    nQuarksInCode(int idQIn)       const;
 
   // Reset to empty decay table.
   void clearChannels() {channels.resize(0);}
@@ -286,7 +317,7 @@ public:
 private:
 
   // Constants: could only be changed in the code itself.
-  static const int    INVISIBLENUMBER, INVISIBLETABLE[52], KNOWNNOWIDTH[3];
+  static const int    INVISIBLENUMBER, INVISIBLETABLE[80], KNOWNNOWIDTH[3];
   static const double MAXTAU0FORDECAY,MINMASSRESONANCE, NARROWMASS,
                       CONSTITUENTMASSTABLE[10];
 
@@ -318,11 +349,6 @@ private:
   // Set constituent mass.
   void setConstituentMass();
 
-  // Useful functions for string handling.
-  string toLower(const string& nameConv) { string temp(nameConv);
-    for (int i = 0; i < int(temp.length()); ++i) temp[i] = tolower(temp[i]);
-    return temp; }
-
 };
 
 //==========================================================================
@@ -337,6 +363,18 @@ public:
   ParticleData() : infoPtr(0), settingsPtr(0), rndmPtr(0), couplingsPtr(0),
     particlePtr(0), isInit(false), readingFailedSave(false) {}
 
+  // Copy constructors.
+  ParticleData& operator=( const ParticleData& oldPD) { if (this != &oldPD) {
+    modeBreitWigner = oldPD.modeBreitWigner; maxEnhanceBW = oldPD.maxEnhanceBW;
+    for (int i = 0; i < 7; ++i) mQRun[i] = oldPD.mQRun[i];
+    Lambda5Run = oldPD.Lambda5Run;
+    infoPtr = 0; settingsPtr = 0; rndmPtr = 0; couplingsPtr = 0;
+    for ( map<int, ParticleDataEntry>::const_iterator pde = oldPD.pdt.begin();
+      pde != oldPD.pdt.end(); pde++) { int idTmp = pde->first;
+      pdt[idTmp] = pde->second; pdt[idTmp].initPtr(this); }
+    particlePtr = 0; isInit = oldPD.isInit;
+    readingFailedSave = oldPD.readingFailedSave; } return *this; }
+
   // Initialize pointers.
   void initPtr(Info* infoPtrIn, Settings* settingsPtrIn, Rndm* rndmPtrIn,
     Couplings* couplingsPtrIn) {infoPtr = infoPtrIn;
@@ -344,8 +382,15 @@ public:
     couplingsPtr = couplingsPtrIn;}
 
   // Read in database from specific file.
-  bool init(string startFile = "../xmldoc/ParticleData.xml") {
+  bool init(string startFile = "../share/Pythia8/xmldoc/ParticleData.xml") {
     initCommon(); return readXML(startFile);}
+
+  // Read in database from saved file stored in memory.
+  bool init(const ParticleData& particleDataIn) {
+    initCommon(); return copyXML(particleDataIn);}
+
+  // Read in database from an istream.
+  bool init(istream& is) { initCommon(); return readXML(is);}
 
   // Overwrite existing database by reading from specific file.
   bool reInit(string startFile, bool xmlFormat = true) { initCommon();
@@ -354,36 +399,42 @@ public:
   // Initialize pointers, normal Breit-Wigners and special resonances.
   void initWidths(vector<ResonanceWidths*> resonancePtrs);
 
-  // Read or list whole (or part of) database from/to an XML file.
+  // Read and process or list whole (or part of) database from/to an XML file.
   bool readXML(string inFile, bool reset = true) ;
   void listXML(string outFile);
+  bool readXML(istream& is, bool reset=true);
+
+  // Copy and process XML information from another particleData object.
+  bool copyXML(const ParticleData &particleDataIn);
+
+  // Auxiliary functions to readXML() and copyXML().
+  bool loadXML(string inFile, bool reset = true) ;
+  bool loadXML(istream& is, bool reset=true);
+  bool processXML(bool reset = true) ;
 
   // Read or list whole (or part of) database from/to a free format file.
   bool readFF(string inFile, bool reset = true) ;
+  bool readFF(istream& is, bool reset = true);
   void listFF(string outFile);
 
   // Read in one update from a single line.
-  bool readString(string lineIn, bool warn = true, ostream& os = cout) ;
+  bool readString(string lineIn, bool warn = true) ;
 
   // Keep track whether any readings have failed, invalidating run setup.
   bool readingFailed() {return readingFailedSave;}
 
   // Print out table of whole database, or of only part of it.
-  void listAll(ostream& os = cout) {list(false, true, os);}
-  void listChanged(ostream& os = cout) {list(true, false, os);}
-  void listChanged(bool changedRes, ostream& os = cout) {
-    list(true, changedRes, os);}
-  void list(bool changedOnly = false, bool changedRes = true,
-    ostream& os = cout);
+  void listAll() {list(false, true);}
+  void listChanged(bool changedRes = false) {list(true, changedRes);}
+  void list(bool changedOnly = false, bool changedRes = true);
 
   // Print out specified particles.
-  void list(int idList, ostream& os = cout) {vector<int> idListTemp;
-    idListTemp.push_back(idList); list( idListTemp, os);}
-  void list(vector<int> idList, ostream& os = cout);
+  void list(int idList) {vector<int> idListTemp;
+    idListTemp.push_back(idList); list( idListTemp);}
+  void list(vector<int> idList);
 
   // Check that table makes sense, especially for decays.
-  void checkTable(ostream& os = cout) {checkTable(1, os);};
-  void checkTable(int verbosity, ostream& os = cout) ;
+  void checkTable(int verbosity = 1) ;
 
   // Add new entry.
   void addParticle(int idIn, string nameIn = " ", int spinTypeIn = 0,
@@ -529,6 +580,8 @@ public:
     return isParticle(idIn) ? pdt[abs(idIn)].heaviestQuark(idIn) : 0 ; }
   int baryonNumberType(int idIn) {
     return isParticle(idIn) ? pdt[abs(idIn)].baryonNumberType(idIn) : 0 ; }
+  int nQuarksInCode(int idIn, int idQIn) {
+    return isParticle(idIn) ? pdt[abs(idIn)].nQuarksInCode(idQIn) : 0 ; }
 
   // Change branching ratios.
   void rescaleBR(int idIn, double newSumBR = 1.) {
@@ -559,6 +612,9 @@ public:
   // Return pointer to entry.
   ParticleDataEntry* particleDataEntryPtr(int idIn) {
     return (isParticle(idIn)) ? &pdt[abs(idIn)] : &pdt[0]; }
+
+  // Check initialisation status.
+  bool getIsInit() {return isInit;}
 
 private:
 
@@ -594,9 +650,6 @@ private:
   void   initCommon();
 
   // Useful functions for string handling.
-  string toLower(const string& nameConv) { string temp(nameConv);
-    for (int i = 0; i < int(temp.length()); ++i) temp[i] = tolower(temp[i]);
-    return temp; }
   bool   boolString(string tag) { string tagLow = toLower(tag);
     return ( tagLow == "true" || tagLow == "1" || tagLow == "on"
     || tagLow == "yes" || tagLow == "ok" ); }
@@ -606,6 +659,9 @@ private:
   bool   boolAttributeValue(string line, string attribute);
   int    intAttributeValue(string line, string attribute);
   double doubleAttributeValue(string line, string attribute);
+
+  // Vector of strings containing the readable lines of the XML file.
+  vector<string> xmlFileSav;
 
 };
 
