@@ -293,6 +293,8 @@ C) New concepts for user interaction in php files (but no interactivity
 in html):
 <ref></ref>
     reference to an article; replaced by [...] and anchor;
+<refit></refit>
+    entry of an article in the Bibilography.xml file; generates anchors;
 <aloc href="..."></aloc>
     anchor among local pages; automatically fills with file type and
     target="page";

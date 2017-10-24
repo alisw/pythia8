@@ -112,7 +112,7 @@ proceeding only through an <ei>s</ei>-channel resonance, by the
 <input type="radio" name="5" value="1" checked="checked"><strong>1 </strong>: the squared invariant mass, i.e. <ei>sHat</ei>.  <br/>
 <input type="radio" name="5" value="2"><strong>2 </strong>: fix scale set in <code>SigmaProcess:renormFixScale</code>  below.  <br/>
  
-<br/><br/><table><tr><td><strong>SigmaProcess:renormScale2  </td><td>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaProcess:renormScale2  </td><td>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)</td></tr></table>
 The <ei>Q^2</ei> renormalization scale for <ei>2 &rarr; 2</ei> processes. 
 <br/>
 <input type="radio" name="6" value="1"><strong>1 </strong>: the smaller of the squared transverse masses of the two  outgoing particles, i.e. <ei>min(mT_3^2, mT_4^2) =  pT^2 + min(m_3^2, m_4^2)</ei>.  <br/>
@@ -120,6 +120,7 @@ The <ei>Q^2</ei> renormalization scale for <ei>2 &rarr; 2</ei> processes.
 <input type="radio" name="6" value="3"><strong>3 </strong>: the arithmetic mean of the squared transverse masses of  the two outgoing particles, i.e. <ei>(mT_3^2 + mT_4^2) / 2 =  pT^2 + 0.5 * (m_3^2 + m_4^2)</ei>. Useful for comparisons  with PYTHIA 6, where this is the default.  <br/>
 <input type="radio" name="6" value="4"><strong>4 </strong>: squared invariant mass of the system,  i.e. <ei>sHat</ei>. Useful for processes dominated by  <ei>s</ei>-channel exchange.  <br/>
 <input type="radio" name="6" value="5"><strong>5 </strong>: fix scale set in <code>SigmaProcess:renormFixScale</code>  below.  <br/>
+<input type="radio" name="6" value="6"><strong>6 </strong>: Use squared invariant momentum transfer <ei>-tHat</ei>.  This is a common choice for lepton-hadron scattering processes. In that  case <ei>-tHat=Q^2</ei>.  <br/>
  
 <br/><br/><table><tr><td><strong>SigmaProcess:renormScale3  </td><td>  &nbsp;&nbsp;(<code>default = <strong>3</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)</td></tr></table>
 The <ei>Q^2</ei> renormalization scale for "normal" <ei>2 &rarr; 3</ei> 
@@ -185,7 +186,7 @@ proceeding only through an <ei>s</ei>-channel resonance.
 <input type="radio" name="11" value="1" checked="checked"><strong>1 </strong>: the squared invariant mass, i.e. <ei>sHat</ei>.  <br/>
 <input type="radio" name="11" value="2"><strong>2 </strong>: fix scale set in <code>SigmaProcess:factorFixScale</code>  below.  <br/>
  
-<br/><br/><table><tr><td><strong>SigmaProcess:factorScale2  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaProcess:factorScale2  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)</td></tr></table>
 The <ei>Q^2</ei> factorization scale for <ei>2 &rarr; 2</ei> processes. 
 <br/>
 <input type="radio" name="12" value="1" checked="checked"><strong>1 </strong>: the smaller of the squared transverse masses of the two  outgoing particles.  <br/>
@@ -193,6 +194,7 @@ The <ei>Q^2</ei> factorization scale for <ei>2 &rarr; 2</ei> processes.
 <input type="radio" name="12" value="3"><strong>3 </strong>: the arithmetic mean of the squared transverse masses of  the two outgoing particles. Useful for comparisons with PYTHIA 6, where  this is the default.  <br/>
 <input type="radio" name="12" value="4"><strong>4 </strong>: squared invariant mass of the system,  i.e. <ei>sHat</ei>. Useful for processes dominated by  <ei>s</ei>-channel exchange.  <br/>
 <input type="radio" name="12" value="5"><strong>5 </strong>: fix scale set in <code>SigmaProcess:factorFixScale</code>  below.  <br/>
+<input type="radio" name="12" value="6"><strong>6 </strong>: Use squared invariant momentum transfer <ei>-tHat</ei>.  This is a common choice for lepton-hadron scattering processes. In that  case <ei>-tHat=Q^2</ei>.  <br/>
  
 <br/><br/><table><tr><td><strong>SigmaProcess:factorScale3  </td><td>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)</td></tr></table>
 The <ei>Q^2</ei> factorization scale for "normal" <ei>2 &rarr; 3</ei> 

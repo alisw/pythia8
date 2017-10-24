@@ -30,19 +30,19 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
  
 <h2>CKKW-L Merging</h2> 
  
-CKKW-L merging [<a href="Bibliography.php" target="page">Lon01</a>] allows for a consistent combination 
+CKKW-L merging [<a href="Bibliography.php#refLon01" target="page">Lon01</a>] allows for a consistent combination 
 of tree-level matrix elements containing multiple well-separated partons 
 with each other and with parton showers. The result is a calculation that 
 contains a mix of processes with different number of well-separated jets 
 with fixed-order accuracy, improved by all-order resummation. The 
-algorithm implemented  in PYTHIA is described in [<a href="Bibliography.php" target="page">Lon11</a>]. To 
+algorithm implemented  in PYTHIA is described in [<a href="Bibliography.php#refLon11" target="page">Lon11</a>]. To 
 perform matrix element merging,  the user has to supply LHE 
-files [<a href="Bibliography.php" target="page">Alw07</a>] for the hard process and the corresponding 
+files [<a href="Bibliography.php#refAlw07" target="page">Alw07</a>] for the hard process and the corresponding 
 process with up to N additional jets. This mix of processes is then 
 internally disentangled to ensure that the inclusive fixed-order inputs 
 can be converted to exclusive cross sections that no longer overlap. 
 Please note that subtleties (and setting scheme) for the EW-improved way of 
-disentangling processes presented in [<a href="Bibliography.php" target="page">Chr15a</a>] is discussed in 
+disentangling processes presented in [<a href="Bibliography.php#refChr15a" target="page">Chr15a</a>] is discussed in 
 the section Electroweak Merging below. 
  
 <p/> The usage of the merging procedure is illustrated in a few 
@@ -169,7 +169,7 @@ combined LHE files can be used in conjunction with flexible containers (see
 below). 
  
 <p/> When the matrix element merging is used to produce HepMC 
-[<a href="Bibliography.php" target="page">Dob01</a>] files to be analysed  with RIVET [<a href="Bibliography.php" target="page">Buc10</a>], 
+[<a href="Bibliography.php#refDob01" target="page">Dob01</a>] files to be analysed  with RIVET [<a href="Bibliography.php#refBuc10" target="page">Buc10</a>], 
 special care  needs to taken in how the cross section is read by RIVET 
 (see below). 
  
@@ -234,7 +234,7 @@ longitudinally invariant <i>kT</i> separation.
  
 <br/><br/><table><tr><td><strong>Merging:nJetMax  </td><td></td><td> <input type="text" name="4" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)</td></tr></table>
 Maximal number of additional jets in the matrix element. Note that the 
-EW-improved "merging of mergings" strategy presented in [<a href="Bibliography.php" target="page">Chr15a</a>] 
+EW-improved "merging of mergings" strategy presented in [<a href="Bibliography.php#refChr15a" target="page">Chr15a</a>] 
 requires a different meaning of "additional", as explained in the 
 "Electroweak Merging" section below. 
    
@@ -420,7 +420,7 @@ event is assumed to pass the merging scale cut.
 To perform CKKW-L matrix element merging, the user has to decide on a hard 
 process, and communicate this choice to Pythia. This is done by setting the 
 input <code>Merging:Process</code>. Note that the EW-improved 
-"merging of mergings" strategy presented in [<a href="Bibliography.php" target="page">Chr15a</a>] requires 
+"merging of mergings" strategy presented in [<a href="Bibliography.php#refChr15a" target="page">Chr15a</a>] requires 
 a very loose process definition that is discussed in the section Electroweak 
 Merging below. 
  
@@ -642,10 +642,10 @@ should construct a class derived from <code>MergingHooks</code>, with
 a constructor and destructor 
  
 <p/> 
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>MergingHooks::MergingHooks() &nbsp;</strong> <br/>
    
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>virtual MergingHooks::~MergingHooks() &nbsp;</strong> <br/>
    
 The constructor and destructor do not need to do anything. 
@@ -664,7 +664,7 @@ An examples of this procedure are given in <code>main82.cc</code>.
 needs to  supply the process to be merged by defining a methods to 
 evaluate the merging scale variable. 
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>virtual double MergingHooks::tmsDefinition(const Event& event) &nbsp;</strong> <br/>
 This method will have to calculate the value of the merging scale 
 defined in  some variable from the input event record. An example of 
@@ -675,32 +675,32 @@ such a function is  given in <code>main82.cc</code>.
 giving  information on the hard process, to make the definition of the 
 merging scale as easy as possible: 
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>int MergingHooks::nMaxJets() &nbsp;</strong> <br/>
 Return the maximum number of additional jets to be merged. 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>int MergingHooks::nHardOutPartons() &nbsp;</strong> <br/>
 Returns the number of outgoing partons in the hard core process. 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>int MergingHooks::nHardOutLeptons() &nbsp;</strong> <br/>
 Returns the number of outgoing leptons in the hard core process. 
    
  
-<a name="method7"></a>
+<a name="anchor7"></a>
 <p/><strong>int MergingHooks::nHardInPartons() &nbsp;</strong> <br/>
 Returns the number of incoming partons in the hard core process. 
    
  
-<a name="method8"></a>
+<a name="anchor8"></a>
 <p/><strong>int MergingHooks::nHardInLeptons() &nbsp;</strong> <br/>
 Returns the number of incoming leptons in the hard core process. 
    
  
-<a name="method9"></a>
+<a name="anchor9"></a>
 <p/><strong>int MergingHooks::nResInCurrent() &nbsp;</strong> <br/>
 The number of resonances in the hard process reconstructed from the 
 current event. If e.g. the ME configuration was 
@@ -708,7 +708,7 @@ current event. If e.g. the ME configuration was
 both intermediate bosons into the LHE file, this will return 2. 
    
  
-<a name="method10"></a>
+<a name="anchor10"></a>
 <p/><strong>double MergingHooks::tms() &nbsp;</strong> <br/>
  Returns the value used as the merging scale. 
    
@@ -745,14 +745,14 @@ configurations  with only unordered histories.
  
 <p/> Clearly, if the parton shower phase space is very constrained by 
 applying  stringent cuts to the two-jet matrix element, merging scale 
-dependencies can  become sizable, as was e.g. seen in [<a href="Bibliography.php" target="page">Lon11</a>] 
+dependencies can  become sizable, as was e.g. seen in [<a href="Bibliography.php#refLon11" target="page">Lon11</a>] 
 when forcing shower emissions to be ordered both in the evolution 
 variable and in rapidity. To  influence the effect of large phase 
 space differences for shower emissions and matrix element 
 configurations due to LHEF generation cuts, the user has to  write a 
 small piece of code overwriting method 
  
-<a name="method11"></a>
+<a name="anchor11"></a>
 <p/><strong>virtual double MergingHooks::dampenIfFailCuts(const Event& event) &nbsp;</strong> <br/>
 multiplicity  reclustered state as an input Event. From this input 
 event, the user can then check if matrix element cuts are 
@@ -782,7 +782,7 @@ of histories directly. This should only be attempted by expert users. If you
 believe manipulations completely unavoidable, we advise you to take great care 
 when redefining the following functions. 
  
-<a name="method12"></a>
+<a name="anchor12"></a>
 <p/><strong>virtual bool MergingHooks::canCutOnRecState() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doCutOnRecState(...)</code> 
@@ -790,7 +790,7 @@ will be called for each reclustered state encountered in the generation of
 all possible histories of the matrix element state. 
    
  
-<a name="method13"></a>
+<a name="anchor13"></a>
 <p/><strong>virtual bool MergingHooks::doCutOnRecState(const Event& event) &nbsp;</strong> <br/>
 This routine will be supplied internally with every possible reclustered 
 event that can be reached by reclustering any number of partons in 
@@ -814,7 +814,7 @@ sufficiently effective.
 <p/> The MergingHooks class also allows the expert user to define the matrix 
 element of the hard process, by defining the method 
  
-<a name="method14"></a>
+<a name="anchor14"></a>
 <p/><strong>virtual double MergingHooks::hardProcessME(const Event& inEvent) &nbsp;</strong> <br/>
 This routine will be supplied internally with the reconstructed 
 lowest-multiplicity event. From this, it is possible to calculate the squared 
@@ -924,7 +924,7 @@ Merging strategies like CKKW-L usually assume that the description of a
 (relatively simple) underlying process should be improved by combining with 
 states that contain additional well-separated partons - with "additional" 
 measured with respect to the underlying process. As discussed 
-in [<a href="Bibliography.php" target="page">Chr15a</a>], this philosophy is not always sensible, and may lead to 
+in [<a href="Bibliography.php#refChr15a" target="page">Chr15a</a>], this philosophy is not always sensible, and may lead to 
 an unconvincing physics model. The bias can be greatly reduced by considering 
 that in perturbation theory, corrections to seemingly very different 
 underlying processes mix, so that there is no justification to classify 
@@ -942,7 +942,7 @@ distinctly different predictions. Thus, a minimally biased method for
 assigning an underlying process has to be found. 
  
 <p/> 
-The method of [<a href="Bibliography.php" target="page">Chr15a</a>] chooses the underlying process 
+The method of [<a href="Bibliography.php#refChr15a" target="page">Chr15a</a>] chooses the underlying process 
 probabilistically for each phase space point based on a product of splitting 
 kernels and full hard process matrix elements, and includes the correct 
 all-order factors after this choice. In our previous example 
@@ -1119,8 +1119,8 @@ three W-bosons.
 <h3>Further variables</h3> 
  
 For more advanced manipulations of the merging machinery, all 
-parameter  changes that were investigated in [<a href="Bibliography.php" target="page">Lon11</a>] are 
-supplied. Please  check [<a href="Bibliography.php" target="page">Lon11</a>] for a detailed discussion of 
+parameter  changes that were investigated in [<a href="Bibliography.php#refLon11" target="page">Lon11</a>] are 
+supplied. Please  check [<a href="Bibliography.php#refLon11" target="page">Lon11</a>] for a detailed discussion of 
 the switches. 
  
 <p/> These switches allow enthusiastic users to perform a systematic 
@@ -1197,7 +1197,7 @@ consecutive splittings has been calculated.
 If on, then also include PDF ratios and <i>&alpha;<sub>s</sub></i> 
 factors in the  splitting probabilities used for picking a parton shower 
 history of the matrix  element, when picking histories by the full shower 
-splitting probability. As argued in  [<a href="Bibliography.php" target="page">Lon11</a>], this should not 
+splitting probability. As argued in  [<a href="Bibliography.php#refLon11" target="page">Lon11</a>], this should not 
 be done since a reweighting with PDF ratios and <i>&alpha;<sub>s</sub></i> 
 factors will be performed. However, it can give useful insight in how 
 sensitive the results  are to the prescription on how to choose PS 
@@ -1217,13 +1217,13 @@ final state splittings with an initial state recoiler.
 <br/><br/><table><tr><td><strong>Merging:aCollFSR </td><td></td><td> <input type="text" name="29" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 Factor with which to multiply the scalar <i>pT</i> of a final state 
 splitting, when choosing the history by the smallest sum of scalar 
-<i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.php" target="page">Tul09</a>]. 
+<i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.php#refTul09" target="page">Tul09</a>]. 
    
  
 <br/><br/><table><tr><td><strong>Merging:aCollISR </td><td></td><td> <input type="text" name="30" value="0.9" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.9</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 Factor with which to multiply the scalar <i>pT</i> of an initial state 
 splitting, when choosing the history by the smallest sum of scalar 
-<i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.php" target="page">Tul09</a>]. 
+<i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.php#refTul09" target="page">Tul09</a>]. 
    
  
 <br/><br/><table><tr><td><strong>Merging:unorderedScalePrescrip  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
@@ -1334,16 +1334,8 @@ of an external shower plugin. This will become possible as soon as new
 showers containing the necessary ingredients are available in Pythia. 
    
  
-<br/><br/><strong>Merging:useShowerPlugin</strong>  <input type="radio" name="41" value="on"><strong>On</strong>
-<input type="radio" name="41" value="off" checked="checked"><strong>Off</strong>
- &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
-Use the splitting probabilities, evolution variables and phase space mappings 
-of an external shower plugin. This will become possible as soon as new 
-showers containing the necessary ingredients are available in Pythia. 
-   
- 
-<br/><br/><strong>Merging:applyVeto</strong>  <input type="radio" name="42" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="42" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:applyVeto</strong>  <input type="radio" name="41" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="41" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If off, no event veto based on the merging scale is applied in CKKW-L merging. 
 This means that the user has to implement the veto by hand in the Pythia main 
@@ -1351,8 +1343,8 @@ program. It can be useful to postpone event vetoes for the purpose of merging
 scale variations. 
    
  
-<br/><br/><strong>Merging:includeWeightInXsection</strong>  <input type="radio" name="43" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="43" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:includeWeightInXsection</strong>  <input type="radio" name="42" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="42" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If on, then the reweighting of events in the CKKW-L scheme is included in 
 the event weight <code>Info::weight()</code>, the merging weight 
@@ -1575,19 +1567,14 @@ if($_POST["40"] != "off")
 $data = "Merging:useShowerPlugin = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["41"] != "off")
+if($_POST["41"] != "on")
 {
-$data = "Merging:useShowerPlugin = ".$_POST["41"]."\n";
+$data = "Merging:applyVeto = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["42"] != "on")
 {
-$data = "Merging:applyVeto = ".$_POST["42"]."\n";
-fwrite($handle,$data);
-}
-if($_POST["43"] != "on")
-{
-$data = "Merging:includeWeightInXsection = ".$_POST["43"]."\n";
+$data = "Merging:includeWeightInXsection = ".$_POST["42"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);

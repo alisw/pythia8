@@ -133,7 +133,7 @@ at that point. If you call such a destructor you will leave a pointer
 dangling inside the <code>Pythia</code> object you gave it in to, 
 if that still exists. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>void ResonanceWidths::initConstants() &nbsp;</strong> <br/>
 is called once during initialization, and can then be used to set up 
 further parameters specific to this particle species, such as couplings, 
@@ -141,7 +141,7 @@ and perform calculations that need not be repeated for each new event,
 thereby saving time. This method needs not be implemented. 
    
  
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>void ResonanceWidths::calcPreFac(bool calledFromInit = false) &nbsp;</strong> <br/>
 is called once a mass has been chosen for the resonance, but before 
 a specific final state is considered. This routine can therefore 
@@ -161,7 +161,7 @@ At initialization this agrees with the nominal mass <code>mRes</code>,
 but during the run it will not (in general). 
    
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>void ResonanceWidths::calcWidth(bool calledFromInit = false) &nbsp;</strong> <br/>
 is the key method for width calculations and returns a partial width 
 value, as further described below. It is called for a specific 
@@ -200,7 +200,7 @@ couplings; see the existing code for examples.
 expressed in GeV. 
    
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>double ResonanceWidths::widthChan( double mHat, int idAbs1, int idAbs2) &nbsp;</strong> <br/>
 is not normally used. In PYTHIA the only exception is Higgs decays, 
 where it is used to define the width (except for colour factors) 
@@ -208,7 +208,7 @@ associated with a specific incoming/outgoing state. It allows the
 results of some loop expressions to be pretabulated. 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>bool ResonanceWidths::allowCalc() &nbsp;</strong> <br/>
 can normally be left dummy (and then always returns <code>true</code>) but 
 can optionally be used to determine whether to force dynamical width 
@@ -220,7 +220,7 @@ particular resonance in question, and checks if those tables should be
 given precedence over the internal width calculation. 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>bool ResonanceWidths::initBSM() &nbsp;</strong> <br/>
 can normally be left dummy, but for advanced implementations it 
 provides a possibility to initialize data members of the derived class 

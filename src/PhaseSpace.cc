@@ -134,6 +134,27 @@ void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
   // Flag if photons from leptons.
   bool beamHasResGamma = beamAPtr->hasResGamma() && beamBPtr->hasResGamma();
 
+  // Set flags for (un)resolved photons according to gammaModes.
+  if ( beamAPtr->isGamma() && beamBPtr->isGamma() ) {
+
+    int beamAGammaMode = beamAPtr->getGammaMode();
+    int beamBGammaMode = beamBPtr->getGammaMode();
+
+    if ( beamAGammaMode == 2 && beamBGammaMode != 2 ) {
+      hasOnePointParticle = true;
+      hasPointGammaA = true;
+    }
+    if ( beamBGammaMode == 2 && beamAGammaMode != 2 ) {
+      hasOnePointParticle = true;
+      hasPointGammaB = true;
+    }
+    if ( beamAGammaMode == 2 && beamBGammaMode == 2 ) {
+      hasTwoPointParticles = true;
+      hasPointGammaA = true;
+      hasPointGammaB = true;
+    }
+  }
+
   // Standard phase space cuts.
   if (isFirst || settingsPtr->flag("PhaseSpace:sameForSecond")) {
     mHatGlobalMin      = settingsPtr->parm("PhaseSpace:mHatMin");
@@ -149,14 +170,18 @@ void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
     pTHatGlobalMax     = settingsPtr->parm("PhaseSpace:pTHatMaxSecond");
   }
 
+  // Cutoff against divergences at pT -> 0.
+  pTHatMinDiverge      = settingsPtr->parm("PhaseSpace:pTHatMinDiverge");
+
+  // Special cut on DIS Q2 = -tHat.
+  Q2GlobalMin          = settingsPtr->parm("PhaseSpace:Q2Min");
+  hasQ2Min             = ( Q2GlobalMin >= pow2(pTHatMinDiverge) );
+
   // For photons from lepton beams match the cuts to gm+gm system cuts.
   if ( beamHasResGamma ) {
     double Wmax         = settingsPtr->parm("Photon:Wmax");
     if ( (mHatGlobalMax > Wmax) || mHatGlobalMax < 0.) mHatGlobalMax = Wmax;
   }
-
-  // Cutoff against divergences at pT -> 0.
-  pTHatMinDiverge      = settingsPtr->parm("PhaseSpace:pTHatMinDiverge");
 
   // When to use Breit-Wigners.
   useBreitWigners      = settingsPtr->flag("PhaseSpace:useBreitWigners");
@@ -183,6 +208,7 @@ void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
   canBias2Sel      = settingsPtr->flag("PhaseSpace:bias2Selection");
   bias2SelPow      = settingsPtr->parm("PhaseSpace:bias2SelectionPow");
   bias2SelRef      = settingsPtr->parm("PhaseSpace:bias2SelectionRef");
+  if (canBias2Sel) pTHatGlobalMin = max( pTHatGlobalMin, pTHatMinDiverge);
 
   // Default event-specific kinematics properties.
   x1H             = 1.;
@@ -1158,8 +1184,10 @@ bool PhaseSpace::limitTau(bool is2, bool is3) {
     return true;
   }
 
-  // Requirements from allowed mHat range.
+  // Requirements from allowed mHat range and allowed Q2Min.
   tauMin = sHatMin / s;
+  if (is2 && hasQ2Min && Q2GlobalMin + s3 + s4 > sHatMin)
+    tauMin = (Q2GlobalMin + s3 + s4) / s;
   tauMax = (mHatMax < mHatMin) ? 1. : min( 1., sHatMax / s);
 
   // Requirements from allowed pT range and masses.
@@ -1211,8 +1239,38 @@ bool PhaseSpace::limitZ() {
   zMax = sqrtpos( 1. - pT2HatMin / p2Abs );
   if (pTHatMax > pTHatMin) zMin = sqrtpos( 1. - pT2HatMax / p2Abs );
 
+  // Check that there is an open range so far.
+  hasNegZ = false;
+  hasPosZ = false;
+  if (zMax < zMin) return false;
+
+  // Define two individual ranges.
+  hasNegZ = true;
+  hasPosZ = true;
+  zNegMin = -zMax;
+  zNegMax = -zMin;
+  zPosMin =  zMin;
+  zPosMax =  zMax;
+
+  // Optionally introduce Q2 = -tHat cut.
+  if (hasQ2Min) {
+    double zMaxQ2 = (sH - s3 - s4 - 2. * Q2GlobalMin) / (2. * pAbs * mHat);
+    if (zMaxQ2 > zPosMin) {
+      if (zMaxQ2 < zPosMax) zPosMax = zMaxQ2;
+    } else {
+      hasPosZ = false;
+      zPosMax = zPosMin;
+      if (zMaxQ2 > zNegMin) {
+        if (zMaxQ2 < zNegMax) zNegMax = zMaxQ2;
+      } else {
+        hasNegZ = false;
+        zNegMin = zNegMax;
+      }
+    }
+  }
+
   // Check that there is an open range.
-  return (zMax > zMin);
+  return hasNegZ;
 }
 
 //--------------------------------------------------------------------------
@@ -1393,6 +1451,7 @@ void PhaseSpace::selectY(int iY, double yVal) {
 // Select z = cos(theta) according to a choice of shapes.
 // The selection is split in the positive- and negative-z regions,
 // since a pTmax cut can remove the region around z = 0.
+// Furthermore, a Q2 (= -tHat) cut can make the two regions asymmetric.
 
 void PhaseSpace::selectZ(int iZ, double zVal) {
 
@@ -1402,89 +1461,111 @@ void PhaseSpace::selectZ(int iZ, double zVal) {
   double ratiopT2 = 2. * pT2HatMin / max( SHATMINZ, sH);
   if (ratiopT2 < PT2RATMINZ) ratio34 = max( ratio34, ratiopT2);
 
-  // Common expressions in z limits.
-  double zPosMax = max(ratio34, unity34 + zMax);
-  double zNegMax = max(ratio34, unity34 - zMax);
-  double zPosMin = max(ratio34, unity34 + zMin);
-  double zNegMin = max(ratio34, unity34 - zMin);
+  // Common expressions of unity - z and unity + z limits, protected from 0.
+  double zNegMinM = max(ratio34, unity34 - zNegMin);
+  double zNegMaxM = max(ratio34, unity34 - zNegMax);
+  double zPosMinM = max(ratio34, unity34 - zPosMin);
+  double zPosMaxM = max(ratio34, unity34 - zPosMax);
+  double zNegMinP = max(ratio34, unity34 + zNegMin);
+  double zNegMaxP = max(ratio34, unity34 + zNegMax);
+  double zPosMinP = max(ratio34, unity34 + zPosMin);
+  double zPosMaxP = max(ratio34, unity34 + zPosMax);
 
+  // Evaluate integrals over negative and positive z ranges.
+  // Flat in z.
+  double area0Neg = zNegMax - zNegMin;
+  double area0Pos = zPosMax - zPosMin;
+  double area0    = area0Neg + area0Pos;
+  // 1 / (unity34 - z).
+  double area1Neg = log(zNegMinM / zNegMaxM);
+  double area1Pos = log(zPosMinM / zPosMaxM);
+  double area1    = area1Neg + area1Pos;
+  // 1 / (unity34 + z).
+  double area2Neg = log(zNegMaxP / zNegMinP);
+  double area2Pos = log(zPosMaxP / zPosMinP);
+  double area2    = area2Neg + area2Pos;
+  // 1 / (unity34 - z)^2.
+  double area3Neg = 1. / zNegMaxM - 1. / zNegMinM;
+  double area3Pos = 1. / zPosMaxM - 1. / zPosMinM;
+  double area3    = area3Neg + area3Pos;
+  // 1 / (unity34 + z)^2.
+  double area4Neg = 1. / zNegMinP - 1. / zNegMaxP;
+  double area4Pos = 1. / zPosMinP - 1. / zPosMaxP;
+  double area4    = area4Neg + area4Pos;
+
+  // Pick z value according to alternatives.
   // Flat in z.
   if (iZ == 0) {
-    if (zVal < 0.5) z = -(zMax + (zMin - zMax) * 2. * zVal);
-    else z = zMin + (zMax - zMin) * (2. * zVal - 1.);
+    if (!hasPosZ || zVal * area0 < area0Neg) {
+      double zValMod = zVal * area0 / area0Neg;
+      z = zNegMin + zValMod * area0Neg;
+    } else {
+      double zValMod = (zVal * area0 - area0Neg) / area0Pos;
+      z = zPosMin + zValMod * area0Pos;
+    }
 
   // 1 / (unity34 - z).
   } else if (iZ == 1) {
-    double areaNeg = log(zPosMax / zPosMin);
-    double areaPos = log(zNegMin / zNegMax);
-    double area = areaNeg + areaPos;
-    if (zVal * area < areaNeg) {
-      double zValMod = zVal * area / areaNeg;
-      z = unity34 - zPosMax * pow(zPosMin / zPosMax, zValMod);
+    if (!hasPosZ || zVal * area1 < area1Neg) {
+      double zValMod = zVal * area1 / area1Neg;
+      z = unity34 - zNegMinM * pow(zNegMaxM / zNegMinM, zValMod);
     } else {
-      double zValMod = (zVal * area - areaNeg)/ areaPos;
-      z = unity34 - zNegMin * pow(zNegMax / zNegMin, zValMod);
+      double zValMod = (zVal * area1 - area1Neg)/ area1Pos;
+      z = unity34 - zPosMinM * pow(zPosMaxM / zPosMinM, zValMod);
     }
 
   // 1 / (unity34 + z).
   } else if (iZ == 2) {
-    double areaNeg = log(zNegMin / zNegMax);
-    double areaPos = log(zPosMax / zPosMin);
-    double area = areaNeg + areaPos;
-    if (zVal * area < areaNeg) {
-      double zValMod = zVal * area / areaNeg;
-      z = zNegMax * pow(zNegMin / zNegMax, zValMod) - unity34;
+    if (!hasPosZ || zVal * area2 < area2Neg) {
+      double zValMod = zVal * area2 / area2Neg;
+      z = zNegMinP * pow(zNegMaxP / zNegMinP, zValMod) - unity34;
     } else {
-      double zValMod = (zVal * area - areaNeg)/ areaPos;
-      z = zPosMin * pow(zPosMax / zPosMin, zValMod) - unity34;
+      double zValMod = (zVal * area2 - area2Neg)/ area2Pos;
+      z = zPosMinP * pow(zPosMaxP / zPosMinP, zValMod) - unity34;
     }
 
   // 1 / (unity34 - z)^2.
   } else if (iZ == 3) {
-    double areaNeg = 1. / zPosMin - 1. / zPosMax;
-    double areaPos = 1. / zNegMax - 1. / zNegMin;
-    double area = areaNeg + areaPos;
-    if (zVal * area < areaNeg) {
-      double zValMod = zVal * area / areaNeg;
-      z = unity34 - 1. / (1./zPosMax + areaNeg * zValMod);
+    if (!hasPosZ || zVal * area3 < area3Neg) {
+      double zValMod = zVal * area3 / area3Neg;
+      z = unity34 - 1. / (1./zNegMinM + area3Neg * zValMod);
     } else {
-      double zValMod = (zVal * area - areaNeg)/ areaPos;
-      z = unity34 - 1. / (1./zNegMin + areaPos * zValMod);
+      double zValMod = (zVal * area3 - area3Neg)/ area3Pos;
+      z = unity34 - 1. / (1./zPosMinM + area3Pos * zValMod);
     }
 
   // 1 / (unity34 + z)^2.
   } else if (iZ == 4) {
-    double areaNeg = 1. / zNegMax - 1. / zNegMin;
-    double areaPos = 1. / zPosMin - 1. / zPosMax;
-    double area = areaNeg + areaPos;
-    if (zVal * area < areaNeg) {
-      double zValMod = zVal * area / areaNeg;
-      z = 1. / (1./zNegMax - areaNeg * zValMod) - unity34;
+    if (!hasPosZ || zVal * area4 < area4Neg) {
+      double zValMod = zVal * area4 / area4Neg;
+      z = 1. / (1./zNegMinP - area4Neg * zValMod) - unity34;
     } else {
-      double zValMod = (zVal * area - areaNeg)/ areaPos;
-      z = 1. / (1./zPosMin - areaPos * zValMod) - unity34;
+      double zValMod = (zVal * area4 - area4Neg)/ area4Pos;
+      z = 1. / (1./zPosMinP - area4Pos * zValMod) - unity34;
     }
   }
 
   // Safety check for roundoff errors. Combinations with z.
-  if (z < 0.) z = min(-zMin, max(-zMax, z));
-  else z = min(zMax, max(zMin, z));
+  if (z < 0.) z = min( zNegMax, max( zNegMin, z));
+  else        z = min( zPosMax, max( zPosMin, z) );
   zNeg = max(ratio34, unity34 - z);
   zPos = max(ratio34, unity34 + z);
 
   // Phase space integral in z.
-  double intZ0 = 2. * (zMax - zMin);
-  double intZ12 = log( (zPosMax * zNegMin) / (zPosMin * zNegMax) );
-  double intZ34 = 1. / zPosMin - 1. / zPosMax + 1. / zNegMax
-    - 1. / zNegMin;
-  wtZ = mHat * pAbs / ( (zCoef[0] / intZ0) + (zCoef[1] / intZ12) / zNeg
-    + (zCoef[2] / intZ12) / zPos + (zCoef[3] / intZ34) / pow2(zNeg)
-    + (zCoef[4] / intZ34) / pow2(zPos) );
+  wtZ = mHat * pAbs / ( (zCoef[0] / area0) + (zCoef[1] / area1) / zNeg
+    + (zCoef[2] / area2) / zPos + (zCoef[3] / area3) / pow2(zNeg)
+    + (zCoef[4] / area4) / pow2(zPos) );
 
   // Calculate tHat and uHat. Also gives pTHat.
   double sH34 = -0.5 * (sH - s3 - s4);
-  tH  = sH34 + mHat * pAbs * z;
-  uH  = sH34 - mHat * pAbs * z;
+  double tHuH = pow2(sH34) * (1. - z) * (1. + z) + s3 * s4 * pow2(z);
+  if (z < 0.) {
+    tH = sH34 + mHat * pAbs * z;
+    uH = tHuH / tH;
+  } else {
+    uH = sH34 - mHat * pAbs * z;
+    tH = tHuH / uH;
+  }
   pTH = sqrtpos( (tH * uH - s3 * s4) / sH);
 
 }
@@ -1915,7 +1996,7 @@ bool PhaseSpace2to1tauy::finalKin() {
   mH[3] = mHat;
 
   // Incoming partons along beam axes. Outgoing has sum of momenta.
-  pH[1] = Vec4( 0., 0., 0.5 * eCM * x1H, 0.5 * eCM * x1H);
+  pH[1] = Vec4( 0., 0.,  0.5 * eCM * x1H, 0.5 * eCM * x1H);
   pH[2] = Vec4( 0., 0., -0.5 * eCM * x2H, 0.5 * eCM * x2H);
   pH[3] = pH[1] + pH[2];
 
@@ -2070,9 +2151,38 @@ bool PhaseSpace2to2tauyz::finalKin() {
   mH[3] = m3;
   mH[4] = m4;
 
-  // Incoming partons along beam axes.
-  pH[1] = Vec4( 0., 0., 0.5 * eCM * x1H, 0.5 * eCM * x1H);
-  pH[2] = Vec4( 0., 0., -0.5 * eCM * x2H, 0.5 * eCM * x2H);
+  // Special kinematics for direct photon+hadron (massless+massive) to fulfill
+  // s = x1 * x2 * sHat and to retain the momentum of the massless photon beam.
+  if ( hasPointGammaA && beamBPtr->isHadron() ) {
+    double eCM1 = 0.5 * ( s + pow2(mA) - pow2(mB) ) / eCM;
+    double eCM2 = 0.25 * x2H * s / eCM1;
+    pH[1] = Vec4( 0., 0.,  eCM1, eCM1);
+    pH[2] = Vec4( 0., 0., -eCM2, eCM2);
+  } else if ( hasPointGammaB && beamAPtr->isHadron() ) {
+    double eCM2 = 0.5 * ( s - pow2(mA) + pow2(mB) ) / eCM;
+    double eCM1 = 0.25 * x1H * s / eCM2;
+    pH[1] = Vec4( 0., 0.,  eCM1, eCM1);
+    pH[2] = Vec4( 0., 0., -eCM2, eCM2);
+
+  // Special kinematics for DIS to preserve lepton mass.
+  } else if ( ( (beamAPtr->isLepton() && beamBPtr->isHadron())
+             || (beamBPtr->isLepton() && beamAPtr->isHadron()) )
+             && !settingsPtr->flag("PDF:lepton2gamma") ) {
+    mH[1] = mA;
+    mH[2] = mB;
+    double pzAcm = 0.5 * sqrtpos( (eCM + mA + mB) * (eCM - mA - mB)
+      * (eCM - mA + mB) * (eCM + mA - mB) ) / eCM;
+    double eAcm  = sqrt( mH[1]*mH[1] + pzAcm*pzAcm);
+    double pzBcm = -pzAcm;
+    double eBcm  = sqrt( mH[2]*mH[2] + pzBcm*pzBcm);
+    pH[1] = Vec4( 0., 0., pzAcm * x1H, eAcm * x1H);
+    pH[2] = Vec4( 0., 0., pzBcm * x2H, eBcm * x2H);
+
+  // Default kinematics with incoming partons along beam axes.
+  } else {
+    pH[1] = Vec4( 0., 0., 0.5 * eCM * x1H, 0.5 * eCM * x1H);
+    pH[2] = Vec4( 0., 0., -0.5 * eCM * x2H, 0.5 * eCM * x2H);
+  }
 
   // Outgoing partons initially in collision CM frame along beam axes.
   pH[3] = Vec4( 0., 0.,  pAbs, 0.5 * (sH + s3 - s4) / mHat);
@@ -2080,7 +2190,7 @@ bool PhaseSpace2to2tauyz::finalKin() {
 
   // Then rotate and boost them to overall CM frame.
   theta = acos(z);
-  phi = 2. * M_PI * rndmPtr->flat();
+  phi   = 2. * M_PI * rndmPtr->flat();
   betaZ = (x1H - x2H)/(x1H + x2H);
   pH[3].rot( theta, phi);
   pH[4].rot( theta, phi);
@@ -2366,6 +2476,51 @@ void PhaseSpace2to2tauyz::rescaleMomenta( double sHatNew){
     setP( iPartonA, pANew);
     setP( iPartonB, pBNew);
   }
+}
+
+//--------------------------------------------------------------------------
+
+// Calculates the cross-section weight for overestimated photon flux.
+
+double PhaseSpace2to2tauyz::weightGammaPDFApprox(){
+
+  // No need for reweighting if only direct photons.
+  if (beamAPtr->getGammaMode() == 2 && beamBPtr->getGammaMode() == 2)
+    return 1.;
+  if ( (beamAPtr->getGammaMode() == 2 && beamBPtr->isHadron())
+       || (beamBPtr->getGammaMode() == 2 && beamAPtr->isHadron()) )
+    return 1.;
+
+  // Get the combined x and x_gamma values and derive x'.
+  double x1GammaHadr = beamAPtr->xGammaHadr();
+  double x2GammaHadr = beamBPtr->xGammaHadr();
+  double x1Gamma     = beamAPtr->xGamma();
+  double x2Gamma     = beamBPtr->xGamma();
+  double x1Hadr      = x1GammaHadr / x1Gamma;
+  double x2Hadr      = x2GammaHadr / x2Gamma;
+
+  // For photon-hadron case do not reweight the hadron side.
+  if ( beamAPtr->isHadron() || beamAPtr->getGammaMode() == 2 ) {
+    x1GammaHadr = -1.;
+    x1Gamma     = -1.;
+  }
+  if ( beamBPtr->isHadron() || beamBPtr->getGammaMode() == 2 ) {
+    x2GammaHadr = -1.;
+    x2Gamma     = -1.;
+  }
+
+  // Calculate the over-estimated PDF convolution and the current one.
+  double sigmaOver = sigmaProcessPtr->sigmaPDF(false, false, true,
+                                               x1GammaHadr, x2GammaHadr);
+  double sigmaCorr = sigmaProcessPtr->sigmaPDF(false, false, true,
+                                               x1Hadr, x2Hadr);
+
+  // Make sure that the over estimate is finite.
+  if (sigmaOver < TINY) return 0.;
+
+  // Return weight.
+  return sigmaCorr / sigmaOver;
+
 }
 
 //==========================================================================
@@ -3458,14 +3613,21 @@ bool PhaseSpace2to3diffractive::finalKin() {
 
 bool PhaseSpace2to2nondiffractiveGamma::setupSampling() {
 
-  // Initialize relevant cuts.
-  Q2maxGamma = settingsPtr->parm("Photon:Q2max");
-  Wmin       = settingsPtr->parm("Photon:Wmin");
+  // Read in relevant cuts.
+  Q2maxGamma    = settingsPtr->parm("Photon:Q2max");
+  Wmin          = settingsPtr->parm("Photon:Wmin");
+  bool hasGamma = settingsPtr->flag("PDF:lepton2gamma");
+  externalFlux  = settingsPtr->mode("PDF:lepton2gammaSet") == 2;
+  sampleQ2      = settingsPtr->flag("Photon:sampleQ2");
 
-  // Save relevant parameters.
-  alphaEM    = couplingsPtr->alphaEM(Q2maxGamma);
-  sCM        = s;
-  sigmaTotPtr->calc( 22, 22, eCM );
+  // Save relevant parameters and calculate sigmaND.
+  alphaEM = couplingsPtr->alphaEM(Q2maxGamma);
+  sCM     = s;
+  gammaA  = beamAPtr->isGamma() || (beamAPtr->isLepton() && hasGamma);
+  gammaB  = beamBPtr->isGamma() || (beamBPtr->isLepton() && hasGamma);
+  idAin   = gammaA ? 22 : beamAPtr->id();
+  idBin   = gammaB ? 22 : beamBPtr->id();
+  sigmaTotPtr->calc( idAin, idBin, eCM);
   sigmaNDmax = sigmaTotPtr->sigmaND();
 
   // Get the masses of beam particles and derive useful ratios.
@@ -3476,26 +3638,69 @@ bool PhaseSpace2to2nondiffractiveGamma::setupSampling() {
 
   // Calculate the square of the minimum invariant mass for sampling.
   double m2GmGmMin = pow2(Wmin);
+  double xGamAMax  = 1.;
+  double xGamBMax  = 1.;
+  double xGamAMin  = m2GmGmMin / sCM ;
+  double xGamBMin  = m2GmGmMin / sCM ;
 
-  // Calculate limits for x1 and x2. Lower limit crude approximation but
-  // fixed later by the minimum invariant mass for gm+gm pair.
-  double xGamAMax   = Q2maxGamma / (2. * m2BeamA)
-    * (sqrt( (1. + 4. * m2BeamA / Q2maxGamma) * (1. - m2sA) ) - 1.);
-  double xGamBMax   = Q2maxGamma / (2. * m2BeamB)
-    * (sqrt( (1. + 4. * m2BeamB / Q2maxGamma) * (1. - m2sB) ) - 1.);
-  double xGamAMin   = m2GmGmMin / sCM ;
-  double xGamBMin   = m2GmGmMin / sCM ;
+  xGamma1   = 1.;
+  xGamma2   = 1.;
+  log2xMinA = 0.;
+  log2xMaxA = 0.;
 
-  // Pre-calculate some logs used for the x-sampling and cross section
-  // estimation.
-  log2xMinA = pow2( log( Q2maxGamma/ ( m2BeamA * pow2(xGamAMin) ) ) );
-  log2xMaxA = pow2( log( Q2maxGamma/ ( m2BeamA * pow2(xGamAMax) ) ) );
-  log2xMinB = pow2( log( Q2maxGamma/ ( m2BeamB * pow2(xGamBMin) ) ) );
-  log2xMaxB = pow2( log( Q2maxGamma/ ( m2BeamB * pow2(xGamBMax) ) ) );
+  // Calculate limit for x1 (if applicable) and derive useful logs.
+  if (gammaA) {
+    xGamAMax = Q2maxGamma / (2. * m2BeamA)
+      * (sqrt( (1. + 4. * m2BeamA / Q2maxGamma) * (1. - m2sA) ) - 1.);
+    if ( !externalFlux) {
+      log2xMinA = pow2( log( Q2maxGamma/ ( m2BeamA * pow2(xGamAMin) ) ) );
+      log2xMaxA = pow2( log( Q2maxGamma/ ( m2BeamA * pow2(xGamAMax) ) ) );
+    }
+  }
 
-  // Derive the over estimate for sigmaND integral with l+l- -> gm+gm.
-  sigmaNDestimate = pow2( 0.5 * alphaEM / M_PI )
-    * 0.25 * (log2xMinA - log2xMaxA) * (log2xMinB - log2xMaxB) * sigmaNDmax;
+  // Calculate limit for x2 (if applicable) and derive useful logs.
+  if (gammaB) {
+    xGamBMax = Q2maxGamma / (2. * m2BeamB)
+      * (sqrt( (1. + 4. * m2BeamB / Q2maxGamma) * (1. - m2sB) ) - 1.);
+    if ( !externalFlux) {
+      log2xMinB = pow2( log( Q2maxGamma/ ( m2BeamB * pow2(xGamBMin) ) ) );
+      log2xMaxB = pow2( log( Q2maxGamma/ ( m2BeamB * pow2(xGamBMax) ) ) );
+    }
+  }
+
+  // Derive the overestimate for sigmaND integral with l+l-/p -> gm+gm/p.
+  if ( !externalFlux) {
+    if ( gammaA && gammaB) {
+      sigmaNDestimate = pow2( 0.5 * alphaEM / M_PI ) * 0.25
+        * (log2xMinA - log2xMaxA) * (log2xMinB - log2xMaxB) * sigmaNDmax;
+    } else if (gammaA) {
+      sigmaNDestimate = 0.5 * alphaEM / M_PI
+        * 0.5 * (log2xMinA - log2xMaxA) * sigmaNDmax;
+    } else if (gammaB) {
+      sigmaNDestimate = 0.5 * alphaEM / M_PI
+        * 0.5 * (log2xMinB - log2xMaxB) * sigmaNDmax;
+    }
+
+  // Slightly different overestimate for externally provided fluxes.
+  } else {
+
+    // Get the minimum virtualities.
+    double Q2minA = beamAPtr->Q2minPDF();
+    double Q2minB = beamBPtr->Q2minPDF();
+
+    // Calculated Overestimated sigmaND.
+    if ( gammaA && gammaB) {
+      sigmaNDestimate = pow2( alphaEM / M_PI ) * sigmaNDmax
+        * log(xGamAMax / xGamAMin) * log(xGamBMax / xGamBMin)
+        * log(Q2maxGamma / Q2minA) * log(Q2maxGamma / Q2minB);
+    } else if (gammaA) {
+      sigmaNDestimate = alphaEM / M_PI * sigmaNDmax
+        * log(xGamAMax / xGamAMin) * log(Q2maxGamma / Q2minA);
+    } else if (gammaB) {
+      sigmaNDestimate = alphaEM / M_PI * sigmaNDmax
+        * log(xGamBMax / xGamBMin) * log(Q2maxGamma / Q2minB);
+    }
+  }
 
   // Save the cross-section estimate.
   sigmaNw = sigmaNDestimate;
@@ -3515,18 +3720,26 @@ bool PhaseSpace2to2nondiffractiveGamma::trialKin(bool , bool) {
   // Current weight.
   double wt = 1.0;
 
-  // Sample x_gamma's.
-  xGamma1 = sqrt( (Q2maxGamma / m2BeamA) * exp( -sqrt( log2xMinA
-          + rndmPtr->flat() * (log2xMaxA - log2xMinA) ) ) );
-  xGamma2 = sqrt( (Q2maxGamma / m2BeamB) * exp( -sqrt( log2xMinB
-          + rndmPtr->flat() * (log2xMaxB - log2xMinB) ) ) );
+  // Sample x_gamma's when using internal photon flux.
+  if ( !externalFlux) {
+    if (gammaA) xGamma1 = sqrt( (Q2maxGamma / m2BeamA) * exp( -sqrt( log2xMinA
+                      + rndmPtr->flat() * (log2xMaxA - log2xMinA) ) ) );
+    if (gammaB) xGamma2 = sqrt( (Q2maxGamma / m2BeamB) * exp( -sqrt( log2xMinB
+                      + rndmPtr->flat() * (log2xMaxB - log2xMinB) ) ) );
 
-  // Save the x_gamma values to beam particles for further use.
-  beamAPtr->xGamma(xGamma1);
-  beamBPtr->xGamma(xGamma2);
+    // Save the x_gamma values to beam particles for further use.
+    beamAPtr->xGamma(xGamma1);
+    beamBPtr->xGamma(xGamma2);
+  }
 
   // Sample the kT of photons.
   if ( !(gammaKinPtr->sampleKTgamma() ) ) return false;
+
+  // Save the sampled x_gamma values with external flux.
+  if (externalFlux) {
+    xGamma1 = beamAPtr->xGamma();
+    xGamma2 = beamBPtr->xGamma();
+  }
 
   // Obtain the sampled values.
   Q2gamma1 = gammaKinPtr->getQ2gamma1();
@@ -3536,20 +3749,48 @@ bool PhaseSpace2to2nondiffractiveGamma::trialKin(bool , bool) {
   mGmGm    = gammaKinPtr->eCMsub();
 
   // Correct for x1 and x2 oversampling.
-  double wt1 = ( 0.5 * ( 1. + pow2(1 - xGamma1) ) ) * log( Q2maxGamma/Q2min1 )
-             / log( Q2maxGamma / ( m2BeamA * pow2( xGamma1 ) ) );
-  double wt2 = ( 0.5 * ( 1. + pow2(1 - xGamma2) ) ) * log( Q2maxGamma/Q2min2 )
-             / log( Q2maxGamma / ( m2BeamB * pow2( xGamma2 ) ) );
+  double wt1 = 1.;
+  double wt2 = 1.;
+
+  // Calculate the weight for beam A from oversampling.
+  if ( gammaA) {
+    if ( !externalFlux) {
+      wt1 = ( 0.5 * ( 1. + pow2(1 - xGamma1) ) ) * log( Q2maxGamma/Q2min1 )
+        / log( Q2maxGamma / ( m2BeamA * pow2( xGamma1 ) ) );
+
+    // For external flux weight depends whether Q2 is sampled.
+    } else {
+      wt1 = sampleQ2 ? beamAPtr->xfFlux(22, xGamma1, Q2gamma1)
+        / beamAPtr->xfApprox(22, xGamma1, Q2gamma1) :
+        beamAPtr->xfFlux(22, xGamma1, Q2gamma1)
+        / beamAPtr->xf(22, xGamma1, Q2gamma1);
+    }
+  }
+
+  // Calculate the weight for beam B from oversampling.
+  if ( gammaB) {
+    if ( !externalFlux) {
+      wt2 = ( 0.5 * ( 1. + pow2(1 - xGamma2) ) ) * log( Q2maxGamma/Q2min2 )
+        / log( Q2maxGamma / ( m2BeamB * pow2( xGamma2 ) ) );
+
+    // For external flux weight depends whether Q2 is sampled.
+    } else {
+      wt2 = sampleQ2 ? beamBPtr->xfFlux(22, xGamma2, Q2gamma2)
+        / beamBPtr->xfApprox(22, xGamma2, Q2gamma2) :
+        beamBPtr->xfFlux(22, xGamma2, Q2gamma2)
+        / beamBPtr->xf(22, xGamma2, Q2gamma2);
+    }
+  }
 
   // Correct for the estimated sigmaND.
-  sigmaTotPtr->calc( 22, 22, mGmGm );
+  sigmaTotPtr->calc( idAin, idBin, mGmGm );
   double sigmaNDnow = sigmaTotPtr->sigmaND();
   double wtSigma    = sigmaNDnow/sigmaNDmax;
 
   // Correct for alpha_EM with the sampled Q2 values.
-  double alphaEM1   = couplingsPtr->alphaEM(Q2gamma1);
-  double alphaEM2   = couplingsPtr->alphaEM(Q2gamma2);
-  double wtAlphaEM  = alphaEM1 * alphaEM2 / pow2(alphaEM);
+  double wtAlphaEM1 = gammaA ? couplingsPtr->alphaEM(Q2gamma1) / alphaEM : 1.;
+  double wtAlphaEM2 = gammaB ? couplingsPtr->alphaEM(Q2gamma2) / alphaEM : 1.;
+  double wtAlphaEM  = wtAlphaEM1 * wtAlphaEM2;
 
   // Calculate the total weight and warn if unphysical weight.
   wt *= wt1 * wt2 * wtSigma * wtAlphaEM;
@@ -3730,7 +3971,7 @@ bool PhaseSpace2to3tauycyl::finalKin() {
   mH[5] = m5;
 
   // Incoming partons along beam axes.
-  pH[1] = Vec4( 0., 0., 0.5 * eCM * x1H, 0.5 * eCM * x1H);
+  pH[1] = Vec4( 0., 0.,  0.5 * eCM * x1H, 0.5 * eCM * x1H);
   pH[2] = Vec4( 0., 0., -0.5 * eCM * x2H, 0.5 * eCM * x2H);
 
   // Begin three-momentum rescaling to compensate for masses.

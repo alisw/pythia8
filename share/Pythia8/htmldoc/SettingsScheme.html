@@ -178,7 +178,10 @@ that do not match an existing variable are ignored. A warning is
 printed, however. Strings beginning with a non-alphanumeric character, 
 like # or !, are assumed to be comments and are not processed at all. 
 Values below the minimum or above the maximum are set at 
-the respective border. For <code>bool</code> values, the following 
+the respective border. In extreme cases, where it is necessary to 
+go outside the allowed range, "<code>FORCE=</code>" can replace 
+the normal "<code>=</code>" separator to force the requested value, 
+at own responsibility. For <code>bool</code> values, the following 
 notation may be used interchangeably: 
 <code>true = on = yes = ok = 1</code>, while everything else gives 
 <code>false</code> (including but not limited to 
@@ -329,17 +332,17 @@ The intention is that you should use <code>Pythia::readFile(...)</code>.
 It parses and decides which individual lines should be sent on to 
 <code>Settings::readString(...)</code>. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>Settings::Settings() &nbsp;</strong> <br/>
 the constructor, which takes no arguments. Internal. 
    
  
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>bool Settings::initPtr(Info* infoPtrIn) &nbsp;</strong> <br/>
 initialize pointer to error-message database. Internal. 
    
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>bool Settings::init(string startFile = &quot;../share/Pythia8/xmldoc/Index.xml&quot;, bool append = false) &nbsp;</strong> <br/>
 read in the settings database. 
 <br/><code>argument</code><strong> startFile </strong>  : <argument name="startFile" 
@@ -354,14 +357,14 @@ If true the further settings read in are added to the current database.
 <br/><b>Note:</b> The method returns false if it fails. 
    
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>bool init(istream& is, bool append = false) &nbsp;</strong> <br/>
 read in the settings from an input stream. This allows initialization 
 without reading the xml files directly, which is useful for initialization 
 of multiple copies of Pythia8. 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>bool Settings::reInit(string startFile = &quot;../share/Pythia8/xmldoc/Index.xml&quot;) &nbsp;</strong> <br/>
 overwrite the existing database. 
 <br/><code>argument</code><strong> startFile </strong>  : <argument name="startFile" 
@@ -372,7 +375,7 @@ assumed to be located in the same subdirectory.
 <br/><b>Note:</b> The method returns false if it fails. 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>bool Settings::readString(string line, bool warn = true) &nbsp;</strong> <br/>
 read in a string, and change the relevant quantity in the database. 
 It is normally used indirectly, via 
@@ -389,9 +392,10 @@ sense, e.g. if the variable does not exist in the databases.
 make sense out of the input string. 
    
  
-<a name="method7"></a>
+<a name="anchor7"></a>
 <p/><strong>bool Settings::writeFile(string toFile, bool writeAll = false) &nbsp;</strong> <br/>
    
+<a name="anchor8"></a>
 <strong>bool Settings::writeFile(ostream& os = cout, bool writeAll = false) &nbsp;</strong> <br/>
 write current settings to a file or to an <code>ostream</code>. 
 <br/><code>argument</code><strong> toFile, os </strong>  :  
@@ -404,17 +408,19 @@ but if true then all settings are output.
 <br/><b>Note:</b> the method returns false if it fails. 
    
  
-<a name="method8"></a>
+<a name="anchor9"></a>
 <p/><strong>bool writeFileXML(ostream& os = cout) &nbsp;</strong> <br/>
 write out the information stored in xmldoc to be used later to 
 initialize Settings through an input stream. 
    
  
-<a name="method9"></a>
+<a name="anchor10"></a>
 <p/><strong>void Settings::listAll() &nbsp;</strong> <br/>
    
+<a name="anchor11"></a>
 <strong>void Settings::listChanged() &nbsp;</strong> <br/>
    
+<a name="anchor12"></a>
 <strong>void Settings::list(string match) &nbsp;</strong> <br/>
 list all or changed settings, or a group of them. 
 <br/><code>argument</code><strong> match </strong>  :  
@@ -423,7 +429,7 @@ the <code>match</code> (sub)string (case-insensitive).
    
    
  
-<a name="method10"></a>
+<a name="anchor13"></a>
 <p/><strong>string Settings::output(string key, bool fullLine = true) &nbsp;</strong> <br/>
 provide the value of a variable as a character string, whatever the type. 
 If the variable does not exist then <code>unknown</code> is returned. 
@@ -436,46 +442,81 @@ while if false only the  <code>value</code> string.
    
    
  
-<a name="method11"></a>
+<a name="anchor14"></a>
+<p/><strong>vector&lt;string&gt; Settings::getReadHistory() &nbsp;</strong> <br/>
+Method to retrieve the history of <code>readString</code> commands that 
+have been processed by the <code>Settings</code> instance, e.g. for 
+inspection. Note that <code>readFile</code> command lines are interpreted 
+by <code>readString</code> and thus also are listed, as are the 
+<code>Settings</code> commands read by <code>Pythia::readString</code> 
+and <code>Pythia::readFile</code>. 
+   
+ 
+<a name="anchor15"></a>
+<p/><strong>vector&lt;string&gt; Settings::getReadHistory(int subrun) &nbsp;</strong> <br/>
+Method to retrieve the history of <code>readString</code> commands that 
+have been processed by <code>Settings</code>, for a specific subrun 
+(see the section on <a href="MainProgramSettings.html" target="page">Main-Program 
+Settings</a>). For <code>subrun = -1</code>, returns the 
+<code>readString</code> history common to all subruns. For 
+<code>subrun >= 0</code>, returns the history of <code>readString</code> 
+commands for that specific subrun (omitting the common part). 
+   
+ 
+<a name="anchor16"></a>
 <p/><strong>void Settings::resetAll() &nbsp;</strong> <br/>
 reset all current values to their defaults. 
    
  
-<a name="method12"></a>
+<a name="anchor17"></a>
 <p/><strong>bool Settings::isFlag(string key) &nbsp;</strong> <br/>
    
+<a name="anchor18"></a>
 <strong>bool Settings::isMode(string key) &nbsp;</strong> <br/>
    
+<a name="anchor19"></a>
 <strong>bool Settings::isParm(string key) &nbsp;</strong> <br/>
    
+<a name="anchor20"></a>
 <strong>bool Settings::isWord(string key) &nbsp;</strong> <br/>
    
+<a name="anchor21"></a>
 <strong>bool Settings::isFVec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor22"></a>
 <strong>bool Settings::isMVec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor23"></a>
 <strong>bool Settings::isPVec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor24"></a>
 <strong>bool Settings::isWVec(string key) &nbsp;</strong> <br/>
 return true if an entry of the given name and kind 
 exists, else false. 
    
  
-<a name="method13"></a>
+<a name="anchor25"></a>
 <p/><strong>void Settings::addFlag(string key, bool default) &nbsp;</strong> <br/>
    
+<a name="anchor26"></a>
 <strong>void Settings::addMode(string key, int default, bool hasMin, bool hasMax, int min, int max) &nbsp;</strong> <br/>
    
+<a name="anchor27"></a>
 <strong>void Settings::addParm(string key, double default, bool hasMin, bool hasMax, double min, double max) &nbsp;</strong> <br/>
    
+<a name="anchor28"></a>
 <strong>void Settings::addWord(string key, string default) &nbsp;</strong> <br/>
    
+<a name="anchor29"></a>
 <strong>void Settings::addFVec(string key, vector&lt;bool&gt; default) &nbsp;</strong> <br/>
    
+<a name="anchor30"></a>
 <strong>void Settings::addMVec(string key, vector&lt;int&gt; default, bool hasMin, bool hasMax, int min, int max) &nbsp;</strong> <br/>
    
+<a name="anchor31"></a>
 <strong>void Settings::addPVec(string key, vector&lt;double&gt; default, bool hasMin, bool hasMax, double min, double max) &nbsp;</strong> <br/>
    
+<a name="anchor32"></a>
 <strong>void Settings::addWVec(string key, vector&lt;string&gt; default) &nbsp;</strong> <br/>
 add an entry of the respective kind to the database. The name and default 
 value(s) always has to be supplied, for <code>Mode</code>, <code>Parm</code>, 
@@ -483,21 +524,28 @@ value(s) always has to be supplied, for <code>Mode</code>, <code>Parm</code>,
 upper limits are to be imposed and, if so, what those limit are. 
    
  
-<a name="method14"></a>
+<a name="anchor33"></a>
 <p/><strong>bool Settings::flag(string key) &nbsp;</strong> <br/>
    
+<a name="anchor34"></a>
 <strong>int Settings::mode(string key) &nbsp;</strong> <br/>
    
+<a name="anchor35"></a>
 <strong>double Settings::parm(string key) &nbsp;</strong> <br/>
    
+<a name="anchor36"></a>
 <strong>string Settings::word(string key) &nbsp;</strong> <br/>
    
+<a name="anchor37"></a>
 <strong>vector&lt;bool&gt; Settings::fvec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor38"></a>
 <strong>vector&lt;int&gt; Settings::mvec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor39"></a>
 <strong>vector&lt;double&gt; Settings::pvec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor40"></a>
 <strong>vector&lt;string&gt; Settings::wvec(string key) &nbsp;</strong> <br/>
 return the current value(s) of the respective setting. If the name 
 does not exist in the database, a value <code>false</code>, 
@@ -506,21 +554,28 @@ vector of length 1 and value <code>false</code>, <code>0</code>,
 <code>0.</code> or <code>&quot; &quot;</code>, respectively, is returned. 
    
  
-<a name="method15"></a>
+<a name="anchor41"></a>
 <p/><strong>bool Settings::flagDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor42"></a>
 <strong>int Settings::modeDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor43"></a>
 <strong>double Settings::parmDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor44"></a>
 <strong>string Settings::wordDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor45"></a>
 <strong>vector&lt;bool&gt; Settings::fvecDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor46"></a>
 <strong>vector&lt;int&gt; Settings::mvecDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor47"></a>
 <strong>vector&lt;double&gt; Settings::pvecDefault(string key) &nbsp;</strong> <br/>
    
+<a name="anchor48"></a>
 <strong>vector&lt;string&gt; Settings::wvecDefault(string key) &nbsp;</strong> <br/>
 return the default value(s) of the respective setting. If the name 
 does not exist in the database, a value <code>false</code>, 
@@ -529,90 +584,124 @@ vector of length 1 and value <code>false</code>, <code>0</code>,
 <code>0.</code> or <code>&quot; &quot;</code>, respectively, is returned. 
    
  
-<a name="method16"></a>
+<a name="anchor49"></a>
 <p/><strong>map&lt;string, Flag&gt; Settings::getFlagMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor50"></a>
 <strong>map&lt;string, Mode&gt; Settings::getModeMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor51"></a>
 <strong>map&lt;string, Parm&gt; Settings::getParmMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor52"></a>
 <strong>map&lt;string, Word&gt; Settings::getWordMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor53"></a>
 <strong>map&lt;string, FVec&gt; Settings::getFVecMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor54"></a>
 <strong>map&lt;string, MVec&gt; Settings::getMVecMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor55"></a>
 <strong>map&lt;string, PVec&gt; Settings::getPVecMap(string match) &nbsp;</strong> <br/>
    
+<a name="anchor56"></a>
 <strong>map&lt;string, WVec&gt; Settings::getWVecMap(string match) &nbsp;</strong> <br/>
 return a map of all settings of the respective type that contain the 
 string "match" in its name. 
    
  
-<a name="method17"></a>
-<p/><strong>void Settings::flag(string key, bool now) &nbsp;</strong> <br/>
+<a name="anchor57"></a>
+<p/><strong>void Settings::flag(string key, bool now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::mode(string key, int now) &nbsp;</strong> <br/>
+<a name="anchor58"></a>
+<strong>void Settings::mode(string key, int now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::parm(string key, double now) &nbsp;</strong> <br/>
+<a name="anchor59"></a>
+<strong>void Settings::parm(string key, double now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::word(string key, string now) &nbsp;</strong> <br/>
+<a name="anchor60"></a>
+<strong>void Settings::word(string key, string now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::fvec(string key, vector&lt;bool&gt; now) &nbsp;</strong> <br/>
+<a name="anchor61"></a>
+<strong>void Settings::fvec(string key, vector&lt;bool&gt; now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::mvec(string key, vector&lt;int&gt; now) &nbsp;</strong> <br/>
+<a name="anchor62"></a>
+<strong>void Settings::mvec(string key, vector&lt;int&gt; now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::pvec(string key, vector&lt;double&gt; now) &nbsp;</strong> <br/>
+<a name="anchor63"></a>
+<strong>void Settings::pvec(string key, vector&lt;double&gt; now, bool force = false) &nbsp;</strong> <br/>
    
-<strong>void Settings::wvec(string key, vector&lt;string&gt; now) &nbsp;</strong> <br/>
+<a name="anchor64"></a>
+<strong>void Settings::wvec(string key, vector&lt;string&gt; now, bool force = false) &nbsp;</strong> <br/>
 change the current value(s) of the respective setting to the provided 
-new value(s). If lower or upper limits have been set, input values 
-outside the allowed range are reinterpreted as being a the nearest 
-limit. 
+new value(s). If lower or upper limits have been set and 
+<code>force=false</code>, input values 
+outside the allowed range are reinterpreted as being at the nearest 
+limit. If <code>force = true</code>, upper and lower limits will be 
+ignored, allowing to force values outside the allowed range (to be 
+used with caution and at own responsibility!). Any key not found in the 
+settings database will be ignored, unless <code>force = true</code>, in 
+which case the missing key will be added to the database with the 
+given value. 
    
  
-<a name="method18"></a>
+<a name="anchor65"></a>
 <p/><strong>void Settings::forceMode(string key, int now) &nbsp;</strong> <br/>
    
+<a name="anchor66"></a>
 <strong>void Settings::forceParm(string key, double now) &nbsp;</strong> <br/>
    
+<a name="anchor67"></a>
 <strong>void Settings::forceMVec(string key, vector&lt;int&gt; now) &nbsp;</strong> <br/>
    
+<a name="anchor68"></a>
 <strong>void Settings::forcePVec(string key, vector&lt;double&gt; now) &nbsp;</strong> <br/>
 as above, but do not check lower and upper limits, so that the current 
 value(s) can be put outside the intended borders. 
+<br/><b>Note:</b> these methods have been superseded by the 
+<code>force = true</code> option in the standard methods above. 
+They are kept for backwards compatibility with version 8.223 and earlier 
+but will be removed in a future major release. 
    
  
-<a name="method19"></a>
+<a name="anchor69"></a>
 <p/><strong>void Settings::resetFlag(string key) &nbsp;</strong> <br/>
    
+<a name="anchor70"></a>
 <strong>void Settings::resetMode(string key) &nbsp;</strong> <br/>
    
+<a name="anchor71"></a>
 <strong>void Settings::resetParm(string key) &nbsp;</strong> <br/>
    
+<a name="anchor72"></a>
 <strong>void Settings::resetWord(string key) &nbsp;</strong> <br/>
    
+<a name="anchor73"></a>
 <strong>void Settings::resetFVec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor74"></a>
 <strong>void Settings::resetMVec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor75"></a>
 <strong>void Settings::resetPVec(string key) &nbsp;</strong> <br/>
    
+<a name="anchor76"></a>
 <strong>void Settings::resetWVec(string key) &nbsp;</strong> <br/>
 reset the current value to the default one. 
    
  
-<a name="method20"></a>
+<a name="anchor77"></a>
 <p/><strong>bool Settings::getIsInit() &nbsp;</strong> <br/>
 return true if the database has been initialized, else false. 
    
  
-<a name="method21"></a>
+<a name="anchor78"></a>
 <p/><strong>bool Settings::readingFailed() &nbsp;</strong> <br/>
 return true if some input could not be parsed, else false. 
    
  
-<a name="method22"></a>
+<a name="anchor79"></a>
 <p/><strong>bool Settings::unfinishedInput() &nbsp;</strong> <br/>
 return true if input of a vector has been begun with am 
 open brace { but no matching closing brace } has been found 

@@ -11,7 +11,7 @@
  
 This manual page describes the parton-jet matching interfaces for 
 PYTHIA8. In this approach, usually referred to as MLM matching 
-[<a href="Bibliography.html" target="page">Man02, Man07</a>], the final jets after parton-shower evolution 
+[<a href="Bibliography.html#refMan02" target="page">Man02</a>, <a href="Bibliography.html#refMan07" target="page">Man07</a>], the final jets after parton-shower evolution 
 and jet clustering are matched to the original partons. The event is 
 accepted if a reasonable match is found, and rejected if not. The 
 rejection step in an approximate way introduces a Sudakov form factor 
@@ -19,8 +19,8 @@ on to the hard processes. Notably the parton shower should not generate
 an emission that would doublecount hard activity already included in 
 the matrix-element description. Within this general ansatz, different 
 technical solutions can be adopted. We provide two alternatives, one 
-based on the algorithm used in ALPGEN [<a href="Bibliography.html" target="page">Man03</a>], and another on 
-the one used in Madgraph [<a href="Bibliography.html" target="page">Alw11</a>], both reimplemented from 
+based on the algorithm used in ALPGEN [<a href="Bibliography.html#refMan03" target="page">Man03</a>], and another on 
+the one used in Madgraph [<a href="Bibliography.html#refAlw11" target="page">Alw11</a>], both reimplemented from 
 scratch here. The main points of these two algorithms are outlined 
 further down on this page. 
  
@@ -74,6 +74,7 @@ The user can choose to set default matching parameters using the
 flag for ALPGEN files. For LHEFs, instead, the setting of default 
 parameters is controlled with the <code>JetMatching:setMad</code> flag: 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> JetMatching:setMad &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 When enabled, the merging parameters are set according to the values 
@@ -107,6 +108,7 @@ keyword.
  
 <h3> Scheme and Usage </h3> 
  
+<a name="anchor2"></a>
 <p/><code>flag&nbsp; </code><strong> JetMatching:merge &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Master switch to activate parton-jet matching. 
@@ -114,6 +116,7 @@ When off, all external events are accepted (unless they
 are rejected due to weighting or event processing problems). 
    
  
+<a name="anchor3"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:scheme &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 The parton-jet MLM-style matching scheme. 
@@ -130,6 +133,7 @@ the settings below. The PYTHIA8 internal <code>CellJet</code> and
 <code>SlowJet</code> routines are used for jet finding.  See the 
 <a href="EventAnalysis.html" target="page">Event Analysis</a> page for more details. 
  
+<a name="anchor4"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:jetAlgorithm &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 The choice of jet algorithm to use when merging against hard partons. 
@@ -140,6 +144,7 @@ matching, while there is full freedom for the ALPGEN-style matching.
 <br/><code>option </code><strong> 2</strong> : The <code>SlowJet</code> clustering algorithm.   
    
  
+<a name="anchor5"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:slowJetPower &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>; <code>maximum = 1</code>)<br/>
 The power to use in the <code>SlowJet</code> algorithm. 
@@ -148,23 +153,27 @@ The power to use in the <code>SlowJet</code> algorithm.
 <br/><code>option </code><strong> 1</strong> : The k<sub>T</sub> algorithm.   
    
  
+<a name="anchor6"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:nEta &nbsp;</strong> 
  (<code>default = <strong>100</strong></code>; <code>minimum = 50</code>)<br/>
 Specific to the <code>CellJet</code> algorithm, the number of bins 
 in pseudorapidity. 
    
  
+<a name="anchor7"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:nPhi &nbsp;</strong> 
  (<code>default = <strong>60</strong></code>; <code>minimum = 30</code>)<br/>
 Specific to the <code>CellJet</code> algorithm, the number of bins in phi. 
    
  
+<a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:eTseed &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 0.0</code>)<br/>
 Specific to the <code>CellJet</code> algorithm, the minimum <i>eT</i> 
 for a cell to be acceptable as the trial center of a jet. 
    
  
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:eTthreshold &nbsp;</strong> 
  (<code>default = <strong>0.1</strong></code>)<br/>
 Specific to the <code>CellJet</code> algorithm, cells with 
@@ -179,6 +188,7 @@ be heavily influenced by the hard process generation cuts.
 These values can be set automatically based on the information in the 
 ALPGEN file or LHEF. 
  
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:eTjetMin &nbsp;</strong> 
  (<code>default = <strong>20.0</strong></code>; <code>minimum = 5.0</code>)<br/>
 For the <code>CellJet</code> algorithm, this gives the minimum transverse 
@@ -188,6 +198,7 @@ cluster to be accepted as a jet. For Madgraph-style matching, this
 parameter should match the <code>qCut</code> parameter described later. 
    
  
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:coneRadius &nbsp;</strong> 
  (<code>default = <strong>0.7</strong></code>; <code>minimum = 0.1</code>)<br/>
 For the <code>CellJet</code> algorithm, this gives the size of the cone 
@@ -195,6 +206,7 @@ in <i>(eta, phi)</i> space drawn around the geometric center of the jet.
 For the <code>SlowJet</code> algorithm, this gives the <i>R</i> parameter. 
    
  
+<a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:etaJetMax &nbsp;</strong> 
  (<code>default = <strong>2.5</strong></code>; <code>minimum = 0.1</code>)<br/>
 For both jet algorithms, this defines the maximum pseudorapidity that 
@@ -216,6 +228,7 @@ produce extra hard jets, without risk of double counting. Any
 extra jet produced by the shower must be softer than any matched light 
 jet, or else the event is vetoed. 
  
+<a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:exclusive &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Exclusive or inclusive merging. 
@@ -238,6 +251,7 @@ algorithm defaults to exclusive mode.
    
    
  
+<a name="anchor14"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:nJet &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)<br/>
 When <code>JetMatching:exclusive = 2</code>, <i>nJet</i> indicates 
@@ -245,6 +259,7 @@ the minimum number of additional light jets in the incoming process.
 This value may be set automatically. 
    
  
+<a name="anchor15"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:nJetMax &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)<br/>
 When <code>JetMatching:exclusive = 2</code>, <i>nJetMax</i> is used to 
@@ -256,6 +271,7 @@ indicate the maximum number of jets that will be matched.
 The following parameters control the criteria for matching a clustered jet 
 to a hard parton. 
  
+<a name="anchor16"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:jetAllow &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 Controls which particles are clustered by the jet algorithm. 
@@ -270,6 +286,7 @@ No extra particles are disallowed.
  
 <h3> Alpgen-specific parameters </h3> 
  
+<a name="anchor17"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:jetMatch &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 Criteria for matching a clustered jet to a parton. 
@@ -293,12 +310,14 @@ particle is then clustered into a jet, it is considered a match.
    
    
  
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:coneMatchLight &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 0.1</code>)<br/>
 The <i>coneMatchLight</i> parameter used when 
 <code>JetMatching:jetMatch = 1</code>. 
    
  
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:coneRadiusHeavy &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 The <i>coneRadiusHeavy</i> parameter used when 
@@ -306,6 +325,7 @@ The <i>coneRadiusHeavy</i> parameter used when
 the value of <code>JetMatching:coneRadius</code> is used. 
    
  
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:coneMatchHeavy &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>)<br/>
 The <i>coneMatchHeavy</i> parameter used when 
@@ -314,10 +334,11 @@ The <i>coneMatchHeavy</i> parameter used when
  
 <h3>Madgraph-specific parameters </h3> 
  
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> JetMatching:doShowerKt &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch changes the merging prescription to the shower-kT matching scheme 
-outlined in [<a href="Bibliography.html" target="page">Alw08</a>]. This scheme differs from "classical" MLM jet 
+outlined in [<a href="Bibliography.html#refAlw08" target="page">Alw08</a>]. This scheme differs from "classical" MLM jet 
 matching with respect to when the matching veto is checked. The shower-kT 
 scheme considers already immediately after the first shower emission if an 
 event should be discarded. A detailed comparison of the "classical" MLM 
@@ -326,11 +347,13 @@ prescription (e.g. Madgraph-style matching with
 in preparation. 
    
  
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:qCut &nbsp;</strong> 
  (<code>default = <strong>10.0</strong></code>; <code>minimum = 0.0</code>)<br/>
 k<sub>T</sub> scale for merging shower products into jets. 
    
  
+<a name="anchor23"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:nQmatch &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 3</code>; <code>maximum = 6</code>)<br/>
 Controls the treatment of heavy quarks. 
@@ -342,6 +365,7 @@ Bottom quarks are treated separately.  Currently, they are unmatched.
    
    
  
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:clFact &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>)<br/>
 The <i>clFact</i> parameter determines how jet-to parton matching 
@@ -353,6 +377,7 @@ for exclusive mode, <i>clFact</i> &ge; 0, or
 <i>clFact</i> &lt; 0. 
    
  
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> JetMatching:doVeto &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If turned off, then no jet matching veto will be applied internally in Pythia. 
@@ -364,18 +389,20 @@ to perform the necessary vetoes.
  
 <p/> 
 A preliminary implementation of the FxFx prescription for combining multiple 
-NLO calculations [<a href="Bibliography.html" target="page">Fre12</a>] is available. We would like to stress that 
+NLO calculations [<a href="Bibliography.html#refFre12" target="page">Fre12</a>] is available. We would like to stress that 
 this implementation is still undergoing validation. FxFx merging with aMC@NLO 
 shares most parameters with the leading-order (MadGraph-style) MLM 
 prescriptions and can be activated by using the three additional settings 
 below. 
  
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> JetMatching:doFxFx &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If turned on, then FxFx merging with aMC@NLO inputs is performed. Note that 
 this requires event samples that are specifically generated for this task. 
    
  
+<a name="anchor27"></a>
 <p/><code>mode&nbsp; </code><strong> JetMatching:nPartonsNow &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>)<br/>
 The number of partons in Born-like events for the current input LHEF. If 
@@ -385,6 +412,7 @@ Real-emission-type events, then <code>JetMatching:nPartonsNow = 2</code>
 applies. 
    
  
+<a name="anchor28"></a>
 <p/><code>parm&nbsp; </code><strong> JetMatching:qCutME &nbsp;</strong> 
  (<code>default = <strong>10.0</strong></code>)<br/>
 The cut applied to regulate multi-jet matrix elements. Note that this cut can 
@@ -394,7 +422,7 @@ differ from the matching scale.
 <h2>Alpgen-style parton-jet matching and merging</h2> 
  
 This section describes the Alpgen-style MLM merging algorithm for PYTHIA8. 
-The most common reference to the algorithm is [<a href="Bibliography.html" target="page">Man02</a>]. In many 
+The most common reference to the algorithm is [<a href="Bibliography.html#refMan02" target="page">Man02</a>]. In many 
 respects, however, the implementation provided in the ALPGEN package should 
 be considered the official description of the MLM merging procedure. 
 Although designed primarily to work with events generated with ALPGEN, it 
@@ -460,7 +488,7 @@ system (ignoring all MPI systems) is then analysed:
         partons. If such a particle is clustered into a jet, the parton 
         and jet are considered to match. The idea of "ghost" particles 
         was originally introduced by FastJet as a way to measure jet 
-        areas [<a href="Bibliography.html" target="page">Cac06</a>] and should not affect clustering with an 
+        areas [<a href="Bibliography.html#refCac06" target="page">Cac06</a>] and should not affect clustering with an 
         infrared-safe jet algorithm. 
       </li> 
     </ul> 
@@ -624,14 +652,14 @@ Pythia only stores all the information that is necessary to check (and apply)
 the shower-kT or kT-MLM vetoes externally by hand. This information can be 
 accessed by calling the functions 
  
-<a name="method1"></a>
+<a name="anchor29"></a>
 <p/><strong>Event JetMatchingMadgraph::getWorkEventJet() &nbsp;</strong> <br/>
 Return the event after parton showering, without resonance decay products and 
 particles that should not be included in the jet matching, as necessary to 
 implement the vetoes in the kT-MLM scheme. 
    
  
-<a name="method2"></a>
+<a name="anchor30"></a>
 <p/><strong>Event JetMatchingMadgraph::getProcessSubset() &nbsp;</strong> <br/>
 Return the event record containing the hard process, without resonance decay 
 products and particles that should not be included in the jet matching, as 
@@ -642,19 +670,19 @@ partons, minimal hard process pT, and to perform the matching of hard-process
 particles to shower jets. 
    
  
-<a name="method3"></a>
+<a name="anchor31"></a>
 <p/><strong>bool  JetMatchingMadgraph::getExclusive() &nbsp;</strong> <br/>
 Return flag to identify if exclusive or inclusive vetoes should be applied 
 to this event. 
    
  
-<a name="method4"></a>
+<a name="anchor32"></a>
 <p/><strong>double JetMatchingMadgraph::getPTfirst() &nbsp;</strong> <br/>
 Return the transverse momentum (w.r.t. the beam) of the first parton 
 shower emission, as needed for the shower-kT scheme. 
    
  
-<a name="method5"></a>
+<a name="anchor33"></a>
 <p/><strong>vector &lt;double&gt; JetMatchingMadgraph::getDJR() &nbsp;</strong> <br/>
 Return a vector of jet clustering scales produced by running the jet algorithm 
 used for jet matching on the event record without resonance decay products and 

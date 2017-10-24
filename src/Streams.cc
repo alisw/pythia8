@@ -15,6 +15,7 @@
 namespace Pythia8 {
 
 #ifdef GZIPSUPPORT
+
 //==========================================================================
 
 // The gzstreambuf class.
@@ -153,7 +154,13 @@ void gzstreambase::close() {
         if ( ! buf.close())
             clear( rdstate() | std::ios::badbit);
 }
+
+//==========================================================================
+
 #endif
+
+// Dummy to avoid harmless compiler warning that Streams.o has no symbols.
+double DummyForStreams::xtox(double x) {return x;}
 
 //==========================================================================
 

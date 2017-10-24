@@ -18,15 +18,21 @@ namespace Pythia8 {
 
 // Initialize data members of the flavour generation.
 
-void HVStringFlav::init(Settings& settings, ParticleData*,
-  Rndm* rndmPtrIn, Info*) {
+void HVStringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
+  Rndm* rndmPtrIn, Info* infoPtrIn) {
 
-  // Save pointer.
-  rndmPtr    = rndmPtrIn;
+  // Save pointers.
+  particleDataPtr = particleDataPtrIn;
+  rndmPtr         = rndmPtrIn;
+  infoPtr         = infoPtrIn;
 
   // Read in data from Settings.
-  nFlav      = settings.mode("HiddenValley:nFlav");
-  probVector = settings.parm("HiddenValley:probVector");
+  nFlav           = settings.mode("HiddenValley:nFlav");
+  probVector      = settings.parm("HiddenValley:probVector");
+  thermalModel    = false;
+  useWidthPre     = false;
+  closePacking    = false;
+  mT2suppression  = false;
 
 }
 
@@ -87,9 +93,9 @@ void HVStringPT::init(Settings& settings, ParticleData* particleDataPtrIn,
   Rndm* rndmPtrIn, Info* infoPtrIn) {
 
   // Save pointer.
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  infoPtr         = infoPtrIn;
+  particleDataPtr  = particleDataPtrIn;
+  rndmPtr          = rndmPtrIn;
+  infoPtr          = infoPtrIn;
 
   // Parameter of the pT width. No enhancement, since this is finetuning.
   double sigmamqv  = settings.parm("HiddenValley:sigmamqv");
@@ -100,6 +106,9 @@ void HVStringPT::init(Settings& settings, ParticleData* particleDataPtrIn,
 
   // Parameter for pT suppression in MiniStringFragmentation.
   sigma2Had        = 2. * pow2( max( SIGMAMIN, sigma) );
+  thermalModel     = false;
+  useWidthPre      = false;
+  closePacking     = false;
 
 }
 

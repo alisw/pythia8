@@ -29,14 +29,15 @@ It only has two main virtual methods. The first, <code>init()</code>, is
 used for initialization. The second, <code>pick()</code>, selects 
 beam momentum and production vertex in the current event. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>BeamShape::BeamShape() &nbsp;</strong> <br/>
    
+<a name="anchor2"></a>
 <strong>virtual BeamShape::~BeamShape() &nbsp;</strong> <br/>
 the constructor and destructor do not need to do anything. 
    
  
-<a name="method2"></a>
+<a name="anchor3"></a>
 <p/><strong>virtual void BeamShape::init( Settings& settings, Rndm* rndmPtrIn) &nbsp;</strong> <br/>
 the base-class method simply reads in the relevant values stored 
 in the <code>Settings</code> data base, and saves a pointer to the 
@@ -51,7 +52,7 @@ shape should be set or not, whereas the other momentum-spread
 and vertex-spread parameters are local to this class. 
    
  
-<a name="method3"></a>
+<a name="anchor4"></a>
 <p/><strong>virtual void BeamShape::pick() &nbsp;</strong> <br/>
 this method is the key one to supply in the derived class. Here you 
 are free to pick whatever parametrization you desire for beam momenta 
@@ -68,9 +69,10 @@ production-vertex position and time.
 with <i>c = 1</i>. 
    
  
-<a name="method4"></a>
+<a name="anchor5"></a>
 <p/><strong>Vec4 BeamShape::deltaPA() &nbsp;</strong> <br/>
    
+<a name="anchor6"></a>
 <strong>Vec4 BeamShape::deltaPB() &nbsp;</strong> <br/>
 read out the three-momentum shifts for beams A and B that were set by 
 <code>pick()</code>. The energy components are put to zero at this stage, 
@@ -78,7 +80,7 @@ since they are most conveniently calculated after the original and the
 shift three-momenta have been added. 
    
  
-<a name="method5"></a>
+<a name="anchor7"></a>
 <p/><strong>Vec4 BeamShape::vertex() &nbsp;</strong> <br/>
 read out the production-vertex position and time that were set by 
 <code>pick()</code>. 

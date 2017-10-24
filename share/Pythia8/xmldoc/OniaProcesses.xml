@@ -184,6 +184,12 @@ Colour-singlet production of <ei>3S1</ei> charmonium states via
 Code 401. 
 </fvec> 
  
+<fvec name="Charmonium:gg2ccbar(3S1)[3S1(1)]gm" default="off,off"> 
+Colour-singlet production of <ei>3S1</ei> charmonium states via 
+<ei>g g &rarr; ccbar[3S1(1)] g</ei> with a hard <ei>gamma</ei>. 
+Code 411. 
+</fvec> 
+ 
 <fvec name="Charmonium:gg2ccbar(3S1)[3S1(8)]g" default="off,off"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3S1(8)] g</ei>. 
@@ -441,6 +447,12 @@ are calculated from these long-distance matrix elements.
 Colour-singlet production of <ei>3S1</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3S1(1)] g</ei>. 
 Code 501. 
+</fvec> 
+ 
+<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(1)]gm" default="off,off,off"> 
+Colour-singlet production of <ei>3S1</ei> bottomonium states via 
+<ei>g g &rarr; ccbar[3S1(1)] g</ei> with a hard <ei>gamma</ei>. 
+Code 511. 
 </fvec> 
  
 <fvec name="Bottomonium:gg2bbbar(3S1)[3S1(8)]g" default="off,off,off"> 

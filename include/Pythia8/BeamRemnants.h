@@ -19,6 +19,7 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PartonVertex.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StringLength.h"
@@ -40,7 +41,8 @@ public:
   // Initialization.
   bool init( Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    PartonSystems* partonSystemsPtrIn, ParticleData* particleDataPtrIn,
+    PartonSystems* partonSystemsPtrIn, PartonVertex* partonVertexPtrIn,
+    ParticleData* particleDataPtrIn,
     ColourReconnection * colourReconnectionPtrIn);
 
   // New beams possible for handling of hard diffraction.
@@ -97,6 +99,10 @@ private:
 
   // Pointer to information on subcollision parton locations.
   PartonSystems* partonSystemsPtr;
+
+  // Pointer to assign space-time information.
+  PartonVertex* partonVertexPtr;
+  bool doPartonVertex;
 
   // Pointer to the particle data table.
   ParticleData* particleDataPtr;

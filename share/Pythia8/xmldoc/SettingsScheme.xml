@@ -172,7 +172,10 @@ that do not match an existing variable are ignored. A warning is
 printed, however. Strings beginning with a non-alphanumeric character, 
 like # or !, are assumed to be comments and are not processed at all. 
 Values below the minimum or above the maximum are set at 
-the respective border. For <code>bool</code> values, the following 
+the respective border. In extreme cases, where it is necessary to 
+go outside the allowed range, "<code>FORCE=</code>" can replace 
+the normal "<code>=</code>" separator to force the requested value, 
+at own responsibility. For <code>bool</code> values, the following 
 notation may be used interchangeably: 
 <code>true = on = yes = ok = 1</code>, while everything else gives 
 <code>false</code> (including but not limited to 
@@ -425,6 +428,25 @@ while if false only the  <code>value</code> string.
 </argument> 
 </method> 
  
+<method name="vector&lt;string&gt; Settings::getReadHistory()"> 
+Method to retrieve the history of <code>readString</code> commands that 
+have been processed by the <code>Settings</code> instance, e.g. for 
+inspection. Note that <code>readFile</code> command lines are interpreted 
+by <code>readString</code> and thus also are listed, as are the 
+<code>Settings</code> commands read by <code>Pythia::readString</code> 
+and <code>Pythia::readFile</code>. 
+</method> 
+ 
+<method name="vector&lt;string&gt; Settings::getReadHistory(int subrun)"> 
+Method to retrieve the history of <code>readString</code> commands that 
+have been processed by <code>Settings</code>, for a specific subrun 
+(see the section on <aidx href="MainProgramSettings">Main-Program 
+Settings</aidx>). For <code>subrun = -1</code>, returns the 
+<code>readString</code> history common to all subruns. For 
+<code>subrun >= 0</code>, returns the history of <code>readString</code> 
+commands for that specific subrun (omitting the common part). 
+</method> 
+ 
 <method name="void Settings::resetAll()"> 
 reset all current values to their defaults. 
 </method> 
@@ -541,25 +563,38 @@ return a map of all settings of the respective type that contain the
 string "match" in its name. 
 </methodmore> 
  
-<method name="void Settings::flag(string key, bool now)"> 
+<method name="void Settings::flag(string key, bool now, bool force = false)"> 
 </method> 
-<methodmore name="void Settings::mode(string key, int now)"> 
+<methodmore name="void Settings::mode(string key, int now, 
+bool force = false)"> 
 </methodmore> 
-<methodmore name="void Settings::parm(string key, double now)"> 
+<methodmore name="void Settings::parm(string key, double now, 
+bool force = false)"> 
 </methodmore> 
-<methodmore name="void Settings::word(string key, string now)"> 
+<methodmore name="void Settings::word(string key, string now, 
+bool force = false)"> 
 </methodmore> 
-<methodmore name="void Settings::fvec(string key, vector&lt;bool&gt; now)"> 
+<methodmore name="void Settings::fvec(string key, vector&lt;bool&gt; now, 
+bool force = false)"> 
 </methodmore> 
-<methodmore name="void Settings::mvec(string key, vector&lt;int&gt; now)"> 
+<methodmore name="void Settings::mvec(string key, vector&lt;int&gt; now, 
+bool force = false)"> 
 </methodmore> 
-<methodmore name="void Settings::pvec(string key, vector&lt;double&gt; now)"> 
+<methodmore name="void Settings::pvec(string key, vector&lt;double&gt; now, 
+bool force = false)"> 
 </methodmore> 
-<methodmore name="void Settings::wvec(string key, vector&lt;string&gt; now)"> 
+<methodmore name="void Settings::wvec(string key, vector&lt;string&gt; now, 
+bool force = false)"> 
 change the current value(s) of the respective setting to the provided 
-new value(s). If lower or upper limits have been set, input values 
-outside the allowed range are reinterpreted as being a the nearest 
-limit. 
+new value(s). If lower or upper limits have been set and 
+<code>force=false</code>, input values 
+outside the allowed range are reinterpreted as being at the nearest 
+limit. If <code>force = true</code>, upper and lower limits will be 
+ignored, allowing to force values outside the allowed range (to be 
+used with caution and at own responsibility!). Any key not found in the 
+settings database will be ignored, unless <code>force = true</code>, in 
+which case the missing key will be added to the database with the 
+given value. 
 </methodmore> 
  
 <method name="void Settings::forceMode(string key, int now)"> 
@@ -573,6 +608,10 @@ vector&lt;int&gt; now)">
 vector&lt;double&gt; now)"> 
 as above, but do not check lower and upper limits, so that the current 
 value(s) can be put outside the intended borders. 
+<note>Note:</note> these methods have been superseded by the 
+<code>force = true</code> option in the standard methods above. 
+They are kept for backwards compatibility with version 8.223 and earlier 
+but will be removed in a future major release. 
 </methodmore> 
  
 <method name="void Settings::resetFlag(string key)"> 

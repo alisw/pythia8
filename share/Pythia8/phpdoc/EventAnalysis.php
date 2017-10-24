@@ -72,7 +72,7 @@ To do sphericity analyses you have to set up a <code>Sphericity</code>
 instance, and then feed in events to it, one at a time. The results 
 for the latest event are available as output from a few methods. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>Sphericity::Sphericity(double power = 2., int select = 2) &nbsp;</strong> <br/>
 create a sphericity analysis object, where 
 <br/><code>argument</code><strong> power </strong> (<code>default = <strong>2.</strong></code>) :  
@@ -92,7 +92,7 @@ particle method), and
    
    
  
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>bool Sphericity::analyze( const Event& event) &nbsp;</strong> <br/>
 perform a sphericity analysis, where 
 <br/><code>argument</code><strong> event </strong>  : is an object of the <code>Event</code> class, 
@@ -106,29 +106,29 @@ analysis failed, e.g. if too few particles are present to analyze.
 After the analysis has been performed, a few methods are available 
 to return the result of the analysis of the latest event: 
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>double Sphericity::sphericity() &nbsp;</strong> <br/>
 gives the sphericity (or equivalent if <i>r</i> is not 2), 
    
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>double Sphericity::aplanarity() &nbsp;</strong> <br/>
 gives the aplanarity (with the same comment), 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>double Sphericity::eigenValue(int i) &nbsp;</strong> <br/>
 gives one of the three eigenvalues for <i>i</i> = 1, 2 or 3, in 
 descending order, 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>Vec4 Sphericity::eventAxis(i) &nbsp;</strong> <br/>
 gives the matching normalized eigenvector, as a <code>Vec4</code> 
 with vanishing time/energy component. 
    
  
-<a name="method7"></a>
+<a name="anchor7"></a>
 <p/><strong>void Sphericity::list() &nbsp;</strong> <br/>
 provides a listing of the above information. 
    
@@ -137,7 +137,7 @@ provides a listing of the above information.
 There is also one method that returns information accumulated for all 
 the events analyzed so far. 
  
-<a name="method8"></a>
+<a name="anchor8"></a>
 <p/><strong>int Sphericity::nError() &nbsp;</strong> <br/>
 tells the number of times <code>analyze(...)</code> failed to analyze 
 events, i.e. returned <code>false</code>. 
@@ -167,7 +167,7 @@ To do thrust analyses you have to set up a <code>Thrust</code>
 instance, and then feed in events to it, one at a time. The results 
 for the latest event are available as output from a few methods. 
  
-<a name="method9"></a>
+<a name="anchor9"></a>
 <p/><strong>Thrust::Thrust(int select = 2) &nbsp;</strong> <br/>
 create a thrust analysis object, where 
 <br/><code>argument</code><strong> select </strong> (<code>default = <strong>2</strong></code>) :  
@@ -182,7 +182,7 @@ particle method), and
    
    
  
-<a name="method10"></a>
+<a name="anchor10"></a>
 <p/><strong>bool Thrust::analyze( const Event& event) &nbsp;</strong> <br/>
 perform a thrust analysis, where 
 <br/><code>argument</code><strong> event </strong>  : is an object of the <code>Event</code> class, 
@@ -196,25 +196,28 @@ analysis failed, e.g. if too few particles are present to analyze.
 After the analysis has been performed, a few methods are available 
 to return the result of the analysis of the latest event: 
  
-<a name="method11"></a>
+<a name="anchor11"></a>
 <p/><strong>double Thrust::thrust() &nbsp;</strong> <br/>
    
+<a name="anchor12"></a>
 <strong>double Thrust::tMajor() &nbsp;</strong> <br/>
    
+<a name="anchor13"></a>
 <strong>double Thrust::tMinor() &nbsp;</strong> <br/>
    
+<a name="anchor14"></a>
 <strong>double Thrust::oblateness() &nbsp;</strong> <br/>
 gives the thrust, major, minor and oblateness values, respectively, 
    
  
-<a name="method12"></a>
+<a name="anchor15"></a>
 <p/><strong>Vec4 Thrust::eventAxis(int i) &nbsp;</strong> <br/>
 gives the matching normalized event-axis vectors, for <i>i</i> = 1, 2 or 3 
 corresponding to thrust, major or minor, as a <code>Vec4</code> with 
 vanishing time/energy component. 
    
  
-<a name="method13"></a>
+<a name="anchor16"></a>
 <p/><strong>void Thrust::list() &nbsp;</strong> <br/>
 provides a listing of the above information. 
    
@@ -223,7 +226,7 @@ provides a listing of the above information.
 There is also one method that returns information accumulated for all 
 the events analyzed so far. 
  
-<a name="method14"></a>
+<a name="anchor17"></a>
 <p/><strong>int Thrust::nError() &nbsp;</strong> <br/>
 tells the number of times <code>analyze(...)</code> failed to analyze 
 events, i.e. returned <code>false</code>. 
@@ -254,7 +257,7 @@ To do jet finding analyses you have to set up a <code>ClusterJet</code>
 instance, and then feed in events to it, one at a time. The results 
 for the latest event are available as output from a few methods. 
  
-<a name="method15"></a>
+<a name="anchor18"></a>
 <p/><strong>ClusterJet::ClusterJet(string measure = &quot;Lund&quot;, int select = 2, int massSet = 2, bool precluster = false, bool reassign = false) &nbsp;</strong> <br/>
 create a <code>ClusterJet</code> instance, where 
 <br/><code>argument</code><strong> measure </strong> (<code>default = <strong>&quot;Lund&quot;</strong></code>) : distance measure, 
@@ -295,7 +298,7 @@ have been joined.
    
    
  
-<a name="method16"></a>
+<a name="anchor19"></a>
 <p/><strong>ClusterJet::analyze( const Event& event, double yScale, double pTscale, int nJetMin = 1, int nJetMax = 0) &nbsp;</strong> <br/>
 performs a jet finding analysis, where 
 <br/><code>argument</code><strong> event </strong>  : is an object of the <code>Event</code> class, 
@@ -334,42 +337,42 @@ of jets requested.
 After the analysis has been performed, a few <code>ClusterJet</code> 
 class methods are available to return the result of the analysis: 
  
-<a name="method17"></a>
+<a name="anchor20"></a>
 <p/><strong>int ClusterJet::size() &nbsp;</strong> <br/>
 gives the number of jets found, with jets numbered 0 through 
 <code>size() - 1</code>. 
    
  
-<a name="method18"></a>
+<a name="anchor21"></a>
 <p/><strong>Vec4 ClusterJet::p(int i) &nbsp;</strong> <br/>
 gives a <code>Vec4</code> corresponding to the four-momentum defined by 
 the sum of all the contributing particles to the <i>i</i>'th jet. 
    
  
-<a name="method19"></a>
+<a name="anchor22"></a>
 <p/><strong>int ClusterJet::mult(int i) &nbsp;</strong> <br/>
 the number of particles that have been clustered into the <i>i</i>'th jet. 
    
  
-<a name="method20"></a>
+<a name="anchor23"></a>
 <p/><strong>int ClusterJet::jetAssignment(int i) &nbsp;</strong> <br/>
 gives the index of the jet that the particle <i>i</i> of the event 
 record belongs to, 
    
  
-<a name="method21"></a>
+<a name="anchor24"></a>
 <p/><strong>void ClusterJet::list() &nbsp;</strong> <br/>
 provides a listing of the reconstructed jets. 
    
  
-<a name="method22"></a>
+<a name="anchor25"></a>
 <p/><strong>int ClusterJet::distanceSize() &nbsp;</strong> <br/>
 the number of most recent clustering scales that have been stored 
 for readout with the next method. Normally this would be five, 
 but less if fewer clustering steps occurred. 
    
  
-<a name="method23"></a>
+<a name="anchor26"></a>
 <p/><strong>double ClusterJet::distance(int i) &nbsp;</strong> <br/>
 clustering scales, with <code>distance(0)</code> being the most 
 recent one, i.e. normally the highest, up to <code>distance(4)</code> 
@@ -385,7 +388,7 @@ as provided by the respective distance measure (Lund, JADE, Durham).
 There is also one method that returns information accumulated for all 
 the events analyzed so far. 
  
-<a name="method24"></a>
+<a name="anchor27"></a>
 <p/><strong>int ClusterJet::nError() &nbsp;</strong> <br/>
 tells the number of times <code>analyze(...)</code> failed to analyze 
 events, i.e. returned <code>false</code>. 
@@ -406,7 +409,7 @@ ones. Not all particles in the event are assigned to jets; leftovers
 may be viewed as belonging to beam remnants or the underlying event. 
 It is not used by any experimental collaboration, but is closely 
 related to the more recent and better theoretically motivated 
-anti-<i>kT</i> algorithm [<a href="Bibliography.php" target="page">Cac08</a>]. 
+anti-<i>kT</i> algorithm [<a href="Bibliography.php#refCac08" target="page">Cac08</a>]. 
  
 <p/> 
 To do jet finding analyses you have to set up a <code>CellJet</code> 
@@ -417,7 +420,7 @@ random number generator, preferably the one residing in the
 <code>Pythia</code> class. The results for the latest event are 
 available as output from a few methods. 
  
-<a name="method25"></a>
+<a name="anchor28"></a>
 <p/><strong>CellJet::CellJet(double etaMax = 5., int nEta = 50, int nPhi = 32, int select = 2, int smear = 0, double resolution = 0.5, double upperCut = 2., double threshold = 0., Rndm* rndmPtr = 0) &nbsp;</strong> <br/>
 create a <code>CellJet</code> instance, where 
 <br/><code>argument</code><strong> etaMax </strong> (<code>default = <strong>5.</strong></code>) :  
@@ -468,7 +471,7 @@ then <code>&pythia.rndm</code> would be the logical choice.
    
    
  
-<a name="method26"></a>
+<a name="anchor29"></a>
 <p/><strong>bool CellJet::analyze( const Event& event, double eTjetMin = 20., double coneRadius = 0.7, double eTseed = 1.5) &nbsp;</strong> <br/>
 performs a jet finding analysis, where 
 <br/><code>argument</code><strong> event </strong>  : is an object of the <code>Event</code> class, 
@@ -494,46 +497,48 @@ but currently this is not foreseen ever to happen.
 After the analysis has been performed, a few <code>CellJet</code> 
 class methods are available to return the result of the analysis: 
  
-<a name="method27"></a>
+<a name="anchor30"></a>
 <p/><strong>int CellJet::size() &nbsp;</strong> <br/>
 gives the number of jets found, with jets numbered 0 through 
 <code>size() - 1</code>, 
    
  
-<a name="method28"></a>
+<a name="anchor31"></a>
 <p/><strong>double CellJet::eT(i) &nbsp;</strong> <br/>
 gives the <i>eT</i> of the <i>i</i>'th jet, where jets have been 
 ordered with decreasing <i>eT</i> values, 
    
  
-<a name="method29"></a>
+<a name="anchor32"></a>
 <p/><strong>double CellJet::etaCenter(int i) &nbsp;</strong> <br/>
    
+<a name="anchor33"></a>
 <strong>double CellJet::phiCenter(int i) &nbsp;</strong> <br/>
 gives the <i>eta</i> and <i>phi</i> coordinates of the geometrical 
 center of the <i>i</i>'th jet, 
    
  
-<a name="method30"></a>
+<a name="anchor34"></a>
 <p/><strong>double CellJet::etaWeighted(int i) &nbsp;</strong> <br/>
    
+<a name="anchor35"></a>
 <strong>double CellJet::phiWeighted(int i) &nbsp;</strong> <br/>
 gives the <i>eta</i> and <i>phi</i> coordinates of the 
 <i>eT</i>-weighted center of the <i>i</i>'th jet, 
    
  
-<a name="method31"></a>
+<a name="anchor36"></a>
 <p/><strong>int CellJet::multiplicity(int i) &nbsp;</strong> <br/>
 gives the number of particles clustered into the <i>i</i>'th jet, 
    
  
-<a name="method32"></a>
+<a name="anchor37"></a>
 <p/><strong>Vec4 CellJet::pMassless(int i) &nbsp;</strong> <br/>
 gives a <code>Vec4</code> corresponding to the four-momentum defined 
 by the <i>eT</i> and the weighted center of the <i>i</i>'th jet, 
    
  
-<a name="method33"></a>
+<a name="anchor38"></a>
 <p/><strong>Vec4 CellJet::pMassive(int i) &nbsp;</strong> <br/>
 gives a <code>Vec4</code> corresponding to the four-momentum defined by 
 the sum of all the contributing cells to the <i>i</i>'th jet, where 
@@ -541,13 +546,13 @@ each cell contributes a four-momentum as if all the <i>eT</i> is
 deposited in the center of the cell, 
    
  
-<a name="method34"></a>
+<a name="anchor39"></a>
 <p/><strong>double CellJet::m(int i) &nbsp;</strong> <br/>
 gives the invariant mass of the <i>i</i>'th jet, defined by the 
 <code>pMassive</code> above, 
    
  
-<a name="method35"></a>
+<a name="anchor40"></a>
 <p/><strong>void CellJet::list() &nbsp;</strong> <br/>
 provides a listing of the above information (except <code>pMassless</code>, 
 for reasons of space). 
@@ -556,7 +561,7 @@ for reasons of space).
 <p/> 
 There is also one method that returns information accumulated for all 
 the events analyzed so far. 
-<a name="method36"></a>
+<a name="anchor41"></a>
 <p/><strong>int CellJet::nError() &nbsp;</strong> <br/>
 tells the number of times <code>analyze(...)</code> failed to analyze 
 events, i.e. returned <code>false</code>. 
@@ -567,7 +572,7 @@ events, i.e. returned <code>false</code>.
 <code>SlowJet</code> is a simple program for doing jet finding according 
 to either of the <i>kT</i>, anti-<i>kT</i>, and Cambridge/Aachen 
 algorithms, in a cylindrical coordinate frame. The name is obviously 
-an homage to the <code>FastJet</code> program [<a href="Bibliography.php" target="page">Cac06, Cac12</a>]. 
+an homage to the <code>FastJet</code> program [<a href="Bibliography.php#refCac06" target="page">Cac06</a>, <a href="Bibliography.php#refCac12" target="page">Cac12</a>]. 
 That package contains many more algorithms, with many more options, 
 and, above all, is <i>much</i> faster. Therefore <code>SlowJet</code> 
 is not so much intended for massive processing of data or Monte Carlo 
@@ -665,7 +670,7 @@ Information on the resulting jets can be extracted by a few different methods.
 The minimal procedure only requires one call per event to do the analysis. 
 We will begin by presenting it, and only afterwards some extensions. 
  
-<a name="method37"></a>
+<a name="anchor42"></a>
 <p/><strong>SlowJet::SlowJet(int power, double R, double pTjetMin = 0., double etaMax = 25., int select = 2, int massSet = 2, SlowJetHook* sjHookPtr = 0, bool useFJcore = true, bool useStandardR = true) &nbsp;</strong> <br/>
 create a <code>SlowJet</code> instance, where 
 <br/><code>argument</code><strong> power </strong>  :  
@@ -744,7 +749,7 @@ masses and transverse momenta).
    
    
  
-<a name="method38"></a>
+<a name="anchor43"></a>
 <p/><strong>bool SlowJet::analyze( const Event& event) &nbsp;</strong> <br/>
 performs a jet finding analysis, where 
 <br/><code>argument</code><strong> event </strong>  : is an object of the <code>Event</code> class, 
@@ -758,73 +763,75 @@ but currently this is not foreseen ever to happen.
 After the analysis has been performed, a few <code>SlowJet</code> 
 class methods are available to return the result of the analysis: 
  
-<a name="method39"></a>
+<a name="anchor44"></a>
 <p/><strong>int SlowJet::sizeOrig() &nbsp;</strong> <br/>
 gives the original number of particles (and thus clusters) that the 
 analysis starts with. 
    
  
-<a name="method40"></a>
+<a name="anchor45"></a>
 <p/><strong>int SlowJet::sizeJet() &nbsp;</strong> <br/>
 gives the number of jets found, with jets numbered 0 through 
 <code>sizeJet() - 1</code>, and ordered in terms of decreasing 
 transverse momentum values w.r.t. the beam axis, 
    
  
-<a name="method41"></a>
+<a name="anchor46"></a>
 <p/><strong>double SlowJet::pT(i) &nbsp;</strong> <br/>
 gives the transverse momentum <i>pT</i> of the <i>i</i>'th jet, 
    
  
-<a name="method42"></a>
+<a name="anchor47"></a>
 <p/><strong>double SlowJet::y(int i) &nbsp;</strong> <br/>
    
+<a name="anchor48"></a>
 <strong>double SlowJet::phi(int i) &nbsp;</strong> <br/>
 gives the rapidity <i>y</i> and azimuthal angle <i>phi</i> 
 of the center of the <i>i</i>'th jet (defined by the vector sum 
 of constituent four-momenta), 
    
  
-<a name="method43"></a>
+<a name="anchor49"></a>
 <p/><strong>Vec4 SlowJet::p(int i) &nbsp;</strong> <br/>
    
+<a name="anchor50"></a>
 <strong>double SlowJet::m(int i) &nbsp;</strong> <br/>
 gives a <code>Vec4</code> corresponding to the four-momentum 
 sum of the particles assigned to the <i>i</i>'th jet, and 
 the invariant mass of this four-vector, 
    
  
-<a name="method44"></a>
+<a name="anchor51"></a>
 <p/><strong>int SlowJet::multiplicity(int i) &nbsp;</strong> <br/>
 gives the number of particles clustered into the <i>i</i>'th jet, 
    
  
-<a name="method45"></a>
+<a name="anchor52"></a>
 <p/><strong>vector&lt;int&gt; SlowJet::constituents(int i) &nbsp;</strong> <br/>
 gives a list of the indices of the particles that have been 
 clustered into the <i>i</i>'th jet, 
    
  
-<a name="method46"></a>
+<a name="anchor53"></a>
 <p/><strong>vector&lt;int&gt; SlowJet::clusConstituents(int i) &nbsp;</strong> <br/>
 gives a list of the indices of the particles that have been 
 clustered into the <i>i</i>'th cluster, at the current stage of 
 the clustering process, 
    
  
-<a name="method47"></a>
+<a name="anchor54"></a>
 <p/><strong>int SlowJet::jetAssignment(int i) &nbsp;</strong> <br/>
 gives the index of the jet that the particle <i>i</i> of the event 
 record belongs to, or -1 if there is no jet containing particle 
 <i>i</i>, 
    
  
-<a name="method48"></a>
+<a name="anchor55"></a>
 <p/><strong>void SlowJet::removeJet(int i) &nbsp;</strong> <br/>
 removes the <i>i</i>'th jet, 
    
  
-<a name="method49"></a>
+<a name="anchor56"></a>
 <p/><strong>void SlowJet::list() &nbsp;</strong> <br/>
 provides a listing of the basic jet information from above. 
    
@@ -841,7 +848,7 @@ joined next before the joining actually is performed. Alternatively you
 can take several steps in one go, or take steps down to a predetermined 
 number of jets plus remaining clusters. 
  
-<a name="method50"></a>
+<a name="anchor57"></a>
 <p/><strong>bool SlowJet::setup( const Event& event) &nbsp;</strong> <br/>
 selects the particles to be analyzed, calculates initial distances, 
 and finds the initial smallest distance. 
@@ -852,7 +859,7 @@ most likely the <code>pythia.event</code> one.
 but currently this is not foreseen ever to happen. 
    
  
-<a name="method51"></a>
+<a name="anchor58"></a>
 <p/><strong>bool SlowJet::doStep() &nbsp;</strong> <br/>
 do the next step of the clustering. This can either be that two 
 clusters are joined to one, or that a cluster is promoted to a jet 
@@ -862,7 +869,7 @@ clusters are joined to one, or that a cluster is promoted to a jet
 clusters left, or if <code>useFJcore = true</code>. 
    
  
-<a name="method52"></a>
+<a name="anchor59"></a>
 <p/><strong>bool SlowJet::doNSteps(int nStep) &nbsp;</strong> <br/>
 calls the <code>doStep()</code> method <code>nStep</code> times, 
 if possible. Will return <code>false</code> if the list of clusters 
@@ -871,7 +878,7 @@ fine; it is only the number of steps that is wrong. Will also return
 <code>false</code> if <code>useFJcore = true</code>. 
    
  
-<a name="method53"></a>
+<a name="anchor60"></a>
 <p/><strong>bool SlowJet::stopAtN(int nStop) &nbsp;</strong> <br/>
 calls the <code>doStep()</code> method until a total of <code>nStop</code> 
 jet and cluster objects remain. Will return <code>false</code> if this 
@@ -882,7 +889,7 @@ expected multiplicity. Will also return <code>false</code> if
 <code>useFJcore = true</code>. 
    
  
-<a name="method54"></a>
+<a name="anchor61"></a>
 <p/><strong>int SlowJet::sizeAll() &nbsp;</strong> <br/>
 gives the total current number of jets and clusters. The jets are 
 numbered 0 through <code>sizeJet() - 1</code>, while the clusters 
@@ -901,7 +908,7 @@ With this extension, the methods <code>double pT(int i)</code>,
 <code>int multiplicity(int i)</code> can be used as before. 
 Furthermore, <code>list()</code> generalizes 
  
-<a name="method55"></a>
+<a name="anchor62"></a>
 <p/><strong>void SlowJet::list(bool listAll = false) &nbsp;</strong> <br/>
 provides a listing of the above information. 
 <br/><code>argument</code><strong> listAll </strong>  :  lists both jets and clusters if <code>true</code>, 
@@ -912,11 +919,13 @@ else only jets.
 <p/> 
 Three further methods can be used to check what will happen next. 
  
-<a name="method56"></a>
+<a name="anchor63"></a>
 <p/><strong>int SlowJet::iNext() &nbsp;</strong> <br/>
    
+<a name="anchor64"></a>
 <strong>int SlowJet::jNext() &nbsp;</strong> <br/>
    
+<a name="anchor65"></a>
 <strong>double SlowJet::dNext() &nbsp;</strong> <br/>
 if the next step is to join two clusters, then the methods give 
 the <i>(i,j, d_ij)</i> values, if instead to promote 
@@ -948,15 +957,16 @@ constructor.
 <p/> 
 The following methods should be defined in your derived class. 
  
-<a name="method57"></a>
+<a name="anchor66"></a>
 <p/><strong>SlowJetHook::SlowJetHook() &nbsp;</strong> <br/>
    
+<a name="anchor67"></a>
 <strong>virtual SlowJetHook::~SlowJetHook() &nbsp;</strong> <br/>
 the constructor and destructor need not do anything, and if so you 
 need not write your own destructor. 
    
  
-<a name="method58"></a>
+<a name="anchor68"></a>
 <p/><strong>virtual bool SlowJetHook::include(int iSel, const Event& event, Vec4& pSel, double& mSel) &nbsp;</strong> <br/>
 is the main method that you will need to write. It will be called 
 once for each final-state particle in an event, subject to the 

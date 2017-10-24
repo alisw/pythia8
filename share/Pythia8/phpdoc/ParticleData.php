@@ -109,8 +109,8 @@ masses run.
 <h3>Comments on the data</h3> 
  
 Much of the current data has been updated based on the 2012 Review of Particle 
-Physics [<a href="Bibliography.php" target="page">Ber12</a>], while some is still based on the 2006 RPP 
-[<a href="Bibliography.php" target="page">Yao06</a>]. All known particle masses, widths and lifetimes 
+Physics [<a href="Bibliography.php#refBer12" target="page">Ber12</a>], while some is still based on the 2006 RPP 
+[<a href="Bibliography.php#refYao06" target="page">Yao06</a>]. All known particle masses, widths and lifetimes 
 have been set accordingly, while most not-yet-measured particles are kept at 
 their values from PYTHIA 6. Decay channels and their branching 
 ratios remain a major worry: many particles do not have one single solidly 
@@ -646,34 +646,34 @@ echo "<a href='ParticleDecays.php?filepath=".$filepath."' target='page'>";?>here
           m0="100.00000" 
  
 <p/>particle: id="54" name="DMmed(s=0)" antiName="DMmedbar(s=0)" spinType="1" chargeType="0" colType="0" 
-          m0="100.00000" mWidth="0.1" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 1  -1" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 2  -2" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 3  -3" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 4  -4" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 5  -5" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products=" 6  -6" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="11 -11" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="12 -12" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="13 -13" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="14 -14" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="15 -15" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="16 -16" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="21  21" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="22  22" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="22  23" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="23  23" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="24 -24" 
- <br/>      channel: onMode="1" bRatio="0.050" meMode="101" products="25  25" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="51 -51" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="51  51" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="52 -52" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="52  52" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="53 -53" 
- <br/>      channel: onMode="1" bRatio="0.025" meMode="101" products="53  53" 
+          m0="500.00000" mWidth="0.1" 
+ <br/>      channel: onMode="1" bRatio="0.000" products=" 1  -1" 
+ <br/>      channel: onMode="1" bRatio="0.000" products=" 2  -2" 
+ <br/>      channel: onMode="1" bRatio="0.000" products=" 3  -3" 
+ <br/>      channel: onMode="1" bRatio="0.000" products=" 4  -4" 
+ <br/>      channel: onMode="1" bRatio="0.300" products=" 5  -5" 
+ <br/>      channel: onMode="1" bRatio="0.000" products=" 6  -6" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="11 -11" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="12 -12" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="13 -13" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="14 -14" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="15 -15" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="16 -16" 
+ <br/>      channel: onMode="1" bRatio="0.100" products="21  21" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="22  22" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="22  23" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="23  23" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="24 -24" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="25  25" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="51 -51" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="51  51" 
+ <br/>      channel: onMode="1" bRatio="0.600" products="52 -52" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="52  52" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="53 -53" 
+ <br/>      channel: onMode="1" bRatio="0.000" products="53  53" 
  
 <p/>particle: id="55" name="DMmed(s=1)" antiName="DMmedbar(s=1)" spinType="3" chargeType="0" colType="0" 
-          m0="100.00000" mWidth="0.1" 
+          m0="500.00000" mWidth="0.1" 
  <br/>      channel: onMode="1" bRatio="0.050" products=" 1  -1" 
  <br/>      channel: onMode="1" bRatio="0.050" products=" 2  -2" 
  <br/>      channel: onMode="1" bRatio="0.050" products=" 3  -3" 
@@ -9145,6 +9145,22 @@ echo "<a href='ParticleDecays.php?filepath=".$filepath."' target='page'>";?>here
 <p/>particle: id="9952203" name="Upsilon(3S)[3PJ(8)]" spinType="3" chargeType="0" colType="2" 
           m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552" 
  <br/>      channel: onMode="1" bRatio="1.0000000" products="200553 21" 
+ 
+<p/>particle: id="1000020040" name="4He" antiName="4Hebar" 
+          spinType="1" chargeType="6" colType="0" m0="3.7284" 
+<p/>particle: id="1000030060" name="6Li" antiName="6Libar" 
+          spinType="1" chargeType="9" colType="0" m0="5.6030512" 
+<p/>particle: id="1000060120" name="12C" antiName="12Cbar" 
+          spinType="1" chargeType="18" colType="0" m0="11.177929" 
+<p/>particle: id="1000080160" name="16O" antiName="16Obar" 
+          spinType="1" chargeType="24" colType="0" m0="14.899168" 
+<p/>particle: id="1000290630" name="63Cu" antiName="63Cubar" 
+          spinType="2" chargeType="87" colType="0" m0="58.618646" 
+<p/>particle: id="1000791970" name="197Au" antiName="197Aubar" 
+          spinType="2" chargeType="237" colType="0" m0="183.47319" 
+<p/>particle: id="1000822080" name="208Pb" antiName="208Pbbar" 
+          spinType="1" chargeType="246" colType="0" m0="193.72902" 
+ 
  
 <input type="hidden" name="saved" value="1"/>
 

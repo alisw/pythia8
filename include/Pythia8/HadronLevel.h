@@ -107,6 +107,13 @@ private:
   // The generator class for hadron scattering.
   HadronScatter hadronScatter;
 
+  // Class for event geometry for Rope Hadronization. Production vertices.
+  Ropewalk ropewalk;
+  bool doRopes, doShoving, doFlavour, doVertex;
+
+  // Flavour change with Rope Hadronization.
+  FlavourRope flavourRope;
+
   // The generator class for Bose-Einstein effects.
   BoseEinstein boseEinstein;
 
@@ -132,7 +139,8 @@ private:
   bool decayOctetOnia(Event& event);
 
   // Trace colour flow in the event to form colour singlet subsystems.
-  bool findSinglets(Event& event);
+  // Option to keep junctions, needed for rope hadronization.
+  bool findSinglets(Event& event, bool keepJunctions = false);
 
   // Extract rapidity pairs.
   vector< vector< pair<double,double> > > rapidityPairs(Event& event);

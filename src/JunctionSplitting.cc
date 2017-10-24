@@ -126,8 +126,9 @@ bool JunctionSplitting::checkColours( Event& event) {
 //--------------------------------------------------------------------------
 
 // Split connected junction chains into separated, mainly by splitting gluons
-// into q-qbar pairs. If the junctions are directly connected
-// other methods are applied.
+// into q-qbar pairs. Other methods are applied if the junctions are directly
+// connected. (Note: implementation below assumes any intermediate gluons
+// are bookkept in iPartonJun, not in iPartonAntiJun.)
 
 bool JunctionSplitting::splitJunGluons(Event& event,
   vector<vector< int > >& iPartonJun, vector<vector< int > >& iPartonAntiJun) {
@@ -835,7 +836,9 @@ bool JunctionSplitting::splitJunPairs(Event& event,
 
 //--------------------------------------------------------------------------
 
-// Get the list of partons connected to the junctions.
+// Create the lists of partons connected to junctions.
+// Input: event
+// Output: iPartonJun and iPartonAntiJun (for JJ connections).
 
 bool JunctionSplitting::getPartonLists(Event& event,
   vector<vector< int > > & iPartonJun, vector<vector<int > >& iPartonAntiJun) {
@@ -846,59 +849,46 @@ bool JunctionSplitting::getPartonLists(Event& event,
   iPartonJun.clear();
   iPartonAntiJun.clear();
 
-  // Loop over junctions and collect all junctions.
-  // Then afterwards collect all antijunctions.
-  // This ensures that all gluons are collected on the junctions.
-  for (int iJun = 0; iJun < event.sizeJunction(); ++iJun)
-  if (event.remainsJunction(iJun)) {
+  // Loop over junctions (first junctions, then antijunctions; this ensures
+  // that any gluons between junction-antijunction pairs are bookkept in
+  // iPartonJun rather than in iPartonAntiJun; assumed by subsequent
+  // splitting methods).
+  for (int iLoop = 0; iLoop < 2*event.sizeJunction(); ++iLoop) {
 
+    int iJun = iLoop % event.sizeJunction();
+    if ( !event.remainsJunction(iJun)) continue;
+
+    // Do junctions first, then antijunctions
     int kindJun = event.kindJunction(iJun);
+    if ( iLoop < event.sizeJunction() && kindJun%2 == 0) continue;
+    else if ( iLoop >= event.sizeJunction() && kindJun%2 == 1) continue;
+
     iParton.resize(0);
-
-    if (kindJun % 2 != 1) continue;
-
-    // Loop over junction legs.
+    // Loop over junction legs
+    // Afterwards (using iJun=0 as example), iParton should look something
+    // like {-10, parton-chain-to-first-colour-end, -11, parton-chain-to-next-
+    // colour-end, -12, parton-chain-to-last-colour-end}
+    // (Note: -10*N indicates leg connected to another junction, with iJun=N-1)
     for (int iCol = 0; iCol < 3; ++iCol) {
       int indxCol = event.colJunction(iJun, iCol);
       iParton.push_back( -(10 + 10 * iJun + iCol) );
-      // Junctions: find color ends.
-      if (kindJun % 2 == 1 && !colTrace.traceFromAcol(indxCol,
-       event, iJun, iCol, iParton))
-        return false;
+      // Junctions: check that we can find colour ends.
+      if ( kindJun%2 == 1 && !colTrace.traceFromAcol(indxCol,event, iJun,
+        iCol, iParton) ) return false;
+      // Antijunctions: check that we can find anticolour ends.
+      else if ( kindJun%2 == 0 && !colTrace.traceFromCol(indxCol,event, iJun,
+        iCol, iParton) ) return false;
     }
 
-    // Store the antijunction and junction list.
+    // Save lists for junction-junction systems in iPartonJun, iPartonAntiJun
     int nNeg = 0;
     for (int i = 0; i < int(iParton.size()); ++i) if (iParton[i] < 0) ++nNeg;
-    if (nNeg > 3) iPartonJun.push_back(iParton);
-  }
-
-  // Loop over all antijunctions.
-  for (int iJun = 0; iJun < event.sizeJunction(); ++iJun)
-  if (event.remainsJunction(iJun)) {
-
-    int kindJun = event.kindJunction(iJun);
-    iParton.resize(0);
-
-    if (kindJun % 2 != 0)
-      continue;
-
-    // Loop over junction legs.
-    for (int iCol = 0; iCol < 3; ++iCol) {
-      int indxCol = event.colJunction(iJun, iCol);
-      iParton.push_back( -(10 + 10 * iJun + iCol) );
-      // Antijunctions: find anticolor ends.
-      if (kindJun % 2 == 0 && !colTrace.traceFromCol(indxCol,
-       event, iJun, iCol, iParton))
-        return false;
+    // If 3
+    if (nNeg > 3) {
+      if ( kindJun%2 == 1 ) iPartonJun.push_back(iParton);
+      else iPartonAntiJun.push_back(iParton);
     }
 
-    // Store the antijunction and junction list.
-    int nNeg = 0;
-    for (int i = 0; i < int(iParton.size()); ++i) if (iParton[i] < 0)
-      ++nNeg;
-    if (nNeg > 3 )
-      iPartonAntiJun.push_back(iParton);
   }
 
   // Done.

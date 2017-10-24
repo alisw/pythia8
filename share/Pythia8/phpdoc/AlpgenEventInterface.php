@@ -30,7 +30,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
  
 <h2>ALPGEN Event Interface</h2> 
  
-This manual page describes the ALPGEN [<a href="Bibliography.php" target="page">Man03</a>] event interface 
+This manual page describes the ALPGEN [<a href="Bibliography.php#refMan03" target="page">Man03</a>] event interface 
 for PYTHIA8.   While future versions of 
 ALPGEN will be able to write out events in LHEF format, previous 
 versions always output events in an ALPGEN native format (a combination 
@@ -42,7 +42,7 @@ the ALPGEN-style parton-jet matching <code>JetMatchingAlpgen</code>
 described on the <?php $filepath = $_GET["filepath"];
 echo "<a href='JetMatching.php?filepath=".$filepath."' target='page'>";?>Jet Matching</a> 
 page. However, it will also work with a implementation of the 
-Madgraph-style [<a href="Bibliography.php" target="page">Alw11</a>] parton-jet matching 
+Madgraph-style [<a href="Bibliography.php#refAlw11" target="page">Alw11</a>] parton-jet matching 
 <code>JetMatchingMadgraph</code> also described on the 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='JetMatching.php?filepath=".$filepath."' target='page'>";?>Jet Matching</a> page. 
@@ -197,7 +197,7 @@ PYTHIA. These standard functions are not documented here. The complete
 parameter file is stored in the PYTHIA Info object, if given, under the 
 key <code>AlpgenPar</code>. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>LHAupAlpgen::LHAupAlpgen(const char *baseFNin, Info *infoPtrIn = NULL) &nbsp;</strong> <br/>
 The constructor for the class takes the base filename for the ALPGEN 
 format files (without file extensions) and optionally a pointer to a 
@@ -207,7 +207,7 @@ parameter files are opened immediately, with the <code>AlpgenPar</code>
 class, described below, used to parse the parameter file. 
    
  
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>bool LHAupAlpgen::addResonances() &nbsp;</strong> <br/>
 This is a private method used when an event is read in. The information 
 read from the event file does not always contain a complete listing of 
@@ -216,7 +216,7 @@ reconstructed. Exactly which details are filled in can vary based on the
 ALPGEN process in question. 
    
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>bool LHAupAlpgen::rescaleMomenta() &nbsp;</strong> <br/>
 This is another private method used when an event is read in. 
 It shuffles and rescales momenta in an event to ensure energy-momentum 
@@ -252,28 +252,29 @@ Finally, the number of events and luminosity are stored under the keys
 present, with differing values, the stored value is overwritten and a 
 warning given. 
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>AlpgenPar::AlpgenPar(Info *infoPtrIn = NULL) &nbsp;</strong> <br/>
 The constructor does nothing except for store the PYTHIA Info 
 pointer, if given. This is used for warning/error message printing. 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>bool AlpgenPar::parse(const string paramStr) &nbsp;</strong> <br/>
 This method parses an ALPGEN parameter file. The parameter file is 
 passed as a single string, mainly intended to be read out from the 
 PYTHIA Info object using the header information methods. 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>bool AlpgenPar::haveParam(const string &amp;paramIn) &nbsp;</strong> <br/>
 Method to check if a parameter with key <code>paramIn</code> is present. 
 Returns true if present, else false. 
    
  
-<a name="method7"></a>
+<a name="anchor7"></a>
 <p/><strong>double AlpgenPar::getParam(const string &amp;paramIn) &nbsp;</strong> <br/>
    
+<a name="anchor8"></a>
 <strong>int AlpgenPar::getParamAsInt(const string &amp;paramIn) &nbsp;</strong> <br/>
 Return the parameter with key <code>paramIn</code> as a double or 
 integer. The presence of a parameter should have already been checked 
@@ -281,7 +282,7 @@ using the <code>haveParam()</code> function above. If the parameter is
 not present, 0 is returned. 
    
  
-<a name="method8"></a>
+<a name="anchor9"></a>
 <p/><strong>void AlpgenPar::void printParams() &nbsp;</strong> <br/>
 Method to print a list of stored parameters. 
    
@@ -296,7 +297,7 @@ native or LHE file formats are used. It is declared with virtual
 inheritance so that it may be combine with other UserHooks classes, see 
 the "Combining UserHooks" section below. 
  
-<a name="method9"></a>
+<a name="anchor10"></a>
 <p/><strong>AlpgenHooks(Pythia &amp;pythia) &nbsp;</strong> <br/>
 The constructor takes a PYTHIA object as input, so that the beam 
 parameter settings can be overridden if the <code>Alpgen:file</code> 
@@ -304,7 +305,7 @@ option is given. If this is the case, an <code>LHAupAlpgen</code>
 instance is automatically created and passed to PYTHIA. 
    
  
-<a name="method10"></a>
+<a name="anchor11"></a>
 <p/><strong>bool initAfterBeams() &nbsp;</strong> <br/>
 This is the only UserHooks method that is overridden. It is called 
 directly after PYTHIA has initialised the beams, and therefore the 

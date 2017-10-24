@@ -13,17 +13,20 @@
 #ifndef Pythia8_Streams_H
 #define Pythia8_Streams_H
 
+#include <cstddef>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-#include <iostream>
 #include <fstream>
 #include <string.h>
+#ifdef GZIPSUPPORT
+#include <zlib.h>
+#endif
 
 namespace Pythia8 {
 
 #ifdef GZIPSUPPORT
-#include <zlib.h>
+
 //==========================================================================
 
 // Internal classes to implement gzstream. See below for user classes.
@@ -103,10 +106,20 @@ public:
         gzstreambase::open( name, mode);
     }
 };
+
+//==========================================================================
+
 #else
 typedef std::ifstream igzstream;
 typedef std::ofstream ogzstream;
 #endif
+
+// Dummy to avoid harmless compiler warning that Streams.o has no symbols.
+class DummyForStreams {
+public:
+  DummyForStreams() {}
+  double xtox(double x);
+};
 
 //==========================================================================
 

@@ -30,7 +30,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>Fragmentation</h2> 
  
 Fragmentation in PYTHIA is based on the Lund string model 
-[<a href="Bibliography.php" target="page">And83, Sjo84</a>]. Several different aspects are involved in 
+[<a href="Bibliography.php#refAnd83" target="page">And83</a>, <a href="Bibliography.php#refSjo84" target="page">Sjo84</a>]. Several different aspects are involved in 
 the physics description, which  here therefore is split accordingly. 
 This also, at least partly, reflect the set of classes involved in 
 the fragmentation machinery. 
@@ -54,7 +54,7 @@ lightcone fraction <i>z</i> according to one of two possible
 shape sets. 
  
 <p/> 
-The Lund symmetric fragmentation function [<a href="Bibliography.php" target="page">And83</a>] is the 
+The Lund symmetric fragmentation function [<a href="Bibliography.php#refAnd83" target="page">And83</a>] is the 
 only alternative for light quarks. It is of the form 
 <br/><i> 
     f(z) = (1/z) * (1-z)^a * exp(-b m_T^2 / z) 
@@ -90,7 +90,7 @@ allows a larger <i>a</i> for diquarks, with total
    
  
 <p/> 
-Finally, the Bowler modification [<a href="Bibliography.php" target="page">Bow81</a>] introduces an extra 
+Finally, the Bowler modification [<a href="Bibliography.php#refBow81" target="page">Bow81</a>] introduces an extra 
 factor 
 <br/><i> 
     1/z^{r_Q * b * m_Q^2} 
@@ -174,7 +174,7 @@ hypothetical heavier quarks.
  
 <p/> 
 As another nonstandard alternative, it is possible to switch over to the 
-Peterson/SLAC formula [<a href="Bibliography.php" target="page">Pet83</a>] 
+Peterson/SLAC formula [<a href="Bibliography.php#refPet83" target="page">Pet83</a>] 
 <br/><i> 
      f(z) = 1 / ( z * (1 - 1/z - epsilon/(1-z))^2 ) 
 </i><br/> 
@@ -229,7 +229,7 @@ How they are distributed depends on the following flag:
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If switched off the quark <i>pT</i> is generated according to 
 the traditional Gaussion distribution in <i>p_x</i> and <i>p_y</i> 
-separately. If switched on, the new "thermal model" [<a href="Bibliography.php" target="page">Fis16</a>] 
+separately. If switched on, the new "thermal model" [<a href="Bibliography.php#refFis16" target="page">Fis16</a>] 
 is instead used, wherein the quark <i>pT</i> is generated such that the 
 resulting hadron receives a <i>pT</i> according to an exponential 
 distribution. Also the hadronic composition is affected, see further 
@@ -279,7 +279,7 @@ width.
    
  
 <p/> 
-In the context of some toy studies [<a href="Bibliography.php" target="page">Fis16</a>] the following three 
+In the context of some toy studies [<a href="Bibliography.php#refFis16" target="page">Fis16</a>] the following three 
 options have also been introduced, but are not part of any recommended 
 framework. 
  
@@ -324,7 +324,7 @@ and <i>s &rarr; u/d</i> transistions.
  
 If strings are closely packed, e.g. as a consequence of MPIs, it is 
 likely that they receive an increased string tension, which translates 
-into a broader <i>pT</i> spectrum, see further [<a href="Bibliography.php" target="page">Fis16</a>]. 
+into a broader <i>pT</i> spectrum, see further [<a href="Bibliography.php#refFis16" target="page">Fis16</a>]. 
 It also means an enhanced rate (or rather reduced suppression) of 
 heavy-particle production relative to pions. This can be regulated by 
 the flag and parameters below. 
@@ -436,7 +436,7 @@ mass of that system. With one exception parameters are the same as
 defined for normal string fragmentation, to the extent that they are 
 at all applicable in this case. 
  
-A discussion of the relevant physics is found in [<a href="Bibliography.php" target="page">Nor00</a>]. 
+A discussion of the relevant physics is found in [<a href="Bibliography.php#refNor00" target="page">Nor00</a>]. 
 The current implementation does not completely abide to the scheme 
 presented there, however, but has in part been simplified. (In part 
 for greater clarity, in part since the class is not quite finished yet.) 
@@ -460,7 +460,7 @@ Such topologies can arise if several valence quarks are kicked out
 from a proton beam, or in baryon-number-violating SUSY decays. 
 Special attention is necessary to handle the region just around 
 the junction, where the baryon number topologically is located. 
-The junction fragmentation scheme is described in [<a href="Bibliography.php" target="page">Sjo03</a>]. 
+The junction fragmentation scheme is described in [<a href="Bibliography.php#refSjo03" target="page">Sjo03</a>]. 
 The parameters in this section should not be touched except by experts. 
  
 <br/><br/><table><tr><td><strong>StringFragmentation:eNormJunction </td><td></td><td> <input type="text" name="42" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)</td></tr></table>

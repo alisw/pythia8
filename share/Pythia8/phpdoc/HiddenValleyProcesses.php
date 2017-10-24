@@ -36,12 +36,18 @@ the normal timelike showering machinery has been expanded with a
 third kind of radiation, in addition to the QCD and QED ones. 
 These three kinds of radiation are fully interleaved, i.e. 
 evolution occurs in a common <i>pT</i>-ordered sequence. 
-The scenario is described in [<a href="Bibliography.php" target="page">Car10</a>]. Furthermore 
+The scenario is described in [<a href="Bibliography.php#refCar10" target="page">Car10</a>]. Furthermore 
 hadronization in the hidden sector has been implemented. 
 Three main scenarios for production into and decay out of the 
 hidden sector can be compared, in each case either for an 
 Abelian or a non-Abelian gauge group in the HV. For further details 
-see [<a href="Bibliography.php" target="page">Car11</a>]. 
+see [<a href="Bibliography.php#refCar11" target="page">Car11</a>]. 
+ 
+<br/><b>Warning</b>: do not use the alternative hadronization 
+scenarios <code>StringPT:thermalModel = on</code> or 
+<code>StringPT:mT2suppression = on</code> in conjunction with 
+Hidden Valley processes, since they have not been constructed to 
+work together. 
  
 <h3>Particle content and properties</h3> 
  
@@ -441,7 +447,7 @@ is reversed for HV radiation.
  
 <p/>This also includes matrix-element corrections for a number 
 of decay processes, with colour, spin and mass effects included 
-[<a href="Bibliography.php" target="page">Nor01</a>]. They were calculated within the context of the 
+[<a href="Bibliography.php#refNor01" target="page">Nor01</a>]. They were calculated within the context of the 
 particle content of the MSSM, however, which does not include spin 1 
 particles with unit colour charge. In such cases spin 0 is assumed 
 instead. By experience, the main effects come from mass and colour 
@@ -455,7 +461,7 @@ in the visible sector by recoil effect, but this is a minor
 effect relative to the primary emission of the <i>gv</i>. 
  
 <p/>While the default model has a fixed Hidden Valley coupling 
-<i> alpha_HV</i>, some further work [<a href="Bibliography.php" target="page">Scw15</a>] has considered 
+<i> alpha_HV</i>, some further work [<a href="Bibliography.php#refScw15" target="page">Scw15</a>] has considered 
 the impact of a running coupling. This is included as an option. 
  
 <br/><br/><strong>HiddenValley:FSR</strong>  <input type="radio" name="33" value="on"><strong>On</strong>

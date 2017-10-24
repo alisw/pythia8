@@ -855,9 +855,9 @@ it returns false if the <code>LHAupLHEF</code> instance is constructed to
 work on an input LHE file, while it returns true if the <code>LHAupLHEF</code> 
 instance is constructed to use externally provided input streams instead. 
 For the latter, the <code>LHAupLHEF</code> instance should have been 
-constructed with the class constructor <code>LHAupLHEF(Info* infoPtrIn, 
-istream* isIn, istream* isHeadIn, bool readHeadersIn, bool setScalesFromLHEFIn) 
-</code> 
+constructed with the class constructor 
+<code>LHAupLHEF(Info* infoPtrIn, istream* isIn, istream* isHeadIn, 
+bool readHeadersIn, bool setScalesFromLHEFIn)</code>. 
 </method> 
  
 <method name="void LHAup::setInfoHeader(const string &key, 

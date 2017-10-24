@@ -13,7 +13,7 @@ is intended to be an integrated part of the initial- and final-state
 radiation frameworks, and is fully interleaved with QCD and QED emissions. 
 It is a new and still not fully explored feature, however, and therefore 
 it is off by default. The weak-emission machinery is described in detail 
-in [<a href="Bibliography.html" target="page">Chr14</a>]; here we only bring up some of the most relevant 
+in [<a href="Bibliography.html#refChr14" target="page">Chr14</a>]; here we only bring up some of the most relevant 
 points for using this machinery. 
  
 <p/> 
@@ -76,7 +76,7 @@ non-negligible. (It is not enough to assign an event weight
 and <i>n</i> is the number of emitted gauge bosons. This still 
 misses to account for the change in phase space for late emissions by 
 the effect of earlier ones, or equivalently for the unwanted change in 
-the Sudakov form factor. See [<a href="Bibliography.html" target="page">Lon13a</a>] for a detailed discussion 
+the Sudakov form factor. See [<a href="Bibliography.html#refLon13a" target="page">Lon13a</a>] for a detailed discussion 
 and possible solutions.) 
  
 <p/> 
@@ -133,6 +133,7 @@ initial-state radiation (e.g. to turn the weak shower on for ISR) see
 final-state radiation see 
 <a href="TimelikeShowers.html" target="page">Timelike Showers</a>. 
  
+<a name="anchor1"></a>
 <p/><code>parm&nbsp; </code><strong> WeakShower:enhancement &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 1.</code>; <code>maximum = 1000.</code>)<br/>
 Enhancement factor for the weak shower. This is used to increase the 
@@ -141,6 +142,7 @@ the additional weak emissions (i.e. divide the rate of weak emissions by
 the same factor). 
    
  
+<a name="anchor2"></a>
 <p/><code>flag&nbsp; </code><strong> WeakShower:singleEmission &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This parameter allows to stop the weak shower after a single emission. 
@@ -148,6 +150,7 @@ This parameter allows to stop the weak shower after a single emission.
 <br/>If off, an unlimited number of weak emissions possible. 
    
  
+<a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> WeakShower:vetoWeakJets &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 There are two ways to produce weak bosons in association with jets, namely 
@@ -164,6 +167,7 @@ is used, but this time the event should be vetoed if the first clustering
 does contain a weak boson, see <code>WeakShower:vetoQCDjets</code> below. 
    
  
+<a name="anchor4"></a>
 <p/><code>flag&nbsp; </code><strong> WeakShower:vetoQCDjets &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag vetoes some QCD emission for Drell-Yan weak production to avoid 
@@ -174,6 +178,7 @@ built-in processes for <i>gamma^*/Z^0/W^+-</i> production, and not
 other internal or external processes. 
    
  
+<a name="anchor5"></a>
 <p/><code>parm&nbsp; </code><strong> WeakShower:vetoWeakDeltaR &nbsp;</strong> 
  (<code>default = <strong>0.6</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.</code>)<br/>
 The <i>delta R</i> parameter used in the <i>kT</i> clustering for 
@@ -181,6 +186,7 @@ the veto algorithm used to avoid double counting. Relates to the relative
 importance given to ISR and FSR emissionbs. 
    
  
+<a name="anchor6"></a>
 <p/><code>flag&nbsp; </code><strong> WeakShower:externalSetup &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flags tells the shower to use an external setup stored in the 

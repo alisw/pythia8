@@ -74,10 +74,12 @@ public:
   void findJunctions( Event& junEvent);
 
   // Initialize and call resonance decays separately.
-  void initDecays( Info* infoPtrIn, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, LHAup* lhaUpPtrIn) { infoPtr = infoPtrIn;
+  void initDecays( Info* infoPtrIn, Settings &settings,
+    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, LHAup* lhaUpPtrIn) {
+    infoPtr = infoPtrIn;
     resonanceDecays.init( infoPtrIn, particleDataPtrIn, rndmPtrIn);
-    containerLHAdec.setLHAPtr(lhaUpPtrIn, particleDataPtrIn); }
+    containerLHAdec.setLHAPtr(lhaUpPtrIn, particleDataPtrIn, &settings,
+      rndmPtrIn); }
   bool nextDecays( Event& process) { return resonanceDecays.next( process);}
 
 private:
@@ -88,9 +90,13 @@ private:
   // Generic info for process generation.
   bool   doSecondHard, doSameCuts, allHardSame, noneHardSame,
          someHardSame, cutsAgree, cutsOverlap, doResDecays, doISR, doMPI;
-  int    nImpact, startColTag;
+  int    startColTag;
   double mHatMin1, mHatMax1, pTHatMin1, pTHatMax1, mHatMin2, mHatMax2,
-         pTHatMin2, pTHatMax2, sigmaND, sumImpactFac, sum2ImpactFac;
+         pTHatMin2, pTHatMax2, sigmaND;
+
+  // Info for process generation with photon beams.
+  bool   beamHasGamma;
+  int    gammaMode;
 
   // Vector of containers of internally-generated processes.
   vector<ProcessContainer*> containerPtrs;

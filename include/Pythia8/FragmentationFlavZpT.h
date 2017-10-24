@@ -71,7 +71,10 @@ class StringFlav {
 public:
 
   // Constructor.
-  StringFlav() {}
+  StringFlav() {
+    // Initialize winning parameters.
+    hadronIDwin = 0; idNewWin = 0; hadronMassWin = -1.0;
+  }
 
   // Destructor.
   virtual ~StringFlav() {}
@@ -82,7 +85,9 @@ public:
 
   // Pick a light d, u or s quark according to fixed ratios.
   int pickLightQ() { double rndmFlav = probQandS * rndmPtr->flat();
-    if (rndmFlav < 1.) return 1; if (rndmFlav < 2.) return 2; return 3; }
+    if (rndmFlav < 1.) return 1;
+    if (rndmFlav < 2.) return 2;
+    return 3; }
 
   // Pick a new flavour (including diquarks) given an incoming one,
   // either by old standard Gaussian or new alternative exponential.
@@ -147,7 +152,8 @@ public:
     int j = (hadronID % 10);
     if (hadronID <  1000) return ((j==1) ? 0 : ( (j==3) ? 1 : 5 ));
     if (hadronID < 20000) return ((j==1) ? 3 : 2);
-    if (hadronID > 20000) return 4; return -1; }
+    if (hadronID > 20000) return 4;
+    return -1; }
 
 protected:
 
@@ -159,8 +165,6 @@ protected:
 
   // Pointer to event information.
   Info* infoPtr;
-
-private:
 
   // Constants: could only be changed in the code itself.
   static const int    mesonMultipletCode[6];
@@ -198,6 +202,7 @@ private:
   map< pair<int,int>, vector< pair<int,int> > > possibleHadronsLast;
   map< pair<int,int>, vector<double> > possibleRatePrefacsLast;
 
+  // Selection in thermal model.
   int    hadronIDwin, idNewWin;
   double hadronMassWin;
 

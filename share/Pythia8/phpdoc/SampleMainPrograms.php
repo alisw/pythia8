@@ -154,11 +154,13 @@ implemented as a new class derived from a PYTHIA base class, and be
 used in an external process, both of them handed in for generation 
 as with normal internal classes.</li> 
  
-<li><code>main23.cc</code> : shows how an external beam momentum spread 
-and vertex location generator can be implemented as a new class derived 
-from a PYTHIA base class, and then handed in for internal use. 
-Also how to use an external random-number generator and an external 
-parton distribution set.</li> 
+<li><code>main23.cc</code> : shows how to write external classes, 
+derived from PYTHIA base classes, that can be handed to PYTHIA for 
+internal generation. The MIXMAX random number generator is this 
+way compared with the default PYTHIA one. Explicit implementations 
+are included for the generation of external beam momentum spread 
+and vertex location, and for a simple scaling external parton 
+distribution set.</li> 
  
 <li><code>main24.cc</code> : tests of internally implemented cross sections 
 for Supersymmetric particle production, with SUSY spectrum defined in 
@@ -200,7 +202,7 @@ echo "<a href='POWHEGMerging.php?filepath=".$filepath."' target='page'>";?>POWHE
 The <code>main31.cmnd</code> allows to switch between several 
 different matching options. It also allows to select input process, 
 in this case either for the POWHEG-hvq program applied to top 
-pair production [<a href="Bibliography.php" target="page">Cor10</a>] or for QCD 2+3-jet events. The small 
+pair production [<a href="Bibliography.php#refCor10" target="page">Cor10</a>] or for QCD 2+3-jet events. The small 
 samples of input events are stored in the <code>powheg-hvq.lhe</code> 
 and <code>powheg-dijets.lhe</code> files, respectively. 
 </li> 
@@ -237,6 +239,13 @@ facilities.</li>
 <li><code>main34.py</code> : a Python interface equivalent 
 of <code>main34.cc</code>. Demonstrates usage of a PYTHIA plugin 
 within the Python interface.</li> 
+ 
+<li><code>main35.cc</code> : demonstrates how to generate quarkonia 
+events with the external HelacOnia package interfaced to Pythia, 
+and compare results with the internal implementation.</li> 
+ 
+<li><code>main36.cc</code> : demonstrates how to generate 
+Deeply Inelastic Scattering events, e.g. in a HERA configuration.</li> 
  
 <li><code>main37.cc</code> : shows how LHEF version 3.0 files can be 
 read and used to fill several histograms of the same property, but with 
@@ -317,7 +326,11 @@ to enhance the rate of rare emissions in the shower.</li>
 be written on an external file.</li> 
  
 <li><code>main69.cc</code> : examplifies how to generate all relevant 
-contributions for charged particle spectra in photon-photon collisions.</li> 
+contributions for charged particle spectra in photon-photon and 
+photon-proton collisions. </li> 
+ 
+<li><code>main70.cc</code> : examplifies how to provide an external 
+photon flux for photo-production processes. </li> 
  
 <li><code>main71.cc</code> : an example how the FastJet jet finding 
 package can be linked to allow an analysis of the final state, 
@@ -330,6 +343,14 @@ identical conditions, in this case for QCD jets.</li>
 <li><code>main73.cc</code> : a comparison of jet properties on the 
 parton and the hadron level, illustrating possibilities for larger 
 control of which particles are used in the jet analyses.</li> 
+ 
+<li><code>main74.cc</code> : exemplifies how to use one of the 
+contributed add-ons to the FastJet package. In this case the 
+modified Mass Drop Tagger is used to improve the mass reconstruction 
+of a boosted hadronically decaying <i>Z^0</i>.</li> 
+ 
+<li><code>main75.cc</code> : setup for Dark Matter production, where the 
+visible jets are found with the FastJet package.</li> 
  
 <li><code>main80.cc</code> : do CKKW-L merging with a merging scale 
 defined in <i>kT</i>. Input is provided by the <code>main80.cmnd</code> 
@@ -424,6 +445,29 @@ in a program that for the rest is structured like a normal PYTHIA run.
  
 <li><code>main92.cc</code> : shows how PYTHIA events can be stored as 
 ROOT trees.</li> 
+ 
+<li><code>main101.cc</code> : shows how the string shoving mechanism, 
+part of the rope hadronization framework, can be set up and used to 
+generate ridge effects.</li> 
+ 
+<li><code>main102.cc</code> : shows how flavour production is changed 
+in the rope hadronization framework.</li> 
+ 
+<li><code>main111.cc</code> : simple pp collisions as in 
+<code>main01.cc</code>, but using the Angantyr model for Heavy Ion 
+collisions. Also shows how Rivet analyses can be set up easily using 
+a special interface.</li> 
+ 
+<li><code>main112.cc</code> : p-Pb collisions at LHC energies, 
+using the Angantyr model for Heavy Ion collisions, and analyzing 
+events by centrality bins.</li> 
+ 
+<li><code>main113.cc</code> : Pb-Pb collisions at LHC energies, 
+using the Angantyr model for Heavy Ion collisions, and analyzing 
+events by centrality bins.</li> 
+ 
+<li><code>main121.cc</code> : set up automatic uncertainty band variations 
+to PDFs and factorization and renormalization scales.</li> 
  
 </ul> 
  

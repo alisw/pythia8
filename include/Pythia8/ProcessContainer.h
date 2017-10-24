@@ -57,8 +57,13 @@ public:
     UserHooks* userHooksPtr, GammaKinematics* gammaKinPtrIn);
 
   // Store or replace Les Houches pointer.
-  void setLHAPtr( LHAup* lhaUpPtrIn,  ParticleData* particleDataPtrIn = 0)
-    {lhaUpPtr = lhaUpPtrIn;
+  void setLHAPtr( LHAup* lhaUpPtrIn,  ParticleData* particleDataPtrIn = 0,
+    Settings* settingsPtrIn = 0, Rndm* rndmPtrIn = 0)
+    {lhaUpPtr = lhaUpPtrIn; setLifetime = 0;
+    if (settingsPtrIn && rndmPtrIn) {
+      rndmPtr = rndmPtrIn;
+      setLifetime = settingsPtrIn->mode("LesHouches:setLifetime");
+    }
     if (particleDataPtrIn != 0) particleDataPtr = particleDataPtrIn;
     if (sigmaProcessPtr != 0) sigmaProcessPtr->setLHAPtr(lhaUpPtr);
     if (phaseSpacePtr != 0) phaseSpacePtr->setLHAPtr(lhaUpPtr);}
@@ -86,6 +91,10 @@ public:
 
   // Reset statistics on events generated so far.
   void reset();
+
+  // Set whether (photon) beam is resolved or unresolved.
+  // Method propagates the choice of photon process type to beam pointers.
+  void setBeamModes();
 
   // Process name and code, and the number of final-state particles.
   string name()             const {return sigmaProcessPtr->name();}
@@ -188,6 +197,10 @@ private:
 
   // Flags to store whether beam has a (un)resolved photon.
   bool   beamAhasResGamma, beamBhasResGamma, beamHasResGamma, beamHasGamma;
+  int    beamAgammaMode, beamBgammaMode, gammaModeEvent;
+
+  // Use external photon flux.
+  bool   externalFlux;
 
   // Statistics for Les Houches event classification.
   vector<int> codeLHA;

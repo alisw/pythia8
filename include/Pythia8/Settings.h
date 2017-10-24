@@ -229,6 +229,15 @@ public:
   // Give back current value(s) as a string, whatever the type.
   string output(string keyIn, bool fullLine = true);
 
+  // Retrieve readString history (e.g., for inspection). Everything
+  // (subrun=-999), up to first subrun (=-1), or subrun-specific (>=0).
+  vector<string> getReadHistory(int subrun=-999) {
+    if (subrun == -999) return readStringHistory;
+    else if (readStringSubrun.find(subrun) != readStringSubrun.end())
+      return readStringSubrun[subrun];
+    else return vector<string>();
+  }
+
   // Reset all values to their defaults.
   void resetAll() ;
 
@@ -304,20 +313,21 @@ public:
   map<string, WVec> getWVecMap(string match);
 
   // Change current value, respecting limits.
-  void flag(string keyIn, bool nowIn);
-  bool mode(string keyIn, int nowIn);
-  void parm(string keyIn, double nowIn);
-  void word(string keyIn, string nowIn);
-  void fvec(string keyIn, vector<bool> nowIn);
-  void mvec(string keyIn, vector<int> nowIn);
-  void pvec(string keyIn, vector<double> nowIn);
-  void wvec(string keyIn, vector<string> nowIn);
+  void flag(string keyIn, bool nowIn, bool force = false);
+  bool mode(string keyIn, int nowIn, bool force = false);
+  void parm(string keyIn, double nowIn, bool force = false);
+  void word(string keyIn, string nowIn, bool force = false);
+  void fvec(string keyIn, vector<bool> nowIn, bool force = false);
+  void mvec(string keyIn, vector<int> nowIn, bool force = false);
+  void pvec(string keyIn, vector<double> nowIn, bool force = false);
+  void wvec(string keyIn, vector<string> nowIn, bool force = false);
 
-  // Change current value, disregarding limits.
-  void forceMode(string keyIn, int nowIn);
-  void forceParm(string keyIn, double nowIn);
-  void forceMVec(string keyIn, vector<int> nowIn);
-  void forcePVec(string keyIn, vector<double> nowIn);
+  // Methods kept for backwards compatability with 8.223 and earlier.
+  // (To be removed in next major release.)
+  void forceMode(string keyIn, int nowIn) {mode(keyIn,nowIn,true);}
+  void forceParm(string keyIn, double nowIn) {parm(keyIn,nowIn,true);}
+  void forceMVec(string keyIn, vector<int> nowIn) {mvec(keyIn,nowIn,true);}
+  void forcePVec(string keyIn, vector<double> nowIn) {pvec(keyIn,nowIn,true);}
 
   // Restore current value to default.
   void resetFlag(string keyIn);
@@ -338,7 +348,7 @@ public:
   // Check whether input openend with { not yet closed with }.
   bool unfinishedInput() {return lineSaved;}
 
-private:
+ private:
 
   // Pointer to various information on the generation.
   Info* infoPtr;
@@ -373,6 +383,10 @@ private:
   // Store temporary line when searching for continuation line.
   bool   lineSaved;
   string savedLine;
+
+  // Stored history of readString statements (common and by subrun).
+  vector<string> readStringHistory;
+  map<int, vector<string> > readStringSubrun;
 
   // Print out table of database, called from listAll and listChanged.
   void list(bool doListAll, bool doListString, string match);

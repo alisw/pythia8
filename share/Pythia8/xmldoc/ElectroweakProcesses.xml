@@ -74,6 +74,14 @@ In addition, <ei>t</ei>-channel exchange of such a boson
 between two fermions form a separate group. 
  
 <p/> 
+Note that the <ei>Z^0</ei> and <ei>W^+-</ei> decay modes generated with 
+the processes below only include those Standard-Model ones that are 
+allowed for on-shell decays. Thus several other processes that receive 
+contributions from off-shell resonances are listed separately, e.g. 
+for <aloc href="TopProcesses">top</aloc> or 
+<aloc href="FourthGenerationProcesses">fourth generation fermions</aloc>. 
+ 
+<p/> 
 There is one flag that can be used to influence the <ei>gamma^*/Z^0</ei> 
 structure in all the processes below where it is produced, unless 
 otherwise stated. 
@@ -297,32 +305,42 @@ Code 266.
  
 <h3> Photon-Parton Processes</h3> 
  
+<p> 
 Photon-parton production processes. See comment related to PDFs above. 
 Also relevant for direct-resolved processes in photon-photon collisions. 
+Two instances of a given process are created when mixing processes where 
+the direct photon can come from either side. In this case the process 
+code in the parentheses is used when the direct photon is from side A. 
+</p> 
  
 <flag name="PhotonParton:all" default="off"> 
-Common switch for the group of two processes presented below. 
+Common switch for the processes 271-274 (also 281-284 when relevant). 
 </flag> 
  
 <flag name="PhotonParton:ggm2qqbar" default="off"> 
 Scattering <ei>g gamma &rarr; q qbar</ei>, where <ei>q</ei> 
 is a light quark (<ei>u, d, s</ei>). 
-Code 271. 
+Code 271 (281). 
 </flag> 
  
 <flag name="PhotonParton:ggm2ccbar" default="off"> 
 Scattering <ei>g gamma &rarr; c cbar</ei>. 
-Code 272. 
+Code 272 (282). 
 </flag> 
  
 <flag name="PhotonParton:ggm2bbbar" default="off"> 
 Scattering <ei>g gamma &rarr; b bbar</ei>. 
-Code 273. 
+Code 273 (283). 
 </flag> 
  
 <flag name="PhotonParton:qgm2qg" default="off"> 
 Scattering <ei>q gamma &rarr; q g</ei>. 
-Code 274. 
+Code 274 (284). 
+</flag> 
+ 
+<flag name="PhotonParton:qgm2qgm" default="off"> 
+Scattering <ei>q gamma &rarr; q gamma</ei>. 
+Code 275 (285). 
 </flag> 
  
 </chapter> 

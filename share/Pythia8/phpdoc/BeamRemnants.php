@@ -42,7 +42,7 @@ on the <i>x</i> and flavours already extracted, and to distinguish
 between valence, sea and companion quarks. Once the perturbative 
 evolution is finished, further beam remnants are added to obtain a 
 consistent set of flavours. The current physics framework is further 
-described in [<a href="Bibliography.php" target="page">Sjo04</a>]. 
+described in [<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>]. 
  
 <p/> 
 The introduction of <?php $filepath = $_GET["filepath"];
@@ -208,7 +208,7 @@ produce the beam remnants. The starting point is the junction structure of the
 beam particle (if it is a baryon). The gluons are attached to a quark line and 
 quark-antiquark pairs are added as if coming from a gluon splittings. Thus 
 this model captures the qualitative behaviour that is expected from leading 
-colour QCD. The model is described in more detail in [<a href="Bibliography.php" target="page">Sjo04</a>]. 
+colour QCD. The model is described in more detail in [<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>]. 
  
 <p/> 
 The new model is built on the full SU(3) colour structure of QCD. The 

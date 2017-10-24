@@ -42,6 +42,7 @@
          (This makes program execution much slower. If you later want to
          switch optimization back on you have to rerun configure without
          this option, since default is to allow optimization.)
+     --enable-optdebug : turns on debugging flags but allow optimization.
      --enable-shared : turns on shared-library creation,
          in addition to the archive libraries always built.
      --enable-64bit : turns on 64 bits compilation flag
@@ -208,19 +209,21 @@
        linker flag.
    LHAPDF6) The details for this package are the same as for LHAPDF5,
        but now for the modern C++ version of LHAPDF,
-       http://lhapdf.hepforge.org/. There are two important things to
+       http://lhapdf.hepforge.org/. There are three important things to
        note here. First, the LHAPDF6 package provides the exact same C
        interface as the LHAPDF5 package, and so technically supplying
        LHAPDF6 libraries to the LHAPDF5 package option will work. This
        is not recommended except for checking that the new C++
        interface works properly. Second, both LHAPDF5 and LHAPDF6 can
        be used simultaneously, technically. This behavior has not
-       been tested and is not recommended.
+       been tested and is not recommended. Third, if using a version 
+       earlier than 6.2, BOOST is required and can be specified using 
+       "--with-boost".
    ROOT) The ROOT HEP package used for data analysis and
        visualization, http://root.cern.ch. This package is only used
        for the "examples/main9[1,2].cc" examples.
    BOOST) Advanced C++ libraries, http://www.boost.org/, which are needed
-       when using the C++ interface for LHAPDF6.
+       when using the C++ interface for LHAPDF6 with version < 6.2.
    GZIP) Support for the reading of gzipped LHE files. It relies upon
        zlib to function. The "--with-gzip=PATH" provides the location
        for "zlib.h" and "libz.[so,dylib]". Note that when compiling a

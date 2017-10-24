@@ -43,7 +43,7 @@ The partial width of a Higgs particle to a pair of gauge bosons,
 Higgs mass. When selecting the Higgs according to a Breit-Wigner, 
 so that the actual mass <i>mHat</i> does not agree with the 
 nominal <i>m_Higgs</i> one, an ambiguity arises which of the 
-two to use [<a href="Bibliography.php" target="page">Sey95</a>]. The default is to use a linear 
+two to use [<a href="Bibliography.php#refSey95" target="page">Sey95</a>]. The default is to use a linear 
 dependence on <i>mHat</i>, i.e. a width proportional to 
 <i>m_Higgs^2 * mHat</i>, while <code>on</code> gives a 
 <i>mHat^3</i> dependence. This does not affect the widths to 

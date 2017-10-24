@@ -11,7 +11,7 @@
 The <code>BoseEinstein</code> class performs shifts of momenta 
 of identical particles to provide a crude estimate of 
 Bose-Einstein effects. The algorithm is the BE_32 one described in 
-[<a href="Bibliography.html" target="page">Lon95</a>], with a Gaussian parametrization of the enhancement. 
+[<a href="Bibliography.html#refLon95" target="page">Lon95</a>], with a Gaussian parametrization of the enhancement. 
 We emphasize that this approach is not based on any first-principles 
 quantum mechanical description of interference phenomena; such 
 approaches anyway have many problems to contend with. Instead a cruder 
@@ -47,7 +47,7 @@ The end result can be viewed as a poor man's rendering of a rapidly
 dampened oscillatory behaviour in <i>Q</i>. 
  
 <p/> 
-Further details can be found in [<a href="Bibliography.html" target="page">Lon95</a>]. For instance, the 
+Further details can be found in [<a href="Bibliography.html#refLon95" target="page">Lon95</a>]. For instance, the 
 target is implemented under the assumption that the initial distribution 
 in <i>Q</i> can be well approximated by pure phase space at small 
 values, and implicitly generates higher-order effects by the way 
@@ -82,23 +82,27 @@ use only particles with a positive status code, i.e. ones for which
 Assuming you have set <code>HadronLevel:BoseEinstein = on</code>, 
 you can regulate the detailed behaviour with the following settings. 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> BoseEinstein:Pion &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Include effects or not for identical <i>pi^+</i>, <i>pi^-</i> 
 and <i>pi^0</i>. 
    
  
+<a name="anchor2"></a>
 <p/><code>flag&nbsp; </code><strong> BoseEinstein:Kaon &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Include effects or not for identical <i>K^+</i>, <i>K^-</i>, 
 <i>K_S^0</i> and <i>K_L^0</i>. 
    
  
+<a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> BoseEinstein:Eta &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Include effects or not for identical <i>eta</i> and <i>eta'</i>. 
    
  
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> BoseEinstein:lambda &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 2.</code>)<br/>
 The strength parameter for Bose-Einstein effects. On physical grounds 
@@ -106,6 +110,7 @@ it should not be above unity, but imperfections in the formalism
 used may require that nevertheless. 
    
  
+<a name="anchor5"></a>
 <p/><code>parm&nbsp; </code><strong> BoseEinstein:QRef &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.05</code>; <code>maximum = 1.</code>)<br/>
 The size parameter of the region in <i>Q</i> space over which 
@@ -115,6 +120,7 @@ the inverse of an effective distance in normal space,
 That is, <i>f_2(Q) = (1 + lambda * exp(-(Q/QRef)^2)) * (...)</i>. 
    
  
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> BoseEinstein:widthSep &nbsp;</strong> 
  (<code>default = <strong>0.02</strong></code>; <code>minimum = 0.001</code>; <code>maximum = 1.</code>)<br/>
 Particle species with a width above this value (in GeV) are assumed 

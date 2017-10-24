@@ -30,7 +30,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>ProMC Files</h2> 
  
 <a href="http://atlaswww.hep.anl.gov/asc/promc/">ProMC</a> 
-[<a href="Bibliography.php" target="page">Che14</a>] is a library 
+[<a href="Bibliography.php#refChe14" target="page">Che14</a>] is a library 
 for the storage of Monte Carlo event records, or other data, in a very 
 compact binary form. It provides routines for fast input to and output 
 from these compact data files. It uses "varints" as a way to store and 

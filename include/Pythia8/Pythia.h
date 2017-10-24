@@ -10,8 +10,8 @@
 #define Pythia8_Pythia_H
 
 // Version number defined for use in macros and for consistency checks.
-#define PYTHIA_VERSION 8.223
-#define PYTHIA_VERSION_INTEGER 8223
+#define PYTHIA_VERSION 8.230
+#define PYTHIA_VERSION_INTEGER 8230
 
 // Header files for the Pythia class and for what else the user may need.
 #include "Pythia8/Analysis.h"
@@ -32,10 +32,12 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PartonVertex.h"
 #include "Pythia8/ProcessLevel.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/ResonanceWidths.h"
 #include "Pythia8/RHadrons.h"
+#include "Pythia8/Ropewalk.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/SigmaTotal.h"
 #include "Pythia8/SpaceShower.h"
@@ -47,6 +49,9 @@
 namespace Pythia8 {
 
 //==========================================================================
+
+// Forward declaration of HeavyIons class.
+class HeavyIons;
 
 // The Pythia class contains the top-level routines to generate an event.
 
@@ -92,7 +97,15 @@ public:
   bool setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn = 0,
     PDF* pdfHardBPtrIn = 0, PDF* pdfPomAPtrIn = 0, PDF* pdfPomBPtrIn = 0,
     PDF* pdfGamAPtrIn = 0, PDF* pdfGamBPtrIn = 0, PDF* pdfHardGamAPtrIn = 0,
-    PDF* pdfHardGamBPtrIn = 0);
+    PDF* pdfHardGamBPtrIn = 0, PDF* pdfUnresAPtrIn = 0,
+    PDF* pdfUnresBPtrIn = 0, PDF* pdfUnresGamAPtrIn = 0,
+    PDF* pdfUnresGamBPtrIn = 0);
+
+  // Set photon fluxes externally. Used with option "PDF:lepton2gammaSet = 2".
+  bool setPhotonFluxPtr( PDF* photonFluxAIn, PDF* photonFluxBIn) {
+    if ( photonFluxAIn != 0 ) pdfGamFluxAPtr = photonFluxAIn;
+    if ( photonFluxBIn != 0 ) pdfGamFluxBPtr = photonFluxBIn;
+    return true;}
 
   // Possibility to pass in pointer to external LHA-interfaced generator.
   bool setLHAupPtr( LHAup* lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn; return true;}
@@ -101,16 +114,32 @@ public:
   bool setDecayPtr( DecayHandler* decayHandlePtrIn,
     vector<int> handledParticlesIn) {decayHandlePtr = decayHandlePtrIn;
     handledParticles.resize(0);
-    for(int i = 0; i < int(handledParticlesIn.size()); ++i)
-    handledParticles.push_back( handledParticlesIn[i] ); return true;}
+    for (int i = 0; i < int(handledParticlesIn.size()); ++i)
+      handledParticles.push_back( handledParticlesIn[i] );
+    return true;}
 
   // Possibility to pass in pointer for external random number generation.
   bool setRndmEnginePtr( RndmEngine* rndmEnginePtrIn)
     { return rndm.rndmEnginePtr( rndmEnginePtrIn);}
 
   // Possibility to pass in pointer for user hooks.
-  bool setUserHooksPtr( UserHooks* userHooksPtrIn)
-    { userHooksPtr = userHooksPtrIn; return true;}
+  bool setUserHooksPtr( UserHooks* userHooksPtrIn) {
+    if (hasUserHooksVector) delete userHooksPtr;
+    hasUserHooksVector = false;
+    userHooksPtr = userHooksPtrIn; return true;}
+
+  // Possibility to add further pointers to allow multiple user hooks.
+  bool addUserHooksPtr( UserHooks* userHooksPtrIn) {
+    if ( !userHooksPtr ) return setUserHooksPtr(userHooksPtrIn);
+    UserHooksVector* uhv = dynamic_cast<UserHooksVector*>(userHooksPtr);
+    if ( !uhv ) { uhv = new UserHooksVector();
+      uhv->hooks.push_back(userHooksPtr); userHooksPtr = uhv; }
+    uhv->hooks.push_back(userHooksPtrIn);
+    hasUserHooksVector = true; return true;}
+
+  // Possibility to pass in pointer for full merging class.
+  bool setMergingPtr( Merging* mergingPtrIn)
+    { mergingPtr = mergingPtrIn; return true;}
 
   // Possibility to pass in pointer for merging hooks.
   bool setMergingHooksPtr( MergingHooks* mergingHooksPtrIn)
@@ -135,6 +164,18 @@ public:
     TimeShower* timesPtrIn = 0, SpaceShower* spacePtrIn = 0)
     { timesDecPtr = timesDecPtrIn; timesPtr = timesPtrIn;
     spacePtr = spacePtrIn; return true;}
+
+  // Possibility to pass in pointer for modelling of heavy ion collisions.
+  bool setHeavyIonsPtr( HeavyIons* heavyIonsPtrIn)
+    { heavyIonsPtr = heavyIonsPtrIn; return true;}
+
+  // Possibility to get the pointer to a object modelling heavy ion
+  // collisions.
+  HeavyIons* getHeavyIonsPtr() { return heavyIonsPtr;}
+
+  // Possibility to pass in pointer for setting of parton space-time vertices.
+  bool setPartonVertexPtr( PartonVertex* partonVertexPtrIn)
+    { partonVertexPtr = partonVertexPtrIn; return true;}
 
   // Initialize.
   bool init();
@@ -161,7 +202,8 @@ public:
 
   // Skip a number of Les Houches events at input.
   bool LHAeventSkip(int nSkip) {
-    if (lhaUpPtr != 0) return lhaUpPtr->skipEvent(nSkip); return false;}
+    if (lhaUpPtr != 0) return lhaUpPtr->skipEvent(nSkip);
+    return false;}
 
   // Main routine to provide final statistics on generation.
   void stat();
@@ -173,7 +215,8 @@ public:
   string word(string key) {return settings.word(key);}
 
   // Auxiliary to set parton densities among list of possibilities.
-  PDF* getPDFPtr(int idIn, int sequence = 1, string beam = "");
+  PDF* getPDFPtr(int idIn, int sequence = 1, string beam = "",
+    bool resolved = true);
 
   // The event record for the parton-level central process.
   Event          process;
@@ -204,11 +247,18 @@ public:
   PartonSystems  partonSystems;
 
   // Merging object as wrapper for matrix element merging routines.
-  Merging        merging;
+  Merging*       mergingPtr;
 
   // Pointer to MergingHooks object for user interaction with the merging.
   // MergingHooks also more generally steers the matrix element merging.
   MergingHooks*  mergingHooksPtr;
+
+  // Pointer to a HeavyIons object for generating heavy ion collisions
+  HeavyIons* heavyIonsPtr;
+
+  // The two incoming beams.
+  BeamParticle beamA;
+  BeamParticle beamB;
 
 private:
 
@@ -231,6 +281,7 @@ private:
   // Initialization data related to photon-photon interactions.
   bool   beamHasGamma, beamAisResGamma, beamBisResGamma, beamAhasResGamma,
          beamBhasResGamma;
+  int    gammaMode;
 
   // Initialization data, extracted from init(...) call.
   bool   isConstructed, isInit, isUnresolvedA, isUnresolvedB, showSaV,
@@ -266,13 +317,21 @@ private:
   PDF* pdfHardGamAPtr;
   PDF* pdfHardGamBPtr;
 
-  // Keep track when "new" has been used and needs a "delete" for PDF's.
-  bool useNewPdfA, useNewPdfB, useNewPdfHard, useNewPdfPomA, useNewPdfPomB,
-    useNewPdfGamA, useNewPdfGamB, useNewPdfHardGamA, useNewPdfHardGamB;
+  // Alternative unresolved PDFs when mixing resolved and unresolved processes.
+  PDF* pdfUnresAPtr;
+  PDF* pdfUnresBPtr;
+  PDF* pdfUnresGamAPtr;
+  PDF* pdfUnresGamBPtr;
 
-  // The two incoming beams.
-  BeamParticle beamA;
-  BeamParticle beamB;
+  // PDF pointers to externally provided photon fluxes.
+  PDF* pdfGamFluxAPtr;
+  PDF* pdfGamFluxBPtr;
+
+  // Keep track when "new" has been used and needs a "delete" for PDF's etc.
+  bool useNewPdfA, useNewPdfB, useNewPdfHard, useNewPdfPomA, useNewPdfPomB,
+    useNewPdfGamA, useNewPdfGamB, useNewPdfHardGamA, useNewPdfHardGamB,
+    useNewPdfUnresA, useNewPdfUnresB, useNewPdfUnresGamA, useNewPdfUnresGamB,
+    hasUserHooksVector;
 
   // Alternative Pomeron beam-inside-beam.
   BeamParticle beamPomA;
@@ -314,6 +373,10 @@ private:
   SpaceShower* spacePtr;
   bool         useNewTimesDec, useNewTimes, useNewSpace;
 
+  // Pointer to assign space-time vertices during parton evolution.
+  PartonVertex* partonVertexPtr;
+  bool          useNewPartonVertex;
+
   // The main generator class to define the core process of the event.
   ProcessLevel processLevel;
 
@@ -324,6 +387,7 @@ private:
   PartonLevel trialPartonLevel;
 
   // Flags for defining the merging scheme.
+  bool        hasMerging, hasOwnMerging;
   bool        hasMergingHooks, hasOwnMergingHooks, doMerging;
 
   // The Colour reconnection class.
@@ -340,6 +404,9 @@ private:
 
   // The RHadrons class is used both at PartonLevel and HadronLevel.
   RHadrons   rHadrons;
+
+  // Flags for handling generation of heavy ion collisons.
+  bool        hasHeavyIons, hasOwnHeavyIons, doHeavyIons;
 
   // Write the Pythia banner, with symbol and version information.
   void banner();

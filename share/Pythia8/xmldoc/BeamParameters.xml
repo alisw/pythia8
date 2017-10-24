@@ -15,13 +15,13 @@ Note that, if nothing is done, you will default to LHC at 14 TeV.
  
 <p/> 
 Currently the beam particles must be either a hadron pair, a lepton 
-pair or a photon pair. In the first category <ei>p p</ei> and <ei>pbar p</ei> 
+pair, a photon pair, a lepton and a hadron or a photon and a hadron. 
+In the first category <ei>p p</ei> and <ei>pbar p</ei> 
 combinations dominate, but it is also possible to combine with 
 <ei>pi^+</ei>, <ei>pi^-</ei> and <ei>pi^0</ei>. In the second 
 <ei>e^+ e^-</ei> and <ei>mu^+ mu^-</ei> would be the most useful 
 combinations, but also others should work if combined with an 
-appropriate hard process. With the last combination collisions of two 
-resolved photons can be generated. 
+appropriate hard process. 
  
 <modeopen name="Beams:idA" default="2212"> 
 The PDG <code>id</code> code for the first incoming particle. 
@@ -31,8 +31,8 @@ Allowed codes include
 <br/><ei>211 = pi^+</ei>, <ei>-211 = pi^-</ei>, <ei>111 = pi^0</ei>, 
 <br/><ei>990 = Pomeron</ei> (used in diffractive machinery; 
 here mainly for debug purposes), 
-<br/><ei>22 = gamma</ei> (for resolved <ei>gamma-gamma</ei> interactions, 
-more info <aloc href="PhotonPhoton">here</aloc>), 
+<br/><ei>22 = gamma</ei> (for <ei>gamma-gamma</ei> and <ei>gamma-hadron</ei> 
+interactions, more info <aloc href="Photoproduction">here</aloc>), 
 <br/><ei>11 = e^-</ei>, <ei>-11 = e^+</ei>, 
 <br/><ei>13 = mu^-</ei>, <ei>-13 = mu^+</ei>, 
 <br/>and a few more leptons/neutrinos in a few combinations. 

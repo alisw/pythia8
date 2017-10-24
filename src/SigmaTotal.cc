@@ -24,8 +24,9 @@ namespace Pythia8 {
 // =  2 : pi+ + p;   =  3 : pi- + p;     =  4 : pi0/rho0 + p;
 // =  5 : phi + p;   =  6 : J/psi + p;
 // =  7 : rho + rho; =  8 : rho + phi;   =  9 : rho + J/psi;
-// = 10 : phi + phi; = 11 : phi + J/psi; = 12 : J/psi + J/psi.
-// = 13 : Pom + p (preliminary); 14 : gamma + gamma (preliminary).
+// = 10 : phi + phi; = 11 : phi + J/psi; = 12 : J/psi + J/psi;
+// = 13 : Pom + p (preliminary); 14 : gamma + gamma (preliminary);
+// = 15 : gamma + p (preliminary).
 // For now a neutron is treated like a proton.
 
 //--------------------------------------------------------------------------
@@ -67,12 +68,6 @@ const double SigmaTotal::ALPHAPRIME = 0.25;
 const double SigmaTotal::CONVERTEL = 0.0510925;
 const double SigmaTotal::CONVERTSD = 0.0336;
 const double SigmaTotal::CONVERTDD = 0.0084;
-
-// Diffractive mass spectrum starts at m + MMIN0 and has a low-mass
-// enhancement, factor cRes, up to around m + mRes0.
-const double SigmaTotal::MMIN0 = 0.28;
-const double SigmaTotal::CRES  = 2.0;
-const double SigmaTotal::MRES0 = 1.062;
 
 // Parameters and coefficients for single diffractive scattering.
 const int SigmaTotal::ISDTABLE[] = { 0, 0, 1, 1, 1, 2, 3, 4, 5,
@@ -159,6 +154,12 @@ void SigmaTotal::init(Info* infoPtrIn, Settings& settings,
   mPomP      = settings.parm("Diffraction:mRefPomP");
   pPomP      = settings.parm("Diffraction:mPowPomP");
 
+  // Diffractive mass spectrum starts at m + mMin0 and has a low-mass
+  // enhancement, factor cRes, up to around m + mRes0.
+  mMin0       = settings.parm("SigmaDiffractive:mMin");
+  cResSv      = settings.parm("SigmaDiffractive:lowMEnhance");
+  mRes0       = settings.parm("SigmaDiffractive:mResMax");
+
   // Parameters for MBR model.
   PomFlux     = settings.mode("Diffraction:PomFlux");
   MBReps      = settings.parm("Diffraction:MBRepsilon");
@@ -222,7 +223,11 @@ bool SigmaTotal::calc( int idA, int idB, double eCM) {
     if (idAbsA > 300) iProc                       = 10;
     if (idAbsA > 300 && idAbsB > 400) iProc       = 11;
     if (idAbsA > 400) iProc                       = 12;
-  } else if (idAbsA == 22 && idAbsB == 22) iProc  = 14;
+  } else if (idAbsA == 22 || idAbsB == 22) {
+    if (idAbsA == idAbsB) iProc                   = 14;
+    if (idAbsA > 1000 || idAbsB > 1000) iProc     = 15;
+  }
+
   if (iProc == -1) return false;
 
   // Primitive implementation of Pomeron + p.
@@ -240,6 +245,18 @@ bool SigmaTotal::calc( int idA, int idB, double eCM) {
     double sEps = pow( s, EPSILON);
     double sEta = pow( s, ETA);
     sigTot = 211e-6 * sEps + 215e-6 * sEta;
+    sigND  = fracSigmaNDgamma * sigTot;
+    isCalc = true;
+    return true;
+  }
+
+  // Primitive implementation of gamma + p.
+  // Multiplied with a factor (\sim 0.7) as above to get the inelastic part.
+  if (iProc == 15) {
+    s           = eCM*eCM;
+    double sEps = pow( s, EPSILON);
+    double sEta = pow( s, ETA);
+    sigTot = 67.7e-3 * sEps + 129e-3 * sEta;
     sigND  = fracSigmaNDgamma * sigTot;
     isCalc = true;
     return true;
@@ -278,9 +295,9 @@ bool SigmaTotal::calc( int idA, int idB, double eCM) {
   double sum1, sum2, sum3, sum4;
 
   // Single diffractive scattering A + B -> X + B cross section.
-  mMinXBsave      = mA + MMIN0;
+  mMinXBsave      = mA + mMin0;
   double sMinXB   = pow2(mMinXBsave);
-  mResXBsave      = mA + MRES0;
+  mResXBsave      = mA + mRes0;
   double sResXB   = pow2(mResXBsave);
   double sRMavgXB = mResXBsave * mMinXBsave;
   double sRMlogXB = log(1. + sResXB/sMinXB);
@@ -288,13 +305,13 @@ bool SigmaTotal::calc( int idA, int idB, double eCM) {
   double BcorrXB  = CSD[iSD][2] + CSD[iSD][3] / s;
   sum1  = log( (2.*bB + alP2 * log(s/sMinXB))
     / (2.*bB + alP2 * log(s/sMaxXB)) ) / alP2;
-  sum2  = CRES * sRMlogXB / (2.*bB + alP2 * log(s/sRMavgXB) + BcorrXB) ;
+  sum2  = cResSv * sRMlogXB / (2.*bB + alP2 * log(s/sRMavgXB) + BcorrXB) ;
   sigXB = CONVERTSD * X[iProc] * BETA0[iHadB] * max( 0., sum1 + sum2);
 
   // Single diffractive scattering A + B -> A + X cross section.
-  mMinAXsave      = mB + MMIN0;
+  mMinAXsave      = mB + mMin0;
   double sMinAX   = pow2(mMinAXsave);
-  mResAXsave      = mB + MRES0;
+  mResAXsave      = mB + mRes0;
   double sResAX   = pow2(mResAXsave);
   double sRMavgAX = mResAXsave * mMinAXsave;
   double sRMlogAX = log(1. + sResAX/sMinAX);
@@ -302,7 +319,7 @@ bool SigmaTotal::calc( int idA, int idB, double eCM) {
   double BcorrAX  = CSD[iSD][6] + CSD[iSD][7] / s;
   sum1  = log( (2.*bA + alP2 * log(s/sMinAX))
     / (2.*bA + alP2 * log(s/sMaxAX)) ) / alP2;
-  sum2  = CRES * sRMlogAX / (2.*bA + alP2 * log(s/sRMavgAX) + BcorrAX) ;
+  sum2  = cResSv * sRMlogAX / (2.*bA + alP2 * log(s/sRMavgAX) + BcorrAX) ;
   sigAX = CONVERTSD * X[iProc] * BETA0[iHadA] * max( 0., sum1 + sum2);
 
   // Order single diffractive correctly.
@@ -324,12 +341,12 @@ bool SigmaTotal::calc( int idA, int idB, double eCM) {
     + CDD[iDD][5] / pow2(sLog) );
   double sLogUp = log( max( 1.1, s * s0 / (sMinXB * sRMavgAX) ));
   double sLogDn = log( max( 1.1, s * s0 / (sMaxXX * sRMavgAX) ));
-  sum2   = CRES * log( sLogUp / sLogDn ) * sRMlogAX / alP2;
+  sum2   = cResSv * log( sLogUp / sLogDn ) * sRMlogAX / alP2;
   sLogUp = log( max( 1.1, s * s0 / (sMinAX * sRMavgXB) ));
   sLogDn = log( max( 1.1, s * s0 / (sMaxXX * sRMavgXB) ));
-  sum3   = CRES * log(sLogUp / sLogDn) * sRMlogXB / alP2;
+  sum3   = cResSv * log(sLogUp / sLogDn) * sRMlogXB / alP2;
   double BcorrXX =  CDD[iDD][6] + CDD[iDD][7] / eCM + CDD[iDD][8] / s;
-  sum4   = pow2(CRES) * sRMlogAX * sRMlogXB
+  sum4   = pow2(cResSv) * sRMlogAX * sRMlogXB
     / max( 0.1, alP2 * log( s * s0 / (sRMavgAX * sRMavgXB) ) + BcorrXX);
   sigXX  = CONVERTDD * X[iProc] * max( 0., sum1 + sum2 + sum3 + sum4);
 

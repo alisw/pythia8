@@ -18,7 +18,8 @@ using namespace Pythia8;
 // Optional final argument to put particle at rest => E = m.
 
 void fillParticle(int id, double ee, double thetaIn, double phiIn,
-  Event& event, ParticleData& pdt, Rndm& rndm, bool atRest = false) {
+  Event& event, ParticleData& pdt, Rndm& rndm, bool atRest = false,
+  bool hasLifetime = false) {
 
   // Reset event record to allow for new event.
   event.reset();
@@ -46,8 +47,11 @@ void fillParticle(int id, double ee, double thetaIn, double phiIn,
   }
 
   // Store the particle in the event record.
-  event.append( id, 1, 0, 0, pp * sThe * cos(phi), pp * sThe * sin(phi),
-    pp * cThe, ee, mm);
+  int iNew = event.append( id, 1, 0, 0, pp * sThe * cos(phi), 
+    pp * sThe * sin(phi), pp * cThe, ee, mm);
+
+  // Generate lifetime, to give decay away from primary vertex.
+  if (hasLifetime) event[iNew].tau( event[iNew].tau0() * rndm.exp() );
 
 }
 
@@ -205,6 +209,11 @@ int main() {
   double eeGun  = (type == 0) ? 20. : 125.;
   bool   atRest = (type == 0) ? false : true;
 
+  // The single-particle gun produces a particle at the origin, and by default
+  // decays it there. When hasLifetime = true instead a finite lifetime is 
+  // selected and used to generate a displaced  decay vertex.
+  bool   hasLifetime = (type == 0) ? true : false;
+
   // Set typical energy per parton.
   double ee = 20.0;
 
@@ -232,6 +241,9 @@ int main() {
   pythia.readString("Next:numberShowProcess = 0");
   pythia.readString("Next:numberShowEvent = 0");
 
+  // Set true to also see space-time information in event listings.
+  bool showScaleAndVertex = (type == 0) ? true : false;
+
   // Initialize.
   pythia.init();
 
@@ -256,7 +268,7 @@ int main() {
 
     // Set up single particle, with random direction in solid angle.
     if (type == 0 || type == 11) fillParticle( idGun, eeGun, -1., 0.,
-      event, pdt, pythia.rndm, atRest);
+      event, pdt, pythia.rndm, atRest, hasLifetime);
 
     // Set up parton-level configuration.
     else fillPartons( type, ee, event, pdt, pythia.rndm);
@@ -281,7 +293,7 @@ int main() {
 
     // List first few events.
     if (iEvent < nList) {
-      event.list();
+      event.list(showScaleAndVertex);
       // Also list junctions.
       event.listJunctions();
     }

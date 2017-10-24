@@ -17,6 +17,7 @@
 #include "Pythia8/FragmentationSystems.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PythiaStdlib.h"
+#include "Pythia8/Ropewalk.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/UserHooks.h"
 
@@ -101,7 +102,7 @@ public:
   void init(Info* infoPtrIn, Settings& settings,
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
     StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn, StringZ* zSelPtrIn,
-    UserHooks* userHooksPtrIn = NULL);
+    FlavourRope* flavRopePtrIn = NULL, UserHooks* userHooksPtrIn = NULL);
 
   // Do the fragmentation: driver routine.
   bool fragment( int iSub, ColConfig& colConfig, Event& event);
@@ -132,11 +133,14 @@ private:
   StringPT*     pTSelPtr;
   StringZ*      zSelPtr;
 
+  // Pointer to flavour-composition-changing ropes.
+  FlavourRope*  flavRopePtr;
+
   // Pointer to the User Hooks class for user intervention
   UserHooks*    userHooksPtr;
 
   // Initialization data, read from Settings.
-  bool   closePacking;
+  bool   closePacking, doFlavRope;
   double stopMass, stopNewFlav, stopSmear, eNormJunction,
          eBothLeftJunction, eMaxLeftJunction, eMinLeftJunction,
          mJoin, bLund, pT20;

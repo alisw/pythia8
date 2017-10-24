@@ -497,11 +497,15 @@ void StringRegion::setUp(Vec4 p1, Vec4 p2, bool isMassless) {
   double pPosNeg = pPos * pNeg;
   double kXPos = eX * pPos / pPosNeg;
   double kXNeg = eX * pNeg / pPosNeg;
-  double kXX = 1. / sqrt( 1. + 2. * kXPos * kXNeg * pPosNeg );
+  double kXtmp = 1. + 2. * kXPos * kXNeg * pPosNeg;
+  if (kXtmp < TINY) {isSetUp = true; isEmpty = true; return;}
+  double kXX = 1. / sqrt( kXtmp );
   double kYPos = eY * pPos / pPosNeg;
   double kYNeg = eY * pNeg / pPosNeg;
   double kYX = kXX * (kXPos * kYNeg + kXNeg * kYPos) * pPosNeg;
-  double kYY = 1. / sqrt(1. + 2. * kYPos * kYNeg * pPosNeg - pow2(kYX));
+  double kYtmp = 1. + 2. * kYPos * kYNeg * pPosNeg - pow2(kYX);
+  if (kYtmp < TINY) {isSetUp = true; isEmpty = true; return;}
+  double kYY = 1. / sqrt( kYtmp );
   eX = kXX * (eX - kXNeg * pPos - kXPos * pNeg);
   eY = kYY * (eY - kYNeg * pPos - kYPos * pNeg - kYX * eX);
 

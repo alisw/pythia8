@@ -217,6 +217,10 @@ void SpaceShower::init( BeamParticle* beamAPtrIn,
   strengthIntAsym    = settingsPtr->parm("SpaceShower:strengthIntAsym");
   nQuarkIn           = settingsPtr->mode("SpaceShower:nQuarkIn");
 
+  // Do not do phiIntAsym if dipoleRecoil is on, to avoid doublecounting.
+  doDipoleRecoil     = settingsPtr->flag("SpaceShower:dipoleRecoil");
+  if (doDipoleRecoil) doPhiIntAsym = false;
+
   // Z0 and W+- properties needed for weak showers.
   mZ                 = particleDataPtr->m0(23);
   gammaZ             = particleDataPtr->mWidth(23);
@@ -268,6 +272,13 @@ void SpaceShower::init( BeamParticle* beamAPtrIn,
   uVarNflavQ         = settingsPtr->mode("UncertaintyBands:nFlavQ");
   uVarMPIshowers     = settingsPtr->flag("UncertaintyBands:MPIshowers");
   cNSpTmin           = settingsPtr->parm("UncertaintyBands:cNSpTmin");
+  uVarpTmin2         = pow2(pT0Ref);
+  uVarpTmin2        *= settingsPtr->parm("UncertaintyBands:FSRpTmin2Fac");
+  overFactor         = settingsPtr->parm("UncertaintyBands:overSampleISR");
+
+  // Possibility to set parton vertex information.
+  doPartonVertex     = settingsPtr->flag("PartonVertex:setVertex")
+                    && (partonVertexPtr != 0);
 
 }
 
@@ -376,11 +387,23 @@ void SpaceShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
   // Note: colour type can change during evolution, so book also if zero.
   if (doQCDshower) {
     int colType1 = event[in1].colType();
-    if (canRadiate1) dipEnd.push_back( SpaceDipoleEnd( iSys,  1,
-      in1, in2, pTmax1, colType1, 0, 0, MEtype, canRadiate2) );
+    if (canRadiate1) {
+      // Look if there is an IF dipole in case of dipole recoil.
+      int iColPartner = (doDipoleRecoil)
+                      ? findColPartner(event, in1, in2, iSys) : 0;
+      int idColPartner = (iColPartner != 0) ? event[iColPartner].id() : 0;
+      dipEnd.push_back( SpaceDipoleEnd( iSys, 1, in1, in2, pTmax1,
+        colType1, 0, 0, MEtype, canRadiate2, 0, iColPartner, idColPartner) );
+    }
     int colType2 = event[in2].colType();
-    if (canRadiate2) dipEnd.push_back( SpaceDipoleEnd( iSys,  2,
-      in2, in1, pTmax2, colType2, 0, 0, MEtype, canRadiate1) );
+    if (canRadiate2) {
+      // Look if there is an IF dipole in case of dipole recoil.
+      int iColPartner = (doDipoleRecoil)
+                      ? findColPartner(event, in2, in1, iSys) : 0;
+      int idColPartner = (iColPartner != 0) ? event[iColPartner].id() : 0;
+      dipEnd.push_back( SpaceDipoleEnd( iSys, 2, in2, in1, pTmax2,
+        colType2, 0, 0, MEtype, canRadiate1, 0, iColPartner, idColPartner) );
+    }
   }
 
   // Find dipole ends for QED radiation.
@@ -582,6 +605,16 @@ double SpaceShower::pTnext( Event& event, double pTbegAll, double pTendAll,
       m2Rec        = (dipEndNow->normalRecoil) ? 0. : event[iRec].m2();
       m2Dip        = x1Now * x2Now * sCM + m2Rec;
 
+      // Prepare kinematics for final-state dipole recoil.
+      m2ColPair    = (dipEndNow->iColPartner == 0) ? 0.
+                   : m2( event[iNow].p(), event[dipEndNow->iColPartner].p() );
+      mColPartner  = (dipEndNow->iColPartner == 0) ? 0.
+                   : event[dipEndNow->iColPartner].m();
+      m2ColPartner = pow2(mColPartner);
+
+      // Stop if m2ColPair is negative.
+      if (m2ColPair < 0.) return 0.;
+
       // Now do evolution in pT2, for QCD, QED or weak.
       if (pT2begDip > pT2endDip) {
         if (dipEndNow->colType != 0)       pT2nextQCD( pT2begDip, pT2endDip);
@@ -613,13 +646,15 @@ double SpaceShower::pTnext( Event& event, double pTbegAll, double pTendAll,
 void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
   // Some properties and kinematical starting values.
-  BeamParticle& beam = (sideA) ? *beamAPtr : *beamBPtr;
-  bool   isGluon     = (idDaughter == 21);
-  bool   isValence   = beam[iSysNow].isValence();
-  int    MEtype      = dipEndNow->MEtype;
-  double pT2         = pT2begDip;
-  double xMaxAbs     = beam.xMax(iSysNow);
-  double zMinAbs     = xDaughter / xMaxAbs;
+  BeamParticle& beam  = (sideA) ? *beamAPtr : *beamBPtr;
+  bool   isGluon      = (idDaughter == 21);
+  bool   isValence    = beam[iSysNow].isValence();
+  int    MEtype       = dipEndNow->MEtype;
+  int    iColPartner  = dipEndNow->iColPartner;
+  int    idColPartner = dipEndNow->idColPartner;
+  double pT2          = pT2begDip;
+  double xMaxAbs      = beam.xMax(iSysNow);
+  double zMinAbs      = xDaughter / xMaxAbs;
   if (xMaxAbs < 0.) {
     infoPtr->errorMsg("Warning in SpaceShower::pT2nextQCD: "
     "xMaxAbs negative");
@@ -627,21 +662,26 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
   }
 
   // Starting values for handling of massive quarks (c/b), if any.
-  double idMassive   = 0;
+  double idMassive    = 0;
   if ( abs(idDaughter) == 4 ) idMassive = 4;
   if ( abs(idDaughter) == 5 ) idMassive = 5;
-  bool   isMassive   = (idMassive > 0);
-  double m2Massive   = 0.;
-  double mRatio      = 0.;
-  double zMaxMassive = 1.;
-  double m2Threshold = pT2;
+  bool   isMassive    = (idMassive > 0);
+  double m2Massive    = 0.;
+  double mRatio       = 0.;
+  double zMaxMassive  = 1.;
+  double m2Threshold  = pT2;
 
   // Evolution below scale of massive quark or at large x is impossible.
   if (isMassive) {
     m2Massive = (idMassive == 4) ? m2c : m2b;
     if (pT2 < HEAVYPT2EVOL * m2Massive) return;
-    mRatio = sqrt( m2Massive / m2Dip );
-    zMaxMassive = (1. -  mRatio) / ( 1. +  mRatio * (1. -  mRatio) );
+    if (iColPartner == 0) {
+     mRatio = sqrt( m2Massive / m2Dip );
+     zMaxMassive = (1. -  mRatio) / ( 1. +  mRatio * (1. -  mRatio) );
+    } else {
+      double m2Red  = m2ColPair - m2ColPartner;
+      zMaxMassive = m2Red / (m2Red + m2Massive);
+    }
     if (xDaughter > HEAVYXEVOL * zMaxMassive * xMaxAbs) return;
 
     // Find threshold scale below which only g -> Q + Qbar will be allowed.
@@ -683,7 +723,10 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
   // (to ensure at least a minimal number of failed branchings).
   doUncertaintiesNow    = doUncertainties;
   if (!uVarMPIshowers && iSysNow != 0) doUncertaintiesNow = false;
-  double overFac        = doUncertaintiesNow ? 1.5 : 1.0;
+  double overFac        = doUncertaintiesNow ? overFactor : 1.0;
+
+  // For dipole recoil: other-end colour factor correction in q-g dipole.
+  double coefColRec = (iColPartner != 0 && idColPartner == 21) ? 9./8. : 1.;
 
   // Set default values for enhanced emissions.
   bool isEnhancedQ2QG, isEnhancedG2QQ, isEnhancedQ2GQ, isEnhancedG2GG;
@@ -738,8 +781,16 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
       // A change of renormalization scale expressed by a change of Lambda.
       Lambda2    /= renormMultFac;
-      zMaxAbs     = 1. - 0.5 * (pT2minNow / m2Dip) *
-        ( sqrt( 1. + 4. * m2Dip / pT2minNow ) - 1. );
+
+      // Upper limit on z range: global or local recoil.
+      if (iColPartner == 0) zMaxAbs = 1. - 0.5 * (pT2minNow / m2Dip)
+          * ( sqrt( 1. + 4. * m2Dip / pT2minNow ) - 1. );
+      else {
+        double m2Red  = m2ColPair - m2ColPartner;
+        double pT2Ext = sqrt(pT2minNow * (pT2minNow  + 4. * m2ColPartner));
+        zMaxAbs = (m2Red + 0.5 * (pT2minNow - pT2Ext))
+                / (m2Red + pT2minNow * (1. -  m2ColPartner / m2Red));
+      }
       if (isMassive) zMaxAbs = min( zMaxAbs, zMaxMassive);
 
       // Go to another z range with lower mass scale if current is closed.
@@ -790,7 +841,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
       } else if (isValence) {
         zRootMin = (1. + sqrt(zMinAbs)) / (1. - sqrt(zMinAbs));
         zRootMax = (1. + sqrt(zMaxAbs)) / (1. - sqrt(zMaxAbs));
-        q2qInt = overFac * (8./3.) * log( zRootMax / zRootMin );
+        q2qInt = coefColRec * overFac * (8./3.) * log( zRootMax / zRootMin );
         if (doMEcorrections) q2qInt *= calcMEmax(MEtype, 1, 1);
         // Optionally enhanced branching rate.
         if (canEnhanceET) q2qInt *= userHooksPtr->enhanceFactor("isr:Q2QG");
@@ -798,7 +849,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
       // Integrals of splitting kernels for quarks: q -> q, g -> q.
       } else {
-        q2qInt = overFac * HEADROOMQ2Q * (8./3.)
+        q2qInt = coefColRec * overFac * HEADROOMQ2Q * (8./3.)
           * log( (1. - zMinAbs) / (1. - zMaxAbs) );
         if (doMEcorrections) q2qInt *= calcMEmax(MEtype, 1, 1);
         // Optionally enhanced branching rate.
@@ -866,7 +917,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // If fallen into b threshold region, force g -> b + bbar.
     if (idMassive == 5 && pT2 < m2Threshold) {
       pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
-        zMinAbs, zMaxMassive );
+        zMinAbs, zMaxMassive, iColPartner );
       return;
 
     // If crossed b threshold, continue evolution from this threshold.
@@ -878,7 +929,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // If fallen into c threshold region, force g -> c + cbar.
     } else if (idMassive == 4 && pT2 < m2Threshold) {
       pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
-        zMinAbs, zMaxMassive );
+        zMinAbs, zMaxMassive, iColPartner );
       return;
 
     // If crossed c threshold, continue evolution from this threshold.
@@ -892,6 +943,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
     // Select z value of branching to g, and corrective weight.
     if (isGluon) {
+
       // g -> g (+ g).
       if (rndmPtr->flat() * kernelPDF < g2gInt) {
         idMother = 21;
@@ -899,6 +951,10 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         z = 1. / ( 1. + ((1. - zMinAbs) / zMinAbs) * pow( (zMinAbs *
           (1. - zMaxAbs)) / (zMaxAbs * (1. - zMinAbs)), rndmPtr->flat() ) );
         wt = pow2( 1. - z * (1. - z));
+        // For dipole recoil: other-end colour factor correction in g-q dipole.
+        if (iColPartner != 0 && idColPartner != 21)
+          wt *= (m2ColPair * pow2(1. - z) + z * pT2 * 8./9.)
+              / (m2ColPair * pow2(1. - z) + z * pT2);
         // Account for headroom factor used to enhance trial probability
         wt /= HEADROOMG2G;
         // Optionally enhanced branching rate.
@@ -910,8 +966,9 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
             isEnhancedG2GG = true;
           }
         }
-      } else {
+
       // q -> g (+ q): also select flavour.
+      } else {
         double temp = xPDFmotherSum * rndmPtr->flat();
         idMother = -nQuarkIn - 1;
         do { temp -= xPDFmother[(++idMother) + 10]; }
@@ -937,6 +994,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // Select z value of branching to q, and corrective weight.
     // Include massive kernel corrections for c and b quarks.
     } else {
+
       // q -> q (+ g).
       if (isValence || rndmPtr->flat() * kernelPDF < q2qInt) {
         idMother = idDaughter;
@@ -952,8 +1010,6 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         if (!isMassive) {
           wt = 0.5 * (1. + pow2(z));
         } else {
-        //?? Bug?? should be 2 more for massive part??
-        //  wt = 0.5 * (1. + pow2(z) - z * pow2(1.-z) * m2Massive / pT2);
           wt = 0.5 * (1. + pow2(z)) - z * pow2(1.-z) * m2Massive / pT2;
         }
         if (isValence) wt *= sqrt(z);
@@ -961,7 +1017,10 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         else wt /= HEADROOMQ2Q;
         // Account for headroom factor for heavy quarks in photon beam.
         if (beam.isGamma() && isMassive) wt /= HEADROOMHQG;
-
+        // For dipole recoil: other-end colour factor correction in q-g dipole.
+        if (iColPartner != 0 && idColPartner == 21)
+          wt *= (m2ColPair * pow2(1. - z) + z * pT2 * 9./8.)
+             / ((m2ColPair * pow2(1. - z) + z * pT2) * coefColRec);
         // Optionally enhanced branching rate.
         nameNow = "isr:Q2QG";
         if (canEnhanceET) {
@@ -971,6 +1030,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
             isEnhancedQ2QG = true;
           }
         }
+
       // g -> q (+ qbar).
       } else {
         idMother = 21;
@@ -1002,6 +1062,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // Derive Q2 and x of mother from pT2 and z.
     Q2      = pT2 / (1. - z);
     xMother = xDaughter / z;
+
     // Correction to x for massive recoiler from rescattering.
     if (!dipEndNow->normalRecoil) {
       if (sideA) xMother += (m2Rec / (x2Now * sCM)) * (1. / z - 1.);
@@ -1012,7 +1073,13 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // Forbidden emission if outside allowed z range for given pT2.
     mSister = particleDataPtr->m0(idSister);
     m2Sister = pow2(mSister);
-    pT2corr = Q2 - z * (m2Dip + Q2) * (Q2 + m2Sister) / m2Dip;
+    if (iColPartner == 0) {
+      pT2corr = Q2 - z * (m2Dip + Q2) * (Q2 + m2Sister) / m2Dip;
+    } else {
+      double tmpRat = z * (Q2 + m2Sister) / (m2ColPair - m2ColPartner);
+      pT2corr = ((1. - z) * Q2 - z * m2Sister) * (1. - tmpRat)
+              - m2ColPartner * pow2(tmpRat);
+    }
     if (pT2corr < TINYPT2) { wt = 0.; continue; }
 
     // For emissions in the hard scattering system, optionally veto
@@ -1031,7 +1098,14 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // So minimum total mass2 is 4 * m2Sister, but use more to be safe.
     if ( isGluon && ( abs(idMother) == 4 || abs(idMother) == 5 )) {
       double m2QQsister =  EXTRASPACEQ * 4. * m2Sister;
-      double pT2QQcorr = Q2 - z * (m2Dip + Q2) * (Q2 + m2QQsister) / m2Dip;
+      double pT2QQcorr = 0.;
+      if (iColPartner == 0) {
+        pT2QQcorr = Q2 - z * (m2Dip + Q2) * (Q2 + m2QQsister) / m2Dip;
+      } else {
+        double tmpRat = z * (Q2 + m2QQsister) / (m2ColPair - m2ColPartner);
+        pT2QQcorr = ((1. - z) * Q2 - z * m2QQsister) * (1. - tmpRat)
+                  - m2ColPartner * pow2(tmpRat);
+      }
       if (pT2QQcorr < TINYPT2) { wt = 0.; continue; }
     }
 
@@ -1096,12 +1170,13 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     if (isEnhancedQ2QG) storeEnhanceFactor(pT2,"isr:Q2QG", enhanceNow);
     if (isEnhancedG2QQ) storeEnhanceFactor(pT2,"isr:G2QQ", enhanceNow);
     if (isEnhancedQ2GQ) storeEnhanceFactor(pT2,"isr:Q2GQ", enhanceNow);
-    if (isEnhancedG2QQ) storeEnhanceFactor(pT2,"isr:G2GG", enhanceNow);
+    if (isEnhancedG2GG) storeEnhanceFactor(pT2,"isr:G2GG", enhanceNow);
   }
 
   // Save values for (so far) acceptable branching.
   dipEndNow->store( idDaughter,idMother, idSister, x1Now, x2Now, m2Dip,
-    pT2, z, xMother, Q2, mSister, m2Sister, pT2corr);
+    pT2, z, xMother, Q2, mSister, m2Sister, pT2corr, iColPartner, m2ColPair,
+    mColPartner);
 
 }
 
@@ -1115,7 +1190,7 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
 void SpaceShower::pT2nearThreshold( BeamParticle& beam,
   double m2Massive, double m2Threshold, double xMaxAbs,
-  double zMinAbs, double zMaxMassive) {
+  double zMinAbs, double zMaxMassive, int iColPartner) {
 
   // Initial values, to be used in kinematics and weighting.
   double Lambda2       = (abs(idDaughter) == 4) ? Lambda4flav2 : Lambda5flav2;
@@ -1172,7 +1247,13 @@ void SpaceShower::pT2nearThreshold( BeamParticle& beam,
 
     // Check that kinematically possible choice.
     Q2 = pT2 / (1.-z) - m2Massive;
-    pT2corr = Q2 - z * (m2Dip + Q2) * (Q2 + m2Massive) / m2Dip;
+    if (iColPartner == 0) {
+      pT2corr = Q2 - z * (m2Dip + Q2) * (Q2 + m2Massive) / m2Dip;
+    } else {
+      double tmpRat = z * (Q2 + m2Massive) / (m2ColPair - m2ColPartner);
+      pT2corr = ((1. - z) * Q2 - z * m2Massive) * (1. - tmpRat)
+              - m2ColPartner * pow2(tmpRat);
+    }
     if (pT2corr < TINYPT2) continue;
 
     // Correction factor for splitting kernel.
@@ -1217,7 +1298,8 @@ void SpaceShower::pT2nearThreshold( BeamParticle& beam,
   if ( isGammaBeam ) splittingNameNow = "isr:A2QQ";
   else               splittingNameNow = "isr:G2QQ";
   dipEndNow->store( idDaughter, idMother, -idDaughter, x1Now, x2Now, m2Dip,
-    pT2, z, xMother, Q2, mSister, pow2(mSister), pT2corr);
+    pT2, z, xMother, Q2, mSister, pow2(mSister), pT2corr, iColPartner,
+    m2ColPair, mColPartner);
 
 }
 
@@ -1371,7 +1453,7 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
         // If fallen into b or c threshold region, force gamma -> q + qbar.
         if ( isMassive && (pT2 < m2Threshold ) ) {
           pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
-                            zMinAbs, zMaxMassive );
+                            zMinAbs, zMaxMassive, 0 );
           return;
         } else if (pT2 < pT2endDip) return;
 
@@ -1432,7 +1514,7 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
         // If fallen into b or c threshold region, force gamma -> Q + Qbar.
         if ( isGammaBeam && isMassive && (pT2 < m2Threshold ) ) {
           pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
-                            zMinAbs, zMaxMassive );
+                            zMinAbs, zMaxMassive, 0 );
           return;
         }
 
@@ -1755,7 +1837,8 @@ void SpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
 
   // Save values for (so far) acceptable branching.
   dipEndNow->store( idDaughter, idMother, idSister, x1Now, x2Now, m2Dip,
-    pT2, z, xMother, Q2, mSister, m2Sister, pT2corr);
+    pT2, z, xMother, Q2, mSister, m2Sister, pT2corr, 0, m2ColPair,
+    mColPartner);
 
 }
 
@@ -2037,7 +2120,8 @@ void SpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
 
   // Save values for (so far) acceptable branching.
   dipEndNow->store( idDaughter, idMother, idSister, x1Now, x2Now, m2Dip,
-                    pT2, z, xMother, Q2, mSister, m2Sister, pT2corr);
+    pT2, z, xMother, Q2, mSister, m2Sister, pT2corr, 0, m2ColPair,
+    mColPartner);
 
 }
 
@@ -2062,6 +2146,7 @@ bool SpaceShower::branch( Event& event) {
   int idRecoiler    = event[iRecoiler].id();
   int colDaughter   = event[iDaughter].col();
   int acolDaughter  = event[iDaughter].acol();
+  int iColPartner   = dipEndSel->iColPartner;
 
   // Recoil parton may be rescatterer, requiring special processing.
   bool normalRecoil = dipEndSel->normalRecoil;
@@ -2071,8 +2156,8 @@ bool SpaceShower::branch( Event& event) {
   double x1         = dipEndSel->x1;
   double x2         = dipEndSel->x2;
   double xMo        = dipEndSel->xMo;
-  double m2         = dipEndSel->m2Dip;
-  double m          = sqrt(m2);
+  double m2II       = dipEndSel->m2Dip;
+  double mII        = sqrt(m2II);
   double pT2        = dipEndSel->pT2;
   double z          = dipEndSel->z;
   double Q2         = dipEndSel->Q2;
@@ -2098,44 +2183,101 @@ bool SpaceShower::branch( Event& event) {
     return true;
   }
 
-  // Read in MEtype:
+  // Read in MEtype. Four-vectors to reconstruct.
   int MEtype        = dipEndSel->MEtype;
+  Vec4 pMother, pSister, pNewRec, pNewColPartner;
 
   // Rescatter: kinematics may fail; use the rescatterFail flag to tell
   //            parton level to try again.
   rescatterFail     = false;
 
+  // Kinematics for II dipole.
   // Construct kinematics of mother, sister and recoiler in old rest frame.
   // Normally both mother and recoiler are taken massless.
-  double eNewRec, pzNewRec, pTbranch, pzMother;
-  if (normalRecoil) {
-    eNewRec         = 0.5 * (m2 + Q2) / m;
-    pzNewRec        = -sideSign * eNewRec;
-    pTbranch        = sqrt(pT2corr) * m2 / ( z * (m2 + Q2) );
-    pzMother        = sideSign * 0.5 * m * ( (m2 - Q2) / ( z * (m2 + Q2) )
-                    + (Q2 + m2Sister) / m2 );
-  // More complicated kinematics when recoiler not massless. May fail.
+  if (iColPartner == 0) {
+    double eNewRec, pzNewRec, pTbranch, pzMother;
+    if (normalRecoil) {
+      eNewRec       = 0.5 * (m2II + Q2) / mII;
+      pzNewRec      = -sideSign * eNewRec;
+      pTbranch      = sqrt(pT2corr) * m2II / ( z * (m2II + Q2) );
+      pzMother      = sideSign * 0.5 * mII * ( (m2II - Q2)
+                    / ( z * (m2II + Q2) ) + (Q2 + m2Sister) / m2II );
+    // More complicated kinematics when recoiler not massless. May fail.
+    } else {
+      m2Rec         = event[iRecoiler].m2();
+      double s1Tmp  = m2II + Q2 - m2Rec;
+      double s3Tmp  = m2II / z - m2Rec;
+      double r1Tmp  = sqrt(s1Tmp * s1Tmp + 4. * Q2 * m2Rec);
+      eNewRec       = 0.5 * (m2II + m2Rec + Q2) / mII;
+      pzNewRec      = -sideSign * 0.5 * r1Tmp / mII;
+      double pT2br  = Q2 * s3Tmp * (m2II / z - m2II - Q2)
+        - m2Sister * s1Tmp * s3Tmp - m2Rec * pow2(Q2 + m2Sister);
+      if (pT2br <= 0.) return false;
+      pTbranch      = sqrt(pT2br) / r1Tmp;
+      pzMother      = sideSign * (mII * s3Tmp
+        - eNewRec * (m2II / z - Q2 - m2Rec - m2Sister)) / r1Tmp;
+    }
+    // Common final kinematics steps for both normal and rescattering.
+    double eMother  = sqrt( pow2(pTbranch) + pow2(pzMother) );
+    double pzSister = pzMother + pzNewRec;
+    double eSister  = sqrt( pow2(pTbranch) + pow2(pzSister) + m2Sister );
+    pMother.p( pTbranch, 0., pzMother, eMother );
+    pSister.p( pTbranch, 0., pzSister, eSister );
+    pNewRec.p(       0., 0., pzNewRec, eNewRec );
+
+  // Kinematics of IF dipole.
+  // Construct kinematics in old rest frame of daughter + colour partner.
+  // Mother and recoiler massless but massive colour partner.
   } else {
-    m2Rec           = event[iRecoiler].m2();
-    double s1Tmp    = m2 + Q2 - m2Rec;
-    double s3Tmp    = m2 / z - m2Rec;
-    double r1Tmp    = sqrt(s1Tmp * s1Tmp + 4. * Q2 * m2Rec);
-    eNewRec         = 0.5 * (m2 + m2Rec + Q2) / m;
-    pzNewRec        = -sideSign * 0.5 * r1Tmp / m;
-    double pT2br    = Q2 * s3Tmp * (m2 / z - m2 - Q2)
-      - m2Sister * s1Tmp * s3Tmp - m2Rec * pow2(Q2 + m2Sister);
-    if (pT2br <= 0.) return false;
-    pTbranch        = sqrt(pT2br) / r1Tmp;
-    pzMother        = sideSign * (m * s3Tmp
-      - eNewRec * (m2 / z - Q2 - m2Rec - m2Sister)) / r1Tmp;
+    double m2IF  = dipEndSel->m2IF;
+    double mIF   = sqrt(m2IF);
+    m2ColPartner = pow2( dipEndSel->mColPartner );
+
+    // Construct kinematics.
+    double m2IFred = m2IF - m2ColPartner;
+    pMother.p( 0., 0., 0.5 * m2IFred / (z * mIF), 0.5 * m2IFred / (z * mIF) );
+    Vec4 pShift( 0., 0.,
+      -0.5 * Q2 / mIF - z * (Q2 + m2Sister) * m2ColPartner / (mIF * m2IFred),
+      -0.5 * Q2 / mIF + z * (Q2 + m2Sister) / mIF );
+    pSister = (1. - z) * pMother + pShift;
+    pNewColPartner = Vec4( 0., 0., -0.5 * m2IFred /mIF,
+       0.5 * (m2IF + m2ColPartner) / mIF ) - pShift;
+    // Do not change the momentum of the recoiler (in event frame).
+    pNewRec.p( event[iRecoiler].p() );
+
+    // Flat azimuthal angle.
+    double phi = 2. * M_PI * rndmPtr->flat();
+
+    // Evaluate coefficient of azimuthal asymmetry from gluon polarization.
+    findAsymPol( event, dipEndSel);
+    int    iFinPol = dipEndSel->iFinPol;
+    double cPol    = dipEndSel->asymPol;
+    double phiPol  = (iFinPol == 0) ? 0. : event[iFinPol].phi();
+
+   // Bias phi distribution for polarization.
+    if (iFinPol != 0) {
+      double cPhiPol, weight;
+      // Boost back to the rest frame of daughter + recoiler.
+      RotBstMatrix M;
+      M.fromCMframe( event[iDaughter].p(), event[iColPartner].p() );
+      double pTcorr = sqrt(pT2corr);
+      do {
+        phi     = 2. * M_PI * rndmPtr->flat();
+        weight  = 1.;
+        Vec4 pSisTmp = pSister + pTcorr * Vec4( cos(phi), sin(phi), 0., 0.);
+        pSisTmp.rotbst(M);
+        cPhiPol = cos(pSisTmp.phi() - phiPol);
+        weight *= ( 1. + cPol * (2. * pow2(cPhiPol) - 1.) )
+                / ( 1. + abs(cPol) );
+      } while (weight < rndmPtr->flat());
+    }
+
+    // Add azimuthal part to the kinematics.
+    pSister.px( sqrt(pT2corr) * cos(phi) );
+    pSister.py( sqrt(pT2corr) * sin(phi) );
+    pNewColPartner.px( - pSister.px() );
+    pNewColPartner.py( - pSister.py() );
   }
-  // Common final kinematics steps for both normal and rescattering.
-  double eMother    = sqrt( pow2(pTbranch) + pow2(pzMother) );
-  double pzSister   = pzMother + pzNewRec;
-  double eSister    = sqrt( pow2(pTbranch) + pow2(pzSister) + m2Sister );
-  Vec4 pMother( pTbranch, 0., pzMother, eMother );
-  Vec4 pSister( pTbranch, 0., pzSister, eSister );
-  Vec4 pNewRec(       0., 0., pzNewRec, eNewRec );
 
   // Current event and subsystem size.
   int eventSizeOld  = event.size();
@@ -2148,17 +2290,18 @@ bool SpaceShower::branch( Event& event) {
   int ev2Dau1V = event[beamOff2].daughter1();
   vector<int> statusV, mother1V, mother2V, daughter1V, daughter2V;
 
-  // Check if the first emission shoild be checked for removal
+  // Check if the first emission should be checked for removal.
   bool canMergeFirst = (mergingHooksPtr != 0)
                      ? mergingHooksPtr->canVetoEmission() : false;
 
   // Check if doing uncertainty variations
   doUncertaintiesNow = doUncertainties;
   if (!uVarMPIshowers && iSysSel != 0) doUncertaintiesNow = false;
+  if (pT2 < uVarpTmin2) doUncertaintiesNow = false;
 
   // Save further properties to be restored.
   if (canVetoEmission || canMergeFirst || canEnhanceET || doWeakShower
-    || doUncertaintiesNow) {
+    || doUncertainties) {
     for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
       int iOldCopy    = partonSystemsPtr->getAll(iSysSel, iCopy);
       statusV.push_back( event[iOldCopy].status());
@@ -2171,6 +2314,7 @@ bool SpaceShower::branch( Event& event) {
 
   // Take copy of existing system, to be given modified kinematics.
   // Incoming negative status. Rescattered also negative, but after copy.
+  int iNewColPartner = 0;
   for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
     int iOldCopy    = partonSystemsPtr->getAll(iSysSel, iCopy);
     int statusOld   = event[iOldCopy].status();
@@ -2178,6 +2322,7 @@ bool SpaceShower::branch( Event& event) {
       || iOldCopy == iRecoiler) ? statusOld : 44;
     int iNewCopy    = event.copy(iOldCopy, statusNew);
     if (statusOld < 0) event[iNewCopy].statusNeg();
+    if (iOldCopy == iColPartner) iNewColPartner = iNewCopy;
   }
 
   // Define colour flow in branching.
@@ -2240,15 +2385,22 @@ bool SpaceShower::branch( Event& event) {
 
   // Indices of partons involved. Add new sister.
   int iMother       = eventSizeOld + side - 1;
-  int iNewRecoiler  = eventSizeOld + 2 - side;
+  int iNewRec       = eventSizeOld + 2 - side;
   int iSister       = event.append( idSister, 43, iMother, 0, 0, 0,
      colSister, acolSister, pSister, mSister, sqrt(pT2) );
 
   // References to the partons involved.
   Particle& daughter    = event[iDaughter];
   Particle& mother      = event[iMother];
-  Particle& newRecoiler = event[iNewRecoiler];
+  Particle& newRecoiler = event[iNewRec];
   Particle& sister      = event.back();
+
+  // Allow setting of vertex for daughter parton, recoiler and sister.
+  if (doPartonVertex) {
+    if (!daughter.hasVertex())  partonVertexPtr->vertexISR( iDaughter, event);
+    if (!newRecoiler.hasVertex()) partonVertexPtr->vertexISR( iNewRec, event);
+     if (!sister.hasVertex())     partonVertexPtr->vertexISR( iSister, event);
+  }
 
   // Replace old by new mother; update new recoiler.
   mother.id( idMother );
@@ -2259,165 +2411,180 @@ bool SpaceShower::branch( Event& event) {
   newRecoiler.status( (normalRecoil) ? -42 : -46 );
   newRecoiler.p( pNewRec);
   if (!normalRecoil) newRecoiler.m( event[iRecoiler].m() );
+  // Update the colour partner in case of dipole recoil.
+  if (iNewColPartner != 0) event[iNewColPartner].p( pNewColPartner );
 
   // Update mother and daughter pointers; also for beams.
   daughter.mothers( iMother, 0);
   mother.daughters( iSister, iDaughter);
   if (iSysSel == 0) {
-    event[beamOff1].daughter1( (side == 1) ? iMother : iNewRecoiler );
-    event[beamOff2].daughter1( (side == 2) ? iMother : iNewRecoiler );
+    event[beamOff1].daughter1( (side == 1) ? iMother : iNewRec );
+    event[beamOff2].daughter1( (side == 2) ? iMother : iNewRec );
   }
 
   // Special checks to set weak particles status equal to 47.
   if (sister.idAbs() == 23 || sister.idAbs() == 24) sister.status(47);
 
-  // Find boost to old rest frame.
-  RotBstMatrix Mtot;
-  if (normalRecoil) Mtot.bst(0., 0., (x2 - x1) / (x1 + x2) );
-  else if (side == 1)
-       Mtot.toCMframe( event[iDaughter].p(), event[iRecoiler].p() );
-  else Mtot.toCMframe( event[iRecoiler].p(), event[iDaughter].p() );
+  // Normal azimuth and boost procedure for II dipole.
+  if (iNewColPartner == 0) {
 
-  // Initially select phi angle of branching at random.
-  double phi = 2. * M_PI * rndmPtr->flat();
+    // Find boost to old rest frame.
+    RotBstMatrix Mtot;
+    if (normalRecoil) Mtot.bst(0., 0., (x2 - x1) / (x1 + x2) );
+    else if (side == 1)
+         Mtot.toCMframe( event[iDaughter].p(), event[iRecoiler].p() );
+    else Mtot.toCMframe( event[iRecoiler].p(), event[iDaughter].p() );
 
-  // Evaluate coefficient of azimuthal asymmetry from gluon polarization.
-  findAsymPol( event, dipEndSel);
-  int    iFinPol = dipEndSel->iFinPol;
-  double cPol    = dipEndSel->asymPol;
-  double phiPol  = (iFinPol == 0) ? 0. : event[iFinPol].phi();
+    // Initially select phi angle of branching at random.
+    double phi = 2. * M_PI * rndmPtr->flat();
 
-  // If interference: try to match sister (anti)colour to final state.
-  int    iFinInt = 0;
-  double cInt    = 0.;
-  double phiInt  = 0.;
-  if (doPhiIntAsym) {
-    for (int i = 0; i < partonSystemsPtr->sizeOut(iSysSel); ++ i) {
-      int iOut = partonSystemsPtr->getOut(iSysSel, i);
-      if ( (acolSister != 0 && event[iOut].col() == acolSister)
-        || (colSister != 0 && event[iOut].acol() == colSister) )
-        iFinInt = iOut;
-    }
-    if (iFinInt != 0) {
-      // Boost final-state parton to current frame of new kinematics.
-      Vec4 pFinTmp = event[iFinInt].p();
-      pFinTmp.rotbst(Mtot);
-      double theFin = pFinTmp.theta();
-      if (side == 2) theFin = M_PI - theFin;
-      double theSis = pSister.theta();
-      if (side == 2) theSis = M_PI - theSis;
-      cInt = strengthIntAsym * 2. * theSis * theFin
-           / (pow2(theSis) + pow2(theFin));
-      phiInt = event[iFinInt].phi();
-    }
-  }
+    // Evaluate coefficient of azimuthal asymmetry from gluon polarization.
+    findAsymPol( event, dipEndSel);
+    int    iFinPol = dipEndSel->iFinPol;
+    double cPol    = dipEndSel->asymPol;
+    double phiPol  = (iFinPol == 0) ? 0. : event[iFinPol].phi();
 
-  // Bias phi distribution for polarization and interference.
-  if (iFinPol != 0 || iFinInt != 0) {
-    double cPhiPol, cPhiInt, weight;
-    do {
-      phi     = 2. * M_PI * rndmPtr->flat();
-      weight  = 1.;
-      if (iFinPol !=0 ) {
-        cPhiPol = cos(phi - phiPol);
-        weight *= ( 1. + cPol * (2. * pow2(cPhiPol) - 1.) )
-          / ( 1. + abs(cPol) );
+    // If interference: try to match sister (anti)colour to final state.
+    int    iFinInt = 0;
+    double cInt    = 0.;
+    double phiInt  = 0.;
+    if (doPhiIntAsym) {
+      for (int i = 0; i < partonSystemsPtr->sizeOut(iSysSel); ++ i) {
+        int iOut = partonSystemsPtr->getOut(iSysSel, i);
+        if ( (acolSister != 0 && event[iOut].col() == acolSister)
+          || (colSister != 0 && event[iOut].acol() == colSister) )
+          iFinInt = iOut;
       }
-      if (iFinInt !=0 ) {
-        cPhiInt = cos(phi - phiInt);
-        weight *= (1. - cInt) * (1. - cInt * cPhiInt)
-          / (1. + pow2(cInt) - 2. * cInt * cPhiInt);
+      if (iFinInt != 0) {
+        // Boost final-state parton to current frame of new kinematics.
+        Vec4 pFinTmp = event[iFinInt].p();
+        pFinTmp.rotbst(Mtot);
+        double theFin = pFinTmp.theta();
+        if (side == 2) theFin = M_PI - theFin;
+        double theSis = pSister.theta();
+        if (side == 2) theSis = M_PI - theSis;
+        cInt = strengthIntAsym * 2. * theSis * theFin
+             / (pow2(theSis) + pow2(theFin));
+        phiInt = event[iFinInt].phi();
       }
-    } while (weight < rndmPtr->flat());
-  }
+    }
 
-  // Include rotation -phi on boost to old rest frame.
-  Mtot.rot(0., -phi);
+    // Bias phi distribution for polarization and interference.
+    if (iFinPol != 0 || iFinInt != 0) {
+      double cPhiPol, cPhiInt, weight;
+      do {
+        phi     = 2. * M_PI * rndmPtr->flat();
+        weight  = 1.;
+        if (iFinPol !=0 ) {
+          cPhiPol = cos(phi - phiPol);
+          weight *= ( 1. + cPol * (2. * pow2(cPhiPol) - 1.) )
+            / ( 1. + abs(cPol) );
+        }
+        if (iFinInt !=0 ) {
+          cPhiInt = cos(phi - phiInt);
+          weight *= (1. - cInt) * (1. - cInt * cPhiInt)
+            / (1. + pow2(cInt) - 2. * cInt * cPhiInt);
+        }
+      } while (weight < rndmPtr->flat());
+    }
 
-  // Find boost from old rest frame to event cm frame.
-  RotBstMatrix MfromRest;
-  // The boost to the new rest frame.
-  Vec4 sumNew       = pMother + pNewRec;
-  double betaX      = sumNew.px() / sumNew.e();
-  double betaZ      = sumNew.pz() / sumNew.e();
-  MfromRest.bst( -betaX, 0., -betaZ);
-  // Alignment of  radiator + recoiler to +- z axis, and rotation +phi.
-  // Note: with spacelike (E < 0) recoiler p'_x_mother < 0 can happen!
-  pMother.rotbst(MfromRest);
-  double theta = pMother.theta();
-  if (pMother.px() < 0.) theta = -theta;
-  if (side == 2) theta += M_PI;
-  MfromRest.rot(-theta, phi);
-  // Boost to radiator + recoiler in event cm frame.
-  if (normalRecoil) {
-    MfromRest.bst( 0., 0., (x1New - x2New) / (x1New + x2New) );
-  } else if (side == 1) {
-    Vec4 pMotherWanted( 0., 0.,  0.5 * eCM * x1New, 0.5 * eCM * x1New);
-    MfromRest.fromCMframe( pMotherWanted, event[iRecoiler].p() );
+    // Include rotation -phi on boost to old rest frame.
+    Mtot.rot(0., -phi);
 
-  } else {
-    Vec4 pMotherWanted( 0., 0., -0.5 * eCM * x2New, 0.5 * eCM * x2New);
-    MfromRest.fromCMframe( event[iRecoiler].p(), pMotherWanted );
-  }
-  Mtot.rotbst(MfromRest);
-
-  // ME correction for weak emissions in the t-channel.
-  double wt;
-  if (MEtype == 201 || MEtype == 202 || MEtype == 203 ||
-      MEtype == 206 || MEtype == 207 || MEtype == 208) {
-
-    // Start by finding the correct outgoing particles
-    // to use in the ME correction.
-    Vec4 pA0     = mother.p();
-    Vec4 pB      = newRecoiler.p();
-    bool sideRad = (abs(side) == 1);
-    Vec4 p1,p2;
-    if (weakExternal) {
-      p1 = weakMomenta[2];
-      p2 = weakMomenta[3];
+    // Find boost from old rest frame to event cm frame.
+    RotBstMatrix MfromRest;
+    // The boost to the new rest frame.
+    Vec4 sumNew       = pMother + pNewRec;
+    double betaX      = sumNew.px() / sumNew.e();
+    double betaZ      = sumNew.pz() / sumNew.e();
+    MfromRest.bst( -betaX, 0., -betaZ);
+    // Alignment of  radiator + recoiler to +- z axis, and rotation +phi.
+    // Note: with spacelike (E < 0) recoiler p'_x_mother < 0 can happen!
+    pMother.rotbst(MfromRest);
+    double theta = pMother.theta();
+    if (pMother.px() < 0.) theta = -theta;
+    if (side == 2) theta += M_PI;
+    MfromRest.rot(-theta, phi);
+    // Boost to radiator + recoiler in event cm frame.
+    if (normalRecoil) {
+      MfromRest.bst( 0., 0., (x1New - x2New) / (x1New + x2New) );
+    } else if (side == 1) {
+      Vec4 pMotherWanted( 0., 0.,  0.5 * eCM * x1New, 0.5 * eCM * x1New);
+      MfromRest.fromCMframe( pMotherWanted, event[iRecoiler].p() );
     } else {
-      p1 = event[5].p();
-      p2 = event[6].p();
+      Vec4 pMotherWanted( 0., 0., -0.5 * eCM * x2New, 0.5 * eCM * x2New);
+      MfromRest.fromCMframe( event[iRecoiler].p(), pMotherWanted );
     }
-    if (!tChannel) swap(p1,p2);
-    if (!sideRad)  swap(p1,p2);
+    Mtot.rotbst(MfromRest);
 
-    // Rotate with -phi to keep correct for the later +phi rotation.
-    p1.rot(0., -phi);
-    p2.rot(0., -phi);
+    // ME correction for weak emissions in the t-channel.
+    double wt;
+    if (MEtype == 201 || MEtype == 202 || MEtype == 203 ||
+        MEtype == 206 || MEtype == 207 || MEtype == 208) {
 
-    // Calculate the actual weight.
-    wt = calcMEcorrWeak(MEtype, m2, z, pT2, pA0, pB,
-      event[iDaughter].p(), event[iRecoiler].p(), p1, p2, sister.p());
-    if (wt > weakMaxWt) {
-      weakMaxWt = wt;
-      infoPtr->errorMsg("Warning in SpaceShower::Branch: "
-                        "weight is above unity for weak emission.");
-    }
-
-    // If weighting fails then restore event record to state before emission.
-    if (wt < rndmPtr->flat()) {
-      event.popBack( event.size() - eventSizeOld);
-      event[beamOff1].daughter1( ev1Dau1V);
-      event[beamOff2].daughter1( ev2Dau1V);
-      for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
-        int iOldCopy = partonSystemsPtr->getAll(iSysSel, iCopy);
-        event[iOldCopy].status( statusV[iCopy]);
-        event[iOldCopy].mothers( mother1V[iCopy], mother2V[iCopy]);
-        event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
+      // Start by finding the correct outgoing particles for the ME correction.
+      Vec4 pA0     = mother.p();
+      Vec4 pB      = newRecoiler.p();
+      bool sideRad = (abs(side) == 1);
+      Vec4 p1,p2;
+      if (weakExternal) {
+        p1 = weakMomenta[2];
+        p2 = weakMomenta[3];
+      } else {
+        p1 = event[5].p();
+        p2 = event[6].p();
       }
-      return false;
-    }
-  }
+      if (!tChannel) swap(p1,p2);
+      if (!sideRad)  swap(p1,p2);
 
-  // Perform cumulative rotation/boost operation.
-  // Mother, recoiler and sister from old rest frame to event cm frame.
-  mother.rotbst(MfromRest);
-  newRecoiler.rotbst(MfromRest);
-  sister.rotbst(MfromRest);
-  // The rest from (and to) event cm frame.
-  for ( int i = eventSizeOld + 2; i < eventSizeOld + systemSizeOld; ++i)
-    event[i].rotbst(Mtot);
+      // Rotate with -phi to keep correct for the later +phi rotation.
+      p1.rot(0., -phi);
+      p2.rot(0., -phi);
+
+      // Calculate the actual weight.
+      wt = calcMEcorrWeak(MEtype, m2II, z, pT2, pA0, pB,
+        event[iDaughter].p(), event[iRecoiler].p(), p1, p2, sister.p());
+      if (wt > weakMaxWt) {
+        weakMaxWt = wt;
+        infoPtr->errorMsg("Warning in SpaceShower::Branch: "
+          "weight is above unity for weak emission.");
+      }
+
+      // If weighting fails then restore event record to state before emission.
+      if (wt < rndmPtr->flat()) {
+        event.popBack( event.size() - eventSizeOld);
+        event[beamOff1].daughter1( ev1Dau1V);
+        event[beamOff2].daughter1( ev2Dau1V);
+        for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
+          int iOldCopy = partonSystemsPtr->getAll(iSysSel, iCopy);
+          event[iOldCopy].status( statusV[iCopy]);
+          event[iOldCopy].mothers( mother1V[iCopy], mother2V[iCopy]);
+          event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
+        }
+        return false;
+      }
+    }
+
+    // Perform cumulative rotation/boost operation.
+    // Mother, recoiler and sister from old rest frame to event cm frame.
+    mother.rotbst(MfromRest);
+    newRecoiler.rotbst(MfromRest);
+    sister.rotbst(MfromRest);
+    // The rest from (and to) event cm frame.
+    for ( int i = eventSizeOld + 2; i < eventSizeOld + systemSizeOld; ++i)
+      event[i].rotbst(Mtot);
+
+  // Simpler special boost procedure for IF dipole.
+  } else {
+
+    // Find boost from daughter + colour partner rest frame to the event frame.
+    RotBstMatrix MfromRest;
+    MfromRest.fromCMframe( event[iDaughter].p(), event[iColPartner].p() );
+    // Boost mother, sister and new colour partner (recoiler already fine).
+    mother.rotbst(MfromRest);
+    sister.rotbst(MfromRest);
+    event[iNewColPartner].rotbst(MfromRest);
+  }
 
   // Remove double counting. Only implemented for QCD hard processes
   // and for the first emission.
@@ -2485,34 +2652,6 @@ bool SpaceShower::branch( Event& event) {
     }
   }
 
- // Recover delayed shower-accept probability for uncertainty variations.
-  double pAccept = dipEndSel->pAccept;
-
-  // Decide if we are going to accept or reject this branching.
-  // (Without wasting time generating random numbers if pAccept = 1.)
-  bool acceptEvent = true;
-  if (pAccept < 1.0) acceptEvent = (rndmPtr->flat() < pAccept);
-
-  // If doing uncertainty variations, calculate accept/reject reweightings.
-  if (doUncertaintiesNow) calcUncertainties( acceptEvent, pAccept, pT20,
-    dipEndSel, &mother, &sister);
-
-  // Return false if we decided to reject this branching.
-  if( !acceptEvent ) {
-    // Restore kinematics before returning
-   event.popBack( event.size() - eventSizeOld);
-    event[beamOff1].daughter1( ev1Dau1V);
-    event[beamOff2].daughter1( ev2Dau1V);
-    for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
-      int iOldCopy = partonSystemsPtr->getAll(iSysSel, iCopy);
-      event[iOldCopy].status( statusV[iCopy]);
-      event[iOldCopy].mothers( mother1V[iCopy], mother2V[iCopy]);
-      event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
-    }
-    // Tell calling method that this trial was rejected
-    return false;
-  }
-
   // Allow veto of branching. If so restore event record to before emission.
   if ( (canVetoEmission
     && userHooksPtr->doVetoISREmission(eventSizeOld, event, iSysSel))
@@ -2530,13 +2669,25 @@ bool SpaceShower::branch( Event& event) {
     return false;
   }
 
+  // Recover delayed shower-accept probability for uncertainty variations.
+  // This should occur after ISR emission veto, because that is a
+  // phase space restriction.
+  double pAccept = dipEndSel->pAccept;
+
+  // Decide if we are going to accept or reject this branching.
+  // (Without wasting time generating random numbers if pAccept = 1.)
+  bool acceptEvent = true;
+  if (pAccept < 1.0) acceptEvent = (rndmPtr->flat() < pAccept);
+
+  // Default values for uncertainty calculations
+  double weight = 1.;
+  double vp = 0.;
+  bool vetoedEnhancedEmission = false;
+
   // Calculate event weight for enhanced emission rate.
   if (canEnhanceET) {
-
     // Check if emission weight was enhanced. Get enhance weight factor.
     bool foundEnhance = false;
-    double weight = 1.;
-    double vp = 0.;
     // Move backwards as last elements have highest pT, thus are chosen
     // splittings.
     for ( map<double,pair<string,double> >::reverse_iterator
@@ -2552,7 +2703,6 @@ bool SpaceShower::branch( Event& event) {
     }
 
     // Check emission veto.
-    bool vetoedEnhancedEmission = false;
     if (foundEnhance && rndmPtr->flat() < vp ) vetoedEnhancedEmission = true;
     // Calculate new event weight.
     double rwgt = 1.;
@@ -2564,25 +2714,38 @@ bool SpaceShower::branch( Event& event) {
 
     // Set events weights, so that these could be used externally.
     double wtOld = userHooksPtr->getEnhancedEventWeight();
-    if (!doTrialNow && canEnhanceEmission)
+    if (!doTrialNow && canEnhanceEmission && !doUncertaintiesNow)
       userHooksPtr->setEnhancedEventWeight(wtOld*rwgt);
     if ( doTrialNow && canEnhanceTrial)
       userHooksPtr->setEnhancedTrial(sqrt(pT2), weight);
-
-    // Veto if necessary.
-    if (vetoedEnhancedEmission && canEnhanceEmission) {
-      event.popBack( event.size() - eventSizeOld);
-      event[beamOff1].daughter1( ev1Dau1V);
-      event[beamOff2].daughter1( ev2Dau1V);
-      for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
-        int iOldCopy = partonSystemsPtr->getAll(iSysSel, iCopy);
-        event[iOldCopy].status( statusV[iCopy]);
-        event[iOldCopy].mothers( mother1V[iCopy], mother2V[iCopy]);
-        event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
-      }
-      return false;
-    }
+    // Increment counter of rejected splittings.
+    if (vetoedEnhancedEmission && canEnhanceEmission) infoPtr->addCounter(40);
   }
+
+  if (vetoedEnhancedEmission) acceptEvent = false;
+
+  // If doing uncertainty variations, calculate accept/reject reweightings.
+  if (doUncertaintiesNow) calcUncertainties( acceptEvent, pAccept, pT20,
+    weight, vp, dipEndSel, &mother, &sister);
+
+  // Veto if necessary.
+  // Return false if we decided to reject this branching.
+  if ( (doUncertainties && !acceptEvent)
+    || (vetoedEnhancedEmission && canEnhanceEmission) ) {
+    // Restore kinematics before returning.
+    event.popBack( event.size() - eventSizeOld);
+    event[beamOff1].daughter1( ev1Dau1V);
+    event[beamOff2].daughter1( ev2Dau1V);
+    for ( int iCopy = 0; iCopy < systemSizeOld; ++iCopy) {
+      int iOldCopy = partonSystemsPtr->getAll(iSysSel, iCopy);
+      event[iOldCopy].status( statusV[iCopy]);
+      event[iOldCopy].mothers( mother1V[iCopy], mother2V[iCopy]);
+      event[iOldCopy].daughters( daughter1V[iCopy], daughter2V[iCopy]);
+    }
+    return false;
+  }
+
+
 
   // Update list of partons in system; adding newly produced one.
   partonSystemsPtr->setInA(iSysSel, eventSizeOld);
@@ -2590,13 +2753,13 @@ bool SpaceShower::branch( Event& event) {
   for (int iCopy = 2; iCopy < systemSizeOld; ++iCopy)
     partonSystemsPtr->setOut(iSysSel, iCopy - 2, eventSizeOld + iCopy);
   partonSystemsPtr->addOut(iSysSel, eventSizeOld + systemSizeOld);
-  partonSystemsPtr->setSHat(iSysSel, m2 / z);
+  partonSystemsPtr->setSHat(iSysSel, m2II / z);
 
   // Add dipoles for  q -> g q, where the daughter is the gluon.
   if (idDaughter == 21 && idMother != 21) {
     if (doQEDshowerByQ) {
       dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-         iNewRecoiler, pT2, 0, mother.chargeType(), 0, 0, normalRecoil) );
+         iNewRec, pT2, 0, mother.chargeType(), 0, 0, normalRecoil) );
     }
     if (doWeakShower && iSysSel == 0) {
       int MEtypeNew = 203;
@@ -2608,10 +2771,10 @@ bool SpaceShower::branch( Event& event) {
       event[iMother].pol(weakPol);
       if ((weakMode == 0 || weakMode == 1) && weakPol == -1)
         dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-         iNewRecoiler, pT2, 0, 0, 1, MEtypeNew, normalRecoil, weakPol) );
+         iNewRec, pT2, 0, 0, 1, MEtypeNew, normalRecoil, weakPol) );
       if (weakMode == 0 || weakMode == 2)
         dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-         iNewRecoiler, pT2, 0, 0, 2, MEtypeNew + 5, normalRecoil, weakPol) );
+         iNewRec, pT2, 0, 0, 2, MEtypeNew + 5, normalRecoil, weakPol) );
     }
   }
 
@@ -2619,15 +2782,15 @@ bool SpaceShower::branch( Event& event) {
   if (idDaughter == 22 && idMother != 22) {
     if (doQCDshower && mother.colType() != 0) {
       dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-        iNewRecoiler, pT2, mother.colType(), 0, 0, 0, normalRecoil) );
+        iNewRec, pT2, mother.colType(), 0, 0, 0, normalRecoil) );
     }
     if (doQEDshowerByQ && mother.chargeType() != 3) {
       dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-        iNewRecoiler, pT2, 0, mother.chargeType(), 0, 0, normalRecoil) );
+        iNewRec, pT2, 0, mother.chargeType(), 0, 0, normalRecoil) );
     }
     if (doQEDshowerByL && mother.chargeType() == 3) {
       dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-         iNewRecoiler, pT2, 0, mother.chargeType(), 0, 0, normalRecoil) );
+         iNewRec, pT2, 0, mother.chargeType(), 0, 0, normalRecoil) );
     }
     if (doWeakShower && iSysSel == 0) {
       int MEtypeNew = 203;
@@ -2639,10 +2802,10 @@ bool SpaceShower::branch( Event& event) {
       event[iMother].pol(weakPol);
       if ((weakMode == 0 || weakMode == 1) && weakPol == -1)
         dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-         iNewRecoiler, pT2, 0, 0, 1, MEtypeNew, normalRecoil, weakPol) );
+         iNewRec, pT2, 0, 0, 1, MEtypeNew, normalRecoil, weakPol) );
       if (weakMode == 0 || weakMode == 2)
         dipEnd.push_back( SpaceDipoleEnd( iSysSel, side, iMother,
-          iNewRecoiler, pT2, 0, 0, 2, MEtypeNew + 5, normalRecoil, weakPol) );
+          iNewRec, pT2, 0, 0, 2, MEtypeNew + 5, normalRecoil, weakPol) );
     }
   }
 
@@ -2666,7 +2829,12 @@ bool SpaceShower::branch( Event& event) {
   if ( dipEnd[iDip].system == iSysSel) {
     if (abs(dipEnd[iDip].side) == side) {
       dipEnd[iDip].iRadiator = iMother;
-      dipEnd[iDip].iRecoiler = iNewRecoiler;
+      dipEnd[iDip].iRecoiler = iNewRec;
+      // Look if there is a IF dipole in case of dipole recoil.
+      dipEnd[iDip].iColPartner = (doDipoleRecoil) ? findColPartner( event,
+        dipEnd[iDip].iRadiator, dipEnd[iDip].iRecoiler, iSysSel) : 0;
+      dipEnd[iDip].idColPartner = (dipEnd[iDip].iColPartner != 0)
+        ? event[dipEnd[iDip].iColPartner].id() : 0;
       if (dipEnd[iDip].colType  != 0)
         dipEnd[iDip].colType = mother.colType();
       else if (dipEnd[iDip].chgType != 0) {
@@ -2689,8 +2857,13 @@ bool SpaceShower::branch( Event& event) {
 
     // Update info on recoiling dipole ends (QCD or QED).
     } else {
-      dipEnd[iDip].iRadiator = iNewRecoiler;
+      dipEnd[iDip].iRadiator = iNewRec;
       dipEnd[iDip].iRecoiler = iMother;
+      // Look if there is an IF dipole in case of dipole recoil.
+      dipEnd[iDip].iColPartner = (doDipoleRecoil) ? findColPartner( event,
+        dipEnd[iDip].iRadiator, dipEnd[iDip].iRecoiler, iSysSel) : 0;
+      dipEnd[iDip].idColPartner = (dipEnd[iDip].iColPartner != 0)
+        ? event[dipEnd[iDip].iColPartner].id() : 0;
       // Optionally also kill recoiler ME corrections after first emission.
       if (!doMEafterFirst && dipEnd[iDip].weakType == 0)
         dipEnd[iDip].MEtype = 0;
@@ -2713,7 +2886,7 @@ bool SpaceShower::branch( Event& event) {
     beamNow.pickValSeaComp();
   }
   BeamParticle& beamRec = (side == 1) ? *beamBPtr : *beamAPtr;
-  beamRec[iSysSel].iPos( iNewRecoiler);
+  beamRec[iSysSel].iPos( iNewRec);
 
   // Store branching values of current dipole. (For rapidity ordering.)
   ++dipEndSel->nBranch;
@@ -2722,7 +2895,7 @@ bool SpaceShower::branch( Event& event) {
 
   // Update history if recoiler rescatters.
   if (!normalRecoil)
-    event[iRecoilMother].daughters( iNewRecoiler, iNewRecoiler);
+    event[iRecoilMother].daughters( iNewRec, iNewRec);
 
   // Start list of rescatterers that force changed kinematics.
   vector<int> iRescatterer;
@@ -2824,7 +2997,8 @@ bool SpaceShower::branch( Event& event) {
   }
 
   // Check that beam momentum not used up by rescattered-system boosts.
-  if (beamAPtr->xMax(-1) < 0.0 || beamBPtr->xMax(-1) < 0.0) {
+  if ( ( beamAPtr->xMax(-1) < 0.0 && !(beamAPtr->isUnresolved()) )
+         || (beamBPtr->xMax(-1) < 0.0 && !(beamBPtr->isUnresolved()) ) ) {
     infoPtr->errorMsg("Warning in SpaceShower::branch: "
       "used up beam momentum; retrying parton level");
     rescatterFail = true;
@@ -2856,6 +3030,7 @@ bool SpaceShower::initUncertainties() {
   varQ2GQmuRfac.clear();    varQ2GQcNS.clear();
   varX2XGmuRfac.clear();    varX2XGcNS.clear();
   varG2QQmuRfac.clear();    varG2QQcNS.clear();
+  varPDFplus.clear();       varPDFminus.clear();
 
   // Get uncertainty variations from Settings (as list of strings to parse).
   vector<string> uVars = settingsPtr->wvec("UncertaintyBands:List");
@@ -2886,6 +3061,8 @@ bool SpaceShower::initUncertainties() {
   keys.push_back("isr:Q2GQ:cNS");
   keys.push_back("isr:X2XG:cNS");
   keys.push_back("isr:G2QQ:cNS");
+  keys.push_back("isr:PDF:plus");
+  keys.push_back("isr:PDF:minus");
 
   // Store number of QCD variations (as separator to QED ones).
   int nKeysQCD=keys.size();
@@ -2942,6 +3119,8 @@ bool SpaceShower::initUncertainties() {
         varX2XGcNS[iWeight] = value;
       if (key == "isr:cns" || key == "isr:g2qq:cns")
         varG2QQcNS[iWeight] = value;
+      if (key == "isr:pdf:plus")   varPDFplus[iWeight] = 1;
+      if (key == "isr:pdf:minus")  varPDFminus[iWeight] = 1;
       // Tell that we found at least one recognized and parseable keyword.
       if (iWord < nKeysQCD) nRecognizedQCD++;
     } // End loop over QCD keywords
@@ -2959,7 +3138,8 @@ bool SpaceShower::initUncertainties() {
 // Calculate uncertainties for the current event.
 
 void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
-  SpaceDipoleEnd* dip, Particle* motPtr, Particle* sisPtr) {
+  double enhance, double vp, SpaceDipoleEnd* dip, Particle* motPtr,
+  Particle* sisPtr) {
 
   // Sanity check.
   if (!doUncertainties || !doUncertaintiesNow || nUncertaintyVariations <= 0)
@@ -2976,10 +3156,32 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
   // Make vector sizes + 1 since 0 = default and variations start at 1.
   vector<double> uVarFac(nUncertaintyVariations + 1, 1.0);
   vector<bool> doVar(nUncertaintyVariations + 1, false);
+  // When performing biasing, the nominal weight need not be unity.
+  doVar[0] = true;
+  uVarFac[0] = 1.0;
 
   // Extract IDs, with standard ISR nomenclature: mot -> dau(Q2) + sis
   int idSis = sisPtr->id();
   int idMot = motPtr->id();
+
+  // PDF variations
+  double deltaPDFplus(0.0);
+  double deltaPDFminus(0.0);
+  if ( !varPDFplus.empty() || !varPDFminus.empty() ) {
+    // Evaluation of new daughter and mother PDF's.
+    double scale2 = (useFixedFacScale) ? fixedFacScale2
+      : factorMultFac * dip->pT2;
+    double xMother = dip->xMo;
+    double xDau    = dip->z * xMother;
+    BeamParticle& beam  = (abs(dip->side) == 1) ? *beamAPtr : *beamBPtr;
+    int valSea = (beam[iSysSel].isValence()) ? 1 : 0;
+    if( beam[iSysSel].isUnmatched() ) valSea = 2;
+    beam.calcPDFEnvelope( make_pair(dip->idMother,dip->idDaughter),
+      make_pair(xMother,xDau), scale2, valSea);
+    PDF::PDFEnvelope ratioPDFEnv = beam.getPDFEnvelope();
+    deltaPDFplus = min(ratioPDFEnv.errplusPDF/ratioPDFEnv.centralPDF,0.5);
+    deltaPDFminus= min(ratioPDFEnv.errminusPDF/ratioPDFEnv.centralPDF,0.5);
+  }
 
   // QCD variations.
   if (dip->colType != 0) {
@@ -3065,25 +3267,38 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
       uVarFac[iWeight] *= minReWeight;
       doVar[iWeight] = true;
     }
+    varPtr = &varPDFplus;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      uVarFac[iWeight] *= 1.0 + deltaPDFplus;
+      doVar[iWeight] = true;
+    }
+    varPtr = &varPDFminus;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      uVarFac[iWeight] *= max(.01,1.0 - deltaPDFminus);
+      doVar[iWeight] = true;
+    }
   }
 
   // Ensure 0 < PacceptPrime < 1 (with small margins).
-  for (int iWeight = 1; iWeight<=nUncertaintyVariations; ++iWeight) {
+  for (int iWeight = 0; iWeight<=nUncertaintyVariations; ++iWeight) {
     if (!doVar[iWeight]) continue;
     double pAcceptPrime = pAccept * uVarFac[iWeight];
     if (pAcceptPrime > PROBLIMIT) uVarFac[iWeight] *= PROBLIMIT / pAcceptPrime;
   }
 
   // Apply reject or accept reweighting factors according to input decision.
-  for (int iWeight = 1; iWeight <= nUncertaintyVariations; ++iWeight) {
+  for (int iWeight = 0; iWeight <= nUncertaintyVariations; ++iWeight) {
     if (!doVar[iWeight]) continue;
     // If trial accepted: apply ratio of accept probabilities.
-    if (accept) infoPtr->reWeight(iWeight, uVarFac[iWeight]);
+    if (accept) infoPtr->reWeight( iWeight,
+       uVarFac[iWeight] / ((1.0 - vp) * enhance) );
     // If trial rejected : apply Sudakov reweightings.
     else {
       // Check for near-singular denominators (indicates too few failures,
       // and hence would need to increase headroom).
-      double denom = 1. - pAccept;
+      double denom = 1. - pAccept * (1.0 - vp);
       if (denom < REJECTFACTOR) {
         stringstream message;
         message << iWeight;
@@ -3091,7 +3306,8 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
           " iWeight = ", message.str());
       }
       // Force reweighting factor > 0.
-      double reWtFail = max(0.01, (1. - uVarFac[iWeight] * pAccept) / denom);
+      double reWtFail = max(0.01, (1. - uVarFac[iWeight] * pAccept / enhance )
+        / denom);
       infoPtr->reWeight(iWeight, reWtFail);
     }
   }
@@ -3348,15 +3564,68 @@ void SpaceShower::findAsymPol( Event& event, SpaceDipoleEnd* dip) {
 
 //--------------------------------------------------------------------------
 
+// Find a possible colour partner in the case of dipole recoil.
+
+int SpaceShower::findColPartner(Event& event, int iSideA, int iSideB,
+  int iSystem) {
+
+  int iColPartner  = 0;
+  int colSideA  = event[iSideA].col();
+  int acolSideA = event[iSideA].acol();
+
+  // Check if the parton on the other side is a colour partner.
+  if ( (colSideA != 0 && event[iSideB].acol() == colSideA)
+    || (acolSideA != 0 && event[iSideB].col() == acolSideA) ) {
+
+    // Another possible colour partner among the outgoing partons
+    // in the case of a gluon.
+    if (event[iSideA].id() == 21)
+    for (int i = 0; i < partonSystemsPtr->sizeOut(iSystem); ++i) {
+      int iOut = partonSystemsPtr->getOut(iSystem, i);
+      if ( event[iOut].col() == colSideA
+        || event[iOut].acol() == acolSideA )
+        // 50% for II and 50% for IF.
+        if (rndmPtr->flat() < 0.5) iColPartner = iOut;
+    }
+
+  // Otherwise, check within the set of outgoing partons.
+  } else if (colSideA != 0 || acolSideA != 0) {
+    for (int i = 0; i < partonSystemsPtr->sizeOut(iSystem); ++ i) {
+      int iOut = partonSystemsPtr->getOut(iSystem, i);
+      if ( (colSideA != 0 && event[iOut].col() == colSideA)
+        || (acolSideA != 0 && event[iOut].acol() == acolSideA) ) {
+        if (iColPartner == 0) iColPartner = iOut;
+        // 50% for each IF in the case of a gluon.
+        else if (rndmPtr->flat() < 0.5) iColPartner = iOut;
+      }
+    }
+  }
+  return iColPartner;
+
+}
+
+//--------------------------------------------------------------------------
+
 // Remove weak dipoles if FSR already emitted a W/Z
 // and only a single weak emission is permited.
+// Update colour partner in case of dipole recoil.
 
-void SpaceShower::update(int , Event &, bool hasWeakRad) {
+void SpaceShower::update(int iSys, Event& event, bool hasWeakRad) {
 
   if (hasWeakRad && singleWeakEmission)
     for (int i = 0; i < int(dipEnd.size()); i++)
       if (dipEnd[i].weakType != 0) dipEnd[i].weakType = 0;
   if (hasWeakRad) hasWeaklyRadiated = true;
+
+  // Update colour partner in case of dipole recoil.
+  if (doDipoleRecoil)
+    for (int i = 0; i < int(dipEnd.size()); i++)
+      if (dipEnd[i].system == iSys) {
+        dipEnd[i].iColPartner = findColPartner(event, dipEnd[i].iRadiator,
+          dipEnd[i].iRecoiler, iSys);
+        dipEnd[i].idColPartner = (dipEnd[i].iColPartner != 0)
+          ? event[dipEnd[i].iColPartner].id() : 0;
+      }
 
 }
 
@@ -3383,7 +3652,6 @@ void SpaceShower::list() const {
   // Done.
   cout << "\n --------  End PYTHIA SpaceShower Dipole Listing  ----------"
        << endl;
-
 
 }
 

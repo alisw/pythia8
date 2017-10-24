@@ -615,7 +615,7 @@ void ParticleData::initCommon() {
 
 void ParticleData::initWidths( vector<ResonanceWidths*> resonancePtrs) {
 
-  // Initialize some common data.
+  // Initialize some common data (but preserve history of read statements).
   initCommon();
 
   // Pointer to database and Breit-Wigner mass initialization for each
@@ -686,6 +686,8 @@ void ParticleData::initWidths( vector<ResonanceWidths*> resonancePtrs) {
   // Mediators for Dark Matter.
   resonancePtr = new ResonanceZp(55);
   setResonancePtr( 55, resonancePtr);
+  resonancePtr = new ResonanceS(54);
+  setResonancePtr( 54, resonancePtr);
 
   // 93 = Z0copy and 94 = W+-copy used to pick decay channels
   // for W/Z production in parton showers.
@@ -860,6 +862,8 @@ bool ParticleData::copyXML(const ParticleData &particleDataIn) {
   // First Reset everything.
   pdt.clear();
   xmlFileSav.clear();
+  readStringHistory.resize(0);
+  readStringSubrun.clear();
   isInit = false;
   xmlFileSav=particleDataIn.xmlFileSav;
 
@@ -876,7 +880,13 @@ bool ParticleData::copyXML(const ParticleData &particleDataIn) {
 bool ParticleData::loadXML(istream& is, bool reset) {
 
   // Normally reset whole database before beginning.
-  if (reset) {pdt.clear(); xmlFileSav.clear(); isInit = false;}
+  if (reset) {
+    pdt.clear();
+    xmlFileSav.clear();
+    readStringHistory.resize(0);
+    readStringSubrun.clear();
+    isInit = false;
+  }
 
   // Check that instream is OK.
   if (!is.good()) {
@@ -1102,7 +1112,12 @@ void ParticleData::listXML(string outFile) {
 bool ParticleData::readFF(istream& is, bool reset) {
 
   // Normally reset whole database before beginning.
-  if (reset) {pdt.clear(); isInit = false;}
+  if (reset) {
+    pdt.clear();
+    readStringHistory.resize(0);
+    readStringSubrun.clear();
+    isInit = false;
+  }
 
   if (!is.good()) {
     infoPtr->errorMsg("Error in ParticleData::readFF:"
@@ -1299,6 +1314,13 @@ void ParticleData::listFF(string outFile) {
     readingFailedSave = true;
     return false;
   }
+
+  // Store history of readString statements.
+  readStringHistory.push_back(line);
+  int subrun = max( -1, settingsPtr->mode("Main:subrun"));
+  if (readStringSubrun.find(subrun) == readStringSubrun.end())
+    readStringSubrun[subrun] = vector<string>();
+  readStringSubrun[subrun].push_back(line);
 
   // Identify particle property and read + set its value, case by case.
   if (property == "name") {

@@ -175,8 +175,8 @@ public:
   // Skip ahead a number of events, which are not considered further.
   // Mainly intended for debug when using the LHAupLHEF class.
   virtual bool skipEvent(int nSkip) {
-    for (int iSkip = 0; iSkip < nSkip; ++iSkip)
-    if (!setEvent()) return false; return true;}
+    for (int iSkip = 0; iSkip < nSkip; ++iSkip) if (!setEvent()) return false;
+    return true;}
 
   // Four routines to write a Les Houches Event file in steps.
   virtual bool openLHEF(string fileNameIn);

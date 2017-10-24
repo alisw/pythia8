@@ -65,8 +65,8 @@ double PDF::xf(int id, double x, double Q2) {
   if ( (abs(idSav) != abs(id) && idSav != 9) || x != xSav || Q2 != Q2Sav)
     {idSav = id; xfUpdate(id, x, Q2); xSav = x; Q2Sav = Q2;}
 
-  // Baryon and nondiagonal meson beams: only p, pbar, pi+, pi- for now.
-  if (idBeamAbs == 2212 || idBeamAbs == 211) {
+  // Baryon beams: only p and pbar for now.
+  if (idBeamAbs == 2212) {
     int idNow = (idBeam > 0) ? id : -id;
     int idAbs = abs(id);
     if (idNow ==  0 || idAbs == 21) return max(0., xg);
@@ -90,6 +90,23 @@ double PDF::xf(int id, double x, double Q2) {
     if (idNow == -1) return max(0., xubar);
     if (idNow ==  2) return max(0., xd);
     if (idNow == -2) return max(0., xdbar);
+    if (idNow ==  3) return max(0., xs);
+    if (idNow == -3) return max(0., xsbar);
+    if (idAbs ==  4) return max(0., xc);
+    if (idAbs ==  5) return max(0., xb);
+    if (idAbs == 22) return max(0., xgamma);
+    return 0.;
+
+  // Nondiagonal meson beams: only pi+ and pi- for now.
+  // Some LHAPDF sets are stored with u d as valence, so use dbar = u.
+  } else if (idBeamAbs == 211) {
+    int idNow = (idBeam > 0) ? id : -id;
+    int idAbs = abs(id);
+    if (idNow ==  0 || idAbs == 21) return max(0., xg);
+    if (idNow ==  1) return max(0., xubar );
+    if (idNow == -1) return max(0., xu );
+    if (idNow ==  2) return max(0., xu);
+    if (idNow == -2) return max(0., xubar);
     if (idNow ==  3) return max(0., xs);
     if (idNow == -3) return max(0., xsbar);
     if (idAbs ==  4) return max(0., xc);
@@ -136,6 +153,21 @@ double PDF::xf(int id, double x, double Q2) {
     if (idAbs ==  5) return max(0., xb);
     if (idAbs == 22) return max(0., xgamma);
     return 0.;
+
+  // Nuclear PDFs
+  } else if ( idBeamAbs > 100000000 ) {
+    int idAbs = abs(id);
+    if (idAbs ==  0 || idAbs == 21) return max(0., xg);
+    if (id ==  1)    return max(0., xd);
+    if (id == -1)    return max(0., xdbar);
+    if (id ==  2)    return max(0., xu);
+    if (id == -2)    return max(0., xubar);
+    if (id ==  3)    return max(0., xs);
+    if (id == -3)    return max(0., xsbar);
+    if (idAbs ==  4) return max(0., xc);
+    if (idAbs ==  5) return max(0., xb);
+    if (idAbs == 22) return max(0., xgamma);
+    return 0;
 
   // Lepton beam.
   } else {
@@ -2180,6 +2212,35 @@ void PomH1Jets::xfUpdate(int , double x, double Q2) {
 
 //==========================================================================
 
+void PomHISASD::xfUpdate(int, double x, double Q2) {
+
+  // Check that pomeron momentum fraction is available.
+  if ( xPomNow < 0.0 || xPomNow > 1.0 || !pPDFPtr )
+    printErr("Error in PonHISASD::xfUpdate: no xPom available.", infoPtr);
+
+  double xx = xPomNow*x;
+
+  double fac = pow(1.0 - x, hixpow)/log(1.0/xx);
+
+  xd = xdbar = fac*pPDFPtr->xfSea(1, xx, Q2);
+  xu = xubar = fac*pPDFPtr->xfSea(2, xx, Q2);
+  xs = xsbar = fac*pPDFPtr->xfSea(3, xx, Q2);
+  xc = fac*pPDFPtr->xfSea(4, xx, Q2);
+  xb = fac*pPDFPtr->xfSea(5, xx, Q2);
+  xg = fac*pPDFPtr->xfSea(21, xx, Q2);
+  xlepton = xgamma = 0.0;
+  // Subdivision of valence and sea.
+  xuVal = 0.;
+  xuSea = xu;
+  xdVal = 0.;
+  xdSea = xd;
+  // idSav = 9 to indicate that all flavours reset.
+  idSav = 9;
+
+}
+
+//==========================================================================
+
 // Gives electron (or muon, or tau) parton distribution.
 
 // Constants: alphaEM(0), m_e, m_mu, m_tau.
@@ -3229,9 +3290,9 @@ double CJKL::hadronlikeB(double x, double s, double Q2) {
 //==========================================================================
 
 // The LHAGrid1 class.
-// Codes to read files i the LHAPDF6 lhagrid1 format,
+// Codes to read files in the LHAPDF6 lhagrid1 format,
 // assuming that the same x grid is used for all Q subgrids.
-// Results are not identical with LHAPDF6, owing do different interpolation.
+// Results are not identical with LHAPDF6, owing to different interpolation.
 
 //--------------------------------------------------------------------------
 
@@ -3252,9 +3313,12 @@ void LHAGrid1::init(string pdfWord, string xmlPath, Info* infoPtr) {
   if (pdfWord[0] == '/') dataFile = pdfWord;
   else if (pdfSet == 0) dataFile = xmlPath + pdfWord;
 
-  // Input is fit number. Current selection for tryout only.
-  //else if (pdfSet == 1) dataFile = xmlPath+"hf_pdf_0000.dat";
-  //else if (pdfSet == 2) dataFile = xmlPath+"NNPDF23_lo_as_0119_qed_0000.dat";
+  // Input is fit number. Current selection for NNPDF3.1 and modified NNLO.
+  else if (pdfSet == 17) dataFile = xmlPath + "NNPDF31_lo_as_0130_0000.dat";
+  else if (pdfSet == 18) dataFile = xmlPath + "NNPDF31_lo_as_0118_0000.dat";
+  else if (pdfSet == 19) dataFile = xmlPath + "NNPDF31_nlo_as_0118_0000.dat";
+  else if (pdfSet == 20) dataFile = xmlPath + "NNPDF31_nnlo_as_0118_0000.dat";
+  else if (pdfSet == 21) dataFile = xmlPath + "mcpdf_test_replicas_0000.dat";
 
   // Open files from which grids should be read in.
   ifstream is( dataFile.c_str() );
@@ -3561,8 +3625,8 @@ void Lepton2gamma::xfUpdate(int , double x, double Q2){
 
   // Find the maximum x value at given Q2max and sqrt(s).
   double sCM = infoPtr->s();
-  double xGamMax = Q2max / (2. * m2lepton)
-    * (sqrt( (1. + 4. * m2lepton / Q2max) * (1. - 4. * m2lepton / sCM) ) - 1.);
+  double xGamMax = ( 2. - 2. * Q2max / sCM - 8. * m2lepton / sCM )
+    / ( 1. + sqrt( (1. + 4. * m2lepton / Q2max) * (1. - 4. * m2lepton/sCM) ) );
 
   // If outside allowed x values set PDFs to zero.
   if ( x > xGamMax ) {
@@ -3636,8 +3700,8 @@ double Lepton2gamma::xfMax(int id, double x, double Q2){
 
   // Find the maximum x value at given Q2max and sqrt(s).
   double sCM = infoPtr->s();
-  double xGamMax = Q2max / (2. * m2lepton)
-    * (sqrt( (1. + 4. * m2lepton / Q2max) * (1. - 4. * m2lepton / sCM) ) - 1.);
+  double xGamMax = ( 2. - 2. * Q2max / sCM - 8. * m2lepton / sCM )
+    / ( 1. + sqrt( (1. + 4. * m2lepton / Q2max) * (1. - 4. * m2lepton/sCM) ) );
 
   // Set PDFs to zero outside allowed x values.
   if ( x > xGamMax ) return 0;
@@ -3676,6 +3740,360 @@ double Lepton2gamma::xfSame(int id, double x, double Q2){
   double xfNow = xf(id, x, Q2);
   sampleXgamma = true;
   return xfNow;
+}
+
+//==========================================================================
+
+// Approximated photon flux that used for process sampling with external flux.
+
+const double EPAexternal::ALPHAEM = 0.007297353080;
+
+// Initilaize kinematics and find the normalization.
+
+void EPAexternal::init(){
+
+  // Collision kinematics.
+  double sCM = pow2(infoPtr->eCM());
+  double m2s = 4. * m2 / sCM;
+
+  // Photon kinematics.
+  xMin  = pow2(settingsPtr->parm("Photon:Wmin")) / sCM;
+  xMax  = 1.0;
+  Q2min = 2. * m2 * pow2(xMin) / ( 1. - xMin - m2s
+               + sqrt(1. - m2s) * sqrt( pow2(1. - xMin) - m2s) );
+  Q2max = settingsPtr->parm("Photon:Q2max");
+  bool sampleQ2 = settingsPtr->flag("Photon:sampleQ2");
+
+  // Initial values for normalization.
+  double ratio, ratioMax = 0.0;
+  norm = 1.0;
+
+  // Scan through x and Q2 grid to find normalization.
+  // Mainly required for flux from heavy ions with large charge.
+  for (int i = 0; i < 10; ++i) {
+    double xi = xMin + (xMax - xMin)*i/(10.);
+    for (int j = 0; j < 10; ++j) {
+      double Q2j = Q2min * exp( log(Q2max/Q2min)*j/(10. - 1.0));
+
+      // When not sampling virtuality use Q2-integrated flux.
+      if (sampleQ2) ratio = xfFlux(22,xi,Q2j) / xfApprox(22,xi,Q2j);
+      else          ratio = xfFlux(22,xi,Q2j) / xf(22,xi,Q2j);
+
+      // Save the largest value.
+      if (ratio > ratioMax) ratioMax = ratio;
+    }
+  }
+
+  // Store the found normalization.
+  norm = ratioMax;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Approximate the differential photon flux with alphaEM/PI/x/Q2.
+// Derived from EPA for leptons but provides leading (small-x)
+// behaviour for hadrons as well.
+
+void EPAexternal::xfUpdate(int , double x, double Q2){
+
+  // Calculate (Q2-integrated) approximation for xfGamma.
+  double alphaLog = norm * ALPHAEM / M_PI * log (Q2max/Q2min);
+
+  // Integrated in Q2, to be used for direct process sampling.
+  xgamma = alphaLog;
+
+  // Approximate the convolution with photon PDFs.
+  if (gammaPDFPtr != 0) {
+
+    // To preserve x/xGamma < 1.
+    xHadr = x;
+
+    // Save the minimum x_gamma value for sampling.
+    xMin  = xHadr;
+
+    // Multiply the approximated flux with PDFs.
+    double alphaLogX = alphaLog * log (xMax / xHadr);
+    xg = alphaLogX * gammaPDFPtr->xf(21, x, Q2);
+    xd = alphaLogX * gammaPDFPtr->xf( 1, x, Q2);
+    xu = alphaLogX * gammaPDFPtr->xf( 2, x, Q2);
+    xs = alphaLogX * gammaPDFPtr->xf( 3, x, Q2);
+    xc = alphaLogX * gammaPDFPtr->xf( 4, x, Q2);
+    xb = alphaLogX * gammaPDFPtr->xf( 5, x, Q2);
+    xdbar = xd;
+    xubar = xu;
+    xsbar = xs;
+  }
+
+  // idSav = 9 to indicate that all flavours reset.
+  idSav = 9;
+
+}
+
+//--------------------------------------------------------------------------
+
+// The approximated photon flux x*f^{gamma}(x,Q2).
+
+double EPAexternal::xfApprox(int , double , double Q2){
+
+  // Differetial in Q2.
+  return norm * ALPHAEM / M_PI / Q2;
+}
+
+//--------------------------------------------------------------------------
+
+// Accurate flux, provided externally.
+
+double EPAexternal::xfFlux(int id, double x, double Q2){
+
+  // The external flux, check that pointer exists.
+  if ( gammaFluxPtr != 0 ) return gammaFluxPtr->xf(id, x, Q2);
+  else return 0.;
+}
+
+//--------------------------------------------------------------------------
+
+// Photon PDFs used for the convolution with the flux.
+
+double EPAexternal::xfGamma(int id, double x, double Q2){
+
+  // Return xf from the photon PDF.
+  if ( gammaPDFPtr != 0 ) return gammaPDFPtr->xf(id, x, Q2);
+  else return 0.;
+}
+
+//==========================================================================
+
+// Inherited class for nuclear PDFs. Needs a proton PDF as a baseline.
+
+void nPDF::initNPDF(PDF* protonPDFPtrIn){
+
+  // Derive mass number and number of protons.
+  a = (idBeam/10) % 1000;
+  z = (idBeam/10000) % 1000;
+
+  // Normalized number of protons and neutrons in nuclei.
+  resetMode();
+
+  // Initialize proton PDF pointer.
+  protonPDFPtr = protonPDFPtrIn;
+
+  // No modifications yet.
+  ruv = 1.;
+  rdv = 1.;
+  ru  = 1.;
+  rd  = 1.;
+  rs  = 1.;
+  rc  = 1.;
+  rb  = 1.;
+  rg  = 1.;
+}
+
+//--------------------------------------------------------------------------
+
+// Updates the nPDF using provided proton PDF and nuclear modification.
+
+void nPDF::xfUpdate(int id, double x, double Q2){
+
+  if (protonPDFPtr == 0) {
+    printErr("Error in nPDF: No free proton PDF pointer set.");
+    return;
+  }
+
+  // Update the proton PDFs and nuclear modifications.
+  this->rUpdate(id, x, Q2);
+
+  // u(bar) and d(bar) pdfs for proton.
+  double xfd  = protonPDFPtr->xf( 1, x, Q2);
+  double xfu  = protonPDFPtr->xf( 2, x, Q2);
+  double xfdb = protonPDFPtr->xf(-1, x, Q2);
+  double xfub = protonPDFPtr->xf(-2, x, Q2);
+
+  // Neutron nPDFs using isospin symmetry.
+  xd     = za * (rdv * (xfd - xfdb) + rd * xfdb)
+         + na * (ruv * (xfu - xfub) + ru * xfub);
+  xu     = za * (ruv * (xfu - xfub) + ru * xfub)
+         + na * (rdv * (xfd - xfdb) + rd * xfdb);
+  xdbar  = za * xfdb * rd + na * xfub * ru;
+  xubar  = za * xfub * ru + na * xfdb * rd;
+  xs     = rs * protonPDFPtr->xf( 3, x, Q2);
+  xsbar  = rs * protonPDFPtr->xf(-3, x, Q2);
+  xc     = rc * protonPDFPtr->xf( 4, x, Q2);
+  xb     = rb * protonPDFPtr->xf( 5, x, Q2);
+  xg     = rg * protonPDFPtr->xf(21, x, Q2);
+  xgamma = 0.;
+
+  // idSav = 9 to indicate that all flavours reset.
+  idSav  = 9;
+
+}
+
+//==========================================================================
+
+// Nuclear modifications of the PDFs from EPS09 fit, either LO or NLO.
+// Ref: K.J. Eskola, H. Paukkunen and C.A. Salgado, JHEP 0904 (2009) 065.
+// Grids files of different nuclei can be found from
+// https://www.jyu.fi/fysiikka/en/research/highenergy/urhic/eps09
+
+// Constants related to the fit.
+const double EPS09::Q2MIN = 1.69;
+const double EPS09::Q2MAX = 1000000.;
+const double EPS09::XMIN  = 0.000001;
+const double EPS09::XMAX  = 1.;
+const double EPS09::XCUT  = 0.1;
+const int EPS09::XSTEPS   = 50;
+const int EPS09::Q2STEPS  = 50;
+
+//--------------------------------------------------------------------------
+
+// Initialize EPS09 nPDFs with given order (1=LO, 2=NLO) and error set.
+
+void EPS09::init(int iOrderIn, int iSetIn, string xmlPath){
+
+  // Save the order and error set number.
+  iOrder = iOrderIn;
+  iSet   = iSetIn;
+
+  // Select which data file to read for current fit.
+  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+  stringstream fileSS;
+
+  if (iOrder == 1) fileSS << xmlPath << "EPS09LOR_" << getA();
+  if (iOrder == 2) fileSS << xmlPath << "EPS09NLOR_" << getA();
+  string gridFile = fileSS.str();
+
+  // Open grid file.
+  ifstream fileStream( gridFile.c_str() );
+  if (!fileStream.good()) {
+    printErr("Error in EPS09::init: did not find grid file " + gridFile,
+             infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Dump additional grid information here.
+  double dummy;
+
+  // Read in the interpolation grid.
+  for (int i = 0;i < 31; ++i){
+    for (int j = 0;j < 51; ++j){
+      fileStream >> dummy;
+      for (int k = 0;k < 51; ++k){
+        for (int l = 0;l < 8; ++l) fileStream >> grid[i][j][k][l];
+      }
+    }
+  }
+  fileStream.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Interpolation from the grid.
+
+void EPS09::rUpdate(int , double x, double Q2){
+
+  // Freeze the x and Q2 values if outside the grid.
+  if( x  < XMIN )  x  = XMIN;
+  if( x  > XMAX )  x  = XMAX;
+  if( Q2 < Q2MIN ) Q2 = Q2MIN;
+  if( Q2 > Q2MAX ) Q2 = Q2MAX;
+
+  // Calculate the position in log(log Q^2) grid:
+  double dQ2 = Q2STEPS * log( log(Q2) / log(Q2MIN) )
+    / log( log(Q2MAX) / log(Q2MIN) );
+  int iQ2 = int(dQ2);
+
+  // Set the Q2 index to interval [1,...,49].
+  if      ( iQ2 < 1 )           iQ2 = 1;
+  else if ( iQ2 > Q2STEPS - 1 ) iQ2 = Q2STEPS - 1;
+
+  // Calculate the three nearest points in log(log Q^2) grid.
+  double Q2Near[3];
+  Q2Near[0] = iQ2 - 1;
+  Q2Near[1] = iQ2 + 0;
+  Q2Near[2] = iQ2 + 1;
+
+  // Interpolate the grid values.
+  for ( int iFlavour = 0; iFlavour < 8; ++iFlavour){
+
+    // Calculate the position in log(x) or x grid.
+    int ix;
+    int nxlog = XSTEPS/2;
+    int nxlin = XSTEPS - nxlog;
+    if ( x <= XCUT ) ix = int( nxlog * log(x / XMIN) / log( XCUT / XMIN ) );
+    else ix = int( ( x - XCUT ) * nxlin / ( XMAX - XCUT ) + nxlog );
+
+    // Set the x-index to interval [1,...,48].
+    if ( ix < 1 ) ix = 1;
+
+    // Do not use the last grid points for interpolation.
+    if ( iFlavour == 0 || iFlavour == 1 || iFlavour == 7)
+      if ( ix >= XSTEPS - 4 ) ix = XSTEPS - 4;
+    if ( iFlavour > 1 && iFlavour < 7 )
+      if ( ix >= XSTEPS - 7 ) ix = XSTEPS - 7;
+
+    // Calculate the four nearest points in log-x or lin-x grid.
+    double xNear[4];
+    for(int i = 0;i < 4;i++){
+      if ( ix - 1 + i < nxlog ) {
+        xNear[i] = XMIN * exp( ( double( ix - 1 + i ) / nxlog )
+          * log( XCUT / XMIN ) );
+      } else {
+        xNear[i] = ( double( ix - 1 + i - nxlog) / nxlin )
+          * ( XMAX - XCUT ) + XCUT;
+      }
+    }
+
+    // Grid points used for interpolation.
+    double xGrid[4];
+    double Q2Grid[3];
+
+    // Read in the relevant values from table and interpolate in x.
+    for ( int j = 0; j < 3; ++j) {
+      xGrid[0]  = grid[iSet - 1][iQ2 - 1 + j][ix - 1][iFlavour];
+      xGrid[1]  = grid[iSet - 1][iQ2 - 1 + j][ix][iFlavour];
+      xGrid[2]  = grid[iSet - 1][iQ2 - 1 + j][ix + 1][iFlavour];
+      xGrid[3]  = grid[iSet - 1][iQ2 - 1 + j][ix + 2][iFlavour];
+      Q2Grid[j] = polInt(xGrid, xNear, 4, x);
+    }
+
+    // Interpolate in Q2.
+    double result = polInt(Q2Grid, Q2Near, 3, dQ2);
+
+    // Save the values.
+    if (iFlavour == 0) ruv = max(result, 0.);
+    if (iFlavour == 1) rdv = max(result, 0.);
+    if (iFlavour == 2) ru  = max(result, 0.);
+    if (iFlavour == 3) rd  = max(result, 0.);
+    if (iFlavour == 4) rs  = max(result, 0.);
+    if (iFlavour == 5) rc  = max(result, 0.);
+    if (iFlavour == 6) rb  = max(result, 0.);
+    if (iFlavour == 7) rg  = max(result, 0.);
+
+  }
+
+
+}
+
+//--------------------------------------------------------------------------
+
+// Polynomial interpolation with Newton's divided difference method.
+
+double EPS09::polInt(double* fi, double* xi, int n, double x){
+
+  for(int i = 1;i < n;i++){
+    for(int j = n-1;j > i - 1;j--){
+      fi[j] = (fi[j] - fi[j-1])/(xi[j] - xi[j-i]);
+    }
+  }
+  double f = fi[n-1];
+  for(int i = n-2;i > -1;i--){
+    f = (x - xi[i])*f + fi[i];
+  }
+
+  return f;
+
 }
 
 //==========================================================================

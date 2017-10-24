@@ -63,6 +63,19 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   hadronScatMode  = settings.mode("HadronScatter:mode");
   hsAfterDecay    = settings.flag("HadronScatter:afterDecay");
 
+  // Rope hadronization. Setting of partonic production vertices.
+  doRopes         = settings.flag("Ropewalk:RopeHadronization");
+  doShoving       = settings.flag("Ropewalk:doShoving");
+  doFlavour       = settings.flag("Ropewalk:doFlavour");
+  doVertex        = settings.flag("PartonVertex:setVertex");
+
+  // Initialize Ropewalk.
+  if (!ropewalk.init(infoPtr, settings, rndmPtr)) return false;
+
+  // Initialize Flavour Ropes.
+  flavourRope.init(&settings, rndmPtr, particleDataPtr, infoPtr,
+    &ropewalk);
+
   // Initialize auxiliary fragmentation classes.
   flavSel.init(settings,  particleDataPtr, rndmPtr, infoPtr);
   pTSel.init(  settings,  particleDataPtr, rndmPtr, infoPtr);
@@ -73,7 +86,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
 
   // Initialize string and ministring fragmentation.
   stringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
-    &flavSel, &pTSel, &zSel, userHooksPtr);
+    &flavSel, &pTSel, &zSel, &flavourRope, userHooksPtr);
   ministringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
     &flavSel, &pTSel, &zSel);
 
@@ -139,7 +152,8 @@ bool HadronLevel::next( Event& event) {
     if (doHadronize) {
 
       // Find the complete colour singlet configuration of the event.
-      if (!findSinglets( event)) return false;
+      // Keep junctions if we do shoving.
+      if (!findSinglets( event, (doRopes && doShoving) )) return false;
 
       // Fragment off R-hadrons, if necessary.
       if (allowRH && !rHadronsPtr->produce( colConfig, event))
@@ -150,6 +164,38 @@ bool HadronLevel::next( Event& event) {
         vector< vector< pair<double,double> > > rapPairs =
           rapidityPairs(event);
         colConfig.rapPairs = rapPairs;
+      }
+
+      // Let strings interact in rope hadronization treatment.
+      if (doRopes) {
+
+        // Do the shoving treatment.
+        if (doShoving) {
+          // For shoving we need explicit vertex information.
+          if (!doVertex) {
+            infoPtr->errorMsg("Error in HadronLevel::next: "
+              "shoving enabled, but no vertex info.");
+            return false;
+          }
+          // Extract all string segments from the event.
+          ropewalk.extractDipoles(event, colConfig);
+          // String shoving.
+          ropewalk.shoveTheDipoles(event);
+          // Find singlets again.
+          iParton.resize(0);
+          colConfig.clear();
+          if (!findSinglets( event)) {
+            infoPtr->errorMsg("Error in HadronLevel::next: "
+              "ropes: failed 2nd singlet tracing.");
+            return false;
+          }
+        }
+
+        // Prepare for flavour ropes.
+        if (doFlavour && doVertex) {
+          ropewalk.extractDipoles(event, colConfig);
+          ropewalk.calculateOverlaps();
+        }
       }
 
       // Process all colour singlet (sub)systems.
@@ -274,8 +320,10 @@ bool HadronLevel::decayOctetOnia(Event& event) {
 //--------------------------------------------------------------------------
 
 // Trace colour flow in the event to form colour singlet subsystems.
+// Option will keep junctions in the remainsJunction list,
+// and not eliminate any junctions by insertion.
 
-bool HadronLevel::findSinglets(Event& event) {
+bool HadronLevel::findSinglets(Event& event, bool keepJunctions) {
 
   // Clear up storage.
   colConfig.clear();
@@ -288,7 +336,7 @@ bool HadronLevel::findSinglets(Event& event) {
   // Junctions: loop over them, and identify kind.
   for (int iJun = 0; iJun < event.sizeJunction(); ++iJun)
   if (event.remainsJunction(iJun)) {
-    event.remainsJunction(iJun, false);
+    if (!keepJunctions) event.remainsJunction(iJun, false);
     int kindJun = event.kindJunction(iJun);
     iParton.resize(0);
 
@@ -305,9 +353,11 @@ bool HadronLevel::findSinglets(Event& event) {
     }
 
     // A junction may be eliminated by insert if two quarks are nearby.
-    int nJunOld = event.sizeJunction();
-    if (!colConfig.insert(iParton, event)) return false;
-    if (event.sizeJunction() < nJunOld) --iJun;
+    if (!keepJunctions) {
+      int nJunOld = event.sizeJunction();
+      if (!colConfig.insert(iParton, event)) return false;
+      if (event.sizeJunction() < nJunOld) --iJun;
+    }
   }
 
   // Open strings: pick up each colour end and trace to its anticolor end.

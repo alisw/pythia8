@@ -75,6 +75,19 @@ public:
   // Return quark masses used in the PDF fit (LHAPDF6 only).
   virtual double mQuarkPDF(int) { return -1.;}
 
+  // Error envelope from PDF uncertainty.
+  struct PDFEnvelope {
+    double centralPDF, errplusPDF, errminusPDF, errsymmPDF, scalePDF;
+    PDFEnvelope() : centralPDF(-1.0), errplusPDF(0.0), errminusPDF(0.0),
+    errsymmPDF(0.0), scalePDF(-1.0) {};
+  };
+
+  // Calculate PDF envelope.
+  virtual void calcPDFEnvelope(int, double, double, int) {}
+  virtual void calcPDFEnvelope(pair<int,int>, pair<double,double>, double,
+    int) {}
+  virtual PDFEnvelope getPDFEnvelope() { return PDFEnvelope(); }
+
   // Approximate photon PDFs by decoupling the scale and x-dependence.
   virtual double gammaPDFxDependence(int, double) { return 0.; }
 
@@ -89,6 +102,21 @@ public:
 
   // Return the sampled value for x_gamma.
   virtual double xGamma(){ return 1.; }
+
+  // Keep track of pomeron momentum fraction.
+  virtual void xPom(double = -1.0) {}
+
+  // Return accurate and approximated photon fluxes and PDFs.
+  virtual double xfFlux(int , double , double )   { return 0.; }
+  virtual double xfApprox(int , double , double ) { return 0.; }
+  virtual double xfGamma(int , double , double )  { return 0.; }
+
+  // Return the kinematical limits and sample Q2 and x.
+  virtual double getQ2min()             { return 0.; }
+  virtual double getXmin()              { return 0.; }
+  virtual double getXhadr()             { return 0.; }
+  virtual double sampleXgamma()         { return 0.; }
+  virtual double sampleQ2gamma(double ) { return 0.; }
 
   // Normal PDFs unless gamma inside lepton -> an overestimate for sampling.
   virtual double xfMax(int id, double x, double Q2) { return xf( id, x, Q2); }
@@ -474,6 +502,42 @@ private:
 
 //==========================================================================
 
+class PomHISASD : public PDF {
+
+public:
+
+  // Basic constructor
+  PomHISASD(int idBeamIn, PDF* ppdf, Settings & settings,Info* infoPtrIn = 0)
+    : PDF(idBeamIn), pPDFPtr(ppdf), xPomNow(-1.0), hixpow(4.0) {
+    infoPtr = infoPtrIn; hixpow = settings.parm("PDF:PomHixSupp"); }
+
+  // Delete also the proton PDF
+  ~PomHISASD() { delete pPDFPtr; }
+
+  // (re-)Set the x_pomeron value.
+  void xPom(double xpom = -1.0) { xPomNow = xpom; }
+
+private:
+
+  // The proton PDF.
+  PDF* pPDFPtr;
+
+  // The momenum fraction if the corresponding pomeron .
+  double xPomNow;
+
+  // The high-x suppression power.
+  double hixpow;
+
+  // Report possible errors.
+  Info* infoPtr;
+
+  // Update PDF values.
+  void xfUpdate(int , double x, double Q2);
+
+};
+
+//==========================================================================
+
 // Gives electron (or muon, or tau) parton distribution.
 
 class Lepton : public PDF {
@@ -484,8 +548,13 @@ public:
   Lepton(int idBeamIn = 11) : PDF(idBeamIn) {}
 
   // Constructor with further info.
-  Lepton(int idBeamIn, double Q2maxGammaIn, Info* infoPtrIn) : PDF(idBeamIn) {
-    Q2maxGamma = Q2maxGammaIn; infoPtr = infoPtrIn; }
+  Lepton(int idBeamIn, double Q2maxGammaIn, Info* infoPtrIn,
+    Rndm* rndmPtrIn = 0) : PDF(idBeamIn) { Q2maxGamma = Q2maxGammaIn;
+    infoPtr = infoPtrIn; rndmPtr = rndmPtrIn; }
+
+  // Sample the Q2 value.
+  double sampleQ2gamma(double Q2min)
+    { return Q2min * pow(Q2maxGamma / Q2min, rndmPtr->flat()); }
 
 private:
 
@@ -500,6 +569,9 @@ private:
 
   // Pointer to info, needed to get sqrt(s) to fix x_gamma limits.
   Info* infoPtr;
+
+  // Pointer to random number generator, needed to sample Q2.
+  Rndm* rndmPtr;
 
 };
 
@@ -669,6 +741,15 @@ public:
   double mQuarkPDF(int idIn) {
     if(pdfPtr) return pdfPtr->mQuarkPDF(idIn); else return -1.;}
 
+  // Calculate PDF envelope.
+  void calcPDFEnvelope(int idNow, double xNow, double Q2Now, int valSea) {
+    if (pdfPtr) pdfPtr->calcPDFEnvelope(idNow, xNow, Q2Now, valSea);}
+  void calcPDFEnvelope(pair<int,int> idNows, pair<double,double> xNows,
+    double Q2Now, int valSea) {
+    if (pdfPtr) pdfPtr->calcPDFEnvelope(idNows,xNows,Q2Now,valSea);}
+  PDFEnvelope getPDFEnvelope() { if (pdfPtr) return pdfPtr->getPDFEnvelope();
+    else return PDFEnvelope(); }
+
 private:
 
   // Resolve valence content for assumed meson.
@@ -748,7 +829,7 @@ private:
 
 // The LHAGrid1 can be used to read files in the LHAPDF6 lhagrid1 format,
 // assuming that the same x grid is used for all Q subgrids.
-// Results are not identical with LHAPDF6, owing do different interpolation.
+// Results are not identical with LHAPDF6, owing to different interpolation.
 
 class LHAGrid1 : public PDF {
 
@@ -826,6 +907,10 @@ public:
   double xfMax(int id, double x, double Q2);
   double xfSame(int id, double x, double Q2);
 
+  // Sample the Q2 value.
+  double sampleQ2gamma(double Q2min)
+    { return Q2min * pow(Q2max / Q2min, rndmPtr->flat()); }
+
 private:
 
   // Parameters for convolution.
@@ -862,6 +947,169 @@ private:
   // Update PDF values in trivial way.
   void xfUpdate(int , double , double ) { xgamma = 1.;}
 
+};
+
+//==========================================================================
+
+// Equivalent photon approximation for sampling with external photon flux.
+
+class EPAexternal : public PDF {
+
+private:
+
+  // Kinematics.
+  static const double ALPHAEM;
+  double m2, Q2max, Q2min, xMax, xMin, xHadr, norm;
+
+  // Photon Flux and PDF.
+  PDF* gammaFluxPtr;
+  PDF* gammaPDFPtr;
+
+  // Pointer to random number generator used for sampling x_gamma.
+  Rndm* rndmPtr;
+
+  // Pointer to info, needed to get sqrt(s) to fix x_gamma limits.
+  Info* infoPtr;
+
+  // Pointer to settings to get Q2max.
+  Settings* settingsPtr;
+
+  // Initialization.
+  void init();
+
+public:
+
+  // Constructor.
+  EPAexternal(int idBeamIn, double m2In, PDF* gammaFluxPtrIn,
+    PDF* gammaPDFPtrIn, Settings* settingsPtrIn, Info* infoPtrIn,
+    Rndm* rndmPtrIn ) : PDF(idBeamIn) { m2 = m2In,
+    gammaFluxPtr = gammaFluxPtrIn; gammaPDFPtr = gammaPDFPtrIn;
+    hasGammaInLepton = true; infoPtr = infoPtrIn; settingsPtr = settingsPtrIn;
+    rndmPtr = rndmPtrIn; init(); }
+
+  // Update PDFs.
+  void xfUpdate(int , double x, double Q2);
+
+  // External flux and photon PDFs, and approximated flux for sampling.
+  double xfFlux(int id, double x, double Q2);
+  double xfGamma(int id, double x, double Q2);
+  double xfApprox(int id, double x, double Q2);
+
+  // Kinematics.
+  double getQ2min() { return Q2min; }
+  double getXmin()  { return xMin; }
+  double getXhadr() { return xHadr; }
+
+  // Sampling of the x and Q2 according to 1/x and 1/Q2.
+  double sampleXgamma() { return xMin * pow(xMax / xMin, rndmPtr->flat()); }
+  double sampleQ2gamma(double )
+    { return Q2min * pow(Q2max / Q2min, rndmPtr->flat()); }
+
+};
+
+//==========================================================================
+
+// A derived class for nuclear PDFs. Needs a pointer for (free) proton PDFs.
+
+class nPDF : public PDF {
+
+public:
+
+  // Constructor.
+  nPDF(int idBeamIn = 2212, PDF* protonPDFPtrIn = 0) : PDF(idBeamIn)
+    { initNPDF(protonPDFPtrIn); }
+
+  // Update parton densities.
+  void xfUpdate(int id, double x, double Q2);
+
+  // Update nuclear modifications.
+  virtual void rUpdate(int, double, double) = 0;
+
+  // Initialize the nPDF-related members.
+  void initNPDF(PDF* protonPDFPtrIn = 0);
+
+  // Return the number of protons and nucleons.
+  int getA() {return a;}
+  int getZ() {return z;}
+
+  // Set (and reset) the ratio of protons to nucleons to study nuclear
+  // modifications of protons (= 1.0) and neutrons (= 0.0). By default Z/A.
+  void setMode(double zaIn) { za = zaIn; na = 1. - za; }
+  void resetMode() { za = double(z)/double(a); na = double(a-z)/double(a); }
+
+protected:
+
+  // The nuclear modifications for each flavour, modified by derived nPDF
+  // classes.
+  double ruv, rdv, ru, rd, rs, rc, rb, rg;
+
+private:
+
+  // The nuclear mass number and number of protons (charge) and normalized
+  // number of protons and neutrons.
+  int a, z;
+  double za, na;
+
+  // Pointer to (free) proton PDF.
+  PDF* protonPDFPtr;
+
+};
+
+//==========================================================================
+
+// Isospin modification with nuclear beam, i.e. no other modifications
+// but correct number of protons and neutrons.
+
+class Isospin : public nPDF {
+
+public:
+
+  // Constructor.
+  Isospin(int idBeamIn = 2212, PDF* protonPDFPtrIn = 0)
+    : nPDF(idBeamIn, protonPDFPtrIn) {}
+
+  // Only the Isospin effect so no need to do anything here.
+  void rUpdate(int , double , double ) {}
+};
+
+//==========================================================================
+
+// Nuclear modifications from EPS09 fit.
+
+class EPS09 : public nPDF {
+
+public:
+
+  // Constructor.
+  EPS09(int idBeamIn = 2212, int iOrderIn = 1, int iSetIn = 1,
+        string xmlPath = "../share/Pythia8/xmldoc/", PDF* protonPDFPtrIn = 0,
+        Info* infoPtrIn = 0) : nPDF(idBeamIn, protonPDFPtrIn)
+        { infoPtr = infoPtrIn; init(iOrderIn, iSetIn, xmlPath);}
+
+  // Update parton densities.
+  void rUpdate(int id, double x, double Q2);
+
+  // Use other than central set to study uncertainties.
+  void setErrorSet(int iSetIn) {iSet = iSetIn;}
+
+private:
+
+  // Parameters related to the fit.
+  static const double Q2MIN, Q2MAX, XMIN, XMAX, XCUT;
+  static const int Q2STEPS, XSTEPS;
+
+  // Set parameters and the grid.
+  int iSet, iOrder;
+  double grid[31][51][51][8];
+
+  // Pointer to info for possible error messages.
+  Info* infoPtr;
+
+  // Initialize with given inputs.
+  void init(int iOrderIn, int iSetIn, string xmlPath);
+
+  // Interpolation algorithm.
+  double polInt(double* fi, double* xi, int n, double x);
 };
 
 //==========================================================================

@@ -367,7 +367,7 @@ diffractive process.
 The momentum transfer <ei>t</ei> in the hard diffractive process. 
 </methodmore> 
  
-<h3>Photon-photon in lepton-lepton</h3> 
+<h3>Photons from lepton beams</h3> 
  
 Information about the kinematics of photon-photon collisions from lepton 
 beams. 
@@ -389,6 +389,10 @@ Virtualities of the photons emitted by the leptons.
 <methodmore name="double Info::thetaScatLepB()"> 
 Scattering angles of the leptons wrt. the beam direction. 
 </methodmore> 
+<method name="int Info::photonMode()"> 
+Type of photon process, see 
+<aloc href="Photoproduction">Photoproduction</aloc> for details. 
+</method> 
  
 <h3>Event weight and activity</h3> 
  
@@ -499,8 +503,22 @@ processes).
 <method name="double Info::enhanceMPI()"> 
 The choice of impact parameter implies an enhancement or depletion of 
 the rate of subsequent interactions, as given by this number. Again 
-the average is normalized be unity for minimum-bias events (meaning 
+the average is normalized to be unity for minimum-bias events (meaning 
 more than that for events with hard processes). 
+</method> 
+ 
+<method name="double Info::enhanceMPIavg()"> 
+The average enhancement factor expected for hard processes, in those 
+cases where it can be calculated already at initialization, i.e. excluding 
+the <ei>x</ei>-dependent <ei>b</ei> profile. The normalization is here 
+chosen to apply to cases with two hard interactions <ei>A</ei> and 
+<ei>B</ei> preselected in the process level, and there multiplies 
+<ei>sigma_A * sigma_B / sigma_{nondiff}</ei> to give the joint cross 
+section. (Additional corrections from joint PDF weights somewhat reduce 
+the final number.) The normalization is slightly different (typically 
+around 5%) from the average of the <code>enhanceMPI()</code> method above, 
+which instead is normalized to average value unity for nondiffractive events. 
+As used internally the two are consistent. 
 </method> 
  
 <method name="int Info::nMPI()"> 
@@ -539,14 +557,16 @@ partons. Note that <code>eMPI(0) = enhanceMPI()</code>.
  
 <method name="double Info::bMPIold()"> 
 </method> 
- <methodmore name="double Info::enhanceMPIold()"> 
+<methodmore name="double Info::enhanceMPIold()"> 
+</methodmore> 
+<methodmore name="double Info::enhanceMPIoldavg()"> 
 These methods are only relevant for hard diffraction with the requirement 
 of no MPI in the hadron-hadron collision. Then an impact parameter 
 and associated enhancement factor is picked for this collision, but 
 afterwards overwritten when the Pomeron-hadron subcollision is considered. 
 In such cases the old hadron-hadron values can be found here, while 
-<code>bMPI</code> and <code>enhanceMPI</code> provide the new 
-Pomeron-hadron ones. 
+<code>bMPI</code>, <code>enhanceMPI</code> and <code>enhanceMPIavg</code> 
+provide the new Pomeron-hadron ones. 
 </methodmore> 
  
 <h3>Cross sections</h3> 
@@ -701,7 +721,10 @@ downwards step above.
 <argoption value="31">  the number of times FSR has been accepted as the 
 downwards step above, after the vetoes. 
 </argoption> 
-<argoption value="40 - 49"> counters that are unused (currently), and 
+<argoption value="40"> keeps track of vetoed emission for shower 
+reweighting. 
+</argoption> 
+<argoption value="41 - 49"> counters that are unused (currently), and 
 that therefore are free to use, with the help of the two methods below. 
 </argoption> 
 </argument> 

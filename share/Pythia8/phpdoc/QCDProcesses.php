@@ -288,7 +288,7 @@ processes. Topologies then cannot be specified beforehand, beyond
 what is provided by the two-parton hard process. For some checks 
 it may be convenient to have access to the dedicated three-parton 
 final states, which is what this set of processes allows. 
-Cross sections have been taken from [<a href="Bibliography.php" target="page">Ber81</a>]. 
+Cross sections have been taken from [<a href="Bibliography.php#refBer81" target="page">Ber81</a>]. 
 <br/>Note that the processes in this section are  <it>not</it> 
 affected by the <code>HardQCD:all</code> switch. In fact, it would 
 be double-counting to include both the <code>HardQCD:all</code> and 

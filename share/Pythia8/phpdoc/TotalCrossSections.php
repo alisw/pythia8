@@ -32,9 +32,9 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 The <code>SigmaTotal</code> class returns the total, elastic, diffractive 
 and nondiffractive cross sections in hadronic collisions, and also the 
 slopes of the <i>d(sigma)/dt</i> distributions. Most of the parametrizations 
-used are from [<a href="Bibliography.php" target="page">Sch94, Sch97</a>] which borrows some of the total cross 
-sections from [<a href="Bibliography.php" target="page">Don92</a>]. If you use the MBR (Minimum Bias Rockefeller) 
-model [<a href="Bibliography.php" target="page">Cie12</a>], <code>Diffraction:PomFlux = 5</code>, this model 
+used are from [<a href="Bibliography.php#refSch94" target="page">Sch94</a>, <a href="Bibliography.php#refSch97" target="page">Sch97</a>] which borrows some of the total cross 
+sections from [<a href="Bibliography.php#refDon92" target="page">Don92</a>]. If you use the MBR (Minimum Bias Rockefeller) 
+model [<a href="Bibliography.php#refCie12" target="page">Cie12</a>], <code>Diffraction:PomFlux = 5</code>, this model 
 contains its own parametrizations of all cross sections in <i>p p</i> 
 and <i>pbar p</i> collisions. 
  
@@ -65,7 +65,7 @@ below, with allowed variations, are mainly intended to make sense for
 <h3>Central diffraction</h3> 
  
 Central diffraction (CD), a.k.a. double Pomeron exchange (DPE), was not 
-part of the framework in [<a href="Bibliography.php" target="page">Sch94</a>]. It has now been added for 
+part of the framework in [<a href="Bibliography.php#refSch94" target="page">Sch94</a>]. It has now been added for 
 multiparticle states, i.e. excluding the resonance region below 1 GeV 
 mass, as well as other exclusive states, but only for <i>p p</i> or 
 <i>pbar p</i>. It uses the same proton-Pomeron vertex as in single 
@@ -146,6 +146,31 @@ is what makes up the minimum-bias event class, and plays a major role
 in the description of multiparton interactions, it is important that a 
 consistent set is used. 
  
+<h3>Modify diffractive cross sections</h3> 
+ 
+The default description of diffractive interactions was 
+parameterized and fit in [<a href="Bibliography.php#refSch94" target="page">Sch94</a>, <a href="Bibliography.php#refSch97" target="page">Sch97</a>]. The following 
+parameters allow for some modification of the mass distribution of 
+the diffractive system, which then integrates to a modified diffractive 
+cross section. Note that these parameters have no effect on the MBR model. 
+ 
+<br/><br/><table><tr><td><strong> </td><td></td><td> <input type="text" name="10" value="0.28" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.28</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+Lowest mass of a diffractive system is set to be <i>mHadron + mMin</i>. 
+   
+ 
+<br/><br/><table><tr><td><strong> </td><td></td><td> <input type="text" name="11" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+Normalization factor for the contribution of low-mass resonances 
+to the diffractive cross section (<i>cRes</i> in eq. (22) of 
+[<a href="Bibliography.php#refSch94" target="page">Sch94</a>]). 
+   
+ 
+<br/><br/><table><tr><td><strong> </td><td></td><td> <input type="text" name="12" value="1.062" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.062</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+The contribution of low-mass resonances is dampened at around the 
+scale <i>mHadron + mResMax</i> (the sum is <i>Mres</i> in eq. (22) 
+of [<a href="Bibliography.php#refSch94" target="page">Sch94</a>]). To make sense, we should have 
+<i>mResMax > mMin</i>. 
+   
+ 
 <h3>Dampen diffractive cross sections</h3> 
  
 As already noted, unitarization effects may dampen the rise of diffractive 
@@ -154,8 +179,8 @@ here allows one way to introduce a dampening, which is used in some
 of the existing <?php $filepath = $_GET["filepath"];
 echo "<a href='Tunes.php?filepath=".$filepath."' target='page'>";?>tunes</a>. 
  
-<br/><br/><strong>SigmaDiffractive:dampen</strong>  <input type="radio" name="10" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="10" value="off"><strong>Off</strong>
+<br/><br/><strong>SigmaDiffractive:dampen</strong>  <input type="radio" name="13" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="13" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 Allow a user to dampen diffractive cross sections; on/off = true/false. 
    
@@ -171,19 +196,19 @@ This reduces to <i>sigma_old(s)</i> at low energies and to
 <i>sigma_max</i> at high ones. Note that the asymptotic value 
 is approached quite slowly, however. 
  
-<br/><br/><table><tr><td><strong>SigmaDiffractive:maxXB </td><td></td><td> <input type="text" name="11" value="65." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaDiffractive:maxXB </td><td></td><td> <input type="text" name="14" value="65." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The above <i>sigma_max</i> for <i>A + B &rarr; X + B</i> in mb. 
    
  
-<br/><br/><table><tr><td><strong>SigmaDiffractive:maxAX </td><td></td><td> <input type="text" name="12" value="65." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaDiffractive:maxAX </td><td></td><td> <input type="text" name="15" value="65." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The above <i>sigma_max</i> for <i>A + B &rarr; A + X</i> in mb. 
    
  
-<br/><br/><table><tr><td><strong>SigmaDiffractive:maxXX </td><td></td><td> <input type="text" name="13" value="65." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaDiffractive:maxXX </td><td></td><td> <input type="text" name="16" value="65." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The above <i>sigma_max</i> for <i>A + B &rarr; X_1 + X_2</i> in mb. 
    
  
-<br/><br/><table><tr><td><strong>SigmaDiffractive:maxAXB </td><td></td><td> <input type="text" name="14" value="3." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>3.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaDiffractive:maxAXB </td><td></td><td> <input type="text" name="17" value="3." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>3.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The above <i>sigma_max</i> for <i>A + B &rarr; A + X + B</i> in mb. 
    
  
@@ -202,46 +227,46 @@ to the elastic (or total) cross section, which of course becomes
 infinite if this contribution is included. If you have switched on 
 <code>SigmaTotal:setOwn</code> you can further switch on a machinery 
 to include the Coulomb term, including interference with the conventional 
-strong-interaction Pomeron one [<a href="Bibliography.php" target="page">Ber87</a>]. Then the elastic cross 
+strong-interaction Pomeron one [<a href="Bibliography.php#refBer87" target="page">Ber87</a>]. Then the elastic cross 
 section is no longer taken from <code>SigmaTotal:sigmaEl</code> but 
 derived from the parameters below and <code>SigmaTotal:sigmaTot</code>, 
 using the optical theorem. The machinery is only intended to be used for 
 <i>p p</i> and <i>pbar p</i> collisions. The description of 
 diffractive events, and especially their slopes, remains unchanged. 
  
-<br/><br/><strong>SigmaElastic:setOwn</strong>  <input type="radio" name="15" value="on"><strong>On</strong>
-<input type="radio" name="15" value="off"><strong>Off</strong>
+<br/><br/><strong>SigmaElastic:setOwn</strong>  <input type="radio" name="18" value="on"><strong>On</strong>
+<input type="radio" name="18" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>no</strong></code>)<br/>
 Allow a user to set parameters for the normalization and shape of the 
 elastic cross section the by hand; yes/no = true/false. 
    
  
-<br/><br/><table><tr><td><strong>SigmaElastic:bSlope </td><td></td><td> <input type="text" name="16" value="18." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>18.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaElastic:bSlope </td><td></td><td> <input type="text" name="19" value="18." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>18.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 the slope <i>b</i> of the strong-interaction term <i>exp(bt)</i>, 
 in units of GeV^-2. 
    
  
-<br/><br/><table><tr><td><strong>SigmaElastic:rho </td><td></td><td> <input type="text" name="17" value="0.13" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.13</strong></code>; <code>minimum = -1.</code>; <code>maximum = 1.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaElastic:rho </td><td></td><td> <input type="text" name="20" value="0.13" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.13</strong></code>; <code>minimum = -1.</code>; <code>maximum = 1.</code>)</td></tr></table>
 the ratio of the real to the imaginary parts of the nuclear scattering 
 amplitude. 
    
  
-<br/><br/><table><tr><td><strong>SigmaElastic:lambda </td><td></td><td> <input type="text" name="18" value="0.71" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.71</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaElastic:lambda </td><td></td><td> <input type="text" name="21" value="0.71" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.71</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.</code>)</td></tr></table>
 the main parameter of the electric form factor 
 <i>G(t) = lambda^2 / (lambda + |t|)^2</i>, in units of GeV^2. 
    
  
-<br/><br/><table><tr><td><strong>SigmaElastic:tAbsMin </td><td></td><td> <input type="text" name="19" value="5e-5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5e-5</strong></code>; <code>minimum = 1e-10</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaElastic:tAbsMin </td><td></td><td> <input type="text" name="22" value="5e-5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5e-5</strong></code>; <code>minimum = 1e-10</code>)</td></tr></table>
 since the Coulomb contribution is infinite a lower limit on 
 <i>|t|</i> must be set to regularize the divergence, 
 in units of GeV^2. 
    
  
-<br/><br/><table><tr><td><strong>SigmaElastic:phaseConst </td><td></td><td> <input type="text" name="20" value="0.577" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.577</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>SigmaElastic:phaseConst </td><td></td><td> <input type="text" name="23" value="0.577" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.577</strong></code>)</td></tr></table>
 The Coulomb term is taken to contain a phase factor 
 <i>exp(+- i alpha phi(t))</i>, with + for <i>p p</i> and - for 
 <i>pbar p</i>, where <i>phi(t) = - phaseConst - ln(-B t/2)</i>. 
-This constant is model dependent [<a href="Bibliography.php" target="page">Cah82</a>]. 
+This constant is model dependent [<a href="Bibliography.php#refCah82" target="page">Cah82</a>]. 
    
  
 <input type="hidden" name="saved" value="1"/>
@@ -304,59 +329,74 @@ if($_POST["9"] != "1.")
 $data = "SigmaTotal:sigmaAXB = ".$_POST["9"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["10"] != "on")
+if($_POST["10"] != "0.28")
 {
-$data = "SigmaDiffractive:dampen = ".$_POST["10"]."\n";
+$data = " = ".$_POST["10"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["11"] != "65.")
+if($_POST["11"] != "2.0")
 {
-$data = "SigmaDiffractive:maxXB = ".$_POST["11"]."\n";
+$data = " = ".$_POST["11"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["12"] != "65.")
+if($_POST["12"] != "1.062")
 {
-$data = "SigmaDiffractive:maxAX = ".$_POST["12"]."\n";
+$data = " = ".$_POST["12"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["13"] != "65.")
+if($_POST["13"] != "on")
 {
-$data = "SigmaDiffractive:maxXX = ".$_POST["13"]."\n";
+$data = "SigmaDiffractive:dampen = ".$_POST["13"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["14"] != "3.")
+if($_POST["14"] != "65.")
 {
-$data = "SigmaDiffractive:maxAXB = ".$_POST["14"]."\n";
+$data = "SigmaDiffractive:maxXB = ".$_POST["14"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["15"] != "no")
+if($_POST["15"] != "65.")
 {
-$data = "SigmaElastic:setOwn = ".$_POST["15"]."\n";
+$data = "SigmaDiffractive:maxAX = ".$_POST["15"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["16"] != "18.")
+if($_POST["16"] != "65.")
 {
-$data = "SigmaElastic:bSlope = ".$_POST["16"]."\n";
+$data = "SigmaDiffractive:maxXX = ".$_POST["16"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["17"] != "0.13")
+if($_POST["17"] != "3.")
 {
-$data = "SigmaElastic:rho = ".$_POST["17"]."\n";
+$data = "SigmaDiffractive:maxAXB = ".$_POST["17"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["18"] != "0.71")
+if($_POST["18"] != "no")
 {
-$data = "SigmaElastic:lambda = ".$_POST["18"]."\n";
+$data = "SigmaElastic:setOwn = ".$_POST["18"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["19"] != "5e-5")
+if($_POST["19"] != "18.")
 {
-$data = "SigmaElastic:tAbsMin = ".$_POST["19"]."\n";
+$data = "SigmaElastic:bSlope = ".$_POST["19"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["20"] != "0.577")
+if($_POST["20"] != "0.13")
 {
-$data = "SigmaElastic:phaseConst = ".$_POST["20"]."\n";
+$data = "SigmaElastic:rho = ".$_POST["20"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["21"] != "0.71")
+{
+$data = "SigmaElastic:lambda = ".$_POST["21"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["22"] != "5e-5")
+{
+$data = "SigmaElastic:tAbsMin = ".$_POST["22"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["23"] != "0.577")
+{
+$data = "SigmaElastic:phaseConst = ".$_POST["23"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);

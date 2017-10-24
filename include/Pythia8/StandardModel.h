@@ -217,7 +217,7 @@ class Couplings : public CoupSM {
 
 public:
 
- Couplings() : isSUSY(false) {}
+  Couplings(bool isSUSYin = false) : isSUSY(isSUSYin) {}
   bool isSUSY;
 
 };

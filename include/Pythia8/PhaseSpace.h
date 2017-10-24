@@ -107,10 +107,13 @@ public:
   // Inform whether beam particles are resolved in partons or scatter directly.
   virtual bool isResolved() const {return true;}
 
-  // Functions to rescale momenta and cross section for new sHat.
+  // Functions to rescale momenta and cross section for new sHat
   // Currently implemented only for PhaseSpace2to2tauyz class.
   virtual void rescaleSigma( double){}
   virtual void rescaleMomenta( double){}
+
+  // Calculate the weight for over-estimated cross section.
+  virtual double weightGammaPDFApprox(){ return 1.;}
 
   // Set the GammaKinematics pointer. Implemented for non-diffractive gm+gm.
   virtual void setGammaKinPtr( GammaKinematics*){}
@@ -164,10 +167,10 @@ protected:
 
   // Initialization data, normally only set once.
   bool   useBreitWigners, doEnergySpread, showSearch, showViolation,
-         increaseMaximum;
+         increaseMaximum, hasQ2Min;
   int    gmZmodeGlobal;
   double mHatGlobalMin, mHatGlobalMax, pTHatGlobalMin, pTHatGlobalMax,
-         pTHatMinDiverge, minWidthBreitWigners;
+         Q2GlobalMin, pTHatMinDiverge, minWidthBreitWigners;
 
   // Information on incoming beams.
   int    idA, idB;
@@ -211,12 +214,12 @@ protected:
   bool   sameResMass;
 
   // Kinematics properties specific to 2 -> 1/2/3.
-  bool   useMirrorWeight;
+  bool   useMirrorWeight, hasNegZ, hasPosZ;
   double tau, y, z, tauMin, tauMax, yMax, zMin, zMax, ratio34, unity34,
          zNeg, zPos, wtTau, wtY, wtZ, wt3Body, runBW3H, runBW4H, runBW5H,
          intTau0, intTau1, intTau2, intTau3, intTau4, intTau5, intTau6,
          intY0, intY12, intY34, intY56, mTchan1, sTchan1, mTchan2, sTchan2,
-         frac3Flat, frac3Pow1, frac3Pow2;
+         frac3Flat, frac3Pow1, frac3Pow2, zNegMin, zNegMax, zPosMin, zPosMax;
   Vec4   p3cm, p4cm, p5cm;
 
   // Coefficients for optimized selection in 2 -> 1/2/3.
@@ -321,6 +324,9 @@ public:
 
   // Recalculates cross section with rescaled sHat.
   virtual void rescaleSigma ( double sHatNew);
+
+  // Calculate the weight for over-estimated cross section.
+  virtual double weightGammaPDFApprox();
 
 private:
 
@@ -500,6 +506,8 @@ private:
   GammaKinematics* gammaKinPtr;
 
   // Parameters.
+  int    idAin, idBin;
+  bool   gammaA, gammaB, externalFlux, sampleQ2;
   double Q2maxGamma, Wmin, sigmaNDestimate, sigmaNDmax, sCM, alphaEM,
     m2BeamA, m2BeamB, m2sA, m2sB, log2xMinA, log2xMaxA, log2xMinB, log2xMaxB,
     xGamma1, xGamma2, Q2gamma1, Q2gamma2, mGmGm, Q2min1, Q2min2;

@@ -191,7 +191,8 @@ In detail, the list of used or foreseen status codes is:
   <li>107 : two temporary leftover gluons joined into one in the formation 
             of a gluino-gluon R-hadron</li> 
   </ul> 
-<li>111 - 119 : hadrons with changed momentum due to hadron (re)scattering</li> 
+<li>111 - 119 : hadrons with changed momentum due to hadron 
+  (re)scattering</li> 
   <ul> 
   <li>111 : first time scattering</li> 
   <li>112 : second or more time scattering</li> 
@@ -522,6 +523,14 @@ angle in the <ei>(p_x, p_z)</ei> plane, between <ei>-pi</ei> and
 </method> 
 <methodmore name="double Particle::eta()"> 
 rapidity and pseudorapidity. 
+</methodmore> 
+ 
+<method name="double Particle::y(double mCut)"> 
+</method> 
+<methodmore name="double Particle::y(double mCut, RotBstMatrix& M)"> 
+rapidity, but calculated assuming that the particle transverse mass 
+is at least <ei>mCut</ei>, and optionally if the particle were first 
+to be boosted and rotated by <ei>M</ei>. 
 </methodmore> 
  
 <method name="double Particle::xDec()"> 

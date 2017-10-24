@@ -37,7 +37,8 @@ const bool   BeamRemnants::CORRECTMISMATCH  = false;
 
 bool BeamRemnants::init( Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
   BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  PartonSystems* partonSystemsPtrIn, ParticleData* particleDataPtrIn,
+  PartonSystems* partonSystemsPtrIn, PartonVertex* partonVertexPtrIn,
+  ParticleData* particleDataPtrIn,
   ColourReconnection* colourReconnectionPtrIn) {
 
   // Save pointers.
@@ -46,6 +47,7 @@ bool BeamRemnants::init( Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
   beamAPtr              = beamAPtrIn;
   beamBPtr              = beamBPtrIn;
   partonSystemsPtr      = partonSystemsPtrIn;
+  partonVertexPtr       = partonVertexPtrIn;
   colourReconnectionPtr = colourReconnectionPtrIn;
   particleDataPtr       = particleDataPtrIn;
 
@@ -84,6 +86,10 @@ bool BeamRemnants::init( Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
   // Initialize junction splitting class.
   junctionSplitting.init(infoPtr, settings, rndmPtr, particleDataPtrIn);
 
+  // Possibility to set parton vertex information.
+  doPartonVertex      = settings.flag("PartonVertex:setVertex")
+                     && (partonVertexPtr != 0);
+
   // Done.
   return true;
 
@@ -120,8 +126,11 @@ bool BeamRemnants::add( Event& event, int iFirst, bool doDiffCR) {
   }
 
   // Deeply inelastic scattering needs special remnant handling.
-  isDIS = (beamAPtr->isLepton() && !beamBPtr->isLepton())
-       || (beamBPtr->isLepton() && !beamAPtr->isLepton());
+  // Here getGammaMode separates from photoproduction.
+  isDIS = (beamAPtr->isLepton() && !beamBPtr->isLepton()
+           && beamAPtr->getGammaMode() == 0)
+       || (beamBPtr->isLepton() && !beamAPtr->isLepton()
+           && beamBPtr->getGammaMode() == 0);
 
   // Number of scattering subsystems. Size of event record before treatment.
   nSys    = partonSystemsPtr->sizeSys();
@@ -161,6 +170,26 @@ bool BeamRemnants::add( Event& event, int iFirst, bool doDiffCR) {
       if (junctionSplitting.checkColours(event))
         colCorrect = true;
       break;
+    }
+  }
+
+  // Possibility to add vertex information to beam particles.
+  if (doPartonVertex) {
+    BeamParticle* beamPtr = beamAPtr;
+    // Add vertex information for both beams.
+    for (int beam = 0; beam < 2; ++beam) {
+      for (int i = 0; i < beamPtr->size(); ++i) {
+        int j = (*beamPtr)[i].iPos();
+        // We might have daughters.
+        vector<int> dList = event[j].daughterList();
+        // First the beam remnant particle itself.
+        partonVertexPtr->vertexBeam(j, beam, event);
+        // Then possible daughters.
+        for(int k = 0, N = dList.size(); k < N; ++k )
+                partonVertexPtr->vertexBeam(dList[k],beam,event);
+      }
+      // Switch beam.
+      beamPtr = beamBPtr;
     }
   }
 
@@ -385,8 +414,19 @@ bool BeamRemnants::setKinematics( Event& event) {
         (!gammaAResolved && gammaBResolved) ) )
     gammaOneResolved = true;
 
+  // Unresolved photon + hadron.
+  if ( ( (beamAisGamma && !gammaAResolved)
+      || (beamBisGamma && !gammaBResolved) )
+      && !(beamAisGamma && beamBisGamma) )
+    gammaOneResolved = true;
+
+  // Unresolved photon from lepton + hadron.
+  if ( ( beamA.getGammaMode() == 2 && beamB.isHadron() )
+    || ( beamB.getGammaMode() == 2 && beamA.isHadron() ) )
+    gammaOneResolved = true;
+
   // Special kinematics setup for one-remnant systems (DIS).
-  if( (gammaOneResolved && infoPtr->nMPI() == 1) || isDIS )
+  if ( (gammaOneResolved && infoPtr->nMPI() == 1) || isDIS )
     return setOneRemnKinematics(event, iDS);
 
   // Last beam-status particles. Offset relative to normal beam locations.
@@ -396,8 +436,10 @@ bool BeamRemnants::setKinematics( Event& event) {
   int nOffset  = nBeams - 3;
 
   // If extra photons in event fix the offset.
-  if (beamA.hasResGamma()) --nOffset;
-  if (beamB.hasResGamma()) --nOffset;
+  if ( !(beamA.isHadron() || beamB.isHadron()) ) {
+    if (beamA.hasResGamma()) --nOffset;
+    if (beamB.hasResGamma()) --nOffset;
+  }
 
   // Reserve space for extra information on the systems and beams.
   int nMaxBeam = max( beamA.size(), beamB.size() );
@@ -903,8 +945,9 @@ bool BeamRemnants::setOneRemnKinematics( Event& event, int beamOffset) {
 
   // Identify beams with and without remnant.
   int iBeamHad;
-  if (isDIS) iBeamHad = beamAPtr->isLepton() ? 2 : 1;
-  else iBeamHad = beamAPtr->resolvedGamma() ? 1 : 2;
+  if ( beamAPtr->isGamma() && beamBPtr->isGamma() )
+    iBeamHad = beamAPtr->resolvedGamma() ? 1 : 2;
+  else iBeamHad = beamAPtr->isHadron() ? 1 : 2;
   BeamParticle& beamHad   = (iBeamHad == 1) ? *beamAPtr : *beamBPtr;
   BeamParticle& beamOther = (iBeamHad == 2) ? *beamAPtr : *beamBPtr;
 

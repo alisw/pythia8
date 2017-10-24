@@ -36,7 +36,8 @@ public:
   ~HVStringFlav() {}
 
   // Initialize data members.
-  void init(Settings& settings, ParticleData*, Rndm* rndmPtrIn, Info*);
+  void init(Settings& settings, ParticleData* particleDataPtrIn,
+    Rndm* rndmPtrIn, Info* infoPtrIn);
 
   // Pick a new flavour (including diquarks) given an incoming one.
   FlavContainer pick(FlavContainer& flavOld, double, double);
@@ -119,7 +120,8 @@ public:
 
   // Destructor.
   ~HiddenValleyFragmentation() { if (doHVfrag) {
-    if (hvZSelPtr) delete hvZSelPtr; if (hvPTSelPtr) delete hvPTSelPtr;
+    if (hvZSelPtr) delete hvZSelPtr;
+    if (hvPTSelPtr) delete hvPTSelPtr;
     if (hvFlavSelPtr) delete hvFlavSelPtr;} }
 
   // Initialize and save pointers.

@@ -33,16 +33,29 @@ class Merging {
 
 public:
 
-  // Constructor.
-  Merging() { settingsPtr = 0; infoPtr = 0; particleDataPtr = 0;
-    rndmPtr = 0; beamAPtr = 0; beamBPtr = 0; trialPartonLevelPtr = 0;
-    mergingHooksPtr = 0; }
-
-  // Make Pythia class friend
-  friend class Pythia;
-
   // Destructor.
-  ~Merging(){}
+  virtual ~Merging(){}
+
+  // Initialisation function for internal use inside Pythia source code
+  void initPtr( Settings* settingsPtrIn, Info* infoPtrIn,
+    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
+    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    MergingHooks* mergingHooksPtrIn, PartonLevel* trialPartonLevelPtrIn,
+    CoupSM* coupSMPtrIn) { settingsPtr = settingsPtrIn; infoPtr = infoPtrIn;
+    particleDataPtr = particleDataPtrIn; rndmPtr = rndmPtrIn;
+    beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn;
+    trialPartonLevelPtr = trialPartonLevelPtrIn;
+    mergingHooksPtr = mergingHooksPtrIn; coupSMPtr = coupSMPtrIn;
+  }
+
+  // Initialisation function for internal use inside Pythia source code
+  virtual void init();
+
+  // Function to print statistics.
+  virtual void statistics();
+
+  // Function to steer different merging prescriptions.
+  virtual int mergeProcess( Event& process);
 
 protected:
 
@@ -50,6 +63,13 @@ protected:
   // The members
   //----------------------------------------------------------------------//
 
+  // Constructor.
+  Merging() { settingsPtr = 0; infoPtr = 0; particleDataPtr = 0;
+    rndmPtr = 0; beamAPtr = 0; beamBPtr = 0; trialPartonLevelPtr = 0;
+    mergingHooksPtr = 0; }
+
+  // Make Pythia class friend
+  friend class Pythia;
 
   // Settings: databases of flags/modes/parms/words to control run.
   Settings*      settingsPtr;
@@ -79,23 +99,6 @@ protected:
   // Minimal value found for the merging scale in events.
   double tmsNowMin;
   static const double TMSMISMATCH;
-
-  // Initialisation function for internal use inside Pythia source code
-  void init( Settings* settingsPtrIn, Info* infoPtrIn,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    MergingHooks* mergingHooksPtrIn, PartonLevel* trialPartonLevelPtrIn,
-    CoupSM* coupSMPtrIn);
-
-  // Function to print statistics.
-  void statistics();
-
-  //----------------------------------------------------------------------//
-  // Functions that implement matrix element merging.
-  //----------------------------------------------------------------------//
-
-  // Function to steer different merging prescriptions.
-  int mergeProcess( Event& process);
 
   // Function to perform CKKW-L merging on the event.
   int mergeProcessCKKWL( Event& process);

@@ -4,7 +4,7 @@
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for DM resonance properties: dynamical widths etc.
-// ResonanceZp, ...: derived classes for individual resonances.
+// ResonanceS, ResonanceZp: derived classes for individual resonances.
 
 #ifndef Pythia8_ResonanceWidthsDM_H
 #define Pythia8_ResonanceWidthsDM_H
@@ -17,7 +17,38 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// The ResonanceZp class. (Zp a.k.a. DMmed(s=1).)
+// The ResonanceS class. (S a.k.a. DMmed(s=0), PDG id 54.)
+
+class ResonanceS : public ResonanceWidths {
+
+public:
+
+  // Constructor.
+  ResonanceS(int idResIn) {initBasic(idResIn);}
+
+private:
+
+  // Couplings.
+  double gq, gX;
+  double preFac, alpS;
+  bool pScalar;
+
+  // Initialize constants.
+  virtual void initConstants();
+
+  // Calculate various common prefactors for the current mass.
+  virtual void calcPreFac(bool = false);
+
+  // Caclulate width for currently considered channel.
+  virtual void calcWidth(bool calledFromInit = false);
+
+  virtual double eta2gg();
+
+};
+
+//==========================================================================
+
+// The ResonanceZp class. (Zp a.k.a. DMmed(s=1), PDG id 55.)
 
 class ResonanceZp : public ResonanceWidths {
 
@@ -29,7 +60,8 @@ public:
 private:
 
   // Couplings.
-  double gq, gX, preFac;
+  double vu, vd, vl, vv, vX, au, ad, al, av, aX;
+  double preFac, gZp;
 
   // Initialize constants.
   virtual void initConstants();

@@ -185,6 +185,12 @@ the three-product.
 the cross-product. 
 </method> 
  
+<method name="friend double cross4(const Vec4& v1, const Vec4& v2, 
+const Vec4& v3)"> 
+the cross-product of three four-vectors: 
+<ei>v_i = epsilon_{iabc} v1_a v2_b v3_c</ei>. 
+</method> 
+ 
 <method name="friend double theta(const Vec4& v1, const Vec4& v2)"> 
 </method> 
 <methodmore name="friend double costheta(const Vec4& v1, const Vec4& v2)"> 
@@ -224,6 +230,12 @@ Note that <code>p1Move</code> and <code>p2Move</code> act both as
 input and output arguments. The method will return false if the invariant 
 mass of the four-vectors is too small to accommodate the new masses, 
 and then the four-vectors are not changed. 
+</method> 
+ 
+<method name="friend pair&lt;Vec4,Vec4&gt; getTwoPerpendicular(const Vec4& v1, 
+const Vec4& v2)"> 
+create a pair of four-vectors that are perpendicular to both input vectors 
+and to each other, and have the squared norm <ei>-1</ei>. 
 </method> 
  
 <h3>Operations with four-vectors</h3> 
@@ -434,6 +446,10 @@ of rotations and boosts.
  
 <method name="void RotBstMatrix::reset()"> 
 reset to no rotation/boost; i.e. the default at creation. 
+</method> 
+ 
+<method name="double RotBstMatrix::value(int i, int j)"> 
+return the value of the (i,j) = [i][j] matrix element. 
 </method> 
  
 <method name="double RotBstMatrix::deviation()"> 

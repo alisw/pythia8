@@ -124,6 +124,14 @@ echo "<a href='ParticleDataScheme.php?filepath=".$filepath."' target='page'>";?>
 methods restrict the allowed mass range of the particle, just like for 
 the <i>2 &rarr; 1 </i> processes. 
  
+<br/><br/><table><tr><td><strong>PhaseSpace:Q2Min </td><td></td><td> <input type="text" name="8" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+The minimum value for the DIS variable <i>Q^2 = - tHat</i>. 
+Can only meaningfully be used for scattering processes between two 
+non-identical particles, i.e. where <i>tHat</i> and <i>uHat</i> 
+are experimentally distinguishable. No cut will be applied for 
+<code>Q2Min &lt; pTHatMinDiverge^2</code>. 
+   
+ 
 <h3>Cuts in <i>2 &rarr; 3</i> processes</h3> 
  
 There are two main classes of <i>2 &rarr; 3</i> processes. One is the 
@@ -164,29 +172,29 @@ program appreciably. Also narrow <i>pT_3</i> and <i>pT_5</i> bins
 are likely to give inefficient generation, if it gives rise to 
 significant indirect restrictions on <i>pT_4</i>. 
  
-<br/><br/><table><tr><td><strong>PhaseSpace:pTHat3Min </td><td></td><td> <input type="text" name="8" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:pTHat3Min </td><td></td><td> <input type="text" name="9" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The minimum invariant <i>pT</i> of the highest-<i>pT</i> parton in 
 QCD <i>2 &rarr; 3</i> processes. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:pTHat3Max </td><td></td><td> <input type="text" name="9" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:pTHat3Max </td><td></td><td> <input type="text" name="10" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
 The maximum invariant <i>pT</i> of the highest-<i>pT</i> parton in 
 QCD <i>2 &rarr; 3</i> processes 
 A value below <code>pTHat3Min</code> means there is no upper limit. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:pTHat5Min </td><td></td><td> <input type="text" name="10" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:pTHat5Min </td><td></td><td> <input type="text" name="11" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The minimum invariant <i>pT</i> of the lowest-<i>pT</i> parton in 
 QCD <i>2 &rarr; 3</i> processes. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:pTHat5Max </td><td></td><td> <input type="text" name="11" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:pTHat5Max </td><td></td><td> <input type="text" name="12" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
 The maximum invariant <i>pT</i> of the lowest-<i>pT</i> parton in 
 QCD <i>2 &rarr; 3</i> processes 
 A value below <code>pTHat5Min</code> means there is no upper limit. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:RsepMin </td><td></td><td> <input type="text" name="12" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:RsepMin </td><td></td><td> <input type="text" name="13" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>)</td></tr></table>
 The minimum separation <i>R</i> in <i>(eta, phi)</i> space between 
 any two outgoing partons in QCD <i>2 &rarr; 3</i> processes. 
    
@@ -204,28 +212,28 @@ technical distinction; you are welcome e.g. to pick <i>pT</i> ranges
 such that the second interaction always has a larger <i>pT</i> than 
 the first. 
  
-<br/><br/><strong>PhaseSpace:sameForSecond</strong>  <input type="radio" name="13" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="13" value="off"><strong>Off</strong>
+<br/><br/><strong>PhaseSpace:sameForSecond</strong>  <input type="radio" name="14" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="14" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 By default use the same cuts for a second hard process as for the 
 first. If <code>off</code> then instead use the mass and <i>pT</i> 
 cuts below, where relevant. (The other cuts above still remain the same.) 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:mHatMinSecond </td><td></td><td> <input type="text" name="14" value="4." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:mHatMinSecond </td><td></td><td> <input type="text" name="15" value="4." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The minimum invariant mass for a second interaction, if separate. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:mHatMaxSecond </td><td></td><td> <input type="text" name="15" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:mHatMaxSecond </td><td></td><td> <input type="text" name="16" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
 The maximum invariant mass for a second interaction, if separate. 
 A value below <code>mHatMin</code> means there is no upper limit. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:pTHatMinSecond </td><td></td><td> <input type="text" name="16" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:pTHatMinSecond </td><td></td><td> <input type="text" name="17" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The minimum invariant <i>pT</i> for a second interaction, if separate. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:pTHatMaxSecond </td><td></td><td> <input type="text" name="17" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:pTHatMaxSecond </td><td></td><td> <input type="text" name="18" value="-1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.</strong></code>)</td></tr></table>
 The maximum invariant <i>pT</i> for a second interaction, if separate. 
 A value below <code>pTHatMin</code> means there is no upper limit. 
    
@@ -245,8 +253,8 @@ however. This then can lead to subsequent maximum violations, where the
 ratio is above unity. Two alternative strategies are implemented to 
 handle such situations, see below. 
  
-<br/><br/><strong>PhaseSpace:showSearch</strong>  <input type="radio" name="18" value="on"><strong>On</strong>
-<input type="radio" name="18" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>PhaseSpace:showSearch</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
+<input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Possibility to print information on the search for phase-space 
 coefficients that (in a multichannel approach) provides an analytical 
@@ -255,8 +263,8 @@ corresponding upper estimate of the cross section. Of interest
 for crosschecks by expert users only. 
    
  
-<br/><br/><strong>PhaseSpace:showViolation</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
-<input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>PhaseSpace:showViolation</strong>  <input type="radio" name="20" value="on"><strong>On</strong>
+<input type="radio" name="20" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Possibility to print information whenever the assumed maximum 
 differential cross section of a process is violated, i.e. when 
@@ -265,8 +273,8 @@ Also, should negative cross sections occur, print whenever a more
 negative value is encountered. 
    
  
-<br/><br/><strong>PhaseSpace:increaseMaximum</strong>  <input type="radio" name="20" value="on"><strong>On</strong>
-<input type="radio" name="20" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>PhaseSpace:increaseMaximum</strong>  <input type="radio" name="21" value="on"><strong>On</strong>
+<input type="radio" name="21" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Strategy for handling cases where a larger cross section is 
 obtained during the event generation than was assumed at initialization, 
@@ -355,8 +363,8 @@ the same event. Furthermore you have to be careful about the choice
 of <code>PhaseSpace:pTHatMin</code>, since a <i>pTHat = 0</i> 
 event would come with an infinite weight. 
  
-<br/><br/><strong>PhaseSpace:bias2Selection</strong>  <input type="radio" name="21" value="on"><strong>On</strong>
-<input type="radio" name="21" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>PhaseSpace:bias2Selection</strong>  <input type="radio" name="22" value="on"><strong>On</strong>
+<input type="radio" name="22" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Possibility to switch on a biased phase space sampling, 
 with compensatingly weighted events, for <i>2 &rarr; 2</i> processes. 
@@ -365,7 +373,7 @@ the paragraph above; under other conditions the initialization
 will abort. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:bias2SelectionPow </td><td></td><td> <input type="text" name="22" value="4." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:bias2SelectionPow </td><td></td><td> <input type="text" name="23" value="4." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)</td></tr></table>
 If the above flag is on, then a <i>2 &rarr; 2</i> process at a scale 
 <i>pTHat</i> will be oversampled in phase space by an amount 
 <i>(pTHat/pTRef)^pow</i>, where you set the power <i>pow</i> 
@@ -378,7 +386,7 @@ The final overall normalization also involves the
 <code>Info::weightSum()</code> value. 
    
  
-<br/><br/><table><tr><td><strong>PhaseSpace:bias2SelectionRef </td><td></td><td> <input type="text" name="23" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PhaseSpace:bias2SelectionRef </td><td></td><td> <input type="text" name="24" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)</td></tr></table>
 The reference scale <i>pTRef</i> introduced above, such that events 
 with this <i>pTHat</i> obtain unit weight in the reweighting procedure. 
 The value of this parameter has no impact on the final result of the 
@@ -436,84 +444,89 @@ if($_POST["7"] != "0.01")
 $data = "PhaseSpace:minWidthBreitWigners = ".$_POST["7"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["8"] != "10.")
+if($_POST["8"] != "0.0")
 {
-$data = "PhaseSpace:pTHat3Min = ".$_POST["8"]."\n";
+$data = "PhaseSpace:Q2Min = ".$_POST["8"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["9"] != "-1.")
+if($_POST["9"] != "10.")
 {
-$data = "PhaseSpace:pTHat3Max = ".$_POST["9"]."\n";
+$data = "PhaseSpace:pTHat3Min = ".$_POST["9"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["10"] != "10.")
+if($_POST["10"] != "-1.")
 {
-$data = "PhaseSpace:pTHat5Min = ".$_POST["10"]."\n";
+$data = "PhaseSpace:pTHat3Max = ".$_POST["10"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["11"] != "-1.")
+if($_POST["11"] != "10.")
 {
-$data = "PhaseSpace:pTHat5Max = ".$_POST["11"]."\n";
+$data = "PhaseSpace:pTHat5Min = ".$_POST["11"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["12"] != "1.")
+if($_POST["12"] != "-1.")
 {
-$data = "PhaseSpace:RsepMin = ".$_POST["12"]."\n";
+$data = "PhaseSpace:pTHat5Max = ".$_POST["12"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["13"] != "on")
+if($_POST["13"] != "1.")
 {
-$data = "PhaseSpace:sameForSecond = ".$_POST["13"]."\n";
+$data = "PhaseSpace:RsepMin = ".$_POST["13"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["14"] != "4.")
+if($_POST["14"] != "on")
 {
-$data = "PhaseSpace:mHatMinSecond = ".$_POST["14"]."\n";
+$data = "PhaseSpace:sameForSecond = ".$_POST["14"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["15"] != "-1.")
+if($_POST["15"] != "4.")
 {
-$data = "PhaseSpace:mHatMaxSecond = ".$_POST["15"]."\n";
+$data = "PhaseSpace:mHatMinSecond = ".$_POST["15"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["16"] != "0.")
+if($_POST["16"] != "-1.")
 {
-$data = "PhaseSpace:pTHatMinSecond = ".$_POST["16"]."\n";
+$data = "PhaseSpace:mHatMaxSecond = ".$_POST["16"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["17"] != "-1.")
+if($_POST["17"] != "0.")
 {
-$data = "PhaseSpace:pTHatMaxSecond = ".$_POST["17"]."\n";
+$data = "PhaseSpace:pTHatMinSecond = ".$_POST["17"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["18"] != "off")
+if($_POST["18"] != "-1.")
 {
-$data = "PhaseSpace:showSearch = ".$_POST["18"]."\n";
+$data = "PhaseSpace:pTHatMaxSecond = ".$_POST["18"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["19"] != "off")
 {
-$data = "PhaseSpace:showViolation = ".$_POST["19"]."\n";
+$data = "PhaseSpace:showSearch = ".$_POST["19"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["20"] != "off")
 {
-$data = "PhaseSpace:increaseMaximum = ".$_POST["20"]."\n";
+$data = "PhaseSpace:showViolation = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["21"] != "off")
 {
-$data = "PhaseSpace:bias2Selection = ".$_POST["21"]."\n";
+$data = "PhaseSpace:increaseMaximum = ".$_POST["21"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["22"] != "4.")
+if($_POST["22"] != "off")
 {
-$data = "PhaseSpace:bias2SelectionPow = ".$_POST["22"]."\n";
+$data = "PhaseSpace:bias2Selection = ".$_POST["22"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["23"] != "10.")
+if($_POST["23"] != "4.")
 {
-$data = "PhaseSpace:bias2SelectionRef = ".$_POST["23"]."\n";
+$data = "PhaseSpace:bias2SelectionPow = ".$_POST["23"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["24"] != "10.")
+{
+$data = "PhaseSpace:bias2SelectionRef = ".$_POST["24"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);

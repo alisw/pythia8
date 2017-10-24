@@ -62,7 +62,7 @@ public:
   // Default constructor
   HardProcess(){}
   // Default destructor
-  ~HardProcess(){}
+  virtual ~HardProcess(){}
 
   // Copy constructor
   HardProcess( const HardProcess& hardProcessIn )
@@ -92,7 +92,7 @@ public:
   }
 
   // Constructor with core process input
-  void initOnProcess( string process, ParticleData* particleData);
+  virtual void initOnProcess( string process, ParticleData* particleData);
 
   // Constructor with path to LHE file input
   void initOnLHEF( string LHEfile, ParticleData* particleData);
@@ -101,27 +101,28 @@ public:
   void translateLHEFString( string LHEpath);
 
   // Function to translate the process string (in MG/ME notation)
-  void translateProcessString( string process);
+  virtual void translateProcessString( string process);
 
   // Function to clear hard process information
   void clear();
 
   // Function to check whether the sets of candidates Pos1, Pos2, together
   // with the proposed candidate iPos give an allowed hard process state
-  bool allowCandidates(int iPos, vector<int> Pos1, vector<int> Pos2,
+  virtual bool allowCandidates(int iPos, vector<int> Pos1, vector<int> Pos2,
     const Event& event);
   // Function to identify the hard subprocess in the current event
-  void storeCandidates( const Event& event, string process);
+  virtual void storeCandidates( const Event& event, string process);
   // Function to check if the particle event[iPos] matches any of
   // the stored outgoing particles of the hard subprocess
-  bool matchesAnyOutgoing(int iPos, const Event& event);
+  virtual bool matchesAnyOutgoing(int iPos, const Event& event);
   // Function to check if instead of the particle event[iCandidate], another
   // particle could serve as part of the hard process. Assumes that iCandidate
   // is already stored as part of the hard process.
-  bool findOtherCandidates(int iPos, const Event& event, bool doReplace);
+  virtual bool findOtherCandidates(int iPos, const Event& event,
+    bool doReplace);
   // Function to exchange a stored hard process candidate with another choice.
-  bool exchangeCandidates( vector<int> candidates1, vector<int> candidates2,
-    map<int,int> further1, map<int,int> further2);
+  virtual bool exchangeCandidates( vector<int> candidates1,
+    vector<int> candidates2, map<int,int> further1, map<int,int> further2);
 
   // Function to get the number of coloured final state partons in the
   // hard process
@@ -189,8 +190,9 @@ public:
     doIgnoreStepSave(true),
     hasJetMaxLocal(false),
     includeWGTinXSECSave(false) {
-      inputEvent = Event(); resonances.resize(0); infoPtr = 0;
-      particleDataPtr = 0; partonSystemsPtr = 0;}
+      inputEvent = Event(); resonances.resize(0); infoPtr = 0; settingsPtr = 0;
+      particleDataPtr = 0; partonSystemsPtr = 0; useOwnHardProcess = false;
+      hardProcess = 0; stopScaleSave= 0.0; }
 
   // Make History class friend to allow access to advanced switches
   friend class History;
@@ -210,7 +212,7 @@ public:
   //----------------------------------------------------------------------//
 
   // Destructor.
-  virtual ~MergingHooks(){}
+  virtual ~MergingHooks();
   // Function encoding the functional definition of the merging scale
   virtual double tmsDefinition( const Event& event){ return event[0].e();}
   // Function to dampen weights calculated from histories with lowest
@@ -253,7 +255,19 @@ public:
   // Function to calculate the hard process matrix element.
   virtual double hardProcessME( const Event& inEvent ) {
     // Dummy statement to avoid compiler warnings.
-    if ( false ) cout << inEvent[0].e(); return 1.; }
+    if ( false ) cout << inEvent[0].e();
+    return 1.; }
+
+  // Functions for internal use inside Pythia source code
+  // Initialize.
+  virtual void init();
+  // Functions for internal use inside Pythia source code
+  // Initialize.
+  void initPtr( Settings* settingsPtrIn, Info* infoPtrIn,
+    ParticleData* particleDataPtrIn, PartonSystems* partonSystemsPtrIn)
+    { settingsPtr = settingsPtrIn; infoPtr = infoPtrIn;
+      particleDataPtr = particleDataPtrIn;
+      partonSystemsPtr = partonSystemsPtrIn;}
 
   //----------------------------------------------------------------------//
   // Simple output functions
@@ -262,8 +276,15 @@ public:
   // Function returning the value of the merging scale.
   double tms() {
     if(doCutBasedMergingSave) return 0.;
+    //else return tmsValueSave;
+    else return tmsValueNow;
+  }
+  double tmsCut() {
+    if(doCutBasedMergingSave) return 0.;
     else return tmsValueSave;
   }
+  void tms( double tmsIn ) { tmsValueNow = tmsIn; }
+
   // Function returning the value of the Delta R_{ij} cut for
   // cut based merging scale definition.
   double dRijMS() {
@@ -288,20 +309,20 @@ public:
   // Function to return hard process string.
   string getProcessString() { return processSave;}
   // Function to return the number of outgoing partons in the core process
-  int nHardOutPartons(){ return hardProcess.nQuarksOut();}
+  int nHardOutPartons(){ return hardProcess->nQuarksOut();}
   // Function to return the number of outgoing leptons in the core process
-  int nHardOutLeptons(){ return hardProcess.nLeptonOut();}
+  int nHardOutLeptons(){ return hardProcess->nLeptonOut();}
   // Function to return the number of outgoing electroweak bosons in the core
   // process.
-  int nHardOutBosons(){ return hardProcess.nBosonsOut();}
+  int nHardOutBosons(){ return hardProcess->nBosonsOut();}
   // Function to return the number of incoming partons (hadrons) in the core
   // process.
-  int nHardInPartons(){ return hardProcess.nQuarksIn();}
+  int nHardInPartons(){ return hardProcess->nQuarksIn();}
   // Function to return the number of incoming leptons in the core process.
-  int nHardInLeptons(){ return hardProcess.nLeptonIn();}
+  int nHardInLeptons(){ return hardProcess->nLeptonIn();}
   // Function to report the number of resonace decays in the 2->2 sub-process
   // of the  current state.
-  int nResInCurrent(){ return hardProcess.nResInCurrent();}
+  int nResInCurrent(){ return hardProcess->nResInCurrent();}
   // Function to determine if user defined merging should be applied.
   bool doUserMerging(){ return doUserMergingSave;}
   // Function to determine if automated MG/ME merging should be applied.
@@ -353,6 +374,22 @@ public:
     if ( getProcessString().compare("pp>h") == 0 ) return true;
     return false; }
 
+  // Function to allow effective gg -> EW boson couplings.
+  bool allowEffectiveVertex( vector<int> in, vector<int> out) {
+    if ( getProcessString().compare("ta+ta->jj") == 0
+      || getProcessString().compare("ta-ta+>jj") == 0 ) {
+      int nInFermions(0), nOutFermions(0), nOutBosons(0);
+      for (int i=0; i < int(in.size()); ++i)
+        if (abs(in[i])<20) nInFermions++;
+      for (int i=0; i < int(out.size()); ++i) {
+        if (abs(out[i])<20) nOutFermions++;
+        if (abs(out[i])>20) nOutBosons++;
+      }
+      return (nInFermions%2==0 && nOutFermions%2==0);
+    }
+    return false;
+  }
+
   // Return event stripped from decay products.
   Event bareEvent( const Event& inputEventIn, bool storeInputEvent );
   // Write event with decay products attached to argument.
@@ -362,7 +399,7 @@ public:
   bool isInHard( int iPos, const Event& event);
 
   // Function to return the number of clustering steps for the current event
-  int getNumberOfClusteringSteps(const Event& event,
+  virtual int getNumberOfClusteringSteps(const Event& event,
     bool resetNjetMax = false);
 
   //----------------------------------------------------------------------//
@@ -392,7 +429,7 @@ public:
   bool checkAgainstCut( const Particle& particle);
   // Function to return the value of the merging scale function in the
   // current event.
-  double tmsNow( const Event& event );
+  virtual double tmsNow( const Event& event );
   // Find the minimal Lund pT between coloured partons in the event
   double rhoms( const Event& event, bool withColour);
   // Function to calculate the minimal kT in the event
@@ -410,9 +447,9 @@ public:
     doIgnoreEmissionsSave = doIgnoreIn;
   }
   // Function to allow not counting a trial emission.
-  bool canVetoEmission() { return !doIgnoreEmissionsSave; }
+  virtual bool canVetoEmission() { return !doIgnoreEmissionsSave; }
   // Function to check if emission should be rejected.
-  bool doVetoEmission( const Event& );
+  virtual bool doVetoEmission( const Event& );
 
   //----------------------------------------------------------------------//
   // Functions used as clusterings / probabilities
@@ -437,18 +474,20 @@ public:
   int nJetsNow()      { return nJetNowSave; }
   double tmsNow()     { return tmsNowSave;}
 
-
-protected:
+  void setHardProcessPtr(HardProcess* hardProcIn) { hardProcess = hardProcIn; }
 
   //----------------------------------------------------------------------//
   // The members, switches etc.
   //----------------------------------------------------------------------//
 
   // Helper class doing all the core process book-keeping
-  HardProcess hardProcess;
+  bool useOwnHardProcess;
+  HardProcess* hardProcess;
 
   // Pointer to various information on the generation.
   Info*          infoPtr;
+
+  Settings* settingsPtr;
 
   // Pointer to the particle data table.
   ParticleData*  particleDataPtr;
@@ -478,6 +517,7 @@ protected:
   int    unorderedScalePrescipSave, unorderedASscalePrescipSave,
          unorderedPDFscalePrescipSave, incompleteScalePrescipSave,
          ktTypeSave, nReclusterSave, nQuarksMergeSave, nRequestedSave;
+
   double scaleSeparationFactorSave, nonJoinedNormSave,
          fsrInRecNormSave, herwigAcollFSRSave, herwigAcollISRSave,
          pT0ISRSave, pTcutSave;
@@ -505,7 +545,7 @@ protected:
   double kFactor2jSave;
 
   // Saved members.
-  double tmsValueSave, DparameterSave;
+  double tmsValueSave, tmsValueNow, DparameterSave;
   int nJetMaxSave;
   int nJetMaxNLOSave;
 
@@ -563,16 +603,12 @@ protected:
   // Generic setup functions
   //----------------------------------------------------------------------//
 
-  // Functions for internal use inside Pythia source code
-  // Initialize.
-  void init( Settings settings, Info* infoPtrIn,
-    ParticleData* particleDataPtrIn, PartonSystems* partonSystemsPtrIn);
-
   // Function storing candidates for the hard process in the current event
   // Needed in order not to cluster members of the core process
   void storeHardProcessCandidates(const Event& event){
-    hardProcess.storeCandidates(event,getProcessString());
+    hardProcess->storeCandidates(event,getProcessString());
   }
+
   // Function to set the path to the LHE file, so that more automated merging
   // can be used.
   // Remove "_1.lhe" suffix from LHE file name.
@@ -715,21 +751,29 @@ protected:
   // Flag to indicate if events should be vetoed.
   void doIgnoreStep( bool doIgnoreIn ) { doIgnoreStepSave = doIgnoreIn; }
   // Function to allow event veto.
-  bool canVetoStep() { return !doIgnoreStepSave; }
-  // Function to check event veto.
-  bool doVetoStep( const Event& process, const Event& event,
-    bool doResonance = false );
+  virtual bool canVetoStep() { return !doIgnoreStepSave; }
 
-  // Stored weights in case veot needs to be revoked
+  // Stored weights in case veto needs to be revoked
   void storeWeights( double weight ){ weightCKKWL1Save = weightCKKWL2Save
      = weight; }
 
+  // Function to check event veto.
+  virtual bool doVetoStep( const Event& process, const Event& event,
+    bool doResonance = false );
+
   // Set starting scales
-  bool setShowerStartingScales( bool isTrial, bool doMergeFirstEmm,
+  virtual bool setShowerStartingScales( bool isTrial, bool doMergeFirstEmm,
     double& pTscaleIn, const Event& event,
     double& pTmaxFSRIn, bool& limitPTmaxFSRin,
     double& pTmaxISRIn, bool& limitPTmaxISRin,
     double& pTmaxMPIIn, bool& limitPTmaxMPIin );
+
+  // Set shower stopping scale. Necessary to e.g. avoid accumulation of
+  // incorrect (low-pT) shower weights through trial showering.
+  double stopScaleSave;
+  void setShowerStoppingScale( double scale = 0.) { stopScaleSave = scale;}
+  double getShowerStoppingScale() { return stopScaleSave;}
+
   void nMinMPI( int nMinMPIIn ) { nMinMPISave = nMinMPIIn; }
   int nMinMPI() { return nMinMPISave;}
 

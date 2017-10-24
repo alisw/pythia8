@@ -29,8 +29,8 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
  
 <h2>aMC@NLO Matching</h2> 
  
-The aMC@NLO package [<a href="Bibliography.php" target="page">Fri02</a>] attempts to automate the MC@NLO matching 
-procedure [<a href="Bibliography.php" target="page">Fri02</a>]. MC@NLO interprets the parton shower as NLO 
+The aMC@NLO package [<a href="Bibliography.php#refFri02" target="page">Fri02</a>] attempts to automate the MC@NLO matching 
+procedure [<a href="Bibliography.php#refFri02" target="page">Fri02</a>]. MC@NLO interprets the parton shower as NLO 
 subtraction method, and removes unwanted parton-shower contributions by 
 extending the subtraction scheme used to generate NLO fixed-order results. 
 Upon showering, an NLO accurate prediction for inclusive observables is 

@@ -45,6 +45,9 @@ const double BeamParticle::POMERONMASS = 1.;
 // Avoid numerical instability in the x -> 1 limit for companion quark.
 const double BeamParticle::XMAXCOMPANION = 0.99;
 
+// Avoid too extremely uneven momentum sharing.
+const double BeamParticle::TINYZREL = 1e-8;
+
 // Maximum number of tries to find a suitable colour.
 const int BeamParticle::NMAX = 1000;
 
@@ -59,7 +62,7 @@ const int BeamParticle::NRANDOMTRIES = 1000;
 void BeamParticle::init( int idIn, double pzIn, double eIn, double mIn,
   Info* infoPtrIn, Settings& settings, ParticleData* particleDataPtrIn,
   Rndm* rndmPtrIn, PDF* pdfInPtr, PDF* pdfHardInPtr, bool isUnresolvedIn,
-  StringFlav* flavSelPtrIn, bool hasResGammaIn) {
+  StringFlav* flavSelPtrIn) {
 
   // Store input pointers (and one bool) for future use.
   infoPtr           = infoPtrIn;
@@ -69,7 +72,17 @@ void BeamParticle::init( int idIn, double pzIn, double eIn, double mIn,
   pdfHardBeamPtr    = pdfHardInPtr;
   isUnresolvedBeam  = isUnresolvedIn;
   flavSelPtr        = flavSelPtrIn;
-  hasResGammaInBeam = hasResGammaIn;
+
+  // Save the usual PDF pointers as the normal ones may be overwritten
+  // with unresolved PDFs when mixing different photoproduction modes.
+  pdfBeamPtrSave     = pdfInPtr;
+  pdfHardBeamPtrSave = pdfHardInPtr;
+
+  // Check whether beam has a supplementary photon beam.
+  bool beamHasGamma  = settings.flag("PDF:lepton2gamma");
+
+  // To be set process by process but start with this.
+  hasResGammaInBeam  = beamHasGamma;
 
   // Maximum quark kind in allowed incoming beam hadrons.
   maxValQuark       = settings.mode("BeamRemnants:maxValQuark");
@@ -149,8 +162,13 @@ void BeamParticle::initBeamKind() {
   isGammaBeam       = false;
   nValKinds         = 0;
 
-  // Check for leptons.
-  if (idBeamAbs > 10 && idBeamAbs < 17) {
+  // To be modified according to the process.
+  gammaMode         = 0;
+  isResUnres        = false;
+
+  // Check for leptons or DM beams.
+  if ( (idBeamAbs > 10 && idBeamAbs < 17)
+    || (idBeamAbs > 50 && idBeamAbs < 60) ) {
     nValKinds = 1;
     nVal[0]   = 1;
     idVal[0]  = idBeam;
@@ -230,6 +248,18 @@ void BeamParticle::initBeamKind() {
   if (idBeam < 0) for (int i = 0; i < nValKinds; ++i) idVal[i] = -idVal[i];
   isHadronBeam = true;
   Q2ValFracSav = -1.;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize the photon beam with additional unresolved PDF pointer.
+
+void BeamParticle::initUnres(PDF* pdfUnresInPtr) {
+
+  // Set the pointer and check that pointer exists.
+  pdfUnresBeamPtr = pdfUnresInPtr;
+  isResUnres      = (pdfUnresBeamPtr != 0 ) ? true : false;
 
 }
 
@@ -558,6 +588,48 @@ double BeamParticle::xCompDist(double xc, double xs) {
 
 //--------------------------------------------------------------------------
 
+// Set the photon mode (none (0), resolved (1), unresolved (2)) of the beam.
+
+void BeamParticle::setGammaMode(int gammaModeIn)  {
+
+  // For hadrons mode always 0.
+  if (isHadron()) {
+    gammaMode         = 0;
+    pdfBeamPtr        = pdfBeamPtrSave;
+    pdfHardBeamPtr    = pdfHardBeamPtrSave;
+    hasResGammaInBeam = false;
+    isResolvedGamma   = false;
+    return;
+  }
+
+  // Save the mode of the photon beam.
+  gammaMode = gammaModeIn;
+
+  // Set the beam and PDF pointers to unresolved mode.
+  if (gammaMode == 2 && isResUnres) {
+    pdfBeamPtr        = pdfUnresBeamPtr;
+    pdfHardBeamPtr    = pdfUnresBeamPtr;
+    isResolvedGamma   = false;
+    hasResGammaInBeam = false;
+
+    // Only a photon beam can be unresolved with gammaMode == 2.
+    if ( isGamma()) isUnresolvedBeam = true;
+
+  // Set the beam and PDF pointers to resolved mode.
+  } else {
+    pdfBeamPtr        = pdfBeamPtrSave;
+    pdfHardBeamPtr    = pdfHardBeamPtrSave;
+    isUnresolvedBeam  = false;
+    if ( isGamma()) isResolvedGamma = true;
+    else            isResolvedGamma = false;
+    if ( isLepton() && gammaMode == 1 ) hasResGammaInBeam = true;
+    else                                hasResGammaInBeam = false;
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
 // Check whether parton iResolved with given Q^2 is a valence quark.
 
 bool BeamParticle::gammaInitiatorIsVal(int iResolved, double Q2) {
@@ -707,6 +779,9 @@ bool BeamParticle::remnantFlavours(Event& event, bool isDIS) {
       }
     }
   }
+
+  // No need for remnants with unresolved photon from leptons.
+  else if ( isLeptonBeam && gammaMode == 2) return true;
 
   // Find remaining valence quarks.
   for (int i = 0; i < nValKinds; ++i) {
@@ -1050,6 +1125,33 @@ double BeamParticle::xRemnant( int i) {
 
 //--------------------------------------------------------------------------
 
+// Approximate the remnant mass according to the initiator.
+
+double BeamParticle::remnantMass(int idIn) {
+
+  int idLight = 2;
+
+  // Hadrons: remove valence flavour masses from the hadron mass, add others.
+  if ( isHadron() ) {
+    double mRem = particleDataPtr->m0( id());
+    int valSign1 = (nValence(idIn) > 0) ? -1 : 1;
+    mRem += valSign1 * particleDataPtr->m0(idIn);
+    return mRem;
+
+  // Photons: For gluons, add two light partons to act as valence, otherwise
+  // add mass of companion. No remnants for unresolved photons.
+  } else if ( isGamma() ) {
+    if ( isUnresolved() ) return 0.;
+    double mRem = (idIn == 21) ? 2*( particleDataPtr->m0( idLight ) ) :
+      particleDataPtr->m0( idIn );
+    return mRem;
+
+  } else return 0.;
+
+}
+
+//--------------------------------------------------------------------------
+
 // Check whether room for a one remnant system.
 
 bool BeamParticle::roomFor1Remnant(double eCM) {
@@ -1120,20 +1222,22 @@ bool BeamParticle::roomForRemnants(BeamParticle beamOther) {
   for (int i = 0; i < this->size(); ++i) {
     if ( resolved[i].id() != 21 ) {
       allGluonsA = false;
-      if ( resolved[i].companion() < 0 )
+      // If initiator a valence, no need for a companion remnant.
+      if ( resolved[i].companion() < 0  && resolved[i].companion() != -3 )
         mRemA += particleDataPtr->m0( resolved[i].id() );
     }
   }
   for (int i = 0; i < beamOther.size(); ++i) {
     if ( beamOther[i].id() != 21 )
       allGluonsB = false;
-    if ( beamOther[i].companion() < 0 )
+    if ( beamOther[i].companion() < 0 && beamOther[i].companion() != -3 )
       mRemB += particleDataPtr->m0( beamOther[i].id() );
   }
 
   // If all initiators are gluons leave room for two light quarks.
-  if ( allGluonsA ) mRemA = 2*particleDataPtr->m0( 2 );
-  if ( allGluonsB ) mRemB = 2*particleDataPtr->m0( 2 );
+  // In case of hadrons the mass is taken into account already in xMax().
+  if ( allGluonsA) mRemA = this->isGamma()     ? 2*particleDataPtr->m0(2) : 0.;
+  if ( allGluonsB) mRemB = beamOther.isGamma() ? 2*particleDataPtr->m0(2) : 0.;
 
   // If not enough invariant mass left for remnants reject scattering.
   if ( Wleft < mRemA + mRemB ) return false;
@@ -1255,7 +1359,7 @@ double BeamParticle::zShare( double mDiff, double m1, double m2) {
   do {
     double x1 = xRemnant(0);
     double x2 = xRemnant(0);
-    zRel = x1 / (x1 + x2);
+    zRel = max( TINYZREL, min( 1. - TINYZREL, x1 / (x1 + x2) ) );
     pair<double, double> gauss2 = rndmPtr->gauss2();
     pxRel = diffPrimKTwidth * gauss2.first;
     pyRel = diffPrimKTwidth * gauss2.second;

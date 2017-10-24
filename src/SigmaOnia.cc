@@ -54,6 +54,7 @@ SigmaOniaSetup::SigmaOniaSetup(Info* infoPtrIn, Settings* settingsPtrIn,
 
   // Set the names of the production settings.
   ggNames3S1.push_back(cat + ":gg2" + key + "(3S1)[3S1(1)]g");
+  ggNames3S1.push_back(cat + ":gg2" + key + "(3S1)[3S1(1)]gm");
   ggNames3S1.push_back(cat + ":gg2" + key + "(3S1)[3S1(8)]g");
   ggNames3S1.push_back(cat + ":gg2" + key + "(3S1)[1S0(8)]g");
   ggNames3S1.push_back(cat + ":gg2" + key + "(3S1)[3PJ(8)]g");
@@ -126,14 +127,17 @@ void SigmaOniaSetup::setupSigma2gg(vector<SigmaProcess*> &procs, bool oniaIn) {
       if (flag || ggs3S1[0][i])
         procs.push_back(new Sigma2gg2QQbar3S11g
           (states3S1[i], mes3S1[0][i], flavour*100 + 1));
-      // Colour-octet.
       if (flag || ggs3S1[1][i])
-        procs.push_back(new Sigma2gg2QQbarX8g
-          (states3S1[i], mes3S1[1][i], 0, mSplit, flavour*100+2));
+        procs.push_back(new Sigma2gg2QQbar3S11gm
+          (states3S1[i], mes3S1[0][i], flavour*110 + 1));
+      // Colour-octet.
       if (flag || ggs3S1[2][i])
         procs.push_back(new Sigma2gg2QQbarX8g
-          (states3S1[i], mes3S1[2][i], 1, mSplit, flavour*100+5));
+          (states3S1[i], mes3S1[1][i], 0, mSplit, flavour*100+2));
       if (flag || ggs3S1[3][i])
+        procs.push_back(new Sigma2gg2QQbarX8g
+          (states3S1[i], mes3S1[2][i], 1, mSplit, flavour*100+5));
+      if (flag || ggs3S1[4][i])
         procs.push_back(new Sigma2gg2QQbarX8g
           (states3S1[i], mes3S1[3][i], 2, mSplit, flavour*100+8));
     }
@@ -462,6 +466,59 @@ void Sigma2gg2QQbar3S11g::setIdColAcol() {
   // Two orientations of colour flow.
   setColAcol( 1, 2, 2, 3, 0, 0, 1, 3);
   if (rndmPtr->flat() > 0.5) swapColAcol();
+
+}
+
+//==========================================================================
+
+// Sigma2gg2QQbar3S11gm class.
+// Cross section g g -> QQbar[3S1(1)] gamma (Q = c or b).
+
+//--------------------------------------------------------------------------
+
+// Initialize process.
+
+void Sigma2gg2QQbar3S11gm::initProc() {
+
+  // Process name.
+  nameSave = "g g -> "
+    + string((codeSave - codeSave%100)/100 == 4 ? "ccbar" : "bbbar")
+    + "(3S1)[3S1(1)] gamma";
+
+  // Squared quark charge.
+  qEM2 = particleDataPtr->charge((codeSave - codeSave%100)/100);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Evaluate d(sigmaHat)/d(tHat); no explicit flavour dependence.
+
+void Sigma2gg2QQbar3S11gm::sigmaKin() {
+
+  // Calculate kinematics dependence.
+  double stH = sH + tH;
+  double tuH = tH + uH;
+  double usH = uH + sH;
+  double sig = (8. * M_PI / 27.) * m3 * ( pow2(sH * tuH)
+    + pow2(tH * usH) + pow2(uH * stH) ) / pow2( stH * tuH * usH );
+
+  // Answer.
+  sigma = (M_PI/sH2) * alpEM * qEM2 * pow2(alpS) * oniumME * sig;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Select identity, colour and anticolour.
+
+void Sigma2gg2QQbar3S11gm::setIdColAcol() {
+
+  // Flavours are trivial.
+  setId( id1, id2, idHad, 22);
+
+  // Single colour flow orientation.
+  setColAcol( 1, 2, 2, 1, 0, 0, 0, 0);
 
 }
 

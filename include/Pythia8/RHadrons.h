@@ -53,8 +53,9 @@ public:
   bool exist() {return (nRHad > 0);}
 
   // Tell whether a R-hadron production+decay happened, and trace down.
-  int trace(int i) { for (int iR = 0; iR < nRHad; ++iR)
-    if (iBefRHad[iR] == i || iCreRHad[iR] == i) return iAftRHad[iR];
+  int trace(int i) {
+    for (int iR = 0; iR < nRHad; ++iR)
+      if (iBefRHad[iR] == i || iCreRHad[iR] == i) return iAftRHad[iR];
     return 0;}
 
 private:

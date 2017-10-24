@@ -43,15 +43,15 @@ only specific (s)particle final states, see below.
  
 <p> 
 Most of the SUSY implementation in PYTHIA 8 has been written by 
-N. Desai and is documented in [<a href="Bibliography.php" target="page">Des11</a>]. Please give due 
+N. Desai and is documented in [<a href="Bibliography.php#refDes11" target="page">Des11</a>]. Please give due 
 credit to external contributions to PYTHIA 8, such as this one, by 
 including the original work in your list of references when using this 
 implementation. The cross section formulae are mostly taken from 
-[<a href="Bibliography.php" target="page">Boz07</a>] and [<a href="Bibliography.php" target="page">Fuk11</a>]. 
+[<a href="Bibliography.php#refBoz07" target="page">Boz07</a>] and [<a href="Bibliography.php#refFuk11" target="page">Fuk11</a>]. 
 </p> 
  
 <p>Since the implementation of SUSY processes was only recently 
-completed [<a href="Bibliography.php" target="page">Des11</a>], case-by-case validations against other codes 
+completed [<a href="Bibliography.php#refDes11" target="page">Des11</a>], case-by-case validations against other codes 
 are still recommended. A set of default validations have 
 already been carried out by the authors, comparing to 
 the PYTHIA 6 SUSY implementation and to the XSUSY code, 
@@ -173,7 +173,7 @@ Pair production of gluinos by gluon-gluon initial states.
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Pair production of gluinos by quark-antiquark annihilation and 
 <i>t</i>-channel squark exchange.  The cross section 
-expression follows [<a href="Bibliography.php" target="page">Fuk11</a>] and include the possibility 
+expression follows [<a href="Bibliography.php#refFuk11" target="page">Fuk11</a>] and include the possibility 
 of non-minimal flavour violation through misalignment of quarks with 
 squarks. Only the MFV case has been explicitly validated. 
    
@@ -184,7 +184,7 @@ squarks. Only the MFV case has been explicitly validated.
 <input type="radio" name="9" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Associated production of a squark with a gluino. The cross section 
-expression follows [<a href="Bibliography.php" target="page">Fuk11</a>] and include the possibility 
+expression follows [<a href="Bibliography.php#refFuk11" target="page">Fuk11</a>] and include the possibility 
 of non-minimal flavour violation through misalignment of quarks with 
 squarks. Only the MFV case has been explicitly validated. 
    
@@ -197,7 +197,7 @@ squarks. Only the MFV case has been explicitly validated.
 Pair production of a scalar quark together with a scalar antiquark by 
 gluon annihilation via <i>s</i>-channel gluon exchange, <i>t</i>- and 
 <i>u</i>-channel squark exchange, and the direct 4-point coupling. 
-The cross section expression follows [<a href="Bibliography.php" target="page">Boz07</a>]. 
+The cross section expression follows [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
    
  
@@ -214,7 +214,7 @@ are neglected). For opposite-isospin <i>~q~q*</i> production
 (<i>~u~d*</i>, <i>~u~s*</i>, ...), the <i>s</i>-channel <i>W</i> 
 and <i>t</i>-channel gluino contributions have been implemented 
 (i.e., the <i>t</i>-channel neutralino contributions are neglected). 
-The cross section expressions follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+The cross section expressions follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
 (Note to PYTHIA 6 users: 
 in older PYTHIA 6 versions, a bug caused the <i>~t1~t2*</i> cross to be 
@@ -239,7 +239,7 @@ position.
 Pair production of scalar quarks (squark-squark and its charge 
 conjugate process; for squark-antisquark production see above) 
 by <i>t</i>- and <i>u</i>-channel gluino, neutralino, and 
-chargino exchange. The cross section expressions follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+chargino exchange. The cross section expressions follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
 (Note to PYTHIA 6 users: PYTHIA 6 only included the gluino exchange 
 contribution, which typically dominates due to the size of the strong 
@@ -266,7 +266,7 @@ leave this flag in the <code>off</code> position.
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Pair production of neutralinos by quark-antiquark annihilation. With 
 four neutralino species this gives ten separate processes, codes 
-1201 - 1210. The cross section expressions follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+1201 - 1210. The cross section expressions follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
    
  
@@ -277,7 +277,7 @@ Associated chargino-neutralino production by quark-antiquark
 annihilation. With four neutralino species, two chargino ones, and 
 maintaining charge conjugate processes separate, this gives 16 
 separate processes, codes 1221 - 1236. The cross section expressions 
-follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
    
  
@@ -287,7 +287,7 @@ Only the MFV case has been explicitly validated.
 Pair production of charginos by quark-antiquark annihilation. With 
 two chargino species and maintaining mutually charge conjugate 
 processes separate, this gives four separate processes, codes 
-1241 - 1244. The cross section expressions follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+1241 - 1244. The cross section expressions follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
    
  
@@ -297,7 +297,7 @@ Only the MFV case has been explicitly validated.
 <input type="radio" name="18" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Pair production of neutralinos from quark-gluon initial states. 
-The cross section expressions follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+The cross section expressions follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
    
  
@@ -306,7 +306,7 @@ Only the MFV case has been explicitly validated.
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Associated chargino-squark production from quark-gluon initial states. 
 annihilation. The cross section expressions 
-follow [<a href="Bibliography.php" target="page">Boz07</a>]. 
+follow [<a href="Bibliography.php#refBoz07" target="page">Boz07</a>]. 
 Only the MFV case has been explicitly validated. 
    
  
@@ -316,7 +316,7 @@ Only the MFV case has been explicitly validated.
 Associated neutralino-gluino production by quark-antiquark 
 annihilation. 
 The cross section expressions follow 
-[<a href="Bibliography.php" target="page">Fuk11</a>]. Only the MFV case has been explicitly validated. 
+[<a href="Bibliography.php#refFuk11" target="page">Fuk11</a>]. Only the MFV case has been explicitly validated. 
    
  
 <br/><br/><strong>SUSY:qqbar2chi+-gluino</strong>  <input type="radio" name="21" value="on"><strong>On</strong>
@@ -324,7 +324,7 @@ The cross section expressions follow
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Associated chargino-gluino production by quark-antiquark 
 annihilation. The cross section expressions follow 
-[<a href="Bibliography.php" target="page">Fuk11</a>]. Only the MFV case has been explicitly 
+[<a href="Bibliography.php#refFuk11" target="page">Fuk11</a>]. Only the MFV case has been explicitly 
 validated. (Note to PYTHIA 6 users: small differences between 
 this implementation and PYTHIA 6 arise due 
 to slightly different treatments of the weak mixing angle, 

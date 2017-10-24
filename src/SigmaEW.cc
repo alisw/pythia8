@@ -3141,12 +3141,20 @@ void Sigma2gmgm2ffbar::setIdColAcol() {
 
 void Sigma2ggm2qqbar::initProc() {
 
-  // Process name.
-  nameSave = "g gamma -> q qbar";
-  if (idNew ==  1) nameSave = "g gamma -> q qbar (uds)";
-  if (idNew ==  4) nameSave = "g gamma -> c cbar";
-  if (idNew ==  5) nameSave = "g gamma -> b bbar";
-  if (idNew ==  6) nameSave = "g gamma -> t tbar";
+  // Initialize the process name according to the incoming partons.
+  if (inFluxSave == "ggm") {
+    nameSave = "g gamma -> q qbar";
+    if (idNew ==  1) nameSave = "g gamma -> q qbar (uds)";
+    if (idNew ==  4) nameSave = "g gamma -> c cbar";
+    if (idNew ==  5) nameSave = "g gamma -> b bbar";
+    if (idNew ==  6) nameSave = "g gamma -> t tbar";
+  } else if (inFluxSave == "gmg") {
+    nameSave = "gamma g -> q qbar";
+    if (idNew ==  1) nameSave = "gamma g -> q qbar (uds)";
+    if (idNew ==  4) nameSave = "gamma g -> c cbar";
+    if (idNew ==  5) nameSave = "gamma g -> b bbar";
+    if (idNew ==  6) nameSave = "gamma g -> t tbar";
+  }
 
   // Generate massive phase space, except for u+d+s.
   idMass = 0;
@@ -3219,6 +3227,18 @@ void Sigma2ggm2qqbar::setIdColAcol() {
 
 //--------------------------------------------------------------------------
 
+// Initialize process wrt incoming particles.
+
+void Sigma2qgm2qg::initProc() {
+
+  // Initialize the process name according to the incoming partons.
+  if (inFluxSave == "qgm") nameSave = "q gamma -> q g (udscb)";
+  if (inFluxSave == "gmq") nameSave = "gamma q -> q g (udscb)";
+
+}
+
+//--------------------------------------------------------------------------
+
 // Evaluate d(sigmaHat)/d(tHat), part independent of incoming flavour.
 
 void Sigma2qgm2qg::sigmaKin() {
@@ -3258,6 +3278,68 @@ void Sigma2qgm2qg::setIdColAcol() {
   // Colour flow topology. Swap if first is gamma, or when antiquark.
   setColAcol( 1, 0, 0, 0, 2, 0, 1, 2);
   if (id1 == 22) swapCol1234();
+  if (id1 < 0 || id2 < 0) swapColAcol();
+
+}
+
+//==========================================================================
+
+// Sigma2qgm2qgm class.
+// Cross section for q gamma -> q gamma.
+
+//--------------------------------------------------------------------------
+
+// Initialize process wrt incoming particles.
+
+void Sigma2qgm2qgm::initProc() {
+
+  // Initialize the process name according to the incoming partons.
+  if (inFluxSave == "qgm") nameSave = "q gamma -> q gamma (udscb)";
+  if (inFluxSave == "gmq") nameSave = "gamma q -> q gamma (udscb)";
+
+}
+
+//--------------------------------------------------------------------------
+
+// Evaluate d(sigmaHat)/d(tHat), part independent of incoming flavour.
+
+void Sigma2qgm2qgm::sigmaKin() {
+
+  // Calculate kinematics dependence.
+  sigUS  = 2. * (sH2 + uH2) / (-sH * uH);
+
+  // Answer.
+  sigma0 =  (M_PI/sH2) * pow2(alpEM) * sigUS;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Evaluate d(sigmaHat)/d(tHat), including incoming flavour dependence.
+
+double Sigma2qgm2qgm::sigmaHat() {
+
+  // Incoming flavour gives charge factor.
+  int idNow    = (id2 == 22) ? id1 : id2;
+  double eNow  = couplingsPtr->ef( abs(idNow) );
+  return sigma0 * pow4(eNow);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Select identity, colour and anticolour.
+
+void Sigma2qgm2qgm::setIdColAcol() {
+
+  // Construct outgoing flavours.
+  id3 = (id1 == 22) ? 22 : id1;
+  id4 = (id2 == 22) ? 22 : id2;
+  setId( id1, id2, id3, id4);
+
+  // Colour flow topology. Swap if first is gamma, or when antiquark.
+  if (id2 == 22) setColAcol( 1, 0, 0, 0, 1, 0, 0, 0);
+  if (id1 == 22) setColAcol( 0, 0, 1, 0, 0, 0, 1, 0);
   if (id1 < 0 || id2 < 0) swapColAcol();
 
 }

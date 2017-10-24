@@ -34,7 +34,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 The <code>AlphaStrong</code> class is used to provide a first- or 
 second-order running <i>alpha_strong</i> (or, trivially, a 
 zeroth-order fixed one). Formulae are the standard ones found in 
-[<a href="Bibliography.php" target="page">Yao06</a>]. The second-order expression used, eq. (9.5), 
+[<a href="Bibliography.php#refYao06" target="page">Yao06</a>]. The second-order expression used, eq. (9.5), 
 may be somewhat different in other approaches (with differences 
 formally of higher order), so do not necessarily expect perfect 
 agreement, especially not at small <i>Q^2</i> scales. The starting 
@@ -87,7 +87,7 @@ below unity, for the second-order terms. This allows a compact handling
 of evolution equations. 
  
 <p/> 
-Resummation arguments [<a href="Bibliography.php" target="page">Cat91</a>] show that a set of 
+Resummation arguments [<a href="Bibliography.php#refCat91" target="page">Cat91</a>] show that a set of 
 universal QCD corrections can be absorbed in coherent parton showers by 
 applying the so-called CMW rescaling of the MSbar value of 
 <i>Lambda_QCD</i>. This can be accomplished via a fourth (optional) 
@@ -128,7 +128,7 @@ The <i>alpha_em</i> value at vanishing momentum transfer
  
 <br/><br/><table><tr><td><strong>StandardModel:alphaEMmZ </td><td></td><td> <input type="text" name="3" value="0.00781751" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.00781751</strong></code>; <code>minimum = 0.00780</code>; <code>maximum = 0.00783</code>)</td></tr></table>
 The <i>alpha_em</i> value at the <i>M_Z</i> mass scale. 
-Default is taken from [<a href="Bibliography.php" target="page">Yao06</a>]. 
+Default is taken from [<a href="Bibliography.php#refYao06" target="page">Yao06</a>]. 
    
  
 <p/> 
@@ -148,14 +148,14 @@ electroweak mixing angle:
 The sine-squared of the weak mixing angle, as used in all <i>Z^0</i> 
 and <i>W^+-</i> masses and couplings, except for the vector couplings 
 of fermions to the <i>Z^0</i>, see below. Default is the MSbar value 
-from [<a href="Bibliography.php" target="page">Yao06</a>]. 
+from [<a href="Bibliography.php#refYao06" target="page">Yao06</a>]. 
    
  
 <br/><br/><table><tr><td><strong>StandardModel:sin2thetaWbar </td><td></td><td> <input type="text" name="5" value="0.2315" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2315</strong></code>; <code>minimum = 0.225</code>; <code>maximum = 0.240</code>)</td></tr></table>
 The sine-squared of the weak mixing angle, as used to derive the vector 
 couplings of fermions to the <i>Z^0</i>, in the relation 
 <i>v_f = a_f - 4 e_f sin^2(theta_W)bar</i>. Default is the 
-effective-angle value from [<a href="Bibliography.php" target="page">Yao06</a>]. 
+effective-angle value from [<a href="Bibliography.php#refYao06" target="page">Yao06</a>]. 
    
  
 <p/> 
@@ -169,7 +169,7 @@ The Fermi coupling constant, in units of GeV<i>^-2</i>.
 <h3>The quark weak-mixing matrix</h3> 
  
 The absolute values of the Cabibbo-Kobayashi-Maskawa matrix elements are 
-set by the following nine real values taken from [<a href="Bibliography.php" target="page">Yao06</a>] - 
+set by the following nine real values taken from [<a href="Bibliography.php#refYao06" target="page">Yao06</a>] - 
 currently the CP-violating phase is not taken into account in this 
 parametrization. It is up to the user to pick a consistent unitary 
 set of new values whenever changes are made. 
@@ -226,12 +226,12 @@ and the quark mixing matrix are only stored here. With the exception of the
 first two methods below, which are for internal use, the subsequent ones 
 could also be used externally. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>CoupSM::CoupSM() &nbsp;</strong> <br/>
 the constructor does nothing. Internal. 
    
  
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>void CoupSM::init(Settings& settings, Rndm* rndmPtr) &nbsp;</strong> <br/>
 this is where the <code>AlphaStrong</code> and <code>AlphaEM</code> 
 instances are initialized, and weak couplings and the quark mixing matrix 
@@ -241,76 +241,82 @@ echo "<a href='CouplingsAndScales.php?filepath=".$filepath."' target='page'>";?>
 Internal. 
    
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>double CoupSM::alphaS(double scale2) &nbsp;</strong> <br/>
 the <i>alpha_strong</i> value at the quadratic scale <code>scale2</code>. 
    
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>double CoupSM::alphaS1Ord(double scale2) &nbsp;</strong> <br/>
 a first-order overestimate of the full second-order <i>alpha_strong</i> 
 value at the quadratic scale <code>scale2</code>. 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>double CoupSM::alphaS2OrdCorr(double scale2) &nbsp;</strong> <br/>
 a multiplicative correction factor, below unity, that brings the 
 first-order overestimate above into agreement with the full second-order 
 <i>alpha_strong</i> value at the quadratic scale <code>scale2</code>. 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>double CoupSM::Lambda3() &nbsp;</strong> <br/>
    
+<a name="anchor7"></a>
 <strong>double CoupSM::Lambda4() &nbsp;</strong> <br/>
    
+<a name="anchor8"></a>
 <strong>double CoupSM::Lambda5() &nbsp;</strong> <br/>
 the three-, four-, and five-flavour <i>Lambda</i> scale. 
    
  
-<a name="method7"></a>
+<a name="anchor9"></a>
 <p/><strong>double CoupSM::alphaEM(double scale2) &nbsp;</strong> <br/>
 the <i>alpha_em</i> value at the quadratic scale <code>scale2</code>. 
    
  
-<a name="method8"></a>
+<a name="anchor10"></a>
 <p/><strong>double CoupSM::sin2thetaW() &nbsp;</strong> <br/>
    
+<a name="anchor11"></a>
 <strong>double CoupSM::cos2thetaW() &nbsp;</strong> <br/>
 the sine-squared and cosine-squared of the weak mixing angle, as used in 
 the gauge-boson sector. 
    
  
-<a name="method9"></a>
+<a name="anchor12"></a>
 <p/><strong>double CoupSM::sin2thetaWbar() &nbsp;</strong> <br/>
 the sine-squared of the weak mixing angle, as used to derive the vector 
 couplings of fermions to the <i>Z^0</i>. 
    
  
-<a name="method10"></a>
+<a name="anchor13"></a>
 <p/><strong>double CoupSM::GF() &nbsp;</strong> <br/>
 the Fermi constant of weak decays, in GeV<i>^-2</i>. 
    
  
-<a name="method11"></a>
+<a name="anchor14"></a>
 <p/><strong>double CoupSM::ef(int idAbs) &nbsp;</strong> <br/>
 the electrical charge of a fermion, by the absolute sign of the PDF code, 
 i.e. <code>idAbs</code> must be in the range between 1 and 18. 
    
  
-<a name="method12"></a>
+<a name="anchor15"></a>
 <p/><strong>double CoupSM::vf(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor16"></a>
 <strong>double CoupSM::af(int idAbs) &nbsp;</strong> <br/>
 the vector and axial charges of a fermion, by the absolute sign of the PDF 
 code (<i>a_f = +-1, v_f = a_f - 4. * sin2thetaWbar * e_f</i>). 
    
  
-<a name="method13"></a>
+<a name="anchor17"></a>
 <p/><strong>double CoupSM::t3f(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor18"></a>
 <strong>double CoupSM::lf(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor19"></a>
 <strong>double CoupSM::rf(int idAbs) &nbsp;</strong> <br/>
 the weak isospin, left- and righthanded charges of a fermion, by the 
 absolute sign of the PDF code (<i>t^3_f = a_f/2, l_f = (v_f + a_f)/2, 
@@ -318,23 +324,28 @@ r_f = (v_f - a_f)/2</i>; you may find other conventions in the literature
 that differ by a factor of 2). 
    
  
-<a name="method14"></a>
+<a name="anchor20"></a>
 <p/><strong>double CoupSM::ef2(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor21"></a>
 <strong>double CoupSM::vf2(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor22"></a>
 <strong>double CoupSM::af2(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor23"></a>
 <strong>double CoupSM::efvf(int idAbs) &nbsp;</strong> <br/>
    
+<a name="anchor24"></a>
 <strong>double CoupSM::vf2af2(int idAbs) &nbsp;</strong> <br/>
 common quadratic combinations of the above couplings: 
 <i>e_f^2, v_f^2, a_f^2, e_f * v_f, v_f^2 + a_f^2</i>. 
    
  
-<a name="method15"></a>
+<a name="anchor25"></a>
 <p/><strong>double CoupSM::VCKMgen(int genU, int genD) &nbsp;</strong> <br/>
    
+<a name="anchor26"></a>
 <strong>double CoupSM::V2CKMgen(int genU, int genD) &nbsp;</strong> <br/>
 the CKM mixing element,or the square of it, for 
 up-type generation index <code>genU</code> 
@@ -343,9 +354,10 @@ down-type generation index <code>genD</code>
 (<i>1 = d, 2 = s, 3 = b, 4 = b'</i>). 
    
  
-<a name="method16"></a>
+<a name="anchor27"></a>
 <p/><strong>double CoupSM::VCKMid(int id1, int id2) &nbsp;</strong> <br/>
    
+<a name="anchor28"></a>
 <strong>double CoupSM::V2CKMid(int id1, int id2) &nbsp;</strong> <br/>
 the CKM mixing element,or the square of it, for 
 flavours <code>id1</code> and <code>id2</code>, both in the 
@@ -356,7 +368,7 @@ evaluate to zero. The neutrino sector is numbered by flavor
 eigenstates, so there is no mixing in the lepton-neutrino system. 
    
  
-<a name="method17"></a>
+<a name="anchor29"></a>
 <p/><strong>double CoupSM::V2CKMsum(int id) &nbsp;</strong> <br/>
 the sum of squared CKM mixing element that a given flavour can couple to, 
 excluding the top quark and fourth generation. Is close to unity 
@@ -364,7 +376,7 @@ for the first two generations. Returns unity for the lepton-neutrino
 sector. 
    
  
-<a name="method18"></a>
+<a name="anchor30"></a>
 <p/><strong>int CoupSM::V2CKMpick(int id) &nbsp;</strong> <br/>
 picks a random CKM partner quark or lepton (with the same sign as 
 <code>id</code>) according to the respective squared elements, again 

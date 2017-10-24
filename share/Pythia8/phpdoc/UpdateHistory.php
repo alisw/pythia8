@@ -30,14 +30,429 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>Update History</h2> 
  
 These update notes describe major updates relative to the 
-PYTHIA 8.186 version, which was the last regular 8.1 release. 
-(Minor bug fixes will continue to appear.) The step from 
-8.1 to 8.2 gave an occasion to break backwards compatibility, 
+PYTHIA 8.186 version, which was the last 8.1 release. The step 
+from 8.1 to 8.2 gave an occasion to break backwards compatibility, 
 but this should only affect a small part of the user code. 
  
 <h3>Main news by version</h3> 
  
 <ul> 
+ 
+<li>8.230: 6 October 2017 
+<ul> 
+ 
+<li>Christian Bierlich joins as co-author. Philip Ilten has new 
+affiliation.</li> 
+ 
+<li>New dipole-shower option for initial-state radiation 
+contributed by Baptiste Cabouat, see 
+<code><?php $filepath = $_GET["filepath"];
+echo "<a href='SpacelikeShowers.php?filepath=".$filepath."' target='page'>";?>SpaceShower:dipoleRecoil</a></code>. 
+More specifically, a unified description of initial-final and 
+final-initial dipole ends is introduced, as described in 
+[<a href="Bibliography.php#refCab17" target="page">Cab17</a>]. This allows a description of showers in Deeply 
+Inelastic Scattering, illustrated by <code>main36.cc</code>.</li> 
+ 
+<li>A new <?php $filepath = $_GET["filepath"];
+echo "<a href='HeavyIons.php?filepath=".$filepath."' target='page'>";?>Heavy Ions</a> machinery has been 
+added, that allows PYTHIA to generate pA and AA collisions within a 
+simple model. This entails significant additions to the PYTHIA code, 
+and some changes. Some of the key points are: 
+<ul> 
+<li>A new <code>HeavyIons</code> base class is introduced, which 
+exists inside <code>Pythia</code> but itself can contain several 
+<code>Pythia</code> instances to handle different subcollision types.</li> 
+<li>A new derived class <code>Angantyr</code> provides the default 
+heavy-ion description. It is inspired by the old <code>Fritiof</code> 
+model [<a href="Bibliography.php#refAnd86" target="page">And86</a>] with recent improvements [<a href="Bibliography.php#refBie16a" target="page">Bie16a</a>].</li> 
+<li>A number of utilities that are used by <code>Angantyr</code>, but 
+could also be used by an external Heavy ion generator, such as the 
+nucleon distribution inside a nucleus.</li> 
+<li>Particle data have been introduced for a few heavy ions, 
+notably 208Pb, code 1000822080.</li> 
+<li>A new <code>PomHISASD</code> pomeron PDF that is actually a rescaled 
+copy of the default proton PDF. New code inserted to keep track of 
+pomeron momentum fractions for such rescaling.</li> 
+<li>The new capabilities are illustrated in <code>main111.cc</code>, 
+<code>main112.cc</code> and <code>main113.cc</code>, for pp, pPb and 
+PbPb collisions, respectively.</li> 
+</ul></li> 
+ 
+<li>New <?php $filepath = $_GET["filepath"];
+echo "<a href='RopeHadronization.php?filepath=".$filepath."' target='page'>";?>Rope Hadronization</a> 
+framework made available. This introduces the possibility to enable 
+string shoving as described in [<a href="Bibliography.php#refBie16b" target="page">Bie16b</a>] and flavour ropes as 
+described in [<a href="Bibliography.php#refBie14" target="page">Bie14</a>]. Both models attempt to model 
+collective effects at a microscopic level, with inspiration 
+from lattice QCD and the dual superconductor picture. These methods 
+are still being actively developed, and users should expect changes 
+in coming versions of Pythia. User feedback is encouraged.</li> 
+ 
+<li>New framework for setting partonic production vertices in MPI, 
+FSR and ISR, see further <?php $filepath = $_GET["filepath"];
+echo "<a href='VertexInformation.php?filepath=".$filepath."' target='page'>";?>here</a>. 
+Still at a primitive stage, and currenly only used for the 
+rope hadronization framework. It replaces a previous setup with 
+UserHooks. The <code>main65.cc</code> example has been removed.</li> 
+ 
+<li>New search function introduced in the <code>html</code> documentation. 
+You can type a word or phrase in the new "Search" box near the top of the 
+left-hand index field, and immediately get up a list of links to places 
+where it occurs.</li> 
+ 
+<li>New processes for <i>3S1</i> charmonium or bottomonium production 
+in association with a photon, accessible through the new switches 
+<code>Charmonium:gg2ccbar(3S1)[3S1(1)]gm</code> and 
+<code>Bottomonium:gg2ccbar(3S1)[3S1(1)]gm</code>.</li> 
+ 
+<li>In <code>configure</code> the plugin option for LHAPDF6 is removed, 
+such that now LHAPDF5 uses LHAPDF5.h and LHAPDF6 always uses LHAPDF6.h. 
+Previously LHAPDF6 used the LHAPDF5.h Fortran wrapper by default. 
+Since LHAPDF 6.2 no longer requires BOOST this dependency has been 
+removed. People using earlier LHAPDF versions must now explicitly 
+enable BOOST. The "-std=c++98" flag has been removed to simplify 
+compilation together with programs using later C++ standards. 
+An "--enable-optdebug" alternative has been added for debug with 
+optimization allowed.</li> 
+ 
+<li><code>Makefile</code> is updated to handle the removal of the 
+LHAPDF plugin option, slightly improved for better compatibility across 
+platforms, and an old shared library will be removed also when a 
+compilation only generates a new static library.</li> 
+ 
+<li>Fix up the extrapolation procedure of external PDFs, notably the 
+ones accessed by the LHAPDF5 interface (previously also available for 
+LHAPDF6). PDFs are now explicitly frozen at borders, except that 
+<code>PDF:extrapolate</code> can be switched on to allow extrapolation 
+to low <i>x</i>. Note that, as a consequence, results can change if 
+you have used external PDFs for the MPI description. The native LHAPDF6 
+interface already froze at borders, but now optionally allows 
+low-<i>x</i> extrapolation. Thanks to Radek Zlebcik.</li> 
+ 
+<li>Implementation of nuclear PDFs for hard processes. See 
+<code><?php $filepath = $_GET["filepath"];
+echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a></code> for more 
+details.</li> 
+ 
+<li>A new proton PDF added, which sets out to combine a NNLO behaviour 
+at high <i>x</i> values with a sensible LO low-<i>x</i> one, see 
+<code><?php $filepath = $_GET["filepath"];
+echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a></code> for more 
+details.</li> 
+ 
+<li>The <code>main51.cc</code>, <code>main52.cc</code> and 
+<code>main53.cc</code> PDF examples have been modified to use 
+LHAPDF6 by default rather than LHAPDF5.</li> 
+ 
+<li>A new method to provide an external photon flux to study 
+photoproduction with different fluxes. Still optimized for lepton beams, 
+but also other fluxes can be studied. See new sample main program 
+<code>main70.cc</code> for examples.</li> 
+ 
+<li>The machinery for 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='Variations.php?filepath=".$filepath."' target='page'>";?>Automated Shower Variations</a> 
+has been extended to also take into account the PDF variations 
+inside a PDF family, using the LHAPDF6 machinery for this. 
+It is now also possible to stop variation uncertainty evaluation 
+below some scale, so as to better correlate the event weighting 
+with the harder part of the event evolution. The new 
+<code>main121.cc</code> example illustrates how to set up the 
+variations.</li> 
+ 
+<li>The MixMax random number generator [<a href="Bibliography.php#refSav15" target="page">Sav15</a>,<a href="Bibliography.php#refSav16" target="page">Sav16</a>] is made 
+available as a plugin distributed with PYTHIA, in the new 
+<code>include/Pythia8Plugin/MixMax.h</code> file, see the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='RandomNumbers.php?filepath=".$filepath."' target='page'>";?>Random Numbers</a> description. Some minor 
+modifications are needed for linking, see <code>examples/Makefile</code> 
+and the <code>main23.cc</code> example. The latter has been updated 
+to include a comparison of execution time between the default and 
+the MixMax generator.</li> 
+ 
+<li>Improved junction colour tracing to fix some problems e.g. in 
+processes with Baryon Number Violation (BNV). Specifically, it is ensured 
+that in- and out-colours are labelled differently for a particle 
+with a BNV vertex both in production and at decay, to avoid colour 
+lines being shortcut. Further examples have been added to 
+<code>main25.lhe</code>. Thanks to A. Monteyx, M. Buckley and F. Jimenez. 
+</li> 
+ 
+<li>Further processes have been added for Dark Matter production, 
+either by a scalar or by a vector <i>s</i>-channel mediator, see 
+the <?php $filepath = $_GET["filepath"];
+echo "<a href='DarkMatterProcesses.php?filepath=".$filepath."' target='page'>";?>Dark Matter Processes</a> 
+description. Also a new <code>main75.cc</code> example.</li> 
+ 
+<li>Fix minor (order 5%) normalization error of the impact-parameter 
+enhancement factor for two preselected hard processes in the MPI 
+framework, see <code>Info::enhanceMPIavg()</code>. Thanks to Jonathan 
+Gaunt.</li> 
+ 
+<li>Minor fix in <code>pythia8-config</code> to solve some parsing issues. 
+Thanks to Gavin Salam, Dmitry Konstantinov and Emanuel Hoogeveen.</li> 
+ 
+<li>Fix typo in reweighting machinery in <code>SpaceShower.cc</code>.</li> 
+ 
+<li>Several minor fixes to protect from rare occasions of division by zero. 
+Thanks to Steffen Weber.</li> 
+ 
+<li>New option in the single-particle gun in <code>main21.cc</code>, 
+to allow the input particle have a lifetime and thus decay some distance 
+away from the origin. Thanks to Graham W. Wilson.</li> 
+ 
+<li>Maximal number of histogram bins increased to 10000 and a warning is 
+printed if this limit is exceeded. Thanks to Roberto Franceschini.</li> 
+ 
+<li>Ensure that the "thermal string fragmentation" is not inadvertently 
+used for Hidden Valley fragmentation.</li> 
+ 
+<li>Correct so that the <code>TimeShower:MEafterFirst</code> option takes 
+effect in <i>g &rarr; q qbar</i> branchings. Does not change the default 
+behaviour. Thanks to Keith Hamilton.</li> 
+ 
+<li>New particle methods <code>y( double mCut)</code> and 
+<code>y(double mCut, RotBstMatrix& M)</code> to calculate rapidity 
+assuming a minimum mass, and optionally after a rotation/boost 
+operation.</li> 
+ 
+<li>A minor bug fix to set up correctly the internal indices for the 
+initiators from emitted photons. Thanks to Aaron Angerami.</li> 
+ 
+<li>A new interface simplifying the usage of <code>Rivet</code> is 
+found in <code>include/Pythia8Plugins/Pythia8Rivet.h</code> and its 
+usage illustrated in the <code>main111.cc</code> example, see 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='RIVETusage.php?filepath=".$filepath."' target='page'>";?>here</a>.</li> 
+ 
+<li>A new utility to keep track of progress and time remaining in a run, 
+see <code>include/Pythia8Plugins/ProgressLog.h</code>, and an example 
+in <code>main111.cc</code>.</li> 
+ 
+<li>New method <code>RotBstMatrix::value(int i, int j)</code> returns the 
+value stored in the <i>(i,j)</i> element of the matrix.</li> 
+ 
+<li>Dummy class added in <code>Streams.h</code> and <code>.cc</code> 
+to avoid harmless warning message.</li> 
+ 
+<li>One more digit for PDG identity codes in event listings, at the 
+expense of a shorter separation to the particle name.</li> 
+ 
+<li>The bibliography now comes with anchor points for each article, 
+and is directed to these from the text references.</li> 
+ 
+<li>PYTHIA author list rearranged alphabetically.</li> 
+ 
+<li>Several minor updates and improvements of the documentation.</li> 
+ 
+</ul> 
+</li> 
+ 
+<li>8.226: 26 April 2017 
+<ul> 
+ 
+<li>Implementation of <i>gamma-hadron</i> collisions and 
+photoproduction in <i>lepton-hadron</i> ones. Section 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='PhotonPhoton.php?filepath=".$filepath."' target='page'>";?>Photon-photon Interactions</a> renamed to 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='Photoproduction.php?filepath=".$filepath."' target='page'>";?>Photoproduction</a> to cover also 
+<i>gamma-hadron</i> documentation. Modified <code>GammaKinematics</code> 
+class to sample photon kinematics also with one photon. Added 
+case <i>gamma-hadron</i> to <code>SigmaTotal</code>.</li> 
+ 
+<li>Automatic mixing of resolved and unresolved photon-photon interactions. 
+Implemented by introducing resolved and unresolved PDF pointers for a 
+<code>BeamParticle</code>, and calling the relevant one once the process 
+has been selected. In case of one direct photon the correct number of 
+photon-initiated processes (<code>PhotonParton</code>) is set by 
+<code>ProcessContainer</code>. A new method <code>Info::photonMode()</code> 
+to output the type of the process. Updated sample program 
+<code>main69.cc</code>.</li> 
+ 
+<li>Check if there is room left for photon-beam remnants also in case 
+of softQCD processes. Very rarely fails.</li> 
+ 
+<li>A new partonic subprocess <i>q gamma &rarr; q gamma</i>, mainly to 
+study photon production in <i>lepton &rarr; gamma - hadron</i> 
+collisions.</li> 
+ 
+<li>Modified kinematics methods for DIS and photoproduction physics, 
+to take beam particle masses into account where important. 
+For DIS, e.g., the incoming lepton is kept massive, which leads to 
+slight changes only visible at very low energies.</li> 
+ 
+<li>Redesigned the merging machinery to allow users to define their 
+own ME+PS merging plugin, which can then be used by Pythia. This change 
+does not affect the physics of Pythia's internal merging schemes. 
+For further details see the new section on "Implementing an external 
+ME+PS combination scheme and interfacing this plugin with Pythia" 
+on the <?php $filepath = $_GET["filepath"];
+echo "<a href='MatchingAndMerging.php?filepath=".$filepath."' target='page'>";?>Matching and Merging</a> 
+page.</li> 
+ 
+<li>Added some new (optional) virtual functions to the timelike and 
+spacelike showers, to ease ME+PS merging with shower plugin codes. The 
+change does not impair the compatibility of existing shower plugin codes. 
+See the description on how to 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='NewShowers.php?filepath=".$filepath."' target='page'>";?>Implement New Showers</a>, 
+the new methods <code>allowedSplitting(...)</code> and 
+<code>getRecoilers(...)</code>, and the modified 
+<code>getSplittingName(...)</code> ones.</li> 
+ 
+<li>New method <code>Pythia::addUserHooksPtr(...)</code> allows 
+the simultaneous use of several <?php $filepath = $_GET["filepath"];
+echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>User Hooks</a>. 
+When several hooks are applicable for a given task the net effect is 
+multiplicative, in weights or in veto survival. It is up to the user 
+to ensure that such combinations are the intended ones.</li> 
+ 
+<li>New <?php $filepath = $_GET["filepath"];
+echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>User Hooks</a> added to set the 
+space-time vertices for the ISR, FSR and MPI evolution process. 
+New <code>main65.cc</code> example illustrates how to set it up. 
+Thanks to Christian Bierlich.</li> 
+ 
+<li>Bug fix in the user hooks machinery for setting fragmentation 
+parameters, and an extension of this framework also to junction 
+topologies.</li> 
+ 
+<li>Four central members from the NNPDF 3.1 sets are made available, 
+as <code>PDF:pSet</code> (and equivalent) codes 17 - 20: the LO 
+ones with <i>alpha_s = 0.130</i> and <i>0.118</i>, and the 
+NLO and NNLO ones with the latter <i>alpha_s</i>. Note that these 
+are rather different from the default NNPDF 2.3 ones; in particular 
+the small-<i>x</i> behaviour is completely changed. Therefore 
+MPI cross sections are appreciably modified for current parameter 
+values, and retunes will be necessary before using NNPDF 3.1 in 
+production. Thanks to Juan Rojo.</li> 
+ 
+<li>Construct <i>pi^+-</i> PDFs so that <i>dbar = u</i> 
+and <i>d = ubar</i>, shortcutting the returned <i>d, dbar</i> 
+values since these are not always constructed correctly in LHAPDF. 
+Thanks to Vincent Andrieux.</li> 
+ 
+<li>Upgrade from fjcore version 3.0.5 to 3.2.1. This removes the 
+usage of the deprecated <code>std::auto_ptr</code> C++ feature. 
+Thanks to Ivan Razumov.</li> 
+ 
+<li>Fix a number of harmless but annoying warnings issued in some 
+versions of GCC 6.x, where the <code>-Wmisleading-indentation</code> 
+flag appears to be on by default. Thanks to Ivan Razumov.</li> 
+ 
+<li>Bug fix the calculation of enhancement factor for the machinery 
+with two hard processes. By mistake statistics was added once with 
+the correct value for each event (accessible with 
+<code>Info::enhanceMPI()</code>), and once with unity, leading to a 
+dilution of the effect. The average enhancement factor is now also 
+calculated at initialization, see <code>Info::enhanceMPIavg()</code> 
+and <code>Info::enhanceMPIoldavg()</code>.</li> 
+ 
+<li>Bug fix in <code>SusyLesHouches.cc</code>, in which the unitary 
+checks of SLHA mixing matrices previously ignored imaginary components, 
+leading to failures when reading in spectra with explicit CP violation. 
+Thanks to M. Noormandipur for pointing to this bug. Mixing-matrix output 
+simultaneously updated so that the magnitudes, rather than the real parts, 
+of mixing-matrix elements are printed.</li> 
+ 
+<li>A new approach has been introduced to force settings values 
+outside their allowed range, either by using the keyword 
+<code>FORCE</code> after the key (= parameter name) in an 
+<code>readString()</code> or <code>readFile()</code> command line, 
+or by using a new optional third argument <code>force = true</code> 
+(which is <code>false</code> by default) in the <code>Settings</code> 
+methods used to change values. The latter methods also will add a new 
+key to the database if not already there when <code>force = true</code> 
+is set. The old special <code>force</code> methods are now redundant 
+and will be removed in the next major release.</li> 
+ 
+<li>New methods <code>Settings::getReadHistory</code> and 
+<code>ParticleData::getReadHistory</code> return a vector 
+with all strings that have been read in by the 
+<code>Settings::readString()</code> and 
+<code>ParticleData::readString()</code> 
+methods, respectively, and thereby also the information set by the 
+<code>Pythia::readString()</code> and <code>Pythia::readFile()</code> 
+commands.</li> 
+ 
+<li>Introduce possibility to make phase space cuts on the DIS 
+<i>Q^2</i> variable.</li> 
+ 
+<li>Add options to use the DIS <i>Q^2</i> variable as factorization 
+and/or renormalization scale.</li> 
+ 
+<li>Introduce some freedom to modify the default shape of the 
+low-mass part of diffractive cross sections, and thereby also the 
+integrated value. </li> 
+ 
+<li>The new <code>LHAupHelaconia</code> class in 
+<code>include/Pythia8Plugins/LHAHelaconia.h</code> provides an 
+interface to the HelacOnia [<a href="Bibliography.php#refSha15" target="page">Sha15</a>] package for onium production, 
+see further the new 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='HelacOniaProcesses.php?filepath=".$filepath."' target='page'>";?>HelacOnia Processes</a> page. The 
+new <code>main35.cc</code> example shows how to use the interface, 
+and how to compare with corresponding internal Pythia results.</li> 
+ 
+<li>Modified <code>configure</code> and <code>Makefile</code>s 
+fixes an issue with linking shared libraries on a Mac, and automatizes 
+the selection of whether to link static or shared libraries to the 
+example main programs. </li> 
+ 
+<li>Two new <code>Vec4</code> methods introduced: <code>cross4</code> 
+for cross product of three four-vectors, and <code>getTwoPerpendicular</code> 
+to create to four-vectors perpendicular to two given ones.</li> 
+ 
+<li>New <code>main74.cc</code> illustrates how the modified Mass Drop 
+Tagger code in FastJet can be used to improve mass reconstruction of 
+a resonance.</li> 
+ 
+<li>When using the <code>PhaseSpace:bias2Selection</code> to reweight 
+high-<i>pT</i> events the <code>PhaseSpace:pTHatMinDiverge</code> 
+value is now used as ultimate fail-safe to avoid <i>pT = 0</i>. 
+</li> 
+ 
+<li>Bug fix in the <code>TimeShower::findMEtype(...)</code> for a 
+few rare cases.</li> 
+ 
+<li>Bug fixes for the squark-gluino and gluino-chargino processes. 
+The charge-conjugate processes were not handled correctly, since the 
+PDF factors are different, and have now been separated.</li> 
+ 
+<li>Minor addition to <code>Streams.cc</code> includes to avoid 
+problems on one platform. Thanks to Joshua Ellis.</li> 
+ 
+<li>Bug fix in <code>HVStringFlav</code>, which otherwise left 
+some Hidden Valley particles massless. Thanks to Colleen Treado.</li> 
+ 
+<li>A few minor fixes when Dark Matter is used as incoming beams in 
+Les Houches input. Thanks to Roberto Ruiz.</li> 
+ 
+<li>Minor bug fix where the process container for resonance decays 
+(only) from LHE input is not initialized. This can lead to the problem 
+where particle input without lifetimes are not corrected, even when 
+the <code>LesHouches:setLifetime</code> mode is non-zero.</li> 
+ 
+<li>Bug fix in <i>LED/Unparticle + Z^0</i> production: correct 
+cross section for allowed <i>Z^0</i> decay channels. Thanks to 
+Andreas Albert.</li> 
+ 
+<li>Fixed memory leak in <code>TimeShower</code>, for the case when 
+the ProcessLevel is off. Thanks to Ryosuke Sato.</li> 
+ 
+<li>Fix that the MPI machinery did not work for the (infrequently used) 
+<code>MultipartonInteractions:bProfile = 0</code> option.</li> 
+ 
+<li>Minor division-by-zero bug fix in statistics calculation and 
+harmless uninitialized <code>bool</code>s in <code>CoupSUSY</code>. 
+Thanks to Vittorio Zecca.</li> 
+ 
+<li>Minor numerical precision improvements in gamma-gamma kinematics 
+and in <i>tHat</i> and <i>uHat</i> construction.</li> 
+ 
+</ul> 
+</li> 
  
 <li>8.223: 5 January 2017 
 <ul> 
@@ -97,7 +512,7 @@ See further the <?php $filepath = $_GET["filepath"];
 echo "<a href='Fragmentation.php?filepath=".$filepath."' target='page'>";?>Fragmentation</a> and 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='FlavourSelection.php?filepath=".$filepath."' target='page'>";?>Flavour Selection</a> descriptions 
-and the article [<a href="Bibliography.php" target="page">Fis16</a>].</li> 
+and the article [<a href="Bibliography.php#refFis16" target="page">Fis16</a>].</li> 
  
 <li>A new option <code>StringPT:closePacking = on</code> allows to 
 enhance the <i>pT</i> width in regions where there is a high 
@@ -107,10 +522,10 @@ default Gaussian and the alternative exponential (see above)
 rate of heavier-particle production. See further the 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='Fragmentation.php?filepath=".$filepath."' target='page'>";?>Fragmentation</a> description 
-and the article [<a href="Bibliography.php" target="page">Fis16</a>].</li> 
+and the article [<a href="Bibliography.php#refFis16" target="page">Fis16</a>].</li> 
  
 <li>A new simple model for hadronic rescattering is introduced, 
-with two variants, as described in [<a href="Bibliography.php" target="page">Fis16</a>]. A new master 
+with two variants, as described in [<a href="Bibliography.php#refFis16" target="page">Fis16</a>]. A new master 
 switch <code>HadronLevel:HadronScatter</code>, by default off, and 
 <code>HadronScatter:mode</code> to pick among them and the old one. 
 See the <?php $filepath = $_GET["filepath"];
@@ -269,7 +684,7 @@ New example <code>main55.cc</code> illustrates this, and event
 properties for an intermediate spinless resonance in 
 <i>&gamma; + &gamma; &rarr; &gamma; + &gamma;</i> at 750 GeV.</li> 
  
-<li>Four Pomeron PDF sets from the ACTW study [<a href="Bibliography.php" target="page">Alv99</a>] now 
+<li>Four Pomeron PDF sets from the ACTW study [<a href="Bibliography.php#refAlv99" target="page">Alv99</a>] now 
 implemented.</li> 
  
 <li>The three Pomeron H1 Jets PDF data files have been joined to one. 
@@ -975,7 +1390,7 @@ used <code>examples/outref</code> subdirectory is moved to
 <li>Fifteen new <?php $filepath = $_GET["filepath"];
 echo "<a href='Tunes.php?filepath=".$filepath."' target='page'>";?>tunes</a> have been added, 
 the MonashStar tune from CMS and fourteen A14 tunes from ATLAS 
-[<a href="Bibliography.php" target="page">ATL14a</a>]. The latter correspond to central tunes for 
+[<a href="Bibliography.php#refATL14a" target="page">ATL14a</a>]. The latter correspond to central tunes for 
 four different PDF sets and ten variations in five (approximate) 
 eigenvector directions. Furthermore, now the chosen 
 <code>Tune:pp</code> implies the <code>Tune:ee</code> value 
@@ -1304,8 +1719,8 @@ tune that was default in 8.1 can be recovered with
 Also most other older tunes are based on <code>Tune:ee = 3</code>. 
 </li> 
  
-<li>Two new CMS underlying-event tunes [<a href="Bibliography.php" target="page">CMS14</a>] and the ATLAS 
-AZ tune [<a href="Bibliography.php" target="page">ATL14</a>] have been added as options.</li> 
+<li>Two new CMS underlying-event tunes [<a href="Bibliography.php#refCMS14" target="page">CMS14</a>] and the ATLAS 
+AZ tune [<a href="Bibliography.php#refATL14" target="page">ATL14</a>] have been added as options.</li> 
  
 <li>The default handling of the <i>g &rarr; q qbar</i> splitting kernel 
 has been changed, affecting in particular heavy-flavour production. 

@@ -29,7 +29,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
  
 <h2>HepMC Interface</h2> 
  
-An interface to the HepMC [<a href="Bibliography.php" target="page">Dob01</a>] standard event record 
+An interface to the HepMC [<a href="Bibliography.php#refDob01" target="page">Dob01</a>] standard event record 
 format has been provided by M. Kirsanov. The code is stored in 
 <code>include/Pythia8Plugins/HepMC2.h</code>. To use it, 
 the relevant libraries need to be linked, as explained in the 
@@ -87,14 +87,15 @@ Here comes a complete list of all public methods of the
 <code>Pythia8ToHepMC</code> class in the <code>HepMC</code> 
 (<i>not</i> <code>Pythia8</code>!) namespace. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>Pythia8ToHepMC::Pythia8ToHepMC() &nbsp;</strong> <br/>
    
+<a name="anchor2"></a>
 <strong>virtual Pythia8ToHepMC::~Pythia8ToHepMC() &nbsp;</strong> <br/>
 the constructor and destructor take no arguments. 
    
  
-<a name="method2"></a>
+<a name="anchor3"></a>
 <p/><strong>bool Pythia8ToHepMC::fill_next_event( Pythia8::Pythia& pythia, GenEvent* evt, int ievnum = -1, bool append = false, GenParticle* rootParticle = 0, int iBarcode = -1) &nbsp;</strong> <br/>
 convert a <code>Pythia</code> event to a <code>HepMC</code> one. 
 Will return true if succeeded. 
@@ -126,7 +127,7 @@ and if 0 then set all bar codes to vanish.
    
    
  
-<a name="method3"></a>
+<a name="anchor4"></a>
 <p/><strong>bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev, GenEvent* evt, int ievnum = -1, Pythia8::Info* pyinfo = 0, Pythia8::Settings* pyset = 0, bool append = false, GenParticle* rootParticle = 0, int iBarcode = -1) &nbsp;</strong> <br/>
 convert a <code>Pythia</code> event to a <code>HepMC</code> one. 
 Will return true if succeeded. 
@@ -179,17 +180,19 @@ The <code>set</code> methods have the same default input values as
 the internal initialization ones, so that a call without an argument 
 (re)stores the default. 
  
-<a name="method4"></a>
+<a name="anchor5"></a>
 <p/><strong>void Pythia8ToHepMC::set_print_inconsistency(bool b = true) &nbsp;</strong> <br/>
    
+<a name="anchor6"></a>
 <strong>bool Pythia8ToHepMC::print_inconsistency() &nbsp;</strong> <br/>
 print a warning line, on <code>cerr</code>, when inconsistent mother 
 and daughter information is encountered. 
    
  
-<a name="method5"></a>
+<a name="anchor7"></a>
 <p/><strong>void Pythia8ToHepMC::set_free_parton_exception(bool b = true) &nbsp;</strong> <br/>
    
+<a name="anchor8"></a>
 <strong>bool Pythia8ToHepMC::free_parton_exception() &nbsp;</strong> <br/>
 check and throw an exception when unhadronized gluons or quarks are 
 encountered in the event record. Does not apply when Pythia hadronization 
@@ -200,9 +203,10 @@ location (<code>index()</code>) and species (<code>pdg_id()</code>) of a
 bad parton. 
    
  
-<a name="method6"></a>
+<a name="anchor9"></a>
 <p/><strong>void Pythia8ToHepMC::set_convert_gluon_to_0(bool b = false) &nbsp;</strong> <br/>
    
+<a name="anchor10"></a>
 <strong>bool Pythia8ToHepMC::convert_gluon_to_0() &nbsp;</strong> <br/>
 the normal gluon identity code 21 is used also when parton density 
 information is stored, unless this optional argument is set true to 
@@ -210,27 +214,30 @@ have gluons represented by a 0. This choice does not affect the
 normal event record, where a gluon is always 21. 
    
  
-<a name="method7"></a>
+<a name="anchor11"></a>
 <p/><strong>void Pythia8ToHepMC::set_store_pdf(bool b = true) &nbsp;</strong> <br/>
    
+<a name="anchor12"></a>
 <strong>bool Pythia8ToHepMC::store_pdf() &nbsp;</strong> <br/>
 for each event store information on the two incoming flavours, their 
 x values and common factorization scale, and the values of the two 
 parton distributions, <i>xf(x,Q)</i>. 
    
  
-<a name="method8"></a>
+<a name="anchor13"></a>
 <p/><strong>void Pythia8ToHepMC::set_store_proc(bool b = true) &nbsp;</strong> <br/>
    
+<a name="anchor14"></a>
 <strong>bool Pythia8ToHepMC::store_proc() &nbsp;</strong> <br/>
 for each event store information on the Pythia process code, the 
 renormalization scale, and <i>alpha_em</i> and <i>alpha_s</i> 
 values used for the hard process. 
    
  
-<a name="method9"></a>
+<a name="anchor15"></a>
 <p/><strong>void Pythia8ToHepMC::set_store_xsec(bool b = true) &nbsp;</strong> <br/>
    
+<a name="anchor16"></a>
 <strong>bool Pythia8ToHepMC::store_xsec() &nbsp;</strong> <br/>
 for each event store information on the Pythia cross section and its error, 
 in pb, and the event weight. If events also come with a dimensional weight, 

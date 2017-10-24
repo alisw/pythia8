@@ -1299,12 +1299,6 @@ of an external shower plugin. This will become possible as soon as new
 showers containing the necessary ingredients are available in Pythia. 
 </flag> 
  
-<flag name="Merging:useShowerPlugin" default="off"> 
-Use the splitting probabilities, evolution variables and phase space mappings 
-of an external shower plugin. This will become possible as soon as new 
-showers containing the necessary ingredients are available in Pythia. 
-</flag> 
- 
 <flag name="Merging:applyVeto" default="on"> 
 If off, no event veto based on the merging scale is applied in CKKW-L merging. 
 This means that the user has to implement the veto by hand in the Pythia main 

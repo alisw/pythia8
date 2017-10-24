@@ -31,6 +31,7 @@ e.g. if you insist on using the same <i>alpha_s</i> everywhere.
 <h3>Couplings and K factor</h3> 
  
 The size of QCD cross sections is mainly determined by 
+<a name="anchor1"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaProcess:alphaSvalue &nbsp;</strong> 
  (<code>default = <strong>0.13</strong></code>; <code>minimum = 0.06</code>; <code>maximum = 0.25</code>)<br/>
 The <i>alpha_strong</i> value at scale <i>M_Z^2</i>. 
@@ -39,6 +40,7 @@ The <i>alpha_strong</i> value at scale <i>M_Z^2</i>.
 <p/> 
 The actual value is then regulated by the running to the <i>Q^2</i> 
 renormalization scale, at which <i>alpha_strong</i> is evaluated 
+<a name="anchor2"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:alphaSorder &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Order at which <i>alpha_strong</i> runs, 
@@ -53,6 +55,7 @@ but there is also nothing wrong with it.
 <p/> 
 QED interactions are regulated by the <i>alpha_electromagnetic</i> 
 value at the <i>Q^2</i> renormalization scale of an interaction. 
+<a name="anchor3"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:alphaEMorder &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = -1</code>; <code>maximum = 1</code>)<br/>
 The running of <i>alpha_em</i> used in hard processes. 
@@ -71,6 +74,7 @@ at the <i>Z^0</i> mass.
 In addition there is the possibility of a global rescaling of 
 cross sections (which could not easily be accommodated by a 
 changed <i>alpha_strong</i>, since <i>alpha_strong</i> runs) 
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaProcess:Kfactor &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 4.0</code>)<br/>
 Multiply almost all cross sections by this common fix factor. Excluded 
@@ -89,6 +93,7 @@ alternatives, separately for <i>2 &rarr; 1</i>, <i>2 &rarr; 2</i> and two
 different kinds of <i>2 &rarr; 3</i> processes. In addition a common 
 multiplicative factor may be imposed. 
  
+<a name="anchor5"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:renormScale1 &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 The <i>Q^2</i> renormalization scale for <i>2 &rarr; 1</i> processes. 
@@ -103,8 +108,9 @@ below.
    
    
  
+<a name="anchor6"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:renormScale2 &nbsp;</strong> 
- (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 5</code>)<br/>
+ (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)<br/>
 The <i>Q^2</i> renormalization scale for <i>2 &rarr; 2</i> processes. 
 <br/><code>option </code><strong> 1</strong> : the smaller of the squared transverse masses of the two 
 outgoing particles, i.e. <i>min(mT_3^2, mT_4^2) = 
@@ -126,8 +132,13 @@ i.e. <i>sHat</i>. Useful for processes dominated by
 <br/><code>option </code><strong> 5</strong> : fix scale set in <code>SigmaProcess:renormFixScale</code> 
 below. 
    
+<br/><code>option </code><strong> 6</strong> : Use squared invariant momentum transfer <i>-tHat</i>. 
+This is a common choice for lepton-hadron scattering processes. In that 
+case <i>-tHat=Q^2</i>. 
+   
    
  
+<a name="anchor7"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:renormScale3 &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)<br/>
 The <i>Q^2</i> renormalization scale for "normal" <i>2 &rarr; 3</i> 
@@ -157,6 +168,7 @@ below.
    
    
  
+<a name="anchor8"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:renormScale3VV &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)<br/>
 The <i>Q^2</i> renormalization scale for <i>2 &rarr; 3</i> 
@@ -187,6 +199,7 @@ below.
    
    
  
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaProcess:renormMultFac &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.</code>)<br/>
 The <i>Q^2</i> renormalization scale for <i>2 &rarr; 1</i>, 
@@ -195,6 +208,7 @@ this factor relative to the scale described above (except for the options
 with a fix scale). Should be use sparingly for <i>2 &rarr; 1</i> processes. 
    
  
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaProcess:renormFixScale &nbsp;</strong> 
  (<code>default = <strong>10000.</strong></code>; <code>minimum = 1.</code>)<br/>
 A fix <i>Q^2</i> value used as renormalization scale for 
@@ -212,6 +226,7 @@ for each event class separately, between normalization and factorization
 scales, and the description has therefore been slightly shortened. The 
 default values are <b>not</b> necessarily the same, however. 
  
+<a name="anchor11"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:factorScale1 &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 The <i>Q^2</i> factorization scale for <i>2 &rarr; 1</i> processes. 
@@ -225,8 +240,9 @@ below.
    
    
  
+<a name="anchor12"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:factorScale2 &nbsp;</strong> 
- (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 5</code>)<br/>
+ (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)<br/>
 The <i>Q^2</i> factorization scale for <i>2 &rarr; 2</i> processes. 
 <br/><code>option </code><strong> 1</strong> : the smaller of the squared transverse masses of the two 
 outgoing particles. 
@@ -245,8 +261,13 @@ i.e. <i>sHat</i>. Useful for processes dominated by
 <br/><code>option </code><strong> 5</strong> : fix scale set in <code>SigmaProcess:factorFixScale</code> 
 below. 
    
+<br/><code>option </code><strong> 6</strong> : Use squared invariant momentum transfer <i>-tHat</i>. 
+This is a common choice for lepton-hadron scattering processes. In that 
+case <i>-tHat=Q^2</i>. 
+   
    
  
+<a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:factorScale3 &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)<br/>
 The <i>Q^2</i> factorization scale for "normal" <i>2 &rarr; 3</i> 
@@ -271,6 +292,7 @@ below.
    
    
  
+<a name="anchor14"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaProcess:factorScale3VV &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 6</code>)<br/>
 The <i>Q^2</i> factorization scale for <i>2 &rarr; 3</i> 
@@ -299,6 +321,7 @@ below.
    
    
  
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaProcess:factorMultFac &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.</code>)<br/>
 The <i>Q^2</i> factorization scale for <i>2 &rarr; 1</i>, 
@@ -307,6 +330,7 @@ this factor relative to the scale described above (except for the options
 with a fix scale). Should be use sparingly for <i>2 &rarr; 1</i> processes. 
    
  
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaProcess:factorFixScale &nbsp;</strong> 
  (<code>default = <strong>10000.</strong></code>; <code>minimum = 1.</code>)<br/>
 A fix <i>Q^2</i> value used as factorization scale for <i>2 &rarr; 1</i>, 

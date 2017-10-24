@@ -512,7 +512,7 @@ private:
   double eDdU, eDLambdaU, eDlambda, eDratio, eDlambdaPrime,
          eDtff, eDconstantTerm;
   double sHS, tHS, uHS, tHC, uHC, tHQ, uHQ, tHuH, mU, mUS, mZ, widZ,
-         mZS, mwZS, eDsigma0;
+         mZS, mwZS, eDsigma0, openFrac;
 
 };
 

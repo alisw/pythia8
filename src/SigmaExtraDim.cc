@@ -1739,6 +1739,9 @@ void Sigma2ffbar2LEDUnparticleZ::initProc() {
   // All in total
   eDconstantTerm = tmpTerm1 * tmpTerm2 * tmpTerm3;
 
+  // Secondary open width fraction.
+  openFrac = particleDataPtr->resOpenFrac(23);
+
 }
 
 //--------------------------------------------------------------------------
@@ -1855,6 +1858,9 @@ double Sigma2ffbar2LEDUnparticleZ::sigmaHat() {
 
   // Total cross section
   double sigma = eDconstantTerm * facEWS * facSpect * eDsigma0;
+
+  // Secondary width for Z0
+  sigma       *= openFrac;
 
   // If f fbar are quarks (1/N_c)
   if (idAbs < 9) sigma /= 3.;

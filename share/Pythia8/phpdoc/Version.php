@@ -33,13 +33,15 @@ The settings on this page should not be changed by the ordinary user,
 but appear here for documentation purposes, and so that they can 
 form part of the standard databases and be queried accordingly. 
  
+<a name="anchor1"></a>
 <p/><code>parm&nbsp; </code><strong> Pythia:versionNumber &nbsp;</strong> 
- (<code>default = <strong>8.223</strong></code>)<br/>
+ (<code>default = <strong>8.230</strong></code>)<br/>
 Version and subversion number, with three significant decimals. 
    
  
+<a name="anchor2"></a>
 <p/><code>mode&nbsp; </code><strong> Pythia:versionDate &nbsp;</strong> 
- (<code>default = <strong>20170105</strong></code>)<br/>
+ (<code>default = <strong>20171006</strong></code>)<br/>
 Last date of change of current (sub)version, in format yyyymmdd. 
    
  

@@ -46,11 +46,13 @@ are explicity switched on, e.g. <code>211:mayDecay  = true</code>.
 (iii) Particles may be requested to have a nominal proper lifetime 
 <i>tau0</i> below a threshold. 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:limitTau0 &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 When on, only particles with <i>tau0 &lt; tau0Max</i> are decayed. 
    
  
+<a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:tau0Max &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>tau0Max</i>, expressed in mm/c. 
@@ -60,11 +62,13 @@ The above <i>tau0Max</i>, expressed in mm/c.
 (iv) Particles may be requested to have an actual proper lifetime 
 <i>tau</i> below a threshold. 
  
+<a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:limitTau &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 When on, only particles with <i>tau &lt; tauMax</i> are decayed. 
    
  
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:tauMax &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>tauMax</i>, expressed in mm/c.<br/> 
@@ -78,6 +82,7 @@ decays or not. (If each test would use a different temporary
 (v) Particles may be requested to decay within a given distance 
 of the origin. 
  
+<a name="anchor5"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:limitRadius &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 When on, only particles with a decay within a radius <i>r &lt; rMax</i> 
@@ -85,6 +90,7 @@ are decayed. There is assumed to be no magnetic field or other
 detector effects. 
    
  
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:rMax &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>rMax</i>, expressed in mm. 
@@ -94,6 +100,7 @@ The above <i>rMax</i>, expressed in mm.
 (vi) Particles may be requested to decay within a given cylindrical 
 volume around the origin. 
  
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:limitCylinder &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 When on, only particles with a decay within a volume limited by 
@@ -102,11 +109,13 @@ are decayed. There is assumed to be no magnetic field or other
 detector effects. 
    
  
+<a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:xyMax &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>xyMax</i>, expressed in mm. 
    
  
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:zMax &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>zMax</i>, expressed in mm. 
@@ -114,17 +123,20 @@ The above <i>zMax</i>, expressed in mm.
  
 <h3>Mixing</h3> 
  
+<a name="anchor10"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:mixB &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow or not <i>B^0 - B^0bar</i> and <i>B_s^0 - B_s^0bar</i> mixing. 
    
  
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:xBdMix &nbsp;</strong> 
  (<code>default = <strong>0.776</strong></code>; <code>minimum = 0.74</code>; <code>maximum = 0.81</code>)<br/>
 The mixing parameter <i>x_d = Delta(m_B^0)/Gamma_B^0</i> in the 
 <i>B^0 - B^0bar</i> system. (Default from RPP2006.) 
    
  
+<a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:xBsMix &nbsp;</strong> 
  (<code>default = <strong>26.05</strong></code>; <code>minimum = 22.0</code>; <code>maximum = 30.0</code>)<br/>
 The mixing parameter <i>x_s = Delta(m_B_s^0)/Gamma_B_s^0</i> in the 
@@ -138,9 +150,9 @@ Decays of <i>tau</i> leptons can be performed using helicity
 information from the <i>tau</i> production process and with the 
 hadronic current of the <i>tau</i> decay modelled using form factors 
 fit to data. The <i>tau</i> decay framework is largely based on the 
-corresponding Herwig++ implementation [<a href="Bibliography.html" target="page">Gre07</a>], with some 
-input from Tauola [<a href="Bibliography.html" target="page">Jad90</a>]. A short summary can be found in 
-[<a href="Bibliography.html" target="page">Ilt12</a>], while the complete writeup is in [<a href="Bibliography.html" target="page">Ilt14</a>]. 
+corresponding Herwig++ implementation [<a href="Bibliography.html#refGre07" target="page">Gre07</a>], with some 
+input from Tauola [<a href="Bibliography.html#refJad90" target="page">Jad90</a>]. A short summary can be found in 
+[<a href="Bibliography.html#refIlt12" target="page">Ilt12</a>], while the complete writeup is in [<a href="Bibliography.html#refIlt14" target="page">Ilt14</a>]. 
  
 <p/> 
  
@@ -181,6 +193,7 @@ of that <i>tau</i> is used instead unless also invalid. For the
 external determination of a correlated <i>tau</i> pair the following 
 options are available. 
  
+<a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> TauDecays:externalMode &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Choice of the external polarization and correlation mechanism for 
@@ -228,6 +241,7 @@ variety of options on how to determine polarization and correlation
 are available, with a sensible default in place which should catch most 
 everything. 
  
+<a name="anchor14"></a>
 <p/><code>mode&nbsp; </code><strong> TauDecays:mode &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Choice of <i>tau</i> decay model. 
@@ -260,12 +274,14 @@ for the <i>tau</i> cannot be determined (internally or externally)
 then the default behaviour described above is applied. 
    
  
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> TauDecays:tauPolarization &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = -1.</code>; <code>maximum = 1.</code>)<br/>
 Polarization of the <i>tau</i> when mode <code>2</code> or <code>3</code> of 
 <code>TauDecays:mode</code> is selected. 
    
  
+<a name="anchor16"></a>
 <p/><code>mode&nbsp; </code><strong> TauDecays:tauMother &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)<br/>
 Mother of the <i>tau</i> for forced polarization when mode <code>2</code> of 
@@ -278,7 +294,7 @@ automatically obtain the inverse polarization.
  
 So far PYTHIA does not have any generic machinery for handling QED radiation 
 in normal particle decays. In order to include this, a program like Photos 
-[<a href="Bibliography.html" target="page">Bar94, Dav10</a>] could be used as an afterburner. In a few cases, 
+[<a href="Bibliography.html#refBar94" target="page">Bar94</a>, <a href="Bibliography.html#refDav10" target="page">Dav10</a>] could be used as an afterburner. In a few cases, 
 however, the existing shower machinery can be used also here: for 
 two-body decays to a lepton pair (<i>l^+ l^-</i> or <i>l^+- nu_l</i>). 
 Such decays are mediated by <i>gamma^*/Z^0/W^+-</i> exchange, for 
@@ -286,6 +302,7 @@ which PYTHIA does have an existing machinery that can be applied,
 including first-order matrix-element corrections for the first (hardest) 
 photon emission. 
  
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:allowPhotonRadiation &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow or not photon radiations in decays to a lepton pair, see above. 
@@ -296,6 +313,7 @@ QED-radiation program, as is the norm in many collaborations.
  
 <h3>Other variables</h3> 
  
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:mSafety &nbsp;</strong> 
  (<code>default = <strong>0.0005</strong></code>; <code>minimum = 0.</code>; <code>maximum = 0.01</code>)<br/>
 Minimum mass difference required between the decaying mother mass 
@@ -303,6 +321,7 @@ and the sum of the daughter masses, kept as a safety margin to avoid
 numerical problems in the decay generation. 
    
  
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:sigmaSoft &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.</code>)<br/>
 In semileptonic decays to more than one hadron, such as 
@@ -333,12 +352,14 @@ new try is made, including a new multiplicity. These constraints
 imply that the actual average multiplicity does not quite agree with 
 the formula above. 
  
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multIncrease &nbsp;</strong> 
  (<code>default = <strong>4.</strong></code>; <code>minimum = 2.</code>; <code>maximum = 6.</code>)<br/>
 The above <i>multIncrease</i> parameter, except for 
 <code>meMode = 23</code>. 
    
  
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multIncreaseWeak &nbsp;</strong> 
  (<code>default = <strong>2.5</strong></code>; <code>minimum = 1.</code>; <code>maximum = 4.</code>)<br/>
 The above <i>multIncrease</i> parameter, specifically for 
@@ -347,16 +368,19 @@ virtual W mass should contribute to the production of new particles,
 rather than the full meson mass. 
    
  
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multRefMass &nbsp;</strong> 
  (<code>default = <strong>0.7</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)<br/>
 The above <i>multRefMass</i> parameter. 
    
  
+<a name="anchor23"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multGoffset &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 The above <i>multGoffset</i> parameter. 
    
  
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:colRearrange &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
 When a decay is given as a list of four partons to be turned into 
@@ -367,6 +391,7 @@ the probability that this original assignment is not respected, and
 default corresponds to no memory of this original colour topology. 
    
  
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:FSRinDecays &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 When a particle decays to <i>q qbar</i>, <i>g g</i>, <i>g g g</i> 

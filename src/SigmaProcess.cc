@@ -62,6 +62,13 @@ void SigmaProcess::init(Info* infoPtrIn, Settings* settingsPtrIn,
   isLeptonB       = (beamBPtr != 0) ? beamBPtr->isLepton() : false;
   hasLeptonBeams  = isLeptonA || isLeptonB;
 
+  // Photon beams from leptons.
+  bool isLepton2gamma = settingsPtr->flag("PDF:lepton2gamma");
+  lepton2gammaA   = (beamAPtr != 0) ?
+    beamAPtr->isLepton() && isLepton2gamma : false;
+  lepton2gammaB   = (beamBPtr != 0) ?
+    beamBPtr->isLepton() && isLepton2gamma : false;
+
   // K factor, multiplying resolved processes. (But not here for MPI.)
   Kfactor         = settingsPtr->parm("SigmaProcess:Kfactor");
 
@@ -193,13 +200,14 @@ bool SigmaProcess::initFlux() {
 
   // Case with f f', f fbar', fbar fbar' incoming state.
   else if (fluxType == "ff") {
-    // If beams are leptons then they are also the colliding partons.
-    if ( isLeptonA && isLeptonB ) {
+    // If beams are leptons then they are also the colliding partons
+    // unless lepton includes a photon beam.
+    if ( isLeptonA && isLeptonB && !lepton2gammaA && !lepton2gammaB ) {
       addBeamA(idA);
       addBeamB(idB);
       addPair(idA, idB);
     // First beam is lepton and second is hadron.
-    } else if ( isLeptonA ) {
+    } else if ( isLeptonA && !lepton2gammaA ) {
       addBeamA(idA);
       for (int idNow = -nQuarkIn; idNow <= nQuarkIn; ++idNow)
       if (idNow != 0) {
@@ -207,7 +215,7 @@ bool SigmaProcess::initFlux() {
         addPair(idA, idNow);
       }
     // First beam is hadron and second is lepton.
-    } else if ( isLeptonB ) {
+    } else if ( isLeptonB && !lepton2gammaB ) {
       addBeamB(idB);
       for (int idNow = -nQuarkIn; idNow <= nQuarkIn; ++idNow)
       if (idNow != 0) {
@@ -231,8 +239,10 @@ bool SigmaProcess::initFlux() {
 
   // Case with f fbar' generic incoming state.
   else if (fluxType == "ffbar") {
-    // If beams are leptons then also colliding partons.
-    if (isLeptonA && isLeptonB && idA * idB < 0) {
+    // If beams are leptons then also colliding partons
+    // unless lepton includes a photon beam.
+    if (isLeptonA && isLeptonB && idA * idB < 0
+        && !lepton2gammaA && !lepton2gammaB) {
       addBeamA(idA);
       addBeamB(idB);
       addPair(idA, idB);
@@ -253,8 +263,9 @@ bool SigmaProcess::initFlux() {
 
   // Case with f fbar incoming state.
   else if (fluxType == "ffbarSame") {
-    // If beams are antiparticle pair and leptons then also colliding partons.
-    if ( idA + idB == 0 && isLeptonA ) {
+    // If beams are antiparticle pair and leptons then also colliding partons
+    // unless lepton includes a photon beam.
+    if ( idA + idB == 0 && isLeptonA && !lepton2gammaA && !lepton2gammaB) {
       addBeamA(idA);
       addBeamB(idB);
       addPair(idA, idB);
@@ -273,9 +284,11 @@ bool SigmaProcess::initFlux() {
 
   // Case with f fbar' charged(+-1) incoming state.
   else if (fluxType == "ffbarChg") {
-    // If beams are leptons then also colliding partons.
-    if ( isLeptonA && isLeptonB && abs( particleDataPtr->chargeType(idA)
-             + particleDataPtr->chargeType(idB) ) == 3 ) {
+    // If beams are leptons then also colliding partons
+    // unless lepton includes a photon beam.
+    if ( isLeptonA && isLeptonB && !lepton2gammaA && !lepton2gammaB
+         && abs( particleDataPtr->chargeType(idA)
+           + particleDataPtr->chargeType(idB) ) == 3 ) {
       addBeamA(idA);
       addBeamB(idB);
       addPair(idA, idB);
@@ -296,8 +309,8 @@ bool SigmaProcess::initFlux() {
 
   // Case with f gamma incoming state.
   else if (fluxType == "fgm") {
-    // Fermion from incoming side A.
-    if ( isLeptonA ) {
+    // Fermion from incoming side A if no photon beam inside.
+    if ( isLeptonA && !lepton2gammaA ) {
       addBeamA( idA);
       addPair(idA, 22);
     } else {
@@ -307,8 +320,8 @@ bool SigmaProcess::initFlux() {
         addPair(idNow, 22);
       }
     }
-    // Fermion from incoming side B.
-    if ( isLeptonB ) {
+    // Fermion from incoming side B if no photon beam inside.
+    if ( isLeptonB && !lepton2gammaB ) {
       addBeamB( idB);
       addPair(22, idB);
     } else {
@@ -341,6 +354,18 @@ bool SigmaProcess::initFlux() {
     addBeamB(22);
   }
 
+  // Case with gamma quark incoming state.
+  // Need this when both resolved and unresolved photon beams.
+  else if (fluxType == "gmq") {
+    for (int idNow = -nQuarkIn; idNow <= nQuarkIn; ++idNow)
+      if (idNow != 0) {
+        addBeamB(idNow);
+        addPair(22, idNow);
+      }
+    // Photon in the beam.
+    addBeamA(22);
+  }
+
   // Case with gluon gamma incoming state.
   else if (fluxType == "ggm") {
     addBeamA(21);
@@ -348,6 +373,14 @@ bool SigmaProcess::initFlux() {
     addBeamB(21);
     addBeamB(22);
     addPair(21, 22);
+    addPair(22, 21);
+  }
+
+  // Case with gamma gluon incoming state.
+  // Need this when both resolved and unresolved photon beams.
+  else if (fluxType == "gmg") {
+    addBeamA(22);
+    addBeamB(21);
     addPair(22, 21);
   }
 
@@ -372,8 +405,11 @@ bool SigmaProcess::initFlux() {
 
 // Convolute matrix-element expression(s) with parton flux and K factor.
 // Possibly different PDFs for the phase-space initialization.
+// Can also take new values for x's to correct for oversampling, as
+// needed with external photon flux.
 
-double SigmaProcess::sigmaPDF(bool initPS, bool samexGamma) {
+double SigmaProcess::sigmaPDF(bool initPS, bool samexGamma,
+    bool useNewXvalues, double x1New, double x2New) {
 
   // Evaluate and store the required parton densities.
   for (int j = 0; j < sizeBeamA(); ++j) {
@@ -381,6 +417,8 @@ double SigmaProcess::sigmaPDF(bool initPS, bool samexGamma) {
       inBeamA[j].pdf = beamAPtr->xfMax( inBeamA[j].id, x1Save, Q2FacSave);
     else if ( samexGamma)
       inBeamA[j].pdf = beamAPtr->xfSame( inBeamA[j].id, x1Save, Q2FacSave);
+    else if ( useNewXvalues && x1New > 0.)
+      inBeamA[j].pdf = beamAPtr->xfGamma( inBeamA[j].id, x1New, Q2FacSave);
     else
       inBeamA[j].pdf = beamAPtr->xfHard( inBeamA[j].id, x1Save, Q2FacSave);
   }
@@ -389,13 +427,18 @@ double SigmaProcess::sigmaPDF(bool initPS, bool samexGamma) {
       inBeamB[j].pdf = beamBPtr->xfMax( inBeamB[j].id, x2Save, Q2FacSave);
     else if ( samexGamma)
       inBeamB[j].pdf = beamBPtr->xfSame( inBeamB[j].id, x2Save, Q2FacSave);
+    else if ( useNewXvalues && x2New > 0.)
+      inBeamB[j].pdf = beamBPtr->xfGamma( inBeamB[j].id, x2New, Q2FacSave);
     else
       inBeamB[j].pdf = beamBPtr->xfHard( inBeamB[j].id, x2Save, Q2FacSave);
   }
 
-  // Save the x_gamma values after PDFs are called if new value is sampled.
-  if ( !samexGamma && beamAPtr->hasResGamma() ) beamAPtr->xGammaPDF();
-  if ( !samexGamma && beamBPtr->hasResGamma() ) beamBPtr->xGammaPDF();
+  // Save the x_gamma values after PDFs are called if new value is sampled
+  // if using internal photon flux from leptons.
+  if ( !useNewXvalues && !samexGamma && beamAPtr->hasResGamma() )
+    beamAPtr->xGammaPDF();
+  if ( !useNewXvalues && !samexGamma && beamBPtr->hasResGamma() )
+    beamBPtr->xGammaPDF();
 
   // Loop over allowed incoming channels.
   sigmaSumSave = 0.;
@@ -854,6 +897,7 @@ void Sigma2Process::store2Kin( double x1in, double x2in, double sHin,
     else                        Q2RenSave = sH;
     Q2RenSave                            *= renormMultFac;
     if      (renormScale2 == 5) Q2RenSave = renormFixScale;
+    if      (renormScale2 == 6) Q2RenSave = -tH * renormMultFac;
 
     // Different options for factorization scale.
     if (masslessKin)            Q2FacSave = (factorScale2 < 4) ? pT2 : sH;
@@ -863,6 +907,7 @@ void Sigma2Process::store2Kin( double x1in, double x2in, double sHin,
     else                        Q2FacSave = sH;
     Q2FacSave                            *= factorMultFac;
     if      (factorScale2 == 5) Q2FacSave = factorFixScale;
+    if      (factorScale2 == 6) Q2FacSave = -tH * factorMultFac;
   }
 
   // Evaluate alpha_strong and alpha_EM.

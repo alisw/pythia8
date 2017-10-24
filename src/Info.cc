@@ -123,18 +123,19 @@ void Info::list() const {
          << setw(10) << pdf2Save[iDS] << " at same Q2.\n";
     cout << " Subprocess " << nameSubSave[iDS] << " with code "
          << codeSubSave[iDS] << " is 2 -> " << nFinalSubSave[iDS] << ".\n";
-    if (nFinalSubSave[iDS] == 1)
+    if (nFinalSubSave[iDS] == 1) {
       cout << " It has sHat = " << setw(10) << sH[iDS] << ".\n";
-    else if (nFinalSubSave[iDS] == 2)
+    } else if (nFinalSubSave[iDS] == 2) {
       cout << " It has sHat = " << setw(10) << sH[iDS] << ",    tHat = "
            << setw(10) << tH[iDS] << ",    uHat = " << setw(10) << uH[iDS]
            << ",\n" << "       pTHat = " << setw(10) << pTH[iDS]
            << ",   m3Hat = " << setw(10) << m3H[iDS] << ",   m4Hat = "
            << setw(10) << m4H[iDS] << ",\n" << "    thetaHat = " << setw(10)
            << thetaH[iDS] << ",  phiHat = "  << setw(10) << phiH[iDS] << ".\n";
-      cout << "     alphaEM = " << setw(10) << alphaEMSave[iDS]
-           << ",  alphaS = " << setw(10) << alphaSSave[iDS] << "    at Q2 = "
-           << setw(10) << Q2RenSave[iDS] << ".\n";
+    }
+    cout << "     alphaEM = " << setw(10) << alphaEMSave[iDS]
+         << ",  alphaS = " << setw(10) << alphaSSave[iDS] << "    at Q2 = "
+         << setw(10) << Q2RenSave[iDS] << ".\n";
   }
 
   // Impact parameter.

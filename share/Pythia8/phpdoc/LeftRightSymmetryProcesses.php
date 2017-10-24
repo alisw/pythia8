@@ -41,7 +41,7 @@ but a search for the lowest-lying states of this kind is no different
 from e.g. the freedom already accorded by the MSSM Higgs scenarios. 
  
 <p/> 
-PYTHIA implements the scenario of [<a href="Bibliography.php" target="page">Hui97</a>]. 
+PYTHIA implements the scenario of [<a href="Bibliography.php#refHui97" target="page">Hui97</a>]. 
  
 <p/> 
 The <i>W_R^+-</i> has been implemented as a simple copy of the 

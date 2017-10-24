@@ -32,6 +32,7 @@ without a process set, it is also not possible to carry out the tasks
 on the parton level. It is still possible, however, to hadronize 
 a parton-level configuration provided by some external program. 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> ProcessLevel:all &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If off, do not attempt to carry out any generation at all on the 
@@ -47,6 +48,7 @@ switches. Further details are found
 For <code>ProcessLevel:all = on</code> one part of the event generation 
 on this level may be switched off individually: 
  
+<a name="anchor2"></a>
 <p/><code>flag&nbsp; </code><strong> ProcessLevel:resonanceDecays &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch to allow resonance decays; on/off = true/false. 
@@ -70,6 +72,7 @@ parton-level configuration to be handed on to <code>HadronLevel</code>.
 This step involves the application of initial- and final-state radiation, 
 multiparton interactions and the structure of beam remnants. 
  
+<a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:all &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If off then stop the generation after the hard process has been 
@@ -82,18 +85,21 @@ one is then not.
 For <code>PartonLevel:all = on</code> some parts of the event generation 
 on this level may be switched off individually: 
  
+<a name="anchor4"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:MPI &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for multiparton interactions; on/off = true/false. 
 Further options are found <a href="MultipartonInteractions.html" target="page">here</a>. 
    
  
+<a name="anchor5"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:ISR &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for initial-state radiation; on/off = true/false. 
 Further options are found <a href="SpacelikeShowers.html" target="page">here</a>. 
    
  
+<a name="anchor6"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:FSR &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for final-state radiation; on/off = true/false. 
@@ -102,6 +108,7 @@ If you leave this switch on, the following two switches allow
 more detailed control to switch off only parts of the showers. 
    
  
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:FSRinProcess &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Switch for final-state radiation in association with the hard process 
@@ -109,6 +116,7 @@ itself; on/off = true/false. In addition <code>PartonLevel:FSR</code>
 must be on for these emissions to occur. 
    
  
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:FSRinResonances &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for final-state radiation in any resonance decays 
@@ -116,6 +124,7 @@ subsequent to the hard process itself; on/off = true/false. In addition
 <code>PartonLevel:FSR</code> must be on for these emissions to occur. 
    
  
+<a name="anchor9"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:earlyResDec &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on then do resonance decays early, before beam handling including 
@@ -137,6 +146,7 @@ In the latter case <b>no</b> operations at all are carried out on the
 parton level, and therefore it is also not possible to go on to the 
 hadron level. 
  
+<a name="anchor10"></a>
 <p/><code>flag&nbsp; </code><strong> PartonLevel:Remnants &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for addition of beam remnants; on/off = true/false. 
@@ -166,6 +176,7 @@ the string between the two, so that the topology can be reduced back
 to two separate one-junction systems, while still preserving the 
 expected particle flow in the junction-junction string region(s). 
  
+<a name="anchor11"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:all &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If off then stop the generation after the hard process and 
@@ -177,12 +188,14 @@ hadron-level steps.
 For <code>HadronLevel:all = on</code> some parts of the event generation 
 on this level may be switched off individually: 
  
+<a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:Hadronize &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for hadronization; on/off = true/false. 
 Further options are found <a href="Fragmentation.html" target="page">here</a>. 
    
  
+<a name="anchor13"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:HadronScatter &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Master switch for hadron rescattering, following the hadronization; 
@@ -190,12 +203,14 @@ on/off = true/false.
 Further options are found <a href="HadronScattering.html" target="page">here</a>. 
    
  
+<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:Decay &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for decays; on/off = true/false. 
 Further options are found <a href="ParticleDecays.html" target="page">here</a>. 
    
  
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:BoseEinstein &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Master switch for the simulation of Bose-Einstein effects; 
@@ -205,6 +220,7 @@ on/off = true/false. Further options are found
  
 <h3>Printing</h3> 
  
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> Print:quiet &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Can be set on to avoid the printing during program execution, to the 

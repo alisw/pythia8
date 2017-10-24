@@ -32,7 +32,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 The PYTHIA 8 program does not contain an internal spectrum calculator 
 (a.k.a. RGE package) to provide supersymmetric couplings, mixing angles, 
 masses and branching ratios. Thus the SUSY Les Houches Accord (SLHA) 
-[<a href="Bibliography.php" target="page">Ska04</a>][<a href="Bibliography.php" target="page">All08</a>] is the only way of 
+[<a href="Bibliography.php#refSka04" target="page">Ska04</a>][<a href="Bibliography.php#refAll08" target="page">All08</a>] is the only way of 
 inputting SUSY models, and SUSY processes (see 
 the <?php $filepath = $_GET["filepath"];
 echo "<a href='SUSYProcesses.php?filepath=".$filepath."' target='page'>";?>SUSYProcesses</a> page) 
@@ -43,15 +43,15 @@ The SLHA input format can also be extended for use with more general BSM
 models, beyond SUSY. Information specific to  how to use the SLHA 
 interface for generic BSM models is collected below, 
 under <a href="#generic">Using SLHA for generic BSM Models</a>, with 
-more elaborate explanations and examples in [<a href="Bibliography.php" target="page">Des11</a>]. 
+more elaborate explanations and examples in [<a href="Bibliography.php#refDes11" target="page">Des11</a>]. 
  
 <p/> 
 Most of the SUSY implementation in PYTHIA 8 is compatible with both the 
-SLHA1 [<a href="Bibliography.php" target="page">Ska04</a>] and SLHA2 [<a href="Bibliography.php" target="page">All08</a>] 
+SLHA1 [<a href="Bibliography.php#refSka04" target="page">Ska04</a>] and SLHA2 [<a href="Bibliography.php#refAll08" target="page">All08</a>] 
 conventions (with some limitations for the NMSSM 
 in the latter case). Internally, PYTHIA 8 uses the 
 SLHA2 conventions and translates SLHA1 input to these when necessary. 
-See the section on SUSY Processes and [<a href="Bibliography.php" target="page">Des11</a>] for more 
+See the section on SUSY Processes and [<a href="Bibliography.php#refDes11" target="page">Des11</a>] for more 
 information. Note that PYTHIA assumes that a spectrum is either fully SHLA1 
 or fully SLHA2 compliant. Mixing of the two standards is discouraged, as 
 this can lead to ambiguities and inconsistencies. 
@@ -159,6 +159,7 @@ ensure that sensible input is being given.
  
 <h3>SLHA Switches and Parameters</h3> 
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> SLHA:readFrom &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Controls from where SLHA information is read. 
@@ -237,6 +238,7 @@ particle, or you may include an SLHA <code>DECAY</code> table for it,
 with the width set explicitly to zero.) 
    
  
+<a name="anchor2"></a>
 <p/><code>mode&nbsp; </code><strong> SLHA:meMode &nbsp;</strong> 
  (<code>default = <strong>100</strong></code>; <code>minimum = 100</code>; <code>maximum = 103</code>)<br/>
 This value specifies how threshold, off-shell, and phase-space 
@@ -273,6 +275,7 @@ program.
  
 <h3>Internal SLHA Variables</h3> 
  
+<a name="anchor3"></a>
 <p/><code>mode&nbsp; </code><strong> SLHA:verbose &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Controls amount of text output written by the SLHA interface, with a 
@@ -293,7 +296,7 @@ Corresponds to SLHA block MODSEL entry 3.
 <h2>Using SLHA for generic BSM Models</h2> 
  
 <p> 
-Using the <code>QNUMBERS</code> extension [<a href="Bibliography.php" target="page">Alw07</a>], the SLHA 
+Using the <code>QNUMBERS</code> extension [<a href="Bibliography.php#refAlw07" target="page">Alw07</a>], the SLHA 
 can also be used to define new particles, with arbitrary quantum 
 numbers. This already serves as a useful way to introduce new 
 particles and can be combined with <code>MASS</code> and 

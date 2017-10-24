@@ -3,13 +3,17 @@
 // PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Example how to write a derived class for beam momentum and vertex spread,
-// with an instance handed to Pythia for internal generation.
-// Also how to write a derived class for external random numbers,
-// and how to write a derived class for external parton distributions.
+// Examples how to write external derived classes
+// that can be handed to Pythia for internal generation.
+// 1) The MIXMAX random number generator; see include/Pythia8Plugins/MixMax.h.
+// 2) A simple derived class for external beam momentum and vertex spread.
+// 3) A simple derived class for external parton distributions.
 // Warning: the parameters are not realistic.
+// Two subruns are made, to compare runtime (and results)
+// for the RanMar and MixMax random number generators.
 
 #include "Pythia8/Pythia.h"
+#include "Pythia8Plugins/MixMax.h"
 
 using namespace Pythia8;
 
@@ -133,62 +137,6 @@ void MyBeamShape::pick() {
 
 //==========================================================================
 
-// A derived class to generate random numbers.
-// A guranteed VERY STUPID generator, just to show principles.
-
-class stupidRndm : public RndmEngine {
-
-public:
-
-  // Constructor.
-  stupidRndm() { init();}
-
-  // Routine for generating a random number.
-  double flat();
-
-private:
-
-  // Initialization.
-  void init();
-
-  // State of the generator.
-  double value, exp10;
-
-};
-
-//--------------------------------------------------------------------------
-
-// Initialization method for the random numbers.
-
-void stupidRndm::init() {
-
-  // Initial values.
-  value = 0.5;
-  exp10 = exp(10.);
-
-}
-
-//--------------------------------------------------------------------------
-
-// Generation method for the random numbers.
-
-double stupidRndm::flat() {
-
-  // Update counter. Add to current value.
-  do {
-    value *= exp10;
-    value += M_PI;
-    value -= double(int(value));
-    if (value < 0.) value += 1.;
-  } while (value <= 0. || value >= 1.);
-
-  // Return new value.
-  return value;
-
-}
-
-//==========================================================================
-
 // A simple scaling PDF. Not realistic; only to check that it works.
 
 class Scaling : public PDF {
@@ -248,138 +196,147 @@ int main() {
   int nEvent = 10000;
   int nAbort = 5;
 
-  // Pythia generator.
-  Pythia pythia;
+  // Comparative statistics.
+  double time[2];
+  Hist nchRM("charged multiplicity RanMar", 100, -1., 399.);
+  Hist nchMM("charged multiplicity MixMax", 100, -1., 399.);
 
-  // Process selection.
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhaseSpace:pTHatMin = 20.");
+  // Compare runtime (and results) for RanMar and MixMax random numbers.
+  for (int iRNG = 0; iRNG < 2; ++iRNG) {
+    clock_t start = clock();
 
-  // LHC with acollinear beams in the x plane.
-  // Use that default is pp with pz = +-7000 GeV, so this need not be set.
-  pythia.readString("Beams:frameType = 3");
-  pythia.readString("Beams:pxA = 1.");
-  pythia.readString("Beams:pxB = 1.");
+    // Pythia generator.
+    Pythia pythia;
 
-  // A class to generate beam parameters according to own parametrization.
-  BeamShape* myBeamShape = new MyBeamShape();
+    // Process selection.
+    pythia.readString("HardQCD:all = on");
+    pythia.readString("PhaseSpace:pTHatMin = 20.");
 
-  // Hand pointer to Pythia.
-  // If you comment this out you get internal Gaussian-style implementation.
-  pythia.setBeamShapePtr( myBeamShape);
+    // LHC with acollinear beams in the x plane.
+    // Use that default is pp with pz = +-7000 GeV, so this need not be set.
+    pythia.readString("Beams:frameType = 3");
+    pythia.readString("Beams:pxA = 1.");
+    pythia.readString("Beams:pxB = 1.");
 
-  // Set up beam spread parameters - reused by MyBeamShape.
-  pythia.readString("Beams:allowMomentumSpread = on");
-  pythia.readString("Beams:sigmapxA = 0.1");
-  pythia.readString("Beams:sigmapyA = 0.1");
-  pythia.readString("Beams:sigmapzA = 5.");
-  pythia.readString("Beams:sigmapxB = 0.1");
-  pythia.readString("Beams:sigmapyB = 0.1");
-  pythia.readString("Beams:sigmapzB = 5.");
+    // A class to generate beam parameters according to own parametrization.
+    BeamShape* myBeamShape = new MyBeamShape();
 
-  // Set up beam vertex parameters - reused by MyBeamShape.
-  pythia.readString("Beams:allowVertexSpread = on");
-  pythia.readString("Beams:sigmaVertexX = 0.3");
-  pythia.readString("Beams:sigmaVertexY = 0.3");
-  pythia.readString("Beams:sigmaVertexZ = 50.");
-  // In MyBeamShape the time width is not an independent parameter.
-  //pythia.readString("Beams:sigmaTime = 50.");
+    // Hand pointer to Pythia.
+    // If you comment this out you get internal Gaussian-style implementation.
+    pythia.setBeamShapePtr( myBeamShape);
 
-  // Optionally simplify generation.
-  pythia.readString("PartonLevel:all = off");
+    // Set up beam spread parameters - reused by MyBeamShape.
+    pythia.readString("Beams:allowMomentumSpread = on");
+    pythia.readString("Beams:sigmapxA = 0.1");
+    pythia.readString("Beams:sigmapyA = 0.1");
+    pythia.readString("Beams:sigmapzA = 5.");
+    pythia.readString("Beams:sigmapxB = 0.1");
+    pythia.readString("Beams:sigmapyB = 0.1");
+    pythia.readString("Beams:sigmapzB = 5.");
 
-  // A class to do random numbers externally. Hand pointer to Pythia.
-  RndmEngine* badRndm = new stupidRndm();
-  pythia.setRndmEnginePtr( badRndm);
+    // Set up beam vertex parameters - reused by MyBeamShape.
+    pythia.readString("Beams:allowVertexSpread = on");
+    pythia.readString("Beams:sigmaVertexX = 0.3");
+    pythia.readString("Beams:sigmaVertexY = 0.3");
+    pythia.readString("Beams:sigmaVertexZ = 50.");
+    // In MyBeamShape the time width is not an independent parameter.
+    //pythia.readString("Beams:sigmaTime = 50.");
 
-  // Two classes to do the two PDFs externally. Hand pointers to Pythia.
-  PDF* pdfAPtr = new Scaling(2212);
-  PDF* pdfBPtr = new Scaling(2212);
-  pythia.setPDFPtr( pdfAPtr, pdfBPtr);
+    // Optionally simplify generation and output.
+    //pythia.readString("PartonLevel:all = off");
+    pythia.readString("Next:numberShowEvent = 0");
 
-  // Initialization.
-  pythia.init();
-
-  // Read out nominal energy.
-  double eCMnom = pythia.info.eCM();
-
-  // Histograms.
-  Hist eCM("center-of-mass energy deviation", 100, -20., 20.);
-  Hist pXsum("net pX offset", 100, -1.0, 1.0);
-  Hist pYsum("net pY offset", 100, -1.0, 1.0);
-  Hist pZsum("net pZ offset", 100, -10., 10.);
-  Hist pZind("individual abs(pZ) offset", 100, -10., 10.);
-  Hist vtxX("vertex x position", 100, -1.0, 1.0);
-  Hist vtxY("vertex y position", 100, -1.0, 1.0);
-  Hist vtxZ("vertex z position", 100, -100., 100.);
-  Hist vtxT("vertex time", 100, -100., 100.);
-  Hist vtxZT("vertex |x| + |t|", 100, 0., 100.);
-
-  // Begin event loop. Generate event.
-  int iAbort = 0;
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
-    if (!pythia.next()) {
-
-      // List faulty events and quit if many failures.
-      pythia.info.list();
-      pythia.process.list();
-      //pythia.event.list();
-      if (++iAbort < nAbort) continue;
-      cout << " Event generation aborted prematurely, owing to error!\n";
-      break;
+    // A class to do random numbers externally. Hand pointer to Pythia.
+    // You can provide four 32-bit unsigned integers to set random sequence.
+    RndmEngine* rndm;
+    if (iRNG == 1) {
+      rndm = new MixMaxRndm( 0, 0, 0, 123);
+      pythia.setRndmEnginePtr(rndm);
     }
 
-    // Fill histograms.
-    double eCMnow = pythia.info.eCM();
-    eCM.fill( eCMnow - eCMnom);
-    pXsum.fill(  pythia.process[0].px() - 2. );
-    pYsum.fill(  pythia.process[0].py() );
-    pZsum.fill(  pythia.process[0].pz() );
-    pZind.fill(  pythia.process[1].pz() - 7000. );
-    pZind.fill( -pythia.process[2].pz() - 7000. );
-    vtxX.fill(  pythia.process[0].xProd() );
-    vtxY.fill(  pythia.process[0].yProd() );
-    vtxZ.fill(  pythia.process[0].zProd() );
-    vtxT.fill(  pythia.process[0].tProd() );
-    double absSum = abs(pythia.process[0].zProd())
-                  + abs(pythia.process[0].tProd());
-    vtxZT.fill( absSum );
+    // Two classes to do the two PDFs externally. Hand pointers to Pythia.
+    PDF* pdfAPtr = new Scaling(2212);
+    PDF* pdfBPtr = new Scaling(2212);
+    pythia.setPDFPtr( pdfAPtr, pdfBPtr);
 
-  // End of event loop. Statistics. Histograms.
+    // Initialization.
+    pythia.init();
+
+    // Read out nominal energy.
+    double eCMnom = pythia.info.eCM();
+
+    // Local histograms.
+    Hist eCM("center-of-mass energy deviation", 100, -20., 20.);
+    Hist pXsum("net pX offset", 100, -1.0, 1.0);
+    Hist pYsum("net pY offset", 100, -1.0, 1.0);
+    Hist pZsum("net pZ offset", 100, -10., 10.);
+    Hist pZind("individual abs(pZ) offset", 100, -10., 10.);
+    Hist vtxX("vertex x position", 100, -1.0, 1.0);
+    Hist vtxY("vertex y position", 100, -1.0, 1.0);
+    Hist vtxZ("vertex z position", 100, -100., 100.);
+    Hist vtxT("vertex time", 100, -100., 100.);
+    Hist vtxZT("vertex |x| + |t|", 100, 0., 100.);
+
+    // Begin event loop. Generate event.
+    int iAbort = 0;
+    for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+      if (!pythia.next()) {
+
+        // List faulty events and quit if many failures.
+        pythia.info.list();
+        pythia.process.list();
+        //pythia.event.list();
+        if (++iAbort < nAbort) continue;
+        cout << " Event generation aborted prematurely, owing to error!\n";
+        break;
+      }
+
+      // Fill comparative histograms.
+      int nch = 0;
+      for (int i = 0; i < pythia.event.size(); ++i)
+        if (pythia.event[i].isFinal() && pythia.event[i].isCharged()) ++nch;
+      if (iRNG == 0) nchRM.fill( nch );
+      else           nchMM.fill( nch );
+
+      // Fill local histograms.
+      double eCMnow = pythia.info.eCM();
+      eCM.fill( eCMnow - eCMnom);
+      pXsum.fill(  pythia.process[0].px() - 2. );
+      pYsum.fill(  pythia.process[0].py() );
+      pZsum.fill(  pythia.process[0].pz() );
+      pZind.fill(  pythia.process[1].pz() - 7000. );
+      pZind.fill( -pythia.process[2].pz() - 7000. );
+      vtxX.fill(  pythia.process[0].xProd() );
+      vtxY.fill(  pythia.process[0].yProd() );
+      vtxZ.fill(  pythia.process[0].zProd() );
+      vtxT.fill(  pythia.process[0].tProd() );
+      double absSum = abs(pythia.process[0].zProd())
+                    + abs(pythia.process[0].tProd());
+      vtxZT.fill( absSum );
+
+    // End of event loop. Statistics. Histograms.
+    }
+    pythia.stat();
+    cout << eCM << pXsum << pYsum << pZsum << pZind
+         << vtxX << vtxY << vtxZ << vtxT << vtxZT;
+
+    // Remove created classes.
+    delete myBeamShape;
+    if (iRNG == 1) delete rndm;
+    delete pdfAPtr;
+    delete pdfBPtr;
+
+    // Check time; end of loop over random number generators. Done.
+    clock_t stop = clock();
+    time[iRNG] = double(stop - start) / double(CLOCKS_PER_SEC);
   }
-  pythia.stat();
-  cout << eCM << pXsum << pYsum << pZsum << pZind
-       << vtxX << vtxY << vtxZ << vtxT << vtxZT;
+  cout << nchRM << nchMM;
+  cout << "\n ========================================================="
+       << "============" << endl;
+  cout << fixed << setprecision(3) << "\n Time for run with RanMar is "
+       << time[0] << " s and for run with MixMax " << time[1] << " s"<< endl;
+  cout << "\n ========================================================="
+       << "============" << endl;
 
-  // Study standard Pythia random number generator.
-  Hist rndmDist("standard random number distribution", 100, 0., 1.);
-  Hist rndmCorr("standard random number correlation", 100, 0., 1.);
-  double rndmNow;
-  double rndmOld = pythia.rndm.flat();
-  for (int i = 0; i < 100000; ++i) {
-    rndmNow = pythia.rndm.flat();
-    rndmDist.fill(rndmNow);
-    rndmCorr.fill( abs(rndmNow - rndmOld) );
-    rndmOld = rndmNow;
-  }
-  cout << rndmDist << rndmCorr;
-
-  // Study bad "new" random number generator.
-  Hist rndmDist2("stupid random number distribution", 100, 0., 1.);
-  Hist rndmCorr2("stupid random number correlation", 100, 0., 1.);
-  rndmOld = pythia.rndm.flat();
-  for (int i = 0; i < 100000; ++i) {
-    rndmNow = pythia.rndm.flat();
-    rndmDist2.fill(rndmNow);
-    rndmCorr2.fill( abs(rndmNow - rndmOld) );
-    rndmOld = rndmNow;
-  }
-  cout << rndmDist2 << rndmCorr2;
-
-  // Done.
-  delete myBeamShape;
-  delete badRndm;
-  delete pdfAPtr;
-  delete pdfBPtr;
   return 0;
 }

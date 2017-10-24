@@ -33,11 +33,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
  
 Diffraction is not well understood, and several alternative approaches 
 have been proposed. Here we follow a fairly conventional Pomeron-based 
-one, in the Ingelman-Schlein spirit [<a href="Bibliography.php" target="page">Ing85</a>], 
+one, in the Ingelman-Schlein spirit [<a href="Bibliography.php#refIng85" target="page">Ing85</a>], 
 but integrated to make full use of the standard PYTHIA machinery 
 for multiparton interactions, parton showers and hadronization 
-[<a href="Bibliography.php" target="page">Nav10,Cor10a</a>]. This is the approach pioneered in the PomPyt 
-program by Ingelman and collaborators [<a href="Bibliography.php" target="page">Ing97</a>]. 
+[<a href="Bibliography.php#refNav10" target="page">Nav10</a>,<a href="Bibliography.php#refCor10a" target="page">Cor10a</a>]. This is the approach pioneered in the PomPyt 
+program by Ingelman and collaborators [<a href="Bibliography.php#refIng97" target="page">Ing97</a>]. 
  
 <p/> 
 For ease of use (and of modelling), the Pomeron-specific parts of the 
@@ -147,7 +147,7 @@ Values are fixed in options 6 and 7.
  
 <p/> 
 When option 5 is selected, the following parameters of the MBR model 
-[<a href="Bibliography.php" target="page">Cie12</a>] are used: 
+[<a href="Bibliography.php#refCie12" target="page">Cie12</a>] are used: 
  
 <br/><br/><table><tr><td><strong>Diffraction:MBRepsilon </td><td></td><td> <input type="text" name="4" value="0.104" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.104</strong></code>; <code>minimum = 0.02</code>; <code>maximum = 0.15</code>)</td></tr></table>
 <br/><br/><table><tr><td><strong>Diffraction:MBRalpha </td><td></td><td> <input type="text" name="5" value="0.25" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.25</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 0.4</code>)</td></tr></table>

@@ -175,6 +175,8 @@ public:
   double pNeg()      const {return pSave.pNeg();}
   double y()         const;
   double eta()       const;
+  double y(double mCut) const;
+  double y(double mCut, RotBstMatrix& M) const;
   Vec4   vDec()      const {return (tauSave > 0. && mSave > 0.)
     ? vProdSave + tauSave * pSave / mSave : vProdSave;}
   double xDec()      const {return (tauSave > 0. && mSave > 0.)

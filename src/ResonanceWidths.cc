@@ -65,6 +65,11 @@ bool ResonanceWidths::init(Info* infoPtrIn, Settings* settingsPtrIn,
   if (idRes == 35 || idRes == 36 || idRes == 37
     || idRes/1000000 == 3) isGeneric = false;
 
+  // Allow width calculation for DM mediators
+  if (idRes == 54 || idRes == 55) isGeneric = false;
+
+
+
   // Resonance properties: antiparticle, mass, width
   hasAntiRes   = particlePtr->hasAnti();
   mRes         = particlePtr->m0();
@@ -169,6 +174,7 @@ bool ResonanceWidths::init(Info* infoPtrIn, Settings* settingsPtrIn,
 
       // Let derived class calculate width for channel provided.
       calcWidth(true);
+
     }
 
     // Channels with meMode >= 100 are calculated based on stored values.

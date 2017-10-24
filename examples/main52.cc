@@ -4,8 +4,8 @@
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Studies of hadron-level and parton-level minimum-bias quantities,
-// comparing internal default PDF with one from LHAPDF.
-// Major differences indicate need for major retuning, e.g. pT0Ref.
+// comparing the internal default PDF with an external one from LHAPDF.
+// Major differences indicate the need for major retuning, e.g. pT0Ref.
 
 // Access time information.
 #include <ctime>
@@ -25,7 +25,11 @@ int main() {
   //string pdfSet = "LHAPDF5:cteq61.LHpdf";
   //string pdfSet = "LHAPDF5:cteq61.LHgrid";
   //string pdfSet = "LHAPDF5:MRST2004nlo.LHgrid";
-  string pdfSet = "LHAPDF5:MRST2001lo.LHgrid";
+  //string pdfSet = "LHAPDF5:MRST2001lo.LHgrid";
+
+  // Select new PDF set; LHAPDF6 file name conventions.
+  // (Bad/unoptimized choice, to illustrate that the PDF matters.)
+  string pdfSet = "LHAPDF6:PDF4LHC15_nlo_asvar";
 
   // Histograms for hadron-level quantities.
   double nMax = (machine == 1) ? 199.5 : 399.5;
@@ -68,18 +72,21 @@ int main() {
     //pythia.readString("HardQCD:all = on");
     //pythia.readString("PhaseSpace:pTHatMin = 50.");
 
+    // Reduce output.
+    pythia.readString("Next:numberShowEvent = 0");
+
     // In second run pick new PDF set.
     if (iRun == 1) {
       pythia.readString("PDF:pSet = " + pdfSet);
 
-     // Allow extrapolation of PDF's beyond x and Q2 boundaries, at own risk.
-     // Default behaviour is to freeze PDF's at boundaries.
-     pythia.readString("PDF:extrapolate = on");
-
-      // Need to change pT0Ref depending on choice of PDF.
+      // Need to change at least pT0Ref depending on choice of PDF.
       // One possibility: retune to same <n_charged>.
       //pythia.readString("MultipartonInteractions:pT0Ref = 2.17");
     }
+
+    // Allow extrapolation of PDF's beyond x and Q2 boundaries, at own risk.
+    // Default behaviour is to freeze PDF's at boundaries.
+    pythia.readString("PDF:extrapolate = on");
 
     // Tevatron/LHC initialization.
     double eCM =  (machine == 1) ? 1960. : 7000.;
@@ -174,16 +181,17 @@ int main() {
   // F_effective(x) = (9/4) x*g(x) + Sum_i (x*q_i(x) + x*qbar_i(x)).
   Info info;
   double Q2 = 10.;
-  PDF* oldPDF = new CTEQ5L(2212);
+  // Current default is NNPDF2.3 QCD+QED LO alpha_s(M_Z) = 0.130.
+  PDF* oldPDF = new NNPDF(2212, 1);
   PDF* newPDF = new LHAPDF(2212, pdfSet, &info);
 
   // Histograms.
   Hist effFlinOld("F_effective( x, Q2 = 10) old", 100 , 0., 1.);
   Hist effFlinNew("F_effective( x, Q2 = 10) new", 100 , 0., 1.);
   Hist effFlinRat("F_effective( x, Q2 = 10) new/old", 100 , 0., 1.);
-  Hist effFlogOld("F_effective( x, Q2 = 10) old", 80 , -8., 0.);
-  Hist effFlogNew("F_effective( x, Q2 = 10) new", 80 , -8., 0.);
-  Hist effFlogRat("F_effective( x, Q2 = 10) new/old", 80 , -8., 0.);
+  Hist effFlogOld("F_effective( log(x), Q2 = 10) old", 80 , -8., 0.);
+  Hist effFlogNew("F_effective( log(x), Q2 = 10) new", 80 , -8., 0.);
+  Hist effFlogRat("F_effective( log(x), Q2 = 10) new/old", 80 , -8., 0.);
 
   // Loop over x values, in a linear scale.
   for (int iX = 0; iX < 99; ++iX) {
@@ -201,7 +209,7 @@ int main() {
       newSum += newPDF->xf( i, x, Q2) + newPDF->xf( -i, x, Q2);
     effFlinNew.fill ( x, newSum );
 
-  //End loop over x values, in a linear scale.
+  // End loop over x values, in a linear scale.
   }
 
   // Loop over x values, in a logarithmic scale

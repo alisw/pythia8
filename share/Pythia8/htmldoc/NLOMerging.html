@@ -10,7 +10,7 @@
 <h2>NLO Merging</h2> 
  
 Pythia offers two NLO merging approaches. Both of these methods have been 
-presented in [<a href="Bibliography.html" target="page">Lon13</a>]. The goal of NLO merging is to extend tree-level 
+presented in [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]. The goal of NLO merging is to extend tree-level 
 multi-jet merging methods to next-to-leading order accuracy in QCD, for every 
 available jet multiplicity. If for example NLO calculations for Higgs + 0 jet, 
 Higgs + 1 jet and Higgs + 2 jets were available, NLO merging allows to 
@@ -45,7 +45,7 @@ This "replacement" means that we subtract the
 tree-level samples, and add another sample -- the POWHEG input. 
 All "higher orders" are unchanged w.r.t. CKKW-L. 
 We have implemented the 
-"inclusive" scheme of [<a href="Bibliography.html" target="page">Lon13</a>] in Pythia. This means that the POWHEG 
+"inclusive" scheme of [<a href="Bibliography.html#refLon13" target="page">Lon13</a>] in Pythia. This means that the POWHEG 
 input will contain contributions for hard, resolved real emission jets, which 
 are already taken care of by higher-multiplicity samples in CKKW-L. Thus, 
 explicit phase space subtractions are also included. The sample program 
@@ -60,7 +60,7 @@ however remains the same: Start from a tree-level merging scheme (in this case
 UMEPS), remove all undesirable <i>&alpha;<sub>s</sub><sup>n+0</sup></i>- and 
 <i>&alpha;<sub>s</sub><sup>n+1</sup></i>-terms from this result, and add 
 back the "correct" description via POWHEG input samples. Again, since the 
-"inclusive" scheme of [<a href="Bibliography.html" target="page">Lon13</a>] was implemented in Pythia, it is 
+"inclusive" scheme of [<a href="Bibliography.html#refLon13" target="page">Lon13</a>] was implemented in Pythia, it is 
 necessary to handle explicit phase space subtractions. Similar to 
 UMEPS, UNLOPS further ensures that the lowest-multiplicity cross section 
 is given by the NLO result. This means that the UMEPS philosophy of "subtract 
@@ -143,12 +143,14 @@ input <code>runningscale 0</code> instead of <code>runningscales 0</code>.)
  
 <p/> When attempting NLO merging, the following Pythia settings are relevant. 
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:nJetMaxNLO &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)<br/>
 The maximal number of additional jets for which NLO event samples are 
 supplied by the user. 
    
  
+<a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:muFac &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 The fixed factorisation scale used in the hard process cross section, 
@@ -166,6 +168,7 @@ parton shower starting scale (<i>&mu;<sub>Q</sub></i>) for the core hard
 process. 
    
  
+<a name="anchor3"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:muRen &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 The fixed renormalisation scale used in the hard process cross section, 
@@ -177,6 +180,7 @@ If the value is not set, the <code>SCALUP</code> variable of the current LH
 event will be used instead. 
    
  
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:muFacInME &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 The fixed factorisation scale used in the matrix element calculation. This 
@@ -189,6 +193,7 @@ If the value is not set, the <code>SCALUP</code> variable of the current LH
 event will be used instead. 
    
  
+<a name="anchor5"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:muRenInME &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 The fixed renormalisation scale used in the matrix element calculation. This 
@@ -212,8 +217,8 @@ file (e.g. <code>main87.cmnd</code>) for Pythia settings, and requires LHE
 input files that follow the naming convention 
 <i>name_tree_#nAdditionalJets.lhe</i> (tree-level samples) and 
 <i>name_powheg_#nAdditionalJets.lhe</i> (POWHEG NLO samples). 
-<code>main87.cc</code> produces HepMC event output [<a href="Bibliography.html" target="page">Dob01</a>], which can 
-be used for analysis (e.g. using RIVET [<a href="Bibliography.html" target="page">Buc10</a>]), or as input for 
+<code>main87.cc</code> produces HepMC event output [<a href="Bibliography.html#refDob01" target="page">Dob01</a>], which can 
+be used for analysis (e.g. using RIVET [<a href="Bibliography.html#refBuc10" target="page">Buc10</a>]), or as input for 
 detector simulations. For users not familiar with HepMC output, it is of 
 course possible remove the HepMC code in the sample program, and use Pythia's 
 histogramming routines instead. Histograms should then be filled as indicated 
@@ -291,22 +296,25 @@ make some comments about K-factors.
 <p/> <code>main87.cc</code> is prepared to use 
 fixed K-factors to rescale the weight of tree-level events. This rescaling 
 does not affect the NLO accuracy of the method, and was investigated in 
-[<a href="Bibliography.html" target="page">Lon13</a>]. By default, <code>main87.cc</code> does not use K-factors. 
+[<a href="Bibliography.html#refLon13" target="page">Lon13</a>]. By default, <code>main87.cc</code> does not use K-factors. 
 However, if the user wants to include K-factors, this can be done by using 
 the following input settings. 
  
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:kFactor0j &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>)<br/>
 The k-Factor used to rescale the tree-level (i.e. CKKW-L or UMEPS) part of 
 zero-jet tree-level events. 
    
  
+<a name="anchor7"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:kFactor1j &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>)<br/>
 The k-Factor used to rescale the tree-level (i.e. CKKW-L or UMEPS) part of 
 one-jet tree-level events. 
    
  
+<a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:kFactor2j &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>)<br/>
 The k-Factor used to rescale the tree-level (i.e. CKKW-L or UMEPS) part of 
@@ -329,6 +337,7 @@ not include a K-factor rescaling of the tree-level samples.
 the procedure is to generate reweighted tree-level samples. This is 
 implemented by using the following switch. 
  
+<a name="anchor9"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doNL3Tree &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the generation of the weight that should be applied to 
@@ -367,6 +376,7 @@ for events in the two-jet sample.
 will move on to process the POWHEG NLO input. This is done by switching to the 
 following flag. 
  
+<a name="anchor10"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doNL3Loop &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the processing of POWHEG NLO events in the 
@@ -383,12 +393,13 @@ calling the function <strong>double Info::mergingWeightNLO()</strong>. This
 weight should also be used when printing (or histogramming) events. 
 For <code>Merging:doNL3Loop = on</code>, 
 the weight <strong>double Info::mergingWeightNLO()</strong> is either one or 
-zero (see Appendix E in [<a href="Bibliography.html" target="page">Lon13</a>]). 
+zero (see Appendix E in [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]). 
  
 After the processing of POWHEG NLO events, <code>main87.cc</code> continues 
 by generating explicit phase space subtractions. This is facilitated by the 
 following switch. 
  
+<a name="anchor11"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doNL3Subt &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the processing of tree-level events, to produce 
@@ -403,10 +414,10 @@ value of <code>Merging:nRecluster</code> to one.
  
 <p/> These contributions are necessary because we have implemented 
 the "inclusive 
-scheme" of [<a href="Bibliography.html" target="page">Lon13</a>] in Pythia. The benefit of this scheme is the user 
+scheme" of [<a href="Bibliography.html#refLon13" target="page">Lon13</a>] in Pythia. The benefit of this scheme is the user 
 does not have to intrusively change the POWHEG-BOX program to implement very 
 particular cuts. Let us explain this comment with an example (a more detailed 
-explanation of the idea is given in Appendix A.2 of [<a href="Bibliography.html" target="page">Lon13</a>]). When 
+explanation of the idea is given in Appendix A.2 of [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]). When 
 generating W + 0 jet events with the POWHEG-BOX program, the output LHE files 
 will contain W  + 1 jet real emission events. Some of these events will 
 contain a jet above the merging scale. However, in NLO merging methods, such 
@@ -421,7 +432,7 @@ calling the function <strong>double Info::mergingWeightNLO()</strong>. This
 weight should also be used when printing (or histogramming) events. 
 For <code>Merging:doNL3Subt = on</code>, 
 the weight <strong>double Info::mergingWeightNLO()</strong> is either one or 
-zero (see Appendix E in [<a href="Bibliography.html" target="page">Lon13</a>]). 
+zero (see Appendix E in [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]). 
  
 <p/> After these steps, all necessary events for NL<sup>3</sup> merging have 
 been produced. <code>main87.cc</code> finishes by returning the 
@@ -510,6 +521,7 @@ use of K-factors.
 by generating reweighted tree-level events. The processing of tree-level 
 events can be invoked by setting the following flag. 
  
+<a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doUNLOPSTree &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the generation of the weight that should be applied to 
@@ -546,6 +558,7 @@ for events in the two-jet sample.
 <code>main88.cc</code> processes the POWHEG NLO input files. This is 
 facilitated by the following switch. 
  
+<a name="anchor13"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doUNLOPSLoop &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the processing of POWHEG NLO events in the 
@@ -563,13 +576,14 @@ calling the function <strong>double Info::mergingWeightNLO()</strong>. This
 weight should also be used when printing (or histogramming) events. 
 For <code>Merging:doUNLOPSLoop = on</code>, 
 the weight <strong>double Info::mergingWeightNLO()</strong> is either one or 
-zero (see Appendix E in [<a href="Bibliography.html" target="page">Lon13</a>]). 
+zero (see Appendix E in [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]). 
  
 <p/> 
 After processing the POWHEG NLO events, <code>main88.cc</code> continues 
 by generating the reweighted subtraction terms of UMEPS. This part is 
 implemented by setting the following flag. 
  
+<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doUNLOPSSubt &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the processing of tree-level events, to produce UMEPS 
@@ -612,7 +626,7 @@ for events in the integrated two-jet sample.
  
 <p/>This choice of weights already 
 incorporates the fact that we have implemented the "inclusive scheme" of 
-[<a href="Bibliography.html" target="page">Lon13</a>], meaning that the "explicit phase space subtractions" of 
+[<a href="Bibliography.html#refLon13" target="page">Lon13</a>], meaning that the "explicit phase space subtractions" of 
 NL<sup>3</sup> are (partially) included though these weights. 
  
 <p/> To ensure that the NLO inclusive cross section is unchanged, UNLOPS 
@@ -621,6 +635,7 @@ one or more jets are included, it is necessary to subtract these samples
 in an integrated form. In <code>main88.cc</code>, this is done by setting the 
 following flag. 
  
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doUNLOPSSubtNLO &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch will allow the processing of POWHEG NLO events, to produce NLO 
@@ -635,7 +650,7 @@ to set the value of <code>Merging:nRecluster</code> to one.
  
 <p/> This sample also provides some "explicit phase space subtractions" of 
 NL<sup>3</sup>, which are necessary because we implemented the 
-"inclusive scheme" of [<a href="Bibliography.html" target="page">Lon13</a>]. Let us again look at the example of 
+"inclusive scheme" of [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]. Let us again look at the example of 
 UNLOPS merging of W + 0 jet and W + 1 jet at NLO accuracy. 
 The integrated  W + 1 jet NLO events, which are produced by the setting 
 <code>Merging:doUNLOPSSubtNLO = on</code>, contain a tree-level part. This 
@@ -648,7 +663,7 @@ calling the function <strong>double Info::mergingWeightNLO()</strong>. This
 weight should also be used when printing (or histogramming) events. 
 For <code>Merging:doUNLOPSSubtNLO = on</code>, 
 the weight <strong>double Info::mergingWeightNLO()</strong> is either one or 
-zero (see Appendix E in [<a href="Bibliography.html" target="page">Lon13</a>]). 
+zero (see Appendix E in [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]). 
  
 <p/> After these five steps (estimation of cross sections, tree-level 
 processing, POWHEG processing, integrated tree-level processing, 
@@ -692,9 +707,10 @@ input files for the processing of "POWHEG NLO files".
 <p/> The changes to <code>main88.cc</code> (implementing UNLOPS) are slightly 
 more complicated. This is the case because the weights of integrated 
 tree-level samples change when using exclusive input, as can be seen in 
-Appendix D in [<a href="Bibliography.html" target="page">Lon13</a>]. The correct weights can be produced by Pythia 
+Appendix D in [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]. The correct weights can be produced by Pythia 
 by using the following flag. 
  
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doUNLOPSTilde &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag allows the UNLOPS machinery to produce the event weights if 
@@ -705,7 +721,7 @@ directly after the cross section estimates have been produced.
 <p/> Then, it is necessary to add code for processing another sample to 
 <code>main88.cc</code>, since when using exclusive inputs, it is also 
 necessary to enforce two integrations on tree-level events (the 
-"&uarr;"-contributions in Appendix D of [<a href="Bibliography.html" target="page">Lon13</a>]). This can be 
+"&uarr;"-contributions in Appendix D of [<a href="Bibliography.html#refLon13" target="page">Lon13</a>]). This can be 
 achieved by adding the following code at the end of <code>main88.cc</code>. 
 <p/> 
 <pre> 
@@ -799,6 +815,7 @@ the end of the <a href="CKKWLMerging.html" target="page">CKKW-L
 tree-level merging</a> documentation. Here, we only document 
 switches that <i>only</i> apply to NLO merging. 
  
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:allowIncompleteHistoriesInReal &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If switched on, this will allow to keep states with incomplete parton 

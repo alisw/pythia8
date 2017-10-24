@@ -1,3 +1,4 @@
+
 // SusyCouplings.h is a part of the PYTHIA event generator.
 // Copyright (C) 2017 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
@@ -28,14 +29,15 @@ class CoupSUSY : public Couplings{
 public:
 
   // Constructor
-  CoupSUSY() {isInit=false; isNMSSM = false; isSUSY=true;}
+  CoupSUSY() : Couplings(true), isInit(false), isNMSSM(false),
+    isLLE(false), isLQD(false), isUDD(false) {}
 
   // Initialize
   void initSUSY(SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
-                ParticleData* particleDataPtrIn, Settings* settingsPtrIn);
+    ParticleData* particleDataPtrIn, Settings* settingsPtrIn);
 
-  // Status flag. Flag for NMSSM.
-  bool isInit, isNMSSM;
+  // Status flag. Flags for NMSSM and RPV couplings.
+  bool isInit, isNMSSM, isLLE, isLQD, isUDD;
 
   // Z and W pole masses and widths
   double mWpole, wWpole, mZpole, wZpole;
@@ -134,8 +136,6 @@ public:
 
   // RPV couplings
   double rvLLE[4][4][4], rvLQD[4][4][4], rvUDD[4][4][4];
-  // Flags for RPV couplings
-  bool isLLE, isLQD, isUDD;
 
   //Squark and slepton mixing matrix: needed for RPV
   complex Rusq[7][7], Rdsq[7][7];

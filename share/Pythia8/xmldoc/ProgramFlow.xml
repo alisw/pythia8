@@ -305,7 +305,8 @@ event than the ones being used for everything else, the extended form
       pythia.setPDFptr( pdfAPtr, pdfBPtr, pdfHardAPtr, pdfHardBPtr); 
 </pre> 
 allows you to specify those separately, and then the first two sets 
-would only be used for the showers and for multiparton interactions. 
+would only be used for the showers and for multiparton interactions.<br/> 
+There is a further method to set photon fluxes in a similar spirit. 
 </li> 
  
 <p/> 
@@ -436,6 +437,22 @@ derive from the <code>TimeShower</code> base class, and
 <code>spacePtr</code> from <code>SpaceShower</code>. 
 </li> 
  
+<p/> 
+<li> 
+With even bigger expertise you can plug in your own 
+<aloc href="HeavyIons">Heavy Ions</aloc> generator, to replace the 
+default Angantyr one, with 
+<pre> 
+      pythia.setHeavyIonsPtr( heavyIonsPtr); 
+</pre> 
+Maybe more useful is the possibility to get back a pointer to the 
+generator used, e.g. to probe various quantities that are not 
+available with the normal Pythia methods: 
+<pre> 
+      pythia.getHeavyIonsPtr(); 
+</pre> 
+</li> 
+ 
 </ol> 
  
 <p/> 
@@ -520,8 +537,8 @@ methods and data members.
  
 <h3>Constructors and destructor</h3> 
  
-<method name="Pythia::Pythia(string xmlDir = &quot;../share/Pythia8/xmldoc&quot;, 
-bool printBanner = true)"> 
+<method name="Pythia::Pythia(string xmlDir 
+= &quot;../share/Pythia8/xmldoc&quot;, bool printBanner = true)"> 
 creates an instance of the <code>Pythia</code> event generators, 
 and sets initial default values, notably for all settings and 
 particle data. You may use several <code>Pythia</code> instances 
@@ -642,7 +659,10 @@ make sense out of any one line.
 </methodmore> 
  
 <method name="bool Pythia::setPDFPtr( PDF* pdfAPtr, PDF* pdfBPtr, 
-PDF* pdfHardAPtr = 0, PDF* pdfHardBPtr = 0)"> 
+PDF* pdfHardAPtr = 0, PDF* pdfHardBPtr = 0, PDF* pdfPomAPtr = 0, 
+PDF* pdfPomBPtr = 0, PDF* pdfGamAPtr = 0, PDF* pdfGamBPtr = 0, 
+PDF* pdfHardGamAPtr = 0, PDF* pdfHardGamBPtr = 0, PDF* pdfUnresAPtr = 0, 
+PDF* pdfUnresBPtr = 0, PDF* pdfUnresGamAPtr = 0, PDF* pdfUnresGamBPtrIn = 0)"> 
 offers the possibility to link in external PDF sets for usage inside 
 the program. The rules for constructing your own class from 
 the <code>PDF</code> base class are described 
@@ -665,6 +685,37 @@ used. This second set is then exclusively for the generation of the hard
 process from the process matrix elements library. The first set above 
 is for everything else, notably parton showers and multiparton interactions. 
 </argument> 
+<argument name="pdfPomAPtr, pdfPomBPtr" default="0"> 
+pointers to two further <code>PDF</code>-derived objects, one for each 
+of the incoming beams. These define the pomeron PDFs used in hard diffraction. 
+</argument> 
+<argument name="pdfGamAPtr, pdfGamBPtr" default="0"> 
+pointers to two further <code>PDF</code>-derived objects, one for each 
+of the incoming beams. These define the photon PDFs when photons are 
+emitted from lepton beams. With resolved photon beams some additional 
+methods are required for initial state radiation and multiparton interactions 
+and to sample valence content. 
+</argument> 
+<argument name="pdfHardGamAPtr, pdfHardGamBPtr" default="0"> 
+pointers to two further <code>PDF</code>-derived objects, one for each 
+of the incoming beams. As above, but now these are used for hard-process 
+generation only, the parton showers and multiparton interactions uses the 
+<code>pdfGamAPtr</code> and <code>pdfGamBPtr</code> PDFs. Unlike above, 
+no additional methods are needed for these. 
+</argument> 
+<argument name="pdfUnresAPtr, pdfUnresBPtr" default="0"> 
+pointers to two further <code>PDF</code>-derived objects, one for each 
+of the incoming beams. Additional PDF pointers when the beam particle 
+has also unresolved PDFs in addition to usual resolved one. Currently 
+used only when mixing direct and resolved photon-initiated processes. 
+</argument> 
+<argument name="pdfUnresGamAPtr, pdfUnresGamBPtr" default="0"> 
+pointers to two further <code>PDF</code>-derived objects, one for each 
+of the incoming beams. Additional PDF pointers when having resolved and 
+unresolved photons coming from lepton beams. Currently used only when mixing 
+direct and resolved photon-initiated processes in lepton-lepton or 
+lepton-hadron collisions. 
+</argument> 
 <note>Note 1:</note> The method returns false if the input is obviously 
 incorrect, e.g. if two (nonzero) pointers agree. 
 <note>Note 2:</note> If you want to combine several subruns you can 
@@ -672,6 +723,19 @@ call <code>setPDFPtr</code> with new arguments before each
 <code>Pythia::init()</code> call. To revert from external PDF's 
 to the normal internal PDF selection you must call 
 <code>setPDFPtr(0, 0)</code> before <code>Pythia::init()</code>. 
+</method> 
+ 
+<method name="bool Pythia::setPhotonFluxPtr( PDF* photonFluxAIn, 
+PDF* photonFluxBIn)"> 
+offers the possibility to link in external photon fluxes for usage 
+inside the program. The rules for constructing your own class from 
+the <code>PDF</code> base class are described 
+<aloc href="PartonDistributions">here</aloc>. 
+<argument name="photonFluxAIn, photonFluxBIn"> 
+pointers to two <code>PDF</code>-derived objects, one for each of 
+the incoming beams. The two objects have to be instantiated by you 
+in your program. 
+</argument> 
 </method> 
  
 <method name="bool Pythia::setLHAupPtr( LHAup* lhaUpPtrIn)"> 
@@ -736,6 +800,16 @@ pointer to a <code>userHooks</code>-derived object. This object
 must be instantiated by you in your program. 
 </argument> 
 <note>Note:</note> The method currently always returns true. 
+</method> 
+ 
+<method name="bool Pythia::addUserHooksPtr( UserHooks* userHooksPtr)"> 
+offers the possibility to add further user hooks, see 
+<code>setUserHooksPtr</code> above for further information. 
+<note>Note:</note> The method currently always returns true. 
+<note>Warning:</note> usually it is meaningful to combine several 
+requirements, but there are examples where not. It is the responsibility 
+of the user to check that a particular combination works as intended. 
+Also see <aloc href="UserHooks">here</aloc>. 
 </method> 
  
 <method name="bool Pythia::setBeamShapePtr( BeamShape* beamShapePtr)"> 
@@ -827,6 +901,35 @@ all spacelike shower evolution, which is normally interleaved
 with multiparton interactions and timelike showers. If you retain 
 the default value 0 then the internal shower routine will be used. 
 </argument> 
+<note>Note:</note> The method currently always returns true. 
+</method> 
+ 
+<method name="bool Pythia::setHeavyIonsPtr( HeavyIons* heavyIonsPtr)"> 
+offers the possibility to feed in an external Heavy Ion generator that 
+can use the internal <code>Pythia</code> machinery for its tasks, 
+see further <aloc href="HeavyIons">here</aloc>. 
+<argument name="heavyIonsPtr"> 
+pointer to a <code>HeavyIons</code>-derived object for doing 
+Heavy Ions collisions. 
+</argument> 
+<note>Note:</note> The method currently always returns true. 
+</method> 
+ 
+<method name="HeavyIons* Pythia::getHeavyIonsPtr()"> 
+gives access to the current <aloc href="HeavyIons">Heavy Ions</aloc> 
+generator, either the default internal Angantyr one or an external 
+one fed in by the method above this. This way a number of further 
+event properties can be interrogated. 
+</method> 
+ 
+<method name="bool Pythia::setPartonVertexPtr( PartonVertex* 
+partonVertexPtrIn)"> 
+offers the possibility to set production vertices for the MPI, 
+FSR and ISR parton-level evolution, instead of the default framework, 
+see further <aloc href="VertexInformation">here</aloc>. 
+This part of the program is still in the early stages, and is 
+likely to evolve further. Currently it is only used for the 
+<aloc href="RopeHadronization">Rope Hadronization</aloc> framework. 
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
@@ -1025,7 +1128,7 @@ the name of the variable to be read.
 <h3>Get a PDF set</h3> 
  
 <code>Pythia</code> contains an number of parton density sets 
-internally, plus an interface to LHAPDF. With the method below, 
+internally, plus an interface to LHAPDF (5 or 6). With the method below, 
 this machinery is also made available for external usage. 
  
 <method name="PDF* getPDFPtr(int id, int sequence = 1)"> 

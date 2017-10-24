@@ -34,7 +34,7 @@ is intended to be an integrated part of the initial- and final-state
 radiation frameworks, and is fully interleaved with QCD and QED emissions. 
 It is a new and still not fully explored feature, however, and therefore 
 it is off by default. The weak-emission machinery is described in detail 
-in [<a href="Bibliography.php" target="page">Chr14</a>]; here we only bring up some of the most relevant 
+in [<a href="Bibliography.php#refChr14" target="page">Chr14</a>]; here we only bring up some of the most relevant 
 points for using this machinery. 
  
 <p/> 
@@ -97,7 +97,7 @@ non-negligible. (It is not enough to assign an event weight
 and <i>n</i> is the number of emitted gauge bosons. This still 
 misses to account for the change in phase space for late emissions by 
 the effect of earlier ones, or equivalently for the unwanted change in 
-the Sudakov form factor. See [<a href="Bibliography.php" target="page">Lon13a</a>] for a detailed discussion 
+the Sudakov form factor. See [<a href="Bibliography.php#refLon13a" target="page">Lon13a</a>] for a detailed discussion 
 and possible solutions.) 
  
 <p/> 

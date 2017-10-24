@@ -3,6 +3,15 @@
 <img src="pythia99.gif" alt="Pythia logo" hspace="10"/> 
  
 <h2>PYTHIA 8 Index</h2> 
+<script>function link(href) {top.frames['page'].location.href = href}</script> 
+<script src="Underscore.js"></script> 
+<script src="Jquery.js" ></script> 
+<script src="Search.js"></script> 
+<form> 
+  <input id="search-input" type="search" placeholder="Search" 
+         style="color:#000000"/> 
+  <ul id="search-result" style="list-style-type:none;padding:0"></ul> 
+</form> 
  
 <h4>Program Overview</h4> 
  
@@ -68,11 +77,14 @@
 <aidx href="ColourReconnection">Colour Reconnection</aidx><br/> 
 <aidx href="Diffraction">Diffraction</aidx><br/> 
 <aidx href="Fragmentation">Fragmentation</aidx><br/> 
+<aidx href="RopeHadronization">Rope Hadronization</aidx><br/> 
+<aidx href="VertexInformation">Vertex Information</aidx><br/> 
 <aidx href="FlavourSelection">Flavour Selection</aidx><br/> 
 <aidx href="ParticleDecays">Particle Decays</aidx><br/> 
 <aidx href="RHadrons">R-hadrons</aidx><br/> 
 <aidx href="BoseEinsteinEffects">Bose-Einstein Effects</aidx><br/> 
-<aidx href="PhotonPhoton">Photon-photon Interactions</aidx><br/> 
+<aidx href="Photoproduction">Photoproduction</aidx><br/> 
+<aidx href="HeavyIons">Heavy Ion Collisions</aidx><br/> 
 <aidx href="HadronScattering">Hadron Scattering</aidx><br/> 
 <aidx href="ParticleData">Particle Data</aidx><br/> 
 <aidx href="ErrorChecks">Error Checks</aidx><br/> 
@@ -102,6 +114,7 @@
 <aidx href="SemiInternalProcesses">Semi-Internal Processes</aidx><br/> 
 <aidx href="SemiInternalResonances">Semi-Internal Resonances</aidx><br/> 
 <aidx href="MadGraph5Processes">MadGraph5 Processes</aidx><br/> 
+<aidx href="HelacOniaProcesses">HelacOnia Processes</aidx><br/> 
 <aidx href="AlpgenEventInterface">Alpgen Event Interface</aidx><br/> 
 <aidx href="MatchingAndMerging">Matching and Merging</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 

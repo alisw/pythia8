@@ -130,7 +130,8 @@ class StringRegion {
 public:
 
   // Constructor.
-  StringRegion() : isSetUp(false), isEmpty(true) {}
+  StringRegion() : isSetUp(false), isEmpty(true), w2(0.), xPosProj(0.), 
+    xNegProj(0.), pxProj(0.), pyProj(0.) {}
 
   // Constants: could only be changed in the code itself.
   static const double MJOIN, TINY;

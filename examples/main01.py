@@ -8,6 +8,10 @@
 # path to the Pythia 8 Python interface do either (in a shell prompt):
 #      export PYTHONPATH=$(PREFIX_LIB):$PYTHONPATH
 # or the following which sets the path from within Python.
+#
+# Use "python-config --include" to find the include directory and 
+# then configure Pythia ""--with-python-include=*".
+
 import sys
 cfg = open("Makefile.inc")
 lib = "../lib"

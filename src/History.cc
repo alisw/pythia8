@@ -155,7 +155,7 @@ History::History( int depth,
   // Stop clustering at 2->1 massive.
   // Stop clustering at 2->2 massless.
 
-  bool qcd = ( nFinalP > mergingHooksPtr->hardProcess.nQuarksOut() );
+  bool qcd = ( nFinalP > mergingHooksPtr->hardProcess->nQuarksOut() );
 
   // If this is not the fully clustered state, try to find possible
   // QCD clusterings.
@@ -808,50 +808,50 @@ void History::getStartingConditions( const double RN, Event& outState ) {
     if (nFinal <=2)
       state.scale(mergingHooksPtr->muF());
 
-      // Save information on last splitting, to allow the next
-      // emission in the shower to have smaller rapidity with
-      // respect to the last ME splitting.
-      // For hard process, use dummy values.
-      if (mergingHooksPtr->getNumberOfClusteringSteps(state) == 0) {
-        infoPtr->zNowISR(0.5);
-        infoPtr->pT2NowISR(pow(state[0].e(),2));
-        infoPtr->hasHistory(true);
-      // For incomplete process, try to use real values.
-      } else {
-        infoPtr->zNowISR(selected->zISR());
-        infoPtr->pT2NowISR(pow(selected->pTISR(),2));
-        infoPtr->hasHistory(true);
-      }
+    // Save information on last splitting, to allow the next
+    // emission in the shower to have smaller rapidity with
+    // respect to the last ME splitting.
+    // For hard process, use dummy values.
+    if (mergingHooksPtr->getNumberOfClusteringSteps(state) == 0) {
+      infoPtr->zNowISR(0.5);
+      infoPtr->pT2NowISR(pow(state[0].e(),2));
+      infoPtr->hasHistory(true);
+    // For incomplete process, try to use real values.
+    } else {
+      infoPtr->zNowISR(selected->zISR());
+      infoPtr->pT2NowISR(pow(selected->pTISR(),2));
+      infoPtr->hasHistory(true);
+    }
 
-      // Set QCD 2->2 starting scale different from arbitrary scale in LHEF!
-      // --> Set to minimal mT of partons.
-      int nFinalCol = 0;
-      double muf = state[0].e();
-      for ( int i=0; i < state.size(); ++i )
-      if ( state[i].isFinal()
-        && ( state[i].colType() != 0 || state[i].id() == 22 ) ) {
-        nFinalCol++;
-        muf = min( muf, abs(state[i].mT()) );
-      }
-      // For pure QCD dijet events (only!), set the process scale to the
-      // transverse momentum of the outgoing partons.
-      if ( nSteps == 0 && nFinalCol == 2
-        && ( mergingHooksPtr->getProcessString().compare("pp>jj") == 0
-          || mergingHooksPtr->getProcessString().compare("pp>aj") == 0) ) {
+    // Set QCD 2->2 starting scale different from arbitrary scale in LHEF!
+    // --> Set to minimal mT of partons.
+    int nFinalCol = 0;
+    double muf = state[0].e();
+    for ( int i=0; i < state.size(); ++i )
+    if ( state[i].isFinal()
+      && ( state[i].colType() != 0 || state[i].id() == 22 ) ) {
+      nFinalCol++;
+      muf = min( muf, abs(state[i].mT()) );
+    }
+    // For pure QCD dijet events (only!), set the process scale to the
+    // transverse momentum of the outgoing partons.
+    if ( nSteps == 0 && nFinalCol == 2
+      && ( mergingHooksPtr->getProcessString().compare("pp>jj") == 0
+        || mergingHooksPtr->getProcessString().compare("pp>aj") == 0) ) {
+      state.scale(muf);
+      for (int i = 3;i < state.size();++i)
+        state[i].scale(muf);
+    }
+    // For weak inclusive merging, follow QCD 2->2 starting scale for dijet
+    // events. Also, restore input input polarisations.
+    if (nSteps == 0 && nFinalCol == 2 &&
+        mergingHooksPtr->getProcessString().find("inc") != string::npos) {
         state.scale(muf);
-        for (int i = 3;i < state.size();++i)
-          state[i].scale(muf);
-      }
-      // For weak inclusive merging, follow QCD 2->2 starting scale for dijet
-      // events. Also, restore input input polarisations.
-      if (nSteps == 0 && nFinalCol == 2 &&
-          mergingHooksPtr->getProcessString().find("inc") != string::npos) {
-          state.scale(muf);
-        for (int i = 3;i < state.size();++i)
-          state[i].scale(muf);
-        for ( int i=0; i < min(state.size(),outState.size()); ++i )
-          state[i].pol(outState[i].pol());
-      }
+      for (int i = 3;i < state.size();++i)
+        state[i].scale(muf);
+      for ( int i=0; i < min(state.size(),outState.size()); ++i )
+        state[i].pol(outState[i].pol());
+    }
 
   } else {
 
@@ -3541,7 +3541,7 @@ vector<Clustering> History::getAllQCDClusterings() {
     // Start with changing final state quark colour
     for(int i = 0; i < int(posFinalQuark.size()); ++i) {
       // Never change the hard process candidates
-      if ( mergingHooksPtr->hardProcess.matchesAnyOutgoing(posFinalQuark[i],
+      if ( mergingHooksPtr->hardProcess->matchesAnyOutgoing(posFinalQuark[i],
        NewState) )
         continue;
       int col = NewState[posFinalQuark[i]].col();
@@ -3564,7 +3564,7 @@ vector<Clustering> History::getAllQCDClusterings() {
     // Now change final state antiquark anticolour
     for(int i = 0; i < int(posFinalAntiq.size()); ++i) {
       // Never change the hard process candidates
-      if ( mergingHooksPtr->hardProcess.matchesAnyOutgoing(posFinalAntiq[i],
+      if ( mergingHooksPtr->hardProcess->matchesAnyOutgoing(posFinalAntiq[i],
        NewState) )
         continue;
       int acl = NewState[posFinalAntiq[i]].acol();
@@ -5033,12 +5033,12 @@ double History::getProb(const Clustering & SystemIn) {
     bool isFSR2 = showers->timesPtr->isTimelike(state, Rad, Emt, iPartner, "");
     if (isFSR2) {
       string name = showers->timesPtr->getSplittingName( state, Rad, Emt,
-                    iPartner);
+                    iPartner).front();
       pr          = showers->timesPtr->getSplittingProb( state, Rad, Emt,
                     iPartner, name);
     } else {
       string name = showers->spacePtr->getSplittingName(state, Rad, Emt,
-                    iPartner);
+                    iPartner).front();
       pr          = showers->spacePtr->getSplittingProb(state, Rad, Emt,
                     iPartner, name);
     }
@@ -5050,8 +5050,8 @@ double History::getProb(const Clustering & SystemIn) {
   int nFinal = 0;
   for(int i=0; i < state.size(); ++i)
     if (state[i].isFinal()) nFinal++;
-  bool isLast = (nFinal == (mergingHooksPtr->hardProcess.nQuarksOut()
-                           +mergingHooksPtr->hardProcess.nLeptonOut()+1));
+  bool isLast = (nFinal == (mergingHooksPtr->hardProcess->nQuarksOut()
+                           +mergingHooksPtr->hardProcess->nLeptonOut()+1));
 
   // Do not calculate splitting functions for electroweak emissions
   bool isElectroWeak = (state[Emt].idAbs() == 23 || state[Emt].idAbs() == 24);
@@ -5160,12 +5160,12 @@ double History::getProb(const Clustering & SystemIn) {
       int nCol = 0;
       for(int i=0; i < state.size(); ++i)
         if (state[i].isFinal() && state[i].colType() != 0
-          && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,state) )
+          && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,state) )
           nCol++;
       // For first splitting of single vector boson production,
       // apply ME corrections
       if (nCol == 1
-       && int(mergingHooksPtr->hardProcess.hardIntermediate.size()) == 1) {
+       && int(mergingHooksPtr->hardProcess->hardIntermediate.size()) == 1) {
         double sH = m2Dip / z1;
         double tH = -Q1sq;
         double uH = Q1sq - m2Dip * (1. - z1) / z1;
@@ -5191,13 +5191,13 @@ double History::getProb(const Clustering & SystemIn) {
       int nCol = 0;
       for(int i=0; i < state.size(); ++i)
         if (state[i].isFinal() && state[i].colType() != 0
-          && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,state) )
+          && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,state) )
           nCol++;
       // For first splitting of single vector boson production,
       // apply ME corrections
       if ( nCol == 1
        && mergingHooksPtr->getProcessString().compare("pp>h") == 0
-       && int(mergingHooksPtr->hardProcess.hardIntermediate.size()) == 1 ) {
+       && int(mergingHooksPtr->hardProcess->hardIntermediate.size()) == 1 ) {
         double sH = m2Dip / z1;
         double tH = -Q1sq;
         double uH = Q1sq - m2Dip * (1. - z1) / z1;
@@ -5222,13 +5222,13 @@ double History::getProb(const Clustering & SystemIn) {
       int nCol = 0;
       for ( int i=0; i < state.size(); ++i )
         if ( state[i].isFinal() && state[i].colType() != 0
-          && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,state) )
+          && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,state) )
           nCol++;
       // For first splitting of single vector boson production,
       // apply ME corrections
       if (nCol == 1
        && mergingHooksPtr->getProcessString().compare("pp>h") == 0
-       && int(mergingHooksPtr->hardProcess.hardIntermediate.size()) == 1) {
+       && int(mergingHooksPtr->hardProcess->hardIntermediate.size()) == 1) {
         double sH = m2Dip / z1;
         double uH = Q1sq - m2Dip * (1. - z1) / z1;
         meReweighting *= (sH*sH + uH*uH)
@@ -5250,12 +5250,12 @@ double History::getProb(const Clustering & SystemIn) {
       int nCol = 0;
       for ( int i=0; i < state.size(); ++i )
         if ( state[i].isFinal() && state[i].colType() != 0
-         && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,state) )
+         && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,state) )
           nCol++;
       // For first splitting of single vector boson production,
       // apply ME corrections
       if (nCol == 1
-        && int(mergingHooksPtr->hardProcess.hardIntermediate.size()) == 1) {
+        && int(mergingHooksPtr->hardProcess->hardIntermediate.size()) == 1) {
         double sH = m2Dip / z1;
         double tH = -Q1sq;
         double uH = Q1sq - m2Dip * (1. - z1) / z1;
@@ -5399,18 +5399,18 @@ double History::getProb(const Clustering & SystemIn) {
       int nCol = 0;
         for(int i=0; i < state.size(); ++i)
           if (state[i].isFinal() && state[i].colType() != 0
-          && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,state) )
+          && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,state) )
             nCol++;
       // Calculate splitting kernel
       if ( nCol > 3
-        || int(mergingHooksPtr->hardProcess.hardIntermediate.size()) > 1)
+        || int(mergingHooksPtr->hardProcess->hardIntermediate.size()) > 1)
         num = CF * (1. + pow2(z1)) /(1.-z1);
       // Calculate ME reweighting factor
       double meReweighting = 1.;
       // Correct if this is the process created by the first
       // FSR splitting of a 2->2 process
       if ( nCol == 3
-        && int(mergingHooksPtr->hardProcess.hardIntermediate.size()) == 1 ) {
+        && int(mergingHooksPtr->hardProcess->hardIntermediate.size()) == 1 ) {
         // Construct 2->3 variables for FSR
         double x1 = 2. * (sum * state[Rad].p()) / m2Dip;
         double x2 = 2. * (sum * state[Rec].p()) / m2Dip;
@@ -5834,11 +5834,11 @@ Event History::cluster( Clustering & inSystem ) {
     bool isFSR = showers->timesPtr->isTimelike(state, Rad, Emt, iPartner, "");
     if (isFSR) {
       string name = showers->timesPtr->getSplittingName(state,Rad,Emt,
-                    iPartner);
+                    iPartner).front();
       return        showers->timesPtr->clustered(state,Rad,Emt,iPartner,name);
     } else {
       string name = showers->spacePtr->getSplittingName(state,Rad,Emt,
-                    iPartner);
+                    iPartner).front();
       return        showers->spacePtr->clustered(state,Rad,Emt,iPartner,name);
     }
   }
@@ -7392,7 +7392,7 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
     // Check all final state partons
     if ( event[i].isFinal()
       && event[i].colType() != 0
-      && mergingHooksPtr->hardProcess.matchesAnyOutgoing(i, event) )
+      && mergingHooksPtr->hardProcess->matchesAnyOutgoing(i, event) )
       nPartonInHard++;
 
   // Count coloured final state partons in event, excluding
@@ -7403,7 +7403,7 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
     if ( i!=emt && i!=rad && i!=rec
       &&  event[i].isFinal()
       &&  event[i].colType() != 0
-      && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i, event) )
+      && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i, event) )
       nPartons++;
 
   // Count number of initial state partons
@@ -7436,7 +7436,7 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
   for(int i=0; i < int(event.size()); ++i) {
     if (i !=rad && i != emt && i != rec) {
       if (event[i].isFinal() && abs(event[i].colType()) == 1 ) {
-        if ( !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,event) )
+        if ( !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,event) )
           nFinalQuark++;
         else
           nFinalQuarkExc++;
@@ -7512,11 +7512,11 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
     allowed = true;
 
   // Never recluster any outgoing partons of the core V -> qqbar' splitting!
-  if ( mergingHooksPtr->hardProcess.matchesAnyOutgoing(emt,event) ) {
+  if ( mergingHooksPtr->hardProcess->matchesAnyOutgoing(emt,event) ) {
     // Check if any other particle could replace "emt" as part of the candidate
     // core process. If so, replace emt with the new candidate and allow the
     // clustering.
-    bool canReplace = mergingHooksPtr->hardProcess.findOtherCandidates(emt,
+    bool canReplace = mergingHooksPtr->hardProcess->findOtherCandidates(emt,
                         event, true);
     if (canReplace) allowed = true;
     else allowed = false;
@@ -7524,7 +7524,7 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
 
   // Never allow clustering of any outgoing partons of the hard process
   // which would change the flavour of one of the hard process partons!
-  if ( mergingHooksPtr->hardProcess.matchesAnyOutgoing(rad,event)
+  if ( mergingHooksPtr->hardProcess->matchesAnyOutgoing(rad,event)
       && event[rad].id() != radBeforeFlav )
     allowed = false;
 
@@ -7543,8 +7543,22 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
   // t-channel gluon needed to connect the final state to a qq~ initial state.
   // Here, partons excluded from clustering are not counted as possible
   // partners to form a t-channel gluon
+  vector<int> in;
+  for(int i=0; i < int(event.size()); ++i)
+    if ( i!=emt && i!=rad && i!=rec
+      && (event[i].mother1() == 1 || event[i].mother1() == 2))
+      in.push_back(event[i].id());
+  if (!event[rad].isFinal()) in.push_back(radBeforeFlav);
+  if (!event[rec].isFinal()) in.push_back(event[rec].id());
+  vector<int> out;
+  for(int i=0; i < int(event.size()); ++i)
+    if ( i!=emt && i!=rad && i!=rec && event[i].isFinal())
+      out.push_back(event[i].id());
+  if (event[rad].isFinal()) out.push_back(radBeforeFlav);
+  if (event[rec].isFinal()) out.push_back(event[rec].id());
   if (event[3].col() == event[4].acol()
     && event[3].acol() == event[4].col()
+    && !mergingHooksPtr->allowEffectiveVertex( in, out)
     && nFinalQuark == 0){
     // Careful if rad and rec are the only quarks in the final state, but
     // were both excluded from the list of final state quarks.
@@ -7563,26 +7577,24 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
   }
 
   // No problems with gluon radiation
-  if (event[emt].id() == 21)
-    return allowed;
+  if (event[emt].id() == 21) return allowed;
 
   // No problems with gluino radiation
-  if (event[emt].id() == 1000021)
-    return allowed;
+  if (event[emt].id() == 1000021) return allowed;
 
   // Save all hard process candidates
   vector<int> outgoingParticles;
-  int nOut1 = int(mergingHooksPtr->hardProcess.PosOutgoing1.size());
+  int nOut1 = int(mergingHooksPtr->hardProcess->PosOutgoing1.size());
   for ( int i=0; i < nOut1;  ++i ) {
-    int iPos = mergingHooksPtr->hardProcess.PosOutgoing1[i];
+    int iPos = mergingHooksPtr->hardProcess->PosOutgoing1[i];
     outgoingParticles.push_back(
-                      mergingHooksPtr->hardProcess.state[iPos].id() );
+                      mergingHooksPtr->hardProcess->state[iPos].id() );
   }
-  int nOut2 = int(mergingHooksPtr->hardProcess.PosOutgoing2.size());
+  int nOut2 = int(mergingHooksPtr->hardProcess->PosOutgoing2.size());
   for ( int i=0; i < nOut2; ++i ) {
-    int iPos = mergingHooksPtr->hardProcess.PosOutgoing2[i];
+    int iPos = mergingHooksPtr->hardProcess->PosOutgoing2[i];
     outgoingParticles.push_back(
-                      mergingHooksPtr->hardProcess.state[iPos].id() );
+                      mergingHooksPtr->hardProcess->state[iPos].id() );
   }
 
   // Start more involved checks. g -> q_1 qbar_1 splittings are
@@ -7718,12 +7730,12 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
       // colours match.
       for(int i=0; i < int(quark.size()); ++i)
         if ( event[quark[i]].isFinal()
-        && mergingHooksPtr->hardProcess.matchesAnyOutgoing(quark[i], event) )
+        && mergingHooksPtr->hardProcess->matchesAnyOutgoing(quark[i], event) )
           colours.push_back(event[quark[i]].col());
 
       for(int i=0; i < int(antiq.size()); ++i)
         if ( event[antiq[i]].isFinal()
-        && mergingHooksPtr->hardProcess.matchesAnyOutgoing(antiq[i], event) )
+        && mergingHooksPtr->hardProcess->matchesAnyOutgoing(antiq[i], event) )
           anticolours.push_back(event[antiq[i]].acol());
 
       // Loop through colours again and check if any match with
@@ -7740,11 +7752,11 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
       // Check if clustering would produce the hard process
       int nNotInHard = 0;
       for ( int i=0; i < int(quark.size()); ++i )
-        if ( !mergingHooksPtr->hardProcess.matchesAnyOutgoing( quark[i],
+        if ( !mergingHooksPtr->hardProcess->matchesAnyOutgoing( quark[i],
               event) )
           nNotInHard++;
       for ( int i=0; i < int(antiq.size()); ++i )
-        if ( !mergingHooksPtr->hardProcess.matchesAnyOutgoing( antiq[i],
+        if ( !mergingHooksPtr->hardProcess->matchesAnyOutgoing( antiq[i],
               event) )
           nNotInHard++;
       for(int i=0; i < int(gluon.size()); ++i)
@@ -7828,7 +7840,7 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
       for(int i=0; i < int(event.size()); ++i)
         if (  i != emt && i != rad
           &&  i != incoming && i != outgoing
-          && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,event) ) {
+          && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,event) ) {
           // Check if an incoming parton matches
           if ( event[i].status() == -21
             && (event[i].id() ==    event[outgoing].id()
@@ -7926,8 +7938,8 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
     // If so, then we're safe to recluster.
     bool isHardSys = true;
     for(int i=0; i < int(colSinglet.size()); ++i)
-      isHardSys =
-         mergingHooksPtr->hardProcess.matchesAnyOutgoing(colSinglet[i], event);
+      isHardSys = mergingHooksPtr->hardProcess->matchesAnyOutgoing(
+        colSinglet[i], event);
 
     // Nearly there...
     // If the decoupled colour singlet system is NOT contained in the hard
@@ -7995,7 +8007,7 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
         if ( i != emt && i != rad
           && i != radBeforeColP[0]
           && i != radBeforeColP[1]
-          && !mergingHooksPtr->hardProcess.matchesAnyOutgoing(i,event) ) {
+          && !mergingHooksPtr->hardProcess->matchesAnyOutgoing(i,event) ) {
           if (event[i].status() == -21
             && ( event[radBeforeColP[0]].id() == event[i].id()
               || event[radBeforeColP[1]].id() == event[i].id() ))
@@ -8302,11 +8314,13 @@ double History::pTLund(const Event& event, int rad, int emt, int rec,
     map<string,double> stateVars;
     bool isFSR = showers->timesPtr->isTimelike(event, rad, emt, rec, "");
     if (isFSR) {
-      string name = showers->timesPtr->getSplittingName(event, rad, emt, rec);
+      string name = showers->timesPtr->getSplittingName(event, rad, emt,
+        rec).front();
       stateVars   = showers->timesPtr->getStateVariables(event, rad, emt, rec,
         name);
     } else {
-      string name = showers->spacePtr->getSplittingName(event, rad, emt, rec);
+      string name = showers->spacePtr->getSplittingName(event, rad, emt,
+        rec).front();
       stateVars   = showers->spacePtr->getStateVariables(event, rad, emt, rec,
         name);
     }
@@ -9226,11 +9240,13 @@ double History::getShowerPluginScale(const Event& event, int rad, int emt,
   map<string,double> stateVars;
   bool isFSR = showers->timesPtr->isTimelike(event, rad, emt, rec, "");
   if (isFSR) {
-    string name = showers->timesPtr->getSplittingName(event, rad, emt, rec);
+    string name = showers->timesPtr->getSplittingName(event, rad, emt,
+      rec).front();
     stateVars   = showers->timesPtr->getStateVariables(event, rad, emt, rec,
       name);
   } else {
-    string name = showers->spacePtr->getSplittingName(event, rad, emt, rec);
+    string name = showers->spacePtr->getSplittingName(event, rad, emt,
+      rec).front();
     stateVars   = showers->spacePtr->getStateVariables(event, rad, emt, rec,
       name);
   }

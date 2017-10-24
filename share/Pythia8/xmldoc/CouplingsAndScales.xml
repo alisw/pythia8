@@ -93,7 +93,7 @@ below.
 </option> 
 </modepick> 
  
-<modepick name="SigmaProcess:renormScale2" default="2" min="1" max="5"> 
+<modepick name="SigmaProcess:renormScale2" default="2" min="1" max="6"> 
 The <ei>Q^2</ei> renormalization scale for <ei>2 &rarr; 2</ei> processes. 
 <option value="1">the smaller of the squared transverse masses of the two 
 outgoing particles, i.e. <ei>min(mT_3^2, mT_4^2) = 
@@ -114,6 +114,10 @@ i.e. <ei>sHat</ei>. Useful for processes dominated by
 </option> 
 <option value="5">fix scale set in <code>SigmaProcess:renormFixScale</code> 
 below. 
+</option> 
+<option value="6">Use squared invariant momentum transfer <ei>-tHat</ei>. 
+This is a common choice for lepton-hadron scattering processes. In that 
+case <ei>-tHat=Q^2</ei>. 
 </option> 
 </modepick> 
  
@@ -209,7 +213,7 @@ below.
 </option> 
 </modepick> 
  
-<modepick name="SigmaProcess:factorScale2" default="1" min="1" max="5"> 
+<modepick name="SigmaProcess:factorScale2" default="1" min="1" max="6"> 
 The <ei>Q^2</ei> factorization scale for <ei>2 &rarr; 2</ei> processes. 
 <option value="1">the smaller of the squared transverse masses of the two 
 outgoing particles. 
@@ -227,6 +231,10 @@ i.e. <ei>sHat</ei>. Useful for processes dominated by
 </option> 
 <option value="5">fix scale set in <code>SigmaProcess:factorFixScale</code> 
 below. 
+</option> 
+<option value="6">Use squared invariant momentum transfer <ei>-tHat</ei>. 
+This is a common choice for lepton-hadron scattering processes. In that 
+case <ei>-tHat=Q^2</ei>. 
 </option> 
 </modepick> 
  

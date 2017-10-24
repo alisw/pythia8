@@ -42,7 +42,8 @@ public:
     bool isActiveIn = true, bool isRealIn = false) : col(colIn), iCol(iColIn),
     iAcol(iAcolIn), colReconnection(colReconnectionIn), isJun(isJunIn),
     isAntiJun(isAntiJunIn),isActive(isActiveIn), isReal(isRealIn)
-    {leftDip = 0; rightDip = 0; iColLeg = 0; iAcolLeg = 0; printed = false;}
+    {leftDip = 0; rightDip = 0; iColLeg = 0; iAcolLeg = 0; printed = false;
+    p1p2 = 0.;}
 
   double mDip(Event & event) {
     if (isJun || isAntiJun) return 1E9;
@@ -51,7 +52,7 @@ public:
 
   // Members.
   int    col, iCol, iAcol, iColLeg, iAcolLeg, colReconnection;
-  bool   isJun, isAntiJun, isActive, isReal, printed, inChain;
+  bool   isJun, isAntiJun, isActive, isReal, printed;
   ColourDipole *leftDip, *rightDip;
   vector<ColourDipole *> colDips, acolDips;
   double p1p2;
@@ -177,7 +178,7 @@ public:
 private:
 
   // Constants: could only be changed in the code itself.
-  static const double MINIMUMGAIN, MINIMUMGAINJUN, HBAR;
+  static const double MINIMUMGAIN, MINIMUMGAINJUN, HBAR, TINYP1P2;
   static const int MAXRECONNECTIONS;
 
   // Variables needed.

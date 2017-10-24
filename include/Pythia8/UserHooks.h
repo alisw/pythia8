@@ -300,6 +300,403 @@ private:
 
 //==========================================================================
 
+// UserHooksVector implements a vector of UserHooks and is itself a UserHooks.
+
+class UserHooksVector: public UserHooks {
+
+private:
+
+  // The default constructor is private, and should only be used
+  // internally in Pythia.
+  UserHooksVector() {}
+  friend class Pythia;
+
+public:
+
+  // Destructor.
+  virtual ~UserHooksVector() {}
+
+  // Initialisation after beams have been set by Pythia::init().
+  // Check that there are no (obvious) clashes.
+  virtual bool initAfterBeams() {
+    int nCanSetResonanceScale = 0;
+    int nCanChangeFragPar     = 0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i ) {
+      hooks[i]->initPtr(infoPtr, settingsPtr, particleDataPtr, rndmPtr,
+                        beamAPtr, beamBPtr, beamPomAPtr, beamPomBPtr,
+                        coupSMPtr, partonSystemsPtr, sigmaTotPtr);
+      if ( !hooks[i]->initAfterBeams() ) return false;
+      if (hooks[i]->canSetResonanceScale()) ++nCanSetResonanceScale;
+      if (hooks[i]->canChangeFragPar()) ++nCanChangeFragPar;
+    }
+    if (nCanSetResonanceScale > 1) {
+      infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
+        "multiple UserHooks with canSetResonanceScale() not allowed");
+      return false;
+    }
+    if (nCanChangeFragPar > 1) {
+      infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
+        "multiple UserHooks with canChangeFragPar() not allowed");
+      return false;
+    }
+    return true;
+  }
+
+  // Possibility to modify cross section of process.
+  virtual bool canModifySigma() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canModifySigma() ) return true;
+    return false;
+  }
+
+  // Multiplicative factor modifying the cross section of a hard process.
+  virtual double multiplySigmaBy(const SigmaProcess* sigmaProcessPtr,
+    const PhaseSpace* phaseSpacePtr, bool inEvent) {
+    double f = 1.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canModifySigma() )
+        f *= hooks[i]->multiplySigmaBy(sigmaProcessPtr, phaseSpacePtr,inEvent);
+    return f;
+  }
+
+  // Possibility to bias selection of events, compensated by a weight.
+  virtual bool canBiasSelection() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canBiasSelection() ) return true;
+    return false;
+  }
+
+  // Multiplicative factor in the phase space selection of a hard process.
+  virtual double biasSelectionBy(const SigmaProcess* sigmaProcessPtr,
+    const PhaseSpace* phaseSpacePtr, bool inEvent) {
+    double f = 1.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canBiasSelection() )
+        f *= hooks[i]->biasSelectionBy(sigmaProcessPtr, phaseSpacePtr,
+             inEvent);
+    return f;
+  }
+
+  // Event weight to compensate for selection weight above.
+  virtual double biasedSelectionWeight() {
+    double f = 1.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canBiasSelection() )
+        f *= hooks[i]->biasedSelectionWeight();
+    return f;
+  }
+
+  // Possibility to veto event after process-level selection.
+  virtual bool canVetoProcessLevel() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoProcessLevel() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto current process or not, based on process record.
+  // Usage: doVetoProcessLevel( process).
+  virtual bool doVetoProcessLevel(Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoProcessLevel() &&
+           hooks[i]->doVetoProcessLevel(e) ) return true;
+    return false;
+  }
+
+  // Possibility to veto resonance decay chain.
+  virtual bool canVetoResonanceDecays() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoResonanceDecays() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto current resonance decay chain or not, based on
+  // process record. Usage: doVetoProcessLevel( process).
+  virtual bool doVetoResonanceDecays(Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoResonanceDecays() &&
+           hooks[i]->doVetoResonanceDecays(e) ) return true;
+    return false;
+  }
+
+  // Possibility to veto MPI + ISR + FSR evolution and kill event,
+  // making decision at a fixed pT scale. Useful for MLM-style matching.
+  virtual bool canVetoPT() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPT() ) return true;
+    return false;
+  }
+
+  // Transverse-momentum scale for veto test.
+  virtual double scaleVetoPT() {
+    double s = 0.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPT() ) s = max(s, hooks[i]->scaleVetoPT());
+    return s;
+  }
+
+  // Decide whether to veto current event or not, based on event record.
+  // Usage: doVetoPT( iPos, event), where iPos = 0: no emissions so far;
+  // iPos = 1/2/3 joint evolution, latest step was MPI/ISR/FSR;
+  // iPos = 4: FSR only afterwards; iPos = 5: FSR in resonance decay.
+  virtual bool doVetoPT( int iPos, const Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPT() && hooks[i]->doVetoPT(iPos, e) ) return true;
+    return false;
+  }
+
+  // Possibility to veto MPI + ISR + FSR evolution and kill event,
+  // making decision after fixed number of ISR or FSR steps.
+  virtual bool canVetoStep() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoStep() ) return true;
+    return false;
+  }
+
+  // Up to how many ISR + FSR steps of hardest interaction should be checked.
+  virtual int numberVetoStep() {
+    int n = 1;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoStep() ) n = max(n, hooks[i]->numberVetoStep());
+    return n;
+  }
+
+  // Decide whether to veto current event or not, based on event record.
+  // Usage: doVetoStep( iPos, nISR, nFSR, event), where iPos as above,
+  // nISR and nFSR number of emissions so far for hard interaction only.
+  virtual bool doVetoStep( int iPos, int nISR, int nFSR, const Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoStep()
+        && hooks[i]->doVetoStep(iPos, nISR, nFSR, e) ) return true;
+    return false;
+  }
+
+  // Possibility to veto MPI + ISR + FSR evolution and kill event,
+  // making decision after fixed number of MPI steps.
+  virtual bool canVetoMPIStep() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoMPIStep() ) return true;
+    return false;
+  }
+
+  // Up to how many MPI steps should be checked.
+  virtual int numberVetoMPIStep() {
+    int n = 1;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoMPIStep() )
+        n = max(n, hooks[i]->numberVetoMPIStep());
+    return n;
+  }
+
+  // Decide whether to veto current event or not, based on event record.
+  // Usage: doVetoMPIStep( nMPI, event), where nMPI is number of MPI's so far.
+  virtual bool doVetoMPIStep( int nMPI, const Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoMPIStep() && hooks[i]->doVetoMPIStep(nMPI, e) )
+        return true;
+    return false;
+  }
+
+  // Possibility to veto event after ISR + FSR + MPI in parton level,
+  // but before beam remnants and resonance decays.
+  virtual bool canVetoPartonLevelEarly() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPartonLevelEarly() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto current partons or not, based on event record.
+  // Usage: doVetoPartonLevelEarly( event).
+  virtual bool doVetoPartonLevelEarly( const Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPartonLevelEarly()
+        && hooks[i]->doVetoPartonLevelEarly(e) ) return true;
+    return false;
+  }
+
+  // Retry same ProcessLevel with a new PartonLevel after a veto in
+  // doVetoPT, doVetoStep, doVetoMPIStep or doVetoPartonLevelEarly
+  // if you overload this method to return true.
+  virtual bool retryPartonLevel() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->retryPartonLevel() ) return true;
+    return false;
+  }
+
+  // Possibility to veto event after parton-level selection.
+  virtual bool canVetoPartonLevel() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPartonLevel() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto current partons or not, based on event record.
+  // Usage: doVetoPartonLevel( event).
+  virtual bool doVetoPartonLevel( const Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoPartonLevel()
+        && hooks[i]->doVetoPartonLevel(e) ) return true;
+   return false;
+  }
+
+  // Possibility to set initial scale in TimeShower for resonance decay.
+  virtual bool canSetResonanceScale() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canSetResonanceScale() ) return true;
+    return false;
+  }
+
+  // Initial scale for TimeShower evolution.
+  // Usage: scaleResonance( iRes, event), where iRes is location
+  // of decaying resonance in the event record.
+  virtual double scaleResonance( int iRes, const Event& e) {
+    double s = 0.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canSetResonanceScale() )
+        s = max(s, hooks[i]->scaleResonance(iRes, e));
+    return s;
+  }
+
+  // Possibility to veto an emission in the ISR machinery.
+  virtual bool canVetoISREmission() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoISREmission() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto current emission or not, based on event record.
+  // Usage: doVetoISREmission( sizeOld, event, iSys) where sizeOld is size
+  // of event record before current emission-to-be-scrutinized was added,
+  // and iSys is the system of the radiation (according to PartonSystems).
+  virtual bool doVetoISREmission( int sizeOld, const Event& e, int iSys) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoISREmission()
+        && hooks[i]->doVetoISREmission(sizeOld, e, iSys) ) return true;
+    return false;
+  }
+
+  // Possibility to veto an emission in the FSR machinery.
+  virtual bool canVetoFSREmission() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoFSREmission() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto current emission or not, based on event record.
+  // Usage: doVetoFSREmission( sizeOld, event, iSys, inResonance) where
+  // sizeOld is size of event record before current emission-to-be-scrutinized
+  // was added, iSys is the system of the radiation (according to
+  // PartonSystems), and inResonance is true if the emission takes place in a
+  // resonance decay.
+  virtual bool doVetoFSREmission(int sizeOld, const Event& e,
+    int iSys, bool inResonance = false ) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoFSREmission()
+        && hooks[i]->doVetoFSREmission(sizeOld, e, iSys, inResonance) )
+        return true;
+    return false;
+  }
+
+
+  // Possibility to veto an MPI.
+  virtual bool canVetoMPIEmission() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoMPIEmission() ) return true;
+    return false;
+  }
+
+  // Decide whether to veto an MPI based on event record.
+  // Usage: doVetoMPIEmission( sizeOld, event) where sizeOld
+  // is size of event record before the current MPI.
+  virtual bool doVetoMPIEmission( int sizeOld, const Event & e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoMPIEmission()
+        && hooks[i]->doVetoMPIEmission(sizeOld, e) )
+        return true;
+    return false;
+  }
+
+  // Possibility to reconnect colours from resonance decay systems.
+  virtual bool canReconnectResonanceSystems() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canReconnectResonanceSystems() ) return true;
+    return false;
+  }
+
+  // Do reconnect colours from resonance decay systems.
+  // Usage: doVetoFSREmission( oldSizeEvt, event)
+  // where oldSizeEvent is the event size before resonance decays.
+  // Should normally return true, while false means serious failure.
+  // Value of PartonLevel:earlyResDec determines where method is called.
+  virtual bool doReconnectResonanceSystems( int j, Event & e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canReconnectResonanceSystems()
+        && hooks[i]->doReconnectResonanceSystems(j, e) ) return true;
+    return false;
+  }
+
+  // Enhance emission rates (sec. 4 in EPJC (2013) 73).
+  virtual bool canEnhanceEmission() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canEnhanceEmission() ) return true;
+    return false;
+  }
+  virtual double enhanceFactor( string s) {
+    double f = 1.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canEnhanceEmission() ) f *= hooks[i]->enhanceFactor(s);
+    return f;
+  }
+  virtual double vetoProbability( string s) {
+    double keep = 1.0;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canEnhanceEmission() )
+        keep *= 1.0 - hooks[i]->vetoProbability(s);
+    return 1.0 - keep;
+  }
+
+  // Bookkeeping of weights for enhanced actual or trial emissions
+  // (sec. 3 in EPJC (2013) 73).
+  virtual bool canEnhanceTrial() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canEnhanceTrial() ) return true;
+    return false;
+  }
+
+  // Can change fragmentation parameters.
+  virtual bool canChangeFragPar() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar() ) return true;
+    return false;
+  }
+
+  // Do change fragmentation parameters.
+  // Input: flavPtr, zPtr, pTPtr, idEnd, m2Had, iParton.
+  virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
+    StringPT* pTPtr, int iEnd, double m2Had, vector<int> iParton) {
+    bool changed = false;
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar()
+        && hooks[i]->doChangeFragPar(flavPtr, zPtr, pTPtr,
+          iEnd, m2Had, iParton) ) changed = true;
+    return changed;
+  }
+
+  // Do a veto on a hadron just before it is added to the final state.
+  virtual bool doVetoFragmentation(Particle p) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar()
+        && hooks[i]->doVetoFragmentation(p) ) return true;
+    return false;
+  }
+
+public:
+
+  vector<UserHooks*> hooks;
+
+};
+
+//==========================================================================
+
 } // end namespace Pythia8
 
 #endif // Pythia8_UserHooks_H

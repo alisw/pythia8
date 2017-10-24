@@ -127,11 +127,14 @@ public:
   void init( int idIn, double pzIn, double eIn, double mIn,
     Info* infoPtrIn, Settings& settings, ParticleData* particleDataPtrIn,
     Rndm* rndmPtrIn, PDF* pdfInPtr, PDF* pdfHardInPtr, bool isUnresolvedIn,
-    StringFlav* flavSelPtrIn, bool hasResGammaIn = false);
+    StringFlav* flavSelPtrIn);
 
   // Initialize only the two pdf pointers.
   void initPDFPtr(PDF* pdfInPtr, PDF* pdfHardInPtr) {
     pdfBeamPtr = pdfInPtr; pdfHardBeamPtr = pdfHardInPtr; }
+
+  // Initialize additional PDF pointer for unresolved beam.
+  void initUnres(PDF* pdfUnresInPtr);
 
   // For mesons like pi0 valence content varies from event to event.
   void newValenceContent();
@@ -170,6 +173,14 @@ public:
   double xfMax(int idIn, double x, double Q2)
     {return pdfHardBeamPtr->xfMax(idIn, x, Q2);}
 
+  // Accurate and approximated photon flux and PDFs.
+  double xfFlux(int idIn, double x, double Q2)
+    {return pdfHardBeamPtr->xfFlux(idIn, x, Q2);}
+  double xfApprox(int idIn, double x, double Q2)
+    {return pdfHardBeamPtr->xfApprox(idIn, x, Q2);}
+  double xfGamma(int idIn, double x, double Q2)
+    {return pdfHardBeamPtr->xfGamma(idIn, x, Q2);}
+
   // Do not sample the x_gamma value to get correct cross section with
   // possible second call.
   double xfSame(int idIn, double x, double Q2)
@@ -202,6 +213,14 @@ public:
   // Return quark masses used in the PDF fit (LHAPDF6 only).
   double mQuarkPDF(int idIn) {return pdfBeamPtr->mQuarkPDF(idIn);}
 
+  // Calculate envelope of PDF predictions
+  void calcPDFEnvelope(int idNow, double xNow, double Q2Now, int valSea) {
+    pdfBeamPtr->calcPDFEnvelope(idNow,xNow,Q2Now,valSea);}
+  void calcPDFEnvelope(pair<int,int> idNows, pair<double,double> xNows,
+    double Q2Now, int valSea) {
+    pdfBeamPtr->calcPDFEnvelope(idNows,xNows,Q2Now,valSea);}
+  PDF::PDFEnvelope getPDFEnvelope() { return pdfBeamPtr->getPDFEnvelope(); }
+
   // Decide whether chosen quark is valence, sea or companion.
   int pickValSeaComp();
 
@@ -217,11 +236,11 @@ public:
   int sizeInit() const {return nInit;}
 
   // Clear list of resolved partons.
-  void clear() {resolved.resize(0); nInit = 0;;}
+  void clear() {resolved.resize(0); nInit = 0;}
 
   // Reset variables related to photon beam.
-  void resetGamma() {iGamVal = -1; iPosVal = -1; isResolvedGamma = isGammaBeam;
-    pT2gm2qqbar = 0.;}
+  void resetGamma() {iGamVal = -1; iPosVal = -1; pT2gm2qqbar = 0.;
+    isResolvedGamma = (gammaMode == 1) ? true : false;}
 
   // Reset variables related to photon beam inside a lepton.
   void resetGammaInLepton() {xGm = 1.; kTgamma = 0.; phiGamma = 0.;}
@@ -242,7 +261,8 @@ public:
   // How many different flavours, and how many quarks of given flavour.
   int nValenceKinds() const {return nValKinds;}
   int nValence(int idIn) const {for (int i = 0; i < nValKinds; ++i)
-    if (idIn == idVal[i]) return nVal[i]; return 0;}
+      if (idIn == idVal[i]) return nVal[i];
+    return 0;}
 
   // Test whether a lepton is to be considered as unresolved.
   bool isUnresolvedLepton();
@@ -297,8 +317,13 @@ public:
   void posVal(int iPosValIn)          { iPosVal = iPosValIn; }
   void gamVal(int iGamValIn)          { iGamVal = iGamValIn; }
   int  gamVal()                       { return iGamVal; }
+
+  // Set and get the state (resolved and/or unresolved) of photon beam.
   void resolvedGamma(bool isResolved) { isResolvedGamma = isResolved; }
   bool resolvedGamma()                { return isResolvedGamma; }
+  void setGammaMode(int gammaModeIn);
+  int  getGammaMode()                 { return gammaMode; }
+  bool isResolvedUnresolved()         { return isResUnres; }
 
   // Store the pT2 value of gamma->qqbar splitting.
   void   pT2gamma2qqbar(double pT2in) { pT2gm2qqbar = pT2in; }
@@ -312,6 +337,9 @@ public:
   bool roomFor1Remnant(int id1, double x1, double eCM);
   bool roomFor2Remnants(int id1, double x1, double eCM);
   bool roomForRemnants(BeamParticle beamOther);
+
+  // Evaluate the remnant mass with initiator idIn.
+  double remnantMass(int idIn);
 
   // Functions to approximate pdfs for ISR.
   double gammaPDFxDependence(int flavour, double x)
@@ -328,6 +356,11 @@ public:
   void newGammaKTPhi(double kTIn, double phiIn)
     { kTgamma = kTIn; phiGamma = phiIn; }
 
+  // Get the kinematic limits for photons emitted by the beam.
+  double Q2minPDF()     { return pdfHardBeamPtr->getQ2min(); }
+  double xGammaMin()    { return pdfHardBeamPtr->getXmin(); }
+  double xGammaHadr()   { return pdfHardBeamPtr->getXhadr(); }
+
   // Get the kinematics related photons form lepton beams.
   double xGamma()   const { return xGm; }
   double Q2Gamma()  const { return Q2gm; }
@@ -336,10 +369,20 @@ public:
   double gammaKT()  const { return kTgamma; }
   double gammaPhi() const { return phiGamma; }
 
+  // Keep track of pomeron momentum fraction.
+  void xPom(double xpom = -1.0)
+    { if ( pdfBeamPtr ) pdfBeamPtr->xPom(xpom); }
+
+  // Sample x and Q2 for emitted photons according to flux.
+  double sampleXgamma()
+    { xGm = pdfHardBeamPtr->sampleXgamma(); return xGm; }
+  double sampleQ2gamma(double Q2min)
+    { Q2gm = pdfHardBeamPtr->sampleQ2gamma(Q2min); return Q2gm;}
+
 private:
 
   // Constants: could only be changed in the code itself.
-  static const double XMINUNRESOLVED, POMERONMASS, XMAXCOMPANION;
+  static const double XMINUNRESOLVED, POMERONMASS, XMAXCOMPANION, TINYZREL;
   static const int NMAX, NRANDOMTRIES;
 
   // Pointer to various information on the generation.
@@ -354,6 +397,11 @@ private:
   // Pointers to PDF sets.
   PDF*          pdfBeamPtr;
   PDF*          pdfHardBeamPtr;
+
+  // Pointer to unresolved PDF and two others to save the resolved ptrs.
+  PDF*          pdfUnresBeamPtr;
+  PDF*          pdfBeamPtrSave;
+  PDF*          pdfHardBeamPtrSave;
 
   // Pointer to class for flavour generation.
   StringFlav*   flavSelPtr;
@@ -381,9 +429,9 @@ private:
   double xqgTot, xqVal, xqgSea, xqCompSum;
 
   // Variables related to photon beams (also inside lepton).
-  bool   doISR, doMPI, doND, isResolvedGamma, hasResGammaInBeam;
+  bool   doISR, doMPI, doND, isResolvedGamma, hasResGammaInBeam, isResUnres;
   double pTminISR, pTminMPI, pT2gm2qqbar;
-  int    iGamVal, iPosVal;
+  int    iGamVal, iPosVal, gammaMode;
 
   // Variables for photon from lepton.
   double xGm, Q2gm, kTgamma, phiGamma;

@@ -420,16 +420,18 @@ kinematical invariants etc.).
 e.g. if multiple kernels with identical post-branching states exist. 
 </method> 
  
-<method name="virtual string TimeShower::getSplittingName( const 
+<method name="virtual vector&lt;string&gt; TimeShower::getSplittingName( const 
 Event& event, int iRad, int iEmt, int iRec)"> 
-This function should return a string identifier of the 
+This function should return a vector of string identifiers of the 
 splitting producing the particles with indices 
 <code>iRad</code>, <code>iEmt</code> and <code>iRec</code>in the input 
 <code>event</code>. 
 If e.g. <code>iRad</code> is the index of a final state quark 
 and <code>iEmt</code> the index of a final state antiquark, we could imagine 
 returning the string "fsr:G2QQ" (which is the name of such a branching 
-in PYTHIA's UserHooks facilities). 
+in PYTHIA's UserHooks facilities). The return value is a vector to allow 
+for multiple string identifiers, e.g. if multiple splittings lead to identical 
+final states. 
 </method> 
  
 <method name="virtual double TimeShower::getSplittingProb( const 
@@ -439,6 +441,32 @@ of the particle with index <code>iEmt</code> from the particles
 with index <code>iRad</code> and <code>iRec</code> 
 All indices are relative to the input <code>event</code>. The identifier 
 <code>name</code> can be used for additional flexibility. 
+</method> 
+ 
+<method name="virtual bool TimeShower::allowedSplitting( const Event& event, 
+int iRad, int iEmt)"> 
+This function is not used in the Pythia core code, and can thus be omitted. 
+The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
+timelike shower if a particular combination of radiator and emission could 
+have resulted from a splitting. The function arguments are the 
+<code>event</code> which contains the radiator and emission, and the position 
+of the radiator (<code>iRad</code>) and emission (<code>iEmt</code>) in said 
+event. The function should return true if the combination was possible, and 
+false otherwise. 
+</method> 
+ 
+<method name="virtual vector&lt;int&gt;TimeShower::getRecoilers(  const Event& 
+event, int iRad, int iEmt, string name)"> 
+This function is not used in the Pythia core code, and can thus be omitted. 
+The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
+timelike shower for all possible recoilers for a particular combination of 
+radiator and emission. The function arguments are the 
+<code>event</code> which contains the radiator and emission, and the position 
+of the radiator (<code>iRad</code>) and emission (<code>iEmt</code>) in said 
+event. Since this information might not be enough to uniquely determine the 
+list of recoilers, a further string argument that encodes e.g. the splitting 
+name is supplied. The function should return a vector of the positions of all 
+possible allowed recoilers in the input event. 
 </method> 
  
 <h3>The SpaceShower interface</h3> 
@@ -654,15 +682,17 @@ kinematical invariants etc.).
 e.g. if multiple kernels with identical post-branching states exist. 
 </method> 
  
-<method name="virtual string SpaceShower::getSplittingName( const 
-Event& event, int iRad, int iEmt, int iRec)"> 
+<method name="virtual vector&lt;string&gt; SpaceShower::getSplittingName( 
+const Event& event, int iRad, int iEmt, int iRec)"> 
 This function should return a string identifier of the splitting producing 
 the particles with indices <code>iRad</code>, <code>iEmt</code> and 
 <code>iRec</code> in the input <code>event</code>. 
 If e.g. <code>iRad</code> is the index of an intial state quark 
 and <code>iEmt</code> the index of a final state gluon, we could imagine 
 returning the string "isr:Q2QG" (which is the name of such a branching 
-in PYTHIA's UserHooks facilities). 
+in PYTHIA's UserHooks facilities). The return value is a vector to allow 
+for multiple string identifiers, e.g. if multiple splittings lead to identical 
+final states. 
 </method> 
  
 <method name="virtual double SpaceShower::getSplittingProb( const 
@@ -672,6 +702,32 @@ of the particle with index <code>iEmt</code> from the particle
 with index <code>iRad</code> and <code>iRec</code>. All indices are 
 relative to the input <code>event</code>. The identifier 
 <code>name</code> can be used for additional flexibility. 
+</method> 
+ 
+<method name="virtual bool SpaceShower::allowedSplitting( const Event& event, 
+int iRad, int iEmt)"> 
+This function is not used in the Pythia core code, and can thus be omitted. 
+The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
+spacelike shower if a particular combination of radiator and emission could 
+have resulted from a splitting. The function arguments are the 
+<code>event</code> which contains the radiator and emission, and the position 
+of the radiator (<code>iRad</code>) and emission (<code>iEmt</code>) in said 
+event. The function should return true if the combination was possible, and 
+false otherwise. 
+</method> 
+ 
+<method name="virtual vector&lt;int&gt; SpaceShower::getRecoilers( 
+const Event& event, int iRad, int iEmt, string name)"> 
+This function is not used in the Pythia core code, and can thus be omitted. 
+The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
+spacelike shower for all possible recoilers for a particular combination of 
+radiator and emission. The function arguments are the 
+<code>event</code> which contains the radiator and emission, and the position 
+of the radiator (<code>iRad</code>) and emission (<code>iEmt</code>) in said 
+event. Since this information might not be enough to uniquely determine the 
+list of recoilers, a further string argument that encodes e.g. the splitting 
+name is supplied. The function should return a vector of the positions of all 
+possible allowed recoilers in the input event. 
 </method> 
  
 </chapter> 

@@ -10,6 +10,7 @@
 
 // Access time information.
 #include <ctime>
+#include <limits>
 
 namespace Pythia8 {
 
@@ -292,6 +293,7 @@ void Vec4::rotaxis(double phiIn, const Vec4& n) {
 void Vec4::bst(double betaX, double betaY, double betaZ) {
 
   double beta2 = betaX*betaX + betaY*betaY + betaZ*betaZ;
+  if (beta2 >= 1.) return;
   double gamma = 1. / sqrt(1. - beta2);
   double prod1 = betaX * xx + betaY * yy + betaZ * zz;
   double prod2 = gamma * (gamma * prod1 / (1. + gamma) + tt);
@@ -323,10 +325,12 @@ void Vec4::bst(double betaX, double betaY, double betaZ, double gamma) {
 
 void Vec4::bst(const Vec4& pIn) {
 
+  if (abs(pIn.tt) < Vec4::TINY) return;
   double betaX = pIn.xx / pIn.tt;
   double betaY = pIn.yy / pIn.tt;
   double betaZ = pIn.zz / pIn.tt;
   double beta2 = betaX*betaX + betaY*betaY + betaZ*betaZ;
+  if (beta2 >= 1.) return;
   double gamma = 1. / sqrt(1. - beta2);
   double prod1 = betaX * xx + betaY * yy + betaZ * zz;
   double prod2 = gamma * (gamma * prod1 / (1. + gamma) + tt);
@@ -343,6 +347,7 @@ void Vec4::bst(const Vec4& pIn) {
 
 void Vec4::bst(const Vec4& pIn, double mIn) {
 
+  if (abs(pIn.tt) < Vec4::TINY) return;
   double betaX = pIn.xx / pIn.tt;
   double betaY = pIn.yy / pIn.tt;
   double betaZ = pIn.zz / pIn.tt;
@@ -362,10 +367,12 @@ void Vec4::bst(const Vec4& pIn, double mIn) {
 
 void Vec4::bstback(const Vec4& pIn) {
 
+  if (abs(pIn.tt) < Vec4::TINY) return;
   double betaX = -pIn.xx / pIn.tt;
   double betaY = -pIn.yy / pIn.tt;
   double betaZ = -pIn.zz / pIn.tt;
   double beta2 = betaX*betaX + betaY*betaY + betaZ*betaZ;
+  if (beta2 >= 1.) return;
   double gamma = 1. / sqrt(1. - beta2);
   double prod1 = betaX * xx + betaY * yy + betaZ * zz;
   double prod2 = gamma * (gamma * prod1 / (1. + gamma) + tt);
@@ -382,6 +389,7 @@ void Vec4::bstback(const Vec4& pIn) {
 
 void Vec4::bstback(const Vec4& pIn, double mIn) {
 
+  if (abs(pIn.tt) < Vec4::TINY) return;
   double betaX = -pIn.xx / pIn.tt;
   double betaY = -pIn.yy / pIn.tt;
   double betaZ = -pIn.zz / pIn.tt;
@@ -407,6 +415,17 @@ void Vec4::rotbst(const RotBstMatrix& M) {
   yy = M.M[2][0] * t + M.M[2][1] * x + M.M[2][2] * y +  M.M[2][3] * z;
   zz = M.M[3][0] * t + M.M[3][1] * x + M.M[3][2] * y +  M.M[3][3] * z;
 
+}
+
+//--------------------------------------------------------------------------
+
+// Print a four-vector: also operator overloading with friend.
+
+ostream& operator<<(ostream& os, const Vec4& v) {
+  os << fixed << setprecision(3) << " " << setw(9) << v.xx << " "
+     << setw(9) << v.yy << " " << setw(9) << v.zz << " " << setw(9)
+     << v.tt << " (" << setw(9) << v.mCalc() << ")\n";
+  return os;
 }
 
 //--------------------------------------------------------------------------
@@ -446,6 +465,24 @@ Vec4 cross3(const Vec4& v1, const Vec4& v2) {
   v.xx = v1.yy * v2.zz - v1.zz * v2.yy;
   v.yy = v1.zz * v2.xx - v1.xx * v2.zz;
   v.zz = v1.xx * v2.yy - v1.yy * v2.xx; return v;
+}
+
+
+//--------------------------------------------------------------------------
+
+// Cross-product of three 4-vectors ( p_i = epsilon_{iabc} p_a p_b p_c)
+
+Vec4 cross4(const Vec4& a, const Vec4& b, const Vec4& c) {
+  Vec4 v(0.,0.,0.,0.);
+  v.tt =   a.xx*b.yy*c.zz + a.yy*b.zz*c.xx + a.zz*b.xx*c.yy
+         - a.xx*b.zz*c.yy - a.zz*b.yy*c.xx - a.yy*b.xx*c.zz;
+  v.xx = -(- a.tt*b.yy*c.zz - a.yy*b.zz*c.tt - a.zz*b.tt*c.yy
+           + a.tt*b.zz*c.yy + a.zz*b.yy*c.tt + a.yy*b.tt*c.zz);
+  v.yy = -(- a.xx*b.tt*c.zz - a.tt*b.zz*c.xx - a.zz*b.xx*c.tt
+           + a.xx*b.zz*c.tt + a.zz*b.tt*c.xx + a.tt*b.xx*c.zz);
+  v.zz = -(- a.xx*b.yy*c.tt - a.yy*b.tt*c.xx - a.tt*b.xx*c.yy
+           + a.xx*b.tt*c.yy + a.tt*b.yy*c.xx + a.yy*b.xx*c.tt);
+  return v;
 }
 
 //--------------------------------------------------------------------------
@@ -556,17 +593,6 @@ double REtaPhi(const Vec4& v1, const Vec4& v2) {
 
 //--------------------------------------------------------------------------
 
-// Print a four-vector: also operator overloading with friend.
-
-ostream& operator<<(ostream& os, const Vec4& v) {
-  os << fixed << setprecision(3) << " " << setw(9) << v.xx << " "
-     << setw(9) << v.yy << " " << setw(9) << v.zz << " " << setw(9)
-     << v.tt << " (" << setw(9) << v.mCalc() << ")\n";
-  return os;
-}
-
-//--------------------------------------------------------------------------
-
 // Shift four-momenta within pair from old to new masses.
 // Note that p1Move and p2Move change values during operation.
 
@@ -592,6 +618,30 @@ bool pShift( Vec4& p1Move, Vec4& p2Move, double m1New, double m2New) {
   p1Move    += pSh;
   p2Move    -= pSh;
   return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Create two vectors that are perpendicular to both input vectors.
+
+pair<Vec4,Vec4> getTwoPerpendicular(const Vec4& v1, const Vec4& v2) {
+
+  // One perpendicular vector from three-dimensional cross-product.
+  Vec4 nPerp( cross3(v1,v2) );
+  double TINY = std::numeric_limits<double>::epsilon();
+  if ( abs(nPerp.pAbs()) < TINY) {
+    Vec4 aux;
+    if (v1.px() != 0.)      aux.p(v1.yy,v1.px(),v1.pz(),v1.e());
+    else if (v1.py() != 0.) aux.p(v1.px(),v1.pz(),v1.py(),v1.e());
+    else if (v1.pz() != 0.) aux.p(v1.pz(),v1.py(),v1.px(),v1.e());
+    nPerp.p( cross3(v1,aux) );
+  }
+  nPerp /= abs(nPerp.pAbs());
+
+  // Second perpendicular vector from four-dimensional cross-product.
+  Vec4 lPerp( cross4(v1,v2,nPerp) );
+  lPerp /= sqrt(abs(lPerp.m2Calc()));
+  return make_pair(nPerp,lPerp);
 }
 
 //==========================================================================
@@ -822,7 +872,7 @@ ostream& operator<<(ostream& os, const RotBstMatrix& M) {
 // These are of technical nature, as described for each.
 
 // Maximum number of bins in a histogram.
-const int    Hist::NBINMAX   = 1000;
+const int    Hist::NBINMAX   = 10000;
 
 // Maximum number of columns that can be printed for a histogram.
 const int    Hist::NCOLMAX   = 100;
@@ -856,7 +906,11 @@ void Hist::book(string titleIn, int nBinIn, double xMinIn,
   titleSave = titleIn;
   nBin  = nBinIn;
   if (nBinIn < 1) nBin = 1;
-  if (nBinIn > NBINMAX) nBin = NBINMAX;
+  if (nBinIn > NBINMAX) {
+    nBin = NBINMAX;
+    cout << " Warning: number of bins for histogram " << titleIn
+         << " reduced to " << NBINMAX << endl;
+  }
   xMin  = xMinIn;
   xMax  = xMaxIn;
   dx    = (xMax - xMin)/nBin;

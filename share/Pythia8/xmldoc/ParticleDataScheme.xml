@@ -671,6 +671,24 @@ list particle data for one single particle, with the identity code as
 input, or for a set of particles, with an input vector of identity codes. 
 </methodmore> 
  
+<method name="vector&lt;string&gt; ParticleData::getReadHistory()"> 
+Method to retrieve the history of <code>readString</code> commands that 
+have been processed by the <code>ParticleData</code> instance, e.g. for 
+inspection. Note that <code>ParticleData</code> commands read by 
+<code>Pythia::readString</code> and <code>Pythia::readFile</code> 
+are interpreted by <code>readString</code> and thus also are listed. 
+</method> 
+ 
+<method name="vector&lt;string&gt; ParticleData::getReadHistory(int subrun)"> 
+Method to retrieve the history of <code>readString</code> commands that 
+have been processed by the <code>ParticleData</code> instance, for a 
+specific subrun (see the section on <aidx href="MainProgramSettings"> 
+Main-Program Settings</aidx>). For <code>subrun = -1</code>, returns the 
+<code>readString</code> history common to all subruns. For 
+<code>subrun >= 0</code>, returns the history of <code>readString</code> 
+commands for that specific subrun (omitting the common part). 
+</method> 
+ 
 <method name="void ParticleData::checkTable(int verbosity)"> 
 check that the particle decay table makes sense, especially for decays. 
 <argument name="verbosity"> level of checks. 0 is only minimal, 

@@ -15,6 +15,7 @@
 #include "Pythia8/Event.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PartonVertex.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/SigmaTotal.h"
@@ -105,7 +106,7 @@ public:
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
     Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
     SigmaTotal* sigmaTotPtrIn, UserHooks* userHooksPtrIn,
-    bool hasGammaIn = false);
+    PartonVertex* partonVertexPtrIn, bool hasGammaIn = false);
 
   // Reset impact parameter choice and update the CM energy.
   void reset();
@@ -146,6 +147,7 @@ public:
   double pdf2()       const {return (id2 == 21 ? 4./9. : 1.) * xPDF2now;}
   double bMPI()       const {return (bIsSet) ? bNow : 0.;}
   double enhanceMPI() const {return (bIsSet) ? enhanceB / zeroIntCorr : 1.;}
+  double enhanceMPIavg() const {return enhanceBavg;}
 
   // For x-dependent matter profile, return incoming valence/sea
   // decision from trial interactions.
@@ -175,7 +177,7 @@ private:
                       KCONVERGE, CONVERT2MB, ROOTMIN, ECMDEV, WTACCWARN;
 
   // Initialization data, read from Settings.
-  bool   allowRescatter, allowDoubleRes, canVetoMPI;
+  bool   allowRescatter, allowDoubleRes, canVetoMPI, doPartonVertex;
   int    pTmaxMatch, alphaSorder, alphaEMorder, alphaSnfmax, bProfile,
          processLevel, bSelScale, rescatterMode, nQuarkIn, nSample,
          enhanceScreening;
@@ -223,7 +225,8 @@ private:
          pT4dProbMax, dSigmaApprox, sigmaInt, sudExpPT[101],
          zeroIntCorr, normOverlap, nAvg, kNow, normPi, bAvg, bDiv,
          probLowB, radius2B, radius2C, fracA, fracB, fracC, fracAhigh,
-         fracBhigh, fracChigh, fracABChigh, expRev, cDiv, cMax;
+         fracBhigh, fracChigh, fracABChigh, expRev, cDiv, cMax,
+         enhanceBavg;
 
   // Properties specific to current system.
   bool   bIsSet, bSetInFirst, isAtLowB, pickOtherSel;
@@ -267,6 +270,9 @@ private:
 
   // Pointer to user hooks.
   UserHooks*     userHooksPtr;
+
+  // Pointer to assign space-time vertices during parton evolution.
+  PartonVertex*  partonVertexPtr;
 
   // Collections of parton-level 2 -> 2 cross sections. Selected one.
   SigmaMultiparton  sigma2gg, sigma2qg, sigma2qqbarSame, sigma2qq;

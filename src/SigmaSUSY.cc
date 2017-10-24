@@ -1919,14 +1919,15 @@ void Sigma2qg2squarkgluino::initProc() {
   coupSUSYPtr = (CoupSUSY*) couplingsPtr;
 
   // Derive name
-  nameSave = "q g -> "+particleDataPtr->name(abs(id3Sav))+" gluino + c.c.";
+
+  nameSave = "q g -> "+particleDataPtr->name(id3)+" gluino";
 
   // Final-state mass squares
   m2Glu     = pow2(particleDataPtr->m0(1000021));
-  m2Sq      = pow2(particleDataPtr->m0(id3Sav));
+  m2Sq      = pow2(particleDataPtr->m0(abs(id3)));
 
   // Secondary open width fraction.
-  openFracPair = particleDataPtr->resOpenFrac(id3Sav, 1000021);
+  openFracPair = particleDataPtr->resOpenFrac(id3, 1000021);
 
 }
 
@@ -1969,9 +1970,10 @@ double Sigma2qg2squarkgluino::sigmaHat() {
 
   // Check for charge conservation
   if(idQA%2 != idSq%2) return 0.0;
+  if(abs(idQA + idSq%10) < abs(idQA) + abs(idSq%10)) return 0.0;
 
   int idQ = (abs(idQA)+1)/2;
-  idSq = 3 * (id3Sav / 2000000) + (id3Sav % 10 + 1)/2;
+  idSq = 3 * (abs(id3) / 2000000) + (abs(id3) % 10 + 1)/2;
 
   double mixingFac;
   if(abs(idQA) % 2 == 1)
@@ -1990,17 +1992,12 @@ double Sigma2qg2squarkgluino::sigmaHat() {
 
 void Sigma2qg2squarkgluino::setIdColAcol() {
 
-  // Check if charge conjugate final state?
   int idQ = (id1 == 21) ? id2 : id1;
-  id3 = (idQ > 0) ? id3Sav : -id3Sav;
-  id4 = 1000021;
 
   // Set flavors
   setId( id1, id2, id3, id4);
 
   // Select color flow A or B (see above)
-  // Recompute individual contributions to this in-out flavour combination
-  sigmaHat();
   double R = rndmPtr->flat()*(sigmaA+sigmaB);
   if (idQ == id1) {
     setColAcol(1,0,2,1,3,0,2,3);
@@ -2581,7 +2578,7 @@ void Sigma2qqbar2chargluino::initProc() {
 
   // Construct name of process.
   nameSave = "q qbar' -> " + particleDataPtr->name(id3) + " "
-    + particleDataPtr->name(id4) + " + c.c";
+    + particleDataPtr->name(id4);
 
   // Secondary open width fraction.
   openFracPair = particleDataPtr->resOpenFrac(id3, id4);
@@ -2849,51 +2846,55 @@ double Sigma2qqbar2sleptonantislepton::sigmaHat() {
     // s-channel W contribution (only contributes to LL helicities)
     sumColS = sigmaEW / 32.0 / pow2(xW) / pow2(1.0-xW)
       * norm(conj(coupSUSYPtr->LudW[iGen1][iGen2])
-             * coupSUSYPtr->LslsvW[iGen3][iGen4]) * facTU * norm(propZW);
-  }
+      * coupSUSYPtr->LslsvW[iGen3][iGen4]) * facTU * norm(propZW);
 
-  double CslZ;
-
-  // s-channel Z/photon and interference
-  if (abs(id1) == abs(id2)) {
-
-    CslZ = real(coupSUSYPtr->LslslZ[iGen3][iGen4]
-                       + coupSUSYPtr->RslslZ[iGen3][iGen4]);
-    if (abs(id3)%2 == 0)
-      CslZ = real(coupSUSYPtr->LsvsvZ[iGen3][iGen4]
-                  + coupSUSYPtr->RsvsvZ[iGen3][iGen4]);
-
-    // gamma
-    // Factor 2 since contributes to both ha != hb helicities
-    sumColS += (abs(CslZ) > 0.0) ? 2. * pow2(eQ) * pow2(eSl) * sigmaEW
-      * facTU / pow2(sH) : 0.0;
-
-    // Z/gamma interference
-    sumInterference += eQ * eSl * sigmaEW * facTU / 2.0 / xW / (1.-xW)
-      * sqrt(norm(propZW)) / sH * CslZ
-      * (coupSUSYPtr->LqqZ[idIn1A] + coupSUSYPtr->RqqZ[idIn1A]);
+  } else {
+    double CslZ;
 
     // s-channel Z
-
     CslZ = norm(coupSUSYPtr->LslslZ[iGen3][iGen4]
-                + coupSUSYPtr->RslslZ[iGen3][iGen4]);
+                - coupSUSYPtr->RslslZ[iGen3][iGen4]);
     if (abs(id3Sav)%2 == 0)
       CslZ = norm(coupSUSYPtr->LsvsvZ[iGen3][iGen4]
                   + coupSUSYPtr->RsvsvZ[iGen3][iGen4]);
-
     sumColS += sigmaEW * facTU / 16.0 / pow2(xW) / pow2(1.0-xW)
       * norm(propZW) * CslZ
       * ( pow2(coupSUSYPtr->LqqZ[idIn1A]) + pow2(coupSUSYPtr->RqqZ[idIn1A]) );
+
+
+    // s-channel Z/photon and interference
+    if (abs(id1) == abs(id2)) {
+
+      CslZ = real(coupSUSYPtr->LslslZ[iGen3][iGen4]
+           + coupSUSYPtr->RslslZ[iGen3][iGen4]);
+      if (abs(id3)%2 == 0)
+        CslZ = real(coupSUSYPtr->LsvsvZ[iGen3][iGen4]
+             + coupSUSYPtr->RsvsvZ[iGen3][iGen4]);
+
+      if(abs(id3) == abs(id4)) {
+
+        // gamma
+        // Factor 2 since contributes to both ha != hb helicities
+
+        sumColS += (abs(CslZ) > 0.0) ? 2. * pow2(eQ) * pow2(eSl) * sigmaEW
+          * facTU / pow2(sH) : 0.0;
+
+        // Z/gamma interference
+        sumInterference += eQ * eSl * sigmaEW * facTU / 2.0 / xW / (1.-xW)
+          * sqrt(norm(propZW)) / sH * CslZ
+          * (coupSUSYPtr->LqqZ[idIn1A] + coupSUSYPtr->RqqZ[idIn1A]);
+      }
+    }
   }
 
   // Cross section
   double sigma = sumColS + sumColT + sumInterference;
 
   // Colour average
-  if(abs(id1) < 10) sigma /= 3.0;
+  if (abs(id1) < 10) sigma /= 9.0;
 
   // Add cc term
-  if(isUD) sigma *= 2.0;
+  if (isUD) sigma *= 2.0;
 
   // Return answer.
   return sigma;

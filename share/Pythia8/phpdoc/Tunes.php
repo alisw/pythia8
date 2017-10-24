@@ -75,7 +75,7 @@ starting with version 8.127. It was noted, in particular by Hendrik
 Hoeth, that this tune had a tension between parameters needed to 
 describe minimum-bias and underlying-event activity. Therefore some 
 further physics features were introduced in the code itself 
-[<a href="Bibliography.php" target="page">Cor10a</a>], which were made default as of 8.140. This version 
+[<a href="Bibliography.php#refCor10a" target="page">Cor10a</a>], which were made default as of 8.140. This version 
 also included two new tunes, 2C and 2M, based on the CTEQ 6L1 and the 
 MRST LO** PDF sets, respectively. These have been made by hand, as a 
 prequel to complete Professor-style tunings. 
@@ -87,24 +87,24 @@ energies. This may suggest some tension in the data. Two alternatives,
 3C and 3M, were produced by a few brute-force changes of 2C and 2M. 
 These were introduced in 8.140, but discontinued in 8.145 in favour of 
 the newer 4C tune, that is based on a more serious study of some early 
-LHC data, see [<a href="Bibliography.php" target="page">Cor10a</a>]. Following the comparative studies in 
-[<a href="Bibliography.php" target="page">Buc11</a>], which independently confirmed a reasonable agreement 
+LHC data, see [<a href="Bibliography.php#refCor10a" target="page">Cor10a</a>]. Following the comparative studies in 
+[<a href="Bibliography.php#refBuc11" target="page">Buc11</a>], which independently confirmed a reasonable agreement 
 with LHC data, tune 4C was made the default from 8.150. A variant is 
 tune 4Cx, where the Gaussian matter profile has an <i>x</i>-dependent 
-width [<a href="Bibliography.php" target="page">Cor11</a>]. 
+width [<a href="Bibliography.php#refCor11" target="page">Cor11</a>]. 
  
 <p/> 
 Tune 4C was the basis for many subsequent LHC tunes. Several ATLAS tunes 
 have been included here, obtained with different PDFs and with different 
-emphasis on minimum-bias and underlying-event data [<a href="Bibliography.php" target="page">ATL12</a>]. 
+emphasis on minimum-bias and underlying-event data [<a href="Bibliography.php#refATL12" target="page">ATL12</a>]. 
 These typically require LHAPDF to be linked, but this can be avoided 
 in cases where the same PDF set is implemented internally. Also two CMS 
-underlying-event tunes are implemented [<a href="Bibliography.php" target="page">CMS14</a>]. The ATLAS AZ tune 
-[<a href="Bibliography.php" target="page">ATL14</a>] instead puts emphasis on the <i>pT</i> spectrum of 
+underlying-event tunes are implemented [<a href="Bibliography.php#refCMS14" target="page">CMS14</a>]. The ATLAS AZ tune 
+[<a href="Bibliography.php#refATL14" target="page">ATL14</a>] instead puts emphasis on the <i>pT</i> spectrum of 
 the <i>Z^/gamma^*0</i> boson. 
  
 <p/> 
-The Monash 2013 tune [<a href="Bibliography.php" target="page">Ska14</a>] is based on a larger set of LHC 
+The Monash 2013 tune [<a href="Bibliography.php#refSka14" target="page">Ska14</a>] is based on a larger set of LHC 
 distributions. It starts out from a more careful comparison with and 
 tuning to LEP data, and so involves several parameter changes. The PDF 
 used is the NNPDF2.3 QCD+QED LO one with <i>alpha_s(M_Z) = 0.130</i>, 
@@ -117,10 +117,10 @@ Recent tunes by the LHC collaborations are based on the Monash 2013 one.
 This includes the CMS tune MonashStar, or formally CUETP8M1-NNPDF2.3LO 
 (currently unpublished). More significantly, ATLAS has produced and 
 published a whole family for underlying-event tunes based on a major 
-effort, including simultaneous fits of ten parameters [<a href="Bibliography.php" target="page">ATL14a</a>]. 
+effort, including simultaneous fits of ten parameters [<a href="Bibliography.php#refATL14a" target="page">ATL14a</a>]. 
 This includes four central tunes, with four different PDF sets, and 
 ten variations around the NNPDF2.3 QCD+QED LO central tune, grouped in 
-five pairs of variations up and down. The publication [<a href="Bibliography.php" target="page">ATL14a</a>] 
+five pairs of variations up and down. The publication [<a href="Bibliography.php#refATL14a" target="page">ATL14a</a>] 
 should be consulted for further details, like with what additional 
 settings various processes have been generated, which should be respected 
 to reap full benefit of the tunes. 
@@ -149,7 +149,7 @@ Further comparisons have been posted on the
 <a href="http://mcplots.cern.ch/">MCPLOTS</a> pages. 
 They have been produced with help of the 
 <a href="http://projects.hepforge.org/rivet/">Rivet</a> package 
-[<a href="Bibliography.php" target="page">Buc10</a>]. 
+[<a href="Bibliography.php#refBuc10" target="page">Buc10</a>]. 
  
 <p/> 
 To simplify comparisons for the user, we propose to collect some of 
@@ -251,8 +251,8 @@ package to obtain their PDF values, and so PYTHIA must be built
 accordingly. See the <aloc href="PDFSelection">PDF 
 documentation</aloc> for more information. For PDFs implemented 
 natively in PYTHIA it is possible to use the respective tunes, without 
-having to use LHAPDF, if you set <code>Tune:preferLHAPDF = 
-0</code> <i>before</i> the <code>Tune:pp</code> choice. 
+having to use LHAPDF, if you set <code>Tune:preferLHAPDF = 0</code> 
+<i>before</i> the <code>Tune:pp</code> choice. 
 <br/>
 <input type="radio" name="2" value="0"><strong>0 </strong>:  Use the internal PYTHIA PDFs.  <br/>
 <input type="radio" name="2" value="1" checked="checked"><strong>1 </strong>:  Use LHAPDF5 PDFs.  <br/>

@@ -29,6 +29,7 @@ indicated in caps, i.e. DIR.
 Configuration options.
 --help          : Print this help message (also -h, --h, and -help).
 --enable-debug  : Turn on debugging and disable optimization.
+--enable-optdebug : Turn on debugging but allow optimization.
 --enable-64bit  : Turn on 64-bit compilation.
 --enable-shared : Build the shared PYTHIA library during compilation.
 --lcg=PLATFORM  : Specify the LCG platform to use when the
@@ -47,9 +48,6 @@ Optional external packages.
 --with-PACKAGE-version=VER : When using an LCG platform, set with the option
                              --lcg above, automatically set the PACKAGE path
                              for the given version VER.
---with-lhapdf6-plugin=CODE : Set the LHAPDF6 plugin code [LHAPDF5.h]. LHAPDF5.h
-                             uses the FORTRAN wrapper while LHAPDF6.h uses the
-                             native C++ interface (requires BOOST headers).
   evtgen   : Particle decays with the EvtGen decay pacakge, requires HEPMC2.
   fastjet3 : Building of jets using the FastJet package, version 3.
   hepmc2   : Export PYTHIA events to the HEPMC format, version 2.
@@ -60,7 +58,7 @@ Optional external packages.
   promc    : Export PYTHIA events to the PROMC format.
   root     : Use ROOT trees and histograms with PYTHIA.
   gzip     : Enable reading of GZIPPED files using the libz library.
-  boost    : Needed for LHAPDF6 when using the LHAPDF6.h plugin.
+  boost    : Needed for LHAPDF6 before version LHAPDF6.2.
   python   : Interface to use PYTHIA in Python.
 
 Installation directories.
@@ -84,7 +82,7 @@ Advanced options.
 --lib-suffix=SUF     : Shared library name suffix: [.so] for Linux and [.dylib]
                        for OS X.
 BLOCKTEXT
-OPTIONS="-h --h -help --help --enable-debug --enable-64bit"
+OPTIONS="-h --h -help --help --enable-debug --enable-optdebug --enable-64bit"
 OPTIONS+=" --enable-shared --lcg"
 OPTIONS+=" --prefix --prefix-bin --prefix-lib --prefix-include --prefix-share"
 for PKG in "evtgen" "fastjet3" "hepmc2" "hepmc3" "lhapdf5" "lhapdf6" "powheg"\
@@ -201,6 +199,7 @@ for VAR in "$@"; do
 # Set the compilation flags and options (order matters).
 if [ "$LCG_SET" != true ]; then LCG=x86_64-slc6-gcc48-opt; fi
 [ "$ENABLE_DEBUG_SET"  = true ] && ENABLE_DEBUG="-g "   || ENABLE_DEBUG="-O2 "
+[ "$ENABLE_OPTDEBUG_SET"  = true ] && ENABLE_DEBUG="-g -O "
 [ "$ENABLE_64BIT_SET"  = true ] && ENABLE_64BIT="-m64 " || ENABLE_64BIT=""
 [ "$ENABLE_SHARED_SET" = true ] && ENABLE_SHARED="true" || ENABLE_SHARED="false"
 if [ -z "$ARCH" ]; then ARCH=$(uname | grep -i -o -e Linux -e Darwin); fi
@@ -209,14 +208,15 @@ if [ "$ARCH" != "LINUX" ] && [ "$ARCH" != "DARWIN" ]; then
     echo "WARNING: Unknown architecture $ARCH, set as LINUX."; ARCH="LINUX"; fi
 if [ -z "$CXX" ]; then CXX="g++"; fi
 if [ -z "$CXX_COMMON" ]; then
-    CXX_COMMON="${ENABLE_DEBUG}${ENABLE_64BIT}-ansi"
+    CXX_COMMON="${ENABLE_DEBUG}${ENABLE_64BIT}"
     CXX_COMMON="$CXX_COMMON -pedantic -W -Wall -Wshadow -fPIC"; fi
 if [ -z "$CXX_SHARED" ]; then
     if [ "$ARCH" = "LINUX" ];  then CXX_SHARED="-shared"; fi
     if [ "$ARCH" = "DARWIN" ]; then CXX_SHARED="-dynamiclib"; fi; fi
 if [ -z "$CXX_SONAME" ]; then
-    if [ "$ARCH" = "LINUX" ];  then CXX_SONAME="-Wl,-soname"; fi
-    if [ "$ARCH" = "DARWIN" ]; then CXX_SONAME="-Wl,-dylib_install_name"; fi; fi
+    if [ "$ARCH" = "LINUX" ];  then CXX_SONAME="-Wl,-soname,"; fi
+    if [ "$ARCH" = "DARWIN" ]; then CXX_SONAME="-Wl,-dylib_install_name,@rpath/"
+    fi; fi
 if [ -z "$LIB_SUFFIX" ]; then
     if [ "$ARCH" = "LINUX" ];  then LIB_SUFFIX=".so"; fi
     if [ "$ARCH" = "DARWIN" ]; then LIB_SUFFIX=".dylib"; fi; fi
@@ -240,12 +240,8 @@ configure_package "HEPMC3" "" \
     "bin" "include" "lib" "" "HepMC/GenEvent.h" "HepMC" ""
 configure_package "LHAPDF5" "/afs/cern.ch/sw/lcg/releases/MCGenerators/lhapdf"\
     "bin" "include" "lib" "" "" "LHAPDF" ""
-if [ "$LHAPDF6_PLUGIN" = "LHAPDF6.h" ]; then configure_package\
-    "LHAPDF6" "/afs/cern.ch/sw/lcg/releases/MCGenerators/lhapdf6"\
-    "bin" "include" "lib" "" "LHAPDF/LHAPDF.h" "LHAPDF" "BOOST"
-else LHAPDF6_PLUGIN="LHAPDF5.h"; configure_package\
-    "LHAPDF6" "/afs/cern.ch/sw/lcg/releases/MCGenerators/lhapdf6"\
-    "bin" "include" "lib" "" "" "LHAPDF" ""; fi
+configure_package "LHAPDF6" "/afs/cern.ch/sw/lcg/releases/MCGenerators/lhapdf6"\
+    "bin" "include" "lib" "" "LHAPDF/LHAPDF.h" "LHAPDF" ""
 configure_package "POWHEG" "" "bin" "" "lib" "hvq" "" "" ""
 configure_package "PROMC" ""\
      "bin" "" "lib" "" "src/ProMCBook.h" "promc" "GZIP"
@@ -284,6 +280,7 @@ echo "|                    PYTHIA Configuration Summary                   |"
 echo "---------------------------------------------------------------------"
 echo "Configured for $ARCH with the following options:"
 if [ "$ENABLE_DEBUG_SET" = true ];  then echo "--enable-debug"; fi
+if [ "$ENABLE_OPTDEBUG_SET" = true ];  then echo "--enable-optdebug"; fi
 if [ "$ENABLE_64BIT_SET" = true ];  then echo "--enable-64bit"; fi
 if [ "$ENABLE_SHARED_SET" = true ]; then echo "--enable-shared"; fi
 if [ "$LCG_SET" = true ];           then echo "--lcg=$LCG"; fi
@@ -321,8 +318,5 @@ ${PKG}_BIN=$PKG_BIN
 ${PKG}_INCLUDE=$PKG_INC
 ${PKG}_LIB=$PKG_LIB
 BLOCKTEXT
-if [ "$PKG" = "LHAPDF6" ]; then
-    echo "${PKG}_PLUGIN=$LHAPDF6_PLUGIN" >> $CFG_FILE; fi
-if [ "$PKG" = "LHAPDF5" ]; then echo "${PKG}_PLUGIN=LHAPDF5.h" >> $CFG_FILE; fi
 done
 echo ""

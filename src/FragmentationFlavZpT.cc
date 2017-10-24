@@ -1212,9 +1212,9 @@ void StringFlav::assignPopQ(FlavContainer& flav) {
   int id1 = (idAbs/1000)%10;
   int id2 = (idAbs/100)%10;
   double pop2WT = 1.;
-       if (id1 == 3) pop2WT = scbBM[1];
+  if      (id1 == 3) pop2WT = scbBM[1];
   else if (id1 >  3) pop2WT = scbBM[2];
-       if (id2 == 3) pop2WT /= scbBM[1];
+  if      (id2 == 3) pop2WT /= scbBM[1];
   else if (id2 >  3) pop2WT /= scbBM[2];
   // Agrees with Patrik code, but opposite to intention??
   flav.idPop = ((1. + pop2WT) * rndmPtr->flat() > 1.) ? id2 : id1;

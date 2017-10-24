@@ -159,9 +159,9 @@ Decays of <i>tau</i> leptons can be performed using helicity
 information from the <i>tau</i> production process and with the 
 hadronic current of the <i>tau</i> decay modelled using form factors 
 fit to data. The <i>tau</i> decay framework is largely based on the 
-corresponding Herwig++ implementation [<a href="Bibliography.php" target="page">Gre07</a>], with some 
-input from Tauola [<a href="Bibliography.php" target="page">Jad90</a>]. A short summary can be found in 
-[<a href="Bibliography.php" target="page">Ilt12</a>], while the complete writeup is in [<a href="Bibliography.php" target="page">Ilt14</a>]. 
+corresponding Herwig++ implementation [<a href="Bibliography.php#refGre07" target="page">Gre07</a>], with some 
+input from Tauola [<a href="Bibliography.php#refJad90" target="page">Jad90</a>]. A short summary can be found in 
+[<a href="Bibliography.php#refIlt12" target="page">Ilt12</a>], while the complete writeup is in [<a href="Bibliography.php#refIlt14" target="page">Ilt14</a>]. 
  
 <p/> 
  
@@ -282,7 +282,7 @@ automatically obtain the inverse polarization.
  
 So far PYTHIA does not have any generic machinery for handling QED radiation 
 in normal particle decays. In order to include this, a program like Photos 
-[<a href="Bibliography.php" target="page">Bar94, Dav10</a>] could be used as an afterburner. In a few cases, 
+[<a href="Bibliography.php#refBar94" target="page">Bar94</a>, <a href="Bibliography.php#refDav10" target="page">Dav10</a>] could be used as an afterburner. In a few cases, 
 however, the existing shower machinery can be used also here: for 
 two-body decays to a lepton pair (<i>l^+ l^-</i> or <i>l^+- nu_l</i>). 
 Such decays are mediated by <i>gamma^*/Z^0/W^+-</i> exchange, for 

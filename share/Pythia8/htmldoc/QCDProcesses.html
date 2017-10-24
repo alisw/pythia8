@@ -37,12 +37,14 @@ especially (high-mass) double diffractive.
 Some options to modify these cross sections are found on the 
 <a href="TotalCrossSections.html" target="page">Total Cross Sections</a> page. 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:all &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Common switch for the group of all soft QCD processes, 
 as listed separately in the following. 
    
  
+<a name="anchor2"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:nonDiffractive &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 The inelastic nondiffrative part of the total cross section, i.e. 
@@ -67,6 +69,7 @@ diffractive from nondiffractive physics can be a matter of definition,
 especially once colour reconnection is to be modelled.) 
    
  
+<a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:elastic &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Elastic scattering <i>A B &rarr; A B</i>. 
@@ -74,6 +77,7 @@ Code 102. It is possible to include <a href="TotalCrossSections.html" target="pa
 Coulomb corrections</a>, but by default this is off. 
    
  
+<a name="anchor4"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:singleDiffractive &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Single diffractive scattering <i>A B &rarr; X B</i> and 
@@ -81,6 +85,7 @@ Single diffractive scattering <i>A B &rarr; X B</i> and
 Diffraction</a> for details. Codes 103 and 104. 
    
  
+<a name="anchor5"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:doubleDiffractive &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Double diffractive scattering <i>A B &rarr; X_1 X_2</i>. 
@@ -88,6 +93,7 @@ See page on <a href="Diffraction.html" target="page">Diffraction</a>
 for details. Code 105. 
    
  
+<a name="anchor6"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:centralDiffractive &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Central diffractive scattering <i>A B &rarr; A X B</i> 
@@ -101,6 +107,7 @@ of a tune (even the default one) to get central diffraction.
 Code 106. 
    
  
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:inelastic &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 All of the above processes, except for elastic. Codes 101, 
@@ -124,18 +131,21 @@ processes; there is no sensible default.
 <code>SoftQCD</code> and <code>HardQCD</code> process groups, since 
 this is likely to lead to double-counting. 
  
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:all &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Common switch for the group of all hard QCD processes, 
 as listed separately in the following. 
    
  
+<a name="anchor9"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:gg2gg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>g g &rarr; g g</i>. 
 Code 111. 
    
  
+<a name="anchor10"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:gg2qqbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>g g &rarr; q qbar</i>, where <i>q</i> by default 
@@ -143,12 +153,14 @@ is a light quark (<i>u, d, s</i>) (see below).
 Code 112. 
    
  
+<a name="anchor11"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qg2qg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q g &rarr; q g</i> and <i>qbar g &rarr; qbar g</i>. 
 Code 113. 
    
  
+<a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qq2qq &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q q' &rarr; q q'</i>, <i>q qbar' &rarr; q qbar'</i>, 
@@ -157,12 +169,14 @@ may agree, but the outgoing flavours equals the incoming ones
 Code 114. 
    
  
+<a name="anchor13"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2gg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; g g</i>. 
 Code 115. 
    
  
+<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2qqbarNew &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; q' qbar'</i>, where <i>q'</i> 
@@ -170,6 +184,7 @@ by default is a light quark (<i>u, d, s</i>) (see below).
 Code 116. 
    
  
+<a name="anchor15"></a>
 <p/><code>mode&nbsp; </code><strong> HardQCD:nQuarkNew &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed outgoing new quark flavours in the above 
@@ -197,36 +212,42 @@ and shower branchings provide major additional sources. All these sources
 come together in the descriptions offered by 
 <code>SoftQCD:nonDiffractive</code> and <code>HardQCD:all</code>. 
  
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:gg2ccbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>g g &rarr; c cbar</i>. 
 Code 121. 
    
  
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2ccbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; c cbar</i>. 
 Code 122. 
    
  
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:hardccbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Sum of the previous two event types. 
 Codes 121 and 122. 
    
  
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:gg2bbbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>g g &rarr; b bbar</i>. 
 Code 123. 
    
  
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2bbbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; b bbar</i>. 
 Code 124. 
    
  
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:hardbbbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Sum of the previous two event types. 
@@ -240,7 +261,7 @@ processes. Topologies then cannot be specified beforehand, beyond
 what is provided by the two-parton hard process. For some checks 
 it may be convenient to have access to the dedicated three-parton 
 final states, which is what this set of processes allows. 
-Cross sections have been taken from [<a href="Bibliography.html" target="page">Ber81</a>]. 
+Cross sections have been taken from [<a href="Bibliography.html#refBer81" target="page">Ber81</a>]. 
 <br/>Note that the processes in this section are  <it>not</it> 
 affected by the <code>HardQCD:all</code> switch. In fact, it would 
 be double-counting to include both the <code>HardQCD:all</code> and 
@@ -249,30 +270,35 @@ the <code>HardQCD:3parton</code> processes in a run or study.
 selection of colour flow is very simple, and so it should only 
 be used with caution. 
  
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:3parton &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Common switch for the group of all hard QCD processes with three 
 partons in the final state, as listed separately in the following. 
    
  
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:gg2ggg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>g g &rarr; g g g</i>. 
 Code 131. 
    
  
+<a name="anchor24"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2ggg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; g g g</i>. 
 Code 132. 
    
  
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qg2qgg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q g &rarr; q g g</i> and <i>qbar g &rarr; qbar g g</i>. 
 Code 133. 
    
  
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qq2qqgDiff &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q q' &rarr; q q' g</i>, <i>q qbar' &rarr; q qbar' g</i>, 
@@ -280,6 +306,7 @@ and <i>qbar qbar' &rarr; qbar qbar' g</i>.
 Code 134. 
    
  
+<a name="anchor27"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qq2qqgSame &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q q &rarr; q q g</i> and 
@@ -289,6 +316,7 @@ below, see <code>HardQCD:qqbar2qqbargSame</code>).
 Code 135. 
    
  
+<a name="anchor28"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2qqbargDiff &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; q' qbar' g</i>, where <i>q'</i> 
@@ -297,12 +325,14 @@ by default is a light quark (<i>u, d, s</i>)
 Code 136. 
    
  
+<a name="anchor29"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qqbar2qqbargSame &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q qbar &rarr; q qbar g</i>. 
 Code 137. 
    
  
+<a name="anchor30"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:gg2qqbarg &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>g g &rarr; q qbar g</i>, where <i>q</i> by 
@@ -311,6 +341,7 @@ default is a light quark (<i>u, d, s</i>)
 Code 138. 
    
  
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qg2qqqbarDiff &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q g &rarr; q q' qbar'</i> and 
@@ -320,6 +351,7 @@ by default is a light quark (<i>u, d, s</i>)
 Code 139. 
    
  
+<a name="anchor32"></a>
 <p/><code>flag&nbsp; </code><strong> HardQCD:qg2qqqbarSame &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>q g &rarr; q q qbar</i> and 

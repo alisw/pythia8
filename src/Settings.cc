@@ -27,6 +27,12 @@ bool Settings::init(string startFile, bool append) {
   if (isInit && !append) return true;
   int nError = 0;
 
+  // Reset readString history.
+  if (!append) {
+    readStringHistory.resize(0);
+    readStringSubrun.clear();
+  }
+
   // List of files to be checked. Start with input file.
   vector<string> files;
   files.push_back(startFile);
@@ -200,6 +206,12 @@ bool Settings::init(istream& is, bool append) {
   if (!is.good()) {
     cout << "\n PYTHIA Error: settings stream not found " << endl;
     return false;
+  }
+
+  // Reset readString history.
+  if (!append) {
+    readStringHistory.resize(0);
+    readStringSubrun.clear();
   }
 
   // Read in one line at a time.
@@ -446,6 +458,21 @@ bool Settings::readString(string line, bool warn) {
     return true;
   }
 
+  // Check for FORCE= statements (to ignore min/max values)
+  bool force = false;
+  if (valueString.find("force") != string::npos) {
+    force = true;
+    // Read value from next word
+    splitLine >> valueString;
+    if (!splitLine) {
+      if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
+         << " not meaningful:\n   " << line << endl;
+      readingFailedSave = true;
+      return false;
+    }
+  }
+
+
   // If string begins with { then find matching } and extract contents.
   if (valueString[0] == '{') {
     size_t openBrace  = lineNow.find_first_of("{");
@@ -462,7 +489,7 @@ bool Settings::readString(string line, bool warn) {
   // Update flag map; allow many ways to say yes.
   if (inDataBase == 1) {
     bool value = boolString(valueString);
-    flag(name, value);
+    flag(name, value, force);
 
   // Update mode map.
   } else if (inDataBase == 2) {
@@ -475,7 +502,7 @@ bool Settings::readString(string line, bool warn) {
       readingFailedSave = true;
       return false;
     }
-    if (!mode(name, value)) {
+    if (!mode(name, value, force)) {
       if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
         << " non-existing option:\n   " << line << endl;
       readingFailedSave = true;
@@ -493,11 +520,11 @@ bool Settings::readString(string line, bool warn) {
       readingFailedSave = true;
       return false;
     }
-    parm(name, value);
+    parm(name, value, force);
 
   // Update word map.
   } else if (inDataBase == 4)  {
-    word(name, valueString);
+    word(name, valueString, force);
 
   // Update fvec map.
   } else if (inDataBase == 5) {
@@ -510,7 +537,7 @@ bool Settings::readString(string line, bool warn) {
       readingFailedSave = true;
       return false;
     }
-    fvec(name, value);
+    fvec(name, value, force);
 
   // Update mvec map.
   } else if (inDataBase == 6) {
@@ -523,7 +550,7 @@ bool Settings::readString(string line, bool warn) {
       readingFailedSave = true;
       return false;
     }
-    mvec(name, value);
+    mvec(name, value, force);
 
   // Update pvec map.
   } else if (inDataBase == 7) {
@@ -536,7 +563,7 @@ bool Settings::readString(string line, bool warn) {
       readingFailedSave = true;
       return false;
     }
-    pvec(name, value);
+    pvec(name, value, force);
 
   // Update wvec map.
   } else if (inDataBase == 8) {
@@ -549,8 +576,15 @@ bool Settings::readString(string line, bool warn) {
       readingFailedSave = true;
       return false;
     }
-    wvec(name, value);
+    wvec(name, value, force);
   }
+
+  // Store history of valid readString statements
+  readStringHistory.push_back(lineNow);
+  int subrun = max(-1,mode("Main:subrun"));
+  if (readStringSubrun.find(subrun) == readStringSubrun.end())
+    readStringSubrun[subrun] = vector<string>();
+  readStringSubrun[subrun].push_back(lineNow);
 
   // Done.
   return true;
@@ -1571,51 +1605,59 @@ map<string, WVec> Settings::getWVecMap(string match) {
 
 //--------------------------------------------------------------------------
 
-// Change current value, respecting limits.
+// Change current value. Respect limits unless force==true.
+// If key not recognised, add new key if force==true, otherwise ignore.
 
-void Settings::flag(string keyIn, bool nowIn) {
+void Settings::flag(string keyIn, bool nowIn, bool force) {
   string keyLower = toLower(keyIn);
   if (isFlag(keyIn)) flags[keyLower].valNow = nowIn;
+  else if (force) addFlag( keyIn, nowIn);
   // Print:quiet  triggers a whole set of changes.
   if (keyLower == "print:quiet") printQuiet( nowIn);
 }
 
-bool Settings:: mode(string keyIn, int nowIn) {
+bool Settings::mode(string keyIn, int nowIn, bool force) {
   if (isMode(keyIn)) {
     string keyLower = toLower(keyIn);
     Mode& modeNow = modes[keyLower];
     // For modepick and modefix fail if values are outside range.
-    if (modeNow.optOnly && (nowIn < modeNow.valMin || nowIn > modeNow.valMax) )
-      return false;
-    if (modeNow.hasMin && nowIn < modeNow.valMin)
+    if (!force && modeNow.optOnly
+      && (nowIn < modeNow.valMin || nowIn > modeNow.valMax) ) return false;
+    if (!force && modeNow.hasMin && nowIn < modeNow.valMin)
       modeNow.valNow = modeNow.valMin;
-    else if (modeNow.hasMax && nowIn > modeNow.valMax)
+    else if (!force && modeNow.hasMax && nowIn > modeNow.valMax)
       modeNow.valNow = modeNow.valMax;
     else modeNow.valNow = nowIn;
     // Tune:ee and Tune:pp each trigger a whole set of changes.
     if (keyLower == "tune:ee") initTuneEE( modeNow.valNow);
     if (keyLower == "tune:pp") initTunePP( modeNow.valNow);
   }
+  else if (force) {
+    addMode(keyIn, nowIn, false, false, 0, 0);
+  }
   return true;
-
 }
 
-void Settings::parm(string keyIn, double nowIn) {
+void Settings::parm(string keyIn, double nowIn, bool force) {
   if (isParm(keyIn)) {
     Parm& parmNow = parms[toLower(keyIn)];
-    if (parmNow.hasMin && nowIn < parmNow.valMin)
+    if (!force && parmNow.hasMin && nowIn < parmNow.valMin)
       parmNow.valNow = parmNow.valMin;
-    else if (parmNow.hasMax && nowIn > parmNow.valMax)
+    else if (!force && parmNow.hasMax && nowIn > parmNow.valMax)
       parmNow.valNow = parmNow.valMax;
     else parmNow.valNow = nowIn;
   }
+  else if (force) {
+    addParm(keyIn, nowIn, false, false, 0., 0.);
+  }
 }
 
-void Settings::word(string keyIn, string nowIn) {
-    if (isWord(keyIn)) words[toLower(keyIn)].valNow = nowIn;
+void Settings::word(string keyIn, string nowIn, bool force) {
+  if (isWord(keyIn)) words[toLower(keyIn)].valNow = nowIn;
+  else if (force) addWord(keyIn, nowIn);
 }
 
-void Settings::fvec(string keyIn, vector<bool> nowIn) {
+void Settings::fvec(string keyIn, vector<bool> nowIn, bool force) {
   if (isFVec(keyIn)) {
     FVec& fvecNow = fvecs[toLower(keyIn)];
     fvecNow.valNow.clear();
@@ -1623,39 +1665,42 @@ void Settings::fvec(string keyIn, vector<bool> nowIn) {
         now != nowIn.end(); now++)
       fvecNow.valNow.push_back(*now);
   }
+  else if (force) addFVec(keyIn, nowIn);
 }
 
-void Settings::mvec(string keyIn, vector<int> nowIn) {
+void Settings::mvec(string keyIn, vector<int> nowIn, bool force) {
   if (isMVec(keyIn)) {
     MVec& mvecNow = mvecs[toLower(keyIn)];
     mvecNow.valNow.clear();
     for (vector<int>::iterator now = nowIn.begin();
         now != nowIn.end(); now++) {
-      if (mvecNow.hasMin && *now < mvecNow.valMin)
+      if (!force && mvecNow.hasMin && *now < mvecNow.valMin)
         mvecNow.valNow.push_back(mvecNow.valMin);
-      else if (mvecNow.hasMax && *now > mvecNow.valMax)
+      else if (!force && mvecNow.hasMax && *now > mvecNow.valMax)
         mvecNow.valNow.push_back(mvecNow.valMax);
       else mvecNow.valNow.push_back(*now);
     }
   }
+  else if (force) addMVec(keyIn, nowIn, false, false, 0, 0);
 }
 
-void Settings::pvec(string keyIn, vector<double> nowIn) {
+void Settings::pvec(string keyIn, vector<double> nowIn, bool force) {
   if (isPVec(keyIn)) {
     PVec& pvecNow = pvecs[toLower(keyIn)];
     pvecNow.valNow.clear();
     for (vector<double>::iterator now = nowIn.begin();
         now != nowIn.end(); now++) {
-      if (pvecNow.hasMin && *now < pvecNow.valMin)
+      if (!force && pvecNow.hasMin && *now < pvecNow.valMin)
         pvecNow.valNow.push_back(pvecNow.valMin);
-      else if (pvecNow.hasMax && *now > pvecNow.valMax)
+      else if (!force && pvecNow.hasMax && *now > pvecNow.valMax)
         pvecNow.valNow.push_back(pvecNow.valMax);
       else pvecNow.valNow.push_back(*now);
     }
   }
+  else if (force) addPVec(keyIn, nowIn, false, false, 0., 0.);
 }
 
-void Settings::wvec(string keyIn, vector<string> nowIn) {
+void Settings::wvec(string keyIn, vector<string> nowIn, bool force) {
   if (isWVec(keyIn)) {
     WVec& wvecNow = wvecs[toLower(keyIn)];
     wvecNow.valNow.clear();
@@ -1663,33 +1708,7 @@ void Settings::wvec(string keyIn, vector<string> nowIn) {
         now != nowIn.end(); now++)
       wvecNow.valNow.push_back(*now);
   }
-}
-
-//--------------------------------------------------------------------------
-
-// Change current value, disregarding limits.
-
-void Settings::forceMode(string keyIn, int nowIn) {
-  if (isMode(keyIn)) {
-    string keyLower = toLower(keyIn);
-    Mode& modeNow   = modes[keyLower];
-    modeNow.valNow  = nowIn;
-    // Tune:ee and Tune:pp each trigger a whole set of changes.
-    if (keyLower == "tune:ee") initTuneEE( modeNow.valNow);
-    if (keyLower == "tune:pp") initTunePP( modeNow.valNow);
-  }
-}
-
-void Settings::forceParm(string keyIn, double nowIn) {
-  if (isParm(keyIn)) parms[toLower(keyIn)].valNow = nowIn;
-}
-
-void Settings::forceMVec(string keyIn, vector<int> nowIn) {
-  if (isMVec(keyIn)) mvecs[toLower(keyIn)].valNow = nowIn;
-}
-
-void Settings::forcePVec(string keyIn, vector<double> nowIn) {
-  if (isPVec(keyIn)) pvecs[toLower(keyIn)].valNow = nowIn;
+  else if (force) addWVec(keyIn, nowIn);
 }
 
 //--------------------------------------------------------------------------

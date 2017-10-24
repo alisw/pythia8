@@ -24,22 +24,8 @@ const double Merging::TMSMISMATCH = 1.5;
 
 // Initialise Merging class
 
-void Merging::init( Settings* settingsPtrIn, Info* infoPtrIn,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  MergingHooks* mergingHooksPtrIn, PartonLevel* trialPartonLevelPtrIn,
-  CoupSM* coupSMPtrIn ){
+void Merging::init(){
 
-  // Save pointers.
-  settingsPtr           = settingsPtrIn;
-  infoPtr               = infoPtrIn;
-  particleDataPtr       = particleDataPtrIn;
-  rndmPtr               = rndmPtrIn;
-  mergingHooksPtr       = mergingHooksPtrIn;
-  trialPartonLevelPtr   = trialPartonLevelPtrIn;
-  beamAPtr              = beamAPtrIn;
-  beamBPtr              = beamBPtrIn;
-  coupSMPtr             = coupSMPtrIn;
   // Reset minimal tms value.
   tmsNowMin             = infoPtr->eCM();
 
@@ -86,9 +72,9 @@ int Merging::mergeProcess(Event& process){
   int vetoCode = 1;
 
   // Reinitialise hard process.
-  mergingHooksPtr->hardProcess.clear();
+  mergingHooksPtr->hardProcess->clear();
   mergingHooksPtr->processSave = settingsPtr->word("Merging:Process");
-  mergingHooksPtr->hardProcess.initOnProcess(
+  mergingHooksPtr->hardProcess->initOnProcess(
     settingsPtr->word("Merging:Process"), particleDataPtr);
 
   mergingHooksPtr->doUserMergingSave

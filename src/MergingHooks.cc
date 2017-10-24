@@ -641,6 +641,10 @@ void HardProcess::translateProcessString( string process){
   // Start mapping user-defined particles onto particle ids.
   string fullProc = process;
 
+  // Remove whitespaces
+  while(fullProc.find(" ", 0) != string::npos)
+    fullProc.erase(fullProc.begin()+fullProc.find(" ",0));
+
   // Find user-defined hard process content
   // Count number of user particles
   int nUserParticles = 0;
@@ -649,6 +653,7 @@ void HardProcess::translateProcessString( string process){
     nUserParticles++;
     n++;
   }
+
   // Cut user-defined particles from remaining process
   vector <string> userParticleStrings;
   for(int i =0; i < nUserParticles;++i) {
@@ -656,6 +661,7 @@ void HardProcess::translateProcessString( string process){
     userParticleStrings.push_back(fullProc.substr(0,n));
     fullProc = fullProc.substr(n+1,fullProc.size());
   }
+
   // Cut remaining process string from rest
   if (nUserParticles > 0)
     userParticleStrings.push_back(
@@ -683,6 +689,7 @@ void HardProcess::translateProcessString( string process){
           userParticleStrings[i].size()).c_str() ) );
     }
   }
+
   // Save remaining process string
   if (nUserParticles > 0)
     userParticleStrings.push_back(
@@ -728,6 +735,7 @@ void HardProcess::translateProcessString( string process){
     pieces.push_back(residualProc.substr(0,n));
     residualProc = residualProc.substr(n+1,residualProc.size());
   }
+
   // Cut last resonance from rest
   if (appearances > 0) {
     pieces.push_back( residualProc.substr(0,residualProc.find(")",0)) );
@@ -1825,7 +1833,6 @@ int HardProcess::nLeptonOut(){
       || abs(hardOutgoing2[i]) == 1000015 || abs(hardOutgoing2[i]) == 2000015)
       nFin++;
   }
-
   // For very loose hard process definition, check number of hard process
   // lepton explicitly.
   // Check lepton / neutrino containers as leptons
@@ -2027,137 +2034,149 @@ void HardProcess::clear() {
 
 //--------------------------------------------------------------------------
 
+// Destructor
+MergingHooks::~MergingHooks() { if (useOwnHardProcess) delete hardProcess; }
+
+//--------------------------------------------------------------------------
+
 // Initialise MergingHooks class
 
-void MergingHooks::init( Settings settings, Info* infoPtrIn,
-  ParticleData* particleDataPtrIn, PartonSystems* partonSystemsPtrIn){
+void MergingHooks::init(){
 
   // Save pointers
-  infoPtr               = infoPtrIn;
-  particleDataPtr       = particleDataPtrIn;
-  partonSystemsPtr      = partonSystemsPtrIn;
   showers               = 0;
 
   // Initialise AlphaS objects for reweighting
-  double alphaSvalueFSR = settings.parm("TimeShower:alphaSvalue");
-  int    alphaSorderFSR = settings.mode("TimeShower:alphaSorder");
-  int    alphaSnfmax    = settings.mode("StandardModel:alphaSnfmax");
-  int    alphaSuseCMWFSR= settings.flag("TimeShower:alphaSuseCMW");
+  double alphaSvalueFSR = settingsPtr->parm("TimeShower:alphaSvalue");
+  int    alphaSorderFSR = settingsPtr->mode("TimeShower:alphaSorder");
+  int    alphaSnfmax    = settingsPtr->mode("StandardModel:alphaSnfmax");
+  int    alphaSuseCMWFSR= settingsPtr->flag("TimeShower:alphaSuseCMW");
   AlphaS_FSRSave.init(alphaSvalueFSR, alphaSorderFSR, alphaSnfmax,
     alphaSuseCMWFSR);
-  double alphaSvalueISR = settings.parm("SpaceShower:alphaSvalue");
-  int    alphaSorderISR = settings.mode("SpaceShower:alphaSorder");
-  int    alphaSuseCMWISR= settings.flag("SpaceShower:alphaSuseCMW");
+  double alphaSvalueISR = settingsPtr->parm("SpaceShower:alphaSvalue");
+  int    alphaSorderISR = settingsPtr->mode("SpaceShower:alphaSorder");
+  int    alphaSuseCMWISR= settingsPtr->flag("SpaceShower:alphaSuseCMW");
   AlphaS_ISRSave.init(alphaSvalueISR, alphaSorderISR, alphaSnfmax,
     alphaSuseCMWISR);
 
   // Initialise AlphaEM objects for reweighting
-  int    alphaEMFSRorder = settings.mode("TimeShower:alphaEMorder");
-  AlphaEM_FSRSave.init(alphaEMFSRorder, &settings);
-  int    alphaEMISRorder = settings.mode("SpaceShower:alphaEMorder");
-  AlphaEM_ISRSave.init(alphaEMISRorder, &settings);
+  int    alphaEMFSRorder = settingsPtr->mode("TimeShower:alphaEMorder");
+  AlphaEM_FSRSave.init(alphaEMFSRorder, settingsPtr);
+  int    alphaEMISRorder = settingsPtr->mode("SpaceShower:alphaEMorder");
+  AlphaEM_ISRSave.init(alphaEMISRorder, settingsPtr);
 
   // Initialise merging switches
-  doUserMergingSave      = settings.flag("Merging:doUserMerging");
+  doUserMergingSave      = settingsPtr->flag("Merging:doUserMerging");
   // Initialise automated MadGraph kT merging
-  doMGMergingSave        = settings.flag("Merging:doMGMerging");
+  doMGMergingSave        = settingsPtr->flag("Merging:doMGMerging");
   // Initialise kT merging
-  doKTMergingSave        = settings.flag("Merging:doKTMerging");
+  doKTMergingSave        = settingsPtr->flag("Merging:doKTMerging");
   // Initialise evolution-pT merging
-  doPTLundMergingSave    = settings.flag("Merging:doPTLundMerging");
+  doPTLundMergingSave    = settingsPtr->flag("Merging:doPTLundMerging");
   // Initialise \Delta_R_{ij}, pT_i Q_{ij} merging
-  doCutBasedMergingSave  = settings.flag("Merging:doCutBasedMerging");
+  doCutBasedMergingSave  = settingsPtr->flag("Merging:doCutBasedMerging");
   // Initialise exact definition of kT
-  ktTypeSave             = settings.mode("Merging:ktType");
+  ktTypeSave             = settingsPtr->mode("Merging:ktType");
 
   // Initialise NL3 switches.
-  doNL3TreeSave          = settings.flag("Merging:doNL3Tree");
-  doNL3LoopSave          = settings.flag("Merging:doNL3Loop");
-  doNL3SubtSave          = settings.flag("Merging:doNL3Subt");
+  doNL3TreeSave          = settingsPtr->flag("Merging:doNL3Tree");
+  doNL3LoopSave          = settingsPtr->flag("Merging:doNL3Loop");
+  doNL3SubtSave          = settingsPtr->flag("Merging:doNL3Subt");
   bool doNL3             = doNL3TreeSave || doNL3LoopSave || doNL3SubtSave;
 
   // Initialise UNLOPS switches.
-  doUNLOPSTreeSave      =  settings.flag("Merging:doUNLOPSTree");
-  doUNLOPSLoopSave      =  settings.flag("Merging:doUNLOPSLoop");
-  doUNLOPSSubtSave      =  settings.flag("Merging:doUNLOPSSubt");
-  doUNLOPSSubtNLOSave   =  settings.flag("Merging:doUNLOPSSubtNLO");
+  doUNLOPSTreeSave      =  settingsPtr->flag("Merging:doUNLOPSTree");
+  doUNLOPSLoopSave      =  settingsPtr->flag("Merging:doUNLOPSLoop");
+  doUNLOPSSubtSave      =  settingsPtr->flag("Merging:doUNLOPSSubt");
+  doUNLOPSSubtNLOSave   =  settingsPtr->flag("Merging:doUNLOPSSubtNLO");
   bool doUNLOPS         = doUNLOPSTreeSave || doUNLOPSLoopSave
                        || doUNLOPSSubtSave || doUNLOPSSubtNLOSave;
 
   // Initialise UMEPS switches
-  doUMEPSTreeSave      =  settings.flag("Merging:doUMEPSTree");
-  doUMEPSSubtSave      =  settings.flag("Merging:doUMEPSSubt");
-  nReclusterSave       =  settings.mode("Merging:nRecluster");
-  nQuarksMergeSave     =  settings.mode("Merging:nQuarksMerge");
-  nRequestedSave       =  settings.mode("Merging:nRequested");
+  doUMEPSTreeSave      =  settingsPtr->flag("Merging:doUMEPSTree");
+  doUMEPSSubtSave      =  settingsPtr->flag("Merging:doUMEPSSubt");
+  nReclusterSave       =  settingsPtr->mode("Merging:nRecluster");
+  nQuarksMergeSave     =  settingsPtr->mode("Merging:nQuarksMerge");
+  nRequestedSave       =  settingsPtr->mode("Merging:nRequested");
   bool doUMEPS         =  doUMEPSTreeSave || doUMEPSSubtSave;
 
   // Flag to only do phase space cut.
-  doEstimateXSection   =  settings.flag("Merging:doXSectionEstimate");
+  doEstimateXSection   =  settingsPtr->flag("Merging:doXSectionEstimate");
 
   // Flag to check if merging weight should directly be included in the cross
   // section.
-  includeWGTinXSECSave = settings.flag("Merging:includeWeightInXsection");
+  includeWGTinXSECSave = settingsPtr->flag("Merging:includeWeightInXsection");
 
   // Flag to check if CKKW-L event veto should be applied.
-  applyVeto            =  settings.flag("Merging:applyVeto");
+  applyVeto            =  settingsPtr->flag("Merging:applyVeto");
 
   // Get core process from user input
-  processSave           = settings.word("Merging:Process");
+  processSave           = settingsPtr->word("Merging:Process");
+
+  if (!hardProcess) {
+    hardProcess = new HardProcess();
+    useOwnHardProcess = true;
+  }
 
   // Clear hard process
-  hardProcess.clear();
+  hardProcess->clear();
 
   // Initialise input event.
   inputEvent.init("(hard process)", particleDataPtr);
-  doRemoveDecayProducts = settings.flag("Merging:mayRemoveDecayProducts");
+  doRemoveDecayProducts = settingsPtr->flag("Merging:mayRemoveDecayProducts");
 
   // Initialise the hard process
   if ( doMGMergingSave )
-    hardProcess.initOnLHEF(lheInputFile, particleDataPtr);
+    hardProcess->initOnLHEF(lheInputFile, particleDataPtr);
   else
-    hardProcess.initOnProcess(processSave, particleDataPtr);
+    hardProcess->initOnProcess(processSave, particleDataPtr);
+
+  // Remove whitespace from process string
+  while(processSave.find(" ", 0) != string::npos)
+    processSave.erase(processSave.begin()+processSave.find(" ",0));
 
   // Parameters for reconstruction of evolution scales
-  includeMassiveSave        = settings.flag("Merging:includeMassive");
-  enforceStrongOrderingSave = settings.flag("Merging:enforceStrongOrdering");
-  scaleSeparationFactorSave = settings.parm("Merging:scaleSeparationFactor");
-  orderInRapiditySave       = settings.flag("Merging:orderInRapidity");
+  includeMassiveSave        = settingsPtr->flag("Merging:includeMassive");
+  enforceStrongOrderingSave =
+    settingsPtr->flag("Merging:enforceStrongOrdering");
+  scaleSeparationFactorSave =
+    settingsPtr->parm("Merging:scaleSeparationFactor");
+  orderInRapiditySave       = settingsPtr->flag("Merging:orderInRapidity");
 
   // Parameters for choosing history probabilistically
-  nonJoinedNormSave     = settings.parm("Merging:nonJoinedNorm");
-  fsrInRecNormSave      = settings.parm("Merging:fsrInRecNorm");
-  pickByFullPSave       = settings.flag("Merging:pickByFullP");
-  pickByPoPT2Save       = settings.flag("Merging:pickByPoPT2");
-  includeRedundantSave  = settings.flag("Merging:includeRedundant");
+  nonJoinedNormSave     = settingsPtr->parm("Merging:nonJoinedNorm");
+  fsrInRecNormSave      = settingsPtr->parm("Merging:fsrInRecNorm");
+  pickByFullPSave       = settingsPtr->flag("Merging:pickByFullP");
+  pickByPoPT2Save       = settingsPtr->flag("Merging:pickByPoPT2");
+  includeRedundantSave  = settingsPtr->flag("Merging:includeRedundant");
 
   // Parameters for scale choices
   unorderedScalePrescipSave   =
-    settings.mode("Merging:unorderedScalePrescrip");
+    settingsPtr->mode("Merging:unorderedScalePrescrip");
   unorderedASscalePrescipSave =
-    settings.mode("Merging:unorderedASscalePrescrip");
+    settingsPtr->mode("Merging:unorderedASscalePrescrip");
   unorderedPDFscalePrescipSave =
-    settings.mode("Merging:unorderedPDFscalePrescrip");
+    settingsPtr->mode("Merging:unorderedPDFscalePrescrip");
   incompleteScalePrescipSave  =
-    settings.mode("Merging:incompleteScalePrescrip");
+    settingsPtr->mode("Merging:incompleteScalePrescrip");
 
   // Parameter for allowing swapping of one colour index while reclustering
   allowColourShufflingSave  =
-    settings.flag("Merging:allowColourShuffling");
+    settingsPtr->flag("Merging:allowColourShuffling");
 
   // Parameters to allow setting hard process scales to default (dynamical)
   // Pythia values.
-  resetHardQRenSave     =  settings.flag("Merging:usePythiaQRenHard");
-  resetHardQFacSave     =  settings.flag("Merging:usePythiaQFacHard");
+  resetHardQRenSave     =  settingsPtr->flag("Merging:usePythiaQRenHard");
+  resetHardQFacSave     =  settingsPtr->flag("Merging:usePythiaQFacHard");
 
   // Parameters for choosing history by sum(|pT|)
-  pickBySumPTSave       = settings.flag("Merging:pickBySumPT");
-  herwigAcollFSRSave    = settings.parm("Merging:aCollFSR");
-  herwigAcollISRSave    = settings.parm("Merging:aCollISR");
+  pickBySumPTSave       = settingsPtr->flag("Merging:pickBySumPT");
+  herwigAcollFSRSave    = settingsPtr->parm("Merging:aCollFSR");
+  herwigAcollISRSave    = settingsPtr->parm("Merging:aCollISR");
 
   // Information on the shower cut-off scale
-  pT0ISRSave            = settings.parm("SpaceShower:pT0Ref");
-  pTcutSave             = settings.parm("SpaceShower:pTmin");
+  pT0ISRSave            = settingsPtr->parm("SpaceShower:pT0Ref");
+  pTcutSave             = settingsPtr->parm("SpaceShower:pTmin");
   pTcutSave             = max(pTcutSave,pT0ISRSave);
 
   // Initialise CKKWL weight
@@ -2170,54 +2189,56 @@ void MergingHooks::init( Settings settings, Info* infoPtrIn,
   tmsValueSave = 0.;
   tmsListSave.resize(0);
 
-  kFactor0jSave         = settings.parm("Merging:kFactor0j");
-  kFactor1jSave         = settings.parm("Merging:kFactor1j");
-  kFactor2jSave         = settings.parm("Merging:kFactor2j");
+  kFactor0jSave         = settingsPtr->parm("Merging:kFactor0j");
+  kFactor1jSave         = settingsPtr->parm("Merging:kFactor1j");
+  kFactor2jSave         = settingsPtr->parm("Merging:kFactor2j");
 
-  muFSave               = settings.parm("Merging:muFac");
-  muRSave               = settings.parm("Merging:muRen");
-  muFinMESave           = settings.parm("Merging:muFacInME");
-  muRinMESave           = settings.parm("Merging:muRenInME");
+  muFSave               = settingsPtr->parm("Merging:muFac");
+  muRSave               = settingsPtr->parm("Merging:muRen");
+  muFinMESave           = settingsPtr->parm("Merging:muFacInME");
+  muRinMESave           = settingsPtr->parm("Merging:muRenInME");
 
-  doWeakClusteringSave  = settings.flag("Merging:allowWeakClustering");
-  doSQCDClusteringSave  = settings.flag("Merging:allowSQCDClustering");
-  DparameterSave        = settings.parm("Merging:Dparameter");
+  doWeakClusteringSave  = settingsPtr->flag("Merging:allowWeakClustering");
+  doSQCDClusteringSave  = settingsPtr->flag("Merging:allowSQCDClustering");
+  DparameterSave        = settingsPtr->parm("Merging:Dparameter");
 
   // Save merging scale on maximal number of jets
   if (  doKTMergingSave || doUserMergingSave || doPTLundMergingSave
     || doUMEPS ) {
     // Read merging scale (defined in kT) from input parameter.
-    tmsValueSave    = settings.parm("Merging:TMS");
-    nJetMaxSave     = settings.mode("Merging:nJetMax");
+    tmsValueSave    = settingsPtr->parm("Merging:TMS");
+    nJetMaxSave     = settingsPtr->mode("Merging:nJetMax");
     nJetMaxNLOSave  = -1;
   } else if (doMGMergingSave) {
     // Read merging scale (defined in kT) from LHE file.
-    tmsValueSave    = hardProcess.tms;
-    nJetMaxSave     = settings.mode("Merging:nJetMax");
+    tmsValueSave    = hardProcess->tms;
+    nJetMaxSave     = settingsPtr->mode("Merging:nJetMax");
     nJetMaxNLOSave  = -1;
   } else if (doCutBasedMergingSave) {
 
     // Save list of cuts defining the merging scale.
-    nJetMaxSave     = settings.mode("Merging:nJetMax");
+    nJetMaxSave     = settingsPtr->mode("Merging:nJetMax");
     nJetMaxNLOSave  = -1;
     // Write tms cut values to list of cut values,
     // ordered by DeltaR_{ij}, pT_{i}, Q_{ij}.
     tmsListSave.resize(0);
-    double drms     = settings.parm("Merging:dRijMS");
-    double ptms     = settings.parm("Merging:pTiMS");
-    double qms      = settings.parm("Merging:QijMS");
+    double drms     = settingsPtr->parm("Merging:dRijMS");
+    double ptms     = settingsPtr->parm("Merging:pTiMS");
+    double qms      = settingsPtr->parm("Merging:QijMS");
     tmsListSave.push_back(drms);
     tmsListSave.push_back(ptms);
     tmsListSave.push_back(qms);
 
   }
 
-  // Read additional settings for NLO merging methods.
+  // Read additional settingsPtr->for NLO merging methods.
   if ( doNL3 || doUNLOPS || doEstimateXSection ) {
-    tmsValueSave    = settings.parm("Merging:TMS");
-    nJetMaxSave     = settings.mode("Merging:nJetMax");
-    nJetMaxNLOSave  = settings.mode("Merging:nJetMaxNLO");
+    tmsValueSave    = settingsPtr->parm("Merging:TMS");
+    nJetMaxSave     = settingsPtr->mode("Merging:nJetMax");
+    nJetMaxNLOSave  = settingsPtr->mode("Merging:nJetMaxNLO");
   }
+
+  tmsValueNow = tmsValueSave;
 
   // Internal Pythia cross section should not include NLO merging weights.
   if ( doNL3 || doUNLOPS ) includeWGTinXSECSave = false;
@@ -2227,7 +2248,7 @@ void MergingHooks::init( Settings settings, Info* infoPtrIn,
   nJetMaxNLOLocal = nJetMaxNLOSave;
 
   // Check if external shower plugin should be used.
-  useShowerPluginSave = settings.flag("Merging:useShowerPlugin");
+  useShowerPluginSave = settingsPtr->flag("Merging:useShowerPlugin");
 
   bool writeBanner =  doKTMergingSave || doMGMergingSave
                    || doUserMergingSave
@@ -2415,6 +2436,8 @@ bool MergingHooks::doVetoStep( const Event& process, const Event& event,
   else nSteps  = (doResonance) ? getNumberOfClusteringSteps(process)
          : getNumberOfClusteringSteps( bareEvent( process, false) );
 
+  int nStepsAfter = getNumberOfClusteringSteps(event);
+
   // Get maximal number of additional jets.
   int nJetMax = nMaxJets();
   // Get merging scale in current event.
@@ -2438,7 +2461,8 @@ bool MergingHooks::doVetoStep( const Event& process, const Event& event,
 
     // Check merging veto condition.
     bool veto = false;
-    if ( nSteps > nMaxJetsNLO() && nSteps < nJetMax && tnow > tms() ) {
+    if ( nStepsAfter > nSteps && nSteps > nMaxJetsNLO() && nSteps < nJetMax
+      && tnow > tms() ) {
       // Set weight to zero if event should be vetoed.
       weightCKKWL1Save = 0.;
       // Save weight before veto, in case veto needs to be revoked.
@@ -3025,11 +3049,11 @@ bool MergingHooks::isFirstEmission(const Event& event ) {
   // If the mumber of photons if larger than in the hard process, QED
   // radiation has pushed the state into the PS region.
   int nPhotons = 0;
-  for(int i =0; i< int(hardProcess.hardOutgoing1.size()); ++i)
-    if (hardProcess.hardOutgoing1[i] == 22)
+  for(int i =0; i< int(hardProcess->hardOutgoing1.size()); ++i)
+    if (hardProcess->hardOutgoing1[i] == 22)
       nPhotons++;
-  for(int i =0; i< int(hardProcess.hardOutgoing2.size()); ++i)
-    if (hardProcess.hardOutgoing2[i] == 22)
+  for(int i =0; i< int(hardProcess->hardOutgoing2.size()); ++i)
+    if (hardProcess->hardOutgoing2[i] == 22)
       nPhotons++;
   if (nFinalPhotons > nPhotons) return false;
 
@@ -3415,6 +3439,18 @@ double MergingHooks::rhoms( const Event& event, bool withColour){
   // Only check first emission.
   if (!isFirstEmission(event)) return 0.;
 
+  if ( useShowerPlugin() ) {
+    double ptret=event[0].e();
+    for(int i=0; i < event.size(); ++i) {
+      for(int j=0; j < event.size(); ++j) {
+        if (i==j) continue;
+        double temp = rhoPythia( event, i, j, 0, 0 );
+        if (temp > 0.) ptret = min(ptret, temp);
+      }
+    }
+    return ptret;
+  }
+
   // Find all electroweak decayed bosons in the state.
   vector<int> ewResonancePos;
   ewResonancePos.clear();
@@ -3639,18 +3675,44 @@ double MergingHooks::rhoPythia(const Event& event, int rad, int emt, int rec,
   // Ask showers for evolution variable.
   if ( useShowerPlugin() ) {
     map<string,double> stateVars;
-    bool isFSR = showers->timesPtr->isTimelike(event, rad, emt, rec, "");
+    double ptret = event[0].m();
+    bool isFSR = showers->timesPtr->allowedSplitting(event, rad, emt);
+    bool isISR = showers->spacePtr->allowedSplitting(event, rad, emt);
     if (isFSR) {
-      string name = showers->timesPtr->getSplittingName(event, rad, emt, rec);
-      stateVars   = showers->timesPtr->getStateVariables(event, rad, emt, rec,
-        name);
-    } else {
-      string name = showers->spacePtr->getSplittingName(event, rad, emt, rec);
-      stateVars   = showers->spacePtr->getStateVariables(event, rad, emt, rec,
-        name);
+      vector<string> names
+        = showers->timesPtr->getSplittingName(event, rad, emt, 0);
+      for (int iName=0; iName < int(names.size()); ++iName) {
+        vector<int> recsNow
+          = showers->timesPtr->getRecoilers(event, rad, emt, names[iName]);
+        for ( int i = 0; i < int(recsNow.size()); ++i ) {
+          stateVars = showers->timesPtr->getStateVariables(event, rad, emt,
+            recsNow[i], names[iName]);
+          double pttemp = ptret;
+          if (stateVars.size() > 0 && stateVars.find("t") != stateVars.end())
+            pttemp = sqrt(stateVars["t"]);
+          ptret = min(ptret,pttemp);
+        }
+      }
     }
-    return ( (stateVars.size() > 0 && stateVars.find("t") != stateVars.end())
-             ? sqrt(stateVars["t"]) : -1.0 );
+
+    if (isISR) {
+      vector<string> names
+        = showers->spacePtr->getSplittingName(event, rad, emt, 0);
+      for (int iName=0; iName < int(names.size()); ++iName) {
+        vector<int> recsNow
+          = showers->timesPtr->getRecoilers(event, rad, emt, names[iName]);
+        for ( int i = 0; i < int(recsNow.size()); ++i ) {
+          stateVars = showers->spacePtr->getStateVariables(event, rad, emt,
+            recsNow[i], names[iName]);
+          double pttemp = ptret;
+          if (stateVars.size() > 0 && stateVars.find("t") != stateVars.end())
+            pttemp = sqrt(stateVars["t"]);
+        ptret = min(ptret,pttemp);
+        }
+      }
+    }
+
+    return ptret;
   }
 
   // Note: If massive particles are involved, this definition slightly differs

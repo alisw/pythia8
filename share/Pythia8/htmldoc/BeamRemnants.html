@@ -21,7 +21,7 @@ on the <i>x</i> and flavours already extracted, and to distinguish
 between valence, sea and companion quarks. Once the perturbative 
 evolution is finished, further beam remnants are added to obtain a 
 consistent set of flavours. The current physics framework is further 
-described in [<a href="Bibliography.html" target="page">Sjo04</a>]. 
+described in [<a href="Bibliography.html#refSjo04" target="page">Sjo04</a>]. 
  
 <p/> 
 The introduction of <a href="MultipartonInteractions.html" target="page">rescattering</a> 
@@ -82,30 +82,35 @@ interactions, <i>m</i> the mass of the system, and
 Furthermore each separately defined beam remnant has a distribution 
 of width <i>sigma_remn</i>, independently of kinematical variables. 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:primordialKT &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow or not selection of primordial <i>kT</i> according to the 
 parameter values below. 
    
  
+<a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:primordialKTsoft &nbsp;</strong> 
  (<code>default = <strong>0.9</strong></code>; <code>minimum = 0.</code>)<br/>
 The width <i>sigma_soft</i> in the above equation, assigned as a 
 primordial <i>kT</i> to initiators in the soft-interaction limit. 
    
  
+<a name="anchor3"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:primordialKThard &nbsp;</strong> 
  (<code>default = <strong>1.8</strong></code>; <code>minimum = 0.</code>)<br/>
 The width <i>sigma_hard</i> in the above equation, assigned as a 
 primordial <i>kT</i> to initiators in the hard-interaction limit. 
    
  
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:halfScaleForKT &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 0.</code>)<br/>
 The scale <i>Q_half</i> in the equation above, defining the 
 half-way point between hard and soft interactions. 
    
  
+<a name="anchor5"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:halfMassForKT &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>)<br/>
 The scale <i>m_half</i> in the equation above, defining the 
@@ -115,6 +120,7 @@ a primordial <i>kT</i> value higher than its mass, so the
 mass-dampening is intended to reduce some troubles later on.) 
    
  
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:reducedKTatHighY &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 For a system of mass <i>m</i> and energy <i>E</i> the 
@@ -127,6 +133,7 @@ for this dampening is purely technical, and for reasonable values
 should not have dramatic consequences overall. 
    
  
+<a name="anchor7"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:primordialKTremnant &nbsp;</strong> 
  (<code>default = <strong>0.4</strong></code>; <code>minimum = 0.</code>)<br/>
 The width <i>sigma_remn</i>, assigned as a primordial <i>kT</i> 
@@ -150,6 +157,7 @@ for hadrons it holds that <i>&lt;pT^2&gt; = 2 sigma^2</i>.
 The comparison is further complicated by the reduction of 
 primordial <i>kT</i> values by the overall compensation mechanism. 
  
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:rescatterRestoreY &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Is only relevant when <a href="MultipartonInteractions.html" target="page">rescattering</a> 
@@ -188,7 +196,7 @@ produce the beam remnants. The starting point is the junction structure of the
 beam particle (if it is a baryon). The gluons are attached to a quark line and 
 quark-antiquark pairs are added as if coming from a gluon splittings. Thus 
 this model captures the qualitative behaviour that is expected from leading 
-colour QCD. The model is described in more detail in [<a href="Bibliography.html" target="page">Sjo04</a>]. 
+colour QCD. The model is described in more detail in [<a href="Bibliography.html#refSjo04" target="page">Sjo04</a>]. 
  
 <p/> 
 The new model is built on the full SU(3) colour structure of QCD. The 
@@ -214,6 +222,7 @@ is needed. This is referred to as colour reconnection. Several different
 models for colour reconnection are implemented, see 
 <a href="ColourReconnection.html" target="page">Colour Reconection</a>. 
  
+<a name="anchor9"></a>
 <p/><code>mode&nbsp; </code><strong> BeamRemnants:remnantMode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 Switch to choose between the two different colour models for the beam remnant. 
@@ -221,6 +230,7 @@ Switch to choose between the two different colour models for the beam remnant.
 <br/><code>option </code><strong> 1</strong> :  The new beam remnant model.    
    
  
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:saturation &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 100000</code>)<br/>
 Controls the suppresion due to saturation in the new model. The exact formula 
@@ -230,6 +240,7 @@ parameter. Thus a small number will result in a large saturation.
  
 <h3>Further variables</h3> 
  
+<a name="anchor11"></a>
 <p/><code>mode&nbsp; </code><strong> BeamRemnants:maxValQuark &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 The maximum valence quark kind allowed in acceptable incoming beams, 
@@ -239,6 +250,7 @@ but not <i>c</i> and <i>b</i> ones, since sensible
 kinematics has not really been worked out for the latter. 
    
  
+<a name="anchor12"></a>
 <p/><code>mode&nbsp; </code><strong> BeamRemnants:companionPower &nbsp;</strong> 
  (<code>default = <strong>4</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 When a sea quark has been found, a companion antisea quark ought to be 
@@ -269,32 +281,38 @@ particles will fix that.) An additional enhancement of the diquark
 momentum is obtained by its <i>x</i> value being rescaled by the 
 <code>valenceDiqEnhance</code> factor. 
  
+<a name="anchor13"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:valencePowerMeson &nbsp;</strong> 
  (<code>default = <strong>0.8</strong></code>; <code>minimum = 0.</code>)<br/>
 The abovementioned power for valence quarks in mesons. 
    
  
+<a name="anchor14"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:valencePowerUinP &nbsp;</strong> 
  (<code>default = <strong>3.5</strong></code>; <code>minimum = 0.</code>)<br/>
 The abovementioned power for valence <i>u</i> quarks in protons. 
    
  
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:valencePowerDinP &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.</code>)<br/>
 The abovementioned power for valence <i>d</i> quarks in protons. 
    
  
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:valenceDiqEnhance &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10.</code>)<br/>
 Enhancement factor for valence diquarks in baryons, relative to the 
 simple sum of the two constituent quarks. 
    
  
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:gluonPower &nbsp;</strong> 
  (<code>default = <strong>4.0</strong></code>; <code>minimum = 0.</code>)<br/>
 The abovementioned power for gluons. 
    
  
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:xGluonCutoff &nbsp;</strong> 
  (<code>default = <strong>1E-7</strong></code>; <code>minimum = 1E-10</code>; <code>maximum = 1</code>)<br/>
 The gluon PDF is approximated with <i>g(x) ~ (1 - x)^p / x</i>, which 
@@ -302,6 +320,7 @@ integrates to infinity when integrated from 0 to 1. This cut-off is
 introduced as a minimum to avoid the problems with infinities. 
    
  
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:allowJunction &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 The <code>off</code> option is intended for debug purposes only, as 
@@ -316,6 +335,7 @@ multiparton interactions and showers are redone until a
 junction-free topology is found. 
    
  
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:beamJunction &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This parameter is only relevant if the new colour reconnection scheme is used. 
@@ -325,6 +345,7 @@ than two valence quarks are found in the beam remnants. If off a di-quark is
 formed and if on a junction will be formed. 
    
  
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:allowBeamJunction &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 This parameter is only relevant if the new Beam remnant model is used. 
@@ -332,6 +353,7 @@ This parameter tells whether to allow the formation of junction structures
 in the colour configuration of the scattered partons. 
    
  
+<a name="anchor22"></a>
 <p/><code>mode&nbsp; </code><strong> BeamRemnants:unresolvedHadron &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Switch to to force either or both of the beam remnants to collapse to a 

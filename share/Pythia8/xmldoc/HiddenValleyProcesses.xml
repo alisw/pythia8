@@ -16,6 +16,12 @@ hidden sector can be compared, in each case either for an
 Abelian or a non-Abelian gauge group in the HV. For further details 
 see <ref>Car11</ref>. 
  
+<note>Warning</note>: do not use the alternative hadronization 
+scenarios <code>StringPT:thermalModel = on</code> or 
+<code>StringPT:mT2suppression = on</code> in conjunction with 
+Hidden Valley processes, since they have not been constructed to 
+work together. 
+ 
 <h3>Particle content and properties</h3> 
  
 For simplicity we assume that the HV contains an unbroken <b>SU(N)</b> 

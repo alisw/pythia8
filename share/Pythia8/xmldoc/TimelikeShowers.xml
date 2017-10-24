@@ -764,7 +764,9 @@ for massive radiators and recoilers. Only has a meaning if
 Use of matrix element corrections also after the first emission, 
 for dipole ends of the same system that did not yet radiate. 
 Only has a meaning if <code>MEcorrections</code> above is 
-switched on. 
+switched on. Switching off this option currently does not take effect 
+for a few rare types of secondary branchings, where ME corrections 
+play a central role. 
 </flag> 
  
 <flag name="TimeShower:phiPolAsym" default="on"> 

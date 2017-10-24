@@ -674,35 +674,35 @@ The meaning of the various properties and the format used are explained
 </particle> 
  
 <particle id="54" name="DMmed(s=0)" antiName="DMmedbar(s=0)" spinType="1" chargeType="0" colType="0" 
-          m0="100.00000" mWidth="0.1"> 
- <channel onMode="1" bRatio="0.050" meMode="101" products=" 1  -1"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products=" 2  -2"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products=" 3  -3"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products=" 4  -4"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products=" 5  -5"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products=" 6  -6"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="11 -11"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="12 -12"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="13 -13"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="14 -14"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="15 -15"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="16 -16"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="21  21"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="22  22"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="22  23"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="23  23"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="24 -24"/> 
- <channel onMode="1" bRatio="0.050" meMode="101" products="25  25"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="51 -51"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="51  51"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="52 -52"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="52  52"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="53 -53"/> 
- <channel onMode="1" bRatio="0.025" meMode="101" products="53  53"/> 
+          m0="500.00000" mWidth="0.1"> 
+ <channel onMode="1" bRatio="0.000" products=" 1  -1"/> 
+ <channel onMode="1" bRatio="0.000" products=" 2  -2"/> 
+ <channel onMode="1" bRatio="0.000" products=" 3  -3"/> 
+ <channel onMode="1" bRatio="0.000" products=" 4  -4"/> 
+ <channel onMode="1" bRatio="0.300" products=" 5  -5"/> 
+ <channel onMode="1" bRatio="0.000" products=" 6  -6"/> 
+ <channel onMode="1" bRatio="0.000" products="11 -11"/> 
+ <channel onMode="1" bRatio="0.000" products="12 -12"/> 
+ <channel onMode="1" bRatio="0.000" products="13 -13"/> 
+ <channel onMode="1" bRatio="0.000" products="14 -14"/> 
+ <channel onMode="1" bRatio="0.000" products="15 -15"/> 
+ <channel onMode="1" bRatio="0.000" products="16 -16"/> 
+ <channel onMode="1" bRatio="0.100" products="21  21"/> 
+ <channel onMode="1" bRatio="0.000" products="22  22"/> 
+ <channel onMode="1" bRatio="0.000" products="22  23"/> 
+ <channel onMode="1" bRatio="0.000" products="23  23"/> 
+ <channel onMode="1" bRatio="0.000" products="24 -24"/> 
+ <channel onMode="1" bRatio="0.000" products="25  25"/> 
+ <channel onMode="1" bRatio="0.000" products="51 -51"/> 
+ <channel onMode="1" bRatio="0.000" products="51  51"/> 
+ <channel onMode="1" bRatio="0.600" products="52 -52"/> 
+ <channel onMode="1" bRatio="0.000" products="52  52"/> 
+ <channel onMode="1" bRatio="0.000" products="53 -53"/> 
+ <channel onMode="1" bRatio="0.000" products="53  53"/> 
 </particle> 
  
 <particle id="55" name="DMmed(s=1)" antiName="DMmedbar(s=1)" spinType="3" chargeType="0" colType="0" 
-          m0="100.00000" mWidth="0.1"> 
+          m0="500.00000" mWidth="0.1"> 
  <channel onMode="1" bRatio="0.050" products=" 1  -1"/> 
  <channel onMode="1" bRatio="0.050" products=" 2  -2"/> 
  <channel onMode="1" bRatio="0.050" products=" 3  -3"/> 
@@ -9585,6 +9585,29 @@ The meaning of the various properties and the format used are explained
           m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552"> 
  <channel onMode="1" bRatio="1.0000000" products="200553 21"/> 
 </particle> 
+ 
+<particle id="1000020040" name="4He" antiName="4Hebar" 
+          spinType="1" chargeType="6" colType="0" m0="3.7284"> 
+</particle> 
+<particle id="1000030060" name="6Li" antiName="6Libar" 
+          spinType="1" chargeType="9" colType="0" m0="5.6030512"> 
+</particle> 
+<particle id="1000060120" name="12C" antiName="12Cbar" 
+          spinType="1" chargeType="18" colType="0" m0="11.177929"> 
+</particle> 
+<particle id="1000080160" name="16O" antiName="16Obar" 
+          spinType="1" chargeType="24" colType="0" m0="14.899168"> 
+</particle> 
+<particle id="1000290630" name="63Cu" antiName="63Cubar" 
+          spinType="2" chargeType="87" colType="0" m0="58.618646"> 
+</particle> 
+<particle id="1000791970" name="197Au" antiName="197Aubar" 
+          spinType="2" chargeType="237" colType="0" m0="183.47319"> 
+</particle> 
+<particle id="1000822080" name="208Pb" antiName="208Pbbar" 
+          spinType="1" chargeType="246" colType="0" m0="193.72902"> 
+</particle> 
+ 
  
 </chapter> 
  

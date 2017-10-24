@@ -259,8 +259,8 @@ package to obtain their PDF values, and so PYTHIA must be built
 accordingly. See the <aloc href="PDFSelection">PDF 
 documentation</aloc> for more information. For PDFs implemented 
 natively in PYTHIA it is possible to use the respective tunes, without 
-having to use LHAPDF, if you set <code>Tune:preferLHAPDF = 
-0</code> <i>before</i> the <code>Tune:pp</code> choice. 
+having to use LHAPDF, if you set <code>Tune:preferLHAPDF = 0</code> 
+<i>before</i> the <code>Tune:pp</code> choice. 
 <option value="0"> Use the internal PYTHIA PDFs. 
 </option> 
 <option value="1"> Use LHAPDF5 PDFs. 

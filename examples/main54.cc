@@ -6,6 +6,8 @@
 // This program compares the internal and LHAPDF implementations of the
 // NNPDF 2.3 QCD+QED sets, for results and for timing.
 // Author: Juan Rojo.
+// Warning: this example is constructed to work for LHAPDF5.
+// There seem to be differences when instead comparing with LHAPDF6.
 
 #include "Pythia8/Pythia.h"
 using namespace Pythia8;

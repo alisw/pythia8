@@ -70,7 +70,7 @@ elif [ ! -f $CFG_FILE ]; then
 while read LINE; do
     if [[ $LINE == \#\ --* ]]; then CONFIG+=${LINE#?}; fi
     if [[ $LINE != *=* ]]; then continue; fi
-    VAR=${LINE%=*}; VAL=${LINE#$KEY}; VAL=${VAL#*=};
+    VAR=${LINE%%=*}; VAL=${LINE#*=};
     eval $VAR=\"$VAL\"; done < $CFG_FILE
 
 # Check if configuration is requested.
@@ -131,4 +131,5 @@ for VAR in "$@"; do
     else eval OUT=\"$OUT \$$VAR\"; fi; done
 
 # Print the output.
+if [ "$VAR" = "LDFLAGS" ]; then OUT+=" -ld"; fi
 echo $OUT

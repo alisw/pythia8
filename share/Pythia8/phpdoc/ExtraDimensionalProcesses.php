@@ -43,7 +43,7 @@ section.
  
 The graviton (G*) and gluon (KKgluon*) resonance states are assigned 
 PDG code 5100039 and 5100021 respectively. The G* processes are 
-described in [<a href="Bibliography.php" target="page">Bij01</a>] and the KKgluon* process in [<a href="Bibliography.php" target="page">Ask11</a>]. 
+described in [<a href="Bibliography.php#refBij01" target="page">Bij01</a>] and the KKgluon* process in [<a href="Bibliography.php#refAsk11" target="page">Ask11</a>]. 
 Decays into fermion and boson pairs are handled with the correct 
 angular distributions, while subsequent decays are handled 
 isotropically. 
@@ -117,9 +117,9 @@ Code 5006.
  
 In the above scenario the main free parameters are the masses, which 
 are set as usual. In addition there are the following coupling parameters. 
-The coupling <i>kappaMG</i> follows the conventions in [<a href="Bibliography.php" target="page">Bij01</a>], 
+The coupling <i>kappaMG</i> follows the conventions in [<a href="Bibliography.php#refBij01" target="page">Bij01</a>], 
 where as the flavour dependent couplings follow the conventions used in 
-[<a href="Bibliography.php" target="page">Dav01</a>]. 
+[<a href="Bibliography.php#refDav01" target="page">Dav01</a>]. 
  
 <br/><br/><strong>ExtraDimensionsG*:SMinBulk</strong>  <input type="radio" name="8" value="on"><strong>On</strong>
 <input type="radio" name="8" value="off" checked="checked"><strong>Off</strong>
@@ -228,7 +228,7 @@ processes.
 This section contains a processes involving the production 
 of electroweak KK gauge bosons, i.e. <i>gamma_{KK}/Z_{KK}</i>, 
 in one TeV^-1 sized extra dimension. The process is described 
-in [<a href="Bibliography.php" target="page">Bel10</a>] and allows for individual final states to be 
+in [<a href="Bibliography.php#refBel10" target="page">Bel10</a>] and allows for individual final states to be 
 specified. 
  
 <br/><br/><strong>ExtraDimensionsTEV:ffbar2ddbar</strong>  <input type="radio" name="27" value="on"><strong>On</strong>
@@ -346,12 +346,12 @@ The LED graviton, where the KK-modes normally are summed and do not
 give rise to phenomena individually, is assigned PDG code 5000039. 
 The graviton emission and virtual graviton exchange processes use 
 the same implementation as the corresponding unparticle processes, 
-which are all described in [<a href="Bibliography.php" target="page">Ask10</a>]. It is also possible to 
+which are all described in [<a href="Bibliography.php#refAsk10" target="page">Ask10</a>]. It is also possible to 
 generate monojet events from scalar graviton emission as described 
-in [<a href="Bibliography.php" target="page">Azu05</a>], by turning on the option <i>GravScalar</i>. 
+in [<a href="Bibliography.php#refAzu05" target="page">Azu05</a>], by turning on the option <i>GravScalar</i>. 
  
 <p/> 
-<i>Note:</i> As discussed in [<a href="Bibliography.php" target="page">Ask09</a>], for the graviton or 
+<i>Note:</i> As discussed in [<a href="Bibliography.php#refAsk09" target="page">Ask09</a>], for the graviton or 
 unparticle emission processes the underlying Breit-Wigner mass 
 distribution should be matched to the graviton mass spectrum in order 
 to achieve an optimal MC efficiency. 
@@ -399,7 +399,7 @@ Code 5024.
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>f fbar &rarr; G gamma</i>. This process corresponds 
 to the photon limit of the <i>G Z</i> process, as described in 
-[<a href="Bibliography.php" target="page">Ask09</a>]. 
+[<a href="Bibliography.php#refAsk09" target="page">Ask09</a>]. 
 Code 5025. 
    
  
@@ -447,7 +447,7 @@ Code 5029.
 Dijet production including graviton exchange is also available, using 
 the same effective theory approach as the LED G exchange processes 
 above or including more detailed amplitudes in accordance with 
-[<a href="Bibliography.php" target="page">Fra11</a>]. In case of the latter, the value of <i>LambdaT</i> 
+[<a href="Bibliography.php#refFra11" target="page">Fra11</a>]. In case of the latter, the value of <i>LambdaT</i> 
 is used as the value of the cut-off scale <i>Lambda</i>. For this 
 reason the dijet processes only relates to the LED model and no 
 unparticle versions are available. The processes are grouped together 
@@ -521,7 +521,7 @@ Code 5035.
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Allow the monojet processes to produce scalar graviton emission 
 instead of the default tensor one. The scalar option is according 
-to the processes described in [<a href="Bibliography.php" target="page">Azu05</a>] and includes two 
+to the processes described in [<a href="Bibliography.php#refAzu05" target="page">Azu05</a>] and includes two 
 coupling constants below. 
    
  
@@ -578,7 +578,7 @@ processes. Similar to <i>HardQCD:nQuarkNew</i> for the QCD processes.
  
 <br/><br/><table><tr><td><strong>ExtraDimensionsLED:opMode  </td><td></td><td> <input type="text" name="69" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
 Options to specify <i>S</i> function for LED dijet amplitudes. 
-<br/><code>option </code><strong> 0</strong> : Use detailed amplitude, as described in [<a href="Bibliography.php" target="page">Fra11</a>]. 
+<br/><code>option </code><strong> 0</strong> : Use detailed amplitude, as described in [<a href="Bibliography.php#refFra11" target="page">Fra11</a>]. 
    
 <br/><code>option </code><strong> 1</strong> : Use conventional <i>LambdaT</i> parametrization, 
 like the other LED processes.   
@@ -592,10 +592,10 @@ only use the dedicated unparticle parameters below. The unparticle
 is also assigned the PDG code 5000039 and is therefore called 
 <i>Graviton</i> in the event record. The graviton and unparticle 
 emission as well as virtual graviton and unparticle exchange processes 
-are described in [<a href="Bibliography.php" target="page">Ask10</a>]. 
+are described in [<a href="Bibliography.php#refAsk10" target="page">Ask10</a>]. 
  
 <p/> 
-<i>Note:</i> As discussed in [<a href="Bibliography.php" target="page">Ask09</a>], for the graviton or 
+<i>Note:</i> As discussed in [<a href="Bibliography.php#refAsk09" target="page">Ask09</a>], for the graviton or 
 unparticle emission processes the underlying Breit-Wigner mass 
 distribution should be matched to the graviton mass spectrum in order 
 to achieve an optimal MC efficiency. 
@@ -643,7 +643,7 @@ Code 5041.
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Scatterings <i>f fbar &rarr; U gamma</i>. This process corresponds 
 to the photon limit of the <i>U Z</i> process, as described in 
-[<a href="Bibliography.php" target="page">Ask09</a>]. 
+[<a href="Bibliography.php#refAsk09" target="page">Ask09</a>]. 
 Code 5042. 
    
  

@@ -30,14 +30,14 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>Multiparton Interactions</h2> 
  
 The starting point for the multiparton interactions physics scenario in 
-PYTHIA is provided by [<a href="Bibliography.php" target="page">Sjo87</a>]. Recent developments have 
+PYTHIA is provided by [<a href="Bibliography.php#refSjo87" target="page">Sjo87</a>]. Recent developments have 
 included a more careful study of flavour and colour correlations, 
 junction topologies and the relationship to beam remnants 
-[<a href="Bibliography.php" target="page">Sjo04</a>], interleaving with initial-state radiation 
-[<a href="Bibliography.php" target="page">Sjo05</a>], making use of transverse-momentum-ordered 
+[<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>], interleaving with initial-state radiation 
+[<a href="Bibliography.php#refSjo05" target="page">Sjo05</a>], making use of transverse-momentum-ordered 
 initial- and final-state showers, with the extension to fully 
-interleaved evolution covered in [<a href="Bibliography.php" target="page">Cor10a</a>]. A framework to 
-handle rescattering is described in [<a href="Bibliography.php" target="page">Cor09</a>]. 
+interleaved evolution covered in [<a href="Bibliography.php#refCor10a" target="page">Cor10a</a>]. A framework to 
+handle rescattering is described in [<a href="Bibliography.php#refCor09" target="page">Cor09</a>]. 
  
 <p/> 
 A big unsolved issue is how the colour of all these subsystems is 
@@ -301,7 +301,7 @@ for MPIs (<code>MultipartonInteractions:pTmaxMatch</code>).
 It is possible that a parton may rescatter, i.e. undergo a further 
 interaction subsequent to the first one. The machinery to model this 
 kind of physics has only recently become fully operational 
-[<a href="Bibliography.php" target="page">Cor09</a>], and is therefore not yet so well explored. 
+[<a href="Bibliography.php#refCor09" target="page">Cor09</a>], and is therefore not yet so well explored. 
  
 <p/> 
 The rescattering framework has ties with other parts of the program, 

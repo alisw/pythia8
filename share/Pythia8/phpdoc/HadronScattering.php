@@ -132,6 +132,7 @@ The following paramters are used for both the above cases:
   scattering of two hadrons that are not part of the same string. 
    
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:neighbourNear &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)<br/>
   If scattering of hadrons within the same string is allowed this 
@@ -140,6 +141,7 @@ The following paramters are used for both the above cases:
   with this potential scattering partner is <code>minProbSS</code>. 
    
  
+<a name="anchor2"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:neighbourFar &nbsp;</strong> 
  (<code>default = <strong>4</strong></code>; <code>minimum = 2</code>; <code>maximum = 15</code>)<br/>
   If scattering of hadrons within the same string is allowed this 

@@ -35,7 +35,7 @@ jet finders</a>, <code>ClusterJet</code> for <i>e^+e^-</i> events
 and <code>SlowJet</code> and <code>CellJet</code>for hadron collider ones. 
 Especially the latter is not so well matched to the standards of its field, 
 however. (But it is closely related to the anti-<i>kT</i> algorithm, 
-so is also not completely disconnected [<a href="Bibliography.php" target="page">Cac08</a>].) 
+so is also not completely disconnected [<a href="Bibliography.php#refCac08" target="page">Cac08</a>].) 
  
 <p/> 
 <code>SlowJet</code> can do jet finding according to the current-day 
@@ -43,7 +43,7 @@ so is also not completely disconnected [<a href="Bibliography.php" target="page"
 It can be run in two modes. The original one is a native implementation 
 which, as the name indicates, is rather slow. However, with the release 
 of the <code>fjcore</code> code from <code>FastJet</code> 
-[<a href="Bibliography.php" target="page">Cac06, Cac12</a>], the default mode has become to use the 
+[<a href="Bibliography.php#refCac06" target="page">Cac06</a>, <a href="Bibliography.php#refCac12" target="page">Cac12</a>], the default mode has become to use the 
 <code>fjcore</code> methods. This is transparent to the user. 
  
 <h3>FastJet</h3> 

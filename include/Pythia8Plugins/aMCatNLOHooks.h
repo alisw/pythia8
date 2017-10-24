@@ -74,7 +74,8 @@ public:
               && workEvent[i].idAbs() > nQuarksMerge) ) ) {
           foundOutgoing = true;
           ostringstream proc;
-          proc << "{" << workEvent[i].name() << "," << workEvent[i].id() << "}";
+          proc << "{" << workEvent[i].name() << "," << workEvent[i].id()
+               << "}";
           processString += proc.str();
         }
       // Set the process string.

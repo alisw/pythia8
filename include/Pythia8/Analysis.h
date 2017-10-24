@@ -434,7 +434,8 @@ public:
   bool analyze(const Event& event) {
     if ( !setup(event) ) return false;
     if (useFJcore) return clusterFJ();
-    while (clSize > 0) doStep(); return true; }
+    while (clSize > 0) doStep();
+    return true; }
 
   // Set up list of particles to analyze, and initial distances.
   bool setup(const Event& event);
@@ -480,15 +481,15 @@ public:
   // Give a list of all particles in the jet.
   vector<int> constituents(int j) { vector<int> cTemp;
     for (set<int>::iterator idxTmp = jets[j].idx.begin();
-       idxTmp != jets[j].idx.end(); ++idxTmp)
-       cTemp.push_back( *idxTmp); return cTemp;
+      idxTmp != jets[j].idx.end(); ++idxTmp) cTemp.push_back( *idxTmp);
+    return cTemp;
   }
 
   // Give a list of all particles in the cluster.
   vector<int> clusConstituents(int j) { vector<int> cTemp;
     for (set<int>::iterator idxTmp = clusters[j].idx.begin();
-       idxTmp != clusters[j].idx.end(); ++idxTmp)
-       cTemp.push_back( *idxTmp); return cTemp;
+      idxTmp != clusters[j].idx.end(); ++idxTmp) cTemp.push_back( *idxTmp);
+    return cTemp;
   }
 
   // Give the index of the jet that the particle i of the event record

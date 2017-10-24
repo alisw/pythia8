@@ -25,16 +25,17 @@ The main switch on/off switch for rescattering is
 since all models are rather simplistic and have to be used 
 with some caution. Currently there are three different options available: 
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:mode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 The first two options are variations of the same model, whereas 
 option 2 respresents a different model. 
 <br/><code>option </code><strong> 0</strong> :  The new model, based on separation in rapidity 
-as described in [<a href="Bibliography.html" target="page">Fis16</a>]. 
+as described in [<a href="Bibliography.html#refFis16" target="page">Fis16</a>]. 
 Further options are found <a href="#HadScatNew1">here</a>. 
    
 <br/><code>option </code><strong> 1</strong> :  The new model, based on separation in rapidity 
-and azimuthal angle as described in [<a href="Bibliography.html" target="page">Fis16</a>]. Further options 
+and azimuthal angle as described in [<a href="Bibliography.html#refFis16" target="page">Fis16</a>]. Further options 
 are found  <a href="#HadScatNew2">here</a>. 
    
 <br/><code>option </code><strong> 2</strong> :  The old model. Further options are found 
@@ -57,6 +58,7 @@ Probe all hadron pairs with an invariant mass <i> m<sub>inv</sub> &lt;
 (m<sup>2</sup><sub>1</sub>+p<sup>2</sup><sub>Max</sub>)<sup>1/2</sup> + 
 (m<sup>2</sup><sub>2</sub>+p<sup>2</sup><sub>Max</sub>)<sup>1/2</sup></i> 
 with the parameter <i>p<sub>Max</sub></i> 
+<a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:pMax &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 1000000.0</code>)<br/>
    
@@ -66,6 +68,7 @@ different strings is <i>P<sub>DS</sub>(&#x394y) =
 P<sup>max</sup><sub>DS</sub>(1 - &#x394y/&#x394y<sup>max</sup>)</i> 
 with rapidity difference <i>&#x394y</i> of the hadron pair and the 
 parameters <i>&#x394y<sup>max</sup></i> 
+<a name="anchor3"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:yDiffMax &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.0</code>)<br/>
    
@@ -90,6 +93,7 @@ P<sup>max</sup><sub>DS</sub>(1 - ((&#x394y)<sup>2</sup>
 with rapidity difference <i>&#x394y</i> and difference in azimuth 
 <i>&#x394&#x3C6</i> of the hadron pair and the 
 parameters <i>R<sup>max</sup></i> 
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:Rmax &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.0</code>)<br/>
    
@@ -103,6 +107,7 @@ to the one before.
 <h4>Common Parameters</h4> 
  
 The following paramters are used for both the above cases: 
+<a name="anchor5"></a>
 <p/><code>flag&nbsp; </code><strong> HadronScatter:scatterSameString &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
   If switched on, strings within the same string are allowed to 
@@ -110,6 +115,7 @@ The following paramters are used for both the above cases:
   not produced on the same string are taken into account. 
    
  
+<a name="anchor6"></a>
 <p/><code>flag&nbsp; </code><strong> HadronScatter:scatterMultipleTimes &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
   If switched off, each hadron is only allowed to scatter at most once. 
@@ -118,12 +124,14 @@ The following paramters are used for both the above cases:
   with small <i>y</i> separation. 
    
  
+<a name="anchor7"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:maxProbDS &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
   The maximum probability <i>P<sup>max</sup><sub>DS</sub></i> for the 
   scattering of two hadrons that are not part of the same string. 
    
  
+<a name="anchor8"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:neighbourNear &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)<br/>
   If scattering of hadrons within the same string is allowed this 
@@ -132,6 +140,7 @@ The following paramters are used for both the above cases:
   with this potential scattering partner is <code>minProbSS</code>. 
    
  
+<a name="anchor9"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:neighbourFar &nbsp;</strong> 
  (<code>default = <strong>4</strong></code>; <code>minimum = 2</code>; <code>maximum = 15</code>)<br/>
   If scattering of hadrons within the same string is allowed this 
@@ -139,6 +148,7 @@ The following paramters are used for both the above cases:
   probability <code>maxProbSS</code> is applied. 
    
  
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:minProbSS &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
   The minimum probability <i>P<sup>min</sup><sub>SS</sub></i> for the 
@@ -147,6 +157,7 @@ The following paramters are used for both the above cases:
   <code>maxProbDS</code> factor also enters.) 
    
  
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:maxProbSS &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
   The maximum probability <i>P<sup>max</sup><sub>SS</sub></i> for the 
@@ -161,6 +172,7 @@ The following paramters are used for both the above cases:
 <br/><b>Warning:</b> This is still at an experimental level, 
 and should not be used unless you know what you are doing. 
  
+<a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> HadronScatter:afterDecay &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Perform hadron scattering before or after first round of decays, 
@@ -169,11 +181,13 @@ The default is to perform scattering directly after the
 string fragmentation, before any decays. 
    
  
+<a name="anchor13"></a>
 <p/><code>flag&nbsp; </code><strong> HadronScatter:allowDecayProd &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow two hadrons with same parent hadron to scatter. 
    
  
+<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> HadronScatter:scatterRepeat &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow hadrons which have already scattered to scatter again. 
@@ -183,6 +197,7 @@ other twice.
  
 <h4>Hadron selection</h4> 
  
+<a name="anchor15"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:hadronSelect &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 0</code>)<br/>
 Probability that a hadron is soft enough to scatter. 
@@ -197,14 +212,17 @@ used in <i>MultipartonInteractions</i>.
    
    
  
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:N &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.01</code>; <code>maximum = 1.0</code>)<br/>
 <i>N</i> parameter as above. 
    
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:k &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.01</code>; <code>maximum = 1.0</code>)<br/>
 <i>k</i> parameter as above. 
    
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:p &nbsp;</strong> 
  (<code>default = <strong>6</strong></code>; <code>minimum = 2</code>; <code>maximum = 30</code>)<br/>
 <i>p</i> parameter as above. 
@@ -212,6 +230,7 @@ used in <i>MultipartonInteractions</i>.
  
 <h4>Scattering probability</h4> 
  
+<a name="anchor19"></a>
 <p/><code>mode&nbsp; </code><strong> HadronScatter:scatterProb &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Probability for a pair of hadrons to scatter. 
@@ -229,15 +248,18 @@ from the partial-wave distributions.
    
    
  
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:j &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)<br/>
 <i>j</i> parameter as above. 
    
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> HadronScatter:rMax &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 <i>rMax</i> parameter as above. 
    
  
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> HadronScatter:tile &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Use tiling in <i>(eta, phi)</i> to reduce number of pairwise tests. 

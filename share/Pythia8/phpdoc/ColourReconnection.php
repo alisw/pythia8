@@ -60,7 +60,7 @@ Relative to the other models it tests fewer reconnection possibilities,
 and therefore tends to be reasonably fast. 
  
 <p/> 
-The new scheme [<a href="Bibliography.php" target="page">Chr14a</a>]relies on the full QCD colour configuration 
+The new scheme [<a href="Bibliography.php#refChr14a" target="page">Chr14a</a>]relies on the full QCD colour configuration 
 in the beam remnant. This is followed up by a colour reconnection, where the 
 potential string energy is minimized (ie. the <i>lambda</i> measure is 
 minimized). The QCD colour rules are also incorporated in the colour 
@@ -72,7 +72,7 @@ In addition to the two models described above, a simple model is implemented,
 wherein gluons can be moved from one location to another so as to reduce the 
 total string length. This is one out of a range of simple models developed 
 to study potential colour reconnection effects e.g. on top mass 
-[<a href="Bibliography.php" target="page">Arg14</a>], not from the point of view of having the most realistic 
+[<a href="Bibliography.php#refArg14" target="page">Arg14</a>], not from the point of view of having the most realistic 
 description, but in order to probe the potential worst-case spread of 
 predictions. All of these models are made available separately in 
 <code>include/Pythia8Plugins/ColourReconnectionHooks.h</code>, with the 
@@ -81,7 +81,7 @@ gluon-move one is sufficiently general and realistic that it has been
 included among the standard options here. 
  
 <p/> 
-Finally, the SK I and SK II models [<a href="Bibliography.php" target="page">Sjo94</a>] have a smaller range 
+Finally, the SK I and SK II models [<a href="Bibliography.php#refSjo94" target="page">Sjo94</a>] have a smaller range 
 of applicability, originally intended for <i>e^+ e^- &rarr; W^+ W^-</i>, 
 but in this context offers a more detailed approach. 
  
@@ -185,7 +185,7 @@ but are left behind.
  
 <p/> 
 The joining procedure can be viewed as a more sophisticated variant of 
-the one introduced already in [<a href="Bibliography.php" target="page">Sjo87</a>]. Clearly it is ad hoc. 
+the one introduced already in [<a href="Bibliography.php#refSjo87" target="page">Sjo87</a>]. Clearly it is ad hoc. 
 It hopefully captures some elements of truth. The lower <i>pT</i> scale 
 a system has the larger its spatial extent and therefore the larger its 
 overlap with other systems. It could be argued that one should classify 
@@ -257,7 +257,7 @@ need to retuned to account for the new CR. The default values below, together
 with changing <code> MultipartonInteractions:pT0Ref = 2.15</code> and 
 <code>ColourReconnection:allowDoubleJunRem = off</code>, provides a good 
 starting point. Additional fragmentation variables were also adjusted in the 
-first tune, but these provide a smaller change (see [<a href="Bibliography.php" target="page">Chr14a</a>] for a 
+first tune, but these provide a smaller change (see [<a href="Bibliography.php#refChr14a" target="page">Chr14a</a>] for a 
 complete list). 
  
  
@@ -440,7 +440,7 @@ Performing the flip step or not. Also possibility to omit the move step.
  
 <h3>The <i>e^+ e^-</i> colour reconnection schemes</h3> 
  
-The SK I and SK II models [<a href="Bibliography.php" target="page">Sjo94</a>] were specifically developed for 
+The SK I and SK II models [<a href="Bibliography.php#refSjo94" target="page">Sjo94</a>] were specifically developed for 
 <i>e^+ e^- &rarr; W^+ W^- &rarr; q_1 qbar_2 q_3 qbar_4</i> at LEP 2, 
 and equally well works for <i>e^+ e^- &rarr; gamma^*/Z^0 gamma^*/Z^0</i>. 
 They are not intended to handle hadronic collisions, except in special 

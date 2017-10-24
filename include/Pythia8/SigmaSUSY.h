@@ -512,10 +512,9 @@ public:
   Sigma2qg2squarkgluino(int id3In, int codeIn) {
 
     // Save ordering indices and process code
-    id3Sav = abs(id3In);
     codeSave = codeIn;
     // Initial values
-    id3    = id3Sav;
+    id3    = id3In;
     id4    = 1000021;
 
   }
@@ -536,14 +535,14 @@ public:
   virtual string name()    const {return nameSave;}
   virtual int    code()    const {return codeSave;}
   virtual string inFlux()  const {return "qg";}
-  virtual int    id3Mass() const {return abs(id3Sav);}
+  virtual int    id3Mass() const {return abs(id3);}
   virtual int    id4Mass() const {return 1000021;}
   virtual bool   isSUSY()  const {return true;}
 
 private:
 
   // Basic process information
-  int     id3Sav, codeSave;
+  int     codeSave;
   string  nameSave;
   double sigmaA, sigmaB, comFacHat, m2Glu, m2Sq, openFracPair;
 

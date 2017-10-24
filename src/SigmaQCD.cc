@@ -274,7 +274,11 @@ double Sigma2qq2qq::sigmaHat() {
   // Combine cross section terms; factor 1/2 when identical quarks.
   if      (id2 ==  id1) sigSum = 0.5 * (sigT + sigU + sigTU);
   else if (id2 == -id1) sigSum = sigT + sigST;
-  else                      sigSum = sigT;
+  else                  sigSum = sigT;
+
+  // Uncomment line below to obtain only q q' -> q q' scattering.
+  // (Useful for studies of well-defined colour flow.)
+  // if (id1 < 0 || id2 < 0 || id2 == id1) sigSum = 0.;
 
   // Answer.
   return (M_PI/sH2) * pow2(alpS) * sigSum;

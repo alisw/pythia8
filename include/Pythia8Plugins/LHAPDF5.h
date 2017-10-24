@@ -36,6 +36,14 @@ extern "C" {
 
   extern void setlhaparm_(const char*, int);
 
+  extern void getxminm_(int &, int &, double &);
+
+  extern void getxmaxm_(int &, int &, double &);
+
+  extern void getq2minm_(int &, int &, double &);
+
+  extern void getq2maxm_(int &, int &, double &);
+
 }
 
 //--------------------------------------------------------------------------
@@ -132,7 +140,7 @@ public:
 
   // Constructor.
   LHAPDF5(int idBeamIn, string setName, int member,  int nSetIn = -1,
-    Info* infoPtr = 0) : PDF(idBeamIn), nSet(nSetIn)
+    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false), nSet(nSetIn)
     { init(setName, member, infoPtr);
     isPhoton = (idBeamIn == 22) ? true : false; }
 
@@ -148,6 +156,7 @@ private:
   void xfUpdate(int , double x, double Q2);
 
   // Current set and pdf values.
+  bool   doExtraPol;
   int    nSet;
   double xfArray[13];
   bool   hasPhoton, isPhoton;
@@ -201,7 +210,8 @@ void LHAPDF5::init(string setName, int member, Info*) {
 
 void LHAPDF5::setExtrapolate(bool extrapol) {
 
-   LHAPDF5Interface::setPDFparm( (extrapol) ? "EXTRAPOLATE" : "18" );
+  doExtraPol = extrapol;
+  LHAPDF5Interface::setPDFparm( (extrapol) ? "EXTRAPOLATE" : "18" );
 
 }
 
@@ -211,7 +221,17 @@ void LHAPDF5::setExtrapolate(bool extrapol) {
 
 void LHAPDF5::xfUpdate(int, double x, double Q2) {
 
-  // Let LHAPDF5 do the evaluation of parton densities.
+  // Freeze at boundary value if PDF is evaluated outside the fit region.
+  int member = LHAPDF5Interface::initializedSets[nSet].member;
+  double xMin, xMax, q2Min, q2Max;
+  getxminm_( nSet, member, xMin);
+  getxmaxm_( nSet, member, xMax);
+  getq2minm_(nSet, member, q2Min);
+  getq2maxm_(nSet, member, q2Max);
+  if (x < xMin && !doExtraPol) x = xMin;
+  if (x > xMax)    x = xMax;
+  if (Q2 < q2Min) Q2 = q2Min;
+  if (Q2 > q2Max) Q2 = q2Max;
   double Q = sqrt( max( 0., Q2));
 
   // Use special call if photon included in proton.

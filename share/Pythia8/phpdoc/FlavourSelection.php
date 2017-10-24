@@ -34,7 +34,7 @@ in the fragmentation process, and the production of a new hadron
 from a set of input flavours. It is mainly used by the string 
 fragmentation machinery (including ministrings), but also e.g. 
 in some particle decays and for some beam-remnant cases. The basic 
-concepts are in agreement with [<a href="Bibliography.php" target="page">And83</a>]. An alternative 
+concepts are in agreement with [<a href="Bibliography.php#refAnd83" target="page">And83</a>]. An alternative 
 "thermal model" is described further below. 
  
 <p/> 
@@ -115,7 +115,7 @@ the relative production ratio vector/pseudoscalar for bottom mesons.
 <p/> 
 Inside each light-quark meson nonet, an octet-singlet mixing angle 
 describes the mixing of the two flavour-diagonal isoscalar = 0 states. 
-(For terminology and details see [<a href="Bibliography.php" target="page">Yao06</a>], chapter 14 on the 
+(For terminology and details see [<a href="Bibliography.php#refYao06" target="page">Yao06</a>], chapter 14 on the 
 quark model.) 
 This angle is needed to specify the probability for such a <i>q qbar</i> 
 state to project onto a specific meson. More transparent formulae are 
@@ -359,7 +359,7 @@ extra suppression for having a strange meson <i>M</i> in a
 <p/> 
 Finally, there are some indications that leading-baryon production 
 may be further suppressed. A proper description should probably be 
-based on a suppression of early production times [<a href="Bibliography.php" target="page">Ede97</a>], 
+based on a suppression of early production times [<a href="Bibliography.php#refEde97" target="page">Ede97</a>], 
 but we here only implement a simpler version where production near 
 the end of a string, as defined by rank, is suppressed. The more 
 detailed studies suggest that leading <i>c</i> and <i>b</i> baryon 
@@ -398,7 +398,7 @@ If the hadronic <i>pT</i> is generated according to the non-default
 thermal distribution, i.e. if <code>StringPT:thermalModel = on</code>, 
 the choice of a new flavour in the fragmentation process, and the 
 production of a new hadron from a set of input flavours, depends mainly on 
-the hadron mass [<a href="Bibliography.php" target="page">Fis16</a>]. For a given <i>pT</i> value the new 
+the hadron mass [<a href="Bibliography.php#refFis16" target="page">Fis16</a>]. For a given <i>pT</i> value the new 
 flavour is chosen according to 
 <br/><i> 
   exp( -mT_had/T) = exp( - sqrt( pT_had^2 + mT_had^2 )/T). 
@@ -443,6 +443,7 @@ hadrons goes linearly with the number of hadrons included. Therefore
 we recommend sticking to the default options as heavier hadrons are 
 produced less likely anyway. 
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> StringFlav:nQuark &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 3</code>; <code>maximum = 5</code>)<br/>
 Selects the newly produced quark flavours that may be included in hadrons. 

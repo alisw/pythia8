@@ -17,6 +17,7 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonSystems.h"
 #include "Pythia8/PythiaStdlib.h"
+#include "Pythia8/PartonVertex.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StandardModel.h"
 #include "Pythia8/UserHooks.h"
@@ -90,11 +91,13 @@ public:
   void initPtr(Info* infoPtrIn, Settings* settingsPtrIn,
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
     CoupSM* coupSMPtrIn, PartonSystems* partonSystemsPtrIn,
-    UserHooks* userHooksPtrIn, MergingHooks* mergingHooksPtrIn = 0) {
-    infoPtr = infoPtrIn; settingsPtr = settingsPtrIn;
-    particleDataPtr = particleDataPtrIn; rndmPtr = rndmPtrIn;
-    coupSMPtr = coupSMPtrIn; partonSystemsPtr = partonSystemsPtrIn;
-    userHooksPtr = userHooksPtrIn; mergingHooksPtr = mergingHooksPtrIn;}
+    UserHooks* userHooksPtrIn, MergingHooks* mergingHooksPtrIn,
+    PartonVertex* partonVertexPtrIn) { infoPtr = infoPtrIn;
+    settingsPtr = settingsPtrIn; particleDataPtr = particleDataPtrIn;
+    rndmPtr = rndmPtrIn; coupSMPtr = coupSMPtrIn;
+    partonSystemsPtr = partonSystemsPtrIn; userHooksPtr = userHooksPtrIn;
+    mergingHooksPtr = mergingHooksPtrIn; partonVertexPtr = partonVertexPtrIn;
+  }
 
   // Initialize alphaStrong and related pTmin parameters.
   virtual void init( BeamParticle* beamAPtrIn = 0,
@@ -145,8 +148,9 @@ public:
   bool initUncertainties();
 
   // Calculate uncertainty-band weights for accepted/rejected trial branching.
-  void calcUncertainties(bool accept, double pAccept,
-    TimeDipoleEnd* dip, Particle* radPtr, Particle* emtPtr);
+  void calcUncertainties(bool accept, double pAccept, double enhance,
+    double vp, TimeDipoleEnd* dip, Particle* radPtr, Particle* emtPtr,
+    Particle* recPtr);
 
   // Tell which system was the last processed one.
   virtual int system() const {return iSysSel;};
@@ -187,13 +191,21 @@ public:
 
   // Return a string identifier of a splitting.
   // Usage: getSplittingName( event, iRad, iEmt, iRec)
-  virtual string getSplittingName( const Event& , int , int , int )
-    { return "";}
+  virtual vector<string> getSplittingName( const Event& , int, int , int)
+    { return vector<string>();}
 
   // Return the splitting probability.
   // Usage: getSplittingProb( event, iRad, iEmt, iRec)
   virtual double getSplittingProb( const Event& , int , int , int , string )
     { return 0.;}
+
+  virtual bool allowedSplitting( const Event& , int , int)
+    { return true; }
+  virtual vector<int> getRecoilers( const Event&, int, int, string)
+    { return vector<int>(); }
+
+  // Pointer to MergingHooks object for NLO merging.
+  MergingHooks* mergingHooksPtr;
 
 protected:
 
@@ -223,6 +235,9 @@ protected:
   // Pointer to userHooks object for user interaction with program.
   UserHooks*     userHooksPtr;
 
+  // Pointer to assign space-time vertices during parton evolution.
+  PartonVertex*  partonVertexPtr;
+
   // Weak matrix elements used for corrections both of ISR and FSR.
   WeakShowerMEs  weakShowerMEs;
 
@@ -249,7 +264,8 @@ private:
          globalRecoil, useLocalRecoilNow, doSecondHard, hasUserHooks,
          singleWeakEmission, alphaSuseCMW, vetoWeakJets, allowMPIdipole,
          weakExternal, recoilDeadCone, doUncertainties, uVarMuSoftCorr,
-         uVarMPIshowers;
+         uVarMPIshowers, doDipoleRecoil, doPartonVertex, noResVariations,
+         noProcVariations;
   int    pTmaxMatch, pTdampMatch, alphaSorder, alphaSnfmax, nGluonToQuark,
          weightGluonToQuark, alphaEMorder, nGammaToQuark, nGammaToLepton,
          nCHV, idHV, alphaHVorder, nMaxGlobalRecoil, weakMode;
@@ -261,7 +277,8 @@ private:
          pTweakCut, pT2weakCut, mMaxGamma, m2MaxGamma, octetOniumFraction,
          octetOniumColFac, mZ, gammaZ, thetaWRat, mW, gammaW, CFHV, nFlavHV,
          alphaHVfix, LambdaHV, pThvCut, pT2hvCut, mHV, pTmaxFudgeMPI,
-         weakEnhancement, vetoWeakDeltaR2, dASmax, cNSpTmin;
+         weakEnhancement, vetoWeakDeltaR2, dASmax, cNSpTmin, uVarpTmin2,
+         overFactor;
 
   // alphaStrong and alphaEM calculations.
   AlphaStrong alphaS;
@@ -352,9 +369,6 @@ private:
   // Switch to constrain recoiling system.
   bool limitMUQ;
 
-  // Pointer to MergingHooks object for NLO merging.
-  MergingHooks* mergingHooksPtr;
-
   // 2 -> 2 information needed for the external weak setup.
   vector<Vec4> weakMomenta;
   vector<int> weak2to2lines;
@@ -364,6 +378,7 @@ private:
   int nUncertaintyVariations, nVarQCD, uVarNflavQ;
   map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varG2QQmuRfac, varX2XGmuRfac;
   map<int,double> varG2GGcNS, varQ2QGcNS, varG2QQcNS, varX2XGcNS;
+  map<int,double> varPDFplus, varPDFminus;
 
 };
 

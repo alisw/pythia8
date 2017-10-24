@@ -30,7 +30,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>RIVET usage</h2> 
  
 <a href="http://projects.hepforge.org/rivet/">RIVET</a> is a toolkit for 
-the validation of Monte Carlo event generators [<a href="Bibliography.php" target="page">Buc10</a>]. It 
+the validation of Monte Carlo event generators [<a href="Bibliography.php#refBuc10" target="page">Buc10</a>]. It 
 contains the results of many experimental analyses, so that generator 
 output can easily be compared to data, as well as providing a framework to 
 implement your own analyses.  Although using PYTHIA with RIVET is not 
@@ -91,6 +91,64 @@ pipe. This is done with the <code>mkfifo</code> command
   rivet --analysis=ANALYSIS_NAME my_fifo 
 </pre> 
 Note that <code>main42</code> is run in the background. 
+ 
+<h3> 
+Compiling PYTHIA with RIVET 
+</h3> 
+ 
+ 
+It is also possible to compile a PYTHIA main program together with the RIVET 
+library. To facilitate this, there is a header file called 
+<code>Pythia8Plugins/Pythia8Rivet.h</code> defining a helper class called 
+<code>Pythia8::Pythia8Rivet</code>. To use this class, a main program needs to 
+be modified as follows: 
+ 
+<pre> 
+  #include "Pythia8/Pythia.h" 
+ 
+  // Include the Pythia8Rivet header file. 
+  #include "Pythia8Plugins/Pythia8Rivet.h" 
+ 
+  int main() { 
+ 
+    Pythia pythia; 
+ 
+    // Setup the run by reading strings or a command file. 
+ 
+    pythia.init(); 
+ 
+    // Create a Pythia8Rivet object and add (one or several) analyses. 
+ 
+    Pythia8Rivet rivet(pythia, "outputfile.yoda"); 
+    rivet.addAnalysis("AnalysisName"); 
+    rivet.addAnalysis("AnotherAnalysisName"); 
+ 
+    for (int iEvent = 0; iEvent &lt; 100; ++iEvent) { 
+      if (!pythia.next()) continue; 
+ 
+      // Push event to Rivet. 
+      rivet(); 
+ 
+      // Maybe do other non-Rivet analysis. 
+    } 
+ 
+    // Tell Rivet to finalise the run. 
+    rivet.done(); 
+ 
+  } 
+</pre> 
+To compile the program, information about where Rivet and YODA are installed 
+is needed. Hence the compile flag 
+<code>-I/path/to/rivet/installation/include</code> is needed, as well as the 
+link flag <code>-L/path/to/rivet/installation/lib -lRivet 
+-lYODA</code>. (Further information about how to compile and link Rivet can be 
+found using the <code>rivet-config</code> script distributed with Rivet.) 
+ 
+<p/> 
+The example program <code>main111.cc</code> includes optional analysis with 
+<code>Pythia8::Pythia8Rivet</code>. To use it, compile the program with the 
+flags above and add <code>-DUSE_PYTHIA8_RIVET</code>. 
+ 
  
 </body>
 </html>

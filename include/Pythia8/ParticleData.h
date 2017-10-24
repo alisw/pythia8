@@ -247,7 +247,8 @@ public:
   bool   doForceWidth()           const { return doForceWidthSave; }
   bool   hasChanged()     const { if (hasChangedSave) return true;
          for (int i = 0; i < int(channels.size()); ++i)
-         if (channels[i].hasChanged()) return true; return false;}
+           if (channels[i].hasChanged()) return true;
+         return false;}
 
   // Set and give back several mass-related quantities.
   void   initBWmass();
@@ -432,6 +433,15 @@ public:
   void list(int idList) {vector<int> idListTemp;
     idListTemp.push_back(idList); list( idListTemp);}
   void list(vector<int> idList);
+
+  // Retrieve readString history (e.g., for inspection). Everything
+  // (subrun=-999), up to first subrun (=-1), or subrun-specific (>=0).
+  vector<string> getReadHistory(int subrun=-999) {
+    if (subrun == -999) return readStringHistory;
+    else if (readStringSubrun.find(subrun) != readStringSubrun.end())
+      return readStringSubrun[subrun];
+    else return vector<string>();
+  }
 
   // Check that table makes sense, especially for decays.
   void checkTable(int verbosity = 1) ;
@@ -662,6 +672,10 @@ private:
 
   // Vector of strings containing the readable lines of the XML file.
   vector<string> xmlFileSav;
+
+  // Stored history of readString statements (common and by subrun).
+  vector<string> readStringHistory;
+  map<int, vector<string> > readStringSubrun;
 
 };
 

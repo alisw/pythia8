@@ -30,15 +30,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <h2>Timelike Showers</h2> 
  
 The PYTHIA algorithm for timelike final-state showers is based on 
-the article [<a href="Bibliography.php" target="page">Sjo05</a>], where a transverse-momentum-ordered 
+the article [<a href="Bibliography.php#refSjo05" target="page">Sjo05</a>], where a transverse-momentum-ordered 
 evolution scheme is introduced, with the extension to fully interleaved 
-evolution covered in [<a href="Bibliography.php" target="page">Cor10a</a>]. This algorithm is influenced by 
-the previous mass-ordered algorithm in PYTHIA [<a href="Bibliography.php" target="page">Ben87</a>] and by 
-the dipole-emission formulation in Ariadne [<a href="Bibliography.php" target="page">Gus86</a>]. From the 
+evolution covered in [<a href="Bibliography.php#refCor10a" target="page">Cor10a</a>]. This algorithm is influenced by 
+the previous mass-ordered algorithm in PYTHIA [<a href="Bibliography.php#refBen87" target="page">Ben87</a>] and by 
+the dipole-emission formulation in Ariadne [<a href="Bibliography.php#refGus86" target="page">Gus86</a>]. From the 
 mass-ordered algorithm it inherits a merging procedure for first-order 
 gluon-emission matrix elements in essentially all two-body decays 
 in the standard model and its minimal supersymmetric extension 
-[<a href="Bibliography.php" target="page">Nor01</a>]. 
+[<a href="Bibliography.php#refNor01" target="page">Nor01</a>]. 
  
 <p/> 
 The normal user is not expected to call <code>TimeShower</code> directly, 
@@ -397,8 +397,8 @@ pattern is unrelated to colour correlations. This is especially
 convenient for some matching algorithms, like MC@NLO, where a full 
 analytic knowledge of the shower radiation pattern is needed to avoid 
 double-counting. (The <i>pT</i>-ordered shower is described in 
-[<a href="Bibliography.php" target="page">Sjo05</a>], and the corrections for massive radiator and recoiler 
-in [<a href="Bibliography.php" target="page">Nor01</a>].) 
+[<a href="Bibliography.php#refSjo05" target="page">Sjo05</a>], and the corrections for massive radiator and recoiler 
+in [<a href="Bibliography.php#refNor01" target="page">Nor01</a>].) 
  
 <p/> 
 Technically, the radiation pattern is most conveniently represented 
@@ -759,7 +759,9 @@ for massive radiators and recoilers. Only has a meaning if
 Use of matrix element corrections also after the first emission, 
 for dipole ends of the same system that did not yet radiate. 
 Only has a meaning if <code>MEcorrections</code> above is 
-switched on. 
+switched on. Switching off this option currently does not take effect 
+for a few rare types of secondary branchings, where ME corrections 
+play a central role. 
    
  
 <br/><br/><strong>TimeShower:phiPolAsym</strong>  <input type="radio" name="45" value="on" checked="checked"><strong>On</strong>

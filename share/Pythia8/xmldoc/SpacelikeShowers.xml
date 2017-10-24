@@ -8,7 +8,7 @@ transverse-momentum-ordered backwards evolution scheme is introduced,
 with the extension to fully interleaved evolution covered in 
 <ref>Cor10a</ref>. 
 This algorithm is a further development of the virtuality-ordered one 
-presented in <ref>Sj085</ref>, with matching to first-order matrix 
+presented in <ref>Sjo85</ref>, with matching to first-order matrix 
 element for <ei>Z^0</ei>, <ei>W^+-</ei> and Higgs (in the 
 <ei>m_t &rarr; infinity</ei> limit) production as introduced in 
 <ref>Miu99</ref>. 
@@ -323,6 +323,49 @@ scattering systems from MPIs are forced to be ordered in rapidity.
 Each MPI is ordered separately from the others. 
 </flag> 
  
+<h3>Dipole showers</h3> 
+ 
+By default the recoil of an ISR emission is taken by the whole final 
+state. The option below gives an alternative approach with local recoils, 
+where only one final-state parton takes the recoil of an emission. 
+See <ref>Cab17</ref> for further details on the philosophy and 
+implementation. 
+ 
+<p/> 
+The existing initial-initial global recoil scheme is maintained for 
+an emission off a colour line that stretches through the hard process, 
+so it is the handling of initial-final dipole ends that is changed. 
+Here the single recoiler is picked based on the colour flow of the 
+hard process. Additionally the description unifies the emission of 
+a gluon from the initial-final and final-initial dipole ends, and 
+handles both as part of the ISR framework. Therefore the separation 
+into ISR and FSR is not a meaningful classification, and either both 
+should be simulated or none. 
+ 
+<p/> 
+Note that this option should not be combined with the global option 
+for FSR, <code>TimeShower:globalRecoil</code>. Furthermore some settings 
+are neglected internally to ensure the same behaviour as obtained for 
+<code>TimeShower:allowBeamRecoil = on</code>, 
+<code>TimeShower:dampenBeamRecoil = off</code>, and 
+<code>SpaceShower:phiIntAsym = off</code>. 
+ 
+<p/> 
+The dipole recoil option for the first time allows the simulation 
+of Deeply Inelastic Scattering processes in PYTHIA 8, see the 
+<code>main36.cc</code> example. Note that the simultaneous emission of 
+photons off the lepton leg has not yet been implemented, so you need to 
+set <code>PDF:lepton = off</code> and 
+<code>TimeShower:QEDshowerByL = off</code>. You are further recommended 
+to set <code>SpaceShower:pTmaxMatch = 2</code> to fill the whole phase 
+space with parton showers. This is allowed since the shower and 
+matrix-element behaviours match well over the whole phase space 
+(at least for the first emission). 
+ 
+<flag name="SpaceShower:dipoleRecoil" default="off"> 
+Option to switch on the dipole-recoil scheme as described above. 
+</flag> 
+ 
 <h3>Weak showers</h3> 
  
 The emission of weak gauge bosons is an integrated part of the initial- 
@@ -420,8 +463,8 @@ evaluation of parton densities if the <code>flag</code> above is on.
  
 <h3>Technical notes</h3> 
  
-Almost everything is equivalent to the algorithm in [1]. Minor changes 
-are as follows. 
+Almost everything is equivalent to the algorithm in 
+<ref>Sjo05,Cor10a</ref>. Minor changes are as follows. 
 <ul> 
 <li> 
 It is now possible to have a second-order running <ei>alpha_s</ei>, 

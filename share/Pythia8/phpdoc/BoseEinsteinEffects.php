@@ -32,7 +32,7 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 The <code>BoseEinstein</code> class performs shifts of momenta 
 of identical particles to provide a crude estimate of 
 Bose-Einstein effects. The algorithm is the BE_32 one described in 
-[<a href="Bibliography.php" target="page">Lon95</a>], with a Gaussian parametrization of the enhancement. 
+[<a href="Bibliography.php#refLon95" target="page">Lon95</a>], with a Gaussian parametrization of the enhancement. 
 We emphasize that this approach is not based on any first-principles 
 quantum mechanical description of interference phenomena; such 
 approaches anyway have many problems to contend with. Instead a cruder 
@@ -68,7 +68,7 @@ The end result can be viewed as a poor man's rendering of a rapidly
 dampened oscillatory behaviour in <i>Q</i>. 
  
 <p/> 
-Further details can be found in [<a href="Bibliography.php" target="page">Lon95</a>]. For instance, the 
+Further details can be found in [<a href="Bibliography.php#refLon95" target="page">Lon95</a>]. For instance, the 
 target is implemented under the assumption that the initial distribution 
 in <i>Q</i> can be well approximated by pure phase space at small 
 values, and implicitly generates higher-order effects by the way 

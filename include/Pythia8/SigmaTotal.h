@@ -66,7 +66,7 @@ public:
   double mMinXB()  const {return mMinXBsave;}
   double mMinAX()  const {return mMinAXsave;}
   double mMinAXB() const {return mMinAXBsave;}
-  double cRes()    const {return CRES;}
+  double cRes()    const {return cResSv;}
   double mResXB()  const {return mResXBsave;}
   double mResAX()  const {return mResAXsave;}
   double sProton() const {return SPROTON;}
@@ -84,8 +84,8 @@ private:
   // Constants: could only be changed in the code itself.
   static const int    IHADATABLE[], IHADBTABLE[], ISDTABLE[], IDDTABLE[];
   static const double MMIN, EPSILON, ETA, X[], Y[], BETA0[], BHAD[],
-                      ALPHAPRIME, CONVERTEL, CONVERTSD, CONVERTDD, MMIN0,
-                      CRES, MRES0, CSD[10][8], CDD[10][9], SPROTON;
+                      ALPHAPRIME, CONVERTEL, CONVERTSD, CONVERTDD,
+                      CSD[10][8], CDD[10][9], SPROTON;
 
   // Integration of MBR cross sections and form factor approximation.
   static const int    NINTEG, NINTEG2;
@@ -95,7 +95,8 @@ private:
   bool   isCalc, setTotal, zeroAXB, doDampen, setElastic;
   double sigAXB2TeV, sigTotOwn, sigElOwn, sigXBOwn, sigAXOwn, sigXXOwn,
          sigAXBOwn, maxXBOwn, maxAXOwn, maxXXOwn, maxAXBOwn, bSlope, rho,
-         lambda, tAbsMin, alphaEM0, sigmaPomP, mPomP, pPomP, fracSigmaNDgamma;
+         lambda, tAbsMin, alphaEM0, sigmaPomP, mPomP, pPomP, fracSigmaNDgamma,
+         mMin0, cResSv, mRes0;
 
   // Parameters of MBR model.
   double MBReps, MBRalpha, MBRbeta0, MBRsigma0, m2min, dyminSDflux,

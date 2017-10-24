@@ -16,6 +16,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PartonVertex.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StandardModel.h"
@@ -38,33 +39,37 @@ public:
   SpaceDipoleEnd( int systemIn = 0, int sideIn = 0, int iRadiatorIn = 0,
     int iRecoilerIn = 0, double pTmaxIn = 0., int colTypeIn = 0,
     int chgTypeIn = 0, int weakTypeIn = 0,  int MEtypeIn = 0,
-    bool normalRecoilIn = true, int weakPolIn = 0) :
+    bool normalRecoilIn = true, int weakPolIn = 0,
+    int iColPartnerIn = 0, int idColPartnerIn = 0) :
     system(systemIn), side(sideIn), iRadiator(iRadiatorIn),
     iRecoiler(iRecoilerIn), pTmax(pTmaxIn), colType(colTypeIn),
     chgType(chgTypeIn), weakType(weakTypeIn), MEtype(MEtypeIn),
-    normalRecoil(normalRecoilIn), weakPol(weakPolIn), nBranch(0),
-    pT2Old(0.), zOld(0.5) { }
+    normalRecoil(normalRecoilIn), weakPol(weakPolIn),
+    iColPartner(iColPartnerIn), idColPartner(idColPartnerIn),
+    nBranch(0), pT2Old(0.), zOld(0.5) { }
 
   // Store values for trial emission.
   void store( int idDaughterIn, int idMotherIn, int idSisterIn,
     double x1In, double x2In, double m2DipIn, double pT2In, double zIn,
     double xMoIn, double Q2In, double mSisterIn, double m2SisterIn,
-    double pT2corrIn) {idDaughter = idDaughterIn; idMother = idMotherIn;
+    double pT2corrIn, int iColPartnerIn, double m2IFIn, double mColPartnerIn)
+    {idDaughter = idDaughterIn; idMother = idMotherIn;
     idSister = idSisterIn; x1 = x1In; x2 = x2In; m2Dip = m2DipIn;
     pT2 = pT2In; z = zIn; xMo = xMoIn; Q2 = Q2In; mSister = mSisterIn;
-    m2Sister = m2SisterIn; pT2corr = pT2corrIn;}
+    m2Sister = m2SisterIn; pT2corr = pT2corrIn; iColPartner = iColPartnerIn;
+    m2IF = m2IFIn; mColPartner = mColPartnerIn;}
 
   // Basic properties related to evolution and matrix element corrections.
   int    system, side, iRadiator, iRecoiler;
   double pTmax;
   int    colType, chgType, weakType, MEtype;
   bool   normalRecoil;
-  int    weakPol;
+  int    weakPol, iColPartner, idColPartner;
 
   // Properties specific to current trial emission.
   int    nBranch, idDaughter, idMother, idSister, iFinPol;
   double x1, x2, m2Dip, pT2, z, xMo, Q2, mSister, m2Sister, pT2corr,
-         pT2Old, zOld, asymPol;
+         pT2Old, zOld, asymPol, m2IF, mColPartner;
 
   // Properties needed for the evaluation of parameter variations
   double pAccept;
@@ -90,11 +95,12 @@ public:
   void initPtr(Info* infoPtrIn, Settings* settingsPtrIn,
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, CoupSM* coupSMPtrIn,
     PartonSystems* partonSystemsPtrIn, UserHooks* userHooksPtrIn,
-    MergingHooks* mergingHooksPtrIn = 0) {
+    MergingHooks* mergingHooksPtrIn, PartonVertex* partonVertexPtrIn) {
     infoPtr = infoPtrIn; settingsPtr = settingsPtrIn;
     particleDataPtr = particleDataPtrIn; rndmPtr = rndmPtrIn;
     coupSMPtr = coupSMPtrIn; partonSystemsPtr = partonSystemsPtrIn;
-    userHooksPtr = userHooksPtrIn; mergingHooksPtr = mergingHooksPtrIn;}
+    userHooksPtr = userHooksPtrIn; mergingHooksPtr = mergingHooksPtrIn;
+    partonVertexPtr = partonVertexPtrIn; }
 
   // Initialize generation. Possibility to force re-initialization by hand.
   virtual void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn);
@@ -130,7 +136,8 @@ public:
 
   // Calculate uncertainty-band weights for accepted/rejected trial branching.
   void calcUncertainties(bool accept, double pAcceptIn, double pT20in,
-    SpaceDipoleEnd* dip, Particle* motherPtr, Particle* sisterPtr);
+    double enhance, double vp, SpaceDipoleEnd* dip, Particle* motherPtr,
+    Particle* sisterPtr);
 
   // Tell if latest scattering was a gamma->qqbar.
   bool wasGamma2qqbar() { return gamma2qqbar; }
@@ -177,13 +184,21 @@ public:
 
   // Return a string identifier of a splitting.
   // Usage: getSplittingName( event, iRad, iEmt, iRec)
-  virtual string getSplittingName( const Event& , int , int , int )
-    { return "";}
+  virtual vector<string> getSplittingName( const Event& , int , int , int )
+    { return vector<string>();}
 
   // Return the splitting probability.
   // Usage: getSplittingProb( event, iRad, iEmt, iRec)
   virtual double getSplittingProb( const Event& , int , int , int , string )
     { return 0.;}
+
+  virtual bool allowedSplitting( const Event& , int , int)
+    { return true;}
+  virtual vector<int> getRecoilers( const Event&, int, int, string)
+    { return vector<int>(); }
+
+  // Pointer to MergingHooks object for NLO merging.
+  MergingHooks* mergingHooksPtr;
 
 protected:
 
@@ -213,6 +228,9 @@ protected:
   // Pointer to userHooks object for user interaction with program.
   UserHooks*     userHooksPtr;
 
+  // Pointer to assign space-time vertices during parton evolution.
+  PartonVertex*  partonVertexPtr;
+
   // Weak matrix elements used for corrections both of ISR and FSR.
   WeakShowerMEs  weakShowerMEs;
 
@@ -237,7 +255,8 @@ private:
          doPhiPolAsymHard, doPhiIntAsym, doRapidityOrder, useFixedFacScale,
          doSecondHard, canVetoEmission, hasUserHooks, alphaSuseCMW,
          singleWeakEmission, vetoWeakJets, weakExternal, doRapidityOrderMPI,
-         doUncertainties, uVarMuSoftCorr, uVarMPIshowers, doMPI, gamma2qqbar;
+         doUncertainties, uVarMuSoftCorr, uVarMPIshowers, doMPI, gamma2qqbar,
+         doDipoleRecoil, doPartonVertex;
   int    pTmaxMatch, pTdampMatch, alphaSorder, alphaSnfmax, alphaEMorder,
          nQuarkIn, enhanceScreening, weakMode;
   double pTdampFudge, mc, mb, m2c, m2b, renormMultFac, factorMultFac,
@@ -246,7 +265,7 @@ private:
          ecmRef, ecmPow, pTmin, sCM, eCM, pT0, pTminChgQ, pTminChgL, pT20,
          pT2min, pT2minChgQ, pT2minChgL, pTweakCut, pT2weakCut, pTmaxFudgeMPI,
          strengthIntAsym, weakEnhancement, mZ, gammaZ, thetaWRat, mW, gammaW,
-         weakMaxWt, vetoWeakDeltaR2, dASmax, cNSpTmin;
+         weakMaxWt, vetoWeakDeltaR2, dASmax, cNSpTmin, uVarpTmin2, overFactor;
 
   // alphaStrong and alphaEM calculations.
   AlphaStrong alphaS;
@@ -256,7 +275,8 @@ private:
   bool   sideA, dopTlimit1, dopTlimit2, dopTdamp, hasWeaklyRadiated, tChannel,
          doUncertaintiesNow;
   int    iNow, iRec, idDaughter, nRad, idResFirst, idResSecond;
-  double xDaughter, x1Now, x2Now, m2Dip, m2Rec, pT2damp, pTbegRef, pdfScale2;
+  double xDaughter, x1Now, x2Now, m2ColPair, mColPartner, m2ColPartner,
+         m2Dip, m2Rec, pT2damp, pTbegRef, pdfScale2;
 
   // Bookkeeping of enhanced  actual or trial emissions (see EPJC (2013) 73).
   bool doTrialNow, canEnhanceEmission, canEnhanceTrial, canEnhanceET;
@@ -286,7 +306,7 @@ private:
   // Evolve a QCD and QED dipole end near heavy quark threshold region.
   void pT2nearThreshold( BeamParticle& beam, double m2Massive,
     double m2Threshold, double xMaxAbs, double zMinAbs,
-    double zMaxMassive);
+    double zMaxMassive, int iColPartner);
 
   // Evolve a QED dipole end.
   void pT2nextQED( double pT2begDip, double pT2endDip);
@@ -312,14 +332,15 @@ private:
   // Find coefficient of azimuthal asymmetry from gluon polarization.
   void findAsymPol( Event& event, SpaceDipoleEnd* dip);
 
-  // Pointer to MergingHooks object for NLO merging.
-  MergingHooks* mergingHooksPtr;
-
   // Store uncertainty variations relevant to TimeShower.
   int nUncertaintyVariations, nVarQCD, uVarNflavQ;
   map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varQ2GQmuRfac, varG2QQmuRfac,
     varX2XGmuRfac;
   map<int,double> varG2GGcNS, varQ2QGcNS, varQ2GQcNS, varG2QQcNS, varX2XGcNS;
+  map<int,double> varPDFplus, varPDFminus;
+
+  // Find a possible colour partner in the case of dipole recoil.
+  int findColPartner(Event& event, int iSideA, int iSideB, int iSystem);
 
 };
 

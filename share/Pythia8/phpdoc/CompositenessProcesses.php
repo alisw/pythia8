@@ -44,10 +44,10 @@ a non-trivial angular dependence is included in the decay, however,
 only decays into gauge bosons are supported, i.e. not decays through 
 contact interactions. In additions to the compositeness scale and couplings 
 listed below, you are expected to change the excited-fermion masses in 
-accordance with what is desired. See [<a href="Bibliography.php" target="page">Bau90</a>] for conventions. 
+accordance with what is desired. See [<a href="Bibliography.php#refBau90" target="page">Bau90</a>] for conventions. 
  
 <p/> 
-The contact interactions are implemented according to [<a href="Bibliography.php" target="page">Eic83</a>]. 
+The contact interactions are implemented according to [<a href="Bibliography.php#refEic83" target="page">Eic83</a>]. 
 The processes include the SM contributions as well as interference. 
 For this reason the processes below converge toward the SM equivalents 
 when the contact interaction contributions are close to zero, e.g. 

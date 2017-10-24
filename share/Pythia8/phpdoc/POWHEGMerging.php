@@ -29,9 +29,9 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
  
 <h2>POWHEG Merging</h2> 
  
-POWHEG [<a href="Bibliography.php" target="page">Nas04</a>] in its character is very much like a parton shower, 
+POWHEG [<a href="Bibliography.php#refNas04" target="page">Nas04</a>] in its character is very much like a parton shower, 
 with a Sudakov factor arising from the ordering of emissions. Both 
-POWHEG-BOX [<a href="Bibliography.php" target="page">Ali10</a>] and PYTHIA are based on a combined evolution 
+POWHEG-BOX [<a href="Bibliography.php#refAli10" target="page">Ali10</a>] and PYTHIA are based on a combined evolution 
 of ISR and FSR in <i>pT</i>-related "hardness" variables, and thus are 
 kindred spirits. The hardness definitions differ, however. Frequently we 
 will therefore need to distinguish between POWHEG-hardness and 
@@ -70,7 +70,7 @@ ordering, and use the POWHEG-hardness to veto those emissions that POWHEG
 should already have covered. This is only possible since the 
 POWHEG-hardness criterion and the shower ordering criterion are very 
 similar. In the more general case a truncated showering would be needed 
-[<a href="Bibliography.php" target="page">Nas04</a>]. 
+[<a href="Bibliography.php#refNas04" target="page">Nas04</a>]. 
  
 <p/> 
 For vetoed showering, it is necessary to define the POWHEG-hardness 
@@ -145,7 +145,7 @@ Les Houches Events, and we recommend using this value by setting
 As a variation, in order to estimate the uncertainty due this choice of 
 POWHEG-hardness definition, it can be useful to also check 
 <code>POWHEG:pThard = 2</code>. This will recalculate the POWHEG-hardness 
-value as promoted in [<a href="Bibliography.php" target="page">Ole12</a>]. 
+value as promoted in [<a href="Bibliography.php#refOle12" target="page">Ole12</a>]. 
  
 <p/> 
 You need to decide how many emissions the vetoed shower should 

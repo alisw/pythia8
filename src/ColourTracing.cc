@@ -93,7 +93,7 @@ bool ColourTracing::traceFromAcol(int indxCol, Event& event, int iJun,
     for (int iAntiJun = 0; iAntiJun < event.sizeJunction(); ++iAntiJun)
       if (iAntiJun != iJun && event.kindJunction(iAntiJun) % 2 == 0)
         for (int iColAnti = 0; iColAnti < 3; ++iColAnti)
-          if (event.colJunction(iAntiJun, iColAnti) == indxCol) {
+          if (event.endColJunction(iAntiJun, iColAnti) == indxCol) {
             iParton.push_back( -(10 + 10 * iAntiJun + iColAnti) );
             indxCol = 0;
             hasFound = true;
@@ -102,8 +102,8 @@ bool ColourTracing::traceFromAcol(int indxCol, Event& event, int iJun,
 
     // In a pinch, check list of opposite-sign junction end colours.
     // Store in iParton list as -(10 + 10 * iAntiJun + iLeg).
-    // This is for J-g-...-g-J connections; where instead of running both ways,
-    // the second time we just store the two junctions.
+    // This is for =J-g-...-g-J= connections; where instead of running both
+    // ways, the second time we just store the two junctions.
     if (!hasFound && kindJun % 2 == 1 && event.sizeJunction() > 1)
     for (int iAntiJun = 0; iAntiJun < event.sizeJunction(); ++iAntiJun)
       if (iAntiJun != iJun && event.kindJunction(iAntiJun) % 2 == 0)
@@ -192,7 +192,7 @@ bool ColourTracing::traceFromCol(int indxCol, Event& event, int iJun,
       for (int iAntiJun = 0; iAntiJun < event.sizeJunction(); ++iAntiJun)
         if (iAntiJun != iJun && event.kindJunction(iAntiJun) %2 == 1)
           for (int iColAnti = 0; iColAnti < 3; ++iColAnti)
-            if (event.colJunction(iAntiJun, iColAnti) == indxCol) {
+            if (event.endColJunction(iAntiJun, iColAnti) == indxCol) {
               iParton.push_back( -(10 + 10 * iAntiJun + iColAnti) );
               indxCol = 0;
               hasFound = true;

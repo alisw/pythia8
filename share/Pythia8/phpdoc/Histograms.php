@@ -157,12 +157,12 @@ can be an integer.
  
 We here collect a more complete and formal overview of the methods. 
  
-<a name="method1"></a>
+<a name="anchor1"></a>
 <p/><strong>Hist::Hist() &nbsp;</strong> <br/>
 declare a histogram, but does not define it. 
    
  
-<a name="method2"></a>
+<a name="anchor2"></a>
 <p/><strong>Hist::Hist(string title, int numberOfBins, double xMin, double xMax) &nbsp;</strong> <br/>
 declare and define a histogram, where 
 <br/><code>argument</code><strong> title </strong>  :  
@@ -180,42 +180,42 @@ is the upper edge of the histogram.
    
    
  
-<a name="method3"></a>
+<a name="anchor3"></a>
 <p/><strong>Hist::Hist(const Hist&amp; h) &nbsp;</strong> <br/>
 creates an identical copy of the histogram in the argument, 
 including bin contents. 
    
  
-<a name="method4"></a>
+<a name="anchor4"></a>
 <p/><strong>Hist::Hist(string title, const Hist&amp; h) &nbsp;</strong> <br/>
 creates an identical copy of the histogram in the argument, 
 including bin contents, except that a new title is provided 
 as first argument. 
    
  
-<a name="method5"></a>
+<a name="anchor5"></a>
 <p/><strong>Hist&amp; Hist::operator=(const Hist&amp; h) &nbsp;</strong> <br/>
 copies all properties of the histogram in the argument, 
 except that the original histogram title is retained. 
    
  
-<a name="method6"></a>
+<a name="anchor6"></a>
 <p/><strong>void Hist::book(string title, int numberOfBins, double xMin, double xMax) &nbsp;</strong> <br/>
 define a histogram that previously was only declared; 
 see above for the meaning of the arguments. 
    
  
-<a name="method7"></a>
+<a name="anchor7"></a>
 <p/><strong>void Hist::title(string title) &nbsp;</strong> <br/>
 change the title of a histogram, but keep other properties unchanged. 
    
  
-<a name="method8"></a>
+<a name="anchor8"></a>
 <p/><strong>void Hist::null() &nbsp;</strong> <br/>
 reset bin contents, but keep other histogram properties unchanged. 
    
  
-<a name="method9"></a>
+<a name="anchor9"></a>
 <p/><strong>void Hist::fill(double xValue, double weight) &nbsp;</strong> <br/>
 fill the histogram, where 
 <br/><code>argument</code><strong> xValue </strong>  :  
@@ -226,7 +226,7 @@ is the amount of weight to be added at this <i>x</i> value.
    
    
  
-<a name="method10"></a>
+<a name="anchor10"></a>
 <p/><strong>friend ostream& operator&lt;&lt;(ostream&amp; os, const Hist&amp; h) &nbsp;</strong> <br/>
 appends a simple histogram printout (see above for format) to the 
 <code>ostream</code>, while leaving the histogram object itself 
@@ -237,9 +237,10 @@ up to 200 bins, three by three up to 300, and so on, with the very
 last column possibly summing fewer rows than the others.) 
    
  
-<a name="method11"></a>
+<a name="anchor11"></a>
 <p/><strong>void Hist::table(ostream&amp; os = cout, bool printOverUnder = false, bool xMidBin = true) &nbsp;</strong> <br/>
    
+<a name="anchor12"></a>
 <strong>void Hist::table(string fileName, bool printOverUnder = false, bool xMidBin = true) &nbsp;</strong> <br/>
 print a two-column table, where the first column gives the center of 
 each bin and the second one the corresponding bin contents. The table 
@@ -257,9 +258,10 @@ just below or above the regular histogram bins.)
 default midpoint value. 
    
  
-<a name="method12"></a>
+<a name="anchor13"></a>
 <p/><strong>void Hist::rivetTable(ostream&amp; os = cout, bool printError = false) &nbsp;</strong> <br/>
    
+<a name="anchor14"></a>
 <strong>void Hist::rivetTable(string fileName, bool printError = false) &nbsp;</strong> <br/>
 print a five-column table, where the first two columns give the lower 
 and upper borders of each bin, the third one the bin contents, and the 
@@ -275,9 +277,10 @@ square root of the bin content, as is relevant if this content has
 the same unit weight for each entry to it. 
    
  
-<a name="method13"></a>
+<a name="anchor15"></a>
 <p/><strong>friend void table(const Hist&amp; h1, const Hist&amp; h2, ostream& os = cout, bool printOverUnder = false, bool xMidBin = true) &nbsp;</strong> <br/>
    
+<a name="anchor16"></a>
 <strong>friend void table(const Hist&amp; h1, const Hist&amp; h2, string fileName, bool printOverUnder = false, bool xMidBin = true) &nbsp;</strong> <br/>
 print a three-column table, where the first column gives the center of 
 each bin and the second and third ones the corresponding bin contents 
@@ -288,31 +291,31 @@ contents to be printed, and the <i>x</i> to refer to the beginning
 of the bin rather than the center; see above. 
    
  
-<a name="method14"></a>
+<a name="anchor17"></a>
 <p/><strong>string Hist::getTitle() &nbsp;</strong> <br/>
 return the title of the histogram. 
    
  
-<a name="method15"></a>
+<a name="anchor18"></a>
 <p/><strong>double Hist::getBinContent(int iBin) &nbsp;</strong> <br/>
 return the value in bin <code>iBin</code>, ranging from 1 through 
 <code>numberOfBins</code>, with <code>0</code> for underflow and 
 <code>numberOfBins + 1</code> for overflow. 
    
  
-<a name="method16"></a>
+<a name="anchor19"></a>
 <p/><strong>int Hist::getEntries() &nbsp;</strong> <br/>
 return the number of entries, i.e. the number of time that 
 <code>fill(...)</code> has been called. 
    
  
-<a name="method17"></a>
+<a name="anchor20"></a>
 <p/><strong>bool Hist::sameSize(const Hist&amp; h) &nbsp;</strong> <br/>
 checks that the number of bins and upper and lower limits are the 
 same as in the histogram in the argument. 
    
  
-<a name="method18"></a>
+<a name="anchor21"></a>
 <p/><strong>void Hist::takeLog(bool tenLog = true) &nbsp;</strong> <br/>
 by default take 10-logarithm of current contents bin by bin. With 
 optional argument <code>false</code> instead take <i>e</i>-logarithm 
@@ -320,78 +323,90 @@ of contents bin by bin. If to be used, then right before the
 histogram is output. 
    
  
-<a name="method19"></a>
+<a name="anchor22"></a>
 <p/><strong>void Hist::takeSqrt() &nbsp;</strong> <br/>
 take square root of current contents bin by bin, with negative contents 
 set to zero. 
    
  
-<a name="method20"></a>
+<a name="anchor23"></a>
 <p/><strong>Hist&amp; Hist::operator+=(const Hist&amp; h) &nbsp;</strong> <br/>
    
+<a name="anchor24"></a>
 <strong>Hist&amp; Hist::operator-=(const Hist&amp; h) &nbsp;</strong> <br/>
 adds or subtracts the current histogram by the contents of the 
 histogram in the argument if <code>sameSize(...)</code> is true, 
 else does nothing. 
    
  
-<a name="method21"></a>
+<a name="anchor25"></a>
 <p/><strong>Hist&amp; Hist::operator*=(const Hist&amp; h) &nbsp;</strong> <br/>
    
+<a name="anchor26"></a>
 <strong>Hist&amp; Hist::operator/=(const Hist&amp; h) &nbsp;</strong> <br/>
 multiplies or divides the current histogram by the contents of the 
 histogram in the argument if <code>sameSize(...)</code> is true, 
 else does nothing. 
    
  
-<a name="method22"></a>
+<a name="anchor27"></a>
 <p/><strong>Hist&amp; Hist::operator+=(double f) &nbsp;</strong> <br/>
    
+<a name="anchor28"></a>
 <strong>Hist&amp; Hist::operator-=(double f) &nbsp;</strong> <br/>
 adds or subtracts each bin content by the common offset <i>f</i>. 
    
  
-<a name="method23"></a>
+<a name="anchor29"></a>
 <p/><strong>Hist&amp; Hist::operator*=(double f) &nbsp;</strong> <br/>
    
+<a name="anchor30"></a>
 <strong>Hist&amp; Hist::operator*=(double f) &nbsp;</strong> <br/>
 multiplies or divides each bin content by the common factor <i>f</i>. 
    
  
-<a name="method24"></a>
+<a name="anchor31"></a>
 <p/><strong>friend Hist operator+(double f, const Hist&amp; h1) &nbsp;</strong> <br/>
    
+<a name="anchor32"></a>
 <strong>friend Hist operator+(const Hist&amp; h1, double f) &nbsp;</strong> <br/>
    
+<a name="anchor33"></a>
 <strong>friend Hist operator+(const Hist&amp; h1, const Hist h2) &nbsp;</strong> <br/>
 add a constant to a histogram or two histograms to each other, bin by bin. 
    
  
-<a name="method25"></a>
+<a name="anchor34"></a>
 <p/><strong>friend Hist operator-(double f, const Hist&amp; h1) &nbsp;</strong> <br/>
    
+<a name="anchor35"></a>
 <strong>friend Hist operator-(const Hist&amp; h1, double f) &nbsp;</strong> <br/>
    
+<a name="anchor36"></a>
 <strong>friend Hist operator-(const Hist&amp; h1, const Hist h2) &nbsp;</strong> <br/>
 subtract a histogram from a constant, a constant from a histogram, 
 or two histograms from each other, bin by bin. 
    
  
-<a name="method26"></a>
+<a name="anchor37"></a>
 <p/><strong>friend Hist operator*(double f, const Hist&amp; h1) &nbsp;</strong> <br/>
    
+<a name="anchor38"></a>
 <strong>friend Hist operator*(const Hist&amp; h1, double f) &nbsp;</strong> <br/>
    
+<a name="anchor39"></a>
 <strong>friend Hist operator*(const Hist&amp; h1, const Hist h2) &nbsp;</strong> <br/>
 multiply a constant by a histogram or two histograms by each other, 
 bin by bin. 
    
  
-<a name="method27"></a>
+<a name="anchor40"></a>
 <p/><strong>friend Hist operator/(double f, const Hist&amp; h1) &nbsp;</strong> <br/>
    
+<a name="anchor41"></a>
 <strong>friend Hist operator/(const Hist&amp; h1, double f) &nbsp;</strong> <br/>
    
+<a name="anchor42"></a>
 <strong>friend Hist operator/(const Hist&amp; h1, const Hist h2) &nbsp;</strong> <br/>
 divide a constant by a histogram, a histogram by a constant, 
 or two histograms by each other, bin by bin. 

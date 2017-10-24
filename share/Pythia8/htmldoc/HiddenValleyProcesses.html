@@ -15,12 +15,18 @@ the normal timelike showering machinery has been expanded with a
 third kind of radiation, in addition to the QCD and QED ones. 
 These three kinds of radiation are fully interleaved, i.e. 
 evolution occurs in a common <i>pT</i>-ordered sequence. 
-The scenario is described in [<a href="Bibliography.html" target="page">Car10</a>]. Furthermore 
+The scenario is described in [<a href="Bibliography.html#refCar10" target="page">Car10</a>]. Furthermore 
 hadronization in the hidden sector has been implemented. 
 Three main scenarios for production into and decay out of the 
 hidden sector can be compared, in each case either for an 
 Abelian or a non-Abelian gauge group in the HV. For further details 
-see [<a href="Bibliography.html" target="page">Car11</a>]. 
+see [<a href="Bibliography.html#refCar11" target="page">Car11</a>]. 
+ 
+<br/><b>Warning</b>: do not use the alternative hadronization 
+scenarios <code>StringPT:thermalModel = on</code> or 
+<code>StringPT:mT2suppression = on</code> in conjunction with 
+Hidden Valley processes, since they have not been constructed to 
+work together. 
  
 <h3>Particle content and properties</h3> 
  
@@ -28,6 +34,7 @@ For simplicity we assume that the HV contains an unbroken <b>SU(N)</b>
 gauge symmetry. This is used in the calculation of production cross 
 sections. These could be rescaled by hand for other gauge groups. 
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> HiddenValley:Ngauge &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 1</code>)<br/>
 is <b>U(1)</b> for <code>Ngauge = 1</code>, is <b>SU(N)</b> if 
@@ -153,6 +160,7 @@ off-diagonal Up/Dn mesons.
 Only the spin of the HV-gluon or HV-photon is determined unambiguously 
 to be unity, for the others you can make your choice. 
  
+<a name="anchor2"></a>
 <p/><code>mode&nbsp; </code><strong> HiddenValley:spinFv &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 The spin of the HV partners of the SM fermions, e.g. 
@@ -162,6 +170,7 @@ The spin of the HV partners of the SM fermions, e.g.
 <br/><code>option </code><strong> 2</strong> : spin 1.   
    
  
+<a name="anchor3"></a>
 <p/><code>mode&nbsp; </code><strong> HiddenValley:spinqv &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 The spin of <i>qv</i> when the <i>Fv</i> (the HV partners of 
@@ -171,6 +180,7 @@ the <i>qv</i> spin is fixed at 1/2.)
 <br/><code>option </code><strong> 1</strong> : spin 1.   
    
  
+<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:kappa &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>)<br/>
 If the <i>Fv</i> have spin 1 then their production 
@@ -179,11 +189,13 @@ moment, i.e. of a <i>kappa</i> different from unity. For other spins
 this parameter is not used. 
    
  
+<a name="anchor5"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:doKinMix &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 allow kinematic mixing or not. 
    
  
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:kinMix &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>)<br/>
 strength of kinetic mixing. 
@@ -201,48 +213,56 @@ decay modes also need to be set.
  
 <h3>Production processes</h3> 
  
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:all &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Common switch for the group of all hard Hidden Valley processes, 
 as listed separately in the following. 
    
  
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:gg2DvDvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>g g &rarr; Dv Dvbar</i>. 
 Code 4901. 
    
  
+<a name="anchor9"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:gg2UvUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>g g &rarr; Uv Uvbar</i>. 
 Code 4902. 
    
  
+<a name="anchor10"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:gg2SvSvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>g g &rarr; Sv Svbar</i>. 
 Code 4903. 
    
  
+<a name="anchor11"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:gg2CvCvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>g g &rarr; Cv Cvbar</i>. 
 Code 4904. 
    
  
+<a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:gg2BvBvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>g g &rarr; Bv Bvbar</i>. 
 Code 4905. 
    
  
+<a name="anchor13"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:gg2TvTvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>g g &rarr; Tv Tvbar</i>. 
 Code 4906. 
    
  
+<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:qqbar2DvDvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>q qbar &rarr; Dv Dvbar</i> 
@@ -250,6 +270,7 @@ via intermediate gluon.
 Code 4911. 
    
  
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:qqbar2UvUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>q qbar &rarr; Uv Uvbar</i> 
@@ -257,6 +278,7 @@ via intermediate gluon.
 Code 4912. 
    
  
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:qqbar2SvSvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>q qbar &rarr; Sv Svbar</i> 
@@ -264,6 +286,7 @@ via intermediate gluon.
 Code 4913. 
    
  
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:qqbar2CvCvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>q qbar &rarr; Cv Cvbar</i> 
@@ -271,6 +294,7 @@ via intermediate gluon.
 Code 4914. 
    
  
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:qqbar2BvBvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>q qbar &rarr; Bv Bvbar</i> 
@@ -278,6 +302,7 @@ via intermediate gluon.
 Code 4915. 
    
  
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:qqbar2TvTvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>q qbar &rarr; Tv Tvbar</i> 
@@ -285,6 +310,7 @@ via intermediate gluon.
 Code 4916. 
    
  
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2DvDvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Dv Dvbar</i> 
@@ -292,6 +318,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4921. 
    
  
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2UvUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Uv Uvbar</i> 
@@ -299,6 +326,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4922. 
    
  
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2SvSvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Sv Svbar</i> 
@@ -306,6 +334,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4923. 
    
  
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2CvCvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Cv Cvbar</i> 
@@ -313,6 +342,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4924. 
    
  
+<a name="anchor24"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2BvBvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Bv Bvbar</i> 
@@ -320,6 +350,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4925. 
    
  
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2TvTvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Tv Tvbar</i> 
@@ -327,6 +358,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4926. 
    
  
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2EvEvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; Ev Evbar</i> 
@@ -334,6 +366,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4931. 
    
  
+<a name="anchor27"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2nuEvnuEvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; nuEv nuEvbar</i> 
@@ -341,6 +374,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4932. 
    
  
+<a name="anchor28"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2MUvMUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; MUv MUvbar</i> 
@@ -348,6 +382,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4933. 
    
  
+<a name="anchor29"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2nuMUvnuMUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; nuMUv nuMUvbar</i> 
@@ -355,6 +390,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4934. 
    
  
+<a name="anchor30"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2TAUvTAUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; TAUv TAUvbar</i> 
@@ -362,6 +398,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4935. 
    
  
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2nuTAUvnuTAUvbar &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Pair production <i>f fbar &rarr; nuTAUv nuTAUvbar</i> 
@@ -369,6 +406,7 @@ via intermediate <i>gamma*/Z^*</i>.
 Code 4936. 
    
  
+<a name="anchor32"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:ffbar2Zv &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Production <i>f fbar &rarr; Zv</i> where <i>Zv</i> is a generic 
@@ -398,7 +436,7 @@ is reversed for HV radiation.
  
 <p/>This also includes matrix-element corrections for a number 
 of decay processes, with colour, spin and mass effects included 
-[<a href="Bibliography.html" target="page">Nor01</a>]. They were calculated within the context of the 
+[<a href="Bibliography.html#refNor01" target="page">Nor01</a>]. They were calculated within the context of the 
 particle content of the MSSM, however, which does not include spin 1 
 particles with unit colour charge. In such cases spin 0 is assumed 
 instead. By experience, the main effects come from mass and colour 
@@ -412,15 +450,17 @@ in the visible sector by recoil effect, but this is a minor
 effect relative to the primary emission of the <i>gv</i>. 
  
 <p/>While the default model has a fixed Hidden Valley coupling 
-<i> alpha_HV</i>, some further work [<a href="Bibliography.html" target="page">Scw15</a>] has considered 
+<i> alpha_HV</i>, some further work [<a href="Bibliography.html#refScw15" target="page">Scw15</a>] has considered 
 the impact of a running coupling. This is included as an option. 
  
+<a name="anchor33"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:FSR &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 switch on final-state shower of <i>gv</i> or <i>gammav</i> 
 in a HV production process. 
    
  
+<a name="anchor34"></a>
 <p/><code>mode&nbsp; </code><strong> HiddenValley:alphaOrder &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 Order at which <i>alpha_HV</i> runs, 
@@ -430,6 +470,7 @@ fixed at the value <i>alphaFSR</i>.
 on <i>Ngauge</i> and <i>Nflav</i>. 
    
  
+<a name="anchor35"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:alphaFSR &nbsp;</strong> 
  (<code>default = <strong>0.1</strong></code>; <code>minimum = 0.0</code>)<br/>
 fixed alpha scale of <i>gv/gammav</i> emission; corresponds to 
@@ -439,11 +480,13 @@ multiplied by <i>C_F = (N^2 - 1) / (2 * N)</i> for an
 <b>SU(N)</b> group and for <i>gv &rarr; gv + gv</i> by <i>N</i>. 
    
  
+<a name="anchor36"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:Lambda &nbsp;</strong> 
  (<code>default = <strong>0.4</strong></code>; <code>minimum = 0.1</code>)<br/>
 the parameter used for the case of a running (first order) <i>alpha_HV</i>. 
    
  
+<a name="anchor37"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:pTminFSR &nbsp;</strong> 
  (<code>default = <strong>0.44</strong></code>; <code>minimum = 0.1</code>)<br/>
 lowest allowed <i>pT</i> of emission. Should be greater than 
@@ -542,12 +585,14 @@ behaviour. This does not mean that deviations from this set should
 not be explored, or that other scaling rules could be preferred 
 within alternative scenarios. These parameters are as follows. 
  
+<a name="anchor38"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:fragment &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 switch on string fragmentation of the HV partonic system. 
 Only relevant for <b>SU(N)</b> scenarios. 
    
  
+<a name="anchor39"></a>
 <p/><code>mode&nbsp; </code><strong> HiddenValley:nFlav &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 8</code>)<br/>
 number of different flavours assumed to exist in the hadronization 
@@ -556,6 +601,7 @@ produced HV-mesons being flavour-diagonal and capable to decay back
 to Standard Model particles. 
    
  
+<a name="anchor40"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:probVector &nbsp;</strong> 
  (<code>default = <strong>0.75</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 fraction of HV-mesons that are assigned spin 1 (vector), with the 
@@ -564,12 +610,14 @@ spin <i>1/2</i> and the mass splitting is small, spin counting
 predicts that <i>3/4</i> of the mesons should have spin 1. 
    
  
+<a name="anchor41"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:aLund &nbsp;</strong> 
  (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 The <i>a</i> parameter of the Lund symmetric fragmentation function. 
 See the normal <a href="Fragmentation.html" target="page">fragmentation 
 function</a> description for the shape of this function.   
  
+<a name="anchor42"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:bmqv2 &nbsp;</strong> 
  (<code>default = <strong>0.8</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)<br/>
 The <i>b</i> parameter of the Lund symmetric fragmentation function, 
@@ -578,6 +626,7 @@ that the fragmentation function keeps the same shape when the
 <i>qv</i> mass is changed (neglecting transverse momenta). 
    
  
+<a name="anchor43"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:rFactqv &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 <i>r_qv</i>, i.e. the Bowler correction factor to the Lund symmetric 
@@ -585,6 +634,7 @@ fragmentation function, which could be made weaker or stronger than
 its natural value. 
    
  
+<a name="anchor44"></a>
 <p/><code>parm&nbsp; </code><strong> HiddenValley:sigmamqv &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>)<br/>
 the width <i>sigma</i> of transverse momenta in the HV fragmentation 

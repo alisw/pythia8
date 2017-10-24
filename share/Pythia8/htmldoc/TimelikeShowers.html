@@ -9,15 +9,15 @@
 <h2>Timelike Showers</h2> 
  
 The PYTHIA algorithm for timelike final-state showers is based on 
-the article [<a href="Bibliography.html" target="page">Sjo05</a>], where a transverse-momentum-ordered 
+the article [<a href="Bibliography.html#refSjo05" target="page">Sjo05</a>], where a transverse-momentum-ordered 
 evolution scheme is introduced, with the extension to fully interleaved 
-evolution covered in [<a href="Bibliography.html" target="page">Cor10a</a>]. This algorithm is influenced by 
-the previous mass-ordered algorithm in PYTHIA [<a href="Bibliography.html" target="page">Ben87</a>] and by 
-the dipole-emission formulation in Ariadne [<a href="Bibliography.html" target="page">Gus86</a>]. From the 
+evolution covered in [<a href="Bibliography.html#refCor10a" target="page">Cor10a</a>]. This algorithm is influenced by 
+the previous mass-ordered algorithm in PYTHIA [<a href="Bibliography.html#refBen87" target="page">Ben87</a>] and by 
+the dipole-emission formulation in Ariadne [<a href="Bibliography.html#refGus86" target="page">Gus86</a>]. From the 
 mass-ordered algorithm it inherits a merging procedure for first-order 
 gluon-emission matrix elements in essentially all two-body decays 
 in the standard model and its minimal supersymmetric extension 
-[<a href="Bibliography.html" target="page">Nor01</a>]. 
+[<a href="Bibliography.html#refNor01" target="page">Nor01</a>]. 
  
 <p/> 
 The normal user is not expected to call <code>TimeShower</code> directly, 
@@ -40,6 +40,7 @@ the <i>pT</i> for a <i>2 &rarr; 2</i> process, supplemented by mass terms
 for massive outgoing particles. For some special applications we do allow 
 an alternative. 
  
+<a name="anchor1"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:pTmaxMatch &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Way in which the maximum shower evolution scale is set to match the 
@@ -104,6 +105,7 @@ setting restricts all emissions, also in resonance decays, to be below
 the input <code>scale</code> value. 
    
  
+<a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTmaxFudge &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.25</code>; <code>maximum = 2.0</code>)<br/>
 In cases where the above <code>pTmaxMatch</code> rules would imply 
@@ -117,6 +119,7 @@ around this default can be useful to test this assumption.
 be set separately by <a href="UserHooks.html" target="page">user hooks</a>. 
    
  
+<a name="anchor3"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTmaxFudgeMPI &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.25</code>; <code>maximum = 2.0</code>)<br/>
 A multiplicative factor <i>f</i> such that 
@@ -124,6 +127,7 @@ A multiplicative factor <i>f</i> such that
 non-hardest interactions (when multiparton interactions are allowed). 
    
  
+<a name="anchor4"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:pTdampMatch &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 These options only take effect when a process is allowed to radiate up 
@@ -167,6 +171,7 @@ Emissions off subsequent multiparton interactions are always constrained
 to be below the factorization scale of the process itself. 
    
  
+<a name="anchor5"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTdampFudge &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.25</code>; <code>maximum = 4.0</code>)<br/>
 In cases 1 and 2 above, where a dampening is imposed at around the 
@@ -179,6 +184,7 @@ away from this value could do better in some processes.
  
 <p/> 
 The amount of QCD radiation in the shower is determined by 
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:alphaSvalue &nbsp;</strong> 
  (<code>default = <strong>0.1365</strong></code>; <code>minimum = 0.06</code>; <code>maximum = 0.25</code>)<br/>
 The <i>alpha_strong</i> value at scale <i>M_Z^2</i>. The default 
@@ -189,6 +195,7 @@ value corresponds to a crude tuning to LEP data, to be improved.
 The actual value is then regulated by the running to the scale 
 <i>pT^2</i>, at which the shower evaluates <i>alpha_strong</i>. 
  
+<a name="anchor7"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:alphaSorder &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Order at which <i>alpha_strong</i> runs, 
@@ -206,6 +213,7 @@ The CMW rescaling of <i>Lambda_QCD</i> (see the section on
 can be applied to the <i>alpha_strong</i> values used for 
 timelike showers. Note that tunes using this option need lower values of 
 <i>alpha_strong(m_Z^2)</i> than tunes that do not. 
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:alphaSuseCMW &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 <br/><code>option </code><strong> off</strong> : Do not apply the CMW rescaling.    
@@ -218,6 +226,7 @@ timelike showers. Note that tunes using this option need lower values of
 QED radiation is regulated by the <i>alpha_electromagnetic</i> 
 value at the <i>pT^2</i> scale of a branching. 
  
+<a name="anchor9"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:alphaEMorder &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = -1</code>; <code>maximum = 1</code>)<br/>
 The running of <i>alpha_em</i>. 
@@ -241,6 +250,7 @@ processes</a>. (Note that there is also an
 <a href="Variations.html" target="page">automated framework</a> for shower 
 uncertainties.) 
  
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:renormMultFac &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.</code>)<br/>
 The default <i>pT^2</i> renormalization scale is multiplied by 
@@ -250,6 +260,7 @@ this prefactor. For QCD this is equivalent to a change of
 remain at fixed scales). 
    
  
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:factorMultFac &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.</code>)<br/>
 The default <i>pT^2</i> factorization scale is multiplied by 
@@ -264,16 +275,19 @@ no emissions are allowed. The cutoff may be different for QCD and QED
 radiation off quarks, and is mainly a technical parameter for QED 
 radiation off leptons. 
  
+<a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTmin &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off <i>pT</i> for QCD emissions. 
    
  
+<a name="anchor13"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTminChgQ &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off <i>pT</i> for photon coupling to coloured particle. 
    
  
+<a name="anchor14"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTminChgL &nbsp;</strong> 
  (<code>default = <strong>1e-6</strong></code>; <code>minimum = 1e-10</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off <i>pT</i> for pure QED branchings. 
@@ -290,6 +304,7 @@ In addition, the shower contribution only contains the pure
 <i>gamma^*</i> contribution, i.e. not the <i>Z^0</i> part, so 
 the mass spectrum above 50 GeV or so would not be well described. 
  
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:mMaxGamma &nbsp;</strong> 
  (<code>default = <strong>10.0</strong></code>; <code>minimum = 0.001</code>; <code>maximum = 5000.0</code>)<br/>
 Maximum invariant mass allowed for the created fermion pair in a 
@@ -329,6 +344,7 @@ by MPI, ISR or FSR? Complete interleaving of the three components also
 offers advantages if one aims at matching to higher-order matrix 
 elements above some given scale. 
  
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:interleave &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, final-state emissions are interleaved in the same 
@@ -365,6 +381,7 @@ This choice is not unique, however. As an alternative, if nothing else
 useful for cross-checks, one could imagine that the FSR is completely 
 decoupled from the ISR and beam remnants. 
  
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:allowBeamRecoil &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, the final-state shower is allowed to borrow energy from 
@@ -377,6 +394,7 @@ mass, cf. the comment above about showers for resonances never being
 interleaved. 
    
  
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:dampenBeamRecoil &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 When beam recoil is allowed there is still some ambiguity how far 
@@ -404,6 +422,7 @@ recoils taken by the beam remnant, where necessary. This could change,
 however, and the following switch would then regulate the choice of 
 behaviour. 
  
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:allowMPIdipole &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, and if interleaving is off, then dipoles are allowed to be 
@@ -429,8 +448,8 @@ pattern is unrelated to colour correlations. This is especially
 convenient for some matching algorithms, like MC@NLO, where a full 
 analytic knowledge of the shower radiation pattern is needed to avoid 
 double-counting. (The <i>pT</i>-ordered shower is described in 
-[<a href="Bibliography.html" target="page">Sjo05</a>], and the corrections for massive radiator and recoiler 
-in [<a href="Bibliography.html" target="page">Nor01</a>].) 
+[<a href="Bibliography.html#refSjo05" target="page">Sjo05</a>], and the corrections for massive radiator and recoiler 
+in [<a href="Bibliography.html#refNor01" target="page">Nor01</a>].) 
  
 <p/> 
 Technically, the radiation pattern is most conveniently represented 
@@ -464,6 +483,7 @@ a global recoil is requested. (Thus, e.g., a gluon is still bookkept
 as one colour and one anticolour dipole end, with half the charge 
 each, but with global recoil those two ends radiate identically.) 
  
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:globalRecoil &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Alternative approach as above, where all final-state particles share 
@@ -475,6 +495,7 @@ is at most <code>TimeShower:nMaxGlobalRecoil</code> before the
 branching. 
    
  
+<a name="anchor21"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:nMaxGlobalRecoil &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>)<br/>
 Represents the maximum number of particles in the final state for which 
@@ -496,6 +517,7 @@ that global recoils should be used as sparsely as possible, in order to
 retain desirable features of the radiation pattern produced with the local 
 recoil prescription. 
  
+<a name="anchor22"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:globalRecoilMode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Choice which splittings are produced with the global recoil approach. 
@@ -515,6 +537,7 @@ This option is only sensible for interleaved evolution.
    
    
  
+<a name="anchor23"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:nMaxGlobalBranch &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>)<br/>
 The maximum number of splittings in the final state for which 
@@ -523,6 +546,7 @@ strategy. This number has to be set if <code>TimeShower:globalRecoilMode = 1
 </code> or <code>TimeShower:globalRecoilMode = 2</code> 
    
  
+<a name="anchor24"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:nPartonsInBorn &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>)<br/>
 The number of partons for Born-like phase space points. This number needs 
@@ -531,6 +555,7 @@ and H-events (with real-emission kinematics) is desired. This number has
 to be set if <code>TimeShower:globalRecoilMode = 2</code>. 
    
  
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:limitPTmaxGlobal &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, limit the maximal pT produced in branchings in the global recoil scheme 
@@ -631,6 +656,7 @@ on the onium mass rather than on the quark mass, as it should be. Gluons
 below the octet-onium scale should only be part of the octet-to-singlet 
 transition. 
  
+<a name="anchor26"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:octetOniumFraction &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 Allow colour-octet charmonium and bottomonium states to radiate gluons. 
@@ -638,6 +664,7 @@ Allow colour-octet charmonium and bottomonium states to radiate gluons.
 to interpolate between these two extremes. 
    
  
+<a name="anchor27"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:octetOniumColFac &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 4.</code>)<br/>
 The colour factor used used in the splitting kernel for those octet onium 
@@ -654,11 +681,13 @@ The following settings are those specifically related to the final-state
 weak radiation, while common settings are found in the 
 <a href="WeakShowers.html" target="page">Weak Showers</a> description. 
  
+<a name="anchor28"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:weakShower &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow a weak shower, yes or no. 
    
  
+<a name="anchor29"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:weakShowerMode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Determine which branchings are allowed. 
@@ -668,6 +697,7 @@ Determine which branchings are allowed.
 <br/><code>option </code><strong> 2</strong> :  only <i>Z^0</i> branchings.    
    
  
+<a name="anchor30"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:pTminWeak &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off <i>pT</i> for weak branchings. 
@@ -680,12 +710,14 @@ branching types in the shower, or in other respects simplify the shower.
 These should normally not be touched. Their main function is for 
 cross-checks. 
  
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:QCDshower &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow a QCD shower, i.e. branchings <i>q &rarr; q g</i>, 
 <i>g &rarr; g g</i> and <i>g &rarr; q qbar</i>; on/off = true/false. 
    
  
+<a name="anchor32"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:nGluonToQuark &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed quark flavours in <i>g &rarr; q qbar</i> branchings 
@@ -693,6 +725,7 @@ Number of allowed quark flavours in <i>g &rarr; q qbar</i> branchings
 <i>g &rarr; b bbar</i>, etc. 
    
  
+<a name="anchor33"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:weightGluonToQuark &nbsp;</strong> 
  (<code>default = <strong>4</strong></code>; <code>minimum = 1</code>; <code>maximum = 8</code>)<br/>
 Different options to assign kinematics distributions and weights 
@@ -725,6 +758,7 @@ rather than the normal <i>alpha_s(pT^2)</i>.
 rather than the normal <i>alpha_s(pT^2)</i>.   
    
  
+<a name="anchor34"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:scaleGluonToQuark &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.25</code>; <code>maximum = 1.0</code>)<br/>
 Extra scale parameter <i>k</i> for 
@@ -733,6 +767,7 @@ Extra scale parameter <i>k</i> for
 alike. 
    
  
+<a name="anchor35"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:recoilDeadCone &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 For topologies where a gluon recoils against a massive quark (or another 
@@ -751,18 +786,21 @@ are not affected; the absence of a soft singularity implies that there
 is hardly any radiation into the recoiler hemisphere anyway. 
    
  
+<a name="anchor36"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByQ &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow quarks to radiate photons, i.e. branchings <i>q &rarr; q gamma</i>; 
 on/off = true/false. 
    
  
+<a name="anchor37"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByL &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow leptons to radiate photons, i.e. branchings <i>l &rarr; l gamma</i>; 
 on/off = true/false. 
    
  
+<a name="anchor38"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByOther &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow charged resonances to radiate photons, i.e. branchings 
@@ -770,6 +808,7 @@ Allow charged resonances to radiate photons, i.e. branchings
 also allow the W boson to radiate. 
    
  
+<a name="anchor39"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:QEDshowerByGamma &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow photons to branch into lepton or quark pairs, i.e. branchings 
@@ -777,6 +816,7 @@ Allow photons to branch into lepton or quark pairs, i.e. branchings
 on/off = true/false. 
    
  
+<a name="anchor40"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:nGammaToQuark &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed quark flavours in <i>gamma &rarr; q qbar</i> branchings 
@@ -784,6 +824,7 @@ Number of allowed quark flavours in <i>gamma &rarr; q qbar</i> branchings
 <i>g &rarr; b bbar</i>, etc. 
    
  
+<a name="anchor41"></a>
 <p/><code>mode&nbsp; </code><strong> TimeShower:nGammaToLepton &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Number of allowed lepton flavours in <i>gamma &rarr; l+ l-</i> branchings 
@@ -792,11 +833,13 @@ Number of allowed lepton flavours in <i>gamma &rarr; l+ l-</i> branchings
 <i>gamma &rarr; mu+ mu-</i>. 
    
  
+<a name="anchor42"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:MEcorrections &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use of matrix element corrections where available; on/off = true/false. 
    
  
+<a name="anchor43"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:MEextended &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use matrix element corrections also for <i>1 &rarr; n</i> and 
@@ -807,25 +850,31 @@ for massive radiators and recoilers. Only has a meaning if
 <code>MEcorrections</code> above is switched on. 
    
  
+<a name="anchor44"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:MEafterFirst &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use of matrix element corrections also after the first emission, 
 for dipole ends of the same system that did not yet radiate. 
 Only has a meaning if <code>MEcorrections</code> above is 
-switched on. 
+switched on. Switching off this option currently does not take effect 
+for a few rare types of secondary branchings, where ME corrections 
+play a central role. 
    
  
+<a name="anchor45"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:phiPolAsym &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Azimuthal asymmetry induced by gluon polarization; on/off = true/false. 
    
  
+<a name="anchor46"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:phiPolAsymHard &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Extend the above azimuthal asymmetry (if on) also back to gluons produced 
 in the hard process itself, where feasible; on/off = true/false. 
    
  
+<a name="anchor47"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:recoilToColoured &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 In the decays of coloured resonances, say <i>t &rarr; b W</i>, it is not 
@@ -845,6 +894,7 @@ would remain recoiler, while in the new (<code>on</code>) instead
 each newly emitted photon becomes the new recoiler. 
    
  
+<a name="anchor48"></a>
 <p/><code>flag&nbsp; </code><strong> TimeShower:useFixedFacScale &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow the possibility to use a fixed factorization scale, set by 
@@ -852,6 +902,7 @@ the <code>parm</code> below. This option is unphysical and only
 intended for toy-model and debug studies. 
    
  
+<a name="anchor49"></a>
 <p/><code>parm&nbsp; </code><strong> TimeShower:fixedFacScale &nbsp;</strong> 
  (<code>default = <strong>100.</strong></code>; <code>minimum = 1.</code>)<br/>
 The fixed factorization scale, in GeV, that would be used in the 

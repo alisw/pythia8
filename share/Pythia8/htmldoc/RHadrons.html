@@ -53,18 +53,21 @@ reasons of administrative simplicity. R-hadron mass spectra and
 other relevant particle data is automatically updated to reflect 
 the change, however. 
  
+<a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> RHadrons:allow &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allows the gluino, stop and sbottom to hadronize if their respective 
 widths are below the limit <code>RHadrons:maxWidth</code>. 
    
  
+<a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> RHadrons:maxWidth &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
 The maximum width of the gluino for which it is possible to form 
 R-hadrons, provided that <code>RHadrons:allow</code> is on. 
    
  
+<a name="anchor3"></a>
 <p/><code>mode&nbsp; </code><strong> RHadrons:idGluino &nbsp;</strong> 
  (<code>default = <strong>1000021</strong></code>)<br/>
 The gluino identity code. For other scenarios than SUSY this code 
@@ -75,6 +78,7 @@ the above two criteria, <code>RHadrons:allow</code>
 and <code>RHadrons:maxWidth</code>, are met. 
    
  
+<a name="anchor4"></a>
 <p/><code>mode&nbsp; </code><strong> RHadrons:idStop &nbsp;</strong> 
  (<code>default = <strong>1000006</strong></code>)<br/>
 The lightest stop identity code. For other scenarios than SUSY this 
@@ -84,6 +88,7 @@ spirit. As above it could be set to 0 to forbid any stop R-hadron
 formation. 
    
  
+<a name="anchor5"></a>
 <p/><code>mode&nbsp; </code><strong> RHadrons:idSbottom &nbsp;</strong> 
  (<code>default = <strong>1000005</strong></code>)<br/>
 The lightest sbottom identity code. For other scenarios than SUSY this 
@@ -93,6 +98,7 @@ spirit. As above it could be set to 0 to forbid any sbottom R-hadron
 formation. 
    
  
+<a name="anchor6"></a>
 <p/><code>flag&nbsp; </code><strong> RHadrons:allowDecay &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allows the R-hadrons to decay or not. If the gluino/stop/sbottom is 
@@ -105,12 +111,13 @@ R-hadron has passed through part of the detector, and changed its
 momentum and quite possibly its flavour content before it is to 
 decay. Then normal decays should be switched off, and the R-hadron 
 tracked through matter by a program like GEANT 
-[<a href="Bibliography.html" target="page">Kra04,Mac07</a>]. After that, the new R-hadron info can be 
+[<a href="Bibliography.html#refKra04" target="page">Kra04</a>,<a href="Bibliography.html#refMac07" target="page">Mac07</a>]. After that, the new R-hadron info can be 
 overwritten into the event record and the 
 <code>Pythia::forceRHadronDecay()</code> method can be called 
 to force this modified R-hadron to decay. 
    
  
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> RHadrons:setMasses &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use simple mass formulae to construct all available R-hadron masses 
@@ -125,12 +132,14 @@ of freedom and the additional confinement gluon field gives a net
 positive contribution to the R-hadron mass. 
    
  
+<a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> RHadrons:probGluinoball &nbsp;</strong> 
  (<code>default = <strong>0.1</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
 The fraction of produced gluino R-hadrons that are contain a "valence" 
 gluon, with the rest containing a meson or baryon quark flavour content. 
    
  
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> RHadrons:mOffsetCloud &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>)<br/>
 Extra mass (in GeV) added to each of the one or two extra constituent 
@@ -143,6 +152,7 @@ decay weakly, since it is taken to correspond to the cloud of gluons
 that surround the squark or gluino. 
    
  
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> RHadrons:mCollapse &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>)<br/>
 A colour singlet system with an invariant mass less than this amount, 
@@ -151,6 +161,7 @@ collapse to this single R-hadron, whereas a full fragmentation handling
 is applied above this mass. 
    
  
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> RHadrons:diquarkSpin1 &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
 Probability that a diquark extracted from the flavour code of a gluino 

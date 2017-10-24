@@ -141,9 +141,13 @@ identity code. Default means that no particle is printed.
 <h3>Event-generation settings</h3> 
  
 <br/><br/><table><tr><td><strong>Next:numberCount  </td><td></td><td> <input type="text" name="9" value="1000" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1000</strong></code>; <code>minimum = 0</code>)</td></tr></table>
-Print a line telling how many events have been generated so far, 
-once every <code>numberCount</code> events. If set zero then no 
-lines are ever printed. 
+Print a line telling how many events have been generated so far, once 
+every <code>numberCount</code> events. If set zero then no lines are 
+ever printed. 
+<br/>In <code>include/Pythia8Plugins/ProgressLog.h</code> an alternative 
+method is implemented that intermittently prints out run progress 
+information, reports on CPU usage and estimates when the run will end. 
+It is used in the <code>main111.cc</code> example. 
    
  
 <br/><br/><table><tr><td><strong>Next:numberShowLHA  </td><td></td><td> <input type="text" name="10" value="1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>)</td></tr></table>

@@ -68,9 +68,41 @@ externally to the <code>Pythia</code> code.
 An example illustrating how to run with an external random number 
 generator is provided in <code>main23.cc</code>. 
  
+<h3>MIXMAX random numbers</h3> 
+ 
+The MIXMAX class of random number generators utilizes 
+matrix-recursion based on Anosov-Kolmogorov C-K systems, with the 
+ability to create a large number of statistically independent 
+sequences of random numbers based on different initial seeds. This is 
+particularly advantageous in creating statistically independent 
+samples when running a large number of parallel jobs, each with a 
+different initial seed. In the plugin 
+header <code>Pythia8Plugins/MixMax.h</code> an implementation of a 
+MIXMAX random number generator is provided <ref>Sav91,Sav15</ref>, 
+courtesy of Konstantin Savvidy, as well as a PYTHIA interface through 
+the <code>MixMaxRndm</code> class. 
+ 
+In this implementation a dimensionality of 17 is used, as this has 
+been found to provide faster access to large numbers of independent 
+sequences. A timing comparison between the external MIXMAX random 
+number generator, and the default internal PYTHIA random number 
+generator is provided in the example <code>main23.cc</code>. The 
+MIXMAX random number generator is found to be comparable in speed to 
+the default generator. The primary methods of 
+the <code>MixMaxRndm</code> class are given here. 
+ 
+<method name="MixMaxRndm::MixMaxRndm(int seed0, int seed1, int seed2, 
+int seed3)"> construct a random number generator, and initialize it 
+for the given four 32-bit seed numbers. The sequence of numbers 
+produced from this set of seeds is guaranteed not to collide with 
+another if at least one bit of the four seeds is different, and, less 
+than <ei>10^100</ei> random numbers are thrown. 
+</method> 
+ 
 <h3>The methods</h3> 
  
-We here collect a more complete and formal overview of the methods. 
+We here collect a more complete and formal overview of 
+the <code>Rndm</code> class methods. 
  
 <method name="Rndm::Rndm()"> 
 construct a random number generator, but does not initialize it. 

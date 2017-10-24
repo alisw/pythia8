@@ -98,7 +98,7 @@ distributions and generation-dependent couplings; the default values
 should mainly be viewed as placeholders. The conversion 
 from the coupling conventions in a set of different <i>Z'^0</i> 
 models in the literature to those used in PYTHIA is described in 
-[<a href="Bibliography.php" target="page">Cio08</a>]. 
+[<a href="Bibliography.php#refCio08" target="page">Cio08</a>]. 
  
 <br/><br/><strong>Zprime:universality</strong>  <input type="radio" name="3" value="on" checked="checked"><strong>On</strong>
 <input type="radio" name="3" value="off"><strong>Off</strong>
@@ -229,7 +229,7 @@ cancel this behaviour, by letting <code>Zprime:coup2WW</code> be
 proportional to <i>m_Z'^2 / m_W^2</i>, you instead obtain a 
 partial width that goes like the fifth power of the <i>Z'^0</i> 
 mass. These two extremes correspond to the "extended gauge model" 
-and the "reference model", respectively, of [<a href="Bibliography.php" target="page">Alt89</a>]. 
+and the "reference model", respectively, of [<a href="Bibliography.php#refAlt89" target="page">Alt89</a>]. 
 Note that this channel only includes the pure <i>Z'</i> part, 
 while <i>f fbar &rarr; gamma^*/Z^*0 &rarr; W^+ W^-</i> is available 
 as a separate electroweak process. 
@@ -380,7 +380,7 @@ width into this channel that increases linearly with the
 you instead obtain a partial width that goes like the fifth power 
 of the <i>W'^+-</i> mass. These two extremes correspond to the 
 "extended gauge model" and the "reference model", respectively, 
-of [<a href="Bibliography.php" target="page">Alt89</a>]. 
+of [<a href="Bibliography.php#refAlt89" target="page">Alt89</a>]. 
    
  
 <br/><br/><table><tr><td><strong>Wprime:anglesWZ </td><td></td><td> <input type="text" name="45" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)</td></tr></table>
@@ -410,7 +410,7 @@ heavy. In spite of being neutral the antiparticle is distinct from
 the particle: one carries a net positive generation number and 
 the other a negative one. This particular model has no new 
 parameters beyond the <i>R^0</i> mass. Decays are assumed isotropic. 
-For further details see [<a href="Bibliography.php" target="page">Ben85</a>]. 
+For further details see [<a href="Bibliography.php#refBen85" target="page">Ben85</a>]. 
  
 <br/><br/><strong>NewGaugeBoson:ffbar2R0</strong>  <input type="radio" name="46" value="on"><strong>On</strong>
 <input type="radio" name="46" value="off" checked="checked"><strong>Off</strong>
