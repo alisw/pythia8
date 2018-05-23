@@ -1,6 +1,6 @@
 // Pythia.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the Pythia class.
@@ -24,7 +24,7 @@ namespace Pythia8 {
 
 // The current Pythia (sub)version number, to agree with XML version.
 const double Pythia::VERSIONNUMBERHEAD = PYTHIA_VERSION;
-const double Pythia::VERSIONNUMBERCODE = 8.230;
+const double Pythia::VERSIONNUMBERCODE = 8.235;
 
 //--------------------------------------------------------------------------
 
@@ -202,6 +202,8 @@ Pythia::~Pythia() {
   if (useNewPdfUnresB) delete pdfUnresBPtr;
   if (useNewPdfUnresGamA) delete pdfUnresGamAPtr;
   if (useNewPdfUnresGamB) delete pdfUnresGamBPtr;
+  if (useNewPdfVMDA) delete pdfVMDAPtr;
+  if (useNewPdfVMDB) delete pdfVMDBPtr;
 
   // Delete the Les Houches object created with new.
   if (useNewLHA) delete lhaUpPtr;
@@ -251,6 +253,8 @@ void Pythia::initPtrs() {
   useNewPdfUnresB    = false;
   useNewPdfUnresGamA = false;
   useNewPdfUnresGamB = false;
+  useNewPdfVMDA      = false;
+  useNewPdfVMDB      = false;
   pdfAPtr            = 0;
   pdfBPtr            = 0;
   pdfHardAPtr        = 0;
@@ -265,6 +269,8 @@ void Pythia::initPtrs() {
   pdfUnresBPtr       = 0;
   pdfUnresGamAPtr    = 0;
   pdfUnresGamBPtr    = 0;
+  pdfVMDAPtr         = 0;
+  pdfVMDBPtr         = 0;
 
   // Initial pointers to externally provided photon fluxes.
   pdfGamFluxAPtr    = 0;
@@ -299,6 +305,7 @@ void Pythia::initPtrs() {
   hasHeavyIons       = false;
   hasOwnHeavyIons    = false;
   heavyIonsPtr       = 0;
+  hiHooksPtr         = 0;
 
   // Initial value for pointer to beam shape.
   useNewBeamShape    = false;
@@ -452,7 +459,8 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
   PDF* pdfHardBPtrIn, PDF* pdfPomAPtrIn, PDF* pdfPomBPtrIn,
   PDF* pdfGamAPtrIn, PDF* pdfGamBPtrIn, PDF* pdfHardGamAPtrIn,
   PDF* pdfHardGamBPtrIn, PDF* pdfUnresAPtrIn, PDF* pdfUnresBPtrIn,
-  PDF* pdfUnresGamAPtrIn, PDF* pdfUnresGamBPtrIn) {
+  PDF* pdfUnresGamAPtrIn, PDF* pdfUnresGamBPtrIn, PDF* pdfVMDAPtrIn,
+  PDF* pdfVMDBPtrIn) {
 
   // Delete any PDF's created in a previous init call.
   if (useNewPdfHard && pdfHardAPtr != pdfAPtr) delete pdfHardAPtr;
@@ -469,6 +477,8 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
   if (useNewPdfUnresGamB) delete pdfUnresGamBPtr;
   if (useNewPdfHardGamA && pdfHardGamAPtr != pdfGamAPtr) delete pdfHardGamAPtr;
   if (useNewPdfHardGamB && pdfHardGamBPtr != pdfGamBPtr) delete pdfHardGamBPtr;
+  if (useNewPdfVMDA) delete pdfVMDAPtr;
+  if (useNewPdfVMDB) delete pdfVMDBPtr;
 
   // Reset pointers to be empty.
   useNewPdfA         = false;
@@ -484,6 +494,8 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
   useNewPdfUnresB    = false;
   useNewPdfUnresGamA = false;
   useNewPdfUnresGamB = false;
+  useNewPdfVMDA      = false;
+  useNewPdfVMDB      = false;
   pdfAPtr            = 0;
   pdfBPtr            = 0;
   pdfHardAPtr        = 0;
@@ -498,6 +510,8 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
   pdfUnresBPtr       = 0;
   pdfUnresGamAPtr    = 0;
   pdfUnresGamBPtr    = 0;
+  pdfVMDAPtr         = 0;
+  pdfVMDBPtr         = 0;
 
   // Switch off external PDF's by zero as input.
   if (pdfAPtrIn == 0 && pdfBPtrIn == 0) return true;
@@ -555,6 +569,13 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
     pdfUnresGamBPtr = pdfUnresGamBPtrIn;
   }
 
+  // Optionally allow pointers for VMD in the gamma.
+  if (pdfVMDAPtrIn != 0 && pdfVMDBPtrIn != 0) {
+    if (pdfVMDAPtrIn == pdfVMDBPtrIn) return false;
+    pdfVMDAPtr  = pdfVMDAPtrIn;
+    pdfVMDBPtr  = pdfVMDBPtrIn;
+  }
+
   // Done.
   return true;
 }
@@ -581,6 +602,7 @@ bool Pythia::init() {
       heavyIonsPtr = new Angantyr(*this);
       hasOwnHeavyIons = true;
     }
+    if ( hiHooksPtr ) heavyIonsPtr->setHIUserHooksPtr(hiHooksPtr);
     if ( !heavyIonsPtr->init() ) doHeavyIons = false;
   }
 
@@ -638,7 +660,7 @@ bool Pythia::init() {
 
   // Set up MergingHooks object.
   bool inputMergingHooks = (mergingHooksPtr != 0);
-  if (doMerging && !inputMergingHooks){
+  if (doMerging && !inputMergingHooks) {
     if (hasOwnMergingHooks && mergingHooksPtr) delete mergingHooksPtr;
     mergingHooksPtr = new MergingHooks();
     hasOwnMergingHooks = true;
@@ -657,7 +679,7 @@ bool Pythia::init() {
 
   // Set up Merging object.
   bool inputMerging = (mergingPtr != 0);
-  if (doMerging && !inputMerging){
+  if (doMerging && !inputMerging) {
     if (hasOwnMerging && mergingPtr) delete mergingPtr;
     mergingPtr = new Merging();
     hasOwnMerging = true;
@@ -800,11 +822,14 @@ bool Pythia::init() {
   // Initialize data members extracted from database.
   doPartonLevel    = settings.flag("PartonLevel:all");
   doHadronLevel    = settings.flag("HadronLevel:all");
-  doDiffraction    = settings.flag("SoftQCD:all")
-                  || settings.flag("SoftQCD:singleDiffractive")
+  doCentralDiff    = settings.flag("SoftQCD:centralDiffractive");
+  doSoftQCDall     = settings.flag("SoftQCD:all");
+  doSoftQCDinel    = settings.flag("SoftQCD:inelastic");
+  doDiffraction    = settings.flag("SoftQCD:singleDiffractive")
                   || settings.flag("SoftQCD:doubleDiffractive")
-                  || settings.flag("SoftQCD:centralDiffractive")
-                  || settings.flag("SoftQCD:inelastic");
+                  || doSoftQCDall || doSoftQCDinel || doCentralDiff;
+  doSoftQCD        = doDiffraction ||
+                     settings.flag("SoftQCD:nonDiffractive");
   doHardDiff       = settings.flag("Diffraction:doHard");
   doResDec         = settings.flag("ProcessLevel:resonanceDecays");
   doFSRinRes       = doPartonLevel && settings.flag("PartonLevel:FSR")
@@ -834,6 +859,34 @@ bool Pythia::init() {
   bool isChargedLeptonB = (abs(idB) == 11 || abs(idB) == 13 || abs(idB) == 15);
   beamAhasResGamma = beamAneedResGamma && beamHasGamma && isChargedLeptonA;
   beamBhasResGamma = beamBneedResGamma && beamHasGamma && isChargedLeptonB;
+  doVMDsideA = doSoftQCD && (beamAisResGamma || beamAhasResGamma);
+  doVMDsideB = doSoftQCD && (beamBisResGamma || beamBhasResGamma);
+
+  // Turn off central diffraction for VMD processes.
+  if (doVMDsideA || doVMDsideB) {
+    if (doCentralDiff) {
+      info.errorMsg("Warning in Pythia::init: "
+        "Central diffractive events not implemented for gamma + p/gamma");
+      return false;
+    }
+    if (doSoftQCDall) {
+      info.errorMsg("Warning in Pythia::init: "
+        "Central diffractive events not implemented for gamma + p/gamma");
+      settings.flag("SoftQCD:all", false);
+      settings.flag("SoftQCD:elastic", true);
+      settings.flag("SoftQCD:nonDiffractive", true);
+      settings.flag("SoftQCD:singleDiffractive", true);
+      settings.flag("SoftQCD:doubleDiffractive", true);
+    }
+    if (doSoftQCDinel) {
+      info.errorMsg("Warning in Pythia::init: "
+        "Central diffractive events not implemented for gamma + p/gamma");
+      settings.flag("SoftQCD:inelastic", false);
+      settings.flag("SoftQCD:nonDiffractive", true);
+      settings.flag("SoftQCD:singleDiffractive", true);
+      settings.flag("SoftQCD:doubleDiffractive", true);
+    }
+  }
 
   // Initialise merging hooks.
   if ( doMerging && (hasMergingHooks || hasOwnMergingHooks) ) {
@@ -921,13 +974,6 @@ bool Pythia::init() {
     return false;
   }
 
-  // Further checks for photon-photon events as not all features included yet.
-  if ( ( idA == 22 && idB == 22 ) && ( doDiffraction || doHardDiff ) ) {
-    info.errorMsg("Abort from Pythia::init: "
-      "Diffractive events not implemented for photon-photon collisions");
-    return false;
-  }
-
   // Do not set up beam kinematics when no process level.
   if (!doProcessLevel) boostType = 1;
   else {
@@ -961,12 +1007,20 @@ bool Pythia::init() {
       beamB.initUnres( pdfUnresBPtr);
 
     // Optionally set up new alternative beams for these Pomerons.
-    if ( doDiffraction || doHardDiff) {
+    if ( doDiffraction || doHardDiff ) {
       beamPomA.init( 990,  0.5 * eCM, 0.5 * eCM, 0., &info, settings,
         &particleData, &rndm, pdfPomAPtr, pdfPomAPtr, false, flavSelPtr);
       beamPomB.init( 990, -0.5 * eCM, 0.5 * eCM, 0., &info, settings,
         &particleData, &rndm, pdfPomBPtr, pdfPomBPtr, false, flavSelPtr);
     }
+
+    // Initialise VMD beams from gammas (in leptons). Use pion PDF for VMDs.
+    if (doVMDsideA)
+      beamVMDA.init( 111,  0.5 * eCM, 0.5 * eCM, 0., &info, settings,
+        &particleData, &rndm, pdfVMDAPtr, pdfVMDAPtr, false, flavSelPtr);
+    if (doVMDsideB)
+      beamVMDB.init( 111,  0.5 * eCM, 0.5 * eCM, 0., &info, settings,
+        &particleData, &rndm, pdfVMDBPtr, pdfVMDBPtr, false, flavSelPtr);
 
     // Optionally set up photon beams from lepton beams if resolved photons.
     if (beamHasGamma && gammaMode < 4) {
@@ -986,20 +1040,13 @@ bool Pythia::init() {
         beamGamB.initUnres( pdfUnresGamBPtr);
     }
 
-    // No diffraction for resolved photon+photon in e+e-.
-    if ( beamA.hasResGamma() || beamB.hasResGamma() ) {
-      if ( doDiffraction || doHardDiff ) {
-        info.errorMsg("Abort from Pythia::init: "
-          "Diffractive events not implemented for photon-photon collisions");
-        return false;
-      }
-    }
   }
 
   // Send info/pointers to process level for initialization.
   if ( doProcessLevel && !processLevel.init( &info, settings, &particleData,
-    &rndm, &beamA, &beamB, &beamGamA, &beamGamB, couplingsPtr, &sigmaTot,
-    doLHA, &slhaInterface, userHooksPtr, sigmaPtrs, phaseSpacePtrs) ) {
+    &rndm, &beamA, &beamB, &beamGamA, &beamGamB, &beamVMDA, &beamVMDB,
+    couplingsPtr, &sigmaTot, doLHA, &slhaInterface, userHooksPtr,
+    sigmaPtrs, phaseSpacePtrs) ) {
     info.errorMsg("Abort from Pythia::init: "
       "processLevel initialization failed");
     return false;
@@ -1016,9 +1063,9 @@ bool Pythia::init() {
   // Send info/pointers to parton level for initialization.
   if ( doPartonLevel && doProcessLevel && !partonLevel.init( &info, settings,
     &particleData, &rndm, &beamA, &beamB, &beamPomA, &beamPomB, &beamGamA,
-    &beamGamB, couplingsPtr, &partonSystems, &sigmaTot, timesDecPtr, timesPtr,
-    spacePtr, &rHadrons, userHooksPtr, mergingHooksPtr, partonVertexPtr,
-    false) ) {
+    &beamGamB, &beamVMDA, &beamVMDB, couplingsPtr, &partonSystems, &sigmaTot,
+    timesDecPtr, timesPtr, spacePtr, &rHadrons, userHooksPtr, mergingHooksPtr,
+    partonVertexPtr, false) ) {
     info.errorMsg("Abort from Pythia::init: "
       "partonLevel initialization failed" );
     return false;
@@ -1030,15 +1077,15 @@ bool Pythia::init() {
 
   // Alternatively only initialize final-state showers in resonance decays.
   if ( !doProcessLevel || !doPartonLevel) partonLevel.init( &info, settings,
-    &particleData, &rndm, 0, 0, 0, 0, 0, 0, couplingsPtr, &partonSystems, 0,
-    timesDecPtr, 0, 0, &rHadrons, 0, 0, partonVertexPtr, false);
+    &particleData, &rndm, 0, 0, 0, 0, 0, 0, 0, 0, couplingsPtr, &partonSystems,
+    0, timesDecPtr, 0, 0, &rHadrons, 0, 0, partonVertexPtr, false);
 
   // Send info/pointers to parton level for trial shower initialization.
   if ( doMerging && !trialPartonLevel.init( &info, settings, &particleData,
       &rndm, &beamA, &beamB, &beamPomA, &beamPomB, &beamGamA, &beamGamB,
-      couplingsPtr, &partonSystems, &sigmaTot, timesDecPtr, timesPtr,
-      spacePtr, &rHadrons, userHooksPtr, mergingHooksPtr, partonVertexPtr,
-      true) ) {
+      &beamVMDA, &beamVMDB, couplingsPtr, &partonSystems, &sigmaTot,
+      timesDecPtr, timesPtr, spacePtr, &rHadrons, userHooksPtr,
+      mergingHooksPtr, partonVertexPtr, true) ) {
     info.errorMsg("Abort from Pythia::init: "
       "trialPartonLevel initialization failed");
     return false;
@@ -1208,13 +1255,7 @@ bool Pythia::checkBeams() {
           " photons with lepton beams.");
         return false;
 
-      // No diffraction with photons.
-      } else if ( doDiffraction || doHardDiff ) {
-        info.errorMsg("Error from Pythia::init: "
-          "Diffractive events not implemented for photon-photon collisions");
-        return false;
       }
-
       // Otherwise photon-photon within lepton beams OK.
       else return true;
     }
@@ -1224,7 +1265,7 @@ bool Pythia::checkBeams() {
   }
 
   // MBR model only implemented for pp/ppbar/pbarp collisions.
-  int PomFlux     = settings.mode("Diffraction:PomFlux");
+  int PomFlux     = settings.mode("SigmaDiffractive:PomFlux");
   if (PomFlux == 5) {
     bool ispp       = (idAabs == 2212 && idBabs == 2212);
     bool ispbarpbar = (idA == -2212 && idB == -2212);
@@ -1263,12 +1304,6 @@ bool Pythia::checkBeams() {
         " photons.");
     }
 
-    else if ( doDiffraction || doHardDiff ) {
-      info.errorMsg("Error from Pythia::init: "
-        "Diffractive events not implemented for photon-photon collisions");
-      return false;
-    }
-
     // lepton2gamma flag with photon beams may cause problems.
     if (beamHasGamma) {
       info.errorMsg("Error in Pythia::init: lepton2gamma should be off for"
@@ -1281,9 +1316,8 @@ bool Pythia::checkBeams() {
   }
 
   // Gamma+hadron mode OK.
-  if ( (isGammaA && isHadronB) || (isGammaB && isHadronA) ) {
+  if ( (isGammaA && isHadronB) || (isGammaB && isHadronA) )
     return true;
-  }
 
   // Lepton-hadron collisions OK for DIS processes or LHEF input,
   // although still primitive. Also e+p with real photons.
@@ -1454,6 +1488,16 @@ bool Pythia::initPDFs() {
     useNewPdfUnresGamB = false;
     pdfUnresGamBPtr    = 0;
   }
+  if (useNewPdfVMDA) {
+    delete pdfVMDAPtr;
+    useNewPdfVMDA = false;
+    pdfVMDAPtr    = 0;
+  }
+  if (useNewPdfVMDB) {
+    delete pdfVMDBPtr;
+    useNewPdfVMDB = false;
+    pdfVMDBPtr    = 0;
+  }
 
   // Optionally set up photon PDF's for lepton -> gamma collisions. Done before
   // the main PDFs so that the gamma pointer can be used for the main PDF
@@ -1475,7 +1519,7 @@ bool Pythia::initPDFs() {
       }
 
       // Set up optional hard photon PDF pointers.
-      if (settings.flag("PDF:useHard")){
+      if (settings.flag("PDF:useHard")) {
         pdfHardGamAPtr = getPDFPtr(22, 2);
         if (!pdfHardGamAPtr->isSetup()) return false;
         useNewPdfHardGamA = true;
@@ -1495,7 +1539,7 @@ bool Pythia::initPDFs() {
       }
 
       // Set up optional hard photon PDF pointers.
-      if (settings.flag("PDF:useHard")){
+      if (settings.flag("PDF:useHard")) {
         pdfHardGamBPtr = getPDFPtr(22, 2, "B");
         if (!pdfHardGamBPtr->isSetup()) return false;
         useNewPdfHardGamB = true;
@@ -1600,6 +1644,18 @@ bool Pythia::initPDFs() {
     }
   }
 
+  // Optionally set up Pomeron PDF's for diffractive physics.
+  if ( doSoftQCD && (doVMDsideA || doVMDsideB)) {
+    if (pdfVMDAPtr == 0) {
+      pdfVMDAPtr    = getPDFPtr(111);
+      useNewPdfVMDA = true;
+    }
+    if (pdfVMDBPtr == 0) {
+      pdfVMDBPtr    = getPDFPtr(111);
+      useNewPdfVMDB = true;
+    }
+  }
+
   // Done.
   return true;
 
@@ -1673,6 +1729,8 @@ bool Pythia::next() {
   beamPomB.clear();
   beamGamA.clear();
   beamGamB.clear();
+  beamVMDA.clear();
+  beamVMDB.clear();
 
   // Pick current beam valence flavours (for pi0, K0S, K0L, Pomeron).
   beamA.newValenceContent();
@@ -1681,6 +1739,8 @@ bool Pythia::next() {
     beamPomA.newValenceContent();
     beamPomB.newValenceContent();
   }
+  if (doVMDsideA) beamVMDA.newValenceContent();
+  if (doVMDsideB) beamVMDB.newValenceContent();
 
   // Can only generate event if initialization worked.
   if (!isInit) {
@@ -1790,6 +1850,8 @@ bool Pythia::next() {
       beamPomB.clear();
       beamGamA.clear();
       beamGamB.clear();
+      beamVMDA.clear();
+      beamVMDB.clear();
       partonSystems.clear();
 
       // Parton-level evolution: ISR, FSR, MPI.
@@ -2316,7 +2378,7 @@ void Pythia::banner() {
        << " when interpreting results.           |  | \n"
        << " |  |                                        "
        << "                                      |  | \n"
-       << " |  |   Copyright (C) 2017 Torbjorn Sjostrand"
+       << " |  |   Copyright (C) 2018 Torbjorn Sjostrand"
        << "                                      |  | \n"
        << " |  |                                        "
        << "                                      |  | \n"
@@ -2458,6 +2520,7 @@ bool Pythia::check() {
       int colType = event[i].colType();
       int col     = event[i].col();
       int acol    = event[i].acol();
+      if ( event[i].statusAbs() / 10 == 8 ) acol = col = 0;
       if ( (colType ==  0 && (col  > 0 || acol  > 0))
         || (colType ==  1 && (col <= 0 || acol  > 0))
         || (colType == -1 && (col  > 0 || acol <= 0))
@@ -2751,9 +2814,14 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
   // Pion beam (or, in one option, Pomeron beam).
   else if (abs(idIn) == 211 || idIn == 111) {
     string piWord = settings.word("PDF:piSet" + beam);
+    if (piWord == "void" && beam == "B") piWord = settings.word("PDF:piSet");
     istringstream piStream(piWord);
     int piSet = 0;
     piStream >> piSet;
+
+    // If VMD process then scale PDF accordingly:
+    // f_a^VMD = alphaEM * (1/f_rho^2 + 1/f_omega^2 + 1/f_phi^2) * f_a^pi0.
+    double rescale = (doVMDsideA || doVMDsideB) ? 0.00402068 : 1.;
 
     // Use internal LHAgrid1 implementation for LHAPDF6 files.
     if (piSet == 0 && piWord.length() > 9
@@ -2764,7 +2832,7 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
     else if (piSet == 0) tempPDFPtr = new LHAPDF(idIn, piWord, &info);
 
     // Use internal set.
-    else if (piSet == 1) tempPDFPtr = new GRVpiL(idIn);
+    else if (piSet == 1) tempPDFPtr = new GRVpiL(idIn, rescale);
     else tempPDFPtr = 0;
   }
 
@@ -2807,14 +2875,15 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
     else if (pomSet > 6 && pomSet < 11)  {
       tempPDFPtr = new CTEQ6pdf( 990, pomSet + 4, rescale, xmlPath, &info);
       info.errorMsg("Warning: Pomeron flux parameters forced for ACTW PDFs");
-      settings.mode("Diffraction:PomFlux", 4);
+      settings.mode("SigmaDiffractive:PomFlux", 4);
       double pomFluxEps = (pomSet == 10) ? 0.19 : 0.14;
-      settings.parm("Diffraction:PomFluxEpsilon", pomFluxEps);
-      settings.parm("Diffraction:PomFluxAlphaPrime", 0.25);
+      settings.parm("SigmaDiffractive:PomFluxEpsilon", pomFluxEps);
+      settings.parm("SigmaDiffractive:PomFluxAlphaPrime", 0.25);
     }
-    else if ( pomSet == 11 ) {
+    else if (pomSet == 11 )
       tempPDFPtr = new PomHISASD(990, getPDFPtr(2212), settings, &info);
-    }
+    else if (pomSet == 12 || pomSet == 13)
+      tempPDFPtr = new LHAGrid1(idIn, "1" + pomWord, xmlPath, &info);
     else tempPDFPtr = 0;
   }
 
@@ -2828,8 +2897,10 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
     // Temporary pointer for storing proton PDF pointer.
     PDF* tempProtonPDFPtr = (beam == "B") ? pdfHardBPtr : pdfHardAPtr;
     if (nPDFSet == 0) tempPDFPtr = new Isospin(idIn, tempProtonPDFPtr);
-    if (nPDFSet == 1 || nPDFSet == 2) tempPDFPtr = new EPS09(idIn, nPDFSet, 1,
-      xmlPath, tempProtonPDFPtr, &info);
+    else if (nPDFSet == 1 || nPDFSet == 2)  tempPDFPtr = new EPS09(idIn,
+      nPDFSet, 1, xmlPath, tempProtonPDFPtr, &info);
+    else if (nPDFSet == 3) tempPDFPtr = new EPPS16(idIn, 1, xmlPath,
+      tempProtonPDFPtr, &info);
     else tempPDFPtr = 0;
   }
 

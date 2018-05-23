@@ -227,12 +227,12 @@ first two methods below, which are for internal use, the subsequent ones
 could also be used externally. 
  
 <a name="anchor1"></a>
-<p/><strong>CoupSM::CoupSM() &nbsp;</strong> <br/>
+<p/><strong> CoupSM::CoupSM() &nbsp;</strong> <br/>
 the constructor does nothing. Internal. 
    
  
 <a name="anchor2"></a>
-<p/><strong>void CoupSM::init(Settings& settings, Rndm* rndmPtr) &nbsp;</strong> <br/>
+<p/><strong> void CoupSM::init(Settings& settings, Rndm* rndmPtr) &nbsp;</strong> <br/>
 this is where the <code>AlphaStrong</code> and <code>AlphaEM</code> 
 instances are initialized, and weak couplings and the quark mixing matrix 
 are read in and set. This is based on the values stored on this page and 
@@ -242,82 +242,82 @@ Internal.
    
  
 <a name="anchor3"></a>
-<p/><strong>double CoupSM::alphaS(double scale2) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::alphaS(double scale2) &nbsp;</strong> <br/>
 the <i>alpha_strong</i> value at the quadratic scale <code>scale2</code>. 
    
  
 <a name="anchor4"></a>
-<p/><strong>double CoupSM::alphaS1Ord(double scale2) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::alphaS1Ord(double scale2) &nbsp;</strong> <br/>
 a first-order overestimate of the full second-order <i>alpha_strong</i> 
 value at the quadratic scale <code>scale2</code>. 
    
  
 <a name="anchor5"></a>
-<p/><strong>double CoupSM::alphaS2OrdCorr(double scale2) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::alphaS2OrdCorr(double scale2) &nbsp;</strong> <br/>
 a multiplicative correction factor, below unity, that brings the 
 first-order overestimate above into agreement with the full second-order 
 <i>alpha_strong</i> value at the quadratic scale <code>scale2</code>. 
    
  
 <a name="anchor6"></a>
-<p/><strong>double CoupSM::Lambda3() &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::Lambda3() &nbsp;</strong> <br/>
    
 <a name="anchor7"></a>
-<strong>double CoupSM::Lambda4() &nbsp;</strong> <br/>
+<strong> double CoupSM::Lambda4() &nbsp;</strong> <br/>
    
 <a name="anchor8"></a>
-<strong>double CoupSM::Lambda5() &nbsp;</strong> <br/>
+<strong> double CoupSM::Lambda5() &nbsp;</strong> <br/>
 the three-, four-, and five-flavour <i>Lambda</i> scale. 
    
  
 <a name="anchor9"></a>
-<p/><strong>double CoupSM::alphaEM(double scale2) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::alphaEM(double scale2) &nbsp;</strong> <br/>
 the <i>alpha_em</i> value at the quadratic scale <code>scale2</code>. 
    
  
 <a name="anchor10"></a>
-<p/><strong>double CoupSM::sin2thetaW() &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::sin2thetaW() &nbsp;</strong> <br/>
    
 <a name="anchor11"></a>
-<strong>double CoupSM::cos2thetaW() &nbsp;</strong> <br/>
+<strong> double CoupSM::cos2thetaW() &nbsp;</strong> <br/>
 the sine-squared and cosine-squared of the weak mixing angle, as used in 
 the gauge-boson sector. 
    
  
 <a name="anchor12"></a>
-<p/><strong>double CoupSM::sin2thetaWbar() &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::sin2thetaWbar() &nbsp;</strong> <br/>
 the sine-squared of the weak mixing angle, as used to derive the vector 
 couplings of fermions to the <i>Z^0</i>. 
    
  
 <a name="anchor13"></a>
-<p/><strong>double CoupSM::GF() &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::GF() &nbsp;</strong> <br/>
 the Fermi constant of weak decays, in GeV<i>^-2</i>. 
    
  
 <a name="anchor14"></a>
-<p/><strong>double CoupSM::ef(int idAbs) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::ef(int idAbs) &nbsp;</strong> <br/>
 the electrical charge of a fermion, by the absolute sign of the PDF code, 
 i.e. <code>idAbs</code> must be in the range between 1 and 18. 
    
  
 <a name="anchor15"></a>
-<p/><strong>double CoupSM::vf(int idAbs) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::vf(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor16"></a>
-<strong>double CoupSM::af(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::af(int idAbs) &nbsp;</strong> <br/>
 the vector and axial charges of a fermion, by the absolute sign of the PDF 
 code (<i>a_f = +-1, v_f = a_f - 4. * sin2thetaWbar * e_f</i>). 
    
  
 <a name="anchor17"></a>
-<p/><strong>double CoupSM::t3f(int idAbs) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::t3f(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor18"></a>
-<strong>double CoupSM::lf(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::lf(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor19"></a>
-<strong>double CoupSM::rf(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::rf(int idAbs) &nbsp;</strong> <br/>
 the weak isospin, left- and righthanded charges of a fermion, by the 
 absolute sign of the PDF code (<i>t^3_f = a_f/2, l_f = (v_f + a_f)/2, 
 r_f = (v_f - a_f)/2</i>; you may find other conventions in the literature 
@@ -325,28 +325,28 @@ that differ by a factor of 2).
    
  
 <a name="anchor20"></a>
-<p/><strong>double CoupSM::ef2(int idAbs) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::ef2(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor21"></a>
-<strong>double CoupSM::vf2(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::vf2(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor22"></a>
-<strong>double CoupSM::af2(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::af2(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor23"></a>
-<strong>double CoupSM::efvf(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::efvf(int idAbs) &nbsp;</strong> <br/>
    
 <a name="anchor24"></a>
-<strong>double CoupSM::vf2af2(int idAbs) &nbsp;</strong> <br/>
+<strong> double CoupSM::vf2af2(int idAbs) &nbsp;</strong> <br/>
 common quadratic combinations of the above couplings: 
 <i>e_f^2, v_f^2, a_f^2, e_f * v_f, v_f^2 + a_f^2</i>. 
    
  
 <a name="anchor25"></a>
-<p/><strong>double CoupSM::VCKMgen(int genU, int genD) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::VCKMgen(int genU, int genD) &nbsp;</strong> <br/>
    
 <a name="anchor26"></a>
-<strong>double CoupSM::V2CKMgen(int genU, int genD) &nbsp;</strong> <br/>
+<strong> double CoupSM::V2CKMgen(int genU, int genD) &nbsp;</strong> <br/>
 the CKM mixing element,or the square of it, for 
 up-type generation index <code>genU</code> 
 (<i>1 = u, 2 = c, 3 = t, 4 = t'</i>) and 
@@ -355,10 +355,10 @@ down-type generation index <code>genD</code>
    
  
 <a name="anchor27"></a>
-<p/><strong>double CoupSM::VCKMid(int id1, int id2) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::VCKMid(int id1, int id2) &nbsp;</strong> <br/>
    
 <a name="anchor28"></a>
-<strong>double CoupSM::V2CKMid(int id1, int id2) &nbsp;</strong> <br/>
+<strong> double CoupSM::V2CKMid(int id1, int id2) &nbsp;</strong> <br/>
 the CKM mixing element,or the square of it, for 
 flavours <code>id1</code> and <code>id2</code>, both in the 
 range from <i>-18</i> to <i>+18</i>. The sign is here not 
@@ -369,7 +369,7 @@ eigenstates, so there is no mixing in the lepton-neutrino system.
    
  
 <a name="anchor29"></a>
-<p/><strong>double CoupSM::V2CKMsum(int id) &nbsp;</strong> <br/>
+<p/><strong> double CoupSM::V2CKMsum(int id) &nbsp;</strong> <br/>
 the sum of squared CKM mixing element that a given flavour can couple to, 
 excluding the top quark and fourth generation. Is close to unity 
 for the first two generations. Returns unity for the lepton-neutrino 
@@ -377,7 +377,7 @@ sector.
    
  
 <a name="anchor30"></a>
-<p/><strong>int CoupSM::V2CKMpick(int id) &nbsp;</strong> <br/>
+<p/><strong> int CoupSM::V2CKMpick(int id) &nbsp;</strong> <br/>
 picks a random CKM partner quark or lepton (with the same sign as 
 <code>id</code>) according to the respective squared elements, again 
 excluding the top quark and fourth generation from the list of 
@@ -481,4 +481,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

@@ -94,6 +94,75 @@ your <code>PythiaStdlib.h</code> file:
 </pre> 
  
 <br/><br/><hr/> 
+<h3>Storing partial PYTHIA events in ROOT trees</h3> 
+ 
+Instead of storing full PYTHIA events in ROOT trees, a common user case 
+is to store only track information relevant to a particular analysis. 
+The resulting ROOT trees will then be what is often referred to as 
+"n-tuples". 
+The advantage of this over the above method is a significant reduction 
+of disk space used, as well as the possibility to construct trees 
+resembling those familiar from the experiments' central MC production. 
+ 
+The <code>examples/main93</code> example provides this - among other - 
+functionality. As for the above example, it is split up in several 
+files. 
+<ul> 
+  <li><code>main93.cc</code> is the main example program;</li> 
+  <li><code>main93.cmnd</code> is a sample input command file;</li> 
+  <li><code>main93LinkDef.h</code> is used by Makefile to generate the 
+  dictionary for only the used PYTHIA classes involved in the IO, for 
+  the example; and</li> 
+  <li><code>main93.h</code> defines a "track" and an "event" class where 
+  relevant event -and track information is defined.</li> 
+</ul> 
+ 
+<h4>Compiling the example</h4> 
+ 
+The <code>main93</code> example is compatible with ROOT v.6 and above. 
+One should have a working installation of ROOT, and then configure PYTHIA 
+with: 
+<pre> 
+    ./configure --with-root=root-installation-directory 
+</pre> 
+One can then compile <code>main93</code> with the usual: 
+<pre> 
+    make main93 
+</pre> 
+provided that all ROOT paths are set correctly by eg. running: 
+<pre> 
+    source root-installation-directory/bin/thisroot.sh 
+</pre> 
+ 
+<h4>Running the example</h4> 
+ 
+The <code>main93</code> example can be run with several command line options. 
+Running: 
+<pre> 
+    ./main93 -h 
+</pre> 
+will display a help text showing these options. 
+To produce events, the user needs to supply a command file with option 
+<code>-c COMMAND-FILE.cmnd</code>. The example command file 
+<code>main93.cmnd</code> is a good starting point. The crucial command to 
+output ROOT trees is to set <code>Main:writeROOT = on</code>. 
+ 
+The ROOT file will be named <code>pythia.root</code> per default. This can 
+be changed by appending <code>-o ONAME</code> on the command line. 
+ 
+<h4>Changing the event information</h4> 
+ 
+The header file <code>main93.h</code> defines a simple event class and track 
+class, which in turn defines the information stored to the tree. If a user 
+wants to change this, either by adding more track information or imposing 
+cuts corresponding to detector acceptance (thus reducing the file size), 
+this can be done directly in this header file. Both the track class and the 
+event class has <code>init</code> functions returning a boolean value, and 
+by returning <code>false</code>, the track/event is rejected. 
+The <code>main93</code> example must be recompiled after making any changes to 
+the header file. 
+ 
+<br/><br/><hr/> 
 <h3>PYTHIA as a plugin to ROOT</h3> 
  
 In more ROOT-centric applications, PYTHIA can be run as a ROOT plug-in. 
@@ -265,4 +334,4 @@ functionality, e.g. in an interactive session
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

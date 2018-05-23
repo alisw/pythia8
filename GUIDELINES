@@ -1,5 +1,5 @@
 
-               MCNET GUIDELINES
+              MCNET GUIDELINES
 
       for Event Generator Authors and Users
 
@@ -21,10 +21,11 @@ context requires full availability of all source code, to further
 progress and to allow local modifications to meet the specific
 requirements of the individual user.
 
-Therefore we have decided to release this program under the
-GNU General Public License (GPL) version 2. This ensures
-that the source code will be available to you and grants you the
-freedom to use and modify the program. You can redistribute your
+Therefore we have decided to release this program under the GNU
+General Public License (GPL) version 2 (with the option to instead
+follow the terms and conditions of any later version of GPL). This
+ensures that the source code will be available to you and grants you
+the freedom to use and modify the program. You can redistribute your
 modified versions as long as you retain the GPL and respect existing
 copyright notices (see the file 'COPYING' for details).
 
@@ -96,7 +97,7 @@ Enquiries regarding the guidelines and related issues are encouraged
 and should be directed to the authors of the program.
 
 Please note that the program, including all its code and documentation,
-is intended for academic use and is delivered "as is" to be used at 
+is intended for academic use and is delivered "as is" to be used at
 your own risk, without any guarantees.
 
 ----------------------------------------------------------------------
@@ -105,4 +106,3 @@ These guidelines were edited by Nils Lavesson and David Grellscheid
 for the MCnet collaboration, which has approved and agreed to respect
 them.  MCnet is a Marie Curie Research Training Network funded under
 Framework Programme 6 contract MRTN-CT-2006-035606.
-

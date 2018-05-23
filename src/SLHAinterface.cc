@@ -1,7 +1,7 @@
 // SLHAinterface.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
+// Copyright (C) 2018 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 #include "Pythia8/SLHAinterface.h"
@@ -372,7 +372,7 @@ bool SLHAinterface::initSLHA(Settings& settings,
   // Import mass spectrum.
   bool   keepSM            = settings.flag("SLHA:keepSM");
   double minMassSM         = settings.parm("SLHA:minMassSM");
-  vector<int> idModified;
+  map<int,bool> idModified;
   if (ifailSpc == 1 || ifailSpc == 0) {
 
     // Start at beginning of mass array
@@ -400,8 +400,16 @@ bool SLHAinterface::initSLHA(Settings& settings,
         ignoreMassM0.push_back(id);
       else {
         particleDataPtr->m0(id,mass);
-        idModified.push_back(id);
+        idModified[id] = true;
         importMass.push_back(id);
+        // If the mMin and mMax cutoffs on Breit-Wigner tails were not already
+        // set by user, set default bounds to at most m0 +- m0/2.
+        // Treat these values as new defaults: do not set hasChanged flags.
+        // Note: tighter bounds may apply if a width is given later; see below.
+        if (!particleDataPtr->hasChangedMMin(id))
+          particleDataPtr->findParticle(id)->setMMinNoChange( mass/2. );
+        if (!particleDataPtr->hasChangedMMax(id))
+          particleDataPtr->findParticle(id)->setMMaxNoChange( 3.*mass/2. );
       }
     };
     // Give summary of any imported/ignored MASS entries, and state reason
@@ -413,8 +421,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
         if (i != 0) idImport +=",";
         idImport += idCode.str();
       }
-      infoPtr->errorMsg(infoPref + "importing MASS entries","for id = ["
-        + idImport + "]", true);
+      infoPtr->errorMsg(infoPref + "importing MASS entries","for id = {"
+        + idImport + "}", true);
     }
     if (ignoreMassKeepSM.size() >= 1) {
       string idIgnore;
@@ -424,8 +432,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
         if (i != 0) idIgnore +=",";
         idIgnore += idCode.str();
       }
-      infoPtr->errorMsg(warnPref + "ignoring MASS entries", "for id = ["
-        + idIgnore + "]"
+      infoPtr->errorMsg(warnPref + "ignoring MASS entries", "for id = {"
+        + idIgnore + "}"
         + " (SLHA:keepSM. Use id > 1000000 for new particles)", true);
     }
     if (ignoreMassM0.size() >= 1) {
@@ -436,8 +444,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
         if (i != 0) idIgnore +=",";
         idIgnore += idCode.str();
       }
-      infoPtr->errorMsg(warnPref + "ignoring MASS entries", "for id = ["
-        + idIgnore + "]" + " (m0 < SLHA:minMassSM)", true);
+      infoPtr->errorMsg(warnPref + "ignoring MASS entries", "for id = {"
+        + idIgnore + "}" + " (m0 < SLHA:minMassSM)", true);
     }
   }
 
@@ -485,6 +493,21 @@ bool SLHAinterface::initSLHA(Settings& settings,
       widRes = 0.0;
     }
     particlePtr->setMWidth(widRes);
+    // If the mMin and mMax cutoffs on Breit-Wigner tails were not already
+    // set by user, set default values for them to 5*width though at most m0/2.
+    // Treat these values as defaults, ie do not set hasChanged flags.
+    // (After all channels have been read in, we also check that mMin is
+    // high enough to allow at least one channel to be on shell; see below.)
+    if (!particlePtr->hasChangedMMin()) {
+      double m0   = particlePtr->m0();
+      double mMin = m0 - min(5*widRes , m0/2.);
+      particlePtr->setMMinNoChange(mMin);
+    }
+    if (!particlePtr->hasChangedMMax()) {
+      double m0   = particlePtr->m0();
+      double mMax = m0 + min(5*widRes , m0/2.);
+      particlePtr->setMMaxNoChange(mMax);
+    }
 
     // Set lifetime in mm for displaced vertex calculations
     // (convert GeV^-1 to mm)
@@ -509,10 +532,6 @@ bool SLHAinterface::initSLHA(Settings& settings,
       particleDataPtr->mayDecay(idRes,false);
       particleDataPtr->isResonance(idRes,false);
     }
-
-    // Set initial minimum mass.
-    double brWTsum   = 0.;
-    double massWTsum = 0.;
 
     // Loop over SLHA channels, import into Pythia, treating channels
     // with negative branching fractions as having the equivalent positive
@@ -567,9 +586,6 @@ bool SLHAinterface::initSLHA(Settings& settings,
             }
           }
         }
-        // Branching-ratio-weighted average mass in decay.
-        brWTsum   += abs(brat);
-        massWTsum += abs(brat) * massSum;
 
         // Add channel
         int id0 = idDa[0];
@@ -586,15 +602,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
       }
     }
 
-    // Set minimal mass, but always below nominal one.
-    if (slhaTable->size() > 0) {
-      double massAvg = massWTsum / brWTsum;
-      double massMin = min( massAvg, particlePtr->m0()) ;
-      particlePtr->setMMin(massMin);
-    }
-
     // Add to list of particles that have been modified
-    idModified.push_back(idRes);
+    idModified[idRes]=true;
 
   }
 
@@ -607,8 +616,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
       if (i != 0) idImport +=",";
       idImport += idCode.str();
     }
-    infoPtr->errorMsg(infoPref + "importing DECAY tables","for id = ["
-      + idImport + "]", true);
+    infoPtr->errorMsg(infoPref + "importing DECAY tables","for id = {"
+      + idImport + "}", true);
   }
   if (ignoreDecayKeepSM.size() >= 1) {
     string idIgnore;
@@ -618,8 +627,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
       if (i != 0) idIgnore +=",";
       idIgnore += idCode.str();
     }
-    infoPtr->errorMsg(warnPref + "ignoring DECAY tables", "for id = ["
-      + idIgnore + "]"
+    infoPtr->errorMsg(warnPref + "ignoring DECAY tables", "for id = {"
+      + idIgnore + "}"
       + " (SLHA:keepSM. Use id > 1000000 for new particles)", true);
   }
   if (ignoreDecayM0.size() >= 1) {
@@ -630,8 +639,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
       if (i != 0) idIgnore +=",";
       idIgnore += idCode.str();
     }
-    infoPtr->errorMsg(warnPref + "ignoring DECAY tables", "for id = ["
-      + idIgnore + "]" + " (m0 < SLHA:minMassSM)", true);
+    infoPtr->errorMsg(warnPref + "ignoring DECAY tables", "for id = {"
+      + idIgnore + "}" + " (m0 < SLHA:minMassSM)", true);
   }
   if (ignoreDecayBR.size() >= 1) {
     string idIgnore;
@@ -641,14 +650,16 @@ bool SLHAinterface::initSLHA(Settings& settings,
       if (i != 0) idIgnore +=",";
       idIgnore += idCode.str();
     }
-    infoPtr->errorMsg(warnPref + "ignoring empty DECAY tables", "for id = ["
-      + idIgnore + "]" + " (total width provided but no Branching Ratios)",
+    infoPtr->errorMsg(warnPref + "ignoring empty DECAY tables", "for id = {"
+      + idIgnore + "}" + " (total width provided but no Branching Ratios)",
       true);
   }
 
   // Sanity check of all decay tables with modified MASS or DECAY info
-  for (int iMod = 0; iMod < int(idModified.size()); ++iMod) {
-    int id = idModified[iMod];
+  map<int,bool>::iterator it;
+  for (it=idModified.begin(); it!=idModified.end(); ++it) {
+    int id = it->first;
+    if (idModified[id] == false) continue;
     ostringstream idCode;
     idCode << id;
     ParticleDataEntry* particlePtr
@@ -699,11 +710,9 @@ bool SLHAinterface::initSLHA(Settings& settings,
           " id = " + idCode.str() , true);
       }
       else {
-      // mMin: lower cutoff on Breit-Wigner: default is mMin = m0 - 5*Gamma
-      // (User is allowed to specify a lower value if desired.)
-      // Increase minimum if needed to ensure at least one channel on shell
-        double mMin = min(particlePtr->mMin(), max(0.0,m0 - 5.*wid));
-        mMin = max(mSumMin,mMin);
+        // mMin: lower cutoff on Breit-Wigner; see above.
+        // Increase minimum if needed to ensure at least one channel on shell
+        double mMin = max(mSumMin, particlePtr->mMin());
         particlePtr->setMMin(mMin);
       }
     }

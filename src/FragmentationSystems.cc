@@ -1,6 +1,6 @@
 // FragmentationSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -429,9 +429,76 @@ const double StringRegion::TINY  = 1e-20;
 
 //--------------------------------------------------------------------------
 
+// Calculate offset of the region due to presence of gluons from parton list.
+
+Vec4 StringRegion::gluonOffset(vector<int>& iSys, Event& event, int iPos,
+  int iNeg) {
+
+  // Half sum of all intervening gluon momenta.
+  Vec4 offset = Vec4(0., 0., 0., 0.);
+  for (int i = iPos + 1; i < int(iSys.size()) - iNeg - 1; ++i)
+    offset += 0.5 * event[ iSys[i] ].p();
+
+  return offset;
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate offset when calculation needed in junction rest frame.
+
+Vec4 StringRegion::gluonOffsetJRF(vector<int>& iSys, Event& event, int iPos,
+  int iNeg, RotBstMatrix MtoJRF) {
+
+  // Half sum of all intervening gluon momenta, boosted to junction rest frame.
+  Vec4 offset = Vec4( 0., 0., 0., 0.);
+  for (int i = iPos + 1; i < int(iSys.size()) - iNeg; ++i) {
+    Vec4 pGluon = event[ iSys[i] ].p();
+    pGluon.rotbst( MtoJRF );
+    if(pGluon.m2Calc() < -1e-8)  pGluon.e( pGluon.pAbs() );
+    offset += 0.5 * pGluon;
+  }
+
+  return offset;
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate offset if system contains c or b quarks, where the location of
+// energy-momentum-picture breakup points in the initial regions are shifted
+// with respect to the origin, to be removed for the space-time vertices.
+
+bool StringRegion::massiveOffset( int iPos, int iNeg, int iMax,
+  int id1, int id2, double mc, double mb) {
+
+  // Done if not in either of endpoint regions or no massive endpoint quark.
+  massOffset  = Vec4( 0., 0., 0., 0.);
+  if (iPos + iNeg != iMax) return false;
+  bool idcb1 = (iPos == 0 && (id1 == 4 || id1 == 5));
+  bool idcb2 = (iNeg == 0 && (id2 == 4 || id2 == 5));
+  if (!idcb1 && !idcb2) return false;
+
+  // Calculate the offset of initial-region massive endpoint quark.
+  double posMass2 = (idcb1) ? ((id1 == 4) ? pow2(mc) : pow2(mb)) : 0.;
+  double negMass2 = (idcb2) ? ((id2 == 4) ? pow2(mc) : pow2(mb)) : 0.;
+  double eCM      = (pPosMass + pNegMass).mCalc();
+  double ePosMass = 0.5 * (pow2(eCM) + posMass2 - negMass2) / eCM;
+  double eNegMass = 0.5 * (pow2(eCM) + negMass2 - posMass2) / eCM;
+  double p0       = 0.5 * sqrt( pow2(pow2(eCM) - negMass2 - posMass2)
+                  - 4. * negMass2 * posMass2) / eCM;
+  massOffset      = ((eNegMass - p0) * pPos + (ePosMass - p0) * pNeg) / eCM;
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
 // Set up four-vectors for longitudinal and transverse directions.
 
 void StringRegion::setUp(Vec4 p1, Vec4 p2, bool isMassless) {
+
+  // Store the original four-momenta; needed for the massive-quark case.
+  pPosMass = p1;
+  pNegMass = p2;
 
   // Simple case: the two incoming four-vectors guaranteed massless.
   if (isMassless) {

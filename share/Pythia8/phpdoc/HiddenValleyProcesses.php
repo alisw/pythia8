@@ -36,7 +36,7 @@ the normal timelike showering machinery has been expanded with a
 third kind of radiation, in addition to the QCD and QED ones. 
 These three kinds of radiation are fully interleaved, i.e. 
 evolution occurs in a common <i>pT</i>-ordered sequence. 
-The scenario is described in [<a href="Bibliography.php#refCar10" target="page">Car10</a>]. Furthermore 
+The scenario is described in [<a href="Bibliography.php#refCar10" target="page">Car10</a>]. Further 
 hadronization in the hidden sector has been implemented. 
 Three main scenarios for production into and decay out of the 
 hidden sector can be compared, in each case either for an 
@@ -508,7 +508,7 @@ hidden sector.
 <p/> 
 The first possibility is relevant for the <b>U(1)</b> scenario. 
 The <b>U(1)</b> group may be broken, so that the <i>gammav</i> 
-acquires a mass. Furthermore, the <i>gammav</i> may have a 
+acquires a mass. Further, the <i>gammav</i> may have a 
 small mixing angle with the normal photon, or with some <i>Z'</i> 
 state or other mediator, and may thus decay back into Standard 
 Model particles. The <i>qv</i> still escapes undetected; 
@@ -573,7 +573,7 @@ two different kinds of HV-mesons, here labeled 4900111 and 4900113
 for the diagonal ones, and +-4900211 and +-4900213 for the 
 off-diagonal ones. It makes sense to set the HV-meson masses to be 
 twice the <i>qv</i> one, as in a simple constituent mass context. 
-Furthermore the <i>hvMesonDiag</i> decay modes need to be set up. 
+Further the <i>hvMesonDiag</i> decay modes need to be set up. 
 Like with the 
 <i>gammav</i> in the <b>U(1)</b> option, the default decay table 
 is based on the branching ratios of an off-shell photon. 
@@ -878,4 +878,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

@@ -362,7 +362,7 @@ axial coupling of leptons.
  
 <p/> 
 The coupling to the decay channel <i>W'^+- &rarr; W^+- Z^0</i> is 
-more model-dependent, like for <i>Z'^0 &rarr; W^+ W^-</i> described 
+ model-dependent, like for <i>Z'^0 &rarr; W^+ W^-</i> described 
 above. By default it is therefore off, but can be 
 switched on as follows. Furthermore, we have left some amount of 
 freedom in the choice of decay angular correlations in this 
@@ -676,4 +676,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

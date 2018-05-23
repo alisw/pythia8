@@ -1,6 +1,6 @@
 // ProcessContainer.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the collected machinery of a process.
@@ -52,7 +52,7 @@ public:
   // Initialize phase space and counters.
   bool init(bool isFirst, Info* infoPtrIn, Settings& settings,
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, BeamParticle* beamAPtr,
-    BeamParticle* beamBPtr, Couplings* couplings, SigmaTotal* sigmaTotPtr,
+    BeamParticle* beamBPtr, Couplings* couplings, SigmaTotal* sigmaTotPtrIn,
     ResonanceDecays* resDecaysPtrIn, SLHAinterface* slhaInterfacePtr,
     UserHooks* userHooksPtr, GammaKinematics* gammaKinPtrIn);
 
@@ -96,12 +96,17 @@ public:
   // Method propagates the choice of photon process type to beam pointers.
   void setBeamModes();
 
+  // If resolved photons, then choose VMD states. Method propagates
+  // states to beam pointers and info pointer.
+  pair<int, int> chooseVMDstates(int idA, int idB);
+
   // Process name and code, and the number of final-state particles.
   string name()             const {return sigmaProcessPtr->name();}
   int    code()             const {return sigmaProcessPtr->code();}
   int    nFinal()           const {return sigmaProcessPtr->nFinal();}
   bool   isSUSY()           const {return sigmaProcessPtr->isSUSY();}
   bool   isNonDiffractive() const {return isNonDiff;}
+  bool   isSoftQCD()        const {return (code() > 100 && code() < 107);}
 
   // Member functions for info on generation process.
   bool   newSigmaMax() const {return newSigmaMx;}
@@ -165,6 +170,9 @@ private:
   // Pointer to ResonanceDecays object for sequential resonance decays.
   ResonanceDecays* resDecaysPtr;
 
+  // Pointer to SigmaTotal.
+  SigmaTotal* sigmaTotPtr;
+
   // Pointer to userHooks object for user interaction with program.
   UserHooks*       userHooksPtr;
 
@@ -184,7 +192,8 @@ private:
   double mRecalculate, mNewM[9];
 
   // Info on process.
-  bool   isLHA, isNonDiff, isResolved, isDiffA, isDiffB, isDiffC, isQCD3body,
+  bool   isLHA, isNonDiff, isResolved, isDiffA, isDiffB, isDiffC,
+         isDiff, isSingleDiff, isDoubleDiff, isCentralDiff, isQCD3body,
          allowNegSig, isSameSave, increaseMaximum, canVetoResDecay;
   int    lhaStrat, lhaStratAbs;
   bool   useStrictLHEFscales;

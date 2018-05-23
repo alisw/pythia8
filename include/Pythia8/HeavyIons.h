@@ -1,6 +1,6 @@
 // HeavyIons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the definition of the HeavyIons class which
@@ -64,6 +64,11 @@ public:
   /// Return true if the beams in the Primary Pythia object contains
   /// heavy ions.
   static bool isHeavyIon(Settings & settings);
+
+  /// Possibility to pass in pointer for special heavy ion user hooks.
+  bool setHIUserHooksPtr(HIUserHooks * userHooksPtrIn) {
+    HIHooksPtr = userHooksPtrIn; return true;
+  }
 
 protected:
 
@@ -157,11 +162,6 @@ public:
   virtual bool next();
 
 
-  /// Possibility to pass in pointer for special heavy ion user hooks.
-  bool setHIUserHooksPtr(HIUserHooks * userHooksPtrIn) {
-    HIHooksPtr = userHooksPtrIn; return true;
-  }
-
   /// Set UserHooks for specific (or ALL) internal Pythia objects.
   bool setUserHooksPtr(PythiaObject sel, UserHooks * userHooksPtrIn);
 
@@ -173,6 +173,7 @@ protected:
   /// Generate events from the internal Pythia oblects;
   EventInfo getSignal(const SubCollision & coll);
   EventInfo getND() { return getMBIAS(0, 101); }
+  EventInfo getND(const SubCollision & coll) { return getMBIAS(&coll, 101); }
   EventInfo getEl(const SubCollision & coll) { return getMBIAS(&coll, 102); }
   EventInfo getSDP(const SubCollision & coll) { return getMBIAS(&coll, 103); }
   EventInfo getSDT(const SubCollision & coll) { return getMBIAS(&coll, 104); }
@@ -242,7 +243,7 @@ private:
   // Private UserHooks class to select a specific process.
   struct ProcessSelectorHook: public UserHooks {
 
-    ProcessSelectorHook(): proc(0) {}
+    ProcessSelectorHook(): proc(0), b(-1.0) {}
 
     // Yes we can veto event after process-level selection.
     virtual bool canVetoProcessLevel() {
@@ -254,29 +255,51 @@ private:
       return proc > 0 && infoPtr->code() != proc;
     }
 
+    // Can set the overall impact parameter for the MPI treatment.
+    virtual bool canSetImpactParameter() const {
+      return b >= 0.0;
+    }
+
+    // Set the overall impact parameter for the MPI treatment.
+    virtual double doSetImpactParameter() {
+      return b;
+    }
+
     // The wanted process;
     int proc;
+
+    // The selected b-value.
+    double b;
+
   };
 
   // Holder class to temporarily select a specific process
   struct HoldProcess {
 
     // Set the given process for the given hook object.
-    HoldProcess(ProcessSelectorHook & hook, int proc)
-      : saveHook(&hook), saveProc(hook.proc) {
+    HoldProcess(ProcessSelectorHook & hook, int proc, double b = -1.0)
+      : saveHook(&hook), saveProc(hook.proc), saveB(hook.b) {
       hook.proc = proc;
+      hook.b = b;
     }
 
     // Reset the process of the hook object given in the constructor.
     ~HoldProcess() {
-      if ( saveHook ) saveHook->proc = saveProc;
+      if ( saveHook ) {
+        saveHook->proc = saveProc;
+        saveHook->b = saveB;
+      }
     }
 
     // The hook object.
     ProcessSelectorHook * saveHook;
 
-    // The previous process of the hook object;
+    // The previous process of the hook object.
     int saveProc;
+
+    // The previous b-value of the hook object.
+    double saveB;
+
   };
 
   // The process selector for standard minimum bias processes.
@@ -289,6 +312,13 @@ private:
 
   static const int MAXTRY = 999;
   static const int MAXEVSAVE = 999;
+
+  /// Projectile and target nucleons for current collision.
+  vector<Nucleon> projectile;
+  vector<Nucleon> target;
+
+  /// All subcollisions in current collision.
+  multiset<SubCollision> subColls;
 
   /// Flag set if there is a specific signal process specified beyond
   /// minimum bias.
@@ -309,6 +339,9 @@ private:
   /// Different choices in choosing recoilers when adding
   /// diffractively excited nucleon.
   int recoilerMode;
+
+  /// Different choices for handling impact parameters.
+  int bMode;
 
 public:
 

@@ -1,6 +1,6 @@
 // FragmentationSystems.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains auxiliary classes in the fragmentation process.
@@ -8,6 +8,7 @@
 // ColConfig describes the colour configuration of the whole event.
 // StringRegion keeps track on string momenta and directions.
 // StringSystem contains all the StringRegions of the colour singlet.
+// StringVertex contains information on space-time location of string breaks.
 
 #ifndef Pythia8_FragmentationSystems_H
 #define Pythia8_FragmentationSystems_H
@@ -130,7 +131,7 @@ class StringRegion {
 public:
 
   // Constructor.
-  StringRegion() : isSetUp(false), isEmpty(true), w2(0.), xPosProj(0.), 
+  StringRegion() : isSetUp(false), isEmpty(true), w2(0.), xPosProj(0.),
     xNegProj(0.), pxProj(0.), pyProj(0.) {}
 
   // Constants: could only be changed in the code itself.
@@ -138,8 +139,17 @@ public:
 
   // Data members.
   bool   isSetUp, isEmpty;
-  Vec4   pPos, pNeg, eX, eY;
+  Vec4   pPos, pNeg, eX, eY, pPosMass, pNegMass, massOffset;
   double w2, xPosProj, xNegProj, pxProj, pyProj;
+
+  // Calculate offset of the region from parton list. Special junction case.
+  Vec4 gluonOffset(vector<int>& iSys, Event& event, int iPos, int iNeg);
+  Vec4 gluonOffsetJRF(vector<int>& iSys, Event& event, int iPos, int iNeg,
+    RotBstMatrix MtoJRF);
+
+  // If massive case, the offset of the initial regions is calculated.
+  bool massiveOffset(int iPos, int iNeg, int iMax, int id1, int id2,
+    double mc, double mb);
 
   // Set up four-vectors for longitudinal and transverse directions.
   void setUp(Vec4 p1, Vec4 p2, bool isMassless = false);
@@ -193,6 +203,36 @@ public:
   // Other data members.
   int    sizePartons, sizeStrings, sizeRegions, indxReg, iMax;
   double mJoin, m2Join;
+
+};
+
+//==========================================================================
+
+// The StringVertex class contains the space-time vertex location information
+// stored during the fragmentation process. No private members.
+
+class StringVertex {
+
+public:
+
+  // Constructors.
+  StringVertex(bool fromPosIn = true, int iRegPosIn = 0,
+    int iRegNegIn = 0, double xRegPosIn = 0., double xRegNegIn = 0.)
+    : fromPos(fromPosIn), iRegPos(iRegPosIn), iRegNeg(iRegNegIn),
+    xRegPos(xRegPosIn), xRegNeg(xRegNegIn) { }
+
+  StringVertex(const StringVertex& v): fromPos(v.fromPos),
+    iRegPos(v.iRegPos), iRegNeg(v.iRegNeg),
+    xRegPos(v.xRegPos), xRegNeg(v.xRegNeg) { }
+
+  StringVertex& operator = (const StringVertex& v) {if (this != &v)
+    {fromPos = v.fromPos; iRegPos = v.iRegPos; iRegNeg = v.iRegNeg;
+    xRegPos = v.xRegPos; xRegNeg = v.xRegNeg;} return *this; }
+
+  // Variable members.
+  bool fromPos;
+  int iRegPos, iRegNeg;
+  double xRegPos, xRegNeg;
 
 };
 

@@ -208,7 +208,7 @@ produce the beam remnants. The starting point is the junction structure of the
 beam particle (if it is a baryon). The gluons are attached to a quark line and 
 quark-antiquark pairs are added as if coming from a gluon splittings. Thus 
 this model captures the qualitative behaviour that is expected from leading 
-colour QCD. The model is described in more detail in [<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>]. 
+colour QCD. The model is described in  detail in [<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>]. 
  
 <p/> 
 The new model is built on the full SU(3) colour structure of QCD. The 
@@ -490,4 +490,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

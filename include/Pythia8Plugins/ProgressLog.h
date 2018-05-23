@@ -1,3 +1,8 @@
+// ProgressLog.h is a part of the PYTHIA event generator.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
 #ifndef PROGRESSLOG_H
 #define PROGRESSLOG_H
 
@@ -20,27 +25,25 @@ class ProgressLog {
 
 public:
 
-  /// Create an object for minitoring the progress of a run with NIn
-  /// iterations
-  ProgressLog(long NIn)
-  : secstep(0) {
+  // Create an object for monitoring the progress of a run with NIn iterations.
+  ProgressLog( long NIn, int maxsec = 1200) : secstep(maxsec) {
     init(NIn);
   }
 
-  /// Itermittently write out a line of progress information, giving
-  /// the current iteration (in the interval [0:N[ ).
+  // Intermittently write out a line of progress information, giving
+  // the current iteration (in the interval [0:N[ ).
   void operator()(int cnt) {
     tick(cnt + 1, N);
   }
 
-  /// Itermittently write out a line of progress information using the
-  /// internal counter.
+  // Intermittently write out a line of progress information using the
+  // internal counter.
   void operator()() {
     tick(++count, N);
   }
 
-  /// Itermittently write out a line of progress information giving
-  /// the current iteration and the total number of iterations.
+  // Intermittently write out a line of progress information giving
+  // the current iteration and the total number of iterations.
   void tick(long i, long n) {
     if ( !statusTime(i, n) ) return;
 
@@ -97,7 +100,7 @@ public:
 
   }
 
-  /// Interface to the system time information.
+  // Interface to the system time information.
   double fclock() {
     struct tms tmsbuf;
     times(&tmsbuf);
@@ -172,7 +175,6 @@ private:
   long count;
 
 };
-
 
 }
 

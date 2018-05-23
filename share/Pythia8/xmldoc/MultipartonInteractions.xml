@@ -181,12 +181,27 @@ automatically be scaled down to cope.
  
 <p/> 
 The actual <ei>pT0</ei> parameter used at a given CM energy scale, 
-<ei>ecmNow</ei>, is obtained as 
+<ei>ecmNow</ei>, is obtained from a power law or a logarithmic 
+parametrization. The former is default with hadron beams and 
+the latter for photon-photon collisions. 
+ 
+<modepick name="MultipartonInteractions:pT0parametrization" default="0" 
+min="0" max="1"> 
+Choice of <ei>pT0</ei> parametrization. 
+<option value="0"> Power law dependence on <ei>ecmNow</ei>:<br/> 
+<ei> 
+    pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
+</ei> 
+</option> 
+<option value="1"> Logarithmic dependence on <ei>ecmNow</ei>: 
 <eq> 
-     pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
+    pT0 = pT0(ecmNow) = pT0Ref + ecmPow * log (ecmNow / ecmRef) 
 </eq> 
 where <ei>pT0Ref</ei>, <ei>ecmRef</ei> and <ei>ecmPow</ei> are the 
-three parameters below. 
+three parameters below. In case of photon-photon collisions the corresponding 
+parameters are set in <aloc href="Photoproduction">Photoproduction</aloc>. 
+</option> 
+</modepick> 
  
 <parm name="MultipartonInteractions:pT0Ref" default="2.28" min="0.5" 
 max="10.0"> 
@@ -587,4 +602,4 @@ interactions.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

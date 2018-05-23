@@ -1,6 +1,6 @@
 // HiddenValleyFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the classes for Hidden-Valley fragmentation.
@@ -88,7 +88,8 @@ public:
   ~HVStringZ() {}
 
   // Initialize data members.
-  void init(Settings& settings, ParticleData& particleData, Rndm* rndmPtrIn);
+  void init(Settings& settings, ParticleData& particleData,
+    Rndm* rndmPtrIn, Info* infoPtrIn);
 
   // Fragmentation function: top-level to determine parameters.
   double zFrag( int idOld, int idNew = 0, double mT2 = 1.);

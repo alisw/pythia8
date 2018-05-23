@@ -51,8 +51,8 @@ An incomplete list is as follows.
 
  8. Begin each code file with
 // (filename) is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
     to establish the legal structure. Follow that with specific
     information on authorship of the particular file, where relevant,
@@ -334,6 +334,10 @@ in html):
     typed in, and written to file as a line with name = value;
 <wordfix name="..." default="..."></wordfix>
     ditto but no interactivity;
+For most of these a "more" variant exists, cf. methodmore above,
+where no new paragraph break is inserted before it in the conversion
+from xml to html, allowing visual grouping of settings belonging together.
+Main examples would be flagmore, modemore, parmmore and wordmore.
 
 D) New concepts that could one day be made interactive, but currently
 are not:

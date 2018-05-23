@@ -61,7 +61,7 @@ without it more demanding.
 <p/> 
 PYTHIA's internal phase-space generators are rather good at handling 
 the phase space of <i>2 &rarr; 1</i> and <i>2 &rarr; 2</i> processes, 
-are more primitive for <i>2 &rarr; 3</i> ones and do not at all 
+are  primitive for <i>2 &rarr; 3</i> ones and do not at all 
 address higher multiplicities. An option is therefore also provided 
 for external phase-space generators to be used, which must then be 
 encapsulated to inherit from PYTHIA's <code>PhaseSpace</code> base class 
@@ -246,7 +246,7 @@ external matrix-element evaluation.
 The matrix-element information has to be encoded in a new class. 
 The relevant code could either be put before the main program in the 
 same file, or be stored separately, e.g. in a matched pair 
-of <code>.h</code> and <code>.cc</code> files. The latter may be more 
+of <code>.h</code> and <code>.cc</code> files. The latter may be  
 convenient, in particular if the cross sections are lengthy, or if you 
 intend to build up your own little process library, but of course 
 requires that these additional files are correctly compiled and linked. 
@@ -284,7 +284,7 @@ dangling inside the <code>Pythia</code> object you gave it in to,
 if that still exists. 
  
 <a name="anchor1"></a>
-<p/><strong>void SigmaProcess::initProc() &nbsp;</strong> <br/>
+<p/><strong> void SigmaProcess::initProc() &nbsp;</strong> <br/>
 is called once during initialization, and can then be used to set up 
 parameters, such as masses and couplings, and perform calculations 
 that need not be repeated for each new event, thereby saving time. 
@@ -293,7 +293,7 @@ calculations can be done in <code>sigmaHat</code> below.
    
  
 <a name="anchor2"></a>
-<p/><strong>void SigmaProcess::sigmaKin() &nbsp;</strong> <br/>
+<p/><strong> void SigmaProcess::sigmaKin() &nbsp;</strong> <br/>
 is called once a kinematical configuration has been determined, but 
 before the two incoming flavours are known. This routine can therefore 
 be used to perform calculations that otherwise might have to be repeated 
@@ -309,7 +309,7 @@ everything in <code>sigmaHat</code>.
    
  
 <a name="anchor3"></a>
-<p/><strong>double SigmaProcess::sigmaHat() &nbsp;</strong> <br/>
+<p/><strong> double SigmaProcess::sigmaHat() &nbsp;</strong> <br/>
 is the key method for cross section calculations and returns a cross section 
 value, as described in the previous section. It is called when also a 
 preliminary set of incoming flavours has been picked, in addition to the 
@@ -323,7 +323,7 @@ a specific incoming state.
    
  
 <a name="anchor4"></a>
-<p/><strong>bool SigmaProcess::setupForME() &nbsp;</strong> <br/>
+<p/><strong> bool SigmaProcess::setupForME() &nbsp;</strong> <br/>
 to be called by the user from inside <code>sigmaHat()</code> 
 (or possibly <code>sigmaKin()</code>) to setup alternative kinematics 
 in the <code>mME[5]</code> and <code>pME[5]</code> arrays, better 
@@ -335,7 +335,7 @@ vanish.
    
  
 <a name="anchor5"></a>
-<p/><strong>void SigmaProcess::setIdColAcol() &nbsp;</strong> <br/>
+<p/><strong> void SigmaProcess::setIdColAcol() &nbsp;</strong> <br/>
 is called only once an initial state and a kinematical configuration has 
 been picked. This routine must set the complete flavour information and 
 the colour flow of the process. This may involve further random choices, 
@@ -378,7 +378,7 @@ event.
    
  
 <a name="anchor6"></a>
-<p/><strong>double SigmaProcess::weightDecayFlav( Event& process) &nbsp;</strong> <br/>
+<p/><strong> double SigmaProcess::weightDecayFlav( Event& process) &nbsp;</strong> <br/>
 is called to allow a reweighting of the simultaneous flavour choices of 
 resonance decay products. Is currently only used for the 
 <i>q qbar &rarr; gamma*/Z^0 gamma*/Z^0</i> process, and will likely not 
@@ -386,7 +386,7 @@ be of interest for you.
    
  
 <a name="anchor7"></a>
-<p/><strong>double SigmaProcess::weightDecay( Event& process, int iResBeg, int iResEnd) &nbsp;</strong> <br/>
+<p/><strong> double SigmaProcess::weightDecay( Event& process, int iResBeg, int iResEnd) &nbsp;</strong> <br/>
 is called when the basic process has one or several resonances, after each 
 set of related resonances in <code>process[i]</code>, 
 <code>iResBeg</code> &lt;= <code>i </code> &lt;= <code>iResEnd</code>, 
@@ -403,12 +403,12 @@ decays and then involve correlations between the four daughter fermions.
    
  
 <a name="anchor8"></a>
-<p/><strong>string SigmaProcess::name() &nbsp;</strong> <br/>
+<p/><strong> string SigmaProcess::name() &nbsp;</strong> <br/>
 returns the name of the process, as you want it to be shown in listings. 
    
  
 <a name="anchor9"></a>
-<p/><strong>int SigmaProcess::code() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::code() &nbsp;</strong> <br/>
 returns an integer identifier of the process. This has no internal function, 
 but is only intended as a service for the user to rapidly (and hopefully 
 uniquely) identify which process occurred in a given event. Numbers below 
@@ -416,7 +416,7 @@ uniquely) identify which process occurred in a given event. Numbers below
    
  
 <a name="anchor10"></a>
-<p/><strong>string SigmaProcess::inFlux() &nbsp;</strong> <br/>
+<p/><strong> string SigmaProcess::inFlux() &nbsp;</strong> <br/>
 this string specifies the combinations of incoming partons that are 
 allowed for the process under consideration, and thereby which incoming 
 flavours <code>id1</code> and <code>id2</code> the <code>sigmaHat()</code> 
@@ -449,7 +449,7 @@ to give charge +-1.
    
  
 <a name="anchor11"></a>
-<p/><strong>bool SigmaProcess::convert2mb() &nbsp;</strong> <br/>
+<p/><strong> bool SigmaProcess::convert2mb() &nbsp;</strong> <br/>
 it is assumed that cross sections normally come in dimensions such that 
 they, when integrated over the relevant phase space, obtain the dimension 
 GeV^-2, and therefore need to be converted to mb. If the cross section 
@@ -458,7 +458,7 @@ overloaded to instead return <code>false</code>.
    
  
 <a name="anchor12"></a>
-<p/><strong>bool SigmaProcess::convertM2() &nbsp;</strong> <br/>
+<p/><strong> bool SigmaProcess::convertM2() &nbsp;</strong> <br/>
 it is assumed that <i>2 &rarr; 1</i> cross sections are encoded as 
 <i>sigmaHat(sHat)</i>, and <i>2 &rarr; 2</i> ones as 
 <i>d(sigmaHat)/d(tHat)</i> in the <code>SigmaProcess::sigmaHat()</code> 
@@ -472,13 +472,13 @@ This switch has no effect on <i>2 &rarr; 3</i> processes, where
    
  
 <a name="anchor13"></a>
-<p/><strong>int SigmaProcess::id3Mass() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::id3Mass() &nbsp;</strong> <br/>
    
 <a name="anchor14"></a>
-<strong>int SigmaProcess::id4Mass() &nbsp;</strong> <br/>
+<strong> int SigmaProcess::id4Mass() &nbsp;</strong> <br/>
    
 <a name="anchor15"></a>
-<strong>int SigmaProcess::id5Mass() &nbsp;</strong> <br/>
+<strong> int SigmaProcess::id5Mass() &nbsp;</strong> <br/>
 are the one, two or three final-state flavours, where masses are to be 
 selected before the matrix elements are evaluated. Only the absolute value 
 should be given. For massless particles, like gluons and photons, one need 
@@ -489,10 +489,10 @@ once a <i>u</i>, <i>d</i> or <i>s</i> flavour has been selected.
    
  
 <a name="anchor16"></a>
-<p/><strong>int SigmaProcess::resonanceA() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::resonanceA() &nbsp;</strong> <br/>
    
 <a name="anchor17"></a>
-<strong>int SigmaProcess::resonanceB() &nbsp;</strong> <br/>
+<strong> int SigmaProcess::resonanceB() &nbsp;</strong> <br/>
 are the codes of up to two <i>s</i>-channel resonances contributing to 
 the matrix elements. These are used by the program to improve the phase-space 
 selection efficiency, by partly sampling according to the relevant 
@@ -501,7 +501,7 @@ need not be specified.
    
  
 <a name="anchor18"></a>
-<p/><strong>bool SigmaProcess::isSChannel() &nbsp;</strong> <br/>
+<p/><strong> bool SigmaProcess::isSChannel() &nbsp;</strong> <br/>
 normally the choice of renormalization and factorization scales in 
 <i>2 &rarr; 2</i> and <i>2 &rarr; 3</i> processes is based on the 
 assumption that <i>t</i>- and <i>u</i>-channel exchanges dominates the 
@@ -515,7 +515,7 @@ echo "<a href='CouplingsAndScales.php?filepath=".$filepath."' target='page'>";?>
    
  
 <a name="anchor19"></a>
-<p/><strong>int SigmaProcess::idSChannel() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::idSChannel() &nbsp;</strong> <br/>
 normally no intermediate state is shown in the event record for 
 <i>2 &rarr; 2</i> and <i>2 &rarr; 3</i> processes. However, in case 
 that <code>idSChannel</code> is overloaded to return a nonzero value, 
@@ -531,7 +531,7 @@ transition from the initial to the final state.
    
  
 <a name="anchor20"></a>
-<p/><strong>int SigmaProcess::isQCD3body() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::isQCD3body() &nbsp;</strong> <br/>
 there are two different 3-body phase-space selection machineries, 
 of which the non-QCD one is default. If you overload this method 
 instead the QCD-inspired machinery will be used. The differences 
@@ -543,10 +543,10 @@ outgoing partons.
    
  
 <a name="anchor21"></a>
-<p/><strong>int SigmaProcess::idTchan1() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::idTchan1() &nbsp;</strong> <br/>
    
 <a name="anchor22"></a>
-<strong>int SigmaProcess::idTchan2() &nbsp;</strong> <br/>
+<strong> int SigmaProcess::idTchan2() &nbsp;</strong> <br/>
 the non-QCD <i>2 &rarr; 3</i> phase space selection machinery is rather 
 primitive, as already mentioned. The efficiency can be improved in 
 processes that proceed though <i>t</i>-channel exchanges, such as 
@@ -556,10 +556,10 @@ of the event are provided. Only the absolute value is of interest.
    
  
 <a name="anchor23"></a>
-<p/><strong>double SigmaProcess::tChanFracPow1() &nbsp;</strong> <br/>
+<p/><strong> double SigmaProcess::tChanFracPow1() &nbsp;</strong> <br/>
    
 <a name="anchor24"></a>
-<strong>double SigmaProcess::tChanFracPow2() &nbsp;</strong> <br/>
+<strong> double SigmaProcess::tChanFracPow2() &nbsp;</strong> <br/>
 in the above kind of <i>2 &rarr; 3</i> phase-space selection, the 
 sampling of <i>pT^2</i> is done with one part flat, one part weighted 
 like <i>1 / (pT^2 + m_R^2)</i> and one part  like 
@@ -579,7 +579,7 @@ by transverse-momentum conservation.
    
  
 <a name="anchor25"></a>
-<p/><strong>bool SigmaProcess::useMirrorWeight() &nbsp;</strong> <br/>
+<p/><strong> bool SigmaProcess::useMirrorWeight() &nbsp;</strong> <br/>
 in <i>2 &rarr; 3</i> processes the phase space selection used here 
 involves a twofold ambiguity basically corresponding to a flipping of 
 the positions of last two outgoing particles. These are assumed equally 
@@ -590,14 +590,14 @@ weights, <code>true</code>.
    
  
 <a name="anchor26"></a>
-<p/><strong>int SigmaProcess::gmZmode() &nbsp;</strong> <br/>
+<p/><strong> int SigmaProcess::gmZmode() &nbsp;</strong> <br/>
 allows a possibility to override the global mode 
 <code><?php $filepath = $_GET["filepath"];
 echo "<a href='ElectroweakProcesses.php?filepath=".$filepath."' target='page'>";?>WeakZ0:gmZmode</a></code> 
 for a specific process. The global mode normally is used to switch off 
 parts of the <i>gamma^*/Z^0</i> propagator for test purposes. The 
 above local mode is useful for processes where a <i>Z^0</i> really is 
-that and nothing more, such as <i>q qbar &rarr; H^0 Z^0</i>. The default 
+that and nothing , such as <i>q qbar &rarr; H^0 Z^0</i>. The default 
 value -1 returned by <code>gmZmode()</code> ensures that the global 
 mode is used, while 0 gives full <i>gamma^*/Z^0</i> interference, 
 1 <i>gamma^*</i> only and 2 <i>Z^0</i> only. 
@@ -721,7 +721,7 @@ by the integrated cross section. This value is to be stored in
 will be used to determine whether the trial event is accepted or not. 
  
 <p/> 
-In the <code>finalKin()</code> step the output is more standardized. 
+In the <code>finalKin()</code> step the output is  standardized. 
 The key values are the ones stored in the <code>mH[]</code> and 
 <code>pH[]</code> arrays, the former for masses and the latter for 
 four-momenta. Here the first two slots represent the two incoming 
@@ -788,4 +788,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

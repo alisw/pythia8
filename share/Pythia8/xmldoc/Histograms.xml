@@ -60,9 +60,8 @@ The two kind of operations can be combined, e.g.
 Finally, also the <code>+=, -+, *=, /=</code> are overloaded, with 
 the right-hand side being either a histogram or a real number. 
  
-<h3>Output format</h3> 
+<h3>Basic output format</h3> 
  
-<p/> 
 A histogram can be printed by making use of the overloaded &lt;&lt; 
 operator, e.g.: 
 <pre> 
@@ -71,7 +70,6 @@ operator, e.g.:
 The printout format is inspired by the old HBOOK one. To understand 
 how to read this format, consider the simplified example 
 <pre> 
- 
         3.50*10^ 2  9 
         3.00*10^ 2  X   7 
         2.50*10^ 2  X  1X 
@@ -125,6 +123,86 @@ exactly at the border between two bins. Also note that the
 to double precision where necessary, i.e. <code>xValue</code> 
 can be an integer. 
  
+<h3>Matplotlib output format</h3> 
+ 
+Assuming you have Python installed on your platform, it is possible to 
+generate simple <a href="https://matplotlib.org/">Matplotlib/Pyplot</a> 
+Python code from the histograms generated above, which then can be run 
+to produce PDF plots. This should be done near the end of a run, after 
+the histograms have been filled and properly normalized, as an alternative 
+or complement to the basic output format above. 
+ 
+<p/> 
+In  a first step you must then decide on the name of the Python program, 
+e.g.: 
+<pre> 
+  HistPlot hpl( "bosonpT"); 
+</pre> 
+where file ending <code>.py</code> is added automatically. 
+ 
+<p/> 
+For each new frame the name should be given, which will later give 
+rise to a PDF file, with ending <code>.pdf</code> added automatically. 
+If you leave the name field empty the same file will be used as for the 
+latest named one, i.e. producing several frames in one file. One can 
+optionally also give title and <ei>x</ei> and <ei>y</ei> axis labels: 
+<pre> 
+  hpl.frame( "pTdist", "Boson pT distributions", "pT (GeV)", "sigma"); 
+</pre> 
+Next, existing <code>Hist</code> histograms can be added to the frame, 
+one by one: 
+<pre> 
+  hpl.add( ZpT, "-"); 
+  hpl.add( WpT, "--,indigo"); 
+  hpl.add( allpT ); 
+</pre> 
+where the second argument tells how each histogram will be plotted. 
+Default is histogram style, "h", but the values can also be connected 
+with full lines "-", dashed ones "--", or dash-dotted ones "-.", or 
+plotted as points "." or crosses "x", to mention some of the many 
+options offered by Pyplot. Here you can also specify the colour, 
+separated by a comma from the line style, to override the normal 
+colour cycle. The most common colours can be given just as a single 
+letter, such as "r", "g", "b", but a more extensive 
+<a href="https://matplotlib.org/examples/color/named_colors.html"> 
+colour palette</a> allow finetuning to nuances such as "orange", 
+"gold", "darkgreen", "royalblue", "crimson", and so on. 
+A third argument can set the legend of each histogram; by default 
+it is taken as the title of histogram. 
+<br/>Finally the plot code itself will be set up by 
+<pre> 
+  hpl.plot(); 
+</pre> 
+where optionally it is possible to demand a logarithmic <ei>y</ei> scale. 
+ 
+<p/> 
+The <code>frame - add - plot</code> steps can be repeated as needed, each 
+giving rise to a separate PDF file with a plot. In case a plot is to be 
+generated from a single histogram the three steps can be joined into one 
+<pre> 
+  hpl.plotFrame( "onlyZ", ZpT ); 
+</pre> 
+where only the name of the PDF file and the histogram are compulsory, while 
+further arguments as discussed above are optional. 
+ 
+<p/> 
+At the end, a file <code>bosonpT.py</code> has now been generated with the 
+proper plotting commands. Additionally a data file has been generated for 
+each histogram to be plotted, <code>pTdist-0.dat, pTdist-1.dat</code>, etc. 
+Now doing 
+<pre> 
+  python bosonpT.py 
+</pre> 
+in a terminal window will produce the plots, such as <code>pTdist.pdf</code> 
+and <code>onlyZ.pdf</code>. You may of course edit the python file further 
+to improve on the finer details. 
+ 
+<p/> 
+Examples are provided in <code>main03.cc</code> and <code>main07.cc</code>, 
+where the latter is the simpler one. The <code>main51.cc</code> example 
+illustrates that the <ei>x</ei> scale can be chosen logarithmically, 
+by using an optional last argument when histograms are booked. 
+ 
 <h3>The methods</h3> 
  
 We here collect a more complete and formal overview of the methods. 
@@ -134,7 +212,7 @@ declare a histogram, but does not define it.
 </method> 
  
 <method name="Hist::Hist(string title, int numberOfBins, double xMin, 
-double xMax)"> 
+double xMax, bool logX = false)"> 
 declare and define a histogram, where 
 <argument name="title"> 
 is a string with the title of the histogram at output, 
@@ -147,7 +225,13 @@ limited to be at most 1000,
 is the lower edge of the histogram, 
 </argument> 
 <argument name="xMax"> 
-is the upper edge of the histogram. 
+is the upper edge of the histogram, 
+</argument> 
+<argument name="logX"> 
+gives a logarithmic <ei>x</ei> scale between <code>xMin</code> and 
+<code>xMax</code> if set <code>true</code>. Note that then 
+<code>xMin</code> must be above 1e-20 so as to stay with positive 
+numbers. 
 </argument> 
 </method> 
  
@@ -168,7 +252,7 @@ except that the original histogram title is retained.
 </method> 
  
 <method name="void Hist::book(string title, int numberOfBins, 
-double xMin, double xMax)"> 
+double xMin, double xMax, bool logXIn = false)"> 
 define a histogram that previously was only declared; 
 see above for the meaning of the arguments. 
 </method> 
@@ -191,7 +275,8 @@ is the amount of weight to be added at this <ei>x</ei> value.
 </argument> 
 </method> 
  
-<method name="friend ostream& operator&lt;&lt;(ostream&amp; os, const Hist&amp; h)"> 
+<method name="friend ostream& operator&lt;&lt;(ostream&amp; os, 
+const Hist&amp; h)"> 
 appends a simple histogram printout (see above for format) to the 
 <code>ostream</code>, while leaving the histogram object itself 
 unchanged. At most 100 columns are allowed to be displayed. 
@@ -199,6 +284,10 @@ If the number of bins is larger than 100 then the contents of
 adjacent bins are added to give the value in each column. (Two by two 
 up to 200 bins, three by three up to 300, and so on, with the very 
 last column possibly summing fewer rows than the others.) 
+<br/>If the histogram has been booked with logarithmic <ei>x</ei> 
+scale then the log10 of each lower bin border will be displayed 
+rather than the border itself, to avoid undue complication. 
+The Pyplot interface will display correct values, however. 
 </method> 
  
 <method name="void Hist::table(ostream&amp; os = cout, 
@@ -241,6 +330,22 @@ square root of the bin content, as is relevant if this content has
 the same unit weight for each entry to it. 
 </methodmore> 
  
+<method name="void Hist::pyplotTable(ostream&amp; os = cout, 
+bool isHist = true)"> 
+</method> 
+<methodmore name="void Hist:pyplotTable(string fileName, 
+bool isHist = true)"> 
+prints either a two- or a three-column table, depending on whether 
+the contents are to be plotted as a curve or as a histogram, the latter 
+being default. In either case the first column gives the center of each 
+bin and the second one the corresponding bin contents. For a histogram 
+the third column gives the lower border of each bin. Then also a final 
+line is provided, that gives no further histogram contents but provides 
+the upper border of the last bin. This format is used for plotting with 
+Pyplot, see below. The choice between the two methods is the same as 
+above for the <code>table</code> methods. 
+</methodmore> 
+ 
 <method name="friend void table(const Hist&amp; h1, const Hist&amp; h2, 
 ostream& os = cout, bool printOverUnder = false, bool xMidBin = true)"> 
 </method> 
@@ -257,6 +362,15 @@ of the bin rather than the center; see above.
  
 <method name="string Hist::getTitle()"> 
 return the title of the histogram. 
+</method> 
+ 
+<method name="int Hist::getBinNumber()"> 
+return the number of bins in the histogram. 
+</method> 
+ 
+<method name="bool Hist::getLinX()"> 
+return true if the histogram has a linear <ei>x</ei> scale and 
+false if a logarithmic one. 
 </method> 
  
 <method name="double Hist::getBinContent(int iBin)"> 
@@ -285,6 +399,11 @@ histogram is output.
 <method name="void Hist::takeSqrt()"> 
 take square root of current contents bin by bin, with negative contents 
 set to zero. 
+</method> 
+ 
+<method name="double Hist::smallestAbsValue()"> 
+returns the smallest absolute value (above 1e-20, to sidestep bins with zero 
+content) in any of the bins. 
 </method> 
  
 <method name="Hist&amp; Hist::operator+=(const Hist&amp; h)"> 
@@ -350,6 +469,88 @@ divide a constant by a histogram, a histogram by a constant,
 or two histograms by each other, bin by bin. 
 </methodmore> 
  
+<method name="HistPlot::HistPlot(string pythonName)"> 
+create a file to which successively Python commands can be written. 
+<argument name="pythonName"> 
+the name of the Python code file will become <code>pythonName.py</code>. 
+When later executed with <code>python pythonName.py</code> the frames 
+defined below will be drawn and output. 
+</argument> 
+</method> 
+ 
+<method name="void HistPlot::frame( string frameName, string title = 
+&quot;&quot;, string xLabel = &quot;&quot;, string yLabel = &quot;&quot;)"> 
+command to open a frame where successive histograms can be added and 
+plotted, where 
+<argument name="frameName"> 
+is the frame that will become a PFD file <code>frameName.pdf</code> when 
+the Python program is run; if left blank the frame will be appended to the 
+most recent previous  PDF file, so clearly it cannot be left blank for the 
+first call, 
+</argument> 
+<argument name="title"> 
+is an optional title of the histogram, plotted on top of the frame, 
+</argument> 
+<argument name="xLabel"> 
+is an optional label plotted below the <ei>x</ei> axis, and 
+</argument> 
+<argument name="yLabel"> 
+is an optional label plotted to the right of the <ei>y</ei> axis. 
+</argument> 
+<note>Note:</note> the title and labels may contain special LaTeX symbols, 
+e.g. simple math formulae enclosed by dollar signs $...$, that are 
+interpreted by the Pyplot package. A backslash \ needs to be doubled to \\, 
+however, since else it will be intepreted as an escape sequence. 
+</method> 
+ 
+<method name="void HistPlot::add(const Hist& hist, 
+string style = &quot;h&quot;, string legend = &quot;void&quot;)"> 
+add a histogram to the current plot frame, where 
+<argument name="hist"> 
+is the name of the histogram to be plotted, 
+</argument> 
+<argument name="style"> 
+tells how the histogram data will be represented in the figure, where 
+default "h" is histogram style, "-" full lines, "--" dashed ones, 
+"-." dash-dotted ones, "." points, "o" circles, "+" and "x" crosses, 
+"*" stars, and so on as described in the Pyplot manual; additionally a 
+colour may also be specified as described earlier, separated by a comma 
+from the symbol; either of both can be used, e.g. "h,r", ",magenta", 
+"+,", "--" or just ""; and 
+</argument> 
+<argument name="legend"> 
+is the text written in association with the plotting symbol, where the 
+default <code>void</code> is replaced by the title provided when the 
+histogram was booked, and LaTex input may be used as described in the note 
+above. 
+</argument> 
+</method> 
+ 
+<method name="void HistPlot::plot( bool logY = false)"> 
+write the Pyplot commands for the current frame, as defined by the input 
+from the two methods above, and additionally write the data files needed 
+when the Python code is to be run. 
+<argument name="logY"> 
+By default a linear <ei>y</ei> scale is used, but when true the <ei>y</ei> 
+scale is instead logarithmic, except that a linear scale is used the very 
+last step to zero bin content. 
+</argument> 
+<note>Note:</note> whether the <ei>x</ei> scale is linear or logarithmic 
+depends on what choice was made when the histogram was booked, and cannot 
+be changed later. 
+</method> 
+ 
+<method name="void HistPlot::plotFrame( string frameName, const Hist& hist, 
+string title = &quot;&quot;, string xLabel = &quot;&quot;, string yLabel = 
+&quot;&quot;, string style = &quot;h&quot;, string legend = &quot;void&quot;, 
+bool logY = false)"> 
+is an omnibus version combining the three above methods when only a single 
+histogram is to be plotted in a frame. The arguments and their meaning is 
+the same as already explained for them, and the order in which they appear 
+is almost the same, the exception being that the two compulsory arguments 
+<code>frameName</code> and <code>hist</code> have been put at the beginning. 
+</method> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

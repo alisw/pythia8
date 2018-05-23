@@ -251,6 +251,8 @@ all ISR QCD radiation, rather than the corresponding parameters below.
 This is a sensible physics ansatz, based on the assumption that colour 
 screening effects influence both MPI and ISR in the same way. Photon 
 radiation is regularized separately in either case. 
+<note>Note:</note> For photon-photon collisions these parameters are set 
+as in <aloc href="Photoproduction">Photoproduction</aloc>. 
 <note>Warning:</note> if a large <code>pT0</code> is picked for multiparton 
 interactions, such that the integrated interaction cross section is 
 below the nondiffractive inelastic one, this <code>pT0</code> will 
@@ -259,13 +261,26 @@ does NOT propagate to <code>SpaceShower</code>, however.
 </flag> 
  
 <p/> 
-The actual <code>pT0</code> parameter used at a given CM energy scale, 
-<ei>ecmNow</ei>, is obtained as 
-<eq> 
+The actual <ei>pT0</ei> parameter used at a given CM energy scale, 
+<ei>ecmNow</ei>, is obtained from a power law or a logarithmic 
+parametrization. The former is default with hadron beams and 
+the latter for photon-photon collisions. 
+ 
+<modepick name="SpaceShower:pT0parametrization" default="0" min="0" max="1"> 
+Choice of <ei>pT0</ei> parametrization. 
+<option value="0"> Power law dependence on <ei>ecmNow</ei>:<br/> 
+<ei> 
     pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
+</ei> 
+</option> 
+<option value="1"> Logarithmic dependence on <ei>ecmNow</ei>: 
+<eq> 
+    pT0 = pT0(ecmNow) = pT0Ref + ecmPow * log (ecmNow / ecmRef) 
 </eq> 
+</option> 
 where <ei>pT0Ref</ei>, <ei>ecmRef</ei> and <ei>ecmPow</ei> are the 
 three parameters below. 
+</modepick> 
  
 <parm name="SpaceShower:pT0Ref" default="2.0" 
 min="0.5" max="10.0"> 
@@ -511,4 +526,4 @@ photon backwards-evolution in lepton beams.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

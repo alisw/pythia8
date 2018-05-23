@@ -34,10 +34,10 @@ all producing Lund strings occupying the same area in transverse space of
 <i>~1</i> fm<i>^2</i>. The Rope Hadronization framework describes the 
 interactions between such overlapping strings, by (a) allowing nearby strings 
 to shove each other with an interaction potential derived from the colour 
-superconductor analogy [<a href="Bibliography.php#refBie16b" target="page">Bie16b</a>] and (b) at hadronization time, colour 
-charges at string endpoints and in gluon "kinks" can act together coherently 
-to form a "rope", which is hadronized with a larger, effective string 
-tension [<a href="Bibliography.php#refBie14" target="page">Bie14</a>]. 
+superconductor analogy [<a href="Bibliography.php#refBie16b" target="page">Bie16b</a>], [<a href="Bibliography.php#refBie17" target="page">Bie17</a>] and (b) at 
+hadronization time, colour charges at string endpoints and in gluon "kinks" 
+can act together coherently to form a "rope", which is hadronized with a 
+larger, effective string tension [<a href="Bibliography.php#refBie14" target="page">Bie14</a>]. 
 The latter has noticeable effects on the flavour composition of the hadronic 
 final state [<a href="Bibliography.php#refBie15" target="page">Bie15</a>], and this effect is denoted "flavour ropes" below. 
  
@@ -49,6 +49,8 @@ model. The information is provided through the
 echo "<a href='VertexInformation.php?filepath=".$filepath."' target='page'>";?>Parton Vertex</a> methods. The string 
 shoving mechanism is exemplified in the <code>main101</code> example, 
 and the flavour ropes in <code>main102</code>. 
+A simpler version of flavour composition ropes exist [<a href="Bibliography.php#refBie16c" target="page">Bie16c</a>], 
+which do not require vertex information. This can be enabled by a switch. 
  
 <h3>Main settings</h3> 
  
@@ -239,7 +241,7 @@ echo "<a href='Fragmentation.php?filepath=".$filepath."' target='page'>";?>Strin
 Fragmentation</a>. One point to note regarding the rescaling is the 
 fragmentation parameter <code>StringFlav:probQQtoQ</code>, describing 
 baryon relative to meson production. Baryon production is, as suggested 
-by eg. the popcorn hadronization model [<a href="Bibliography.php#refEde97" target="page">Ede97</a>], more complicated 
+by eg. the popcorn hadronization model [<a href="Bibliography.php#refEde97" target="page">Ede97</a>],  complicated 
 than meson production. The current modelling of this in the flavour ropes 
 framework is limited, but intended to be extended in the future. 
  
@@ -252,8 +254,37 @@ This parameter controls how large a fraction of the parameter will scale
 with string tension. 
    
  
-<br/><br/><strong>Ropewalk:setFixedKappa</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
+<br/><br/><strong>Ropewalk:alwaysHighest</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
 <input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Setting this flag on will skip the random walk procedure for flavour ropes, 
+and assume that one always ends up in the highest possible SU(3) multiplet. 
+This would be adequate for situations where all lower multiplets are assumed 
+handled by colour reconnection and junction formation. 
+   
+ 
+<br/><br/><strong>Ropewalk:doBuffon</strong>  <input type="radio" name="20" value="on"><strong>On</strong>
+<input type="radio" name="20" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Setting this flag on, enables a simpler treatment of flavour ropes. This is not 
+reliant on vertex information, but string-string overlaps are decided randomly 
+&aacute; la Buffon's needle [<a href="Bibliography.php#refBie16c" target="page">Bie16c</a>]: All strings are thrown randomly 
+into a circular area in transverse space to estimate overlaps. 
+   
+ 
+<br/><br/><table><tr><td><strong>Ropewalk:stringProtonRatio </td><td></td><td> <input type="text" name="21" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.0</code>)</td></tr></table>
+Only used if <code>Ropewalk:buffonRope</code> is enabled. The ratio of the 
+string transverse area to a proton transverse area. Determines the amount of 
+overlap in collisions. 
+   
+ 
+<br/><br/><table><tr><td><strong>Ropewalk:rapiditySpan </td><td></td><td> <input type="text" name="22" value="0.5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.0</code>)</td></tr></table>
+Only used if <code>Ropewalk:buffonRope</code> is enabled. Determines how far in 
+rapidity from a string break overlaps are counted. 
+   
+ 
+<br/><br/><strong>Ropewalk:setFixedKappa</strong>  <input type="radio" name="23" value="on"><strong>On</strong>
+<input type="radio" name="23" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Setting this flag gives the user the possibility to ignore the generator 
 space-time information altogether, using only a provided string tension. 
@@ -261,13 +292,18 @@ This could be useful for (toy) studies of hadronization in very dense
 environments, such as central heavy ion collisions. 
    
  
-<br/><br/><table><tr><td><strong>Ropewalk:presetKappa </td><td></td><td> <input type="text" name="20" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 100.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Ropewalk:presetKappa </td><td></td><td> <input type="text" name="24" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 100.0</code>)</td></tr></table>
 The effective string tension is normally calculated dynamically using overlaps 
 of strings, based on <?php $filepath = $_GET["filepath"];
 echo "<a href='VertexInformation.php?filepath=".$filepath."' target='page'>";?>Parton Vertex</a> 
 information. By setting <code>Ropewalk:setFixedKappa</code>, this information 
 is ignored, and a preset value provided in the <code>presetKappa</code> 
 variable is used. 
+   
+ 
+<br/><br/><table><tr><td><strong>StringFlav:kappa </td><td></td><td> <input type="text" name="25" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.</code>)</td></tr></table>
+A base value of the string tension can be added, and modified along with other 
+parameters, to allow for studies of exotic quark production in the Rope model. 
    
  
 <input type="hidden" name="saved" value="1"/>
@@ -377,12 +413,37 @@ fwrite($handle,$data);
 }
 if($_POST["19"] != "off")
 {
-$data = "Ropewalk:setFixedKappa = ".$_POST["19"]."\n";
+$data = "Ropewalk:alwaysHighest = ".$_POST["19"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["20"] != "0.")
+if($_POST["20"] != "off")
 {
-$data = "Ropewalk:presetKappa = ".$_POST["20"]."\n";
+$data = "Ropewalk:doBuffon = ".$_POST["20"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["21"] != "0.2")
+{
+$data = "Ropewalk:stringProtonRatio = ".$_POST["21"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["22"] != "0.5")
+{
+$data = "Ropewalk:rapiditySpan = ".$_POST["22"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["23"] != "off")
+{
+$data = "Ropewalk:setFixedKappa = ".$_POST["23"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["24"] != "0.")
+{
+$data = "Ropewalk:presetKappa = ".$_POST["24"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["25"] != "0.2")
+{
+$data = "StringFlav:kappa = ".$_POST["25"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -392,4 +453,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

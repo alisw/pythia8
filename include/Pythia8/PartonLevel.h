@@ -1,6 +1,6 @@
 // PartonLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the main class for parton-level event generation
@@ -53,6 +53,7 @@ public:
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
     BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
     BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
+    BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
     Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
     SigmaTotal* sigmaTotPtr, TimeShower* timesDecPtrIn,
     TimeShower* timesPtrIn, SpaceShower* spacePtrIn,
@@ -86,9 +87,9 @@ public:
   // Reset PartonLevel object for trial shower usage.
   void resetTrial();
   // Provide the pT scale of the last branching in the shower.
-  double pTLastInShower(){ return pTLastBranch; }
+  double pTLastInShower() { return pTLastBranch; }
   // Provide the type of the last branching in the shower.
-  int typeLastInShower(){ return typeLastBranch; }
+  int typeLastInShower() { return typeLastBranch; }
 
   // Make History and MergingHooks friends for access to private functions.
   // This is helpful when merging with an external shower plugin.
@@ -132,16 +133,18 @@ private:
   bool   isNonDiff, isDiffA, isDiffB, isDiffC, isDiff, isSingleDiff,
          isDoubleDiff, isCentralDiff, isResolved, isResolvedA,
          isResolvedB, isResolvedC, isHardDiffA, isHardDiffB, isHardDiff,
-         doDiffVeto;
+         doDiffVeto, hardDiffSet;
   int    sizeProcess, sizeEvent, nHardDone, nHardDoneRHad, iDS;
   double eCMsave;
   vector<bool> inRHadDecay;
   vector<int>  iPosBefShow;
 
   // Variables for photon inside electron.
-  bool   hasGammaA, hasGammaB, beamHasGamma, beamAhasResGamma,
-         beamBhasResGamma, beamHasResGamma, isGammaHadronDir;
-  int    gammaMode, gammaModeEvent;
+  bool   hasGammaA, hasGammaB, beamHasGamma, beamAisGamma, beamBisGamma,
+         beamAhasGamma, beamBhasGamma, beamAhasResGamma, beamBhasResGamma,
+         beamHasResGamma, isGammaHadronDir;
+  int    gammaMode, gammaModeEvent, gammaOffset;
+  double eCMsaveGamma;
 
   // Pointer to various information on the generation.
   Info*          infoPtr;
@@ -165,6 +168,9 @@ private:
   // Pointers to photon beams inside lepton beams.
   BeamParticle*  beamGamAPtr;
   BeamParticle*  beamGamBPtr;
+  // Pointers to VMD beams inside gamma beams.
+  BeamParticle*  beamVMDAPtr;
+  BeamParticle*  beamVMDBPtr;
 
   // Pointers to Standard Model couplings.
   Couplings*     couplingsPtr;

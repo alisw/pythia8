@@ -1,6 +1,6 @@
 // main61.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Christine O. Rasmussen.
 
@@ -28,7 +28,7 @@ int main() {
   // Setup of diffractive framework.
   pythia.readString("Diffraction:doHard = on");
   pythia.readString("Diffraction:sampleType = 1");
-  pythia.readString("Diffraction:PomFlux = 5");
+  pythia.readString("SigmaDiffractive:PomFlux = 5");
   pythia.readString("PDF:PomSet = 6");
 
   // Simplify printout.

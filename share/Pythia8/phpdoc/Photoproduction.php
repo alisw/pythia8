@@ -135,7 +135,7 @@ hadron beams. The only difference follows again from the additional
 <i>gamma &rarr; q qbar</i> splittings where the beam photon becomes 
 unresolved. If this splitting happens during the interleaved evolution 
 for either of the photon beams no further MPIs below the branching scale 
-<i>pT</i> are allowed since the photon is not resolved anymore. 
+<i>pT</i> are allowed since the photon is not resolved any. 
 </p> 
  
 <p> 
@@ -165,26 +165,62 @@ Show the evolution steps of the beam photon in the event record, if on.
 </p> 
  
 <p> 
-Currently the default values for the parameters related to multiparton 
-interactions are the same as in hadronic collision so no tuning for the 
-MPIs in photon-photon or photon-hadron has been done. This holds also for 
-the parameters related to the impact-parameter dependence. Preliminary 
-studies indicate that a larger value of <i>pT0Ref</i> would be preferred 
-for photon-photon case: The inclusive hadron <i>pT</i> spectra in LEP 
-is well reproduced with <i>pT0Ref = 3.30 GeV</i>. 
+Based on comparisons with charged hadron production in photon-photon 
+collision data from LEP, the default MPI parametrization tuned to 
+proton-(anti)proton collisions produces too much hadrons from the 
+additional interactions. Such differences are not surprising, given 
+that the photon is less hadron-like than the proton, e.g. with less 
+well developed PDFs, leaving less room for MPIs. Therefore a different 
+parametrization for <i>pT0(eCM)</i> is used in case of photon-photon 
+collisions, where the default values are tuned to the LEP data 
+(a reference to this study will be added later). By default, 
+a logarithmic dependence on <i>eCM</i> is used. 
+<br/><b>Note:</b> These parameters override the choices made in 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='MultipartonInteractions.php?filepath=".$filepath."' target='page'>";?>Multiparton Interactions</a> 
+when photon-photon collisions are generated. 
+</p> 
+ 
+<br/><br/><table><tr><td><strong>PhotonPhoton:pT0parametrization  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
+Choice of <ei>pT0</ei> parametrization. See 
+<aloc href="MultipartonInteractions">Multiparton Interactions</aloc> for 
+further details. 
+<br/>
+<input type="radio" name="3" value="0"><strong>0 </strong>: Power law in <ei>eCM</ei>.<br/>
+<input type="radio" name="3" value="1" checked="checked"><strong>1 </strong>: Logarithmic in <ei>eCM</ei>.<br/>
+ 
+<br/><br/><table><tr><td><strong>PhotonPhoton:ecmRef </td><td></td><td> <input type="text" name="4" value="100.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>100.0</strong></code>; <code>minimum = 1.</code>)</td></tr></table>
+The <i>ecmRef</i> reference energy scale. 
+   
+ 
+<br/><br/><table><tr><td><strong>PhotonPhoton:pT0Ref </td><td></td><td> <input type="text" name="5" value="1.52" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.52</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10.0</code>)</td></tr></table>
+The value of <i>pT0</i> at the reference energy scale. 
+   
+ 
+<br/><br/><table><tr><td><strong>PhotonPhoton:ecmPow </td><td></td><td> <input type="text" name="6" value="0.413" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.413</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)</td></tr></table>
+The <i>ecmPow</i> energy rescaling pace. 
+   
+ 
+<p/> 
+Alternatively, or in combination, a sharp cut can be used. 
+<br/><br/><table><tr><td><strong>PhotonPhoton:pTmin </td><td></td><td> <input type="text" name="7" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.0</code>)</td></tr></table>
+More details in 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='MultipartonInteractions.php?filepath=".$filepath."' target='page'>";?>Multiparton Interactions</a>. 
+   
+ 
+<p> 
+A similar study for photon-hadron collisions will follow, current 
+recommendation is to use value <i>pT0Ref = 3.0 GeV</i> set in 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='MultipartonInteractions.php?filepath=".$filepath."' target='page'>";?>Multiparton Interactions</a> page. 
 </p> 
  
 <p> 
 The total cross section for photon-photon collisions is paramerized as in 
-[<a href="Bibliography.php#refSch97" target="page">Sch97</a>]. Since the total cross section includes contribution also 
-from elastic and diffractive events, a multiplicative factor is introduced 
-to control the non-diffractive component. 
+[<a href="Bibliography.php#refSch97" target="page">Sch97</a>]. Approximate diffractive cross sections have been defined 
+according to the assumed VMD contribution. 
 </p> 
- 
-<br/><br/><table><tr><td><strong>Photon:sigmaNDfrac </td><td></td><td> <input type="text" name="3" value="0.7" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.7</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.0</code>)</td></tr></table>
-Fraction of non-diffractive cross section of the total cross section. 
-Default value is motivated by earlier Pythia 6 studies. 
-   
  
 <h4>Beam Remnants</h4> 
  
@@ -253,19 +289,19 @@ the upper limit for the <i>k_T</i> of the photon, which in turn will
 be the same as the <i>k_T</i> of the scattered lepton. Also some other 
 cuts can be imposed. 
  
-<br/><br/><table><tr><td><strong>Photon:Q2max </td><td></td><td> <input type="text" name="4" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Photon:Q2max </td><td></td><td> <input type="text" name="8" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>maximum = 2.0</code>)</td></tr></table>
 Upper limit for (quasi-)real photon virtuality in <i>GeV^2</i>. Too low 
 value might cause problems, e.g. if the lower <i>Q^2</i> limit derived from 
 kinematics becomes larger than upper limit. 
    
  
-<br/><br/><table><tr><td><strong>Photon:Wmin </td><td></td><td> <input type="text" name="5" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>; <code>minimum = 5.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Photon:Wmin </td><td></td><td> <input type="text" name="9" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>; <code>minimum = 5.0</code>)</td></tr></table>
 Lower limit for invariant mass of <i>gamma-gamma</i> system in <i>GeV</i>. 
 In lepton-hadron collisions <i>W</i> corresponds to invariant mass of 
 photon-hadron system. 
    
  
-<br/><br/><table><tr><td><strong>Photon:Wmax </td><td></td><td> <input type="text" name="6" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Photon:Wmax </td><td></td><td> <input type="text" name="10" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>)</td></tr></table>
 Upper limit for invariant mass of <i>gamma-gamma</i> 
 (<i>gamma-hadron</i>) system in <i>GeV</i>. 
 A value below <code>Photon:Wmin</code> means that the invariant mass of 
@@ -273,19 +309,24 @@ the original <i>l+l-</i> (<i>lepton-hadron</i>) system is used as an
 upper limit. 
    
  
-<br/><br/><table><tr><td><strong>Photon:thetaAMax </td><td></td><td> <input type="text" name="7" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>; <code>maximum = 3.141593</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Photon:thetaAMax </td><td></td><td> <input type="text" name="11" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>; <code>maximum = 3.141593</code>)</td></tr></table>
 Upper limit for scattering angle of lepton A in <i>rad</i>. A negative 
 value means that no cut is applied. Since <i>k_T</i> depends on virtuality 
-of the emitted photon, the <code>Photon:Q2max</code> cut is usually more 
-restrictive unless a very small angle is used. 
+of the emitted photon, the <code>Photon:Q2max</code> cut is usually  
+restrictive unless a very small angle is used. This cut is only applied 
+when the colliding beams are defined in their CM frame 
+(<code>Beams:frameType=1</code>). Further, in case of <i>2 &rarr; 1</i> 
+processes with direct photons the scattered lepton kinematics is modified 
+later in the event generation, so accurate rejection can be obtained only 
+based on the final lepton momenta in the event record. 
    
  
-<br/><br/><table><tr><td><strong>Photon:thetaBMax </td><td></td><td> <input type="text" name="8" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>; <code>maximum = 3.141593</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Photon:thetaBMax </td><td></td><td> <input type="text" name="12" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>; <code>maximum = 3.141593</code>)</td></tr></table>
 As above but for lepton B. 
    
  
-<br/><br/><strong>Photon:sampleQ2</strong>  <input type="radio" name="9" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="9" value="off"><strong>Off</strong>
+<br/><br/><strong>Photon:sampleQ2</strong>  <input type="radio" name="13" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="13" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 Determines whether the sampling for the photon virtuality is done. This can 
 be used only with <code>PDF:lepton2gammaSet = 2</code> option where 
@@ -334,39 +375,59 @@ if($_POST["2"] != "off")
 $data = "Photon:showUnres = ".$_POST["2"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["3"] != "0.7")
+if($_POST["3"] != "1")
 {
-$data = "Photon:sigmaNDfrac = ".$_POST["3"]."\n";
+$data = "PhotonPhoton:pT0parametrization = ".$_POST["3"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["4"] != "1.0")
+if($_POST["4"] != "100.0")
 {
-$data = "Photon:Q2max = ".$_POST["4"]."\n";
+$data = "PhotonPhoton:ecmRef = ".$_POST["4"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["5"] != "10.0")
+if($_POST["5"] != "1.52")
 {
-$data = "Photon:Wmin = ".$_POST["5"]."\n";
+$data = "PhotonPhoton:pT0Ref = ".$_POST["5"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["6"] != "-1.0")
+if($_POST["6"] != "0.413")
 {
-$data = "Photon:Wmax = ".$_POST["6"]."\n";
+$data = "PhotonPhoton:ecmPow = ".$_POST["6"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["7"] != "-1.0")
+if($_POST["7"] != "0.2")
 {
-$data = "Photon:thetaAMax = ".$_POST["7"]."\n";
+$data = "PhotonPhoton:pTmin = ".$_POST["7"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["8"] != "-1.0")
+if($_POST["8"] != "1.0")
 {
-$data = "Photon:thetaBMax = ".$_POST["8"]."\n";
+$data = "Photon:Q2max = ".$_POST["8"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["9"] != "on")
+if($_POST["9"] != "10.0")
 {
-$data = "Photon:sampleQ2 = ".$_POST["9"]."\n";
+$data = "Photon:Wmin = ".$_POST["9"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["10"] != "-1.0")
+{
+$data = "Photon:Wmax = ".$_POST["10"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["11"] != "-1.0")
+{
+$data = "Photon:thetaAMax = ".$_POST["11"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["12"] != "-1.0")
+{
+$data = "Photon:thetaBMax = ".$_POST["12"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["13"] != "on")
+{
+$data = "Photon:sampleQ2 = ".$_POST["13"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -376,4 +437,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

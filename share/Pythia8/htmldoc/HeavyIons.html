@@ -6,7 +6,6 @@
 </head>
 <body>
  
- 
 <h2>Heavy Ions</h2> 
  
 PYTHIA does not normally handle collisions involving heavy ions, but it 
@@ -19,14 +18,15 @@ and is inspired by the old Fritiof program from the Lund group
 <p/> 
  
 To allow for the generation of collisions with heavy ions, PYTHIA includes a 
-handfull of nuclei with PDG numbers on the form 100ZZZAAAI: 
+handful of nuclei with PDG numbers on the form 100ZZZAAAI: 
 <sup>4</sup>He (1000020040), 
 <sup>6</sup>Li (1000030060), 
 <sup>12</sup>C (1000060120), 
 <sup>16</sup>O (1000080160), 
 <sup>63</sup>Cu (1000290630), 
+<sup>129</sup>Xe (1000290630), 
 <sup>197</sup>Au (1000791970), and 
-<sup>208</sup>Pb(1000822080), but more can be added using the function 
+<sup>208</sup>Pb(1000822080), but  can be added using the function 
 <code>ParticleData::addParticle</code>. 
  
 <a name="anchor1"></a>
@@ -90,7 +90,7 @@ nucleon-nucleon  collision between a projectile and a target
 model for the distribution in impact parameter 
 space of nucleons in a nucleus. There are two ready-made subclasses called 
 <code>WoodsSaxonModel</code>, implementing a standard Woods-Saxon 
-distribution, and <code>GLISSANDOModel</code>, implementing the more 
+distribution, and <code>GLISSANDOModel</code>, implementing the  
 advanced model in [<a href="Bibliography.html#refBro09" target="page">Bro09</a>,<a href="Bibliography.html#refRyb14" target="page">Ryb14</a>]. 
 <a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> HeavyIon:WSHardCore &nbsp;</strong> 
@@ -107,8 +107,14 @@ advanced model in [<a href="Bibliography.html#refBro09" target="page">Bro09</a>,
   distance between nucleons in a nucleus in the default Woods-Saxon 
   model for nucleon distributions. 
    
- 
 <a name="anchor5"></a>
+<p/><code>flag&nbsp; </code><strong> HeavyIon:gaussHardCore &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+  Option to use a Gaussian profile of the hard core instead of a sharp 
+  cut-off, inspired by [<a href="Bibliography.html#refBay95" target="page">Bay95</a>]. 
+   
+ 
+<a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> HeavyIon:WSR &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)<br/>
 The radius of a nucleon in units of fermi in the default Woods-Saxon 
@@ -117,7 +123,7 @@ formulae [<a href="Bibliography.html#refRyb14" target="page">Ryb14</a>], based o
 nuclei and whether a hard core is used or not. 
    
  
-<a name="anchor6"></a>
+<a name="anchor7"></a>
 <p/><code>parm&nbsp; </code><strong> HeavyIon:WSa &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)<br/>
 The <i>skin width</i> of a nucleus in units of fermi in the default 
@@ -130,7 +136,7 @@ nucleons in the nuclus and whether a hard core is used or not.
 parameter space for the colliding nuclei. The base class implements a Gaussian 
 sampling, which means that the events produced will always be weighted. Other 
 distributions can be implemented in subclasses. 
-<a name="anchor7"></a>
+<a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> HeavyIon:bWidth &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)<br/>
   The width in fermi of the distribution by which the impact parameter 
@@ -190,7 +196,7 @@ The default model for nucleon fluctuations has three parameters, the general
 fitting machinery in <code>SubCollisionModel</code> allows for up to eight 
 parameters. 
  
-<a name="anchor8"></a>
+<a name="anchor9"></a>
 <p/><code>pvec&nbsp; </code><strong> HeavyIon:SigFitDefPar &nbsp;</strong> 
  (<code>default = <strong>17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0</strong></code>)<br/>
 These are the default values of the parameters of the 
@@ -206,7 +212,7 @@ number of generations. In the end the the parameter set in the final
 population  which gives the best inclusive cross sections is picked. 
 Eight different cross sections may be fitted to but it is possible to select 
 only some of them: 
-<a name="anchor9"></a>
+<a name="anchor10"></a>
 <p/><code>pvec&nbsp; </code><strong> HeavyIon:SigFitErr &nbsp;</strong> 
  (<code>default = <strong>0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
 The relative error assumed in the calculation of goodness of fit 
@@ -220,21 +226,21 @@ error of zero for one of these cross sections means the corresponding
 cross section not be used in the fit. 
    
  
-<a name="anchor10"></a>
+<a name="anchor11"></a>
 <p/><code>mode&nbsp; </code><strong> HeavyIon:SigFitNInt &nbsp;</strong> 
  (<code>default = <strong>100000</strong></code>; <code>minimum = 0</code>)<br/>
 The number of integration points used for each parameter setting to calculate 
 the cross sections. 
    
  
-<a name="anchor11"></a>
+<a name="anchor12"></a>
 <p/><code>mode&nbsp; </code><strong> HeavyIon:SigFitNPop &nbsp;</strong> 
  (<code>default = <strong>20</strong></code>; <code>minimum = 1</code>)<br/>
   The number individuals (parameter settings) in a population in each 
   generation. 
    
  
-<a name="anchor12"></a>
+<a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> HeavyIon:SigFitNGen &nbsp;</strong> 
  (<code>default = <strong>20</strong></code>; <code>minimum = 0</code>)<br/>
 The number of generation used in the genetic algorithm. If set to zero, no 
@@ -242,21 +248,21 @@ fitting will be performed and the values in <code>HeavyIon:SigFitDefPar</code>
 will be used. 
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
 <p/><code>parm&nbsp; </code><strong> HeavyIon:SigFitFuzz &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)<br/>
 A parameter determining the probability that an individual parameter setting 
 will evolves further away from the best parameter set in each generation. 
    
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> HeavyIon:SigFitPrint &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 fitting procedure. If on, extensive information about the fitting will be 
 printed. 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><code>mode&nbsp; </code><strong> Angantyr:CollisionModel &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 The Angantyr model has a couple of option for the SubCollisionModel 
@@ -269,6 +275,13 @@ sections.
 <br/><code>option </code><strong> 2</strong> :  Fluctuating radii and cross sections but different 
 treatment of opacity. 
    
+   
+ 
+<a name="anchor17"></a>
+<p/><code>flag&nbsp; </code><strong> Angantyr:GlauberOnly &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+event generation will stop after SubCollisions has been determined, allowing 
+the user to read out the nucleon configuration only. 
    
  
 <p/> 
@@ -320,14 +333,14 @@ object a special form of settings can be used. All settings available for
 can be set separately for this <code>Pythia</code> object by prefixing 
 their names with <code>HI</code>. 
  
-As an example, setting <code>HIDiffraction:PomFlux</code> and 
+As an example, setting <code>HISigmaDiffractive:PomFlux</code> and 
 <code>HIPDF:PomSet</code> will set the 
-<code>Diffraction:PomFlux</code> and <code>PDF:PomSet</code> options 
+<code>SigmaDiffractive:PomFlux</code> and <code>PDF:PomSet</code> options 
 for this <code>Pythia</code> object. 
  
-<a name="anchor16"></a>
+<a name="anchor18"></a>
 <p/><code>mode&nbsp; </code><strong> Angantyr:SASDmode &nbsp;</strong> 
- (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+ (<code>default = <strong>4</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 Determines how to generate single-diffraction events as secondary absorptive 
 (SASD) sub-collisions. 
 <br/><code>option </code><strong> 0</strong> :  Standard singel-diffraction events as speicfied by 
@@ -338,12 +351,47 @@ same initial <code>HIMultipartonInteractions:pT0Ref</code> as for
 non-diffractive events for the total nucleon-nucleon collision energy, 
 independent of the mass of the diffractive system. 
    
-<br/><code>option </code><strong> 2</strong> :  As for option <code>1</code> but also rescale the pomeron 
+<br/><code>option </code><strong> 2</strong> :  (Experimental) As for option <code>1</code> but also 
+rescale the pomeron 
 proton non-diffractive cross section to match the pp non-diffractive one. 
+   
+<br/><code>option </code><strong> 3</strong> :  (Experimental) As for option <code>1</code> but use the full 
+  nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron in the 
+  multiple interaction machinery. Also rescale the Pomeron PDF with the log of 
+  the ratio of maximum and minimum Pomeron-nucleon collision energy. 
+   
+<br/><code>option </code><strong> 4</strong> :  As for option <code>3</code> but no rescaling of the Pomeron 
+ PDF. 
    
    
  
-<a name="anchor17"></a>
+<a name="anchor19"></a>
+<p/><code>mode&nbsp; </code><strong> Angantyr:impactMode &nbsp;</strong> 
+ (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+Determines how to bias non-diffractive minimum-bias sub-collisions in pythia to 
+be appropriately central. 
+<br/><code>option </code><strong> 0</strong> :  If we have N pirmary sub-collisions and Na secondary 
+sub-collisions, generate N+Na non-diffractive events and pick the N most central. 
+   
+<br/><code>option </code><strong> 1</strong> :  Use UserHooks to force Pythia to produce events with a 
+particular impact parameter for the N primary sub collisions according to the 
+generated impact parameter in the SubCollisionModel. 
+   
+<br/><code>option </code><strong> 2</strong> :  As for option <code>1</code> but also the secondary 
+absorptive sub-collisions have their impact parameter set. 
+   
+   
+ 
+<a name="anchor20"></a>
+<p/><code>parm&nbsp; </code><strong> Angantyr:impactFudge &nbsp;</strong> 
+ (<code>default = <strong>0.85</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 4.0</code>)<br/>
+Multiplicative factor used to compensate for the fact that the 
+<code>SubColllisionModel</code> in Angantyr may have a different 
+impact parameter profile than what is assumed in the MPI overlap 
+calculation in Pythia. 
+   
+ 
+<a name="anchor21"></a>
 <p/><code>mode&nbsp; </code><strong> Angantyr:SDTries &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>)<br/>
 When adding single diffractive sub-collisions to other 
@@ -354,7 +402,7 @@ for regenerating the single diffractive sub-event a number of times
 to see if a small enough diffractive system is produced. 
    
  
-<a name="anchor18"></a>
+<a name="anchor22"></a>
 <p/><code>mode&nbsp; </code><strong> Angantyr:SDRecoil &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 Determines which particles in a primary sub-collision will take the 
@@ -369,7 +417,7 @@ rapidity range are considered.
    
    
  
-<a name="anchor19"></a>
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> Angantyr:SDTest &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Used in conjunction with <code>HeavyIon:mode = 2</code> and proton 
@@ -378,6 +426,16 @@ secondary non-diffractive scatterings in the Angantyr heavy ion model
 for the given nucleon energies. Used for tuning special 
 <code>HI</code>-prefixed parameters of the secondary absorptive 
 sub-collisions. 
+   
+ 
+<a name="anchor24"></a>
+<p/><code>parm&nbsp; </code><strong> Angantyr:SDTestB &nbsp;</strong> 
+ (<code>default = <strong>-1.0</strong></code>)<br/>
+In conjunction with <code>Angantyr:SDTest = on</code> and 
+<code>Angantyr:impactMode = 2</code> only pick diffractive 
+events with a particular impact parameter (as defined by the scaled value 
+given in <code>Info::bMPI()</code>). If negative, the standard impact 
+parameter distribution is used. 
    
  
 <p/> 
@@ -392,4 +450,4 @@ complete the full nucleaus-nucleus collision.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

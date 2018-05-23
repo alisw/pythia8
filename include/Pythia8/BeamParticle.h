@@ -1,6 +1,6 @@
 // BeamParticle.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for information on incoming beams.
@@ -146,21 +146,25 @@ public:
   void newM( double mIn) { mBeam = mIn; }
 
   // Member functions for output.
-  int id() const {return idBeam;}
-  Vec4 p() const {return pBeam;}
-  double px() const {return pBeam.px();}
-  double py() const {return pBeam.py();}
-  double pz() const {return pBeam.pz();}
-  double e() const {return pBeam.e();}
-  double m() const {return mBeam;}
-  bool isLepton() const {return isLeptonBeam;}
+  int id()            const {return idBeam;}
+  int  idVMD()        const {return idVMDBeam;}
+  Vec4 p()            const {return pBeam;}
+  double px()         const {return pBeam.px();}
+  double py()         const {return pBeam.py();}
+  double pz()         const {return pBeam.pz();}
+  double e()          const {return pBeam.e();}
+  double m()          const {return mBeam;}
+  double mVMD()       const {return mVMDBeam;}
+  double scaleVMD()   const {return scaleVMDBeam;}
+  bool isLepton()     const {return isLeptonBeam;}
   bool isUnresolved() const {return isUnresolvedBeam;}
   // As hadrons here we only count those we know how to handle remnants for.
-  bool isHadron()    const {return isHadronBeam;}
-  bool isMeson()     const {return isMesonBeam;}
-  bool isBaryon()    const {return isBaryonBeam;}
-  bool isGamma()     const {return isGammaBeam;}
-  bool hasResGamma() const {return hasResGammaInBeam;}
+  bool isHadron()     const {return isHadronBeam;}
+  bool isMeson()      const {return isMesonBeam;}
+  bool isBaryon()     const {return isBaryonBeam;}
+  bool isGamma()      const {return isGammaBeam;}
+  bool hasResGamma()  const {return hasResGammaInBeam;}
+  bool hasVMDstate()  const {return hasVMDstateInBeam;}
 
   // Maximum x remaining after previous MPI and ISR, plus safety margin.
   double xMax(int iSkip = -1);
@@ -212,6 +216,9 @@ public:
 
   // Return quark masses used in the PDF fit (LHAPDF6 only).
   double mQuarkPDF(int idIn) {return pdfBeamPtr->mQuarkPDF(idIn);}
+
+  // Return number of members in PDF family (LHAPDF6 only).
+  int nMembers() {return pdfBeamPtr->nMembers();}
 
   // Calculate envelope of PDF predictions
   void calcPDFEnvelope(int idNow, double xNow, double Q2Now, int valSea) {
@@ -325,6 +332,20 @@ public:
   int  getGammaMode()                 { return gammaMode; }
   bool isResolvedUnresolved()         { return isResUnres; }
 
+  // Set state of VMD inside gamma.
+  void setVMDstate(bool isVMDIn, int idIn, double mIn, double scaleIn,
+    bool reassignState = false) {
+    hasVMDstateInBeam = isVMDIn;
+    idVMDBeam         = idIn;
+    mVMDBeam          = mIn;
+    scaleVMDBeam      = scaleIn;
+    if (reassignState) {
+      idBeam = idVMDBeam;
+      mBeam  = mVMDBeam;
+      pdfBeamPtr->setVMDscale(scaleVMDBeam);
+    }
+  }
+
   // Store the pT2 value of gamma->qqbar splitting.
   void   pT2gamma2qqbar(double pT2in) { pT2gm2qqbar = pT2in; }
   double pT2gamma2qqbar()             { return pT2gm2qqbar; }
@@ -357,9 +378,10 @@ public:
     { kTgamma = kTIn; phiGamma = phiIn; }
 
   // Get the kinematic limits for photons emitted by the beam.
-  double Q2minPDF()     { return pdfHardBeamPtr->getQ2min(); }
-  double xGammaMin()    { return pdfHardBeamPtr->getXmin(); }
-  double xGammaHadr()   { return pdfHardBeamPtr->getXhadr(); }
+  double Q2minPDF()      { return pdfHardBeamPtr->getQ2min(); }
+  double xGammaMin()     { return pdfHardBeamPtr->getXmin(); }
+  double xGammaHadr()    { return pdfHardBeamPtr->getXhadr(); }
+  double gammaFluxNorm() { return pdfHardBeamPtr->getGammaFluxNorm(); }
 
   // Get the kinematics related photons form lepton beams.
   double xGamma()   const { return xGm; }
@@ -374,8 +396,8 @@ public:
     { if ( pdfBeamPtr ) pdfBeamPtr->xPom(xpom); }
 
   // Sample x and Q2 for emitted photons according to flux.
-  double sampleXgamma()
-    { xGm = pdfHardBeamPtr->sampleXgamma(); return xGm; }
+  double sampleXgamma(double xMinIn)
+    { xGm = pdfHardBeamPtr->sampleXgamma(xMinIn); return xGm; }
   double sampleQ2gamma(double Q2min)
     { Q2gm = pdfHardBeamPtr->sampleQ2gamma(Q2min); return Q2gm;}
 
@@ -415,9 +437,9 @@ private:
          xGluonCutoff;
 
   // Basic properties of a beam particle.
-  int    idBeam, idBeamAbs;
+  int    idBeam, idBeamAbs, idVMDBeam;
   Vec4   pBeam;
-  double mBeam;
+  double mBeam, mVMDBeam, scaleVMDBeam;
 
   // Beam kind. Valence flavour content for hadrons.
   bool   isUnresolvedBeam, isLeptonBeam, isHadronBeam, isMesonBeam,
@@ -429,7 +451,8 @@ private:
   double xqgTot, xqVal, xqgSea, xqCompSum;
 
   // Variables related to photon beams (also inside lepton).
-  bool   doISR, doMPI, doND, isResolvedGamma, hasResGammaInBeam, isResUnres;
+  bool   doISR, doMPI, doND, isResolvedGamma, hasResGammaInBeam,
+         isResUnres, hasVMDstateInBeam;
   double pTminISR, pTminMPI, pT2gm2qqbar;
   int    iGamVal, iPosVal, gammaMode;
 

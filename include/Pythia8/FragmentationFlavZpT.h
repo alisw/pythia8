@@ -1,6 +1,6 @@
 // FragmentationFlavZpT.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains helper classes for fragmentation.
@@ -210,6 +210,74 @@ protected:
 
 //==========================================================================
 
+// Auxiliary class to encapsulate (unnormalised) Lund FF.
+
+class LundFFRaw : public FunctionEncapsulator {
+
+public:
+
+  // Constructor and destructor.
+  LundFFRaw() {};
+  virtual ~LundFFRaw() {};
+
+  // f(z) = (1-z)^a / z^c * Exp ( - b * mT2 / z).
+  virtual double f(vector<double> args) {
+    if (args.size() < 5) return -1.;
+    double z   = args[0];
+    if (z <= 0. || z >= 1.) return 0.;
+    double a   = args[1];
+    double b   = args[2];
+    double c   = args[3];
+    double mT2 = args[4];
+    return pow(1. - z, a) / pow(z, c) * exp(-b * mT2 / z);
+  }
+
+};
+
+//==========================================================================
+
+// Auxiliary class to encapsulate average, <z>, of Lund FF.
+
+class LundFFAvg : public FunctionEncapsulator {
+
+public:
+
+  // Constructor and destructor.
+  LundFFAvg() {};
+  virtual ~LundFFAvg() {};
+
+  // <z> = integral( z * f(z) dz ) / integral( f(z) dz ),
+  // argsIn[] : a, b, c, mT2, and optionally integrator tolerance parameter.
+  virtual double f(vector<double> argsIn) {
+
+    // Do sanity checks and set initial values.
+    if (argsIn.size() < 4) return -1.;
+    double tol = 1.e-6;
+    if (argsIn.size() >= 5) tol = argsIn[4];
+    double denom = 1.;
+    double numerator = 0.;
+
+    // Evaluate denominator integral. LundFF expects args: z, a, b, c, mT2.
+    vector<double> args(1);
+    args.insert(args.end(), argsIn.begin(), argsIn.end());
+    check = lundFF.integrateGauss(denom, 0, 0., 1., args, tol);
+    if ( !check || denom <= 0. ) return -1.;
+
+    // Evaluate numerator integral. Evaluating z*f is equivalent to c -> c-1.
+    args[3] -= 1.;
+    check = lundFF.integrateGauss(numerator, 0, 0., 1., args, tol);
+    if ( !check || numerator < 0. ) return -1.;
+    return numerator/denom;
+  }
+
+private:
+
+  LundFFRaw lundFF;
+  bool check;
+};
+
+//==========================================================================
+
 // The StringZ class is used to sample the fragmentation function f(z).
 
 class StringZ {
@@ -224,7 +292,7 @@ public:
 
   // Initialize data members.
   virtual void init(Settings& settings, ParticleData& particleData,
-    Rndm* rndmPtrIn);
+    Rndm* rndmPtrIn, Info* infoPtrIn);
 
   // Fragmentation function: top-level to determine parameters.
   virtual double zFrag( int idOld, int idNew = 0, double mT2 = 1.);
@@ -237,6 +305,9 @@ public:
   // a and b fragmentation parameters needed in some operations.
   virtual double aAreaLund() {return aLund;}
   virtual double bAreaLund() {return bLund;}
+
+  // Method to derive bLund from <z> (for fixed a and reference mT2).
+  bool deriveBLund(Settings& settings, ParticleData& particleData);
 
 protected:
 
@@ -256,6 +327,9 @@ protected:
 
   // Pointer to the random number generator.
   Rndm*  rndmPtr;
+
+  // Pointer to event information.
+  Info* infoPtr;
 
 };
 

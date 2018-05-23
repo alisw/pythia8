@@ -43,56 +43,56 @@ events fed in via the Les Houches Accord.
 <h3>List information</h3> 
  
 <a name="anchor1"></a>
-<p/><strong>void Info::list() &nbsp;</strong> <br/>
+<p/><strong> void Info::list() &nbsp;</strong> <br/>
 a listing of most of the information set for the current event. 
    
  
 <h3>The beams</h3> 
  
 <a name="anchor2"></a>
-<p/><strong>int Info::idA() &nbsp;</strong> <br/>
+<p/><strong> int Info::idA() &nbsp;</strong> <br/>
    
 <a name="anchor3"></a>
-<strong>int Info::idB() &nbsp;</strong> <br/>
+<strong> int Info::idB() &nbsp;</strong> <br/>
 the identities of the two beam particles. 
    
  
 <a name="anchor4"></a>
-<p/><strong>double Info::pzA() &nbsp;</strong> <br/>
+<p/><strong> double Info::pzA() &nbsp;</strong> <br/>
    
 <a name="anchor5"></a>
-<strong>double Info::pzB() &nbsp;</strong> <br/>
+<strong> double Info::pzB() &nbsp;</strong> <br/>
 the longitudinal momenta of the two beam particles. 
    
  
 <a name="anchor6"></a>
-<p/><strong>double Info::eA() &nbsp;</strong> <br/>
+<p/><strong> double Info::eA() &nbsp;</strong> <br/>
    
 <a name="anchor7"></a>
-<strong>double Info::eB() &nbsp;</strong> <br/>
+<strong> double Info::eB() &nbsp;</strong> <br/>
 the energies of the two beam particles. 
    
  
 <a name="anchor8"></a>
-<p/><strong>double Info::mA() &nbsp;</strong> <br/>
+<p/><strong> double Info::mA() &nbsp;</strong> <br/>
    
 <a name="anchor9"></a>
-<strong>double Info::mB() &nbsp;</strong> <br/>
+<strong> double Info::mB() &nbsp;</strong> <br/>
 the masses of the two beam particles. 
    
  
 <a name="anchor10"></a>
-<p/><strong>double Info::eCM() &nbsp;</strong> <br/>
+<p/><strong> double Info::eCM() &nbsp;</strong> <br/>
    
 <a name="anchor11"></a>
-<strong>double Info::s() &nbsp;</strong> <br/>
+<strong> double Info::s() &nbsp;</strong> <br/>
 the CM energy and its square for the two beams. 
    
  
 <h3>Initialization</h3> 
  
 <a name="anchor12"></a>
-<p/><strong>bool Info::tooLowPTmin() &nbsp;</strong> <br/>
+<p/><strong> bool Info::tooLowPTmin() &nbsp;</strong> <br/>
 normally false, but true if the proposed <i>pTmin</i> scale was too low 
 in timelike or spacelike showers, or in multiparton interactions. In the 
 former case the <i>pTmin</i> is raised to some minimal value, in the 
@@ -104,46 +104,46 @@ cross section bigger than the nondiffractive one by reducing
 <h3>The event type</h3> 
  
 <a name="anchor13"></a>
-<p/><strong>string Info::name() &nbsp;</strong> <br/>
+<p/><strong> string Info::name() &nbsp;</strong> <br/>
    
 <a name="anchor14"></a>
-<strong>int Info::code() &nbsp;</strong> <br/>
+<strong> int Info::code() &nbsp;</strong> <br/>
 the name and code of the process that occurred. 
    
  
 <a name="anchor15"></a>
-<p/><strong>int Info::nFinal() &nbsp;</strong> <br/>
+<p/><strong> int Info::nFinal() &nbsp;</strong> <br/>
 the number of final-state partons in the hard process. 
    
  
 <a name="anchor16"></a>
-<p/><strong>bool Info::isResolved() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isResolved() &nbsp;</strong> <br/>
 are beam particles resolved, i.e. were PDF's used for the process? 
    
  
 <a name="anchor17"></a>
-<p/><strong>bool Info::isDiffractiveA() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isDiffractiveA() &nbsp;</strong> <br/>
    
 <a name="anchor18"></a>
-<strong>bool Info::isDiffractiveB() &nbsp;</strong> <br/>
+<strong> bool Info::isDiffractiveB() &nbsp;</strong> <br/>
 is either beam soft diffractively excited? 
    
  
 <a name="anchor19"></a>
-<p/><strong>bool Info::isDiffractiveC() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isDiffractiveC() &nbsp;</strong> <br/>
 is there soft central diffraction (a.k.a. double Pomeron exchange)? 
    
  
 <a name="anchor20"></a>
-<p/><strong>bool Info::isHardDiffractiveA() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isHardDiffractiveA() &nbsp;</strong> <br/>
    
 <a name="anchor21"></a>
-<strong>bool Info::isHardDiffractiveB() &nbsp;</strong> <br/>
+<strong> bool Info::isHardDiffractiveB() &nbsp;</strong> <br/>
 is either beam hard diffractively excited? 
    
  
 <a name="anchor22"></a>
-<p/><strong>bool Info::isNonDiffractive() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isNonDiffractive() &nbsp;</strong> <br/>
 is the process the <code>SoftQCD:nonDiffractive</code> one, 
 i.e. corresponding to the full inelastic nondiffractive part of the 
 total cross section. (Note that a hard process, say <i>Z^0</i> 
@@ -154,39 +154,39 @@ machinery for the <code>SoftQCD:nonDiffractive</code> component.)
    
  
 <a name="anchor23"></a>
-<p/><strong>bool Info::isMinBias() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isMinBias() &nbsp;</strong> <br/>
 the same as above, retained for backwards compatibility, but to 
 be removed in PYTHIA 8.2. 
    
  
 <a name="anchor24"></a>
-<p/><strong>bool Info::isLHA() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isLHA() &nbsp;</strong> <br/>
 has the process been generated from external Les Houches Accord 
 information? 
    
  
 <a name="anchor25"></a>
-<p/><strong>bool Info::atEndOfFile() &nbsp;</strong> <br/>
+<p/><strong> bool Info::atEndOfFile() &nbsp;</strong> <br/>
 true if a linked Les Houches class refuses to return any further 
 events, presumably because it has reached the end of the file from 
 which events have been read in. 
    
  
 <a name="anchor26"></a>
-<p/><strong>bool Info::hasSub() &nbsp;</strong> <br/>
+<p/><strong> bool Info::hasSub() &nbsp;</strong> <br/>
 does the process have a subprocess classification? 
 Currently only true for nondiffractive and Les Houches events, where 
 it allows the hardest collision to be identified. 
    
  
 <a name="anchor27"></a>
-<p/><strong>string Info::nameSub() &nbsp;</strong> <br/>
+<p/><strong> string Info::nameSub() &nbsp;</strong> <br/>
    
 <a name="anchor28"></a>
-<strong>int Info::codeSub() &nbsp;</strong> <br/>
+<strong> int Info::codeSub() &nbsp;</strong> <br/>
    
 <a name="anchor29"></a>
-<strong>int Info::nFinalSub() &nbsp;</strong> <br/>
+<strong> int Info::nFinalSub() &nbsp;</strong> <br/>
 the name, code and number of final-state partons in the subprocess 
 that occurred when <code>hasSub()</code> is true. For a minimum-bias event 
 the <code>code</code> would always be 101, while <code>codeSub()</code> 
@@ -203,35 +203,35 @@ The methods in this sections refer to the two initial partons of the
 hard <i>2 &rarr; n</i> process (diffraction excluded; see below). 
  
 <a name="anchor30"></a>
-<p/><strong>int Info::id1() &nbsp;</strong> <br/>
+<p/><strong> int Info::id1() &nbsp;</strong> <br/>
    
 <a name="anchor31"></a>
-<strong>int Info::id2() &nbsp;</strong> <br/>
+<strong> int Info::id2() &nbsp;</strong> <br/>
 the identities of the two partons coming in to the hard process. 
    
  
 <a name="anchor32"></a>
-<p/><strong>double Info::x1() &nbsp;</strong> <br/>
+<p/><strong> double Info::x1() &nbsp;</strong> <br/>
    
 <a name="anchor33"></a>
-<strong>double Info::x2() &nbsp;</strong> <br/>
+<strong> double Info::x2() &nbsp;</strong> <br/>
 <i>x</i> fractions of the two partons coming in to the hard process. 
    
  
 <a name="anchor34"></a>
-<p/><strong>double Info::y() &nbsp;</strong> <br/>
+<p/><strong> double Info::y() &nbsp;</strong> <br/>
    
 <a name="anchor35"></a>
-<strong>double Info::tau() &nbsp;</strong> <br/>
+<strong> double Info::tau() &nbsp;</strong> <br/>
 rapidity and scaled mass-squared of the hard-process subsystem, as 
 defined by the above <i>x</i> values. 
    
  
 <a name="anchor36"></a>
-<p/><strong>bool Info::isValence1() &nbsp;</strong> <br/>
+<p/><strong> bool Info::isValence1() &nbsp;</strong> <br/>
    
 <a name="anchor37"></a>
-<strong>bool Info::isValence2() &nbsp;</strong> <br/>
+<strong> bool Info::isValence2() &nbsp;</strong> <br/>
 <code>true</code> if the two hard incoming partons have been picked 
 to belong to the valence piece of the parton-density distribution, 
 else <code>false</code>. Should be interpreted with caution. 
@@ -270,28 +270,28 @@ line provides the factorization scale separately. If <i>alpha_s</i>,
 then new values are defined as for internal processes. 
  
 <a name="anchor38"></a>
-<p/><strong>int Info::id1pdf() &nbsp;</strong> <br/>
+<p/><strong> int Info::id1pdf() &nbsp;</strong> <br/>
    
 <a name="anchor39"></a>
-<strong>int Info::id2pdf() &nbsp;</strong> <br/>
+<strong> int Info::id2pdf() &nbsp;</strong> <br/>
 the identities of the two partons for which parton density values 
 are defined. 
    
  
 <a name="anchor40"></a>
-<p/><strong>double Info::x1pdf() &nbsp;</strong> <br/>
+<p/><strong> double Info::x1pdf() &nbsp;</strong> <br/>
    
 <a name="anchor41"></a>
-<strong>double Info::x2pdf() &nbsp;</strong> <br/>
+<strong> double Info::x2pdf() &nbsp;</strong> <br/>
 <i>x</i> fractions of the two partons for which parton density values 
 are defined. 
    
  
 <a name="anchor42"></a>
-<p/><strong>double Info::pdf1() &nbsp;</strong> <br/>
+<p/><strong> double Info::pdf1() &nbsp;</strong> <br/>
    
 <a name="anchor43"></a>
-<strong>double Info::pdf2() &nbsp;</strong> <br/>
+<strong> double Info::pdf2() &nbsp;</strong> <br/>
 parton densities <i>x*f(x,Q^2)</i> evaluated for the two incoming 
 partons; could be used e.g. for reweighting purposes in conjunction 
 with the <code>idpdf</code>, <code>xpdf</code> and <code>QFac</code> 
@@ -300,34 +300,34 @@ contain this information and, if so, 0 is returned.
    
  
 <a name="anchor44"></a>
-<p/><strong>double Info::QFac() &nbsp;</strong> <br/>
+<p/><strong> double Info::QFac() &nbsp;</strong> <br/>
    
 <a name="anchor45"></a>
-<strong>double Info::Q2Fac() &nbsp;</strong> <br/>
+<strong> double Info::Q2Fac() &nbsp;</strong> <br/>
 the <i>Q</i> or <i>Q^2</i> factorization scale at which the 
 densities were evaluated. 
    
  
 <a name="anchor46"></a>
-<p/><strong>double Info::alphaS() &nbsp;</strong> <br/>
+<p/><strong> double Info::alphaS() &nbsp;</strong> <br/>
    
 <a name="anchor47"></a>
-<strong>double Info::alphaEM() &nbsp;</strong> <br/>
+<strong> double Info::alphaEM() &nbsp;</strong> <br/>
 the <i>alpha_strong</i> and <i>alpha_electromagnetic</i> values used 
 for the hard process. 
    
  
 <a name="anchor48"></a>
-<p/><strong>double Info::QRen() &nbsp;</strong> <br/>
+<p/><strong> double Info::QRen() &nbsp;</strong> <br/>
    
 <a name="anchor49"></a>
-<strong>double Info::Q2Ren() &nbsp;</strong> <br/>
+<strong> double Info::Q2Ren() &nbsp;</strong> <br/>
 the <i>Q</i> or <i>Q^2</i> renormalization scale at which 
 <i>alpha_strong</i> and <i>alpha_electromagnetic</i> were evaluated. 
    
  
 <a name="anchor50"></a>
-<p/><strong>double Info::scalup() &nbsp;</strong> <br/>
+<p/><strong> double Info::scalup() &nbsp;</strong> <br/>
 returns the stored <code>SCALUP</code> value for Les Houches events, 
 and else zero. It may agree with both the <code>QFac()</code> and 
 <code>QRen()</code> values, as explained above. However, to repeat, 
@@ -345,44 +345,44 @@ processes, with special emphasis on <i>2 &rarr; 2</i> (diffraction excluded;
 see below). 
  
 <a name="anchor51"></a>
-<p/><strong>double Info::mHat() &nbsp;</strong> <br/>
+<p/><strong> double Info::mHat() &nbsp;</strong> <br/>
    
 <a name="anchor52"></a>
-<strong>double Info::sHat() &nbsp;</strong> <br/>
+<strong> double Info::sHat() &nbsp;</strong> <br/>
 the invariant mass and its square for the hard process. 
    
  
 <a name="anchor53"></a>
-<p/><strong>double Info::tHat() &nbsp;</strong> <br/>
+<p/><strong> double Info::tHat() &nbsp;</strong> <br/>
    
 <a name="anchor54"></a>
-<strong>double Info::uHat() &nbsp;</strong> <br/>
+<strong> double Info::uHat() &nbsp;</strong> <br/>
 the remaining two Mandelstam variables; only defined for <i>2 &rarr; 2</i> 
 processes. 
    
  
 <a name="anchor55"></a>
-<p/><strong>double Info::pTHat() &nbsp;</strong> <br/>
+<p/><strong> double Info::pTHat() &nbsp;</strong> <br/>
    
 <a name="anchor56"></a>
-<strong>double Info::pT2Hat() &nbsp;</strong> <br/>
+<strong> double Info::pT2Hat() &nbsp;</strong> <br/>
 transverse momentum and its square in the rest frame of a <i>2 &rarr; 2</i> 
 processes. 
    
  
 <a name="anchor57"></a>
-<p/><strong>double Info::m3Hat() &nbsp;</strong> <br/>
+<p/><strong> double Info::m3Hat() &nbsp;</strong> <br/>
    
 <a name="anchor58"></a>
-<strong>double Info::m4Hat() &nbsp;</strong> <br/>
+<strong> double Info::m4Hat() &nbsp;</strong> <br/>
 the masses of the two outgoing particles in a <i>2 &rarr; 2</i> processes. 
    
  
 <a name="anchor59"></a>
-<p/><strong>double Info::thetaHat() &nbsp;</strong> <br/>
+<p/><strong> double Info::thetaHat() &nbsp;</strong> <br/>
    
 <a name="anchor60"></a>
-<strong>double Info::phiHat() &nbsp;</strong> <br/>
+<strong> double Info::phiHat() &nbsp;</strong> <br/>
 the polar and azimuthal scattering angles in the rest frame of 
 a <i>2 &rarr; 2</i> process. 
    
@@ -444,18 +444,18 @@ Note that when side A is diffractively exited, then the Pomeron
 has been taken from side B and vice versa. 
  
 <a name="anchor61"></a>
-<p/><strong>double Info::xPomeronA() &nbsp;</strong> <br/>
+<p/><strong> double Info::xPomeronA() &nbsp;</strong> <br/>
    
 <a name="anchor62"></a>
-<strong>double Info::xPomeronB() &nbsp;</strong> <br/>
+<strong> double Info::xPomeronB() &nbsp;</strong> <br/>
 <i>x</i> fractions of momenta carried by the Pomeron in the hard 
 diffractive process. 
    
 <a name="anchor63"></a>
-<p/><strong>double Info::tPomeronA() &nbsp;</strong> <br/>
+<p/><strong> double Info::tPomeronA() &nbsp;</strong> <br/>
    
 <a name="anchor64"></a>
-<strong>double Info::tPomeronB() &nbsp;</strong> <br/>
+<strong> double Info::tPomeronB() &nbsp;</strong> <br/>
 The momentum transfer <i>t</i> in the hard diffractive process. 
    
  
@@ -464,32 +464,32 @@ The momentum transfer <i>t</i> in the hard diffractive process.
 Information about the kinematics of photon-photon collisions from lepton 
 beams. 
 <a name="anchor65"></a>
-<p/><strong>double Info::eCMsub() &nbsp;</strong> <br/>
+<p/><strong> double Info::eCMsub() &nbsp;</strong> <br/>
 Collision energy of the <i>gamma-gamma</i> sub-system. 
    
 <a name="anchor66"></a>
-<p/><strong>double Info::xGammaA() &nbsp;</strong> <br/>
+<p/><strong> double Info::xGammaA() &nbsp;</strong> <br/>
    
 <a name="anchor67"></a>
-<strong>double Info::xGammaB() &nbsp;</strong> <br/>
+<strong> double Info::xGammaB() &nbsp;</strong> <br/>
 <i>x</i> fractions of lepton momenta carried by the photons. 
    
 <a name="anchor68"></a>
-<p/><strong>double Info::Q2GammaA() &nbsp;</strong> <br/>
+<p/><strong> double Info::Q2GammaA() &nbsp;</strong> <br/>
    
 <a name="anchor69"></a>
-<strong>double Info::Q2GammaB() &nbsp;</strong> <br/>
+<strong> double Info::Q2GammaB() &nbsp;</strong> <br/>
 Virtualities of the photons emitted by the leptons. 
    
 <a name="anchor70"></a>
-<p/><strong>double Info::thetaScatLepA() &nbsp;</strong> <br/>
+<p/><strong> double Info::thetaScatLepA() &nbsp;</strong> <br/>
    
 <a name="anchor71"></a>
-<strong>double Info::thetaScatLepB() &nbsp;</strong> <br/>
+<strong> double Info::thetaScatLepB() &nbsp;</strong> <br/>
 Scattering angles of the leptons wrt. the beam direction. 
    
 <a name="anchor72"></a>
-<p/><strong>int Info::photonMode() &nbsp;</strong> <br/>
+<p/><strong> int Info::photonMode() &nbsp;</strong> <br/>
 Type of photon process, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='Photoproduction.php?filepath=".$filepath."' target='page'>";?>Photoproduction</a> for details. 
@@ -498,7 +498,7 @@ echo "<a href='Photoproduction.php?filepath=".$filepath."' target='page'>";?>Pho
 <h3>Event weight and activity</h3> 
  
 <a name="anchor73"></a>
-<p/><strong>double Info::weight() &nbsp;</strong> <br/>
+<p/><strong> double Info::weight() &nbsp;</strong> <br/>
 weight assigned to the current event. Is normally 1 and thus 
 uninteresting. However, there are several cases where one may have 
 nontrivial event weights. These weights must the be used e.g. when 
@@ -523,7 +523,7 @@ but converted at output.)
    
  
 <a name="anchor74"></a>
-<p/><strong>double Info::weightSum() &nbsp;</strong> <br/>
+<p/><strong> double Info::weightSum() &nbsp;</strong> <br/>
 Sum of weights accumulated during the run. For unweighted events this 
 agrees with the number of generated events. In order to obtain 
 histograms normalized "per event", at the end of a run, histogram 
@@ -533,7 +533,7 @@ required multiplication by <code>sigmaGen()</code> below.
    
  
 <a name="anchor75"></a>
-<p/><strong>int Info::lhaStrategy() &nbsp;</strong> <br/>
+<p/><strong> int Info::lhaStrategy() &nbsp;</strong> <br/>
 normally 0, but if Les Houches events are input then it gives the 
 event weighting strategy, see 
 <?php $filepath = $_GET["filepath"];
@@ -541,33 +541,33 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>Le
    
  
 <a name="anchor76"></a>
-<p/><strong>int Info::nISR() &nbsp;</strong> <br/>
+<p/><strong> int Info::nISR() &nbsp;</strong> <br/>
    
 <a name="anchor77"></a>
-<strong>int Info::nFSRinProc() &nbsp;</strong> <br/>
+<strong> int Info::nFSRinProc() &nbsp;</strong> <br/>
    
 <a name="anchor78"></a>
-<strong>int Info::nFSRinRes() &nbsp;</strong> <br/>
+<strong> int Info::nFSRinRes() &nbsp;</strong> <br/>
 the number of emissions in the initial-state showering, in the final-state 
 showering excluding resonance decays, and in the final-state showering 
 inside resonance decays, respectively. 
    
  
 <a name="anchor79"></a>
-<p/><strong>double Info::pTmaxMPI() &nbsp;</strong> <br/>
+<p/><strong> double Info::pTmaxMPI() &nbsp;</strong> <br/>
    
 <a name="anchor80"></a>
-<strong>double Info::pTmaxISR() &nbsp;</strong> <br/>
+<strong> double Info::pTmaxISR() &nbsp;</strong> <br/>
    
 <a name="anchor81"></a>
-<strong>double Info::pTmaxFSR() &nbsp;</strong> <br/>
+<strong> double Info::pTmaxFSR() &nbsp;</strong> <br/>
 Maximum <i>pT</i> scales set for MPI, ISR and FSR, given the 
 process type and scale choice for the hard interactions. The actual 
 evolution will run down from these scales. 
    
  
 <a name="anchor82"></a>
-<p/><strong>double Info::pTnow() &nbsp;</strong> <br/>
+<p/><strong> double Info::pTnow() &nbsp;</strong> <br/>
 The current <i>pT</i> scale in the combined MPI, ISR and FSR evolution. 
 Useful for classification in <?php $filepath = $_GET["filepath"];
 echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>user hooks</a>, 
@@ -575,7 +575,7 @@ but not once the event has been evolved.
    
  
 <a name="anchor83"></a>
-<p/><strong>double Info::mergingWeight() &nbsp;</strong> <br/>
+<p/><strong> double Info::mergingWeight() &nbsp;</strong> <br/>
 combined leading-order merging weight assigned to the current event, if 
 tree-level multi-jet merging (i.e. 
 <?php $filepath = $_GET["filepath"];
@@ -591,7 +591,7 @@ echo "<a href='UMEPSMerging.php?filepath=".$filepath."' target='page'>";?> UMEPS
    
  
 <a name="anchor84"></a>
-<p/><strong>double Info::mergingWeightNLO() &nbsp;</strong> <br/>
+<p/><strong> double Info::mergingWeightNLO() &nbsp;</strong> <br/>
 combined NLO merging weight assigned to the current event, if 
 NLO multi-jet merging (i.e. 
 <?php $filepath = $_GET["filepath"];
@@ -612,13 +612,13 @@ but mainly it is for technical reasons, e.g. that double diffraction
 involves two separate systems that would have to be bookkept as such. 
  
 <a name="anchor85"></a>
-<p/><strong>double Info::a0MPI() &nbsp;</strong> <br/>
+<p/><strong> double Info::a0MPI() &nbsp;</strong> <br/>
 The value of a0 when an x-dependent matter profile is used, 
 <code>MultipartonInteractions:bProfile = 4</code>. 
    
  
 <a name="anchor86"></a>
-<p/><strong>double Info::bMPI() &nbsp;</strong> <br/>
+<p/><strong> double Info::bMPI() &nbsp;</strong> <br/>
 The impact parameter <i>b</i> assumed for the current collision when 
 multiparton interactions are simulated. Is not expressed in any physical 
 size (like fm), but only rescaled so that the average should be unity 
@@ -627,7 +627,7 @@ processes).
    
  
 <a name="anchor87"></a>
-<p/><strong>double Info::enhanceMPI() &nbsp;</strong> <br/>
+<p/><strong> double Info::enhanceMPI() &nbsp;</strong> <br/>
 The choice of impact parameter implies an enhancement or depletion of 
 the rate of subsequent interactions, as given by this number. Again 
 the average is normalized to be unity for minimum-bias events (meaning 
@@ -635,7 +635,7 @@ more than that for events with hard processes).
    
  
 <a name="anchor88"></a>
-<p/><strong>double Info::enhanceMPIavg() &nbsp;</strong> <br/>
+<p/><strong> double Info::enhanceMPIavg() &nbsp;</strong> <br/>
 The average enhancement factor expected for hard processes, in those 
 cases where it can be calculated already at initialization, i.e. excluding 
 the <i>x</i>-dependent <i>b</i> profile. The normalization is here 
@@ -650,17 +650,17 @@ As used internally the two are consistent.
    
  
 <a name="anchor89"></a>
-<p/><strong>int Info::nMPI() &nbsp;</strong> <br/>
+<p/><strong> int Info::nMPI() &nbsp;</strong> <br/>
 The number of hard interactions in the current event. Is 0 for elastic 
 and diffractive events, and else at least 1, with more possible from 
 multiparton interactions. 
    
  
 <a name="anchor90"></a>
-<p/><strong>int Info::codeMPI(int i) &nbsp;</strong> <br/>
+<p/><strong> int Info::codeMPI(int i) &nbsp;</strong> <br/>
    
 <a name="anchor91"></a>
-<strong>double Info::pTMPI(int i) &nbsp;</strong> <br/>
+<strong> double Info::pTMPI(int i) &nbsp;</strong> <br/>
 the process code and transverse momentum of the <code>i</code>'th 
 subprocess, with <code>i</code> in the range from 0 to 
 <code>nMPI() - 1</code>. The values for subprocess 0 is redundant with 
@@ -668,10 +668,10 @@ information already provided above.
    
  
 <a name="anchor92"></a>
-<p/><strong>int Info::iAMPI(int i) &nbsp;</strong> <br/>
+<p/><strong> int Info::iAMPI(int i) &nbsp;</strong> <br/>
    
 <a name="anchor93"></a>
-<strong>int Info::iBMPI(int i) &nbsp;</strong> <br/>
+<strong> int Info::iBMPI(int i) &nbsp;</strong> <br/>
 are normally zero. However, if the <code>i</code>'th subprocess is 
 a rescattering, i.e. either or both incoming partons come from the 
 outgoing state of previous scatterings, they give the position in the 
@@ -681,7 +681,7 @@ the first or second beam, respectively.
    
  
 <a name="anchor94"></a>
-<p/><strong>double Info::eMPI(int i) &nbsp;</strong> <br/>
+<p/><strong> double Info::eMPI(int i) &nbsp;</strong> <br/>
 The enhancement or depletion of the rate of the <code>i</code>'th 
 subprocess. Is primarily of interest for the 
 <code>MultipartonInteractions:bProfile = 4</code> option, where the 
@@ -690,13 +690,13 @@ partons. Note that <code>eMPI(0) = enhanceMPI()</code>.
    
  
 <a name="anchor95"></a>
-<p/><strong>double Info::bMPIold() &nbsp;</strong> <br/>
+<p/><strong> double Info::bMPIold() &nbsp;</strong> <br/>
    
 <a name="anchor96"></a>
-<strong>double Info::enhanceMPIold() &nbsp;</strong> <br/>
+<strong> double Info::enhanceMPIold() &nbsp;</strong> <br/>
    
 <a name="anchor97"></a>
-<strong>double Info::enhanceMPIoldavg() &nbsp;</strong> <br/>
+<strong> double Info::enhanceMPIoldavg() &nbsp;</strong> <br/>
 These methods are only relevant for hard diffraction with the requirement 
 of no MPI in the hadron-hadron collision. Then an impact parameter 
 and associated enhancement factor is picked for this collision, but 
@@ -721,24 +721,24 @@ echo "<a href='ASecondHardProcess.php?filepath=".$filepath."' target='page'>";?>
 chosen, but can be gleaned from the <code>pythia.stat()</code> output. 
  
 <a name="anchor98"></a>
-<p/><strong>vector&lt;int&gt; Info::codesHard() &nbsp;</strong> <br/>
+<p/><strong> vector&lt;int&gt; Info::codesHard() &nbsp;</strong> <br/>
 returns a vector with all the process codes set up for the current run, 
 i.e. the valid nonzero arguments for the five methods below. 
    
  
 <a name="anchor99"></a>
-<p/><strong>string Info::nameProc(int i = 0) &nbsp;</strong> <br/>
+<p/><strong> string Info::nameProc(int i = 0) &nbsp;</strong> <br/>
 returns the process name for process code <code>i</code>. 
    
  
 <a name="anchor100"></a>
-<p/><strong>long Info::nTried(int i = 0) &nbsp;</strong> <br/>
+<p/><strong> long Info::nTried(int i = 0) &nbsp;</strong> <br/>
    
 <a name="anchor101"></a>
-<strong>long Info::nSelected(int i = 0) &nbsp;</strong> <br/>
+<strong> long Info::nSelected(int i = 0) &nbsp;</strong> <br/>
    
 <a name="anchor102"></a>
-<strong>long Info::nAccepted(int i = 0) &nbsp;</strong> <br/>
+<strong> long Info::nAccepted(int i = 0) &nbsp;</strong> <br/>
 the total number of tried phase-space points, selected hard processes 
 and finally accepted events, summed over all allowed processes 
 (<code>i = 0</code>) or for the given process. 
@@ -752,10 +752,10 @@ second hard process</a> there may also be a mismatch.
    
  
 <a name="anchor103"></a>
-<p/><strong>double Info::sigmaGen(int i = 0) &nbsp;</strong> <br/>
+<p/><strong> double Info::sigmaGen(int i = 0) &nbsp;</strong> <br/>
    
 <a name="anchor104"></a>
-<strong>double Info::sigmaErr(int i = 0) &nbsp;</strong> <br/>
+<strong> double Info::sigmaErr(int i = 0) &nbsp;</strong> <br/>
 the estimated cross section and its estimated error, 
 summed over all allowed processes (<code>i = 0</code>) or for the given 
 process, in units of mb. The numbers refer to the accepted event sample 
@@ -772,7 +772,7 @@ This may be especially useful in the context of the
 echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>User Hooks</a></code> facility. 
  
 <a name="anchor105"></a>
-<p/><strong>int Info::getCounter(int i) &nbsp;</strong> <br/>
+<p/><strong> int Info::getCounter(int i) &nbsp;</strong> <br/>
 the method that gives you access to the value of the various loop 
 counters. 
 <br/><code>argument</code><strong> i </strong>  :  the counter number you want to access: 
@@ -879,7 +879,7 @@ that therefore are free to use, with the help of the two methods below.
    
  
 <a name="anchor106"></a>
-<p/><strong>void Info::setCounter(int i, int value = 0) &nbsp;</strong> <br/>
+<p/><strong> void Info::setCounter(int i, int value = 0) &nbsp;</strong> <br/>
 set the above counters to a given value. Only to be used by you 
 for the unassigned counters 40 - 49. 
 <br/><code>argument</code><strong> i </strong>  :  the counter number, see above. 
@@ -890,7 +890,7 @@ normally the default value is what you want.
    
  
 <a name="anchor107"></a>
-<p/><strong>void Info::addCounter(int i, int value = 0) &nbsp;</strong> <br/>
+<p/><strong> void Info::addCounter(int i, int value = 0) &nbsp;</strong> <br/>
 increase the above counters by a given amount. Only to be used by you 
 for the unassigned counters 40 - 49. 
 <br/><code>argument</code><strong> i </strong>  :  the counter number, see above. 
@@ -906,27 +906,27 @@ The following methods are mainly intended for internal use,
 e.g. for matrix-element matching. 
  
 <a name="anchor108"></a>
-<p/><strong>void Info::hasHistory(bool hasHistoryIn) &nbsp;</strong> <br/>
+<p/><strong> void Info::hasHistory(bool hasHistoryIn) &nbsp;</strong> <br/>
    
 <a name="anchor109"></a>
-<strong>bool Info::hasHistory() &nbsp;</strong> <br/>
+<strong> bool Info::hasHistory() &nbsp;</strong> <br/>
 set/get knowledge whether the likely shower history of an event 
 has been traced. 
    
  
 <a name="anchor110"></a>
-<p/><strong>void Info::zNowISR(bool zNowIn) &nbsp;</strong> <br/>
+<p/><strong> void Info::zNowISR(bool zNowIn) &nbsp;</strong> <br/>
    
 <a name="anchor111"></a>
-<strong>double Info::zNowISR() &nbsp;</strong> <br/>
+<strong> double Info::zNowISR() &nbsp;</strong> <br/>
 set/get value of <i>z</i> in latest ISR branching. 
    
  
 <a name="anchor112"></a>
-<p/><strong>void Info::pT2NowISR(bool pT2NowIn) &nbsp;</strong> <br/>
+<p/><strong> void Info::pT2NowISR(bool pT2NowIn) &nbsp;</strong> <br/>
    
 <a name="anchor113"></a>
-<strong>double Info::pT2NowISR() &nbsp;</strong> <br/>
+<strong> double Info::pT2NowISR() &nbsp;</strong> <br/>
 set/get value of <i>pT^2</i> in latest ISR branching. 
    
  
@@ -936,7 +936,7 @@ Les Houches Event files can conform to version 1.0 and version 3.0
 of the standard (version 2.0 having been extended to 3.0). The LHEF version 
 of an input file can can be accessed by 
 <a name="anchor114"></a>
-<br/><strong>int Info::LHEFversion() &nbsp;</strong> <br/>
+<br/><strong> int Info::LHEFversion() &nbsp;</strong> <br/>
    
  
 <p/> 
@@ -979,7 +979,7 @@ in a series <code>struct</code>'s:
  <code>&lt;weightgroup&gt;</code> tags. The size of the vector can be accessed 
  through the method 
 <a name="anchor115"></a>
-<br/><strong>int Info::getInitrwgtSize() &nbsp;</strong> <br/>
+<br/><strong> int Info::getInitrwgtSize() &nbsp;</strong> <br/>
    
  
 <p/> 
@@ -990,7 +990,7 @@ in a series <code>struct</code>'s:
  <code>vector&lt;LHAgenerators&gt; * Info::generators</code>. More easy-to-use 
  output functions are available. The size of this vector can be obtained from 
 <a name="anchor116"></a>
-<br/><strong>int Info::getGeneratorSize() &nbsp;</strong> <br/>
+<br/><strong> int Info::getGeneratorSize() &nbsp;</strong> <br/>
    
  
 <p/> 
@@ -1001,7 +1001,7 @@ member <code>string getHeaderBlock()</code>.
 The contents of a <code>&lt;generator&gt;</code> tag can be accessed through 
 the method 
 <a name="anchor117"></a>
-<br/><strong>string Info::getGeneratorValue(unsigned int n = 0) &nbsp;</strong> <br/>
+<br/><strong> string Info::getGeneratorValue(unsigned int n = 0) &nbsp;</strong> <br/>
 Return the contents of the n'th <code>&lt;generator&gt;</code> tag in 
 the vector of tags. 
    
@@ -1010,7 +1010,7 @@ the vector of tags.
 Attributes of the <code>&lt;generator&gt;</code> tag (e.g. the generator 
 <code>name</code> and <code>version</code>) can be accessed via 
 <a name="anchor118"></a>
-<br/><strong>string Info::getGeneratorAttribute(unsigned int n, string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
+<br/><strong> string Info::getGeneratorAttribute(unsigned int n, string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 Return the value of the generator attribute named <code>key</code> for 
 the n'th generator in the vector. Setting <code>doRemoveWhitespace</code> to 
 true will return the value, stripped of any whitespace. An empty string is 
@@ -1021,11 +1021,11 @@ returned if the attribute named <code>key</code> does not exist.
 To obtain information on cross sections, the following two methods can be 
 used 
 <a name="anchor119"></a>
-<br/><strong>int Info::nProcessesLHEF() &nbsp;</strong> <br/>
+<br/><strong> int Info::nProcessesLHEF() &nbsp;</strong> <br/>
 return the number of processes for which the cross section is stored. 
    
 <a name="anchor120"></a>
-<br/><strong>double Info::sigmaLHEF(int iProcess) &nbsp;</strong> <br/>
+<br/><strong> double Info::sigmaLHEF(int iProcess) &nbsp;</strong> <br/>
 return the cross section of the <code>iProcess</code>'th process. 
    
  
@@ -1048,7 +1048,7 @@ Possible information also includes extended use of XML tags in the
  More easy-to-use output functions are available. The size of this vector 
  can be obtained from 
 <a name="anchor121"></a>
-<br/><strong>unsigned int Info::getWeightsDetailedSize() &nbsp;</strong> <br/>
+<br/><strong> unsigned int Info::getWeightsDetailedSize() &nbsp;</strong> <br/>
    
  
 <p/> 
@@ -1062,7 +1062,7 @@ tags appear in the event block.
 The contents of a <code>&lt;wgt&gt;</code> tag can be accessed through the 
 method 
 <a name="anchor122"></a>
-<br/><strong>double Info::getWeightsDetailedValue(string n) &nbsp;</strong> <br/>
+<br/><strong> double Info::getWeightsDetailedValue(string n) &nbsp;</strong> <br/>
 Return the value of the n'th <code>&lt;wgt&gt;</code> tag in the 
 event. 
    
@@ -1071,7 +1071,7 @@ event.
 Attributes of the <code>&lt;wgt&gt;</code> tag (e.g. the weight 
 <code>id</code>) can be accessed via 
 <a name="anchor123"></a>
-<br/><strong>string Info::getWeightsDetailedAttribute(string n, string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
+<br/><strong> string Info::getWeightsDetailedAttribute(string n, string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 Return the value of the wgt attribute named <code>key</code> for 
 the n'th wgt in the vector. Setting <code>doRemoveWhitespace</code> to 
 true will return the value, stripped of any whitespace. An empty string is 
@@ -1087,20 +1087,20 @@ returned if the attribute named <code>key</code> does not exist.
  Info::weights_compressed</code>. More easy-to-use output functions are 
  available. The size of this vector can be obtained from 
 <a name="anchor124"></a>
-<br/><strong>unsigned int Info::getWeightsCompressedSize() &nbsp;</strong> <br/>
+<br/><strong> unsigned int Info::getWeightsCompressedSize() &nbsp;</strong> <br/>
    
  
 <p/> 
 The n'th weight can be accessed through the method 
 <a name="anchor125"></a>
-<br/><strong>double Info::getWeightsCompressedValue(unsigned int n) &nbsp;</strong> <br/>
+<br/><strong> double Info::getWeightsCompressedValue(unsigned int n) &nbsp;</strong> <br/>
    
  
 <p/> 
 Attributes of the <code>&lt;weights&gt;</code> tag (not normally used) can be 
 accessed via 
 <a name="anchor126"></a>
-<br/><strong>string Info::getWeightsCompressedAttribute(string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
+<br/><strong> string Info::getWeightsCompressedAttribute(string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 Return the value of the <code>&lt;weights&gt;</code> tag's attribute 
 named <code>key</code>. Setting <code>doRemoveWhitespace</code> to 
 true will return the value, stripped of any whitespace. An empty string is 
@@ -1115,7 +1115,7 @@ returned if the attribute named <code>key</code> does not exist.
  output functions are available. The contents of the scales tag can be 
  obtained from 
 <a name="anchor127"></a>
-<br/><strong>string Info::getScalesValue() &nbsp;</strong> <br/>
+<br/><strong> string Info::getScalesValue() &nbsp;</strong> <br/>
    
  
 <p/> 
@@ -1123,7 +1123,7 @@ However, note that the actual scale values are stored as attributes (called
 e.g. <code>muf</code> or <code>mur</code>). Attributes of the 
 <code>&lt;scales&gt;</code> tag can be accessed via 
 <a name="anchor128"></a>
-<br/><strong>double Info::getScalesAttribute(string key) &nbsp;</strong> <br/>
+<br/><strong> double Info::getScalesAttribute(string key) &nbsp;</strong> <br/>
 Return the value of the <code>&lt;scales&gt;</code> tag's attribute 
 named <code>key</code>. Not-a-number will be returned if the attribute 
 named <code>key</code> does not exist. 
@@ -1133,7 +1133,7 @@ named <code>key</code> does not exist.
 Finally, arbitrary attributes of the <code>&lt;event&gt;</code> tag are 
 supported. Attributes of the <code>&lt;event&gt;</code> tag can be accessed by 
 <a name="anchor129"></a>
-<br/><strong>string Info::getEventAttribute(string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
+<br/><strong> string Info::getEventAttribute(string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 return the value of the event attribute named <code>key</code>. Setting 
 <code>doRemoveWhitespace</code> to true will return the value, stripped of 
 any whitespace. An empty string is returned if the attribute named 
@@ -1154,24 +1154,24 @@ this header information, which can then be read out later. Although the
 naming convention is arbitrary, in practice, it is dictated by the 
 XML-like format of LHE files, see <?php $filepath = $_GET["filepath"];
 echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?> 
-Les Houches Accord</a> for more details. 
+Les Houches Accord</a> for  details. 
  
 <a name="anchor130"></a>
-<p/><strong>string Info::header(string key) &nbsp;</strong> <br/>
+<p/><strong> string Info::header(string key) &nbsp;</strong> <br/>
 return the header named <code>key</code> 
    
  
 <a name="anchor131"></a>
-<p/><strong>vector &lt;string&gt; Info::headerKeys() &nbsp;</strong> <br/>
+<p/><strong> vector &lt;string&gt; Info::headerKeys() &nbsp;</strong> <br/>
 return a vector of all header key names 
    
  
 <a name="anchor132"></a>
-<p/><strong>void Info::setHeader(string key, string val) &nbsp;</strong> <br/>
+<p/><strong> void Info::setHeader(string key, string val) &nbsp;</strong> <br/>
 set the header named <code>key</code> with the contents of <code>val</code> 
    
  
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

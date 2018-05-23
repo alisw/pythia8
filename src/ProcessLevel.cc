@@ -1,6 +1,6 @@
 // ProcessLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the ProcessLevel class.
@@ -45,6 +45,7 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
   BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
   BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
+  BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
   Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn, bool doLHA,
   SLHAinterface* slhaInterfacePtrIn, UserHooks* userHooksPtrIn,
   vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs) {
@@ -70,15 +71,19 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   if (beamHasGamma)
     gammaKin.init(infoPtr, &settings, rndmPtr, beamAPtr, beamBPtr);
 
-  // Initialize variables related photon-inside-lepton.
+  // Initialize variables related to photon-inside-lepton.
   beamGamAPtr      = beamGamAPtrIn;
   beamGamBPtr      = beamGamBPtrIn;
+
+  // Initialize variables related to VMD-inside-photon.
+  beamVMDAPtr      = beamVMDAPtrIn;
+  beamVMDBPtr      = beamVMDBPtrIn;
 
   // Send on some input pointers.
   resonanceDecays.init( infoPtr, particleDataPtr, rndmPtr);
 
   // Set up SigmaTotal. Store sigma_nondiffractive for future use.
-  sigmaTotPtr->init( infoPtr, settings, particleDataPtr);
+  sigmaTotPtr->init( infoPtr, settings, particleDataPtr, rndmPtr);
   int    idA = infoPtr->idA();
   int    idB = infoPtr->idB();
   double eCM = infoPtr->eCM();
@@ -684,10 +689,10 @@ bool ProcessLevel::nextOne( Event& process) {
     // Check that enough room for beam remnants in the photon beams and
     // set the valence content for photon beams.
     // Do not check for softQCD processes since no initiators yet.
-    if ( ( ( ( beamAPtr->isGamma() && !(beamAPtr->isUnresolved()) )
-          || ( beamBPtr->isGamma() && !(beamBPtr->isUnresolved()) ) )
+    if ( ( ( ( beamAPtr->isGamma() && !beamAPtr->isUnresolved() )
+          || ( beamBPtr->isGamma() && !beamBPtr->isUnresolved() ) )
         || ( beamAPtr->hasResGamma() || beamBPtr->hasResGamma() ) )
-        && !(containerPtrs[iContainer]->isNonDiffractive()) ) {
+        && !containerPtrs[iContainer]->isSoftQCD() ) {
       if ( !roomForRemnants() ) {
         physical = false;
         continue;
@@ -696,6 +701,18 @@ bool ProcessLevel::nextOne( Event& process) {
 
     // Outer loop should normally work first time around.
     if (physical) break;
+  }
+
+  // Update information in VMD beams according to chosen state.
+  if (infoPtr->isVMDstateA()) {
+    beamVMDAPtr->setGammaMode(beamAPtr->getGammaMode());
+    beamVMDAPtr->setVMDstate(true, infoPtr->idVMDA(), infoPtr->mVMDA(),
+      infoPtr->scaleVMDA(), true);
+  }
+  if (infoPtr->isVMDstateB()) {
+    beamVMDBPtr->setGammaMode(beamBPtr->getGammaMode());
+    beamVMDBPtr->setVMDstate(true, infoPtr->idVMDB(), infoPtr->mVMDB(),
+      infoPtr->scaleVMDB(), true);
   }
 
   // Done.
@@ -907,7 +924,7 @@ bool ProcessLevel::roomForRemnants() {
 
   // Direct-resolved processes with photons from lepton beams.
   if ( ( (resGammaA && !resGammaB) || (!resGammaA && resGammaB) )
-    && beamHasResGamma ){
+    && beamHasResGamma ) {
     double wTot   = infoPtr->eCMsub();
     double w2scat = infoPtr->sHatNew();
     mTRem = wTot - sqrt(w2scat);
@@ -922,7 +939,7 @@ bool ProcessLevel::roomForRemnants() {
   } else {
 
     // Photons from lepton beams.
-    if ( beamAhasResGamma && beamBhasResGamma){
+    if ( beamAhasResGamma && beamBhasResGamma) {
 
       // Rescale the x_gamma values according to the new invariant mass
       // of the gamma+gamma system and rescale x values.
@@ -960,7 +977,7 @@ bool ProcessLevel::roomForRemnants() {
       // Hard parton is a gluon:           Remnant mass = 2*m_val.
       // Hard parton is not valence quark: Remnant mass = 2*m_val + m_hard.
       // Unresolved photon:                Remnant mass = 0.
-      if ( tmpBeamAPtr->isGamma() ){
+      if ( tmpBeamAPtr->isGamma() ) {
         if ( !resGammaA) {
           m1 = 0;
         } else if (init1Val) {
@@ -980,7 +997,7 @@ bool ProcessLevel::roomForRemnants() {
       }
 
       // Photons.
-      if ( tmpBeamBPtr->isGamma() ){
+      if ( tmpBeamBPtr->isGamma() ) {
         if ( !resGammaB) {
           m2 = 0;
         } else if (init2Val) {
@@ -991,7 +1008,7 @@ bool ProcessLevel::roomForRemnants() {
         }
 
       // For hadrons start with hadron mass.
-      } else if ( tmpBeamBPtr->isHadron() ){
+      } else if ( tmpBeamBPtr->isHadron() ) {
         m2 = particleDataPtr->m0(tmpBeamBPtr->id());
 
         // If a valence flavor, remove the mass from remnants, else add.
@@ -1040,7 +1057,7 @@ bool ProcessLevel::roomForRemnants() {
     if ( tmpBeamBPtr->isGamma() ) {
       m2 = (id2 == 21) ? 2*( particleDataPtr->m0( idLight ) ) :
         particleDataPtr->m0( id2 );
-    } else if ( tmpBeamBPtr->isHadron() ){
+    } else if ( tmpBeamBPtr->isHadron() ) {
       m2 = particleDataPtr->m0( tmpBeamBPtr->id() );
       int valSign2 = (tmpBeamBPtr->nValence(id2) > 0) ? -1 : 1;
       m2 = m2 + valSign2 * particleDataPtr->m0(id2);

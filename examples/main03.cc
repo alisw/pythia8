@@ -1,15 +1,18 @@
 // main03.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This is a simple test program.
 // It illustrates how different processes can be selected and studied.
 // All input is specified in the main03.cmnd file.
+// Also illustrated output to be plotted by Python/Matplotlib/pyplot.
 
 #include "Pythia8/Pythia.h"
 
 using namespace Pythia8;
+
+//==========================================================================
 
 int main() {
 
@@ -84,10 +87,38 @@ int main() {
 
   // Final statistics. Normalize and output histograms.
   pythia.stat();
-  dndy   *=  5. / nEvent;
-  dndeta *=  5. / nEvent;
-  dndpT  *= 10. / nEvent;
+  double sigma = pythia.info.sigmaGen();
+  pThard   *= sigma * 1e6 * 0.2 / nEvent;
+  nFinal   *= 1. / (16. * nEvent);
+  nCharged *= 1. / (8. * nEvent);
+  dndy     *=  5. / nEvent;
+  dndeta   *=  5. / nEvent;
+  dndpT    *= 10. / nEvent;
   cout << pThard << nFinal << nCharged << dndy << dndeta << dndpT << epCons;
+
+  // Write Python code that can generate a PDF file with the spectra.
+  // Assuming you have Python installed on your platform, do as follows.
+  // After the program has run, type "python main03plot.py" (without the " ")
+  // in a terminal window, and open "out03plot.pdf" in a PDF viewer.
+  // Colours and other choices can be omitted, but are shown as illustration.
+  HistPlot hpl("main03plot");
+  hpl.plotFrame("out03plot", pThard, "$p_{\\perp}$ scale of hard interaction",
+    "$p_{\\perp}$ (GeV)", "$\\mathrm{d}\\sigma/\\mathrm{d}p_{\\perp}$ (nb/GeV)",
+    "h", "$p_{\\perp}$ of $2 \\to 2$ process", true);
+  hpl.frame("", "Total and charged particle multiplicities",
+    "$n$", "$\\mathrm{d}P/\\mathrm{d}n$");
+  hpl.add( nFinal, "h,royalblue", "total");
+  hpl.add( nCharged, "h,orange", "charged (even only!)");
+  hpl.plot();
+  hpl.frame( "", "Charged (pseudo)rapidity distribution", "$y$ or $\\eta$",
+    "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}(y/\\eta)$");
+  hpl.add( dndy, "-", "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}y$");
+  hpl.add( dndeta, "--,magenta",
+    "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}\\eta$");
+  hpl.plot();
+  hpl.plotFrame("", dndpT, "Charged $p_{\\perp}$ spectrum",
+    "$p_{\\perp}$ (GeV)", "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}"
+    "p_{\\perp}$ (GeV$^{-1}$)", "", "charged", true);
 
   // Done.
   return 0;

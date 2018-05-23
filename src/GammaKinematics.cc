@@ -1,6 +1,6 @@
 // GammaKinematics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the GammaKinematics
@@ -29,12 +29,15 @@ bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
   beamAPtr      = beamAPtrIn;
   beamBPtr      = beamBPtrIn;
 
+  // Rejection based on theta only when beams set in CM frame.
+  bool rejectTheta = settingsPtr->mode("Beams:frameType") == 1;
+
   // Save the applied cuts.
   Q2maxGamma    = settingsPtr->parm("Photon:Q2max");
   Wmin          = settingsPtr->parm("Photon:Wmin");
   Wmax          = settingsPtr->parm("Photon:Wmax");
-  theta1Max     = settingsPtr->parm("Photon:thetaAMax");
-  theta2Max     = settingsPtr->parm("Photon:thetaBMax");
+  theta1Max     = rejectTheta ? settingsPtr->parm("Photon:thetaAMax") : -1.0;
+  theta2Max     = rejectTheta ? settingsPtr->parm("Photon:thetaBMax") : -1.0;
 
   // Initial choice for the process type and whether to use external flux.
   gammaMode     = settingsPtr->mode("Photon:ProcessType");
@@ -85,7 +88,7 @@ bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
 
 // Sample kinematics of one or two photon beams from the original beams.
 
-bool GammaKinematics::sampleKTgamma(){
+bool GammaKinematics::sampleKTgamma(bool nonDiff){
 
   // Get the sampled x_gamma values from beams.
   xGamma1 = beamAPtr->xGamma();
@@ -107,7 +110,8 @@ bool GammaKinematics::sampleKTgamma(){
 
     // Sample the x_gamma value if needed and check that value is valid.
     if ( externalFlux && (gammaMode == 1 || gammaMode == 2) ) {
-      xGamma1 = beamAPtr->sampleXgamma();
+      double xMinA = nonDiff ? -1. : beamAPtr->xGammaHadr();
+      xGamma1 = beamAPtr->sampleXgamma(xMinA);
       if ( xGamma1 > xGammaMax1 ) return false;
     }
 
@@ -128,7 +132,8 @@ bool GammaKinematics::sampleKTgamma(){
 
     // Sample the x_gamma value if needed and check that value is valid.
     if ( externalFlux && (gammaMode == 1 || gammaMode == 3) ) {
-      xGamma2 = beamBPtr->sampleXgamma();
+      double xMinB = nonDiff ? -1. : beamBPtr->xGammaHadr();
+      xGamma2 = beamBPtr->sampleXgamma(xMinB);
       if ( xGamma2 > xGammaMax2 ) return false;
     }
 
@@ -314,10 +319,14 @@ bool GammaKinematics::finalize(){
   infoPtr->setQ2Gamma2(Q2gamma2);
   infoPtr->setX1Gamma(xGamma1);
   infoPtr->setX2Gamma(xGamma2);
-  infoPtr->setTheta1(theta1);
-  infoPtr->setTheta2(theta2);
-  infoPtr->setECMsub(mGmGm);
-  infoPtr->setsHatNew(sHatNew);
+
+  // Keep old mGmGm for 2->1 processes with direct photons.
+  if ( (infoPtr->nFinal() > 1) || (gammaMode != 4)) {
+    infoPtr->setTheta1(theta1);
+    infoPtr->setTheta2(theta2);
+    infoPtr->setECMsub(mGmGm);
+    infoPtr->setsHatNew(sHatNew);
+  }
 
   // Done.
   return true;

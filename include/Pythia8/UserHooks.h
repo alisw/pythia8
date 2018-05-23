@@ -1,6 +1,6 @@
 // UserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file to allow user access to program at different stages.
@@ -210,6 +210,12 @@ public:
  // Do a veto on a hadron just before it is added to the final state.
   virtual bool doVetoFragmentation( Particle) { return false;}
 
+  // Can set the overall impact parameter for the MPI treatment.
+  virtual bool canSetImpactParameter() const { return false; }
+
+  // Set the overall impact parameter for the MPI treatment.
+  virtual double doSetImpactParameter() { return 0.0; }
+
 protected:
 
   // Constructor.
@@ -319,8 +325,9 @@ public:
   // Initialisation after beams have been set by Pythia::init().
   // Check that there are no (obvious) clashes.
   virtual bool initAfterBeams() {
-    int nCanSetResonanceScale = 0;
-    int nCanChangeFragPar     = 0;
+    int nCanSetResonanceScale  = 0;
+    int nCanChangeFragPar      = 0;
+    int nCanSetImpactParameter = 0;
     for ( int i = 0, N = hooks.size(); i < N; ++i ) {
       hooks[i]->initPtr(infoPtr, settingsPtr, particleDataPtr, rndmPtr,
                         beamAPtr, beamBPtr, beamPomAPtr, beamPomBPtr,
@@ -328,6 +335,7 @@ public:
       if ( !hooks[i]->initAfterBeams() ) return false;
       if (hooks[i]->canSetResonanceScale()) ++nCanSetResonanceScale;
       if (hooks[i]->canChangeFragPar()) ++nCanChangeFragPar;
+      if (hooks[i]->canSetImpactParameter()) ++nCanSetImpactParameter;
     }
     if (nCanSetResonanceScale > 1) {
       infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
@@ -337,6 +345,11 @@ public:
     if (nCanChangeFragPar > 1) {
       infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
         "multiple UserHooks with canChangeFragPar() not allowed");
+      return false;
+    }
+    if (nCanSetImpactParameter > 1) {
+      infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
+        "multiple UserHooks with canSetImpactParameter() not allowed");
       return false;
     }
     return true;
@@ -669,24 +682,19 @@ public:
     return false;
   }
 
-  // Do change fragmentation parameters.
-  // Input: flavPtr, zPtr, pTPtr, idEnd, m2Had, iParton.
-  virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
-    StringPT* pTPtr, int iEnd, double m2Had, vector<int> iParton) {
-    bool changed = false;
+  // Can set the overall impact parameter for the MPI treatment.
+  virtual bool canSetImpactParameter() const {
     for ( int i = 0, N = hooks.size(); i < N; ++i )
-      if ( hooks[i]->canChangeFragPar()
-        && hooks[i]->doChangeFragPar(flavPtr, zPtr, pTPtr,
-          iEnd, m2Had, iParton) ) changed = true;
-    return changed;
+      if ( hooks[i]->canSetImpactParameter() ) return true;
+    return false;
   }
 
-  // Do a veto on a hadron just before it is added to the final state.
-  virtual bool doVetoFragmentation(Particle p) {
+  // Set the overall impact parameter for the MPI treatment.
+  virtual double doSetImpactParameter() {
     for ( int i = 0, N = hooks.size(); i < N; ++i )
-      if ( hooks[i]->canChangeFragPar()
-        && hooks[i]->doVetoFragmentation(p) ) return true;
-    return false;
+      if ( hooks[i]->canSetImpactParameter() )
+        return hooks[i]->doSetImpactParameter();
+    return 0.0;
   }
 
 public:

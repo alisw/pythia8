@@ -228,7 +228,7 @@ Code 401.
 <br/><br/><table><tr><td><strong>Charmonium:gg2ccbar(3S1)[3S1(1)]gm  </td><td></td><td> <input type="text" name="15" value="off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off</strong></code>)</td></tr></table>
 Colour-singlet production of <i>3S1</i> charmonium states via 
 <i>g g &rarr; ccbar[3S1(1)] g</i> with a hard <i>gamma</i>. 
-Code 411. 
+Code 441. 
    
  
 <br/><br/><table><tr><td><strong>Charmonium:gg2ccbar(3S1)[3S1(8)]g  </td><td></td><td> <input type="text" name="16" value="off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off</strong></code>)</td></tr></table>
@@ -487,7 +487,7 @@ Code 501.
 <br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3S1(1)]gm  </td><td></td><td> <input type="text" name="53" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
 Colour-singlet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; ccbar[3S1(1)] g</i> with a hard <i>gamma</i>. 
-Code 511. 
+Code 551. 
    
  
 <br/><br/><table><tr><td><strong>Bottomonium:gg2bbbar(3S1)[3S1(8)]g  </td><td></td><td> <input type="text" name="54" value="off,off,off" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>off,off,off</strong></code>)</td></tr></table>
@@ -1144,4 +1144,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

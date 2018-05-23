@@ -1,6 +1,6 @@
 // FragmentationFlavZpT.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -1281,10 +1281,11 @@ const double StringZ::EXPMAX     = 50.;
 // Initialize data members of the string z selection.
 
 void StringZ::init(Settings& settings, ParticleData& particleData,
-  Rndm* rndmPtrIn) {
+  Rndm* rndmPtrIn, Info* infoPtrIn) {
 
-  // Save pointer.
+  // Save pointers.
   rndmPtr       = rndmPtrIn;
+  infoPtr       = infoPtrIn;
 
   // c and b quark masses.
   mc2           = pow2( particleData.m0(4));
@@ -1298,6 +1299,15 @@ void StringZ::init(Settings& settings, ParticleData& particleData,
   rFactC        = settings.parm("StringZ:rFactC");
   rFactB        = settings.parm("StringZ:rFactB");
   rFactH        = settings.parm("StringZ:rFactH");
+
+  // Alternative parameterisation of Lund FF using average z(rho) instead of b.
+  if (settings.flag("StringZ:deriveBLund")) {
+    if (!deriveBLund(settings, particleData)) {
+      infoPtr->errorMsg("Error in StringZ::init: Derivation of b parameter "
+        " failed. Reverting to default.");
+      settings.resetParm("StringZ:bLund");
+    }
+  }
 
   // Flags and parameters of nonstandard Lund fragmentation functions.
   useNonStandC  = settings.flag("StringZ:useNonstandardC");
@@ -1323,6 +1333,50 @@ void StringZ::init(Settings& settings, ParticleData& particleData,
   stopNF        = settings.parm("StringFragmentation:stopNewFlav");
   stopS         = settings.parm("StringFragmentation:stopSmear");
 
+}
+
+//--------------------------------------------------------------------------
+
+// Alternative parameterisation of the Lund function. Derive the bLund
+// parameter given the average z for fixed a and mT2.
+
+bool StringZ::deriveBLund(Settings& settings, ParticleData& particleData) {
+
+  // Set up using reference mT2 = mRho^2 + 2*sigmaPT^2
+  double mRef   = particleData.m0(113);
+  double mT2ref = pow2(mRef) + 2.*pow2(settings.parm("stringPT:sigma"));
+  double avgZ   = settings.parm("StringZ:avgZLund");
+  double a      = settings.parm("StringZ:aLund");
+
+  // Set up average FF encapsulator. Args: a, b (dummy), c, mT2
+  LundFFAvg lundFFAvg;
+  vector<double> args(4);
+  args[0] = a;
+  args[1] = 1.;
+  args[2] = 1.;
+  args[3] = mT2ref;
+  double bNow = 0.;
+
+  // Check if derived b fell inside the nominal range for bLund
+  bool check = lundFFAvg.brent(bNow, avgZ, 1, 0.01, 20.0, args, 1.e-6, 1000);
+  if (check) {
+    settings.parm("StringZ:bLund", bNow, false);
+
+    // Print out derived value for b (and mT2ref), noting if outside range.
+    cout << fixed << setprecision(2) << "\n <z(rho)> = " << setw(5)
+         << avgZ << " for aLund = "<< a <<" & mT2ref = " << setw(5) << mT2ref
+         << " GeV^2 gave bLund = " << setw(5) << bNow << " GeV^-2:";
+    if ( bNow == settings.parm("StringZ:bLund") ) cout <<" accepted" << endl;
+    else {
+      // If outside range, tell user but force anyway so fits can see behaviour
+      cout << " accepted (forced)" << endl;
+      settings.parm("StringZ:bLund", bNow, true);
+    }
+
+    // No further calls needed since b parameter updated in settings database.
+    settings.flag("StringZ:deriveBLund", false);
+  }
+  return check;
 }
 
 //--------------------------------------------------------------------------

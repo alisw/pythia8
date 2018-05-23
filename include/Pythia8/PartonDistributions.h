@@ -1,6 +1,6 @@
 // PartonDistributions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for parton densities.
@@ -75,11 +75,15 @@ public:
   // Return quark masses used in the PDF fit (LHAPDF6 only).
   virtual double mQuarkPDF(int) { return -1.;}
 
+  // Return number of members of this PDF family (LHAPDF6 only).
+  virtual int nMembers() { return 1;}
+
   // Error envelope from PDF uncertainty.
   struct PDFEnvelope {
     double centralPDF, errplusPDF, errminusPDF, errsymmPDF, scalePDF;
+    vector<double> pdfMemberVars;
     PDFEnvelope() : centralPDF(-1.0), errplusPDF(0.0), errminusPDF(0.0),
-    errsymmPDF(0.0), scalePDF(-1.0) {};
+      errsymmPDF(0.0), scalePDF(-1.0), pdfMemberVars(0.0) {};
   };
 
   // Calculate PDF envelope.
@@ -101,7 +105,7 @@ public:
   virtual double xfIntegratedTotal(double) { return 0.; }
 
   // Return the sampled value for x_gamma.
-  virtual double xGamma(){ return 1.; }
+  virtual double xGamma() { return 1.; }
 
   // Keep track of pomeron momentum fraction.
   virtual void xPom(double = -1.0) {}
@@ -115,7 +119,8 @@ public:
   virtual double getQ2min()             { return 0.; }
   virtual double getXmin()              { return 0.; }
   virtual double getXhadr()             { return 0.; }
-  virtual double sampleXgamma()         { return 0.; }
+  virtual double getGammaFluxNorm()     { return 0.; }
+  virtual double sampleXgamma(double )  { return 0.; }
   virtual double sampleQ2gamma(double ) { return 0.; }
 
   // Normal PDFs unless gamma inside lepton -> an overestimate for sampling.
@@ -123,6 +128,9 @@ public:
 
   // Normal PDFs unless gamma inside lepton -> Do not sample x_gamma.
   virtual double xfSame(int id, double x, double Q2) { return xf( id, x, Q2); }
+
+  // Allow for new scaling factor for VMD PDFs.
+  virtual void setVMDscale(double = 1.) {}
 
 protected:
 
@@ -367,9 +375,16 @@ class GRVpiL : public PDF {
 public:
 
   // Constructor.
-  GRVpiL(int idBeamIn = 221) : PDF(idBeamIn) {}
+  GRVpiL(int idBeamIn = 211, double rescaleIn = 1.) :
+    PDF(idBeamIn) {rescale = rescaleIn;}
+
+  // Allow for new rescaling factor of the PDF for VMD beams.
+  void setVMDscale(double rescaleIn = 1.) {rescale = rescaleIn;}
 
 private:
+
+  // Rescaling of pion PDF for VMDs.
+  double rescale;
 
   // Update PDF values.
   void xfUpdate(int , double x, double Q2);
@@ -508,8 +523,13 @@ public:
 
   // Basic constructor
   PomHISASD(int idBeamIn, PDF* ppdf, Settings & settings,Info* infoPtrIn = 0)
-    : PDF(idBeamIn), pPDFPtr(ppdf), xPomNow(-1.0), hixpow(4.0) {
-    infoPtr = infoPtrIn; hixpow = settings.parm("PDF:PomHixSupp"); }
+    : PDF(idBeamIn), pPDFPtr(ppdf), xPomNow(-1.0), hixpow(4.0), newfac(1.0) {
+    infoPtr = infoPtrIn;
+    hixpow = settings.parm("PDF:PomHixSupp");
+    if ( settings.mode("Angantyr:SASDmode") == 3 ) newfac =
+      log(settings.parm("Beams:eCM")/settings.parm("Diffraction:mMinPert"));
+    if ( settings.mode("Angantyr:SASDmode") == 4 ) newfac = 0.0;
+  }
 
   // Delete also the proton PDF
   ~PomHISASD() { delete pPDFPtr; }
@@ -527,6 +547,9 @@ private:
 
   // The high-x suppression power.
   double hixpow;
+
+  // Special options.
+  double newfac;
 
   // Report possible errors.
   Info* infoPtr;
@@ -741,6 +764,11 @@ public:
   double mQuarkPDF(int idIn) {
     if(pdfPtr) return pdfPtr->mQuarkPDF(idIn); else return -1.;}
 
+  // Return quark masses used in the PDF fit (LHAPDF6 only).
+  int nMembers() {
+    if(pdfPtr) return pdfPtr->nMembers(); else return 1;}
+
+
   // Calculate PDF envelope.
   void calcPDFEnvelope(int idNow, double xNow, double Q2Now, int valSea) {
     if (pdfPtr) pdfPtr->calcPDFEnvelope(idNow, xNow, Q2Now, valSea);}
@@ -767,10 +795,11 @@ private:
   // Acccess a plugin library symbol.
   Symbol symbol(string symName);
 
-  // The loaded LHAPDF object, info pointer, and plugin library name.
+  // The loaded LHAPDF object, info pointer, and plugin library and name.
   PDF   *pdfPtr;
   Info  *infoPtr;
   string libName;
+  void  *lib;
 
 };
 
@@ -903,7 +932,7 @@ public:
 
   // Overload the member function definitions where relevant.
   void xfUpdate(int id, double x, double Q2);
-  double xGamma(){ return xGm; }
+  double xGamma() { return xGm; }
   double xfMax(int id, double x, double Q2);
   double xfSame(int id, double x, double Q2);
 
@@ -996,12 +1025,15 @@ public:
   double xfApprox(int id, double x, double Q2);
 
   // Kinematics.
-  double getQ2min() { return Q2min; }
-  double getXmin()  { return xMin; }
-  double getXhadr() { return xHadr; }
+  double getQ2min()         { return Q2min; }
+  double getXmin()          { return xMin; }
+  double getXhadr()         { return xHadr; }
+  double getGammaFluxNorm() { return norm; }
 
   // Sampling of the x and Q2 according to 1/x and 1/Q2.
-  double sampleXgamma() { return xMin * pow(xMax / xMin, rndmPtr->flat()); }
+  double sampleXgamma(double xMinIn)
+    { double xMinSample = (xMinIn < 0.) ? xMin : xMinIn;
+    return xMinSample * pow(xMax / xMinSample, rndmPtr->flat()); }
   double sampleQ2gamma(double )
     { return Q2min * pow(Q2max / Q2min, rndmPtr->flat()); }
 
@@ -1107,6 +1139,47 @@ private:
 
   // Initialize with given inputs.
   void init(int iOrderIn, int iSetIn, string xmlPath);
+
+  // Interpolation algorithm.
+  double polInt(double* fi, double* xi, int n, double x);
+};
+
+//==========================================================================
+
+// Nuclear modifications from EPPS16 fit.
+
+class EPPS16 : public nPDF {
+
+public:
+
+  // Constructor.
+  EPPS16(int idBeamIn = 2212, int iSetIn = 1,
+        string xmlPath = "../share/Pythia8/xmldoc/", PDF* protonPDFPtrIn = 0,
+        Info* infoPtrIn = 0) : nPDF(idBeamIn, protonPDFPtrIn)
+        { infoPtr = infoPtrIn; init(iSetIn, xmlPath);}
+
+  // Update parton densities.
+  void rUpdate(int id, double x, double Q2);
+
+  // Use other than central set to study uncertainties.
+  void setErrorSet(int iSetIn) {iSet = iSetIn;}
+
+private:
+
+  // Parameters related to the fit.
+  static const double Q2MIN, Q2MAX, XMIN, XMAX, XCUT;
+  static const int Q2STEPS, XSTEPS, NINTQ2, NINTX, NSETS;
+
+  // Set parameters and the grid.
+  int iSet;
+  double grid[41][31][80][8];
+  double logQ2min, loglogQ2maxmin, logX2min;
+
+  // Pointer to info for possible error messages.
+  Info* infoPtr;
+
+  // Initialize with given inputs.
+  void init(int iSetIn, string xmlPath);
 
   // Interpolation algorithm.
   double polInt(double* fi, double* xi, int n, double x);

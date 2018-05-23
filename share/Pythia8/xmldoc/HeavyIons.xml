@@ -1,6 +1,5 @@
 <chapter name="Heavy Ions"> 
  
- 
 <h2>Heavy Ions</h2> 
  
 PYTHIA does not normally handle collisions involving heavy ions, but it 
@@ -13,12 +12,13 @@ and is inspired by the old Fritiof program from the Lund group
 <p/> 
  
 To allow for the generation of collisions with heavy ions, PYTHIA includes a 
-handfull of nuclei with PDG numbers on the form 100ZZZAAAI: 
+handful of nuclei with PDG numbers on the form 100ZZZAAAI: 
 <sup>4</sup>He (1000020040), 
 <sup>6</sup>Li (1000030060), 
 <sup>12</sup>C (1000060120), 
 <sup>16</sup>O (1000080160), 
 <sup>63</sup>Cu (1000290630), 
+<sup>129</sup>Xe (1000290630), 
 <sup>197</sup>Au (1000791970), and 
 <sup>208</sup>Pb(1000822080), but more can be added using the function 
 <code>ParticleData::addParticle</code>. 
@@ -93,6 +93,10 @@ advanced model in <ref>Bro09,Ryb14</ref>.
   distance between nucleons in a nucleus in the default Woods-Saxon 
   model for nucleon distributions. 
 </parm> 
+<flag name="HeavyIon:gaussHardCore" default="off"> 
+  Option to use a Gaussian profile of the hard core instead of a sharp 
+  cut-off, inspired by <ref>Bay95</ref>. 
+</flag> 
  
 <parm name="HeavyIon:WSR" default="0.0" min="0.0"> 
 The radius of a nucleon in units of fermi in the default Woods-Saxon 
@@ -237,6 +241,11 @@ treatment of opacity.
 </option> 
 </modepick> 
  
+<flag name="Angantyr:GlauberOnly" default="off"> If switched on, the 
+event generation will stop after SubCollisions has been determined, allowing 
+the user to read out the nucleon configuration only. 
+</flag> 
+ 
 <p/> 
  
 After all possible nucleon-nucleon sub-collisions has been determined, 
@@ -286,12 +295,12 @@ object a special form of settings can be used. All settings available for
 can be set separately for this <code>Pythia</code> object by prefixing 
 their names with <code>HI</code>. 
  
-As an example, setting <code>HIDiffraction:PomFlux</code> and 
+As an example, setting <code>HISigmaDiffractive:PomFlux</code> and 
 <code>HIPDF:PomSet</code> will set the 
-<code>Diffraction:PomFlux</code> and <code>PDF:PomSet</code> options 
+<code>SigmaDiffractive:PomFlux</code> and <code>PDF:PomSet</code> options 
 for this <code>Pythia</code> object. 
  
-<modepick name="Angantyr:SASDmode" default="1" min="0" max="2"> 
+<modepick name="Angantyr:SASDmode" default="4" min="0" max="4"> 
 Determines how to generate single-diffraction events as secondary absorptive 
 (SASD) sub-collisions. 
 <option value="0"> Standard singel-diffraction events as speicfied by 
@@ -302,10 +311,41 @@ same initial <code>HIMultipartonInteractions:pT0Ref</code> as for
 non-diffractive events for the total nucleon-nucleon collision energy, 
 independent of the mass of the diffractive system. 
 </option> 
-<option value="2"> As for option <code>1</code> but also rescale the pomeron 
+<option value="2"> (Experimental) As for option <code>1</code> but also 
+rescale the pomeron 
 proton non-diffractive cross section to match the pp non-diffractive one. 
 </option> 
+<option value="3"> (Experimental) As for option <code>1</code> but use the full 
+  nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron in the 
+  multiple interaction machinery. Also rescale the Pomeron PDF with the log of 
+  the ratio of maximum and minimum Pomeron-nucleon collision energy. 
+</option> 
+<option value="4"> As for option <code>3</code> but no rescaling of the Pomeron 
+ PDF. 
+</option> 
 </modepick> 
+ 
+<modepick name="Angantyr:impactMode" default="2" min="0" max="2"> 
+Determines how to bias non-diffractive minimum-bias sub-collisions in pythia to 
+be appropriately central. 
+<option value="0"> If we have N pirmary sub-collisions and Na secondary 
+sub-collisions, generate N+Na non-diffractive events and pick the N most central. 
+</option> 
+<option value="1"> Use UserHooks to force Pythia to produce events with a 
+particular impact parameter for the N primary sub collisions according to the 
+generated impact parameter in the SubCollisionModel. 
+</option> 
+<option value="2"> As for option <code>1</code> but also the secondary 
+absorptive sub-collisions have their impact parameter set. 
+</option> 
+</modepick> 
+ 
+<parm name="Angantyr:impactFudge" default="0.85" min="0.0" max="4.0"> 
+Multiplicative factor used to compensate for the fact that the 
+<code>SubColllisionModel</code> in Angantyr may have a different 
+impact parameter profile than what is assumed in the MPI overlap 
+calculation in Pythia. 
+</parm> 
  
 <mode name="Angantyr:SDTries" default="1" min="1"> 
 When adding single diffractive sub-collisions to other 
@@ -338,6 +378,14 @@ for the given nucleon energies. Used for tuning special
 sub-collisions. 
 </flag> 
  
+<parm name="Angantyr:SDTestB" default="-1.0"> 
+In conjunction with <code>Angantyr:SDTest = on</code> and 
+<code>Angantyr:impactMode = 2</code> only pick diffractive 
+events with a particular impact parameter (as defined by the scaled value 
+given in <code>Info::bMPI()</code>). If negative, the standard impact 
+parameter distribution is used. 
+</parm> 
+ 
 <p/> 
  
 After all absorptive sub-collisions have been dealt with, the 
@@ -349,4 +397,4 @@ complete the full nucleaus-nucleus collision.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

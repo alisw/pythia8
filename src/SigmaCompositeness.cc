@@ -1,6 +1,6 @@
 // SigmaCompositeness.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -817,6 +817,7 @@ void Sigma2QCffbar2llbar::initProc() {
   qCetaLL     = settingsPtr->mode("ContactInteractions:etaLL");
   qCetaRR     = settingsPtr->mode("ContactInteractions:etaRR");
   qCetaLR     = settingsPtr->mode("ContactInteractions:etaLR");
+  qCetaRL     = settingsPtr->mode("ContactInteractions:etaRL");
   qCLambda2  *= qCLambda2;
 
   // Process name.
@@ -892,7 +893,7 @@ double Sigma2QCffbar2llbar::sigmaHat() {
        + 4. * M_PI * qCetaLR / qCLambda2;
   meRL = tmPe2QfQl * qCPropGm
        + tmPe2s2c2 * tmPgRf * tmPgLl * (qCrePropZ + I * qCimPropZ)
-       + 4. * M_PI * qCetaLR / qCLambda2;
+       + 4. * M_PI * qCetaRL / qCLambda2;
 
   double sigma = sigma0 * uH2 * real(meLL*conj(meLL));
   sigma += sigma0 * uH2 * real(meRR*conj(meRR));

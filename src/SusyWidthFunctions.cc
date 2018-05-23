@@ -1,7 +1,7 @@
 // SusyWidthFunctions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand
+// Copyright (C) 2018 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -31,99 +31,11 @@ void WidthFunction::setPointers( ParticleData* particleDataPtrIn,
 
 //--------------------------------------------------------------------------
 
-double WidthFunction::function(double) {
+double WidthFunction::f(double) {
 
   infoPtr->errorMsg("Error in WidthFunction::function: "
     "using dummy width function");
   return 0.;
-}
-
-//--------------------------------------------------------------------------
-
-// Adapted from the CERNLIB DGAUSS routine by K.S. Kolbig.
-
-double WidthFunction::integrateGauss(double xlo, double xhi, double tol) {
-
-  // 8-point unweighted.
-  static double x8[4]={0.96028985649753623,
-                       0.79666647741362674,
-                       0.52553240991632899,
-                       0.18343464249564980};
-  static double w8[4]={0.10122853629037626,
-                       0.22238103445337447,
-                       0.31370664587788729,
-                       0.36268378337836198};
-  // 16-point unweighted.
-  static double x16[8]={0.98940093499164993,
-                       0.94457502307323258,
-                       0.86563120238783174,
-                       0.75540440835500303,
-                       0.61787624440264375,
-                       0.45801677765722739,
-                       0.28160355077925891,
-                       0.09501250983763744};
-  static double w16[8]={0.027152459411754095,
-                       0.062253523938647893,
-                       0.095158511682492785,
-                       0.12462897125553387,
-                       0.14959598881657673,
-                       0.16915651939500254,
-                       0.18260341504492359,
-                       0.18945061045506850};
-
-  // Boundary checks.
-  if (xlo >= xhi) {
-  infoPtr->errorMsg("Error in WidthFunction::integrateGauss: "
-    "xlo >= xhi");
-    return 0.0;
-  }
-
-  // Initialize.
-  double sum = 0.0;
-  double c = 0.001/abs(xhi-xlo);
-  double zlo = xlo;
-  double zhi = xhi;
-
-  bool nextbin = true;
-  while ( nextbin ) {
-
-    double zmi = 0.5*(zhi+zlo); // midpoint
-    double zmr = 0.5*(zhi-zlo); // midpoint, relative to zlo
-
-    // Calculate 8-point and 16-point quadratures.
-    double s8=0.0;
-    for (int i=0;i<4;i++) {
-      double dz = zmr * x8[i];
-      s8 += w8[i]*(function(zmi+dz) + function(zmi-dz));
-    }
-    s8 *= zmr;
-    double s16=0.0;
-    for (int i=0;i<8;i++) {
-      double dz = zmr * x16[i];
-      s16 += w16[i]*(function(zmi+dz) + function(zmi-dz));
-    }
-    s16 *= zmr;
-    if (abs(s16-s8) < tol*(1+abs(s16))) {
-      // Precision in this bin OK, add to cumulative and go to next.
-      nextbin=true;
-      sum += s16;
-      // Next bin: LO = end of current, HI = end of integration region.
-      zlo=zhi;
-      zhi=xhi;
-      if ( zlo == zhi ) nextbin = false;
-    } else {
-      // Precision in this bin not OK, subdivide.
-      if (1.0 + c*abs(zmr) == 1.0) {
-        infoPtr->errorMsg("Error in WidthFunction::integrateGauss: "
-          "too high accuracy required");
-        sum = 0.0 ;
-        break;
-      }
-      zhi=zmi;
-      nextbin=true;
-    }
-  }
-  return sum;
 }
 
 //==========================================================================
@@ -139,8 +51,9 @@ double StauWidths::getWidth(int idResIn, int idIn){
 
   // Calculate integration limits and return integrated width.
   if (idResIn % 2 == 0) return 0.0;
-  double width = integrateGauss(0.0,1.0,1.0e-3);
-  return width;
+  double width;
+  if (integrateGauss(width, 0.0, 1.0, 1.0e-3)) return width;
+  else return 0.0;
 
 }
 
@@ -195,7 +108,7 @@ void StauWidths::setChannel(int idResIn, int idIn) {
 
 //------------------------------------------------------------------------
 
-double StauWidths::function(double x){
+double StauWidths::f(double x){
 
   // Decay width functions documented in arXiv:1212.2886 Citron et. al.
   double value = 0.0;

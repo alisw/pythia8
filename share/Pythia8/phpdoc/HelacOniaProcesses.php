@@ -83,7 +83,7 @@ example is provided in <code>main35.cc</code>. We describe some of the
 key elements used there and in the general case. 
  
 <a name="anchor1"></a>
-<p/><strong>LHAupHelaconia::LHAupHelaconia(Pythia* pythia, string dir = &quot;helaconiarun&quot;, string exe = &quot;ho_cluster&quot;) &nbsp;</strong> <br/>
+<p/><strong> LHAupHelaconia::LHAupHelaconia(Pythia* pythia, string dir = &quot;helaconiarun&quot;, string exe = &quot;ho_cluster&quot;) &nbsp;</strong> <br/>
 creates an instance of the <code>LHAupHelaconia</code> class. 
 <br/><code>argument</code><strong> pythia </strong>  :  pointer to the <code>Pythia</code> instance, 
 such that some of its facilities can be used inside the interface. 
@@ -99,7 +99,7 @@ it may be necessary to prepend the full pathname of the executable:
    
  
 <a name="anchor2"></a>
-<p/><strong>bool LHAupHelaconia::readString(string line) &nbsp;</strong> <br/>
+<p/><strong> bool LHAupHelaconia::readString(string line) &nbsp;</strong> <br/>
 allows the user to send commands to HelacOnia. 
 <br/><code>argument</code><strong> line </strong>  :  the command to be sent to HelacOnia. For 
 example, the following will produce <i>J/psi</i> events events from 13 TeV 
@@ -124,13 +124,13 @@ colour-singlet state.
    
  
 <a name="anchor3"></a>
-<p/><strong>void LHAupHelaconia::setEvents(int events) &nbsp;</strong> <br/>
+<p/><strong> void LHAupHelaconia::setEvents(int events) &nbsp;</strong> <br/>
 the number of events to generate per HelacOnia run. Normally does not 
 need to be set, but defaults to 10000. 
    
  
 <a name="anchor4"></a>
-<p/><strong>void LHAupHelaconia::setSeed(int seed, int runs = 30081) &nbsp;</strong> <br/>
+<p/><strong> void LHAupHelaconia::setSeed(int seed, int runs = 30081) &nbsp;</strong> <br/>
 the random seed (sequence), normally not needed to be set explicitly. 
 If the random seed is negative (default of -1), then the HelacOnia 
 seed is taken as the Pythia parameter <code>"Random:seed"</code>, which 
@@ -148,4 +148,4 @@ setEvents can be used to increase the number of events generated per run.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

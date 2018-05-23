@@ -83,7 +83,7 @@ changed.
  
 <br/><br/><table><tr><td><strong>Higgs:wingsFac </td><td></td><td> <input type="text" name="4" value="50." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>50.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 With <code>Higgs:clipWings</code> on, all Higgs masses which deviate 
-from the nominal one by more than <code>Higgs:wingsFac</code> 
+from the nominal one by  than <code>Higgs:wingsFac</code> 
 times the nominal width are forbidden. This is achieved by setting 
 the <code>mMin</code> and <code>mMax</code> values of the Higgs states 
 at initialization. These changes never  allow a wider range than already 
@@ -1751,4 +1751,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

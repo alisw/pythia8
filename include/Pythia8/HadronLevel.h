@@ -1,6 +1,6 @@
 // HadronLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the main class for hadron-level generation.
@@ -109,7 +109,7 @@ private:
 
   // Class for event geometry for Rope Hadronization. Production vertices.
   Ropewalk ropewalk;
-  bool doRopes, doShoving, doFlavour, doVertex;
+  bool doRopes, doShoving, doFlavour, doVertex, doBuffon;
 
   // Flavour change with Rope Hadronization.
   FlavourRope flavourRope;

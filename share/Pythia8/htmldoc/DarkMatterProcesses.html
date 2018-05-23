@@ -12,25 +12,25 @@ This page contains the production of Dirac fermion Dark Matter via new
 <i>s</i>-channel mediators. An example how these processes can be run 
 is found in <code>main75.cc</code>. 
  
-<h3><i>S</i></h3> 
+<h3>Scalar Mediator </h3> 
  
 <a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> DM:gg2S2XX &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
-Scattering <i>f fbar &rarr;Z'^0 &rarr; X Xbar</i>. 
-Code 6011. S is assumed to be on-shell. 
+Scattering <i>g g &rarr; S &rarr; X Xbar</i>. 
+Code 6001. S is assumed to be on-shell. 
    
  
 <a name="anchor2"></a>
 <p/><code>flag&nbsp; </code><strong> DM:gg2S2XXj &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
-Scattering <i>f fbar &rarr;Z'^0 &rarr; X Xbar</i>. 
-Code 6012. S is assumed to be on-shell. 
+Scattering <i>g g &rarr;S &rarr; X Xbar j</i>. 
+Code 6002. S is assumed to be on-shell. (Not validated) 
    
  
 <p> 
 Fermion couplings to scalar S are assumed to be proportional to mass 
-of the fermion and coupling are the factor multiplying SM Higgs 
+of the fermion and couplings are the factor multiplying SM Higgs 
 coupling (i.e. sin(mixing) in case of portal models). 
 </p> 
  
@@ -55,20 +55,43 @@ Scalar coupling of DM fermion.
 Pseudo-scalar coupling of DM fermion. 
    
  
-<h3><i>Z'</i></h3> 
+<h3>Vector Mediator <i>Z'</i></h3> 
+ 
+The Vector mediator model assumes a simplified U(1) model with couplings 
+to fermionic Dark Matter.  Both vector and axial couplings are possible. 
  
 <a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> DM:ffbar2Zp2XX &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scattering <i>f fbar &rarr;Z'^0 &rarr; X Xbar</i>. 
-Code 6001. Z' is assumed to be on-shell. 
+Code 6001. <i>Z'</i> is assumed to be on-shell. 
    
  
 <a name="anchor8"></a>
+<p/><code>flag&nbsp; </code><strong> DM:ffbar2ZpH &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Scattering <i>f fbar &rarr;Z'^0 H </i>. 
+Code 6004. <i>Z'</i> is assumed to be on-shell. The coupling of the 
+<i>Z'</i> to the SM Higgs is given by the parameter <code>Zp:coupH</code>. 
+Interference with <i>gamma/Z</i> currently not implemented, therefore 
+this is only suitable when <i>Z' &rarr; X Xbar</i>.  This can be 
+ensured using <br/> 
+55:onMode = off <br/> 
+55:onIfAny = 52 
+   
+ 
+<a name="anchor9"></a>
 <p/><code>flag&nbsp; </code><strong> DM:ffbar2Zp2XXj &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Scattering <i>f fbar &rarr;Z'^0 &rarr; X Xbar</i>. 
-Code 6002. Z' is assumed to be on-shell. 
+Code 6002. <i>Z'</i> is assumed to be on-shell. (Not validated) 
+   
+ 
+<a name="anchor10"></a>
+<p/><code>flag&nbsp; </code><strong> DM:qg2Zp2XXj &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Scattering <i>f fbar &rarr;Z'^0 &rarr; X Xbar</i>. 
+Code 6003. <i>Z'</i> is assumed to be on-shell. (Not validated) 
    
  
 <p> 
@@ -82,62 +105,69 @@ linearly with the <i>Z'</i> mass.
 Here are the couplings: 
 </p> 
  
-<a name="anchor9"></a>
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:gZp &nbsp;</strong> 
  (<code>default = <strong>0.1</strong></code>)<br/>
-Gauge coupling of new U(1) 
+Gauge coupling of new U(1). 
    
  
-<a name="anchor10"></a>
+<a name="anchor12"></a>
+<p/><code>parm&nbsp; </code><strong> Zp:coupH &nbsp;</strong> 
+ (<code>default = <strong>0.1</strong></code>)<br/>
+Coupling to SM higgs. 
+   
+ 
+ 
+<a name="anchor13"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:vu &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>)<br/>
 Vector coupling of up-type quarks. 
    
-<a name="anchor11"></a>
+<a name="anchor14"></a>
  <p/><code>parm&nbsp; </code><strong> Zp:au &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
 Axial coupling of up-type quarks. 
    
  
-<a name="anchor12"></a>
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:vd &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>)<br/>
 Vector coupling of down-type quarks. 
    
-<a name="anchor13"></a>
+<a name="anchor16"></a>
  <p/><code>parm&nbsp; </code><strong> Zp:ad &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
 Axial coupling of down-type quarks. 
    
  
-<a name="anchor14"></a>
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:vl &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>)<br/>
 Vector coupling of charged leptons. 
    
-<a name="anchor15"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:al &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
 Axial coupling of charged leptons. 
    
  
-<a name="anchor16"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:vv &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>)<br/>
 Vector coupling of neutrinos. 
    
-<a name="anchor17"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:av &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
 Axial coupling of neutrinos. 
    
  
-<a name="anchor18"></a>
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:vX &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>)<br/>
 Vector coupling of DM fermion. 
    
-<a name="anchor19"></a>
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> Zp:aX &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
 Axial coupling of DM fermion. 
@@ -146,4 +176,4 @@ Axial coupling of DM fermion.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

@@ -56,7 +56,7 @@ option 2 respresents a different model.
  
 <h3>The New Model for Hadron Scattering</h3> 
  
-Within the new modle, there are two options available for how hadron 
+Within the new model, there are two options available for how hadron 
 pairs are found: 
  
 <a name="HadScatNew1"></a> 
@@ -234,6 +234,139 @@ Probability for a pair of hadrons to scatter.
 Use tiling in <i>(eta, phi)</i> to reduce number of pairwise tests. 
    
  
+ 
+<h3>Hadron Production Vertices</h3> 
+ 
+It is not trivial to define where in space-time that the primary 
+hadrons are produced by the string fragmentation machinery. 
+The basic strategy is well-defined in a 1+1-dimensional picture, 
+as represented by a single straight string stretched between massless 
+<i>q</i> and <i>qbar</i> endpoints [<a href="Bibliography.php#refAnd83" target="page">And83</a>]. Even so there 
+is no unique definition of the production vertex of the hadron 
+straddling two adjacent breakup vertices, and the transverse width 
+of the string adds a further smearing. Some of that ambiguity is 
+reflected in the options below. The major step in complexity comes 
+with the introduction of more convoluted string topologies, however. 
+Here the momentum-space description contains a number of ambiguities, 
+notably for those hadrons that straddle two or more different string 
+regions, that were only overcome by a set of reasonable simplifications 
+[<a href="Bibliography.php#refSjo84" target="page">Sjo84</a>]. The space-time picture introduced here inherits 
+all these problems, and thus many of the same prescriptions, but also 
+require a few further simplifications and assumptions. 
+ 
+<p/> 
+Below the main switches and parameters of this picture are described. 
+Note, however, that that the machinery is still under development and 
+should be used with caution. 
+ 
+<p/> 
+When on, the machinery assigns space-time production vertices to all 
+primary hadrons, i.e. those that are produced directly from the string 
+breakups. These vertices can be read out by the <code>event[i].vProd()</code> 
+method. Note that the length unit is mm, and mm/s for time. To study 
+the hadronization process it is natural to cnvert to fm. The conversion 
+constants <code>FM2MM</code> <i>= 10^12</i> and <code>MM2FM</code> 
+<i>= 10^-12</i> are defined inside the <code>Pythia8</code> namespace, 
+available in user programs that include <code>Pythia8/Pythia.h</code>. 
+ 
+<p/> 
+Secondary vertices are set in decays, but by default only for scales 
+of the order of mm or above. That is, decays on the fm scale, like for 
+<i>rho</i> mesons, then are not considered. When the machinery in this 
+section is switched on, also such displacements are considered, see 
+further <code>HadronVertex:rapidDecays</code> below. Do note that the factor 
+<i>10^12</i> separation between fm and mm scales means that the two do 
+not mix well, i.e. any contribution of the latter kind would leave 
+little trace of the former when stored in double-precision real numbers. 
+For this reason it is also not meaningful to combine studies of hadron 
+production vertices with displaced <i>pp</i> collision vertices from 
+the profile of the incoming bunches. 
+ 
+<br/><br/><strong>Fragmentation:setVertices</strong>  <input type="radio" name="21" value="on"><strong>On</strong>
+<input type="radio" name="21" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Normally primary hadron production vertices are not set, but if 
+on they are. In the latter case the further switches and parameters 
+below provide more detailed choices. 
+   
+ 
+<br/><br/><table><tr><td><strong>HadronVertex:mode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = -1</code>; <code>maximum = 1</code>)</td></tr></table>
+The definition of hadron production points is not unique, and here 
+three alternatives are considered: one early, one late and one in the 
+middle. Further expressions below are written for a hadron <ei>i</ei> 
+produced between two string vertices <ei>i</ei> and <ei>i+1</ei>. 
+<br/>
+<input type="radio" name="22" value="0" checked="checked"><strong>0 </strong>: A hadron production point is defined as the middle  point between the two breakup vertices,  <ei>v<sup>h</sup><sub>i</sub> = (v<sub>i</sub> + v<sub>i+1</sub>)/2</ei>.  <br/>
+<input type="radio" name="22" value="-1"><strong>-1 </strong>: An "early" hadron production, counted backwards to the  point where a fictitious string oscillation could have begun that would  have reached the two string breakup vertices above. Given the hadronic  four-momentum <ei>p<sup>h</sup></ei> and the string tension <ei>kappa</ei>,  this vertex would be  <ei>v<sup>h</sup><sub>i</sub> = (v<sub>i</sub> + v<sub>i+1</sub>)/2  - p<sup>h</sup><sub>i</sub> / (2 kappa)</ei>. With this prescription is  is possible to obtain a negative squared proper time, since the  <ei>p<sup>h</sup></ei> contains a transverse-momentum smearing that  does not quite match up with longitudinal-momentum string picture.  In such cases the negative term is scaled down to give a vanishing  proper time.  <br/>
+<input type="radio" name="22" value="1"><strong>1 </strong>: A "late" hadron production, defined as the point  where the two partons that form the hadron cross for the first time.  The hadron momentum contribution then shifts sign relative to the previous  option,  <ei>v<sup>h</sup><sub>i</sub> = (v<sub>i</sub> + v<sub>i+1</sub>)/2  + p<sup>h</sup><sub>i</sub> / (2 kappa)</ei>,  and there is no problem with negative squared proper times.  <br/>
+ 
+<br/><br/><table><tr><td><strong>HadronVertex:kappa </td><td></td><td> <input type="text" name="23" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10.</code>)</td></tr></table>
+The string tension <i>kappa</i> in units of GeV/fm, i.e. how much 
+energy is stored in a string per unit length. 
+   
+ 
+<br/><br/><strong>HadronVertex:smearOn</strong>  <input type="radio" name="24" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="24" value="off"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
+When on, the space--time location of breakp points is smear in transverse 
+space accordingly to the value of xySmear given. 
+   
+ 
+<br/><br/><table><tr><td><strong>HadronVertex:xySmear </td><td></td><td> <input type="text" name="25" value="0.7" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.7</strong></code>; <code>minimum = 0.</code>; <code>maximum = 2.</code>)</td></tr></table>
+Transverse smearing of the hadron production vertices in units of fm. 
+This is initially assigned as a Gaussian smearing of the string breakup 
+vertices in the plane perpendicular to the string direction. 
+The <i>xySmear</i> parameter is picked such that a breakup vertex 
+should have a smearing <i>&lt;x^2 + y^2&gt; = xySmear^2</i> for a 
+simple string along the <i>z</i> direction. The default value has 
+been picked roughly like <i>sqrt(2/3)</i> of the proton radius, to 
+represent two out of three spatial directions. For a hadron this is 
+then averaged, as described above in <i>v<sup>h</sup><sub>i</sub> = 
+(v<sub>i</sub> + v<sub>i+1</sub>)/2 </i> and its variants, 
+giving a width reduction of 1/sqrt(2). 
+   
+ 
+<br/><br/><strong>HadronVertex:constantTau</strong>  <input type="radio" name="26" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="26" value="off"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
+The transverse smearing might change either the time coordinate or 
+the invariant time of the breakup points with respect to the origin. 
+Normally, the <i>tau</i> is kept constant and the time coordinate is 
+recalculated to compensate the effect of the smearing. If off, the 
+time coordinate is kept constant and the invariant time is modified 
+by the smearing. 
+   
+ 
+<br/><br/><strong></strong>  <input type="radio" name="27" value="on"><strong>On</strong>
+<input type="radio" name="27" value="off"><strong>Off</strong>
+<br/>
+The decay products of particles with short lifetimes, such as rho, should be 
+displaced from the production point of the mother particle. When on, the 
+corresponding displacement is included in the space--time location of the 
+daughter production points. More specifically, the width stored for these 
+particles are inverted to give the respective lifetimes. (Even more 
+specifically, the width must be above <code>NARROWMASS</code> = 
+<i>10^-6 GeV</i>.) Particles that by default already have a nonvanishing 
+lifetime (in the database or set by the user) are always given a displaced 
+vertex based on that value, so for them this flag makes no difference. 
+See below for unstable particles that have neither a know width nor a 
+known lifetime. 
+   
+ 
+<br/><br/><table><tr><td><strong>HadronVertex:intermediateTau0 </td><td></td><td> <input type="text" name="28" value="1e-9" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-9</strong></code>; <code>minimum = 1e-12</code>; <code>maximum = 1e-3</code>)</td></tr></table>
+Average lifetime <i>c * tau_0</i>, expressed in mm, assigned to particle 
+species which are unstable, but have neither been assigned a nonvanishing 
+lifetime nor a non-negligible (above <code>NARROWMASS</code>) width. 
+For such cases an intermediate scale is chosen, such that the decays happen 
+well separated from the primary vertex, and yet not as far away as to give 
+rise to an experimentally discernible secondary vertex. The default 
+<i>10^-9 mm = 1000 fm</i> meets this requirement, and is additionally 
+a reasonable value for the particles that mainly decay electromagnetically. 
+The value is also used for a few rare particles that probably have a 
+non-negligible width, but are so poorly known that no width is listed 
+in the Review of Particle Physics. 
+   
+ 
 <input type="hidden" name="saved" value="1"/>
 
 <?php
@@ -349,6 +482,46 @@ if($_POST["20"] != "off")
 $data = "HadronScatter:tile = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
+if($_POST["21"] != "off")
+{
+$data = "Fragmentation:setVertices = ".$_POST["21"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["22"] != "0")
+{
+$data = "HadronVertex:mode = ".$_POST["22"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["23"] != "1.")
+{
+$data = "HadronVertex:kappa = ".$_POST["23"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["24"] != "on")
+{
+$data = "HadronVertex:smearOn = ".$_POST["24"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["25"] != "0.7")
+{
+$data = "HadronVertex:xySmear = ".$_POST["25"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["26"] != "on")
+{
+$data = "HadronVertex:constantTau = ".$_POST["26"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["27"] != "")
+{
+$data = " = ".$_POST["27"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["28"] != "1e-9")
+{
+$data = "HadronVertex:intermediateTau0 = ".$_POST["28"]."\n";
+fwrite($handle,$data);
+}
 fclose($handle);
 }
 
@@ -356,4 +529,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

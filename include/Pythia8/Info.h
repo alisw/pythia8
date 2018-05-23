@@ -1,6 +1,6 @@
 // Info.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains a class that keep track of generic event info.
@@ -119,6 +119,16 @@ public:
   double sHatNew()            const {return sHatNewSave;}
   int    photonMode()         const {return gammaModeEvent;}
 
+  // Information on VMD state inside a photon.
+  bool   isVMDstateA()        const {return isVMDstateAEvent;}
+  bool   isVMDstateB()        const {return isVMDstateBEvent;}
+  int    idVMDA()             const {return idVMDASave;}
+  int    idVMDB()             const {return idVMDBSave;}
+  double mVMDA()              const {return mVMDASave;}
+  double mVMDB()              const {return mVMDBSave;}
+  double scaleVMDA()          const {return scaleVMDASave;}
+  double scaleVMDB()          const {return scaleVMDBSave;}
+
   // Mandelstam variables (notation as if subcollision).
   double mHat(int i = 0)      const {return sqrt(sH[i]);}
   double sHat(int i = 0)      const {return sH[i];}
@@ -145,6 +155,24 @@ public:
     if (iWeight >= 0 && iWeight < (int)weightLabelSave.size())
       return weightLabelSave[iWeight];
     else return "";}
+
+  void   initUncertainties(vector<string>*, bool = false);
+  int    nVariationGroups() { return externalVariationsSize; }
+  string getGroupName(int iGN) {
+    string tmpString("Null");
+    if( iGN < 0 || iGN >= externalVariationsSize ) return tmpString;
+    return externalGroupNames[iGN];
+  }
+  double getGroupWeight(int iGW) {
+    double tempWeight(1.0);
+    if( iGW < 0 || iGW >= externalVariationsSize ) return tempWeight;
+    for( vector<int>::const_iterator cit = externalMap[iGW].begin();
+      cit < externalMap[iGW].end(); ++cit ) tempWeight *= weightSave[*cit];
+    return tempWeight;
+  }
+  string getInitialName(int iG) { return initialNameSave[iG]; }
+  // Variations that must be known by TimeShower and Spaceshower
+  map<int,double> varPDFplus, varPDFminus, varPDFmember;
 
   // Number of times other steps have been carried out.
   int    nISR()               const {return nISRSave;}
@@ -434,11 +462,19 @@ public:
   vector<int>    codeMPISave, iAMPISave, iBMPISave;
   vector<double> pTMPISave, eMPISave, weightSave;
   vector<string> weightLabelSave;
+  vector<string>          externalVariations;
+  vector<vector<string> > externalVarNames;
+  vector<string>          externalGroupNames;
+  vector<string>          initialNameSave;
+  vector<vector<int> >    externalMap;
+  int                     externalVariationsSize;
 
   // Variables related to photon kinematics.
-  int    gammaModeEvent;
+  bool   isVMDstateAEvent, isVMDstateBEvent;
+  int    gammaModeEvent, idVMDASave, idVMDBSave;
   double x1GammaSave, x2GammaSave, Q2Gamma1Save, Q2Gamma2Save, eCMsubSave,
-         thetaLepton1, thetaLepton2, sHatNewSave;
+         thetaLepton1, thetaLepton2, sHatNewSave, mVMDASave, mVMDBSave,
+         scaleVMDASave, scaleVMDBSave;
 
   // Vector of various loop counters.
   int    counters[50];
@@ -487,6 +523,13 @@ public:
   void setECMsub( double eCMsubIn)       { eCMsubSave     = eCMsubIn;    }
   void setsHatNew( double sHatNewIn)     { sHatNewSave    = sHatNewIn;   }
   void setGammaMode( double gammaModeIn) { gammaModeEvent = gammaModeIn; }
+  // Set info on VMD state.
+  void setVMDstateA(bool isVMDAIn, int idAIn, double mAIn, double scaleAIn)
+    {isVMDstateAEvent = isVMDAIn; idVMDASave = idAIn; mVMDASave = mAIn;
+    scaleVMDASave = scaleAIn;}
+  void setVMDstateB(bool isVMDBIn, int idBIn, double mBIn, double scaleBIn)
+    {isVMDstateBEvent = isVMDBIn; idVMDBSave = idBIn; mVMDBSave = mBIn;
+    scaleVMDBSave = scaleBIn;}
 
   // Reset info for current event: only from Pythia class.
   void clear() {
@@ -601,9 +644,10 @@ public:
   // Set number and labels of weights (for uncertainty evaluations).
   void setNWeights(int mWeights) {
     mWeights = max(1,mWeights);
+    int lWeights = weightSave.size();
     weightSave.resize(mWeights);
     weightLabelSave.resize(mWeights);
-    for (int i=1; i<mWeights; ++i) weightLabelSave[i]="";
+    for (int i=lWeights; i<mWeights; ++i) weightLabelSave[i]="";
   }
   void setWeightLabel(int iWeight, string labelIn) {
     if (iWeight >= 0 && iWeight < (int)weightLabelSave.size())

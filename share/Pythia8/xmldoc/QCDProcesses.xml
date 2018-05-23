@@ -67,14 +67,16 @@ Coulomb corrections</aloc>, but by default this is off.
  
 <flag name="SoftQCD:singleDiffractive" default="off"> 
 Single diffractive scattering <ei>A B &rarr; X B</ei> and 
-<ei>A B &rarr; A X</ei>. See page on <aloc href="Diffraction"> 
-Diffraction</aloc> for details. Codes 103 and 104. 
+<ei>A B &rarr; A X</ei>. See pages on 
+<aloc href="TotalCrossSections">Total Cross Sections</aloc> 
+and <aloc href="Diffraction"> Diffraction</aloc> for details. 
+Codes 103 and 104. 
 </flag> 
  
 <flag name="SoftQCD:doubleDiffractive" default="off"> 
 Double diffractive scattering <ei>A B &rarr; X_1 X_2</ei>. 
-See page on <aloc href="Diffraction">Diffraction</aloc> 
-for details. Code 105. 
+See pages on <aloc href="TotalCrossSections">Total Cross Sections</aloc> 
+and <aloc href="Diffraction">Diffraction</aloc> for details. Code 105. 
 </flag> 
  
 <flag name="SoftQCD:centralDiffractive" default="off"> 
@@ -292,4 +294,4 @@ Code 140.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

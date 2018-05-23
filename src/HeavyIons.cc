@@ -1,6 +1,6 @@
 // HeavyIons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the HeavyIons.h header) for the
@@ -271,7 +271,7 @@ bool HeavyIons::isHeavyIon(Settings & settings) {
 
 Angantyr::Angantyr(Pythia & mainPythiaIn)
   : HeavyIons(mainPythiaIn), hasSignal(true),
-    bGenPtr(0), projPtr(0), targPtr(0), collPtr(0) {
+    bGenPtr(0), projPtr(0), targPtr(0), collPtr(0), recoilerMode(1), bMode(0) {
   pythia.resize(ALL);
   pythiaNames.resize(ALL);
   pythiaNames[HADRON] = "HADRON";
@@ -368,6 +368,7 @@ bool Angantyr::init() {
   }
 
   recoilerMode = settings.mode("Angantyr:SDRecoil");
+  bMode = settings.mode("Angantyr:impactMode");
 
   int frame = settings.mode("Beams:frameType");
   bool dohad = settings.flag("HadronLevel:all");
@@ -401,7 +402,8 @@ bool Angantyr::init() {
 
   sigtot.init(&pythia[MBIAS]->info,
               pythia[MBIAS]->settings,
-              &pythia[MBIAS]->particleData);
+              &pythia[MBIAS]->particleData,
+              &pythia[MBIAS]->rndm);
   sigtot.calc(2212, 2212, sqrt(4.0*eAbm*eBbm));
 
   clearProcessLevel(*pythia[MBIAS]);
@@ -423,6 +425,7 @@ bool Angantyr::init() {
     double ecmRef = sdabsopts.parm("MultipartonInteractions:ecmRef");
     double ecmPow = sdabsopts.parm("MultipartonInteractions:ecmPow");
     double ecm = sqrt(4.0*eBbm*eAbm);
+    sdabsopts.parm("Beams:eCM", ecm);
     double pT0     = pT0Ref * pow(ecm / ecmRef, ecmPow);
     sdabsopts.parm("MultipartonInteractions:pT0Ref", pT0);
     sdabsopts.parm("MultipartonInteractions:ecmRef", ecm);
@@ -436,7 +439,13 @@ bool Angantyr::init() {
       sdabsopts.parm("Diffraction:mPowPomP", powp, true);
       if ( powp > 0.0 ) sigND /= ((1.0 - pow(mmin/ecm, powp))/powp);
       else sigND /= log(ecm/mmin);
-      sdabsopts.parm("Diffraction:sigmaRefPomP", sigND);
+      sdabsopts.parm("Diffraction:sigmaRefPomP", sigND, true);
+    }
+    if ( sdabsopts.mode("Angantyr:SASDmode") >= 3 ) {
+      sdabsopts.parm("Diffraction:mRefPomP", ecm);
+      double sigND = sigtot.sigmaND();
+      sdabsopts.parm("Diffraction:sigmaRefPomP", sigND, true);
+      sdabsopts.parm("Diffraction:mPowPomP", 0.0);
     }
   }
   sdabsopts.mode("Beams:idA", idProjP);
@@ -597,7 +606,9 @@ EventInfo Angantyr::getSignal(const SubCollision & coll) {
 
 EventInfo Angantyr::getMBIAS(const SubCollision * coll, int procid) {
   int itry = MAXTRY;
-  HoldProcess hold(selectMB, procid);
+  double bp = -1.0;
+  if ( bMode > 0 && procid == 101 ) bp = coll->bp;
+  HoldProcess hold(selectMB, procid, bp);
   while ( --itry ) {
     if ( !pythia[MBIAS]->next() ) continue;
     assert( pythia[MBIAS]->info.code() == procid );
@@ -608,7 +619,9 @@ EventInfo Angantyr::getMBIAS(const SubCollision * coll, int procid) {
 
 EventInfo Angantyr::getSASD(const SubCollision * coll, int procid) {
   int itry = MAXTRY;
-  HoldProcess hold(selectSASD, procid);
+  double bp = -1.0;
+  if ( bMode > 1 ) bp = coll->bp;
+  HoldProcess hold(selectSASD, procid, bp);
   while ( --itry ) {
     if ( !pythia[SASD]->next() ) continue;
     assert( pythia[SASD]->info.code() == procid );
@@ -628,6 +641,8 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
   vector<multiset<SubCollision>::const_iterator> abscoll;
    // The partly absorptive
   vector<multiset<SubCollision>::const_iterator> abspart;
+  // The non-diffractive and signal events
+  multiset<EventInfo> ndeve, sigeve;
 
   // Select the primary absorptive sub collisions.
   for ( multiset<SubCollision>::iterator cit = coll.begin();
@@ -635,6 +650,11 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
     if ( cit->type != SubCollision::ABS ) continue;
     if (!cit->proj->done() && !cit->targ->done() ) {
       abscoll.push_back(cit);
+      if ( bMode > 0 ) {
+        EventInfo ie = getND(*cit);
+        assert( ie.info.code() == 101 );
+        ndeve.insert(ie);
+      }
       cit->proj->select();
       cit->targ->select();
     } else
@@ -646,13 +666,13 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
   int Nabs = abscoll.size();
   int Nadd = abspart.size();
 
-  multiset<EventInfo> ndeve, sigeve;
-  for ( int i = 0; i < Nabs + Nadd; ++i ) {
-    EventInfo ie = getND();
-    assert( ie.info.code() == 101 );
-    ndeve.insert(ie);
+  if ( bMode == 0 ) {
+    for ( int i = 0; i < Nabs + Nadd; ++i ) {
+      EventInfo ie = getND();
+      assert( ie.info.code() == 101 );
+      ndeve.insert(ie);
+    }
   }
-
   vector<int> Nii(4, 0);
   vector<double> w(4, 0.0);
   double wsum = 0.0;
@@ -1404,7 +1424,10 @@ void Angantyr::addJunctions(Event & ev, Event & addev, int coloff) {
 // and tuning purposes.
 
 bool Angantyr::nextSASD(int procid) {
-  EventInfo ei = getSASD(0, procid);
+  Nucleon dummy;
+  double bp = pythia[SASD]->parm("Angantyr:SDTestB");
+  SubCollision coll(dummy, dummy, bp*collPtr->avNDB(), bp, SubCollision::ABS);
+  EventInfo ei = getSASD(&coll, procid);
   if ( !ei.ok ) return false;
   pythia[HADRON]->event = ei.event;
   pythia[HADRON]->info = ei.info;
@@ -1566,21 +1589,24 @@ bool Angantyr::next() {
   while ( itry-- ) {
 
     // Generate nuclei, impact paramter and nucleon sub-collisions.
-    vector<Nucleon> proj = projPtr->generate();
-    vector<Nucleon> targ = targPtr->generate();
+    projectile = projPtr->generate();
+    target = targPtr->generate();
 
     double bweight = 0.0;
     Vec4 bvec = bGenPtr->generate(bweight);
     double T = 0.0;
-    multiset<SubCollision> coll =
-      collPtr->getCollisions(proj, targ, bvec, T);
+    subColls = collPtr->getCollisions(projectile, target, bvec, T);
     hiinfo.addAttempt(T, bvec.pT(), bweight);
-    if ( coll.empty() ) continue;
+    hiinfo.subCollisionsPtr(&subColls);
+    if (mainPythiaPtr->flag("Angantyr:GlauberOnly") ) {
+      return true;
+    }
+    if ( subColls.empty() ) continue;
 
 
     list<EventInfo> subevents;
 
-    if ( !genAbs(coll, subevents) ) {
+    if ( !genAbs(subColls, subevents) ) {
       mainPythiaPtr->info.errorMsg("Warning from PyHIia::next: "
                                    "Could not setup signal or ND collisions.");
       continue;
@@ -1589,49 +1615,49 @@ bool Angantyr::next() {
 
     // Collect absorptively wounded nucleons in secondary
     // sub-collisions.
-    addSASD(coll);
+    addSASD(subColls);
 
     // Collect full double diffraction collisions.
-    if ( !addDD(coll, subevents) ) {
+    if ( !addDD(subColls, subevents) ) {
       mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
                                    " Could not setup DD sub collision.");
       continue;
     }
 
     // Collect full single diffraction collisions.
-    if ( !addSD(coll, subevents) ) {
+    if ( !addSD(subColls, subevents) ) {
       mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
                                    " Could not setup SD sub collision.");
       continue;
     }
 
     // Collect secondary single diffractive sub-collisions.
-    addSDsecond(coll);
+    addSDsecond(subColls);
 
     // Collect full central diffraction collisions.
-    if ( !addSD(coll, subevents) ) {
+    if ( !addSD(subColls, subevents) ) {
       mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
                                    " Could not setup CD sub collisions.");
       continue;
     }
 
     // Collect secondary central diffractive sub-collisions.
-    addCDsecond(coll);
+    addCDsecond(subColls);
 
     // Collect full elastic collisions.
-    if ( !addEL(coll, subevents) ) {
+    if ( !addEL(subColls, subevents) ) {
       mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
                                    " Could not setup elastic sub collisions.");
       continue;
     }
 
     // Collect secondary elastic sub-collisions.
-    addELsecond(coll);
+    addELsecond(subColls);
 
     // Finally bunch all events together.
     if ( subevents.empty() ) continue;
 
-    if ( !buildEvent(subevents, proj, targ) ) continue;
+    if ( !buildEvent(subevents, projectile, target) ) continue;
 
     // Finally we hadronise everything, if requested.
     if ( pythia[HADRON]->flag("HadronLevel:all") ) {

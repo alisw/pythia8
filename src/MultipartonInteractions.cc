@@ -1,6 +1,6 @@
 // MultipartonInteractions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -333,6 +333,9 @@ const double MultipartonInteractions::XDEP_SMB2FM   = sqrt(0.1);
 // Only write warning when weight clearly above unity.
 const double MultipartonInteractions::WTACCWARN     = 1.1;
 
+// Limit below which scientific notation is used for printing.
+const double MultipartonInteractions::SIGMAMBLIMIT  = 1.;
+
 //--------------------------------------------------------------------------
 
 // Initialize the generation process for given beams.
@@ -359,7 +362,8 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   if (!doMPIinit) return false;
 
   // If both beams are baryons then softer PDF's than for mesons/Pomerons.
-  hasBaryonBeams = ( beamAPtr->isBaryon() && beamBPtr->isBaryon() );
+  hasBaryonBeams  = ( beamAPtr->isBaryon() && beamBPtr->isBaryon() );
+  hasPomeronBeams = ( beamAPtr->id() == 990 || beamBPtr->id() == 990 );
 
   // Matching in pT of hard interaction to further interactions.
   pTmaxMatch     = settings.mode("MultipartonInteractions:pTmaxMatch");
@@ -375,11 +379,26 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   //  Parameters of cross section generation.
   Kfactor        = settings.parm("MultipartonInteractions:Kfactor");
 
+  // Check if photon-photon or photon-hadron collision.
+  isGammaGamma   = beamAPtr->isGamma()  && beamBPtr->isGamma();
+  isGammaHadron  = beamAPtr->isGamma()  && beamBPtr->isHadron();
+  isHadronGamma  = beamAPtr->isHadron() && beamBPtr->isGamma();
+
   // Regularization of QCD evolution for pT -> 0.
-  pT0Ref         = settings.parm("MultipartonInteractions:pT0Ref");
-  ecmRef         = settings.parm("MultipartonInteractions:ecmRef");
-  ecmPow         = settings.parm("MultipartonInteractions:ecmPow");
-  pTmin          = settings.parm("MultipartonInteractions:pTmin");
+  // Separate default parameters for photon-photon collisions.
+  if (isGammaGamma) {
+    pT0paramMode = settings.mode("PhotonPhoton:pT0parametrization");
+    pT0Ref       = settings.parm("PhotonPhoton:pT0Ref");
+    ecmRef       = settings.parm("PhotonPhoton:ecmRef");
+    ecmPow       = settings.parm("PhotonPhoton:ecmPow");
+    pTmin        = settings.parm("PhotonPhoton:pTmin");
+  } else {
+    pT0paramMode = settings.mode("MultipartonInteractions:pT0parametrization");
+    pT0Ref       = settings.parm("MultipartonInteractions:pT0Ref");
+    ecmRef       = settings.parm("MultipartonInteractions:ecmRef");
+    ecmPow       = settings.parm("MultipartonInteractions:ecmPow");
+    pTmin        = settings.parm("MultipartonInteractions:pTmin");
+  }
 
   // Impact parameter profile: nondiffractive topologies.
   if (iDiffSys == 0) {
@@ -497,6 +516,12 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   if ( mGmGmMax < mGmGmMin ) mGmGmMax = eCM;
 
   // Get the total inelastic and nondiffractive cross section.
+  // Ensure correct cross sections for VMD photons.
+  if (infoPtr->isVMDstateA() || infoPtr->isVMDstateB())
+    sigmaTotPtr->calc(infoPtr->idA(), infoPtr->idB(), infoPtr->eCM());
+  // Ensure correct cross sections also for non-VMD photon beams.
+  else if  ( (isGammaGamma || isGammaHadron || isHadronGamma) && !hasGamma)
+    sigmaTotPtr->calc(infoPtr->idA(), infoPtr->idB(), infoPtr->eCM());
   if (!sigmaTotPtr->hasSigmaTot()) return false;
   bool isNonDiff = (iDiffSys == 0);
   sigmaND = sigmaTotPtr->sigmaND();
@@ -522,13 +547,13 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
     else if (iDiffSys == 3)
       cout << " |                          diffraction AXB               "
            << "          | \n";
-    else if ( hasGamma && beamAPtr->isGamma() && beamBPtr->isGamma() )
+    else if ( hasGamma && isGammaGamma )
       cout << " |                       l+l- -> gamma+gamma -> X         "
            << "          | \n";
-    else if ( hasGamma && beamAPtr->isGamma() && beamBPtr->isHadron() )
+    else if ( hasGamma && isGammaHadron )
       cout << " |              lepton+hadron -> gamma+hadron -> X        "
            << "          | \n";
-    else if ( hasGamma && beamBPtr->isGamma() && beamAPtr->isHadron() )
+    else if ( hasGamma && isHadronGamma )
       cout << " |              hadron+lepton -> hadron+gamma -> X        "
            << "          | \n";
     cout << " |                                                        "
@@ -541,7 +566,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
             : log(mMaxPertDiff / mMinPertDiff) / (nStep - 1.);
 
   // For photons from lepton cover range of gm+gm invariant masses.
-  if (hasGamma){
+  if (hasGamma) {
     nStep     = 5;
     eStepSize = log(mGmGmMax / mGmGmMin) / (nStep - 1.);
   }
@@ -557,12 +582,21 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
       sCM = eCM * eCM;
 
 
-      // MPI for Diffractive events.
-      if (!hasGamma) {
-        sigmaND = sigmaPomP * pow( eCM / mPomP, pPomP);
-        if (showMPI) cout << " |    diffractive mass = " << scientific
-          << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
-          << fixed << setw(6) << sigmaND << " mb    | \n";
+      // MPI for diffractive events. Rescale Pom/p flux to use for Pom/gamma.
+      if (hasPomeronBeams) {
+        double gamPomRatio = 1.;
+        if (hasGamma) {
+          sigmaTotPtr->calc(22, 2212, eCM);
+          double sigGamP = sigmaTotPtr->sigmaTot();
+          sigmaTotPtr->calc(2212, 2212, eCM);
+          double sigPP   = sigmaTotPtr->sigmaTot();
+          gamPomRatio = sigGamP / sigPP;
+        }
+        sigmaND = gamPomRatio * sigmaPomP * pow( eCM / mPomP, pPomP);
+        if (showMPI) cout << " |   diffractive mass = " << scientific
+          << setprecision(2) << setw(8) << eCM << " GeV and sigmaNorm = "
+          << ((sigmaND > SIGMAMBLIMIT) ? fixed : scientific)
+          << setw(8) << sigmaND << " mb    | \n";
 
         // Keep track of pomeron momentum fraction.
         if ( beamAPtr->id() == 990 && beamBPtr->id() == 990 ) {
@@ -577,35 +611,39 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
       } else {
 
         // Hadron-photon case.
-        if ( beamAPtr->isHadron() && beamBPtr->isGamma() ) {
+        if ( isHadronGamma ) {
           sigmaTotPtr->calc( beamAPtr->id(), 22, eCM );
           sigmaND = sigmaTotPtr->sigmaND();
           if (showMPI) cout << " |   hadron+gamma eCM = " << scientific
-            << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
-            << scientific << setw(6) << sigmaND << " mb  | \n";
+            << setprecision(2) << setw(8) << eCM << " GeV and sigmaNorm = "
+            << ((sigmaND > SIGMAMBLIMIT) ? fixed : scientific)
+            << setw(8) << sigmaND << " mb    | \n";
 
         // Photon-hadron case.
-        } else if ( beamBPtr->isHadron() && beamAPtr->isGamma() )  {
+        } else if ( isGammaHadron )  {
           sigmaTotPtr->calc( 22, beamBPtr->id(), eCM );
           sigmaND = sigmaTotPtr->sigmaND();
           if (showMPI) cout << " |   gamma+hadron eCM = " << scientific
-            << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
-            << scientific << setw(6) << sigmaND << " mb  | \n";
+            << setprecision(2) << setw(8) << eCM << " GeV and sigmaNorm = "
+            << ((sigmaND > SIGMAMBLIMIT) ? fixed : scientific)
+            << setw(8) << sigmaND << " mb    | \n";
 
         // Photon-photon case.
         } else {
           sigmaTotPtr->calc( 22, 22, eCM );
           sigmaND = sigmaTotPtr->sigmaND();
           if (showMPI) cout << " |    gamma+gamma eCM = " << scientific
-            << setprecision(3) << setw(9) << eCM << " GeV and sigmaNorm = "
-            << scientific << setw(6) << sigmaND << " mb  | \n";
+            << setprecision(2) << setw(8) << eCM << " GeV and sigmaNorm = "
+            << ((sigmaND > SIGMAMBLIMIT) ? fixed : scientific)
+            << setw(8) << sigmaND << " mb    | \n";
         }
       }
 
     }
 
-    // Set current pT0 scale.
-    pT0 = pT0Ref * pow(eCM / ecmRef, ecmPow);
+    // Set current pT0 scale according to chosed parametrization.
+    if (pT0paramMode == 0) pT0 = pT0Ref * pow(eCM / ecmRef, ecmPow);
+    else                   pT0 = pT0Ref + ecmPow * log (eCM / ecmRef);
 
     // The pT0 value may need to be decreased, if sigmaInt < sigmaND.
     double pT4dSigmaMaxBeg = 0.;
@@ -647,8 +685,9 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
       // Sufficiently big SigmaInt or reduce pT0; maybe also pTmin.
       if (sigmaInt > SIGMASTEP * sigmaND) break;
       if (showMPI) cout << fixed << setprecision(2) << " |    pT0 = "
-        << setw(5) << pT0 << " gives sigmaInteraction = " << setw(7)
-        << sigmaInt << " mb: rejected     | \n";
+        << setw(5) << pT0 << " gives sigmaInteraction = " << setw(8)
+        << ((sigmaInt > SIGMAMBLIMIT) ? fixed : scientific) << sigmaInt
+        << " mb: rejected    | \n";
       if (pTmin > pT0) pTmin *= PT0STEP;
       pT0 *= PT0STEP;
 
@@ -664,7 +703,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
     // Output for accepted pT0.
     if (showMPI) cout << fixed << setprecision(2) << " |    pT0 = "
       << setw(5) << pT0 << " gives sigmaInteraction = "<< setw(8)
-      << ((sigmaInt > 1.) ? fixed : scientific) << sigmaInt
+      << ((sigmaInt > SIGMAMBLIMIT) ? fixed : scientific) << sigmaInt
       << " mb: accepted    | \n";
 
     // Calculate factor relating matter overlap and interaction rate.
@@ -932,9 +971,16 @@ void MultipartonInteractions::pTfirst() {
         double w1    = XDEP_A1 + a1 * log(1. / x1);
         double w2    = XDEP_A1 + a1 * log(1. / x2);
         double fac   = a02now * (w1 * w1 + w2 * w2);
-        double expb2 = rndmPtr->flat();
-        b2now  = - fac * log(expb2);
-        bNow   = sqrt(b2now);
+        double expb2 = 1.;
+        if ( userHooksPtr && userHooksPtr->canSetImpactParameter() ) {
+          bNow  = userHooksPtr->doSetImpactParameter() * bAvg;
+          b2now = pow2(bNow);
+          expb2 = exp(-b2now / fac);
+        } else {
+          expb2 = rndmPtr->flat();
+          b2now  = - fac * log(expb2);
+          bNow   = sqrt(b2now);
+        }
 
         // Enhancement factor for the hard process and overestimate
         // for fastPT2. Note that existing framework has a (1. / sigmaND)
@@ -1383,7 +1429,6 @@ bool MultipartonInteractions::scatter( Event& event) {
   // roomForRemnants treats both beam equally so need to do only once.
   if ( beamAPtr->isGamma() || beamBPtr->isGamma() ) {
     if ( !beamAPtr->roomForRemnants(*beamBPtr) ) {
-
       // Remove the partons associated to the latest scattering from the
       // event record.
       event.popBack(4);
@@ -1570,6 +1615,8 @@ double MultipartonInteractions::fastPT2( double pT2beg) {
   double pT4dProbMaxNow = pT4dProbMax * enhanceBmax;
   double pT2try         = pT4dProbMaxNow * pT20begR
     / (pT4dProbMaxNow - pT20begR * log(rndmPtr->flat())) - pT20R;
+
+  if ( pT2try + pT20R <= 0.0 ) return 0.0;
 
   // Save cross section associated with ansatz above. Done.
   dSigmaApprox = pT4dSigmaMax / pow2(pT2try + pT20R);
@@ -2294,8 +2341,28 @@ void MultipartonInteractions::overlapFirst() {
     return;
   }
 
-  // Preliminary choice between and inside low-b and high-b regions.
+  // Possibility for user to set impact parameter. Evaluate overlap.
   double overlapNow = 0.;
+  if ( userHooksPtr && userHooksPtr->canSetImpactParameter() ) {
+    bNow = userHooksPtr->doSetImpactParameter() * bAvg;
+    isAtLowB = ( bNow < bDiv );
+
+    if (bProfile == 1) overlapNow = normPi * exp( -min(EXPMAX, bNow*bNow));
+    else if (bProfile == 2) overlapNow = normPi *
+      ( fracA * exp( -min(EXPMAX, bNow*bNow))
+      + fracB * exp( -min(EXPMAX, bNow*bNow / radius2B)) / radius2B
+      + fracC * exp( -min(EXPMAX, bNow*bNow / radius2C)) / radius2C );
+    else overlapNow = normPi * exp( -pow( bNow, expPow));
+    // Same enhancement for hardest process and all subsequent MPI.
+    enhanceB = enhanceBmax = enhanceBnow = (normOverlap / normPi) * overlapNow;
+
+    // Done.
+    bNow  /= bAvg;
+    bIsSet = true;
+    return;
+  }
+
+  // Preliminary choice between and inside low-b and high-b regions.
   double probAccept = 0.;
   do {
 

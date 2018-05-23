@@ -1,6 +1,6 @@
 // MiniStringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the .
@@ -43,6 +43,18 @@ void MiniStringFragmentation::init(Info* infoPtrIn, Settings& settings,
   flavSelPtr      = flavSelPtrIn;
   pTSelPtr        = pTSelPtrIn;
   zSelPtr         = zSelPtrIn;
+
+  // Calculation and definition of hadron space-time production vertices.
+  hadronVertex    = settings.mode("HadronVertex:mode");
+  setVertices     = settings.flag("Fragmentation:setVertices");
+  kappaVtx        = settings.parm("HadronVertex:kappa");
+  smearOn         = settings.flag("HadronVertex:smearOn");
+  xySmear         = settings.parm("HadronVertex:xySmear");
+  constantTau     = settings.flag("HadronVertex:constantTau");
+
+  // Charm and bottom quark masses used for space-time offset.
+  mc              = particleDataPtr->m0(4);
+  mb              = particleDataPtr->m0(5);
 
   // Initialize the MiniStringFragmentation class proper.
   nTryMass        = settings.mode("MiniStringFragmentation:nTry");
@@ -242,6 +254,18 @@ bool MiniStringFragmentation::ministring2two( int nTry, Event& event) {
     event[ iParton[i] ].daughters(iFirst, iLast);
   }
 
+  // Store breakup vertex information from the fragmentation process.
+  if (setVertices) {
+    ministringVertices.clear();
+    ministringVertices.push_back( StringVertex(true, 0, 0, 1., 0.) );
+    ministringVertices.push_back(
+      StringVertex(true, 0, 0, 1. - (xe1 + xpz1), xe1 - xpz1) );
+    ministringVertices.push_back( StringVertex(true, 0, 0, 0., 1.) );
+
+    // Store hadron production space-time vertices.
+    setHadronVertices( event, region, iFirst, iLast);
+  }
+
   // Successfully done.
   return true;
 
@@ -351,8 +375,186 @@ bool MiniStringFragmentation::ministring2one( int iSub,
   colConfig[iMax].pSum = pRecNew;
   colConfig[iMax].isCollected = true;
 
+  // Calculate hadron production points from breakup vertices
+  // using one of the three definitions.
+  if (setVertices) {
+    Vec4 prodPoint = Vec4( 0., 0., 0., 0.);
+    Vec4 pHadron = event[iHad].p();
+
+    // Smearing in transverse space.
+    if (smearOn) {
+
+      // Find two spacelike transverse four-vector directions.
+      Vec4 eX = Vec4( 1., 0., 0., 0.);
+      Vec4 eY = Vec4( 0., 1., 0., 0.);
+
+      // Introduce smearing in transverse space.
+      double transX = rndmPtr -> gauss();
+      double transY = rndmPtr -> gauss();
+      prodPoint = xySmear * (transX * eX + transY * eY) / sqrt(2.);
+      // Keep proper or actual time constant when including the smearing.
+      // Latter case to be done better when introducing MPI vertices.
+      if (constantTau) prodPoint.e( prodPoint.pAbs() );
+      else prodPoint = Vec4( 0., 0., 0., 0.);
+    }
+
+    // Reduced oscillation period if hadron contains massive quarks.
+    int id1 = event[ iParton.front() ].idAbs();
+    int id2 = event[ iParton.back() ].idAbs();
+    double redOsc = 1.;
+    if (id1 == 4 || id1 == 5 || id2 == 4 || id2 == 5) {
+      double posMass = (id1 == 4 || id1 == 5) ? particleDataPtr->m0(id1) : 0.;
+      double negMass = (id2 == 4 || id2 == 5) ? particleDataPtr->m0(id2) : 0.;
+      redOsc = sqrtpos( pow2(pow2(mHad) - pow2(posMass) - pow2(negMass))
+        - 4. * pow2(posMass * negMass) ) / mHad;
+    }
+
+    // Find hadron production points according to chosen definition.
+    if (hadronVertex == 0) prodPoint += 0.5 * redOsc * pHadron / kappaVtx;
+    else if (hadronVertex == 1) prodPoint += redOsc * pHadron / kappaVtx;
+    event[iHad].vProd( prodPoint * FM2MM );
+  }
+
   // Successfully done.
   return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Store two hadron production points in the event record.
+
+void MiniStringFragmentation::setHadronVertices(Event& event,
+  StringRegion& region, int iFirst, int iLast) {
+
+  // Initial values.
+  vector<Vec4> longitudinal;
+  int id1 = event[ iParton.front() ].idAbs();
+  int id2 = event[ iParton.back() ].idAbs();
+
+  // Longitudinal space-time location of breakup points.
+  for (int i = 0; i < 3; ++i) {
+    double xPosIn = ministringVertices[i].xRegPos;
+    double xNegIn = ministringVertices[i].xRegNeg;
+    Vec4 noOffset = (xPosIn * region.pPos + xNegIn * region.pNeg) / kappaVtx;
+    longitudinal.push_back( noOffset );
+  }
+
+  // Longitudinal offset of breakup points for massive quarks.
+  if (region.massiveOffset( 0, 0, 0, id1, id2, mc, mb)) {
+    for (int i = 0; i < 3; ++i) {
+
+      // Endpoint correction separately for each end.
+      if (i == 0 && (id1 == 4 || id1 == 5)) {
+        Vec4 v1 = longitudinal[i];
+        Vec4 v2 = longitudinal[i + 1];
+        double mHad =  event[event.size() - 2].m();
+        double pPosMass = particleDataPtr->m0(id1);
+        longitudinal[i] = v1 + (pPosMass / mHad) * (v2 - v1);
+      }
+      if (i == 2 && (id2 == 4 || id2== 5)) {
+        Vec4 v1 = longitudinal[i];
+        Vec4 v2 = longitudinal[i-1] + region.massOffset / kappaVtx;
+        double mHad =  event[i - 1 + event.size() - 2].m();
+        double pNegMass = particleDataPtr->m0(id2);
+        longitudinal[i] = v1 + (pNegMass / mHad) * (v2 - v1);
+        if (longitudinal[i].m2Calc()
+           < -1e-8 * max(1., pow2(longitudinal[i].e())))
+           infoPtr->errorMsg("Warning in MiniStringFragmentation::setVertices:"
+             " negative tau^2 for endpoint massive correction");
+      }
+
+      // Add mass offset for all breakup points.
+      Vec4 massOffset = region.massOffset / kappaVtx;
+      Vec4 position = longitudinal[i] - massOffset;
+
+      // Correction for non-physical situations.
+      if (position.m2Calc() < 0.) {
+        double cMinus = 0.;
+        if (position.m2Calc() > -1e-8 * max(1., pow2(position.e())))
+          position.e( position.pAbs() );
+        else {
+          if(massOffset.m2Calc() > 1e-6)
+            cMinus = (longitudinal[i] * massOffset
+              - sqrt(pow2(longitudinal[i] * massOffset)
+              - longitudinal[i].m2Calc() * massOffset.m2Calc()))
+              / massOffset.m2Calc();
+          else cMinus = 0.5 * longitudinal[i].m2Calc()
+              / (longitudinal[i] * massOffset);
+          position = longitudinal[i] - cMinus * massOffset;
+        }
+      }
+      longitudinal[i] = position;
+    }
+  }
+
+  // Smearing in transverse space.
+  vector<Vec4> spaceTime;
+  for (int i = 0; i < 3; ++i) {
+    Vec4 positionTot =  longitudinal[i];
+    if (smearOn) {
+
+      if (!isClosed && (i == 0 || i == 2)) {
+        spaceTime.push_back(positionTot);
+        continue;
+      }
+      Vec4 eX = region.eX;
+      Vec4 eY = region.eY;
+
+      // Smearing calculated randomly following a gaussian.
+      for (int iTry = 0; ; ++iTry) {
+        double transX = rndmPtr->gauss();
+        double transY = rndmPtr->gauss();
+        Vec4 transversePos = xySmear * (transX * eX + transY * eY) / sqrt(2.);
+        positionTot = transversePos + longitudinal[i];
+
+        // Keep proper or actual time constant when including the smearing.
+        // Latter case to be done better when introducing MPI vertices.
+        if (constantTau) {
+          double newtime = sqrt(longitudinal[i].m2Calc()
+            + positionTot.pAbs2());
+          positionTot.e(newtime);
+          break;
+        } else {
+          if (positionTot.m2Calc() >= 0.) break;
+          if (iTry == 100) {
+            positionTot = longitudinal[i];
+            break;
+          }
+        }
+      }
+    }
+    spaceTime.push_back(positionTot);
+  }
+
+  // Find hadron production points according to chosen definition.
+  vector<Vec4> prodPoints(2);
+  for(int i = 0; i < 2; ++i) {
+    Vec4 middlePoint = 0.5 * (spaceTime[i] + spaceTime[i+1]);
+    int  iHad = (i == 0) ? iFirst : iLast;
+    Vec4 pHad = event[iHad].p();
+
+    // Reduced oscillation period if hadron contains massive quarks.
+    double mHad = event[iHad].m();
+    int    idQ  = (i == 0) ? id1 : id2;
+    double redOsc = (idQ == 4 || idQ == 5)
+      ? 1. - pow2(particleDataPtr->m0(idQ) / mHad) : 0.;
+
+    // Set production point according to chosen definition.
+    if (hadronVertex == 0) prodPoints[i] = middlePoint;
+    else if (hadronVertex == 1)
+      prodPoints[i] = middlePoint + 0.5 * redOsc * pHad / kappaVtx;
+    else {
+      prodPoints[i] = middlePoint - 0.5 * redOsc * pHad / kappaVtx;
+      if (prodPoints[i].m2Calc() < 0.) {
+        double tau0fac = 2. * (redOsc * middlePoint * pHad
+          - sqrt(pow2(middlePoint * redOsc * pHad) - middlePoint.m2Calc()
+          * pow2(redOsc * mHad))) / pow2(redOsc * mHad);
+        prodPoints[i] = middlePoint - 0.5 * tau0fac * redOsc * pHad / kappaVtx;
+      }
+    }
+    event[iHad].vProd( prodPoints[i] * FM2MM );
+  }
 
 }
 

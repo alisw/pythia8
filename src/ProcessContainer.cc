@@ -1,6 +1,6 @@
 // ProcessContainer.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -47,7 +47,7 @@ const int ProcessContainer::N3SAMPLE  = 1000;
 bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   Settings& settings, ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
   BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, Couplings* couplingsPtr,
-  SigmaTotal* sigmaTotPtr, ResonanceDecays* resDecaysPtrIn,
+  SigmaTotal* sigmaTotPtrIn, ResonanceDecays* resDecaysPtrIn,
   SLHAinterface* slhaInterfacePtr, UserHooks* userHooksPtrIn,
   GammaKinematics* gammaKinPtrIn) {
 
@@ -58,6 +58,9 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   isDiffA     = sigmaProcessPtr->isDiffA();
   isDiffB     = sigmaProcessPtr->isDiffB();
   isDiffC     = sigmaProcessPtr->isDiffC();
+  isCentralDiff = isDiffC;
+  isDoubleDiff  = isDiffA && isDiffB;
+  isSingleDiff  = isDiff && !isDoubleDiff  && !isCentralDiff;
   isQCD3body  = sigmaProcessPtr->isQCD3body();
   int nFin    = sigmaProcessPtr->nFinal();
   lhaStrat    = (isLHA) ? lhaUpPtr->strategy() : 0;
@@ -111,6 +114,7 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   particleDataPtr = particleDataPtrIn;
   rndmPtr         = rndmPtrIn;
   resDecaysPtr    = resDecaysPtrIn;
+  sigmaTotPtr     = sigmaTotPtrIn;
   userHooksPtr    = userHooksPtrIn;
   canVetoResDecay = (userHooksPtr != 0)
                   ? userHooksPtr->canVetoResonanceDecays() : false;
@@ -303,6 +307,13 @@ bool ProcessContainer::trialProcess() {
       }
     }
 
+    // Incoming top beams will not be handled, although allowed by LHAPDF.
+    if (isLHA && (abs(lhaUpPtr->id(1)) == 6 || abs(lhaUpPtr->id(2)) == 6)) {
+      infoPtr->errorMsg("Error in ProcessContainer::trialProcess(): top not "
+        "allowed incoming beam parton; event skipped");
+      return false;
+    }
+
     // Possibly fail, else cross section.
     if (!physical) return false;
     double sigmaNow = phaseSpacePtr->sigmaNow();
@@ -449,8 +460,102 @@ void ProcessContainer::setBeamModes() {
   else if (beamAgammaMode == 2 && beamBgammaMode == 2) gammaModeEvent = 4;
   else                                                 gammaModeEvent = 0;
 
-  // Propagate gammaMode to info pointer.
+  // Propagate gammaMode and VMD state to info pointer.
   infoPtr->setGammaMode(gammaModeEvent);
+  if (gammaModeEvent != 4) {
+    double scale[3] = {0.00331524, 0.00030905, 0.00039639};
+    pair<int, int> idAB = chooseVMDstates(beamAPtr->id(), beamBPtr->id());
+    if (idAB.first == 113 || idAB.first == 223 || idAB.first == 333) {
+      double mA  = particleDataPtr->mSel(idAB.first);
+      double scA = scale[idAB.first/100 - 1];
+      beamAPtr->setVMDstate(true, idAB.first, mA, scA, false);
+      infoPtr->setVMDstateA(true, idAB.first, mA, scA);
+    }
+    if (idAB.second == 113 || idAB.second == 223 || idAB.second == 333) {
+      double mB  = particleDataPtr->mSel(idAB.second);
+      double scB = scale[idAB.second/100 - 1];
+      beamBPtr->setVMDstate(true, idAB.second, mB, scB, false);
+      infoPtr->setVMDstateB(true, idAB.second, mB, scB);
+    }
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+// VMD processes: Choose particle.
+
+pair<int, int> ProcessContainer::chooseVMDstates( int idA, int idB) {
+
+  // Constants and initial values.
+  double gammaFac[3] = {2.2, 23.6, 18.4};
+  double alphaEM     = 0.00729353;
+  double idVMD[3]    = {113, 223, 333};
+  double pVP[3]      = {};
+  double pVV[3][3]   = {};
+  double pSum        = 0.;
+
+  // gamma-gamma.
+  if (idA == 22 && idB == 22) {
+    for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j) {
+      // Evaluate the cross sections individually.
+      sigmaTotPtr->calc(idVMD[i], idVMD[j], infoPtr->eCM());
+      pVV[i][j] = pow2(alphaEM) / (gammaFac[i] * gammaFac[j]);
+      if (isSingleDiff && isDiffA)      pVV[i][j] *= sigmaTotPtr->sigmaXB();
+      else if (isSingleDiff && isDiffB) pVV[i][j] *= sigmaTotPtr->sigmaAX();
+      else if (isDoubleDiff)            pVV[i][j] *= sigmaTotPtr->sigmaXX();
+      else return make_pair(idA, idB);
+      pSum     += pVV[i][j];
+    }
+    // Choose VMD states based on relative fractions.
+    double pickMode = rndmPtr->flat() * pSum;
+    for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j) {
+      pickMode -= pVV[i][j];
+      if (pickMode < 0.) return make_pair(113 + 110 * i, 113 + 110 * j);
+    }
+    return make_pair(113, 113);
+
+  // gamma + p.
+  } else if (idA == 22 && idB == 2212) {
+    for (int i = 0; i < 3; ++i) {
+      // Evaluate the cross sections individually.
+      sigmaTotPtr->calc(idVMD[i], 2212, infoPtr->eCM());
+      pVP[i] = alphaEM / gammaFac[i];
+      if (isSingleDiff && isDiffA)      pVP[i] *= sigmaTotPtr->sigmaXB();
+      else if (isSingleDiff && isDiffB) pVP[i] *= sigmaTotPtr->sigmaAX();
+      else if (isDoubleDiff)            pVP[i] *= sigmaTotPtr->sigmaXX();
+      else return make_pair(idA, idB);
+      pSum     += pVP[i];
+    }
+    // Choose VMD state based on relative fractions.
+    double pickMode = rndmPtr->flat() * pSum;
+    if (pickMode > pVP[1] + pVP[2]) return make_pair(113, 2212);
+    else if (pickMode > pVP[2])     return make_pair(223, 2212);
+    else                            return make_pair(333, 2212);
+
+  // p + gamma.
+  } else if (idA == 2212 && idB == 22) {
+    for (int i = 0; i < 3; ++i) {
+      // Evaluate the cross sections individually.
+      sigmaTotPtr->calc(2212, idVMD[i], infoPtr->eCM());
+      pVP[i] = alphaEM / gammaFac[i];
+      if (isSingleDiff && isDiffA)      pVP[i] *= sigmaTotPtr->sigmaXB();
+      else if (isSingleDiff && isDiffB) pVP[i] *= sigmaTotPtr->sigmaAX();
+      else if (isDoubleDiff)            pVP[i] *= sigmaTotPtr->sigmaXX();
+      else return make_pair(idA, idB);
+      pSum     += pVP[i];
+    }
+    // Choose VMD state based on relative fractions.
+    double pickMode = rndmPtr->flat() * pSum;
+    if (pickMode > pVP[1] + pVP[2]) return make_pair(2212, 113);
+    else if (pickMode > pVP[2])     return make_pair(2212, 223);
+    else                            return make_pair(2212, 333);
+
+  // Do nothing for other beam combinations.
+  } else return make_pair(idA, idB);
+
 }
 
 //--------------------------------------------------------------------------
@@ -463,7 +568,11 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
   if (!phaseSpacePtr->finalKin()) return false;
   int nFin = sigmaProcessPtr->nFinal();
 
-  // Save sampled values for further use.
+  // Basic info on process.
+  if (isHardest) infoPtr->setType( name(), code(), nFin, isNonDiff,
+    isResolved, isDiffA, isDiffB, isDiffC, isLHA);
+
+  // Save sampled values for further use, requires info stored by setType.
   if ( beamHasGamma && !isNonDiffractive() ) gammaKinPtr->finalize();
 
   // Rescale the momenta again when unresolved photons after finalKin.
@@ -471,10 +580,6 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
     double sHatNew = infoPtr->sHatNew();
     phaseSpacePtr->rescaleMomenta( sHatNew);
   }
-
-  // Basic info on process.
-  if (isHardest) infoPtr->setType( name(), code(), nFin, isNonDiff,
-    isResolved, isDiffA, isDiffB, isDiffC, isLHA);
 
   // Let hard process record begin with the event as a whole and
   // the two incoming beam particles.
@@ -497,7 +602,7 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
                        || (beamAgammaMode == 0 && beamBgammaMode == 2);
   if ( beamHasResGamma || (isGammaHadronDir && beamHasGamma) ) {
     double xGm1 = beamAPtr->xGamma();
-    if ( beamAPtr->isHadron()){
+    if ( beamAPtr->isHadron()) {
       process.append( beamAPtr->id(), -13, 1, 0, 0, 0, 0, 0,
         Vec4(0., 0., infoPtr->pzA(), infoPtr->eA()), beamAPtr->m(), 0. );
     } else {
@@ -507,7 +612,7 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
     process[1].daughter1(3);
     ++nOffsetGamma;
     double xGm2 = beamBPtr->xGamma();
-    if ( beamBPtr->isHadron()){
+    if ( beamBPtr->isHadron()) {
       process.append( beamBPtr->id(), -13, 2, 0, 0, 0, 0, 0,
         Vec4(0., 0., infoPtr->pzB(), infoPtr->eB()), beamBPtr->m(), 0. );
     } else {
@@ -1609,7 +1714,7 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
       sigmaPtr = new Sigma2ggm2qqbar(1, 271, "ggm");
       containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
     }
-    if ( initGammaA ){
+    if ( initGammaA ) {
       sigmaPtr = new Sigma2ggm2qqbar(1, 281, "gmg");
       containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
     }
@@ -2910,19 +3015,23 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
 
   // Set up requested objects for Dark Matter processes.
   if (settings.flag("DM:ffbar2Zp2XX")) {
-    sigmaPtr = new Sigma2ffbar2Zp2XX();
+    sigmaPtr = new Sigma1ffbar2Zp2XX();
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
   if (settings.flag("DM:ffbar2Zp2XXj")) {
-    sigmaPtr = new Sigma3ffbar2Zp2XXj();
+    sigmaPtr = new Sigma2qqbar2Zpg2XXj();
+    containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+  }
+  if (settings.flag("DM:ffbar2ZpH")) {
+    sigmaPtr = new Sigma2ffbar2ZpH();
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
   if (settings.flag("DM:gg2S2XX")) {
-    sigmaPtr = new Sigma2gg2S2XX();
+    sigmaPtr = new Sigma1gg2S2XX();
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
   if (settings.flag("DM:gg2S2XXj")) {
-    sigmaPtr = new Sigma3gg2S2XXj();
+    sigmaPtr = new Sigma2gg2Sg2XXj();
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
 

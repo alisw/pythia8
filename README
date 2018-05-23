@@ -216,8 +216,8 @@
        is not recommended except for checking that the new C++
        interface works properly. Second, both LHAPDF5 and LHAPDF6 can
        be used simultaneously, technically. This behavior has not
-       been tested and is not recommended. Third, if using a version 
-       earlier than 6.2, BOOST is required and can be specified using 
+       been tested and is not recommended. Third, if using a version
+       earlier than 6.2, BOOST is required and can be specified using
        "--with-boost".
    ROOT) The ROOT HEP package used for data analysis and
        visualization, http://root.cern.ch. This package is only used

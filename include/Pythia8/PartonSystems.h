@@ -1,6 +1,6 @@
 // PartonSystems.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains auxiliary classes for the parton-level processes.
@@ -56,6 +56,7 @@ public:
   void setInA(int iSys, int iPos) {systems[iSys].iInA = iPos;}
   void setInB(int iSys, int iPos) {systems[iSys].iInB = iPos;}
   void addOut(int iSys, int iPos) {systems[iSys].iOut.push_back(iPos);}
+  void popBackOut(int iSys) {systems[iSys].iOut.pop_back();}
   void setOut(int iSys, int iMem, int iPos) {systems[iSys].iOut[iMem] = iPos;}
   void replace(int iSys, int iPosOld, int iPosNew);
   void setSHat(int iSys, double sHatIn) {systems[iSys].sHat = sHatIn;}

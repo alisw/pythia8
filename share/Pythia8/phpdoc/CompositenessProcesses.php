@@ -362,6 +362,13 @@ Helicity parameter.
 <input type="radio" name="41" value="0" checked="checked"><strong>0 </strong>: <br/>
 <input type="radio" name="41" value="-1"><strong>-1 </strong>: <br/>
  
+<br/><br/><table><tr><td><strong>ContactInteractions:etaRL  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = -1</code>; <code>maximum = 1</code>)</td></tr></table>
+Helicity parameter.   Implemented only for the <ei>q qbar &rarr; l- l+</ei> process. 
+<br/>
+<input type="radio" name="42" value="1"><strong>1 </strong>: <br/>
+<input type="radio" name="42" value="0" checked="checked"><strong>0 </strong>: <br/>
+<input type="radio" name="42" value="-1"><strong>-1 </strong>: <br/>
+ 
 <input type="hidden" name="saved" value="1"/>
 
 <?php
@@ -582,6 +589,11 @@ if($_POST["41"] != "0")
 $data = "ContactInteractions:etaLR = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
+if($_POST["42"] != "0")
+{
+$data = "ContactInteractions:etaRL = ".$_POST["42"]."\n";
+fwrite($handle,$data);
+}
 fclose($handle);
 }
 
@@ -589,4 +601,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

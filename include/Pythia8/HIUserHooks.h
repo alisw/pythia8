@@ -1,6 +1,6 @@
 // HIUserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the definition of the HIUserHooks class and a
@@ -202,11 +202,12 @@ public:
     ABS         ///< This is an absorptive (non-diffractive) collision.
   };
 
-  SubCollision(Nucleon & projIn, Nucleon & targIn, double bIn, Type typeIn)
-    : proj(&projIn), targ(&targIn), b(bIn), type(typeIn) {}
+  SubCollision(Nucleon & projIn, Nucleon & targIn,
+               double bIn, double bpIn, Type typeIn)
+    : proj(&projIn), targ(&targIn), b(bIn), bp(bpIn), type(typeIn) {}
 
   SubCollision()
-    : proj(0), targ(0), b(0.0), type(NONE) {}
+    : proj(0), targ(0), b(0.0), bp(0.0), type(NONE) {}
 
   // Used to order sub-collisions in a set.
   bool operator< (const SubCollision & s) const { return b < s.b; }
@@ -226,6 +227,10 @@ public:
 
   /// The impact parameter distance between the nucleons in femtometer.
   double b;
+
+  /// The impact parameter distance between the nucleons scaled like
+  /// in Pythia to have unit average for non-diffractive collisions.
+  double bp;
 
   /// The type of collison.
   mutable Type type;
@@ -349,7 +354,7 @@ class GLISSANDOModel: public WoodsSaxonModel {
 public:
 
   /// Default constructor.
-  GLISSANDOModel(): RhSave(0.0) {}
+  GLISSANDOModel(): RhSave(0.0), gaussHardCore(false) {}
 
   /// Virtual destructor.
   virtual ~GLISSANDOModel() {}
@@ -364,10 +369,15 @@ public:
   /// Accessor functions.
   double Rh() const { return RhSave; }
 
+  double RhGauss() const { return RhSave*abs(rndPtr->gauss()); };
+
 private:
 
   /// The hard core radius;
   double RhSave;
+
+  /// Option to use a Gaussian hard core instead of a sharp one.
+  bool gaussHardCore;
 
 };
 
@@ -451,8 +461,13 @@ public:
     /// Which cross sections were actually fitted
     vector<bool> fsig;
 
+    /// The estimate of the average (and squared error) impact
+    /// parameter for inelastic non-diffractive collisions.
+    double avNDb, davNDb2;
+
     /// Constructor for zeros.
-    SigEst(): sig(8, 0.0), dsig2(8, 0.0), fsig(8, false) {}
+    SigEst(): sig(8, 0.0), dsig2(8, 0.0), fsig(8, false),
+              avNDb(0.0), davNDb2(0.0) {}
 
   };
 
@@ -461,7 +476,7 @@ public:
   /// The default constructor is empty.
   SubCollisionModel(): sigTarg(8, 0.0), sigErr(8, 0.05), NInt(100000),
                        NGen(20), NPop(20), sigFuzz(0.2),
-                       fitPrint(true) {}
+                       fitPrint(true), avNDb(1.0*femtometer) {}
 
   /// Virtual destructor,
   virtual ~SubCollisionModel() {}
@@ -529,6 +544,11 @@ public:
     return SigEst();
   }
 
+  /// Return the average non-diffractive impact parameter.
+  double avNDB() const {
+    return avNDb;
+  }
+
   /// Calculate the Chi2 for the given cross section estimates.
   double Chi2(const SigEst & sigs, int npar) const;
 
@@ -563,6 +583,10 @@ protected:
   int NInt, NGen, NPop;
   double sigFuzz;
   bool fitPrint;
+
+  /// The estimated average impact parameter distance (in femtometer)
+  /// for absorptive collisions.
+  double avNDb;
 
   /// Info from the controlling HeavyIons object
   NucleusModel * projPtr;
@@ -689,6 +713,78 @@ protected:
 
 //==========================================================================
 
+/// A more complicated model where each nucleon has a fluctuating
+/// "radius" according to a Strikman-inspired distribution.
+
+class MultiRadial: public SubCollisionModel {
+
+public:
+
+  /// The default constructor simply lists the nucleon-nucleon cross
+  /// sections.
+  MultiRadial(int NrIn = 0)
+    : Nr(max(1, NrIn)) {
+    dR = T0 = c = phi = vector<double>(Nr, 0.0);
+  }
+
+  /// Virtual destructor,
+  virtual ~MultiRadial() {}
+
+  /// Take two vectors of Nucleons and an impact parameter vector and
+  /// produce the corrsponding sub-collisions. Note that states of the
+  /// nucleons may be changed.
+  virtual multiset<SubCollision>
+  getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
+                const Vec4 & bvec, double & T);
+
+  /// Return the elastic amplitude for a projectile and target state
+  /// and the impact parameter between the corresponding nucleons.
+  double Tpt(const Nucleon::State & p,
+             const Nucleon::State & t, double b) const {
+    return b < p[0] + t[0]? p[1]*t[1]: 0.0;
+  }
+
+  /// Calculate the cross sections for the given set of parameters.
+  SigEst getSig() const;
+
+  /// Set the parameters of this model.
+  virtual void setParm(const vector<double> &);
+
+  /// Return the current parameters and the minimum and maximum
+  /// allowed values for the parameters of this model.
+  virtual vector<double> getParm() const;
+  virtual vector<double> minParm() const;
+  virtual vector<double> maxParm() const;
+
+protected:
+
+  // Set the probabilities according to the angle parameters.
+  void setProbs();
+
+  /// Choose a radius.
+  int choose() const;
+
+  /// The number of radii.
+  int Nr;
+
+
+  /// The probability distribution.
+  vector<double> c;
+
+  /// The difference between radii.
+  vector<double> dR;
+
+  /// The opacity for different radii.
+  vector<double> T0;
+
+  /// The angles defining the probability distribution for the radii.
+  vector<double> phi;
+
+};
+
+
+//==========================================================================
+
 // Class for storing Events and Info objects.
 
 class EventInfo {
@@ -737,7 +833,8 @@ public:
     : idProjSave(0), idTargSave(0), bSave(0.0), NSave(0), NAccSave(0),
       sigmaTotSave(0.0), sigmaNDSave(0.0), sigErr2TotSave(0.0),
       sigErr2NDSave(0.0), weightSave(0.0), weightSumSave(0.0),
-      nCollSave(10, 0), nProjSave(10, 0), nTargSave(10, 0), nFailSave(0) {}
+      nCollSave(10, 0), nProjSave(10, 0), nTargSave(10, 0), nFailSave(0),
+      subColsPtr(NULL) {}
 
   /// The impact-parameter distance in the current event.
   double b() const {
@@ -910,6 +1007,20 @@ private:
 
   // Number of failed nucleon excitations.
   int nFailSave;
+
+
+public:
+  // Access to subcollision to be extracted by the user.
+  multiset<SubCollision>* subCollisionsPtr() { return subColsPtr; }
+
+  void subCollisionsPtr(multiset<SubCollision> * sPtrIn) {
+    subColsPtr = sPtrIn; }
+
+private:
+
+  // Full information about the Glauber calculation, consisting of
+  // all subcollisions.
+  multiset<SubCollision>* subColsPtr;
 
 };
 

@@ -1,6 +1,6 @@
 // main21.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This is a simple test program.
@@ -47,7 +47,7 @@ void fillParticle(int id, double ee, double thetaIn, double phiIn,
   }
 
   // Store the particle in the event record.
-  int iNew = event.append( id, 1, 0, 0, pp * sThe * cos(phi), 
+  int iNew = event.append( id, 1, 0, 0, pp * sThe * cos(phi),
     pp * sThe * sin(phi), pp * cThe, ee, mm);
 
   // Generate lifetime, to give decay away from primary vertex.
@@ -210,7 +210,7 @@ int main() {
   bool   atRest = (type == 0) ? false : true;
 
   // The single-particle gun produces a particle at the origin, and by default
-  // decays it there. When hasLifetime = true instead a finite lifetime is 
+  // decays it there. When hasLifetime = true instead a finite lifetime is
   // selected and used to generate a displaced  decay vertex.
   bool   hasLifetime = (type == 0) ? true : false;
 

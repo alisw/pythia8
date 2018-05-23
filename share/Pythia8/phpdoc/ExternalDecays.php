@@ -47,7 +47,7 @@ method.
 The main pure virtual method in <code>DecayHandler</code> 
 to do the decay is: 
 <a name="anchor1"></a>
-<p/><strong>virtual bool DecayHandler::decay(vector&lt;int&gt;&amp; idProd, vector&lt;double&gt;&amp; mProd, vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool DecayHandler::decay(vector&lt;int&gt;&amp; idProd, vector&lt;double&gt;&amp; mProd, vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) &nbsp;</strong> <br/>
 where 
 <br/><code>argument</code><strong> idProd </strong>  :  is a list of particle PDG identity codes, 
    
@@ -98,7 +98,7 @@ displaying such intermediate steps.) That is, the control for any
 subsequent decays returns to PYTHIA. If you want to avoid this another 
 method exists, with one extra argument: 
 <a name="anchor2"></a>
-<p/><strong>virtual bool DecayHandler::chainDecay( vector&lt;int&gt;&amp; idProd, vector&lt;int&gt;&amp; motherProd, vector&lt;double&gt;&amp; mProd, vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool DecayHandler::chainDecay( vector&lt;int&gt;&amp; idProd, vector&lt;int&gt;&amp; motherProd, vector&lt;double&gt;&amp; mProd, vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) &nbsp;</strong> <br/>
 where 
 <br/><code>argument</code><strong> motherProd </strong>  :  is a list of the indices of the mother, 
    
@@ -140,7 +140,7 @@ decays you do not handle.
 <p/> 
 The choice of which method to use can be done by the user in the method 
 <a name="anchor3"></a>
-<p/><strong>virtual bool doChainDecay(int idMother) {return false;} &nbsp;</strong> <br/>
+<p/><strong> virtual bool doChainDecay(int idMother) {return false;} &nbsp;</strong> <br/>
 if true then <code>chainDecay</code> is called, else <code>decay</code>. 
 This method is called for each particle that is to be decayed externally. 
 <br/><code>argument</code><strong> idMother </strong>  :  is the PDG identity code of the decaying mother. 
@@ -167,4 +167,4 @@ event weights for forced decays, can be found in
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

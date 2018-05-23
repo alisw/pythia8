@@ -49,19 +49,19 @@ pointer, see further below.
 Let us now describe the methods at your disposal to do the job. 
  
 <a name="anchor1"></a>
-<p/><strong>LHAup::LHAup( int strategy = 3) &nbsp;</strong> <br/>
+<p/><strong> LHAup::LHAup( int strategy = 3) &nbsp;</strong> <br/>
 the base class constructor takes the choice of mixing/weighting 
 strategy as optional input argument, and calls <code>setStrategy</code>, 
 see below. It also reserves some space for processes and particles. 
    
  
 <a name="anchor2"></a>
-<p/><strong>virtual LHAup::~LHAup() &nbsp;</strong> <br/>
+<p/><strong> virtual LHAup::~LHAup() &nbsp;</strong> <br/>
 the destructor does not need to do anything. 
    
  
 <a name="anchor3"></a>
-<p/><strong>void LHAup::setPtr(Info* infoPtr) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setPtr(Info* infoPtr) &nbsp;</strong> <br/>
 this method only sets the pointer that allows some information 
 to be accessed, and is automatically called by 
 <code>Pythia::init()</code>. 
@@ -78,7 +78,7 @@ apply, and variables have been regrouped for clarity, but nothing
 fundamental is changed. 
  
 <a name="anchor4"></a>
-<p/><strong>virtual bool LHAup::setInit() &nbsp;</strong> <br/>
+<p/><strong> virtual bool LHAup::setInit() &nbsp;</strong> <br/>
 this pure virtual method has to be implemented in the derived class, 
 to set relevant information when called. It should return false if it 
 fails to set the info. In the no-beams extension this method need not 
@@ -90,10 +90,10 @@ vanishing, but the method must exist.
 Inside <code>setInit()</code>, such information can be set by the following 
 methods: 
 <a name="anchor5"></a>
-<p/><strong>void LHAup::setBeamA( int identity, double energy, int pdfGroup = 0, int pdfSet = 0) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setBeamA( int identity, double energy, int pdfGroup = 0, int pdfSet = 0) &nbsp;</strong> <br/>
    
 <a name="anchor6"></a>
-<strong>void LHAup::setBeamB( int identity, double energy, int pdfGroup = 0, int pdfSet = 0) &nbsp;</strong> <br/>
+<strong> void LHAup::setBeamB( int identity, double energy, int pdfGroup = 0, int pdfSet = 0) &nbsp;</strong> <br/>
 sets the properties of the first and second incoming beam, respectively 
 (cf. the Fortran <code>IDBMUP(1), EBMUP(i), PDFGUP(i), PDFSUP(i)</code>, 
 with <code>i</code> 1 or 2). These numbers can be used to tell which PDF 
@@ -103,7 +103,7 @@ event generation in PYTHIA.
    
  
 <a name="anchor7"></a>
-<p/><strong>void LHAup::setStrategy( int strategy) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setStrategy( int strategy) &nbsp;</strong> <br/>
 sets the event weighting and cross section strategy. The default, 
 provided in the class constructor, is 3, which is the natural value 
 e.g. for an LHEF. 
@@ -167,7 +167,7 @@ functional form.)
    
  
 <a name="anchor8"></a>
-<p/><strong>void LHAup::addProcess( int idProcess, double xSec, double xErr, double xMax) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::addProcess( int idProcess, double xSec, double xErr, double xMax) &nbsp;</strong> <br/>
 sets info on an allowed process (cf. <code>LPRUP, XSECUP, XERRUP, 
 XMAXUP</code>). 
 Each new call will append one more entry to the list of processes. 
@@ -189,26 +189,26 @@ error decreasing like <i>1/sqrt(n_acc)</i>, where <i>n_acc</i>
 is the number of accepted events, should offer a reasonable estimate. 
  
 <a name="anchor9"></a>
-<p/><strong>void LHAup::setXSec( int i, double xSec) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setXSec( int i, double xSec) &nbsp;</strong> <br/>
 update the <code>xSec</code> value of the <code>i</code>'th process 
 added with <code>addProcess</code> method (i.e. <code>i</code> runs 
 from 0 through <code>sizeProc() - 1</code>, see below). 
    
  
 <a name="anchor10"></a>
-<p/><strong>void LHAup::setXErr( int i, double xErr) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setXErr( int i, double xErr) &nbsp;</strong> <br/>
 update the <code>xErr</code> value of the <code>i</code>'th process 
 added with <code>addProcess</code> method. 
    
  
 <a name="anchor11"></a>
-<p/><strong>void LHAup::setXMax( int i, double xMax) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setXMax( int i, double xMax) &nbsp;</strong> <br/>
 update the <code>xMax</code> value of the <code>i</code>'th process 
 added with <code>addProcess</code> method. 
    
  
 <a name="anchor12"></a>
-<p/><strong>void LHAup::setInfoHeader(string &key, string &val) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setInfoHeader(string &key, string &val) &nbsp;</strong> <br/>
 set the header <code>key</code> to have value <code>val</code>. 
 This is a wrapper function to the 
 <a href="EventInformation.html" target="page">Info::setHeader</a> function that 
@@ -219,62 +219,62 @@ should be used in any classes derived from LHAup.
 Information is handed back by the following methods 
 (that normally you would not need to touch): 
 <a name="anchor13"></a>
-<p/><strong>int LHAup::idBeamA() &nbsp;</strong> <br/>
+<p/><strong> int LHAup::idBeamA() &nbsp;</strong> <br/>
    
 <a name="anchor14"></a>
-<strong>int LHAup::idBeamB() &nbsp;</strong> <br/>
+<strong> int LHAup::idBeamB() &nbsp;</strong> <br/>
    
 <a name="anchor15"></a>
-<strong>double LHAup::eBeamA() &nbsp;</strong> <br/>
+<strong> double LHAup::eBeamA() &nbsp;</strong> <br/>
    
 <a name="anchor16"></a>
-<strong>double LHAup::eBeamB() &nbsp;</strong> <br/>
+<strong> double LHAup::eBeamB() &nbsp;</strong> <br/>
    
 <a name="anchor17"></a>
-<strong>int LHAup::pdfGroupBeamA() &nbsp;</strong> <br/>
+<strong> int LHAup::pdfGroupBeamA() &nbsp;</strong> <br/>
    
 <a name="anchor18"></a>
-<strong>int LHAup::pdfGroupBeamB() &nbsp;</strong> <br/>
+<strong> int LHAup::pdfGroupBeamB() &nbsp;</strong> <br/>
    
 <a name="anchor19"></a>
-<strong>int LHAup::pdfSetBeamA() &nbsp;</strong> <br/>
+<strong> int LHAup::pdfSetBeamA() &nbsp;</strong> <br/>
    
 <a name="anchor20"></a>
-<strong>int LHAup::pdfSetBeamB() &nbsp;</strong> <br/>
+<strong> int LHAup::pdfSetBeamB() &nbsp;</strong> <br/>
 for the beam properties. 
    
 <a name="anchor21"></a>
-<p/><strong>int LHAup::strategy() &nbsp;</strong> <br/>
+<p/><strong> int LHAup::strategy() &nbsp;</strong> <br/>
 for the strategy choice. 
    
 <a name="anchor22"></a>
-<p/><strong>int LHAup::sizeProc() &nbsp;</strong> <br/>
+<p/><strong> int LHAup::sizeProc() &nbsp;</strong> <br/>
 for the number of subprocesses. 
    
 <a name="anchor23"></a>
-<p/><strong>int LHAup::idProcess(i) &nbsp;</strong> <br/>
+<p/><strong> int LHAup::idProcess(i) &nbsp;</strong> <br/>
    
 <a name="anchor24"></a>
-<strong>double LHAup::xSec(i) &nbsp;</strong> <br/>
+<strong> double LHAup::xSec(i) &nbsp;</strong> <br/>
    
 <a name="anchor25"></a>
-<strong>double LHAup::xErr(i) &nbsp;</strong> <br/>
+<strong> double LHAup::xErr(i) &nbsp;</strong> <br/>
    
 <a name="anchor26"></a>
-<strong>double LHAup::xMax(i) &nbsp;</strong> <br/>
+<strong> double LHAup::xMax(i) &nbsp;</strong> <br/>
 for process <code>i</code> in the range <code>0 &lt;= i &lt; 
 sizeProc()</code>. 
    
 <a name="anchor27"></a>
-<p/><strong>double LHAup::xSecSum() &nbsp;</strong> <br/>
+<p/><strong> double LHAup::xSecSum() &nbsp;</strong> <br/>
 <a name="anchor28"></a>
-<strong>double LHAup::xErrSum() &nbsp;</strong> <br/>
+<strong> double LHAup::xErrSum() &nbsp;</strong> <br/>
 the sum of the cross sections and errors (the latter added quadratically). 
 Note that cross section errors are only meaningful for strategies +-3. 
    
  
 <a name="anchor29"></a>
-<p/><strong>void LHAup::listInit() &nbsp;</strong> <br/>
+<p/><strong> void LHAup::listInit() &nbsp;</strong> <br/>
 prints the above initialization information. This method is 
 automatically called from <code>Pythia::init()</code>, 
 so would normally not need to be called directly by the user. 
@@ -304,7 +304,7 @@ empty zeroth line, and thus is one larger than the true number of
 particles (<code>NUP</code>). 
  
 <a name="anchor30"></a>
-<p/><strong>virtual bool LHAup::setEvent(int idProcess = 0) &nbsp;</strong> <br/>
+<p/><strong> virtual bool LHAup::setEvent(int idProcess = 0) &nbsp;</strong> <br/>
 this pure virtual method has to be implemented in the derived class, 
 to set relevant information when called. For strategy options +-1 
 and +-2 the input <code>idProcess</code> value specifies which process 
@@ -322,7 +322,7 @@ to break out of the event generation loop.
 Inside a normal <code>setEvent(...)</code> call, information can be set 
 by the following methods: 
 <a name="anchor31"></a>
-<p/><strong>void LHAup::setProcess( int idProcess, double weight, double scale, double alphaQED, double alphaQCD) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setProcess( int idProcess, double weight, double scale, double alphaQED, double alphaQCD) &nbsp;</strong> <br/>
 tells which kind of process occurred, with what weight, at what scale, 
 and which <i>alpha_EM</i> and <i>alpha_strong</i> were used 
 (cf. <code>IDPRUP, XWTGUP, SCALUP, AQEDUP, AQCDUP</code>). This method 
@@ -330,7 +330,7 @@ also resets the size of the particle list, and adds the empty zeroth
 line, so it has to be called before the <code>addParticle</code> method below. 
    
 <a name="anchor32"></a>
-<p/><strong>void LHAup::addParticle( int id, int status, int mother1, int mother2, int colourTag1, int colourTag2, double p_x, double p_y, double p_z, double e, double m, double tau, double spin, double scale) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::addParticle( int id, int status, int mother1, int mother2, int colourTag1, int colourTag2, double p_x, double p_y, double p_z, double e, double m, double tau, double spin, double scale) &nbsp;</strong> <br/>
 gives the properties of the next particle handed in (cf. <code>IDUP, ISTUP, 
 MOTHUP(1,..), MOTHUP(2,..), ICOLUP(1,..), ICOLUP(2,..),  PUP(J,..), 
 VTIMUP, SPINUP</code>; while <code>scale</code> is a new optional property, 
@@ -340,12 +340,12 @@ see further below) .
 <p/> 
 Information is handed back by the following methods: 
 <a name="anchor33"></a>
-<p/><strong>int LHAup::idProcess() &nbsp;</strong> <br/>
+<p/><strong> int LHAup::idProcess() &nbsp;</strong> <br/>
 process number. 
    
  
 <a name="anchor34"></a>
-<p/><strong>double LHAup::weight() &nbsp;</strong> <br/>
+<p/><strong> double LHAup::weight() &nbsp;</strong> <br/>
 Note that the weight stored in <code>Info::weight()</code> as a rule 
 is not the same as the above <code>weight()</code>: the method here gives 
 the value before unweighting while the one in <code>info</code> gives 
@@ -355,64 +355,64 @@ here, except for a conversion from pb to mb for +-4.
    
  
 <a name="anchor35"></a>
-<p/><strong>double LHAup::scale() &nbsp;</strong> <br/>
+<p/><strong> double LHAup::scale() &nbsp;</strong> <br/>
    
 <a name="anchor36"></a>
-<strong>double LHAup::alphaQED() &nbsp;</strong> <br/>
+<strong> double LHAup::alphaQED() &nbsp;</strong> <br/>
    
 <a name="anchor37"></a>
-<strong>double LHAup::alphaQCD() &nbsp;</strong> <br/>
+<strong> double LHAup::alphaQCD() &nbsp;</strong> <br/>
 scale and couplings at that scale. 
    
  
 <a name="anchor38"></a>
-<p/><strong>int LHAup::sizePart() &nbsp;</strong> <br/>
+<p/><strong> int LHAup::sizePart() &nbsp;</strong> <br/>
 the size of the particle array, which is one larger than the number 
 of particles in the event, since the zeroth entry is kept empty 
 (see above). 
    
  
 <a name="anchor39"></a>
-<p/><strong>int LHAup::id(int i) &nbsp;</strong> <br/>
+<p/><strong> int LHAup::id(int i) &nbsp;</strong> <br/>
    
 <a name="anchor40"></a>
-<strong>int LHAup::status(int i) &nbsp;</strong> <br/>
+<strong> int LHAup::status(int i) &nbsp;</strong> <br/>
    
 <a name="anchor41"></a>
-<strong>int LHAup::mother1(int i) &nbsp;</strong> <br/>
+<strong> int LHAup::mother1(int i) &nbsp;</strong> <br/>
    
 <a name="anchor42"></a>
-<strong>int LHAup::mother2(int i) &nbsp;</strong> <br/>
+<strong> int LHAup::mother2(int i) &nbsp;</strong> <br/>
    
 <a name="anchor43"></a>
-<strong>int LHAup::col1(int i) &nbsp;</strong> <br/>
+<strong> int LHAup::col1(int i) &nbsp;</strong> <br/>
    
 <a name="anchor44"></a>
-<strong>int LHAup::col2(int i) &nbsp;</strong> <br/>
+<strong> int LHAup::col2(int i) &nbsp;</strong> <br/>
    
 <a name="anchor45"></a>
-<strong>double LHAup::px(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::px(int i) &nbsp;</strong> <br/>
    
 <a name="anchor46"></a>
-<strong>double LHAup::py(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::py(int i) &nbsp;</strong> <br/>
    
 <a name="anchor47"></a>
-<strong>double LHAup::pz(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::pz(int i) &nbsp;</strong> <br/>
    
 <a name="anchor48"></a>
-<strong>double LHAup::e(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::e(int i) &nbsp;</strong> <br/>
    
 <a name="anchor49"></a>
-<strong>double LHAup::m(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::m(int i) &nbsp;</strong> <br/>
    
 <a name="anchor50"></a>
-<strong>double LHAup::tau(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::tau(int i) &nbsp;</strong> <br/>
    
 <a name="anchor51"></a>
-<strong>double LHAup::spin(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::spin(int i) &nbsp;</strong> <br/>
    
 <a name="anchor52"></a>
-<strong>double LHAup::scale(int i) &nbsp;</strong> <br/>
+<strong> double LHAup::scale(int i) &nbsp;</strong> <br/>
 for particle <code>i</code> in the range 
 <code>0 &lt;= i &lt; sizePart()</code>. (But again note that 
 <code>i = 0</code> is an empty line, so the true range begins at 1.) 
@@ -422,22 +422,22 @@ for particle <code>i</code> in the range
 From the information in the event record it is possible to set 
 the flavour and <i>x</i> values of the initiators 
 <a name="anchor53"></a>
-<p/><strong>void LHAup::setIdX(int id1, int id2, double x1, double x2) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setIdX(int id1, int id2, double x1, double x2) &nbsp;</strong> <br/>
    
  
 <p/> 
 This information is returned by the methods 
 <a name="anchor54"></a>
-<p/><strong>int LHAup::id1() &nbsp;</strong> <br/>
+<p/><strong> int LHAup::id1() &nbsp;</strong> <br/>
    
 <a name="anchor55"></a>
-<strong>int LHAup::id2() &nbsp;</strong> <br/>
+<strong> int LHAup::id2() &nbsp;</strong> <br/>
    
 <a name="anchor56"></a>
-<strong>double LHAup::x1() &nbsp;</strong> <br/>
+<strong> double LHAup::x1() &nbsp;</strong> <br/>
    
 <a name="anchor57"></a>
-<strong>double LHAup::x2() &nbsp;</strong> <br/>
+<strong> double LHAup::x2() &nbsp;</strong> <br/>
 the flavour and <i>x</i> values of the two initiators. 
    
  
@@ -446,7 +446,7 @@ In the LHEF description [<a href="Bibliography.html#refAlw06" target="page">Alw0
 include information on the parton densities of the colliding partons 
 is suggested. This optional further information can be set by 
 <a name="anchor58"></a>
-<p/><strong>void LHAup::setPdf( int id1pdf, int id2pdf, double x1pdf, double x2pdf, double scalePDF, double pdf1, double pdf2, bool pdfIsSet) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setPdf( int id1pdf, int id2pdf, double x1pdf, double x2pdf, double scalePDF, double pdf1, double pdf2, bool pdfIsSet) &nbsp;</strong> <br/>
 which gives the flavours , the <i>x</i> and the <i>Q</i> scale 
 (in GeV) at which the parton densities <i>x*f_i(x, Q)</i> have been 
 evaluated. The last argument is normally <code>true</code>. 
@@ -455,28 +455,28 @@ evaluated. The last argument is normally <code>true</code>.
 <p/> 
 This information is returned by the methods 
 <a name="anchor59"></a>
-<p/><strong>bool LHAup::pdfIsSet() &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::pdfIsSet() &nbsp;</strong> <br/>
    
 <a name="anchor60"></a>
-<strong>int LHAup::id1pdf() &nbsp;</strong> <br/>
+<strong> int LHAup::id1pdf() &nbsp;</strong> <br/>
    
 <a name="anchor61"></a>
-<strong>int LHAup::id2pdf() &nbsp;</strong> <br/>
+<strong> int LHAup::id2pdf() &nbsp;</strong> <br/>
    
 <a name="anchor62"></a>
-<strong>double LHAup::x1pdf() &nbsp;</strong> <br/>
+<strong> double LHAup::x1pdf() &nbsp;</strong> <br/>
    
 <a name="anchor63"></a>
-<strong>double LHAup::x2pdf() &nbsp;</strong> <br/>
+<strong> double LHAup::x2pdf() &nbsp;</strong> <br/>
    
 <a name="anchor64"></a>
-<strong>double LHAup::scalePDF() &nbsp;</strong> <br/>
+<strong> double LHAup::scalePDF() &nbsp;</strong> <br/>
    
 <a name="anchor65"></a>
-<strong>double LHAup::pdf1() &nbsp;</strong> <br/>
+<strong> double LHAup::pdf1() &nbsp;</strong> <br/>
    
 <a name="anchor66"></a>
-<strong>double LHAup::pdf2() &nbsp;</strong> <br/>
+<strong> double LHAup::pdf2() &nbsp;</strong> <br/>
 where the first one tells whether this optional information has been set 
 for the current event. (<code>setPdf(...)</code> must be called after the 
 <code>setProcess(...)</code> call of the event for this to work.) 
@@ -514,7 +514,7 @@ has been read from the LHEF, the scale defaults to -1.
  
 <p/> 
 <a name="anchor67"></a>
-<p/><strong>void LHAup::listEvent() &nbsp;</strong> <br/>
+<p/><strong> void LHAup::listEvent() &nbsp;</strong> <br/>
 prints the above information for the current event.  In cases where the 
 <code>LHAup</code> object is not available to the user, the 
 <code>Pythia::LHAeventList()</code> method can 
@@ -522,7 +522,7 @@ be used, which is a wrapper for the above.
    
  
 <a name="anchor68"></a>
-<p/><strong>virtual bool LHAup::skipEvent(int nSkip) &nbsp;</strong> <br/>
+<p/><strong> virtual bool LHAup::skipEvent(int nSkip) &nbsp;</strong> <br/>
 skip ahead <code>nSkip</code> events in the Les Houches generation 
 sequence, without doing anything further with them. Mainly 
 intended for debug purposes, e.g. when an event at a known 
@@ -614,7 +614,7 @@ simplify calculations. This is particularly common for the <i>e</i> and
 afflicted. Incoming leptons are not affected by this procedure. 
 <br/><code>option </code><strong> 0</strong> :  all lepton masses are taken from the Les Houches input. 
    
-<br/><code>option </code><strong> 1</strong> :  if the input lepton mass deviates by more than 10% 
+<br/><code>option </code><strong> 1</strong> :  if the input lepton mass deviates by  than 10% 
 from the PYTHIA (data table) mass then its mass is reset according to the 
 PYTHIA value. This should catch weird masses, while allowing sensible 
 variations. 
@@ -888,20 +888,20 @@ found in the base class, so as to allow them to be reused in other
 contexts. 
  
 <a name="anchor75"></a>
-<p/><strong>bool LHAup::setInitLHEF(ifstream& is, bool readHeaders = false) &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::setInitLHEF(ifstream& is, bool readHeaders = false) &nbsp;</strong> <br/>
 read in and set all required initialization information from the 
 specified stream. With second argument true it will also read and store 
 header information, as described above. Return false if it fails. 
    
  
 <a name="anchor76"></a>
-<p/><strong>bool LHAup::setNewEventLHEF(ifstream& is) &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::setNewEventLHEF(ifstream& is) &nbsp;</strong> <br/>
 read in event information from the specified stream into a staging area 
 where it can be reused by <code>setOldEventLHEF</code>. 
    
  
 <a name="anchor77"></a>
-<p/><strong>bool LHAup::setOldEventLHEF() &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::setOldEventLHEF() &nbsp;</strong> <br/>
 store the event information from the staging area into the normal 
 location. Thus a single <code>setNewEventLHEF</code> call can be 
 followed by several <code>setOldEventLHEF</code> ones, so as to 
@@ -925,14 +925,14 @@ the <code>LHAupLHEF</code> methods.
 Some other small utility routines are: 
  
 <a name="anchor78"></a>
-<p/><strong>bool LHAup::fileFound() &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::fileFound() &nbsp;</strong> <br/>
 always returns true in the base class, but in <code>LHAupLHEF</code> 
 it returns false if the LHEF provided in the constructor is not 
 found and opened correctly. 
    
  
 <a name="anchor79"></a>
-<p/><strong>bool LHAup::useExternal() &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::useExternal() &nbsp;</strong> <br/>
 always returns false in the base class, but in <code>LHAupLHEF</code> 
 it returns false if the <code>LHAupLHEF</code> instance is constructed to 
 work on an input LHE file, while it returns true if the <code>LHAupLHEF</code> 
@@ -944,7 +944,7 @@ bool readHeadersIn, bool setScalesFromLHEFIn)</code>.
    
  
 <a name="anchor80"></a>
-<p/><strong>void LHAup::setInfoHeader(const string &key, const string &val) &nbsp;</strong> <br/>
+<p/><strong> void LHAup::setInfoHeader(const string &key, const string &val) &nbsp;</strong> <br/>
 is used to send header information on to the <code>Info</code> class. 
    
  
@@ -956,22 +956,22 @@ reinitialization. This presupposes that the events are of the same
 kind, only split e.g. to limit file sizes. 
  
 <a name="anchor81"></a>
-<p/><strong>bool LHAup::newEventFile(const char* fileIn) &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::newEventFile(const char* fileIn) &nbsp;</strong> <br/>
 close current event input file/stream and open a new one, to 
 continue reading events of the same kind as before. 
    
  
 <a name="anchor82"></a>
-<p/><strong>istream* LHAup::openFile(const char *fn, ifstream &ifs) &nbsp;</strong> <br/>
+<p/><strong> istream* LHAup::openFile(const char *fn, ifstream &ifs) &nbsp;</strong> <br/>
    
 <a name="anchor83"></a>
-<strong>void LHAup::closeFile(istream *&is, ifstream &ifs) &nbsp;</strong> <br/>
+<strong> void LHAup::closeFile(istream *&is, ifstream &ifs) &nbsp;</strong> <br/>
 open and close a file, also gzip files, where an intermediate 
 decompression layer is needed. 
    
  
 <a name="anchor84"></a>
-<p/><strong>void LHAupLHEF::closeAllFiles() &nbsp;</strong> <br/>
+<p/><strong> void LHAupLHEF::closeAllFiles() &nbsp;</strong> <br/>
 close main event file (LHEF) and, if present, separate header file. 
    
  
@@ -1024,20 +1024,20 @@ that can be called to write a Les Houches Event File. These should be
 called in sequence in order to build up the proper file structure. 
  
 <a name="anchor85"></a>
-<p/><strong>bool LHAup::openLHEF(string filename) &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::openLHEF(string filename) &nbsp;</strong> <br/>
 Opens a file with the filename indicated, and writes a header plus a brief 
 comment with date and time information. 
    
  
 <a name="anchor86"></a>
-<p/><strong>bool LHAup::initLHEF() &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::initLHEF() &nbsp;</strong> <br/>
 Writes initialization information to the file above. Such information should 
 already have been set with the methods described in the "Initialization" 
 section above. 
    
  
 <a name="anchor87"></a>
-<p/><strong>bool LHAup::eventLHEF(bool verbose = true) &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::eventLHEF(bool verbose = true) &nbsp;</strong> <br/>
 Writes event information to the file above. Such information should 
 already have been set with the methods described in the "Event input" 
 section above. This call should be repeated once for each event to be 
@@ -1047,7 +1047,7 @@ leaves a single blank between the information fields.
    
  
 <a name="anchor88"></a>
-<p/><strong>bool LHAup::closeLHEF(bool updateInit = false) &nbsp;</strong> <br/>
+<p/><strong> bool LHAup::closeLHEF(bool updateInit = false) &nbsp;</strong> <br/>
 Writes the closing tag and closes the file. Optionally, if 
 <code>updateInit = true</code>, this routine will reopen the file from 
 the beginning, rewrite the same header as <code>openLHEF()</code> did, 
@@ -1066,7 +1066,7 @@ another process in between, the file will be corrupted.
    
  
 <a name="anchor89"></a>
-<p/><strong>string LHAup::getFileName() &nbsp;</strong> <br/>
+<p/><strong> string LHAup::getFileName() &nbsp;</strong> <br/>
 Return the name of the LHE file above. 
    
  
@@ -1089,7 +1089,7 @@ are working with an instance <code>pythia</code> of the
 The method <code>setInit()</code> should be called to store the 
 <code>pythia</code> initialization information in the LHA object, 
 and <code>setEvent()</code> to store event information. 
-Furthermore, <code>updateSigma()</code> can be used at the end 
+Further, <code>updateSigma()</code> can be used at the end 
 of the run to update cross-section information, cf. 
 <code>closeLHEF(true)</code> above. An example how the 
 generation, translation and writing methods should be ordered is 
@@ -1185,4 +1185,4 @@ for the case that <code>Pythia::process</code> is not in this frame.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

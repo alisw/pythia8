@@ -45,6 +45,7 @@ Currently, the list of available automated variations
 <li> The inclusion of non-singular terms in QCD emissions in FSR; </li> 
 <li> The inclusion of non-singular terms in QCD emissions in ISR. </li> 
 <li> The PDF members of a PDF family in LHAPDF6. </li> 
+<li> Individual PDF members of a PDF family in LHAPDF6. </li> 
 </ul> 
 Similar variations would be possible for QED emissions, but these have not 
 yet been implemented. 
@@ -279,6 +280,27 @@ the renormalisation scale, hence &mu;<sup>2</sup> &rarr;
 (<code>muRfac</code>)<sup>2</sup>*&mu;<sup>2</sup>. 
  
 <p/> 
+The keywords for PDF variations (plus and minus) is: 
+<ul> 
+  <li><code>isr:PDF:plus</code> : any number </li> 
+  <li><code>isr:PDF:minus</code> : any number </li> 
+</ul> 
+The number is not used, but is there for syntactical consistency. 
+Note, this uses the formula from the LHAPDF6 library to calculate the variation. 
+ 
+<p/> 
+Alternatively, the variation from the default to any other individual 
+PDF member is calculated using the following syntax: 
+<ul> 
+  <li><code>isr:PDF:member</code> : member number </li> 
+</ul> 
+To force the calculation for ALL members of the PDF family, then use: 
+<ul> 
+  <li><code>isr:PDF:family</code> : any number </li> 
+</ul> 
+The number is not used. 
+ 
+<p/> 
 Optionally, a further level of detail can be accessed by specifying 
 variations for specific types of branchings, with the global keywords 
 above corresponding to setting the same value for all 
@@ -305,14 +327,6 @@ higher ID codes controlled by <code>X2XG</code> keywords. Thus a change to
 5 would mean that top-quark variations would use <code>X2XG</code> keyword 
 values instead of the corresponding <code>Q2QG</code> ones. 
    
- 
-<p/> 
-Finally, the keywords for PDF variations (plus and minus) is: 
-<ul> 
-  <li><code>isr:PDF:plus</code> : any number </li> 
-  <li><code>isr:PDF:minus</code> : any number </li> 
-</ul> 
-The number is not used. 
  
 <input type="hidden" name="saved" value="1"/>
 
@@ -386,4 +400,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

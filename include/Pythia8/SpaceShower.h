@@ -1,6 +1,6 @@
 // SpaceShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for the spacelike initial-state showers.
@@ -258,7 +258,7 @@ private:
          doUncertainties, uVarMuSoftCorr, uVarMPIshowers, doMPI, gamma2qqbar,
          doDipoleRecoil, doPartonVertex;
   int    pTmaxMatch, pTdampMatch, alphaSorder, alphaSnfmax, alphaEMorder,
-         nQuarkIn, enhanceScreening, weakMode;
+         nQuarkIn, enhanceScreening, weakMode, pT0paramMode;
   double pTdampFudge, mc, mb, m2c, m2b, renormMultFac, factorMultFac,
          fixedFacScale2, alphaSvalue, alphaS2pi, Lambda3flav, Lambda4flav,
          Lambda5flav, Lambda3flav2, Lambda4flav2, Lambda5flav2, pT0Ref,
@@ -337,7 +337,9 @@ private:
   map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varQ2GQmuRfac, varG2QQmuRfac,
     varX2XGmuRfac;
   map<int,double> varG2GGcNS, varQ2QGcNS, varQ2GQcNS, varG2QQcNS, varX2XGcNS;
-  map<int,double> varPDFplus, varPDFminus;
+  map<int,double>* varPDFplus;
+  map<int,double>* varPDFminus;
+  map<int,double>* varPDFmember;
 
   // Find a possible colour partner in the case of dipole recoil.
   int findColPartner(Event& event, int iSideA, int iSideB, int iSystem);

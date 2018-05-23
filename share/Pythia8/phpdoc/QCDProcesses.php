@@ -106,18 +106,22 @@ Coulomb corrections</a>, but by default this is off.
 <input type="radio" name="4" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Single diffractive scattering <i>A B &rarr; X B</i> and 
-<i>A B &rarr; A X</i>. See page on <?php $filepath = $_GET["filepath"];
-echo "<a href='Diffraction.php?filepath=".$filepath."' target='page'>";?> 
-Diffraction</a> for details. Codes 103 and 104. 
+<i>A B &rarr; A X</i>. See pages on 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='TotalCrossSections.php?filepath=".$filepath."' target='page'>";?>Total Cross Sections</a> 
+and <?php $filepath = $_GET["filepath"];
+echo "<a href='Diffraction.php?filepath=".$filepath."' target='page'>";?> Diffraction</a> for details. 
+Codes 103 and 104. 
    
  
 <br/><br/><strong>SoftQCD:doubleDiffractive</strong>  <input type="radio" name="5" value="on"><strong>On</strong>
 <input type="radio" name="5" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Double diffractive scattering <i>A B &rarr; X_1 X_2</i>. 
-See page on <?php $filepath = $_GET["filepath"];
-echo "<a href='Diffraction.php?filepath=".$filepath."' target='page'>";?>Diffraction</a> 
-for details. Code 105. 
+See pages on <?php $filepath = $_GET["filepath"];
+echo "<a href='TotalCrossSections.php?filepath=".$filepath."' target='page'>";?>Total Cross Sections</a> 
+and <?php $filepath = $_GET["filepath"];
+echo "<a href='Diffraction.php?filepath=".$filepath."' target='page'>";?>Diffraction</a> for details. Code 105. 
    
  
 <br/><br/><strong>SoftQCD:centralDiffractive</strong>  <input type="radio" name="6" value="on"><strong>On</strong>
@@ -569,4 +573,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

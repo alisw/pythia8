@@ -1,6 +1,6 @@
 // LHAPDF6.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the LHAPDF6 PDF plugin class.
@@ -21,14 +21,70 @@ namespace Pythia8 {
 
 namespace LHAPDF6Interface {
 
-  // Structure to hold all of the data needed to reproduce a set.
-  struct pdf_Info {
-    ::LHAPDF::PDF *pdf;
-    vector< ::LHAPDF::PDF*> pdfs;
-    ::LHAPDF::PDFSet pdfSet;
+//--------------------------------------------------------------------------
+
+// Class to hold a PDF set, its information, and its uncertainty sets.
+
+  class PdfSets {
+
+  public:
+
+    // Constructors.
+    PdfSets() {;}
+    PdfSets(string setName) : info(::LHAPDF::PDFSet(setName)),
+      pdfs(vector< ::LHAPDF::PDF* >(info.size(), 0)) {;}
+
+    // Access a PDF set.
+    ::LHAPDF::PDF *operator[](unsigned int member) {
+      if (!pdfs[member]) pdfs[member] = info.mkPDF(member);
+      return pdfs[member];
+    }
+
+    // Get number of PDF sets.
+    int size() {return pdfs.size();}
+
+    // PDF sets and info.
+    ::LHAPDF::PDFSet info;
+    vector< ::LHAPDF::PDF* > pdfs;
+
   };
-  // Define opened PDF sets global variable.
-  map< int, pair< pdf_Info, int> > initializedSets;
+
+//--------------------------------------------------------------------------
+
+// Class to globally track all open PDF sets.
+
+  class PdfTracker {
+
+  public:
+
+    // Destructor, all PDFs from LHAPDF::mkPDF must be deleted.
+    ~PdfTracker() {
+      for (map<int, PdfSets>::iterator pdf = pdfs.begin();
+           pdf != pdfs.end(); ++pdf)
+        for (int iMem = 0; iMem < (int)pdf->second.size(); ++iMem)
+          if (pdf->second.pdfs[iMem]) delete pdf->second.pdfs[iMem];
+    }
+
+    // Find and return a requested PDF set.
+    PdfSets *find(string setName) {
+      int id = ::LHAPDF::lookupLHAPDFID(setName, 0);
+      if (id < 0) return 0;
+      else if (pdfs.find(id) == pdfs.end()) pdfs[id] = PdfSets(setName);
+      return &pdfs[id];
+    }
+
+  private:
+
+    // Map to hold open PDF set information.
+    map<int, PdfSets> pdfs;
+
+  };
+
+//--------------------------------------------------------------------------
+
+// Define opened PDF sets global variable.
+
+  PdfTracker pdfTracker;
 
 }
 
@@ -41,12 +97,9 @@ class LHAPDF6 : public PDF {
 public:
 
   // Constructor.
-  LHAPDF6(int idBeamIn, string setName, int member,  int,
-          Info* infoPtr) : PDF(idBeamIn), id (-1), pdf(0), extrapol(false)
-    {init(setName, member, infoPtr);}
-
-  // Destructor.
-  ~LHAPDF6();
+  LHAPDF6(int idBeamIn, string setName, int member, int, Info* infoPtr)
+    : PDF(idBeamIn), pdf(0), extrapol(false)
+    { init(setName, member, infoPtr); }
 
   // Allow extrapolation beyond boundaries (not implemented).
   void setExtrapolate(bool extrapolIn) {extrapol = extrapolIn;}
@@ -54,8 +107,7 @@ public:
 private:
 
   // The LHAPDF objects.
-  int id;
-  LHAPDF6Interface::pdf_Info pdfInfo;
+  LHAPDF6Interface::PdfSets *pdfs;
   ::LHAPDF::PDF *pdf;
   ::LHAPDF::Extrapolator *ext;
   bool extrapol;
@@ -68,8 +120,8 @@ private:
 
   // Check whether x and Q2 values fall inside the fit bounds.
   bool insideBounds(double x, double Q2) {
-   return ( x > pdf->xMin()  &&  x < pdf->xMax()
-        && Q2 > pdf->q2Min() && Q2 < pdf->q2Max() ); }
+    return (x > pdf->xMin()  &&  x < pdf->xMax()
+            && Q2 > pdf->q2Min() && Q2 < pdf->q2Max());}
 
   // Return the running alpha_s shipped with the LHAPDF set.
   double alphaS(double Q2) { return pdf->alphasQ2(Q2); }
@@ -89,27 +141,17 @@ private:
   void calcPDFEnvelope(int, double, double, int);
   void calcPDFEnvelope(pair<int,int>, pair<double,double>, double, int);
   PDFEnvelope pdfEnvelope;
-  PDFEnvelope getPDFEnvelope() { return pdfEnvelope; }
+  PDFEnvelope getPDFEnvelope() {return pdfEnvelope;}
   static const double PDFMINVALUE;
+
+  int nMembersSave;
+  int nMembers() { return nMembersSave; }
 
 };
 
 //--------------------------------------------------------------------------
 
-// Destructor.
-
-LHAPDF6::~LHAPDF6() {
-  map< int, pair<LHAPDF6Interface::pdf_Info, int> >::iterator set =
-    LHAPDF6Interface::initializedSets.find(id);
-  if (set == LHAPDF6Interface::initializedSets.end()) return;
-  set->second.second--;
-  if (set->second.second == 0) {
-    LHAPDF6Interface::initializedSets.erase(set);
-  }
-
-}
-
-//--------------------------------------------------------------------------
+// Constants.
 
 const double LHAPDF6::PDFMINVALUE = 1e-10;
 
@@ -120,31 +162,21 @@ const double LHAPDF6::PDFMINVALUE = 1e-10;
 void LHAPDF6::init(string setName, int member, Info *info) {
   isSet = false;
 
-  // Initialize the set if not initialized.
-  id = ::LHAPDF::lookupLHAPDFID(setName, member);
-  if (id < 0) {
+  // Initialize the LHAPDF sets.
+  pdfs = LHAPDF6Interface::pdfTracker.find(setName);
+  if (!pdfs) {
     info->errorMsg("Error in LHAPDF6::init: unknown PDF " + setName);
     return;
-  } else if (LHAPDF6Interface::initializedSets.find(id) ==
-             LHAPDF6Interface::initializedSets.end()) {
-    pdfInfo.pdfSet = ::LHAPDF::PDFSet(setName);
-    pdfInfo.pdfs = pdfInfo.pdfSet.mkPDFs();
-    pdfInfo.pdf = ::LHAPDF::mkPDF(id);
-    pdf = pdfInfo.pdf;
-    if (!pdf) {
-      info->errorMsg("Error in LHAPDF6::init: could not initialize PDF "
-                     + setName);
-      return;
-    } else LHAPDF6Interface::initializedSets[id] = make_pair(pdfInfo,0);
-  } else {
-    pair< LHAPDF6Interface::pdf_Info, int > &set
-      = LHAPDF6Interface::initializedSets[id];
-    pdfInfo.pdf = set.first.pdf;
-    pdfInfo.pdfs = set.first.pdfs;
-    pdfInfo.pdfSet = set.first.pdfSet;
-    pdf = pdfInfo.pdf;
-    set.second++;
+  } else if ((*pdfs).size() == 0) {
+    info->errorMsg("Error in LHAPDF6::init: could not initialize PDF "
+                   + setName);
+    return;
+  } else if (member >= (*pdfs).size()) {
+    info->errorMsg("Error in LHAPDF6::init: " + setName
+                   + " does not contain requested member");
+    return;
   }
+  pdf = (*pdfs)[member];
   isSet = true;
 
   // Store quark masses used in PDF fit.
@@ -153,6 +185,8 @@ void LHAPDF6::init(string setName, int member, Info *info) {
   mcPDFSave = pdf->info().get_entry_as<double>("MCharm");
   msPDFSave = pdf->info().get_entry_as<double>("MStrange");
   mbPDFSave = pdf->info().get_entry_as<double>("MBottom");
+
+  nMembersSave  = pdf->info().get_entry_as<int>("NumMembers");
 
 }
 
@@ -193,31 +227,34 @@ void LHAPDF6::xfUpdate(int, double x, double Q2) {
 
 //--------------------------------------------------------------------------
 
-// Call the PDF uncertainty calculation in the LHAPDF library
+// Calculate uncertainties using the LHAPDF prescription.
 
 void LHAPDF6::calcPDFEnvelope(int idNow, double xNow, double Q2NowIn,
   int valSea) {
 
   // Freeze at boundary value if PDF is evaluated outside the fit region.
-  double x1 = (xNow < pdfInfo.pdf->xMin() && !extrapol)
-            ? pdfInfo.pdf->xMin() : xNow;
-  if (x1 > pdfInfo.pdf->xMax() ) x1 = pdfInfo.pdf->xMax();
-  double Q2Now = (Q2NowIn < pdfInfo.pdf->q2Min() )
-               ? pdfInfo.pdf->q2Min() : Q2NowIn;
-  if (Q2Now > pdfInfo.pdf->q2Max() ) Q2Now = pdfInfo.pdf->q2Max();
+  double x1 = (xNow < pdf->xMin() && !extrapol)
+            ? pdf->xMin() : xNow;
+  if (x1 > pdf->xMax() ) x1 = pdf->xMax();
+  double Q2Now = (Q2NowIn < pdf->q2Min() )
+               ? pdf->q2Min() : Q2NowIn;
+  if (Q2Now > pdf->q2Max() ) Q2Now = pdf->q2Max();
 
-  vector<double> xfCalc(pdfInfo.pdfs.size());
-  for(int imem=0; imem < pdfInfo.pdfs.size(); ++imem) {
-    if( valSea==0 || (idNow != 1 && idNow != 2 ) ) {
-      xfCalc[imem] = pdfInfo.pdfs[imem]->xfxQ2(idNow, x1, Q2Now);
-    } else if ( valSea==1 && (idNow == 1 || idNow == 2 ) ) {
-      xfCalc[imem] = pdfInfo.pdfs[imem]->xfxQ2(idNow, x1, Q2Now) -
-        pdfInfo.pdfs[imem]->xfxQ2(-idNow, x1, Q2Now);
-    } else if ( valSea==2 && (idNow == 1 || idNow == 2 ) ) {
-      xfCalc[imem] = pdfInfo.pdfs[imem]->xfxQ2(-idNow, x1, Q2Now);
+  // Loop over the members.
+  vector<double> xfCalc((*pdfs).size());
+  for(int iMem = 0; iMem < (*pdfs).size(); ++iMem) {
+    if (valSea==0 || (idNow != 1 && idNow != 2)) {
+      xfCalc[iMem] = (*pdfs)[iMem]->xfxQ2(idNow, x1, Q2Now);
+    } else if (valSea==1 && (idNow == 1 || idNow == 2 )) {
+      xfCalc[iMem] = (*pdfs)[iMem]->xfxQ2(idNow, x1, Q2Now) -
+        (*pdfs)[iMem]->xfxQ2(-idNow, x1, Q2Now);
+    } else if (valSea==2 && (idNow == 1 || idNow == 2 )) {
+      xfCalc[iMem] = (*pdfs)[iMem]->xfxQ2(-idNow, x1, Q2Now);
     }
   }
-  ::LHAPDF::PDFUncertainty xfErr = pdfInfo.pdfSet.uncertainty(xfCalc);
+
+  // Calculate the uncertainty.
+  ::LHAPDF::PDFUncertainty xfErr = (*pdfs).info.uncertainty(xfCalc);
   pdfEnvelope.centralPDF = xfErr.central;
   pdfEnvelope.errplusPDF = xfErr.errplus;
   pdfEnvelope.errminusPDF = xfErr.errminus;
@@ -227,43 +264,51 @@ void LHAPDF6::calcPDFEnvelope(int idNow, double xNow, double Q2NowIn,
 
 //--------------------------------------------------------------------------
 
+// Calculate uncertainties using the LHAPDF prescription.
+
 void LHAPDF6::calcPDFEnvelope(pair<int,int> idNows, pair<double,double> xNows,
   double Q2NowIn, int valSea) {
 
   // Freeze at boundary value if PDF is evaluated outside the fit region.
-  double x1 = (xNows.first < pdfInfo.pdf->xMin() && !extrapol)
-            ? pdfInfo.pdf->xMin() : xNows.first;
-  if (x1 > pdfInfo.pdf->xMax() ) x1 = pdfInfo.pdf->xMax();
-  double x2 = (xNows.second < pdfInfo.pdf->xMin() && !extrapol)
-            ? pdfInfo.pdf->xMin() : xNows.second;
-  if (x2 > pdfInfo.pdf->xMax() ) x2 = pdfInfo.pdf->xMax();
-  double Q2Now = (Q2NowIn < pdfInfo.pdf->q2Min() )
-               ? pdfInfo.pdf->q2Min() : Q2NowIn;
-  if (Q2Now > pdfInfo.pdf->q2Max() ) Q2Now = pdfInfo.pdf->q2Max();
+  double x1 = (xNows.first < pdf->xMin() && !extrapol)
+            ? pdf->xMin() : xNows.first;
+  if (x1 > pdf->xMax() ) x1 = pdf->xMax();
+  double x2 = (xNows.second < pdf->xMin() && !extrapol)
+            ? pdf->xMin() : xNows.second;
+  if (x2 > pdf->xMax() ) x2 = pdf->xMax();
+  double Q2Now = (Q2NowIn < pdf->q2Min() )
+               ? pdf->q2Min() : Q2NowIn;
+  if (Q2Now > pdf->q2Max() ) Q2Now = pdf->q2Max();
 
-  vector<double> xfCalc(pdfInfo.pdfs.size());
-  for(int imem=0; imem < pdfInfo.pdfs.size(); ++imem) {
-    if ( valSea==0 || (idNows.first != 1 && idNows.first != 2 ) ) {
-      xfCalc[imem] = pdfInfo.pdfs[imem]->xfxQ2(idNows.first, x1, Q2Now);
-    } else if ( valSea==1 && (idNows.first == 1 || idNows.first == 2 ) ) {
-      xfCalc[imem] = pdfInfo.pdfs[imem]->xfxQ2(idNows.first, x1, Q2Now)
-        - pdfInfo.pdfs[imem]->xfxQ2(-idNows.first, x1, Q2Now);
-    } else if ( valSea==2 && (idNows.first == 1 || idNows.first == 2 ) ) {
-      xfCalc[imem] = pdfInfo.pdfs[imem]->xfxQ2(-idNows.first, x1, Q2Now);
+  // Loop over the members.
+  vector<double> xfCalc((*pdfs).size());
+  pdfEnvelope.pdfMemberVars.resize((*pdfs).size());
+  for(int iMem = 0; iMem < (*pdfs).size(); ++iMem) {
+    if        (valSea == 0 || (idNows.first != 1 && idNows.first != 2 ) ) {
+      xfCalc[iMem] = (*pdfs)[iMem]->xfxQ2(idNows.first, x1, Q2Now);
+    } else if (valSea == 1 && (idNows.first == 1 || idNows.first == 2)) {
+      xfCalc[iMem] = (*pdfs)[iMem]->xfxQ2(idNows.first, x1, Q2Now)
+        - (*pdfs)[iMem]->xfxQ2(-idNows.first, x1, Q2Now);
+    } else if (valSea == 2 && (idNows.first == 1 || idNows.first == 2 )) {
+      xfCalc[iMem] = (*pdfs)[iMem]->xfxQ2(-idNows.first, x1, Q2Now);
     }
-    if( valSea==0 || (idNows.second != 1 && idNows.second != 2 ) ) {
-      xfCalc[imem] /= max(PDFMINVALUE,pdfInfo.pdfs[imem]->xfxQ2(idNows.second,
-        x2, Q2Now));
-    } else if ( valSea==1 && (idNows.second == 1 || idNows.second == 2 ) ) {
-      xfCalc[imem] /= max(pdfInfo.pdfs[imem]->xfxQ2(idNows.second, x2, Q2Now)
-        - pdfInfo.pdfs[imem]->xfxQ2(-idNows.second, x2, Q2Now),PDFMINVALUE);
-    } else if ( valSea==2 && (idNows.second == 1 || idNows.second == 2 ) ) {
-      xfCalc[imem] /= max( pdfInfo.pdfs[imem]->xfxQ2(-idNows.second, x2,
-        Q2Now), PDFMINVALUE);
+    xfCalc[iMem] = max(0.0, xfCalc[iMem]);
+    if        (valSea == 0 || (idNows.second != 1 && idNows.second != 2)) {
+      xfCalc[iMem] /= max
+        (PDFMINVALUE, (*pdfs)[iMem]->xfxQ2(idNows.second, x2, Q2Now));
+    } else if (valSea == 1 && (idNows.second == 1 || idNows.second == 2 )) {
+      xfCalc[iMem] /= max
+        ((*pdfs)[iMem]->xfxQ2(idNows.second, x2, Q2Now) - (*pdfs)[iMem]->xfxQ2
+         (-idNows.second, x2, Q2Now), PDFMINVALUE);
+    } else if (valSea == 2 && (idNows.second == 1 || idNows.second == 2 )) {
+      xfCalc[iMem] /= max
+        ((*pdfs)[iMem]->xfxQ2(-idNows.second, x2, Q2Now), PDFMINVALUE);
     }
+    pdfEnvelope.pdfMemberVars[iMem] = xfCalc[iMem];
   }
 
-  ::LHAPDF::PDFUncertainty xfErr = pdfInfo.pdfSet.uncertainty(xfCalc);
+  // Calculate the uncertainty.
+  ::LHAPDF::PDFUncertainty xfErr = (*pdfs).info.uncertainty(xfCalc);
   pdfEnvelope.centralPDF = xfErr.central;
   pdfEnvelope.errplusPDF = xfErr.errplus;
   pdfEnvelope.errminusPDF = xfErr.errminus;

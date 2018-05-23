@@ -1,6 +1,6 @@
 // Basics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for basic, often-used helper classes.
@@ -366,26 +366,26 @@ class Hist {
 public:
 
   // Constructors, including copy constructors.
-  Hist() {;}
+  Hist() {titleSave = "";}
   Hist(string titleIn, int nBinIn = 100, double xMinIn = 0.,
-    double xMaxIn = 1.) {
-    book(titleIn, nBinIn, xMinIn, xMaxIn);}
+    double xMaxIn = 1., bool logXIn = false) {
+    book(titleIn, nBinIn, xMinIn, xMaxIn, logXIn);}
   Hist(const Hist& h)
     : titleSave(h.titleSave), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
-    xMax(h.xMax), dx(h.dx), under(h.under), inside(h.inside),
+    xMax(h.xMax), linX(h.linX), dx(h.dx), under(h.under), inside(h.inside),
     over(h.over), res(h.res) { }
   Hist(string titleIn, const Hist& h)
     : titleSave(titleIn), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
-    xMax(h.xMax), dx(h.dx), under(h.under), inside(h.inside),
+    xMax(h.xMax), linX(h.linX), dx(h.dx), under(h.under), inside(h.inside),
     over(h.over), res(h.res) { }
   Hist& operator=(const Hist& h) { if(this != &h) {
     nBin = h.nBin; nFill = h.nFill; xMin = h.xMin; xMax = h.xMax;
-    dx = h.dx;  under = h.under; inside = h.inside; over = h.over;
-    res = h.res; } return *this; }
+    linX = h.linX; dx = h.dx;  under = h.under; inside = h.inside;
+    over = h.over; res = h.res; } return *this; }
 
   // Book a histogram.
   void book(string titleIn = "  ", int nBinIn = 100, double xMinIn = 0.,
-    double xMaxIn = 1.) ;
+    double xMaxIn = 1., bool logXIn = false) ;
 
   // Set title of a histogram.
   void title(string titleIn = "  ") {titleSave = titleIn; }
@@ -399,7 +399,7 @@ public:
   // Print a histogram with overloaded << operator.
   friend ostream& operator<<(ostream& os, const Hist& h) ;
 
-  // Print histogram contents as a table (e.g. for Gnuplot or Rivet).
+  // Print histogram contents as a table (e.g. for Gnuplot, Rivet or Pyplot).
   void table(ostream& os = cout, bool printOverUnder = false,
     bool xMidBin = true) const ;
   void table(string fileName, bool printOverUnder = false,
@@ -408,6 +408,9 @@ public:
   void rivetTable(ostream& os = cout, bool printError = false) const ;
   void rivetTable(string fileName, bool printError = false) const {
     ofstream streamName(fileName.c_str()); rivetTable(streamName, printError);}
+  void pyplotTable(ostream& os = cout, bool isHist = true) const ;
+  void pyplotTable(string fileName, bool isHist = true) const {
+    ofstream streamName(fileName.c_str()); pyplotTable(streamName, isHist);}
 
   // Print a table out of two histograms with same x axis.
   friend void table(const Hist& h1, const Hist& h2, ostream& os,
@@ -415,8 +418,10 @@ public:
   friend void table(const Hist& h1, const Hist& h2, string fileName,
     bool printOverUnder, bool xMidBin) ;
 
-  // Return title of histogram.
+  // Return title and size of histogram. Also if logarithmic x scale.
   string getTitle() const {return titleSave;}
+  int    getBinNumber() const {return nBin;}
+  bool   getLinX() const {return linX;}
 
   // Return content of specific bin: 0 gives underflow and nBin+1 overflow.
   double getBinContent(int iBin) const;
@@ -432,6 +437,9 @@ public:
 
   // Take square root of bin contents.
   void takeSqrt() ;
+
+  // Find smallest nonzero absolute value of bin contents.
+  double smallestAbsValue() const ;
 
   // Operator overloading with member functions
   Hist& operator+=(const Hist& h) ;
@@ -467,7 +475,9 @@ private:
   // Properties and contents of a histogram.
   string titleSave;
   int    nBin, nFill;
-  double xMin, xMax, dx, under, inside, over;
+  double xMin, xMax;
+  bool   linX;
+  double dx, under, inside, over;
   vector<double> res;
 
 };
@@ -490,6 +500,58 @@ Hist operator+(double f, const Hist& h1);
 Hist operator-(double f, const Hist& h1);
 Hist operator*(double f, const Hist& h1);
 Hist operator/(double f, const Hist& h1);
+
+//==========================================================================
+
+// HistPlot class.
+// Writes a Python program that can generate PDF plots from Hist histograms.
+
+class HistPlot {
+
+public:
+
+  // Constructor requires name of Python program (and adds .py).
+  HistPlot(string pythonName) { toPython.open( (pythonName + ".py").c_str() );
+    toPython << "from matplotlib import pyplot as plt" << endl
+             << "from matplotlib.backends.backend_pdf import PdfPages" << endl;
+    nPDF = 0; }
+
+  // Destructor should do final close.
+  ~HistPlot() { toPython << "pp.close()" << endl; }
+
+  // New plot frame, with title, x and y labels.
+  void frame( string frameIn, string titleIn = "", string xLabIn = "",
+    string yLabIn = "") {frameName = frameIn; title = titleIn; xLabel = xLabIn;
+    yLabel = yLabIn; histos.clear(); styles.clear(); legends.clear(); }
+
+  // Add a histogram to the current plot, with optional style and legend.
+  void add( const Hist& histIn, string styleIn = "h",
+    string legendIn = "void") { histos.push_back(&histIn);
+    styles.push_back(styleIn); legends.push_back(legendIn); }
+
+  // Plot a frame given the information from the new and add calls.
+  void plot( bool logY = false);
+
+  //  Omnibus single call when only one histogram in the frame.
+  void plotFrame( string frameIn, const Hist& histIn, string titleIn = "",
+    string xLabIn = "", string yLabIn = "", string styleIn = "h",
+    string legendIn = "void",  bool logY = false) {
+    frame( frameIn, titleIn, xLabIn, yLabIn);
+    add( histIn, styleIn, legendIn); plot( logY); }
+
+private:
+
+  // Initialization code.
+  void init( string pythonName);
+
+  // Stored quantities.
+  ofstream toPython;
+  int      nPDF, nFrame, nTable;
+  string   frameName, title, xLabel, yLabel, fileName, tmpFig;
+  vector<const Hist*> histos;
+  vector<string> styles, legends;
+
+};
 
 //==========================================================================
 

@@ -1,6 +1,6 @@
 // Basics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the Rndm, Vec4,
@@ -901,7 +901,7 @@ const char NUMBER[] = {'0', '1', '2', '3', '4', '5',
 // Book a histogram.
 
 void Hist::book(string titleIn, int nBinIn, double xMinIn,
-  double xMaxIn) {
+  double xMaxIn, bool logXIn) {
 
   titleSave = titleIn;
   nBin  = nBinIn;
@@ -909,11 +909,22 @@ void Hist::book(string titleIn, int nBinIn, double xMinIn,
   if (nBinIn > NBINMAX) {
     nBin = NBINMAX;
     cout << " Warning: number of bins for histogram " << titleIn
-         << " reduced to " << NBINMAX << endl;
+         << " reduced to " << nBin << endl;
   }
+  linX  = !logXIn;
   xMin  = xMinIn;
   xMax  = xMaxIn;
-  dx    = (xMax - xMin)/nBin;
+  if (!linX && xMin < TINY) {
+    xMin = TINY;
+    cout << " Warning: lower x border of histogram " << titleIn
+         << " increased to " << xMin << endl;
+  }
+  if (xMax < xMin + TINY) {
+    xMax = 2. * xMin;
+    cout << " Warning: upper x border of histogram " << titleIn
+         << " increased to " << xMax << endl;
+  }
+  dx    = (linX) ? (xMax - xMin) / nBin : log10(xMax / xMin) / nBin;
   res.resize(nBin);
   null();
 
@@ -942,7 +953,8 @@ void Hist::fill(double x, double w) {
   ++nFill;
   if (x < xMin) {under += w; return;}
   if (x > xMax) {over  += w; return;}
-  int iBin = int(floor((x - xMin)/dx));
+  int iBin = (linX) ? int( floor( (x - xMin) / dx) )
+           : int( floor( log10(x / xMin) / dx) );
   if      (iBin < 0)     under += w;
   else if (iBin >= nBin) over  += w;
   else                 {inside += w; res[iBin] += w; }
@@ -1043,14 +1055,15 @@ ostream& operator<<(ostream& os, const Hist& h) {
     } os << "\n";
 
     // Print sign and value of lower bin edge.
-    maxim = log10( max( -h.xMin, h.xMax - h.dx));
+    maxim = (h.linX) ? log10( max( -h.xMin, h.xMax - h.dx))
+          :  log10( max( -log10(h.xMin), log10(h.xMax) - h.dx ) );
     int iPowExp = int(floor(maxim + 0.0001));
     os << "          Low edge  ";
     for (int iCol = 0; iCol < nCol ; ++iCol) {
-      if (h.xMin + iCol * nGroup * h.dx < - pow(10., iPowExp - 3)) os << "-";
-      else os << " ";
-      row[iCol] = int(abs(h.xMin + iCol * nGroup * h.dx)
-        * pow(10., 2 - iPowExp) + 0.5);
+      double edgeNow = (h.linX) ? h.xMin + iCol * nGroup * h.dx
+        : log10(h.xMin) + iCol * nGroup * h.dx;
+      os << ( ( edgeNow < - pow(10., iPowExp - 3) ) ? "-" : " " );
+      row[iCol] = int( abs(edgeNow) * pow(10., 2 - iPowExp) + 0.5 );
     } os << "\n";
     for (int iRow = 2; iRow >= 0; iRow--) {
       os << "            *10^" << setw(2) << iPowExp + iRow - 2 << "  ";
@@ -1071,7 +1084,8 @@ ostream& operator<<(ostream& os, const Hist& h) {
   double cxxSum = 0.;
   for (int ix = 0; ix < h.nBin ; ++ix) {
     double cta = abs(h.res[ix]);
-    double x = h.xMin + (ix + 0.5) * h.dx;
+    double x = (h.linX) ? h.xMin + (ix + 0.5) * h.dx
+             : h.xMin * pow( 10., (ix + 0.5) * h.dx);
     cSum   = cSum   + cta;
     cxSum  = cxSum  + cta * x;
     cxxSum = cxxSum + cta * x * x;
@@ -1099,12 +1113,16 @@ void Hist::table(ostream& os, bool printOverUnder, bool xMidBin) const {
   // Print histogram vector bin by bin, with mean x as first column.
   os << scientific << setprecision(4);
   double xBeg = (xMidBin) ? xMin + 0.5 * dx : xMin;
+  if (!linX && xMidBin) xBeg = xMin * pow( 10., 0.5 * dx);
   if (printOverUnder)
-    os << setw(12) << xBeg - dx << setw(12) << under << "\n";
+    os << setw(12) << (linX ? xBeg - dx : xBeg * pow(10., -dx))
+       << setw(12) << under << "\n";
   for (int ix = 0; ix < nBin; ++ix)
-    os << setw(12) << xBeg + ix * dx << setw(12) << res[ix] << "\n";
+    os << setw(12) << (linX ? xBeg + ix * dx : xBeg * pow(10., ix * dx))
+       << setw(12) << res[ix] << "\n";
   if (printOverUnder)
-    os << setw(12) << xBeg + nBin * dx << setw(12) << over << "\n";
+    os << setw(12) << (linX ? xBeg + nBin * dx : xBeg * pow(10., nBin * dx))
+       << setw(12) << over << "\n";
 
 }
 
@@ -1118,11 +1136,40 @@ void Hist::rivetTable(ostream& os, bool printError) const {
   // and +- error in last two (assuming that contents is number of events).
   os << scientific << setprecision(4);
   double xBeg = xMin;
-  double xEnd = xMin+dx;
+  double xEnd = (linX) ? xMin + dx : xMin * pow(10., dx);
   for (int ix = 0; ix < nBin; ++ix) {
     double err = (printError) ? sqrtpos(res[ix]) : 0.0;
-    os << setw(12) << xBeg + ix * dx << setw(12) << xEnd + ix * dx
+    os << setw(12) << (linX ? xBeg + ix * dx : xBeg * pow(10., ix * dx))
+       << setw(12) << (linX ? xEnd + ix * dx : xEnd * pow(10., ix * dx))
        << setw(12) << res[ix] << setw(12) << err << setw(12) << err << "\n";
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+// Print histogram contents as a table, as appropriate for Pyplot.
+
+void Hist::pyplotTable(ostream& os, bool isHist) const {
+
+  // Set precision.
+  os << scientific << setprecision(4);
+
+  // For plotting as a histogram one needs bin edges as last column.
+  double xBeg = (linX) ? xMin + 0.5 * dx : xMin * pow( 10., 0.5 * dx);
+  double xNow, xEdge;
+  for (int ix = 0; ix < nBin; ++ix) {
+    xNow  = (linX) ? xBeg + ix * dx : xBeg * pow(10., ix * dx);
+    xEdge = (linX) ? xMin + ix * dx : xMin * pow(10., ix * dx);
+    os << setw(12) << xNow << setw(12) << res[ix];
+    if (isHist) os << setw(12) << xEdge << "\n";
+    else os << "\n";
+  }
+
+  // And also an extra no-weights line to give final upper bin edge.
+  if (isHist) {
+    double xEnd = (linX) ? xMax - 0.5 * dx : xMax * pow( 10., -0.5 * dx);
+    os << setw(12) << xEnd << setw(12) << 0. << setw(12) << xMax << "\n";
   }
 
 }
@@ -1135,21 +1182,25 @@ void table(const Hist& h1, const Hist& h2, ostream& os, bool printOverUnder,
   bool xMidBin) {
 
   // Require histogram x axes to agree.
-  if (h1.nBin != h2.nBin || abs(h1.xMin - h2.xMin) > Hist::TOLERANCE * h1.dx
-    || abs(h1.xMax - h2.xMax) > Hist::TOLERANCE * h1.dx) return;
+  int nBin  = h1.nBin;
+  double dx = h1.dx;
+  if (nBin != h2.nBin || abs(h1.xMin - h2.xMin) > Hist::TOLERANCE * dx
+    || abs(h1.xMax - h2.xMax) > Hist::TOLERANCE * dx || h1.linX != h2.linX)
+    return;
 
   // Print histogram vectors bin by bin, with mean x as first column.
   os << scientific << setprecision(4);
-  double xBeg = (xMidBin) ? h1.xMin + 0.5 * h1.dx : h1.xMin;
+  double xBeg = (xMidBin) ? h1.xMin + 0.5 * dx : h1.xMin;
+  if (!h1.linX && xMidBin) xBeg = h1.xMin * pow(10., 0.5 * dx);
   if (printOverUnder)
-    os << setw(12) << xBeg - h1.dx << setw(12) << h1.under
-       << setw(12) << h2.under << "\n";
-  for (int ix = 0; ix < h1.nBin; ++ix)
-    os << setw(12) << xBeg + ix * h1.dx << setw(12) << h1.res[ix]
-       << setw(12) << h2.res[ix] << "\n";
+    os << setw(12) << (h1.linX ? xBeg - dx : xBeg * pow(10., -dx))
+       << setw(12) << h1.under << setw(12) << h2.under << "\n";
+  for (int ix = 0; ix < nBin; ++ix)
+    os << setw(12) << (h1.linX ? xBeg + ix * dx : xBeg * pow(10., ix * dx))
+       << setw(12) << h1.res[ix] << setw(12) << h2.res[ix] << "\n";
   if (printOverUnder)
-    os << setw(12) << xBeg + h1.nBin * h1.dx << setw(12) << h1.over
-       << setw(12) << h2.over << "\n";
+    os << setw(12) << (h1.linX ? xBeg + nBin * dx : xBeg * pow(10., nBin * dx))
+       << setw(12) << h1.over << setw(12) << h2.over << "\n";
 
 }
 
@@ -1229,6 +1280,19 @@ void Hist::takeSqrt() {
   under  = sqrtpos(under);
   inside = sqrtpos(inside);
   over   = sqrtpos(over);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Find smallest nonzero absolute value of bin contents.
+
+double Hist::smallestAbsValue() const {
+
+  double smallest = 1e20; double yAbs;
+  for (int ix = 0; ix < nBin; ++ix) { yAbs = abs(res[ix]);
+    if (yAbs > 1e-20 && yAbs < smallest) smallest = yAbs; }
+  return smallest;
 
 }
 
@@ -1395,6 +1459,88 @@ Hist operator/(double f, const Hist& h1) {
   for (int ix = 0; ix < h1.nBin; ++ix)
     h.res[ix] = (abs(h1.res[ix]) < Hist::TINY) ? 0. : f/h1.res[ix];
   return h;
+}
+
+//==========================================================================
+
+// HistPlot class.
+// Writes a Python program that can generate PDF plots from Hist histograms.
+
+//--------------------------------------------------------------------------
+
+//  Generate the Python code for plotting a frame.
+
+void HistPlot::plot( bool logY) {
+
+  // Start new file or add to existing one.
+  if (frameName != "") {
+    if (nPDF > 0) toPython << "pp.close()" << endl;
+    ++nPDF;
+    fileName = frameName;
+    toPython << "pp   = PdfPages('" << fileName << ".pdf')" << endl;
+    nFrame = 1;
+    nTable = 0;
+  } else {
+    ++nFrame;
+  }
+  toPython << "tmp" << nFrame << " = plt.figure(" << nFrame << ")" << endl;
+
+  // Loop through the vector of histograms.
+  double yAbsMin = 1e20;
+  for (int iHist = 0; iHist < int(histos.size()); ++iHist) {
+
+    // Histogram information for plotting.
+    string legendNow = (legends[iHist] != "void") ? legends[iHist]
+      : histos[iHist]->getTitle();
+    stringstream nBin;
+    nBin << histos[iHist]->getBinNumber();
+    double yAbsNow = histos[iHist]->smallestAbsValue();
+    if (yAbsNow < yAbsMin) yAbsMin = yAbsNow;
+
+    // Split plotting style and potential colour information.
+    string styleNow = (styles[iHist] == "") ? "h" : styles[iHist];
+    string style1 = styleNow;
+    string style2 = "";
+    if (styleNow.find(",") != string::npos) {
+      int iComma = styleNow.find(",");
+      style1 = (iComma > 0) ? styleNow.substr( 0, iComma) : "h";
+      if (iComma + 1 < int(styleNow.length()))
+        style2 = styleNow.substr( iComma + 1);
+    }
+
+    // Write histogram itself to a data file as two columns of (x,y) values.
+    stringstream encode;
+    encode << fileName << "-" << nTable + iHist << ".dat";
+    histos[iHist]->pyplotTable( encode.str(), (style1 == "h") );
+
+    // Write code to plot histogram.
+    toPython << "plot = open('" << encode.str() << "')" << endl
+             << "plot = [line.split() for line in plot]" << endl
+             << "valx = [float(x[0]) for x in plot]" << endl
+             << "valy = [float(x[1]) for x in plot]" << endl;
+    if (style1 == "h") toPython  << "vale = [float(x[2]) for x in plot]"
+             << endl << "plt.hist( valx, vale, weights = valy,"
+             << " histtype='step',";
+    else toPython << "plt.plot( valx, valy, '" << style1 << "',";
+    if (style2 != "") toPython << " color='" << style2 << "',";
+    toPython << " label=r'" << legendNow << "')" << endl;
+  }
+
+  // Write title, axes and create plot.
+  if (!histos[0]->getLinX()) toPython << "plt.xscale('log')" << endl;
+  if (logY) toPython << "plt.yscale('symlog', linthreshy=" << scientific
+           << setprecision(2) << yAbsMin << ")" << endl;
+  else toPython << "plt.ticklabel_format(axis='y', style='sci', "
+           << "scilimits=(-2,3))" << endl;
+  toPython << "plt.legend(frameon=False,loc='best')" << endl
+           << "plt.title(r'" << title << "')" << endl
+           << "plt.xlabel(r'" << xLabel << "')" << endl
+           << "plt.ylabel(r\'" << yLabel << "')" << endl
+           << "pp.savefig(tmp" << nFrame << ",bbox_inches='tight')"
+           << endl << "plt.clf()" << endl;
+
+  // Update table counter. Done.
+  nTable += histos.size();
 }
 
 //==========================================================================

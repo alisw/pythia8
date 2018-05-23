@@ -1,6 +1,6 @@
 // HadronLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the HadronLevel class.
@@ -68,18 +68,18 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   doShoving       = settings.flag("Ropewalk:doShoving");
   doFlavour       = settings.flag("Ropewalk:doFlavour");
   doVertex        = settings.flag("PartonVertex:setVertex");
+  doBuffon        = settings.flag("Ropewalk:doBuffon");
 
-  // Initialize Ropewalk.
-  if (!ropewalk.init(infoPtr, settings, rndmPtr)) return false;
-
-  // Initialize Flavour Ropes.
-  flavourRope.init(&settings, rndmPtr, particleDataPtr, infoPtr,
-    &ropewalk);
+  // Initialize Ropewalk and Flavour Ropes.
+  if (doRopes) {
+    if (!ropewalk.init(infoPtr, settings, rndmPtr)) return false;
+    flavourRope.init(&settings, rndmPtr, particleDataPtr, infoPtr, &ropewalk);
+  }
 
   // Initialize auxiliary fragmentation classes.
   flavSel.init(settings,  particleDataPtr, rndmPtr, infoPtr);
   pTSel.init(  settings,  particleDataPtr, rndmPtr, infoPtr);
-  zSel.init(   settings, *particleDataPtr, rndmPtr);
+  zSel.init(   settings, *particleDataPtr, rndmPtr, infoPtr);
 
   // Initialize auxiliary administrative class.
   colConfig.init(infoPtr, settings, &flavSel);
@@ -134,7 +134,11 @@ bool HadronLevel::next( Event& event) {
   // Colour-octet onia states must be decayed to singlet + gluon.
   if (!decayOctetOnia(event)) return false;
 
-  // remove junction structures.
+  // Set lifetimes for already existing hadrons, like onia.
+  for (int i = 0; i < event.size(); ++i) if (event[i].isHadron())
+    event[i].tau( event[i].tau0() * rndmPtr->exp() );
+
+  // Remove junction structures.
   if (!junctionSplitting.checkColours(event)) {
     infoPtr->errorMsg("Error in HadronLevel::next: "
         "failed colour/junction check");
@@ -192,9 +196,17 @@ bool HadronLevel::next( Event& event) {
         }
 
         // Prepare for flavour ropes.
-        if (doFlavour && doVertex) {
-          ropewalk.extractDipoles(event, colConfig);
-          ropewalk.calculateOverlaps();
+        if (doFlavour) {
+          if (doVertex && !doBuffon) {
+            ropewalk.extractDipoles(event, colConfig);
+            ropewalk.calculateOverlaps();
+          }
+          // Else default to Buffon treatment which
+          // does not need dipole extraction and overlaps.
+          else {
+            infoPtr->errorMsg("Error in HadronLevel::next: "
+              "ropes: Flavour enabled, but no space time information.");
+          }
         }
       }
 

@@ -1,6 +1,6 @@
 // PartonDistributions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the PDF, LHAPDF,
@@ -1830,21 +1830,21 @@ void GRVpiL::xfUpdate(int , double x, double Q2) {
     + sqrt( (3.056 + 1.694 * s) * pow(s, 0.39) * xL) );
 
   // Update values.
-  xg    = gl;
-  xu    = uv + ub;
-  xd    = ub;
-  xubar = ub;
-  xdbar = uv + ub;
-  xs    = ub;
-  xsbar = ub;
-  xc    = chm;
-  xb    = bot;
+  xg    = rescale * gl;
+  xu    = rescale * (uv + ub);
+  xd    = rescale * ub;
+  xubar = rescale * ub;
+  xdbar = rescale * (uv + ub);
+  xs    = rescale * ub;
+  xsbar = rescale * ub;
+  xc    = rescale * chm;
+  xb    = rescale * bot;
 
   // Subdivision of valence and sea.
-  xuVal = uv;
-  xuSea = ub;
-  xdVal = uv;
-  xdSea = ub;
+  xuVal = rescale * uv;
+  xuSea = rescale * ub;
+  xdVal = rescale * uv;
+  xdSea = rescale * ub;
 
   // idSav = 9 to indicate that all flavours reset.
   idSav = 9;
@@ -2216,24 +2216,26 @@ void PomHISASD::xfUpdate(int, double x, double Q2) {
 
   // Check that pomeron momentum fraction is available.
   if ( xPomNow < 0.0 || xPomNow > 1.0 || !pPDFPtr )
-    printErr("Error in PonHISASD::xfUpdate: no xPom available.", infoPtr);
+    printErr("Error in PomHISASD::xfUpdate: no xPom available.", infoPtr);
 
-  double xx = xPomNow*x;
+  double xx = xPomNow * x;
+  double fac = newfac * pow(1.0 - x, hixpow) / log(1.0 / xx);
+  if ( fac == 0.0 ) fac = 1.0;
 
-  double fac = pow(1.0 - x, hixpow)/log(1.0/xx);
-
-  xd = xdbar = fac*pPDFPtr->xfSea(1, xx, Q2);
-  xu = xubar = fac*pPDFPtr->xfSea(2, xx, Q2);
-  xs = xsbar = fac*pPDFPtr->xfSea(3, xx, Q2);
-  xc = fac*pPDFPtr->xfSea(4, xx, Q2);
-  xb = fac*pPDFPtr->xfSea(5, xx, Q2);
-  xg = fac*pPDFPtr->xfSea(21, xx, Q2);
+  xd = xdbar = fac * pPDFPtr->xfSea(1, xx, Q2);
+  xu = xubar = fac * pPDFPtr->xfSea(2, xx, Q2);
+  xs = xsbar = fac * pPDFPtr->xfSea(3, xx, Q2);
+  xc =         fac * pPDFPtr->xfSea(4, xx, Q2);
+  xb =         fac * pPDFPtr->xfSea(5, xx, Q2);
+  xg =         fac * pPDFPtr->xfSea(21, xx, Q2);
   xlepton = xgamma = 0.0;
+
   // Subdivision of valence and sea.
   xuVal = 0.;
   xuSea = xu;
   xdVal = 0.;
   xdSea = xd;
+
   // idSav = 9 to indicate that all flavours reset.
   idSav = 9;
 
@@ -2594,7 +2596,7 @@ void NNPDF::polin2(double x1al[], double x2al[], double yal[][fN],
 // Constructor.
 
 LHAPDF::LHAPDF(int idIn, string pSet, Info* infoPtrIn) :
-  pdfPtr(0), infoPtr(infoPtrIn) {
+  pdfPtr(0), infoPtr(infoPtrIn), lib(0) {
   isSet = false;
   if (!infoPtr) return;
 
@@ -2609,6 +2611,26 @@ LHAPDF::LHAPDF(int idIn, string pSet, Info* infoPtrIn) :
     return;
   }
   libName = "libpythia8lhapdf" + libName.substr(6) + ".so";
+
+  // Load the plugin library.
+  const char* error(0);
+  map<string, pair<void*, int> >::iterator plugin =
+    infoPtr->plugins.find(libName);
+  if (plugin == infoPtr->plugins.end()) {
+    lib   = dlopen(libName.c_str(), RTLD_LAZY);
+    error = dlerror();
+  }
+  if (error) {
+    printErr("Error in LHAPDF::init: " + string(error), infoPtr);
+    return;
+  }
+  if (plugin == infoPtr->plugins.end())
+    infoPtr->plugins[libName] = pair<void*, int>(lib, 1);
+  else {
+    lib = plugin->second.first;
+    ++plugin->second.second;
+  }
+  dlerror();
 
   // Determine the PDF set and member.
   string   set = pSet.substr(8);
@@ -2658,29 +2680,9 @@ LHAPDF::~LHAPDF() {
 // Access a plugin library symbol.
 
 LHAPDF::Symbol LHAPDF::symbol(string symName) {
-  void  *lib(0);
   Symbol sym(0);
   const char* error(0);
   if (!infoPtr) return sym;
-
-  // Load the library if not loaded.
-  map<string, pair<void*, int> >::iterator plugin =
-    infoPtr->plugins.find(libName);
-  if (plugin == infoPtr->plugins.end()) {
-    lib   = dlopen(libName.c_str(), RTLD_LAZY);
-    error = dlerror();
-  }
-  if (error) {
-    printErr("Error in LHAPDF::symbol: " + string(error), infoPtr);
-    return sym;
-  }
-  if (plugin == infoPtr->plugins.end())
-    infoPtr->plugins[libName] = pair<void*, int>(lib, 1);
-  else {
-    lib = plugin->second.first;
-    ++plugin->second.second;
-  }
-  dlerror();
 
   // Load the symbol.
   sym = (Symbol)dlsym(lib, symName.c_str());
@@ -2886,7 +2888,7 @@ int CJKL::sampleGammaValFlavor(double Q2) {
 // Sum of integrated PDFs \int dx x f(x,Q^2) at given scale Q^2.
 // Integrals parametrized as a0 + a1*log(Q^2/Q0^2).
 
-double CJKL::xfIntegratedTotal(double Q2){
+double CJKL::xfIntegratedTotal(double Q2) {
 
   // Freeze the scale below the initial scale.
   if(Q2 < Q02) Q2 = Q02;
@@ -3316,9 +3318,15 @@ void LHAGrid1::init(string pdfWord, string xmlPath, Info* infoPtr) {
   // Input is fit number. Current selection for NNPDF3.1 and modified NNLO.
   else if (pdfSet == 17) dataFile = xmlPath + "NNPDF31_lo_as_0130_0000.dat";
   else if (pdfSet == 18) dataFile = xmlPath + "NNPDF31_lo_as_0118_0000.dat";
-  else if (pdfSet == 19) dataFile = xmlPath + "NNPDF31_nlo_as_0118_0000.dat";
-  else if (pdfSet == 20) dataFile = xmlPath + "NNPDF31_nnlo_as_0118_0000.dat";
+  else if (pdfSet == 19) dataFile = xmlPath
+    + "NNPDF31_nlo_as_0118_luxqed_0000.dat";
+  else if (pdfSet == 20) dataFile = xmlPath
+    + "NNPDF31_nnlo_as_0118_luxqed_0000.dat";
   else if (pdfSet == 21) dataFile = xmlPath + "mcpdf_test_replicas_0000.dat";
+
+  // Pomeron PDFs, currently the GKG18 sets.
+  else if (pdfSet == 112) dataFile = xmlPath + "GKG18_DPDF_FitA_0000.dat";
+  else if (pdfSet == 113) dataFile = xmlPath + "GKG18_DPDF_FitB_0000.dat";
 
   // Open files from which grids should be read in.
   ifstream is( dataFile.c_str() );
@@ -3621,7 +3629,7 @@ const double Lepton2gamma::Q2MIN   = 1.;
 
 // Update PDFs and sample a value for x_gamma.
 
-void Lepton2gamma::xfUpdate(int , double x, double Q2){
+void Lepton2gamma::xfUpdate(int , double x, double Q2) {
 
   // Find the maximum x value at given Q2max and sqrt(s).
   double sCM = infoPtr->s();
@@ -3696,7 +3704,7 @@ void Lepton2gamma::xfUpdate(int , double x, double Q2){
 // Approximate the maximum of convoluted PDF to correctly set up the
 // sampling of the phase space.
 
-double Lepton2gamma::xfMax(int id, double x, double Q2){
+double Lepton2gamma::xfMax(int id, double x, double Q2) {
 
   // Find the maximum x value at given Q2max and sqrt(s).
   double sCM = infoPtr->s();
@@ -3734,7 +3742,7 @@ double Lepton2gamma::xfMax(int id, double x, double Q2){
 // Return PDF without sampling x_gamma values to compute cross section with
 // rescaled sHat. Not very elegant but no need to modify the xfUpdate call.
 
-double Lepton2gamma::xfSame(int id, double x, double Q2){
+double Lepton2gamma::xfSame(int id, double x, double Q2) {
   sampleXgamma = false;
   xfUpdate(id, x, Q2);
   double xfNow = xf(id, x, Q2);
@@ -3750,7 +3758,7 @@ const double EPAexternal::ALPHAEM = 0.007297353080;
 
 // Initilaize kinematics and find the normalization.
 
-void EPAexternal::init(){
+void EPAexternal::init() {
 
   // Collision kinematics.
   double sCM = pow2(infoPtr->eCM());
@@ -3795,7 +3803,7 @@ void EPAexternal::init(){
 // Derived from EPA for leptons but provides leading (small-x)
 // behaviour for hadrons as well.
 
-void EPAexternal::xfUpdate(int , double x, double Q2){
+void EPAexternal::xfUpdate(int , double x, double Q2) {
 
   // Calculate (Q2-integrated) approximation for xfGamma.
   double alphaLog = norm * ALPHAEM / M_PI * log (Q2max/Q2min);
@@ -3808,9 +3816,6 @@ void EPAexternal::xfUpdate(int , double x, double Q2){
 
     // To preserve x/xGamma < 1.
     xHadr = x;
-
-    // Save the minimum x_gamma value for sampling.
-    xMin  = xHadr;
 
     // Multiply the approximated flux with PDFs.
     double alphaLogX = alphaLog * log (xMax / xHadr);
@@ -3834,7 +3839,7 @@ void EPAexternal::xfUpdate(int , double x, double Q2){
 
 // The approximated photon flux x*f^{gamma}(x,Q2).
 
-double EPAexternal::xfApprox(int , double , double Q2){
+double EPAexternal::xfApprox(int , double , double Q2) {
 
   // Differetial in Q2.
   return norm * ALPHAEM / M_PI / Q2;
@@ -3844,7 +3849,7 @@ double EPAexternal::xfApprox(int , double , double Q2){
 
 // Accurate flux, provided externally.
 
-double EPAexternal::xfFlux(int id, double x, double Q2){
+double EPAexternal::xfFlux(int id, double x, double Q2) {
 
   // The external flux, check that pointer exists.
   if ( gammaFluxPtr != 0 ) return gammaFluxPtr->xf(id, x, Q2);
@@ -3855,7 +3860,7 @@ double EPAexternal::xfFlux(int id, double x, double Q2){
 
 // Photon PDFs used for the convolution with the flux.
 
-double EPAexternal::xfGamma(int id, double x, double Q2){
+double EPAexternal::xfGamma(int id, double x, double Q2) {
 
   // Return xf from the photon PDF.
   if ( gammaPDFPtr != 0 ) return gammaPDFPtr->xf(id, x, Q2);
@@ -3866,7 +3871,7 @@ double EPAexternal::xfGamma(int id, double x, double Q2){
 
 // Inherited class for nuclear PDFs. Needs a proton PDF as a baseline.
 
-void nPDF::initNPDF(PDF* protonPDFPtrIn){
+void nPDF::initNPDF(PDF* protonPDFPtrIn) {
 
   // Derive mass number and number of protons.
   a = (idBeam/10) % 1000;
@@ -3893,7 +3898,7 @@ void nPDF::initNPDF(PDF* protonPDFPtrIn){
 
 // Updates the nPDF using provided proton PDF and nuclear modification.
 
-void nPDF::xfUpdate(int id, double x, double Q2){
+void nPDF::xfUpdate(int id, double x, double Q2) {
 
   if (protonPDFPtr == 0) {
     printErr("Error in nPDF: No free proton PDF pointer set.");
@@ -3933,7 +3938,7 @@ void nPDF::xfUpdate(int id, double x, double Q2){
 // Nuclear modifications of the PDFs from EPS09 fit, either LO or NLO.
 // Ref: K.J. Eskola, H. Paukkunen and C.A. Salgado, JHEP 0904 (2009) 065.
 // Grids files of different nuclei can be found from
-// https://www.jyu.fi/fysiikka/en/research/highenergy/urhic/eps09
+// https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/eps09
 
 // Constants related to the fit.
 const double EPS09::Q2MIN = 1.69;
@@ -3948,7 +3953,7 @@ const int EPS09::Q2STEPS  = 50;
 
 // Initialize EPS09 nPDFs with given order (1=LO, 2=NLO) and error set.
 
-void EPS09::init(int iOrderIn, int iSetIn, string xmlPath){
+void EPS09::init(int iOrderIn, int iSetIn, string xmlPath) {
 
   // Save the order and error set number.
   iOrder = iOrderIn;
@@ -3975,10 +3980,10 @@ void EPS09::init(int iOrderIn, int iSetIn, string xmlPath){
   double dummy;
 
   // Read in the interpolation grid.
-  for (int i = 0;i < 31; ++i){
-    for (int j = 0;j < 51; ++j){
+  for (int i = 0;i < 31; ++i) {
+    for (int j = 0;j < 51; ++j) {
       fileStream >> dummy;
-      for (int k = 0;k < 51; ++k){
+      for (int k = 0;k < 51; ++k) {
         for (int l = 0;l < 8; ++l) fileStream >> grid[i][j][k][l];
       }
     }
@@ -3991,7 +3996,7 @@ void EPS09::init(int iOrderIn, int iSetIn, string xmlPath){
 
 // Interpolation from the grid.
 
-void EPS09::rUpdate(int , double x, double Q2){
+void EPS09::rUpdate(int , double x, double Q2) {
 
   // Freeze the x and Q2 values if outside the grid.
   if( x  < XMIN )  x  = XMIN;
@@ -4015,7 +4020,7 @@ void EPS09::rUpdate(int , double x, double Q2){
   Q2Near[2] = iQ2 + 1;
 
   // Interpolate the grid values.
-  for ( int iFlavour = 0; iFlavour < 8; ++iFlavour){
+  for ( int iFlavour = 0; iFlavour < 8; ++iFlavour) {
 
     // Calculate the position in log(x) or x grid.
     int ix;
@@ -4035,7 +4040,7 @@ void EPS09::rUpdate(int , double x, double Q2){
 
     // Calculate the four nearest points in log-x or lin-x grid.
     double xNear[4];
-    for(int i = 0;i < 4;i++){
+    for(int i = 0;i < 4;i++) {
       if ( ix - 1 + i < nxlog ) {
         xNear[i] = XMIN * exp( ( double( ix - 1 + i ) / nxlog )
           * log( XCUT / XMIN ) );
@@ -4073,6 +4078,188 @@ void EPS09::rUpdate(int , double x, double Q2){
 
   }
 
+}
+
+//--------------------------------------------------------------------------
+
+// Polynomial interpolation with Newton's divided difference method.
+
+double EPS09::polInt(double* fi, double* xi, int n, double x) {
+
+  for(int i = 1;i < n;i++) {
+    for(int j = n-1;j > i - 1;j--) {
+      fi[j] = (fi[j] - fi[j-1])/(xi[j] - xi[j-i]);
+    }
+  }
+  double f = fi[n-1];
+  for(int i = n-2;i > -1;i--) {
+    f = (x - xi[i])*f + fi[i];
+  }
+
+  return f;
+
+}
+
+//==========================================================================
+
+// Nuclear modifications of the PDFs from EPPS16 NLO fit.
+// Ref: K.J. Eskola, P. Paakkinen, H. Paukkunen and C.A. Salgado,
+// Eur.Phys.J. C77 (2017) no.3, 163 [arXiv:1612.05741]
+// Grids files for different nuclei can be found from
+// https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/
+// epps16-nuclear-pdfs.
+
+// Constants related to the fit.
+const double EPPS16::Q2MIN = 1.69;
+const double EPPS16::Q2MAX = 100000000.;
+const double EPPS16::XMIN  = 0.0000001;
+const double EPPS16::XMAX  = 1.;
+const int EPPS16::XSTEPS   = 80;
+const int EPPS16::Q2STEPS  = 30;
+const int EPPS16::NINTQ2   = 4;
+const int EPPS16::NINTX    = 4;
+const int EPPS16::NSETS    = 41;
+
+//--------------------------------------------------------------------------
+
+// Initialize EPPS16 nPDFs with given order (1=LO, 2=NLO) and error set.
+
+void EPPS16::init(int iSetIn, string xmlPath) {
+
+  // Save the error set number and derive useful values.
+  iSet           = iSetIn;
+  logQ2min       = log(Q2MIN);
+  loglogQ2maxmin = log( log(Q2MAX)/logQ2min );
+  logX2min       = log(XMIN) - 2. * (1. - XMIN);
+
+  // Select which data file to read for current fit.
+  if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
+  stringstream fileSS;
+  fileSS << xmlPath << "EPPS16NLOR_" << getA();
+  string gridFile = fileSS.str();
+
+  // Open grid file.
+  ifstream fileStream( gridFile.c_str() );
+  if (!fileStream.good()) {
+    printErr("Error in EPPS16::init: did not find grid file " + gridFile,
+             infoPtr);
+    isSet = false;
+    return;
+  }
+
+  // Dump additional grid information here.
+  double dummy;
+
+  // Read in the interpolation grid.
+  for (int i = 0;i < NSETS; ++i) {
+    for (int j = 0;j < Q2STEPS+1; ++j) {
+      fileStream >> dummy;
+      for (int k = 0;k < XSTEPS; ++k) {
+        for (int l = 0;l < 8; ++l) fileStream >> grid[i][j][k][l];
+      }
+    }
+  }
+  fileStream.close();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Interpolation from the grid.
+
+void EPPS16::rUpdate(int , double x, double Q2) {
+
+  // Freeze the x and Q2 values if outside the grid.
+  if( x  < XMIN )  x  = XMIN;
+  if( x  > XMAX )  x  = XMAX;
+  if( Q2 < Q2MIN ) Q2 = Q2MIN;
+  if( Q2 > Q2MAX ) Q2 = Q2MAX;
+
+  // Do not use the points at mass threshold for interpolation.
+  int cThreshold = 0;
+  int bThreshold = 0;
+
+  // Calculate the position in log(log Q^2) grid.
+  double dQ2 = Q2STEPS * log( log(Q2) / logQ2min ) / loglogQ2maxmin;
+  int    iQ2 = int(dQ2);
+
+  // Set the Q2 index to interval [1,...,28].
+  if      ( iQ2 < 1 )           iQ2 = 1;
+  else if ( iQ2 > Q2STEPS - 3 ) iQ2 = Q2STEPS - 2;
+
+  // Calculate the position in x grid.
+  double dx = XSTEPS * ( 1. - (log(x) - 2. * (1. - x) ) / logX2min );
+  int    ix = int(dx);
+
+  // Set the x-index interval.
+  if ( ix < 1 ) ix = 1;
+
+  // Interpolate the grid values.
+  for ( int iFlavour = 0; iFlavour < 8; ++iFlavour) {
+
+    // Do not use the last grid points for interpolation.
+    if ( (iFlavour > 1) && (iFlavour < 7) ) {
+      if ( ix > XSTEPS - 6 ) ix = XSTEPS - 6;
+    } else {
+      if ( ix > XSTEPS - 4 ) ix = XSTEPS - 4;
+    }
+
+    // Calculate the four nearest points in x grid.
+    double xNear[4];
+    for(int i = 0;i < 4;i++) xNear[i] = ix - 1 + i;
+
+    // Reject point Q=1.3 GeV from interpoilation for charm.
+    if ( (iFlavour == 5) && (iQ2 == 1) ) {
+      cThreshold = iQ2;
+      iQ2        = 2;
+    }
+
+    // Reject points Q<4.75 GeV from interpoilation for bottom.
+    if ( (iFlavour == 6) && (iQ2 < 17) && (iQ2 > 1) ) {
+      bThreshold = iQ2;
+      iQ2        = 17;
+    }
+
+    // Calculate the three nearest points in log(log Q^2) grid.
+    double Q2Near[4];
+    for(int i = 0;i < 4;i++) Q2Near[i] = iQ2 - 1 + i;
+
+    // Grid points used for interpolation.
+    double xGrid[4];
+    double Q2Grid[4];
+
+    // Read in the relevant values from table and interpolate in x.
+    for ( int j = 0; j < 4; ++j) {
+      xGrid[0]  = grid[iSet - 1][iQ2 - 1 + j][ix - 1][iFlavour];
+      xGrid[1]  = grid[iSet - 1][iQ2 - 1 + j][ix][iFlavour];
+      xGrid[2]  = grid[iSet - 1][iQ2 - 1 + j][ix + 1][iFlavour];
+      xGrid[3]  = grid[iSet - 1][iQ2 - 1 + j][ix + 2][iFlavour];
+      Q2Grid[j] = polInt(xGrid, xNear, NINTX, dx);
+    }
+
+    // Interpolate in Q2.
+    double result = polInt(Q2Grid, Q2Near, NINTQ2, dQ2);
+
+    // Save the values, for b non-zero only above the mass threshold.
+    if (iFlavour == 0) ruv = result;
+    if (iFlavour == 1) rdv = result;
+    if (iFlavour == 2) ru  = result;
+    if (iFlavour == 3) rd  = result;
+    if (iFlavour == 4) rs  = result;
+    if (iFlavour == 5) rc  = result;
+    if (iFlavour == 6) rb  = ( sqrt(Q2) < 4.75 ) ? 0. : result;
+    if (iFlavour == 7) rg  = result;
+
+    // Revert back to original interpolation points.
+    if (cThreshold > 0) {
+      iQ2        = cThreshold;
+      cThreshold = 0;
+    } else if (bThreshold > 0) {
+      iQ2        = bThreshold;
+      bThreshold = 0;
+    }
+
+  }
 
 }
 
@@ -4080,15 +4267,15 @@ void EPS09::rUpdate(int , double x, double Q2){
 
 // Polynomial interpolation with Newton's divided difference method.
 
-double EPS09::polInt(double* fi, double* xi, int n, double x){
+double EPPS16::polInt(double* fi, double* xi, int n, double x) {
 
-  for(int i = 1;i < n;i++){
-    for(int j = n-1;j > i - 1;j--){
+  for(int i = 1;i < n;i++) {
+    for(int j = n-1;j > i - 1;j--) {
       fi[j] = (fi[j] - fi[j-1])/(xi[j] - xi[j-i]);
     }
   }
   double f = fi[n-1];
-  for(int i = n-2;i > -1;i--){
+  for(int i = n-2;i > -1;i--) {
     f = (x - xi[i])*f + fi[i];
   }
 

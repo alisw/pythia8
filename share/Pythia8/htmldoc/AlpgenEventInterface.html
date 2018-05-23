@@ -170,7 +170,7 @@ parameter file is stored in the PYTHIA Info object, if given, under the
 key <code>AlpgenPar</code>. 
  
 <a name="anchor6"></a>
-<p/><strong>LHAupAlpgen::LHAupAlpgen(const char *baseFNin, Info *infoPtrIn = NULL) &nbsp;</strong> <br/>
+<p/><strong> LHAupAlpgen::LHAupAlpgen(const char *baseFNin, Info *infoPtrIn = NULL) &nbsp;</strong> <br/>
 The constructor for the class takes the base filename for the ALPGEN 
 format files (without file extensions) and optionally a pointer to a 
 PYTHIA Info class, used for warning/error message printing and for 
@@ -180,7 +180,7 @@ class, described below, used to parse the parameter file.
    
  
 <a name="anchor7"></a>
-<p/><strong>bool LHAupAlpgen::addResonances() &nbsp;</strong> <br/>
+<p/><strong> bool LHAupAlpgen::addResonances() &nbsp;</strong> <br/>
 This is a private method used when an event is read in. The information 
 read from the event file does not always contain a complete listing of 
 all particles and four-momenta, and so various details must be 
@@ -189,7 +189,7 @@ ALPGEN process in question.
    
  
 <a name="anchor8"></a>
-<p/><strong>bool LHAupAlpgen::rescaleMomenta() &nbsp;</strong> <br/>
+<p/><strong> bool LHAupAlpgen::rescaleMomenta() &nbsp;</strong> <br/>
 This is another private method used when an event is read in. 
 It shuffles and rescales momenta in an event to ensure energy-momentum 
 conservation.  First, <i>pT</i> is made to balance by splitting any 
@@ -225,29 +225,29 @@ present, with differing values, the stored value is overwritten and a
 warning given. 
  
 <a name="anchor9"></a>
-<p/><strong>AlpgenPar::AlpgenPar(Info *infoPtrIn = NULL) &nbsp;</strong> <br/>
+<p/><strong> AlpgenPar::AlpgenPar(Info *infoPtrIn = NULL) &nbsp;</strong> <br/>
 The constructor does nothing except for store the PYTHIA Info 
 pointer, if given. This is used for warning/error message printing. 
    
  
 <a name="anchor10"></a>
-<p/><strong>bool AlpgenPar::parse(const string paramStr) &nbsp;</strong> <br/>
+<p/><strong> bool AlpgenPar::parse(const string paramStr) &nbsp;</strong> <br/>
 This method parses an ALPGEN parameter file. The parameter file is 
 passed as a single string, mainly intended to be read out from the 
 PYTHIA Info object using the header information methods. 
    
  
 <a name="anchor11"></a>
-<p/><strong>bool AlpgenPar::haveParam(const string &amp;paramIn) &nbsp;</strong> <br/>
+<p/><strong> bool AlpgenPar::haveParam(const string &amp;paramIn) &nbsp;</strong> <br/>
 Method to check if a parameter with key <code>paramIn</code> is present. 
 Returns true if present, else false. 
    
  
 <a name="anchor12"></a>
-<p/><strong>double AlpgenPar::getParam(const string &amp;paramIn) &nbsp;</strong> <br/>
+<p/><strong> double AlpgenPar::getParam(const string &amp;paramIn) &nbsp;</strong> <br/>
    
 <a name="anchor13"></a>
-<strong>int AlpgenPar::getParamAsInt(const string &amp;paramIn) &nbsp;</strong> <br/>
+<strong> int AlpgenPar::getParamAsInt(const string &amp;paramIn) &nbsp;</strong> <br/>
 Return the parameter with key <code>paramIn</code> as a double or 
 integer. The presence of a parameter should have already been checked 
 using the <code>haveParam()</code> function above. If the parameter is 
@@ -255,7 +255,7 @@ not present, 0 is returned.
    
  
 <a name="anchor14"></a>
-<p/><strong>void AlpgenPar::void printParams() &nbsp;</strong> <br/>
+<p/><strong> void AlpgenPar::void printParams() &nbsp;</strong> <br/>
 Method to print a list of stored parameters. 
    
  
@@ -269,7 +269,7 @@ inheritance so that it may be combine with other UserHooks classes, see
 the "Combining UserHooks" section below. 
  
 <a name="anchor15"></a>
-<p/><strong>AlpgenHooks(Pythia &amp;pythia) &nbsp;</strong> <br/>
+<p/><strong> AlpgenHooks(Pythia &amp;pythia) &nbsp;</strong> <br/>
 The constructor takes a PYTHIA object as input, so that the beam 
 parameter settings can be overridden if the <code>Alpgen:file</code> 
 option is given. If this is the case, an <code>LHAupAlpgen</code> 
@@ -277,7 +277,7 @@ instance is automatically created and passed to PYTHIA.
    
  
 <a name="anchor16"></a>
-<p/><strong>bool initAfterBeams() &nbsp;</strong> <br/>
+<p/><strong> bool initAfterBeams() &nbsp;</strong> <br/>
 This is the only UserHooks method that is overridden. It is called 
 directly after PYTHIA has initialised the beams, and therefore the 
 header information should be present in the PYTHIA Info object. The 
@@ -288,4 +288,4 @@ present, which are then used to set further PYTHIA settings.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

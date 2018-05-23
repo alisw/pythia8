@@ -193,14 +193,30 @@ automatically be scaled down to cope.
  
 <p/> 
 The actual <i>pT0</i> parameter used at a given CM energy scale, 
-<i>ecmNow</i>, is obtained as 
-<br/><i> 
-     pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
-</i><br/> 
-where <i>pT0Ref</i>, <i>ecmRef</i> and <i>ecmPow</i> are the 
-three parameters below. 
+<i>ecmNow</i>, is obtained from a power law or a logarithmic 
+parametrization. The former is default with hadron beams and 
+the latter for photon-photon collisions. 
  
 <a name="anchor7"></a>
+<p/><code>mode&nbsp; </code><strong> MultipartonInteractions:pT0parametrization &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
+Choice of <i>pT0</i> parametrization. 
+<br/><code>option </code><strong> 0</strong> :  Power law dependence on <i>ecmNow</i>:<br/> 
+<i> 
+    pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
+</i> 
+   
+<br/><code>option </code><strong> 1</strong> :  Logarithmic dependence on <i>ecmNow</i>: 
+<br/><i> 
+    pT0 = pT0(ecmNow) = pT0Ref + ecmPow * log (ecmNow / ecmRef) 
+</i><br/> 
+where <i>pT0Ref</i>, <i>ecmRef</i> and <i>ecmPow</i> are the 
+three parameters below. In case of photon-photon collisions the corresponding 
+parameters are set in <a href="Photoproduction.html" target="page">Photoproduction</a>. 
+   
+   
+ 
+<a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:pT0Ref &nbsp;</strong> 
  (<code>default = <strong>2.28</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10.0</code>)<br/>
 The <i>pT0Ref</i> scale in the above formula. 
@@ -210,13 +226,13 @@ choices, such as that of colour flow description, so unfortunately it is
 difficult to give an independent meaning to <i>pT0Ref</i>. 
    
  
-<a name="anchor8"></a>
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:ecmRef &nbsp;</strong> 
  (<code>default = <strong>7000.0</strong></code>; <code>minimum = 1.</code>)<br/>
 The <i>ecmRef</i> reference energy scale introduced above. 
    
  
-<a name="anchor9"></a>
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:ecmPow &nbsp;</strong> 
  (<code>default = <strong>0.215</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)<br/>
 The <i>ecmPow</i> energy rescaling pace introduced above. 
@@ -224,7 +240,7 @@ The <i>ecmPow</i> energy rescaling pace introduced above.
  
 <p/> 
 Alternatively, or in combination, a sharp cut can be used. 
-<a name="anchor10"></a>
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:pTmin &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.0</code>)<br/>
 Lower cutoff in <i>pT</i>, below which no further interactions 
@@ -257,7 +273,7 @@ to begin with, since it later is increased back up. Also note that the
 idea with this scenario is to propose an alternative to colour 
 reconnection to understand the rise of <i>&lt;pT&gt;(n_ch)</i>, 
 so that the amount of colour reconnection should be reduced. 
-<a name="anchor11"></a>
+<a name="anchor12"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:enhanceScreening &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Choice to activate the above screening scenario, i.e. an increasing 
@@ -289,7 +305,7 @@ there is currently no <code>bProfile = 4</code> option for diffraction.
 Other parameters are assumed to agree between diffractive and 
 nondiffractive topologies. 
  
-<a name="anchor12"></a>
+<a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:bProfile &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 Choice of impact parameter profile for the incoming hadron beams. 
@@ -315,7 +331,7 @@ for this option.
    
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:coreRadius &nbsp;</strong> 
  (<code>default = <strong>0.4</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 1.</code>)<br/>
 When assuming a double Gaussian matter profile, <i>bProfile = 2</i>, 
@@ -323,7 +339,7 @@ the inner core is assumed to have a radius that is a factor
 <i>coreRadius</i> smaller than the rest. 
    
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:coreFraction &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 When assuming a double Gaussian matter profile, <i>bProfile = 2</i>, 
@@ -331,7 +347,7 @@ the inner core is assumed to have a fraction <i>coreFraction</i>
 of the matter content of the hadron. 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:expPow &nbsp;</strong> 
  (<code>default = <strong>1.85</strong></code>; <code>minimum = 0.4</code>; <code>maximum = 10.</code>)<br/>
 When <i>bProfile = 3</i> it gives the power of the assumed overlap 
@@ -344,7 +360,7 @@ at all, <i>bProfile = 0</i>. For small <i>expPow</i> the program
 becomes slow and unstable, so the min limit must be respected. 
    
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:a1 &nbsp;</strong> 
  (<code>default = <strong>0.15</strong></code>; <code>minimum = 0.</code>; <code>maximum = 2.</code>)<br/>
 When <i>bProfile = 4</i>, this gives the <i>a1</i> constant in the 
@@ -352,7 +368,7 @@ Gaussian width. When <i>a1 = 0.</i>, this reduces back to the single
 Gaussian case. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:bSelScale &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 3</code>)<br/>
 The selection of impact parameter is related to the scale of the 
@@ -396,7 +412,7 @@ kind of physics has only recently become fully operational
 The rescattering framework has ties with other parts of the program, 
 notably with the <a href="BeamRemnants.html" target="page">beam remnants</a>. 
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> MultipartonInteractions:allowRescatter &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Switch to allow rescattering of partons; on/off = true/false.<br/> 
@@ -407,7 +423,7 @@ and can therefore not be switched on in that case.
 so well tested. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> MultipartonInteractions:allowDoubleRescatter &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Switch to allow rescattering of partons, where both incoming partons 
@@ -421,7 +437,7 @@ simulated. The rate also comes out to be much lower than for single
 rescattering, so to first approximation it can be neglected. 
    
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:rescatterMode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 Selection of which partons rescatter against unscattered partons 
@@ -447,7 +463,7 @@ with <i>y</i> according to
 beams.   
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:ySepRescatter &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
 used for some of the <code>MultipartonInteractions:rescatterMode</code> 
@@ -458,7 +474,7 @@ rescatter at all, while a <i>ySep &lt; 0</i>  instead allows central
 partons to scatter against either beam. 
    
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:deltaYRescatter &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.1</code>)<br/>
 used for some of the <code>MultipartonInteractions:rescatterMode</code> 
@@ -473,7 +489,7 @@ as a potential rescatterer.
 These should normally not be touched. Their only function is for 
 cross-checks. 
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:nQuarkIn &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed incoming quark flavours in the beams; a change 
@@ -481,7 +497,7 @@ to 4 would thus exclude <i>b</i> and <i>bbar</i> as incoming
 partons, etc. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:nSample &nbsp;</strong> 
  (<code>default = <strong>1000</strong></code>; <code>minimum = 100</code>)<br/>
 The allowed <i>pT</i> range is split (unevenly) into 100 bins, 
@@ -603,7 +619,7 @@ and <i>uHat</i>, and the average formed, while the final kinematics
 is given by the relative importance of the two. 
  
 <p/> 
-Furthermore, since large <i>y</i> values are disfavoured by dropping 
+Further, since large <i>y</i> values are disfavoured by dropping 
 PDF's, a factor 
 <br/><i> 
    WT_y = (1 - (y_3/y_max)^2) * (1 - (y_4/y_max)^2) 
@@ -625,4 +641,4 @@ interactions.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

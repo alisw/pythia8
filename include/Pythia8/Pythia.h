@@ -1,6 +1,6 @@
 // Pythia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the main class for event generation.
@@ -10,8 +10,8 @@
 #define Pythia8_Pythia_H
 
 // Version number defined for use in macros and for consistency checks.
-#define PYTHIA_VERSION 8.230
-#define PYTHIA_VERSION_INTEGER 8230
+#define PYTHIA_VERSION 8.235
+#define PYTHIA_VERSION_INTEGER 8235
 
 // Header files for the Pythia class and for what else the user may need.
 #include "Pythia8/Analysis.h"
@@ -50,8 +50,9 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// Forward declaration of HeavyIons class.
+// Forward declaration of HeavyIons and HIUserHooks classes.
 class HeavyIons;
+class HIUserHooks;
 
 // The Pythia class contains the top-level routines to generate an event.
 
@@ -99,7 +100,7 @@ public:
     PDF* pdfGamAPtrIn = 0, PDF* pdfGamBPtrIn = 0, PDF* pdfHardGamAPtrIn = 0,
     PDF* pdfHardGamBPtrIn = 0, PDF* pdfUnresAPtrIn = 0,
     PDF* pdfUnresBPtrIn = 0, PDF* pdfUnresGamAPtrIn = 0,
-    PDF* pdfUnresGamBPtrIn = 0);
+    PDF* pdfUnresGamBPtrIn = 0, PDF* pdfVMDAPtrIn = 0, PDF* pdfVMDBPtrIn = 0);
 
   // Set photon fluxes externally. Used with option "PDF:lepton2gammaSet = 2".
   bool setPhotonFluxPtr( PDF* photonFluxAIn, PDF* photonFluxBIn) {
@@ -169,6 +170,11 @@ public:
   bool setHeavyIonsPtr( HeavyIons* heavyIonsPtrIn)
     { heavyIonsPtr = heavyIonsPtrIn; return true;}
 
+  // Possibility to pass a HIUserHooks pointer for modifying the
+  // behavior of the heavy ion modelling.
+  bool setHIHooks(HIUserHooks* hiHooksPtrIn)
+    { hiHooksPtr = hiHooksPtrIn; return true; }
+
   // Possibility to get the pointer to a object modelling heavy ion
   // collisions.
   HeavyIons* getHeavyIonsPtr() { return heavyIonsPtr;}
@@ -185,7 +191,7 @@ public:
 
   // Generate only a single timelike shower as in a decay.
   int forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0)
-    { info.setScalup( 0, pTmax);
+    {  partonSystems.clear(); info.setScalup( 0, pTmax);
     return timesDecPtr->shower( iBeg, iEnd, event, pTmax, nBranchMax); }
 
   // Generate only the hadronization/decay stage.
@@ -256,6 +262,9 @@ public:
   // Pointer to a HeavyIons object for generating heavy ion collisions
   HeavyIons* heavyIonsPtr;
 
+  // Pointer to a HIUserHooks object to modify heavy ion modelling.
+  HIUserHooks* hiHooksPtr;
+
   // The two incoming beams.
   BeamParticle beamA;
   BeamParticle beamB;
@@ -272,9 +281,10 @@ private:
 
   // Initialization data, extracted from database.
   string xmlPath;
-  bool   doProcessLevel, doPartonLevel, doHadronLevel, doDiffraction,
-         doHardDiff, doResDec, doFSRinRes, decayRHadrons, abortIfVeto,
-         checkEvent, checkHistory;
+  bool   doProcessLevel, doPartonLevel, doHadronLevel, doSoftQCDall,
+         doSoftQCDinel, doCentralDiff, doDiffraction,
+         doSoftQCD, doVMDsideA, doVMDsideB, doHardDiff, doResDec,
+         doFSRinRes, decayRHadrons, abortIfVeto, checkEvent, checkHistory;
   int    nErrList;
   double epTolErr, epTolWarn, mTolErr, mTolWarn;
 
@@ -327,11 +337,15 @@ private:
   PDF* pdfGamFluxAPtr;
   PDF* pdfGamFluxBPtr;
 
+  // Extra VMD PDF pointers to be used in SoftQCD with gammas.
+  PDF* pdfVMDAPtr;
+  PDF* pdfVMDBPtr;
+
   // Keep track when "new" has been used and needs a "delete" for PDF's etc.
   bool useNewPdfA, useNewPdfB, useNewPdfHard, useNewPdfPomA, useNewPdfPomB,
     useNewPdfGamA, useNewPdfGamB, useNewPdfHardGamA, useNewPdfHardGamB,
     useNewPdfUnresA, useNewPdfUnresB, useNewPdfUnresGamA, useNewPdfUnresGamB,
-    hasUserHooksVector;
+    useNewPdfVMDA, useNewPdfVMDB, hasUserHooksVector;
 
   // Alternative Pomeron beam-inside-beam.
   BeamParticle beamPomA;
@@ -340,6 +354,10 @@ private:
   // Alternative photon beam-inside-beam.
   BeamParticle beamGamA;
   BeamParticle beamGamB;
+
+  // Alternative VMD beam-inside-beam.
+  BeamParticle beamVMDA;
+  BeamParticle beamVMDB;
 
   // LHAup object for generating external events.
   bool   doLHA, useNewLHA;

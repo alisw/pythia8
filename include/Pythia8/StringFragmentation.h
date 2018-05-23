@@ -1,6 +1,6 @@
 // StringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the classes for string fragmentation.
@@ -54,7 +54,9 @@ public:
 
   // Fragment off one hadron from the string system, in momentum space,
   // by taking steps either from positive or from negative end.
-  Vec4 kinematicsHadron(StringSystem& system);
+  Vec4 kinematicsHadron(StringSystem& system,
+    vector<StringVertex>& stringVertices, bool useInputZ = false,
+    double zHadIn = 0.);
 
   // Generate momentum for some possible next hadron, based on mean values
   // to get an estimate for rapidity and pT.
@@ -77,7 +79,7 @@ public:
 
   // Data members.
   bool   fromPos, thermalModel, mT2suppression;
-  int    iEnd, iMax, idHad, iPosOld, iNegOld, iPosNew, iNegNew;
+  int    iEnd, iMax, idHad, iPosOld, iNegOld, iPosNew, iNegNew, hadSoFar;
   double pxOld, pyOld, pxNew, pyNew, pxHad, pyHad, mHad, mT2Had, zHad,
          GammaOld, GammaNew, xPosOld, xPosNew, xPosHad, xNegOld, xNegNew,
          xNegHad, aLund, bLund;
@@ -117,7 +119,8 @@ private:
                       NTRYJNMATCH, NTRYJRFEQ;
   static const double FACSTOPMASS, CLOSEDM2MAX, CLOSEDM2FRAC, EXPMAX,
                       MATCHPOSNEG, EJNWEIGHTMAX, CONVJNREST, M2MAXJRF,
-                      M2MINJRF, EEXTRAJNMATCH, MDIQUARKMIN, CONVJRFEQ;
+                      M2MINJRF, EEXTRAJNMATCH, MDIQUARKMIN, CONVJRFEQ,
+                      CHECKPOS;
 
   // Pointer to various information on the generation.
   Info*         infoPtr;
@@ -140,10 +143,11 @@ private:
   UserHooks*    userHooksPtr;
 
   // Initialization data, read from Settings.
-  bool   closePacking, doFlavRope;
+  bool   closePacking, doFlavRope, setVertices, constantTau, smearOn;
+  int    hadronVertex;
   double stopMass, stopNewFlav, stopSmear, eNormJunction,
          eBothLeftJunction, eMaxLeftJunction, eMinLeftJunction,
-         mJoin, bLund, pT20;
+         mJoin, bLund, pT20, xySmear, kappaVtx, mc, mb;
 
   // Data members.
   bool   hasJunction, isClosed;
@@ -152,7 +156,19 @@ private:
   Vec4   pSum, pRem, pJunctionHadrons;
 
   // List of partons in string system.
-  vector<int> iParton;
+  vector<int> iParton, iPartonMinLeg, iPartonMidLeg, iPartonMax;
+
+  // Vertex information from the fragmentation process.
+  vector<StringVertex> stringVertices, legMinVertices, legMidVertices;
+
+  // Boost from/to rest frame of a junction to original frame.
+  RotBstMatrix MfromJRF, MtoJRF;
+
+  // Information on diquark created at the junction.
+  int    idDiquark;
+
+  // Fictitious opposing partons in JRF: string ends for vertex location.
+  Vec4 pMinEnd, pMidEnd;
 
   // Temporary event record for the produced particles.
   Event hadrons;
@@ -167,14 +183,21 @@ private:
   vector<int> findFirstRegion(int iSub, ColConfig& colConfig, Event& event);
 
   // Set flavours and momentum position for initial string endpoints.
-  void setStartEnds(int idPos, int idNeg, StringSystem systemNow);
+  void setStartEnds(int idPos, int idNeg, StringSystem systemNow,
+    int legNow = 3);
 
   // Check remaining energy-momentum whether it is OK to continue.
   bool energyUsedUp(bool fromPos);
 
   // Produce the final two partons to complete the system.
   bool finalTwo(bool fromPos, Event& event, bool usedPosJun, bool usedNegJun,
-    double nNSP);
+  double nNSP);
+
+  // Final region information.
+  Vec4 pPosFinalReg, pNegFinalReg, eXFinalReg, eYFinalReg;
+
+  // Set hadron production points in space-time picture.
+  void setHadronVertices(Event& event);
 
   // Construct a special joining region for the final two hadrons.
   StringRegion finalRegion();
@@ -184,6 +207,9 @@ private:
 
   // Fragment off two of the string legs in to a junction.
   bool fragmentToJunction(Event& event);
+
+  // Initially considered legs from the junction.
+  int legMin, legMid;
 
   // Join extra nearby partons when stuck.
   int extraJoin(double facExtra, Event& event);

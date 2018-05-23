@@ -1,6 +1,6 @@
 // SpaceShower.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -154,21 +154,38 @@ void SpaceShower::init( BeamParticle* beamAPtrIn,
   // same as for multiparton interactions, or be set separately.
   useSamePTasMPI  = settingsPtr->flag("SpaceShower:samePTasMPI");
   if (useSamePTasMPI) {
-    pT0Ref        = settingsPtr->parm("MultipartonInteractions:pT0Ref");
-    ecmRef        = settingsPtr->parm("MultipartonInteractions:ecmRef");
-    ecmPow        = settingsPtr->parm("MultipartonInteractions:ecmPow");
-    pTmin         = settingsPtr->parm("MultipartonInteractions:pTmin");
+
+    // Different parametrization for photon-photon collisions.
+    if (beamAPtr->isGamma() && beamBPtr->isGamma()) {
+      pT0paramMode  = settingsPtr->mode("PhotonPhoton:pT0parametrization");
+      pT0Ref        = settingsPtr->parm("PhotonPhoton:pT0Ref");
+      ecmRef        = settingsPtr->parm("PhotonPhoton:ecmRef");
+      ecmPow        = settingsPtr->parm("PhotonPhoton:ecmPow");
+      pTmin         = settingsPtr->parm("PhotonPhoton:pTmin");
+    } else {
+      pT0paramMode
+        = settingsPtr->mode("MultipartonInteractions:pT0parametrization");
+      pT0Ref        = settingsPtr->parm("MultipartonInteractions:pT0Ref");
+      ecmRef        = settingsPtr->parm("MultipartonInteractions:ecmRef");
+      ecmPow        = settingsPtr->parm("MultipartonInteractions:ecmPow");
+      pTmin         = settingsPtr->parm("MultipartonInteractions:pTmin");
+    }
+
   } else {
+    pT0paramMode  = settingsPtr->mode("SpaceShower:pT0parametrization");
     pT0Ref        = settingsPtr->parm("SpaceShower:pT0Ref");
     ecmRef        = settingsPtr->parm("SpaceShower:ecmRef");
     ecmPow        = settingsPtr->parm("SpaceShower:ecmPow");
     pTmin         = settingsPtr->parm("SpaceShower:pTmin");
   }
 
-  // Calculate nominal invariant mass of events. Set current pT0 scale.
+  // Calculate nominal invariant mass of events.
   sCM             = m2( beamAPtr->p(), beamBPtr->p());
   eCM             = sqrt(sCM);
-  pT0             = pT0Ref * pow(eCM / ecmRef, ecmPow);
+
+  // Set current pT0 scale according to the chosen parametrization.
+  if (pT0paramMode == 0) pT0 = pT0Ref * pow(eCM / ecmRef, ecmPow);
+  else                   pT0 = pT0Ref + ecmPow * log (eCM / ecmRef);
 
   // Restrict pTmin to ensure that alpha_s(pTmin^2 + pT_0^2) does not blow up.
   double pTminAbs = sqrtpos(pow2(LAMBDA3MARGIN) * Lambda3flav2 / renormMultFac
@@ -1045,7 +1062,9 @@ void SpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         // Account for headroom factor for gluons
         wt /= HEADROOMG2Q;
         // Optionally enhanced branching rate.
-        nameNow = "isr:G2QQ";
+        if      (abs(idSister) <  4) nameNow = "isr:G2QQ";
+        else if (abs(idSister) == 4) nameNow = "isr:G2QQ:cc";
+        else                         nameNow = "isr:G2QQ:bb";
         if (canEnhanceET) {
           double enhance = userHooksPtr->enhanceFactor(nameNow);
           if (enhance != 1.) {
@@ -2693,11 +2712,11 @@ bool SpaceShower::branch( Event& event) {
     for ( map<double,pair<string,double> >::reverse_iterator
           it = enhanceFactors.rbegin();
           it != enhanceFactors.rend(); ++it ){
-      if (it->second.first.find(splittingNameSel) != string::npos
+      if (splittingNameSel.find(it->second.first) != string::npos
         && abs(it->second.second-1.0) > 1e-9) {
         foundEnhance = true;
         weight       = it->second.second;
-        vp           = userHooksPtr->vetoProbability(it->second.first);
+        vp           = userHooksPtr->vetoProbability(splittingNameSel);
         break;
       }
     }
@@ -3030,105 +3049,155 @@ bool SpaceShower::initUncertainties() {
   varQ2GQmuRfac.clear();    varQ2GQcNS.clear();
   varX2XGmuRfac.clear();    varX2XGcNS.clear();
   varG2QQmuRfac.clear();    varG2QQcNS.clear();
-  varPDFplus.clear();       varPDFminus.clear();
+  // Maps that must be known by TimeShower
+  varPDFplus   = &infoPtr->varPDFplus;
+  varPDFminus  = &infoPtr->varPDFminus;
+  varPDFmember = &infoPtr->varPDFmember;
+  varPDFplus->clear();       varPDFminus->clear();
+  varPDFmember->clear();
 
-  // Get uncertainty variations from Settings (as list of strings to parse).
-  vector<string> uVars = settingsPtr->wvec("UncertaintyBands:List");
-  nUncertaintyVariations = int(uVars.size());
-  if (nUncertaintyVariations == 0) return false;
-  if (infoPtr->nWeights() <= 1.) {
-    infoPtr->setNWeights( nUncertaintyVariations + 1 );
-    infoPtr->setWeightLabel( 0, "Baseline");
-    for(int iWeight = 1; iWeight <= nUncertaintyVariations; ++iWeight) {
-      string uVarString = uVars[iWeight - 1];
-      int iEnd = uVarString.find(" ", 0);
-      string valueString = uVarString.substr(0, iEnd);
-      infoPtr->setWeightLabel(iWeight, valueString);
-    }
-  }
-
-  // List of keywords recognised by SpaceShower.
   vector<string> keys;
-  keys.push_back("isr:muRfac");
-  keys.push_back("isr:G2GG:muRfac");
-  keys.push_back("isr:Q2QG:muRfac");
-  keys.push_back("isr:Q2GQ:muRfac");
-  keys.push_back("isr:X2XG:muRfac");
-  keys.push_back("isr:G2QQ:muRfac");
-  keys.push_back("isr:cNS");
-  keys.push_back("isr:G2GG:cNS");
-  keys.push_back("isr:Q2QG:cNS");
-  keys.push_back("isr:Q2GQ:cNS");
-  keys.push_back("isr:X2XG:cNS");
-  keys.push_back("isr:G2QQ:cNS");
-  keys.push_back("isr:PDF:plus");
-  keys.push_back("isr:PDF:minus");
+  // List of keywords recognised by SpaceShower.
+  keys.push_back("isr:murfac");
+  keys.push_back("isr:g2gg:murfac");
+  keys.push_back("isr:q2qg:murfac");
+  keys.push_back("isr:q2gq:murfac");
+  keys.push_back("isr:x2xg:murfac");
+  keys.push_back("isr:g2qq:murfac");
+  keys.push_back("isr:cns");
+  keys.push_back("isr:g2gg:cns");
+  keys.push_back("isr:q2qg:cns");
+  keys.push_back("isr:q2gq:cns");
+  keys.push_back("isr:x2xg:cns");
+  keys.push_back("isr:g2qq:cns");
+  keys.push_back("isr:pdf:plus");
+  keys.push_back("isr:pdf:minus");
+  keys.push_back("isr:pdf:member");
 
   // Store number of QCD variations (as separator to QED ones).
   int nKeysQCD=keys.size();
 
-  // Parse each string in uVars to look for recognised keywords.
-  for (int iWeight = 1; iWeight <= int(uVars.size()); ++iWeight) {
+  // Get uncertainty variations from Settings (as list of strings to parse).
+  vector<string> uVars = settingsPtr->wvec("UncertaintyBands:List");
+  size_t varSize = uVars.size();
+  nUncertaintyVariations = int(uVars.size());
+  if (nUncertaintyVariations == 0) return false;
+  vector<string> uniqueVars;
+
+  // Expand uVars if PDFmembers has been chosen
+  string tmpKey("isr:pdf:family");
+  // Parse each string in uVars to look for recognized keywords.
+  for (size_t iWeight = 0; iWeight < varSize; ++iWeight) {
     // Convert to lowercase (to be case-insensitive). Also remove "=" signs
     // and extra spaces, so "key=value", "key = value" mapped to "key value"
-    string uVarString = toLower(uVars[iWeight - 1]);
+    string uVarString = toLower(uVars[iWeight]);
+    while (uVarString.find(" ") == 0) uVarString.erase( 0, 1);
+    int iEnd = uVarString.find(" ", 0);
+    uVarString.erase(0,iEnd+1);
     while (uVarString.find("=") != string::npos) {
       int firstEqual = uVarString.find_first_of("=");
-      uVarString.replace(firstEqual, 1, " ");
+      string testString = uVarString.substr(0, firstEqual);
+      iEnd = uVarString.find_first_of(" ", 0);
+      if( iEnd<0 ) iEnd = uVarString.length();
+      string insertString = uVarString.substr(0,iEnd);
+      // does the key match an fsr one?
+      if( find(keys.begin(), keys.end(), testString) != keys.end() ) {
+        if( uniqueVars.size() == 0 ) {
+          uniqueVars.push_back(insertString);
+        } else if ( find(uniqueVars.begin(), uniqueVars.end(), insertString)
+        == uniqueVars.end() ) {
+          uniqueVars.push_back(insertString);
+        }
+      } else if ( testString == tmpKey ) {
+        int nMembers(0);
+        BeamParticle& beam  = *beamAPtr;
+        nMembers = beam.nMembers();
+        for(int iMem=1; iMem<nMembers; ++iMem) {
+          ostringstream iss;
+          iss << iMem;
+          string tmpString("isr:pdf:member="+iss.str());
+          if (find(uniqueVars.begin(), uniqueVars.end(), tmpString)
+          == uniqueVars.end() ) {
+            uniqueVars.push_back(tmpString);
+          }
+        }
+      }
+      uVarString.erase(0,iEnd+1);
     }
-    while (uVarString.find("  ") != string::npos)
-      uVarString.erase( uVarString.find("  "), 1);
-    if (uVarString == "" || uVarString == " ") continue;
+  }
 
-    // Loop over all keywords.
-    int nRecognizedQCD = 0;
-    for (int iWord = 0; iWord < int(keys.size()); ++iWord) {
-      // Transform string to lowercase to avoid case-dependence.
-      string key = toLower(keys[iWord]);
-      // Skip if empty or keyword not found.
-      if (uVarString.find(key) == string::npos) continue;
-      // Extract variation value/factor.
-      int iKey = uVarString.find(key);
-      int iBeg = uVarString.find(" ", iKey) + 1;
-      int iEnd = uVarString.find(" ", iBeg);
-      string valueString = uVarString.substr(iBeg, iEnd - iBeg);
-      stringstream ss(valueString);
-      double value;
-      ss >> value;
-      if (!ss) continue;
+  nUncertaintyVariations = int(uniqueVars.size());
 
-      // Store (iWeight,value) pairs
-      // RECALL: use lowercase for all keys here (since converted above).
-      if (key == "isr:murfac" || key == "isr:g2gg:murfac")
-        varG2GGmuRfac[iWeight] = value;
-      if (key == "isr:murfac" || key == "isr:q2qg:murfac")
-        varQ2QGmuRfac[iWeight] = value;
-      if (key == "isr:murfac" || key == "isr:q2gq:murfac")
-        varQ2GQmuRfac[iWeight] = value;
-      if (key == "isr:murfac" || key == "isr:x2xg:murfac")
-        varX2XGmuRfac[iWeight] = value;
-      if (key == "isr:murfac" || key == "isr:g2qq:murfac")
-        varG2QQmuRfac[iWeight] = value;
-       if (key == "isr:cns" || key == "isr:g2gg:cns")
-        varG2GGcNS[iWeight] = value;
-      if (key == "isr:cns" || key == "isr:q2qg:cns")
+  if ( nUncertaintyVariations > 0 ) {
+    int nWeights = infoPtr->nWeights();
+    infoPtr->setNWeights( nWeights + nUncertaintyVariations );
+    int newSize = infoPtr->nWeights();
+    for(int iWeight = nWeights; iWeight < newSize; ++iWeight) {
+      string uVarString = uniqueVars[iWeight - nWeights];
+      infoPtr->setWeightLabel(iWeight, uVarString);
+      // Parse each string in uVars to look for recognised keywords.
+      // Convert to lowercase (to be case-insensitive). Also remove "=" signs
+      // and extra spaces, so "key=value", "key = value" mapped to "key value"
+
+      while (uVarString.find("=") != string::npos) {
+        int firstEqual = uVarString.find_first_of("=");
+        uVarString.replace(firstEqual, 1, " ");
+      }
+      while (uVarString.find("  ") != string::npos)
+        uVarString.erase( uVarString.find("  "), 1);
+      if (uVarString == "" || uVarString == " ") continue;
+
+      // Loop over all keywords.
+      int nRecognizedQCD = 0;
+      for (int iWord = 0; iWord < int(keys.size()); ++iWord) {
+        // Transform string to lowercase to avoid case-dependence.
+        string key = toLower(keys[iWord]);
+        // Extract variation value/factor.
+        int iKey = uVarString.find(key);
+        int iBeg = uVarString.find(" ", iKey) + 1;
+        int iEnd = uVarString.find(" ", iBeg);
+        string valueString = uVarString.substr(iBeg, iEnd - iBeg);
+        stringstream ss(valueString);
+        double value;
+        ss >> value;
+        if (!ss) continue;
+
+        // Store (iWeight,value) pairs
+        // RECALL: use lowercase for all keys here (since converted above).
+        if (key == "isr:murfac" || key == "isr:g2gg:murfac")
+          varG2GGmuRfac[iWeight] = value;
+        if (key == "isr:murfac" || key == "isr:q2qg:murfac")
+          varQ2QGmuRfac[iWeight] = value;
+        if (key == "isr:murfac" || key == "isr:q2gq:murfac")
+          varQ2GQmuRfac[iWeight] = value;
+        if (key == "isr:murfac" || key == "isr:x2xg:murfac")
+          varX2XGmuRfac[iWeight] = value;
+        if (key == "isr:murfac" || key == "isr:g2qq:murfac")
+          varG2QQmuRfac[iWeight] = value;
+        if (key == "isr:cns" || key == "isr:g2gg:cns")
+          varG2GGcNS[iWeight] = value;
+        if (key == "isr:cns" || key == "isr:q2qg:cns")
         varQ2QGcNS[iWeight] = value;
-      if (key == "isr:cns" || key == "isr:q2gq:cns")
-        varQ2GQcNS[iWeight] = value;
-      if (key == "isr:cns" || key == "isr:x2xg:cns")
-        varX2XGcNS[iWeight] = value;
-      if (key == "isr:cns" || key == "isr:g2qq:cns")
-        varG2QQcNS[iWeight] = value;
-      if (key == "isr:pdf:plus")   varPDFplus[iWeight] = 1;
-      if (key == "isr:pdf:minus")  varPDFminus[iWeight] = 1;
-      // Tell that we found at least one recognized and parseable keyword.
-      if (iWord < nKeysQCD) nRecognizedQCD++;
-    } // End loop over QCD keywords
+        if (key == "isr:cns" || key == "isr:q2gq:cns")
+          varQ2GQcNS[iWeight] = value;
+        if (key == "isr:cns" || key == "isr:x2xg:cns")
+          varX2XGcNS[iWeight] = value;
+        if (key == "isr:cns" || key == "isr:g2qq:cns")
+          varG2QQcNS[iWeight] = value;
+        if (key == "isr:pdf:plus")   varPDFplus->operator[](iWeight) = 1;
+        if (key == "isr:pdf:minus")  varPDFminus->operator[](iWeight) = 1;
+        if (key == "isr:pdf:member")
+          varPDFmember->operator[](iWeight) = int(value);
+        // Tell that we found at least one recognized and parseable keyword.
+        if (iWord < nKeysQCD) nRecognizedQCD++;
+      } // End loop over QCD keywords
 
-    // Tell whether this uncertainty variation contained >= 1 QCD variation.
-    if (nRecognizedQCD > 0) ++nVarQCD;
-  } // End loop over UVars.
+      // Tell whether this uncertainty variation contained >= 1 QCD variation.
+      if (nRecognizedQCD > 0) ++nVarQCD;
+    } // End loop over UVars.
+  }
 
+  infoPtr->initUncertainties(&uVars,true);
   // Let the calling function know if we found anything.
   return (nVarQCD > 0);
 }
@@ -3152,10 +3221,11 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
   // Make sure we have a dummy to point to if no map to be used.
   map<int,double> dummy;     dummy.clear();
 
+  int numWeights = infoPtr->nWeights();
   // Store uncertainty variation factors, initialised to unity.
   // Make vector sizes + 1 since 0 = default and variations start at 1.
-  vector<double> uVarFac(nUncertaintyVariations + 1, 1.0);
-  vector<bool> doVar(nUncertaintyVariations + 1, false);
+  vector<double> uVarFac(numWeights, 1.0);
+  vector<bool> doVar(numWeights, false);
   // When performing biasing, the nominal weight need not be unity.
   doVar[0] = true;
   uVarFac[0] = 1.0;
@@ -3165,9 +3235,8 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
   int idMot = motPtr->id();
 
   // PDF variations
-  double deltaPDFplus(0.0);
-  double deltaPDFminus(0.0);
-  if ( !varPDFplus.empty() || !varPDFminus.empty() ) {
+  if ( !varPDFplus->empty() || !varPDFminus->empty() || !varPDFmember->empty()
+    ) {
     // Evaluation of new daughter and mother PDF's.
     double scale2 = (useFixedFacScale) ? fixedFacScale2
       : factorMultFac * dip->pT2;
@@ -3178,9 +3247,31 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
     if( beam[iSysSel].isUnmatched() ) valSea = 2;
     beam.calcPDFEnvelope( make_pair(dip->idMother,dip->idDaughter),
       make_pair(xMother,xDau), scale2, valSea);
-    PDF::PDFEnvelope ratioPDFEnv = beam.getPDFEnvelope();
-    deltaPDFplus = min(ratioPDFEnv.errplusPDF/ratioPDFEnv.centralPDF,0.5);
-    deltaPDFminus= min(ratioPDFEnv.errminusPDF/ratioPDFEnv.centralPDF,0.5);
+    PDF::PDFEnvelope ratioPDFEnv = beam.getPDFEnvelope( );
+    //
+    varPtr = varPDFplus;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      uVarFac[iWeight] *= 1.0 + min(ratioPDFEnv.errplusPDF
+        / ratioPDFEnv.centralPDF, 0.5);
+      doVar[iWeight] = true;
+    }
+    //
+    varPtr = varPDFminus;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      uVarFac[iWeight] *= max(.01,1.0 - min(ratioPDFEnv.errminusPDF
+        / ratioPDFEnv.centralPDF, 0.5));
+      doVar[iWeight] = true;
+    }
+    varPtr = varPDFmember;
+    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
+      int iWeight   = itVar->first;
+      int member    = int( itVar->second );
+      uVarFac[iWeight] *= max(.01,ratioPDFEnv.pdfMemberVars[member]
+        / ratioPDFEnv.centralPDF);
+      doVar[iWeight] = true;
+    }
   }
 
   // QCD variations.
@@ -3195,11 +3286,12 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
       else varPtr = &varX2XGmuRfac;
     }
     else varPtr = &dummy;
+    double Q2  = dip->pT2;
+    double muR2 = renormMultFac * (Q2 + pT20in);
+    double alphaSbaseline = alphaS.alphaS(muR2);
     for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
       int iWeight   = itVar->first;
       double valFac = itVar->second;
-      double muR2 = renormMultFac * (dip->pT2 + pT20in);
-      double alphaSbaseline = alphaS.alphaS(muR2);
       // Correction-factor alphaS.
       double muR2var = max(1.1 * Lambda3flav2, pow2(valFac) * muR2);
       double alphaSratio = alphaS.alphaS(muR2var) / alphaSbaseline;
@@ -3236,12 +3328,11 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
       else varPtr = &varX2XGcNS;
     }
     else varPtr = &dummy;
+    double z   = dip->z;
     for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
       int iWeight   = itVar->first;
       double valFac = itVar->second;
       // Correction-factor alphaS.
-      double z   = dip->z;
-      double Q2  = dip->pT2;
       // Virtuality for off-shell massive quarks.
       if (idMot == 21 && abs(idSis) >= 4 && idSis != 21)
         Q2 = max(1., Q2+pow2(sisPtr->m0()));
@@ -3267,29 +3358,20 @@ void SpaceShower::calcUncertainties(bool accept, double pAccept, double pT20in,
       uVarFac[iWeight] *= minReWeight;
       doVar[iWeight] = true;
     }
-    varPtr = &varPDFplus;
-    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
-      int iWeight   = itVar->first;
-      uVarFac[iWeight] *= 1.0 + deltaPDFplus;
-      doVar[iWeight] = true;
-    }
-    varPtr = &varPDFminus;
-    for (itVar = varPtr->begin(); itVar != varPtr->end(); ++itVar) {
-      int iWeight   = itVar->first;
-      uVarFac[iWeight] *= max(.01,1.0 - deltaPDFminus);
-      doVar[iWeight] = true;
-    }
   }
 
   // Ensure 0 < PacceptPrime < 1 (with small margins).
-  for (int iWeight = 0; iWeight<=nUncertaintyVariations; ++iWeight) {
+  // Skip the central weight, so as to avoid confusion
+  for (int iWeight = 1; iWeight<numWeights; ++iWeight) {
     if (!doVar[iWeight]) continue;
     double pAcceptPrime = pAccept * uVarFac[iWeight];
-    if (pAcceptPrime > PROBLIMIT) uVarFac[iWeight] *= PROBLIMIT / pAcceptPrime;
+    if (pAcceptPrime > PROBLIMIT && dip->colType != 0) {
+      uVarFac[iWeight] *= PROBLIMIT / pAcceptPrime;
+    }
   }
 
   // Apply reject or accept reweighting factors according to input decision.
-  for (int iWeight = 0; iWeight <= nUncertaintyVariations; ++iWeight) {
+  for (int iWeight = 0; iWeight < numWeights; ++iWeight) {
     if (!doVar[iWeight]) continue;
     // If trial accepted: apply ratio of accept probabilities.
     if (accept) infoPtr->reWeight( iWeight,

@@ -7,10 +7,10 @@ all producing Lund strings occupying the same area in transverse space of
 <ei>~1</ei> fm<ei>^2</ei>. The Rope Hadronization framework describes the 
 interactions between such overlapping strings, by (a) allowing nearby strings 
 to shove each other with an interaction potential derived from the colour 
-superconductor analogy <ref>Bie16b</ref> and (b) at hadronization time, colour 
-charges at string endpoints and in gluon "kinks" can act together coherently 
-to form a "rope", which is hadronized with a larger, effective string 
-tension <ref>Bie14</ref>. 
+superconductor analogy <ref>Bie16b</ref>, <ref>Bie17</ref> and (b) at 
+hadronization time, colour charges at string endpoints and in gluon "kinks" 
+can act together coherently to form a "rope", which is hadronized with a 
+larger, effective string tension <ref>Bie14</ref>. 
 The latter has noticeable effects on the flavour composition of the hadronic 
 final state <ref>Bie15</ref>, and this effect is denoted "flavour ropes" below. 
  
@@ -21,6 +21,8 @@ model. The information is provided through the
 <aloc href="VertexInformation">Parton Vertex</aloc> methods. The string 
 shoving mechanism is exemplified in the <code>main101</code> example, 
 and the flavour ropes in <code>main102</code>. 
+A simpler version of flavour composition ropes exist <ref>Bie16c</ref>, 
+which do not require vertex information. This can be enabled by a switch. 
  
 <h3>Main settings</h3> 
  
@@ -206,6 +208,31 @@ This parameter controls how large a fraction of the parameter will scale
 with string tension. 
 </parm> 
  
+<flag name="Ropewalk:alwaysHighest" default="off"> 
+Setting this flag on will skip the random walk procedure for flavour ropes, 
+and assume that one always ends up in the highest possible SU(3) multiplet. 
+This would be adequate for situations where all lower multiplets are assumed 
+handled by colour reconnection and junction formation. 
+</flag> 
+ 
+<flag name="Ropewalk:doBuffon" default="off"> 
+Setting this flag on, enables a simpler treatment of flavour ropes. This is not 
+reliant on vertex information, but string-string overlaps are decided randomly 
+&aacute; la Buffon's needle <ref>Bie16c</ref>: All strings are thrown randomly 
+into a circular area in transverse space to estimate overlaps. 
+</flag> 
+ 
+<parm name="Ropewalk:stringProtonRatio" default="0.2" min="0." max="10.0"> 
+Only used if <code>Ropewalk:buffonRope</code> is enabled. The ratio of the 
+string transverse area to a proton transverse area. Determines the amount of 
+overlap in collisions. 
+</parm> 
+ 
+<parm name="Ropewalk:rapiditySpan" default="0.5" min="0." max="10.0"> 
+Only used if <code>Ropewalk:buffonRope</code> is enabled. Determines how far in 
+rapidity from a string break overlaps are counted. 
+</parm> 
+ 
 <flag name="Ropewalk:setFixedKappa" default="off"> 
 Setting this flag gives the user the possibility to ignore the generator 
 space-time information altogether, using only a provided string tension. 
@@ -221,6 +248,11 @@ is ignored, and a preset value provided in the <code>presetKappa</code>
 variable is used. 
 </parm> 
  
+<parm name="StringFlav:kappa" default="0.2" min="0.0" max="10." > 
+A base value of the string tension can be added, and modified along with other 
+parameters, to allow for studies of exotic quark production in the Rope model. 
+</parm> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

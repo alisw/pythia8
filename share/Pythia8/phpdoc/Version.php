@@ -35,17 +35,17 @@ form part of the standard databases and be queried accordingly.
  
 <a name="anchor1"></a>
 <p/><code>parm&nbsp; </code><strong> Pythia:versionNumber &nbsp;</strong> 
- (<code>default = <strong>8.230</strong></code>)<br/>
+ (<code>default = <strong>8.235</strong></code>)<br/>
 Version and subversion number, with three significant decimals. 
    
  
 <a name="anchor2"></a>
 <p/><code>mode&nbsp; </code><strong> Pythia:versionDate &nbsp;</strong> 
- (<code>default = <strong>20171006</strong></code>)<br/>
+ (<code>default = <strong>20180327</strong></code>)<br/>
 Last date of change of current (sub)version, in format yyyymmdd. 
    
  
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

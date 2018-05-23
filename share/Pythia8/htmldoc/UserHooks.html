@@ -100,15 +100,15 @@ class, of course. This must contain a constructor and a destructor. The
 any intervention from you. 
  
 <a name="anchor1"></a>
-<p/><strong>UserHooks::UserHooks() &nbsp;</strong> <br/>
+<p/><strong> UserHooks::UserHooks() &nbsp;</strong> <br/>
    
 <a name="anchor2"></a>
-<strong>virtual UserHooks::~UserHooks() &nbsp;</strong> <br/>
+<strong> virtual UserHooks::~UserHooks() &nbsp;</strong> <br/>
 The constructor and destructor do not need to do anything. 
    
  
 <a name="anchor3"></a>
-<p/><strong>void UserHooks::initPtr( Info* infoPtr, Settings* settingsPtr, ParticleData* particleDataPtr, Rndm* rndmPtr, BeamParticle* beamAPtr, BeamParticle* beamBPtr, BeamParticle* beamPomAPtr, BeamParticle* beamPomBPtr, CoupSM* coupSMPtr, PartonSystems* partonSystemsPtr, SigmaTotal* sigmaTotPtr) &nbsp;</strong> <br/>
+<p/><strong> void UserHooks::initPtr( Info* infoPtr, Settings* settingsPtr, ParticleData* particleDataPtr, Rndm* rndmPtr, BeamParticle* beamAPtr, BeamParticle* beamBPtr, BeamParticle* beamPomAPtr, BeamParticle* beamPomBPtr, CoupSM* coupSMPtr, PartonSystems* partonSystemsPtr, SigmaTotal* sigmaTotPtr) &nbsp;</strong> <br/>
 this (non-virtual) method is automatically called during the 
 initialization stage to set several useful pointers, and to set up 
 the <code>workEvent</code> below. The corresponding objects can 
@@ -147,7 +147,7 @@ lengthy and difficult to overview. The following methods and data member
 can then come in handy. 
  
 <a name="anchor4"></a>
-<p/><strong>void UserHooks::omitResonanceDecays(const Event& process, bool finalOnly = false) &nbsp;</strong> <br/>
+<p/><strong> void UserHooks::omitResonanceDecays(const Event& process, bool finalOnly = false) &nbsp;</strong> <br/>
 is a protected method that you can make use of in your own methods to 
 extract a simplified list of the hard process, where all resonance decay 
 chains are omitted. Intended for the <code>can/doVetoProcessLevel</code> 
@@ -183,7 +183,7 @@ index of the same parton in the original event record.
    
  
 <a name="anchor5"></a>
-<p/><strong>void UserHooks::subEvent(const Event& event, bool isHardest = true) &nbsp;</strong> <br/>
+<p/><strong> void UserHooks::subEvent(const Event& event, bool isHardest = true) &nbsp;</strong> <br/>
 is a protected method that you can make use of in your own methods to 
 extract a brief list of the current partons of interest, with all 
 irrelevant ones omitted. It is primarily intended to track the evolution 
@@ -207,7 +207,7 @@ trace the full history, if of interest.
    
  
 <a name="anchor6"></a>
-<p/><strong>Event UserHooks::workEvent &nbsp;</strong> <br/>
+<p/><strong> Event UserHooks::workEvent &nbsp;</strong> <br/>
 This protected class member contains the outcome of the above 
 <code>omitResonanceDecays(...)</code> and 
 <code>subEvent(...)</code> methods. Alternatively you can use it for 
@@ -221,7 +221,7 @@ The <code>workEvent</code> can also be sent on to a
 <h3>(i) Interrupt between the main generation levels</h3> 
  
 <a name="anchor7"></a>
-<p/><strong>virtual bool UserHooks::initAfterBeams() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::initAfterBeams() &nbsp;</strong> <br/>
 This routine is called by Pythia::init(), after the beams have been 
 set up, but before any other initialisation. Therefore, at this stage, 
 it is still possible to modify settings (apart from 
@@ -234,7 +234,7 @@ PYTHIA initialisation will be aborted.
    
  
 <a name="anchor8"></a>
-<p/><strong>virtual bool UserHooks::canVetoProcessLevel() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoProcessLevel() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoProcessLevel(...)</code> 
 will be called immediately after a hard process (and associated 
@@ -257,7 +257,7 @@ the cases of interest.
    
  
 <a name="anchor9"></a>
-<p/><strong>virtual bool UserHooks::doVetoProcessLevel(Event& process) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoProcessLevel(Event& process) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study the 
 <code>process</code> event record of the hard process. 
 Based on that you can decide whether to veto the event, true, or let 
@@ -285,7 +285,7 @@ develop into complete final states (unless flags have been set otherwise).
    
  
 <a name="anchor10"></a>
-<p/><strong>virtual bool UserHooks::canVetoPartonLevel() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoPartonLevel() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoPartonLevel(...)</code> 
 will be called immediately after the parton level has been generated 
@@ -300,7 +300,7 @@ jet structure.
    
  
 <a name="anchor11"></a>
-<p/><strong>virtual bool UserHooks::doVetoPartonLevel(const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoPartonLevel(const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the event, true, or let 
@@ -324,7 +324,7 @@ do survive the veto are allowed to develop into complete final states
    
  
 <a name="anchor12"></a>
-<p/><strong>virtual bool UserHooks::canVetoPartonLevelEarly() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoPartonLevelEarly() &nbsp;</strong> <br/>
 is very similar to <code>canVetoPartonLevel()</code> above, except 
 that the chance to veto appears somewhat earlier in the generation 
 chain, after showers and multiparton interactions, but before the 
@@ -335,7 +335,7 @@ not be included.
    
  
 <a name="anchor13"></a>
-<p/><strong>virtual bool UserHooks::doVetoPartonLevelEarly(const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoPartonLevelEarly(const Event& event) &nbsp;</strong> <br/>
 is very similar to <code>doVetoPartonLevel(...)</code> above, but 
 the veto can be done earlier, as described for 
 <code>canVetoPartonLevelEarly()</code>. 
@@ -384,20 +384,20 @@ In this subsection we outline the possibility to interrupt at a given
 emissions. 
  
 <a name="anchor14"></a>
-<p/><strong>virtual bool UserHooks::canVetoPT() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoPT() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoPT(...)</code> will 
 interrupt the downward evolution at <code>scaleVetoPT()</code>. 
    
  
 <a name="anchor15"></a>
-<p/><strong>virtual double UserHooks::scaleVetoPT() &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::scaleVetoPT() &nbsp;</strong> <br/>
 In the base class this method returns 0. You should redefine it 
 to return the <i>pT</i> scale at which you want to study the event. 
    
  
 <a name="anchor16"></a>
-<p/><strong>virtual bool UserHooks::doVetoPT(int iPos, const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoPT(int iPos, const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the event, true, or let 
@@ -453,7 +453,7 @@ alternative is offered to consider the event after a given number
 of interactions. 
  
 <a name="anchor17"></a>
-<p/><strong>virtual bool UserHooks::canVetoStep() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoStep() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoStep(...)</code> will 
 interrupt the downward ISR and FSR evolution the first 
@@ -461,7 +461,7 @@ interrupt the downward ISR and FSR evolution the first
    
  
 <a name="anchor18"></a>
-<p/><strong>virtual int UserHooks::numberVetoStep() &nbsp;</strong> <br/>
+<p/><strong> virtual int UserHooks::numberVetoStep() &nbsp;</strong> <br/>
 Returns the number of steps <i>n</i> each of ISR and FSR, for the 
 hardest interaction, that you want to be able to study. That is, 
 the method will be called after the first <i>n</i> ISR emissions, 
@@ -474,7 +474,7 @@ emissions.
    
  
 <a name="anchor19"></a>
-<p/><strong>virtual bool UserHooks::doVetoStep(int iPos, int nISR, int nFSR, const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoStep(int iPos, int nISR, int nFSR, const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the event, true, or let 
@@ -505,7 +505,7 @@ obtain a simplified event record.
    
  
 <a name="anchor20"></a>
-<p/><strong>virtual bool UserHooks::canVetoMPIStep() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoMPIStep() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoMPIStep(...)</code> will 
 interrupt the downward MPI evolution the first 
@@ -513,7 +513,7 @@ interrupt the downward MPI evolution the first
    
  
 <a name="anchor21"></a>
-<p/><strong>virtual int UserHooks::numberVetoMPIStep() &nbsp;</strong> <br/>
+<p/><strong> virtual int UserHooks::numberVetoMPIStep() &nbsp;</strong> <br/>
 Returns the number of steps in the MPI evolution that you want to be 
 able to study, right after each new step has been taken and the 
 subcollision has been added to the event record. The number of steps 
@@ -532,7 +532,7 @@ machinery would have sequence number 3.
    
  
 <a name="anchor22"></a>
-<p/><strong>virtual bool UserHooks::doVetoMPIStep(int nMPI, const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoMPIStep(int nMPI, const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the event, true, or let 
@@ -571,7 +571,7 @@ Systems, reflects the event before the shower branching or MPI has
 taken place. 
  
 <a name="anchor23"></a>
-<p/><strong>virtual bool UserHooks::canVetoISREmission() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoISREmission() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoISREmission(...)</code> 
 will interrupt the initial-state shower immediately after each 
@@ -579,7 +579,7 @@ emission and allow that emission to be vetoed.
    
  
 <a name="anchor24"></a>
-<p/><strong>virtual bool UserHooks::doVetoISREmission( int sizeOld, const Event& event, int iSys) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoISREmission( int sizeOld, const Event& event, int iSys) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the emission, true, or 
@@ -603,7 +603,7 @@ to Parton Systems.
    
  
 <a name="anchor25"></a>
-<p/><strong>virtual bool UserHooks::canVetoFSREmission() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoFSREmission() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoFSREmission(...)</code> 
 will interrupt the final-state shower immediately after each 
@@ -611,7 +611,7 @@ emission and allow that emission to be vetoed.
    
  
 <a name="anchor26"></a>
-<p/><strong>virtual bool UserHooks::doVetoFSREmission( int sizeOld, const Event& event, int iSys, bool inResonance = false) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoFSREmission( int sizeOld, const Event& event, int iSys, bool inResonance = false) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the emission, true, or 
@@ -638,7 +638,7 @@ place in a resonance decay, subsequent to the hard process.
    
  
 <a name="anchor27"></a>
-<p/><strong>virtual bool UserHooks::canVetoMPIEmission() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoMPIEmission() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoMPIEmission(...)</code> 
 will interrupt the MPI machinery immediately after each multiparton 
@@ -646,7 +646,7 @@ interaction and allow it to be vetoed.
    
  
 <a name="anchor28"></a>
-<p/><strong>virtual bool UserHooks::doVetoMPIEmission( int sizeOld, const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoMPIEmission( int sizeOld, const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> event record of the partonic process. 
 Based on that you can decide whether to veto the MPI, true, or 
@@ -683,7 +683,7 @@ is unchanged. Below these two cases are considered separately,
 but note that they share many points. 
  
 <a name="anchor29"></a>
-<p/><strong>virtual bool UserHooks::canModifySigma() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canModifySigma() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>multiplySigmaBy(...)</code> will 
 allow you to modify the cross section weight assigned to the current 
@@ -691,7 +691,7 @@ event.
    
  
 <a name="anchor30"></a>
-<p/><strong>virtual double UserHooks::multiplySigmaBy( const SigmaProcess* sigmaProcessPtr, const PhaseSpace* phaseSpacePtr, bool inEvent) &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::multiplySigmaBy( const SigmaProcess* sigmaProcessPtr, const PhaseSpace* phaseSpacePtr, bool inEvent) &nbsp;</strong> <br/>
 when called this method should provide the factor by which you want to 
 see the cross section weight of the current event modified. If you 
 return unity then the normal cross section is obtained. Note that, unlike 
@@ -741,7 +741,7 @@ This class contains <code>canModifySigma()</code> and
 <code>multiplySigmaBy()</code> methods that overload the base class ones. 
  
 <a name="anchor32"></a>
-<p/><strong>SuppressSmallPT::SuppressSmallPT( double pT0timesMPI = 1., int numberAlphaS = 0, bool useSameAlphaSasMPI = true) &nbsp;</strong> <br/>
+<p/><strong> SuppressSmallPT::SuppressSmallPT( double pT0timesMPI = 1., int numberAlphaS = 0, bool useSameAlphaSasMPI = true) &nbsp;</strong> <br/>
  The optional arguments of the constructor provides further variability. 
 <br/><code>argument</code><strong> pT0timesMPI </strong>  :  
 corresponds to the additional factor <i>k</i> in the above formula. 
@@ -773,7 +773,7 @@ The second main case of the current section involves three methods,
 as follows. 
  
 <a name="anchor33"></a>
-<p/><strong>virtual bool UserHooks::canBiasSelection() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canBiasSelection() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>biasSelectionBy(...)</code> will 
 allow you to modify the phase space sampling, with a compensating 
@@ -783,7 +783,7 @@ combine this kind of reweighting with the selection of
    
  
 <a name="anchor34"></a>
-<p/><strong>virtual double UserHooks::biasSelectionBy( const SigmaProcess* sigmaProcessPtr, const PhaseSpace* phaseSpacePtr, bool inEvent) &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::biasSelectionBy( const SigmaProcess* sigmaProcessPtr, const PhaseSpace* phaseSpacePtr, bool inEvent) &nbsp;</strong> <br/>
 when called this method should provide the factor by which you want to 
 see the phase space sampling of the current event modified. Events are 
 assigned a weight being the inverse of this, such that the integrated 
@@ -814,13 +814,13 @@ from comparisons.
    
  
 <a name="anchor35"></a>
-<p/><strong>virtual double UserHooks::biasedSelectionWeight() &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::biasedSelectionWeight() &nbsp;</strong> <br/>
 Returns the weight you should assign to the event, to use e.g. when 
 you histogram results. It is the exact inverse of the weight you 
 used to modify the phase-space sampling, a weight that must be stored 
 in the <code>selBias</code> member variable, such that this routine 
 can return <code>1/selBias</code>. The weight is also returned by the 
-<code>Info::weight()</code> method, which may be more convenient to use. 
+<code>Info::weight()</code> method, which may be  convenient to use. 
    
  
 <h3>(vi) Reject the decay sequence of resonances</h3> 
@@ -847,7 +847,7 @@ either to the tops, or to the <i>W</i> bosons, or no rollback at all,
 depending on how the process generation was set up. 
  
 <a name="anchor36"></a>
-<p/><strong>virtual bool UserHooks::canVetoResonanceDecays() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canVetoResonanceDecays() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doVetoResonanceDecays(...)</code> 
 will be called immediately after the resonance decays have been 
@@ -856,7 +856,7 @@ as described above for <code>canVetoProcessLevel()</code>.
    
  
 <a name="anchor37"></a>
-<p/><strong>virtual bool UserHooks::doVetoResonanceDecays(Event& process) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doVetoResonanceDecays(Event& process) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study the 
 <code>process</code> event record of the hard process. 
 Based on that you can decide whether to reject the sequence of 
@@ -882,14 +882,14 @@ showers are called from the <code>PartonLevel</code> generation. Thus
 user calls directly to <code>TimeShower</code> are not affected. 
  
 <a name="anchor38"></a>
-<p/><strong>virtual bool UserHooks::canSetResonanceScale() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canSetResonanceScale() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>scaleResonance(...)</code> 
 will set the initial scale of downwards shower evolution. 
    
  
 <a name="anchor39"></a>
-<p/><strong>virtual double UserHooks::scaleResonance( int iRes, const Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::scaleResonance( int iRes, const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You should return the maximum 
 scale, in GeV, from which the shower evolution will begin. The base class 
 method returns 0, i.e. gives no shower evolution at all. 
@@ -927,7 +927,7 @@ colour reconnection and here implement your own reconnection model
 for the whole event. 
  
 <a name="anchor40"></a>
-<p/><strong>virtual bool UserHooks::canReconnectResonanceSystems() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canReconnectResonanceSystems() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doReconnectResonanceSystems(...)</code> 
 will be called immediately after the resonance decays and their 
@@ -935,7 +935,7 @@ associated final-state showers have been added to the event record.
    
  
 <a name="anchor41"></a>
-<p/><strong>virtual bool UserHooks::doReconnectResonanceSystems( int oldSizeEvent, Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::doReconnectResonanceSystems( int oldSizeEvent, Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above, to reconnect colours 
 in the event. The method should normally return true, but false if the 
 colour-reconnected event is unphysical and to be rejected. 
@@ -995,7 +995,7 @@ or weak radiation, Pythia supplies the following functions implementing
 the strategy of section 4 in [<a href="Bibliography.html#refLon13a" target="page">Lon13a</a>]. 
  
 <a name="anchor42"></a>
-<p/><strong>virtual bool UserHooks::canEnhanceEmission() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canEnhanceEmission() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
 return true then the method <code>enhanceFactor(...)</code> will be 
 used to rescale an initial-state splitting probability. Both 
@@ -1004,7 +1004,7 @@ will have to be derived to allow for a branching enhancement.
    
  
 <a name="anchor43"></a>
-<p/><strong>virtual double UserHooks::enhanceFactor( string name) &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::enhanceFactor( string name) &nbsp;</strong> <br/>
 This function should return the enhancement factor for the splitting 
 probability with identifier <code>name</code>. It should return 1. 
 by default, i.e. for all input strings it does not propose to handle. 
@@ -1015,7 +1015,10 @@ splittings.
 <p/> 
 ISR QCD branchings: 
 <br/><code>isr:G2GG</code> for <i>g &rarr; g + g</i>, 
-<br/><code>isr:G2QQ</code> for <i>g &rarr; q + qbar</i>, 
+<br/><code>isr:G2QQ</code> for <i>g &rarr; q + qbar</i> 
+with <i>q</i> a light quark, 
+<br/><code>isr:G2QQ:cc</code> for <i>g &rarr; c + cbar</i> 
+<br/><code>isr:G2QQ:bb</code> for <i>g &rarr; b + bbar</i> 
 <br/><code>isr:Q2QG</code> for <i>q &rarr; q + g</i>, 
 <br/><code>isr:Q2GQ</code> for <i>q &rarr; g + q</i>; 
 <p/> 
@@ -1029,7 +1032,10 @@ ISR weak shower branchings:
 <p/> 
 FSR QCD branchings: 
 <br/><code>fsr:G2GG</code> for <i>g &rarr; g + g</i>, 
-<br/><code>fsr:G2QQ</code> for <i>g &rarr; q + qbar</i>, 
+<br/><code>fsr:G2QQ</code> for <i>g &rarr; q + qbar</i> 
+with <i>q</i> a light quark, 
+<br/><code>fsr:G2QQ:cc</code> for <i>g &rarr; c + cbar</i> 
+<br/><code>fsr:G2QQ:bb</code> for <i>g &rarr; b + bbar</i> 
 <br/><code>fsr:Q2QG</code> for <i>q &rarr; q + g</i>; 
 <p/> 
 FSR QED branchings: 
@@ -1069,7 +1075,7 @@ be enhanced by non-unity return value for the splitting with
    
  
 <a name="anchor44"></a>
-<p/><strong>virtual double UserHooks::vetoProbability( string name) &nbsp;</strong> <br/>
+<p/><strong> virtual double UserHooks::vetoProbability( string name) &nbsp;</strong> <br/>
 This function should return the probability of an emission that has 
 been enhanced with the help of <code>enhanceFactor(...)</code>, for the 
 same <code>name</code> arguments as above. An optimal choice depends on 
@@ -1079,7 +1085,7 @@ propose to handle.
    
  
 <a name="anchor45"></a>
-<p/><strong>double getEnhancedEventWeight() &nbsp;</strong> <br/>
+<p/><strong> double getEnhancedEventWeight() &nbsp;</strong> <br/>
 If you use enhanced emissions, it is paramount to attribute a corrective 
 weight to each event containing enhanced emissions. This function returns 
 this weight. In the presence of enhancements, all histograms and output 
@@ -1096,7 +1102,7 @@ Pythia allows users to enhance trial emissions by using the following
 functions. 
  
 <a name="anchor46"></a>
-<p/><strong>virtual bool UserHooks::canEnhanceTrial() &nbsp;</strong> <br/>
+<p/><strong> virtual bool UserHooks::canEnhanceTrial() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
 return true then the method <code>enhanceFactor(...)</code> (see above) 
 will be used to rescale an initial-state trial splitting probability. 
@@ -1118,19 +1124,19 @@ the string hadronization model, involving changes to hadronization
 parameters based on local properties of the string. Given information 
 on the hadronization history of a single string,  parameters can be 
 changed to control the selection of quark flavour, <i>z</i> and 
-<i>pT</i> in string breaks. Furthermore there is a option to veto 
+<i>pT</i> in string breaks. Further there is a option to veto 
 the creation of a hadron before it is added to the event record, 
 thus repeating a step in the hadronization procedure. 
  
 <a name="anchor47"></a>
-<p/><strong>virtual bool canChangeFragPar() &nbsp;</strong> <br/>
+<p/><strong> virtual bool canChangeFragPar() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
 return true, it will enable the methods <code>doChangeFragPar(...)</code> 
 and <code>doVetoFragmentation(...)</code>. 
    
  
 <a name="anchor48"></a>
-<p/><strong>virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton) &nbsp;</strong> <br/>
+<p/><strong> virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton) &nbsp;</strong> <br/>
 This is the method for changing fragmentation parameters. If all 
 parameters are changed as they should, the method should return true. 
 In case of errors the method returns false and a warning is printed. 
@@ -1172,13 +1178,32 @@ record for all the partons in the string currently being hadronized.
    
  
 <a name="anchor49"></a>
-<p/><strong>virtual bool doVetoFragmentation(Particle had) &nbsp;</strong> <br/>
+<p/><strong> virtual bool doVetoFragmentation(Particle had) &nbsp;</strong> <br/>
 This method can veto the production of a hadron, whereby the current 
 string break is redone. 
 <br/><code>argument</code><strong> had </strong>  :  is a (copy of) the hadron being produced, 
 just before it is added to the event record. 
    
    
+ 
+<a name="anchor50"></a>
+<p/><strong> virtual bool canSetImpactParameter() &nbsp;</strong> <br/>
+In the base class this method returns false. If you redefine it to 
+return true, it will enable the method <code>doSetImpactParameter()</code> . 
+   
+ 
+<a name="anchor51"></a>
+<p/><strong> virtual bool doSetImpactParameter() &nbsp;</strong> <br/>
+This method allows the user to select a particular impact parameter in the 
+MPI machinery in the generation of minimum-bias events. The function takes no 
+arguments and is intended for situations where the impact parameter is 
+generated from the outside, as is the case in the Angantyr model for Heavy Ion 
+collisions. Note that it does not modify the <a href="MultipartonInteractions.html" target="page"> 
+  <code>MultipartonInteractions:bProfile</code></a> used in the MPI 
+machinery, and that currently it will only affect the <a href="QCDProcesses.html" target="page"> 
+  <code>SoftQCD</code></a> processes. 
+   
+ 
  
 <h3>Multiple user hooks</h3> 
  
@@ -1207,4 +1232,4 @@ occurs.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

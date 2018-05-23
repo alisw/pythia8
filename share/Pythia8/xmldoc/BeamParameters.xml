@@ -36,6 +36,15 @@ interactions, more info <aloc href="Photoproduction">here</aloc>),
 <br/><ei>11 = e^-</ei>, <ei>-11 = e^+</ei>, 
 <br/><ei>13 = mu^-</ei>, <ei>-13 = mu^+</ei>, 
 <br/>and a few more leptons/neutrinos in a few combinations. 
+<br/>Recently <aloc href="HeavyIons">heavy-ion collisions</aloc> have 
+been implemented in PYTHIA. Therefore a handful of nuclei have been 
+added as allowed incoming beams, using PDG codes of the format 
+<code>100ZZZAAAI</code>: 
+1000020040 = <sup>4</sup>He , 1000030060 = <sup>6</sup>Li, 
+1000060120 = <sup>12</sup>C, 1000080160 = <sup>16</sup>O, 
+1000290630 = <sup>63</sup>Cu, 1000791970 = <sup>197</sup>Au, and 
+1000822080 = <sup>208</sup>Pb. More can be added using the function 
+<code>ParticleData::addParticle</code>. 
 </modeopen> 
  
 <modeopen name="Beams:idB" default="2212"> 
@@ -329,4 +338,4 @@ The time <ei>t</ei> of the interaction vertex is centered at this value.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

@@ -1,6 +1,6 @@
 // BeamParticle.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -269,8 +269,8 @@ void BeamParticle::initUnres(PDF* pdfUnresInPtr) {
 
 void BeamParticle::newValenceContent() {
 
-  // A pi0 oscillates between d dbar and u ubar.
-  if (idBeam == 111) {
+  // A pi0, rho and omega oscillates between d dbar and u ubar.
+  if (idBeam == 111 || idBeam == 113 || idBeam == 223) {
     idVal[0] = (rndmPtr->flat() < 0.5) ? 1 : 2;
     idVal[1] = -idVal[0];
 
@@ -284,10 +284,29 @@ void BeamParticle::newValenceContent() {
     idVal[0] = (rndmPtr->flat() < 0.5) ? 1 : 2;
     idVal[1] = -idVal[0];
 
-  // For photons set an usused code to indicate that the flavour is not
-  // chosen yet but will be done later.
+  // For photons a VMD content may be chosen, or the choice may be delayed.
   } else if (idBeam == 22) {
-    idVal[0] = 10;
+    if (hasVMDstate()) {
+      int idTmp = idVMD();
+      // A rho and omega oscillates between a uubar and ddbar.
+      if (idTmp == 113 || idTmp == 223) {
+        idVal[0] = (rndmPtr->flat() < 0.5) ? 1 : 2;
+        idVal[1] = -idVal[0];
+      // A phi is an ssbar system.
+      } else if (idTmp == 333) {
+        idVal[0] = 3;
+        idVal[1] = -3;
+      } else return;
+    // For non-VMD photons set an usused code to indicate that the flavour
+    // is not chosen yet but will be done later.
+    } else {
+      idVal[0] = 10;
+      idVal[1] = -idVal[0];
+    }
+
+  // If phi meson set content to s sbar.
+  } else if (idBeam == 333) {
+    idVal[0] = 3;
     idVal[1] = -idVal[0];
 
   // Other hadrons so far do not require any event-by-event change.
@@ -1068,7 +1087,7 @@ double BeamParticle::xRemnant( int i) {
     // Resolve diquark into sum of two quarks.
     int id1 = resolved[i].id();
     int id2 = 0;
-    if (abs(id1) > 10) {
+    if (abs(id1) > 1000) {
       id2 = (id1 > 0) ? (id1/100)%10 : -(((-id1)/100)%10);
       id1 = (id1 > 0) ? id1/1000 : -((-id1)/1000);
     }
@@ -1212,24 +1231,23 @@ bool BeamParticle::roomForRemnants(BeamParticle beamOther) {
   double xLeftA   = this->xMax(-1);
   double xLeftB   = beamOther.xMax(-1);
   double eCM      = infoPtr->eCM();
-  double Wleft    = eCM*sqrt(xLeftA*xLeftB);
+  double Wleft    = eCM * sqrt(xLeftA * xLeftB);
   double mRemA    = 0;
   double mRemB    = 0;
   bool allGluonsA = true;
   bool allGluonsB = true;
 
   // Calculate the total mass of each beam remnant.
-  for (int i = 0; i < this->size(); ++i) {
-    if ( resolved[i].id() != 21 ) {
-      allGluonsA = false;
-      // If initiator a valence, no need for a companion remnant.
-      if ( resolved[i].companion() < 0  && resolved[i].companion() != -3 )
-        mRemA += particleDataPtr->m0( resolved[i].id() );
-    }
+  for (int i = 0; i < this->size(); ++i)
+  if ( resolved[i].id() != 21 ) {
+    allGluonsA = false;
+    // If initiator a valence, no need for a companion remnant.
+    if ( resolved[i].companion() < 0 && resolved[i].companion() != -3 )
+      mRemA += particleDataPtr->m0( resolved[i].id() );
   }
-  for (int i = 0; i < beamOther.size(); ++i) {
-    if ( beamOther[i].id() != 21 )
-      allGluonsB = false;
+  for (int i = 0; i < beamOther.size(); ++i)
+  if ( beamOther[i].id() != 21 ) {
+    allGluonsB = false;
     if ( beamOther[i].companion() < 0 && beamOther[i].companion() != -3 )
       mRemB += particleDataPtr->m0( beamOther[i].id() );
   }

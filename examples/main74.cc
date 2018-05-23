@@ -1,6 +1,6 @@
 // main74.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Example how to use the modified Mass Drop Tagger on Pythia jets.
@@ -41,7 +41,7 @@ int main() {
 
   // Set up FastJet jet finders and modified mass-drop tagger.
   JetDefinition jetDefAKT( antikt_algorithm, radius);
-  JetDefinition jetDefCA( cambridge_algorithm, JetDefinition::max_allowable_R );
+  JetDefinition jetDefCA( cambridge_algorithm, JetDefinition::max_allowable_R);
   contrib::ModifiedMassDropTagger mMDT(z_cut);
 
   // Histograms for Z mass: truth, before and after mass drop.
@@ -54,8 +54,8 @@ int main() {
   for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
     if (!pythia.next()) continue;
 
-    // Store final visible central particle four-momenta as start configuration.
-    // Also find last copy 0f Z0, i.e. right before decay.
+    // Store final visible central particle four-momenta as start
+    // configuration. Also find last copy 0f Z0, i.e. right before decay.
     vector<PseudoJet> particles;
     int iZ = 0;
     for (int i = 0; i < event.size(); ++i) {

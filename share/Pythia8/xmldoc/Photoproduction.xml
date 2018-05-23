@@ -143,26 +143,60 @@ Show the evolution steps of the beam photon in the event record, if on.
 </p> 
  
 <p> 
-Currently the default values for the parameters related to multiparton 
-interactions are the same as in hadronic collision so no tuning for the 
-MPIs in photon-photon or photon-hadron has been done. This holds also for 
-the parameters related to the impact-parameter dependence. Preliminary 
-studies indicate that a larger value of <ei>pT0Ref</ei> would be preferred 
-for photon-photon case: The inclusive hadron <ei>pT</ei> spectra in LEP 
-is well reproduced with <ei>pT0Ref = 3.30 GeV</ei>. 
+Based on comparisons with charged hadron production in photon-photon 
+collision data from LEP, the default MPI parametrization tuned to 
+proton-(anti)proton collisions produces too much hadrons from the 
+additional interactions. Such differences are not surprising, given 
+that the photon is less hadron-like than the proton, e.g. with less 
+well developed PDFs, leaving less room for MPIs. Therefore a different 
+parametrization for <ei>pT0(eCM)</ei> is used in case of photon-photon 
+collisions, where the default values are tuned to the LEP data 
+(a reference to this study will be added later). By default, 
+a logarithmic dependence on <ei>eCM</ei> is used. 
+<note>Note:</note> These parameters override the choices made in 
+<aloc href="MultipartonInteractions">Multiparton Interactions</aloc> 
+when photon-photon collisions are generated. 
+</p> 
+ 
+<modepick name="PhotonPhoton:pT0parametrization" default="1" min="0" max="1"> 
+Choice of <ei>pT0</ei> parametrization. See 
+<aloc href="MultipartonInteractions">Multiparton Interactions</aloc> for 
+further details. 
+<option value="0">Power law in <ei>eCM</ei>.</option> 
+<option value="1">Logarithmic in <ei>eCM</ei>.</option> 
+</modepick> 
+ 
+<parm name="PhotonPhoton:ecmRef" default="100.0" min="1."> 
+The <ei>ecmRef</ei> reference energy scale. 
+</parm> 
+ 
+<parm name="PhotonPhoton:pT0Ref" default="1.52" min="0.5" max="10.0"> 
+The value of <ei>pT0</ei> at the reference energy scale. 
+</parm> 
+ 
+<parm name="PhotonPhoton:ecmPow" default="0.413" min="0.0" max="0.5"> 
+The <ei>ecmPow</ei> energy rescaling pace. 
+</parm> 
+ 
+<p/> 
+Alternatively, or in combination, a sharp cut can be used. 
+<parm name="PhotonPhoton:pTmin" default="0.2" min="0.1" 
+max="10.0"> 
+More details in 
+<aloc href="MultipartonInteractions">Multiparton Interactions</aloc>. 
+</parm> 
+ 
+<p> 
+A similar study for photon-hadron collisions will follow, current 
+recommendation is to use value <ei>pT0Ref = 3.0 GeV</ei> set in 
+<aloc href="MultipartonInteractions">Multiparton Interactions</aloc> page. 
 </p> 
  
 <p> 
 The total cross section for photon-photon collisions is paramerized as in 
-<ref>Sch97</ref>. Since the total cross section includes contribution also 
-from elastic and diffractive events, a multiplicative factor is introduced 
-to control the non-diffractive component. 
+<ref>Sch97</ref>. Approximate diffractive cross sections have been defined 
+according to the assumed VMD contribution. 
 </p> 
- 
-<parm name="Photon:sigmaNDfrac" default="0.7" min="0.5" max="1.0"> 
-Fraction of non-diffractive cross section of the total cross section. 
-Default value is motivated by earlier Pythia 6 studies. 
-</parm> 
  
 <h4>Beam Remnants</h4> 
  
@@ -254,7 +288,12 @@ upper limit.
 Upper limit for scattering angle of lepton A in <ei>rad</ei>. A negative 
 value means that no cut is applied. Since <ei>k_T</ei> depends on virtuality 
 of the emitted photon, the <code>Photon:Q2max</code> cut is usually more 
-restrictive unless a very small angle is used. 
+restrictive unless a very small angle is used. This cut is only applied 
+when the colliding beams are defined in their CM frame 
+(<code>Beams:frameType=1</code>). Furthermore, in case of <ei>2 &rarr; 1</ei> 
+processes with direct photons the scattered lepton kinematics is modified 
+later in the event generation, so accurate rejection can be obtained only 
+based on the final lepton momenta in the event record. 
 </parm> 
  
 <parm name="Photon:thetaBMax" default="-1.0" max="3.141593"> 
@@ -286,4 +325,4 @@ for the sampled <ei>W</ei>.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

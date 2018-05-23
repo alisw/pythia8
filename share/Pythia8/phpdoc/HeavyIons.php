@@ -27,7 +27,6 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 
 <form method='post' action='HeavyIons.php'>
  
- 
 <h2>Heavy Ions</h2> 
  
 PYTHIA does not normally handle collisions involving heavy ions, but it 
@@ -40,14 +39,15 @@ and is inspired by the old Fritiof program from the Lund group
 <p/> 
  
 To allow for the generation of collisions with heavy ions, PYTHIA includes a 
-handfull of nuclei with PDG numbers on the form 100ZZZAAAI: 
+handful of nuclei with PDG numbers on the form 100ZZZAAAI: 
 <sup>4</sup>He (1000020040), 
 <sup>6</sup>Li (1000030060), 
 <sup>12</sup>C (1000060120), 
 <sup>16</sup>O (1000080160), 
 <sup>63</sup>Cu (1000290630), 
+<sup>129</sup>Xe (1000290630), 
 <sup>197</sup>Au (1000791970), and 
-<sup>208</sup>Pb(1000822080), but more can be added using the function 
+<sup>208</sup>Pb(1000822080), but  can be added using the function 
 <code>ParticleData::addParticle</code>. 
  
 <br/><br/><table><tr><td><strong>HeavyIon:mode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)</td></tr></table>
@@ -105,7 +105,7 @@ nucleon-nucleon  collision between a projectile and a target
 model for the distribution in impact parameter 
 space of nucleons in a nucleus. There are two ready-made subclasses called 
 <code>WoodsSaxonModel</code>, implementing a standard Woods-Saxon 
-distribution, and <code>GLISSANDOModel</code>, implementing the more 
+distribution, and <code>GLISSANDOModel</code>, implementing the  
 advanced model in [<a href="Bibliography.php#refBro09" target="page">Bro09</a>,<a href="Bibliography.php#refRyb14" target="page">Ryb14</a>]. 
 <br/><br/><strong>HeavyIon:WSHardCore</strong>  <input type="radio" name="3" value="on" checked="checked"><strong>On</strong>
 <input type="radio" name="3" value="off"><strong>Off</strong>
@@ -120,15 +120,21 @@ advanced model in [<a href="Bibliography.php#refBro09" target="page">Bro09</a>,<
   distance between nucleons in a nucleus in the default Woods-Saxon 
   model for nucleon distributions. 
    
+<br/><br/><strong>HeavyIon:gaussHardCore</strong>  <input type="radio" name="5" value="on"><strong>On</strong>
+<input type="radio" name="5" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+  Option to use a Gaussian profile of the hard core instead of a sharp 
+  cut-off, inspired by [<a href="Bibliography.php#refBay95" target="page">Bay95</a>]. 
+   
  
-<br/><br/><table><tr><td><strong>HeavyIon:WSR </td><td></td><td> <input type="text" name="5" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HeavyIon:WSR </td><td></td><td> <input type="text" name="6" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The radius of a nucleon in units of fermi in the default Woods-Saxon 
 model for nucleon distributions. If zero, the size is given by the 
 formulae [<a href="Bibliography.php#refRyb14" target="page">Ryb14</a>], based on the number of nucleons in the 
 nuclei and whether a hard core is used or not. 
    
  
-<br/><br/><table><tr><td><strong>HeavyIon:WSa </td><td></td><td> <input type="text" name="6" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HeavyIon:WSa </td><td></td><td> <input type="text" name="7" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
 The <i>skin width</i> of a nucleus in units of fermi in the default 
 Woods-Saxon model for nucleon distributions.  If zero, the size is 
 given by the numbers in [<a href="Bibliography.php#refRyb14" target="page">Ryb14</a>], based on the number of 
@@ -139,7 +145,7 @@ nucleons in the nuclus and whether a hard core is used or not.
 parameter space for the colliding nuclei. The base class implements a Gaussian 
 sampling, which means that the events produced will always be weighted. Other 
 distributions can be implemented in subclasses. 
-<br/><br/><table><tr><td><strong>HeavyIon:bWidth </td><td></td><td> <input type="text" name="7" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HeavyIon:bWidth </td><td></td><td> <input type="text" name="8" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
   The width in fermi of the distribution by which the impact parameter 
   is sampled. If zero, a suitable width must be guessed by the 
   <code>ImpactParamerGenerator</code> 
@@ -199,7 +205,7 @@ The default model for nucleon fluctuations has three parameters, the general
 fitting machinery in <code>SubCollisionModel</code> allows for up to eight 
 parameters. 
  
-<br/><br/><table><tr><td><strong>HeavyIon:SigFitDefPar </td><td></td><td> <input type="text" name="8" value="17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HeavyIon:SigFitDefPar </td><td></td><td> <input type="text" name="9" value="17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0</strong></code>)</td></tr></table>
 These are the default values of the parameters of the 
 <code>SubCollisionModel</code> in Angantyr. They will be used as starting 
 point when fitting to the inclusive nucleon cross sections. 
@@ -213,7 +219,7 @@ number of generations. In the end the the parameter set in the final
 population  which gives the best inclusive cross sections is picked. 
 Eight different cross sections may be fitted to but it is possible to select 
 only some of them: 
-<br/><br/><table><tr><td><strong>HeavyIon:SigFitErr </td><td></td><td> <input type="text" name="9" value="0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HeavyIon:SigFitErr </td><td></td><td> <input type="text" name="10" value="0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)</td></tr></table>
 The relative error assumed in the calculation of goodness of fit 
 corresponding to the different cross sections fitted to. The cross 
 sections are obtained from the 
@@ -248,13 +254,13 @@ fitting will be performed and the values in <code>HeavyIon:SigFitDefPar</code>
 will be used. 
    
  
-<br/><br/><table><tr><td><strong>HeavyIon:SigFitFuzz </td><td></td><td> <input type="text" name="10" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HeavyIon:SigFitFuzz </td><td></td><td> <input type="text" name="11" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)</td></tr></table>
 A parameter determining the probability that an individual parameter setting 
 will evolves further away from the best parameter set in each generation. 
    
  
-<br/><br/><strong>HeavyIon:SigFitPrint</strong>  <input type="radio" name="11" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="11" value="off"><strong>Off</strong>
+<br/><br/><strong>HeavyIon:SigFitPrint</strong>  <input type="radio" name="12" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="12" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 fitting procedure. If on, extensive information about the fitting will be 
 printed. 
@@ -263,9 +269,16 @@ printed.
 <br/><br/><table><tr><td><strong>Angantyr:CollisionModel  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
 The Angantyr model has a couple of option for the SubCollisionModel 
 <br/>
-<input type="radio" name="12" value="0"><strong>0 </strong>:  A simplified model with fixed nucleon radii.  its normal machinery.  <br/>
-<input type="radio" name="12" value="1" checked="checked"><strong>1 </strong>:  The default model with fluctuating radii and cross  sections.  <br/>
-<input type="radio" name="12" value="2"><strong>2 </strong>:  Fluctuating radii and cross sections but different  treatment of opacity.  <br/>
+<input type="radio" name="13" value="0"><strong>0 </strong>:  A simplified model with fixed nucleon radii.  its normal machinery.  <br/>
+<input type="radio" name="13" value="1" checked="checked"><strong>1 </strong>:  The default model with fluctuating radii and cross  sections.  <br/>
+<input type="radio" name="13" value="2"><strong>2 </strong>:  Fluctuating radii and cross sections but different  treatment of opacity.  <br/>
+ 
+<br/><br/><strong>Angantyr:GlauberOnly</strong>  <input type="radio" name="14" value="on"><strong>On</strong>
+<input type="radio" name="14" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+event generation will stop after SubCollisions has been determined, allowing 
+the user to read out the nucleon configuration only. 
+   
  
 <p/> 
  
@@ -321,18 +334,35 @@ echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?><code>
 can be set separately for this <code>Pythia</code> object by prefixing 
 their names with <code>HI</code>. 
  
-As an example, setting <code>HIDiffraction:PomFlux</code> and 
+As an example, setting <code>HISigmaDiffractive:PomFlux</code> and 
 <code>HIPDF:PomSet</code> will set the 
-<code>Diffraction:PomFlux</code> and <code>PDF:PomSet</code> options 
+<code>SigmaDiffractive:PomFlux</code> and <code>PDF:PomSet</code> options 
 for this <code>Pythia</code> object. 
  
-<br/><br/><table><tr><td><strong>Angantyr:SASDmode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Angantyr:SASDmode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>4</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)</td></tr></table>
 Determines how to generate single-diffraction events as secondary absorptive 
 (SASD) sub-collisions. 
 <br/>
-<input type="radio" name="13" value="0"><strong>0 </strong>:  Standard singel-diffraction events as speicfied by  <code>HIDiffraction</code> settings above.  <br/>
-<input type="radio" name="13" value="1" checked="checked"><strong>1 </strong>:  Always use <code>HIPDF:PomSet = 11</code> and use the  same initial <code>HIMultipartonInteractions:pT0Ref</code> as for  non-diffractive events for the total nucleon-nucleon collision energy,  independent of the mass of the diffractive system.  <br/>
-<input type="radio" name="13" value="2"><strong>2 </strong>:  As for option <code>1</code> but also rescale the pomeron  proton non-diffractive cross section to match the pp non-diffractive one.  <br/>
+<input type="radio" name="15" value="0"><strong>0 </strong>:  Standard singel-diffraction events as speicfied by  <code>HIDiffraction</code> settings above.  <br/>
+<input type="radio" name="15" value="1"><strong>1 </strong>:  Always use <code>HIPDF:PomSet = 11</code> and use the  same initial <code>HIMultipartonInteractions:pT0Ref</code> as for  non-diffractive events for the total nucleon-nucleon collision energy,  independent of the mass of the diffractive system.  <br/>
+<input type="radio" name="15" value="2"><strong>2 </strong>:  (Experimental) As for option <code>1</code> but also  rescale the pomeron  proton non-diffractive cross section to match the pp non-diffractive one.  <br/>
+<input type="radio" name="15" value="3"><strong>3 </strong>:  (Experimental) As for option <code>1</code> but use the full    nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron in the    multiple interaction machinery. Also rescale the Pomeron PDF with the log of    the ratio of maximum and minimum Pomeron-nucleon collision energy.  <br/>
+<input type="radio" name="15" value="4" checked="checked"><strong>4 </strong>:  As for option <code>3</code> but no rescaling of the Pomeron   PDF.  <br/>
+ 
+<br/><br/><table><tr><td><strong>Angantyr:impactMode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
+Determines how to bias non-diffractive minimum-bias sub-collisions in pythia to 
+be appropriately central. 
+<br/>
+<input type="radio" name="16" value="0"><strong>0 </strong>:  If we have N pirmary sub-collisions and Na secondary  sub-collisions, generate N+Na non-diffractive events and pick the N most central.  <br/>
+<input type="radio" name="16" value="1"><strong>1 </strong>:  Use UserHooks to force Pythia to produce events with a  particular impact parameter for the N primary sub collisions according to the  generated impact parameter in the SubCollisionModel.  <br/>
+<input type="radio" name="16" value="2" checked="checked"><strong>2 </strong>:  As for option <code>1</code> but also the secondary  absorptive sub-collisions have their impact parameter set.  <br/>
+ 
+<br/><br/><table><tr><td><strong>Angantyr:impactFudge </td><td></td><td> <input type="text" name="17" value="0.85" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.85</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 4.0</code>)</td></tr></table>
+Multiplicative factor used to compensate for the fact that the 
+<code>SubColllisionModel</code> in Angantyr may have a different 
+impact parameter profile than what is assumed in the MPI overlap 
+calculation in Pythia. 
+   
  
 <a name="anchor4"></a>
 <p/><code>mode&nbsp; </code><strong> Angantyr:SDTries &nbsp;</strong> 
@@ -351,11 +381,11 @@ recoil when adding single diffractive sub-collisions to other
 sub-collisions. The choice may be overridded by a user-defined 
 <code>HIUserHooks::findRecoilers</code> function. 
 <br/>
-<input type="radio" name="14" value="1" checked="checked"><strong>1 </strong>:   Only elastically scattered nucleons and nucleon  remnants will take recoil.  <br/>
-<input type="radio" name="14" value="2"><strong>2 </strong>:   All particles outside the added diffractive system's  rapidity range are considered.  <br/>
+<input type="radio" name="18" value="1" checked="checked"><strong>1 </strong>:   Only elastically scattered nucleons and nucleon  remnants will take recoil.  <br/>
+<input type="radio" name="18" value="2"><strong>2 </strong>:   All particles outside the added diffractive system's  rapidity range are considered.  <br/>
  
-<br/><br/><strong>Angantyr:SDTest</strong>  <input type="radio" name="15" value="on"><strong>On</strong>
-<input type="radio" name="15" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Angantyr:SDTest</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
+<input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Used in conjunction with <code>HeavyIon:mode = 2</code> and proton 
 beams to generate single diffractive events that would be used as 
@@ -363,6 +393,14 @@ secondary non-diffractive scatterings in the Angantyr heavy ion model
 for the given nucleon energies. Used for tuning special 
 <code>HI</code>-prefixed parameters of the secondary absorptive 
 sub-collisions. 
+   
+ 
+<br/><br/><table><tr><td><strong>Angantyr:SDTestB </td><td></td><td> <input type="text" name="20" value="-1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1.0</strong></code>)</td></tr></table>
+In conjunction with <code>Angantyr:SDTest = on</code> and 
+<code>Angantyr:impactMode = 2</code> only pick diffractive 
+events with a particular impact parameter (as defined by the scaled value 
+given in <code>Info::bMPI()</code>). If negative, the standard impact 
+parameter distribution is used. 
    
  
 <p/> 
@@ -409,59 +447,84 @@ if($_POST["4"] != "0.9")
 $data = "HeavyIon:WSRh = ".$_POST["4"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["5"] != "0.0")
+if($_POST["5"] != "off")
 {
-$data = "HeavyIon:WSR = ".$_POST["5"]."\n";
+$data = "HeavyIon:gaussHardCore = ".$_POST["5"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["6"] != "0.0")
 {
-$data = "HeavyIon:WSa = ".$_POST["6"]."\n";
+$data = "HeavyIon:WSR = ".$_POST["6"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["7"] != "0.0")
 {
-$data = "HeavyIon:bWidth = ".$_POST["7"]."\n";
+$data = "HeavyIon:WSa = ".$_POST["7"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["8"] != "17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0")
+if($_POST["8"] != "0.0")
 {
-$data = "HeavyIon:SigFitDefPar = ".$_POST["8"]."\n";
+$data = "HeavyIon:bWidth = ".$_POST["8"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["9"] != "0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0")
+if($_POST["9"] != "17.24,2.15,0.33,0.0,0.0,0.0,0.0,0.0")
 {
-$data = "HeavyIon:SigFitErr = ".$_POST["9"]."\n";
+$data = "HeavyIon:SigFitDefPar = ".$_POST["9"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["10"] != "0.2")
+if($_POST["10"] != "0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0")
 {
-$data = "HeavyIon:SigFitFuzz = ".$_POST["10"]."\n";
+$data = "HeavyIon:SigFitErr = ".$_POST["10"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["11"] != "on")
+if($_POST["11"] != "0.2")
 {
-$data = "HeavyIon:SigFitPrint = ".$_POST["11"]."\n";
+$data = "HeavyIon:SigFitFuzz = ".$_POST["11"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["12"] != "1")
+if($_POST["12"] != "on")
 {
-$data = "Angantyr:CollisionModel = ".$_POST["12"]."\n";
+$data = "HeavyIon:SigFitPrint = ".$_POST["12"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["13"] != "1")
 {
-$data = "Angantyr:SASDmode = ".$_POST["13"]."\n";
+$data = "Angantyr:CollisionModel = ".$_POST["13"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["14"] != "1")
+if($_POST["14"] != "off")
 {
-$data = "Angantyr:SDRecoil = ".$_POST["14"]."\n";
+$data = "Angantyr:GlauberOnly = ".$_POST["14"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["15"] != "off")
+if($_POST["15"] != "4")
 {
-$data = "Angantyr:SDTest = ".$_POST["15"]."\n";
+$data = "Angantyr:SASDmode = ".$_POST["15"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["16"] != "2")
+{
+$data = "Angantyr:impactMode = ".$_POST["16"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["17"] != "0.85")
+{
+$data = "Angantyr:impactFudge = ".$_POST["17"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["18"] != "1")
+{
+$data = "Angantyr:SDRecoil = ".$_POST["18"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["19"] != "off")
+{
+$data = "Angantyr:SDTest = ".$_POST["19"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["20"] != "-1.0")
+{
+$data = "Angantyr:SDTestB = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -471,4 +534,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

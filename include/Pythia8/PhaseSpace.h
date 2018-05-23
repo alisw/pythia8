@@ -1,6 +1,6 @@
 // PhaseSpace.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for phase space generators in kinematics selection.
@@ -125,14 +125,11 @@ protected:
 
   // Constants: could only be changed in the code itself.
   static const int    NMAXTRY, NTRY3BODY;
-  static const double SAFETYMARGIN, TINY, EVENFRAC, SAMESIGMA, WIDTHMARGIN,
-                      SAMEMASS, MASSMARGIN, EXTRABWWTMAX, THRESHOLDSIZE,
-                      THRESHOLDSTEP, YRANGEMARGIN, LEPTONXMIN, LEPTONXMAX,
-                      LEPTONXLOGMIN, LEPTONXLOGMAX, LEPTONTAUMIN,
+  static const double SAFETYMARGIN, TINY, EVENFRAC, SAMESIGMA, MRESMINABS,
+                      WIDTHMARGIN, SAMEMASS, MASSMARGIN, EXTRABWWTMAX,
+                      THRESHOLDSIZE, THRESHOLDSTEP, YRANGEMARGIN, LEPTONXMIN,
+                      LEPTONXMAX, LEPTONXLOGMIN, LEPTONXLOGMAX, LEPTONTAUMIN,
                       SHATMINZ, PT2RATMINZ, WTCORRECTION[11];
-
-  // MBR constants: form factor appoximation with two exponents.
-  static const double FFA1, FFA2,FFB1, FFB2;
 
   // Pointer to cross section.
   SigmaProcess* sigmaProcessPtr;
@@ -258,6 +255,23 @@ protected:
   void   trialMass(int iM);
   double weightMass(int iM);
 
+  // Standard methods to find t range of a 2 -> 2 process
+  // and to check whether a given t value is in that range.
+  pair<double,double> tRange( double sIn, double s1In, double s2In,
+    double s3In,  double s4In) {
+    double lambda12 = pow2( sIn - s1In - s2In) - 4. * s1In * s2In;
+    double lambda34 = pow2( sIn - s3In - s4In) - 4. * s3In * s4In;
+    if (lambda12 < 0. || lambda34 < 0.) return make_pair( 0., 0.);
+    double tLow = -0.5 * (sIn - (s1In + s2In + s3In + s4In) + (s1In - s2In)
+      * (s3In - s4In) / sIn + sqrtpos(lambda12 *  lambda34) / sIn);
+    double tUpp = ( (s3In - s1In) * (s4In - s2In) + (s1In + s4In - s2In - s3In)
+      * (s1In * s4In - s2In * s3In) / sIn ) / tLow;
+    return make_pair( tLow, tUpp); }
+  bool tInRange( double tIn, double sIn, double s1In, double s2In,
+    double s3In,  double s4In) {
+    pair<double, double> tRng = tRange( sIn, s1In, s2In, s3In, s4In);
+    return (tIn > tRng.first && tIn < tRng.second); }
+
   // The error function erf(x) should normally be in your math library,
   // but if not uncomment this simple parametrization by Sergei Winitzki.
   //double erf(double x) { double x2 = x * x; double kx2 = 0.147 * x2;
@@ -365,15 +379,14 @@ public:
 private:
 
   // Constants: could only be changed in the code itself.
-  static const double EXPMAX, CONVERTEL;
+  static const int    NTRY;
+  static const double HBARC2, BNARROW, BWIDE, WIDEFRAC, TOFFSET;
 
   // Kinematics properties specific to 2 -> 2 elastic.
-  bool   useCoulomb;
-  double s1, s2, bSlope, lambda12S, tLow, tUpp, tAux, sigmaTot, rho,
-         lambda, tAbsMin, phaseCst, alphaEM0, sigmaNuc, sigmaCou, signCou;
-
- // Calculation of alphaElectromagnetic.
- AlphaEM alphaEM;
+  bool   isOneExp, useCoulomb;
+  double s1, s2, alphaEM0, lambda12S, tLow, tUpp, bSlope1, bSlope2,
+         sigRef1, sigRef2, sigRef, sigNorm1, sigNorm2, sigNorm3,
+         sigNormSum, rel2;
 
 };
 
@@ -387,7 +400,7 @@ public:
 
   // Constructor.
   PhaseSpace2to2diffractive(bool isDiffAin = false, bool isDiffBin = false)
-    : isDiffA(isDiffAin), isDiffB(isDiffBin) {}
+    : isDiffA(isDiffAin), isDiffB(isDiffBin) {isSD = !isDiffA || !isDiffB;}
 
   // Construct the trial or final event kinematics.
   virtual bool setupSampling();
@@ -401,21 +414,18 @@ private:
 
   // Constants: could only be changed in the code itself.
   static const int    NTRY;
-  static const double EXPMAX, DIFFMASSMARGIN;
+  static const double BWID1, BWID2, BWID3, BWID4, FWID1SD, FWID2SD, FWID3SD,
+                      FWID4SD, FWID1DD, FWID2DD, FWID3DD, FWID4DD, MAXFUDGESD,
+                      MAXFUDGEDD, MAXFUDGET, DIFFMASSMARGIN, SPROTON;
 
-  // Initialization data, in constructor or read from Settings.
-  bool   isDiffA, isDiffB;
-  int    PomFlux;
-  double epsilonPF, alphaPrimePF;
+  // Initialization data.
+  bool   isDiffA, isDiffB, isSD, splitxit;
 
-  // Initialization: kinematics properties specific to 2 -> 2 diffractive.
-  double m3ElDiff, m4ElDiff, s1, s2, lambda12, lambda34, tLow, tUpp,
-         cRes, sResXB, sResAX, sProton, bMin, bSlope, bSlope1, bSlope2,
-         probSlope1, xIntPF, xtCorPF, mp24DL, coefDL, tAux, tAux1, tAux2;
-
-  // Parameters for MBR model.
-  double sdpmax, ddpmax, dymin0, dymax, amx, am1, am2, t;
-  double eps, alph, alph2, m2min, dyminSD, dyminDD, dyminSigSD, dyminSigDD;
+  // Kinematics properties specific to 2 -> 2 diffraction.
+  double m3ElDiff, m4ElDiff, s1, s2, xiMin, xiMax, xiNow, sigNow, sigMax,
+         sigMaxNow, lambda12, lambda34, bNow, tempA, tempB, tempC,
+         tLow, tUpp, tWeight, fWid1, fWid2, fWid3, fWid4, fbWid1, fbWid2,
+         fbWid3, fbWid4, fbWid1234;
 
 };
 
@@ -442,16 +452,16 @@ public:
  private:
 
   // Constants: could only be changed in the code itself.
-  static const int    NTRY, NINTEG2;
-  static const double EXPMAX, DIFFMASSMIN, DIFFMASSMARGIN;
+  static const int    NTRY;
+  static const double BWID1, BWID2, BWID3, BWID4, FWID1, FWID2, FWID3,
+                      MAXFUDGECD, MAXFUDGET, DIFFMASSMARGIN;
+
+  // Initialization data.
+  bool   splitxit;
 
   // Local variables to calculate DPE kinematics.
-  int    PomFlux;
-  double epsilonPF, alphaPrimePF, s1, s2, m5min, s5min, tLow[2], tUpp[2],
-         bMin[2], tAux[2], bSlope1, bSlope2, probSlope1[2], tAux1[2],
-         tAux2[2], bSlope, xIntPF, xIntInvPF, xtCorPF, mp24DL, coefDL,
-         epsMBR, alphMBR, m2minMBR, dyminMBR, dyminSigMBR, dyminInvMBR,
-         dpepmax, t1, t2;
+  double s1, s2, m5min, s5min, m5, sigNow, sigMax, sigMaxNow, xiMin, xi1, xi2,
+         fWid1, fWid2, fWid3, fbWid1, fbWid2, fbWid3, fbWid123;
   Vec4   p1, p2, p3, p4, p5;
 
 };

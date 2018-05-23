@@ -46,7 +46,7 @@ intended for more special applications.
  
 <p/> 
 At the bottom of this webpage is a complete survey of all public 
-<code>Pythia</code> methods and data members, in a more formal style 
+<code>Pythia</code> methods and data members, in a  formal style 
 than the task-oriented descriptions found in the preceding sections. 
 This offers complementary information. 
  
@@ -521,7 +521,7 @@ so each instance could be run inside a separate thread.
  
 <p/> 
 <li> 
-In some cases it is convenient to use more than one <code>Pythia</code> 
+In some cases it is convenient to use  than one <code>Pythia</code> 
 object. The key example would be the simultaneous generation of signal 
 and pileup events, see <code>main19.cc</code>. The two objects are then 
 set up and initialized separately, and generate events completely 
@@ -588,7 +588,7 @@ methods and data members.
 <h3>Constructors and destructor</h3> 
  
 <a name="anchor1"></a>
-<p/><strong>Pythia::Pythia(string xmlDir = &quot;../share/Pythia8/xmldoc&quot;, bool printBanner = true) &nbsp;</strong> <br/>
+<p/><strong> Pythia::Pythia(string xmlDir = &quot;../share/Pythia8/xmldoc&quot;, bool printBanner = true) &nbsp;</strong> <br/>
 creates an instance of the <code>Pythia</code> event generators, 
 and sets initial default values, notably for all settings and 
 particle data. You may use several <code>Pythia</code> instances 
@@ -614,7 +614,7 @@ where output needs to be restricted.
    
  
 <a name="anchor2"></a>
-<p/><strong>Pythia::Pythia(Settings& settingsIn, ParticleData& particleDataIn, bool printBanner = true) &nbsp;</strong> <br/>
+<p/><strong> Pythia::Pythia(Settings& settingsIn, ParticleData& particleDataIn, bool printBanner = true) &nbsp;</strong> <br/>
 creates an instance of the <code>Pythia</code> event generators, 
 and sets initial default values, notably for all settings and 
 particle data. This option is intended for runs with multiple 
@@ -630,7 +630,7 @@ where output needs to be restricted.
    
  
 <a name="anchor3"></a>
-<p/><strong>Pythia::Pythia( istream& settingsStrings, istream& particleDataStrings, bool printBanner = true) &nbsp;</strong> <br/>
+<p/><strong> Pythia::Pythia( istream& settingsStrings, istream& particleDataStrings, bool printBanner = true) &nbsp;</strong> <br/>
 creates an instance of the <code>Pythia</code> event generators, 
 and sets initial default values, notably for all settings and 
 particle data. This option is intended for runs with multiple 
@@ -644,22 +644,22 @@ where output needs to be restricted.
    
  
 <a name="anchor4"></a>
-<p/><strong>Pythia::~Pythia &nbsp;</strong> <br/>
+<p/><strong> Pythia::~Pythia &nbsp;</strong> <br/>
 the destructor deletes the objects created by the constructor. 
    
  
 <a name="anchor5"></a>
-<p/><strong>void Pythia::initPtrs() &nbsp;</strong> <br/>
+<p/><strong> void Pythia::initPtrs() &nbsp;</strong> <br/>
    
 <a name="anchor6"></a>
-<strong>bool Pythia::checkVersion() &nbsp;</strong> <br/>
+<strong> bool Pythia::checkVersion() &nbsp;</strong> <br/>
 helper methods, that collects common tasks of the two constructors. 
    
  
 <h3>Set up run</h3> 
  
 <a name="anchor7"></a>
-<p/><strong>bool Pythia::readString(string line, bool warn = true) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::readString(string line, bool warn = true) &nbsp;</strong> <br/>
 reads in a single string, that is interpreted as an instruction to 
 modify the value of a <?php $filepath = $_GET["filepath"];
 echo "<a href='SettingsScheme.php?filepath=".$filepath."' target='page'>";?>setting</a> or 
@@ -678,16 +678,16 @@ make sense out of the string.
    
  
 <a name="anchor8"></a>
-<p/><strong>bool Pythia::readFile(string fileName, bool warn = true, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::readFile(string fileName, bool warn = true, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
    
 <a name="anchor9"></a>
-<strong>bool Pythia::readFile(string fileName, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
+<strong> bool Pythia::readFile(string fileName, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
    
 <a name="anchor10"></a>
-<strong>bool Pythia::readFile(istream& inStream = cin, bool warn = true, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
+<strong> bool Pythia::readFile(istream& inStream = cin, bool warn = true, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
    
 <a name="anchor11"></a>
-<strong>bool Pythia::readFile(istream& inStream = cin, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
+<strong> bool Pythia::readFile(istream& inStream = cin, int subrun = SUBRUNDEFAULT) &nbsp;</strong> <br/>
 reads in a whole file, where each line is interpreted as an instruction 
 to modify the value of a <?php $filepath = $_GET["filepath"];
 echo "<a href='SettingsScheme.php?filepath=".$filepath."' target='page'>";?>setting</a> or 
@@ -718,7 +718,7 @@ make sense out of any one line.
    
  
 <a name="anchor12"></a>
-<p/><strong>bool Pythia::setPDFPtr( PDF* pdfAPtr, PDF* pdfBPtr, PDF* pdfHardAPtr = 0, PDF* pdfHardBPtr = 0, PDF* pdfPomAPtr = 0, PDF* pdfPomBPtr = 0, PDF* pdfGamAPtr = 0, PDF* pdfGamBPtr = 0, PDF* pdfHardGamAPtr = 0, PDF* pdfHardGamBPtr = 0, PDF* pdfUnresAPtr = 0, PDF* pdfUnresBPtr = 0, PDF* pdfUnresGamAPtr = 0, PDF* pdfUnresGamBPtrIn = 0) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setPDFPtr( PDF* pdfAPtr, PDF* pdfBPtr, PDF* pdfHardAPtr = 0, PDF* pdfHardBPtr = 0, PDF* pdfPomAPtr = 0, PDF* pdfPomBPtr = 0, PDF* pdfGamAPtr = 0, PDF* pdfGamBPtr = 0, PDF* pdfHardGamAPtr = 0, PDF* pdfHardGamBPtr = 0, PDF* pdfUnresAPtr = 0, PDF* pdfUnresBPtr = 0, PDF* pdfUnresGamAPtr = 0, PDF* pdfUnresGamBPtrIn = 0) &nbsp;</strong> <br/>
 offers the possibility to link in external PDF sets for usage inside 
 the program. The rules for constructing your own class from 
 the <code>PDF</code> base class are described 
@@ -783,7 +783,7 @@ to the normal internal PDF selection you must call
    
  
 <a name="anchor13"></a>
-<p/><strong>bool Pythia::setPhotonFluxPtr( PDF* photonFluxAIn, PDF* photonFluxBIn) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setPhotonFluxPtr( PDF* photonFluxAIn, PDF* photonFluxBIn) &nbsp;</strong> <br/>
 offers the possibility to link in external photon fluxes for usage 
 inside the program. The rules for constructing your own class from 
 the <code>PDF</code> base class are described 
@@ -797,7 +797,7 @@ in your program.
    
  
 <a name="anchor14"></a>
-<p/><strong>bool Pythia::setLHAupPtr( LHAup* lhaUpPtrIn) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setLHAupPtr( LHAup* lhaUpPtrIn) &nbsp;</strong> <br/>
 offers linkage to an external generator that feeds in events 
 in the LHA format, see 
 <?php $filepath = $_GET["filepath"];
@@ -813,7 +813,7 @@ pointer to a <code>LHAup</code>-derived object.
    
  
 <a name="anchor15"></a>
-<p/><strong>bool Pythia::setDecayPtr( DecayHandler* decayHandlePtr, vector&lt;int&gt; handledParticles) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setDecayPtr( DecayHandler* decayHandlePtr, vector&lt;int&gt; handledParticles) &nbsp;</strong> <br/>
 offers the possibility to link to an external program that can do some 
 of the particle decays, instead of using the internal decay machinery. 
 With particles we here mean the normal hadrons and leptons, not 
@@ -837,7 +837,7 @@ antiparticle is always included as well.
    
  
 <a name="anchor16"></a>
-<p/><strong>bool Pythia::setRndmEnginePtr( RndmEngine* rndmEnginePtr) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setRndmEnginePtr( RndmEngine* rndmEnginePtr) &nbsp;</strong> <br/>
 offers the possibility to link to an external random number generator. 
 The rules for constructing your own class from the 
 <code>RndmEngine</code> base class are described 
@@ -852,7 +852,7 @@ from 0.
    
  
 <a name="anchor17"></a>
-<p/><strong>bool Pythia::setUserHooksPtr( UserHooks* userHooksPtr) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setUserHooksPtr( UserHooks* userHooksPtr) &nbsp;</strong> <br/>
 offers the possibility to interact with the generation process at 
 a few different specified points, e.g. to reject undesirable events 
 at an early stage to save computer time. The rules for constructing 
@@ -869,7 +869,7 @@ must be instantiated by you in your program.
    
  
 <a name="anchor18"></a>
-<p/><strong>bool Pythia::addUserHooksPtr( UserHooks* userHooksPtr) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::addUserHooksPtr( UserHooks* userHooksPtr) &nbsp;</strong> <br/>
 offers the possibility to add further user hooks, see 
 <code>setUserHooksPtr</code> above for further information. 
 <br/><b>Note:</b> The method currently always returns true. 
@@ -881,7 +881,7 @@ echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>here</a>.
    
  
 <a name="anchor19"></a>
-<p/><strong>bool Pythia::setBeamShapePtr( BeamShape* beamShapePtr) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setBeamShapePtr( BeamShape* beamShapePtr) &nbsp;</strong> <br/>
 offers the possibility to provide your own shape of the momentum and 
 space-time spread of the incoming beams. The rules for constructing 
 your own class from the <code>BeamShape</code> base class are described 
@@ -895,7 +895,7 @@ must be instantiated by you in your program.
    
  
 <a name="anchor20"></a>
-<p/><strong>bool Pythia::setSigmaPtr( SigmaProcess* sigmaPtr, PhaseSpace* phaseSpacePtrIn = 0) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setSigmaPtr( SigmaProcess* sigmaPtr, PhaseSpace* phaseSpacePtrIn = 0) &nbsp;</strong> <br/>
 offers the possibility to link your own implementation of a process 
 and its cross section, to make it a part of the normal process 
 generation machinery, without having to recompile the 
@@ -921,7 +921,7 @@ When provided, this object must be instantiated by you in your program.
    
  
 <a name="anchor21"></a>
-<p/><strong>bool Pythia::setResonancePtr( ResonanceWidths* resonancePtr) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setResonancePtr( ResonanceWidths* resonancePtr) &nbsp;</strong> <br/>
 offers the possibility to link your own implementation of the 
 calculation of partial resonance widths, to make it a part of the 
 normal process generation machinery, without having to recompile the 
@@ -941,7 +941,7 @@ must be instantiated by you in your program.
    
  
 <a name="anchor22"></a>
-<p/><strong>bool Pythia::setShowerPtr( TimeShower* timesDecPtr, TimeShower* timesPtr = 0, SpaceShower* spacePtr = 0) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setShowerPtr( TimeShower* timesDecPtr, TimeShower* timesPtr = 0, SpaceShower* spacePtr = 0) &nbsp;</strong> <br/>
 offers the possibility to link your own parton shower routines as 
 replacements for the default ones. This is much more complicated 
 since the showers are so central and are so interlinked with other 
@@ -979,7 +979,7 @@ the default value 0 then the internal shower routine will be used.
    
  
 <a name="anchor23"></a>
-<p/><strong>bool Pythia::setHeavyIonsPtr( HeavyIons* heavyIonsPtr) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setHeavyIonsPtr( HeavyIons* heavyIonsPtr) &nbsp;</strong> <br/>
 offers the possibility to feed in an external Heavy Ion generator that 
 can use the internal <code>Pythia</code> machinery for its tasks, 
 see further <?php $filepath = $_GET["filepath"];
@@ -992,7 +992,7 @@ Heavy Ions collisions.
    
  
 <a name="anchor24"></a>
-<p/><strong>HeavyIons* Pythia::getHeavyIonsPtr() &nbsp;</strong> <br/>
+<p/><strong> HeavyIons* Pythia::getHeavyIonsPtr() &nbsp;</strong> <br/>
 gives access to the current <?php $filepath = $_GET["filepath"];
 echo "<a href='HeavyIons.php?filepath=".$filepath."' target='page'>";?>Heavy Ions</a> 
 generator, either the default internal Angantyr one or an external 
@@ -1001,7 +1001,7 @@ event properties can be interrogated.
    
  
 <a name="anchor25"></a>
-<p/><strong>bool Pythia::setPartonVertexPtr( PartonVertex* partonVertexPtrIn) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setPartonVertexPtr( PartonVertex* partonVertexPtrIn) &nbsp;</strong> <br/>
 offers the possibility to set production vertices for the MPI, 
 FSR and ISR parton-level evolution, instead of the default framework, 
 see further <?php $filepath = $_GET["filepath"];
@@ -1021,7 +1021,7 @@ of events. Currently only one <code>init</code>
 method is available for this stage. 
  
 <a name="anchor26"></a>
-<p/><strong>bool Pythia::init() &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::init() &nbsp;</strong> <br/>
 initialize for collisions. The beams are not specified by input 
 arguments, but instead by the settings in the 
 <?php $filepath = $_GET["filepath"];
@@ -1040,7 +1040,7 @@ In this section we also put a few other specialized methods that
 may be useful in some circumstances. 
  
 <a name="anchor27"></a>
-<p/><strong>bool Pythia::next() &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::next() &nbsp;</strong> <br/>
 generate the next event. No input parameters are required; all 
 instructions have already been set up in the initialization stage. 
 <br/><b>Note:</b> The method returns false if the event generation 
@@ -1054,7 +1054,7 @@ method.
    
  
 <a name="anchor28"></a>
-<p/><strong>int Pythia::forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0) &nbsp;</strong> <br/>
+<p/><strong> int Pythia::forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0) &nbsp;</strong> <br/>
 perform a final-state shower evolution on partons in the 
 <code>event</code> event record. This could be used for externally 
 provided simple events, or even parts of events, for which 
@@ -1087,7 +1087,7 @@ has been generated.
    
  
 <a name="anchor29"></a>
-<p/><strong>bool Pythia::forceHadronLevel(bool findJunctions = true) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::forceHadronLevel(bool findJunctions = true) &nbsp;</strong> <br/>
 hadronize the existing event record, i.e. perform string fragmentation 
 and particle decays. There are two main applications. Firstly, 
 you can use the same parton-level content as a basis for repeated 
@@ -1115,7 +1115,7 @@ studied.
    
  
 <a name="anchor30"></a>
-<p/><strong>bool Pythia::moreDecays() &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::Decays() &nbsp;</strong> <br/>
 perform decays of all particles in the event record that have not been 
 decayed but should have been done so. This can be used e.g. for 
 repeated decay attempts, in schemes intended to save computer time. 
@@ -1126,7 +1126,7 @@ event record is then not consistent and should not be studied.
    
  
 <a name="anchor31"></a>
-<p/><strong>bool Pythia::forceRHadronDecays() &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::forceRHadronDecays() &nbsp;</strong> <br/>
 perform decays of R-hadrons that were previously considered stable. 
 This could be if an R-hadron is sufficiently long-lived that 
 it may interact in the detector between production and decay, so that 
@@ -1138,7 +1138,7 @@ event record is then not consistent and should not be studied.
    
  
 <a name="anchor32"></a>
-<p/><strong>void Pythia::LHAeventList() &nbsp;</strong> <br/>
+<p/><strong> void Pythia::LHAeventList() &nbsp;</strong> <br/>
 list the Les Houches Accord information on the current event, see 
 <code><?php $filepath = $_GET["filepath"];
 echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>LHAup::listEvent(...)</a></code>. 
@@ -1147,7 +1147,7 @@ listing is a special case that would not fit elsewhere.)
    
  
 <a name="anchor33"></a>
-<p/><strong>bool Pythia::LHAeventSkip(int nSkip) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::LHAeventSkip(int nSkip) &nbsp;</strong> <br/>
 skip ahead a number of events in the Les Houches generation 
 sequence, without doing anything further with them, see 
 <code><?php $filepath = $_GET["filepath"];
@@ -1170,7 +1170,7 @@ routine to call the following method at the end. A second method provides
 a deprecated alternative. 
  
 <a name="anchor34"></a>
-<p/><strong>void Pythia::stat() &nbsp;</strong> <br/>
+<p/><strong> void Pythia::stat() &nbsp;</strong> <br/>
 list statistics on the event generation, specifically total and partial 
 cross sections and the number of different errors. For more details see 
 <?php $filepath = $_GET["filepath"];
@@ -1196,7 +1196,7 @@ following shortcuts to some <code>Settings</code> methods may be
 convenient. 
  
 <a name="anchor35"></a>
-<p/><strong>bool Pythia::flag(string key) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::flag(string key) &nbsp;</strong> <br/>
 read in a boolean variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
 the name of the variable to be read. 
@@ -1204,7 +1204,7 @@ the name of the variable to be read.
    
  
 <a name="anchor36"></a>
-<p/><strong>int Pythia::mode(string key) &nbsp;</strong> <br/>
+<p/><strong> int Pythia::mode(string key) &nbsp;</strong> <br/>
 read in an integer variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
 the name of the variable to be read. 
@@ -1212,7 +1212,7 @@ the name of the variable to be read.
    
  
 <a name="anchor37"></a>
-<p/><strong>double Pythia::parm(string key) &nbsp;</strong> <br/>
+<p/><strong> double Pythia::parm(string key) &nbsp;</strong> <br/>
 read in a double-precision variable from the <code>Settings</code> 
 database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1221,7 +1221,7 @@ the name of the variable to be read.
    
  
 <a name="anchor38"></a>
-<p/><strong>string Pythia::word(string key) &nbsp;</strong> <br/>
+<p/><strong> string Pythia::word(string key) &nbsp;</strong> <br/>
 read in a string variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
 the name of the variable to be read. 
@@ -1235,7 +1235,7 @@ internally, plus an interface to LHAPDF (5 or 6). With the method below,
 this machinery is also made available for external usage. 
  
 <a name="anchor39"></a>
-<p/><strong>PDF* getPDFPtr(int id, int sequence = 1) &nbsp;</strong> <br/>
+<p/><strong> PDF* getPDFPtr(int id, int sequence = 1) &nbsp;</strong> <br/>
 get a pointer to a PDF object. Which PDF is returned depends on the 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a> settings. 
@@ -1256,42 +1256,42 @@ several of which play a central role. We list them here, with
 links to the places where they are further described. 
  
 <a name="anchor40"></a>
-<p/><strong>Event Pythia::process &nbsp;</strong> <br/>
+<p/><strong> Event Pythia::process &nbsp;</strong> <br/>
 the hard-process event record, see <?php $filepath = $_GET["filepath"];
 echo "<a href='EventRecord.php?filepath=".$filepath."' target='page'>";?>here</a> 
 for further details. 
    
  
 <a name="anchor41"></a>
-<p/><strong>Event Pythia::event &nbsp;</strong> <br/>
+<p/><strong> Event Pythia::event &nbsp;</strong> <br/>
 the complete event record, see <?php $filepath = $_GET["filepath"];
 echo "<a href='EventRecord.php?filepath=".$filepath."' target='page'>";?>here</a> 
 for further details. 
    
  
 <a name="anchor42"></a>
-<p/><strong>Info Pythia::info &nbsp;</strong> <br/>
+<p/><strong> Info Pythia::info &nbsp;</strong> <br/>
 further information on the event-generation process, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='EventInformation.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
 <a name="anchor43"></a>
-<p/><strong>Settings Pythia::settings &nbsp;</strong> <br/>
+<p/><strong> Settings Pythia::settings &nbsp;</strong> <br/>
 the settings database, see <?php $filepath = $_GET["filepath"];
 echo "<a href='SettingsScheme.php?filepath=".$filepath."' target='page'>";?>here</a> 
 for further details. 
    
  
 <a name="anchor44"></a>
-<p/><strong>ParticleData Pythia::particleData &nbsp;</strong> <br/>
+<p/><strong> ParticleData Pythia::particleData &nbsp;</strong> <br/>
 the particle properties and decay tables database, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='ParticleDataScheme.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
 <a name="anchor45"></a>
-<p/><strong>Rndm Pythia::rndm &nbsp;</strong> <br/>
+<p/><strong> Rndm Pythia::rndm &nbsp;</strong> <br/>
 the random number generator, see <?php $filepath = $_GET["filepath"];
 echo "<a href='RandomNumberSeed.php?filepath=".$filepath."' target='page'>";?>here</a> 
 and <?php $filepath = $_GET["filepath"];
@@ -1299,21 +1299,21 @@ echo "<a href='RandomNumbers.php?filepath=".$filepath."' target='page'>";?>here<
    
  
 <a name="anchor46"></a>
-<p/><strong>CoupSM Pythia::coupSM &nbsp;</strong> <br/>
+<p/><strong> CoupSM Pythia::coupSM &nbsp;</strong> <br/>
 Standard Model couplings and mixing matrices, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='StandardModelParameters.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
 <a name="anchor47"></a>
-<p/><strong>SusyLesHouches Pythia::slha &nbsp;</strong> <br/>
+<p/><strong> SusyLesHouches Pythia::slha &nbsp;</strong> <br/>
 parameters and particle data in the context of supersymmetric models, 
 see <?php $filepath = $_GET["filepath"];
 echo "<a href='SUSYLesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
 <a name="anchor48"></a>
-<p/><strong>PartonSystems Pythia::partonSystems &nbsp;</strong> <br/>
+<p/><strong> PartonSystems Pythia::partonSystems &nbsp;</strong> <br/>
 a grouping of the partons in the event record by subsystem, 
 see <?php $filepath = $_GET["filepath"];
 echo "<a href='AdvancedUsage.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
@@ -1322,4 +1322,4 @@ echo "<a href='AdvancedUsage.php?filepath=".$filepath."' target='page'>";?>here<
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

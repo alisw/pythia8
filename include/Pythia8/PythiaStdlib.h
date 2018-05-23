@@ -1,6 +1,6 @@
 // PythiaStdlib.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for functionality pulled in from Stdlib,
@@ -95,6 +95,19 @@ using std::setprecision;
 
 namespace Pythia8 {
 
+// Define conversion hbar * c = 0.2 GeV * fm = 1.
+#ifndef HBARC
+#define HBARC 0.19732698
+#endif
+
+// Define conversion between fm and mm, in both directions.
+#ifndef FM2MM
+#define FM2MM 1e-12
+#endif
+#ifndef MM2FM
+#define MM2FM 1e12
+#endif
+
 // Powers of small integers - for balance speed/code clarity.
 inline double pow2(const double& x) {return x*x;}
 inline double pow3(const double& x) {return x*x*x;}
@@ -123,6 +136,21 @@ double besselI0(double x);
 double besselI1(double x);
 double besselK0(double x);
 double besselK1(double x);
+
+// Base class to encapsulate a (double) function of an arbitrary number
+// of (double) arguments (to avoid using function pointers).
+class FunctionEncapsulator  {
+public:
+  FunctionEncapsulator() {};
+  virtual ~FunctionEncapsulator() { };
+  virtual double f(vector<double> args);
+  // Integrate over function argument iArg, using Gaussian quadrature.
+  bool integrateGauss(double& result, int iArg, double xLo, double xHi,
+    vector<double> args, double tol=1e-6);
+  // Solve f(args) = target for argument iArg, using Brent's method
+  bool brent(double& solution, double target, int iArg, double xLo, double xHi,
+    vector<double> argsIn, double tol=1e-6, int maxIter=10000);
+};
 
 } // end namespace Pythia8
 

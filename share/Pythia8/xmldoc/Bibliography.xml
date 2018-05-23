@@ -42,26 +42,21 @@ JHEP 1106 (2011) 128 [arXiv:1106.0522 [hep-ph]]</dd>
 <dd>J. Alwall, R. Frederix, S. Frixione, V. Hirschi, F. Maltoni et al., 
 JHEP 1407 (2014) 079 [arXiv:1405.0301 [hep-ph]]</dd> 
  
-<refit>Arg14</refit> 
-<dd>S. Argyropoulos and T. Sj&ouml;strand, JHEP 1411 (2014) 043 
-[arXiv:1407.6653 [hep-ph]] </dd> 
- 
-<refit>ATL12</refit> 
-<dd>ATLAS Collaboration, ATL-PHYS-PUB-2012-003</dd> 
- 
-<refit>ATL14</refit> 
-<dd>ATLAS Collaboration, JHEP 09 (2014) 145 [arXiv:1406.3660 [hep-ex]]</dd> 
- 
-<refit>ATL14a</refit> 
-<dd>ATLAS Collaboration, ATL-PHYS-PUB-2014-021</dd> 
- 
 <refit>And83</refit> 
 <dd>B. Andersson, G. Gustafson, G. Ingelman and T. Sj&ouml;strand, 
 Phys. Rep. 97 (1983) 31</dd> 
  
 <refit>And87</refit> 
-<dd>B. Andersson, G. Gustafson, B. Nilsso-Almqvist, 
+<dd>B. Andersson, G. Gustafson and B. Nilsson-Almqvist, 
 Nucl. Phys. B281 (1987) 289</dd> 
+ 
+<refit>App16</refit> 
+<dd>R.B. Appleby, R.J. Barlow, J. G Molson, M. Serluca and A. Toader, 
+Eur. Phys. J. C76 (2016) 520</dd> 
+ 
+<refit>Arg14</refit> 
+<dd>S. Argyropoulos and T. Sj&ouml;strand, JHEP 1411 (2014) 043 
+[arXiv:1407.6653 [hep-ph]] </dd> 
  
 <refit>Ask09</refit> 
 <dd>S. Ask, Eur. Phys. J. C60 (2009) 509</dd> 
@@ -73,6 +68,15 @@ Nucl. Phys. B281 (1987) 289</dd>
 <refit>Ask11</refit> 
 <dd>S. Ask, J.H. Collins, J.R. Forshaw, K. Joshi and A.D. Pilkington, 
 JHEP 1201 (2012) 018 [arXiv:1108.2396 [hep-ph]] </dd> 
+ 
+<refit>ATL12</refit> 
+<dd>ATLAS Collaboration, ATL-PHYS-PUB-2012-003</dd> 
+ 
+<refit>ATL14</refit> 
+<dd>ATLAS Collaboration, JHEP 09 (2014) 145 [arXiv:1406.3660 [hep-ex]]</dd> 
+ 
+<refit>ATL14a</refit> 
+<dd>ATLAS Collaboration, ATL-PHYS-PUB-2014-021</dd> 
  
 <refit>Azu05</refit> 
 <dd>G. Azuelos, P.-H. Beauchemin and C.P. Burgess, J. Phys. G31 (2005) 1</dd> 
@@ -92,6 +96,10 @@ JHEP 1201 (2012) 018 [arXiv:1108.2396 [hep-ph]] </dd>
 <refit>Bau90</refit> 
 <dd>U. Baur, M. Spira and P. M. Zerwas, Phys. Rev. D42 (1990) 815; 
 <br/>C. Berger et al., CERN Yellow Reports 90-10, Vol. II, p.1014</dd> 
+ 
+<refit>Bay95</refit> 
+<dd>G. Baym, B. Blattel, L. L. Frankfurt, H. Heiselberg and M. Strikman, 
+<br/>Phys. Rev. C52 (1995) 1604-1617 [arXiv:nucl-th/9502038]</dd> 
  
 <refit>Bel10</refit> 
 <dd>G. Bella et al., arXiv:1004.1649 [hep-ex], 
@@ -134,6 +142,13 @@ arXiv:1507.02091 [hep-ph]</dd>
 <dt>Bie16b</dt> 
 <dd>C. Bierlich, G. Gustafson and L. L&ouml;nnblad, LU-TP-16-64, 
 arXiv:1612.05132 [hep-ph]</dd> 
+ 
+<refit>Bie16c</refit> 
+<dd>C. Bierlich, PoS DIS20016 (2016) 051, arXiv:1606.09456 [hep-ph]</dd> 
+ 
+<refit>Bie17</refit> 
+<dd>C. Bierlich, G. Gustafson and L. L&ouml;nnblad, Phys.Lett B779 (2018) 
+58-63, arXiv:1710.09725 [hep-ph]</dd> 
  
 <refit>Bij01</refit> 
 <dd>J. Bijnens et al., Phys. Lett. B503 (2001) 341</dd> 
@@ -289,7 +304,12 @@ Phys. Rev. D63 (2001) 075004</dd>
 p. 806</dd> 
  
 <refit>Esk09</refit> 
-<dd>K.J. Eskola, H. Paukkunen and C.A. Salgado, JHEP 0904 (2009) 065</dd> 
+<dd>K.J. Eskola, H. Paukkunen and C.A. Salgado, JHEP 0904 (2009) 065 
+[arXiv:0902.4154 [hep-ph]]</dd> 
+ 
+<refit>Esk16</refit> 
+<dd>K.J. Eskola, P.Paakkinen, H. Paukkunen and C.A. Salgado, 
+Eur. Phys. J. C77 (2017) 163 [arXiv:1612.05741 [hep-ph]]</dd> 
  
 <refit>Fis16</refit> 
 <dd>N. Fischer and T. Sj&ouml;strand, JHEP 1701 (2017) 140 
@@ -329,6 +349,9 @@ P. Torrielli, Phys.Lett. B701 (2011) 427 [arXiv:1104.5613 [hep-ph]]</dd>
  
 <refit>Giu04</refit> 
 <dd>G.F. Giudice, T. Plehn and A. Strumia, Nucl. Phys. B706 (2005) 455</dd> 
+ 
+<refit>Goh18</refit> 
+<dd>M. Goharipour, H. Khanpour and V. Guzey, arXiv:1802.01363 [hep-ph]</dd> 
  
 <refit>Gre07</refit> 
 <dd>D. Grellscheid and P. Richardson, arXiv:0810.1951 [hep-ph]</dd> 
@@ -494,12 +517,20 @@ eds. G. Altarelli and M.L. Mangano, CERN 2000-004, p. 231
 <refit>Ole13</refit> 
 <dd>C. Oleari and P. Nason, arXiv:1303.3922 [hep-ph]</dd> 
  
+<refit>Pat16</refit> 
+<dd>Particle Data Group, C. Patrignani et al., 
+Chin.Phys. C40 (2016) 100001</dd> 
+ 
 <refit>Pet83</refit> 
 <dd>C. Peterson, D. Schlatter, I. Schmitt and P. Zerwas, 
 Phys. Rev. D27 (1983) 105</dd> 
  
 <refit>Qia02</refit> 
 <dd>C. Qiao, Phys. Rev. D66 (2002) 057504</dd> 
+ 
+<refit>Ras16</refit> 
+<dd>C.O. Rasmussen and T. Sj&ouml;strand, JHEP 02 (2016) 142 
+[arXiv:1512.05525 [hep-ph]]</dd> 
  
 <refit>Riz08</refit> 
 <dd>T. G. Rizzo, Phys. Lett. B665 (2008) 361</dd> 
@@ -599,4 +630,4 @@ J. Phys. G33 (2006) 1</dd>
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

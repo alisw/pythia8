@@ -1,6 +1,6 @@
 // JetMatching.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors: Richard Corke (implementation of MLM matching as
@@ -693,6 +693,22 @@ inline void JetMatchingAlpgen::jetAlgorithmInput(const Event &event,
         // Otherwise next mother and continue
         idx = event[idx].mother1();
 
+      // Other jets
+      } else if (iType == 2) {
+
+        // Only include if originates from other jet
+        if (typeSet[2].find(idx) != typeSet[2].end()) break;
+
+        // Made it to start of event record with no heavy jet mother,
+        // so DO NOT include particle
+        if (idx == 0) {
+          workEventJet[i].statusNeg();
+          break;
+        }
+
+        // Otherwise next mother and continue
+        idx = event[idx].mother1();
+
       } // if (iType)
     } // while (true)
   } // for (i)
@@ -773,6 +789,7 @@ inline bool JetMatchingAlpgen::matchPartonsToJets(int iType) {
   // different veto conditions and for clarity
   if (iType == 0) return (matchPartonsToJetsLight() > 0);
   else if (iType == 1) return (matchPartonsToJetsHeavy() > 0);
+  else if (iType == 2) return false;
   return true;
 }
 

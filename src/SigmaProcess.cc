@@ -1,6 +1,6 @@
 // SigmaProcess.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -1014,6 +1014,7 @@ bool Sigma2Process::final2KinMPI( int i1Res, int i2Res, Vec4 p1Res, Vec4 p2Res,
   double pX    = pTFin * sin(phi);
   double pY    = pTFin * cos(phi);
   double scale = 0.5 * mH * sinTheta;
+  if (swappedTU()) pZ = -pZ;
 
   // Fill particle info.
   int status1  = (i1Res == 0) ? -31 : -34;

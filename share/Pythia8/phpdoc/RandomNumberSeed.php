@@ -52,7 +52,7 @@ sequence.
    
  
 <p/> 
-For more on random numbers see <?php $filepath = $_GET["filepath"];
+For  on random numbers see <?php $filepath = $_GET["filepath"];
 echo "<a href='RandomNumbers.php?filepath=".$filepath."' target='page'>";?>here</a>. 
 This includes methods to save and restore the state of the generator, 
 and some preprogrammed methods to generate non-uniform random numbers. 
@@ -89,4 +89,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

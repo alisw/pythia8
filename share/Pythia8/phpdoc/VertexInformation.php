@@ -110,7 +110,7 @@ above will not have vertex information assigned (e.g. hard process,
 beam remnants etc.), neither will particles produced in the weak shower. 
  
 <a name="anchor1"></a>
-<p/><strong>virtual void init() &nbsp;</strong> <br/>
+<p/><strong> virtual void init() &nbsp;</strong> <br/>
 can be used to initialize various parameters of the model or precalculate 
 common numbers. Note that a separate non-virtual method will already 
 have provided pointers to the <code>Info</code>, <code>Settings</code> 
@@ -119,7 +119,7 @@ classes.
    
  
 <a name="anchor2"></a>
-<p/><strong>virtual void vertexMPI( int iBeg, int nAdd, double bNow, Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual void vertexMPI( int iBeg, int nAdd, double bNow, Event& event) &nbsp;</strong> <br/>
 Method to assign a production vertex to a particle produced in the MPI 
 framework. Should set the vertices <code>vProd</code> of the particles 
 concerned. 
@@ -141,7 +141,7 @@ from and set the relevant <code>vProd</code> values into.
    
  
 <a name="anchor3"></a>
-<p/><strong>virtual Vec4 vertexFSR( int iNow, Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual Vec4 vertexFSR( int iNow, Event& event) &nbsp;</strong> <br/>
 Method to assign production vertex to a particle produced in the FSR 
 (<code>TimeShower</code>). Should set the vertex <code>vProd</code> 
 of the particle concerned. 
@@ -158,7 +158,7 @@ from and set the relevant <code>vProd</code> values into.
    
  
 <a name="anchor4"></a>
-<p/><strong>virtual Vec4 vertexISR( int iNow, Event& event) &nbsp;</strong> <br/>
+<p/><strong> virtual Vec4 vertexISR( int iNow, Event& event) &nbsp;</strong> <br/>
 Method to assign production vertex to a particle produced in the ISR 
 (<code>SpaceShower</code>). Should set the vertices <code>vProd</code> 
 of the particle concerned. 
@@ -218,4 +218,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

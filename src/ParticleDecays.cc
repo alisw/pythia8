@@ -1,6 +1,6 @@
 // ParticleDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -212,6 +212,7 @@ bool ParticleDecays::decay( int iDec, Event& event) {
 
       // Allow up to ten tries for each channel (e.g with different masses).
       bool foundMode = false;
+      iProd.resize(1);
       for (int iTryMode = 0; iTryMode < NTRYDECAY; ++iTryMode) {
         idProd.resize(1);
         mProd.resize(1);

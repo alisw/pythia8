@@ -726,6 +726,13 @@ query whether the particle data table contains the particle of the
 identity code. 
 </method> 
  
+<method name="ParticleDataEntry* ParticleData::findParticle(int id)"> 
+</method> 
+<methodmore name="const ParticleDataEntry* ParticleData::findParticle(int id)"> 
+query whether the particle data table contains the particle of the 
+identity code, and if so return a (const) iterator to it. 
+</methodmore> 
+ 
 <method name="int ParticleData::nextId(int id)"> 
 return the identity code of the sequentially next particle stored in table. 
 </method> 
@@ -1556,4 +1563,4 @@ positive and negative particles. For internal use.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

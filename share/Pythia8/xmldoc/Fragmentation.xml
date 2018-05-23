@@ -43,6 +43,40 @@ The <ei>b</ei> parameter of the Lund symmetric fragmentation function.
 </parm> 
  
 <p/> 
+In the context of fits to experimental data, note that the <ei>a</ei> 
+and <ei>b</ei> parameters typically exhibit a very high degree of 
+correlation. An option for choosing an alternative parameterisation 
+is therefore provided, whereby the user specifies the desired average 
+value of the fragmentation function for primary rho mesons instead of 
+the <ei>b</ei> parameter. The <ei>a</ei> parameter should still be 
+given by <code>StringZ:aLund</code> as usual. The rho has been chosen 
+as reference since its mass is near the average of the primary hadron 
+production, while pions come to dominate only after secondary decays. 
+This option can be enabled via the following flag: 
+ 
+<flag name="StringZ:deriveBLund" default="off"> 
+When set to <code>on</code>, the <ei>b</ei> parameter is treated as a 
+derived quantity; i.e., the value of <code>StringZ:bLund</code> is 
+ignored in favour of the <code>StringZ:avgZLund</code> parameter 
+below. (The <code>StringZ:bLund</code> parameter is then also reset to 
+the derived value so that it can be queried after initialisation, if 
+desired.) 
+</flag> 
+ 
+<parm name="StringZ:avgZLund" default="0.55" min="0.30" max="0.70"> 
+When <code>StringZ:deriveBLund</code> is set to <code>on</code>, 
+this parameter specifies the average of the fragmentation function 
+for primary rho mesons, evaluated at 
+<ei>mT^2 = mRho^2 + 2<code>StringPT:sigma</code>^2</ei>. 
+The appropriate <ei>b</ei>-parameter value is computed automatically 
+during initialisation and the <code>StringZ:bLund</code> parameter is 
+updated accordingly. Note that the derived value is allowed to exceed 
+the nominal limits given for <code>bLund</code> above. This is intended 
+to allow fits to see the functional behaviour even outside the nominal 
+limits. 
+</parm> 
+ 
+<p/> 
 In principle, each flavour can have a different <ei>a</ei>. Then, 
 for going from an old flavour <ei>i</ei> to a new <ei>j</ei> one 
 the shape is 
@@ -457,4 +491,4 @@ junction rest frame).
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

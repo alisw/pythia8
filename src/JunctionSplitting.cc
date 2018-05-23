@@ -1,6 +1,6 @@
 // JunctionSplitting.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -52,7 +52,7 @@ void JunctionSplitting::init( Info* infoPtrIn, Settings& settings,
   // Initialize auxiliary fragmentation classes.
   flavSel.init(settings,  particleDataPtrIn, rndmPtr, infoPtr);
   pTSel.init(  settings,  particleDataPtrIn, rndmPtr, infoPtr);
-  zSel.init(   settings, *particleDataPtrIn, rndmPtr);
+  zSel.init(   settings, *particleDataPtrIn, rndmPtr, infoPtr);
 
   // Initialize string and ministring fragmentation.
   stringFrag.init(infoPtr, settings, particleDataPtrIn, rndmPtr,

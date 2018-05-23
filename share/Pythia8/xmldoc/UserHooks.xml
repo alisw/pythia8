@@ -986,7 +986,10 @@ splittings.
 <p/> 
 ISR QCD branchings: 
 <br/><code>isr:G2GG</code> for <ei>g &rarr; g + g</ei>, 
-<br/><code>isr:G2QQ</code> for <ei>g &rarr; q + qbar</ei>, 
+<br/><code>isr:G2QQ</code> for <ei>g &rarr; q + qbar</ei> 
+with <ei>q</ei> a light quark, 
+<br/><code>isr:G2QQ:cc</code> for <ei>g &rarr; c + cbar</ei> 
+<br/><code>isr:G2QQ:bb</code> for <ei>g &rarr; b + bbar</ei> 
 <br/><code>isr:Q2QG</code> for <ei>q &rarr; q + g</ei>, 
 <br/><code>isr:Q2GQ</code> for <ei>q &rarr; g + q</ei>; 
 <p/> 
@@ -1000,7 +1003,10 @@ ISR weak shower branchings:
 <p/> 
 FSR QCD branchings: 
 <br/><code>fsr:G2GG</code> for <ei>g &rarr; g + g</ei>, 
-<br/><code>fsr:G2QQ</code> for <ei>g &rarr; q + qbar</ei>, 
+<br/><code>fsr:G2QQ</code> for <ei>g &rarr; q + qbar</ei> 
+with <ei>q</ei> a light quark, 
+<br/><code>fsr:G2QQ:cc</code> for <ei>g &rarr; c + cbar</ei> 
+<br/><code>fsr:G2QQ:bb</code> for <ei>g &rarr; b + bbar</ei> 
 <br/><code>fsr:Q2QG</code> for <ei>q &rarr; q + g</ei>; 
 <p/> 
 FSR QED branchings: 
@@ -1146,6 +1152,23 @@ just before it is added to the event record.
 </argument> 
 </method> 
  
+<method name="virtual bool canSetImpactParameter()"> 
+In the base class this method returns false. If you redefine it to 
+return true, it will enable the method <code>doSetImpactParameter()</code> . 
+</method> 
+ 
+<method name="virtual bool doSetImpactParameter()"> 
+This method allows the user to select a particular impact parameter in the 
+MPI machinery in the generation of minimum-bias events. The function takes no 
+arguments and is intended for situations where the impact parameter is 
+generated from the outside, as is the case in the Angantyr model for Heavy Ion 
+collisions. Note that it does not modify the <aloc href="MultipartonInteractions"> 
+  <code>MultipartonInteractions:bProfile</code></aloc> used in the MPI 
+machinery, and that currently it will only affect the <aloc href="QCDProcesses"> 
+  <code>SoftQCD</code></aloc> processes. 
+</method> 
+ 
+ 
 <h3>Multiple user hooks</h3> 
  
 In addition to the 
@@ -1172,4 +1195,4 @@ occurs.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

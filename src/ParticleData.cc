@@ -1,6 +1,6 @@
 // ParticleData.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -148,8 +148,9 @@ void ParticleDataEntry::setDefaults() {
   // Set up constituent masses.
   setConstituentMass();
 
-  // No Breit-Wigner mass selection before initialized.
-  modeBWnow = 0;
+  // No Breit-Wigner mass selection before initialized. Status tau0.
+  modeBWnow   = 0;
+  modeTau0now = 0;
 
 }
 
@@ -292,6 +293,12 @@ int ParticleDataEntry::nQuarksInCode(int idQIn) const {
 // frequently-used expressions.
 
 void ParticleDataEntry::initBWmass() {
+
+  // Optionally set decay vertices also for short-lived particles.
+  if (modeTau0now == 0) modeTau0now = (particleDataPtr->setRapidDecayVertex
+    && tau0Save == 0. && channels.size() > 0) ? 2 : 1;
+  if (modeTau0now == 2) tau0Save = (mWidthSave > NARROWMASS)
+    ? HBARC * FM2MM / mWidthSave : particleDataPtr->intermediateTau0;
 
   // Find Breit-Wigner mode for current particle.
   modeBWnow = particleDataPtr->modeBreitWigner;
@@ -604,6 +611,11 @@ void ParticleData::initCommon() {
   AlphaStrong alphaS;
   alphaS.init( alphaSvalue, 1, 5, false);
   Lambda5Run = alphaS.Lambda5();
+
+  // Set secondary vertices also for rapidly decaying particles.
+  setRapidDecayVertex = settingsPtr->flag("Fragmentation:setVertices")
+                     && settingsPtr->flag("HadronVertex:rapidDecays");
+  intermediateTau0    = settingsPtr->parm("HadronVertex:intermediateTau0");
 
 }
 
@@ -2189,13 +2201,16 @@ double ParticleData::resOpenFrac(int id1In, int id2In, int id3In) {
   double answer = 1.;
 
   // First resonance.
-  if (isParticle(id1In)) answer  = pdt[abs(id1In)].resOpenFrac(id1In);
+  if ( ParticleDataEntry* ptr = findParticle(id1In) )
+    answer = ptr->resOpenFrac(id1In);
 
   // Possibly second resonance.
-  if (isParticle(id2In)) answer *= pdt[abs(id2In)].resOpenFrac(id2In);
+  if ( ParticleDataEntry* ptr = findParticle(id2In) )
+    answer *= ptr->resOpenFrac(id2In);
 
   // Possibly third resonance.
-  if (isParticle(id3In)) answer *= pdt[abs(id2In)].resOpenFrac(id3In);
+  if ( ParticleDataEntry* ptr = findParticle(id3In) )
+    answer *= ptr->resOpenFrac(id3In);
 
   // Done.
   return answer;

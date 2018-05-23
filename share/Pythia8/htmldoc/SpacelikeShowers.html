@@ -133,7 +133,7 @@ to the kinematical limit by the above <code>pTmaxMatch</code> choice,
 and no matrix-element corrections are available. Then, in many processes, 
 the fall-off in <i>pT</i> will be too slow by one factor of <i>pT^2</i>. 
 That is, while showers have an approximate <i>dpT^2/pT^2</i> shape, often 
-it should become more like <i>dpT^2/pT^4</i> at <i>pT</i> values above 
+it should become  like <i>dpT^2/pT^4</i> at <i>pT</i> values above 
 the scale of the hard process. Whether this actually is the case 
 depends on the particular process studied, e.g. if <i>t</i>-channel 
 gluon exchange is likely to dominate. If so, the options below could 
@@ -281,6 +281,8 @@ all ISR QCD radiation, rather than the corresponding parameters below.
 This is a sensible physics ansatz, based on the assumption that colour 
 screening effects influence both MPI and ISR in the same way. Photon 
 radiation is regularized separately in either case. 
+<br/><b>Note:</b> For photon-photon collisions these parameters are set 
+as in <a href="Photoproduction.html" target="page">Photoproduction</a>. 
 <br/><b>Warning:</b> if a large <code>pT0</code> is picked for multiparton 
 interactions, such that the integrated interaction cross section is 
 below the nondiffractive inelastic one, this <code>pT0</code> will 
@@ -289,15 +291,30 @@ does NOT propagate to <code>SpaceShower</code>, however.
    
  
 <p/> 
-The actual <code>pT0</code> parameter used at a given CM energy scale, 
-<i>ecmNow</i>, is obtained as 
-<br/><i> 
-    pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
-</i><br/> 
-where <i>pT0Ref</i>, <i>ecmRef</i> and <i>ecmPow</i> are the 
-three parameters below. 
+The actual <i>pT0</i> parameter used at a given CM energy scale, 
+<i>ecmNow</i>, is obtained from a power law or a logarithmic 
+parametrization. The former is default with hadron beams and 
+the latter for photon-photon collisions. 
  
 <a name="anchor13"></a>
+<p/><code>mode&nbsp; </code><strong> SpaceShower:pT0parametrization &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
+Choice of <i>pT0</i> parametrization. 
+<br/><code>option </code><strong> 0</strong> :  Power law dependence on <i>ecmNow</i>:<br/> 
+<i> 
+    pT0 = pT0(ecmNow) = pT0Ref * (ecmNow / ecmRef)^ecmPow 
+</i> 
+   
+<br/><code>option </code><strong> 1</strong> :  Logarithmic dependence on <i>ecmNow</i>: 
+<br/><i> 
+    pT0 = pT0(ecmNow) = pT0Ref + ecmPow * log (ecmNow / ecmRef) 
+</i><br/> 
+   
+where <i>pT0Ref</i>, <i>ecmRef</i> and <i>ecmPow</i> are the 
+three parameters below. 
+   
+ 
+<a name="anchor14"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:pT0Ref &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10.0</code>)<br/>
 Regularization of the divergence of the QCD emission probability for 
@@ -308,19 +325,19 @@ so that <i>pT0Ref</i> is the <i>pT0</i> value for the reference
 cm energy, <i>pT0Ref = pT0(ecmRef)</i>. 
    
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:ecmRef &nbsp;</strong> 
  (<code>default = <strong>7000.0</strong></code>; <code>minimum = 1.</code>)<br/>
 The <i>ecmRef</i> reference energy scale introduced above. 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:ecmPow &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.</code>; <code>maximum = 0.5</code>)<br/>
 The <i>ecmPow</i> energy rescaling pace introduced above. 
    
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:pTmin &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 10.0</code>)<br/>
 Lower cutoff in <i>pT</i>, below which no further ISR branchings 
@@ -333,21 +350,21 @@ or to combine them in intermediate approaches. Currently <i>pTmin</i>
 is taken to be energy-independent. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:pTminChgQ &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.01</code>)<br/>
 Parton shower cut-off <i>pT</i> for photon coupling to a coloured 
 particle. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:pTminChgL &nbsp;</strong> 
  (<code>default = <strong>0.0005</strong></code>; <code>minimum = 0.0001</code>)<br/>
 Parton shower cut-off mass for pure QED branchings. 
 Assumed smaller than (or equal to) <i>pTminChgQ</i>. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:rapidityOrder &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Force emissions, after the first,  to be ordered in rapidity, 
@@ -359,7 +376,7 @@ subcollision.)
  
    
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:rapidityOrderMPI &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Same as the last switch, but this time only emissions in secondary 
@@ -388,7 +405,7 @@ should be simulated or none.
  
 <p/> 
 Note that this option should not be combined with the global option 
-for FSR, <code>TimeShower:globalRecoil</code>. Furthermore some settings 
+for FSR, <code>TimeShower:globalRecoil</code>. Further some settings 
 are neglected internally to ensure the same behaviour as obtained for 
 <code>TimeShower:allowBeamRecoil = on</code>, 
 <code>TimeShower:dampenBeamRecoil = off</code>, and 
@@ -406,7 +423,7 @@ space with parton showers. This is allowed since the shower and
 matrix-element behaviours match well over the whole phase space 
 (at least for the first emission). 
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:dipoleRecoil &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Option to switch on the dipole-recoil scheme as described above. 
@@ -420,13 +437,13 @@ The following settings are those specifically related to the initial-state
 weak radiation, while common settings are found in the 
 <a href="WeakShowers.html" target="page">Weak Showers</a> description. 
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:weakShower &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow a weak shower, yes or no. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>mode&nbsp; </code><strong> SpaceShower:weakShowerMode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 Determine which branchings are allowed. 
@@ -436,7 +453,7 @@ Determine which branchings are allowed.
 <br/><code>option </code><strong> 2</strong> :  only <i>Z^0</i> branchings.    
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:pTminWeak &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off <i>pT</i> for weak branchings. 
@@ -451,19 +468,19 @@ cross-checks.
 There are three flags you can use to switch on or off selected 
 branchings in the shower: 
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:QCDshower &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow a QCD shower; on/off = true/false. 
    
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:QEDshowerByQ &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow quarks to radiate photons; on/off = true/false. 
    
  
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:QEDshowerByL &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow leptons to radiate photons; on/off = true/false. 
@@ -472,13 +489,13 @@ Allow leptons to radiate photons; on/off = true/false.
 <p/> 
 There are some further possibilities to modify the shower: 
  
-<a name="anchor28"></a>
+<a name="anchor29"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:MEcorrections &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use of matrix element corrections; on/off = true/false. 
    
  
-<a name="anchor29"></a>
+<a name="anchor30"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:MEafterFirst &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Use of matrix element corrections also after the first emission, 
@@ -487,33 +504,33 @@ Only has a meaning if <code>MEcorrections</code> above is
 switched on. 
    
  
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:phiPolAsym &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Azimuthal asymmetry induced by gluon polarization; on/off = true/false. 
    
  
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:phiPolAsymHard &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Extend the above azimuthal asymmetry (if on) also back to gluons produced 
 in the hard process itself, where feasible; on/off = true/false. 
    
  
-<a name="anchor32"></a>
+<a name="anchor33"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:phiIntAsym &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Azimuthal asymmetry induced by interference; on/off = true/false. 
    
  
-<a name="anchor33"></a>
+<a name="anchor34"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:strengthIntAsym &nbsp;</strong> 
  (<code>default = <strong>0.7</strong></code>; <code>minimum = 0.</code>; <code>maximum = 0.9</code>)<br/>
 Size of asymmetry induced by interference. Natural value of order 0.5; 
 expression would blow up for a value of 1. 
    
  
-<a name="anchor34"></a>
+<a name="anchor35"></a>
 <p/><code>mode&nbsp; </code><strong> SpaceShower:nQuarkIn &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed quark flavours in <i>g &rarr; q qbar</i> branchings, 
@@ -521,7 +538,7 @@ when kinematically allowed, and thereby also in incoming beams.
 Changing it to 4 would forbid <i>g &rarr; b bbar</i>, etc. 
    
  
-<a name="anchor35"></a>
+<a name="anchor36"></a>
 <p/><code>flag&nbsp; </code><strong> SpaceShower:useFixedFacScale &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow the possibility to use a fixed factorization scale, set by 
@@ -529,7 +546,7 @@ the <code>parm</code> below. This option is unphysical and only
 intended for toy-model and debug studies. 
    
  
-<a name="anchor36"></a>
+<a name="anchor37"></a>
 <p/><code>parm&nbsp; </code><strong> SpaceShower:fixedFacScale &nbsp;</strong> 
  (<code>default = <strong>100.</strong></code>; <code>minimum = 1.</code>)<br/>
 The fixed factorization scale, in GeV, that would be used in the 
@@ -587,4 +604,4 @@ photon backwards-evolution in lepton beams.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

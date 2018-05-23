@@ -1,6 +1,6 @@
 // ProcessLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the main class for process-level event generation.
@@ -47,6 +47,7 @@ public:
     ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
     BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
+    BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
     Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn, bool doLHAin,
     SLHAinterface* slhaInterfacePtrIn, UserHooks* userHooksPtrIn,
     vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs);
@@ -127,6 +128,10 @@ private:
   // Pointers to the two possible photon beams inside the incoming beams.
   BeamParticle*   beamGamAPtr;
   BeamParticle*   beamGamBPtr;
+
+  // Pointers to the two possible photon beams inside the incoming beams.
+  BeamParticle*   beamVMDAPtr;
+  BeamParticle*   beamVMDBPtr;
 
   // Pointer to Standard Model couplings, including alphaS and alphaEM.
   Couplings*      couplingsPtr;

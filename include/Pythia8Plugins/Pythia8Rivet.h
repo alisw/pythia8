@@ -1,3 +1,8 @@
+// Pythia8Rivet.h is a part of the PYTHIA event generator.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
 #ifndef PYTHIA8RIVET_H
 #define PYTHIA8RIVET_H
 
@@ -53,11 +58,17 @@ public:
   }
 
   /**
+   * Add an (optional) run name for Rivet internal use.
+   */
+  void addRunName(const string runname) {
+    rname = runname;
+  }
+  /**
    * Initialize Rivet. Will do nothing if Rivet was already initialized
    */
   void init(const HepMC::GenEvent & gev) {
     if ( rivet ) return;
-    rivet = new Rivet::AnalysisHandler;
+    rivet = new Rivet::AnalysisHandler(rname);
     Rivet::addAnalysisLibPath(".");
     vector<string> anals(analyses.begin(), analyses.end());
     rivet->addAnalyses(anals);
@@ -139,6 +150,11 @@ private:
    * The HepMC converter
    */
   HepMC::Pythia8ToHepMC converter;
+
+  /**
+   * The Rivet run name
+   */
+  string rname;
 
 };
 

@@ -73,10 +73,10 @@ Some methods are available to read out information on the
 current event record: 
  
 <a name="anchor1"></a>
-<p/><strong>Particle& Event::operator[](int i) &nbsp;</strong> <br/>
+<p/><strong> Particle& Event::operator[](int i) &nbsp;</strong> <br/>
    
 <a name="anchor2"></a>
-<strong>const Particle& Event::operator[](int i) &nbsp;</strong> <br/>
+<strong> const Particle& Event::operator[](int i) &nbsp;</strong> <br/>
 returns a (<code>const</code>) reference to the <i>i</i>'th particle 
 in the event record, which can be used to get (or set) all the 
 <?php $filepath = $_GET["filepath"];
@@ -84,19 +84,19 @@ echo "<a href='ParticleProperties.php?filepath=".$filepath."' target='page'>";?>
    
  
 <a name="anchor3"></a>
-<p/><strong>Particle& Event::front() &nbsp;</strong> <br/>
+<p/><strong> Particle& Event::front() &nbsp;</strong> <br/>
    
 <a name="anchor4"></a>
-<strong>Particle& Event::at(int i) &nbsp;</strong> <br/>
+<strong> Particle& Event::at(int i) &nbsp;</strong> <br/>
    
 <a name="anchor5"></a>
-<strong>Particle& Event::back() &nbsp;</strong> <br/>
+<strong> Particle& Event::back() &nbsp;</strong> <br/>
    
 returns a reference to the zeroth, <i>i</i>'th or last particle 
 in the event record, as an alternative to the methods above. 
  
 <a name="anchor6"></a>
-<p/><strong>int Event::size() &nbsp;</strong> <br/>
+<p/><strong> int Event::size() &nbsp;</strong> <br/>
 The event size, i.e. the size of the <code>vector&lt;Particle&gt;</code>. 
 Thus valid particles, to be accessed by the above indexing operator, 
 are stored in the range <i>0 &lt;= i &lt; size()</i>. See comment 
@@ -104,7 +104,7 @@ above about the (ir)relevance of entry 0.
    
  
 <a name="anchor7"></a>
-<p/><strong>void Event::list(bool showScaleAndVertex = false, bool showMothersAndDaughters = false, int precision = 3) &nbsp;</strong> <br/>
+<p/><strong> void Event::list(bool showScaleAndVertex = false, bool showMothersAndDaughters = false, int precision = 3) &nbsp;</strong> <br/>
 Provide a listing of the whole event, i.e. of the 
 <code>vector&lt;Particle&gt;</code>. The basic identity 
 code, status, mother, daughter, colour, four-momentum and mass data 
@@ -137,10 +137,10 @@ directly in the event generation, a few are stored directly in the
 <code>Event</code> class, however. 
  
 <a name="anchor8"></a>
-<p/><strong>void Event::scale( double scaleIn) &nbsp;</strong> <br/>
+<p/><strong> void Event::scale( double scaleIn) &nbsp;</strong> <br/>
    
 <a name="anchor9"></a>
-<strong>double Event::scale() &nbsp;</strong> <br/>
+<strong> double Event::scale() &nbsp;</strong> <br/>
 set or get the scale (in GeV) of the hardest process in the event. 
 Matches the function of the <code>scale</code> variable in the 
 <?php $filepath = $_GET["filepath"];
@@ -148,10 +148,10 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>Le
    
  
 <a name="anchor10"></a>
-<p/><strong>void Event::scaleSecond( double scaleSecondIn) &nbsp;</strong> <br/>
+<p/><strong> void Event::scaleSecond( double scaleSecondIn) &nbsp;</strong> <br/>
    
 <a name="anchor11"></a>
-<strong>double Event::scaleSecond() &nbsp;</strong> <br/>
+<strong> double Event::scaleSecond() &nbsp;</strong> <br/>
 set or get the scale (in GeV) of a second hard process in the event, 
 in those cases where such a one 
 <?php $filepath = $_GET["filepath"];
@@ -171,19 +171,19 @@ well.
    
  
 <a name="anchor12"></a>
-<p/><strong>void Event::initColTag(int colTag = 0) &nbsp;</strong> <br/>
+<p/><strong> void Event::initColTag(int colTag = 0) &nbsp;</strong> <br/>
 forces the current colour tag value to be the larger of the input 
 <code>colTag</code> and the above <code>Event:startColTag</code> 
 values. 
    
  
 <a name="anchor13"></a>
-<p/><strong>int Event::lastColTag() &nbsp;</strong> <br/>
+<p/><strong> int Event::lastColTag() &nbsp;</strong> <br/>
 returns the current maximum colour tag. 
    
  
 <a name="anchor14"></a>
-<p/><strong>int Event::nextColTag() &nbsp;</strong> <br/>
+<p/><strong> int Event::nextColTag() &nbsp;</strong> <br/>
 increases the current maximum colour tag by one and returns this 
 new value. This method is used whenever a new colour tag is needed. 
    
@@ -199,18 +199,18 @@ where you want to add one or a few particles to an existing event
 record. 
  
 <a name="anchor15"></a>
-<p/><strong>Event::Event(int capacity = 100) &nbsp;</strong> <br/>
+<p/><strong> Event::Event(int capacity = 100) &nbsp;</strong> <br/>
 creates an empty event record, but with a reserved size 
 <i>capacity</i> for the <code>Particle</code> vector. 
    
  
 <a name="anchor16"></a>
-<p/><strong>Event& Event::operator=(const Event& oldEvent) &nbsp;</strong> <br/>
+<p/><strong> Event& Event::operator=(const Event& oldEvent) &nbsp;</strong> <br/>
 copies the input event record. 
    
  
 <a name="anchor17"></a>
-<p/><strong>Event& Event::operator+=(const Event& addEvent) &nbsp;</strong> <br/>
+<p/><strong> Event& Event::operator+=(const Event& addEvent) &nbsp;</strong> <br/>
 appends an event to an existing one. For the appended particles 
 mother, daughter and colour tags are shifted to make a consistent 
 record. The zeroth particle of the appended event is not copied, 
@@ -219,7 +219,7 @@ full energy-momentum content.
    
  
 <a name="anchor18"></a>
-<p/><strong>void Event::init(string headerIn = &quot;&quot;, ParticleData* particleDataPtrIn = 0, int startColTagIn = 100) &nbsp;</strong> <br/>
+<p/><strong> void Event::init(string headerIn = &quot;&quot;, ParticleData* particleDataPtrIn = 0, int startColTagIn = 100) &nbsp;</strong> <br/>
 initializes colour, the pointer to the particle database, and the 
 header specification used for the event listing. We remind that a 
 <code>Pythia</code> object contains two event records 
@@ -235,13 +235,13 @@ append an event, the modified event is printed with
    
  
 <a name="anchor19"></a>
-<p/><strong>void Event::clear() &nbsp;</strong> <br/>
+<p/><strong> void Event::clear() &nbsp;</strong> <br/>
 empties event record. Specifically the <code>Particle</code> vector 
 size is reset to zero. 
    
  
 <a name="anchor20"></a>
-<p/><strong>void Event::reset() &nbsp;</strong> <br/>
+<p/><strong> void Event::reset() &nbsp;</strong> <br/>
 empties the event record, as <code>clear()</code> above, but then 
 fills the zero entry of the <code>Particle</code> vector with the 
 pseudoparticle used to represent the event as a whole. At this point 
@@ -249,14 +249,14 @@ the pseudoparticle is not assigned any momentum or mass.
    
  
 <a name="anchor21"></a>
-<p/><strong>void Event::popBack(int n = 1) &nbsp;</strong> <br/>
+<p/><strong> void Event::popBack(int n = 1) &nbsp;</strong> <br/>
 removes the last <i>n</i> particle entries; must be a positive 
 number. History (and other) information of remaning entries is 
 untouched, and so may be internally inconsistent. 
    
  
 <a name="anchor22"></a>
-<p/><strong>void Event::remove(int iFirst, int iLast, bool shiftHistory = true) &nbsp;</strong> <br/>
+<p/><strong> void Event::remove(int iFirst, int iLast, bool shiftHistory = true) &nbsp;</strong> <br/>
 removes particles in the range between indices <code>iFirst</code> 
 and <code>iLast</code>, including the endpoints. By default all mother 
 and daughter indices above the removed range are shifted down by the 
@@ -268,13 +268,13 @@ positive, cf. <code>Particle::undoDecay()</code>.
    
  
 <a name="anchor23"></a>
-<p/><strong>int Event::append(Particle entryIn) &nbsp;</strong> <br/>
+<p/><strong> int Event::append(Particle entryIn) &nbsp;</strong> <br/>
 appends a particle to the bottom of the event record and 
 returns the index of this position. 
    
  
 <a name="anchor24"></a>
-<p/><strong>int Event::append(int id, int status, int mother1, int mother2, int daughter1, int daughter2, int col, int acol, double px, double py, double pz,  double e, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
+<p/><strong> int Event::append(int id, int status, int mother1, int mother2, int daughter1, int daughter2, int col, int acol, double px, double py, double pz,  double e, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
 appends a particle to the bottom of the event record and 
 returns the index of this position; 
 <?php $filepath = $_GET["filepath"];
@@ -283,24 +283,24 @@ of the various particle properties.
    
  
 <a name="anchor25"></a>
-<p/><strong>int Event::append(int id, int status, int mother1, int mother2, int daughter1, int daughter2, int col, int acol, Vec4 p, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
+<p/><strong> int Event::append(int id, int status, int mother1, int mother2, int daughter1, int daughter2, int col, int acol, Vec4 p, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
 appends a particle to the bottom of the event record and 
 returns the index of this position, as above but with four-momentum 
 as a <code>Vec4</code>. 
    
  
 <a name="anchor26"></a>
-<p/><strong>int Event::append(int id, int status, int col, int acol, double px, double py, double pz, double e, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
+<p/><strong> int Event::append(int id, int status, int col, int acol, double px, double py, double pz, double e, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
    
 <a name="anchor27"></a>
-<strong>int Event::append(int id, int status, int col, int acol, Vec4 p, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
+<strong> int Event::append(int id, int status, int col, int acol, Vec4 p, double m = 0., double scale = 0., double pol = 9.) &nbsp;</strong> <br/>
 appends a particle to the bottom of the event record and 
 returns the index of this position, as above but with vanishing 
 (i.e. zero) mother and daughter indices. 
    
  
 <a name="anchor28"></a>
-<p/><strong>int Event::setEvtPtr(int iSet = -1) &nbsp;</strong> <br/>
+<p/><strong> int Event::setEvtPtr(int iSet = -1) &nbsp;</strong> <br/>
 send in the <code>this</code> pointer of the current <code>Event</code> 
 itself to the particle <code>iSet</code>, by default the most recently 
 appended particle. Also generates a pointer to the 
@@ -308,7 +308,7 @@ appended particle. Also generates a pointer to the
    
  
 <a name="anchor29"></a>
-<p/><strong>int Event::copy(int iCopy, int newStatus = 0) &nbsp;</strong> <br/>
+<p/><strong> int Event::copy(int iCopy, int newStatus = 0) &nbsp;</strong> <br/>
 copies the existing particle in entry <code>iCopy</code> to the 
 bottom of the event record and returns the index of this position. 
 By default, i.e. with <code>newStatus = 0</code>, everything is 
@@ -323,7 +323,7 @@ entry will return -1.
    
  
 <a name="anchor30"></a>
-<p/><strong>void Event::restorePtrs() &nbsp;</strong> <br/>
+<p/><strong> void Event::restorePtrs() &nbsp;</strong> <br/>
 each particle in the event record has a pointer to the event itself 
 and another to the particle species it belongs to. The latter pointer 
 is automatically set/changed whenever the particle identity is 
@@ -342,19 +342,19 @@ echo "<a href='FourVectors.php?filepath=".$filepath."' target='page'>";?>Vec4</a
 momentum and the vertex (position) components of all particles. 
  
 <a name="anchor31"></a>
-<p/><strong>void Event::rot(double theta, double phi) &nbsp;</strong> <br/>
+<p/><strong> void Event::rot(double theta, double phi) &nbsp;</strong> <br/>
 rotate all particles in the event by this polar and azimuthal angle 
 (expressed in radians). 
    
  
 <a name="anchor32"></a>
-<p/><strong>void Event::bst(double betaX, double betaY, double betaZ) &nbsp;</strong> <br/>
+<p/><strong> void Event::bst(double betaX, double betaY, double betaZ) &nbsp;</strong> <br/>
    
 <a name="anchor33"></a>
-<strong>void Event::bst(double betaX, double betaY, double betaZ, double gamma) &nbsp;</strong> <br/>
+<strong> void Event::bst(double betaX, double betaY, double betaZ, double gamma) &nbsp;</strong> <br/>
    
 <a name="anchor34"></a>
-<strong>void Event::bst(const Vec4& vec) &nbsp;</strong> <br/>
+<strong> void Event::bst(const Vec4& vec) &nbsp;</strong> <br/>
 boost all particles in the event by this three-vector. 
 Optionally you may provide the <i>gamma</i> value as a fourth argument, 
 which may help avoid roundoff errors for big boosts. You may alternatively 
@@ -363,7 +363,7 @@ becomes <i>beta = p/E</i>.
    
  
 <a name="anchor35"></a>
-<p/><strong>void Event::rotbst(const RotBstMatrix& M) &nbsp;</strong> <br/>
+<p/><strong> void Event::rotbst(const RotBstMatrix& M) &nbsp;</strong> <br/>
 rotate and boost by the combined action encoded in the 
 <code><?php $filepath = $_GET["filepath"];
 echo "<a href='FourVectors.php?filepath=".$filepath."' target='page'>";?>RotBstMatrix</a> M</code>. 
@@ -466,4 +466,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # configure is a part of the PYTHIA event generator.
-# Copyright (C) 2017 Torbjorn Sjostrand.
-# PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+# Copyright (C) 2018 Torbjorn Sjostrand.
+# PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
-# Author: Philip Ilten, October 2014 - May 2015.
+# Author: Philip Ilten, October 2014 - November 2017.
 #
 # This is is the configuration script which should be run prior to building
 # PYTHIA. Example usage is:
@@ -89,7 +89,6 @@ for PKG in "evtgen" "fastjet3" "hepmc2" "hepmc3" "lhapdf5" "lhapdf6" "powheg"\
     "promc" "root" "gzip" "boost" "python"; do
     OPTIONS+=" --with-$PKG --with-$PKG-bin --with-$PKG-lib --with-$PKG-include"
     OPTIONS+=" --with-$PKG-version"; done
-OPTIONS+=" --with-lhapdf6-plugin"
 OPTIONS+=" --arch --cxx --cxx-common --cxx-shared --cxx-soname --lib-suffix"
 
 ################################################################################

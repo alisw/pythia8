@@ -273,6 +273,13 @@ Helicity parameter.
 <option value="-1"></option> 
 </modepick> 
  
+<modepick name="ContactInteractions:etaRL" default="0" min="-1" max="1"> 
+Helicity parameter.   Implemented only for the <ei>q qbar &rarr; l- l+</ei> process. 
+<option value="1"></option> 
+<option value="0"></option> 
+<option value="-1"></option> 
+</modepick> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

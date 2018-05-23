@@ -1,6 +1,6 @@
 // Ropewalk.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for Rope Hadronization. The Ropewalk takes care of setting
@@ -74,7 +74,7 @@ public:
   OverlappingRopeDipole(RopeDipole* d, double m0, RotBstMatrix& r);
 
   // Calculate the overlap at given y and b.
-  bool overlap(double y, Vec4 ba, double R0);
+  bool overlap(double y, Vec4 ba, double r0);
 
   // Has the dipole been hadronized?
   bool hadronized();
@@ -119,14 +119,15 @@ public:
   RotBstMatrix getDipoleRestFrame();
   RotBstMatrix getDipoleLabFrame();
 
-
   // Get the dipole momentum four-vector.
   Vec4 dipoleMomentum();
-
   // Get the spatial point interpolated to given rapidity.
-  Vec4 bInterpolate(double y, double m0);
+  // In the dipole rest frame.
+  Vec4 bInterpolateDip(double y, double m0);
+  // In the lab frame.
+  Vec4 bInterpolateLab(double y, double m0);
+  // Given a Lorentz matrix.
   Vec4 bInterpolate(double y, RotBstMatrix rb, double m0);
-
 
   // Get the quantum numbers m,n characterizing all dipole overlaps
   // at a given rapidity value.
@@ -139,6 +140,12 @@ public:
   // Get the maximal and minimal rapidity of the dipole.
   double maxRapidity(double m0) { return (max(d1.rap(m0), d2.rap(m0))); }
   double minRapidity(double m0) { return (min(d1.rap(m0), d2.rap(m0))); }
+
+  // Get the maximal and minimal boosted rapidity of the dipole.
+  double maxRapidity(double m0, RotBstMatrix& r) { return (max(d1.rap(m0,r),
+    d2.rap(m0,r))); }
+  double minRapidity(double m0, RotBstMatrix& r) { return (min(d1.rap(m0,r),
+    d2.rap(m0,r))); }
 
   // Propagate the dipole itself.
   void propagateInit(double deltat);
@@ -266,6 +273,8 @@ private:
   double tInit;
   // Final state shower cut-off.
   double showerCut;
+  // Assume we are always in highest multiplet.
+  bool alwaysHighest;
 
   // Info pointer.
   Info* infoPtr;
@@ -348,10 +357,10 @@ private:
   map<double, double> aDiqMap;
 
   // Initial values of parameters.
-  double aIn, adiqIn, bIn, rhoIn, xIn, yIn, xiIn, sigmaIn;
+  double aIn, adiqIn, bIn, rhoIn, xIn, yIn, xiIn, sigmaIn, kappaIn;
 
   // Effective values of parameters.
-  double aEff, adiqEff, bEff, rhoEff, xEff, yEff, xiEff, sigmaEff;
+  double aEff, adiqEff, bEff, rhoEff, xEff, yEff, xiEff, sigmaEff, kappaEff;
 
   // Junction parameter.
   double beta;
@@ -382,13 +391,16 @@ public:
     ePtr = NULL;
     h = settingsPtr->parm("Ropewalk:presetKappa");
     fixedKappa = settingsPtr->flag("Ropewalk:setFixedKappa");
+    doBuffon = settingsPtr->flag("Ropewalk:doBuffon");
+    rapiditySpan = settingsPtr->parm("Ropewalk:rapiditySpan");
+    stringProtonRatio = settingsPtr->parm("Ropewalk:stringProtonRatio");
     // Initialize FragPar.
     fp.init(infoPtr, *settingsPtr);
   }
 
   // Change the fragmentation parameters.
   bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
-   StringPT * pTPtr, double m2Had, vector<int> iParton);
+   StringPT * pTPtr, double m2Had, vector<int> iParton, int endId);
 
   // Set enhancement manually.
   void setEnhancement(double hIn) { h = hIn;}
@@ -399,7 +411,12 @@ public:
 private:
 
   // Find breakup placement and fetch effective parameters.
-  map<string, double> fetchParameters(double m2Had, vector<int> iParton);
+  // For model depending on vertex information.
+  map<string, double> fetchParameters(double m2Had, vector<int> iParton,
+    int endId);
+  // For simple Buffon model.
+  map<string, double> fetchParametersBuffon(double m2Had, vector<int> iParton,
+    int endId);
 
   // Pointer to settings.
   Settings* settingsPtr;
@@ -421,6 +438,15 @@ private:
 
   // The object which handles change in parameters.
   RopeFragPars fp;
+
+  // Use Buffon prescription without vertex information.
+  bool doBuffon;
+
+  // Parameters of Buffon prescription
+  double rapiditySpan, stringProtonRatio;
+
+  // Keep track of hadronized dipoles in Buffon prescription.
+  vector<int> hadronized;
 
   // Use preset kappa from settings.
   bool fixedKappa;

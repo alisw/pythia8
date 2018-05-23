@@ -1,6 +1,6 @@
 // BeamRemnants.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -199,7 +199,7 @@ bool BeamRemnants::add( Event& event, int iFirst, bool doDiffCR) {
     (*beamAPtr) = beamAsave;
     (*beamBPtr) = beamBsave;
     (*partonSystemsPtr) = partonSystemsSave;
-    infoPtr->errorMsg("Error in BeamRemnants::Add: "
+    infoPtr->errorMsg("Error in BeamRemnants::add: "
       "failed to find physical colour state after colour reconnection");
     return false;
   }
@@ -553,7 +553,7 @@ bool BeamRemnants::setKinematics( Event& event) {
           // Other valence parton takes (most of) the recoil but this will
           // still be part of pT balancing.
           for (int iPar = 0; iPar < nPar; ++iPar)
-            if ( iPar != beam.gamVal() && beam[iPar].isValence() ){
+            if ( iPar != beam.gamVal() && beam[iPar].isValence() ) {
               beam[iPar].px(-px);
               beam[iPar].py(-py);
               pxSum += -px;
@@ -571,7 +571,7 @@ bool BeamRemnants::setKinematics( Event& event) {
 
       // Without primordial kT: still need to store rescattered partons.
       } else if ( beam.isHadron() || beam.isGamma() ) {
-        for (int iPar = 0; iPar < nPar; ++iPar){
+        for (int iPar = 0; iPar < nPar; ++iPar) {
           if ( !beam[iPar].isFromBeam() ) {
             int iInAB = (iBeam == 0) ? partonSystemsPtr->getInA(iPar)
                                      : partonSystemsPtr->getInB(iPar);
@@ -589,8 +589,8 @@ bool BeamRemnants::setKinematics( Event& event) {
 
           // Other valence parton takes the recoil but this will still be
           // part of pT balancing.
-          for (int iPar = 0; iPar < nPar; ++iPar){
-            if ( iPar != beam.gamVal() && beam[iPar].isValence() ){
+          for (int iPar = 0; iPar < nPar; ++iPar) {
+            if ( iPar != beam.gamVal() && beam[iPar].isValence() ) {
               beam[iPar].px(-px);
               beam[iPar].py(-py);
               break;
@@ -1005,7 +1005,7 @@ bool BeamRemnants::setOneRemnKinematics( Event& event, int beamOffset) {
     kTcompSum = mHatDamp + nBeam - 1.;
 
     // Calculate the kT width for remnant partons.
-    for ( int iRem = 1; iRem < nBeam; ++iRem){
+    for ( int iRem = 1; iRem < nBeam; ++iRem) {
       kTwidth[iRem] = primordialKTremnant;
       kTcomp[iRem]  = 1.;
     }
@@ -1035,7 +1035,7 @@ bool BeamRemnants::setOneRemnKinematics( Event& event, int beamOffset) {
       }
 
       // Share recoil between all initiator partons.
-      for (int iPar = 0; iPar < nBeam; ++iPar){
+      for (int iPar = 0; iPar < nBeam; ++iPar) {
         beamHad[iPar].px( beamHad[iPar].px() - pxSum*kTcomp[iPar]/kTcompSum );
         beamHad[iPar].py( beamHad[iPar].py() - pySum*kTcomp[iPar]/kTcompSum );
       }
@@ -1063,6 +1063,9 @@ bool BeamRemnants::setOneRemnKinematics( Event& event, int beamOffset) {
   }
 
   if (!isPhysical) {
+    // Boost back event.
+    MtoHadRest.invert();
+    event.rotbst( MtoHadRest);
     infoPtr->errorMsg("Error in BeamRemnants::setOneRemnKinematics:"
       " too big beam remnant invariant mass");
     return false;

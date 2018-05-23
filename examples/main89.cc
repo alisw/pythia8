@@ -1,6 +1,6 @@
 // main89.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This program is written by Stefan Prestel.
@@ -75,6 +75,8 @@ int main( int argc, char* argv[] ){
 
   // Get number of subruns.
   int nMerge = pythia.mode("LHEFInputs:nSubruns");
+  bool doMatchMerge = true;
+  if (nMerge == 0) { nMerge = 1; doMatchMerge = false; }
 
   // Number of events. Negative numbers mean all events in the LHEF will be
   // used.
@@ -113,6 +115,30 @@ int main( int argc, char* argv[] ){
     pythia.setUserHooksPtr(matching);
   }
 
+  vector<double> xss;
+
+  // Allow usage also for non-matched configuration.
+  if(!doMatchMerge) {
+    // Loop over subruns with varying number of jets.
+    for (int iMerge = 0; iMerge < nMerge; ++iMerge) {
+      // Read in file for current subrun and initialize.
+      pythia.readFile(argv[1], iMerge);
+      // Initialise.
+      pythia.init();
+      // Start generation loop
+      while( pythia.info.nSelected() < nEvent ){
+        // Generate next event
+        if( !pythia.next() ) {
+          if ( pythia.info.atEndOfFile() ) break;
+          else continue;
+        }
+      } // end loop over events to generate.
+      // print cross section, errors
+      pythia.stat();
+      xss.push_back(pythia.info.sigmaGen());
+    }
+  }
+
   // Cross section and error.
   double sigmaTotal  = 0.;
   double errorTotal  = 0.;
@@ -132,13 +158,22 @@ int main( int argc, char* argv[] ){
 
     // Read in name of LHE file for current subrun and initialize.
     pythia.readFile(argv[1], iMerge);
+
+    // If the process string is "guess", temporarily set it to something safe
+    // for initialization.
+    bool doGuess = pythia.settings.word("Merging:process") == "guess";
+    if (doMerge && doGuess) pythia.settings.word("Merging:process","pp>e+e-");
     // Initialise.
     pythia.init();
+    // Reset the process string to "guess" if necessary.
+    if (doGuess) pythia.settings.word("Merging:process","guess");
 
     // Get the inclusive x-section by summing over all process x-sections.
     double xs = 0.;
     for (int i=0; i < pythia.info.nProcessesLHEF(); ++i)
       xs += pythia.info.sigmaLHEF(i);
+
+    if (!doMatchMerge) xs = xss[iMerge];
 
     // Start generation loop
     while( pythia.info.nSelected() < nEvent ){

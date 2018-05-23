@@ -1,6 +1,6 @@
 // StringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the StringEnd and
@@ -110,10 +110,12 @@ void StringEnd::newHadron(double nNSP) {
 // Fragment off one hadron from the string system, in momentum space,
 // by taking steps from positive end.
 
-Vec4 StringEnd::kinematicsHadron( StringSystem& system) {
+Vec4 StringEnd::kinematicsHadron( StringSystem& system,
+  vector<StringVertex>& stringVertices, bool useInputZ, double zHadIn) {
 
   // Pick fragmentation step z and calculate new Gamma.
-  zHad = zSelPtr->zFrag( flavOld.id, flavNew.id, mT2Had);
+  if (useInputZ) zHad = zHadIn;
+  else zHad = zSelPtr->zFrag( flavOld.id, flavNew.id, mT2Had);
   GammaNew = (1. - zHad) * (GammaOld + mT2Had / zHad);
 
   // Set up references that are direction-neutral;
@@ -152,6 +154,10 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system) {
         xDirNew = xDirOld - xDirHad;
         xInvNew = xInvOld + xInvHad;
 
+        // Store breakup vertex information from the fragmentation process.
+        stringVertices.push_back( StringVertex( fromPos, iPosNew, iNegNew,
+          xPosNew, xNegNew) );
+
         // Find and return four-momentum of the produced particle.
         return region.pHad( xPosHad, xNegHad, pxHad, pyHad);
 
@@ -173,6 +179,7 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system) {
       pSoFar = region.pHad( 0., 0., pxOld, pyOld);
       pTNew  = region.pHad( 0., 0., pxNew, pyNew);
     }
+
 
     // Now begin normal treatment of nontrivial regions.
     // Set up four-vectors in a region not visited before.
@@ -272,8 +279,13 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system) {
       continue;
     }
 
+    // Store breakup vertex information from the fragmentation process.
+    stringVertices.push_back( StringVertex( fromPos, iPosNew, iNegNew,
+      xPosNew, xNegNew) );
+
     // Else we have found the correct region, and can return four-momentum.
-    return pSoFar + region.pHad( xPosHad, xNegHad, pxNew, pyNew);
+    if (useInputZ) return Vec4( 0., 0., 0., 0.);
+    else return pSoFar + region.pHad( xPosHad, xNegHad, pxNew, pyNew);
 
   // End of "infinite" loop of stepping to new region.
   }
@@ -352,10 +364,10 @@ Vec4 StringEnd::kinematicsHadronTmp( StringSystem system, Vec4 pRem,
 
       // A first step within a low region is easy. Make sure we use this
       // region in case it's the last one.
-      if ( (meanMT2 < zHadTmp * xDirOld * (1. - xInvOld) * region.w2) ||
-           ((iInvNew-1) < 0) ) {
+      if ( (meanMT2 < zHadTmp * xDirOld * (1. - xInvOld) * region.w2)
+        || (iInvNew - 1 < 0) ) {
 
-        if ((iInvNew-1) < 0)
+        if (iInvNew - 1 < 0)
           zHadTmp = meanMT2 / xDirOld / (1. - xInvOld) / region.w2;
 
         // Translate into x coordinates.
@@ -559,6 +571,9 @@ const double StringFragmentation::M2MINJRF      = 1e-4;
 const double StringFragmentation::CONVJRFEQ     = 1e-12;
 const int    StringFragmentation::NTRYJRFEQ     = 40;
 
+// Check that breakup vertex does not have negative tau^2 or t within roundoff.
+const double StringFragmentation::CHECKPOS     = 1e-10;
+
 //--------------------------------------------------------------------------
 
 // Initialize and save pointers.
@@ -590,6 +605,14 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   eMinLeftJunction
     = settings.parm("StringFragmentation:eMinLeftJunction");
 
+  // Calculation and definition of hadron space-time production vertices.
+  hadronVertex    = settings.mode("HadronVertex:mode");
+  setVertices     = settings.flag("Fragmentation:setVertices");
+  kappaVtx        = settings.parm("HadronVertex:kappa");
+  smearOn         = settings.flag("HadronVertex:smearOn");
+  xySmear         = settings.parm("HadronVertex:xySmear");
+  constantTau     = settings.flag("HadronVertex:constantTau");
+
   // Flavour Rope treatment.
   doFlavRope      = settings.flag("Ropewalk:RopeHadronization")
                  && settings.flag("Ropewalk:doFlavour");
@@ -597,9 +620,10 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   // Sanity check of flavour rope and vertex information.
   if (doFlavRope) {
     // Flavour ropes requires vertex information, unless an effective
-    // string tension is supplied by hand.
+    // string tension is supplied by hand or Buffon treatment.
     if (!settings.flag("PartonVertex:setVertex") &&
-      !settings.flag("Ropewalk:setFixedKappa")) {
+      (!settings.flag("Ropewalk:setFixedKappa") &&
+      !settings.flag("Ropewalk:doBuffon")) ) {
         infoPtr->errorMsg("Error in StringFragmentation::init: "
           "failed initialization of flavour ropes");
     }
@@ -610,6 +634,10 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
 
   // Initialize the b parameter of the z spectrum, used when joining jets.
   bLund           = zSelPtr->bAreaLund();
+
+  // Charm and bottom quark masses used for space-time offset.
+  mc              = particleDataPtr->m0(4);
+  mb              = particleDataPtr->m0(5);
 
   // MPI pT0, used for calculating effective number of strings.
   pT20            = pow2(settings.parm("MultipartonInteractions:pT0Ref"));
@@ -645,8 +673,13 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
   // Rapidity pairs [yMin, yMax] of string piece ends.
   vector< vector< pair<double,double> > > rapPairs = colConfig.rapPairs;
 
-  // Reset the local event record.
+  // Reset the local event record and vertex arrays.
   hadrons.clear();
+  stringVertices.clear();
+  legMinVertices.clear();
+  legMidVertices.clear();
+  posEnd.hadSoFar = 0;
+  negEnd.hadSoFar = 0;
 
   // For closed gluon string: pick first breakup region.
   isClosed = colConfig[iSub].isClosed;
@@ -714,7 +747,8 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       // The FlavourRope treatment changes the fragmentation parameters.
       if (doFlavRope) {
         if (!flavRopePtr->doChangeFragPar(flavSelPtr, zSelPtr, pTSelPtr,
-          (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton) )
+          (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton,
+          (fromPos ? idPos : idNeg)) )
           infoPtr->errorMsg("Error in StringFragmentation::fragment: "
             "FlavourRope failed to change fragmentation parameters.");
       }
@@ -734,8 +768,9 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       if ( energyUsedUp(fromPos) ) break;
 
       // Construct kinematics of the new hadron and store it.
-      Vec4 pHad = nowEnd.kinematicsHadron(system);
+      Vec4 pHad = nowEnd.kinematicsHadron(system, stringVertices);
       int statusHad = (fromPos) ? 83 : 84;
+      nowEnd.hadSoFar += 1;
 
       // Change status code if hadron from junction.
       if (abs(nowEnd.idHad) > 1000 && abs(nowEnd.idHad) < 10000) {
@@ -782,14 +817,16 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       ((rndmPtr->flat() < 0.5) ? posEnd : negEnd), rapPairs) : 0.;
 
     // When done, join in the middle. If this works, then really done.
-    if ( finalTwo(fromPos, event, usedPosJun, usedNegJun, nNSP) ) break;
+    if ( finalTwo(fromPos, event, usedPosJun, usedNegJun, nNSP) )  break;
 
     // Else remove produced particles (except from first two junction legs)
     // and start all over.
     int newHadrons = hadrons.size() - junctionHadrons;
     hadrons.popBack(newHadrons);
+    stringVertices.clear();
+    posEnd.hadSoFar = 0;
+    negEnd.hadSoFar = 0;
   }
-
 
   // Junctions & extra joins: remove fictitious end, restore original partons.
   if (hasJunction) ++nExtraJoin;
@@ -800,6 +837,9 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
 
   // Store the hadrons in the normal event record, ordered from one end.
   store(event);
+
+  // Store hadron production space-time vertices.
+  if (setVertices) setHadronVertices( event);
 
   // Done.
   return true;
@@ -848,7 +888,7 @@ vector<int> StringFragmentation::findFirstRegion(int iSub,
 // Set flavours and momentum position for initial string endpoints.
 
 void StringFragmentation::setStartEnds(int idPos, int idNeg,
-  StringSystem systemNow) {
+StringSystem systemNow, int legNow) {
 
   // Variables characterizing string endpoints: defaults for open string.
   double px          = 0.;
@@ -892,6 +932,19 @@ void StringFragmentation::setStartEnds(int idPos, int idNeg,
   negEnd.setUp( false, iNeg, idNeg, systemNow.iMax, -px, -py,
     Gamma, xPosFromNeg, xNegFromNeg);
 
+  // Store breakup vertex information from the first and last points.
+  if (setVertices) {
+    if (legNow == legMin) legMinVertices.push_back(
+      StringVertex( true, 0, systemNow.iMax, xPosFromPos, xNegFromPos) );
+    else if (legNow == legMid) legMidVertices.push_back(
+      StringVertex( true, 0, systemNow.iMax, xPosFromPos, xNegFromPos) );
+    else {
+      stringVertices.push_back(
+       StringVertex (true, 0, systemNow.iMax, xPosFromPos, xNegFromPos) );
+      stringVertices.push_back(
+       StringVertex( false, systemNow.iMax, 0, xPosFromNeg, xNegFromNeg) );
+    }
+  }
   // For closed gluon loop can allow popcorn on one side but not both.
   if (isClosed) {
     flavSelPtr->assignPopQ(posEnd.flavOld);
@@ -932,12 +985,491 @@ bool StringFragmentation::energyUsedUp(bool fromPos) {
 
 }
 
+
+//--------------------------------------------------------------------------
+
+// Store hadron production vertices in the event record.
+
+void StringFragmentation::setHadronVertices( Event& event) {
+
+  // Order breakup points from one end to the other.
+  int vertexSize = stringVertices.size();
+  vector<StringVertex> orderedVertices;
+  for (int i = 0; i < vertexSize; ++i) if (stringVertices[i].fromPos)
+    orderedVertices.push_back( stringVertices[i] );
+  for (int i = vertexSize - 1; i >= 0; --i) if (!stringVertices[i].fromPos)
+    orderedVertices.push_back( stringVertices[i] );
+
+  // Obtain space-time picture for breakup points.
+  vector<Vec4> longitudinal;
+  int finalSpacePos  = 0;
+  int finalVertexPos = 0;
+  vector<int> iPartonIn = (hasJunction) ? iPartonMax : iParton;
+  int id1 = event[ iPartonIn.front() ].idAbs();
+  int id2 = (hasJunction) ? idDiquark : event[ iPartonIn.back() ].idAbs();
+  int iHadJunc = (hasJunction)
+    ?  legMinVertices.size() + legMidVertices.size() - 2 : 0;
+
+   // Loop over ordered vertices to obtain longitudinal space-time locations.
+  for (int i = 0; i < vertexSize; ++i) {
+    int iPosIn    = orderedVertices[i].iRegPos;
+    int iNegIn    = orderedVertices[i].iRegNeg;
+    double xPosIn = orderedVertices[i].xRegPos;
+    double xNegIn = orderedVertices[i].xRegNeg;
+
+    // Special case for complicated solutions in finalTwo: calculated after.
+    if (iPosIn == -1 && iNegIn == -1) {
+      longitudinal.push_back( Vec4( 0., 0., 0., 0.) );
+      finalSpacePos  =  i + 1;
+      finalVertexPos = i;
+
+    // The normal cases.
+    } else {
+      StringRegion currentRegion = system.region( iPosIn, iNegIn);
+      Vec4 gluonOffset = currentRegion.gluonOffset( iPartonIn, event, iPosIn,
+        iNegIn) / kappaVtx;
+      Vec4 noOffset = (xPosIn * currentRegion.pPos +
+        xNegIn * currentRegion.pNeg) / kappaVtx;
+      Vec4 pRegion = (currentRegion.pPos + currentRegion.pNeg) / kappaVtx;
+
+      // Correction added to the space-time location of breakup points
+      // if negative squared invariant time.
+      if (noOffset.m2Calc() < 0.) {
+        double cPlus = (-pRegion * noOffset + sqrt( pow2(pRegion*noOffset)
+        - pRegion.m2Calc() * noOffset.m2Calc())) / pRegion.m2Calc();
+        Vec4 pCorrection = noOffset + cPlus * pRegion;
+        Vec4 fracCorrection;
+        bool betterFrac = false;
+        if (xPosIn < 0. || xPosIn > 1. || xNegIn < 0. || xNegIn > 1.) {
+          xPosIn = max( 0., min( 1., xPosIn) );
+          xNegIn = max( 0., min( 1., xNegIn) );
+          fracCorrection = (xPosIn * currentRegion.pPos
+            + xNegIn * currentRegion.pNeg) / kappaVtx;
+          betterFrac = abs(noOffset.e() - pCorrection.e())
+                     > abs(noOffset.e() - fracCorrection.e());
+        }
+        noOffset = (betterFrac) ? fracCorrection : pCorrection;
+      }
+      // Store vertex and check positivity.
+      Vec4 fromBreaks = noOffset + gluonOffset;
+      longitudinal.push_back(fromBreaks);
+      if (fromBreaks.m2Calc() < -CHECKPOS * max(1., pow2(fromBreaks.e())))
+        infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
+          "negative tau^2 from breaks");
+    }
+  }
+
+  // Breakup longitudinal space--time location for the special finalTwo case.
+  if (finalSpacePos != 0) {
+    double xPosIn = orderedVertices[finalVertexPos].xRegPos;
+    double xNegIn = orderedVertices[finalVertexPos].xRegNeg;
+    Vec4 v1 = longitudinal[finalSpacePos - 1];
+    Vec4 v2 = longitudinal[finalSpacePos + 1];
+    Vec4 vl = v1 - v2;
+    Vec4 vk = pPosFinalReg + pNegFinalReg;
+    double r = 0.;
+    if (vl.m2Calc() > 0.) {
+      Vec4 va = ( 0.5 * (v1 + v2) + xPosIn * pPosFinalReg +
+        xNegIn * pNegFinalReg ) / kappaVtx;
+      r = (va * vk - sqrt(pow2(va * vk) - vk.m2Calc() * va.m2Calc()) )
+        / vk.m2Calc();
+    } else r = 0.5 * sqrt(-vl.m2Calc() / vk.m2Calc());
+    longitudinal[finalSpacePos] = ( 0.5 * (v1 + v2) + (xPosIn - r)
+      * pPosFinalReg + (xNegIn - r) * pNegFinalReg ) / kappaVtx;
+  }
+
+  // Longitudinal offset of breakup points for massive quarks.
+  for (int i = 0; i < vertexSize; ++i) {
+    int iPosIn = orderedVertices[i].iRegPos;
+    int iNegIn = orderedVertices[i].iRegNeg;
+    if (iPosIn != -1) {
+      StringRegion currentRegion = system.region( iPosIn, iNegIn);
+      if ( currentRegion.massiveOffset( iPosIn, iNegIn, system.iMax,
+        id1, id2, mc, mb) ) {
+        Vec4 v1, v2;
+
+        // Initial endpoint correction.
+        if (i == 0 && (id1 == 4 || id1 == 5)) {
+          int iPosIn2 = orderedVertices[i + 1].iRegPos;
+          int iNegIn2 = orderedVertices[i + 1].iRegNeg;
+          v2 = longitudinal[i + 1];
+          double mHad =  event[event.size() + iHadJunc - hadrons.size()].m();
+          double pPosMass = particleDataPtr->m0(id1);
+          if (iPosIn == iPosIn2 && iNegIn == iNegIn2) {
+            v1 = longitudinal[i];
+            longitudinal[i] = v1 + (pPosMass / mHad) * (v2 - v1);
+            if (longitudinal[i].m2Calc()
+              < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
+              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
+                "negative tau^2 for endpoint massive correction");
+          } else {
+            StringRegion region2 = system.region( iPosIn2, iNegIn2);
+            Vec4 gluonOffset = currentRegion.gluonOffset( iPartonIn, event,
+              iPosIn, iNegIn);
+            v1 = (region2.pPos + gluonOffset) / kappaVtx;
+            longitudinal[i] = v1 + (pPosMass / mHad) * (v2 - v1);
+            if (longitudinal[i].m2Calc()
+              < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
+              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
+                "negative tau^2 for endpoint massive correction");
+            continue;
+          }
+        }
+
+        // Final endpoint correction.
+        if (i == vertexSize - 1 && (id2 == 4 || id2 == 5) && !hasJunction) {
+          int iPosIn2 = orderedVertices[i - 1].iRegPos;
+          int iNegIn2 = orderedVertices[i - 1].iRegNeg;
+          double mHad =  event[i - 1 + event.size() + iHadJunc
+            - hadrons.size()].m();
+          double pNegMass = particleDataPtr->m0(id2);
+          if (iPosIn == iPosIn2 && iNegIn == iNegIn2) {
+            v1 = longitudinal[i];
+            v2 = longitudinal[i - 1] + currentRegion.massOffset / kappaVtx;
+            longitudinal[i] = v1 + (pNegMass / mHad) * (v2 - v1);
+            if (longitudinal[i].m2Calc()
+              < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
+              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
+                "negative tau^2 for endpoint massive correction");
+
+          } else {
+            StringRegion region2 = system.region( iPosIn2, iNegIn2);
+            Vec4 gluonOffset = currentRegion.gluonOffset( iPartonIn, event,
+              iPosIn, iNegIn);
+            v1 = (region2.pNeg + gluonOffset) / kappaVtx;
+            v2 = longitudinal[i - 1];
+            longitudinal[i] = v1 + (pNegMass / mHad) * (v2 - v1);
+            if (longitudinal[i].m2Calc()
+              < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
+              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
+                "negative tau^2 for endpoint massive correction");
+            continue;
+          }
+        }
+
+        // Add mass offset for all breakup points.
+        Vec4 massOffset = currentRegion.massOffset / kappaVtx;
+        Vec4 position = longitudinal[i] - massOffset;
+        if (position.m2Calc() < 0.) {
+          double cMinus = 0.;
+          if (position.m2Calc() > -CHECKPOS * max(1., pow2(position.e())))
+            position.e( position.pAbs() );
+          else {
+            if (massOffset.m2Calc() > 1e-6)
+              cMinus = (longitudinal[i] * massOffset
+                - sqrt(pow2(longitudinal[i] * massOffset)
+                - longitudinal[i].m2Calc() * massOffset.m2Calc()))
+                / massOffset.m2Calc();
+            else cMinus = 0.5 * longitudinal[i].m2Calc()
+                   / (longitudinal[i] * massOffset);
+            position = longitudinal[i] - cMinus * massOffset;
+          }
+        }
+        longitudinal[i] = position;
+      }
+    }
+  }
+
+  // Smearing in transverse space.
+  vector<Vec4> spaceTime;
+  for (int i = 0; i < vertexSize; ++i) {
+    Vec4 positionTot = longitudinal[i];
+    if (smearOn) {
+
+      if (!isClosed && (i == 0 || i == vertexSize -1)) {
+        spaceTime.push_back(positionTot);
+        continue;
+      }
+      Vec4 eX, eY;
+      int iPosIn = orderedVertices[i].iRegPos;
+      int iNegIn = orderedVertices[i].iRegNeg;
+
+      // Find two spacelike transverse four-vector directions.
+      if (iPosIn == -1 && iNegIn == -1) {
+        eX = eXFinalReg;
+        eY = eYFinalReg;
+      } else{
+        StringRegion currentRegion = system.region(iPosIn, iNegIn);
+        eX = currentRegion.eX;
+        eY = currentRegion.eY;
+      }
+
+      // Smearing calculated randomly following a gaussian.
+      for (int iTry = 0; ; ++iTry) {
+        double transX = rndmPtr -> gauss();
+        double transY = rndmPtr -> gauss();
+        Vec4 transversePos = xySmear * (transX * eX + transY * eY) / sqrt(2.);
+        positionTot = transversePos + longitudinal[i];
+
+        // Keep proper or actual time constant when including the smearing.
+        if (constantTau) {
+          double newtime = sqrt(longitudinal[i].m2Calc()
+            + positionTot.pAbs2());
+          positionTot.e(newtime);
+          break;
+        } else {
+          if (positionTot.m2Calc() >= 0.) break;
+          if (iTry == 100) {
+            positionTot = longitudinal[i];
+            break;
+          }
+        }
+      }
+    }
+    spaceTime.push_back(positionTot);
+  }
+
+  // Space-time location of the breakup points in two initial junction legs.
+  vector<Vec4> legMinSpaceTime, legMidSpaceTime;
+  if (hasJunction) {
+    int hadSoFar = 0;
+    // Loop over the two lowest-energy legs.
+    for (int legLoop = 0; legLoop < 2; ++legLoop) {
+      vector<StringVertex> legVertices = (legLoop == 0) ? legMinVertices
+        : legMidVertices;
+      StringSystem& systemNow =  (legLoop == 0) ? systemMin : systemMid;
+      vector<int> iPartonNow = (legLoop == 0) ? iPartonMinLeg : iPartonMidLeg;
+      vector<Vec4> longitudinalPos;
+      if (int(legVertices.size()) < 2) continue;
+
+      // Loop over all breakup points of the specific leg.
+      for (int i = 0; i < int(legVertices.size()); i++) {
+
+        // Obtain longitudinal space-time location of breakup vertices.
+        int iPosIn = legVertices[i].iRegPos;
+        int iNegIn = legVertices[i].iRegNeg;
+        double xPosIn = legVertices[i].xRegPos;
+        double xNegIn = legVertices[i].xRegNeg;
+        StringRegion currentRegion = systemNow.region( iPosIn, iNegIn);
+        Vec4 gluonOffset = currentRegion.gluonOffsetJRF( iPartonNow, event,
+          iPosIn, iNegIn, MtoJRF) / kappaVtx;
+        Vec4 pRegion = (currentRegion.pPos + currentRegion.pNeg) / kappaVtx;
+        Vec4 noOffset = (xPosIn * currentRegion.pPos
+          + xNegIn * currentRegion.pNeg) / kappaVtx;
+
+        // Correction added to the space-time location of breakup points
+        // if negative squared invariant time.
+        if (noOffset.m2Calc() < 0.) {
+          double cPlus = (-pRegion * noOffset + sqrt( pow2(pRegion * noOffset)
+            - pRegion.m2Calc() * noOffset.m2Calc())) / pRegion.m2Calc();
+          Vec4 pCorrection = noOffset + cPlus * pRegion;
+          Vec4 fracCorrection;
+          bool betterFrac = false;
+          if (xPosIn < 0. || xPosIn > 1. || xNegIn < 0. || xNegIn > 1.) {
+            xPosIn = max( 0., min( 1., xPosIn) );
+            xNegIn = max( 0., min( 1., xNegIn) );
+            fracCorrection = (xPosIn * currentRegion.pPos
+              + xNegIn * currentRegion.pNeg) / kappaVtx;
+            betterFrac = abs(noOffset.e() - pCorrection.e())
+                       > abs(noOffset.e() - fracCorrection.e());
+          }
+          noOffset = (betterFrac) ? fracCorrection : pCorrection;
+        }
+        // Store vertex and check positivity.
+        Vec4 fromBreaks = noOffset + gluonOffset;
+        longitudinalPos.push_back(fromBreaks);
+        if (fromBreaks.m2Calc() < -CHECKPOS * max(1., pow2(fromBreaks.e())))
+          infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
+            "negative tau^2 from breaks");
+      }
+
+      // Longitudinal offset of breakup points for massive quarks.
+      for (int i = 0; i < int(legVertices.size()); ++i) {
+        int iPosIn = legVertices[i].iRegPos;
+        int iNegIn = legVertices[i].iRegNeg;
+        StringRegion currentRegion = systemNow.region( iPosIn, iNegIn);
+        int id = event[ iPartonNow.front() ].idAbs();
+
+        if ( currentRegion.massiveOffset( iPosIn, iNegIn, systemNow.iMax,
+          id, 2, mc, mb) ) {
+          Vec4 v1, v2;
+          // Initial endpoint correction.
+          if (i == 0 && (id == 4 || id == 5)) {
+            int iPosIn2 = legVertices[i + 1].iRegPos;
+            int iNegIn2 = legVertices[i + 1].iRegNeg;
+            v2 = longitudinalPos[i + 1];
+            double mHad =  event[hadSoFar + event.size() - hadrons.size()].m();
+            double pPosMass = particleDataPtr->m0(id);
+            if (iPosIn == iPosIn2 && iNegIn == iNegIn2) {
+              v1 = longitudinalPos[i];
+              longitudinalPos[i] = v1 + (pPosMass / mHad) * (v2 - v1);
+              if (longitudinalPos[i].m2Calc()
+                < -CHECKPOS * max(1., pow2(longitudinalPos[i].e())))
+                infoPtr->errorMsg("Warning in StringFragmentation::setVertices"
+                  ": negative tau^2 for endpoint massive correction");
+            } else {
+              StringRegion region2 = systemNow.region( iPosIn2, iNegIn2);
+              Vec4 gluonOffset =  currentRegion.gluonOffsetJRF( iPartonNow,
+              event, iPosIn2, iNegIn2, MtoJRF);
+              v1 = (region2.pPos + gluonOffset) / kappaVtx;
+              longitudinalPos[i] = v1 + (pPosMass / mHad) * (v2 - v1);
+              if (longitudinalPos[i].m2Calc()
+                < -CHECKPOS * max(1., pow2(longitudinalPos[i].e())))
+                infoPtr->errorMsg("Warning in StringFragmentation::setVertices"
+                  ": negative tau^2 for endpoint massive correction");
+              continue;
+            }
+          }
+
+          // Add mass offset for all breakup points.
+          Vec4 massOffset = currentRegion.massOffset / kappaVtx;
+          Vec4 position = longitudinalPos[i] - massOffset;
+
+          // Correction for non-physical  situations.
+          if (position.m2Calc() < 0.) {
+            double cMinus = 0.;
+            if (position.m2Calc() > -CHECKPOS * max(1., pow2(position.e())))
+              position.e( position.pAbs() );
+            else {
+              if (massOffset.m2Calc() > 1e-6)
+                cMinus = (longitudinalPos[i] * massOffset
+                  - sqrt(pow2(longitudinalPos[i] * massOffset)
+                  - longitudinalPos[i].m2Calc() * massOffset.m2Calc()))
+                  / massOffset.m2Calc();
+              else cMinus = 0.5 * longitudinalPos[i].m2Calc()
+                     / (longitudinalPos[i] * massOffset);
+              position = longitudinalPos[i] - cMinus * massOffset;
+            }
+          }
+          longitudinalPos[i] = position;
+        }
+      }
+
+      for (int i = 0; i < int(legVertices.size()); ++i) {
+        Vec4 positionTot = longitudinalPos[i];
+
+        // Smearing in transverse space.
+        if (smearOn) {
+          int iPosIn = legVertices[i].iRegPos;
+          int iNegIn = legVertices[i].iRegNeg;
+          StringRegion currentRegion = systemNow.region( iPosIn, iNegIn);
+          Vec4 eX = currentRegion.eX;
+          Vec4 eY = currentRegion.eY;
+          for (int iTry = 0; ; ++iTry) {
+            double transX = rndmPtr->gauss();
+            double transY = rndmPtr->gauss();
+            Vec4 transversePos = xySmear * (transX * eX + transY * eY)
+              / sqrt(2.);
+            positionTot = transversePos + longitudinalPos[i];
+
+            // Keep proper or actual time constant when including the smearing.
+            if (constantTau) {
+              double newtime = sqrt( longitudinalPos[i].m2Calc()
+                +  positionTot.pAbs2());
+              positionTot.e(newtime);
+              break;
+            } else {
+              if (positionTot.m2Calc() >= 0.) break;
+              if (iTry == 100) {
+                positionTot = longitudinalPos[i];
+                break;
+              }
+            }
+          }
+        }
+
+        // Boost from the rest frame of the junction to the original frame.
+        positionTot.rotbst(MfromJRF);
+
+        // Recalculate time to compensate for numerical precision loss
+        // in iterative calculation of MfromJRF. Store final result.
+        if (positionTot.m2Calc() < 0.)
+          positionTot.e( positionTot.pAbs() );
+        if (legLoop == 0) legMinSpaceTime.push_back(positionTot);
+        else legMidSpaceTime.push_back(positionTot);
+
+      // End of loops over all breakup point of two lowest-energy legs.
+      }
+      hadSoFar = hadSoFar + legVertices.size() - 1;
+    }
+  }
+
+  // Calculate hadron production points of the two initial junction legs.
+  if (hasJunction) {
+    int hadSoFar = 0;
+
+    // Loop over the two lowest-energy legs.
+    for (int legLoop = 0; legLoop < 2; legLoop++) {
+      vector<Vec4>& finalLocation = (legLoop == 0) ? legMinSpaceTime
+        : legMidSpaceTime;
+      vector<int> iPartonNow = (legLoop == 0) ? iPartonMinLeg : iPartonMidLeg;
+      int id =  event[iPartonNow.front()].idAbs();
+
+      // Calculate hadron production points from breakup vertices
+      // using one of the three definitions.
+      for (int i = 0; i < int(finalLocation.size()) - 1; ++i) {
+        Vec4 middlePoint =  0.5 * (finalLocation[i] + finalLocation[i + 1]);
+        int iHad = i + hadSoFar + event.size() - hadrons.size();
+        Vec4 pHad = event[iHad].p();
+        Vec4 prodPoints = Vec4( 0., 0., 0., 0.);
+
+        // Reduced oscillation period if system contains massive quarks.
+        double mHad = event[iHad].m();
+        double redOsc = (i == 0 && (id == 4 || id == 5))
+           ? 1. - pow2(particleDataPtr->m0(id) / mHad) : 1.;
+
+        // Hadron production points calculation depending on definition.
+        if (hadronVertex == 0) prodPoints = middlePoint;
+        else if (hadronVertex == 1)
+          prodPoints = middlePoint + 0.5 * redOsc * pHad / kappaVtx;
+        else {
+          prodPoints = middlePoint - 0.5 * redOsc * pHad / kappaVtx;
+          if (prodPoints.m2Calc() < 0.) {
+            double midpProd = redOsc * middlePoint * pHad;
+            double tau0fac = 2. * (midpProd - sqrt( pow2(midpProd)
+              - middlePoint.m2Calc() * pow2(redOsc * mHad)))
+              / pow2(redOsc * mHad);
+            prodPoints = middlePoint - 0.5 * tau0fac * redOsc * pHad
+              / kappaVtx;
+          }
+        }
+        event[iHad].vProd( event[iHad].vProd() + prodPoints * FM2MM );
+      }
+      // End of the two legs loop. Number of hadrons with stored vertices.
+      hadSoFar = hadSoFar + finalLocation.size() - 1;
+    }
+  }
+
+  // Normal string system or last leg: calculate hadron production points
+  // from breakup vertices using one of the three definitions.
+  for (int i = 0; i < int(spaceTime.size()) - 1; ++i) {
+    Vec4 middlePoint = 0.5 * (spaceTime[i] + spaceTime[i + 1]);
+    int iHad = i + iHadJunc + event.size() - hadrons.size();
+    Vec4 pHad = event[iHad].p();
+    Vec4 prodPoints = Vec4( 0., 0., 0., 0.);
+
+    // Reduced oscillation period if system contains massive quarks.
+    double redOsc = 1.;
+    double mHad = event[iHad].m();
+    if (i == 0 && (id1 == 4 || id1 == 5))
+      redOsc = 1. - pow2( particleDataPtr->m0(id1) / mHad);
+    if (i == int(spaceTime.size()) - 1 && (id2 == 4 || id2 == 5))
+      redOsc = 1. - pow2( particleDataPtr->m0(id2) / mHad);
+
+    // Hadron production points calculation depending on definition.
+    if (hadronVertex == 0) prodPoints = middlePoint;
+    else if (hadronVertex == 1)
+      prodPoints = middlePoint + 0.5 * redOsc * pHad / kappaVtx;
+    else {
+      prodPoints = middlePoint - 0.5 * redOsc * pHad / kappaVtx;
+      if (prodPoints.m2Calc() < 0.) {
+        double midpProd = redOsc * middlePoint * pHad;
+        double tau0fac = 2. * ( midpProd - sqrt( pow2(midpProd)
+          - middlePoint.m2Calc() * pow2(redOsc * mHad))) / pow2(redOsc * mHad);
+        prodPoints = middlePoint - 0.5 * tau0fac *  redOsc * pHad / kappaVtx;
+      }
+    }
+    event[iHad].vProd( event[iHad].vProd() + prodPoints * FM2MM );
+  }
+
+}
+
 //--------------------------------------------------------------------------
 
 // Produce the final two partons to complete the system.
 
-bool StringFragmentation::finalTwo(bool fromPos, Event& event, bool usedPosJun,
-  bool usedNegJun, double nNSP) {
+bool StringFragmentation::finalTwo(bool fromPos, Event& event,
+  bool usedPosJun, bool usedNegJun, double nNSP) {
 
   // Check whether we went too far in p+-.
   if (pRem.e() < 0.  || w2Rem < 0. || (hadrons.size() > 0
@@ -1039,10 +1571,67 @@ bool StringFragmentation::finalTwo(bool fromPos, Event& event, bool usedPosJun,
   Vec4 pHadNeg = region.pHad( (xeNeg - xpzPos) *  xPosRem,
     (xeNeg + xpzPos) *  xNegRem, negEnd.pxHad, negEnd.pyHad);
 
+  // Project pHadPos momentum fraction on the positive region
+  // to obtain breakup vertices with respect to that region.
+  if (setVertices) {
+    StringRegion posRegion = system.region( posEnd.iPosOld, posEnd.iNegOld);
+    posRegion.project(pHadPos);
+    double xFromPosPos = posEnd.xPosOld - posRegion.xPos();
+    double xFromPosNeg = posEnd.xNegOld + posRegion.xNeg();
+
+    // Same, but projecting pHadNeg fractions on the negative region.
+    StringRegion negRegion = system.region( negEnd.iPosOld, negEnd.iNegOld);
+    negRegion.project(pHadNeg);
+    double xFromNegPos = negEnd.xPosOld + negRegion.xPos();
+    double xFromNegNeg = negEnd.xNegOld - negRegion.xNeg();
+
+    // Store energy-momentum coordinates for the final breakup vertex.
+    // If projections give valid results, store them as breakup fractions.
+    if (xFromPosPos > 0. && xFromPosPos < 1. && xFromPosNeg > 0.
+      && xFromPosNeg < 1.) stringVertices.push_back( StringVertex(
+      fromPos, posEnd.iPosOld, posEnd.iNegOld, xFromPosPos, xFromPosNeg) );
+    else if (xFromNegPos > 0. && xFromNegPos < 1. && xFromNegNeg > 0.
+      && xFromNegNeg < 1.) stringVertices.push_back( StringVertex(
+      fromPos, negEnd.iPosOld, negEnd.iNegOld, xFromNegPos, xFromNegNeg) );
+
+    // If above procedures do not work, calculate a new zHad and use
+    // the kinematicsHadron method, first from the positive end.
+    else {
+      double gammaPosOld = posEnd.GammaOld;
+      double gammaNegOld = negEnd.GammaOld;
+      double zNewReg = 0.;
+      if (posEnd.hadSoFar == 0) zNewReg = wT2Rem / (wT2Rem + gammaNegOld);
+      else zNewReg = 0.5 * ( sqrt( pow2(wT2Rem + gammaNegOld - gammaPosOld)
+        + 4. * wT2Rem * gammaPosOld) - (wT2Rem + gammaNegOld - gammaPosOld) )
+        / gammaPosOld;
+      double zHad = (xePos + xpzPos) * zNewReg;
+      Vec4 proof = posEnd.kinematicsHadron(system, stringVertices, true, zHad);
+
+      // Try negative-end kinematicsHadron method if positive-end one failed.
+      if (proof.e() < -1e-8) {
+        if (negEnd.hadSoFar == 0) zNewReg = wT2Rem / (wT2Rem + gammaPosOld);
+        else zNewReg = 0.5 * ( sqrt( pow2(wT2Rem + gammaPosOld - gammaNegOld)
+          + 4. * wT2Rem * gammaNegOld) - (wT2Rem + gammaPosOld - gammaNegOld) )
+          / gammaNegOld;
+        zHad = (xeNeg + xpzPos) * zNewReg;
+        proof = negEnd.kinematicsHadron( system, stringVertices, true, zHad);
+
+        // As last resort use the final region created by the finalTwo method.
+        if (proof.e() < -1.) {
+          pPosFinalReg = region.pPos;
+          pNegFinalReg = region.pNeg;
+          eXFinalReg = region.eX;
+          eYFinalReg = region.eY;
+          stringVertices.push_back( StringVertex( true, -1, -1,
+            1. - (xePos + xpzPos) * xPosRem, (xePos - xpzPos) * xNegRem) );
+        }
+      }
+    }
+  }
+
   // Update status codes for junction baryons.
   int statusHadPos = 83;
   int statusHadNeg = 84;
-
   if (fromPos) {
     if (abs(posEnd.idHad) > 1000 && abs(posEnd.idHad) < 10000) {
       if (event[iPos].statusAbs() == 74 && !usedPosJun)  {
@@ -1059,14 +1648,14 @@ bool StringFragmentation::finalTwo(bool fromPos, Event& event, bool usedPosJun,
   } else {
     if (abs(negEnd.idHad) > 1000 && abs(negEnd.idHad) < 10000) {
         if (!usedNegJun && (event[iNeg].statusAbs() == 74 || hasJunction)) {
-          statusHadNeg = 87;
+          statusHadNeg = 88;
           usedNegJun = true;
         }
       }
     if (abs(idHad) > 1000 && abs(idHad) < 10000) {
       if ((!usedNegJun && (event[iNeg].statusAbs() == 74 || hasJunction))
           || (!usedPosJun && event[iPos].statusAbs() == 74)) {
-        statusHadPos = 88;
+        statusHadPos = 87;
       }
     }
   }
@@ -1250,7 +1839,8 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   }
 
   // Iterate from system rest frame towards the junction rest frame (JRF).
-  RotBstMatrix MtoJRF, Mstep;
+  RotBstMatrix Mstep;
+  MtoJRF.reset();
   MtoJRF.bstback(pSum);
   Vec4 pWTinJRF[3];
   int iter = 0;
@@ -1305,7 +1895,7 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   }
 
   // Opposite operation: boost from JRF to original system.
-  RotBstMatrix MfromJRF = MtoJRF;
+  MfromJRF = MtoJRF;
   MfromJRF.invert();
 
   // Sum leg four-momenta in original frame and in JRF.
@@ -1319,11 +1909,11 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   }
 
   // Pick the two legs with lowest energy in JRF.
-  int legMin = (pInJRF[0].e() < pInJRF[1].e()) ? 0 : 1;
+  legMin = (pInJRF[0].e() < pInJRF[1].e()) ? 0 : 1;
   int legMax = 1 - legMin;
   if (pInJRF[2].e() < min(pInJRF[0].e(), pInJRF[1].e()) ) legMin = 2;
   else if (pInJRF[2].e() > max(pInJRF[0].e(), pInJRF[1].e()) ) legMax = 2;
-  int legMid = 3 - legMin - legMax;
+  legMid = 3 - legMin - legMax;
 
   // Save info on which status codes belong with the three legs.
   int iJunction = (-iParton[0]) / 10 - 1;
@@ -1334,13 +1924,17 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   // Temporarily copy the partons on the low-energy legs, into the JRF,
   // in reverse order, so (anti)quark leg end first.
   vector<int> iPartonMin;
+  iPartonMinLeg.clear();
   for (int i = legEnd[legMin]; i >= legBeg[legMin]; --i) {
+    if (setVertices) iPartonMinLeg.push_back( iParton[i] );
     int iNew = event.append( event[ iParton[i] ] );
     event[iNew].rotbst(MtoJRF);
     iPartonMin.push_back( iNew );
   }
   vector<int> iPartonMid;
+  iPartonMidLeg.clear();
   for (int i = legEnd[legMid]; i >= legBeg[legMid]; --i) {
+    if (setVertices) iPartonMidLeg.push_back( iParton[i] );
     int iNew = event.append( event[ iParton[i] ] );
     event[iNew].rotbst(MtoJRF);
     iPartonMid.push_back( iNew );
@@ -1408,21 +2002,25 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
 
         // Inner fallback loop, when a diquark comes in to junction.
         double eUsed = 0.;
+        vector<StringVertex> junctionVertices;
         for ( int iTryInner = 0; ; ++iTryInner) {
+
           if (iTryInner > 2 * NTRYJNMATCH) {
             infoPtr->errorMsg("Error in StringFragmentation::fragment"
               "ToJunction: caught in junction flavour loop");
             event.popBack( iPartonMin.size() + iPartonMid.size() );
             return false;
           }
+
           bool needBaryon = (abs(idPos) > 10 && iTryInner > NTRYJNMATCH);
           double eExtra   = (iTryInner > NTRYJNMATCH) ? EEXTRAJNMATCH : 0.;
 
           // Set up two string ends, and begin fragmentation loop.
-          setStartEnds(idPos, idOppose, systemNow);
+          setStartEnds(idPos, idOppose, systemNow, legNow);
           eUsed = 0.;
           int nHadrons = 0;
           bool noNegE = true;
+
           // Keep track of hadron momentum.
           Vec4 hadMom;
           for ( ; ; ++nHadrons) {
@@ -1430,9 +2028,10 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
             // The FlavourRope treatment changes the fragmentation parameters.
             if (doFlavRope) {
               if (!flavRopePtr->doChangeFragPar(flavSelPtr, zSelPtr, pTSelPtr,
-                hadMom.m2Calc(), iParton) ) infoPtr->errorMsg("Error in "
-                  "StringFragmentation::fragmentToJunction: FlavourRope "
-                  "failed to change fragmentation parameters.");
+                hadMom.m2Calc(), (legLoop == 0 ? iPartonMin : iPartonMid ),
+                idPos )) infoPtr->errorMsg("Error in StringFragmentation::"
+                "fragmentToJunction: FlavourRope failed to change "
+                "fragmentation parameters.");
             }
 
             // Possibility for a user to change the fragmentation parameters.
@@ -1446,7 +2045,7 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
 
             // Construct trial hadron from positive end.
             posEnd.newHadron();
-            Vec4 pHad = posEnd.kinematicsHadron(systemNow);
+            Vec4 pHad = posEnd.kinematicsHadron(systemNow, junctionVertices);
 
             // Negative energy signals failure in construction.
             if (pHad.e() < 0. ) { noNegE = false; break; }
@@ -1455,7 +2054,10 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
             // Exceptions: small systems, and/or with diquark end.
             bool delayedBreak = false;
             if (eUsed + pHad.e() + eExtra > eInJRF) {
-              if (nHadrons > 0 || !needBaryon) break;
+              if (nHadrons > 0 || !needBaryon) {
+                junctionVertices.pop_back();
+                break;
+              }
               delayedBreak = true;
             }
 
@@ -1482,6 +2084,9 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
           // End of fragmentation loop. Inner loopback if ends on a diquark.
           if ( noNegE && abs(posEnd.flavOld.id) < 10 ) break;
           hadrons.popBack(nHadrons);
+          junctionVertices.clear();
+          if (legNow == legMin) legMinVertices.clear();
+          else legMidVertices.clear();
         }
 
         // End of one-leg fragmentation. Store end quark and remnant energy.
@@ -1492,6 +2097,15 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
           idMid = posEnd.flavOld.id;
           eLeftMid = eInJRF - eUsed;
         }
+
+        // Store breakup vertices in two different vectors depending on leg.
+        if (setVertices) {
+          for (int i = 0; i < int(junctionVertices.size()); ++i) {
+            if (legNow == legMin)
+                 legMinVertices.push_back( junctionVertices[i]);
+            else legMidVertices.push_back( junctionVertices[i]);
+          }
+        }
       }
 
       // End of both-leg fragmentation.
@@ -1501,11 +2115,14 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
         || ( min( eLeftMin, eLeftMid) < eBothLeftJunction
         && max( eLeftMin, eLeftMid) < eTrial ) ) break;
       hadrons.clear();
+      legMinVertices.clear();
+      legMidVertices.clear();
     }
 
     // Boost hadrons away from the JRF to the original frame.
     for (int i = 0; i < hadrons.size(); ++i) {
       hadrons[i].rotbst(MfromJRF);
+
       // Recalculate energy to compensate for numerical precision loss
       // in iterative calculation of MfromJRF.
       hadrons[i].e( hadrons[i].eCalc() );
@@ -1519,6 +2136,8 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
     if (iTryOuter >  NTRYJNMATCH || (pDiquark.mCalc() > MDIQUARKMIN
       && m2Left > eMinLeftJunction * pInLeg[legMax].e()) ) break;
     hadrons.clear();
+    legMinVertices.clear();
+    legMidVertices.clear();
     pJunctionHadrons = 0.;
   }
 
@@ -1527,13 +2146,12 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
 
   // Construct and store an effective diquark string end from the
   // two remnant quark ends, for temporary usage.
-  int    idDiquark = flavSelPtr->makeDiquark( idMin, idMid);
-  double mDiquark  = pDiquark.mCalc();
-  int    iDiquark  = event.append( idDiquark, 78, 0, 0, 0, 0, 0, 0,
-    pDiquark, mDiquark);
+  idDiquark = flavSelPtr->makeDiquark( idMin, idMid);
+  int iDiquark  = event.append( idDiquark, 78, 0, 0, 0, 0, 0, 0,
+    pDiquark, pDiquark.mCalc());
 
   // Find the partons on the last leg, again in reverse order.
-  vector<int> iPartonMax;
+  iPartonMax.clear();
   for (int i = legEnd[legMax]; i >= legBeg[legMax]; --i)
     iPartonMax.push_back( iParton[i] );
   iPartonMax.push_back( iDiquark );
@@ -1827,7 +2445,7 @@ double StringFragmentation::nearStringPieces(StringEnd end,
   double pT2Had     = pHad.pT2();
   double nStringEff = double(nString) / (1.0 + pT2Had / pT20);
 
-  return (nStringEff+1.0);
+  return nStringEff + 1.0;
 }
 
 //==========================================================================

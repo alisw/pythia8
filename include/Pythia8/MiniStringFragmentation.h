@@ -1,6 +1,6 @@
 // MiniStringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the class for "cluster" fragmentation.
@@ -62,8 +62,9 @@ private:
   StringZ*      zSelPtr;
 
   // Initialization data, read from Settings.
-  int    nTryMass;
-  double bLund;
+  bool   setVertices, constantTau, smearOn;
+  int    nTryMass, hadronVertex;
+  double bLund, xySmear, kappaVtx, mc, mb;
 
   // Data members.
   bool   isClosed;
@@ -72,11 +73,18 @@ private:
   vector<int> iParton;
   FlavContainer flav1, flav2;
 
+  // Information from the fragmentation process.
+  vector<StringVertex> ministringVertices;
+
   // Attempt to produce two particles from a cluster.
   bool ministring2two( int nTry, Event& event);
 
   // Attempt to produce one particle from a cluster.
   bool ministring2one( int iSub, ColConfig& colConfig, Event& event);
+
+  // Set hadron production points in space-time picture.
+  void setHadronVertices(Event& event, StringRegion& region,
+    int iFirst, int iLast);
 
 };
 

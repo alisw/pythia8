@@ -78,7 +78,7 @@ by the dynamically calculated values.
 The resonance-width calculation has to be encoded in a new class. 
 The relevant code could either be put before the main program in the 
 same file, or be stored separately, e.g. in a matched pair 
-of <code>.h</code> and <code>.cc</code> files. The latter may be more 
+of <code>.h</code> and <code>.cc</code> files. The latter may be  
 convenient, in particular if the calculations are lengthy, or 
 likely to be used in many different runs, but of course requires 
 that these additional files are correctly compiled and linked. 
@@ -134,7 +134,7 @@ dangling inside the <code>Pythia</code> object you gave it in to,
 if that still exists. 
  
 <a name="anchor1"></a>
-<p/><strong>void ResonanceWidths::initConstants() &nbsp;</strong> <br/>
+<p/><strong> void ResonanceWidths::initConstants() &nbsp;</strong> <br/>
 is called once during initialization, and can then be used to set up 
 further parameters specific to this particle species, such as couplings, 
 and perform calculations that need not be repeated for each new event, 
@@ -142,7 +142,7 @@ thereby saving time. This method needs not be implemented.
    
  
 <a name="anchor2"></a>
-<p/><strong>void ResonanceWidths::calcPreFac(bool calledFromInit = false) &nbsp;</strong> <br/>
+<p/><strong> void ResonanceWidths::calcPreFac(bool calledFromInit = false) &nbsp;</strong> <br/>
 is called once a mass has been chosen for the resonance, but before 
 a specific final state is considered. This routine can therefore 
 be used to perform calculations that otherwise might have to be repeated 
@@ -162,7 +162,7 @@ but during the run it will not (in general).
    
  
 <a name="anchor3"></a>
-<p/><strong>void ResonanceWidths::calcWidth(bool calledFromInit = false) &nbsp;</strong> <br/>
+<p/><strong> void ResonanceWidths::calcWidth(bool calledFromInit = false) &nbsp;</strong> <br/>
 is the key method for width calculations and returns a partial width 
 value, as further described below. It is called for a specific 
 final state, typically in a loop over all allowed final states, 
@@ -201,7 +201,7 @@ expressed in GeV.
    
  
 <a name="anchor4"></a>
-<p/><strong>double ResonanceWidths::widthChan( double mHat, int idAbs1, int idAbs2) &nbsp;</strong> <br/>
+<p/><strong> double ResonanceWidths::widthChan( double mHat, int idAbs1, int idAbs2) &nbsp;</strong> <br/>
 is not normally used. In PYTHIA the only exception is Higgs decays, 
 where it is used to define the width (except for colour factors) 
 associated with a specific incoming/outgoing state. It allows the 
@@ -209,7 +209,7 @@ results of some loop expressions to be pretabulated.
    
  
 <a name="anchor5"></a>
-<p/><strong>bool ResonanceWidths::allowCalc() &nbsp;</strong> <br/>
+<p/><strong> bool ResonanceWidths::allowCalc() &nbsp;</strong> <br/>
 can normally be left dummy (and then always returns <code>true</code>) but 
 can optionally be used to determine whether to force dynamical width 
 calculation to be switched off (return <code>false</code>). 
@@ -221,7 +221,7 @@ given precedence over the internal width calculation.
    
  
 <a name="anchor6"></a>
-<p/><strong>bool ResonanceWidths::initBSM() &nbsp;</strong> <br/>
+<p/><strong> bool ResonanceWidths::initBSM() &nbsp;</strong> <br/>
 can normally be left dummy, but for advanced implementations it 
 provides a possibility to initialize data members of the derived class 
 at a very early stage during initialization, before any of the other 
@@ -270,4 +270,4 @@ to <code>include/ResonanceWidths.h</code> and
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

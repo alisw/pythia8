@@ -1,6 +1,6 @@
 // Settings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the Settings class.
@@ -58,10 +58,11 @@ bool Settings::init(string startFile, bool append) {
     string line;
     while ( getline(is, line) ) {
 
-      // Get first word of a line, to interpret it as tag.
+      // Get first word of a line, to interpret it as tag. Remove "more".
       istringstream getfirst(line);
       string tag;
       getfirst >> tag;
+      if (tag.find("more") != string::npos) tag.erase( tag.find("more"), 4);
 
       // Skip ahead if not interesting. Only look for new files in startfile.
       if (tag != "<flag" && tag != "<flagfix" && tag != "<mode"
@@ -218,10 +219,11 @@ bool Settings::init(istream& is, bool append) {
   string line;
   while ( getline(is, line) ) {
 
-    // Get first word of a line, to interpret it as tag.
+    // Get first word of a line, to interpret it as tag. Remove "more".
     istringstream getfirst(line);
     string tag;
     getfirst >> tag;
+    if (tag.find("more") != string::npos) tag.erase( tag.find("more"), 4);
 
     // Skip ahead if not interesting. Only look for new files in startfile.
     if (tag != "<flag" && tag != "<flagfix" && tag != "<mode"
@@ -379,8 +381,8 @@ bool Settings::readString(string line, bool warn) {
   if (!isalpha(lineNow[firstChar])) return true;
 
   // Replace an equal sign by a blank to make parsing simpler, except after {.
-  size_t iBrace = (line.find_first_of("{") == string::npos) ? line.size()
-    : line.find_first_of("{");
+  size_t iBrace = (lineNow.find_first_of("{") == string::npos) ? lineNow.size()
+    : lineNow.find_first_of("{");
   while (lineNow.find("=") != string::npos
     && lineNow.find_first_of("=") < iBrace) {
     int firstEqual = lineNow.find_first_of("=");

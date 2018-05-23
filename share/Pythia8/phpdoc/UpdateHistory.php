@@ -38,6 +38,256 @@ but this should only affect a small part of the user code.
  
 <ul> 
  
+<li>8.235: 27 March 2018 
+<ul> 
+ 
+<li>Up until now, PYTHIA has been licenced under GNU GPL v2 or later. 
+This is extended so that alternatively any later version can be used, 
+specifically version 3. The MCnet GUIDELINES are updated accordingly, 
+as are many file headers. Thanks to Christophe Delaere.</li> 
+ 
+<li>The machinery for total, elastic and diffractive cross sections 
+has been rewritten and expanded. 
+<ul> 
+<li>The ABMST model [<a href="Bibliography.php#refApp16" target="page">App16</a>] has been introduced, and extended 
+from total, elastic and single diffraction to also include double and 
+central diffraction.</li> 
+<li>The RPP 2016 parametrization [<a href="Bibliography.php#refPat16" target="page">Pat16</a>] for total and 
+elastic cross sections has been introduced.</li> 
+<li>The set-it-yourself machinery has been extended and systematized.</li> 
+<li>The descriptions on the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='TotalCrossSections.php?filepath=".$filepath."' target='page'>";?>TotalCrossSections</a> and the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='Diffraction.php?filepath=".$filepath."' target='page'>";?>Diffraction</a> webpages have been regrouped. 
+The former now describes both integrated and differential cross sections 
+of all scenarios, whereas the latter describes parameters related to 
+the hadronization of diffractive systems, and additionally the machinery 
+for hard diffraction.</li> 
+<li>In the process of this regrouping, several <code>Diffraction:xxx</code> 
+parameters have been renamed <code>SigmaDiffractive:xxx</code>. The 
+most prominent example is <code>PomFlux</code>, but the largest group is 
+the MBR parameters set.</li> 
+<li>The phase space generation machinery has been rewritten to allow for 
+the extended set of models, to be more general (at the expense of speed). 
+Also the cross section code itself has been restructured.</li> 
+</ul></li> 
+ 
+<li>A scenario for hard diffraction with <i>gamma</i> beams has been 
+introduced, applicable for both <i>gamma + gamma</i> and 
+<i>gamma + p</i> processes. Only a resolved photon, currently 
+always associated with a virtual <i>rho</i> state, is assumed to 
+contain a Pomeron flux. See further in the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='Diffraction.php?filepath=".$filepath."' target='page'>";?>Diffraction</a> description. The framework 
+can be applied also for photoproduction with lepton beams.</li> 
+ 
+<li>A new machinery has been introduced to handle soft diffraction in 
+<i>gamma-p</i> and <i>gamma-gamma</i> collisions, based on VMD 
+(Vector Meson Dominance) states assumed present in a photon beams. 
+In detail, diffractive cross sections for <i>gamma + p</i> and 
+<i>gamma + gamma</i> have been introduced, and thus the parameter 
+<code>Photon:sigmaNDfrac</code> has been removed. VMD states have been 
+introduced as possible beam particles inside a photon beam. The 
+standard beam machinery has been extended to pick VMD states when 
+required. New methods in <code>Info.h</code> give access to the current 
+character of such states. Possibility to rescale the pion PDF has been 
+implemented, e.g. when used to represent a VMD state.</li> 
+ 
+<li>It is now possible to obtain space-time production points for hadrons 
+as predicted within the string fragmentation model, see further the 
+"Hadron Production Vertices" section of the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='HadronScattering.php?filepath=".$filepath."' target='page'>";?>Hadron Scattering</a> description. 
+Physics and code developed by Silvia Ferreres-Sol&eacute;, article in 
+preparation.</li> 
+ 
+<li>The Angantyr model for <?php $filepath = $_GET["filepath"];
+echo "<a href='HeavyIons.php?filepath=".$filepath."' target='page'>";?>Heavy Ion Collisions</a> 
+has been updated with a few extra options and new defaults. To recover old 
+results one needs to set <code>Angantyr:SASDmode = 1</code>, 
+<code>Angantyr:impactMode = 0</code>, and 
+<code>HIPDF:PomHixSupp = 4.</code>.</li> 
+ 
+<li>It is now possible to specify a given impact parameter when 
+generating minimum bias events using a new functions in the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>UserHooks</a>.</li> 
+ 
+<li>The flavour part of the rope hadronization implementation has been 
+updated. The option to always go to the highest possible SU(3) multiplet, 
+relevant when junction CR is used in addition to ropes, has been added. 
+The possibility of a simpler impact parameter model &agrave; la Buffons 
+needle [<a href="Bibliography.php#refBie16c" target="page">Bie16c</a>] has also been added.</li> 
+ 
+<li>An option is introduced to have a logarithmic parametrization for 
+the energy dependence of <i>pT0</i>, used for the cross section 
+regularization in the MPI framework. This is used as a default for 
+<i>gamma-gamma</i> collisions, with new default parameters listed in 
+the <?php $filepath = $_GET["filepath"];
+echo "<a href='Photoproduction.php?filepath=".$filepath."' target='page'>";?>Photoproduction</a> description.</li> 
+ 
+<li>A new parameter <code>ContactInteractions:etaRL</code> is introduced 
+into the differential cross section for <i>q qbar &rarr; ell+ ell-</i> 
+to distinguish a right-left contact interaction between quarks and leptons. 
+Previously, the same parameter was used for left-right and right-left 
+contact interactions. Results from prior versions of the code can be 
+reproduced only if <code>etaLR</code> and <code>etaRL</code> are set 
+equal.</li> 
+ 
+<li>A new Dark Matter production process <i>f fbar &rarr; Z' H</i> 
+has been added, with <i>Z'</i> decaying to a DM pair. Some other DM 
+processes have been modified.</li> 
+ 
+<li>It is now possible to specify the <i>a</i> and <i>&lt;z&gt;</i> 
+values of the Lund fragentation function, as an alternative to the 
+conventional <i>a</i> and <i>b</i> selection, see further in the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='Fragmentation.php?filepath=".$filepath."' target='page'>";?>Fragmentation</a> description.</li> 
+ 
+<li>The shower variations have been extended so that the calculation 
+can be made for an individual member of a PDF family, instead of 
+calculating the effect when averaged over all members.</li> 
+ 
+<li>Possibility to enhance rate of gluon branchings to charm and bottom 
+independently from light flavours. New splitting names 
+<code>isr:G2QQ:cc</code> and <code>isr:G2QQ:bb</code> are introduced 
+for initial-state showers, and <code>fsr:G2QQ:cc</code> and 
+<code>fsr:G2QQ:bb</code> for final-state ones. See further the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>User Hooks</a> documentation.</li> 
+ 
+<li>A new nuclear PDF set, EPPS16, is added.</li> 
+ 
+<li>The GKG-DPDF Fit A and Fit B (central member) diffractive PDF sets 
+have been added.</li> 
+ 
+<li>The central NNPDF 3.1 QCD NLO and NNLO fits at <i>alpha_s = 0.118</i>, 
+<code>PDF:pSet = 19</code> and <code>20</code>, have been replaced by 
+the  recent corresponding NNPDF 3.1 QCD + QED (luxqed) fits.</li> 
+ 
+<li>Updates for non-diffractive photoproduction with externally provided 
+photon flux, to fix the normalization and to solve issue with process 
+initialization when using a heavy-ion specific flux.</li> 
+ 
+<li>Updated remnant kinematics for <i>2 &rarr;1</i> processes with direct 
+photons from leptons.</li> 
+ 
+<li>A Docker container for PYTHIA 8 and DIRE can be obtained from 
+<a href="http://dire.gitlab.io/Docker/" target="_top"> 
+http://dire.gitlab.io/Docker/</a>. You will there also find some 
+Jupyter notebooks and notes e.g. how to use Rivet analyses.</li> 
+ 
+<li>An example, main93, is added, which provides an updated ROOT interface, 
+as well as options to run RIVET and output HepMC files, all steered from 
+run cards and the command line.</li> 
+ 
+<li>Updated <code>main89.cc</code> to allow use also without employing 
+matching or merging. This allows to use this main program as an option 
+to read from LHE file input and write HepMC file output. Furthermore, 
+<code>main89.cc</code> has been updated to also allow Pythia to guess 
+the hard process used for merging through the 
+<code>Merging:process = guess</code> setting. More details can be found 
+in the discussion of merging and hard process definitions under 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='CKKWLMerging.php?filepath=".$filepath."' target='page'>";?>CKKW-L Merging</a> in the manual.</li> 
+ 
+<li>A new class <code><?php $filepath = $_GET["filepath"];
+echo "<a href='Histograms.php?filepath=".$filepath."' target='page'>";?>HistPlot</a></code> 
+is introduced to generate PDF plots from the histograms of the 
+<code>Hist</code> class. More specifically, the histogram contents 
+are written on files and Python code is generated that contains 
+appropriate Matplotlib/Pyplot commands, that can then be run to 
+produce the plots. The <code>main03.cc</code>, <code>main07.cc</code> 
+and <code>main51.cc</code> programs have been modified to illustrate 
+the new setup. Histograms can now also be booked with a logarithmic 
+<i>x</i> scale. Thanks to Johannes Bellm.</li> 
+ 
+<li>New simple facility introduced in <code>PythiaStdlib</code> for 
+integrating a function by Gaussian quadrature or findig its roots. 
+In part lifted out from <code>SusyWidhtFunctions</code>.</li> 
+ 
+<li>When a particle is read in by the SLHA interface, the minimal and 
+maximal allowed masses for the Breit-Wigner distribution can be set by 
+the user but, if not, the maximal deviation from the nominal mass is 
+now set to be the smaller of five times the width and half the mass.</li> 
+ 
+<li>A bug was fixed in the Hidden Valley model to allow copies of the 
+hidden valley quark to properly shower and hadronize.</li> 
+ 
+<li>A bug fix in the <i>q g &rarr; Leptoquark l</i> process, whereby 
+the role of <i>tHat</i> and <i>uHat</i> was incorrectly swapped. 
+Thanks to Yiming Zhong and Martin Schmaltz.</li> 
+ 
+<li>A bug fix in the <i>q g &rarr; onium q</i> processes in the MPI 
+machinery, whereby it was not correctly symmetrized. Thanks to Steffen 
+Webber.</li> 
+ 
+<li>Minor updates for the print format in MPI initialization.</li> 
+ 
+<li>Corrected issue in timelike and spacelike showers that meant that 
+the inclusive cross section was changed slightly when enabling shower 
+variation.</li> 
+ 
+<li>Ensure that all matrix-element corrections in timelike showers are 
+switched off when that option is set.</li> 
+ 
+<li>Fixed beam-remnant kinematics of scattered leptons when using 
+<code>PDF:lepton=on</code> with lepton beams.</li> 
+ 
+<li>Bug fix in the Alpgen interface for parton shower matching of 
+non-QCD partons. Previously the matching would hang when encountering 
+a resonance.</li> 
+ 
+<li>A modification in the strategy to get or set particle data 
+saves having to search a map twice. New methods introduced to return 
+an iterator of an entry to the map as part of this.</li> 
+ 
+<li>New method <code>PartonSystems::popBackOut(iSys)</code> helps 
+to remove the most recently added outgoing parton of a given 
+parton system.</li> 
+ 
+<li>Handling of multiple PDFs via the LHAPDF6 interface is rewritten 
+for more flexibility. For instance, not all members of a set are 
+loaded unless uncertainty variation studies need them. 
+A destructor problem is also solved for the case that a Pythia object 
+is made global. Thanks to Florian Herrmann.</li> 
+ 
+<li>Fix for PDF setup when second incoming hadron is a pion or other 
+meson.</li> 
+ 
+<li>Les Houches events with incoming top quarks are skipped, since 
+the ISR and beam-remnant machineries are not set up to handle top.</li> 
+ 
+<li><code>partonSystems</code> vector cleared in beginning of 
+<code>Pythia::forceTimeShower</code>.</li> 
+ 
+<li>Modification in the parsing of a <code>wvec</code>, to avoid 
+the removal of the first <code>=</code> sign in the first entry.</li> 
+ 
+<li>Updated <code>examples/Makefile</code> to address recent problem 
+that libz is not properly linked if the GZIP flags do not appear at 
+the end of the compile command, experienced with recent gcc versions 
+on Ubuntu.</li> 
+ 
+<li>Fix typo in <code>bin/pythia8-config</code>.</li> 
+ 
+<li>Remove obsolete <code>--with-lhapdf6-plugin</code> option 
+in the <code>configure</code> script. Thanks to James Monk.</li> 
+ 
+<li>Minor per-nucleon mass update in <code>main70.cc</code>.</li> 
+ 
+<li>Minor fix to avoid division by zero in resonance mass selection.</li> 
+ 
+<li>New xml tags introduced to group parameters visually in conversion 
+to html, by omitting the paragraph break before a tag that contains 
+<code></code>, e.g. <code>parm</code>.</li> 
+ 
+<li>Year has been updated to 2018.</li> 
+ 
+</ul> 
+</li> 
+ 
 <li>8.230: 6 October 2017 
 <ul> 
  
@@ -131,13 +381,13 @@ low-<i>x</i> extrapolation. Thanks to Radek Zlebcik.</li>
  
 <li>Implementation of nuclear PDFs for hard processes. See 
 <code><?php $filepath = $_GET["filepath"];
-echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a></code> for more 
+echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a></code> for  
 details.</li> 
  
 <li>A new proton PDF added, which sets out to combine a NNLO behaviour 
 at high <i>x</i> values with a sensible LO low-<i>x</i> one, see 
 <code><?php $filepath = $_GET["filepath"];
-echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a></code> for more 
+echo "<a href='PDFSelection.php?filepath=".$filepath."' target='page'>";?>PDF Selection</a></code> for  
 details.</li> 
  
 <li>The <code>main51.cc</code>, <code>main52.cc</code> and 
@@ -604,7 +854,7 @@ Thanks to Inga Strumke.</li>
  
 <li>New <code>#define PYTHIA_VERSION_INTEGER 82xx</code> in 
 <code>Pythia.h</code> matches already existing 
-<code>#define PYTHIA_VERSION 8.2xx</code>, for more convenient 
+<code>#define PYTHIA_VERSION 8.2xx</code>, for  convenient 
 matching using integers. Thanks to Andrii Verbytskyi.</li> 
  
 <li>The handling of the <code>meMode</code> ranges 52 - 60 and 62 - 70 
@@ -655,7 +905,7 @@ and a paper is due to appear on arXiv shortly.</li>
 <li>When a final-state <i>g &rarr; g g</i> branching happens with 
 a massive recoiler, radiation in the recoiler direction is now 
 by default further suppressed to respect the "dead cone" effect, 
-see new switch <code>TimeShower:recoilDeadCone</code>. Furthermore 
+see new switch <code>TimeShower:recoilDeadCone</code>. Further 
 a new switch, <code>TimeShower:MEextended</code>, on by defaults, 
 attempts to guess the most relevant ME correction when the 
 correct choice is not known or implemented. Thanks to 
@@ -700,7 +950,7 @@ in one call.</li>
 hard-diffraction Pomeron fluxes.</li> 
  
 <li>Extrapolation of PDFs to small <i>x</i> values when 
-<code>PDF:extrapolate = on</code> now extended to more cases.</li> 
+<code>PDF:extrapolate = on</code> now extended to  cases.</li> 
  
 <li>New flag <code>TimeShower:QEDshowerByOther</code> allows charged 
 resonances, like the <i>W^+-</i>, to radiate photons.</li> 
@@ -754,14 +1004,14 @@ echo "<a href='SettingsScheme.php?filepath=".$filepath."' target='page'>";?>Sett
 <li>The <code>Settings::toLower</code> method used to convert a string 
 to lowercase, and also trim it from initial or trailing blanks and special 
 characters, now moved to <code>PythiaStdlib.h</code> so it can be used 
-more generally. Other code changes accordingly.</li> 
+ generally. Other code changes accordingly.</li> 
  
 <li>Remove many rarely (if ever) used <code>ostream& os = cout</code> 
 optional arguments in favour of hardcoded <code>cout</code> in the code. 
 Eliminates some redundancy of methods.</li> 
  
 <li>Rename <code>...print(...</code> methods to <code>...list(...</code> 
-to favour a more regular naming pattern.</li> 
+to favour a  regular naming pattern.</li> 
  
 <li>Minor <code>configure</code> and <code>Makefile</code> updates, 
 to address potential linking problems on some platforms for boost, gzip 
@@ -1032,7 +1282,7 @@ configuration were not calculated correctly, as an incorrect recoiler
 momentum was used, leading to a numerical small deviation from the 
 actual result. This issue has now been corrected. Some additional 
 matching and merging changes, mostly to make the reclustering in the 
-merging numerically more stable, and to make UN2LOPS possible.</li> 
+merging numerically  stable, and to make UN2LOPS possible.</li> 
  
 <li>Fix bug for the <code>Beams:newLHEFsameInit = on</code> option, 
 whereby several LHE files can be read in without new initialization 
@@ -1154,7 +1404,7 @@ are called for event topologies they are set up to handle.</li>
  
 <li>Bug fixes in partial widths of the <i>W'</i> boson. Results are 
 correct when the <i>W'</i> is a simply rescaled copy of the <i>W</i>, 
-but not for more general couplings. Thanks to Mihail Chizhov. </li> 
+but not for  general couplings. Thanks to Mihail Chizhov. </li> 
  
 <li>Minor fix in default location of PDF data files in the constructors. 
 No practical consequence since correct non-default values are used.</li> 
@@ -1276,7 +1526,7 @@ set the charm, bottom and top flavour-threshold masses used for the
 running of <i>alpha_strong</i>.</li> 
  
 <li>New option for the <code>Event::list()</code> methods allows to show 
-momenta with more decimal digits.</li> 
+momenta with  decimal digits.</li> 
  
 <li>New <code>Particle::isFinalPartonLevel()</code> method to tell whether 
 a particle belonged to the final state on the parton level of generation 
@@ -1438,7 +1688,7 @@ in <code>main46.cc</code>. Thanks to Sergei Chekanov.</li>
 <li>Change in the setup of final-state-shower colour dipoles for the 
 non-default case of no interleaving, whereby it becomes less likely 
 to pick a colourless final-state particle as recoiler. New option 
-<code>TimeShower:allowMPIdipole</code> gives more flexibility. 
+<code>TimeShower:allowMPIdipole</code> gives  flexibility. 
 Thanks to Mihoko Nojiri and Bryan Webber.</li> 
  
 <li>New options 3 and 4 for <code>TimeShower:pTdampMatch</code> 
@@ -1577,7 +1827,7 @@ and <code>README</code> are also copied here during installation.
  
 <li>A new <code>share/Pythia8/pdfdoc</code> directory collects pdf 
 documents that are linked from the <code>htmldoc</code> and 
-<code>phpdoc</code> directories. Over time it will  provide more 
+<code>phpdoc</code> directories. Over time it will  provide  
 in-depth descriptions of various physics aspects than offered in 
 the html/php-formatted documentation. In addition to the official 
 main publication and the worksheet, currently notes on LO vs. NLO 
@@ -1821,4 +2071,4 @@ to six flavours at the top mass.</li>
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

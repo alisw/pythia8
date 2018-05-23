@@ -1,6 +1,6 @@
 // main75.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This is a simple test program to study jets in Dark Matter production.
@@ -30,7 +30,7 @@ int main() {
   // Fastjet input.
   std::vector <fastjet::PseudoJet> fjInputs;
 
-  Histograms. Error counter.
+  // Histograms. Error counter.
   Hist pTj("dN/dpTj", 100, 0., 100.);
   Hist mRec("mRec", 100, 0., 1000.);
   int iErr = 0;

@@ -153,7 +153,7 @@ The choice of jet algorithm and associated parameters can be adjusted with
 the settings below. The PYTHIA8 internal <code>CellJet</code> and 
 <code>SlowJet</code> routines are used for jet finding.  See the 
 <?php $filepath = $_GET["filepath"];
-echo "<a href='EventAnalysis.php?filepath=".$filepath."' target='page'>";?>Event Analysis</a> page for more details. 
+echo "<a href='EventAnalysis.php?filepath=".$filepath."' target='page'>";?>Event Analysis</a> page for  details. 
  
 <br/><br/><table><tr><td><strong>JetMatching:jetAlgorithm  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)</td></tr></table>
 The choice of jet algorithm to use when merging against hard partons. 
@@ -502,7 +502,7 @@ for PYTHIA8.
 First, the k<sub>T</sub> jet algorithm is applied using the PYTHIA8 
 <code>SlowJet</code> implementation. The <code>useStandardR = false</code> 
 is used, ie. the <i>(delta R)^2</i> separation is defined as 
-<i>2 (cosh(delta y) - cos(delta phi))</i> rather than the more common 
+<i>2 (cosh(delta y) - cos(delta phi))</i> rather than the  common 
 <i>(delta y)^2 + delta phi)^2</i>. The <i>R</i>, <i>etaMax</i>, 
 and a <i>pTmin</i> parameters are specified. By default, <i>R = 1</i> 
 and <i>pTmin = qCut </i>. It is not recommended to change these. 
@@ -598,14 +598,14 @@ the shower-kT or kT-MLM vetoes externally by hand. This information can be
 accessed by calling the functions 
  
 <a name="anchor2"></a>
-<p/><strong>Event JetMatchingMadgraph::getWorkEventJet() &nbsp;</strong> <br/>
+<p/><strong> Event JetMatchingMadgraph::getWorkEventJet() &nbsp;</strong> <br/>
 Return the event after parton showering, without resonance decay products and 
 particles that should not be included in the jet matching, as necessary to 
 implement the vetoes in the kT-MLM scheme. 
    
  
 <a name="anchor3"></a>
-<p/><strong>Event JetMatchingMadgraph::getProcessSubset() &nbsp;</strong> <br/>
+<p/><strong> Event JetMatchingMadgraph::getProcessSubset() &nbsp;</strong> <br/>
 Return the event record containing the hard process, without resonance decay 
 products and particles that should not be included in the jet matching, as 
 necessary to implement the vetoes in the shower-kT and kT-MLM schemes. In the 
@@ -616,19 +616,19 @@ particles to shower jets.
    
  
 <a name="anchor4"></a>
-<p/><strong>bool  JetMatchingMadgraph::getExclusive() &nbsp;</strong> <br/>
+<p/><strong> bool  JetMatchingMadgraph::getExclusive() &nbsp;</strong> <br/>
 Return flag to identify if exclusive or inclusive vetoes should be applied 
 to this event. 
    
  
 <a name="anchor5"></a>
-<p/><strong>double JetMatchingMadgraph::getPTfirst() &nbsp;</strong> <br/>
+<p/><strong> double JetMatchingMadgraph::getPTfirst() &nbsp;</strong> <br/>
 Return the transverse momentum (w.r.t. the beam) of the first parton 
 shower emission, as needed for the shower-kT scheme. 
    
  
 <a name="anchor6"></a>
-<p/><strong>vector &lt;double&gt; JetMatchingMadgraph::getDJR() &nbsp;</strong> <br/>
+<p/><strong> vector &lt;double&gt; JetMatchingMadgraph::getDJR() &nbsp;</strong> <br/>
 Return a vector of jet clustering scales produced by running the jet algorithm 
 used for jet matching on the event record without resonance decay products and 
 particles that should not be included in the matching. In this vector, 
@@ -812,4 +812,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

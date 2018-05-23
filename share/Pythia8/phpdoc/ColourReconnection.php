@@ -135,7 +135,7 @@ string length. The bulk of these lower-<i>pT</i> partons are gluons,
 and this is what the scheme is optimized to handle. 
  
 <p/> 
-In more detail, an MPI system with a scale <i>pT</i> of the hard 
+In  detail, an MPI system with a scale <i>pT</i> of the hard 
 interaction (normally <i>2 &rarr; 2</i>) can be merged with one of 
 a harder scale with a probability that is 
 <i>pT0_Rec^2 / (pT0_Rec^2 + pT^2)</i>, where <i>pT0_Rec</i> is 
@@ -207,7 +207,7 @@ Ideally the time scales of resonance decays and of colour reconnection
 should be picked dynamically, but this is not yet the case. Notably 
 the <i>W</i>, <i>Z</i> and <i>t</i> have intermediate decay time 
 scales, somewhat but not much shorter than typical hadronization times, 
-whereas the <i>H</i> is much more long-lived. 
+whereas the <i>H</i> is much  long-lived. 
  
 <h3>The newer scheme</h3> 
  
@@ -371,7 +371,7 @@ parton pairs. For each gluon and each pair it is calculated how the total
 <i>lambda</i> would shift if the gluon would be removed from its current 
 location and inserted in between the pair. The gluon move that gives the 
 largest negative shift, if any, is then carried out. Alternatively, only 
-shifts more negative than <i>dLambdaCut</i> are considered. The procedure 
+shifts  negative than <i>dLambdaCut</i> are considered. The procedure 
 is iterated so long as allowed moves can be found. 
  
 <p/> 
@@ -668,4 +668,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # pythia8-config is a part of the PYTHIA event generator.
-# Copyright (C) 2017 Torbjorn Sjostrand.
-# PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+# Copyright (C) 2018 Torbjorn Sjostrand.
+# PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
-# Author: Philip Ilten, October 2014.
+# Author: Philip Ilten, October 2014 - November 2017.
 #
 # Configuration tool for the PYTHIA event generator library. Eaxmple usage is:
 #     ./pythia8-config --cxxflags --ldflags --hepmc2
@@ -131,5 +131,5 @@ for VAR in "$@"; do
     else eval OUT=\"$OUT \$$VAR\"; fi; done
 
 # Print the output.
-if [ "$VAR" = "LDFLAGS" ]; then OUT+=" -ld"; fi
+if [ "$VAR" = "LDFLAGS" ]; then OUT+=" -ldl"; fi
 echo $OUT

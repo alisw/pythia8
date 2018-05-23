@@ -419,15 +419,16 @@ a very loose process definition that is discussed in the section Electroweak
 Merging below. 
  
 <p/> 
-For single processes in the Standard Model or the MSSM, MG4/ME notation is 
-applicable. However, for some purposes, using a single simple process 
+For single processes in the Standard Model or the MSSM a notation similar to 
+MG4/MEis applicable. However, for some purposes, using a single simple process 
 string is not satisfactory. Mixed W<sup>+</sup> and W<sup>-</sup> events 
 in a single LHE file is a common example. For this case, it would of course 
 be perfectly allowed to perform twice, once for W<sup>+</sup> production and 
 once for W<sup>-</sup> production, and then add the results. Nevertheless, it 
 seems reasonable to alleviate difficulties by allowing for less restrictive 
-hard process definitions. Two generalisations of the process tag are 
-available: Containers and user-defined particle tags. The syntax of these 
+hard process definitions. Some generalisations of the process tag are 
+available: Containers, user-defined particle tags and a very rudimentary 
+option to "guess" the hard process. The syntax of these 
 settings is described below. 
  
 <p/> 
@@ -553,6 +554,22 @@ W<sup>-</sup> and W<sup>+</sup> boson), <code>n1</code> (MSSM neutralino),
 <code>b2~</code>, <code>b2</code>, <code>t2~</code>, <code>t2</code> 
 (all MSSM squarks). Other outgoing particles are possible if you use the 
 "curly bracket notation" described earlier. 
+ 
+<p/> 
+Finally, it is worth noting that including the header 
+<code>Pythia8Plugins/aMCatNLOHooks.h</code> (as is e.g. the case in the 
+<code>main89.cc</code> example) allows the user to instruct Pythia 
+to "guess" the hard process by setting <code>Merging:Process = guess</code>. 
+In this case, the code will inspect the hard process before starting the 
+merging code, and set <code>Merging:Process</code> on an event-by-event 
+basis according to the rules implemented in 
+<code>Pythia8Plugins/aMCatNLOHooks.h</code>. It is instructive to 
+understand these rules before using this feature. 
+At present, the guess feature assumes that any non-colored particle, 
+any particle with PDG ID larger than 21, and any quark not labelled as 
+"additional parton" through the <code>Merging:nQuarksMerge</code> mode 
+are part of the hard process definition. This e.g. enables usage for 
+simple BSM processes. Please use this feature with caution. 
  
 <br/><br/><hr/> 
 <h3>Histogramming the events</h3> 
@@ -1315,4 +1332,4 @@ by <code>Info::sigmaGen()</code> includes the effect of CKKW-L merging.
  
 </chapter> 
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

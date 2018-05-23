@@ -1,6 +1,6 @@
 // main70.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Main program to demonstrate how to define a photon flux and use that
@@ -47,7 +47,7 @@ public:
     double z = 82.;
 
     // Per-nucleon mass for lead.
-    double m2 = pow2(0.895);
+    double m2 = pow2(0.9314);
     double alphaEM = 0.007297353080;
     double hbarc = 0.197;
     double xi = x * sqrt(m2) * bmin / hbarc;

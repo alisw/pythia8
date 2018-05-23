@@ -21,7 +21,7 @@ The SLHA input format can also be extended for use with more general BSM
 models, beyond SUSY. Information specific to  how to use the SLHA 
 interface for generic BSM models is collected below, 
 under <a href="#generic">Using SLHA for generic BSM Models</a>, with 
-more elaborate explanations and examples in [<a href="Bibliography.html#refDes11" target="page">Des11</a>]. 
+ elaborate explanations and examples in [<a href="Bibliography.html#refDes11" target="page">Des11</a>]. 
  
 <p/> 
 Most of the SUSY implementation in PYTHIA 8 is compatible with both the 
@@ -29,7 +29,7 @@ SLHA1 [<a href="Bibliography.html#refSka04" target="page">Ska04</a>] and SLHA2 [
 conventions (with some limitations for the NMSSM 
 in the latter case). Internally, PYTHIA 8 uses the 
 SLHA2 conventions and translates SLHA1 input to these when necessary. 
-See the section on SUSY Processes and [<a href="Bibliography.html#refDes11" target="page">Des11</a>] for more 
+See the section on SUSY Processes and [<a href="Bibliography.html#refDes11" target="page">Des11</a>] for  
 information. Note that PYTHIA assumes that a spectrum is either fully SHLA1 
 or fully SLHA2 compliant. Mixing of the two standards is discouraged, as 
 this can lead to ambiguities and inconsistencies. 
@@ -105,10 +105,13 @@ be declared stable unless there is at least one on-shell decay channel open
 massless particles will always be declared stable. A lower cutoff is imposed 
 on the Breit-Wigner shape of the particle, requiring its mass to remain above 
 the sum of masses for the lightest decay channel. Subject to that constraint, 
-the lower cutoff will normally be placed at 5 times the width (so that the 
-default gives a decent sampling of the shape), but the user is allowed to 
-use the <code>mMin</code> parameter to choose a larger sampling range if so 
-desired (still subject to the on-shell constraint). 
+the <code>mMin</code> and <code>mMax</code> cutoffs 
+will normally be placed at 5 times the width or the on-shell mass divided by 
+two, whichever is smaller, so that the default gives a decent sampling of the 
+shape without straying too far from the on-shell value. The user is allowed to 
+use the <code>mMin</code> and <code>mMax</code> parameters to choose a 
+different sampling range if so desired (still subject to the constraint of at 
+least one decay channel remaining open for on-shell decay products). 
 </li> 
 <li>For each decay channel in an SLHA DECAY table, PYTHIA will checks the 
 available phase space. If the channel is on shell (sum of daughter masses is 
@@ -346,4 +349,4 @@ recompute the EW parameters as best suited for the application at hand.
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

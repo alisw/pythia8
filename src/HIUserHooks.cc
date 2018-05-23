@@ -1,6 +1,6 @@
 // HIUserHooks.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the HIUserHooks.h header) for
@@ -122,6 +122,7 @@ Vec4 WoodsSaxonModel::generateNucleon() const {
 
 bool GLISSANDOModel::init() {
   if ( A() == 0 ) return true;
+  gaussHardCore = settingsPtr->flag("HeavyIon:gaussHardCore");
   if ( settingsPtr->isFlag("HI:hardCore") ) {
     if ( settingsPtr->flag("HI:hardCore") ) {
       RhSave = 0.9*femtometer;
@@ -180,7 +181,8 @@ vector<Nucleon> GLISSANDOModel::generate() const {
       Vec4 pos = generateNucleon();
       bool overlap = false;
       for ( int i = 0, N = positions.size(); i < N && !overlap; ++i )
-        if ( (positions[i] - pos).pAbs() < Rh() ) overlap = true;
+        if ( (positions[i] - pos).pAbs() < (gaussHardCore ? RhGauss() : Rh()) )
+          overlap = true;
       if ( overlap ) continue;
       positions.push_back(pos);
       cms += pos;
@@ -288,6 +290,10 @@ bool SubCollisionModel::init() {
   sigErr = settingsPtr->pvec("HeavyIon:SigFitErr");
   sigFuzz = settingsPtr->parm("HeavyIon:SigFitFuzz");
   fitPrint = settingsPtr->flag("HeavyIon:SigFitPrint");
+  // preliminarily set average non-diffractive impact parameter as if
+  // black disk.
+  avNDb = 2.0*sqrt(sigTarg[1]/M_PI)*
+    settingsPtr->parm("Angantyr:impactFudge")/3.0;
   return evolve();
 }
 
@@ -318,21 +324,22 @@ namespace {
 
 void printTarget(string name, double sig, double sigerr,
                  string unit = "mb    ") {
-  cout << " |" << setw(25) << name << ": " << setw(9) << sig << " " << unit;
+  cout << fixed << setprecision(2);
+  cout << " |" << setw(25) << name << ": " << setw(8) << sig << " " << unit;
   if ( sigerr > 0.0 )
     cout <<"  (+- " << setw(2) << int(100.0*sigerr)
-         << "%)                | \n";
+         << "%)                 | \n";
   else
-    cout << "  not used                | \n";
+    cout << "  not used                 | \n";
 }
 
 void printFit(string name, double fit, double sig, double sigerr,
                  string unit = "mb    ") {
-  cout << " |" << setw(25) << name << ":  "
+  cout << " |" << setw(25) << name << ": "
        << setw(8) << fit
        << (sigerr > 0.0? " *(": "  (")
        << setw(6) << sig
-       << ") " << unit << "                | " << endl;
+       << ") " << unit << "                 | " << endl;
 }
 
 }
@@ -396,11 +403,11 @@ bool SubCollisionModel::evolve() {
              << "                               | \n"
              << " |   Using a genetic algorithm          "
              << "                               | \n"
-             << " |   Generation       best Chi2/Ndf     "
-             << "                               | \n";
-      cout << " |" << setw(13) << igen << fixed << setprecision(2)
-           << setw(20) << it->first
-           << "                                    | " << endl;
+             << " |               Generation    best Chi2/Ndf     "
+             << "                      | \n";
+      cout << " |" << setw(25) << igen << ":" << fixed << setprecision(2)
+           << setw(9) << it->first
+           << "                                  | " << endl;
     }
 
     for ( int i = 1; i < NPop; ++i ) {
@@ -425,6 +432,7 @@ bool SubCollisionModel::evolve() {
   setParm(pop[0]);
   SigEst se = getSig();
   double chi2 = Chi2(se, dim);
+  avNDb = se.avNDb*settingsPtr->parm("Angantyr:impactFudge");
   if ( chi2 > 2.0 )
     infoPtr->errorMsg("HeavyIon Warning: Chi^2 in fitting sub-collision "
                       "model to cross sections was high.");
@@ -454,15 +462,25 @@ bool SubCollisionModel::evolve() {
     cout << " |                 Chi2/Ndf: "
          << setw(8) << chi2
          << "                                  | " << endl;
-    cout << " |                                  "
-         << "                                   | "
+    cout << " |                                   "
+         << "                                  | "
          << endl;
     cout << " |     Resulting parameters:         "
          << "                                  | "
          << endl;
     for ( int j = 0; j < dim; ++j )
-      cout << " |" << setw(20) << j << ":" << setw(9) << pop[0][j]
-           << "                                       | " << endl;
+      cout << " |" << setw(25) << j << ":" << setw(9) << pop[0][j]
+           << "                                  | " << endl;
+    cout << " |                                      "
+         << "                               | "
+         << endl;
+    cout << " |     Resulting non-diffractive average impact parameter: "
+         << "            | "
+         << endl;
+    cout << " |                      <b>:" << setw(9) << se.avNDb << " +- "
+         << setw(4) << sqrt(se.davNDb2) << " fm                       | "
+         << endl;
+
     cout << " |                                      "
          << "                               | "
          << endl;
@@ -539,23 +557,23 @@ getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
       if ( b > sqrt(sigTot()/M_PI) ) continue;
       T = 0.5; // The naive cross section only gets the total xsec correct.
       if ( b < sqrt(sigND()/M_PI) ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::ABS));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::ABS));
       }
       else if ( b < sqrt((sigND() + sigDDE())/M_PI) ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::DDE));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::DDE));
       }
       else if ( b < sqrt((sigND() + sigSDE() + sigDDE())/M_PI) ) {
          if ( sigSDEP() > rndPtr->flat()*sigSDE() ) {
-          ret.insert(SubCollision(p, t, b, SubCollision::SDEP));
+          ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::SDEP));
         } else {
-          ret.insert(SubCollision(p, t, b, SubCollision::SDET));
+          ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::SDET));
         }
       }
       else if ( b < sqrt((sigND() + sigSDE() + sigDDE() + sigCDE())/M_PI) ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::CDE));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::CDE));
       }
       else {
-        ret.insert(SubCollision(p, t, b, SubCollision::ELASTIC));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::ELASTIC));
       }
     }
 
@@ -608,6 +626,13 @@ SubCollisionModel::SigEst DoubleStrikman::getSig() const {
     double u12 = opacity(s12)/2.0;
     double u21 = opacity(s21)/2.0;
     double u22 = opacity(s22)/2.0;
+
+    double avb = sqrt(2.0/M_PI)*(s11*sqrt(s11/(2.0*u11))*(1.0 - u11) +
+                                 s12*sqrt(s12/(2.0*u12))*(1.0 - u12) +
+                                 s21*sqrt(s21/(2.0*u21))*(1.0 - u21) +
+                                 s22*sqrt(s22/(2.0*u22))*(1.0 - u22))/12.0;
+    s.avNDb += avb;
+    s.davNDb2 += pow2(avb);
 
     double snd = (s11 - s11*u11 + s12 - s12*u12 +
                   s21 - s21*u21 + s22 - s22*u22)/4.0;
@@ -668,6 +693,11 @@ SubCollisionModel::SigEst DoubleStrikman::getSig() const {
   s.dsig2[5] = 0.0;
   s.sig[7] = bS;
   s.dsig2[7] = b2S;
+
+  s.avNDb /= double(NInt);
+  s.davNDb2 = (s.davNDb2/double(NInt) - pow2(s.avNDb))/double(NInt);
+  s.avNDb /= s.sig[1];
+  s.davNDb2 /= pow2(s.sig[1]);
 
   return s;
 
@@ -822,7 +852,7 @@ getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
       // First and most important, check if this is an absorptive
       // scattering.
       if ( PND11 > rndPtr->flat() ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::ABS));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::ABS));
         continue;
       }
 
@@ -840,15 +870,15 @@ getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
       bool wt = ( PWt11 - PND11 > (1.0 - PND11)*rndPtr->flat() );
       bool wp = ( PWp11 - PND11 > (1.0 - PND11)*rndPtr->flat() );
       if ( wt && wp ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::DDE));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::DDE));
         continue;
       }
       if ( wt ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::SDET));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::SDET));
         continue;
       }
       if ( wp ) {
-        ret.insert(SubCollision(p, t, b, SubCollision::SDEP));
+        ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::SDEP));
         continue;
       }
 
@@ -872,14 +902,157 @@ getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
       shuffel(PEL, PNW11, PNW12, PNW21, PNW22);
       if ( PEL > PNW11*rndPtr->flat() ) {
         if ( sigCDE() > rndPtr->flat()*(sigCDE() + sigEl()) )
-          ret.insert(SubCollision(p, t, b, SubCollision::CDE));
+          ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::CDE));
         else
-          ret.insert(SubCollision(p, t, b, SubCollision::ELASTIC));
+          ret.insert(SubCollision(p, t, b, b/avNDb, SubCollision::ELASTIC));
       }
     }
 
 
   T = 1.0 - S;
+
+  return ret;
+}
+
+//==========================================================================
+
+// MultiRadial uses a number of different disk sizes with different
+// opacities. Like a discrete version of DoubleStrikman.
+
+//--------------------------------------------------------------------------
+
+// Numerically estimate the cross sections corresponding to the
+// current parameter setting.
+
+SubCollisionModel::SigEst MultiRadial::getSig() const {
+
+  SigEst s;
+
+  double sTpt = 0.0;
+  double sT2pt = 0.0;
+  //  double sTpt2 = 0.0;
+  double sTp2t = 0.0;
+  //  double sTt2p = 0.0;
+  double Rp = 0.0;
+  for ( int ip = 0; ip < Nr; ++ip ) {
+    Rp += dR[ip];
+    double Rt = 0.0;
+    for ( int it = 0; it < Nr; ++it ) {
+      Rt += dR[it];
+      sTpt += c[ip]*T0[ip]*c[it]*T0[it]*pow2(Rp + Rt)*sigTot();
+      sT2pt += c[ip]*pow2(T0[ip])*c[it]*pow2(T0[it])*pow2(Rp + Rt)*sigTot();
+      double rp = 0.0;
+      for ( int jp = 0; jp < Nr; ++jp ) {
+        rp += dR[jp];
+        double rt = 0.0;
+        for ( int jt = 0; jt < Nr; ++jt ) {
+          rt += dR[jt];
+          double fac = T0[ip]*T0[jp]*T0[it]*T0[jt]*pow2(min(Rp + Rt, rp + rt))
+            * sigTot();
+          if ( ip == jp ) sTp2t += c[ip]*c[it]*c[jt]*fac;
+        }
+      }
+    }
+
+  }
+
+  s.sig[0] /= double(NInt);
+  s.dsig2[0] = (s.dsig2[0]/double(NInt) - pow2(s.sig[0]))/double(NInt);
+
+  s.sig[1] /= double(NInt);
+  s.dsig2[1] = (s.dsig2[1]/double(NInt) - pow2(s.sig[1]))/double(NInt);
+
+  s.sig[2] /= double(NInt);
+  s.dsig2[2] = (s.dsig2[2]/double(NInt) - pow2(s.sig[2]))/double(NInt);
+
+  s.sig[3] /= double(NInt);
+  s.dsig2[3] = (s.dsig2[3]/double(NInt) - pow2(s.sig[3]))/double(NInt);
+
+  s.sig[4] /= double(NInt);
+  s.dsig2[4] = (s.dsig2[4]/double(NInt) - pow2(s.sig[4]))/double(NInt);
+
+  s.sig[6] /= double(NInt);
+  s.dsig2[6] = (s.dsig2[6]/double(NInt) - pow2(s.sig[6]))/double(NInt);
+
+  s.sig[5] /= double(NInt);
+  s.dsig2[5] /= double(NInt);
+
+  s.sig[7] /= double(NInt);
+  s.dsig2[7] /= double(NInt);
+  double bS = (s.sig[7]/s.sig[5])/(16.0*M_PI*pow2(0.19732697));
+  double b2S = pow2(bS)*(s.dsig2[7]/pow2(s.sig[7]) - 1.0 +
+                        s.dsig2[5]/pow2(s.sig[5]) - 1.0)/double(NInt);
+  s.sig[5] = 0.0;
+  s.dsig2[5] = 0.0;
+  s.sig[7] = bS;
+  s.dsig2[7] = b2S;
+
+  return s;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Access funtions to parameters in the MultiRadial model.
+
+void MultiRadial::setParm(const vector<double> & p) {
+  unsigned int ip = 0;
+  for ( int i = 0; i < Nr; ++i ) {
+    if ( ip < p.size() ) dR[i] = p[ip++];
+    if ( ip < p.size() ) T0[i] = p[ip++];
+    if ( ip < p.size() ) phi[i] = p[ip++];
+  }
+}
+
+vector<double> MultiRadial::getParm() const {
+  vector<double> ret;
+  for ( int i = 0; i < Nr; ++i ) {
+    ret.push_back(dR[i]);
+    ret.push_back(T0[i]);
+    if ( i < Nr -1 ) ret.push_back(phi[i]);
+  }
+  return ret;
+}
+
+vector<double> MultiRadial::minParm() const {
+  return vector<double>(Nr*Nr*(Nr - 1), 0.0);
+}
+
+vector<double> MultiRadial::maxParm() const {
+  return vector<double>(Nr*Nr*(Nr - 1), 1.0);
+}
+
+void MultiRadial::setProbs() {
+  double rProj = 1.0;
+  for ( int i = 0; i < Nr - 1; ++i ) {
+    c[i] = rProj*cos(phi[i]*M_PI/2.0);
+    rProj *= sin(phi[i]*M_PI/2.0);
+  }
+  c[Nr - 1] = rProj;
+}
+
+int MultiRadial::choose() const {
+  double sum = 0.0;
+  double sel = rndPtr->flat();
+  for ( int i = 0; i < Nr - 1; ++i )
+    if ( sel < ( sum += c[i] ) ) return i;
+  return Nr - 1;
+}
+
+
+
+
+//--------------------------------------------------------------------------
+
+// Main function returning the possible sub-collisions.
+
+multiset<SubCollision> MultiRadial::
+getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
+              const Vec4 & bvec, double & T) {
+  // Always call base class to reset nucleons and shift them into
+  // position.
+  multiset<SubCollision> ret =
+    SubCollisionModel::getCollisions(proj, targ, bvec, T);
 
   return ret;
 }

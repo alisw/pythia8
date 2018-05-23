@@ -1,6 +1,6 @@
 // TimeShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Header file for the timelike final-state showers.
@@ -376,9 +376,12 @@ private:
 
   // Store uncertainty variations relevant to TimeShower.
   int nUncertaintyVariations, nVarQCD, uVarNflavQ;
-  map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varG2QQmuRfac, varX2XGmuRfac;
+  map<int,double> varG2GGmuRfac;
+  map<int,double> varQ2QGmuRfac, varG2QQmuRfac, varX2XGmuRfac;
   map<int,double> varG2GGcNS, varQ2QGcNS, varG2QQcNS, varX2XGcNS;
-  map<int,double> varPDFplus, varPDFminus;
+  map<int,double>* varPDFplus;
+  map<int,double>* varPDFminus;
+  map<int,double>* varPDFmember;
 
 };
 

@@ -1,6 +1,6 @@
 // MultipartonInteractions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the main classes for multiparton interactions physics.
@@ -174,13 +174,14 @@ private:
   static const bool   SHIFTFACSCALE, PREPICKRESCATTER;
   static const double SIGMAFUDGE, RPT20, PT0STEP, SIGMASTEP, PT0MIN,
                       EXPPOWMIN, PROBATLOWB, BSTEP, BMAX, EXPMAX,
-                      KCONVERGE, CONVERT2MB, ROOTMIN, ECMDEV, WTACCWARN;
+                      KCONVERGE, CONVERT2MB, ROOTMIN, ECMDEV, WTACCWARN,
+                      SIGMAMBLIMIT;
 
   // Initialization data, read from Settings.
   bool   allowRescatter, allowDoubleRes, canVetoMPI, doPartonVertex;
   int    pTmaxMatch, alphaSorder, alphaEMorder, alphaSnfmax, bProfile,
          processLevel, bSelScale, rescatterMode, nQuarkIn, nSample,
-         enhanceScreening;
+         enhanceScreening, pT0paramMode;
   double alphaSvalue, Kfactor, pT0Ref, ecmRef, ecmPow, pTmin, coreRadius,
          coreFraction, expPow, ySepResc, deltaYResc, sigmaPomP, mPomP, pPomP,
          mMaxPertDiff, mMinPertDiff;
@@ -218,7 +219,7 @@ private:
   int    vsc1, vsc2;
 
   // Other initialization data.
-  bool   hasBaryonBeams, hasLowPow, globalRecoilFSR;
+  bool   hasBaryonBeams, hasPomeronBeams, hasLowPow, globalRecoilFSR;
   int    iDiffSys, nMaxGlobalRecoilFSR, bSelHard;
   double eCM, sCM, pT0, pT20, pT2min, pTmax, pT2max, pT20R, pT20minR,
          pT20maxR, pT20min0maxR, pT2maxmin, sigmaND, pT4dSigmaMax,
@@ -247,7 +248,7 @@ private:
   // Beam offset wrt. normal situation and other photon-related parameters.
   int    beamOffset;
   double mGmGmMin, mGmGmMax;
-  bool   hasGamma;
+  bool   hasGamma, isGammaGamma, isGammaHadron, isHadronGamma;
 
   // Pointer to various information on the generation.
   Info*          infoPtr;

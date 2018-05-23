@@ -57,7 +57,7 @@ analysis</a>, or one you have created yourself. The output of RIVET is in
 the form of <code>.aida</code> files, containing the histograms for the 
 analysis, which can be processed further with RIVET (see the 
 <a href="http://projects.hepforge.org/rivet/trac/wiki/FirstRivetRun"> 
-RIVET documentation</a> for more details). 
+RIVET documentation</a> for  details). 
  
 <br/><br/> 
 The above examples requires that (potentially large) HepMC events are stored 
@@ -71,10 +71,7 @@ pipe. This is done with the <code>mkfifo</code> command
 </pre> 
 Note that <code>main42</code> is run in the background. 
  
-<h3> 
-Compiling PYTHIA with RIVET 
-</h3> 
- 
+<h3>Compiling PYTHIA with RIVET </h3> 
  
 It is also possible to compile a PYTHIA main program together with the RIVET 
 library. To facilitate this, there is a header file called 
@@ -128,8 +125,29 @@ The example program <code>main111.cc</code> includes optional analysis with
 <code>Pythia8::Pythia8Rivet</code>. To use it, compile the program with the 
 flags above and add <code>-DUSE_PYTHIA8_RIVET</code>. 
  
+<p/> 
+The most common user case (run PYTHIA with a run card, using one or 
+several RIVET analyses) is implemented in the example <code>main93</code>. 
+The sample command file <code>main93.cmnd</code> provides a good starting 
+point. The lines: 
+<pre> 
+    Main:runRivet = on 
+    Main:analyses = ATLAS_2010_S8817804,ALICE_2010_S8625980,CMS_2011_S8957746 
+    Main:writeHepMC = on 
+</pre> 
+provides the switch to run RIVET, and gives the user the possibility to add 
+any number of (installed) RIVET analyses to the run, as a comma separated list. 
+The last line is the switch needed to write a HepMC file. 
+The example is run with: 
+<pre> 
+    ./main93 -c main93.cmnd 
+</pre> 
+and a .yoda file (the RIVET output) is then written. 
+ 
+There are several other useful command line options to <code>main93</code>. 
+They are all displayed by running <code>./main93 -h</code>. 
  
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

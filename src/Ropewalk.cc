@@ -1,6 +1,6 @@
 // Ropewalk.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -43,7 +43,7 @@ bool OverlappingRopeDipole::overlap(double y, Vec4 ba, double r0) {
   if (y < min(y1, y2) || y > max(y1, y2)) return false;
   Vec4 bb  = b1 + (b2 - b1) * (y - y1) / (y2 - y1);
   Vec4 tmp = ba - bb;
-  return (tmp.pT() < 2 * r0);
+  return (tmp.pT() <= 2 * r0);
 
 }
 
@@ -140,7 +140,7 @@ void RopeDipole::propagate(double deltat, double m0) {
                 eItr->second->yProd() + deltat * em.py() / em.pT(), 0, 0);
       eItr->second->vProd(newVert);
     }
-    else eItr->second->vProd(bInterpolate(eItr->first,m0));
+    else eItr->second->vProd(bInterpolateLab(eItr->first,m0));
   }
 
 }
@@ -347,8 +347,26 @@ Vec4 RopeDipole::dipoleMomentum() {
 //--------------------------------------------------------------------------
 
 // Interpolate (linear) between dipole ends to get b position at given y.
+// Here y must be given in dipole rest frame, and the resulting b-position
+// will also be in the dipole rest frame.
 
-Vec4 RopeDipole::bInterpolate(double y, double m0) {
+Vec4 RopeDipole::bInterpolateDip(double y, double m0) {
+  if(!hasRotTo) getDipoleRestFrame();
+  Vec4 bb1 = d1.getParticlePtr()->vProd();
+  bb1.rotbst(rotTo);
+  Vec4 bb2 = d2.getParticlePtr()->vProd();
+  bb2.rotbst(rotTo);
+  double y1 = d1.rap(m0,rotTo);
+  double y2 = d2.rap(m0,rotTo);
+  return bb1 + y * (bb2 - bb1) / (y2 - y1);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Interpolate (linear) between dipole ends to get b position at given y.
+
+Vec4 RopeDipole::bInterpolateLab(double y, double m0) {
 
   Vec4 bb1 = d1.getParticlePtr()->vProd();
   Vec4 bb2 = d2.getParticlePtr()->vProd();
@@ -381,10 +399,14 @@ Vec4 RopeDipole::bInterpolate(double y, RotBstMatrix rb, double m0) {
 // Return the number of overlapping dipoles to the "left" and "right".
 
 pair<int, int> RopeDipole::getOverlaps(double yfrac, double m0, double r0) {
-
+  // Transform yfrac to y in dipole rest frame
+  if (!hasRotTo) getDipoleRestFrame();
+  double yL = d1.rap(m0,rotTo);
+  double yS = d2.rap(m0,rotTo);
+  double yH = yS + (yL - yS) * yfrac;
   int m = 0, n = 0;
   for (size_t i = 0; i < overlaps.size(); ++i) {
-    if (overlaps[i].overlap( yfrac, bInterpolate(yfrac,m0), r0)
+    if (overlaps[i].overlap( yfrac, bInterpolateDip(yH,m0), r0)
       && !overlaps[i].hadronized()) {
         if (overlaps[i].dir > 0) ++m;
         else                     ++n;
@@ -450,8 +472,8 @@ void shove(double dpx, double dpy) {
 
 // The push direction as a four vector.
 Vec4 direction() {
-  return dip1->bInterpolate(y,dip1->getDipoleRestFrame(),m0) -
-    dip2->bInterpolate(y,dip1->getDipoleRestFrame(),m0);
+  return dip1->bInterpolateDip(y,m0) -
+    dip2->bInterpolateDip(y,m0);
 }
 
 // Member variables, slice rapidity and small cut-off mass.
@@ -500,6 +522,7 @@ bool Ropewalk::init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn) {
   tShove               = settings.parm("Ropewalk:tShove");
   tInit                = settings.parm("Ropewalk:tInit");
   showerCut            = settings.parm("TimeShower:pTmin");
+  alwaysHighest        = settings.flag("Ropewalk:alwaysHighest");
 
   // Check consistency.
   if (deltat > tShove) {
@@ -553,9 +576,16 @@ double Ropewalk::getKappaHere(int e1, int e2, double yfrac) {
 
   // Get quantum numbers m and n.
   pair<int, int> overlap = d->getOverlaps(yfrac, m0, r0);
-  // Invoke random walk procedure.
-  pair<double, double> pq = select(overlap.first + 1, overlap.second,
-    rndmPtr);
+  pair<double, double> pq;
+  // If we are always in the highest multiplet, we need not do
+  // a random walk
+  if (alwaysHighest) {
+    pq = make_pair(overlap.first + 1, overlap.second);
+  }
+  // Invoke default random walk procedure.
+  else {
+    pq = select(overlap.first + 1, overlap.second, rndmPtr);
+  }
   // Calculate enhancement factor.
   double enh = 0.25 * (2. + 2. * pq.first + pq.second);
   return (enh > 1.0 ? enh : 1.0);
@@ -576,8 +606,8 @@ bool Ropewalk::calculateOverlaps() {
 
     // RopeDipoles rapidities in dipole rest frame.
     RotBstMatrix dipoleRestFrame = d1->getDipoleRestFrame();
-    double yc1 = d1->d1Ptr()->rap(m0);
-    double ya1 = d1->d2Ptr()->rap(m0);
+    double yc1 = d1->d1Ptr()->rap(m0, dipoleRestFrame);
+    double ya1 = d1->d2Ptr()->rap(m0, dipoleRestFrame);
     if (yc1 <= ya1) continue;
 
     // Go through all possible overlapping dipoles.
@@ -594,21 +624,13 @@ bool Ropewalk::calculateOverlaps() {
       if (min(od.y1, od.y2) > yc1 || max(od.y1, od.y2) < ya1 || od.y1 == od.y2)
         continue;
 
-      // Calculate rapidity overlap region ends.
-      double yomax = min(max(od.y1, od.y2), yc1);
-      double yomin = max(min(od.y1, od.y2), ya1);
+      d1->addOverlappingDipole(od);
 
-      // Add to overlapping dipoles if it overlaps in space in
-      // at least one of the overlap region ends.
-      if ( od.overlap(yomax, d1->bInterpolate(yomax,m0), r0)
-        || od.overlap(yomin, d1->bInterpolate(yomin,m0), r0) )
-        d1->addOverlappingDipole(od);
     }
   }
   return true;
 
 }
-
 //--------------------------------------------------------------------------
 
 // Invoke the random walk of colour states.
@@ -731,7 +753,7 @@ void Ropewalk::shoveTheDipoles(Event& event) {
       // We boost the excitation back from dipole rest frame.
       tmp[j]->recoil(ex,false);
       Particle pp = Particle(21, 22, 0, 0, 0, 0, 0, 0, ex);
-      pp.vProd( tmp[j]->bInterpolate(ySample,m0) );
+      pp.vProd( tmp[j]->bInterpolateLab(ySample,m0) );
       eParticles[i].push_back(pp);
     }
   // Construct all pairs of possible excitations in this slice.
@@ -874,17 +896,18 @@ void RopeFragPars::init(Info* infoPtrIn, Settings& settings) {
   beta = settings.parm("Ropewalk:beta");
 
   // Initialize default values from input settings.
-  const int len = 8;
+  const int len = 9;
   string params [len] = {"StringPT:sigma", "StringZ:aLund",
   "StringZ:aExtraDiquark","StringZ:bLund", "StringFlav:probStoUD",
-  "StringFlav:probSQtoQQ", "StringFlav:probQQ1toQQ0", "StringFlav:probQQtoQ"};
+  "StringFlav:probSQtoQQ", "StringFlav:probQQ1toQQ0", "StringFlav:probQQtoQ",
+  "StringFlav:kappa"};
   double* variables[len] = {&sigmaIn, &aIn, &adiqIn, &bIn, &rhoIn, &xIn,
-    &yIn, &xiIn};
+    &yIn, &xiIn, &kappaIn};
   for (int i = 0; i < len; ++i) *variables[i] = settings.parm(params[i]);
 
   // Insert the h = 1 case immediately.
   sigmaEff = sigmaIn, aEff = aIn, adiqEff = adiqIn, bEff = bIn,
-    rhoEff = rhoIn, xEff = xIn, yEff = yIn, xiEff = xiIn;
+    rhoEff = rhoIn, xEff = xIn, yEff = yIn, xiEff = xiIn, kappaEff = kappaIn;
   if (!insertEffectiveParameters(1.0)) infoPtr->errorMsg(
     "Error in RopeFragPars::init: failed to insert defaults.");
 
@@ -956,6 +979,8 @@ bool RopeFragPars::calculateEffectiveParameters(double h) {
   double hinv = 1.0 / h;
 
   // Start with the easiest transformations.
+  // The string tension kappa.
+  kappaEff = kappaIn * h;
   // Strangeness.
   rhoEff = pow(rhoIn, hinv);
   // Strange diquarks.
@@ -1005,6 +1030,7 @@ bool RopeFragPars::insertEffectiveParameters(double h) {
   p["StringFlav:probQQtoQ"]    = xiEff;
   p["StringZ:aLund"]           = aEff;
   p["StringZ:aExtraDiquark"]   = adiqEff;
+  p["StringFlav:kappa"]        = kappaEff;
 
   return (parameters.insert( make_pair(h,p)).second );
 
@@ -1111,17 +1137,20 @@ double RopeFragPars::trapIntegrate( double a, double b, double mT2,
 // Change the fragmentation parameters.
 
 bool FlavourRope::doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
- StringPT * pTPtr, double m2Had, vector<int> iParton) {
+ StringPT * pTPtr, double m2Had, vector<int> iParton, int endId) {
 
   // The new parameters.
-  map<string, double> newPar = fetchParameters(m2Had, iParton);
+  map<string, double> newPar;
+  if (doBuffon)
+    newPar = fetchParametersBuffon(m2Had, iParton, endId);
+  else
+    newPar = fetchParameters(m2Had, iParton, endId);
   // Change settings to new settings.
   for (map<string, double>::iterator itr = newPar.begin(); itr!=newPar.end();
     ++itr) settingsPtr->parm( itr->first, itr->second);
-
   // Re-initialize flavour, z, and pT selection with new settings.
   flavPtr->init( *settingsPtr, particleDataPtr, rndmPtr, infoPtr);
-  zPtr->init( *settingsPtr, *particleDataPtr, rndmPtr);
+  zPtr->init( *settingsPtr, *particleDataPtr, rndmPtr, infoPtr);
   pTPtr->init( *settingsPtr, particleDataPtr, rndmPtr, infoPtr);
   return true;
 
@@ -1129,11 +1158,147 @@ bool FlavourRope::doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
 
 //--------------------------------------------------------------------------
 
-// Find breakup placement and fetch effective parameters.
+// Find breakup placement and fetch effective parameters using Buffon.
+
+map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
+  vector<int> iParton, int endId) {
+  // If effective string tension is set manually, use that.
+  if (fixedKappa) return fp.getEffectiveParameters(h);
+  if (!ePtr) {
+    infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
+      " Event pointer not set in FlavourRope");
+    return fp.getEffectiveParameters(1.0);
+  }
+    if(find(hadronized.begin(),hadronized.end(),*iParton.begin()) ==
+      hadronized.end()){
+      hadronized.reserve(hadronized.size() + iParton.size());
+      hadronized.insert(hadronized.end(),iParton.begin(),iParton.end());
+    }
+    // Quark string ends, default mode
+   if (endId != 21){
+    // Test consistency
+    if(ePtr->at(*(iParton.begin())).id() != endId &&
+        ePtr->at(*(iParton.end() - 1)).id() != endId) {
+      infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
+        " Quark end inconsistency.");
+      return fp.getEffectiveParameters(1.0);
+    }
+
+      // First we must let the string vector point in the right direction
+      if(ePtr->at(*(iParton.begin())).id() != endId)
+       reverse(iParton.begin(),iParton.end());
+
+      // Initialize a bit
+      Vec4 hadronic4Momentum(0,0,0,0);
+      double enh = 1.0;
+      double dipFrac;
+      vector<int>::iterator dipItr;
+      // Find out when invariant mass exceeds m2Had
+      for(dipItr = iParton.begin(); dipItr != iParton.end(); ++dipItr){
+       double m2Big = hadronic4Momentum.m2Calc();
+        if( m2Had <= m2Big){
+          // Approximate the fraction we are in on the dipole, this goes
+          // in three cases.
+          // We are at the beginning.
+          if(m2Had == 0){
+            dipFrac = 0;
+          }
+          // We are somewhere in the first dipole
+          else if(dipItr - 1  == iParton.begin()){
+            dipFrac = sqrt(m2Had/m2Big);
+          }
+          else{
+            if(ePtr->at(*(dipItr - 1)).id() != 21) {
+              infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
+                " Connecting partons should always be gluons.");
+              return fp.getEffectiveParameters(1.0);
+            }
+
+            hadronic4Momentum -= 0.5*ePtr->at(*(dipItr -1)).p();
+            double m2Small = hadronic4Momentum.m2Calc();
+
+            dipFrac = (sqrt(m2Had) - sqrt(m2Small)) /
+              (sqrt(m2Big) - sqrt(m2Small));
+          }
+          break;
+        }
+        hadronic4Momentum += ePtr->at(*dipItr).id() == 21 ?
+          0.5*ePtr->at(*dipItr).p() : ePtr->at(*dipItr).p();
+      }
+      // If we reached the end
+      // we are in a small string that should just be collapsed
+      if(dipItr == iParton.end())
+        return fp.getEffectiveParameters(1.0);
+      // Sanity check
+      if(dipFrac < 0 || dipFrac > 1) {
+        infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
+                " Dipole exceed with fraction less than 0 or greater than 1.");
+        return fp.getEffectiveParameters(1.0);
+      }
+      // We now figure out at what rapidity value,
+      // in the lab system, the string is breaking
+      double yBreak;
+      // Trivial case, just inherit
+      if(dipFrac == 0)
+        yBreak = ePtr->at(*dipItr).y();
+      else{
+        // Sanity check
+        if(dipItr == iParton.begin()) {
+          infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
+            " We are somehow before the first dipole on a string.");
+          return fp.getEffectiveParameters(1.0);
+        }
+        double dy = ePtr->at(*dipItr).y() - ePtr->at(*(dipItr - 1)).y();
+        yBreak = ePtr->at(*(dipItr - 1)).y() + dipFrac*dy;
+      }
+      // Count the number of partons in the whole
+      // event within deltay of breaking point
+      double p = 1;
+      double q = 0;
+
+      for(int i = 0; i < ePtr->size(); ++i){
+        // Don't double count partons from this
+        // string (no self-overlap)
+        if(find(iParton.begin(),iParton.end(), i) != iParton.end())
+          continue;
+        // Don't count strings that are already hadronized
+        if(find(hadronized.begin(),hadronized.end(),i) != hadronized.end())
+          continue;
+        double pRap = ePtr->at(i).y();
+        if(pRap > yBreak - rapiditySpan && pRap < yBreak + rapiditySpan ){
+          // Do a "Buffon" selection to decide whether
+          // two strings overlap in impact parameter space
+          // given ratio of string diameter to collision diameter
+          double r1 = rndmPtr->flat();
+          double r2 = rndmPtr->flat();
+          double theta1 = 2*M_PI*rndmPtr->flat();
+          double theta2 = 2*M_PI*rndmPtr->flat();
+          // Overlap?
+          if(4*pow2(stringProtonRatio) > pow2(sqrt(r1)*cos(theta1) -
+            sqrt(r2)*cos(theta2)) + pow2(sqrt(r1)*sin(theta1) -
+            sqrt(r2)*sin(theta2))) {
+              if(rndmPtr->flat() < 0.5) p += 0.5;
+              else q += 0.5;
+          }
+        }
+      }
+      enh = 0.25*(2.0*p+q+2.0);
+
+      return fp.getEffectiveParameters(enh);
+    }
+   // For closed gluon loops we cannot distinguish the ends.
+   // Do nothing instead
+   else{
+      return fp.getEffectiveParameters(1.0);
+   }
+      return fp.getEffectiveParameters(1.0);
+}
+
+//--------------------------------------------------------------------------
+// Find breakup placement and fetch effective parameters using Ropewalk.
 
 map<string, double> FlavourRope::fetchParameters(double m2Had,
-  vector<int> iParton) {
-
+  vector<int> iParton, int endId) {
   // If effective string tension is set manually, use that.
   if (fixedKappa) return fp.getEffectiveParameters(h);
   if (!ePtr) {
@@ -1143,12 +1308,24 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   }
   Vec4 mom;
   int eventIndex = -1;
+  // Set direction
+  bool dirPos;
+  if( ePtr->at(iParton[0]).id() == endId) dirPos = true;
+  else if( ePtr->at(iParton[iParton.size() - 1]).id() == endId) dirPos = false;
+  else {
+    infoPtr->errorMsg("Error in FlavourRope::fetchParameters:"
+    " Could not get string direction");
+    return fp.getEffectiveParameters(1.0);
+  }
+
   for (int i = 0, N = iParton.size(); i < N; ++i) {
+    // Change to right direction
+    int j = (dirPos ? i : N - 1 - i);
     // Skip the junction entry.
-    if ( iParton[i] < 0) continue;
-    mom += ePtr->at(iParton[i]).p();
+    if ( iParton[j] < 0) continue;
+    mom += ePtr->at(iParton[j]).p();
     if ( mom.m2Calc() > m2Had) {
-      eventIndex = i;
+      eventIndex = j;
       break;
     }
   }
@@ -1161,7 +1338,7 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   // We are in the first dipole.
   if (eventIndex == -1 || eventIndex == 0) {
     eventIndex = 0;
-    dipFrac = sqrt(m2Had/m2Here);
+    dipFrac = sqrt(m2Had / m2Here);
   }
   else {
     mom -= ePtr->at(iParton[eventIndex]).p();
@@ -1173,6 +1350,7 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   return fp.getEffectiveParameters(enh);
 
 }
+
 
 //==========================================================================
 

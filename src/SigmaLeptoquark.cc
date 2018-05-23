@@ -1,6 +1,6 @@
 // SigmaLeptoquark.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -161,8 +161,8 @@ void Sigma2qg2LeptoQuarkl::setIdColAcol() {
   int idlp = (idq > 0) ? -idLepton : idLepton;
   setId( id1, id2, idLQ, idlp);
 
-  // tH defined between f and f': must swap tHat <-> uHat if q g in.
-  swapTU = (id2 == 21);
+  // tH defined between f and LQ: must swap tHat <-> uHat if g q in.
+  swapTU = (id1 == 21);
 
   // Colour flow topologies. Swap when antiquarks.
   if (id2 == 21) setColAcol( 1, 0, 2, 1, 2, 0, 0, 0);

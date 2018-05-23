@@ -1,6 +1,6 @@
 // HiddenValleyFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2017 Torbjorn Sjostrand.
-// PYTHIA is licenced under the GNU GPL version 2, see COPYING for details.
+// Copyright (C) 2018 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the
@@ -121,10 +121,11 @@ void HVStringPT::init(Settings& settings, ParticleData* particleDataPtrIn,
 // Initialize data members of the string z selection.
 
 void HVStringZ::init(Settings& settings, ParticleData& particleData,
-  Rndm* rndmPtrIn) {
+  Rndm* rndmPtrIn, Info* infoPtrIn) {
 
   // Save pointer.
   rndmPtr  = rndmPtrIn;
+  infoPtr  = infoPtrIn;
 
   // Paramaters of Lund/Bowler symmetric fragmentation function.
   aLund    = settings.parm("HiddenValley:aLund");
@@ -200,7 +201,7 @@ bool HiddenValleyFragmentation::init(Info* infoPtrIn, Settings& settings,
 
   // Create HVStringZ instance for z selection in HV fragmentation.
   hvZSelPtr = new HVStringZ();
-  hvZSelPtr->init( settings, *particleDataPtr, rndmPtr);
+  hvZSelPtr->init( settings, *particleDataPtr, rndmPtr, infoPtr);
 
   // Initialize auxiliary administrative class.
   hvColConfig.init(infoPtr, settings, hvFlavSelPtr);
@@ -272,7 +273,8 @@ bool HiddenValleyFragmentation::extractHVevent(Event& event) {
     int idAbs = event[i].idAbs();
     bool isHV = (idAbs > 4900000 && idAbs < 4900007)
              || (idAbs > 4900010 && idAbs < 4900017)
-             || idAbs == 4900021 || idAbs == 4900101;
+             || idAbs == 4900021
+             || (idAbs > 4900100 && idAbs < 4900109);
     if (isHV) {
       int iHV = hvEvent.append( event[i]);
       // Convert HV-gluons into normal ones so as to use normal machinery.

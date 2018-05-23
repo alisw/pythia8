@@ -59,11 +59,21 @@ Allowed codes include
 <br/><i>990 = Pomeron</i> (used in diffractive machinery; 
 here mainly for debug purposes), 
 <br/><i>22 = gamma</i> (for <i>gamma-gamma</i> and <i>gamma-hadron</i> 
-interactions, more info <?php $filepath = $_GET["filepath"];
+interactions,  info <?php $filepath = $_GET["filepath"];
 echo "<a href='Photoproduction.php?filepath=".$filepath."' target='page'>";?>here</a>), 
 <br/><i>11 = e^-</i>, <i>-11 = e^+</i>, 
 <br/><i>13 = mu^-</i>, <i>-13 = mu^+</i>, 
 <br/>and a few more leptons/neutrinos in a few combinations. 
+<br/>Recently <?php $filepath = $_GET["filepath"];
+echo "<a href='HeavyIons.php?filepath=".$filepath."' target='page'>";?>heavy-ion collisions</a> have 
+been implemented in PYTHIA. Therefore a handful of nuclei have been 
+added as allowed incoming beams, using PDG codes of the format 
+<code>100ZZZAAAI</code>: 
+1000020040 = <sup>4</sup>He , 1000030060 = <sup>6</sup>Li, 
+1000060120 = <sup>12</sup>C, 1000080160 = <sup>16</sup>O, 
+1000290630 = <sup>63</sup>Cu, 1000791970 = <sup>197</sup>Au, and 
+1000822080 = <sup>208</sup>Pb. More can be added using the function 
+<code>ParticleData::addParticle</code>. 
    
  
 <br/><br/><table><tr><td><strong>Beams:idB  </td><td></td><td> <input type="text" name="2" value="2212" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2212</strong></code>)</td></tr></table>
@@ -158,7 +168,7 @@ Read in LHEF header blocks and store them in the
 <?php $filepath = $_GET["filepath"];
 echo "<a href='EventInformation.php?filepath=".$filepath."' target='page'>";?>Info</a> class. See also 
 <?php $filepath = $_GET["filepath"];
-echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>LHAupLHEF</a> for more information. 
+echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>LHAupLHEF</a> for  information. 
    
  
 <a name="anchor1"></a>
@@ -207,7 +217,7 @@ This framework currently is intended for a modest beam spread, such as
 experienced at hadron colliders. Thus it can be safely assumed that the 
 physics does not change over the CM energy range probed, so that the 
 parameters of the physics initialization at the nominal energy can be 
-used as is. Currently it can <b>not</b> be used for the more extensive 
+used as is. Currently it can <b>not</b> be used for the  extensive 
 energy spread expected at linear <i>e^+ e^-</i> colliders. Also, 
 any attempt to combine it with external Les Houches input of 
 parton-level events is at own risk. 
@@ -570,4 +580,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

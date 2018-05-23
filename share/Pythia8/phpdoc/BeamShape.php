@@ -53,15 +53,15 @@ used for initialization. The second, <code>pick()</code>, selects
 beam momentum and production vertex in the current event. 
  
 <a name="anchor1"></a>
-<p/><strong>BeamShape::BeamShape() &nbsp;</strong> <br/>
+<p/><strong> BeamShape::BeamShape() &nbsp;</strong> <br/>
    
 <a name="anchor2"></a>
-<strong>virtual BeamShape::~BeamShape() &nbsp;</strong> <br/>
+<strong> virtual BeamShape::~BeamShape() &nbsp;</strong> <br/>
 the constructor and destructor do not need to do anything. 
    
  
 <a name="anchor3"></a>
-<p/><strong>virtual void BeamShape::init( Settings& settings, Rndm* rndmPtrIn) &nbsp;</strong> <br/>
+<p/><strong> virtual void BeamShape::init( Settings& settings, Rndm* rndmPtrIn) &nbsp;</strong> <br/>
 the base-class method simply reads in the relevant values stored 
 in the <code>Settings</code> data base, and saves a pointer to the 
 random-number generator. You are free to write your own 
@@ -76,7 +76,7 @@ and vertex-spread parameters are local to this class.
    
  
 <a name="anchor4"></a>
-<p/><strong>virtual void BeamShape::pick() &nbsp;</strong> <br/>
+<p/><strong> virtual void BeamShape::pick() &nbsp;</strong> <br/>
 this method is the key one to supply in the derived class. Here you 
 are free to pick whatever parametrization you desire for beam momenta 
 and vertex position, including correlations between the two. 
@@ -93,10 +93,10 @@ with <i>c = 1</i>.
    
  
 <a name="anchor5"></a>
-<p/><strong>Vec4 BeamShape::deltaPA() &nbsp;</strong> <br/>
+<p/><strong> Vec4 BeamShape::deltaPA() &nbsp;</strong> <br/>
    
 <a name="anchor6"></a>
-<strong>Vec4 BeamShape::deltaPB() &nbsp;</strong> <br/>
+<strong> Vec4 BeamShape::deltaPB() &nbsp;</strong> <br/>
 read out the three-momentum shifts for beams A and B that were set by 
 <code>pick()</code>. The energy components are put to zero at this stage, 
 since they are most conveniently calculated after the original and the 
@@ -104,7 +104,7 @@ shift three-momenta have been added.
    
  
 <a name="anchor7"></a>
-<p/><strong>Vec4 BeamShape::vertex() &nbsp;</strong> <br/>
+<p/><strong> Vec4 BeamShape::vertex() &nbsp;</strong> <br/>
 read out the production-vertex position and time that were set by 
 <code>pick()</code>. 
    
@@ -112,4 +112,4 @@ read out the production-vertex position and time that were set by
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

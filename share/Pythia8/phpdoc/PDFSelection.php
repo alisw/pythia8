@@ -138,7 +138,7 @@ to set <code>PDF:pSet</code> differently it should be done <i>after</i>
 the <code>Tune:pp</code> value, if any, has been set. 
 <br/><b>Warning 2:</b> People often underestimate the differences 
 between different sets on the market. The sets for the same order are 
-constructed to behave more or less similarly at large <i>x</i> and 
+constructed to behave  or less similarly at large <i>x</i> and 
 <i>Q^2</i>, while the multiparton interactions are dominated by the 
 behaviour in the region of small <i>x</i> and <i>Q^2</i>. A good 
 PDF parametrization ought to be sensible down to <i>x = 10^-6</i> 
@@ -194,16 +194,15 @@ NLO <i>alpha_s(M_Z) = 0.1180</i> (NLO, see Warning 3 above).
    
 <br/><b>Warning :</b>the following four NNPDF 3.1 sets are quite 
 different from the NNPDF 2.3 ones, and cannot be used interchangeably, 
-but need retuning of the MPI framework. They also do not contain QED 
-evolution, and are likely to be replaced by ones that do for the next 
-release. 
+but need retuning of the MPI framework. Some also do not contain QED 
+evolution. 
 <br/><code>option </code><strong> 17</strong> : NNPDF3.1 QCD LO <i>alpha_s(M_Z) = 0.130</i>. 
    
 <br/><code>option </code><strong> 18</strong> : NNPDF3.1 QCD LO <i>alpha_s(M_Z) = 0.118</i>. 
    
-<br/><code>option </code><strong> 19</strong> : NNPDF3.1 QCD NLO <i>alpha_s(M_Z) = 0.118</i>. 
+<br/><code>option </code><strong> 19</strong> : NNPDF3.1 QCD+QED NLO <i>alpha_s(M_Z) = 0.118</i>. 
    
-<br/><code>option </code><strong> 20</strong> : NNPDF3.1 QCD NNLO <i>alpha_s(M_Z) = 0.118</i>. 
+<br/><code>option </code><strong> 20</strong> : NNPDF3.1 QCD+QED NNLO <i>alpha_s(M_Z) = 0.118</i>. 
    
 <br/><code>option </code><strong> 21</strong> :  modified NNPDF3.1 QCD NNLO. It is highly experimental, 
 as a first attempt to combine a NNLO behaviour at high <i>x</i> 
@@ -301,7 +300,7 @@ of an event, but if the <i>x</i> and <i>Q^2</i> ranges mainly accessed
 by the components are rather different then the contradiction would not be 
 too glaring. Furthermore, since standard PDF's are one-particle-inclusive 
 we anyway have to 'invent' our own PDF modifications to handle configurations 
-where more than one parton is kicked out of the proton [<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>]. 
+where  than one parton is kicked out of the proton [<a href="Bibliography.php#refSjo04" target="page">Sjo04</a>]. 
  
 <p/> 
 The PDF choices that can be made are the same as above, so we do not 
@@ -341,7 +340,7 @@ set using the PDG code for nucleus. The neutron PDFs are obtained by
 applying isospin symmetry, e.g. <i>f_u^(n/A)(x,Q^2) = f_d^(p/A)(x,Q^2)</i>. 
 The nuclear PDFs implemented provide only the nuclear modification so the 
 full PDF is calculated by multiplying the selected free proton PDF with the 
-modication. 
+modification. 
 <p/> 
  
 <br/><br/><strong>PDF:useHardNPDFA</strong>  <input type="radio" name="7" value="on"><strong>On</strong>
@@ -358,24 +357,30 @@ If on, the hard processes are generated with nuclear modifications for
 beam B. 
    
  
-<br/><br/><table><tr><td><strong>PDF:nPDFSetA  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PDF:nPDFSetA  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)</td></tr></table>
 The nuclear modication to be used for beam A if enabled with the switch above. 
 <br/>
 <option value = "0"> Only Isospin effect.</option> 
 <option value = "1"> EPS09, LO <ref>Esk09</ref>.</option> 
 <option value = "2"> EPS09, NLO <ref>Esk09</ref>. The grid files can be 
 found from 
-<a href="https://www.jyu.fi/fysiikka/en/research/highenergy/urhic/eps09"> 
+<a href="https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/eps09"> 
 here</a> and are to be stored in the same folder as other PDF grid files 
 (usually share/Pythia8/xmldoc/). 
 </option> 
+<option value = "3"> EPPS16, NLO <ref>Esk16</ref>. The grid files can be 
+found from 
+<a href="https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/epps16-nuclear-pdfs"> 
+here</a>. 
+</option> 
  
-<br/><br/><table><tr><td><strong>PDF:nPDFSetB  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PDF:nPDFSetB  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)</td></tr></table>
 The nuclear modication to be used for beam B. Same options as above. 
 <br/>
 <option value = "0"> Only Isospin effect.</option> 
 <option value = "1"> EPS09, LO. </option> 
 <option value = "2"> EPS09, NLO.</option> 
+<option value = "3"> EPPS16, NLO.</option> 
  
 <br/><br/><table><tr><td><strong>PDF:nPDFBeamA  </td><td></td><td> <input type="text" name="11" value="100822080" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>100822080</strong></code>)</td></tr></table>
 The PDG code for nuclear beam A, provides the number of protons and 
@@ -496,6 +501,12 @@ rescaled by the factor <code>PomRescale</code> below.
 there is an additional suppression by <i>(1-x)^p</i>, where the power is 
 given by <code>PDF:PomHixSupp</code> below. 
    
+<br/><code>option </code><strong> 12</strong> : The GKG18-DPDF Fit A central member <i>Q^2</i>-dependent 
+parametrization based on a tune to H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
+   
+<br/><code>option </code><strong> 13</strong> : The GKG18-DPDF Fit B central member <i>Q^2</i>-dependent 
+parametrization based on a tune to H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
+   
 <br/><code>option </code><strong> LHAPDF5:set/member</strong> : Use an external LHAPDF5 set, 
 cf. the corresponding proton option. 
    
@@ -538,8 +549,8 @@ the suppression of the <i>s</i> quark density relative to that of the
    
  
 <br/><br/><table><tr><td><strong>PDF:PomRescale </td><td></td><td> <input type="text" name="22" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 5.0</code>)</td></tr></table>
-Rescale the four H1 fits above by this uniform factor, e.g. to bring 
-up their momentum sum to around unity. By default all three have 
+Rescale several of the fits above by this uniform factor, e.g. to bring 
+up their momentum sum to around unity. By default many of the sets have 
 a momentum sum of order 0.5, suggesting that a factor around 2.0 
 should be used. You can use <code>examples/main51.cc</code> to get 
 a more precise value. Note that also other parameters in the 
@@ -551,7 +562,7 @@ of <code>PDF:PomRescale</code> to preserve the cross section for hard
 diffractive processes. 
    
  
-<br/><br/><table><tr><td><strong>PDF:PomHixSupp </td><td></td><td> <input type="text" name="23" value="4." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PDF:PomHixSupp </td><td></td><td> <input type="text" name="23" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)</td></tr></table>
 the power in the suppression of the high-x PDF for option 11 above. 
    
  
@@ -776,7 +787,7 @@ if($_POST["22"] != "1.0")
 $data = "PDF:PomRescale = ".$_POST["22"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["23"] != "4.")
+if($_POST["23"] != "0.")
 {
 $data = "PDF:PomHixSupp = ".$_POST["23"]."\n";
 fwrite($handle,$data);
@@ -818,4 +829,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

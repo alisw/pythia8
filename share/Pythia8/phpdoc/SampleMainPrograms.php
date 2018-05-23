@@ -52,7 +52,8 @@ of Z bosons at the Tevatron. (Brief example fitting on one slide.)</li>
  
 <li><code>main03.cc</code> : a simple study of several different kinds 
 of events, with the choice to be made in the <code>main03.cmnd</code> 
-"cards file".</li> 
+"cards file". Also shows how to plot histograms using the 
+Python/Matplotlib/Pyplot solution. </li> 
  
 <li><code>main04.cc</code> : tests of cross sections, multiplicities and 
 average transverse momenta for elastic, diffractive and nondiffractive 
@@ -73,7 +74,8 @@ of (two-body) decay modes to a variety of final states. Also traces
 decay chains down to truly stable particles: gamma, e+-, p/pbar and 
 neutrinos. Suitable for astroparticle applications, like neutralino 
 pair annihilation, where cross sections are calculated separately 
-in another program.</li> 
+in another program.  Also shows how to plot histograms using the 
+Python/Matplotlib/Pyplot solution.</li> 
  
 <li><code>main08.cc</code> : generation of the QCD jet cross section 
 biased towards higher pT values, by two different techniques. 
@@ -101,7 +103,7 @@ PYTHIA 6.4. This file currently only contains 100 events
 so as not to make the distributed PYTHIA package too big, and so serves 
 mainly as a demonstration of the principles involved. </li> 
  
-<li><code>main12.cc</code> : a more sophisticated variant of 
+<li><code>main12.cc</code> : a  sophisticated variant of 
 <code>main11.cc</code>, where two Les Houches Event Files 
 (<code>ttbar.lhe</code> and <code>ttbar2.lhe</code>) successively 
 are used as input. Also illustrating some other aspects, like the 
@@ -164,7 +166,7 @@ distribution set.</li>
  
 <li><code>main24.cc</code> : tests of internally implemented cross sections 
 for Supersymmetric particle production, with SUSY spectrum defined in 
-<code>cmssm.spc</code> and settings in <code>main24.cmnd</code>. For 
+<code>slha2-example.spc</code> and settings in <code>main24.cmnd</code>. For 
 illustration, an alternative example spectrum is also 
 available, <code>sps1aWithDecays.spc</code>, which contains a decay 
 table in SLHA format.</li> 
@@ -287,7 +289,9 @@ contains special instructions how to configure PYTHIA for use with
  
 <li><code>main51.cc</code> : a test of the shape of parton densities, 
 as a check prior to using a given PDF set in a generator.  Requires 
-that LHAPDF is properly linked.</li> 
+that LHAPDF is properly linked. Also shows how to plot histograms 
+(with logarithmic <i>x</i> scale) using the Python/Matplotlib/Pyplot 
+solution.</li> 
  
 <li><code>main52.cc</code> : compares the charged multiplicity 
 distribution, and a few other minimum-bias physics aspects, between 
@@ -446,6 +450,19 @@ in a program that for the rest is structured like a normal PYTHIA run.
 <li><code>main92.cc</code> : shows how PYTHIA events can be stored as 
 ROOT trees.</li> 
  
+<li><code>main93.cc</code> : stremlined event generation with possibility 
+to output ROOT files, output HepMC files and run RIVET analyses, all by 
+specifying output modes in a cmnd file, where also the event generator 
+settings are specified. The example is run with command 
+line options, run <code>./main93 -h</code> to see a full list. 
+See <?php $filepath = $_GET["filepath"];
+echo "<a href='ROOTusage.php?filepath=".$filepath."' target='page'>";?>ROOT Usage</a> for information about ROOT 
+output, <?php $filepath = $_GET["filepath"];
+echo "<a href='RIVETusage.php?filepath=".$filepath."' target='page'>";?>RIVET Usage</a> for information about 
+RIVET and  <?php $filepath = $_GET["filepath"];
+echo "<a href='HepMCInterface.php?filepath=".$filepath."' target='page'>";?>HepMC Interface</a> for 
+information about HepMC.</li> 
+ 
 <li><code>main101.cc</code> : shows how the string shoving mechanism, 
 part of the rope hadronization framework, can be set up and used to 
 generate ridge effects.</li> 
@@ -474,4 +491,4 @@ to PDFs and factorization and renormalization scales.</li>
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 

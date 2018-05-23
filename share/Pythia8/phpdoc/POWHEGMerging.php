@@ -80,7 +80,7 @@ decisions have already been made in the implementation of POWHEG, one example
 being the choice in defining which "hardness value" is transferred as 
 POWHEG-hardness, e.g. by deciding if the "singular regions" of the FKS or the 
 CS approach are used. If the POWHEG-hardness definition were to be changed, 
-or extended to more objects, the <code>PowhegHooks.h</code> code would need 
+or extended to  objects, the <code>PowhegHooks.h</code> code would need 
 to be modified accordingly. 
  
 <p/> 
@@ -305,4 +305,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2017 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
