@@ -35,11 +35,33 @@ public:
   Info() : LHEFversionSave(0), initrwgt(NULL), generators(NULL),
     weightgroups(NULL), init_weights(NULL), eventAttributes(NULL),
     weights_detailed(NULL), weights_compressed(NULL), scales(NULL),
-    weights(NULL), rwgt(NULL), hiinfo(0), eCMSave(0.),
-    lowPTmin(false), a0MPISave(0.),
-    abortPartonLevel(false), weightCKKWLSave(1.), weightFIRSTSave(0.) {
-    for (int i = 0; i < 40; ++i) counters[i] = 0;
-    setNWeights(1);}
+    weights(NULL), rwgt(NULL), eventWeightLHEF(0), hiinfo(0), idASave(0), idBSave(0),
+    pzASave(0), eASave(0),mASave(0), pzBSave(0), eBSave(0), mBSave(0), eCMSave(0.), sSave(0), lowPTmin(false),
+    nTry(0), nSel(0), nAcc(0), sigGen(0), sigErr(0), wtAccSum(0), lhaStrategySave(0), a0MPISave(0.),
+    isRes(false), isDiffA(false), isDiffB(false), isDiffC(false), isND(false), isLH(false),
+    bIsSet(false), evolIsSet(false), atEOF(false), isVal1(false), isVal2(false), hasHistorySave(false),
+    abortPartonLevel(false), isHardDiffA(false), isHardDiffB(false), hasUnresBeams(false), hasPomPsys(false),
+    codeSave(0), nFinalSave(0), nTotal(0), nMPISave(0), nISRSave(0), nFSRinProcSave(0), nFSRinResSave(0),
+    bMPISave(0), enhanceMPISave(0), enhanceMPIavgSave(0), bMPIoldSave(0), enhanceMPIoldSave(0),
+    enhanceMPIoldavgSave(0), pTmaxMPISave(0), pTmaxISRSave(0), pTmaxFSRSave(0), pTnowSave(0), zNowISRSave(0),
+    pT2NowISRSave(0), xPomA(0), xPomB(0), tPomA(0), tPomB(0),
+    externalVariationsSize(0),
+    isVMDstateAEvent(false), isVMDstateBEvent(false),
+    gammaModeEvent(0), idVMDASave(0), idVMDBSave(0),
+    x1GammaSave(0), x2GammaSave(0), Q2Gamma1Save(0), Q2Gamma2Save(0), eCMsubSave(0),
+    thetaLepton1(0), thetaLepton2(0), sHatNewSave(0), mVMDASave(0), mVMDBSave(0),
+    scaleVMDASave(0), scaleVMDBSave(0),     
+    weightCKKWLSave(1.), weightFIRSTSave(0.)
+    {
+      for (int i = 0; i < 50; ++i) counters[i] = 0;
+      for (int i=4;i--;) {
+	hasSubSave[i] = false;
+	codeSubSave[i] = nFinalSubSave[i] = id1Save[i] = id2Save[i] = id1pdfSave[i] = id2pdfSave[i] = 0;
+	x1Save[i] = x2Save[i] = x1pdfSave[i] = x2pdfSave[i] = pdf1Save[i] = pdf2Save[i] = Q2FacSave[i] = alphaEMSave[i] = 0;
+	alphaSSave[i] = Q2RenSave[i] = scalupSave[i] = sH[i] = tH[i] = uH[i] = pTH[i] = m3H[i] = m4H[i] = thetaH[i] = phiH[4] = 0;
+      }
+      setNWeights(1);
+    }
 
   // Listing of most available information on current event.
   void   list() const;
