@@ -58,7 +58,7 @@ public:
 	hasSubSave[i] = false;
 	codeSubSave[i] = nFinalSubSave[i] = id1Save[i] = id2Save[i] = id1pdfSave[i] = id2pdfSave[i] = 0;
 	x1Save[i] = x2Save[i] = x1pdfSave[i] = x2pdfSave[i] = pdf1Save[i] = pdf2Save[i] = Q2FacSave[i] = alphaEMSave[i] = 0;
-	alphaSSave[i] = Q2RenSave[i] = scalupSave[i] = sH[i] = tH[i] = uH[i] = pTH[i] = m3H[i] = m4H[i] = thetaH[i] = phiH[4] = 0;
+	alphaSSave[i] = Q2RenSave[i] = scalupSave[i] = sH[i] = tH[i] = uH[i] = pTH[i] = m3H[i] = m4H[i] = thetaH[i] = phiH[i] = 0;
       }
       setNWeights(1);
     }
