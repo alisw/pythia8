@@ -1,5 +1,5 @@
 // SigmaLeftRightSym.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,7 +22,8 @@ class Sigma1ffbar2ZRight : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1ffbar2ZRight() {}
+  Sigma1ffbar2ZRight() : idZR(), mRes(), GammaRes(), m2Res(), GamMRat(),
+    sin2tW(), sigma0(), ZRPtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -65,7 +66,8 @@ class Sigma1ffbar2WRight : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1ffbar2WRight() {}
+  Sigma1ffbar2WRight() : idWR(), mRes(), GammaRes(), m2Res(), GamMRat(),
+    thetaWRat(), sigma0Pos(), sigma0Neg(), particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -108,7 +110,9 @@ class Sigma1ll2Hchgchg : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1ll2Hchgchg(int leftRightIn ) : leftRight(leftRightIn) {}
+  Sigma1ll2Hchgchg(int leftRightIn ) : leftRight(leftRightIn), idHLR(),
+    codeSave(), mRes(), GammaRes(), m2Res(), GamMRat(), yukawa(),
+    particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -150,7 +154,8 @@ public:
 
   // Constructor.
   Sigma2lgm2Hchgchgl(int leftRightIn, int idLepIn ) : leftRight(leftRightIn),
-    idLep(idLepIn) {}
+    idHLR(), idLep(idLepIn), codeSave(), yukawa(), openFracPos(),
+    openFracNeg() {}
 
   // Initialize process.
   virtual void initProc();
@@ -188,7 +193,9 @@ class Sigma3ff2HchgchgfftWW : public Sigma3Process {
 public:
 
   // Constructor.
-  Sigma3ff2HchgchgfftWW(int leftRightIn) : leftRight(leftRightIn) {}
+  Sigma3ff2HchgchgfftWW(int leftRightIn) : leftRight(leftRightIn), idHLR(),
+    codeSave(), mWS(), prefac(), sigma0TU(), sigma0T(), openFracPos(),
+    openFracNeg() {}
 
   // Initialize process.
   virtual void initProc();
@@ -236,7 +243,9 @@ class Sigma2ffbar2HchgchgHchgchg : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2HchgchgHchgchg(int leftRightIn) : leftRight(leftRightIn) {}
+  Sigma2ffbar2HchgchgHchgchg(int leftRightIn) : leftRight(leftRightIn),
+    idHLR(), codeSave(), mRes(), GammaRes(), m2Res(), GamMRat(), sin2tW(),
+    preFac(), yukawa(), openFrac() {}
 
   // Initialize process.
   virtual void initProc();

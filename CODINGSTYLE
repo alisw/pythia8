@@ -223,6 +223,11 @@ An incomplete list is as follows.
 44. Only use == and != for comparisons between two pointers,
     or a pointer and 0. Thus comparisons like (Xptr > 0) are forbidden.
 
+45. Initialize all class variables in constructors. When there is no
+    nontrivial default value, use the default constructor:
+    Thrust(int selectIn = 2) : select(selectIn), eVal1(), eVal2(), eVal3(),
+      nFew(0) {}
+
 -----------------------------------------------------------------------
 
 Remember to update the xmldoc documentation in parallel with the
@@ -247,10 +252,11 @@ and <tag/> for single (=combined begin+end). Note that the parsing
 of the conversion program assumes a "sensible" layout of the text.
 
 A) Standard html concepts:
-<h1></h1> a top-level header;
-<h2></h2> a subheader;
-<h3></h3> a subsubheader;
+<h1></h1> a top-level header, only used on the Frontpage;
+<h2></h2> a subheader, one on top each separate xml file;
+<h3></h3> a subsubheader, giving (indexed) main subdivisions of an xml file;
 <h4></h4> a subsubsubheader;
+<hr/> a horizontal ruler line, to separate very distinct parts of a page; 
 <br/> a new line;
 <p/> a new paragraph;
 <ol></ol> an ordered list, with <li> items;

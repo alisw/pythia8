@@ -46,6 +46,7 @@ of the <code>fjcore</code> code from <code>FastJet</code>
 [<a href="Bibliography.php#refCac06" target="page">Cac06</a>, <a href="Bibliography.php#refCac12" target="page">Cac12</a>], the default mode has become to use the 
 <code>fjcore</code> methods. This is transparent to the user. 
  
+<a name="section0"></a> 
 <h3>FastJet</h3> 
  
 <code>SlowJet</code> does not exhaust all the posssibilities of the 
@@ -78,4 +79,4 @@ in an identical manner, should the need arise.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -7,11 +7,431 @@ PYTHIA 8.186 version, which was the last 8.1 release. The step
 from 8.1 to 8.2 gave an occasion to break backwards compatibility, 
 but this should only affect a small part of the user code. 
  
-<h3>Main news by version</h3> 
- 
+<h3>8.243: 4 July 2019</h3> 
 <ul> 
  
-<li>8.235: 27 March 2018 
+<li>Bug fix in the Les Houches reader, where the introduction of 
+the optional <code>#scaleShowers</code> tag in 8.242 meant that 
+parton showers were killed if that tag was not present. Should not 
+affect LHE3-compliant files. Thanks to Helen Brooks.</li> 
+ 
+<li>The Python interface in 
+<code>include/Pythia8Plugins/PythonWrapper.h</code> has been updated.</li> 
+ 
+<li>Obsolete method declaration in <code>ProcessContainer.cc</code> 
+removed.</li> 
+ 
+<li><code>main29.cc</code> has been updated with safer handling of a 
+pointer. Address tiny issue of possibly uninitialized variable in 
+<code>ColourReconnectionHooks.h</code>. Thanks to Leif Gellersen.</li> 
+ 
+</ul> 
+ 
+<h3>8.242: 1 July 2019</h3> 
+<ul> 
+ 
+<li>A bug fix in 8.240, for an issue with colour vs. anticolour assignment 
+of dipole ends in baryon-number-violating decays, unfortunately introduced 
+a bug of its own. Specifically, in cases where the recoiler of a final-state 
+radiation is in the initial state, the recoiler colour type should 
+be negated relative to a final-state recoiler. In addition, the new 
+code has been extended to apply for all colour (anti)triplets, including 
+(anti)squarks. The bug has meant that high-<ei>pT</ei> jets 
+in some flavour combinations have acquired a larger multiplicity than they 
+should, at very high <ei>pT</ei> by up to 10%. Physics at lower <ei>pT</ei> 
+scales appear unaffected, as is e.g. top, <ei>W</ei>, <ei>Z</ei> and 
+<ei>H</ei> decays. Thanks to Patrick Komiske and Jesse Thaler.</li> 
+ 
+<li>New particle decay codes 93 and 94 for singlet particle decaying to a 
+<ei>q qbar</ei> pair plus a new singlet. Thanks to Philippe Mermod.</li> 
+ 
+<li>Fix cases where <code>scale()</code> and <code>scaleSecond()</code> 
+return values were not stored in the event record, by allowing new 
+<code>#scaleShowers</code> tag in Les Houches events. Thanks to 
+Oleh Fedkevych.</li> 
+ 
+<li>Bug fixes to the LHEF3 file reader. An issue previously led to 
+some tags being skipped, if the line before the tag was commented by 
+a hash/pound sign (#).</li> 
+ 
+<li>Protect against potential square root of negative number in 
+Dark Matter resonance handling. Thanks to Peter Richardson.</li> 
+ 
+<li>The implementation of the indexing operator <code>event[i]</code> 
+has been changed from straight vector indexing to using the 
+<code>at(i)</code> method, giving some safety against out-of-bounds 
+indexing with little to no cost in execution time. Thanks to 
+Helen Brooks.</li> 
+ 
+<li>The new method <code>Event::free()</code> empties the event record, 
+like <code>Event::clear()</code>,but also frees up the memory of the 
+<code>Particle</code> vector.</li> 
+ 
+<li>Fix that PDF set 22 was unreachable, since a range check had not 
+been updated.</li> 
+ 
+<li>Static code analysis by Dmitri Konstantinov and colleagues revealed 
+four errors, now fixed. 
+<ul> 
+<li>The <ei>H^+</ei> contribution was missed in BSM Higgs width 
+calculation for the <ei>gamma + Z^0</ei> channel.</li> 
+<li>Typo in the expression for the slepton/sneutrino partial width to 
+a chargino plus a neutrino/lepton.</li> 
+<li>Typo in the merging machinery for SUSY pair production.</li> 
+<li>Possibility of incorrect kinematics when photoproduction involves 
+off-shell photons.</li> 
+</ul></li> 
+ 
+<li>Fixed faulty behaviour in PartonVertex asssignment, where parton 
+shower would boost vertices to unphysical spatial points. To this end 
+the event and particle <code>rotbst</code> methods have been endowed 
+with a second optional argument not to boost production vertices.</li> 
+ 
+<li>Bug fixes to the "guess" option for defining hard process name for 
+multijet merging. An issue previously led to the hard process name being 
+only corrected once for the first event, and then no longer adjusted 
+automatically.The <code>main89.cc</code> program has been modified 
+as a consequence.</li> 
+ 
+<li>Bug fixes for the hard process name handling for weak-boson-fusion-like 
+processes that led to an incorrect counting of additional emissions. 
+In multijet merging, this led to incorrect no-emission probabilities 
+being applied to such processes.</li> 
+ 
+<li>A winner-takes-it-all strategy for choosing parton shower histories 
+has been added in multijet merging. This is an unfortunate necessity for 
+extremely high multiplicity merging, to avoid excessive memory usage. 
+Other memory usage tweaks have been included in the <code>History</code> 
+class.</li> 
+ 
+<li>Corrections and extensions to the VMD framework for photon beams, 
+including improved kinematics and minor corrections for the production 
+of VMD states. It is now possible to generate the <ei>J/Psi</ei> as 
+one of the VMD states. </li> 
+ 
+<li>Process <ei>g gamma &rarr; t tbar</ei> has been enabled, see 
+<aloc href="TopProcesses">Top Processes</aloc> for details.</li> 
+ 
+<li>Fixed cross section for heavy-quark pair production in gamma+gluon 
+and gamma+gamma fusion processes. Thanks to Javier Alberto Murillo 
+Quijada.</li> 
+ 
+<li>Bug fix for hard diffraction and resolved photons, wherein kinematics 
+is not recalculated when previous steps already failed.</li> 
+ 
+<li>Bug fix in the check that energy-momentum is preserved, without which 
+DIS events e.g. generated with <code>main36.cc</code> are falsely 
+rejected.</li> 
+ 
+<li>New setting <code>Beams:allowVariableEnergy</code> allow incoming 
+beam energies or momenta to be set event-by event, by further arguments 
+to the <code>pythia.next</code> call. This is achieved by initializing 
+the MPI machinery at a grid of CM energies, and then interpolating as 
+needed. Thus only processes belonging to the <code>SoftQCD</code> family 
+for inclusive hadron-hadron collisions can be simulated. This is unlike 
+the <code>Beams:allowMomentumSpread</code>, which can be used for any 
+process, but only in a narrow energy range around the nominal one. 
+The selection of grid energies for diffraction and photon beams has been 
+unified with the new one above. 
+See further in the "Variable collision energy" section of the 
+<aloc href="BeamParameters">Beam Parameters</aloc> description.</li> 
+ 
+<li>Some simple methods have been added to the <code>Event</code> 
+class, to return the final-state multiplicity, or the rapidity/angular 
+separation between two particles in the event record.</li> 
+ 
+<li>A simple method has been added to the <code>Settings</code> class, 
+to check whether only <code>SoftQCD</code> processes are switched on. 
+</li> 
+ 
+<li>A new check at initialization to warn if <code>SoftQCD</code> 
+processes are mixed with other kinds of processes, since this can 
+lead to doublecounting and/or low efficiency.</li> 
+ 
+<li>New <code>main77.cc</code> example how double parton scattering events 
+can be reweighted according to a different model than default in Pythia. 
+Contributed by Boris Blok and Paolo Gunnellini.</li> 
+ 
+<li>The examples <code>main10.cc</code> and <code>main62.cc</code> 
+have been rewritten to avoid having histograms in global scope.</li> 
+ 
+<li>Fix minor typo in the <ei>I_0</ei> and <ei>I_1</ei> Bessel 
+functions.</li> 
+ 
+<li>Various other minor typo corrections.</li> 
+ 
+<li>Year updated to 2019.</li> 
+ 
+</ul> 
+ 
+<h3>8.240: 20 December 2018</h3> 
+<ul> 
+ 
+<li>Nadine Fischer leaves the PYTHIA collaboration. New affiliations 
+for Nishita Desai, Ilkka Helenius and Stefan Prestel.</li> 
+ 
+<li>All soft QCD processes, including elastic and diffractive, are now 
+implemented for photoproduction in connection with lepton beams. These 
+can also be applied to ultra-peripheral collisions by providing an approriate 
+photon flux. This involved some restructuring of related code, mainly between 
+<code>PhaseSpace.cc</code> and <code>GammaKinematics.cc</code>. 
+</li> 
+ 
+<li>A modified coalescence model for (anti)deuteron production 
+out of (anti)protons and (anti)neutrons has been implemented. 
+The model and its parameters are further described on the new 
+<aloc href="DeuteronProduction">Deuteron Production</aloc> page. The 
+model is enabled by <code>HadronLevel:DeuteronProduction = on</code>. 
+New status code 121 for particles produced in this step. 
+</li> 
+ 
+<li>A major restructuring of the parton shower code has begun, 
+with the objective that the Vincia and Dire parton showers should 
+be distributed as part of the Pythia package, to allow simple 
+switching and comparison between showers. So far, the 
+<code>TimeShower</code> and <code>SpaceShower</code> classes have 
+been reduced to base classes for other showers. Therefore only the 
+header files remain, while the <code>.cc</code> files are removed. 
+The existing shower algorithms have been moved to the new derived classes 
+<code>SimpleTimeShower</code> and <code>SimpleSpaceShower</code>, 
+located in correspondingly-named <code>.h</code> and <code>.cc</code> 
+files. Finally, both class and files <code>WeakShowerMEs</code> have 
+been renamed <code>SimpleWeakShowerMEs</code>. Existing shower 
+settings retain their names, for backwards compatibility. 
+See further <aloc href="SimpleShowers">here</aloc>.</li> 
+ 
+<li>Two new proton PDF sets, NNPDF3.1sx+LHCb (N)NLO+NLLx LUXQED, 
+have been introduced. Since they include small-<ei>x</ei> resummation 
+they offer a more reasonable small-<ei>x</ei> behaviour for use in a 
+LO context. The old set 21 has been removed and replaced by the 
+new NLO/NNLO ones as sets 21 and 22. Thanks to J. Rojo.</li> 
+ 
+<li>The GKG18 Pomeron PDF sets have been updated to the final 
+version. In addition both LO and NLO fits are now provided for 
+Fit A and Fit B, in each case for the central member.</li> 
+ 
+<li>The <aloc href="DarkMatterProcesses">Dark Matter</aloc> setup has 
+been extended with some new processes, for <ei>f fbar &rarr; Z' H</ei> 
+and <ei>q qbar &rarr;</ei> Drell-Yan production of charged 
+co-annihilation partners of several different kinds. As a consequence 
+also some new particles are introduced in the DM scenario.</li> 
+ 
+<li>The html/php documentation has been extended with an index 
+on the top of (almost) all pages, with links to the main subsections. 
+The level of headers has been adjusted for consistency in some places. 
+</li> 
+ 
+<li>A new switch <code>StringFragmentation:TraceColours</code> allows 
+fictitious colour and anticolour indices to be set for the primary 
+hadrons, according to the colour indices of the endpoint partons of 
+the string region(s) in which each hadron is produced.</li> 
+ 
+<li>The <code>configure</code> file has been made more verbose, 
+both on choices made and on any problems encountered.</li> 
+ 
+<li>Some improvements of the merging machinery for high-multiplicity 
+merging, in particular correcting an inconvenient choice in the 
+organization of the construction of all paths that slowed down the 
+code significantly. Added new functionality to info pointer to set 
+auxiliary event attributes. Updated UNLOPS merging to allow user-defined 
+merging scale definition.</li> 
+ 
+<li>Improved handling of beams to allow more straightforward handling 
+of neutrino scattering. Allow the PDFs of both beams to be set 
+independently, such that one can be used to emulate the varying neutrino 
+flux.</li> 
+ 
+<li>Improvements to the beam handling to allow QED radiation in DIS 
+events.</li> 
+ 
+<li>The <aloc href="UserHooks">User Hooks</aloc> machinery for modified 
+hadronization parameters has been extended with a few more arguments and 
+methods.</li> 
+ 
+<li>The <code>HistPlot::add()</code> method has been extended so the 
+input histogram could be a temporary one, e.g. a rescaled histogram 
+or the sum or ratio of two.</li> 
+ 
+<li>The <code>PartonSystems</code> class has been extended to also store 
+the location of a single resonance mother of a system, not only 
+incoming beam partons (where relevant) and outgoing ones. Consequently 
+some methods have been added or modified.</li> 
+ 
+<li>A new base class method <code>TimeShower::showerQEDafterRemnants</code> 
+has been added, and is called at the very end of the parton-level step. 
+</li> 
+ 
+<li>Correct sign and phase of the Coulomb term in the ABMST and RPP 
+elastic <ei>pp/ppbar</ei> cross sections, owing to typos in the 
+respective articles.</li> 
+ 
+<li>A new overestimate for photon flux optimized for the flux from 
+heavy ions. Related parameters are listed on the 
+<aloc href="PDFSelection">PDF Selection</aloc> page, and usage is 
+demonstrated in the <code>main70.cc</code> sample main program. This should 
+reduce the generation time roughly by a factor of six.</li> 
+ 
+<li>A switch to select for which side the hard-diffractive selection is done 
+is introduced, see <aloc href="Diffraction">Diffraction</aloc>.</li> 
+ 
+<li>A small correction for photoproduction kinematics with a massive photon 
+emitter.</li> 
+ 
+<li>Removed resetting the <ei>pT0Ref</ei> in <code>main69.cc</code> for 
+<ei>gamma + gamma</ei> case, since the new retuned default parametrization 
+is sufficient. A similar setting for <ei>gamma + proton</ei> is 
+introduced, however.</li> 
+ 
+<li>Bug fix in <ei>A^0 &rarr; H^+- W^-+</ei> decays: coupling 
+parameter name was misspelt.</li> 
+ 
+<li>Fixed missing possibility of secondary vertices in some shower 
+branchings, notably in the Hidden Valley shower. Thanks to Malte 
+Buschmann.</li> 
+ 
+<li>Bug fix in the lower <ei>Q^2</ei> limit of the equivalent photon 
+flux around a proton. Mainly affects the shape at large <ei>x</ei> 
+values.</li> 
+ 
+<li>The initializer list of all class constructors has been extended 
+such that all class variables are initialized to the default value 
+of the respective data type, when not explicitly initialized to 
+something else.</li> 
+ 
+<li>Forgotten initialization of <code>isDiff</code> in 
+<code>ProcessContainer.cc</code> fixed. May affect soft diffraction 
+with photon beams. Thanks to Vittorio Zecca. <code>isDiff</code> 
+made obsolete by subsequent change.</li> 
+ 
+<li>Reset cross sections after choice of photon VMD state. Corrects 
+bug that could give incorrect <ei>gamma-p</ei> and <ei>gamma-gamma</ei> 
+cross sections. Thanks to Celine Degrande.</li> 
+ 
+<li>Initialize some variables that are not otherwise initialized 
+when using <code>TimeShower::showerQED</code>. Thanks to Kevin Pedro.</li> 
+ 
+<li>Minor change in <code>BeamParticle</code> for more flexibility in 
+resolving beam remnants. Thanks to Laurent Forthomme.</li> 
+ 
+<li>Fix incorrect combination of a displaced vertex in the hard process 
+and a displaced beam vertex. Introduce a new method 
+<code>Particle::vProdAdd</code> to shift an existing vertex. 
+Thanks to Felipe Rojas.</li> 
+ 
+<li>Fix forgotten initialization of particle data 
+<code>hasChangedMMinSave</code> and <code>hasChangedMMaxSave</code>. 
+Thanks to Vittorio Zecca.</li> 
+ 
+<li>Fix so that <code>Info::isVMDstateA()</code> and 
+<code>Info::isVMDstateB()</code> by default return false. 
+Thanks to Axel Naumann.</li> 
+ 
+<li>Do not set <code>p3weak</code> and <code>p4weak</code> in 
+timelike showers when not used. Thanks to Vittorio Zecca.</li> 
+ 
+<li>Fix so that the SKI and SKII colour reconnection scenarios are 
+called in the relevant configurations, as now described in the manual. 
+Thanks to Marina Beguin.</li> 
+ 
+<li>Speed up the TimeShower when global recoil is switched on. 
+Too much time was spent determining whether a dipole was from 
+the hard process, which is now solved by storing whether a system 
+is the hard one or not.</li> 
+ 
+<li>Check and correct for incorrect colour vs. anticolour assignments 
+of dipole ends in baryon-number-violating decays. Also do more extensive 
+search to find moved/new colour dipole recoil ends.</li> 
+ 
+<li>Note that in 8.235 update, the SaS/DL description of elastic 
+scattering was upgraded by the addition of a <ei>1 + rho^2</ei> 
+factor. Although a small effect, it lead to an undocumented decrease 
+in the default nondiffractive cross section. Thanks to Rick Field.</li> 
+ 
+<li>The SLHA interface has been updated to parse non-integer entries 
+in the QNUMBERS block, to allow for definitions of millicharged 
+particles. Note that such charges will still be rounded to zero 
+internally in PYTHIA, since bremsstrahlung corrections are negligible. 
+Thanks to A. Pukhov for pointing to this issue.</li> 
+ 
+<li>Add possibility to preload calibration files in Rivet analyses. 
+Added methods for analysis options and ignore beam configurations.</li> 
+ 
+<li>Include option with black-disc Glauber for nuclear collisions.</li> 
+ 
+<li>Some minor bug fixes in the AA machinery.</li> 
+ 
+<li>Added methods to iterate over nucleons; useful for Glauber 
+analyses. </li> 
+ 
+<li>In <code>main93.cc</code> Rivet analysis options are set from the 
+<code>.cmnd</code> file, and heavy ion information is added to the 
+HepMC file.</li> 
+ 
+<li>Bug fix to ensure that <code>Tune:pp = 0</code> does nothing. 
+</li> 
+ 
+<li>Extra safety check for inconsistent input to the SLHA interface. 
+</li> 
+ 
+<li>New possibility to let particles with narrow widths (such as onia 
+states) obtain a simple Breit-Wigner distribution, both in hard 
+processes and in MPIs, assuming their widths are above the new 
+<code>PhaseSpace:minWidthNarrowBW</code> parameter value, but still 
+not so large that they merit a completely dynamical mass generation. 
+</li> 
+ 
+<li>New <code>ParticleData::isOnium()</code> to identify onia states. 
+</li> 
+ 
+<li>The <code>ResonanceWidths:minWidth</code> default value has been 
+changed from 1e-20 to 1.97e-19, meaning that resenances with a lifetime 
+of above 1 km are set stable. </li> 
+ 
+<li>For unstable resonances the width is translated into a lifetime 
+(<ei>tau_0</ei>) at setup. The <code>ParticleData::setTau0</code> 
+method has been extended with a second optional argument so that this 
+does not have to count as changed particle data.</li> 
+ 
+<li>The <code>ResonanceDecays::MSAFETY</code> mass margin has been 
+changed from 0.1 to 0.01 GeV to allow for longer-lived particles.</li> 
+ 
+<li>Fix for gluino R-hadrons, which before got a too large, by about 
+half a GeV, and variable mass.</li> 
+ 
+<li>Minor extra safety check for the setting of space-time production 
+vertices.</li> 
+ 
+<li>Several new methods for the <code>RotBstMatrix</code> class, 
+to obtain an inverse without overwriting the original, to perform 
+vector and matrix multiplication by an overloaded * operator, 
+and to provide variants of the <code>toCMframe</code> and 
+<code>fromCMframe</code> methods.</li> 
+ 
+<li>Minor modification so that <code>ProcessLevel:all = off</code> 
+does not give any hadronization/decay activity at all if also 
+<code>HadronLevel:all = off</code>.</li> 
+ 
+<li>Introduce a safety check that exits when no dipoles are found for 
+the new colour reconnection scenario.</li> 
+ 
+<li>Improve reweighting scheme when a second hard process is generated, 
+by symmetrization of PDF weights, better bookkeeping of weights above 
+unity, and possibility to reduce the number of above-unity weight events 
+by the new parameter <code>SecondHard:maxPDFreweight</code>.</li> 
+ 
+<li>New possibility to input (and output) Double Parton Scattering parton 
+configurations by an extension of the Les Houches Accord standard, although 
+with some restrictions.</li> 
+ 
+<li>Minor modification in the parsing of settings vectors input as strings 
+enclosed in braces.</li> 
+ 
+<li>Change the default value of <code>ResonanceWidths::MASSMIN</code> 
+from 0.4 to 0.1 GeV by ATLAS request.</li> 
+ 
+</ul> 
+ 
+<h3>8.235: 27 March 2018</h3> 
 <ul> 
  
 <li>Up until now, PYTHIA has been licenced under GNU GPL v2 or later. 
@@ -174,6 +594,13 @@ maximal allowed masses for the Breit-Wigner distribution can be set by
 the user but, if not, the maximal deviation from the nominal mass is 
 now set to be the smaller of five times the width and half the mass.</li> 
  
+<li>A bug was found in <code>PhaseSpace2to2diffractive::trialKin</code> 
+whereby <code>s3</code> and <code>s4</code> were not correctly reset 
+for the non-default case of <code>Beams:allowMomentumSpread = on</code>. 
+It led to non-thread-safe execution. Thanks to Dominik Mueller. This bug 
+is not fixed per se, since the diffractive phase space machinery was 
+rewritten anyway, so that the same issue never arises.</li> 
+ 
 <li>A bug was fixed in the Hidden Valley model to allow copies of the 
 hidden valley quark to properly shower and hadronize.</li> 
  
@@ -248,9 +675,8 @@ to html, by omitting the paragraph break before a tag that contains
 <li>Year has been updated to 2018.</li> 
  
 </ul> 
-</li> 
  
-<li>8.230: 6 October 2017 
+<h3>8.230: 6 October 2017</h3> 
 <ul> 
  
 <li>Christian Bierlich joins as co-author. Philip Ilten has new 
@@ -448,9 +874,8 @@ and is directed to these from the text references.</li>
 <li>Several minor updates and improvements of the documentation.</li> 
  
 </ul> 
-</li> 
  
-<li>8.226: 26 April 2017 
+<h3>8.226: 26 April 2017</h3> 
 <ul> 
  
 <li>Implementation of <ei>gamma-hadron</ei> collisions and 
@@ -647,9 +1072,8 @@ Thanks to Vittorio Zecca.</li>
 and in <ei>tHat</ei> and <ei>uHat</ei> construction.</li> 
  
 </ul> 
-</li> 
  
-<li>8.223: 5 January 2017 
+<h3>8.223: 5 January 2017</h3> 
 <ul> 
  
 <li>Nadine Fischer and Leif L&ouml;nnblad join as co-authors, 
@@ -817,9 +1241,8 @@ companion choice also if <code>iComp = 0</code>.</li>
 <li>Small clarifications in the documentation.</li> 
  
 </ul> 
-</li> 
  
-<li>8.219: 10 May 2016 
+<h3>8.219: 10 May 2016</h3> 
 <ul> 
  
 <li>An interface to the Python programming language has been introduced, 
@@ -990,9 +1413,8 @@ php version of the manual recognize them.</li>
 <li>Some trivial code, manual and bibliography updates.</li> 
  
 </ul> 
-</li> 
  
-<li>8.215: 4 January 2016 
+<h3>8.215: 4 January 2016</h3> 
 <ul> 
  
 <li>Ilkka Helenius joins as new PYTHIA co-author.</li> 
@@ -1160,9 +1582,8 @@ Thanks to Radek Zlebcik.</li>
 <li>Year updated to 2016.</li> 
  
 </ul> 
-</li> 
  
-<li>8.212: 23 September 2015 
+<h3>8.212: 23 September 2015</h3> 
 <ul> 
  
 <li>Included new weighting facilities in initial- and final-state showers. 
@@ -1303,9 +1724,8 @@ aMC@NLO merging.</li>
 <li>Clarify documentation on which particles are stable by default.</li> 
  
 </ul> 
-</li> 
  
-<li>8.210: 29 June 2015 
+<h3>8.210: 29 June 2015</h3> 
 <ul> 
  
 <li>Bug fix in CKKW-L merging for LHE files, such that the factorization 
@@ -1334,9 +1754,8 @@ No practical consequence since correct non-default values are used.</li>
 containing an equal sign are parsed correctly.</li> 
  
 </ul> 
-</li> 
  
-<li>8.209: 25 May 2015 
+<h3>8.209: 25 May 2015</h3> 
 <ul> 
  
 <li>The "An Introduction to PYTHIA 8.2", arXiv:1410.3012 [hep-ph], 
@@ -1524,9 +1943,8 @@ role.</li>
 debugged and tested, so not yet ready for public usage.</li> 
  
 </ul> 
-</li> 
  
-<li>8.205: 23 January 2015 
+<h3>8.205: 23 January 2015</h3> 
 <ul> 
  
 <li>Unfortunate tiny typo made the new A14 tunes inaccessible. 
@@ -1545,9 +1963,8 @@ partons of the lowest-multiplicity state into its counting (as is
 conventional). Thanks to Josh Bendavid for pointing this out.</li> 
  
 </ul> 
-</li> 
  
-<li>8.204: 22 January 2015 
+<h3>8.204: 22 January 2015</h3> 
 <ul> 
  
 <li>The <code>examples</code> directory has been moved back from 
@@ -1716,9 +2133,8 @@ rapidities when primordial <ei>kT</ei> is introduced.</li>
 lines where meaningful, and some further minor changes.</li> 
  
 </ul> 
-</li> 
  
-<li>8.201: 14 October 2014 
+<h3>8.201: 14 October 2014</h3> 
 <ul> 
  
 <li>The <i>Introduction to PYTHIA 8.2</i> has now been assigned 
@@ -1731,9 +2147,8 @@ among allowed configure options.</li>
 <li>Corrected a few tiny documentation typos.</li> 
  
 </ul> 
-</li> 
  
-<li>8.200: 11 October 2014 
+<h3>8.200: 11 October 2014</h3> 
 <ul> 
  
 <li>A new <code>share/Pythia8</code> directory collects all 
@@ -1975,10 +2390,7 @@ to six flavours at the top mass.</li>
 <li>Updated Introduction (= the official 8.2 article) and Worksheet.</li> 
  
 </ul> 
-</li> 
- 
-</ul> 
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

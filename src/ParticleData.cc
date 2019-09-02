@@ -1,5 +1,5 @@
 // ParticleData.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -199,6 +199,20 @@ bool ParticleDataEntry::isBaryon() const {
     || (idSave/1000)%10 == 0) return false;
   return true;
 
+}
+
+//--------------------------------------------------------------------------
+
+// Find out if a particle is quarkonia.
+
+bool ParticleDataEntry::isOnium() const {
+  if (idSave%2 != 1) return false;
+  if (idSave > 1000000) return false;
+  if ((idSave/10)%10 < 4) return false;
+  if ((idSave/10)%10 > 6) return false;
+  if ((idSave/10)%10 != (idSave/100)%10) return false;
+  if ((idSave/1000)%10 != 0) return false;
+  return true;
 
 }
 
@@ -295,6 +309,7 @@ int ParticleDataEntry::nQuarksInCode(int idQIn) const {
 void ParticleDataEntry::initBWmass() {
 
   // Optionally set decay vertices also for short-lived particles.
+  // (Lifetimes are explicitly tabulated for long-lived ones.)
   if (modeTau0now == 0) modeTau0now = (particleDataPtr->setRapidDecayVertex
     && tau0Save == 0. && channels.size() > 0) ? 2 : 1;
   if (modeTau0now == 2) tau0Save = (mWidthSave > NARROWMASS)
@@ -696,10 +711,18 @@ void ParticleData::initWidths( vector<ResonanceWidths*> resonancePtrs) {
   setResonancePtr( 42, resonancePtr);
 
   // Mediators for Dark Matter.
-  resonancePtr = new ResonanceZp(55);
-  setResonancePtr( 55, resonancePtr);
   resonancePtr = new ResonanceS(54);
   setResonancePtr( 54, resonancePtr);
+  resonancePtr = new ResonanceZp(55);
+  setResonancePtr( 55, resonancePtr);
+  resonancePtr = new ResonanceSl(56);
+  setResonancePtr( 56, resonancePtr);
+  resonancePtr = new ResonanceCha(57);
+  setResonancePtr( 57, resonancePtr);
+  resonancePtr = new ResonanceDM2(58);
+  setResonancePtr( 58, resonancePtr);
+  resonancePtr = new ResonanceChaD(59);
+  setResonancePtr( 59, resonancePtr);
 
   // 93 = Z0copy and 94 = W+-copy used to pick decay channels
   // for W/Z production in parton showers.

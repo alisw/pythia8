@@ -1,5 +1,5 @@
 // SigmaSUSY.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -42,10 +42,12 @@ class Sigma2qqbar2chi0chi0 : public Sigma2SUSY {
 public:
 
   // Constructor.
-  Sigma2qqbar2chi0chi0() {};
+  Sigma2qqbar2chi0chi0() : id3chi(), id4chi(), codeSave(), sigma0(),
+    ui(), uj(), ti(), tj(), openFracPair(), coupSUSYPtr() {};
 
   // Constructor.
-  Sigma2qqbar2chi0chi0(int id3chiIn, int id4chiIn, int codeIn) {
+  Sigma2qqbar2chi0chi0(int id3chiIn, int id4chiIn, int codeIn) : sigma0(),
+    ui(), uj(), ti(), tj(), openFracPair(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     id3chi   = id3chiIn;
@@ -187,10 +189,12 @@ class Sigma2qg2chi0squark : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qg2chi0squark() { };
+  Sigma2qg2chi0squark() : id3chi(), id4sq(), codeSave(), sigma0(),
+    ui(), uj(), ti(), tj(), openFracPair(), coupSUSYPtr() { };
 
   // Constructor.
-  Sigma2qg2chi0squark(int id3chiIn, int id4sqIn, bool isUp, int codeIn) {
+  Sigma2qg2chi0squark(int id3chiIn, int id4sqIn, bool isUp, int codeIn) :
+    sigma0(), ui(), uj(), ti(), tj(), openFracPair(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     id3chi   = id3chiIn;
@@ -307,10 +311,18 @@ class Sigma2qq2squarksquark : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qq2squarksquark() {}
+  Sigma2qq2squarksquark() : id3Sav(), id4Sav(), codeSave(), iGen3(), iGen4(),
+    nNeut(), isUD(), onlyQCD(), m2Glu(), sigmaChar(), sigmaNeut(), sigmaGlu(),
+    sigmaCharNeut(), sigmaCharGlu(), sigmaNeutGlu(), openFracPair(), tGlu(),
+    uGlu(), sumCt(), sumCu(), sumNt(), sumNu(), sumGt(), sumGu(),
+    sumInterference(), coupSUSYPtr() {}
 
   // Constructor.
-  Sigma2qq2squarksquark(int id3In, int id4In, int codeIn) {
+  Sigma2qq2squarksquark(int id3In, int id4In, int codeIn) : iGen3(), iGen4(),
+    nNeut(), isUD(), onlyQCD(), m2Glu(), sigmaChar(), sigmaNeut(), sigmaGlu(),
+    sigmaCharNeut(), sigmaCharGlu(), sigmaNeutGlu(), openFracPair(), tGlu(),
+    uGlu(), sumCt(), sumCu(), sumNt(), sumNu(), sumGt(), sumGu(),
+    sumInterference(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     id3Sav = id3In;
@@ -376,10 +388,16 @@ class Sigma2qqbar2squarkantisquark : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qqbar2squarkantisquark() {}
+  Sigma2qqbar2squarkantisquark() : id3Sav(), id4Sav(), codeSave(), iGen3(),
+    iGen4(), nNeut(), isUD(), isCC(), onlyQCD(), m2Glu(), xW(), openFracPair(),
+    sigmaEW(), sigmaGlu(), sigmaEWG(), tGlu(), uGlu(), sumColS(), sumColT(),
+    sumInterference(), coupSUSYPtr() {}
 
   // Constructor.
-  Sigma2qqbar2squarkantisquark(int id3In, int id4In, int codeIn) {
+  Sigma2qqbar2squarkantisquark(int id3In, int id4In, int codeIn) : iGen3(),
+    iGen4(), nNeut(), isUD(), isCC(), onlyQCD(), m2Glu(), xW(), openFracPair(),
+    sigmaEW(), sigmaGlu(), sigmaEWG(), tGlu(), uGlu(), sumColS(), sumColT(),
+    sumInterference(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     // (always store squark first, antisquark second)
@@ -448,11 +466,12 @@ class Sigma2gg2squarkantisquark : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2gg2squarkantisquark() {
-  }
+  Sigma2gg2squarkantisquark() : id3Sav(), id4Sav(), codeSave(), sigma(),
+    m2Sq(), openFracPair(), coupSUSYPtr() { }
 
   // Constructor.
-  Sigma2gg2squarkantisquark(int id34In, int codeIn) {
+  Sigma2gg2squarkantisquark(int id34In, int codeIn) : sigma(), m2Sq(),
+    openFracPair(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     // (always store squark first, antisquark second)
@@ -506,10 +525,12 @@ class Sigma2qg2squarkgluino : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qg2squarkgluino() {}
+  Sigma2qg2squarkgluino() : codeSave(), sigmaA(), sigmaB(), comFacHat(),
+    m2Glu(), m2Sq(), openFracPair(), coupSUSYPtr() {}
 
   // Constructor.
-  Sigma2qg2squarkgluino(int id3In, int codeIn) {
+  Sigma2qg2squarkgluino(int id3In, int codeIn) : sigmaA(), sigmaB(),
+    comFacHat(), m2Glu(), m2Sq(), openFracPair(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     codeSave = codeIn;
@@ -560,8 +581,8 @@ class Sigma2gg2gluinogluino : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2gg2gluinogluino() {
-  }
+  Sigma2gg2gluinogluino() : sigTS(), sigUS(), sigTU(), sigSum(), sigma(),
+    openFracPair(), coupSUSYPtr() { }
 
   // Initialize process.
   virtual void initProc();
@@ -602,9 +623,8 @@ class Sigma2qqbar2gluinogluino : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qqbar2gluinogluino() {
-
-}
+  Sigma2qqbar2gluinogluino() : openFracPair(), s34Avg(), sigS(), tHG(), uHG(),
+    tHG2(), uHG2(), coupSUSYPtr() { }
 
   // Initialize process.
   virtual void initProc();
@@ -642,10 +662,12 @@ class Sigma1qq2antisquark : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1qq2antisquark() {}
+  Sigma1qq2antisquark() : mRes(), GammaRes(), m2Res(), sigBW(), widthOut(),
+    codeSave(), idRes(), coupSUSYPtr() {}
 
 
-  Sigma1qq2antisquark(int id3In) {
+  Sigma1qq2antisquark(int id3In) : mRes(), GammaRes(), m2Res(), sigBW(),
+    widthOut(), codeSave(), coupSUSYPtr() {
 
     idRes = id3In;
 
@@ -693,10 +715,12 @@ class Sigma2qqbar2chi0gluino : public Sigma2SUSY {
 public:
 
   // Constructor.
-  Sigma2qqbar2chi0gluino() {};
+  Sigma2qqbar2chi0gluino() : id3chi(), id4chi(), codeSave(), sigma0(), ui(),
+    uj(), ti(), tj(), openFracPair(), coupSUSYPtr() {};
 
   // Constructor.
-  Sigma2qqbar2chi0gluino(int id4chiIn, int codeIn) {
+  Sigma2qqbar2chi0gluino(int id4chiIn, int codeIn) : id3chi(), sigma0(), ui(),
+    uj(), ti(), tj(), openFracPair(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     id3   = 1000021;
@@ -801,10 +825,14 @@ class Sigma2qqbar2sleptonantislepton : public Sigma2qqbar2squarkantisquark {
 public:
 
   // Constructor.
-  Sigma2qqbar2sleptonantislepton() {}
+  Sigma2qqbar2sleptonantislepton() : id3Sav(), id4Sav(), codeSave(), iGen3(),
+    iGen4(), nNeut(), isUD(), xW(), openFracPair(), sigmaEW(), sumColS(),
+    sumColT(), sumInterference(), coupSUSYPtr() {}
 
   // Constructor.
-  Sigma2qqbar2sleptonantislepton(int id3In, int id4In, int codeIn) {
+  Sigma2qqbar2sleptonantislepton(int id3In, int id4In, int codeIn) : iGen3(),
+    iGen4(), nNeut(), isUD(), xW(), openFracPair(), sigmaEW(), sumColS(),
+    sumColT(), sumInterference(), coupSUSYPtr() {
 
     // Save ordering indices and process code
     // (always store squark first, antisquark second)

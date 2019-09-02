@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='HadronLevelStandalone.php'>
  
 <h2>Hadron-Level Standalone</h2> 
+<ol id="toc">
+  <li><a href="#section0">Input configuration</a></li>
+  <li><a href="#section1">Extensions to resonance decays</a></li>
+  <li><a href="#section2">Repeated hadronization or decay</a></li>
+</ol>
+
  
 The Les Houches Accord allows external process-level configurations 
 to be fed in, for subsequent parton-level and hadron-level generation 
@@ -73,6 +79,7 @@ and so on, as for a normal PYTHIA run. The unique aspect is how to fill
 the <code>event</code> inside the loop, before <code>pythia.next()</code> 
 is called. 
  
+<a name="section0"></a> 
 <h3>Input configuration</h3> 
  
 To set up a new configuration the first step is to throw away the current 
@@ -194,6 +201,7 @@ difference is in status codes: outgoing particles should have 1
 instead of 23, and intermediate resonances 2 instead of -22. 
 Incoming partons, if any, are -1 instead of -21. 
  
+<a name="section1"></a> 
 <h3>Extensions to resonance decays</h3> 
  
 With the above scheme, <code>pythia.next()</code> will generate 
@@ -236,6 +244,7 @@ however, since this is not a fully tested core functionality,
 so don't combine wildly if there is no reason to. 
  
  
+<a name="section2"></a> 
 <h3>Repeated hadronization or decay</h3> 
  
 An alternative approach is possible with the 
@@ -294,4 +303,4 @@ events.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

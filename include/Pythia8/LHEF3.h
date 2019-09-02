@@ -1,5 +1,5 @@
 // LHEF3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -106,8 +106,27 @@ struct XMLTag {
 
       // Find the first tag.
       pos_t begin = str.find("<", curr);
+      // Skip tags in lines beginning with #.
+      pos_t lastbreak_before_begin = str.find_last_of("\n",begin);
+      pos_t lastpound_before_begin = str.find_last_of("#",begin);
+      // Logic: Last newline before begin was before last pound sign (or there
+      // was no last newline at all, i.e. this is the special case of the
+      // first line), and hence the pound sign was before the tag was opened
+      // (at begin) with '<'. Thus, skip forward to next new line.
+      if ( (lastbreak_before_begin < lastpound_before_begin
+         || lastbreak_before_begin == end)
+        && begin > lastpound_before_begin) {
+        pos_t endcom = str.find_first_of("\n",begin);
+        if ( endcom == end ) {
+          if ( leftover ) *leftover += str.substr(curr);
+             return tags;
+        }
+        if ( leftover ) *leftover += str.substr(curr, endcom - curr);
+        curr = endcom;
+        continue;
+      }
 
-      // Skip comments.
+      // Skip xml-style comments.
       if ( begin != end && str.find("<!--", curr) == begin ) {
         pos_t endcom = str.find("-->", begin);
         if ( endcom == end ) {
@@ -658,9 +677,7 @@ public:
       SCALUP(0.0), AQEDUP(0.0), AQCDUP(0.0), heprup(0) {}
 
   // Copy constructor
-  HEPEUP(const HEPEUP & x) {
-    operator=(x);
-  }
+  HEPEUP(const HEPEUP & x) { operator=(x); }
 
   // Copy information from the given HEPEUP.
   HEPEUP & setEvent(const HEPEUP & x);
@@ -807,14 +824,14 @@ public:
   // filename: the name of the file to read from.
   //
   Reader(string filenameIn)
-    : filename(filenameIn), intstream(NULL), file(NULL) {
+    : filename(filenameIn), intstream(NULL), file(NULL), version() {
     intstream = new igzstream(filename.c_str());
     file = intstream;
     isGood = init();
   }
 
   Reader(istream* is)
-    : filename(""), intstream(NULL), file(is) {
+    : filename(""), intstream(NULL), file(is), version() {
     isGood = init();
   }
 

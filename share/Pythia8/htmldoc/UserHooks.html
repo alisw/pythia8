@@ -7,6 +7,21 @@
 <body>
  
 <h2>User Hooks</h2> 
+<ol id="toc">
+  <li><a href="#section0">The basic components</a></li>
+  <li><a href="#section1">(i) Interrupt between the main generation levels</a></li>
+  <li><a href="#section2">(ii) Interrupt during the parton-level evolution, at a </a></li>
+  <li><a href="#section3">(iii) Interrupt during the parton-level evolution, after a step</a></li>
+  <li><a href="#section4">(iv) Veto emissions</a></li>
+  <li><a href="#section5">(v) Modify cross-sections or phase space sampling</a></li>
+  <li><a href="#section6">(vi) Reject the decay sequence of resonances</a></li>
+  <li><a href="#section7">(vii) Modify scale in shower evolution</a></li>
+  <li><a href="#section8">(viii) Allow colour reconnection</a></li>
+  <li><a href="#section9">(ix) Enhanced rate of rare shower splittings</a></li>
+  <li><a href="#section10">(x) Modified hadronization</a></li>
+  <li><a href="#section11">Multiple user hooks</a></li>
+</ol>
+
  
 Sometimes it may be convenient to step in during the generation 
 process: to modify the built-in cross sections, to veto undesirable 
@@ -87,6 +102,7 @@ compile without any warnings, but not be used inside <code>Pythia</code>.
 So, at the debug stage, do insert some suitable print statements to check 
 that the new methods are called (and do what they should). 
  
+<a name="section0"></a> 
 <h3>The basic components</h3> 
  
 For a derived <code>UserHooks</code> class to be called during the 
@@ -218,6 +234,7 @@ The <code>workEvent</code> can also be sent on to a
 <a href="EventAnalysis.html" target="page">jet clustering algorithm</a>. 
    
  
+<a name="section1"></a> 
 <h3>(i) Interrupt between the main generation levels</h3> 
  
 <a name="anchor7"></a>
@@ -341,6 +358,7 @@ the veto can be done earlier, as described for
 <code>canVetoPartonLevelEarly()</code>. 
    
  
+<a name="section2"></a> 
 <h3>(ii) Interrupt during the parton-level evolution, at a 
 <i>pT</i> scale</h3> 
  
@@ -437,6 +455,7 @@ obtain a simplified event record <code>workEvent</code>.
    
    
  
+<a name="section3"></a> 
 <h3>(iii) Interrupt during the parton-level evolution, after a step</h3> 
  
 These options are closely related to the ones above in section (ii), so 
@@ -552,6 +571,7 @@ had time to radiate, of course.
    
    
  
+<a name="section4"></a> 
 <h3>(iv) Veto emissions</h3> 
  
 The methods in this group are intended to allow the veto of an emission 
@@ -665,6 +685,7 @@ these entries will be removed.
    
    
  
+<a name="section5"></a> 
 <h3>(v) Modify cross-sections or phase space sampling</h3> 
  
 This section addresses two related but different topics. In both 
@@ -823,6 +844,7 @@ can return <code>1/selBias</code>. The weight is also returned by the
 <code>Info::weight()</code> method, which may be  convenient to use. 
    
  
+<a name="section6"></a> 
 <h3>(vi) Reject the decay sequence of resonances</h3> 
  
 Resonance decays are performed already at the process level, as 
@@ -870,6 +892,7 @@ event record. However, as an extreme measure, parts or the complete decay
 chain could be overwritten. If so, be very careful. 
    
  
+<a name="section7"></a> 
 <h3>(vii) Modify scale in shower evolution</h3> 
  
 The choice of maximum shower scale in resonance decays is normally not a 
@@ -904,6 +927,7 @@ decay products.
    
    
  
+<a name="section8"></a> 
 <h3>(viii) Allow colour reconnection</h3> 
  
 PYTHIA contains only a limites set of possibilities for 
@@ -958,6 +982,7 @@ a singlet on its own.
    
    
  
+<a name="section9"></a> 
 <h3>(ix) Enhanced rate of rare shower splittings</h3> 
  
 PYTHIA also offers possibilities to enhance the frequency of rare 
@@ -1117,6 +1142,7 @@ These are handled internally, so that users only have to ensure that
 <code>main63.cc</code>, whereas <code>main64.cc</code> illustrates 
 the usefulness of enhanced trial emissions for expert users. 
  
+<a name="section10"></a> 
 <h3>(x) Modified hadronization</h3> 
  
 The methods in this group are intended to allow for modifications of 
@@ -1131,12 +1157,13 @@ thus repeating a step in the hadronization procedure.
 <a name="anchor47"></a>
 <p/><strong> virtual bool canChangeFragPar() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
-return true, it will enable the methods <code>doChangeFragPar(...)</code> 
-and <code>doVetoFragmentation(...)</code>. 
+return true, it will enable the methods <code>doChangeFragPar(...)</code>, 
+<code>doVetoFragmentation(...)</code> and 
+<code>setStringEnds(...)</code>. 
    
  
 <a name="anchor48"></a>
-<p/><strong> virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton) &nbsp;</strong> <br/>
+<p/><strong> virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton, const StringEnd * sEnd) &nbsp;</strong> <br/>
 This is the method for changing fragmentation parameters. If all 
 parameters are changed as they should, the method should return true. 
 In case of errors the method returns false and a warning is printed. 
@@ -1175,24 +1202,42 @@ keep track of where we are on the string.
 <br/><code>argument</code><strong> iParton </strong>  :  contains the indices in the standard event 
 record for all the partons in the string currently being hadronized. 
    
+<br/><code>argument</code><strong> sEnd </strong>  :  is a pointer to a <code>StringEnd</code> object 
+ containing additional information about the string break. 
+   
    
  
 <a name="anchor49"></a>
-<p/><strong> virtual bool doVetoFragmentation(Particle had) &nbsp;</strong> <br/>
+<p/><strong> virtual bool doVetoFragmentation(Particle had, const StringEnd * sEnd) &nbsp;</strong> <br/>
 This method can veto the production of a hadron, whereby the current 
 string break is redone. 
 <br/><code>argument</code><strong> had </strong>  :  is a (copy of) the hadron being produced, 
 just before it is added to the event record. 
    
+<br/><code>argument</code><strong> sEnd </strong>  :  is a pointer to a <code>StringEnd</code> object 
+containing additional information about the string break. 
+   
    
  
 <a name="anchor50"></a>
+<p/><strong> virtual bool doVetoFragmentation(Particle had1, Particle had2, const StringEnd * sEnd1, const StringEnd * sEnd1) &nbsp;</strong> <br/>
+This method can veto the production of the final hadrons produced in the 
+fragmentation of a string. 
+<br/><code>argument</code><strong> had1,had2 </strong>  :  are (copies of) the two final hadrons being 
+produced, just before they are added to the event record. 
+   
+<br/><code>argument</code><strong> sEnd1,sEnd2 </strong>  :  are pointers to <code>StringEnd</code> objects 
+containing additional information about the string break. 
+   
+   
+ 
+<a name="anchor51"></a>
 <p/><strong> virtual bool canSetImpactParameter() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
 return true, it will enable the method <code>doSetImpactParameter()</code> . 
    
  
-<a name="anchor51"></a>
+<a name="anchor52"></a>
 <p/><strong> virtual bool doSetImpactParameter() &nbsp;</strong> <br/>
 This method allows the user to select a particular impact parameter in the 
 MPI machinery in the generation of minimum-bias events. The function takes no 
@@ -1205,6 +1250,7 @@ machinery, and that currently it will only affect the <a href="QCDProcesses.html
    
  
  
+<a name="section11"></a> 
 <h3>Multiple user hooks</h3> 
  
 In addition to the 
@@ -1232,4 +1278,4 @@ occurs.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

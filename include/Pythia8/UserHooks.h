@@ -1,5 +1,5 @@
 // UserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,8 +19,9 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// Forward reference to the PhaseSpace class.
+// Forward references to the PhaseSpace and StringEnd classes.
 class PhaseSpace;
+class StringEnd;
 
 //==========================================================================
 
@@ -202,13 +203,28 @@ public:
   // Can change fragmentation parameters.
   virtual bool canChangeFragPar() { return false;}
 
-  // Do change fragmentation parameters.
-  // Input: flavPtr, zPtr, pTPtr, idEnd, m2Had, iParton.
-  virtual bool doChangeFragPar( StringFlav*, StringZ*, StringPT*, int,
-    double, vector<int>) { return false;}
+  // Set initial ends of a string to be fragmented. This is done once
+  // for each string. Note that the second string end may be zero in case
+  // we are hadronising a string piece leading to a junction.
+  virtual void setStringEnds( const StringEnd*, const StringEnd*,
+    vector<int>) {}
 
- // Do a veto on a hadron just before it is added to the final state.
-  virtual bool doVetoFragmentation( Particle) { return false;}
+  // Do change fragmentation parameters.
+  // Input: flavPtr, zPtr, pTPtr, idEnd, m2Had, iParton and posEnd (or
+  // negEnd).
+  virtual bool doChangeFragPar( StringFlav*, StringZ*, StringPT*, int,
+    double, vector<int>, const StringEnd* ) { return false;}
+
+  // Do a veto on a hadron just before it is added to the final state.
+  // The StringEnd from which the the hadron was produced is included
+  // for information.
+  virtual bool doVetoFragmentation( Particle, const StringEnd *)
+    { return false;}
+
+  // Do a veto on a hadron just before it is added to the final state
+  // (final two hadron case).
+  virtual bool doVetoFragmentation(Particle, Particle,
+    const StringEnd*, const StringEnd* ) { return false;}
 
   // Can set the overall impact parameter for the MPI treatment.
   virtual bool canSetImpactParameter() const { return false; }
@@ -221,7 +237,8 @@ protected:
   // Constructor.
   UserHooks() : infoPtr(0), settingsPtr(0), particleDataPtr(0), rndmPtr(0),
     beamAPtr(0), beamBPtr(0), beamPomAPtr(0), beamPomBPtr(0), coupSMPtr(0),
-    partonSystemsPtr(0), sigmaTotPtr(0), selBias(1.) {}
+    partonSystemsPtr(0), sigmaTotPtr(0), selBias(1.), enhancedEventWeight(),
+    pTEnhanced(), wtEnhanced() {}
 
   // Pointer to various information on the generation.
   Info*          infoPtr;
@@ -679,6 +696,22 @@ public:
   virtual bool canChangeFragPar() {
     for ( int i = 0, N = hooks.size(); i < N; ++i )
       if ( hooks[i]->canChangeFragPar() ) return true;
+    return false;
+  }
+
+  // Do a veto on a hadron just before it is added to the final state.
+  virtual bool doVetoFragmentation(Particle p, const StringEnd* nowEnd) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar()
+        && hooks[i]->doVetoFragmentation(p, nowEnd) ) return true;
+    return false;
+  }
+
+  virtual bool doVetoFragmentation(Particle p1, Particle p2,
+    const StringEnd* e1, const StringEnd* e2) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar()
+        && hooks[i]->doVetoFragmentation(p1, p2, e1, e2) ) return true;
     return false;
   }
 

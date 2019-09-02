@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -1234,7 +1234,7 @@ void StringFlav::assignPopQ(FlavContainer& flav) {
 
 // Combine two quarks to produce a diquark.
 // Normally according to production composition, but nonvanishing idHad
-// means diquark from known hadron content, so use SU(6) wave fucntion.
+// means diquark from known hadron content, so use SU(6) wave function.
 
 int StringFlav::makeDiquark(int id1, int id2, int idHad) {
 

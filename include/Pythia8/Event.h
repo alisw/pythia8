@@ -1,5 +1,5 @@
 // Event.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -77,6 +77,9 @@ public:
     tauSave = pt.tauSave; pdePtr = pt.pdePtr; evtPtr = pt.evtPtr; }
     return *this; }
 
+  // Destructor.
+  virtual ~Particle() {}
+
   // Member functions to set the Event and ParticleDataEntry pointers.
   void setEvtPtr(Event* evtPtrIn) { evtPtr = evtPtrIn; setPDEPtr();}
   void setPDEPtr(ParticleDataEntry* pdePtrIn = 0);
@@ -117,6 +120,7 @@ public:
   void yProd(double yProdIn) {vProdSave.py(yProdIn); hasVertexSave = true;}
   void zProd(double zProdIn) {vProdSave.pz(zProdIn); hasVertexSave = true;}
   void tProd(double tProdIn) {vProdSave.e(tProdIn); hasVertexSave = true;}
+  void vProdAdd(Vec4 vProdIn) {vProdSave += vProdIn; hasVertexSave = true;}
   void tau(double tauIn) {tauSave = tauIn;}
 
   // Member functions for output.
@@ -277,8 +281,8 @@ public:
     if (hasVertexSave) vProdSave.bstback(pBst);}
   void bstback(const Vec4& pBst, double mBst) {pSave.bstback(pBst, mBst);
     if (hasVertexSave) vProdSave.bstback(pBst, mBst);}
-  void rotbst(const RotBstMatrix& M) {pSave.rotbst(M);
-    if (hasVertexSave) vProdSave.rotbst(M);}
+  void rotbst(const RotBstMatrix& M, bool boostVertex = true) {pSave.rotbst(M);
+    if (hasVertexSave && boostVertex) vProdSave.rotbst(M);}
   void offsetHistory( int minMother, int addMother, int minDaughter,
     int addDaughter);
   void offsetCol( int addCol);
@@ -325,16 +329,18 @@ class Junction {
 public:
 
   // Constructors.
-  Junction() : remainsSave(true), kindSave(0) {
-    for (int j = 0; j < 3; ++j) {
-    colSave[j] = 0; endColSave[j] = 0; statusSave[j] = 0; } }
+  Junction() : remainsSave(true), kindSave(0), colSave(), endColSave(),
+    statusSave() { }
+
   Junction( int kindIn, int col0In, int col1In, int col2In)
-    : remainsSave(true), kindSave(kindIn) {colSave[0] = col0In;
-    colSave[1] = col1In; colSave[2] = col2In;
-    for (int j = 0; j < 3; ++j) {
-    endColSave[j] = colSave[j]; statusSave[j] = 0; } }
+    : remainsSave(true), kindSave(kindIn), colSave(), endColSave(),
+    statusSave() {
+      colSave[0] = col0In; colSave[1] = col1In; colSave[2] = col2In;
+      for (int j = 0; j < 3; ++j) {
+      endColSave[j] = colSave[j];  } }
   Junction(const Junction& ju) : remainsSave(ju.remainsSave),
-    kindSave(ju.kindSave) { for (int j = 0; j < 3; ++j) {
+    kindSave(ju.kindSave), colSave(), endColSave(), statusSave() {
+    for (int j = 0; j < 3; ++j) {
     colSave[j] = ju.colSave[j]; endColSave[j] = ju.endColSave[j];
     statusSave[j] = ju.statusSave[j]; } }
   Junction& operator=(const Junction& ju) {if (this != &ju) {
@@ -393,13 +399,16 @@ public:
   void clear() {entry.resize(0); maxColTag = startColTag;
     savedPartonLevelSize = 0; scaleSave = 0.; scaleSecondSave = 0.;
     clearJunctions();}
+  void free() {vector<Particle>().swap(entry); maxColTag = startColTag;
+    savedPartonLevelSize = 0; scaleSave = 0.; scaleSecondSave = 0.;
+    clearJunctions();}
 
   // Clear event record, and set first particle empty.
   void reset() {clear(); append(90, -11, 0, 0, 0., 0., 0., 0., 0.);}
 
   // Overload index operator to access element of event record.
-  Particle& operator[](int i) {return entry[i];}
-  const Particle& operator[](int i) const {return entry[i];}
+  Particle& operator[](int i) {return entry.at(i);}
+  const Particle& operator[](int i) const {return entry.at(i);}
 
   // Implement standard references to elements in the particle array.
   Particle& front()   {return entry.front();}
@@ -498,6 +507,29 @@ public:
   // Note: temporarily retained for CMS compatibility. Do not use!
   vector<int> daughterList(int i) const {return entry[i].daughterList();}
 
+  // Return number of final-state particles, optionally charged only.
+  int nFinal(bool chargedOnly = false) const {
+    int nFin = 0;
+    for (int i = 0; i < size(); ++i)
+      if (entry[i].isFinal() && (!chargedOnly || entry[i].isCharged()))
+        ++nFin;
+    return nFin; }
+
+  // Find separation in y, eta, phi or R between two particles.
+  double dyAbs(int i1, int i2) const {
+    return abs( entry[i1].y() - entry[i2].y() ); }
+  double detaAbs(int i1, int i2) const {
+    return abs( entry[i1].eta() - entry[i2].eta() ); }
+  double dphiAbs(int i1, int i2) const {
+    double dPhiTmp = abs( entry[i1].phi() - entry[i2].phi() );
+    if (dPhiTmp > M_PI)
+      dPhiTmp = 2. * M_PI - dPhiTmp;
+    return dPhiTmp; }
+  double RRapPhi(int i1, int i2) const {
+    return sqrt( pow2(dyAbs(i1, i2)) + pow2(dphiAbs(i1, i2)) ); }
+  double REtaPhi(int i1, int i2) const {
+    return sqrt( pow2(detaAbs(i1, i2)) + pow2(dphiAbs(i1, i2)) ); }
+
   // Member functions for rotations and boosts of an event.
   void rot(double theta, double phi)
     {for (int i = 0; i < size(); ++i) entry[i].rot(theta, phi);}
@@ -508,8 +540,8 @@ public:
     gamma);}
   void bst(const Vec4& vec)
     {for (int i = 0; i < size(); ++i) entry[i].bst(vec);}
-  void rotbst(const RotBstMatrix& M)
-    {for (int i = 0; i < size(); ++i) entry[i].rotbst(M);}
+  void rotbst(const RotBstMatrix& M, bool boostVertices = true)
+    {for (int i = 0; i < size(); ++i) entry[i].rotbst(M, boostVertices);}
 
   // Clear the list of junctions.
   void clearJunctions() {junction.resize(0);}

@@ -1,5 +1,5 @@
 // HelicityBasics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -120,7 +120,7 @@ class GammaMatrix {
 public:
 
   // Constructors and destructor.
-  GammaMatrix() {};
+  GammaMatrix() : index() {};
   GammaMatrix(int mu);
   ~GammaMatrix() {};
 
@@ -184,14 +184,14 @@ class HelicityParticle : public Particle {
 public:
 
   // Constructors.
-  HelicityParticle() : Particle() { direction = 1;}
+  HelicityParticle() : Particle(), indexSave() { direction = 1;}
   HelicityParticle(int idIn, int statusIn = 0, int mother1In = 0,
     int mother2In = 0, int daughter1In = 0, int daughter2In = 0,
     int colIn = 0, int acolIn = 0, double pxIn = 0.,
     double pyIn = 0., double pzIn = 0., double eIn = 0.,
     double mIn = 0., double scaleIn = 0., ParticleData* ptr = 0)
     : Particle(idIn, statusIn, mother1In, mother2In, daughter1In, daughter2In,
-    colIn, acolIn, pxIn, pyIn, pzIn, eIn, mIn, scaleIn) {
+    colIn, acolIn, pxIn, pyIn, pzIn, eIn, mIn, scaleIn), indexSave() {
     if (ptr) setPDEPtr( ptr->particleDataEntryPtr( idIn) );
     initRhoD();
     direction = 1; }
@@ -199,7 +199,7 @@ public:
     int daughter1In, int daughter2In, int colIn, int acolIn, Vec4 pIn,
     double mIn = 0., double scaleIn = 0., ParticleData* ptr = 0)
     : Particle(idIn, statusIn, mother1In, mother2In, daughter1In, daughter2In,
-    colIn, acolIn, pIn, mIn, scaleIn) {
+    colIn, acolIn, pIn, mIn, scaleIn), indexSave() {
     if (ptr) setPDEPtr( ptr->particleDataEntryPtr( idIn) );
     initRhoD();
     direction = 1; }

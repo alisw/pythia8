@@ -1,5 +1,5 @@
 // Pythia.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,7 +24,7 @@ namespace Pythia8 {
 
 // The current Pythia (sub)version number, to agree with XML version.
 const double Pythia::VERSIONNUMBERHEAD = PYTHIA_VERSION;
-const double Pythia::VERSIONNUMBERCODE = 8.235;
+const double Pythia::VERSIONNUMBERCODE = 8.243;
 
 //--------------------------------------------------------------------------
 
@@ -41,7 +41,35 @@ const int Pythia::SUBRUNDEFAULT = -999;
 
 // Constructor.
 
-Pythia::Pythia(string xmlDir, bool printBanner) {
+Pythia::Pythia(string xmlDir, bool printBanner) :
+  couplingsPtr(), mergingPtr(),
+  mergingHooksPtr(), heavyIonsPtr(), hiHooksPtr(), doProcessLevel(),
+  doPartonLevel(), doHadronLevel(), doSoftQCDall(), doSoftQCDinel(),
+  doCentralDiff(), doDiffraction(), doSoftQCD(), doVMDsideA(), doVMDsideB(),
+  doHardDiff(), doResDec(), doFSRinRes(), decayRHadrons(), abortIfVeto(),
+  checkEvent(), checkHistory(), nErrList(), epTolErr(), epTolWarn(), mTolErr(),
+  mTolWarn(), beamHasGamma(), beamAisResGamma(), beamBisResGamma(),
+  beamAhasResGamma(), beamBhasResGamma(), gammaMode(), isUnresolvedA(),
+  isUnresolvedB(), showSaV(), showMaD(), doReconnect(), forceHadronLevelCR(),
+  idA(), idB(), frameType(), boostType(), nCount(), nShowLHA(), nShowInfo(),
+  nShowProc(), nShowEvt(), reconnectMode(), mA(), mB(), pxA(), pxB(), pyA(),
+  pyB(), pzA(), pzB(), eA(), eB(), pzAcm(), pzBcm(), eCM(), betaZ(), gammaZ(),
+  nErrEvent(), pdfAPtr(), pdfBPtr(), pdfHardAPtr(), pdfHardBPtr(),
+  pdfPomAPtr(), pdfPomBPtr(), pdfGamAPtr(), pdfGamBPtr(), pdfHardGamAPtr(),
+  pdfHardGamBPtr(), pdfUnresAPtr(), pdfUnresBPtr(), pdfUnresGamAPtr(),
+  pdfUnresGamBPtr(), pdfGamFluxAPtr(), pdfGamFluxBPtr(), pdfVMDAPtr(),
+  pdfVMDBPtr(), useNewPdfA(), useNewPdfB(), useNewPdfHard(), useNewPdfPomA(),
+  useNewPdfPomB(), useNewPdfGamA(), useNewPdfGamB(), useNewPdfHardGamA(),
+  useNewPdfHardGamB(), useNewPdfUnresA(), useNewPdfUnresB(),
+  useNewPdfUnresGamA(), useNewPdfUnresGamB(), useNewPdfVMDA(), useNewPdfVMDB(),
+  hasUserHooksVector(), doLHA(), useNewLHA(), lhaUpPtr(), decayHandlePtr(),
+  userHooksPtr(), hasUserHooks(), doVetoProcess(), doVetoPartons(),
+  retryPartonLevel(), beamShapePtr(), useNewBeamShape(), doMomentumSpread(),
+  doVertexSpread(), doVarEcm(), eMinPert(), eWidthPert(), timesDecPtr(),
+  timesPtr(), spacePtr(), useNewTimesDec(), useNewTimes(), useNewSpace(),
+  partonVertexPtr(), useNewPartonVertex(), hasMerging(), hasOwnMerging(),
+  hasMergingHooks(), hasOwnMergingHooks(), doMerging(), hasHeavyIons(),
+  hasOwnHeavyIons(), doHeavyIons() {
 
   // Initialise / reset pointers and global variables.
   initPtrs();
@@ -104,7 +132,35 @@ Pythia::Pythia(string xmlDir, bool printBanner) {
 // Constructor from pre-initialised ParticleData and Settings objects.
 
 Pythia::Pythia(Settings& settingsIn, ParticleData& particleDataIn,
-  bool printBanner) {
+  bool printBanner) :
+  couplingsPtr(), mergingPtr(), mergingHooksPtr(),
+  heavyIonsPtr(), hiHooksPtr(), doProcessLevel(), doPartonLevel(),
+  doHadronLevel(), doSoftQCDall(), doSoftQCDinel(), doCentralDiff(),
+  doDiffraction(), doSoftQCD(), doVMDsideA(), doVMDsideB(), doHardDiff(),
+  doResDec(), doFSRinRes(), decayRHadrons(), abortIfVeto(), checkEvent(),
+  checkHistory(), nErrList(), epTolErr(), epTolWarn(), mTolErr(), mTolWarn(),
+  beamHasGamma(), beamAisResGamma(), beamBisResGamma(), beamAhasResGamma(),
+  beamBhasResGamma(), gammaMode(), isUnresolvedA(), isUnresolvedB(),
+  showSaV(), showMaD(), doReconnect(), forceHadronLevelCR(), idA(), idB(),
+  frameType(), boostType(), nCount(), nShowLHA(), nShowInfo(), nShowProc(),
+  nShowEvt(), reconnectMode(), mA(), mB(), pxA(), pxB(), pyA(), pyB(),
+  pzA(), pzB(), eA(), eB(), pzAcm(), pzBcm(), eCM(), betaZ(), gammaZ(),
+  nErrEvent(), pdfAPtr(), pdfBPtr(), pdfHardAPtr(), pdfHardBPtr(),
+  pdfPomAPtr(), pdfPomBPtr(), pdfGamAPtr(), pdfGamBPtr(), pdfHardGamAPtr(),
+  pdfHardGamBPtr(), pdfUnresAPtr(), pdfUnresBPtr(), pdfUnresGamAPtr(),
+  pdfUnresGamBPtr(), pdfGamFluxAPtr(), pdfGamFluxBPtr(), pdfVMDAPtr(),
+  pdfVMDBPtr(), useNewPdfA(), useNewPdfB(), useNewPdfHard(), useNewPdfPomA(),
+  useNewPdfPomB(), useNewPdfGamA(), useNewPdfGamB(), useNewPdfHardGamA(),
+  useNewPdfHardGamB(), useNewPdfUnresA(), useNewPdfUnresB(),
+  useNewPdfUnresGamA(), useNewPdfUnresGamB(), useNewPdfVMDA(), useNewPdfVMDB(),
+  hasUserHooksVector(), doLHA(), useNewLHA(), lhaUpPtr(), decayHandlePtr(),
+  userHooksPtr(), hasUserHooks(), doVetoProcess(), doVetoPartons(),
+  retryPartonLevel(), beamShapePtr(), useNewBeamShape(), doMomentumSpread(),
+  doVertexSpread(), doVarEcm(), eMinPert(), eWidthPert(), timesDecPtr(),
+  timesPtr(), spacePtr(), useNewTimesDec(), useNewTimes(), useNewSpace(),
+  partonVertexPtr(), useNewPartonVertex(), hasMerging(), hasOwnMerging(),
+  hasMergingHooks(), hasOwnMergingHooks(), doMerging(),hasHeavyIons(),
+  hasOwnHeavyIons(), doHeavyIons() {
 
   // Initialise / reset pointers and global variables.
   initPtrs();
@@ -147,7 +203,35 @@ Pythia::Pythia(Settings& settingsIn, ParticleData& particleDataIn,
 // Constructor from string streams.
 
 Pythia::Pythia( istream& settingsStrings, istream& particleDataStrings,
-  bool printBanner) {
+  bool printBanner) :
+  couplingsPtr(), mergingPtr(), mergingHooksPtr(), heavyIonsPtr(),
+  hiHooksPtr(), doProcessLevel(), doPartonLevel(), doHadronLevel(),
+  doSoftQCDall(), doSoftQCDinel(), doCentralDiff(), doDiffraction(),
+  doSoftQCD(), doVMDsideA(), doVMDsideB(), doHardDiff(), doResDec(),
+  doFSRinRes(), decayRHadrons(), abortIfVeto(), checkEvent(), checkHistory(),
+  nErrList(), epTolErr(), epTolWarn(), mTolErr(), mTolWarn(), beamHasGamma(),
+  beamAisResGamma(), beamBisResGamma(), beamAhasResGamma(), beamBhasResGamma(),
+  gammaMode(), isUnresolvedA(), isUnresolvedB(), showSaV(), showMaD(),
+  doReconnect(), forceHadronLevelCR(), idA(), idB(), frameType(), boostType(),
+  nCount(), nShowLHA(), nShowInfo(), nShowProc(), nShowEvt(), reconnectMode(),
+  mA(), mB(), pxA(), pxB(), pyA(), pyB(), pzA(), pzB(), eA(), eB(), pzAcm(),
+  pzBcm(), eCM(), betaZ(), gammaZ(), nErrEvent(), pdfAPtr(), pdfBPtr(),
+  pdfHardAPtr(), pdfHardBPtr(), pdfPomAPtr(), pdfPomBPtr(), pdfGamAPtr(),
+  pdfGamBPtr(), pdfHardGamAPtr(), pdfHardGamBPtr(), pdfUnresAPtr(),
+  pdfUnresBPtr(), pdfUnresGamAPtr(), pdfUnresGamBPtr(), pdfGamFluxAPtr(),
+  pdfGamFluxBPtr(), pdfVMDAPtr(), pdfVMDBPtr(), useNewPdfA(), useNewPdfB(),
+  useNewPdfHard(), useNewPdfPomA(), useNewPdfPomB(), useNewPdfGamA(),
+  useNewPdfGamB(), useNewPdfHardGamA(), useNewPdfHardGamB(), useNewPdfUnresA(),
+  useNewPdfUnresB(), useNewPdfUnresGamA(), useNewPdfUnresGamB(),
+  useNewPdfVMDA(), useNewPdfVMDB(), hasUserHooksVector(), doLHA(),
+  useNewLHA(), lhaUpPtr(), decayHandlePtr(), userHooksPtr(), hasUserHooks(),
+  doVetoProcess(), doVetoPartons(), retryPartonLevel(), beamShapePtr(),
+  useNewBeamShape(), doMomentumSpread(), doVertexSpread(), doVarEcm(),
+  eMinPert(), eWidthPert(), timesDecPtr(), timesPtr(), spacePtr(),
+  useNewTimesDec(), useNewTimes(), useNewSpace(), partonVertexPtr(),
+  useNewPartonVertex(), hasMerging(), hasOwnMerging(), hasMergingHooks(),
+  hasOwnMergingHooks(), doMerging(), hasHeavyIons(), hasOwnHeavyIons(),
+  doHeavyIons() {
 
   // Initialise / reset pointers and global variables.
   initPtrs();
@@ -582,6 +666,144 @@ bool Pythia::setPDFPtr( PDF* pdfAPtrIn, PDF* pdfBPtrIn, PDF* pdfHardAPtrIn,
 
 //--------------------------------------------------------------------------
 
+// Routine to pass in pointers to PDF's. Usage optional.
+
+bool Pythia::setPDFAPtr( PDF* pdfAPtrIn ) {
+
+  // Delete any PDF's created in a previous init call.
+  if (useNewPdfHard && pdfHardAPtr != pdfAPtr) delete pdfHardAPtr;
+  if (useNewPdfHard && pdfHardBPtr != pdfBPtr) delete pdfHardBPtr;
+  if (useNewPdfA) delete pdfAPtr;
+  if (useNewPdfB) delete pdfBPtr;
+  if (useNewPdfPomA) delete pdfPomAPtr;
+  if (useNewPdfPomB) delete pdfPomBPtr;
+  if (useNewPdfGamA) delete pdfGamAPtr;
+  if (useNewPdfGamB) delete pdfGamBPtr;
+  if (useNewPdfUnresA) delete pdfUnresAPtr;
+  if (useNewPdfUnresB) delete pdfUnresBPtr;
+  if (useNewPdfUnresGamA) delete pdfUnresGamAPtr;
+  if (useNewPdfUnresGamB) delete pdfUnresGamBPtr;
+  if (useNewPdfHardGamA && pdfHardGamAPtr != pdfGamAPtr) delete pdfHardGamAPtr;
+  if (useNewPdfHardGamB && pdfHardGamBPtr != pdfGamBPtr) delete pdfHardGamBPtr;
+  if (useNewPdfVMDA) delete pdfVMDAPtr;
+  if (useNewPdfVMDB) delete pdfVMDBPtr;
+
+  // Reset pointers to be empty.
+  useNewPdfA         = false;
+  useNewPdfB         = false;
+  useNewPdfHard      = false;
+  useNewPdfPomA      = false;
+  useNewPdfPomB      = false;
+  useNewPdfGamA      = false;
+  useNewPdfGamB      = false;
+  useNewPdfHardGamA  = false;
+  useNewPdfHardGamB  = false;
+  useNewPdfUnresA    = false;
+  useNewPdfUnresB    = false;
+  useNewPdfUnresGamA = false;
+  useNewPdfUnresGamB = false;
+  useNewPdfVMDA      = false;
+  useNewPdfVMDB      = false;
+  pdfAPtr            = 0;
+  pdfBPtr            = 0;
+  pdfHardAPtr        = 0;
+  pdfHardBPtr        = 0;
+  pdfPomAPtr         = 0;
+  pdfPomBPtr         = 0;
+  pdfGamAPtr         = 0;
+  pdfGamBPtr         = 0;
+  pdfHardGamAPtr     = 0;
+  pdfHardGamBPtr     = 0;
+  pdfUnresAPtr       = 0;
+  pdfUnresBPtr       = 0;
+  pdfUnresGamAPtr    = 0;
+  pdfUnresGamBPtr    = 0;
+  pdfVMDAPtr         = 0;
+  pdfVMDBPtr         = 0;
+
+  // Switch off external PDF's by zero as input.
+  if (pdfAPtrIn == 0) return true;
+
+  // Save pointers.
+  pdfAPtr       = pdfAPtrIn;
+  // By default same pointers for hard-process PDF's.
+  pdfHardAPtr   = pdfAPtrIn;
+
+  // Done.
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Routine to pass in pointers to PDF's. Usage optional.
+
+bool Pythia::setPDFBPtr( PDF* pdfBPtrIn ) {
+
+  // Delete any PDF's created in a previous init call.
+  if (useNewPdfHard && pdfHardAPtr != pdfAPtr) delete pdfHardAPtr;
+  if (useNewPdfHard && pdfHardBPtr != pdfBPtr) delete pdfHardBPtr;
+  if (useNewPdfA) delete pdfAPtr;
+  if (useNewPdfB) delete pdfBPtr;
+  if (useNewPdfPomA) delete pdfPomAPtr;
+  if (useNewPdfPomB) delete pdfPomBPtr;
+  if (useNewPdfGamA) delete pdfGamAPtr;
+  if (useNewPdfGamB) delete pdfGamBPtr;
+  if (useNewPdfUnresA) delete pdfUnresAPtr;
+  if (useNewPdfUnresB) delete pdfUnresBPtr;
+  if (useNewPdfUnresGamA) delete pdfUnresGamAPtr;
+  if (useNewPdfUnresGamB) delete pdfUnresGamBPtr;
+  if (useNewPdfHardGamA && pdfHardGamAPtr != pdfGamAPtr) delete pdfHardGamAPtr;
+  if (useNewPdfHardGamB && pdfHardGamBPtr != pdfGamBPtr) delete pdfHardGamBPtr;
+  if (useNewPdfVMDA) delete pdfVMDAPtr;
+  if (useNewPdfVMDB) delete pdfVMDBPtr;
+
+  // Reset pointers to be empty.
+  useNewPdfA         = false;
+  useNewPdfB         = false;
+  useNewPdfHard      = false;
+  useNewPdfPomA      = false;
+  useNewPdfPomB      = false;
+  useNewPdfGamA      = false;
+  useNewPdfGamB      = false;
+  useNewPdfHardGamA  = false;
+  useNewPdfHardGamB  = false;
+  useNewPdfUnresA    = false;
+  useNewPdfUnresB    = false;
+  useNewPdfUnresGamA = false;
+  useNewPdfUnresGamB = false;
+  useNewPdfVMDA      = false;
+  useNewPdfVMDB      = false;
+  pdfAPtr            = 0;
+  pdfBPtr            = 0;
+  pdfHardAPtr        = 0;
+  pdfHardBPtr        = 0;
+  pdfPomAPtr         = 0;
+  pdfPomBPtr         = 0;
+  pdfGamAPtr         = 0;
+  pdfGamBPtr         = 0;
+  pdfHardGamAPtr     = 0;
+  pdfHardGamBPtr     = 0;
+  pdfUnresAPtr       = 0;
+  pdfUnresBPtr       = 0;
+  pdfUnresGamAPtr    = 0;
+  pdfUnresGamBPtr    = 0;
+  pdfVMDAPtr         = 0;
+  pdfVMDBPtr         = 0;
+
+  // Switch off external PDF's by zero as input.
+  if (pdfBPtrIn == 0) return true;
+
+  // Save pointers.
+  pdfBPtr       = pdfBPtrIn;
+  // By default same pointers for hard-process PDF's.
+  pdfHardBPtr   = pdfBPtrIn;
+
+  // Done.
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
 // Routine to initialize with the variable values of the Beams kind.
 
 bool Pythia::init() {
@@ -657,6 +879,7 @@ bool Pythia::init() {
     || doPTLundMerging || doCutBasedMerging || doUMEPSTree || doUMEPSSubt
     || doNL3Tree || doNL3Loop || doNL3Subt || doUNLOPSTree
     || doUNLOPSLoop || doUNLOPSSubt || doUNLOPSSubtNLO || doXSectionEst;
+  doMerging = doMerging || settings.flag("Merging:doMerging");
 
   // Set up MergingHooks object.
   bool inputMergingHooks = (mergingHooksPtr != 0);
@@ -829,7 +1052,8 @@ bool Pythia::init() {
                   || settings.flag("SoftQCD:doubleDiffractive")
                   || doSoftQCDall || doSoftQCDinel || doCentralDiff;
   doSoftQCD        = doDiffraction ||
-                     settings.flag("SoftQCD:nonDiffractive");
+                     settings.flag("SoftQCD:nonDiffractive") ||
+                     settings.flag("SoftQCD:elastic");
   doHardDiff       = settings.flag("Diffraction:doHard");
   doResDec         = settings.flag("ProcessLevel:resonanceDecays");
   doFSRinRes       = doPartonLevel && settings.flag("PartonLevel:FSR")
@@ -837,6 +1061,9 @@ bool Pythia::init() {
   decayRHadrons    = settings.flag("RHadrons:allowDecay");
   doMomentumSpread = settings.flag("Beams:allowMomentumSpread");
   doVertexSpread   = settings.flag("Beams:allowVertexSpread");
+  doVarEcm         = settings.flag("Beams:allowVariableEnergy");
+  eMinPert         = settings.parm("Beams:eMinPert");
+  eWidthPert       = settings.parm("Beams:eWidthPert");
   abortIfVeto      = settings.flag("Check:abortIfVeto");
   checkEvent       = settings.flag("Check:event");
   checkHistory     = settings.flag("Check:history");
@@ -845,6 +1072,19 @@ bool Pythia::init() {
   epTolWarn        = settings.parm("Check:epTolWarn");
   mTolErr          = settings.parm("Check:mTolErr");
   mTolWarn         = settings.parm("Check:mTolWarn");
+
+  // Warn/abort for unallowed process and beam combinations.
+  bool doHardProc  = !settings.onlySoftQCD() || doLHA;
+  if (doSoftQCD && doHardProc) {
+    info.errorMsg("Warning from Pythia::init: "
+      "should not combine softQCD processes with hard ones");
+  }
+  if (doVarEcm) doMomentumSpread = false;
+  if (doVarEcm && doHardProc) {
+    info.errorMsg("Abort from Pythia::init: "
+      "variable energy only works for softQCD processes");
+    return false;
+  }
 
   // Find out if beam is or has a resolved photon beam.
   beamHasGamma     = settings.flag("PDF:lepton2gamma");
@@ -903,7 +1143,7 @@ bool Pythia::init() {
   // Initialize SLHA interface (including SLHA/BSM couplings).
   bool useSLHAcouplings = false;
   slhaInterface = SLHAinterface();
-  slhaInterface.setPtr( &info );
+  slhaInterface.setPtr( &info);
   slhaInterface.init( settings, &rndm, couplingsPtr, &particleData,
     useSLHAcouplings, particleDataBuffer );
   if (useSLHAcouplings) couplingsPtr = slhaInterface.couplingsPtr;
@@ -937,7 +1177,7 @@ bool Pythia::init() {
 
   // Set up objects for timelike and spacelike showers.
   if (timesDecPtr == 0 || timesPtr == 0) {
-    TimeShower* timesNow = new TimeShower();
+    TimeShower* timesNow = new SimpleTimeShower();
     if (timesDecPtr == 0) {
       timesDecPtr    = timesNow;
       useNewTimesDec = true;
@@ -948,7 +1188,7 @@ bool Pythia::init() {
     }
   }
   if (spacePtr == 0) {
-    spacePtr    = new SpaceShower();
+    spacePtr    = new SimpleSpaceShower();
     useNewSpace = true;
   }
 
@@ -1227,8 +1467,8 @@ bool Pythia::checkBeams() {
   bool isUnresLep   = !settings.flag("PDF:lepton");
   bool isGammaA     = idAabs == 22;
   bool isGammaB     = idBabs == 22;
-  isUnresolvedA     = ( isLeptonA && (idAabs%2 == 0 || isUnresLep) );
-  isUnresolvedB     = ( isLeptonB && (idBabs%2 == 0 || isUnresLep) );
+  isUnresolvedA     = (isLeptonA && isUnresLep);
+  isUnresolvedB     = (isLeptonB && isUnresLep);
 
   // Also photons may be unresolved.
   if ( idAabs == 22 && !beamAisResGamma ) isUnresolvedA = true;
@@ -1325,9 +1565,14 @@ bool Pythia::checkBeams() {
     bool doDIS = settings.flag("WeakBosonExchange:all")
               || settings.flag("WeakBosonExchange:ff2ff(t:gmZ)")
               || settings.flag("WeakBosonExchange:ff2ff(t:W)")
+              || !settings.flag("Check:beams")
               || (frameType == 4);
     if (doDIS || beamHasGamma ) return true;
   }
+
+  // Allow to explicitly omit beam check for LHEF input.
+  if ( settings.mode("Beams:frameType") == 4
+    && !settings.flag("Check:beams")) return true;
 
   // If no case above then failed.
   info.errorMsg("Error in Pythia::init: cannot handle this beam combination");
@@ -1644,7 +1889,7 @@ bool Pythia::initPDFs() {
     }
   }
 
-  // Optionally set up Pomeron PDF's for diffractive physics.
+  // Optionally set up VMD PDF's for photon physics.
   if ( doSoftQCD && (doVMDsideA || doVMDsideB)) {
     if (pdfVMDAPtr == 0) {
       pdfVMDAPtr    = getPDFPtr(111);
@@ -1712,7 +1957,7 @@ bool Pythia::next() {
     event[0].m( pSum.mCalc() );
 
     // Generate hadronization and decays.
-    bool status = forceHadronLevel();
+    bool status = (doHadronLevel) ? forceHadronLevel() : true;
     if (status) info.addCounter(4);
     if (status && nPrevious < nShowEvt) event.list(showSaV, showMaD);
     return status;
@@ -1753,7 +1998,7 @@ bool Pythia::next() {
   if (doMomentumSpread || doVertexSpread) beamShapePtr->pick();
 
   // Recalculate kinematics when beam momentum spread.
-  if (doMomentumSpread) nextKinematics();
+  if (doMomentumSpread || doVarEcm) nextKinematics();
 
   // Outer loop over hard processes; only relevant for user-set vetoes.
   for ( ; ; ) {
@@ -1817,6 +2062,8 @@ bool Pythia::next() {
     if (!doPartonLevel) {
       boostAndVertex( true, true);
       processLevel.accumulate();
+      event.scale( process.scale() );
+      event.scaleSecond( process.scaleSecond() );
       info.addCounter(4);
       if (doLHA && nPrevious < nShowLHA) lhaUpPtr->listEvent();
       if (nPrevious < nShowInfo) info.list();
@@ -1904,6 +2151,8 @@ bool Pythia::next() {
       if (!doHadronLevel) {
         processLevel.accumulate();
         partonLevel.accumulate();
+        event.scale( process.scale() );
+        event.scaleSecond( process.scaleSecond() );
         // Optionally check final event for problems.
         if (checkEvent && !check()) {
           info.errorMsg("Abort from Pythia::next: "
@@ -1966,6 +2215,7 @@ bool Pythia::next() {
     processLevel.accumulate();
     partonLevel.accumulate();
     event.scale( process.scale() );
+    event.scaleSecond( process.scaleSecond() );
 
     // End of outer loop over hard processes. Done with normal option.
     info.addCounter(13);
@@ -1981,6 +2231,106 @@ bool Pythia::next() {
   // Done.
   info.addCounter(4);
   return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Variant of the main event-generation routine, for variable CM energies.
+
+bool Pythia::next(double eCMin) {
+
+  // Check that constructor worked.
+  if (!isConstructed) return false;
+
+  // Check that generation has been initialized for variable energy.
+  if (!doVarEcm) {
+    info.errorMsg("Abort from Pythia::next: "
+      "generation not initialized for variable energies");
+    return false;
+  }
+
+  // Check that the frameType matches the input provided.
+  if (frameType != 1) {
+    info.errorMsg("Abort from Pythia::next: "
+      "input parameters do not match frame type");
+    return false;
+  }
+
+  // Save input value.
+  eCM = eCMin;
+
+  // Call regular next method for event generation.
+  return next();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Variant of the main event-generation routine, for variable beam energies.
+
+bool Pythia::next(double eAin, double eBin) {
+
+  // Check that constructor worked.
+  if (!isConstructed) return false;
+
+  // Check that generation has been initialized for variable energy.
+  if (!doVarEcm) {
+    info.errorMsg("Abort from Pythia::next: "
+      "generation not initialized for variable energies");
+    return false;
+  }
+
+  // Check that the frameType matches the input provided.
+  if (frameType != 2) {
+    info.errorMsg("Abort from Pythia::next: "
+      "input parameters do not match frame type");
+    return false;
+  }
+
+  // Save input values.
+  eA = eAin;
+  eB = eBin;
+
+  // Call regular next method for event generation.
+  return next();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Variant of the main event-generation routine, for variable beam momenta.
+
+bool Pythia::next(double pxAin, double pyAin, double pzAin,
+                  double pxBin, double pyBin, double pzBin) {
+
+  // Check that constructor worked.
+  if (!isConstructed) return false;
+
+  // Check that generation has been initialized for variable energy.
+  if (!doVarEcm) {
+    info.errorMsg("Abort from Pythia::next: "
+      "generation not initialized for variable energies");
+    return false;
+  }
+
+  // Check that the frameType matches the input provided.
+  if (frameType != 3) {
+    info.errorMsg("Abort from Pythia::next: "
+      "input parameters do not match frame type");
+    return false;
+  }
+
+  // Save input value.
+  pxA = pxAin;
+  pyA = pyAin;
+  pzA = pzAin;
+  pxB = pxBin;
+  pyB = pyBin;
+  pzB = pzBin;
+
+  // Call regular next method for event generation.
+  return next();
 
 }
 
@@ -2019,7 +2369,9 @@ bool Pythia::forceHadronLevel(bool findJunctions) {
       partonSystems.clear();
       partonSystems.addSys();
       partonSystems.addSys();
-      for (int i = 5;i < event.size();++i) {
+      partonSystems.setInRes(0, 3);
+      partonSystems.setInRes(1, 4);
+      for (int i = 5; i < event.size(); ++i) {
         if (event[i].mother1() - 3 < 0 || event[i].mother1() - 3 > 1) {
           info.errorMsg("Error in Pythia::forceHadronLevel: "
             " Event is not setup correctly for SK-I or SK-II CR");
@@ -2107,14 +2459,36 @@ bool Pythia::forceHadronLevel(bool findJunctions) {
 
 void Pythia::nextKinematics() {
 
-  // Read out momentum shift to give current beam momenta.
-  pAnow = pAinit + beamShapePtr->deltaPA();
-  pAnow.e( sqrt(pAnow.pAbs2() + mA * mA) );
-  pBnow = pBinit + beamShapePtr->deltaPB();
-  pBnow.e( sqrt(pBnow.pAbs2() + mB * mB) );
+  // Momentum spread: read out momentum shift to give current beam momenta.
+  if (doMomentumSpread) {
+    pAnow = pAinit + beamShapePtr->deltaPA();
+    pAnow.e( sqrt(pAnow.pAbs2() + mA*mA) );
+    pBnow = pBinit + beamShapePtr->deltaPB();
+    pBnow.e( sqrt(pBnow.pAbs2() + mB*mB) );
+    eCM   = (pAnow + pBnow).mCalc();
+
+  // For variable energy in rest frame only need new eCM value, already set.
+  } else if (frameType == 1) {
+
+  // Variable energy but collinear beams: give current beam momenta.
+  } else if (frameType == 2) {
+    pAnow = Vec4( 0., 0.,  sqrtpos( eA*eA - mA*mA), eA);
+    pBnow = Vec4( 0., 0., -sqrtpos( eB*eB - mB*mB), eB);
+    eCM   = (pAnow + pBnow).mCalc();
+
+  // Variable three-momenta stored and energy calculated.
+  } else if (frameType == 3) {
+    pAnow = Vec4( pxA, pyA, pzA, sqrt(pxA*pxA + pyA*pyA + pzA*pzA + mA*mA) );
+    pBnow = Vec4( pxB, pyB, pzB, sqrt(pxB*pxB + pyB*pyB + pzB*pzB + mB*mB) );
+    eCM   = (pAnow + pBnow).mCalc();
+
+  // Other possibilites not supported.
+  } else {
+    info.errorMsg("Error from Pythia::nextKinematics: unsupported frameType");
+    return;
+  }
 
   // Construct CM frame kinematics.
-  eCM   = (pAnow + pBnow).mCalc();
   pzAcm = 0.5 * sqrtpos( (eCM + mA + mB) * (eCM - mA - mB)
         * (eCM - mA + mB) * (eCM + mA - mB) ) / eCM;
   pzBcm = -pzAcm;
@@ -2129,10 +2503,12 @@ void Pythia::nextKinematics() {
   beamB.newPzE( pzBcm, eB);
 
   // Set boost/rotation matrices from/to CM frame.
-  MfromCM.reset();
-  MfromCM.fromCMframe( pAnow, pBnow);
-  MtoCM = MfromCM;
-  MtoCM.invert();
+  if (frameType != 1) {
+    MfromCM.reset();
+    MfromCM.fromCMframe( pAnow, pBnow);
+    MtoCM = MfromCM;
+    MtoCM.invert();
+  }
 
 }
 
@@ -2168,8 +2544,8 @@ void Pythia::boostAndVertex( bool toLab, bool setVertex) {
   // Set production vertex; assumes particles are in lab frame and at origin.
   if (setVertex && doVertexSpread) {
     Vec4 vertex = beamShapePtr->vertex();
-    for (int i = 0; i < process.size(); ++i) process[i].vProd( vertex);
-    for (int i = 0; i < event.size(); ++i) event[i].vProd( vertex);
+    for (int i = 0; i < process.size(); ++i) process[i].vProdAdd( vertex);
+    for (int i = 0; i < event.size(); ++i) event[i].vProdAdd( vertex);
   }
 
 }
@@ -2284,24 +2660,18 @@ void Pythia::banner() {
        << "E-223 62 Lund, Sweden;                |  | \n"
        << " |  |      e-mail: christian.bierlich@thep.lu"
        << ".se                                   |  | \n"
-       << " |  |   Nishita Desai;  Laboratoire Charles C"
-       << "oulomb (L2C),                         |  | \n"
-       << " |  |      CNRS-Universite de Montpellier, 34"
-       << "090 Montpellier, France;              |  | \n"
-       << " |  |      e-mail: nishita.desai@umontpellier"
-       << ".fr                                   |  | \n"
-       << " |  |   Nadine Fischer;  School of Physics,  "
+       << " |  |   Nishita Desai;  Department of Theoret"
+       << "ical Physics, Tata Institute,         |  | \n"
+       << " |  |      Homi Bhabha Road, Mumbai 400005, I"
+       << "ndia;                                 |  | \n"
+       << " |  |      e-mail: desai@theory.tifr.res.in  "
        << "                                      |  | \n"
-       << " |  |      Monash University, PO Box 27, 3800"
-       << " Melbourne, Australia;                |  | \n"
-       << " |  |      e-mail: nadine.fischer@monash.edu "
+       << " |  |   Ilkka Helenius;  Department of Physic"
+       << "s, University of Jyvaskyla,           |  | \n"
+       << " |  |      P.O. Box 35, FI-40014 University o"
+       << "f Jyvaskyla, Finland;                 |  | \n"
+       << " |  |      e-mail: ilkka.m.helenius@jyu.fi   "
        << "                                      |  | \n"
-       << " |  |   Ilkka Helenius;  Institute for Theore"
-       << "tical Physics,                        |  | \n"
-       << " |  |     Tuebingen University, Auf der Morge"
-       << "nstelle 14, 72076 Tuebingen, Germany; |  | \n"
-       << " |  |      e-mail: ilkka.helenius@uni-tuebing"
-       << "en.de                                 |  | \n"
        << " |  |   Philip Ilten;  School of Physics and "
        << "Astronomy,                            |  | \n"
        << " |  |      University of Birmingham, Birmingh"
@@ -2320,11 +2690,11 @@ void Pythia::banner() {
        << "ory, MS 234, Batavia, IL 60510, USA;  |  | \n"
        << " |  |      e-mail: mrenna@fnal.gov           "
        << "                                      |  | \n"
-       << " |  |   Stefan Prestel;  Theoretical Physics "
-       << "Department,                           |  | \n"
-       << " |  |      Fermi National Accelerator Laborat"
-       << "ory, MS 106, Batavia, IL 60510, USA;  |  | \n"
-       << " |  |      e-mail: sprestel@fnal.gov         "
+       << " |  |   Stefan Prestel;  Department of Astron"
+       << "omy and Theoretical Physics,          |  | \n"
+       << " |  |      Lund University, Solvegatan 14A, S"
+       << "E-223 62 Lund, Sweden;                |  | \n"
+       << " |  |      e-mail: stefan.prestel@thep.lu.se "
        << "                                      |  | \n"
        << " |  |   Christine O. Rasmussen;  Department o"
        << "f Astronomy and Theoretical Physics,  |  | \n"
@@ -2378,7 +2748,7 @@ void Pythia::banner() {
        << " when interpreting results.           |  | \n"
        << " |  |                                        "
        << "                                      |  | \n"
-       << " |  |   Copyright (C) 2018 Torbjorn Sjostrand"
+       << " |  |   Copyright (C) 2019 Torbjorn Sjostrand"
        << "                                      |  | \n"
        << " |  |                                        "
        << "                                      |  | \n"
@@ -2484,7 +2854,28 @@ bool Pythia::check() {
 
   // Incoming beams counted with negative momentum and charge.
   if (doProcessLevel) {
-    pSum      = - (event[1].p() + event[2].p());
+    // Incoming particles will be at position "1" and "2" in most cases.
+    // However, need to be careful how to find incoming particles after
+    // QED radiation in DIS-type collisions. Thus, first find both incoming
+    // particles.
+    int iA = 1;
+    int iB = 2;
+    if (!beamHasGamma) {
+      if (beamA.isLepton() && beamB.isHadron())
+        { iA = beamA[0].iPos(); iB = 2; }
+      if (beamB.isLepton() && beamA.isHadron())
+        { iB = beamB[0].iPos(); iA = 1; }
+      int iPos = 0;
+      while ( beamA.isHadron() && iPos < beamB.size()
+           && beamA.id() == beamB[iPos].id() )
+        { iA = beamA[iPos].iPos(); iPos++;}
+      iPos = 0;
+      while ( beamB.isHadron() && iPos < beamB.size()
+           && beamB.id() == beamB[iPos].id() )
+        { iB = beamB[iPos].iPos(); iPos++; }
+    }
+    // Count incoming momentum and charge.
+    pSum      = - (event[iA].p() + event[iB].p());
     chargeSum = - (event[1].charge() + event[2].charge());
 
   // If no ProcessLevel then sum final state of process record.
@@ -2806,7 +3197,7 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
       tempPDFPtr = new CTEQ6pdf(idIn, pSet - 6, 1., xmlPath, &info);
     else if (pSet <= 16)
       tempPDFPtr = new NNPDF(idIn, pSet - 12, xmlPath, &info);
-    else if (pSet <= 21)
+    else if (pSet <= 22)
       tempPDFPtr = new LHAGrid1(idIn, pWord, xmlPath, &info);
     else tempPDFPtr = 0;
   }
@@ -2820,8 +3211,10 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
     piStream >> piSet;
 
     // If VMD process then scale PDF accordingly:
-    // f_a^VMD = alphaEM * (1/f_rho^2 + 1/f_omega^2 + 1/f_phi^2) * f_a^pi0.
-    double rescale = (doVMDsideA || doVMDsideB) ? 0.00402068 : 1.;
+    // f_a^VMD = alphaEM * (1/f_rho^2 + 1/f_omega^2 + 1/f_phi^2 + 1/f_J/psi)
+    //         * f_a^pi0.
+    // COR: New value here includes J/psi
+    double rescale = (doVMDsideA || doVMDsideB) ? 0.0046549 : 1.;
 
     // Use internal LHAgrid1 implementation for LHAPDF6 files.
     if (piSet == 0 && piWord.length() > 9
@@ -2882,7 +3275,7 @@ PDF* Pythia::getPDFPtr(int idIn, int sequence, string beam, bool resolved) {
     }
     else if (pomSet == 11 )
       tempPDFPtr = new PomHISASD(990, getPDFPtr(2212), settings, &info);
-    else if (pomSet == 12 || pomSet == 13)
+    else if (pomSet >= 12 && pomSet <= 15)
       tempPDFPtr = new LHAGrid1(idIn, "1" + pomWord, xmlPath, &info);
     else tempPDFPtr = 0;
   }

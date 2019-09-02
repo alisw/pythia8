@@ -87,7 +87,7 @@ your <code>PythiaStdlib.h</code> file:
    #endif 
 </pre> 
  
-<br/><br/><hr/> 
+<br/><hr/> 
 <h3>Storing partial PYTHIA events in ROOT trees</h3> 
  
 Instead of storing full PYTHIA events in ROOT trees, a common user case 
@@ -327,4 +327,4 @@ functionality, e.g. in an interactive session
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // LesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -169,6 +169,10 @@ public:
   double pdf1()            const {return pdf1Save;}
   double pdf2()            const {return pdf2Save;}
 
+  // Optional: give back info on parton shower scales.
+  bool   scaleShowersIsSet() const {return scaleShowersIsSetSave;}
+  double scaleShowers(int i) const {return scaleShowersSave[i];}
+
   // Print the info; useful to check that reading an event worked.
   void   listEvent();
 
@@ -190,8 +194,19 @@ public:
 protected:
 
   // Constructor. Sets default to be that events come with unit weight.
-  LHAup(int strategyIn = 3) : fileName("void"), strategySave(strategyIn)
-    { processes.reserve(10); particles.reserve(20);
+  LHAup(int strategyIn = 3) : infoPtr(), nupSave(), idprupSave(), xwgtupSave(),
+    scalupSave(), aqedupSave(), aqcdupSave(), xSecSumSave(), xErrSumSave(),
+    getPDFSave(), getScale(), getScaleShowers(), id1InSave(), id2InSave(),
+    id1pdfInSave(), id2pdfInSave(), x1InSave(), x2InSave(), x1pdfInSave(),
+    x2pdfInSave(), scalePDFInSave(), pdf1InSave(), pdf2InSave(),
+    scaleShowersInSave(), fileName("void"), dateNow(), timeNow(),
+    strategySave(strategyIn), idBeamASave(), idBeamBSave(), eBeamASave(),
+    eBeamBSave(), pdfGroupBeamASave(), pdfGroupBeamBSave(), pdfSetBeamASave(),
+    pdfSetBeamBSave(), idProc(), weightProc(), scaleProc(), alphaQEDProc(),
+    alphaQCDProc(), pdfIsSetSave(), scaleShowersIsSetSave(false), id1Save(),
+    id2Save(), id1pdfSave(), id2pdfSave(), x1Save(), x2Save(), x1pdfSave(),
+    x2pdfSave(), scalePDFSave(), pdf1Save(), pdf2Save(), scaleShowersSave() {
+    processes.reserve(10); particles.reserve(20);
     setBeamA( 0, 0., 0, 0); setBeamB( 0, 0., 0, 0); }
 
   // Allow conversion from mb to pb.
@@ -227,7 +242,8 @@ protected:
     idProc = idProcIn; weightProc = weightIn; scaleProc = scaleIn;
     alphaQEDProc = alphaQEDIn; alphaQCDProc = alphaQCDIn;
     // Clear particle list. Add empty zeroth particle for correct indices.
-    particles.clear(); addParticle(0); pdfIsSetSave = false;}
+    particles.clear(); addParticle(0); pdfIsSetSave = false;
+    scaleShowersIsSetSave = false;}
 
   // Input particle info, one particle at the time.
   void addParticle(LHAParticle particleIn) {
@@ -250,6 +266,11 @@ protected:
     { id1pdfSave = id1pdfIn; id2pdfSave = id2pdfIn; x1pdfSave = x1pdfIn;
     x2pdfSave = x2pdfIn; scalePDFSave = scalePDFIn; pdf1Save = pdf1In;
     pdf2Save = pdf2In; pdfIsSetSave = pdfIsSetIn;}
+
+  // Optionally input info on parton shower starting scale; two for DPS.
+  void setScaleShowers( double scaleIn1, double scaleIn2 = 0.)
+    { scaleShowersSave[0] = scaleIn1; scaleShowersSave[1] = scaleIn2;
+    scaleShowersIsSetSave = true;}
 
   // Three routines for LHEF files, but put here for flexibility.
   bool setInitLHEF(istream& is, bool readHeaders = false);
@@ -275,10 +296,10 @@ protected:
   double xwgtupSave, scalupSave, aqedupSave, aqcdupSave, xSecSumSave,
          xErrSumSave;
   vector<LHAParticle> particlesSave;
-  bool   getPDFSave, getScale;
+  bool   getPDFSave, getScale, getScaleShowers;
   int    id1InSave, id2InSave, id1pdfInSave, id2pdfInSave;
   double x1InSave, x2InSave, x1pdfInSave, x2pdfInSave, scalePDFInSave,
-         pdf1InSave, pdf2InSave;
+         pdf1InSave, pdf2InSave, scaleShowersInSave[2];
 
   // File to which to write Les Houches Event File information.
   string fileName;
@@ -308,10 +329,10 @@ private:
   vector<LHAParticle> particles;
 
   // Info on initiators and optionally on parton density values of event.
-  bool   pdfIsSetSave;
+  bool   pdfIsSetSave, scaleShowersIsSetSave;
   int    id1Save, id2Save, id1pdfSave, id2pdfSave;
   double x1Save, x2Save, x1pdfSave, x2pdfSave, scalePDFSave, pdf1Save,
-         pdf2Save;
+         pdf2Save, scaleShowersSave[2];
 
 };
 
@@ -345,7 +366,6 @@ public:
     is_gz = new igzstream(filename);
     isHead_gz = (headerfile == NULL) ? is_gz : new igzstream(headerfile);
   }
-
 
   // Destructor.
   ~LHAupLHEF() {

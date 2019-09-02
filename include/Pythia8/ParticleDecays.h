@@ -1,5 +1,5 @@
 // ParticleDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -55,7 +55,14 @@ class ParticleDecays {
 public:
 
   // Constructor.
-  ParticleDecays() {}
+  ParticleDecays() : infoPtr(), particleDataPtr(), rndmPtr(), couplingsPtr(),
+    timesDecPtr(), flavSelPtr(), decayHandlePtr(), limitTau0(), limitTau(),
+    limitRadius(), limitCylinder(), limitDecay(), mixB(), doFSRinDecays(),
+    doGammaRad(), tauMode(), mSafety(), tau0Max(), tauMax(), rMax(), xyMax(),
+    zMax(), xBdMix(), xBsMix(), sigmaSoft(), multIncrease(),
+    multIncreaseWeak(), multRefMass(), multGoffset(), colRearrange(),
+    stopMass(), sRhoDal(), wRhoDal(), hasPartons(), keepPartons(), idDec(),
+    meMode(), mult(), scale(), decDataPtr() {}
 
   // Initialize: store pointers and find settings
   void init(Info* infoPtrIn, Settings& settings,

@@ -1,5 +1,5 @@
 // SigmaTotal.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,6 +32,12 @@ namespace Pythia8 {
 class SigmaTotAux {
 
 public:
+
+  // Constructor.
+  SigmaTotAux() : isExpEl(), hasCou(), sigTot(), rhoOwn(), sigEl(), bEl(),
+    sigTotCou(), sigElCou(), sigXB(), sigAX(), sigXX(), sigAXB(), idA(),
+    idB(), tryCoulomb(), chgSgn(), tAbsMin(), lambda(), phaseCst(),
+    particleDataPtr(), rndmPtr() {}
 
   // Destructor.
   virtual ~SigmaTotAux() {};
@@ -133,10 +139,13 @@ class SigmaTotal {
 public:
 
   // Constructor.
-  SigmaTotal() : isCalc(false), sigTotElPtr(NULL), sigDiffPtr(NULL) {};
+  SigmaTotal() : isCalc(false), ispp(), modeTotEl(), modeTotElNow(),
+    modeDiff(), modeDiffNow(), idAbsA(), idAbsB(), s(), sigND(),
+    sigTotElPtr(NULL), sigDiffPtr(NULL), infoPtr(), settingsPtr(),
+    particleDataPtr(), rndmPtr() {};
 
   // Destructor.
-  ~SigmaTotal() { if (sigTotElPtr) delete sigTotElPtr;
+  virtual ~SigmaTotal() { if (sigTotElPtr) delete sigTotElPtr;
     if (sigDiffPtr) delete sigDiffPtr; }
 
   // Store pointers and initialize data members.
@@ -156,6 +165,10 @@ public:
   bool   bElIsExp()     {return sigTotElPtr->isExpEl;}
   double bSlopeEl()     {return sigTotElPtr->bEl;}
   bool   hasCoulomb()   {return sigTotElPtr->hasCou;}
+
+  // Total elastic cross section.
+  bool calcTotEl( int idAin, int idBin, double sIn, double mAin, double mBin) {
+    return sigTotElPtr->calcTotEl( idAin, idBin, sIn, mAin, mBin); }
 
   // Differential elastic cross section.
   double dsigmaEl( double t, bool useCoulomb = false,
@@ -186,6 +199,9 @@ public:
 
   // Minimal central diffractive mass.
   double mMinCD() {return sigDiffPtr->mMinCD();}
+
+  // Sample the VMD states for resolved photons.
+  void chooseVMDstates(int idA, int idB, double eCM, int processCode);
 
   // Standard methods to find t range of a 2 -> 2 process
   // and to check whether a given t value is in that range.
@@ -237,7 +253,10 @@ class SigmaTotOwn : public SigmaTotAux {
 public:
 
   // Constructor.
-  SigmaTotOwn() {};
+  SigmaTotOwn() : dampenGap(), pomFlux(), s(), a0(), ap(), b0(), A1(), A2(),
+    A3(), a1(), a2(), a3(), bMinDD(), ygap(), ypow(), expPygap(), mMinCDnow(),
+    wtNow(), yNow(), yNow1(), yNow2(), b(), b1(), b2(), Q(), Q1(),
+    Q2() {};
 
   // Store pointers and initialize data members.
   virtual void init( Info* , Settings& settings,
@@ -287,7 +306,13 @@ class SigmaSaSDL : public SigmaTotAux {
 public:
 
   // Constructor.
-  SigmaSaSDL() {};
+  SigmaSaSDL() : doDampen(), zeroAXB(), swapped(), sameSign(), idAbsA(),
+    idAbsB(), iProc(), iHadA(), iHadB(), iHadAtmp(), iHadBtmp(), iProcVP(),
+    iProcVV(), s(), mA(), mB(), bA(), bB(), maxXBOwn(), maxAXOwn(), maxXXOwn(),
+    maxAXBOwn(), epsSaS(), sigmaPomP(), mPomP(), pPomP(), sigAXB2TeV(),
+    mMin0(), cRes(), mRes0(), mMinCDnow(), alP2(), s0(), mMinXB(), mMinAX(),
+    mMinAXB(), mResXB(), mResAX(), sResXB(), sResAX(), wtNow(), mAtmp(),
+    mBtmp(), multVP(), multVV(), infoPtr() {};
 
   // Store pointers and initialize data members.
   virtual void init( Info* infoPtrIn, Settings& settings,
@@ -320,19 +345,19 @@ public:
 private:
 
   // Constants: could only be changed in the code itself.
-  static const int    IHADATABLE[], IHADBTABLE[], ISDTABLE[], IDDTABLE[];
+  static const int    IHADATABLE[], IHADBTABLE[], ISDTABLE[], IDDTABLE[], NVMD;
   static const double EPSILON, ETA, X[], Y[], BETA0[], BHAD[], ALPHAPRIME,
-                      CONVERTSD, CONVERTDD, VMDMASS[3], GAMMAFAC[3],
+                      CONVERTSD, CONVERTDD, VMDMASS[4], GAMMAFAC[4],
                       CSD[10][8], CDD[10][9];
 
   // Initialization data, normally only set once, and result of calculation.
   bool   doDampen, zeroAXB, swapped, sameSign;
-  int    idAbsA, idAbsB, iProc, iHadA, iHadB, iHadAtmp[3],
-         iHadBtmp[3], iProcVP[3], iProcVV[3][3];
+  int    idAbsA, idAbsB, iProc, iHadA, iHadB, iHadAtmp[4],
+         iHadBtmp[4], iProcVP[4], iProcVV[4][4];
   double s, mA, mB, bA, bB, maxXBOwn, maxAXOwn, maxXXOwn, maxAXBOwn, epsSaS,
          sigmaPomP, mPomP, pPomP, sigAXB2TeV, mMin0,  cRes, mRes0, mMinCDnow,
          alP2, s0, mMinXB,  mMinAX, mMinAXB, mResXB, mResAX, sResXB,
-         sResAX, wtNow, mAtmp[3], mBtmp[3], multVP[3], multVV[3][3];
+         sResAX, wtNow, mAtmp[4], mBtmp[4], multVP[4], multVV[4][4];
 
   // Find combination of incoming beams.
   bool findBeamComb( int idAin, int idBin, double mAin, double mBin);
@@ -352,7 +377,11 @@ class SigmaMBR : public SigmaTotAux {
 public:
 
   // Constructor.
-  SigmaMBR() {};
+  SigmaMBR() : s(), sigSD(), sigDD(), sigCD(), eps(), alph(), beta0gev(),
+    beta0mb(), sigma0mb(), sigma0gev(), m2min(), dyminSDflux(),
+    dyminDDflux(), dyminCDflux(), dyminSD(), dyminDD(), dyminCD(),
+    dyminSigSD(), dyminSigDD(), dyminSigCD(), a1(), a2(), b1(), b2(),
+    sdpmax(), ddpmax(), dpepmax() {};
 
   // Initialize data members.
   virtual void init( Info* , Settings& settings,
@@ -413,7 +442,10 @@ class SigmaABMST : public SigmaTotAux {
 public:
 
   // Constructor.
-  SigmaABMST() {};
+  SigmaABMST() : ispp(), dampenGap(), useBMin(), modeSD(), modeDD(), modeCD(),
+    s(), facEl(), m2minp(), m2minm(), alp0(), alpt(), s0(), c0(), ygap(),
+    ypow(), expPygap(), multSD(), powSD(), multDD(), powDD(), multCD(),
+    powCD(), mMinCDnow(), bMinSD(), bMinDD(), bMinCD() {};
 
   // Initialize data members.
   virtual void init( Info* , Settings& settings, ParticleData* ,
@@ -508,7 +540,7 @@ class SigmaRPP : public SigmaTotAux {
 public:
 
   // Constructor.
-  SigmaRPP() {};
+  SigmaRPP() : ispp(), s(), facEl() {};
 
   // Initialize data members.
   virtual void init( Info* , Settings& settings, ParticleData* , Rndm* ) {

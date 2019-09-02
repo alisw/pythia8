@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='PythonInterface.php'>
  
 <h2>A Python Interface</h2> 
+<ol id="toc">
+  <li><a href="#section0">Features</a></li>
+  <li><a href="#section1">Limitations</a></li>
+  <li><a href="#section2">Installation</a></li>
+  <li><a href="#section3">Examples</a></li>
+</ol>
+
  
 <a href="https://www.python.org/" target="_top">Python</a> is a 
 powerful, high-level 
@@ -41,6 +48,7 @@ interface has not been extensively tested and consequently issues may
 arise. If bugs are found or additional features are required, as 
 usual, please report them to the PYTHIA authors. 
  
+<a name="section0"></a> 
 <h3>Features</h3> 
  
 An attempt has been made to translate all PYTHIA classes and functions 
@@ -98,6 +106,7 @@ of the C++ <code>main10.cc</code> example which uses a derived class
 from the <code>UserHooks</code> class to veto events.</li> 
 </ul> 
  
+<a name="section1"></a> 
 <h3>Limitations</h3> 
  
 A variety of methods to interface C++ code with Python exist, each 
@@ -150,6 +159,7 @@ all remaining plugins, including both <code>LHAMadgraph.h</code>
 and <code>PowhegProcs.h</code>.</li> 
 </ul> 
  
+<a name="section2"></a> 
 <h3>Installation</h3> 
  
 To install the Python interface, both the <code>python</code> command, 
@@ -207,6 +217,7 @@ where <code>DYLD</code> should be substituted for <code>LD</code> in
 OS X. Alternatively, it is also possible to define the Python path from 
 within Python, as is done within the provided examples. 
  
+<a name="section3"></a> 
 <h3>Examples</h3> 
  
 To use the Python interface for PYTHIA, start Python 
@@ -217,4 +228,4 @@ of the example.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

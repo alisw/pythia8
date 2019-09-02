@@ -1,5 +1,5 @@
 // SLHAinterface.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -319,10 +319,13 @@ bool SLHAinterface::initSLHA(Settings& settings,
         infoPtr->errorMsg(warnPref + "ignoring QNUMBERS", "for id = "
           + idCode.str() + " (already exists)", true);
       } else {
-        int qEM3    = slha.qnumbers[iQnum](1);
-        int nSpins  = slha.qnumbers[iQnum](2);
-        int colRep  = slha.qnumbers[iQnum](3);
-        int hasAnti = slha.qnumbers[iQnum](4);
+        // Note: qnumbers entries stored internally as doubles to allow for
+        // millicharged particles. Round to nearest int when handing to PYTHIA.
+        // (So charge ~ 0 treated as charge = 0; good enough for showers.)
+        int qEM3    = lrint(slha.qnumbers[iQnum](1));
+        int nSpins  = lrint(slha.qnumbers[iQnum](2));
+        int colRep  = lrint(slha.qnumbers[iQnum](3));
+        int hasAnti = lrint(slha.qnumbers[iQnum](4));
         // Translate colRep to PYTHIA colType
         int colType = 0;
         if (colRep == 3) colType = 1;
@@ -399,6 +402,14 @@ bool SLHAinterface::initSLHA(Settings& settings,
         && isInternal)
         ignoreMassM0.push_back(id);
       else {
+        ParticleDataEntry* tmpPtr = particleDataPtr->findParticle(id);
+        if( tmpPtr == NULL ) {
+          ostringstream idCode;
+          idCode << id;
+          infoPtr->errorMsg(infoPref + " attempting to set properties",
+            "for unknown id = {" + idCode.str() + "}", true);
+          continue;
+        }
         particleDataPtr->m0(id,mass);
         idModified[id] = true;
         importMass.push_back(id);
@@ -509,10 +520,9 @@ bool SLHAinterface::initSLHA(Settings& settings,
       particlePtr->setMMaxNoChange(mMax);
     }
 
-    // Set lifetime in mm for displaced vertex calculations
-    // (convert GeV^-1 to mm)
+    // Set lifetime for displaced vertex calculations (convert GeV^-1 to mm).
     if (widRes > 0.) {
-      double decayLength = 1.97e-13/widRes;
+      double decayLength = HBARC * FM2MM / widRes;
       particlePtr->setTau0(decayLength);
 
       // Reset decay table of the particle. Allow decays, treat as resonance.

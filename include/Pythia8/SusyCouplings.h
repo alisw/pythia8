@@ -1,6 +1,6 @@
 
 // SusyCouplings.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -30,7 +30,11 @@ public:
 
   // Constructor
   CoupSUSY() : Couplings(true), isInit(false), isNMSSM(false),
-    isLLE(false), isLQD(false), isUDD(false) {}
+    isLLE(false), isLQD(false), isUDD(false), mWpole(), wWpole(), mZpole(),
+    wZpole(), mW(), mZ(), sin2W(), sinW(), cosW(), tanb(), cosb(), sinb(),
+    muHiggs(), alphaHiggs(), mAHiggs(), LqqZ(), RqqZ(), LllZ(), RllZ(),
+    rvLLE(), rvLQD(), rvUDD(), slhaPtr(), infoPtr(), settingsPtr(),
+    particleDataPtr() {}
 
   // Initialize
   void initSUSY(SusyLesHouches* slhaPtrIn, Info* infoPtrIn,

@@ -28,6 +28,17 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='PDFSelection.php'>
  
 <h2>PDF Selection</h2> 
+<ol id="toc">
+  <li><a href="#section0">Parton densities for protons</a></li>
+  <li><a href="#section1">Parton densities for protons in the hard process</a></li>
+  <li><a href="#section2">Nuclear modifications of parton densities</a></li>
+  <li><a href="#section3">Parton densities for pions</a></li>
+  <li><a href="#section4">Parton densities for Pomerons</a></li>
+  <li><a href="#section5">Parton densities for photons</a></li>
+  <li><a href="#section6">Parton densities for leptons</a></li>
+  <li><a href="#section7">Incoming parton selection</a></li>
+</ol>
+
  
 This page contains several subsections. The first deals with how to 
 pick the parton distribution set for protons, including from LHAPDF, 
@@ -86,6 +97,7 @@ are checked and PDFs frozen outside them, so the extrapolate option now
 is strictly a choice of low-<i>x</i> behaviour. 
    
  
+<a name="section0"></a> 
 <h3>Parton densities for protons</h3> 
  
 PYTHIA comes with a reasonably complete list of recent LO fits built-in, 
@@ -200,17 +212,25 @@ evolution.
    
 <br/><code>option </code><strong> 18</strong> : NNPDF3.1 QCD LO <i>alpha_s(M_Z) = 0.118</i>. 
    
-<br/><code>option </code><strong> 19</strong> : NNPDF3.1 QCD+QED NLO <i>alpha_s(M_Z) = 0.118</i>. 
+<br/><code>option </code><strong> 19</strong> : NNPDF3.1 QCD+LUXQED NLO <i>alpha_s(M_Z) = 0.118</i>. 
    
-<br/><code>option </code><strong> 20</strong> : NNPDF3.1 QCD+QED NNLO <i>alpha_s(M_Z) = 0.118</i>. 
+<br/><code>option </code><strong> 20</strong> : NNPDF3.1 QCD+LUXQED NNLO <i>alpha_s(M_Z) = 0.118</i>. 
    
-<br/><code>option </code><strong> 21</strong> :  modified NNPDF3.1 QCD NNLO. It is highly experimental, 
-as a first attempt to combine a NNLO behaviour at high <i>x</i> 
-with a physical LO-style one at low <i>x</i> and <i>Q</i>, 
-see the presentation by Zahiri Kassabov at the 
-<a href="https://indico.cern.ch/event/647565/" target="page"> 
-September 2017 PDF4LHC meeting</a>, and it is likely to be replaced 
-in future versions. 
+<br/><code>option </code><strong> 21</strong> : NNPDF3.1sx+LHCb NLO+NLLx LUXQED 
+<i>alpha_s(M_Z) = 0.118</i> [<a href="Bibliography.php#refBer18" target="page">Ber18</a>]. While at NLO, the 
+additional small-<i>x</i> resummation, anchored by LHC-b data, offers 
+a  reasonable small-<i>x</i> behaviour than most NLO PDFs, as 
+required for the successful usage e.g. with traditional "improved LL" 
+parton showers. The photon part is unchanged from the earlier NNPDF 3.1 
+QED analysis [<a href="Bibliography.php#refBer17" target="page">Ber17</a>]. 
+<br/><b>Warning :</b>in version 8.235 the 21 identifier was used to 
+denote and earlier attempt to obtain a  reasonable small-<i>x</i> 
+behaviour. This PDF set is superseded by the new 21 and 22 sets, and has 
+been removed, as was forewarned. 
+   
+<br/><code>option </code><strong> 22</strong> : NNPDF3.1sx+LHCb NNLO+NLLx LUXQED 
+<i>alpha_s(M_Z) = 0.118</i>. Comments as for 21, but this set is at 
+NNLO rather than NLO. 
    
 <br/><code>option </code><strong> LHAPDF5:set/member</strong> : Use an external LHAPDF set 
 where <code>set</code> is the name of the set to use 
@@ -276,6 +296,7 @@ LHAPDF another way, you have full freedom to use the more generic
 <?php $filepath = $_GET["filepath"];
 echo "<a href='PartonDistributions.php?filepath=".$filepath."' target='page'>";?>interface options</a>. 
  
+<a name="section1"></a> 
 <h3>Parton densities for protons in the hard process</h3> 
  
 The above options provides a PDF set that will be used everywhere: 
@@ -328,6 +349,7 @@ for <code>PDF:pSet</code>. If this option is set to <code>void</code>
 then the same PDF set as <code>PDF:pHardSet</code> is used. 
    
  
+<a name="section2"></a> 
 <h3>Nuclear modifications of parton densities</h3> 
  
 <p/> 
@@ -391,6 +413,7 @@ neutrons. Default code for Pb.
 The PDG code for nucleus B. 
    
  
+<a name="section3"></a> 
 <h3>Parton densities for pions</h3> 
  
 The parton densities of the pion are considerably less well known than 
@@ -435,6 +458,7 @@ to <code>void</code> then the same PDF set as <code>PDF:piSet</code>
 is used. 
    
  
+<a name="section4"></a> 
 <h3>Parton densities for Pomerons</h3> 
  
 The Pomeron is introduced in the description of diffractive events, 
@@ -501,11 +525,21 @@ rescaled by the factor <code>PomRescale</code> below.
 there is an additional suppression by <i>(1-x)^p</i>, where the power is 
 given by <code>PDF:PomHixSupp</code> below. 
    
-<br/><code>option </code><strong> 12</strong> : The GKG18-DPDF Fit A central member <i>Q^2</i>-dependent 
-parametrization based on a tune to H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
+<br/><code>option </code><strong> 12</strong> : The GKG18-DPDF LO Fit A central member 
+<i>Q^2</i>-dependent parametrization based on a tune to 
+H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
    
-<br/><code>option </code><strong> 13</strong> : The GKG18-DPDF Fit B central member <i>Q^2</i>-dependent 
-parametrization based on a tune to H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
+<br/><code>option </code><strong> 13</strong> : The GKG18-DPDF LO Fit B central member 
+<i>Q^2</i>-dependent parametrization based on a tune to 
+H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
+   
+<br/><code>option </code><strong> 14</strong> : The GKG18-DPDF NLO Fit A central member 
+<i>Q^2</i>-dependent parametrization based on a tune to 
+H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
+   
+<br/><code>option </code><strong> 15</strong> : The GKG18-DPDF NLO Fit B central member 
+<i>Q^2</i>-dependent parametrization based on a tune to 
+H1 and ZEUS data [<a href="Bibliography.php#refGoh18" target="page">Goh18</a>]. 
    
 <br/><code>option </code><strong> LHAPDF5:set/member</strong> : Use an external LHAPDF5 set, 
 cf. the corresponding proton option. 
@@ -566,6 +600,7 @@ diffractive processes.
 the power in the suppression of the high-x PDF for option 11 above. 
    
  
+<a name="section5"></a> 
 <h3>Parton densities for photons</h3> 
  
 Photon PDFs describe the partonic content of the resolved photons and 
@@ -592,6 +627,7 @@ to <code>void</code> then the same PDF set as <code>PDF:GammaSet</code> is
 used. 
    
  
+<a name="section6"></a> 
 <h3>Parton densities for leptons</h3> 
  
 For electrons/muons/taus there is no need to choose between different 
@@ -646,8 +682,37 @@ photon-photon pair) are not applied.
 The type of photon flux. 
 <br/>
 <input type="radio" name="28" value="1" checked="checked"><strong>1 </strong>:  Convolute the photon flux from EPA with the selected photon  PDF set. Convolution integral is performed "on the fly", meaning that the  actual integral is not computed but the <ei>x_gamma</ei> is sampled  event-by-event. Since the final PDF value depends on the sampled value for  <ei>x_gamma</ei> the phase-space sampling is set up using an overestimate for  the PDFs. This makes the process selection somewhat less efficient compared  to the case where the PDFs are fixed (e.g. for protons).<br/>
-<input type="radio" name="28" value="2"><strong>2 </strong>:  Uses an approximation of the photon flux to sample  processes and corrects this later with an externally provided flux. For  leptons a bit less efficient than option 1 but allows straightforward  implementation of photon fluxes from different particles. To use this option  user has to provide the external photon flux using method  <code>Pythia::setPhotonFluxPtr(PDF*, PDF*)</code> as demostrated in the  sample program <code>main70.cc</code>. <br/>
+<input type="radio" name="28" value="2"><strong>2 </strong>:  Uses an approximation of the photon flux to sample  processes and corrects this later with an externally provided flux. For  leptons a bit less efficient than option 1 but allows straightforward  implementation of photon fluxes from different particles. To use this option  user has to provide the external photon flux using method  <code>Pythia::setPhotonFluxPtr(PDF*, PDF*)</code> as demostrated in the  sample program <code>main70.cc</code>.<br/>
  
+<br/><br/><table><tr><td><strong>PDF:lepton2gammaApprox  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)</td></tr></table>
+Controls which type of overestimate is used for photon flux sampling. 
+<br/>
+<input type="radio" name="29" value="1" checked="checked"><strong>1 </strong>:  Estimate optimized for photons from leptons. Works  reasonable well also for photoproduction in p+p.<br/>
+<input type="radio" name="29" value="2"><strong>2 </strong>:  Estimate optimized for ultraperipheral heavy-ion collisions  as presented in <code>main70.cc</code>. Here the estimate is divided into two  regions, a power-law in <ei>x_gamma</ei> below <ei>x_cut</ei> and an  exponential fall-off above, see the related parameters below. Default values  are optimized for p+Pb collisions where Pb-nucleus provide the photons but  they should work reasonably well also for other similar  configurations.<br/>
+<br/><b>Note:</b> Parameters do not affect the flux itself, only the sampling 
+efficiency. 
+ 
+<br/><br/><table><tr><td><strong>PDF:gammaFluxApprox2bMin </td><td></td><td> <input type="text" name="30" value="7.336" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>7.336</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+Minimal allowed impact parameter for which the flux is considered. Units in 
+<code>fm</code>. Should match the flux provided by user. 
+   
+ 
+<br/><br/><table><tr><td><strong>PDF:gammaFluxApprox2mBeam </td><td></td><td> <input type="text" name="31" value="0.9314" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.9314</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+Per-nucleon mass used for the overestimate. Units in 
+<code>GeV</code> and should again match to the user-provided flux. 
+   
+ 
+<br/><br/><table><tr><td><strong>PDF:gammaFluxApprox2xPow </td><td></td><td> <input type="text" name="32" value="1.15" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.15</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+Value of the exponent of the power law. The default value should work well 
+for the foreseen cases, so vary with caution. 
+   
+ 
+<br/><br/><table><tr><td><strong>PDF:gammaFluxApprox2xCut </td><td></td><td> <input type="text" name="33" value="0.01" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.01</strong></code>; <code>minimum = 0.0</code>)</td></tr></table>
+Value that defines at which <i>x_gamma</i> different approximations are 
+used. As above, vary with caution. 
+   
+ 
+<a name="section7"></a> 
 <h3>Incoming parton selection</h3> 
  
 There is one useful degree of freedom to restrict the set of incoming 
@@ -656,7 +721,7 @@ only which quarks are allowed to contribute to the hard-process cross
 sections. Note that separate but similarly named modes are available 
 for multiparton interactions and spacelike showers. 
  
-<br/><br/><table><tr><td><strong>PDFinProcess:nQuarkIn  </td><td></td><td> <input type="text" name="29" value="5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>PDFinProcess:nQuarkIn  </td><td></td><td> <input type="text" name="34" value="5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)</td></tr></table>
 Number of allowed incoming quark flavours in the beams; a change 
 to 4 would thus exclude <i>b</i> and <i>bbar</i> as incoming 
 partons, etc. 
@@ -817,9 +882,34 @@ if($_POST["28"] != "1")
 $data = "PDF:lepton2gammaSet = ".$_POST["28"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["29"] != "5")
+if($_POST["29"] != "1")
 {
-$data = "PDFinProcess:nQuarkIn = ".$_POST["29"]."\n";
+$data = "PDF:lepton2gammaApprox = ".$_POST["29"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["30"] != "7.336")
+{
+$data = "PDF:gammaFluxApprox2bMin = ".$_POST["30"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["31"] != "0.9314")
+{
+$data = "PDF:gammaFluxApprox2mBeam = ".$_POST["31"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["32"] != "1.15")
+{
+$data = "PDF:gammaFluxApprox2xPow = ".$_POST["32"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["33"] != "0.01")
+{
+$data = "PDF:gammaFluxApprox2xCut = ".$_POST["33"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["34"] != "5")
+{
+$data = "PDFinProcess:nQuarkIn = ".$_POST["34"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -829,4 +919,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

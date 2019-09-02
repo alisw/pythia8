@@ -1,5 +1,5 @@
 // Basics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -46,10 +46,10 @@ class Rndm {
 public:
 
   // Constructors.
-  Rndm() : initRndm(false), seedSave(0), sequence(0),
-    useExternalRndm(false), rndmEngPtr(0) { }
-  Rndm(int seedIn) : initRndm(false), seedSave(0), sequence(0),
-    useExternalRndm(false), rndmEngPtr(0) { init(seedIn);}
+  Rndm() : initRndm(false), i97(), j97(), seedSave(0), sequence(0), u(), c(),
+    cd(), cm(), useExternalRndm(false), rndmEngPtr(0) { }
+  Rndm(int seedIn) : initRndm(false), i97(), j97(), seedSave(0), sequence(0),
+    u(), c(), cd(), cm(), useExternalRndm(false), rndmEngPtr(0) {init(seedIn);}
 
   // Possibility to pass in pointer for external random number generation.
   bool rndmEnginePtr( RndmEngine* rndmEngPtrIn);
@@ -305,9 +305,9 @@ class RotBstMatrix {
 public:
 
   // Constructors.
-  RotBstMatrix() {for (int i = 0; i < 4; ++i) { for (int j = 0; j < 4; ++j)
-    { M[i][j] = (i==j) ? 1. : 0.; } } }
-  RotBstMatrix(const RotBstMatrix& Min) {
+  RotBstMatrix() : M() {for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) { M[i][j] = (i==j) ? 1. : 0.; } } }
+  RotBstMatrix(const RotBstMatrix& Min) : M() {
     for (int i = 0; i < 4; ++i) { for (int j = 0; j < 4; ++j) {
     M[i][j] = Min.M[i][j]; } } }
   RotBstMatrix& operator=(const RotBstMatrix& Min) {if (this != &Min) {
@@ -325,6 +325,8 @@ public:
   void fromCMframe(const Vec4&, const Vec4&);
   void rotbst(const RotBstMatrix&);
   void invert();
+  RotBstMatrix inverse() const { RotBstMatrix tmp = *this;
+    tmp.invert(); return tmp; }
   void reset();
 
   // Return value of matrix element.
@@ -338,6 +340,10 @@ public:
 
   // Private members to be accessible from Vec4.
   friend class Vec4;
+
+  // Multiplication.
+  Vec4 operator*(Vec4 p) const { p.rotbst(*this); return p; }
+  RotBstMatrix operator*(RotBstMatrix R) const { R.rotbst(*this); return R; }
 
 private:
 
@@ -356,6 +362,36 @@ private:
 // Print a transformation matrix.
 ostream& operator<<(ostream&, const RotBstMatrix&) ;
 
+// Get a RotBstMatrix to rest frame of p.
+inline RotBstMatrix toCMframe(const Vec4& p) {
+  RotBstMatrix tmp; tmp.bstback(p); return tmp; }
+
+// Get a RotBstMatrix from rest frame of p.
+inline RotBstMatrix fromCMframe(const Vec4& p) {
+  RotBstMatrix tmp; tmp.bst(p); return tmp; }
+
+// Get a RotBstMatrix to rest frame of p1 and p2, where p1 is along
+// the z-axis.
+inline RotBstMatrix toCMframe(const Vec4& p1, const Vec4& p2) {
+  RotBstMatrix tmp; tmp.toCMframe(p1, p2); return tmp; }
+
+// Get a RotBstMatrix from rest frame of p1 and p2, where p1 is along
+// the z-axis.
+inline RotBstMatrix fromCMframe(const Vec4& p1, const Vec4& p2) {
+  RotBstMatrix tmp; tmp.fromCMframe(p1, p2); return tmp; }
+
+// Get a RotBstMatrix to rest frame of ptot where pz is along the
+// z-axis and pxz is in the xz-plane with positive x.
+inline RotBstMatrix toCMframe(const Vec4& ptot, const Vec4& pz,
+  const Vec4 & pxz) { RotBstMatrix tmp = toCMframe(ptot);
+  Vec4 pzp = tmp*pz; tmp.rot(0.0, -pzp.phi()); tmp.rot(-pzp.theta());
+  tmp.rot(0.0, -(tmp*pxz).phi()); return tmp; }
+
+// Get a RotBstMatrix from rest frame of ptot where pz is along the
+// z-axis and pxz is in the xz-plane with positive x.
+inline RotBstMatrix fromCMframe(const Vec4& ptot, const Vec4& pz,
+  const Vec4 & pxz) { return toCMframe(ptot, pz, pxz).inverse(); }
+
 //==========================================================================
 
 // Hist class.
@@ -366,9 +402,11 @@ class Hist {
 public:
 
   // Constructors, including copy constructors.
-  Hist() {titleSave = "";}
+  Hist() : titleSave(""), nBin(), nFill(), xMin(), xMax(), linX(), dx(),
+    under(), inside(), over() { }
   Hist(string titleIn, int nBinIn = 100, double xMinIn = 0.,
-    double xMaxIn = 1., bool logXIn = false) {
+    double xMaxIn = 1., bool logXIn = false) : nBin(), nFill(), xMin(), xMax(),
+    linX(), dx(), under(), inside(), over() {
     book(titleIn, nBinIn, xMinIn, xMaxIn, logXIn);}
   Hist(const Hist& h)
     : titleSave(h.titleSave), nBin(h.nBin), nFill(h.nFill), xMin(h.xMin),
@@ -511,7 +549,8 @@ class HistPlot {
 public:
 
   // Constructor requires name of Python program (and adds .py).
-  HistPlot(string pythonName) { toPython.open( (pythonName + ".py").c_str() );
+  HistPlot(string pythonName) : nFrame(), nTable() {
+    toPython.open( (pythonName + ".py").c_str() );
     toPython << "from matplotlib import pyplot as plt" << endl
              << "from matplotlib.backends.backend_pdf import PdfPages" << endl;
     nPDF = 0; }
@@ -526,7 +565,7 @@ public:
 
   // Add a histogram to the current plot, with optional style and legend.
   void add( const Hist& histIn, string styleIn = "h",
-    string legendIn = "void") { histos.push_back(&histIn);
+    string legendIn = "void") { histos.push_back(histIn);
     styles.push_back(styleIn); legends.push_back(legendIn); }
 
   // Plot a frame given the information from the new and add calls.
@@ -548,7 +587,7 @@ private:
   ofstream toPython;
   int      nPDF, nFrame, nTable;
   string   frameName, title, xLabel, yLabel, fileName, tmpFig;
-  vector<const Hist*> histos;
+  vector<Hist> histos;
   vector<string> styles, legends;
 
 };

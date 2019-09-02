@@ -29,6 +29,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='CKKWLMerging.php'>
  
 <h2>CKKW-L Merging</h2> 
+<ol id="toc">
+  <li><a href="#section0">Merging scale definitions</a></li>
+  <li><a href="#section1">Histogramming the events</a></li>
+  <li><a href="#section2">Merging with user-defined merging scale function</a></li>
+  <li><a href="#section3">Matrix element merging and HepMC output for RIVET</a></li>
+  <li><a href="#section4">Electroweak Merging</a></li>
+  <li><a href="#section5">Further variables</a></li>
+</ol>
+
  
 CKKW-L merging [<a href="Bibliography.php#refLon01" target="page">Lon01</a>] allows for a consistent combination 
 of tree-level matrix elements containing multiple well-separated partons 
@@ -186,6 +195,7 @@ the usage of the merging machinery to consistently include LHE files
 with additional jets into PYTHIA  will be discussed. 
  
 <br/><br/><hr/> 
+<a name="section0"></a> 
 <h3>Merging scale definitions</h3> 
  
 <p/> The quickest way to include processes with additional jets is to 
@@ -289,14 +299,24 @@ setting <code>Merging:nJetMax</code>.
    
  
  
+<br/><br/><strong>Merging:doMerging</strong>  <input type="radio" name="8" value="on"><strong>On</strong>
+<input type="radio" name="8" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Finally, it is also possible to switch on the merging machinery without 
+switching on specific merging procedure, by turning this setting on. This 
+is not sufficient for the internal merging of PYTHIA itself, but convenient 
+when using an external shower plugin. 
+   
+ 
+ 
 <h4>Merging with merging scale defined in Pythia evolution <i>pT</i>:</h4> 
  
 If the LHE file has been regularised by cutting on the minimal Pythia 
 evolution <i>pT</i> in the state, this can also be used as a merging scale 
 right away. For this, change the switch 
  
-<br/><br/><strong>Merging:doPTLundMerging</strong>  <input type="radio" name="8" value="on"><strong>On</strong>
-<input type="radio" name="8" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:doPTLundMerging</strong>  <input type="radio" name="9" value="on"><strong>On</strong>
+<input type="radio" name="9" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 The merging scale is then defined by finding the minimal Pythia evolution 
 <i>pT</i> between sets of radiator, emitted and recoiler partons. For this 
@@ -345,8 +365,8 @@ invariant mass <i> Q<sub>ij</sub></i> of jet pairs. The combination of
 these standard cuts can also serve as a merging scale. For this, use this 
 setting 
  
-<br/><br/><strong>Merging:doCutBasedMerging</strong>  <input type="radio" name="9" value="on"><strong>On</strong>
-<input type="radio" name="9" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:doCutBasedMerging</strong>  <input type="radio" name="10" value="on"><strong>On</strong>
+<input type="radio" name="10" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 This switch will use cuts on (<i>pT<sub>i</sub></i>), 
 <i> &Delta;R<sub>ij</sub></i>  and 
@@ -358,17 +378,17 @@ Please note for this particular merging scale definition, only light jets
 <p/> 
 The values of the cuts will then be read from 
  
-<br/><br/><table><tr><td><strong>Merging:QijMS </td><td></td><td> <input type="text" name="10" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:QijMS </td><td></td><td> <input type="text" name="11" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>)</td></tr></table>
 The value of the invariant mass cut <i> Q<sub>ij</sub></i> of pairs of final 
 state partons used in the matrix element generation. 
    
  
-<br/><br/><table><tr><td><strong>Merging:pTiMS </td><td></td><td> <input type="text" name="11" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:pTiMS </td><td></td><td> <input type="text" name="12" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>)</td></tr></table>
 The value of the minimal transverse momentum cut <i> pT<sub>i</sub></i> on 
 final state partons, as used in the matrix element generation. 
    
  
-<br/><br/><table><tr><td><strong>Merging:dRijMS </td><td></td><td> <input type="text" name="12" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:dRijMS </td><td></td><td> <input type="text" name="13" value="0.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0</strong></code>)</td></tr></table>
 The value of the minimal <i> &Delta;R<sub>ij</sub></i> separation between 
 pairs of final state partons used in the matrix element generation, where 
 <i> &Delta;R<sub>ij</sub><sup>2</sup> = (&Delta;y<sub>ij</sub>)<sup>2</sup> + 
@@ -406,8 +426,8 @@ fails merging scale cut. Cut by rejecting event</code>". These warnings
 should, in this case, rather be regarded as information. 
 To change the default behaviour, use the flag 
  
-<br/><br/><strong>Merging:enforceCutOnLHE</strong>  <input type="radio" name="13" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="13" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:enforceCutOnLHE</strong>  <input type="radio" name="14" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="14" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 This will check if the events read from LHE file are in the matrix element 
 region as defined by the merging scale definition and value(s). If on, LHE 
@@ -578,7 +598,9 @@ are part of the hard process definition. This e.g. enables usage for
 simple BSM processes. Please use this feature with caution. 
  
 <br/><br/><hr/> 
+<a name="section1"></a> 
 <h3>Histogramming the events</h3> 
+ 
 After the event has been processed, histograms for observables of interest 
 need to be filled. In order to achieve good statistical accuracy for all jet 
 multiplicities and all subprocesses contributing to one jet multiplicity, 
@@ -628,6 +650,7 @@ events (see below, and particularly examine the example programs
 for RIVET usage), and <code>main85.cc</code> (HepMC output for RIVET usage). 
  
 <br/><br/><hr/> 
+<a name="section2"></a> 
 <h3>Merging with user-defined merging scale function</h3> 
  
 <p/> For all other merging scale definitions, the procedure is 
@@ -635,8 +658,8 @@ slightly more  complicated, since the user has to write a small piece
 of code defining the  merging scale. To allow for a user defined 
 procedure, set the input 
  
-<br/><br/><strong>Merging:doUserMerging</strong>  <input type="radio" name="14" value="on"><strong>On</strong>
-<input type="radio" name="14" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:doUserMerging</strong>  <input type="radio" name="15" value="on"><strong>On</strong>
+<input type="radio" name="15" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 General user defined merging on/off. 
    
@@ -853,6 +876,7 @@ encountered any changes upon inclusion of the full hard process matrix
 element, even for the QCD dijet case. 
  
 <br/><br/><hr/> 
+<a name="section3"></a> 
 <h3>Matrix element merging and HepMC output for RIVET</h3> 
  
 Examples how to produce matrix element merged events to be analysed 
@@ -883,8 +907,8 @@ of the cross section after cuts. This however entails a careful cut definition
 by the user, which might become cumbersome for some in-built merging scale 
 definitions. A reasonable alternative is using the switch 
  
-<br/><br/><strong>Merging:doXSectionEstimate</strong>  <input type="radio" name="15" value="on"><strong>On</strong>
-<input type="radio" name="15" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:doXSectionEstimate</strong>  <input type="radio" name="16" value="on"><strong>On</strong>
+<input type="radio" name="16" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, estimate cross section after merging scale cut. This switch has to be 
 used in conjunction with a merging scale definition (e.g. 
@@ -900,7 +924,7 @@ This switch also relies on knowledge on how many partons a LHE file should
 contain. This is important for real-emission kinematics in the case of 
 NLO merging. The number of (additional) partons in a LHE file can be set with 
  
-<br/><br/><table><tr><td><strong>Merging:nRequested  </td><td></td><td> <input type="text" name="16" value="-1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:nRequested  </td><td></td><td> <input type="text" name="17" value="-1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)</td></tr></table>
 Exact number of additional jets requested for a particular LHE file. If 
 a file should for example only contain <i>W<sup>+</sup> g g </i> events, 
 this switch should be set to "2" for this LHE file. For NLO merging 
@@ -935,6 +959,7 @@ events with two additional partons in the LHE file will be printed to the
 HepMC file before events with one additional parton. 
  
 <br/><br/><hr/> 
+<a name="section4"></a> 
 <h3>Electroweak Merging</h3> 
  
 Merging strategies like CKKW-L usually assume that the description of a 
@@ -1050,8 +1075,8 @@ W-boson emissions by using
  
 <p/> To enable the electroweak merging, use the following switch. 
  
-<br/><br/><strong>Merging:allowWeakClustering</strong>  <input type="radio" name="17" value="on"><strong>On</strong>
-<input type="radio" name="17" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:allowWeakClustering</strong>  <input type="radio" name="18" value="on"><strong>On</strong>
+<input type="radio" name="18" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Allow clustering of weak bosons, as necessary if a merging of matrix elements 
 with QCD and weak showering is attempted. Currently, only emissions of 
@@ -1130,9 +1155,8 @@ a "merging of mergins" containing states with up to three partons, or up to
 two partons and one W-boson, or up to one parton and two W-bosons, or up to 
 three W-bosons. 
  
- 
- 
 <br/><br/><hr/> 
+<a name="section5"></a> 
 <h3>Further variables</h3> 
  
 For more advanced manipulations of the merging machinery, all 
@@ -1144,7 +1168,7 @@ the switches.
 assessment of the merging prescription. Apart from this, we advise the 
 non-expert user to keep the default values. 
  
-<br/><br/><table><tr><td><strong>Merging:nQuarksMerge  </td><td></td><td> <input type="text" name="18" value="5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5</strong></code>; <code>minimum = 2</code>; <code>maximum = 5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:nQuarksMerge  </td><td></td><td> <input type="text" name="19" value="5" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5</strong></code>; <code>minimum = 2</code>; <code>maximum = 5</code>)</td></tr></table>
 This switch controls which quarks flavours (labelled by PDG id's) are 
 considered additional partons. If e.g. set to 4, then u-, d-, c- and s-quarks 
 will be merged, while b-quarks will not be considered in the merging 
@@ -1154,8 +1178,8 @@ for additional partons in the input LHE file does not exceed this value, since
 unnecessary double-counting might occur otherwise. 
    
  
-<br/><br/><strong>Merging:includeMassive</strong>  <input type="radio" name="19" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="19" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:includeMassive</strong>  <input type="radio" name="20" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="20" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If on, use the correct massive evolution variable and massive 
 splitting kernels in the reconstruction and picking of parton shower 
@@ -1164,8 +1188,8 @@ scales, kinematics and splitting kernels  as if all partons were
 massless. 
    
  
-<br/><br/><strong>Merging:enforceStrongOrdering</strong>  <input type="radio" name="20" value="on"><strong>On</strong>
-<input type="radio" name="20" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:enforceStrongOrdering</strong>  <input type="radio" name="21" value="on"><strong>On</strong>
+<input type="radio" name="21" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, preferably pick parton shower histories of the matrix element 
 which  have strongly ordered consecutive splittings, i.e. paths in 
@@ -1173,43 +1197,43 @@ which consecutive reclustered evolution scales are separated by a
 user-defined factor. 
    
  
-<br/><br/><table><tr><td><strong>Merging:scaleSeparationFactor </td><td></td><td> <input type="text" name="21" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:scaleSeparationFactor </td><td></td><td> <input type="text" name="22" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 The factor by which scales should differ to be classified as strongly 
 ordered. 
    
  
-<br/><br/><strong>Merging:orderInRapidity</strong>  <input type="radio" name="22" value="on"><strong>On</strong>
-<input type="radio" name="22" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:orderInRapidity</strong>  <input type="radio" name="23" value="on"><strong>On</strong>
+<input type="radio" name="23" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, preferably pick parton shower histories of the matrix element 
 with  consecutive splittings ordered in rapidity and <i>pT</i>. 
    
  
-<br/><br/><strong>Merging:pickByFullP</strong>  <input type="radio" name="23" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="23" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:pickByFullP</strong>  <input type="radio" name="24" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="24" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If on, pick parton shower histories of the matrix element by the full 
 shower  splitting kernels, including potential ME corrections and 
 Jacobians from joined evolution measures. 
    
  
-<br/><br/><strong>Merging:pickByPoPT2</strong>  <input type="radio" name="24" value="on"><strong>On</strong>
-<input type="radio" name="24" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:pickByPoPT2</strong>  <input type="radio" name="25" value="on"><strong>On</strong>
+<input type="radio" name="25" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, pick parton shower histories of the matrix element by the 
 shower  splitting kernels divided by the evolution <i>pT</i>. 
    
  
-<br/><br/><strong>Merging:pickBySumPT</strong>  <input type="radio" name="25" value="on"><strong>On</strong>
-<input type="radio" name="25" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:pickBySumPT</strong>  <input type="radio" name="26" value="on"><strong>On</strong>
+<input type="radio" name="26" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, exclusively pick parton shower histories of the matrix element 
 for which have the smallest sum of scalar evolution <i>pT</i> for 
 consecutive splittings has been calculated. 
    
  
-<br/><br/><strong>Merging:includeRedundant</strong>  <input type="radio" name="26" value="on"><strong>On</strong>
-<input type="radio" name="26" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:includeRedundant</strong>  <input type="radio" name="27" value="on"><strong>On</strong>
+<input type="radio" name="27" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, then also include PDF ratios and <i>&alpha;<sub>s</sub></i> 
 factors in the  splitting probabilities used for picking a parton shower 
@@ -1221,23 +1245,23 @@ sensitive the results  are to the prescription on how to choose PS
 histories. 
    
  
-<br/><br/><table><tr><td><strong>Merging:nonJoinedNorm </td><td></td><td> <input type="text" name="27" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:nonJoinedNorm </td><td></td><td> <input type="text" name="28" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 Normalisation factor with which to multiply splitting probability for 
 splittings without joined evolution equation. 
    
  
-<br/><br/><table><tr><td><strong>Merging:fsrInRecNorm </td><td></td><td> <input type="text" name="28" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:fsrInRecNorm </td><td></td><td> <input type="text" name="29" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 Normalisation factor with which to multiply splitting probability for 
 final state splittings with an initial state recoiler. 
    
  
-<br/><br/><table><tr><td><strong>Merging:aCollFSR </td><td></td><td> <input type="text" name="29" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:aCollFSR </td><td></td><td> <input type="text" name="30" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 Factor with which to multiply the scalar <i>pT</i> of a final state 
 splitting, when choosing the history by the smallest sum of scalar 
 <i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.php#refTul09" target="page">Tul09</a>]. 
    
  
-<br/><br/><table><tr><td><strong>Merging:aCollISR </td><td></td><td> <input type="text" name="30" value="0.9" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.9</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Merging:aCollISR </td><td></td><td> <input type="text" name="31" value="0.9" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.9</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)</td></tr></table>
 Factor with which to multiply the scalar <i>pT</i> of an initial state 
 splitting, when choosing the history by the smallest sum of scalar 
 <i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.php#refTul09" target="page">Tul09</a>]. 
@@ -1251,24 +1275,24 @@ emission. Then, a decision on which starting scale for trial emissions
 off reconstructed states in this sequence of unordered splittings has 
 to be made. Two options are available: 
 <br/>
-<input type="radio" name="31" value="0" checked="checked"><strong>0 </strong>:  Use larger of the two reconstructed (unordered)  scales as  starting scale.  <br/>
-<input type="radio" name="31" value="1"><strong>1 </strong>:  Use smaller of the two reconstructed (unordered)  scales as  starting scale.  <br/>
+<input type="radio" name="32" value="0" checked="checked"><strong>0 </strong>:  Use larger of the two reconstructed (unordered)  scales as  starting scale.  <br/>
+<input type="radio" name="32" value="1"><strong>1 </strong>:  Use smaller of the two reconstructed (unordered)  scales as  starting scale.  <br/>
  
 <br/><br/><table><tr><td><strong>Merging:unorderedASscalePrescrip  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
 Prescription which scale to use to evaluate <ei>&alpha;<sub>s</sub></ei> 
 weight for  splittings in a sequence of splittings which are not ordered 
 in evolution <ei>pT</ei>. 
 <br/>
-<input type="radio" name="32" value="0"><strong>0 </strong>:  Use the combined splitting scale as argument in  <ei>&alpha;<sub>s</sub></ei>, for both splittings.  <br/>
-<input type="radio" name="32" value="1" checked="checked"><strong>1 </strong>:  Use the true reconstructed scale  as as argument in  <ei>&alpha;<sub>s</sub></ei>, for each splitting separately.  <br/>
+<input type="radio" name="33" value="0"><strong>0 </strong>:  Use the combined splitting scale as argument in  <ei>&alpha;<sub>s</sub></ei>, for both splittings.  <br/>
+<input type="radio" name="33" value="1" checked="checked"><strong>1 </strong>:  Use the true reconstructed scale  as as argument in  <ei>&alpha;<sub>s</sub></ei>, for each splitting separately.  <br/>
  
 <br/><br/><table><tr><td><strong>Merging:unorderedPDFscalePrescrip  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)</td></tr></table>
 Prescription which scale to use to evaluate ratios of parton distributions 
 for splittings in a sequence of splittings which are not ordered 
 in evolution <ei>pT</ei>. 
 <br/>
-<input type="radio" name="33" value="0" checked="checked"><strong>0 </strong>:  Use the combined splitting scale as argument in PDF ratios,  for both splittings.  <br/>
-<input type="radio" name="33" value="1"><strong>1 </strong>:  Use the true reconstructed scale as argument in PDF  ratios, for each splitting separately.  <br/>
+<input type="radio" name="34" value="0" checked="checked"><strong>0 </strong>:  Use the combined splitting scale as argument in PDF ratios,  for both splittings.  <br/>
+<input type="radio" name="34" value="1"><strong>1 </strong>:  Use the true reconstructed scale as argument in PDF  ratios, for each splitting separately.  <br/>
  
 <br/><br/><table><tr><td><strong>Merging:incompleteScalePrescrip  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
 When no complete parton shower history (i.e. starting from a 
@@ -1279,12 +1303,12 @@ determined by clusterings, a prescription for setting the starting scale
 of trial showers in incomplete histories is needed. Three options are 
 provided. 
 <br/>
-<input type="radio" name="34" value="0" checked="checked"><strong>0 </strong>:  Use factorisation scale as shower starting scale  for  incomplete histories.  <br/>
-<input type="radio" name="34" value="1"><strong>1 </strong>:  Use <ei>sHat</ei> as shower starting scale for  incomplete histories.  <br/>
-<input type="radio" name="34" value="2"><strong>2 </strong>:  Use <ei>s</ei> as shower starting scale for  incomplete histories.  <br/>
+<input type="radio" name="35" value="0" checked="checked"><strong>0 </strong>:  Use factorisation scale as shower starting scale  for  incomplete histories.  <br/>
+<input type="radio" name="35" value="1"><strong>1 </strong>:  Use <ei>sHat</ei> as shower starting scale for  incomplete histories.  <br/>
+<input type="radio" name="35" value="2"><strong>2 </strong>:  Use <ei>s</ei> as shower starting scale for  incomplete histories.  <br/>
  
-<br/><br/><strong>Merging:allowColourShuffling</strong>  <input type="radio" name="35" value="on"><strong>On</strong>
-<input type="radio" name="35" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:allowColourShuffling</strong>  <input type="radio" name="36" value="on"><strong>On</strong>
+<input type="radio" name="36" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 If on, this will allow the algorithm to swap one colour index in the state, 
 when trying to find all possible clusterings, if no clustering has been 
@@ -1295,8 +1319,8 @@ the radiation pattern. To however study the sensitivity of the predictions on
 these effects, allowing for colour reshuffling can be useful. 
    
  
-<br/><br/><strong>Merging:usePythiaQRenHard</strong>  <input type="radio" name="36" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="36" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:usePythiaQRenHard</strong>  <input type="radio" name="37" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="37" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If on, this will allow the algorithm to use a dynamical renormalisation scale 
 to evaluate the strong couplings of the core hard process in dijet and 
@@ -1308,8 +1332,8 @@ masses of the two outgoing particles, as is the default prescription in
 Pythia. 
    
  
-<br/><br/><strong>Merging:usePythiaQFacHard</strong>  <input type="radio" name="37" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="37" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:usePythiaQFacHard</strong>  <input type="radio" name="38" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="38" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If on, this will allow the algorithm to use a dynamical factorisation scale 
 to evaluate parton distributions associated with the hadronic cross section 
@@ -1322,8 +1346,8 @@ factorisation scale is set to the smaller of the squared transverse masses
 of the two outgoing particles. 
    
  
-<br/><br/><strong>Merging:mayRemoveDecayProducts</strong>  <input type="radio" name="38" value="on"><strong>On</strong>
-<input type="radio" name="38" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:mayRemoveDecayProducts</strong>  <input type="radio" name="39" value="on"><strong>On</strong>
+<input type="radio" name="39" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Remove products of resonances in the hard process, in case Pythia generates 
 decay products before merging. This makes merging possible even for an 
@@ -1337,22 +1361,22 @@ and Pythia decides on a decay according to the branching fractions read from
 SLHA input. 
    
  
-<br/><br/><strong>Merging:allowSQCDClustering</strong>  <input type="radio" name="39" value="on"><strong>On</strong>
-<input type="radio" name="39" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:allowSQCDClustering</strong>  <input type="radio" name="40" value="on"><strong>On</strong>
+<input type="radio" name="40" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Allow clustering of gluon emission off squarks. 
    
  
-<br/><br/><strong>Merging:useShowerPlugin</strong>  <input type="radio" name="40" value="on"><strong>On</strong>
-<input type="radio" name="40" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Merging:useShowerPlugin</strong>  <input type="radio" name="41" value="on"><strong>On</strong>
+<input type="radio" name="41" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Use the splitting probabilities, evolution variables and phase space mappings 
 of an external shower plugin. This will become possible as soon as new 
 showers containing the necessary ingredients are available in Pythia. 
    
  
-<br/><br/><strong>Merging:applyVeto</strong>  <input type="radio" name="41" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="41" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:applyVeto</strong>  <input type="radio" name="42" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="42" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If off, no event veto based on the merging scale is applied in CKKW-L merging. 
 This means that the user has to implement the veto by hand in the Pythia main 
@@ -1360,13 +1384,20 @@ program. It can be useful to postpone event vetoes for the purpose of merging
 scale variations. 
    
  
-<br/><br/><strong>Merging:includeWeightInXsection</strong>  <input type="radio" name="42" value="on" checked="checked"><strong>On</strong>
-<input type="radio" name="42" value="off"><strong>Off</strong>
+<br/><br/><strong>Merging:includeWeightInXsection</strong>  <input type="radio" name="43" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="43" value="off"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
 If on, then the reweighting of events in the CKKW-L scheme is included in 
 the event weight <code>Info::weight()</code>, the merging weight 
 <code>Info:mergingWeight()</code> is unity, and the cross section printed 
 by <code>Info::sigmaGen()</code> includes the effect of CKKW-L merging. 
+   
+ 
+<br/><br/><table><tr><td><strong>Merging:nJetMinWinnerTakesAll  </td><td></td><td> <input type="text" name="44" value="-1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)</td></tr></table>
+Minimal number of additional jets in the matrix element that will be handled 
+by winner-takes-all cluctering. The default, negative value means that no 
+clusterings will be handled by winner-takes-all, and instead all histories 
+are constructed. 
    
  
 <input type="hidden" name="saved" value="1"/>
@@ -1421,177 +1452,187 @@ fwrite($handle,$data);
 }
 if($_POST["8"] != "off")
 {
-$data = "Merging:doPTLundMerging = ".$_POST["8"]."\n";
+$data = "Merging:doMerging = ".$_POST["8"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["9"] != "off")
 {
-$data = "Merging:doCutBasedMerging = ".$_POST["9"]."\n";
+$data = "Merging:doPTLundMerging = ".$_POST["9"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["10"] != "0.0")
+if($_POST["10"] != "off")
 {
-$data = "Merging:QijMS = ".$_POST["10"]."\n";
+$data = "Merging:doCutBasedMerging = ".$_POST["10"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["11"] != "0.0")
 {
-$data = "Merging:pTiMS = ".$_POST["11"]."\n";
+$data = "Merging:QijMS = ".$_POST["11"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["12"] != "0.0")
 {
-$data = "Merging:dRijMS = ".$_POST["12"]."\n";
+$data = "Merging:pTiMS = ".$_POST["12"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["13"] != "on")
+if($_POST["13"] != "0.0")
 {
-$data = "Merging:enforceCutOnLHE = ".$_POST["13"]."\n";
+$data = "Merging:dRijMS = ".$_POST["13"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["14"] != "off")
+if($_POST["14"] != "on")
 {
-$data = "Merging:doUserMerging = ".$_POST["14"]."\n";
+$data = "Merging:enforceCutOnLHE = ".$_POST["14"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["15"] != "off")
 {
-$data = "Merging:doXSectionEstimate = ".$_POST["15"]."\n";
+$data = "Merging:doUserMerging = ".$_POST["15"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["16"] != "-1")
+if($_POST["16"] != "off")
 {
-$data = "Merging:nRequested = ".$_POST["16"]."\n";
+$data = "Merging:doXSectionEstimate = ".$_POST["16"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["17"] != "off")
+if($_POST["17"] != "-1")
 {
-$data = "Merging:allowWeakClustering = ".$_POST["17"]."\n";
+$data = "Merging:nRequested = ".$_POST["17"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["18"] != "5")
+if($_POST["18"] != "off")
 {
-$data = "Merging:nQuarksMerge = ".$_POST["18"]."\n";
+$data = "Merging:allowWeakClustering = ".$_POST["18"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["19"] != "on")
+if($_POST["19"] != "5")
 {
-$data = "Merging:includeMassive = ".$_POST["19"]."\n";
+$data = "Merging:nQuarksMerge = ".$_POST["19"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["20"] != "off")
+if($_POST["20"] != "on")
 {
-$data = "Merging:enforceStrongOrdering = ".$_POST["20"]."\n";
+$data = "Merging:includeMassive = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["21"] != "1.0")
+if($_POST["21"] != "off")
 {
-$data = "Merging:scaleSeparationFactor = ".$_POST["21"]."\n";
+$data = "Merging:enforceStrongOrdering = ".$_POST["21"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["22"] != "off")
+if($_POST["22"] != "1.0")
 {
-$data = "Merging:orderInRapidity = ".$_POST["22"]."\n";
+$data = "Merging:scaleSeparationFactor = ".$_POST["22"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["23"] != "on")
+if($_POST["23"] != "off")
 {
-$data = "Merging:pickByFullP = ".$_POST["23"]."\n";
+$data = "Merging:orderInRapidity = ".$_POST["23"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["24"] != "off")
+if($_POST["24"] != "on")
 {
-$data = "Merging:pickByPoPT2 = ".$_POST["24"]."\n";
+$data = "Merging:pickByFullP = ".$_POST["24"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["25"] != "off")
 {
-$data = "Merging:pickBySumPT = ".$_POST["25"]."\n";
+$data = "Merging:pickByPoPT2 = ".$_POST["25"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["26"] != "off")
 {
-$data = "Merging:includeRedundant = ".$_POST["26"]."\n";
+$data = "Merging:pickBySumPT = ".$_POST["26"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["27"] != "1.0")
+if($_POST["27"] != "off")
 {
-$data = "Merging:nonJoinedNorm = ".$_POST["27"]."\n";
+$data = "Merging:includeRedundant = ".$_POST["27"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["28"] != "1.0")
 {
-$data = "Merging:fsrInRecNorm = ".$_POST["28"]."\n";
+$data = "Merging:nonJoinedNorm = ".$_POST["28"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["29"] != "1.0")
 {
-$data = "Merging:aCollFSR = ".$_POST["29"]."\n";
+$data = "Merging:fsrInRecNorm = ".$_POST["29"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["30"] != "0.9")
+if($_POST["30"] != "1.0")
 {
-$data = "Merging:aCollISR = ".$_POST["30"]."\n";
+$data = "Merging:aCollFSR = ".$_POST["30"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["31"] != "0")
+if($_POST["31"] != "0.9")
 {
-$data = "Merging:unorderedScalePrescrip = ".$_POST["31"]."\n";
+$data = "Merging:aCollISR = ".$_POST["31"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["32"] != "1")
+if($_POST["32"] != "0")
 {
-$data = "Merging:unorderedASscalePrescrip = ".$_POST["32"]."\n";
+$data = "Merging:unorderedScalePrescrip = ".$_POST["32"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["33"] != "0")
+if($_POST["33"] != "1")
 {
-$data = "Merging:unorderedPDFscalePrescrip = ".$_POST["33"]."\n";
+$data = "Merging:unorderedASscalePrescrip = ".$_POST["33"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["34"] != "0")
 {
-$data = "Merging:incompleteScalePrescrip = ".$_POST["34"]."\n";
+$data = "Merging:unorderedPDFscalePrescrip = ".$_POST["34"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["35"] != "off")
+if($_POST["35"] != "0")
 {
-$data = "Merging:allowColourShuffling = ".$_POST["35"]."\n";
+$data = "Merging:incompleteScalePrescrip = ".$_POST["35"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["36"] != "on")
+if($_POST["36"] != "off")
 {
-$data = "Merging:usePythiaQRenHard = ".$_POST["36"]."\n";
+$data = "Merging:allowColourShuffling = ".$_POST["36"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["37"] != "on")
 {
-$data = "Merging:usePythiaQFacHard = ".$_POST["37"]."\n";
+$data = "Merging:usePythiaQRenHard = ".$_POST["37"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["38"] != "off")
+if($_POST["38"] != "on")
 {
-$data = "Merging:mayRemoveDecayProducts = ".$_POST["38"]."\n";
+$data = "Merging:usePythiaQFacHard = ".$_POST["38"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["39"] != "off")
 {
-$data = "Merging:allowSQCDClustering = ".$_POST["39"]."\n";
+$data = "Merging:mayRemoveDecayProducts = ".$_POST["39"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["40"] != "off")
 {
-$data = "Merging:useShowerPlugin = ".$_POST["40"]."\n";
+$data = "Merging:allowSQCDClustering = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["41"] != "on")
+if($_POST["41"] != "off")
 {
-$data = "Merging:applyVeto = ".$_POST["41"]."\n";
+$data = "Merging:useShowerPlugin = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["42"] != "on")
 {
-$data = "Merging:includeWeightInXsection = ".$_POST["42"]."\n";
+$data = "Merging:applyVeto = ".$_POST["42"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["43"] != "on")
+{
+$data = "Merging:includeWeightInXsection = ".$_POST["43"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["44"] != "-1")
+{
+$data = "Merging:nJetMinWinnerTakesAll = ".$_POST["44"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -1601,4 +1642,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

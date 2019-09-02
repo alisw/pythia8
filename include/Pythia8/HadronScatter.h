@@ -1,5 +1,5 @@
 // HadronScatter.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,6 +18,11 @@ namespace Pythia8 {
 
 class SigmaPartialWave {
 public:
+  // Constructor
+  SigmaPartialWave() : infoPtr(), particleDataPtr(), rndmPtr(), process(),
+    subprocess(), subprocessMax(), norm(), idA(), idB(), Lmax(), Imax(),
+    mA(), mB(), binMax(), sigElMax() {}
+
   // Initialisation
   bool init(int, string, string, Info *, ParticleData *, Rndm *);
 
@@ -106,7 +111,7 @@ typedef pair < int, int > HSIndex;
 class HadronScatterPair {
 public:
   // Constructors.
-  HadronScatterPair() {}
+  HadronScatterPair() : yt1(), pt1(), yt2(), pt2(), measure() {}
   HadronScatterPair(const HSIndex &i1in, int yt1in, int pt1in,
                     const HSIndex &i2in, int yt2in, int pt2in,
                     double measureIn) :
@@ -138,7 +143,13 @@ class HadronScatter {
 public:
 
   // Constructor.
-  HadronScatter() {}
+  HadronScatter() : infoPtr(), rndmPtr(), scatSameString(), scatMultTimes(),
+    scatterMode(), p2max(), yDiffMax(), Rmax(), maxProbDS(), neighNear(),
+    neighFar(), minProbSS(), maxProbSS(), doOldScatter(), afterDecay(),
+    allowDecayProd(), scatterRepeat(), doTile(), hadronSelect(), scatterProb(),
+    Npar(), kPar(), pPar(), jPar(), rMax(), rMax2(), pTsigma(), pTsigma2(),
+    pT0MPI(), ytMax(), ptMax(), yMin(), yMax(), ytSize(), ptSize(),
+    sigElMax() {}
 
   // Initialisation
   bool init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,

@@ -1,5 +1,5 @@
 // Info.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,7 +15,7 @@
 
 namespace Pythia8 {
 
-// Forard declaration of HIInfo class.
+// Forward declaration of HIInfo class.
 class HIInfo;
 
 //==========================================================================
@@ -33,13 +33,38 @@ public:
 
   // Constructor.
   Info() : LHEFversionSave(0), initrwgt(NULL), generators(NULL),
-    weightgroups(NULL), init_weights(NULL), eventAttributes(NULL),
-    weights_detailed(NULL), weights_compressed(NULL), scales(NULL),
-    weights(NULL), rwgt(NULL), hiinfo(0), eCMSave(0.),
-    lowPTmin(false), a0MPISave(0.),
-    abortPartonLevel(false), weightCKKWLSave(1.), weightFIRSTSave(0.) {
+    weightgroups(NULL), init_weights(NULL), hasOwnEventAttributes(false),
+    eventAttributes(NULL), weights_detailed(NULL), weights_compressed(NULL),
+    scales(NULL), weights(NULL), rwgt(NULL), eventWeightLHEF(), hiinfo(0),
+    idASave(), idBSave(), pzASave(), eASave(), mASave(), pzBSave(), eBSave(),
+    mBSave(), eCMSave(0.), sSave(), lowPTmin(false), nTry(), nSel(), nAcc(),
+    sigGen(), sigErr(), wtAccSum(), lhaStrategySave(), a0MPISave(0.), isRes(),
+    isDiffA(), isDiffB(), isDiffC(), isND(), isLH(), hasSubSave(), bIsSet(),
+    evolIsSet(), atEOF(), isVal1(), isVal2(), hasHistorySave(),
+    abortPartonLevel(false), isHardDiffA(), isHardDiffB(), hasUnresBeams(),
+    hasPomPsys(), codeSave(), codeSubSave(), nFinalSave(), nFinalSubSave(),
+    nTotal(), id1Save(), id2Save(), id1pdfSave(), id2pdfSave(), nMPISave(),
+    nISRSave(), nFSRinProcSave(), nFSRinResSave(), x1Save(), x2Save(),
+    x1pdfSave(), x2pdfSave(), pdf1Save(), pdf2Save(), Q2FacSave(),
+    alphaEMSave(), alphaSSave(), Q2RenSave(), scalupSave(), sH(), tH(), uH(),
+    pTH(), m3H(), m4H(), thetaH(), phiH(), bMPISave(), enhanceMPISave(),
+    enhanceMPIavgSave(), bMPIoldSave(), enhanceMPIoldSave(),
+    enhanceMPIoldavgSave(), pTmaxMPISave(), pTmaxISRSave(), pTmaxFSRSave(),
+    pTnowSave(), zNowISRSave(), pT2NowISRSave(), xPomA(), xPomB(), tPomA(),
+    tPomB(), externalVariationsSize(), isVMDstateAEvent(false),
+    isVMDstateBEvent(false), gammaModeEvent(), idVMDASave(), idVMDBSave(),
+    x1GammaSave(), x2GammaSave(), Q2Gamma1Save(), Q2Gamma2Save(), eCMsubSave(),
+    thetaLepton1(), thetaLepton2(), sHatNewSave(), mVMDASave(), mVMDBSave(),
+    scaleVMDASave(), scaleVMDBSave(), counters(), weightCKKWLSave(1.),
+    weightFIRSTSave(0.) {
     for (int i = 0; i < 40; ++i) counters[i] = 0;
     setNWeights(1);}
+
+  // Destructor for clean-up.
+ ~Info(){
+    if (hasOwnEventAttributes && eventAttributes != NULL)
+      delete eventAttributes;
+  }
 
   // Listing of most available information on current event.
   void   list() const;
@@ -70,6 +95,7 @@ public:
   bool   isDiffractiveB()     const {return isDiffB;}
   bool   isDiffractiveC()     const {return isDiffC;}
   bool   isNonDiffractive()   const {return isND;}
+  bool   isElastic()          const {return (codeSave == 102);}
   // Retained for backwards compatibility.
   bool   isMinBias()          const {return isND;}
 
@@ -145,7 +171,7 @@ public:
   // or when reweighting phase space selection. Conversion from mb to pb
   // for LHA strategy +-4. Uncertainty variations can be accessed by
   // providing an index >= 1 (0 = no variations). Also cumulative sum.
-  double weight(int i=0)      const;
+  double weight(int i = 0)    const;
   double weightSum()          const;
   double lhaStrategy()        const {return lhaStrategySave;}
 
@@ -254,7 +280,7 @@ public:
   double pT2NowISR() {return pT2NowISRSave;}
 
   // Update a particular event weight, first entry by default.
-  void updateWeight( double weightIn, int i=0) { weightSave[i] = weightIn;}
+  void updateWeight( double weightIn, int i = 0) { weightSave[i] = weightIn;}
 
   // Return CKKW-L weight.
   double getWeightCKKWL() const { return weightCKKWLSave;}
@@ -304,6 +330,7 @@ public:
   map<string,LHAweight > *init_weights;
 
   // Store current-event Les Houches event tags.
+  bool hasOwnEventAttributes;
   map<string, string > *eventAttributes;
 
   // The weights associated with this event, as given by the LHAwgt tags
@@ -346,6 +373,18 @@ public:
 
   // Retrieve events tag information.
   string getEventAttribute(string key, bool doRemoveWhitespace = false);
+
+  // Externally set event tag auxiliary information.
+  void setEventAttribute(string key, string value, bool doOverwrite = true) {
+    if (eventAttributes == NULL) {
+      eventAttributes = new map<string,string>();
+      hasOwnEventAttributes = true;
+    }
+    map<string, string>::iterator it = eventAttributes->find(key);
+    if ( it != eventAttributes->end() && !doOverwrite ) return;
+    if ( it != eventAttributes->end() ) eventAttributes->erase(it);
+    eventAttributes->insert(make_pair(key,value));
+  }
 
   // Retrieve LHEF version
   int LHEFversion();
@@ -503,8 +542,11 @@ public:
   friend class Settings;
   friend class TimeShower;
   friend class SpaceShower;
+  friend class SimpleTimeShower;
+  friend class SimpleSpaceShower;
   friend class GammaKinematics;
   friend class HeavyIons;
+  friend class SigmaTotal;
 
   // Set info on the two incoming beams: only from Pythia class.
   void setBeamA( int idAin, double pzAin, double eAin, double mAin) {
@@ -656,7 +698,7 @@ public:
 
   // Set event weight, either for LHEF3 or for uncertainty bands.
   void setWeight( double weightIn, int lhaStrategyIn) {
-    for (int i=0; i<nWeights(); ++i) weightSave[i] = weightIn;
+    for (int i = 0; i < nWeights(); ++i) weightSave[i] = weightIn;
     if (nWeights() == 0) weightSave.push_back(weightIn);
     lhaStrategySave = lhaStrategyIn;}
 

@@ -1,5 +1,5 @@
 // StringLength.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -23,6 +23,10 @@ namespace Pythia8 {
 class StringLength {
 
 public:
+
+  // Constructor.
+  StringLength() : m0(), m0sqr(), sqrt2(), juncCorr(), lambdaForm(),
+    infoPtr() {}
 
   // Initialize.
   void init(Info* infoPtrIn, Settings& settings);

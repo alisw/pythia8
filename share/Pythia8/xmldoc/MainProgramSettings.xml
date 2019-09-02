@@ -34,7 +34,7 @@ This could be achieved e.g. with a main-program statement<br/>
 <code>   if (iEvent &lt; 3) pythia.event.list()</code><br/> 
 to list the first three events in a loop over <code>iEvent</code>, 
 after <code>pythia.next()</code> has been used to generate the next 
-event. Alternatively a <code>Next:numberListEvent = 3</code> 
+event. Alternatively a <code>Next:numberShowEvent = 3</code> 
 setting, e.g. in a command file, would achieve the same, by an 
 internal call at the end of <code>pythia.next()</code>. 
  
@@ -284,4 +284,4 @@ and then use that value in the main program as desired.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

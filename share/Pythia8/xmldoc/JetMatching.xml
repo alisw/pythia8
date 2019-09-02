@@ -45,7 +45,7 @@ file showing the usage of the previous files/classes.
 </li> 
 </ul> 
  
-<h2>Event input source</h2> 
+<h3>Event input source</h3> 
  
 External sources of partons are used in the parton-jet matching 
 process. The source of the partons has been separated from the 
@@ -88,7 +88,7 @@ With this flag on, the values from the LHEF for these parameters take
 precedence over other values. 
 </flag> 
  
-<h2> Jet Matching parameters </h2> 
+<h3> Jet Matching parameters </h3> 
  
 A class <code>JetMatching</code>, derived from <code>UserHooks</code>, is 
 used to define the basic structure of a parton-jet matching algorithm. 
@@ -98,7 +98,7 @@ by the ALPGEN and Madgraph packages, respectively:
 The matching parameters are defined with the <code>JetMatching:*</code> 
 keyword. 
  
-<h3> Scheme and Usage </h3> 
+<h4> Scheme and Usage </h4> 
  
 <flag name="JetMatching:merge" default="off"> 
 Master switch to activate parton-jet matching. 
@@ -114,7 +114,7 @@ here implemented in the <code>JetMatchingMadgraph</code> class.</option>
 here implemented in the <code>JetMatchingAlpgen</code> class.</option> 
 </modepick> 
  
-<h3>Jet algorithm</h3> 
+<h4>Jet algorithm</h4> 
  
 The choice of jet algorithm and associated parameters can be adjusted with 
 the settings below. The PYTHIA8 internal <code>CellJet</code> and 
@@ -156,7 +156,7 @@ Specific to the <code>CellJet</code> algorithm, cells with
 <ei>eT &lt; eTthreshold</ei> are completely neglected by the jet algorithm. 
 </parm> 
  
-<h3>Merging parameters</h3> 
+<h4>Merging parameters</h4> 
  
 The following options are the three main parameters for the merging 
 procedure. Although here they are in principle free parameters, they should 
@@ -189,7 +189,7 @@ For the Madgraph-style matching, only particles within <ei>etaJetMax</ei>
 are used. 
 </parm> 
  
-<h3>Exclusive mode</h3> 
+<h4>Exclusive mode</h4> 
  
 The following settings determine whether clustered jets which do not 
 match an original hard parton are allowed. They are typically permitted 
@@ -230,7 +230,7 @@ When <code>JetMatching:exclusive = 2</code>, <ei>nJetMax</ei> is used to
 indicate the maximum number of jets that will be matched. 
 </modepick> 
  
-<h3>Jet matching</h3> 
+<h4>Jet matching</h4> 
  
 The following parameters control the criteria for matching a clustered jet 
 to a hard parton. 
@@ -357,7 +357,7 @@ The cut applied to regulate multi-jet matrix elements. Note that this cut can
 differ from the matching scale. 
 </parm> 
  
-<h2>Alpgen-style parton-jet matching and merging</h2> 
+<h3>Alpgen-style parton-jet matching and merging</h3> 
  
 This section describes the Alpgen-style MLM merging algorithm for PYTHIA8. 
 The most common reference to the algorithm is <ref>Man02</ref>. In many 
@@ -487,7 +487,7 @@ ALPGEN input is used and the hard process parameters are used to guide
 the merging procedure, it is enough to set the 
 <code>JetMatching:nJetMax</code> parameter. 
  
-<h2>Madgraph-style parton-jet Merging and Matching</h2> 
+<h3>Madgraph-style parton-jet Merging and Matching</h3> 
  
 <p/> 
 This section describes the Madgraph-style parton-jet matching algorithm 
@@ -689,4 +689,4 @@ above example, the only shared methods are the constructor and
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

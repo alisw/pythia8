@@ -7,7 +7,7 @@ includes a facility where a model for combining several nucleon-nucleon
 collisions into one heavy ion collision can be implemented. One such model, 
 called <a href="#Angantyr" target="page">Angantyr</a>, is provided with PYTHIA 
 and is inspired by the old Fritiof program from the Lund group 
-<ref>And86</ref> with recent improvements <ref>Bie16a</ref> (see below). 
+<ref>And87</ref> with recent improvements <ref>Bie16a</ref> (see below). 
  
 <p/> 
  
@@ -18,9 +18,9 @@ handful of nuclei with PDG numbers on the form 100ZZZAAAI:
 <sup>12</sup>C (1000060120), 
 <sup>16</sup>O (1000080160), 
 <sup>63</sup>Cu (1000290630), 
-<sup>129</sup>Xe (1000290630), 
+<sup>129</sup>Xe (1000541290), 
 <sup>197</sup>Au (1000791970), and 
-<sup>208</sup>Pb(1000822080), but more can be added using the function 
+<sup>208</sup>Pb (1000822080), but more can be added using the function 
 <code>ParticleData::addParticle</code>. 
  
 <modepick name="HeavyIon:mode" default="1" min="1" max="2"> 
@@ -228,16 +228,17 @@ fitting procedure. If on, extensive information about the fitting will be
 printed. 
 </flag> 
  
-<modepick name="Angantyr:CollisionModel" default="1" min="0" max="2"> 
+<modepick name="Angantyr:CollisionModel" default="1" min="0" max="3"> 
 The Angantyr model has a couple of option for the SubCollisionModel 
 <option value="0"> A simplified model with fixed nucleon radii. 
-its normal machinery. 
 </option> 
 <option value="1"> The default model with fluctuating radii and cross 
 sections. 
 </option> 
 <option value="2"> Fluctuating radii and cross sections but different 
 treatment of opacity. 
+</option> 
+<option value="3"> Black disks with no fluctuations, ie. no diffraction. 
 </option> 
 </modepick> 
  
@@ -397,4 +398,4 @@ complete the full nucleaus-nucleus collision.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

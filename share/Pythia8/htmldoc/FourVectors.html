@@ -7,6 +7,15 @@
 <body>
  
 <h2>Four-Vectors</h2> 
+<ol id="toc">
+  <li><a href="#section0">Constructors and basic operators</a></li>
+  <li><a href="#section1">Member methods for input</a></li>
+  <li><a href="#section2">Member methods for output</a></li>
+  <li><a href="#section3">Friend methods for output</a></li>
+  <li><a href="#section4">Operations with four-vectors</a></li>
+  <li><a href="#section5">Rotations and boosts</a></li>
+</ol>
+
  
 The <code>Vec4</code> class gives a simple implementation of four-vectors. 
 The member function names are based on the assumption that these 
@@ -42,6 +51,7 @@ ways. Operator overloading is implemented where reasonable. Properties
 can be read out, not only the components themselves but also for derived 
 quantities such as absolute momentum and direction angles. 
  
+<a name="section0"></a> 
 <h3>Constructors and basic operators</h3> 
  
 A few methods are available to create or copy a four-vector: 
@@ -66,6 +76,7 @@ copies the input four-vector.
 gives a  four-vector with all components set to <i>value</i>. 
    
  
+<a name="section1"></a> 
 <h3>Member methods for input</h3> 
  
 The values stored in a four-vector can be modified in a few different 
@@ -100,6 +111,7 @@ sets all components equal to those of the input four-vector.
 sets the respective component to the input value. 
    
  
+<a name="section2"></a> 
 <h3>Member methods for output</h3> 
  
 A number of methods provides output of basic or derived quantities: 
@@ -193,6 +205,7 @@ the combinations <i>E+-p_z</i>.
 true rapidity <i>y</i> and pseudorapidity <i>eta</i>. 
    
  
+<a name="section3"></a> 
 <h3>Friend methods for output</h3> 
  
 There are also some <code>friend</code> methods that take one, two 
@@ -284,6 +297,7 @@ create a pair of four-vectors that are perpendicular to both input vectors
 and to each other, and have the squared norm <i>-1</i>. 
    
  
+<a name="section4"></a> 
 <h3>Operations with four-vectors</h3> 
  
 Of course one should be able to add, subtract and scale four-vectors, 
@@ -368,6 +382,7 @@ fourth component unchanged.
 flip the sign of all four-vector components. 
    
  
+<a name="section5"></a> 
 <h3>Rotations and boosts</h3> 
  
 A common task is to rotate or boost four-vectors. In case only one 
@@ -519,22 +534,39 @@ combine the current matrix with another one.
    
  
 <a name="anchor85"></a>
+<p/><strong> RotBstMatrix& RotBstMatrix::operator*(const RotBstMatrix& Min) &nbsp;</strong> <br/>
+return the combination of this and another matrix (corresponding to first 
+making the transformation <i>M_{in}</i> and then this transformation. 
+   
+ 
+<a name="anchor86"></a>
+<p/><strong> Vec4 RotBstMatrix::operator*(Vec4 p) &nbsp;</strong> <br/>
+return a rotated and boosted version of <i>p</i>. 
+   
+ 
+<a name="anchor87"></a>
 <p/><strong> void RotBstMatrix::invert() &nbsp;</strong> <br/>
 invert the matrix, which corresponds to an opposite sequence and sign 
 of rotations and boosts. 
    
  
-<a name="anchor86"></a>
+<a name="anchor88"></a>
+<p/><strong> RotBstMatrix RotBstMatrix::inverse() &nbsp;</strong> <br/>
+return the inverse matrix, which corresponds to an opposite sequence and sign 
+of rotations and boosts, without overwriting the original matrix. 
+   
+ 
+<a name="anchor89"></a>
 <p/><strong> void RotBstMatrix::reset() &nbsp;</strong> <br/>
 reset to no rotation/boost; i.e. the default at creation. 
    
  
-<a name="anchor87"></a>
+<a name="anchor90"></a>
 <p/><strong> double RotBstMatrix::value(int i, int j) &nbsp;</strong> <br/>
 return the value of the (i,j) = [i][j] matrix element. 
    
  
-<a name="anchor88"></a>
+<a name="anchor91"></a>
 <p/><strong> double RotBstMatrix::deviation() &nbsp;</strong> <br/>
 crude estimate how much a matrix deviates from the unit matrix: 
 the sum of the absolute values of all non-diagonal matrix elements 
@@ -542,14 +574,57 @@ plus the sum of the absolute deviation of the diagonal matrix
 elements from unity. 
    
  
-<a name="anchor89"></a>
+<a name="anchor92"></a>
 <p/><strong> friend ostream& operator&lt;&lt;(ostream&, const RotBstMatrix& M) &nbsp;</strong> <br/>
 writes out the values of the sixteen components of a 
 <code>RotBstMatrix</code>, on four consecutive lines and 
 ended with a newline. 
    
  
+<a name="anchor93"></a>
+<p/><strong> RotBstMatrix toCMframe(const Vec4& p) &nbsp;</strong> <br/>
+Return a <code>RotBstMatrix</code> corresponding to a boost 
+to the rest frame of <i>p</i>. 
+   
+ 
+<a name="anchor94"></a>
+<p/><strong> RotBstMatrix fromCMframe(const Vec4& p) &nbsp;</strong> <br/>
+Return a <code>RotBstMatrix</code> corresponding to a boost 
+from the rest frame of <i>p</i> . 
+   
+ 
+<a name="anchor95"></a>
+<p/><strong> RotBstMatrix toCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation to the rest frame of <i>p_1</i> and <i>p_2</i>, with 
+<i>p_1</i> along the <i>+z</i> axis. 
+   
+ 
+<a name="anchor96"></a>
+<p/><strong> RotBstMatrix fromCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation from the rest frame of <i>p_1</i> and <i>p_2</i>, with 
+<i>p_1</i> along the <i>+z</i> axis. 
+   
+ 
+<a name="anchor97"></a>
+<p/><strong> RotBstMatrix toCMframe(const Vec4& ptot, const Vec4& pz, const Vec4& pxz) &nbsp;</strong> <br/>
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation to the rest frame of <i>p_{tot}</i>, where additionally 
+the <i>p_z</i> vector is put along the <i>+z</i> axis and the 
+<i>p_{xz}</i> on put in the <i>xz</i> plane with positive <i>x</i>. 
+   
+ 
+<a name="anchor98"></a>
+<p/><strong> RotBstMatrix fromCMframe(const Vec4& ptot, const Vec4& pz, const Vec4& pxz) &nbsp;</strong> <br/>
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation from the rest frame of <i>p_{tot}</i>, where additionally 
+the <i>p_z</i> vector is along the <i>+z</i> axis and the 
+<i>p_{xz}</i> is in the <i>xz</i> plane with positive <i>x</i> 
+when in the rest frame. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

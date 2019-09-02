@@ -28,6 +28,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='SemiInternalResonances.php'>
  
 <h2>Semi-Internal Resonances</h2> 
+<ol id="toc">
+  <li><a href="#section0">The ResonanceWidths Class</a></li>
+  <li><a href="#section1">Access to resonance widths</a></li>
+</ol>
+
  
 The introduction of a new <?php $filepath = $_GET["filepath"];
 echo "<a href='SemiInternalProcesses.php?filepath=".$filepath."' target='page'>";?> 
@@ -73,6 +78,7 @@ by the dynamically calculated values.
 <br/>3) handing in a pointer to an instance of this class to PYTHIA. 
 <br/>We consider the latter two aspects in turn. 
  
+<a name="section0"></a> 
 <h3>The ResonanceWidths Class</h3> 
  
 The resonance-width calculation has to be encoded in a new class. 
@@ -233,6 +239,7 @@ an internal pointer to a derived <code>Couplings</code> class must be
 initialization step failed. 
    
  
+<a name="section1"></a> 
 <h3>Access to resonance widths</h3> 
  
 Once you have implemented a class, it is straightforward to 
@@ -270,4 +277,4 @@ to <code>include/ResonanceWidths.h</code> and
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

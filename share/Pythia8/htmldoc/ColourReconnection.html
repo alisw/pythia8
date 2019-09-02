@@ -7,6 +7,13 @@
 <body>
  
 <h2>Colour Reconnection</h2> 
+<ol id="toc">
+  <li><a href="#section0">The MPI-based scheme</a></li>
+  <li><a href="#section1">The newer scheme</a></li>
+  <li><a href="#section2">The gluon-move scheme</a></li>
+  <li><a href="#section3">The <ei>e^+ e^-</ei> colour reconnection schemes</a></li>
+</ol>
+
  
 The colour flows in the separate subprocesses defined in the 
 multiparton-interactions scenario are tied together via the assignment 
@@ -62,7 +69,9 @@ included among the standard options here.
 <p/> 
 Finally, the SK I and SK II models [<a href="Bibliography.html#refSjo94" target="page">Sjo94</a>] have a smaller range 
 of applicability, originally intended for <i>e^+ e^- &rarr; W^+ W^-</i>, 
-but in this context offers a more detailed approach. 
+but in this context offers a more detailed approach. They are not suitable 
+for hadronic collisions, since they would only address CR inside a gauge 
+boson pair, and not CR in the rest of the event. 
  
 <a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> ColourReconnection:reconnect &nbsp;</strong> 
@@ -74,17 +83,21 @@ Allow or not a system to be merged with another one.
 <p/><code>mode&nbsp; </code><strong> ColourReconnection:mode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 Determine which model is used for colour reconnection. Beware that 
-different <code>BeamRemnants:remnantMode</code> should be used for 
-different reconnection schemes. 
+some settings may need to be changed to match the model selected. 
 <br/><code>option </code><strong> 0</strong> :  The MPI-based original Pythia 8 scheme. 
    
-<br/><code>option </code><strong> 1</strong> :  The new  QCD based scheme. 
+<br/><code>option </code><strong> 1</strong> :  The new  QCD based scheme. Should be combined ewith 
+<code>BeamRemnants:remnantMode = 1.</code> 
    
 <br/><code>option </code><strong> 2</strong> :  The new gluon-move model. 
    
-<br/><code>option </code><strong> 3</strong> :  The SK I <i>e^+ e^-</i> CR model. 
+<br/><code>option </code><strong> 3</strong> :  The SK I <i>e^+ e^-</i> CR model. Requires 
+<code>ColourReconnection:forceResonance = on</code> (and default 
+<code>PartonLevel:earlyResDec = off</code>) to give any CR. 
    
-<br/><code>option </code><strong> 4</strong> :  The SK II <i>e^+ e^-</i> CR model. 
+<br/><code>option </code><strong> 4</strong> :  The SK II <i>e^+ e^-</i> CR model. Requires 
+<code>ColourReconnection:forceResonance = on</code> (and default 
+<code>PartonLevel:earlyResDec = off</code>) to give any CR. 
    
    
  
@@ -110,6 +123,7 @@ bosons is still a possibility, however. This option is not available for
 colored resonances, and not for the MPI-based model. 
    
  
+<a name="section0"></a> 
 <h3>The MPI-based scheme</h3> 
  
 In this scheme partons are classified by which MPI system they belong to. 
@@ -195,6 +209,7 @@ the <i>W</i>, <i>Z</i> and <i>t</i> have intermediate decay time
 scales, somewhat but not much shorter than typical hadronization times, 
 whereas the <i>H</i> is much  long-lived. 
  
+<a name="section1"></a> 
 <h3>The newer scheme</h3> 
  
 The newer CR scheme builds on the minimization of the string length as well as 
@@ -371,6 +386,7 @@ This is a tuneable parameter for the time dilation. The definition
 can be seen above under <code>timeDilationMode</code>. 
    
  
+<a name="section2"></a> 
 <h3>The gluon-move scheme</h3> 
  
 This approach contains two steps, a first "move" one and an optional 
@@ -474,6 +490,7 @@ in junction topologies.
    
    
  
+<a name="section3"></a> 
 <h3>The <i>e^+ e^-</i> colour reconnection schemes</h3> 
  
 The SK I and SK II models [<a href="Bibliography.html#refSjo94" target="page">Sjo94</a>] were specifically developed for 
@@ -570,4 +587,4 @@ phase space volume in SK I. There is no real reason to change this number.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

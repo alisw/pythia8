@@ -1,5 +1,5 @@
 // main04.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,14 +16,25 @@ using namespace Pythia8;
 
 //==========================================================================
 
-int main() {
+int main(int argc, char* argv[]) {
 
   // Generator. Shorthand for the event.
   Pythia pythia;
   Event& event = pythia.event;
 
   // Read in commands from external file.
-  pythia.readFile("main04.cmnd");
+  if (argc != 2)
+    pythia.readFile("main04.cmnd");
+  else {
+    // Check that the provided input name corresponds to an existing file.
+    ifstream is(argv[1]);
+    if (!is) {
+      cerr << " Command-line file " << argv[1] << " was not found. \n"
+           << " Program stopped! " << endl;
+      return 1;
+    }
+    pythia.readFile(argv[1]);
+  }
 
   // Extract settings to be used in the main program.
   int    nEvent    = pythia.mode("Main:numberOfEvents");

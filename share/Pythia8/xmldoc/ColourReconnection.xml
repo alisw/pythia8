@@ -56,7 +56,9 @@ included among the standard options here.
 <p/> 
 Finally, the SK I and SK II models <ref>Sjo94</ref> have a smaller range 
 of applicability, originally intended for <ei>e^+ e^- &rarr; W^+ W^-</ei>, 
-but in this context offers a more detailed approach. 
+but in this context offers a more detailed approach. They are not suitable 
+for hadronic collisions, since they would only address CR inside a gauge 
+boson pair, and not CR in the rest of the event. 
  
 <flag name="ColourReconnection:reconnect" default="on"> 
 Allow or not a system to be merged with another one. 
@@ -64,17 +66,21 @@ Allow or not a system to be merged with another one.
  
 <modepick name="ColourReconnection:mode" default="0" min="0" max="4"> 
 Determine which model is used for colour reconnection. Beware that 
-different <code>BeamRemnants:remnantMode</code> should be used for 
-different reconnection schemes. 
+some settings may need to be changed to match the model selected. 
 <option value="0"> The MPI-based original Pythia 8 scheme. 
 </option> 
-<option value="1"> The new more QCD based scheme. 
+<option value="1"> The new more QCD based scheme. Should be combined ewith 
+<code>BeamRemnants:remnantMode = 1.</code> 
 </option> 
 <option value="2"> The new gluon-move model. 
 </option> 
-<option value="3"> The SK I <ei>e^+ e^-</ei> CR model. 
+<option value="3"> The SK I <ei>e^+ e^-</ei> CR model. Requires 
+<code>ColourReconnection:forceResonance = on</code> (and default 
+<code>PartonLevel:earlyResDec = off</code>) to give any CR. 
 </option> 
-<option value="4"> The SK II <ei>e^+ e^-</ei> CR model. 
+<option value="4"> The SK II <ei>e^+ e^-</ei> CR model. Requires 
+<code>ColourReconnection:forceResonance = on</code> (and default 
+<code>PartonLevel:earlyResDec = off</code>) to give any CR. 
 </option> 
 </modepick> 
  
@@ -518,4 +524,4 @@ phase space volume in SK I. There is no real reason to change this number.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

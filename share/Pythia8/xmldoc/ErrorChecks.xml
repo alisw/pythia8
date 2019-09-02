@@ -63,6 +63,15 @@ to generate the event in the first place), and so could be switched off
 to save time. 
 </flag> 
  
+<flag name="Check:beams" default="on"> 
+Check that Pythia supports the beam setup, i.e. if the beams 
+are the allowed combinations described in 
+<aloc href="BeamParameters">Beam Parameters</aloc>. If turned 
+off, all checks of allowed beam combinations will be skipped, as 
+can e.g. be useful to allow processing of Les Houches 
+event files with exotic beam structure. 
+</flag> 
+ 
 <modeopen name="Check:nErrList" default="0"> 
 The number of erroneous events, in the above check, for which 
 event listing and other detailed information will be printed. 
@@ -103,4 +112,4 @@ than an error.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

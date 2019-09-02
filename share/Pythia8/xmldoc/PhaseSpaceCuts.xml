@@ -77,8 +77,19 @@ cross section itself, and therefore always included.
 <parm name="PhaseSpace:minWidthBreitWigners" default="0.01" min="1e-6"> 
 The minimum width a resonance must have for the mass to be dynamically 
 selected according to a Breit-Wigner shape, within the limits set below. 
-Only applies when <code>useBreitWigners</code> is on; else the nominal 
-mass value is always used. 
+The Breit-Wigner shape is deformed by the variation of the cross section 
+across the peak. Only applies when <code>useBreitWigners</code> is on; 
+else the nominal mass value is always used. 
+</parm> 
+ 
+<parm name="PhaseSpace:minWidthNarrowBW" default="1e-6" min="1e-10"> 
+A particle that is not wide enough to qualify for the dynamical mass 
+generation above can still qualify for a simplified treatment if it has 
+a width above this value. Then the mass is selected according to a simple 
+symmetric Breit-Wigner that will not be (significantly) distorted by 
+the cross section variation. Only applies when <code>useBreitWigners</code> 
+is on; else the nominal mass value is always used. Note that this parameter 
+is also used for mass selection in the MPI machinery. 
 </parm> 
  
 <p/> 
@@ -344,4 +355,4 @@ give "reasonably-sized" weights.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

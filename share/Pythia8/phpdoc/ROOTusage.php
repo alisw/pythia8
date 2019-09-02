@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ROOTusage.php'>
  
 <h2>ROOT usage</h2> 
+<ol id="toc">
+  <li><a href="#section0">Standalone usage</a></li>
+  <li><a href="#section1">Storing partial PYTHIA events in ROOT trees</a></li>
+  <li><a href="#section2">PYTHIA as a plugin to ROOT</a></li>
+</ol>
+
  
 Many PYTHIA users wish to use <a href="http://root.cern.ch/">ROOT</a> 
 to produce histograms, or even to run PYTHIA as a plugin to ROOT. 
@@ -48,6 +54,7 @@ and GNU Make is assumed. In particular, for Mac OS X, the
 <code>.so</code> should be replaced with <code>.dylib</code>. 
  
 <br/><br/><hr/> 
+<a name="section0"></a> 
 <h3>Standalone usage</h3> 
  
 One can perform the generation and analysis of events in a completely 
@@ -114,7 +121,8 @@ your <code>PythiaStdlib.h</code> file:
    #endif 
 </pre> 
  
-<br/><br/><hr/> 
+<br/><hr/> 
+<a name="section1"></a> 
 <h3>Storing partial PYTHIA events in ROOT trees</h3> 
  
 Instead of storing full PYTHIA events in ROOT trees, a common user case 
@@ -184,6 +192,7 @@ The <code>main93</code> example must be recompiled after making any changes to
 the header file. 
  
 <br/><br/><hr/> 
+<a name="section2"></a> 
 <h3>PYTHIA as a plugin to ROOT</h3> 
  
 In more ROOT-centric applications, PYTHIA can be run as a ROOT plug-in. 
@@ -355,4 +364,4 @@ functionality, e.g. in an interactive session
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ResonanceDecays.php'>
  
 <h2>Resonance Decays</h2> 
+<ol id="toc">
+  <li><a href="#section0">Resonance Decays and Cross Sections</a></li>
+  <li><a href="#section1">Special properties and methods for resonances</a></li>
+  <li><a href="#section2">Modes for Matrix Element Processing</a></li>
+</ol>
+
  
 The <code>ResonanceDecays</code> class performs the sequential decays of 
 all resonances formed in the hard process. Note the important distinction 
@@ -104,6 +110,7 @@ set up at initialization for the nominal mass and then updated to the
 current mass when these are picked according to a Breit-Wigner resonance 
 shape. 
  
+<a name="section0"></a> 
 <h3>Resonance Decays and Cross Sections</h3> 
  
 As already hinted above, you have the possibility to set the allowed 
@@ -138,16 +145,19 @@ hard process and its associated resonance decays.
  
 <p/> 
 There is one key restriction on resonances: 
-<br/><br/><table><tr><td><strong>ResonanceWidths:minWidth </td><td></td><td> <input type="text" name="1" value="1e-20" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-20</strong></code>; <code>minimum = 1e-30</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>ResonanceWidths:minWidth </td><td></td><td> <input type="text" name="1" value="1.97e-19" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.97e-19</strong></code>; <code>minimum = 1e-30</code>)</td></tr></table>
 Minimal allowed width of a resonance, in GeV. If the width falls below 
 this number the resonance is considered stable and will not be allowed 
 to decay. This is mainly intended as a technical parameter, to avoid 
 disasters in cases where no open decay channels exists at all. It could 
-be used for real-life decisions as well, however, but then typically 
-would have to be much bigger than the default value. Special caution 
-would be needed if coloured resonance particles were made stable, since 
-the program would not necessarily know how to hadronize them, and 
-therefore fail at that stage. 
+be used for real-life decisions as well, however. The default value 
+corresponds to an average lifetime <i>c * tau</i> of 1 km, meaning 
+such a particle would only rarely decay inside a typical detector. 
+Special caution would be needed if coloured resonance particles were 
+made stable, since the program would not necessarily know how to 
+hadronize them, and therefore fail at that stage (see further the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='RHadrons.php?filepath=".$filepath."' target='page'>";?>R-hadrons description</a>). 
    
  
 <p/> 
@@ -170,6 +180,7 @@ treatment is needed for coloured long-lived resonances, that form
 echo "<a href='Rhadrons.php?filepath=".$filepath."' target='page'>";?>R-hadrons</a>, and where charge and flavour 
 may change between the production and decay vertices. 
  
+<a name="section1"></a> 
 <h3>Special properties and methods for resonances</h3> 
  
 The method <code>ParticleData::isResonance(id)</code> allows you to 
@@ -289,6 +300,7 @@ These methods actually provide an interface to the classes derived from
 the <code>ResonanceWidths</code> base class, to describe various 
 resonances. 
  
+<a name="section2"></a> 
 <h3>Modes for Matrix Element Processing</h3> 
  
 The <code>meMode()</code> value for a decay mode is used to specify 
@@ -424,7 +436,7 @@ if($_POST["saved"] == 1)
 $filepath = $_POST["filepath"];
 $handle = fopen($filepath, 'a');
 
-if($_POST["1"] != "1e-20")
+if($_POST["1"] != "1.97e-19")
 {
 $data = "ResonanceWidths:minWidth = ".$_POST["1"]."\n";
 fwrite($handle,$data);
@@ -441,4 +453,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

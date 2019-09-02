@@ -1,5 +1,5 @@
 // SusyLesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -28,7 +28,7 @@ namespace Pythia8 {
   public:
 
     //Constructor.
-    LHblock<T>() : idnow(0) {} ;
+    LHblock<T>() : idnow(0), qDRbar(), i() {} ;
 
     //Does block exist?
     bool exists() { return int(entry.size()) == 0 ? false : true ; };
@@ -132,7 +132,7 @@ namespace Pythia8 {
   template <int size> class LHmatrixBlock {
   public:
     //Constructor. Set uninitialized and explicitly zero.
-    LHmatrixBlock<size>() {
+    LHmatrixBlock<size>() : entry(), qDRbar(), val() {
       initialized=false;
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
@@ -205,7 +205,7 @@ namespace Pythia8 {
   template <int size> class LHtensor3Block {
   public:
     //Constructor. Set uninitialized and explicitly zero.
-    LHtensor3Block<size>() {
+    LHtensor3Block<size>() : entry(), qDRbar(), val() {
       initialized=false;
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
@@ -287,7 +287,7 @@ namespace Pythia8 {
 
     LHdecayChannel() : brat(0.0) {};
     LHdecayChannel(double bratIn, int nDaIn, vector<int> idDaIn,
-      string cIn="") { setChannel(bratIn,nDaIn,idDaIn,cIn);
+      string cIn="") : brat() { setChannel(bratIn,nDaIn,idDaIn,cIn);
     }
 
     // Functions to set decay channel information
@@ -497,7 +497,7 @@ public:
   map<int,int> decayIndices;
 
   //********************* THE BSM-SLHA QNUMBERS BLOCKS *********************//
-  vector< LHblock<int> > qnumbers;     // Zero'th entry is PDG code
+  vector< LHblock<double> > qnumbers;     // Zero'th entry is PDG code
   vector< string > qnumbersName;
   vector< string > qnumbersAntiName;
 

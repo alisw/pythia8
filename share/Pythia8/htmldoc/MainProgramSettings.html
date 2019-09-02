@@ -7,7 +7,18 @@
 <body>
  
 <h2>Main-Program and Related Settings</h2> 
+<ol id="toc">
+  <li><a href="#section0">Introduction</a></li>
+  <li><a href="#section1">Initialization settings</a></li>
+  <li><a href="#section2">Event-generation settings</a></li>
+  <li><a href="#section3">Statistics</a></li>
+  <li><a href="#section4">Main-program settings</a></li>
+  <li><a href="#section5">Subruns</a></li>
+  <li><a href="#section6">Spares</a></li>
+</ol>
+
  
+<a name="section0"></a> 
 <h3>Introduction</h3> 
  
 The main program is up to the user to write. However, 
@@ -40,7 +51,7 @@ This could be achieved e.g. with a main-program statement<br/>
 <code>   if (iEvent &lt; 3) pythia.event.list()</code><br/> 
 to list the first three events in a loop over <code>iEvent</code>, 
 after <code>pythia.next()</code> has been used to generate the next 
-event. Alternatively a <code>Next:numberListEvent = 3</code> 
+event. Alternatively a <code>Next:numberShowEvent = 3</code> 
 setting, e.g. in a command file, would achieve the same, by an 
 internal call at the end of <code>pythia.next()</code>. 
  
@@ -57,6 +68,7 @@ taken during the <code>pythia.stat()</code> call.</li>
 have the freedom to make use of in your main program.</li> 
 </ul> 
  
+<a name="section1"></a> 
 <h3>Initialization settings</h3> 
  
 <a name="anchor1"></a>
@@ -118,6 +130,7 @@ Print particle and decay data for the particle with this particular
 identity code. Default means that no particle is printed. 
    
  
+<a name="section2"></a> 
 <h3>Event-generation settings</h3> 
  
 <a name="anchor9"></a>
@@ -177,6 +190,7 @@ In addition to the normal information in the listing of the
 list all the mothers and daughters of each particle. 
    
  
+<a name="section3"></a> 
 <h3>Statistics</h3> 
  
 <a name="anchor16"></a>
@@ -211,6 +225,7 @@ the reset option makes a difference is if <code>stat()</code>
 is called several times in a (sub)run. 
    
  
+<a name="section4"></a> 
 <h3>Main-program settings</h3> 
  
 The settings in this section <i>must</i> be under the control of the 
@@ -267,6 +282,7 @@ to the <code>Settings</code> ones to do the job, e.g.<br/>
 The area of subruns is covered separately below. A few spares are also 
 defined after that, for unforeseen applications. 
  
+<a name="section5"></a> 
 <h3>Subruns</h3> 
  
 You can use <a href="ProgramFlow.html" target="page">subruns</a> to carry out 
@@ -300,6 +316,7 @@ program to loop over subruns from 0 through
 <code>numberOfSubruns - 1</code>. 
    
  
+<a name="section6"></a> 
 <h3>Spares</h3> 
  
 For currently unforeseen purposes, a few dummy settings are made 
@@ -369,4 +386,4 @@ and then use that value in the main program as desired.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

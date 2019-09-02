@@ -439,9 +439,23 @@ with <ei>p_1</ei> along the <ei>+z</ei> axis, to the actual frame of
 combine the current matrix with another one. 
 </method> 
  
+<method name="RotBstMatrix& RotBstMatrix::operator*(const RotBstMatrix& Min)"> 
+return the combination of this and another matrix (corresponding to first 
+making the transformation <ei>M_{in}</ei> and then this transformation. 
+</method> 
+ 
+<method name="Vec4 RotBstMatrix::operator*(Vec4 p)"> 
+return a rotated and boosted version of <ei>p</ei>. 
+</method> 
+ 
 <method name="void RotBstMatrix::invert()"> 
 invert the matrix, which corresponds to an opposite sequence and sign 
 of rotations and boosts. 
+</method> 
+ 
+<method name="RotBstMatrix RotBstMatrix::inverse()"> 
+return the inverse matrix, which corresponds to an opposite sequence and sign 
+of rotations and boosts, without overwriting the original matrix. 
 </method> 
  
 <method name="void RotBstMatrix::reset()"> 
@@ -466,6 +480,45 @@ writes out the values of the sixteen components of a
 ended with a newline. 
 </method> 
  
+<method name="RotBstMatrix toCMframe(const Vec4& p)"> 
+Return a <code>RotBstMatrix</code> corresponding to a boost 
+to the rest frame of <ei>p</ei>. 
+</method> 
+ 
+<method name="RotBstMatrix fromCMframe(const Vec4& p)"> 
+Return a <code>RotBstMatrix</code> corresponding to a boost 
+from the rest frame of <ei>p</ei> . 
+</method> 
+ 
+<method name="RotBstMatrix toCMframe(const Vec4& p1, const Vec4& p2)"> 
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation to the rest frame of <ei>p_1</ei> and <ei>p_2</ei>, with 
+<ei>p_1</ei> along the <ei>+z</ei> axis. 
+</method> 
+ 
+<method name="RotBstMatrix fromCMframe(const Vec4& p1, const Vec4& p2)"> 
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation from the rest frame of <ei>p_1</ei> and <ei>p_2</ei>, with 
+<ei>p_1</ei> along the <ei>+z</ei> axis. 
+</method> 
+ 
+<method name="RotBstMatrix toCMframe(const Vec4& ptot, const Vec4& pz, 
+const Vec4& pxz)"> 
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation to the rest frame of <ei>p_{tot}</ei>, where additionally 
+the <ei>p_z</ei> vector is put along the <ei>+z</ei> axis and the 
+<ei>p_{xz}</ei> on put in the <ei>xz</ei> plane with positive <ei>x</ei>. 
+</method> 
+ 
+<method name="RotBstMatrix fromCMframe(const Vec4& ptot, const Vec4& pz, 
+const Vec4& pxz)"> 
+Return a <code>RotBstMatrix</code> corresponding to a boost and 
+rotation from the rest frame of <ei>p_{tot}</ei>, where additionally 
+the <ei>p_z</ei> vector is along the <ei>+z</ei> axis and the 
+<ei>p_{xz}</ei> is in the <ei>xz</ei> plane with positive <ei>x</ei> 
+when in the rest frame. 
+</method> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

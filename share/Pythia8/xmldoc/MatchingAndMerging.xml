@@ -152,7 +152,7 @@ is also available. For details see
  
 </ul> 
  
-<br/><br/><hr/> 
+<br/><hr/> 
 <h3>MC@NLO, jet matching, multi-jet merging and NLO merging with 
 main89.cc</h3> 
  
@@ -598,4 +598,4 @@ candidates by another list of candidates.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

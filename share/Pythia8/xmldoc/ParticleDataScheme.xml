@@ -384,7 +384,7 @@ beyond the product list. By contrast,
     id:offIfMatch   = product1 product2 .... 
     id:onIfMatch    = product1 product2 .... 
     id:onPosIfMatch = product1 product2 .... 
-    id:onPosIfMatch = product1 product2 .... 
+    id:onNegIfMatch = product1 product2 .... 
 </pre> 
 requires the decay-channel multiplicity to agree with that of the product 
 list, but otherwise works as the <code>onIfAll/offIfAll</code> methods. 
@@ -527,7 +527,8 @@ switching it on among the standard
  
 </ol> 
  
-<h2>The public methods</h2> 
+<br/><hr/> 
+<h3>The public methods</h3> 
  
 In the following we present briefly the public methods in the three 
 classes used to build up the particle database. The order 
@@ -545,7 +546,7 @@ the input is of type <code>void</code> and has an extra last argument,
 namely is the input value, while the output method returns a 
 quantity of the expected type. 
  
-<h3>The ParticleData methods</h3> 
+<h4>The ParticleData methods</h4> 
  
 <method name="ParticleData::ParticleData()"> 
 the constructor has no arguments and does not do anything. Internal. 
@@ -966,6 +967,13 @@ true for a meson.
 true for a baryon or antibaryon. 
 </method> 
  
+<method name="bool ParticleData::isOnium(int id)"> 
+true for a charmonium, bottomonium or (hypothetical) toponium state, 
+i.e any state composed of <ei>c cbar</ei>, <ei>b bbar</ei> or 
+<ei>t tbar</ei> irrespective of colour (singlet or octet) and 
+spin, angular momentum or radial excitation. 
+</method> 
+ 
 <method name="bool ParticleData::isOctetHadron(int id)"> 
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
@@ -1052,7 +1060,7 @@ this object.
 return true if the database has been initialized, else false. 
 </method> 
  
-<h3>The ParticleDataEntry methods</h3> 
+<h4>The ParticleDataEntry methods</h4> 
  
 Most of the methods that can be applied to a single 
 <code>ParticleDataEntry</code> object are almost identical with 
@@ -1195,10 +1203,12 @@ similar to <code>mMax()</code> above, except that for particles with
 no width the <code>m0(id)</code> value is returned. 
 </method> 
  
-<method name="void ParticleDataEntry::setTau0(double tau0)"> 
+<method name="void ParticleDataEntry::setTau0(double tau0, 
+bool countAsChanged = true)"> 
 </method> 
 <methodmore name="double ParticleDataEntry::tau0()"> 
-the nominal proper lifetime <ei>tau_0</ei> (in mm/c). 
+the nominal proper lifetime <ei>tau_0</ei> (in mm/c). Second argument of 
+input method for internal use only. 
 </methodmore> 
  
 <method name="void ParticleDataEntry::setIsResonance(bool isResonance)"> 
@@ -1452,7 +1462,7 @@ for Higgs decay to <ei>q qbar</ei>, <ei>g g</ei> or
 <ei>gamma gamma</ei>. 
 </method> 
  
-<h3>The DecayChannel methods</h3> 
+<h4>The DecayChannel methods</h4> 
  
 The properties stored in an individual decay channel can be set or get 
 by the methods in this section. 
@@ -1563,4 +1573,4 @@ positive and negative particles. For internal use.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

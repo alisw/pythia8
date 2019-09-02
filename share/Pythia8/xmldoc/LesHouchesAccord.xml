@@ -23,6 +23,23 @@ in the <aloc href="HadronLevelStandalone">Hadron-Level Standalone</aloc>
 description. 
  
 <p/> 
+Another unofficial extension is the support for Double Parton Scattering 
+(DPS), i.e. when two hard scatterings should be defined. This is allowed 
+by letting one follow after the other in the event listing, such 
+that two <ei>2 &rarr; 2</ei> scatterings are specified by eight lines. 
+It is here required that daughters are located below mothers strictly 
+within each scattering separately, since the logic needed to sort out 
+an arbitrary ordering is deemed overkill for such a peripheral case. 
+An additional line <code>#scaleShowers scale1 scale2</code> can be 
+attached after the event proper, where the starting shower scale can be 
+defined for each scattering separately; if not present both scatterings 
+evolve down from the standard scale value. The <code>LHAup</code> 
+method <code>bool scaleShowersIsSet()</code> tells whether such information 
+has been set for the current event and, if so, 
+<code>double scaleShowers(int i)</code> return the two scale values for 
+arguments 0 and 1. 
+ 
+<p/> 
 The <code>LHAup</code> class is a base class, containing reading and 
 printout functions, plus two pure virtual functions, one to set 
 initialization information and one to set information on each new event. 
@@ -493,6 +510,27 @@ and <ei>t &rarr; b W &rarr; b f fbar</ei>, where the process-independent
 correlations implemented for internal processes are used. If part of 
 the decay chain has already been set, however (e.g. <ei>H &rarr; WW/ZZ</ei> 
 or <ei>t &rarr; b W</ei>), then decay is still isotropic. 
+ 
+<p/> 
+The LHA standard only allows for one hard subcollision in an event. 
+Further multiparton interactions are supposed to be handled by the 
+internal MPI machinery. As a nonstandard feature, it is possible 
+to input two hard subcollisions in the same event, to match the internal 
+<aloc href="ASecondHardProcess">second hard process</aloc> machinery. 
+In such cases two partons are extracted from each of the two incoming 
+hadrons. A restriction is that, unlike the single-subprocess case, 
+it is important that the partons are input in the order that PYTHIA 
+later would need. That is, the two subcollisions should follow each 
+other, with instate preceding outstate. Any resonance decay chain 
+should be put at the end, after both interactions. As illustration, 
+consider double <ei>W</ei> production. With <ei>1</ei> and <ei>2</ei> 
+labelling the two subcollisions, and <ei>A</ei> and <ei>B</ei> the two 
+incoming hadron beams, the event record ordering should be 
+<ei>in_A1 - in_B1 - W_1 - in_A2 - in_B2 - W_2 - f_1 - fbar_1 - f_2 - 
+fbar_2</ei>, where <ei>f fbar</ei> is the fermion decay products of 
+the respective <ei>W</ei>. A limitation is that currently only one 
+input scale is used, that thereby limits all further partonic activity 
+in the same way for both processes. 
  
 <h3>Transfer to the PYTHIA process record</h3> 
  
@@ -1092,4 +1130,4 @@ for the case that <code>Pythia::process</code> is not in this frame.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

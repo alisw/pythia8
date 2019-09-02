@@ -28,6 +28,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='MatchingAndMerging.php'>
  
 <h2>Matching and Merging</h2> 
+<ol id="toc">
+  <li><a href="#section0">MC@NLO, jet matching, multi-jet merging and NLO merging with </a></li>
+  <li><a href="#section1">Implementing an external ME+PS combination scheme and interfacing this </a></li>
+</ol>
+
  
 Starting from a Born-level leading-order (LO) process, higher orders 
 can be included in various ways. The three basic approaches would be 
@@ -189,7 +194,8 @@ echo "<a href='JetMatching.php?filepath=".$filepath."' target='page'>";?>separat
  
 </ul> 
  
-<br/><br/><hr/> 
+<br/><hr/> 
+<a name="section0"></a> 
 <h3>MC@NLO, jet matching, multi-jet merging and NLO merging with 
 main89.cc</h3> 
  
@@ -325,6 +331,7 @@ echo "<a href='UNLOPSMerging.php?filepath=".$filepath."' target='page'>";?>UMEPS
 echo "<a href='CKKWLMerging.php?filepath=".$filepath."' target='page'>";?>CKKW-L merging</a> for  details. 
  
 <br/><br/><hr/> 
+<a name="section1"></a> 
 <h3>Implementing an external ME+PS combination scheme and interfacing this 
 plugin with Pythia</h3> 
  
@@ -662,4 +669,4 @@ candidates by another list of candidates.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

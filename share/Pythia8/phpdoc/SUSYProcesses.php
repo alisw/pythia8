@@ -28,6 +28,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='SUSYProcesses.php'>
  
 <h2>SUSY</h2> 
+<ol id="toc">
+  <li><a href="#section0">SUSY Processes</a></li>
+  <li><a href="#section1">Decays of SUSY Particles</a></li>
+</ol>
+
 <p> 
 Here is collected processes involving supersymmetric particle 
 production, with the exception of the (extended) Higgs sector. 
@@ -77,6 +82,7 @@ SLHA spectrum is strongly discouraged and may lead to unexpected
 results. Always check for warnings and errors reported by the SLHA 
 reader during the initialization stage. 
  
+<a name="section0"></a> 
 <h3>SUSY Processes</h3> 
  
 <br/><b>Note 1:</b> Decays of SUSY particles are described 
@@ -352,6 +358,7 @@ couplings must be input using the SLHA2 structure.
    
  
 <a name="decays"></a> 
+<a name="section1"></a> 
 <h3>Decays of SUSY Particles</h3> 
  
 Based on the parameters read in from the SLHA, PYTHIA 8 will normally 
@@ -536,4 +543,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

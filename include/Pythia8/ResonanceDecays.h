@@ -1,5 +1,5 @@
 // ResonanceDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -29,7 +29,8 @@ class ResonanceDecays {
 public:
 
   // Constructor.
-  ResonanceDecays() {}
+  ResonanceDecays() : infoPtr(), particleDataPtr(), rndmPtr(), id0(), mult(),
+    m0() {}
 
   // Store pointers to Info and Rndm for error messages and random numbers.
   void init(Info* infoPtrIn,  ParticleData* particleDataPtrIn,

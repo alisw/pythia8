@@ -7,6 +7,17 @@
 <body>
  
 <h2>Les Houches Accord</h2> 
+<ol id="toc">
+  <li><a href="#section0">Initialization</a></li>
+  <li><a href="#section1">Event input</a></li>
+  <li><a href="#section2">Transfer to the PYTHIA process record</a></li>
+  <li><a href="#section3">An interface to Les Houches Event Files</a></li>
+  <li><a href="#section4">A runtime Fortran interface</a></li>
+  <li><a href="#section5">Methods for LHEF output</a></li>
+  <li><a href="#section6">PYTHIA 8 output to a Les Houches Event File version 1.0</a></li>
+  <li><a href="#section7">PYTHIA 8 output to a Les Houches Event File version 3.0</a></li>
+</ol>
+
  
 The Les Houches Accord (LHA) for user processes [<a href="Bibliography.html#refBoo01" target="page">Boo01</a>] is the 
 standard way to input parton-level information from a 
@@ -27,6 +38,23 @@ added. Another example would be where a given partonic configuration
 would be hadronized, without any previous showers. See further below and 
 in the <a href="HadronLevelStandalone.html" target="page">Hadron-Level Standalone</a> 
 description. 
+ 
+<p/> 
+Another unofficial extension is the support for Double Parton Scattering 
+(DPS), i.e. when two hard scatterings should be defined. This is allowed 
+by letting one follow after the other in the event listing, such 
+that two <i>2 &rarr; 2</i> scatterings are specified by eight lines. 
+It is here required that daughters are located below mothers strictly 
+within each scattering separately, since the logic needed to sort out 
+an arbitrary ordering is deemed overkill for such a peripheral case. 
+An additional line <code>#scaleShowers scale1 scale2</code> can be 
+attached after the event proper, where the starting shower scale can be 
+defined for each scattering separately; if not present both scatterings 
+evolve down from the standard scale value. The <code>LHAup</code> 
+method <code>bool scaleShowersIsSet()</code> tells whether such information 
+has been set for the current event and, if so, 
+<code>double scaleShowers(int i)</code> return the two scale values for 
+arguments 0 and 1. 
  
 <p/> 
 The <code>LHAup</code> class is a base class, containing reading and 
@@ -67,6 +95,7 @@ to be accessed, and is automatically called by
 <code>Pythia::init()</code>. 
    
  
+<a name="section0"></a> 
 <h3>Initialization</h3> 
  
 The <code>LHAup</code> class stores information equivalent to the 
@@ -283,6 +312,7 @@ so would normally not need to be called directly by the user.
 <p/> 
  
  
+<a name="section1"></a> 
 <h3>Event input</h3> 
  
 The <code>LHAup</code> class also stores information equivalent to the 
@@ -561,6 +591,28 @@ correlations implemented for internal processes are used. If part of
 the decay chain has already been set, however (e.g. <i>H &rarr; WW/ZZ</i> 
 or <i>t &rarr; b W</i>), then decay is still isotropic. 
  
+<p/> 
+The LHA standard only allows for one hard subcollision in an event. 
+Further multiparton interactions are supposed to be handled by the 
+internal MPI machinery. As a nonstandard feature, it is possible 
+to input two hard subcollisions in the same event, to match the internal 
+<a href="ASecondHardProcess.html" target="page">second hard process</a> machinery. 
+In such cases two partons are extracted from each of the two incoming 
+hadrons. A restriction is that, unlike the single-subprocess case, 
+it is important that the partons are input in the order that PYTHIA 
+later would need. That is, the two subcollisions should follow each 
+other, with instate preceding outstate. Any resonance decay chain 
+should be put at the end, after both interactions. As illustration, 
+consider double <i>W</i> production. With <i>1</i> and <i>2</i> 
+labelling the two subcollisions, and <i>A</i> and <i>B</i> the two 
+incoming hadron beams, the event record ordering should be 
+<i>in_A1 - in_B1 - W_1 - in_A2 - in_B2 - W_2 - f_1 - fbar_1 - f_2 - 
+fbar_2</i>, where <i>f fbar</i> is the fermion decay products of 
+the respective <i>W</i>. A limitation is that currently only one 
+input scale is used, that thereby limits all further partonic activity 
+in the same way for both processes. 
+ 
+<a name="section2"></a> 
 <h3>Transfer to the PYTHIA process record</h3> 
  
 There are a few settings available for event input. They take effect when 
@@ -722,6 +774,7 @@ in the Les Houches input.
 the <i>+-z</i> axis; else the kinematics construction will fail. 
    
  
+<a name="section3"></a> 
 <h3>An interface to Les Houches Event Files</h3> 
  
 The LHEF standard ([<a href="Bibliography.html#refAlw06" target="page">Alw06</a>], [<a href="Bibliography.html#refBut14" target="page">But14</a>]) specifies a format 
@@ -975,6 +1028,7 @@ decompression layer is needed.
 close main event file (LHEF) and, if present, separate header file. 
    
  
+<a name="section4"></a> 
 <h3>A runtime Fortran interface</h3> 
  
 The runtime Fortran interface requires linking to an external Fortran 
@@ -1015,6 +1069,7 @@ cross-platform support leads to many possible combinations. Therefore
 this support has been removed, but can still be recuperated from 
 previous code versions, in a reduced form up to version 8.176. 
  
+<a name="section5"></a> 
 <h3>Methods for LHEF output</h3> 
  
 The main objective of the <code>LHAup</code> class is to feed information 
@@ -1070,6 +1125,7 @@ another process in between, the file will be corrupted.
 Return the name of the LHE file above. 
    
  
+<a name="section6"></a> 
 <h3>PYTHIA 8 output to a Les Houches Event File version 1.0</h3> 
  
 The above methods could be used by any program to write an LHEF. 
@@ -1117,6 +1173,7 @@ In addition, the <code>PartonLevel:all = off</code> command found in
 <code>main20.cc</code> obviously must be removed if one wants to 
 obtain complete events. 
  
+<a name="section7"></a> 
 <h3>PYTHIA 8 output to a Les Houches Event File version 3.0</h3> 
  
 PYTHIA 8 also supports LHEF 3.0 output, and we include a 
@@ -1185,4 +1242,4 @@ for the case that <code>Pythia::process</code> is not in this frame.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

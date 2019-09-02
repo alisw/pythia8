@@ -1,5 +1,5 @@
 // PartonDistributions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -1727,7 +1727,7 @@ const double ProtonPoint::C       = 0.028;
 void ProtonPoint::xfUpdate(int , double x, double /*Q2*/ ) {
 
   // Photon spectrum
-  double tmpQ2Min = 0.88 * pow2(x);
+  double tmpQ2Min = 0.88 * pow2(x) / (1. - x);
   double phiMax = phiFunc(x, Q2MAX / Q20);
   double phiMin = phiFunc(x, tmpQ2Min / Q20);
 
@@ -3322,11 +3322,16 @@ void LHAGrid1::init(string pdfWord, string xmlPath, Info* infoPtr) {
     + "NNPDF31_nlo_as_0118_luxqed_0000.dat";
   else if (pdfSet == 20) dataFile = xmlPath
     + "NNPDF31_nnlo_as_0118_luxqed_0000.dat";
-  else if (pdfSet == 21) dataFile = xmlPath + "mcpdf_test_replicas_0000.dat";
+  else if (pdfSet == 21) dataFile = xmlPath
+    + "NNPDF31sx_nlonllx_as_0118_LHCb_luxqed_0000.dat";
+  else if (pdfSet == 22) dataFile = xmlPath
+    + "NNPDF31sx_nnlonllx_as_0118_LHCb_luxqed_0000.dat";
 
   // Pomeron PDFs, currently the GKG18 sets.
-  else if (pdfSet == 112) dataFile = xmlPath + "GKG18_DPDF_FitA_0000.dat";
-  else if (pdfSet == 113) dataFile = xmlPath + "GKG18_DPDF_FitB_0000.dat";
+  else if (pdfSet == 112) dataFile = xmlPath + "GKG18_DPDF_FitA_LO_0000.dat";
+  else if (pdfSet == 113) dataFile = xmlPath + "GKG18_DPDF_FitB_LO_0000.dat";
+  else if (pdfSet == 114) dataFile = xmlPath + "GKG18_DPDF_FitA_NLO_0000.dat";
+  else if (pdfSet == 115) dataFile = xmlPath + "GKG18_DPDF_FitB_NLO_0000.dat";
 
   // Open files from which grids should be read in.
   ifstream is( dataFile.c_str() );
@@ -3767,33 +3772,72 @@ void EPAexternal::init() {
   // Photon kinematics.
   xMin  = pow2(settingsPtr->parm("Photon:Wmin")) / sCM;
   xMax  = 1.0;
-  Q2min = 2. * m2 * pow2(xMin) / ( 1. - xMin - m2s
-               + sqrt(1. - m2s) * sqrt( pow2(1. - xMin) - m2s) );
-  Q2max = settingsPtr->parm("Photon:Q2max");
-  bool sampleQ2 = settingsPtr->flag("Photon:sampleQ2");
 
-  // Initial values for normalization.
-  double ratio, ratioMax = 0.0;
-  norm = 1.0;
+  // Select which overestimate is used for sampling.
+  approxMode = settingsPtr->mode("PDF:lepton2gammaApprox");
 
-  // Scan through x and Q2 grid to find normalization.
-  // Mainly required for flux from heavy ions with large charge.
-  for (int i = 0; i < 10; ++i) {
-    double xi = xMin + (xMax - xMin)*i/(10.);
-    for (int j = 0; j < 10; ++j) {
-      double Q2j = Q2min * exp( log(Q2max/Q2min)*j/(10. - 1.0));
+  // Approximation suited for lepton beams.
+  if (approxMode == 1) {
 
-      // When not sampling virtuality use Q2-integrated flux.
-      if (sampleQ2) ratio = xfFlux(22,xi,Q2j) / xfApprox(22,xi,Q2j);
-      else          ratio = xfFlux(22,xi,Q2j) / xf(22,xi,Q2j);
+    // Derive kinematics.
+    Q2min = 2. * m2 * pow2(xMin) / ( 1. - xMin - m2s
+          + sqrt(1. - m2s) * sqrt( pow2(1. - xMin) - m2s) );
+    Q2max = settingsPtr->parm("Photon:Q2max");
+    xMax  = 2. * ( 1. - Q2max / sCM - m2s )
+          / ( 1. + sqrt( (1. + 4. * m2 / Q2max) * (1. - m2s) ) );
+    bool sampleQ2 = settingsPtr->flag("Photon:sampleQ2");
 
-      // Save the largest value.
-      if (ratio > ratioMax) ratioMax = ratio;
+    // Initial values for normalization.
+    double ratio, ratioMax = 0.0;
+    norm = 1.0;
+
+    // Scan through x and Q2 grid to find normalization.
+    // Mainly required for flux from heavy ions with large charge.
+    for (int i = 0; i < 10; ++i) {
+      double xi = xMin + (xMax - xMin)*i/(10.);
+
+      // If sampling for Q2 also, scan through the Q2 grid as well.
+      if (sampleQ2) {
+        for (int j = 0; j < 10; ++j) {
+          double Q2j = Q2min * exp( log(Q2max/Q2min)*j/(10. - 1.0));
+          ratio = xfFlux(22,xi,Q2j) / xfApprox(22,xi,Q2j);
+          if (ratio > ratioMax) ratioMax = ratio;
+        }
+
+      // If not, scanning x-grid suffice.
+      } else {
+        ratio = xfFlux(22,xi) / xf(22,xi,1.);
+        if (ratio > ratioMax) ratioMax = ratio;
+      }
     }
-  }
 
-  // Store the found normalization.
-  norm = ratioMax;
+    // Store the found normalization.
+    norm = ratioMax;
+
+  // Sampling optimized for heavy-ions with flux proportional to modified
+  // bessel functions. Divided into regions with x^pow and exp(-A*x).
+  } else if (approxMode == 2) {
+
+    // Find the parameters for the overestimate and derive further variables.
+    double mBeam = settingsPtr->parm("PDF:gammaFluxApprox2bMin");
+    double bMin  = settingsPtr->parm("PDF:gammaFluxApprox2mBeam");
+    xPow         = settingsPtr->parm("PDF:gammaFluxApprox2xPow");
+    xCut         = settingsPtr->parm("PDF:gammaFluxApprox2xCut");
+    bmhbarc      = bMin * mBeam / HBARC;
+
+    // Normalizations for the two regions from the flux.
+    norm1 = xMin < xCut ? pow(xMin, -1. + xPow) * xfFlux(22,xMin) : 0.0;
+    norm2 = xMin < xCut ? exp( 2. * bmhbarc * xCut) * xfFlux(22,xCut) / xCut
+                        : exp( 2. * bmhbarc * xMin) * xfFlux(22,xMin) / xMin;
+
+    // Integrals of the two regions for cross section approximation.
+    integral1 = xMin < xCut ? norm1 / (1. - xPow)
+              * ( pow(xCut, 1. - xPow) - pow(xMin, 1. - xPow) ) : 0.;
+    integral2 = xMin < xCut ? norm2 * 0.5 / bmhbarc
+              * ( exp(-2. * bmhbarc * xCut) - exp(-2. * bmhbarc) )
+              : norm2 * 0.5 / bmhbarc
+              * ( exp(-2. * bmhbarc * xMin) - exp(-2. * bmhbarc) );
+  }
 
 }
 
@@ -3806,19 +3850,37 @@ void EPAexternal::init() {
 void EPAexternal::xfUpdate(int , double x, double Q2) {
 
   // Calculate (Q2-integrated) approximation for xfGamma.
-  double alphaLog = norm * ALPHAEM / M_PI * log (Q2max/Q2min);
+  double alphaLog = (approxMode == 1) ?
+    norm * ALPHAEM / M_PI * log (Q2max/Q2min) : 1.;
 
   // Integrated in Q2, to be used for direct process sampling.
-  xgamma = alphaLog;
+  if (approxMode == 1) {
+    xgamma = alphaLog;
+  } else if (approxMode == 2) {
+    if (x < xCut) xgamma = norm1 * pow(x, 1. - xPow);
+    else          xgamma = norm2 * x * exp(-2. * bmhbarc * x);
+  }
 
   // Approximate the convolution with photon PDFs.
   if (gammaPDFPtr != 0) {
 
     // To preserve x/xGamma < 1.
-    xHadr = x;
+    xHadr            = x;
+    double alphaLogX = 0.;
+
+    // Integrals for the overestimates.
+    if (approxMode == 1) {
+      alphaLogX = alphaLog * log (xMax / xHadr);
+    } else if (approxMode == 2) {
+      double integral1tmp = xHadr < xCut ? norm1 / (1. - xPow)
+        * ( pow(xCut, 1. - xPow) - pow(xHadr, 1. - xPow) ) : 0.;
+      double xMinTmp = xHadr < xCut ? xCut : xHadr;
+      double integral2tmp = norm2 * 0.5 / bmhbarc
+        * ( exp(-2. * bmhbarc * xMinTmp) - exp(-2. * bmhbarc) );
+      alphaLogX = integral1tmp + integral2tmp;
+    }
 
     // Multiply the approximated flux with PDFs.
-    double alphaLogX = alphaLog * log (xMax / xHadr);
     xg = alphaLogX * gammaPDFPtr->xf(21, x, Q2);
     xd = alphaLogX * gammaPDFPtr->xf( 1, x, Q2);
     xu = alphaLogX * gammaPDFPtr->xf( 2, x, Q2);
@@ -3839,10 +3901,19 @@ void EPAexternal::xfUpdate(int , double x, double Q2) {
 
 // The approximated photon flux x*f^{gamma}(x,Q2).
 
-double EPAexternal::xfApprox(int , double , double Q2) {
+double EPAexternal::xfApprox(int , double x, double Q2) {
 
-  // Differetial in Q2.
-  return norm * ALPHAEM / M_PI / Q2;
+  // Differential in Q2 for leptons.
+  if (approxMode == 1) {
+    return norm * ALPHAEM / M_PI / Q2;
+
+  // Piece-wise approximation for heavy ions.
+  } else if (approxMode == 2) {
+    if (x < xCut) return norm1 * pow(x, 1. - xPow);
+    else          return norm2 * x * exp(-2. * bmhbarc * x);
+  }
+
+  return 0.;
 }
 
 //--------------------------------------------------------------------------
@@ -3865,6 +3936,61 @@ double EPAexternal::xfGamma(int id, double x, double Q2) {
   // Return xf from the photon PDF.
   if ( gammaPDFPtr != 0 ) return gammaPDFPtr->xf(id, x, Q2);
   else return 0.;
+}
+
+//--------------------------------------------------------------------------
+
+// Sample the x_gamma value according to given photon flux approximation.
+
+double EPAexternal::sampleXgamma(double xMinIn) {
+
+  // Sample with lepton-type flux.
+  double xMinSample = (xMinIn < 0.) ? xMin : xMinIn;
+  if (approxMode == 1) {
+    return xMinSample * pow(xMax / xMinSample, rndmPtr->flat());
+
+  // Sample with photon flux for nuclei.
+  } else if (approxMode == 2) {
+
+    // Calculate the integrals of over estimates.
+    double integral1tmp = xMinSample < xCut ? norm1 / (1. - xPow)
+      * ( pow(xCut, 1. - xPow) - pow(xMinSample, 1. - xPow) ) : 0.;
+    double integral2tmp = norm2 * 0.5 / bmhbarc
+      * ( exp(-2. * bmhbarc * xMinSample) - exp(-2. * bmhbarc) );
+    double integral1Frac = integral1tmp / (integral1tmp + integral2tmp);
+
+    // Select the sampling region.
+    int samplingRegion = 1;
+    if ( xMinSample > xCut || integral1Frac < rndmPtr->flat() )
+      samplingRegion = 2;
+
+    // Sample x.
+    double xGm = (samplingRegion == 1)
+      ? pow( pow(xMinSample,1. - xPow) + rndmPtr->flat()
+      * ( pow(xCut, 1. - xPow) - pow(xMinSample, 1. - xPow) ), 1./(1. - xPow))
+      : -0.5 / bmhbarc * log( exp(-2. * bmhbarc * xMinSample) - rndmPtr->flat()
+      * ( exp(-2. * bmhbarc * xMinSample) -  exp(-2. * bmhbarc) ) );
+    return xGm;
+  }
+
+  // Return zero for undefined cases.
+  return 0.;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Return integrated over-estimate for photon flux to approximate soft
+// cross sections.
+
+double EPAexternal::intFluxApprox() {
+
+  // Check the used approximation and return the integral.
+  if ( approxMode == 1 )
+    return ALPHAEM / M_PI * norm * log (xMax/xMin) * log(Q2max/Q2min);
+  else if (approxMode == 2) return integral1 + integral2;
+  else return 0.;
+
 }
 
 //==========================================================================

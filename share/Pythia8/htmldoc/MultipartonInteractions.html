@@ -7,6 +7,12 @@
 <body>
  
 <h2>Multiparton Interactions</h2> 
+<ol id="toc">
+  <li><a href="#section0">Main variables</a></li>
+  <li><a href="#section1">Further variables</a></li>
+  <li><a href="#section2">Technical notes</a></li>
+</ol>
+
  
 The starting point for the multiparton interactions physics scenario in 
 PYTHIA is provided by [<a href="Bibliography.html#refSjo87" target="page">Sjo87</a>]. Recent developments have 
@@ -28,6 +34,7 @@ effects appear necessary to describe data, e.g. on
 rearrangement is found as part of the 
 <a href="BeamRemnants.html" target="page">beam remnants</a> description. 
  
+<a name="section0"></a> 
 <h3>Main variables</h3> 
  
 <h4>Matching to hard process</h4> 
@@ -315,8 +322,8 @@ no free parameters.
 <br/><code>option </code><strong> 2</strong> : a double Gaussian matter distribution, 
 with the two free parameters <i>coreRadius</i> and 
 <i>coreFraction</i>.   
-<br/><code>option </code><strong> 3</strong> : an overlap function, i.e. the convolution of 
-the matter distributions of the two incoming hadrons, of the form 
+<br/><code>option </code><strong> 3</strong> : an overlap function (i.e. the convolution of 
+the matter distributions of the two incoming hadrons) of the form 
 <i>exp(- b^expPow)</i>, where <i>expPow</i> is a free 
 parameter.   
 <br/><code>option </code><strong> 4</strong> : a Gaussian matter distribution with a width 
@@ -351,13 +358,21 @@ of the matter content of the hadron.
 <p/><code>parm&nbsp; </code><strong> MultipartonInteractions:expPow &nbsp;</strong> 
  (<code>default = <strong>1.85</strong></code>; <code>minimum = 0.4</code>; <code>maximum = 10.</code>)<br/>
 When <i>bProfile = 3</i> it gives the power of the assumed overlap 
-shape <i>exp(- b^expPow)</i>. Default corresponds to a simple 
-exponential drop, which is not too dissimilar from the overlap 
-obtained with the standard double Gaussian parameters. For 
-<i>expPow = 2</i> we reduce to the simple Gaussian, <i>bProfile = 1</i>, 
-and for <i>expPow &rarr; infinity</i> to no impact parameter dependence 
-at all, <i>bProfile = 0</i>. For small <i>expPow</i> the program 
-becomes slow and unstable, so the min limit must be respected. 
+shape <i>exp(- b^expPow)</i>. Since the convolution of two Gaussians 
+is another Gaussian, the overlap shape obtained for <i>expPow = 2</i> 
+is the same as that obtained for a Gaussian matter distribution, 
+<i>bProfile = 1</i>. The limit <i>expPow &rarr; infinity</i> 
+corresponds to no impact parameter dependence at all, <i>bProfile = 0</i>. 
+The overlap shape that would be obtained for an exponential matter 
+distribution cannot be represented exactly on this form, but a similar 
+variance (for fixed normalisation and average <i>b</i>) is obtained 
+for <i>expPow = 1.4</i>. The double Gaussian matter profiles that 
+are obtained for <i>bProfile = 2</i> generally correspond to the range 
+between <i>expPow = 1</i> and <i>expPow = 2</i>, with the former 
+representing scenarios with pronounced "hot spots" and consequently 
+very significant fluctuations (high variance). Note that for small 
+<i>expPow</i> the program becomes slow and unstable, so the min 
+limit must be respected. 
    
  
 <a name="anchor17"></a>
@@ -484,6 +499,7 @@ as a potential rescatterer.
    
  
  
+<a name="section1"></a> 
 <h3>Further variables</h3> 
  
 These should normally not be touched. Their only function is for 
@@ -508,6 +524,7 @@ at initialization, and the differential one during the run as a
 A larger number implies increased accuracy of the calculations. 
    
  
+<a name="section2"></a> 
 <h3>Technical notes</h3> 
  
 Relative to the articles mentioned above, not much has happened. 
@@ -641,4 +658,4 @@ interactions.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

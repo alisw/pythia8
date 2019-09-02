@@ -1,5 +1,5 @@
 // StringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -34,7 +34,12 @@ class StringEnd {
 public:
 
   // Constructor.
-  StringEnd() {}
+  StringEnd() : particleDataPtr(), flavSelPtr(), pTSelPtr(), zSelPtr(),
+    fromPos(), thermalModel(), mT2suppression(), iEnd(), iMax(), idHad(),
+    iPosOld(), iNegOld(), iPosNew(), iNegNew(), hadSoFar(), colOld(), colNew(),
+    pxOld(), pyOld(), pxNew(), pyNew(), pxHad(), pyHad(), mHad(), mT2Had(),
+    zHad(), GammaOld(), GammaNew(), xPosOld(), xPosNew(), xPosHad(), xNegOld(),
+    xNegNew(), xNegHad(), aLund(), bLund() {}
 
   // Save pointers.
   void init( ParticleData* particleDataPtrIn, StringFlav* flavSelPtrIn,
@@ -47,7 +52,8 @@ public:
 
   // Set up initial endpoint values from input.
   void setUp(bool fromPosIn, int iEndIn, int idOldIn, int iMaxIn,
-    double pxIn, double pyIn, double GammaIn, double xPosIn, double xNegIn);
+    double pxIn, double pyIn, double GammaIn, double xPosIn,
+    double xNegIn, int colIn);
 
   // Fragment off one hadron from the string system, in flavour and pT.
   void newHadron(double nNSP = 0.0);
@@ -79,7 +85,8 @@ public:
 
   // Data members.
   bool   fromPos, thermalModel, mT2suppression;
-  int    iEnd, iMax, idHad, iPosOld, iNegOld, iPosNew, iNegNew, hadSoFar;
+  int    iEnd, iMax, idHad, iPosOld, iNegOld, iPosNew, iNegNew, hadSoFar,
+         colOld, colNew;
   double pxOld, pyOld, pxNew, pyNew, pxHad, pyHad, mHad, mT2Had, zHad,
          GammaOld, GammaNew, xPosOld, xPosNew, xPosHad, xNegOld, xNegNew,
          xNegHad, aLund, bLund;
@@ -98,7 +105,14 @@ class StringFragmentation {
 public:
 
   // Constructor.
-  StringFragmentation() {}
+  StringFragmentation() : infoPtr(), particleDataPtr(), rndmPtr(),
+    flavSelPtr(), pTSelPtr(), zSelPtr(), flavRopePtr(), userHooksPtr(),
+    closePacking(), doFlavRope(), setVertices(), constantTau(), smearOn(),
+    traceColours(false), hadronVertex(), stopMass(), stopNewFlav(),
+    stopSmear(), eNormJunction(), eBothLeftJunction(), eMaxLeftJunction(),
+    eMinLeftJunction(), mJoin(), bLund(), pT20(), xySmear(), kappaVtx(),
+    mc(), mb(), hasJunction(), isClosed(), iPos(), iNeg(), w2Rem(),
+    stopMassNow(), idDiquark(), legMin(), legMid() {}
 
   // Initialize and save pointers.
   void init(Info* infoPtrIn, Settings& settings,
@@ -143,7 +157,8 @@ private:
   UserHooks*    userHooksPtr;
 
   // Initialization data, read from Settings.
-  bool   closePacking, doFlavRope, setVertices, constantTau, smearOn;
+  bool   closePacking, doFlavRope, setVertices, constantTau, smearOn,
+         traceColours;
   int    hadronVertex;
   double stopMass, stopNewFlav, stopSmear, eNormJunction,
          eBothLeftJunction, eMaxLeftJunction, eMinLeftJunction,

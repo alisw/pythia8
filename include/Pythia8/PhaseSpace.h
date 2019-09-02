@@ -1,5 +1,5 @@
 // PhaseSpace.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -115,13 +115,44 @@ public:
   // Calculate the weight for over-estimated cross section.
   virtual double weightGammaPDFApprox(){ return 1.;}
 
-  // Set the GammaKinematics pointer. Implemented for non-diffractive gm+gm.
-  virtual void setGammaKinPtr( GammaKinematics*){}
+  // Set the GammaKinematics pointer needed for soft photoproduction.
+  virtual void setGammaKinPtr( GammaKinematics* gammaKinPtrIn) {
+    gammaKinPtr = gammaKinPtrIn; }
 
 protected:
 
   // Constructor.
-  PhaseSpace() {}
+  PhaseSpace() : sigmaProcessPtr(), infoPtr(), settingsPtr(),
+    particleDataPtr(), rndmPtr(), beamAPtr(), beamBPtr(), couplingsPtr(),
+    sigmaTotPtr(), userHooksPtr(), lhaUpPtr(), gammaKinPtr(),
+    useBreitWigners(), doEnergySpread(), showSearch(), showViolation(),
+    increaseMaximum(), hasQ2Min(), gmZmodeGlobal(), mHatGlobalMin(),
+    mHatGlobalMax(), pTHatGlobalMin(), pTHatGlobalMax(), Q2GlobalMin(),
+    pTHatMinDiverge(), minWidthBreitWigners(), minWidthNarrowBW(), idA(),
+    idB(), idAgm(), idBgm(), mA(), mB(), eCM(), s(), sigmaMxGm(),
+    hasLeptonBeamA(), hasLeptonBeamB(), hasOneLeptonBeam(),
+    hasTwoLeptonBeams(), hasPointGammaA(), hasPointGammaB(),
+    hasOnePointParticle(), hasTwoPointParticles(), hasGamma(),
+    hasVMD(), newSigmaMx(),
+    canModifySigma(), canBiasSelection(), canBias2Sel(), gmZmode(),
+    bias2SelPow(), bias2SelRef(), wtBW(), sigmaNw(),
+    sigmaMx(), sigmaPos(), sigmaNeg(), biasWt(), mHatMin(), mHatMax(),
+    sHatMin(), sHatMax(), pTHatMin(), pTHatMax(), pT2HatMin(), pT2HatMax(),
+    x1H(), x2H(), m3(), m4(), m5(), s3(), s4(), s5(), mHat(), sH(), tH(), uH(),
+    pAbs(), p2Abs(), pTH(), theta(), phi(), betaZ(), mH(), idResA(), idResB(),
+    mResA(), mResB(), GammaResA(), GammaResB(), tauResA(), tauResB(),
+    widResA(), widResB(), sameResMass(), useMirrorWeight(), hasNegZ(),
+    hasPosZ(), tau(), y(), z(), tauMin(), tauMax(), yMax(), zMin(), zMax(),
+    ratio34(), unity34(), zNeg(), zPos(), wtTau(), wtY(), wtZ(), wt3Body(),
+    runBW3H(), runBW4H(), runBW5H(), intTau0(), intTau1(), intTau2(),
+    intTau3(), intTau4(), intTau5(), intTau6(), intY0(), intY12(), intY34(),
+    intY56(), mTchan1(), sTchan1(), mTchan2(), sTchan2(), frac3Flat(),
+    frac3Pow1(), frac3Pow2(), zNegMin(), zNegMax(), zPosMin(), zPosMax(),
+    nTau(), nY(), nZ(), tauCoef(), yCoef(), zCoef(), tauCoefSum(), yCoefSum(),
+    zCoefSum(), useBW(), useNarrowBW(), idMass(), mPeak(), sPeak(), mWidth(),
+    mMin(), mMax(), mw(), wmRat(), mLower(), mUpper(), sLower(), sUpper(),
+    fracFlatS(), fracFlatM(), fracInv(), fracInv2(), atanLower(), atanUpper(),
+    intBW(), intFlatS(), intFlatM(), intInv(), intInv2() {}
 
   // Constants: could only be changed in the code itself.
   static const int    NMAXTRY, NTRY3BODY;
@@ -162,19 +193,22 @@ protected:
   // Pointer to LHAup for generating external events.
   LHAup*        lhaUpPtr;
 
+  // Pointer to object that samples photon kinematics from leptons.
+  GammaKinematics* gammaKinPtr;
+
   // Initialization data, normally only set once.
   bool   useBreitWigners, doEnergySpread, showSearch, showViolation,
          increaseMaximum, hasQ2Min;
   int    gmZmodeGlobal;
   double mHatGlobalMin, mHatGlobalMax, pTHatGlobalMin, pTHatGlobalMax,
-         Q2GlobalMin, pTHatMinDiverge, minWidthBreitWigners;
+         Q2GlobalMin, pTHatMinDiverge, minWidthBreitWigners, minWidthNarrowBW;
 
   // Information on incoming beams.
-  int    idA, idB;
-  double mA, mB, eCM, s;
+  int    idA, idB, idAgm, idBgm;
+  double mA, mB, eCM, s, sigmaMxGm;
   bool   hasLeptonBeamA, hasLeptonBeamB, hasOneLeptonBeam, hasTwoLeptonBeams,
          hasPointGammaA, hasPointGammaB, hasOnePointParticle,
-         hasTwoPointParticles;
+         hasTwoPointParticles, hasGamma, hasVMD;
 
   // Cross section information.
   bool   newSigmaMx, canModifySigma, canBiasSelection, canBias2Sel;
@@ -240,7 +274,7 @@ protected:
     double coef[8]);
 
   // Properties specific to resonance mass selection in 2 -> 2 and 2 -> 3.
-  bool   useBW[6];
+  bool   useBW[6], useNarrowBW[6];
   int    idMass[6];
   double mPeak[6], sPeak[6], mWidth[6], mMin[6], mMax[6], mw[6], wmRat[6],
          mLower[6], mUpper[6], sLower[6], sUpper[6], fracFlatS[6],
@@ -366,7 +400,10 @@ class PhaseSpace2to2elastic : public PhaseSpace {
 public:
 
   // Constructor.
-  PhaseSpace2to2elastic() {}
+  PhaseSpace2to2elastic() : isOneExp(), useCoulomb(), s1(), s2(), alphaEM0(),
+    lambda12S(), lambda12(), lambda34(), tempA(), tempB(), tempC(),
+    tLow(), tUpp(), bSlope1(), bSlope2(), sigRef1(), sigRef2(),
+    sigRef(), sigNorm1(), sigNorm2(), sigNorm3(), sigNormSum(), rel2() {}
 
   // Construct the trial or final event kinematics.
   virtual bool setupSampling();
@@ -384,9 +421,9 @@ private:
 
   // Kinematics properties specific to 2 -> 2 elastic.
   bool   isOneExp, useCoulomb;
-  double s1, s2, alphaEM0, lambda12S, tLow, tUpp, bSlope1, bSlope2,
-         sigRef1, sigRef2, sigRef, sigNorm1, sigNorm2, sigNorm3,
-         sigNormSum, rel2;
+  double s1, s2, alphaEM0, lambda12S, lambda12, lambda34, tempA, tempB, tempC,
+         tLow, tUpp, bSlope1, bSlope2, sigRef1, sigRef2, sigRef,
+         sigNorm1, sigNorm2, sigNorm3, sigNormSum, rel2;
 
 };
 
@@ -400,7 +437,11 @@ public:
 
   // Constructor.
   PhaseSpace2to2diffractive(bool isDiffAin = false, bool isDiffBin = false)
-    : isDiffA(isDiffAin), isDiffB(isDiffBin) {isSD = !isDiffA || !isDiffB;}
+    : isDiffA(isDiffAin), isDiffB(isDiffBin), splitxit(), m3ElDiff(),
+    m4ElDiff(), s1(), s2(), xiMin(), xiMax(), xiNow(), sigNow(), sigMax(),
+    sigMaxNow(), lambda12(), lambda34(), bNow(), tempA(), tempB(), tempC(),
+    tLow(), tUpp(), tWeight(), fWid1(), fWid2(), fWid3(), fWid4(), fbWid1(),
+    fbWid2(), fbWid3(), fbWid4(), fbWid1234() {isSD = !isDiffA || !isDiffB;}
 
   // Construct the trial or final event kinematics.
   virtual bool setupSampling();
@@ -439,7 +480,9 @@ class PhaseSpace2to3diffractive : public PhaseSpace {
 public:
 
   // Constructor.
-  PhaseSpace2to3diffractive() {}
+  PhaseSpace2to3diffractive() : splitxit(), s1(), s2(), m5min(), s5min(), m5(),
+    sigNow(), sigMax(), sigMaxNow(), xiMin(), xi1(), xi2(), fWid1(), fWid2(),
+    fWid3(), fbWid1(), fbWid2(), fbWid3(), fbWid123() {}
 
   // Construct the trial or final event kinematics.
   virtual bool setupSampling();
@@ -468,10 +511,10 @@ public:
 
 //==========================================================================
 
+class PhaseSpace2to2nondiffractive : public PhaseSpace {
+
 // A derived class for nondiffractive events. Hardly does anything, since
 // the real action is taken care of by the MultipartonInteractions class.
-
-class PhaseSpace2to2nondiffractive : public PhaseSpace {
 
 public:
 
@@ -479,48 +522,12 @@ public:
   PhaseSpace2to2nondiffractive() {}
 
   // Construct the trial or final event kinematics.
-  virtual bool setupSampling() {sigmaNw = sigmaProcessPtr->sigmaHat();
-    sigmaMx = sigmaNw; return true;}
-  virtual bool trialKin( bool , bool = false) {return true;}
-  virtual bool finalKin() {return true;}
-
-private:
-
-};
-
-//==========================================================================
-
-// A derived class for nondiffractive events in l+l- -> gm+gm.
-// The process is still generated in MultipartonInteraction but the sampling
-// of the sub-collision is done here to allow cuts for the phase space.
-
-class PhaseSpace2to2nondiffractiveGamma : public PhaseSpace {
-
-public:
-
-  // Constructor.
-  PhaseSpace2to2nondiffractiveGamma() {}
-
-  // Construct the trial or final event kinematics.
   virtual bool setupSampling();
-  virtual bool trialKin(bool inEvent = true, bool = false);
-  virtual bool finalKin() {gammaKinPtr->finalize(); return true;}
-
-  // Set the pointer to GammaKinematics.
-  virtual void setGammaKinPtr( GammaKinematics* gammaKinPtrIn) {
-    gammaKinPtr = gammaKinPtrIn; }
+  virtual bool trialKin( bool , bool = false);
+  virtual bool finalKin() { if (hasGamma) gammaKinPtr->finalize();
+    return true;}
 
 private:
-
-  // Pointer to object that samples photon kinematics from leptons.
-  GammaKinematics* gammaKinPtr;
-
-  // Parameters.
-  int    idAin, idBin;
-  bool   gammaA, gammaB, externalFlux, sampleQ2;
-  double Q2maxGamma, Wmin, sigmaNDestimate, sigmaNDmax, sCM, alphaEM,
-    m2BeamA, m2BeamB, m2sA, m2sB, log2xMinA, log2xMaxA, log2xMinB, log2xMaxB,
-    xGamma1, xGamma2, Q2gamma1, Q2gamma2, mGmGm, Q2min1, Q2min2;
 
 };
 
@@ -572,7 +579,10 @@ class PhaseSpace2to3yyycyl : public PhaseSpace {
 public:
 
   // Constructor.
-  PhaseSpace2to3yyycyl() {}
+  PhaseSpace2to3yyycyl() : pTHat3Min(), pTHat3Max(), pTHat5Min(), pTHat5Max(),
+    RsepMin(), R2sepMin(), hasBaryonBeams(), pT3Min(), pT3Max(), pT5Min(),
+    pT5Max(), y3Max(), y4Max(), y5Max(), pT3(), pT4(), pT5(), phi3(), phi4(),
+    phi5(), y3(), y4(), y5(), dphi() {}
 
   // Optimize subsequent kinematics selection.
   virtual bool setupSampling();
@@ -605,7 +615,8 @@ class PhaseSpaceLHA : public PhaseSpace {
 public:
 
   // Constructor.
-  PhaseSpaceLHA() {idProcSave = 0;}
+  PhaseSpaceLHA() : strategy(), stratAbs(), nProc(), idProcSave(0),
+    xMaxAbsSum(), xSecSgnSum(), sigmaSgn() {}
 
   // Find maximal cross section for comparison with internal processes.
   virtual bool setupSampling();

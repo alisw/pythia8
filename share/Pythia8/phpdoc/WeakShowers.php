@@ -145,7 +145,8 @@ to turn this method on only if you simulate both Drell-Yan weak production
 and QCD hard production with a weak shower. Do not turn on the veto 
 algorithm if you only intend to generate one of the two processes. 
  
-<h3>variables</h3> 
+<a name="section0"></a> 
+<h3>Variables</h3> 
  
 Below are listed the variables related to the weak shower and common to both 
 the initial- and final-state radiation. For variables only related to the 
@@ -265,4 +266,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

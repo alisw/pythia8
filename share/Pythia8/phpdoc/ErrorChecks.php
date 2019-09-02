@@ -94,7 +94,19 @@ to generate the event in the first place), and so could be switched off
 to save time. 
    
  
-<br/><br/><table><tr><td><strong>Check:nErrList  </td><td></td><td> <input type="text" name="6" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
+<br/><br/><strong>Check:beams</strong>  <input type="radio" name="6" value="on" checked="checked"><strong>On</strong>
+<input type="radio" name="6" value="off"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>on</strong></code>)<br/>
+Check that Pythia supports the beam setup, i.e. if the beams 
+are the allowed combinations described in 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='BeamParameters.php?filepath=".$filepath."' target='page'>";?>Beam Parameters</a>. If turned 
+off, all checks of allowed beam combinations will be skipped, as 
+can e.g. be useful to allow processing of Les Houches 
+event files with exotic beam structure. 
+   
+ 
+<br/><br/><table><tr><td><strong>Check:nErrList  </td><td></td><td> <input type="text" name="7" value="0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>)</td></tr></table>
 The number of erroneous events, in the above check, for which 
 event listing and other detailed information will be printed. 
 After that, only the normal error messages will be issued. 
@@ -102,7 +114,7 @@ Error counters are always updated, and accumulated numbers can be
 shown with <code>pythia.stat()</code> at the end of the run. 
    
  
-<br/><br/><table><tr><td><strong>Check:epTolErr </td><td></td><td> <input type="text" name="7" value="1e-4" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-4</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Check:epTolErr </td><td></td><td> <input type="text" name="8" value="1e-4" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-4</strong></code>)</td></tr></table>
 Maximum allowed summed deviation of <i>E</i>, <i>p_x</i>, 
 <i>p_y</i> and <i>p_z</i> between the incoming beams and the 
 final state, as a fraction of the initial energy, above which the 
@@ -114,20 +126,20 @@ any fundamental bug if also the default tolerance above is violated
 occasionally.) 
    
  
-<br/><br/><table><tr><td><strong>Check:epTolWarn </td><td></td><td> <input type="text" name="8" value="1e-6" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-6</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Check:epTolWarn </td><td></td><td> <input type="text" name="9" value="1e-6" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-6</strong></code>)</td></tr></table>
 A check on the same summed deviation as above, but counted as a 
 warning rather than an error, and not leading to the event being 
 classified as aborted. 
    
  
-<br/><br/><table><tr><td><strong>Check:mTolErr </td><td></td><td> <input type="text" name="9" value="1e-3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-3</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Check:mTolErr </td><td></td><td> <input type="text" name="10" value="1e-3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-3</strong></code>)</td></tr></table>
 For each particle the maximum allowed deviation between the mass 
 calculated from energy-momentum and the bookkept mass, as a fraction 
 of the energy. This energy is taken to be at least 1 GeV, in order 
 to avoid harmless problems at very low energies (gluons mainly). 
    
  
-<br/><br/><table><tr><td><strong>Check:mTolWarn </td><td></td><td> <input type="text" name="10" value="1e-4" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-4</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Check:mTolWarn </td><td></td><td> <input type="text" name="11" value="1e-4" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1e-4</strong></code>)</td></tr></table>
 A check on the deviation as above, but counted as a warning rather 
 than an error. 
    
@@ -172,29 +184,34 @@ if($_POST["5"] != "on")
 $data = "Check:history = ".$_POST["5"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["6"] != "0")
+if($_POST["6"] != "on")
 {
-$data = "Check:nErrList = ".$_POST["6"]."\n";
+$data = "Check:beams = ".$_POST["6"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["7"] != "1e-4")
+if($_POST["7"] != "0")
 {
-$data = "Check:epTolErr = ".$_POST["7"]."\n";
+$data = "Check:nErrList = ".$_POST["7"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["8"] != "1e-6")
+if($_POST["8"] != "1e-4")
 {
-$data = "Check:epTolWarn = ".$_POST["8"]."\n";
+$data = "Check:epTolErr = ".$_POST["8"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["9"] != "1e-3")
+if($_POST["9"] != "1e-6")
 {
-$data = "Check:mTolErr = ".$_POST["9"]."\n";
+$data = "Check:epTolWarn = ".$_POST["9"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["10"] != "1e-4")
+if($_POST["10"] != "1e-3")
 {
-$data = "Check:mTolWarn = ".$_POST["10"]."\n";
+$data = "Check:mTolErr = ".$_POST["10"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["11"] != "1e-4")
+{
+$data = "Check:mTolWarn = ".$_POST["11"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -204,4 +221,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

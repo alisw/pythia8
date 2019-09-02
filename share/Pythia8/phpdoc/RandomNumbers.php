@@ -28,10 +28,18 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='RandomNumbers.php'>
  
 <h2>Random Numbers</h2> 
+<ol id="toc">
+  <li><a href="#section0">Internal random numbers</a></li>
+  <li><a href="#section1">External random numbers</a></li>
+  <li><a href="#section2">MIXMAX random numbers</a></li>
+  <li><a href="#section3">The methods</a></li>
+</ol>
+
  
 This page describes the random-number generator in PYTHIA and 
 how it can be replaced by an external one. 
  
+<a name="section0"></a> 
 <h3>Internal random numbers</h3> 
  
 The <code>Rndm</code> class generates random numbers, using the 
@@ -71,6 +79,7 @@ flag and a mode</a>, that allows the <code>seed</code> to be set in
 the <code>Pythia::init</code> call. That would be the standard way for a 
 user to pick the random number sequence in a run. 
  
+<a name="section1"></a> 
 <h3>External random numbers</h3> 
  
 <code>RndmEngine</code> is a base class for the external handling of 
@@ -96,6 +105,7 @@ externally to the <code>Pythia</code> code.
 An example illustrating how to run with an external random number 
 generator is provided in <code>main23.cc</code>. 
  
+<a name="section2"></a> 
 <h3>MIXMAX random numbers</h3> 
  
 The MIXMAX class of random number generators utilizes 
@@ -127,6 +137,7 @@ another if at least one bit of the four seeds is different, and, less
 than <i>10^100</i> random numbers are thrown. 
    
  
+<a name="section3"></a> 
 <h3>The methods</h3> 
  
 We here collect a more complete and formal overview of 
@@ -211,4 +222,4 @@ to give a random number between 0 and 1.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

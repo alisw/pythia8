@@ -7,12 +7,19 @@
 <body>
  
 <h2>Particle Data</h2> 
+<ol id="toc">
+  <li><a href="#section0">Main settings</a></li>
+  <li><a href="#section1">Comments on the data</a></li>
+  <li><a href="#section2">The data itself</a></li>
+</ol>
+
  
 The structure and operation of the particle data table is described 
 <a href="ParticleDataScheme.html" target="page">here</a>. That page 
 also describes how default data properties can be changed. The 
 current page provides the actual default values. 
  
+<a name="section0"></a> 
 <h3>Main settings</h3> 
  
 Apart from the data itself, the particle data table only contains 
@@ -123,6 +130,7 @@ the <i>alpha_s(M_Z)</i> value used to define the rate at which MSbar
 masses run. 
    
  
+<a name="section1"></a> 
 <h3>Comments on the data</h3> 
  
 Much of the current data has been updated based on the 2012 Review of Particle 
@@ -168,6 +176,7 @@ on the LHCb tables (with some modifications) are 411, 421, 431, 441,
 the DELPHI tables are 415, 425, 435, 515, 525, 535, 4132, 4232, 4332, 
 5132, 5232 and 5332. 
  
+<a name="section2"></a> 
 <h3>The data itself</h3> 
  
 Here comes the default particle data used in the program. Do not touch. 
@@ -714,17 +723,28 @@ The meaning of the various properties and the format used are explained
  <br/>      channel: onMode="1" bRatio="0.025" products="53 -53" 
  <br/>      channel: onMode="1" bRatio="0.025" products="53  53" 
  
-<p/>particle: id="56" name="DM?1" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+<p/>particle: id="56" name="Sl (DM)" antiName="Slbar (DM)" spinType="1" chargeType="3" colType="0" 
           m0="100.00000" 
+ <br/>      channel: onMode="1" bRatio="1.00" products="11 52" 
+ <br/>      channel: onMode="1" bRatio="0.00" products="13 52" 
+ <br/>      channel: onMode="1" bRatio="0.00" products="15 52" 
  
-<p/>particle: id="57" name="DM?2" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+<p/>particle: id="57" name="DM+" antiName="DM-" spinType="2" chargeType="3" colType="0" 
           m0="100.00000" 
+  <br/>      channel: onMode="1" bRatio="1.00" products="211 58" 
+  <br/>      channel: onMode="1" bRatio="0.0" products="11 -12 52"  
+  <br/>      channel: onMode="1" bRatio="0.0" products="13 -14 52"  
+  <br/>      channel: onMode="1" bRatio="0.0" products="15 -16 52"  
+  <br/>      channel: onMode="1" bRatio="0.0" products="-1 2 52"  
+  <br/>      channel: onMode="1" bRatio="0.0" products="-3 4 52"  
  
-<p/>particle: id="58" name="DM?3" antiName="DMbar?3" spinType="1" chargeType="0" colType="0" 
+<p/>particle: id="58" name="DM2" antiName="DMbar2" spinType="2" chargeType="0" colType="0" 
           m0="100.00000" 
+ <br/>      channel: onMode="1" bRatio="1.00" products="5 -5 52" 
  
-<p/>particle: id="59" name="DM?4" antiName="DMbar?4" spinType="1" chargeType="0" colType="0" 
+<p/>particle: id="59" name="DM++" antiName="DM--" spinType="2" chargeType="6" colType="0" 
           m0="100.00000" 
+  <br/>      channel: onMode="1" bRatio="1.00" products="211 57" 
  
 <p/>particle: id="60" name="DM?5" antiName="DMbar?5" spinType="1" chargeType="0" colType="0" 
           m0="100.00000" 
@@ -9164,6 +9184,9 @@ The meaning of the various properties and the format used are explained
           m0="10.5552" mWidth="0.0" mMin="10.5552" mMax="10.5552" 
  <br/>      channel: onMode="1" bRatio="1.0000000" products="200553 21" 
  
+<p/>particle: id="1000010020" name="2H" antiName="2Hbar" 
+          spinType="1" chargeType="3" colType="0" m0="1.876" 
+ 
 <p/>particle: id="1000020040" name="4He" antiName="4Hebar" 
           spinType="1" chargeType="6" colType="0" m0="3.7284" 
  
@@ -9192,4 +9215,4 @@ The meaning of the various properties and the format used are explained
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -71,10 +71,18 @@ class StringFlav {
 public:
 
   // Constructor.
-  StringFlav() {
-    // Initialize winning parameters.
-    hadronIDwin = 0; idNewWin = 0; hadronMassWin = -1.0;
-  }
+  StringFlav() : rndmPtr(), particleDataPtr(), infoPtr(), suppressLeadingB(),
+    mT2suppression(), useWidthPre(), probQQtoQ(), probStoUD(), probSQtoQQ(),
+    probQQ1toQQ0(), probQandQQ(), probQandS(), probQandSinQQ(), probQQ1corr(),
+    probQQ1corrInv(), probQQ1norm(), probQQ1join(), mesonRate(),
+    mesonRateSum(), mesonMix1(), mesonMix2(), etaSup(), etaPrimeSup(),
+    decupletSup(), baryonCGSum(), baryonCGMax(), popcornRate(), popcornSpair(),
+    popcornSmeson(), scbBM(), popFrac(), popS(), dWT(), lightLeadingBSup(),
+    heavyLeadingBSup(), sigmaHad(), widthPreStrange(), widthPreDiquark(),
+    thermalModel(), mesonNonetL1(), temperature(), tempPreFactor(),
+    nNewQuark(), mesMixRate1(), mesMixRate2(), mesMixRate3(),
+    baryonOctWeight(), baryonDecWeight(), closePacking(), exponentMPI(),
+    exponentNSP(), hadronIDwin(0), idNewWin(0), hadronMassWin(-1.0) {}
 
   // Destructor.
   virtual ~StringFlav() {}
@@ -243,7 +251,7 @@ class LundFFAvg : public FunctionEncapsulator {
 public:
 
   // Constructor and destructor.
-  LundFFAvg() {};
+  LundFFAvg() : check() {};
   virtual ~LundFFAvg() {};
 
   // <z> = integral( z * f(z) dz ) / integral( f(z) dz ),
@@ -285,7 +293,11 @@ class StringZ {
 public:
 
   // Constructor.
-  StringZ() {}
+  StringZ() : useNonStandC(), useNonStandB(), useNonStandH(), usePetersonC(),
+    usePetersonB(), usePetersonH(), mc2(), mb2(), aLund(), bLund(),
+    aExtraSQuark(), aExtraDiquark(), rFactC(), rFactB(), rFactH(), aNonC(),
+    aNonB(), aNonH(), bNonC(), bNonB(), bNonH(), epsilonC(), epsilonB(),
+    epsilonH(), stopM(), stopNF(), stopS(), rndmPtr(), infoPtr() {}
 
   // Destructor.
   virtual ~StringZ() {}
@@ -342,7 +354,10 @@ class StringPT {
 public:
 
   // Constructor.
-  StringPT() {}
+  StringPT() : useWidthPre(), sigmaQ(), enhancedFraction(), enhancedWidth(),
+    sigma2Had(), widthPreStrange(), widthPreDiquark(), thermalModel(),
+    temperature(), tempPreFactor(), fracSmallX(), closePacking(),
+    exponentMPI(), exponentNSP(), particleDataPtr(), rndmPtr(), infoPtr() {}
 
   // Destructor.
   virtual ~StringPT() {}

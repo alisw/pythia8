@@ -1,5 +1,5 @@
 // ResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -75,7 +75,13 @@ public:
 protected:
 
   // Constructor.
-  ResonanceWidths() {}
+  ResonanceWidths() : idRes(), hasAntiRes(), doForceWidth(), isGeneric(),
+    allowCalcWidth(), minWidth(), minThreshold(), mRes(), GammaRes(), m2Res(),
+    GamMRat(), openPos(), openNeg(), forceFactor(), iChannel(), onMode(),
+    meMode(), mult(), id1(), id2(), id3(), id1Abs(), id2Abs(), id3Abs(),
+    idInFlav(), widNow(), mHat(), mf1(), mf2(), mf3(), mr1(), mr2(), mr3(),
+    ps(), kinFac(), alpEM(), alpS(), colQ(), preFac(), particlePtr(),
+    infoPtr(), settingsPtr(), particleDataPtr(), couplingsPtr() {}
 
   // Constants: could only be changed in the code itself.
   static const int    NPOINT;
@@ -159,7 +165,8 @@ class ResonanceGmZ : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceGmZ(int idResIn) {initBasic(idResIn);}
+  ResonanceGmZ(int idResIn) : gmZmode(), thetaWRat(), ei2(), eivi(), vi2ai2(),
+    gamNorm(), intNorm(), resNorm() {initBasic(idResIn);}
 
 private:
 
@@ -187,7 +194,7 @@ class ResonanceW : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceW(int idResIn) {initBasic(idResIn);}
+  ResonanceW(int idResIn) : thetaWRat(), alpEM() {initBasic(idResIn);}
 
 private:
 
@@ -214,7 +221,8 @@ class ResonanceTop : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceTop(int idResIn) {initBasic(idResIn);}
+  ResonanceTop(int idResIn) : thetaWRat(), m2W(), tanBeta(), tan2Beta(),
+    mbRun() {initBasic(idResIn);}
 
 private:
 
@@ -241,7 +249,7 @@ class ResonanceFour : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceFour(int idResIn) {initBasic(idResIn);}
+  ResonanceFour(int idResIn) : thetaWRat(), m2W() {initBasic(idResIn);}
 
 private:
 
@@ -269,8 +277,13 @@ class ResonanceH : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceH(int higgsTypeIn, int idResIn) : higgsType(higgsTypeIn)
-    {initBasic(idResIn);}
+  ResonanceH(int higgsTypeIn, int idResIn) : higgsType(higgsTypeIn),
+    useCubicWidth(), useRunLoopMass(), useNLOWidths(), sin2tW(), cos2tW(),
+    mT(), mZ(), mW(), mHchg(), GammaT(), GammaZ(), GammaW(), rescAlpS(),
+    rescColQ(), coup2d(), coup2u(), coup2l(), coup2Z(), coup2W(), coup2Hchg(),
+    coup2H1H1(), coup2A3A3(), coup2H1Z(), coup2A3Z(), coup2A3H1(),
+    coup2HchgW(), mLowT(), mStepT(), mLowZ(), mStepZ(), mLowW(), mStepW(),
+    kinFacT(), kinFacZ(), kinFacW() {initBasic(idResIn);}
 
 private:
 
@@ -317,7 +330,8 @@ class ResonanceHchg : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceHchg(int idResIn) {initBasic(idResIn);}
+  ResonanceHchg(int idResIn) : useCubicWidth(), thetaWRat(), mW(), tanBeta(),
+    tan2Beta(), coup2H1W() {initBasic(idResIn);}
 
 private:
 
@@ -345,7 +359,10 @@ class ResonanceZprime : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceZprime(int idResIn) {initBasic(idResIn);}
+  ResonanceZprime(int idResIn) : gmZmode(), maxZpGen(), sin2tW(), cos2tW(),
+    thetaWRat(), mZ(), GammaZ(), m2Z(), GamMRatZ(), afZp(), vfZp(), coupZpWW(),
+    ei2(), eivi(), vai2(), eivpi(), vaivapi(), vapi2(), gamNorm(), gamZNorm(),
+    ZNorm(), gamZpNorm(), ZZpNorm(), ZpNorm() {initBasic(idResIn);}
 
 private:
 
@@ -375,7 +392,8 @@ class ResonanceWprime : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceWprime(int idResIn) {initBasic(idResIn);}
+  ResonanceWprime(int idResIn) : thetaWRat(), cos2tW(), alpEM(), aqWp(),
+    vqWp(), alWp(), vlWp(), coupWpWZ() {initBasic(idResIn);}
 
 private:
 
@@ -402,7 +420,7 @@ class ResonanceRhorizontal : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceRhorizontal(int idResIn) {initBasic(idResIn);}
+  ResonanceRhorizontal(int idResIn) : thetaWRat() {initBasic(idResIn);}
 
 private:
 
@@ -429,7 +447,8 @@ class ResonanceExcited : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceExcited(int idResIn) {initBasic(idResIn);}
+  ResonanceExcited(int idResIn) : Lambda(), coupF(), coupFprime(), coupFcol(),
+    contactDec(), sin2tW(), cos2tW() {initBasic(idResIn);}
 
 private:
 
@@ -456,7 +475,8 @@ class ResonanceGraviton : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceGraviton(int idResIn) {initBasic(idResIn);}
+  ResonanceGraviton(int idResIn) : eDsmbulk(), eDvlvl(), kappaMG(),
+    eDcoupling() {initBasic(idResIn);}
 
 private:
 
@@ -487,7 +507,8 @@ class ResonanceKKgluon : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceKKgluon(int idResIn) {initBasic(idResIn);}
+  ResonanceKKgluon(int idResIn) : normSM(), normInt(), normKK(), eDgv(),
+    eDga(), interfMode() {initBasic(idResIn);}
 
 private:
 
@@ -522,7 +543,7 @@ class ResonanceLeptoquark : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceLeptoquark(int idResIn) {initBasic(idResIn);}
+  ResonanceLeptoquark(int idResIn) : kCoup() {initBasic(idResIn);}
 
 private:
 
@@ -549,7 +570,7 @@ class ResonanceNuRight : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceNuRight(int idResIn) {initBasic(idResIn);}
+  ResonanceNuRight(int idResIn) : thetaWRat(), mWR() {initBasic(idResIn);}
 
 private:
 
@@ -576,7 +597,7 @@ class ResonanceZRight : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceZRight(int idResIn) {initBasic(idResIn);}
+  ResonanceZRight(int idResIn) : sin2tW(), thetaWRat() {initBasic(idResIn);}
 
 private:
 
@@ -603,7 +624,7 @@ class ResonanceWRight : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceWRight(int idResIn) {initBasic(idResIn);}
+  ResonanceWRight(int idResIn) : thetaWRat() {initBasic(idResIn);}
 
 private:
 
@@ -630,7 +651,8 @@ class ResonanceHchgchgLeft : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceHchgchgLeft(int idResIn) {initBasic(idResIn);}
+  ResonanceHchgchgLeft(int idResIn) : yukawa(), gL(), vL(),
+    mW() {initBasic(idResIn);}
 
 private:
 
@@ -657,7 +679,8 @@ class ResonanceHchgchgRight : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceHchgchgRight(int idResIn) {initBasic(idResIn);}
+  ResonanceHchgchgRight(int idResIn) : idWR(), yukawa(),
+    gR() {initBasic(idResIn);}
 
 private:
 

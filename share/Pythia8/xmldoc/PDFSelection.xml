@@ -169,17 +169,25 @@ evolution.
 </option> 
 <option value="18">NNPDF3.1 QCD LO <ei>alpha_s(M_Z) = 0.118</ei>. 
 </option> 
-<option value="19">NNPDF3.1 QCD+QED NLO <ei>alpha_s(M_Z) = 0.118</ei>. 
+<option value="19">NNPDF3.1 QCD+LUXQED NLO <ei>alpha_s(M_Z) = 0.118</ei>. 
 </option> 
-<option value="20">NNPDF3.1 QCD+QED NNLO <ei>alpha_s(M_Z) = 0.118</ei>. 
+<option value="20">NNPDF3.1 QCD+LUXQED NNLO <ei>alpha_s(M_Z) = 0.118</ei>. 
 </option> 
-<option value="21"> modified NNPDF3.1 QCD NNLO. It is highly experimental, 
-as a first attempt to combine a NNLO behaviour at high <ei>x</ei> 
-with a physical LO-style one at low <ei>x</ei> and <ei>Q</ei>, 
-see the presentation by Zahiri Kassabov at the 
-<a href="https://indico.cern.ch/event/647565/" target="page"> 
-September 2017 PDF4LHC meeting</a>, and it is likely to be replaced 
-in future versions. 
+<option value="21">NNPDF3.1sx+LHCb NLO+NLLx LUXQED 
+<ei>alpha_s(M_Z) = 0.118</ei> <ref>Ber18</ref>. While at NLO, the 
+additional small-<ei>x</ei> resummation, anchored by LHC-b data, offers 
+a more reasonable small-<ei>x</ei> behaviour than most NLO PDFs, as 
+required for the successful usage e.g. with traditional "improved LL" 
+parton showers. The photon part is unchanged from the earlier NNPDF 3.1 
+QED analysis <ref>Ber17</ref>. 
+<note>Warning :</note>in version 8.235 the 21 identifier was used to 
+denote and earlier attempt to obtain a more reasonable small-<ei>x</ei> 
+behaviour. This PDF set is superseded by the new 21 and 22 sets, and has 
+been removed, as was forewarned. 
+</option> 
+<option value="22">NNPDF3.1sx+LHCb NNLO+NLLx LUXQED 
+<ei>alpha_s(M_Z) = 0.118</ei>. Comments as for 21, but this set is at 
+NNLO rather than NLO. 
 </option> 
 <option value="LHAPDF5:set/member">Use an external LHAPDF set 
 where <code>set</code> is the name of the set to use 
@@ -458,11 +466,21 @@ rescaled by the factor <code>PomRescale</code> below.
 there is an additional suppression by <ei>(1-x)^p</ei>, where the power is 
 given by <code>PDF:PomHixSupp</code> below. 
 </option> 
-<option value="12">The GKG18-DPDF Fit A central member <ei>Q^2</ei>-dependent 
-parametrization based on a tune to H1 and ZEUS data <ref>Goh18</ref>. 
+<option value="12">The GKG18-DPDF LO Fit A central member 
+<ei>Q^2</ei>-dependent parametrization based on a tune to 
+H1 and ZEUS data <ref>Goh18</ref>. 
 </option> 
-<option value="13">The GKG18-DPDF Fit B central member <ei>Q^2</ei>-dependent 
-parametrization based on a tune to H1 and ZEUS data <ref>Goh18</ref>. 
+<option value="13">The GKG18-DPDF LO Fit B central member 
+<ei>Q^2</ei>-dependent parametrization based on a tune to 
+H1 and ZEUS data <ref>Goh18</ref>. 
+</option> 
+<option value="14">The GKG18-DPDF NLO Fit A central member 
+<ei>Q^2</ei>-dependent parametrization based on a tune to 
+H1 and ZEUS data <ref>Goh18</ref>. 
+</option> 
+<option value="15">The GKG18-DPDF NLO Fit B central member 
+<ei>Q^2</ei>-dependent parametrization based on a tune to 
+H1 and ZEUS data <ref>Goh18</ref>. 
 </option> 
 <option value="LHAPDF5:set/member">Use an external LHAPDF5 set, 
 cf. the corresponding proton option. 
@@ -610,8 +628,43 @@ leptons a bit less efficient than option 1 but allows straightforward
 implementation of photon fluxes from different particles. To use this option 
 user has to provide the external photon flux using method 
 <code>Pythia::setPhotonFluxPtr(PDF*, PDF*)</code> as demostrated in the 
-sample program <code>main70.cc</code>. </option> 
+sample program <code>main70.cc</code>.</option> 
 </modepick> 
+ 
+<modepick name="PDF:lepton2gammaApprox" default="1" min="1" max="2"> 
+Controls which type of overestimate is used for photon flux sampling. 
+<option value="1"> Estimate optimized for photons from leptons. Works 
+reasonable well also for photoproduction in p+p.</option> 
+<option value="2"> Estimate optimized for ultraperipheral heavy-ion collisions 
+as presented in <code>main70.cc</code>. Here the estimate is divided into two 
+regions, a power-law in <ei>x_gamma</ei> below <ei>x_cut</ei> and an 
+exponential fall-off above, see the related parameters below. Default values 
+are optimized for p+Pb collisions where Pb-nucleus provide the photons but 
+they should work reasonably well also for other similar 
+configurations.</option> 
+<note>Note:</note> Parameters do not affect the flux itself, only the sampling 
+efficiency. 
+</modepick> 
+ 
+<parm name="PDF:gammaFluxApprox2bMin" default="7.336" min="0.0"> 
+Minimal allowed impact parameter for which the flux is considered. Units in 
+<code>fm</code>. Should match the flux provided by user. 
+</parm> 
+ 
+<parm name="PDF:gammaFluxApprox2mBeam" default="0.9314" min="0.0"> 
+Per-nucleon mass used for the overestimate. Units in 
+<code>GeV</code> and should again match to the user-provided flux. 
+</parm> 
+ 
+<parm name="PDF:gammaFluxApprox2xPow" default="1.15" min="0.0"> 
+Value of the exponent of the power law. The default value should work well 
+for the foreseen cases, so vary with caution. 
+</parm> 
+ 
+<parm name="PDF:gammaFluxApprox2xCut" default="0.01" min="0.0" max = "1.0"> 
+Value that defines at which <ei>x_gamma</ei> different approximations are 
+used. As above, vary with caution. 
+</parm> 
  
 <h3>Incoming parton selection</h3> 
  
@@ -629,4 +682,4 @@ partons, etc.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

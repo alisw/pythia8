@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ProgramFlow.php'>
  
 <h2>Program Flow</h2> 
+<ol id="toc">
+  <li><a href="#section0">Normal usage</a></li>
+  <li><a href="#section1">Advanced usage, mainly for initialization</a></li>
+  <li><a href="#section2">The Pythia class methods and members</a></li>
+</ol>
+
  
 Recall that, to first order, the event generation process can be 
 subdivided into three stages: 
@@ -50,7 +56,10 @@ At the bottom of this webpage is a complete survey of all public
 than the task-oriented descriptions found in the preceding sections. 
 This offers complementary information. 
  
-<h3>Initialization - normal usage</h3> 
+<a name="section0"></a> 
+<h3>Normal usage</h3> 
+ 
+<h4>Initialization</h4> 
  
 <ol> 
  
@@ -191,7 +200,7 @@ either only what has been changed or everything, you can use
  
 </ol> 
  
-<h3>The event loop</h3> 
+<h4>The event loop</h4> 
  
 <ol> 
  
@@ -236,7 +245,7 @@ event.
  
 </ol> 
  
-<h3>Finishing</h3> 
+<h4>Finishing</h4> 
  
 <ol> 
  
@@ -250,6 +259,7 @@ and warnings encountered.
  
 </ol> 
  
+<a name="section1"></a> 
 <h3>Advanced usage, mainly for initialization</h3> 
  
 A) Necessary data are automatically loaded when you use the 
@@ -580,12 +590,14 @@ first-read file, when the full initialization is performed.
  
 </ol> 
  
-<h2>The Pythia Class</h2> 
+<br/><hr/> 
+<a name="section2"></a> 
+<h3>The Pythia class methods and members</h3> 
  
 Here follows the complete survey of all public <code>Pythia</code> 
 methods and data members. 
  
-<h3>Constructors and destructor</h3> 
+<h4>Constructors and destructor</h4> 
  
 <a name="anchor1"></a>
 <p/><strong> Pythia::Pythia(string xmlDir = &quot;../share/Pythia8/xmldoc&quot;, bool printBanner = true) &nbsp;</strong> <br/>
@@ -656,7 +668,7 @@ the destructor deletes the objects created by the constructor.
 helper methods, that collects common tasks of the two constructors. 
    
  
-<h3>Set up run</h3> 
+<h4>Set up run</h4> 
  
 <a name="anchor7"></a>
 <p/><strong> bool Pythia::readString(string line, bool warn = true) &nbsp;</strong> <br/>
@@ -1013,7 +1025,7 @@ echo "<a href='RopeHadronization.php?filepath=".$filepath."' target='page'>";?>R
 <br/><b>Note:</b> The method currently always returns true. 
    
  
-<h3>Initialize</h3> 
+<h4>Initialize</h4> 
  
 At the initialization stage all the information provided above is 
 processed, and the stage is set up for the subsequent generation 
@@ -1033,7 +1045,7 @@ initialization fails. It is then not possible to generate any
 events. 
    
  
-<h3>Generate events</h3> 
+<h4>Generate events</h4> 
  
 The <code>next()</code> method is the main one to generate events. 
 In this section we also put a few other specialized methods that 
@@ -1054,6 +1066,23 @@ method.
    
  
 <a name="anchor28"></a>
+<p/><strong> bool Pythia::next(double eCM) &nbsp;</strong> <br/>
+   
+<a name="anchor29"></a>
+<strong> bool Pythia::next(double eA, double eB) &nbsp;</strong> <br/>
+   
+<a name="anchor30"></a>
+<strong> bool Pythia::next(double pxA, double pyA, double pzA, double pxB, double pyB, double pzB) &nbsp;</strong> <br/>
+These three methods can only be used when variable event-energy has been 
+switched on, see the <?php $filepath = $_GET["filepath"];
+echo "<a href='BeamParameters.php?filepath=".$filepath."' target='page'>";?>Beam Parameters</a> 
+description. Then they can be used to give in the new event CM energy, 
+the two back-to-back incoming particle energies, or the full 
+three-momentum of the incoming particles, for <code>Beams:frameType</code> 
+set to 1, 2 or 3, respectively. 
+   
+ 
+<a name="anchor31"></a>
 <p/><strong> int Pythia::forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0) &nbsp;</strong> <br/>
 perform a final-state shower evolution on partons in the 
 <code>event</code> event record. This could be used for externally 
@@ -1086,7 +1115,7 @@ will continue to the lower cutoff.
 has been generated. 
    
  
-<a name="anchor29"></a>
+<a name="anchor32"></a>
 <p/><strong> bool Pythia::forceHadronLevel(bool findJunctions = true) &nbsp;</strong> <br/>
 hadronize the existing event record, i.e. perform string fragmentation 
 and particle decays. There are two main applications. Firstly, 
@@ -1114,7 +1143,7 @@ fails. The event record is then not consistent and should not be
 studied. 
    
  
-<a name="anchor30"></a>
+<a name="anchor33"></a>
 <p/><strong> bool Pythia::Decays() &nbsp;</strong> <br/>
 perform decays of all particles in the event record that have not been 
 decayed but should have been done so. This can be used e.g. for 
@@ -1125,7 +1154,7 @@ echo "<a href='HadronLevelStandalone.php?filepath=".$filepath."' target='page'>"
 event record is then not consistent and should not be studied. 
    
  
-<a name="anchor31"></a>
+<a name="anchor34"></a>
 <p/><strong> bool Pythia::forceRHadronDecays() &nbsp;</strong> <br/>
 perform decays of R-hadrons that were previously considered stable. 
 This could be if an R-hadron is sufficiently long-lived that 
@@ -1137,7 +1166,7 @@ echo "<a href='RHadrons.php?filepath=".$filepath."' target='page'>";?>here</a>.
 event record is then not consistent and should not be studied. 
    
  
-<a name="anchor32"></a>
+<a name="anchor35"></a>
 <p/><strong> void Pythia::LHAeventList() &nbsp;</strong> <br/>
 list the Les Houches Accord information on the current event, see 
 <code><?php $filepath = $_GET["filepath"];
@@ -1146,7 +1175,7 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>LH
 listing is a special case that would not fit elsewhere.) 
    
  
-<a name="anchor33"></a>
+<a name="anchor36"></a>
 <p/><strong> bool Pythia::LHAeventSkip(int nSkip) &nbsp;</strong> <br/>
 skip ahead a number of events in the Les Houches generation 
 sequence, without doing anything further with them, see 
@@ -1162,14 +1191,14 @@ specifically if the end of a LHEF has been reached, cf.
 <code>next()</code> above. 
    
  
-<h3>Finalize</h3> 
+<h4>Finalize</h4> 
  
 There is no required finalization step; you can stop generating events 
 when and how you want. It is still recommended that you make it a 
 routine to call the following method at the end. A second method provides 
 a deprecated alternative. 
  
-<a name="anchor34"></a>
+<a name="anchor37"></a>
 <p/><strong> void Pythia::stat() &nbsp;</strong> <br/>
 list statistics on the event generation, specifically total and partial 
 cross sections and the number of different errors. For more details see 
@@ -1179,7 +1208,7 @@ echo "<a href='EventStatistics.php?filepath=".$filepath."' target='page'>";?>her
 echo "<a href='MainProgramSettings.php?filepath=".$filepath."' target='page'>";?>here</a>. 
    
  
-<h3>Interrogate settings</h3> 
+<h4>Interrogate settings</h4> 
  
 Normally settings are used in the setup and initialization stages 
 to determine the character of a run, e.g. read from a file with the 
@@ -1195,7 +1224,7 @@ be the number of events to generate. For such applications the
 following shortcuts to some <code>Settings</code> methods may be 
 convenient. 
  
-<a name="anchor35"></a>
+<a name="anchor38"></a>
 <p/><strong> bool Pythia::flag(string key) &nbsp;</strong> <br/>
 read in a boolean variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1203,7 +1232,7 @@ the name of the variable to be read.
    
    
  
-<a name="anchor36"></a>
+<a name="anchor39"></a>
 <p/><strong> int Pythia::mode(string key) &nbsp;</strong> <br/>
 read in an integer variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1211,7 +1240,7 @@ the name of the variable to be read.
    
    
  
-<a name="anchor37"></a>
+<a name="anchor40"></a>
 <p/><strong> double Pythia::parm(string key) &nbsp;</strong> <br/>
 read in a double-precision variable from the <code>Settings</code> 
 database. 
@@ -1220,7 +1249,7 @@ the name of the variable to be read.
    
    
  
-<a name="anchor38"></a>
+<a name="anchor41"></a>
 <p/><strong> string Pythia::word(string key) &nbsp;</strong> <br/>
 read in a string variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1228,13 +1257,13 @@ the name of the variable to be read.
    
    
  
-<h3>Get a PDF set</h3> 
+<h4>Get a PDF set</h4> 
  
 <code>Pythia</code> contains an number of parton density sets 
 internally, plus an interface to LHAPDF (5 or 6). With the method below, 
 this machinery is also made available for external usage. 
  
-<a name="anchor39"></a>
+<a name="anchor42"></a>
 <p/><strong> PDF* getPDFPtr(int id, int sequence = 1) &nbsp;</strong> <br/>
 get a pointer to a PDF object. Which PDF is returned depends on the 
 <?php $filepath = $_GET["filepath"];
@@ -1249,48 +1278,48 @@ selection be determined by the special settings for hard processes
    
    
  
-<h3>Data members</h3> 
+<h4>Data members</h4> 
  
 The <code>Pythia</code> class contains a few public data members, 
 several of which play a central role. We list them here, with 
 links to the places where they are further described. 
  
-<a name="anchor40"></a>
+<a name="anchor43"></a>
 <p/><strong> Event Pythia::process &nbsp;</strong> <br/>
 the hard-process event record, see <?php $filepath = $_GET["filepath"];
 echo "<a href='EventRecord.php?filepath=".$filepath."' target='page'>";?>here</a> 
 for further details. 
    
  
-<a name="anchor41"></a>
+<a name="anchor44"></a>
 <p/><strong> Event Pythia::event &nbsp;</strong> <br/>
 the complete event record, see <?php $filepath = $_GET["filepath"];
 echo "<a href='EventRecord.php?filepath=".$filepath."' target='page'>";?>here</a> 
 for further details. 
    
  
-<a name="anchor42"></a>
+<a name="anchor45"></a>
 <p/><strong> Info Pythia::info &nbsp;</strong> <br/>
 further information on the event-generation process, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='EventInformation.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
-<a name="anchor43"></a>
+<a name="anchor46"></a>
 <p/><strong> Settings Pythia::settings &nbsp;</strong> <br/>
 the settings database, see <?php $filepath = $_GET["filepath"];
 echo "<a href='SettingsScheme.php?filepath=".$filepath."' target='page'>";?>here</a> 
 for further details. 
    
  
-<a name="anchor44"></a>
+<a name="anchor47"></a>
 <p/><strong> ParticleData Pythia::particleData &nbsp;</strong> <br/>
 the particle properties and decay tables database, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='ParticleDataScheme.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
-<a name="anchor45"></a>
+<a name="anchor48"></a>
 <p/><strong> Rndm Pythia::rndm &nbsp;</strong> <br/>
 the random number generator, see <?php $filepath = $_GET["filepath"];
 echo "<a href='RandomNumberSeed.php?filepath=".$filepath."' target='page'>";?>here</a> 
@@ -1298,21 +1327,21 @@ and <?php $filepath = $_GET["filepath"];
 echo "<a href='RandomNumbers.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
-<a name="anchor46"></a>
+<a name="anchor49"></a>
 <p/><strong> CoupSM Pythia::coupSM &nbsp;</strong> <br/>
 Standard Model couplings and mixing matrices, see 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='StandardModelParameters.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
-<a name="anchor47"></a>
+<a name="anchor50"></a>
 <p/><strong> SusyLesHouches Pythia::slha &nbsp;</strong> <br/>
 parameters and particle data in the context of supersymmetric models, 
 see <?php $filepath = $_GET["filepath"];
 echo "<a href='SUSYLesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>here</a> for further details. 
    
  
-<a name="anchor48"></a>
+<a name="anchor51"></a>
 <p/><strong> PartonSystems Pythia::partonSystems &nbsp;</strong> <br/>
 a grouping of the partons in the event record by subsystem, 
 see <?php $filepath = $_GET["filepath"];
@@ -1322,4 +1351,4 @@ echo "<a href='AdvancedUsage.php?filepath=".$filepath."' target='page'>";?>here<
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

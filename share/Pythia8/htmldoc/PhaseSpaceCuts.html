@@ -7,6 +7,16 @@
 <body>
  
 <h2>Phase Space Cuts</h2> 
+<ol id="toc">
+  <li><a href="#section0">Cuts in all processes</a></li>
+  <li><a href="#section1">Cuts in <ei>2 &rarr; 1</ei> processes</a></li>
+  <li><a href="#section2">Cuts in <ei>2 &rarr; 2</ei> processes</a></li>
+  <li><a href="#section3">Cuts in <ei>2 &rarr; 3</ei> processes</a></li>
+  <li><a href="#section4">Cuts for a second hard process</a></li>
+  <li><a href="#section5">Generation strategy and documentation</a></li>
+  <li><a href="#section6">Reweighting of <ei>2 &rarr; 2</ei> processes</a></li>
+</ol>
+
  
 <code>PhaseSpace</code> is base class for all hard-process phase-space 
 generators, either generic <i>2 &rarr; 1</i> or <i>2 &rarr; 2</i> ones, 
@@ -28,6 +38,7 @@ Here we have tried to remain with the useful minimum, however. More
 generic possibilities could be handled by the 
 <a href="UserHooks.html" target="page">user hooks</a> facility. 
  
+<a name="section0"></a> 
 <h3>Cuts in all processes</h3> 
  
 <a name="anchor1"></a>
@@ -43,6 +54,7 @@ The maximum invariant mass.
 A value below <code>mHatMin</code> means there is no upper limit. 
    
  
+<a name="section1"></a> 
 <h3>Cuts in <i>2 &rarr; 1</i> processes</h3> 
  
 When a resonance <code>id</code> is produced, the 
@@ -56,6 +68,7 @@ upper mass limit, so effects mainly concern the lower limit.
 Should there be no overlap between the two ranges then the process 
 will be switched off. 
  
+<a name="section2"></a> 
 <h3>Cuts in <i>2 &rarr; 2</i> processes</h3> 
  
 <a name="anchor3"></a>
@@ -97,8 +110,21 @@ cross section itself, and therefore always included.
  (<code>default = <strong>0.01</strong></code>; <code>minimum = 1e-6</code>)<br/>
 The minimum width a resonance must have for the mass to be dynamically 
 selected according to a Breit-Wigner shape, within the limits set below. 
-Only applies when <code>useBreitWigners</code> is on; else the nominal 
-mass value is always used. 
+The Breit-Wigner shape is deformed by the variation of the cross section 
+across the peak. Only applies when <code>useBreitWigners</code> is on; 
+else the nominal mass value is always used. 
+   
+ 
+<a name="anchor8"></a>
+<p/><code>parm&nbsp; </code><strong> PhaseSpace:minWidthNarrowBW &nbsp;</strong> 
+ (<code>default = <strong>1e-6</strong></code>; <code>minimum = 1e-10</code>)<br/>
+A particle that is not wide enough to qualify for the dynamical mass 
+generation above can still qualify for a simplified treatment if it has 
+a width above this value. Then the mass is selected according to a simple 
+symmetric Breit-Wigner that will not be (significantly) distorted by 
+the cross section variation. Only applies when <code>useBreitWigners</code> 
+is on; else the nominal mass value is always used. Note that this parameter 
+is also used for mass selection in the MPI machinery. 
    
  
 <p/> 
@@ -109,7 +135,7 @@ rules above and to the rules of the particle species itself, the
 methods restrict the allowed mass range of the particle, just like for 
 the <i>2 &rarr; 1 </i> processes. 
  
-<a name="anchor8"></a>
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:Q2Min &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>)<br/>
 The minimum value for the DIS variable <i>Q^2 = - tHat</i>. 
@@ -119,6 +145,7 @@ are experimentally distinguishable. No cut will be applied for
 <code>Q2Min &lt; pTHatMinDiverge^2</code>. 
    
  
+<a name="section3"></a> 
 <h3>Cuts in <i>2 &rarr; 3</i> processes</h3> 
  
 There are two main classes of <i>2 &rarr; 3</i> processes. One is the 
@@ -159,14 +186,14 @@ program appreciably. Also narrow <i>pT_3</i> and <i>pT_5</i> bins
 are likely to give inefficient generation, if it gives rise to 
 significant indirect restrictions on <i>pT_4</i>. 
  
-<a name="anchor9"></a>
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHat3Min &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The minimum invariant <i>pT</i> of the highest-<i>pT</i> parton in 
 QCD <i>2 &rarr; 3</i> processes. 
    
  
-<a name="anchor10"></a>
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHat3Max &nbsp;</strong> 
  (<code>default = <strong>-1.</strong></code>)<br/>
 The maximum invariant <i>pT</i> of the highest-<i>pT</i> parton in 
@@ -174,14 +201,14 @@ QCD <i>2 &rarr; 3</i> processes
 A value below <code>pTHat3Min</code> means there is no upper limit. 
    
  
-<a name="anchor11"></a>
+<a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHat5Min &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
 The minimum invariant <i>pT</i> of the lowest-<i>pT</i> parton in 
 QCD <i>2 &rarr; 3</i> processes. 
    
  
-<a name="anchor12"></a>
+<a name="anchor13"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHat5Max &nbsp;</strong> 
  (<code>default = <strong>-1.</strong></code>)<br/>
 The maximum invariant <i>pT</i> of the lowest-<i>pT</i> parton in 
@@ -189,7 +216,7 @@ QCD <i>2 &rarr; 3</i> processes
 A value below <code>pTHat5Min</code> means there is no upper limit. 
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:RsepMin &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>)<br/>
 The minimum separation <i>R</i> in <i>(eta, phi)</i> space between 
@@ -197,6 +224,7 @@ any two outgoing partons in QCD <i>2 &rarr; 3</i> processes.
    
  
  
+<a name="section4"></a> 
 <h3>Cuts for a second hard process</h3> 
  
 If you use the machinery that allows the generation of a specified 
@@ -208,7 +236,7 @@ technical distinction; you are welcome e.g. to pick <i>pT</i> ranges
 such that the second interaction always has a larger <i>pT</i> than 
 the first. 
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:sameForSecond &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 By default use the same cuts for a second hard process as for the 
@@ -216,32 +244,33 @@ first. If <code>off</code> then instead use the mass and <i>pT</i>
 cuts below, where relevant. (The other cuts above still remain the same.) 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:mHatMinSecond &nbsp;</strong> 
  (<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>)<br/>
 The minimum invariant mass for a second interaction, if separate. 
    
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:mHatMaxSecond &nbsp;</strong> 
  (<code>default = <strong>-1.</strong></code>)<br/>
 The maximum invariant mass for a second interaction, if separate. 
 A value below <code>mHatMin</code> means there is no upper limit. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHatMinSecond &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The minimum invariant <i>pT</i> for a second interaction, if separate. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHatMaxSecond &nbsp;</strong> 
  (<code>default = <strong>-1.</strong></code>)<br/>
 The maximum invariant <i>pT</i> for a second interaction, if separate. 
 A value below <code>pTHatMin</code> means there is no upper limit. 
    
  
+<a name="section5"></a> 
 <h3>Generation strategy and documentation</h3> 
  
 During the initialization stage a simplified function is found, 
@@ -257,7 +286,7 @@ however. This then can lead to subsequent maximum violations, where the
 ratio is above unity. Two alternative strategies are implemented to 
 handle such situations, see below. 
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:showSearch &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Possibility to print information on the search for phase-space 
@@ -267,7 +296,7 @@ corresponding upper estimate of the cross section. Of interest
 for crosschecks by expert users only. 
    
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:showViolation &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Possibility to print information whenever the assumed maximum 
@@ -277,7 +306,7 @@ Also, should negative cross sections occur, print whenever a more
 negative value is encountered. 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:increaseMaximum &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Strategy for handling cases where a larger cross section is 
@@ -307,6 +336,7 @@ easy to save-and-restore the <a href="RandomNumbers.html" target="page">random-n
 state</a> for debugging purposes. 
    
  
+<a name="section6"></a> 
 <h3>Reweighting of <i>2 &rarr; 2</i> processes</h3> 
  
 Events normally come with unit weight, i.e. are distributed across 
@@ -362,7 +392,7 @@ the same event. Furthermore you have to be careful about the choice
 of <code>PhaseSpace:pTHatMin</code>, since a <i>pTHat = 0</i> 
 event would come with an infinite weight. 
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:bias2Selection &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Possibility to switch on a biased phase space sampling, 
@@ -372,7 +402,7 @@ the paragraph above; under other conditions the initialization
 will abort. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:bias2SelectionPow &nbsp;</strong> 
  (<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)<br/>
 If the above flag is on, then a <i>2 &rarr; 2</i> process at a scale 
@@ -386,7 +416,7 @@ The final overall normalization also involves the
 <code>Info::weightSum()</code> value. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:bias2SelectionRef &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)<br/>
 The reference scale <i>pTRef</i> introduced above, such that events 
@@ -399,4 +429,4 @@ give "reasonably-sized" weights.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

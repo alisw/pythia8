@@ -81,7 +81,8 @@ of the run, so the values associated with the last generated event
 should be the most accurate ones. If events also come with a dimensional 
 weight, like in some Les Houches strategies, this weight is in units of pb. 
  
-<h2>Direct output to HepMC</h2> 
+<a name="section0"></a> 
+<h3>Direct output to HepMC</h3> 
  
 Provided that PYTHIA is properly linked to HepMC, implementation of the 
 most common user case (run PYTHIA with a runcard, output HepMC) exists. 
@@ -102,7 +103,8 @@ and a HepMC file is then written.
 There are several other useful command line options to <code>main93</code>. 
 They are all displayed by running <code>./main93 -h</code>. 
  
-<h2>The public methods</h2> 
+<a name="section1"></a> 
+<h3>The public methods</h3> 
  
 Here comes a complete list of all public methods of the 
 <code>Pythia8ToHepMC</code> class in the <code>HepMC</code> 
@@ -268,4 +270,4 @@ like in some Les Houches strategies, this weight is in units of pb.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

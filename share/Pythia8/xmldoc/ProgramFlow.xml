@@ -23,7 +23,9 @@ At the bottom of this webpage is a complete survey of all public
 than the task-oriented descriptions found in the preceding sections. 
 This offers complementary information. 
  
-<h3>Initialization - normal usage</h3> 
+<h3>Normal usage</h3> 
+ 
+<h4>Initialization</h4> 
  
 <ol> 
  
@@ -157,7 +159,7 @@ either only what has been changed or everything, you can use
  
 </ol> 
  
-<h3>The event loop</h3> 
+<h4>The event loop</h4> 
  
 <ol> 
  
@@ -199,7 +201,7 @@ event.
  
 </ol> 
  
-<h3>Finishing</h3> 
+<h4>Finishing</h4> 
  
 <ol> 
  
@@ -530,12 +532,13 @@ first-read file, when the full initialization is performed.
  
 </ol> 
  
-<h2>The Pythia Class</h2> 
+<br/><hr/> 
+<h3>The Pythia class methods and members</h3> 
  
 Here follows the complete survey of all public <code>Pythia</code> 
 methods and data members. 
  
-<h3>Constructors and destructor</h3> 
+<h4>Constructors and destructor</h4> 
  
 <method name="Pythia::Pythia(string xmlDir 
 = &quot;../share/Pythia8/xmldoc&quot;, bool printBanner = true)"> 
@@ -602,7 +605,7 @@ the destructor deletes the objects created by the constructor.
 helper methods, that collects common tasks of the two constructors. 
 </methodmore> 
  
-<h3>Set up run</h3> 
+<h4>Set up run</h4> 
  
 <method name="bool Pythia::readString(string line, bool warn = true)"> 
 reads in a single string, that is interpreted as an instruction to 
@@ -933,7 +936,7 @@ likely to evolve further. Currently it is only used for the
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<h3>Initialize</h3> 
+<h4>Initialize</h4> 
  
 At the initialization stage all the information provided above is 
 processed, and the stage is set up for the subsequent generation 
@@ -951,7 +954,7 @@ initialization fails. It is then not possible to generate any
 events. 
 </method> 
  
-<h3>Generate events</h3> 
+<h4>Generate events</h4> 
  
 The <code>next()</code> method is the main one to generate events. 
 In this section we also put a few other specialized methods that 
@@ -968,6 +971,20 @@ can be checked with the
 <code><aloc href="EventInformation">Info::atEndOfFile()</aloc></code> 
 method. 
 </method> 
+ 
+<method name="bool Pythia::next(double eCM)"> 
+</method> 
+<methodmore name="bool Pythia::next(double eA, double eB)"> 
+</methodmore> 
+<methodmore name="bool Pythia::next(double pxA, double pyA, double pzA, 
+double pxB, double pyB, double pzB)"> 
+These three methods can only be used when variable event-energy has been 
+switched on, see the <aloc href="BeamParameters">Beam Parameters</aloc> 
+description. Then they can be used to give in the new event CM energy, 
+the two back-to-back incoming particle energies, or the full 
+three-momentum of the incoming particles, for <code>Beams:frameType</code> 
+set to 1, 2 or 3, respectively. 
+</methodmore> 
  
 <method name="int Pythia::forceTimeShower( int iBeg, int iEnd, 
 double pTmax, int nBranchMax = 0)"> 
@@ -1067,7 +1084,7 @@ specifically if the end of a LHEF has been reached, cf.
 <code>next()</code> above. 
 </method> 
  
-<h3>Finalize</h3> 
+<h4>Finalize</h4> 
  
 There is no required finalization step; you can stop generating events 
 when and how you want. It is still recommended that you make it a 
@@ -1081,7 +1098,7 @@ cross sections and the number of different errors. For more details see
 <aloc href="MainProgramSettings">here</aloc>. 
 </method> 
  
-<h3>Interrogate settings</h3> 
+<h4>Interrogate settings</h4> 
  
 Normally settings are used in the setup and initialization stages 
 to determine the character of a run, e.g. read from a file with the 
@@ -1125,7 +1142,7 @@ the name of the variable to be read.
 </argument> 
 </method> 
  
-<h3>Get a PDF set</h3> 
+<h4>Get a PDF set</h4> 
  
 <code>Pythia</code> contains an number of parton density sets 
 internally, plus an interface to LHAPDF (5 or 6). With the method below, 
@@ -1144,7 +1161,7 @@ selection be determined by the special settings for hard processes
 </argument> 
 </method> 
  
-<h3>Data members</h3> 
+<h4>Data members</h4> 
  
 The <code>Pythia</code> class contains a few public data members, 
 several of which play a central role. We list them here, with 
@@ -1197,4 +1214,4 @@ see <aloc href="AdvancedUsage">here</aloc> for further details.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

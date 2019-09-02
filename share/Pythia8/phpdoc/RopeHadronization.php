@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='RopeHadronization.php'>
  
 <h2>Rope Hadronization</h2> 
+<ol id="toc">
+  <li><a href="#section0">Main settings</a></li>
+  <li><a href="#section1">String shoving</a></li>
+  <li><a href="#section2">Flavour Ropes</a></li>
+</ol>
+
  
 In collisions of protons, there are often tens of multiparton interactions, 
 all producing Lund strings occupying the same area in transverse space of 
@@ -52,6 +58,7 @@ and the flavour ropes in <code>main102</code>.
 A simpler version of flavour composition ropes exist [<a href="Bibliography.php#refBie16c" target="page">Bie16c</a>], 
 which do not require vertex information. This can be enabled by a switch. 
  
+<a name="section0"></a> 
 <h3>Main settings</h3> 
  
 The main settings are common for both the string shoving and the flavour rope 
@@ -96,6 +103,7 @@ Imposed lower mass cutoff to allow for calculation of rapidities of dipoles
 composed of massless gluons. 
    
  
+<a name="section1"></a> 
 <h3>String shoving</h3> 
  
 The string shoving mechanism allows strings to push each other, before 
@@ -215,6 +223,7 @@ The value of <i>p_\perp</i> at which shoving is turned off, if the flag
 <code>Ropewalk:limitMom</code> is on. 
    
  
+<a name="section2"></a> 
 <h3>Flavour Ropes</h3> 
  
 The Flavour Ropes mechanism allows strings situated close in impact parameter 
@@ -453,4 +462,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

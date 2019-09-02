@@ -1,5 +1,5 @@
 // ResonanceWidths.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -26,7 +26,7 @@ namespace Pythia8 {
 const int    ResonanceWidths::NPOINT         = 100;
 
 // The mass of a resonance must not be too small.
-const double ResonanceWidths::MASSMIN        = 0.4;
+const double ResonanceWidths::MASSMIN        = 0.1;
 
 // The sum of product masses must not be too close to the resonance mass.
 const double ResonanceWidths::MASSMARGIN     = 0.1;
@@ -64,11 +64,6 @@ bool ResonanceWidths::init(Info* infoPtrIn, Settings* settingsPtrIn,
   // some exceptions: not used Higgses and not used Technicolor.
   if (idRes == 35 || idRes == 36 || idRes == 37
     || idRes/1000000 == 3) isGeneric = false;
-
-  // Allow width calculation for DM mediators
-  if (idRes == 54 || idRes == 55) isGeneric = false;
-
-
 
   // Resonance properties: antiparticle, mass, width
   hasAntiRes   = particlePtr->hasAnti();
@@ -214,6 +209,10 @@ bool ResonanceWidths::init(Info* infoPtrIn, Settings* settingsPtrIn,
       particlePtr->channel(i).bRatio( 0., false);
     return true;
   }
+
+  // Set lifetime for displaced vertex calculations (convert GeV^-1 to mm).
+  double decayLength = HBARC * FM2MM / widTot;
+  particlePtr->setTau0(decayLength, false);
 
   // Normalize branching ratios to unity.
   double bRatio;
@@ -933,7 +932,7 @@ void ResonanceH::initConstants() {
     coup2Hchg    = settingsPtr->parm("HiggsA3:coup2Hchg");
     coup2H1H1    = settingsPtr->parm("HiggsA3:coup2H1H1");
     coup2H1Z     = settingsPtr->parm("HiggsA3:coup2H1Z");
-    coup2HchgW   = settingsPtr->parm("HiggsA3:coup2Hchg");
+    coup2HchgW   = settingsPtr->parm("HiggsA3:coup2HchgW");
   }
 
   // Initialization of threshold kinematical factor by stepwise
@@ -1210,12 +1209,13 @@ double ResonanceH::eta2gaZ() {
   double  ef, vf, mLoop, epsilon, epsPrime, root, rootLog, asinEps;
   complex phi, psi, phiPrime, psiPrime, fXY, f1, etaNow;
 
-  // Loop over s, c, b, t, mu , tau, W+-, H+- flavours.
-  for (int idLoop = 0; idLoop < 7; ++idLoop) {
+  // Loop over s, c, b, t, mu, tau, W+-, H+- flavours.
+  for (int idLoop = 0; idLoop < 8; ++idLoop) {
     if      (idLoop < 4) idNow = idLoop + 3;
     else if (idLoop < 6) idNow = 2 * idLoop + 5;
     else if (idLoop < 7) idNow = 24;
     else                 idNow = 37;
+    if (idNow == 37 && higgsType == 0) continue;
 
     // Electroweak charges and loop integral parameters.
     ef        = (idNow < 20) ? couplingsPtr->ef(idNow) : 1.;

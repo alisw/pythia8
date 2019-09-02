@@ -13,7 +13,7 @@ leaves the field open exactly how to define what to mean by
 <ei>pT</ei>, how to handle recoil effects, how the colour flow is 
 affected, and so on, so there is certainly room for alternative 
 showers. A first example of a shower implemented within the PYTHIA 
-context is <a href="http://home.fnal.gov/~skands/vincia/">VINCIA</a>. 
+context is <a href="https://vincia.hepforge.org">VINCIA</a>. 
  
 <p/> 
 For the moment we assume you want to keep the MPI part of the story 
@@ -207,6 +207,14 @@ to the matrix element in the decay via a virtual photon or
 <ei>W^+-</ei>, respectively. It is called as part of such decays 
 if <code>ParticleDecays:allowPhotonRadiation = on</code>, which is 
 not the default value. 
+</method> 
+ 
+<method name="virtual int TimeShower::showerQEDafterRemnants( Event& event)"> 
+ Optional method to add QED showers after beam remnants have been added 
+ but before hadronisation. 
+ It is called from the very end of <code>PartonLevel::next()</code>, 
+ after the main perturbative evolution has finished and all beam 
+ remnants have been added. 
 </method> 
  
 <method name="double TimeShower::pTLastInShower()"> 
@@ -732,4 +740,4 @@ possible allowed recoilers in the input event.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

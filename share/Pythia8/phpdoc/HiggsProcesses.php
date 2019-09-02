@@ -28,6 +28,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='HiggsProcesses.php'>
  
 <h2>Higgs Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0">Standard-Model Higgs, basic processes</a></li>
+  <li><a href="#section1">Standard-Model Higgs, further processes</a></li>
+  <li><a href="#section2">Beyond-the-Standard-Model Higgs, introduction</a></li>
+  <li><a href="#section3">Beyond-the-Standard-Model Higgs, basic processes</a></li>
+  <li><a href="#section4">Beyond-the-Standard-Model Higgs, further processes</a></li>
+  <li><a href="#section5">Parameters for Beyond-the-Standard-Model Higgs production and decay</a></li>
+</ol>
+
  
 This page documents Higgs production within and beyond the Standard Model 
 (SM and BSM for short). This includes several different processes and, 
@@ -104,6 +113,7 @@ factors have been derived for a 125 GeV Higgs, but should apply for a
 reasonable mass range around that value. 
    
  
+<a name="section0"></a> 
 <h3>Standard-Model Higgs, basic processes</h3> 
  
 This section provides the standard set of processes that can be 
@@ -195,6 +205,7 @@ lengthy cross-section expression and inefficient phase-space selection.
 Code 909. 
    
  
+<a name="section1"></a> 
 <h3>Standard-Model Higgs, further processes</h3> 
  
 A number of further production processes has been implemented, that 
@@ -302,6 +313,7 @@ but is numerically negligible.
 Code 916. 
    
  
+<a name="section2"></a> 
 <h3>Beyond-the-Standard-Model Higgs, introduction</h3> 
  
 Further Higgs multiplets arise in a number of scenarios. We here 
@@ -331,6 +343,7 @@ be used, with couplings that can be set freely, also found further down
 on this page. 
    
  
+<a name="section3"></a> 
 <h3>Beyond-the-Standard-Model Higgs, basic processes</h3> 
  
 This section provides the standard set of processes that can be 
@@ -673,6 +686,7 @@ Scattering <i>f fbar &rarr; H+ H-</i>.
 Code 1085. 
    
  
+<a name="section4"></a> 
 <h3>Beyond-the-Standard-Model Higgs, further processes</h3> 
  
 This section mimics the above section on "Standard-Model Higgs, 
@@ -894,6 +908,7 @@ but is numerically negligible.
 Code 1056. 
    
  
+<a name="section5"></a> 
 <h3>Parameters for Beyond-the-Standard-Model Higgs production and decay</h3> 
  
 This section offers a big flexibility to set couplings of the various 
@@ -1751,4 +1766,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

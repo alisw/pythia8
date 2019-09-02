@@ -1,5 +1,5 @@
 // SusyResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand
+// Copyright (C) 2019 Torbjorn Sjostrand
 // Main author of this file: N. Desai
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -22,7 +22,9 @@ class WidthFunction : public FunctionEncapsulator {
 public:
 
   // Constructor and destructor.
-  WidthFunction() { };
+  WidthFunction() : particleDataPtr(), coupSUSYPtr(), infoPtr(), idRes(),
+    idInt(), id1(), id2(), id3(), id4(), mRes(), mInt(), gammaInt(), m1(),
+      m2(), m3(), m4() { };
   virtual ~WidthFunction() { };
 
   // Public methods.
@@ -57,6 +59,9 @@ protected:
 class StauWidths : public WidthFunction {
 
 public:
+
+  // Constructor.
+  StauWidths() : fnSwitch(), delm(), f0(), gf(), cons(), wparam() {}
 
   // Destructor.
   ~StauWidths() { };

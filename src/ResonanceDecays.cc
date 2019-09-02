@@ -1,5 +1,5 @@
 // ResonanceDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -27,7 +27,7 @@ const int    ResonanceDecays::NTRYCHANNEL = 10;
 const int    ResonanceDecays::NTRYMASSES  = 10000;
 
 // Mass above threshold for allowed decays.
-const double ResonanceDecays::MSAFETY     = 0.1;
+const double ResonanceDecays::MSAFETY     = 0.01;
 
 // When constrainted kinematics cut high-mass tail of Breit-Wigner.
 const double ResonanceDecays::WIDTHCUT    = 5.;

@@ -7,6 +7,26 @@
 <body>
  
 <h2>Event Information</h2> 
+<ol id="toc">
+  <li><a href="#section0">List information</a></li>
+  <li><a href="#section1">The beams</a></li>
+  <li><a href="#section2">Initialization</a></li>
+  <li><a href="#section3">The event type</a></li>
+  <li><a href="#section4">Hard process initiators</a></li>
+  <li><a href="#section5">Hard process parton densities and scales</a></li>
+  <li><a href="#section6">Hard process kinematics</a></li>
+  <li><a href="#section7">Soft Diffraction</a></li>
+  <li><a href="#section8">Hard Diffraction</a></li>
+  <li><a href="#section9">Photons from lepton beams</a></li>
+  <li><a href="#section10">Event weight and activity</a></li>
+  <li><a href="#section11">Multiparton interactions</a></li>
+  <li><a href="#section12">Cross sections</a></li>
+  <li><a href="#section13">Loop counters</a></li>
+  <li><a href="#section14">Parton shower history</a></li>
+  <li><a href="#section15">Les Houches Event File 3.0 information</a></li>
+  <li><a href="#section16">Header information</a></li>
+</ol>
+
  
 The <code>Info</code> class collects various one-of-a-kind information, 
 some relevant for all events and others for the current event. 
@@ -19,6 +39,7 @@ directly available. It is primarily intended for processes generated
 internally in PYTHIA, but many of the methods would work also for 
 events fed in via the Les Houches Accord. 
  
+<a name="section0"></a> 
 <h3>List information</h3> 
  
 <a name="anchor1"></a>
@@ -26,6 +47,7 @@ events fed in via the Les Houches Accord.
 a listing of most of the information set for the current event. 
    
  
+<a name="section1"></a> 
 <h3>The beams</h3> 
  
 <a name="anchor2"></a>
@@ -68,6 +90,7 @@ the masses of the two beam particles.
 the CM energy and its square for the two beams. 
    
  
+<a name="section2"></a> 
 <h3>Initialization</h3> 
  
 <a name="anchor12"></a>
@@ -80,6 +103,7 @@ cross section bigger than the nondiffractive one by reducing
 <i>pTmin</i>). 
    
  
+<a name="section3"></a> 
 <h3>The event type</h3> 
  
 <a name="anchor13"></a>
@@ -176,6 +200,7 @@ user-defined classification code. The methods below would also provide
 information for such particular subcollisions. 
    
  
+<a name="section4"></a> 
 <h3>Hard process initiators</h3> 
  
 The methods in this sections refer to the two initial partons of the 
@@ -217,6 +242,7 @@ else <code>false</code>. Should be interpreted with caution.
 Information is not set if you switch off parton-level processing. 
    
  
+<a name="section5"></a> 
 <h3>Hard process parton densities and scales</h3> 
  
 The methods in this section refer to the partons for which parton 
@@ -317,6 +343,7 @@ the Les Houches event, the factorization scale is set by this PDF info
 (<code>scalePDF</code>), which can disagree with <code>SCALUP</code>. 
    
  
+<a name="section6"></a> 
 <h3>Hard process kinematics</h3> 
  
 The methods in this section provide info on the kinematics of the hard 
@@ -366,6 +393,7 @@ the polar and azimuthal scattering angles in the rest frame of
 a <i>2 &rarr; 2</i> process. 
    
  
+<a name="section7"></a> 
 <h3>Soft Diffraction</h3> 
  
 Information on the primary elastic or 
@@ -414,6 +442,7 @@ The methods below this section do not currently provide information
 specific to diffractive subsystems, e.g. the MPI information is not 
 bookkept in such cases. 
  
+<a name="section8"></a> 
 <h3>Hard Diffraction</h3> 
  
 Information on the momentum fraction taken from the beam 
@@ -437,6 +466,7 @@ diffractive process.
 The momentum transfer <i>t</i> in the hard diffractive process. 
    
  
+<a name="section9"></a> 
 <h3>Photons from lepton beams</h3> 
  
 Information about the kinematics of photon-photon collisions from lepton 
@@ -472,6 +502,7 @@ Type of photon process, see
 <a href="Photoproduction.html" target="page">Photoproduction</a> for details. 
    
  
+<a name="section10"></a> 
 <h3>Event weight and activity</h3> 
  
 <a name="anchor73"></a>
@@ -570,6 +601,7 @@ with this weight, as discussed in
 <a href="NLOMerging.html" target="page"> NLO Merging</a>. 
    
  
+<a name="section11"></a> 
 <h3>Multiparton interactions</h3> 
  
 As already noted, these methods do not make sense for diffractive 
@@ -672,6 +704,7 @@ In such cases the old hadron-hadron values can be found here, while
 provide the new Pomeron-hadron ones. 
    
  
+<a name="section12"></a> 
 <h3>Cross sections</h3> 
  
 Here are the currently available methods related to the event sample 
@@ -726,6 +759,7 @@ process, in units of mb. The numbers refer to the accepted event sample
 above, i.e. after any user veto. 
    
  
+<a name="section13"></a> 
 <h3>Loop counters</h3> 
  
 Mainly for internal/debug purposes, a number of loop counters from 
@@ -863,6 +897,7 @@ normally the default value is what you want.
    
    
  
+<a name="section14"></a> 
 <h3>Parton shower history</h3> 
  
 The following methods are mainly intended for internal use, 
@@ -893,6 +928,7 @@ set/get value of <i>z</i> in latest ISR branching.
 set/get value of <i>pT^2</i> in latest ISR branching. 
    
  
+<a name="section15"></a> 
 <h3>Les Houches Event File 3.0 information</h3> 
  
 Les Houches Event files can conform to version 1.0 and version 3.0 
@@ -1108,6 +1144,7 @@ Additional comments appearing in the <code>&lt;event&gt;</code> tag
 can be obtained with the <code>Info</code> class member 
 <code>string getEventComments()</code>. 
  
+<a name="section16"></a> 
 <h3>Header information</h3> 
  
 A simple string key/value store, mainly intended for accessing 
@@ -1136,4 +1173,4 @@ set the header named <code>key</code> with the contents of <code>val</code>
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

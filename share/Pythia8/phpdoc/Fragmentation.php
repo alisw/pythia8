@@ -28,6 +28,16 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='Fragmentation.php'>
  
 <h2>Fragmentation</h2> 
+<ol id="toc">
+  <li><a href="#section0">Fragmentation functions</a></li>
+  <li><a href="#section1">Fragmentation <ei>pT</ei></a></li>
+  <li><a href="#section2">Jet joining procedure</a></li>
+  <li><a href="#section3">Colour tracing</a></li>
+  <li><a href="#section4">Simplifying systems</a></li>
+  <li><a href="#section5">Ministrings</a></li>
+  <li><a href="#section6">Junction treatment</a></li>
+</ol>
+
  
 Fragmentation in PYTHIA is based on the Lund string model 
 [<a href="Bibliography.php#refAnd83" target="page">And83</a>, <a href="Bibliography.php#refSjo84" target="page">Sjo84</a>]. Several different aspects are involved in 
@@ -47,6 +57,7 @@ described on the separate <?php $filepath = $_GET["filepath"];
 echo "<a href='FlavourSelection.php?filepath=".$filepath."' target='page'>";?>Flavour 
 Selection</a> page. 
  
+<a name="section0"></a> 
 <h3>Fragmentation functions</h3> 
  
 The <code>StringZ</code> class handles the choice of longitudinal 
@@ -253,6 +264,7 @@ This allows a sensible scaling to a particle with an unknown higher
 mass without the need for a user intervention. 
    
  
+<a name="section1"></a> 
 <h3>Fragmentation <i>pT</i></h3> 
  
 The <code>StringPT</code> class handles the choice of fragmentation 
@@ -392,6 +404,7 @@ MPI regularization parameter <code>MultipartonInteractions:pT0Ref</code>.
 The width/temperature will get the prefactor <i>N(NSP)^expNSP</i>. 
    
  
+<a name="section2"></a> 
 <h3>Jet joining procedure</h3> 
  
 String fragmentation is carried out iteratively from both string ends 
@@ -427,12 +440,29 @@ particle production. If not, i.e. if
 produced from what is currently left, if possible. (If not, the 
 fragmentation process is started over.) 
  
+<a name="section3"></a> 
+<h3>Colour tracing</h3> 
+ 
+<br/><br/><strong>StringFragmentation:TraceColours</strong>  <input type="radio" name="40" value="on"><strong>On</strong>
+<input type="radio" name="40" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+In some cases it is interesting to trace the primary hadrons back 
+to the string pieces from which they were 
+formed. If <code>StringFragmentation:TraceColours</code> is switched 
+<code>on</code>, this is done by setting colour and anticolour 
+indices for the primary hadrons to the indices of the string piece 
+where the corresponding break-ups are assumed to have happened. To 
+avoid the possible confusion of having colour indices on colour 
+singlet particles, this flag is by default <code>off</code>. 
+   
+ 
+<a name="section4"></a> 
 <h3>Simplifying systems</h3> 
  
 There are a few situations when it is meaningful to simplify the 
 original task, one way or another. 
  
-<br/><br/><table><tr><td><strong>HadronLevel:mStringMin </td><td></td><td> <input type="text" name="40" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>HadronLevel:mStringMin </td><td></td><td> <input type="text" name="41" value="1." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.5</code>)</td></tr></table>
 Decides whether a partonic system should be considered as a normal 
 string or a ministring, the latter only producing one or two primary 
 hadrons. The system mass should be above <i>mStringMin</i> plus the 
@@ -440,7 +470,7 @@ sum of quark/diquark constituent masses for a normal string description,
 else the ministring scenario is used. 
    
  
-<br/><br/><table><tr><td><strong>FragmentationSystems:mJoin </td><td></td><td> <input type="text" name="41" value="0.3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.3</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 1.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>FragmentationSystems:mJoin </td><td></td><td> <input type="text" name="42" value="0.3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.3</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 1.</code>)</td></tr></table>
 When two colour-connected partons are very nearby, with at least 
 one being a gluon, they can be joined into one, to avoid technical 
 problems of very small string regions. The requirement for joining is 
@@ -450,7 +480,7 @@ to the string region under consideration. (Note that, for technical
 reasons, the 0.2 GeV lower limit is de facto hardcoded.) 
    
  
-<br/><br/><table><tr><td><strong>FragmentationSystems:mJoinJunction </td><td></td><td> <input type="text" name="42" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 2.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>FragmentationSystems:mJoinJunction </td><td></td><td> <input type="text" name="43" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 2.</code>)</td></tr></table>
 When the invariant mass of two of the quarks in a three-quark junction 
 string system becomes too small, the system is simplified to a 
 quark-diquark simple string. The requirement for this simplification 
@@ -461,6 +491,7 @@ four-momentum. Those on the two combined legs are clustered with the
 diquark when it is formed. 
    
  
+<a name="section5"></a> 
 <h3>Ministrings</h3> 
  
 The <code>MiniStringFragmentation</code> machinery is only used when a 
@@ -477,7 +508,7 @@ The current implementation does not completely abide to the scheme
 presented there, however, but has in part been simplified. (In part 
 for greater clarity, in part since the class is not quite finished yet.) 
  
-<br/><br/><table><tr><td><strong>MiniStringFragmentation:nTry  </td><td></td><td> <input type="text" name="43" value="2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>MiniStringFragmentation:nTry  </td><td></td><td> <input type="text" name="44" value="2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)</td></tr></table>
 Whenever the machinery is called, first this many attempts are made 
 to pick two hadrons that the system fragments to. If the hadrons are 
 too massive the attempt will fail, but a new subsequent try could 
@@ -488,6 +519,7 @@ attempts at obtaining two hadrons will be made before eventually
 giving up. 
    
  
+<a name="section6"></a> 
 <h3>Junction treatment</h3> 
  
 A junction topology corresponds to an Y arrangement of strings 
@@ -499,7 +531,7 @@ the junction, where the baryon number topologically is located.
 The junction fragmentation scheme is described in [<a href="Bibliography.php#refSjo03" target="page">Sjo03</a>]. 
 The parameters in this section should not be touched except by experts. 
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eNormJunction </td><td></td><td> <input type="text" name="44" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eNormJunction </td><td></td><td> <input type="text" name="45" value="2.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)</td></tr></table>
 Used to find the effective rest frame of the junction, which is 
 complicated when the three string legs may contain additional 
 gluons between the junction and the endpoint. To this end, 
@@ -512,13 +544,13 @@ Should in principle be (close to) <i>sqrt((1 + a) / b)</i>, with
 fragmentation function. 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eBothLeftJunction </td><td></td><td> <input type="text" name="45" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eBothLeftJunction </td><td></td><td> <input type="text" name="46" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>)</td></tr></table>
 Retry (up to 10 times) when the first two considered strings in to a 
 junction both have a remaining energy (in the junction rest frame) 
 above this number. 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eMaxLeftJunction </td><td></td><td> <input type="text" name="46" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eMaxLeftJunction </td><td></td><td> <input type="text" name="47" value="10.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.0</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 Retry (up to 10 times) when the first two considered strings in to a 
 junction has a highest remaining energy (in the junction rest frame) 
 above a random energy evenly distributed between 
@@ -527,7 +559,7 @@ above a random energy evenly distributed between
 (drawn anew for each test). 
    
  
-<br/><br/><table><tr><td><strong>StringFragmentation:eMinLeftJunction </td><td></td><td> <input type="text" name="47" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>StringFragmentation:eMinLeftJunction </td><td></td><td> <input type="text" name="48" value="0.2" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 Retry (up to 10 times) when the invariant mass-squared of the final leg 
 and the leftover momentum of the first two treated legs falls below 
 <i>eMinLeftJunction</i> times the energy of the final leg (in the 
@@ -744,44 +776,49 @@ if($_POST["39"] != "0.2")
 $data = "StringFragmentation:stopSmear = ".$_POST["39"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["40"] != "1.")
+if($_POST["40"] != "off")
 {
-$data = "HadronLevel:mStringMin = ".$_POST["40"]."\n";
+$data = "StringFragmentation:TraceColours = ".$_POST["40"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["41"] != "0.3")
+if($_POST["41"] != "1.")
 {
-$data = "FragmentationSystems:mJoin = ".$_POST["41"]."\n";
+$data = "HadronLevel:mStringMin = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["42"] != "1.0")
+if($_POST["42"] != "0.3")
 {
-$data = "FragmentationSystems:mJoinJunction = ".$_POST["42"]."\n";
+$data = "FragmentationSystems:mJoin = ".$_POST["42"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["43"] != "2")
+if($_POST["43"] != "1.0")
 {
-$data = "MiniStringFragmentation:nTry = ".$_POST["43"]."\n";
+$data = "FragmentationSystems:mJoinJunction = ".$_POST["43"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["44"] != "2.0")
+if($_POST["44"] != "2")
 {
-$data = "StringFragmentation:eNormJunction = ".$_POST["44"]."\n";
+$data = "MiniStringFragmentation:nTry = ".$_POST["44"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["45"] != "1.0")
+if($_POST["45"] != "2.0")
 {
-$data = "StringFragmentation:eBothLeftJunction = ".$_POST["45"]."\n";
+$data = "StringFragmentation:eNormJunction = ".$_POST["45"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["46"] != "10.0")
+if($_POST["46"] != "1.0")
 {
-$data = "StringFragmentation:eMaxLeftJunction = ".$_POST["46"]."\n";
+$data = "StringFragmentation:eBothLeftJunction = ".$_POST["46"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["47"] != "0.2")
+if($_POST["47"] != "10.0")
 {
-$data = "StringFragmentation:eMinLeftJunction = ".$_POST["47"]."\n";
+$data = "StringFragmentation:eMaxLeftJunction = ".$_POST["47"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["48"] != "0.2")
+{
+$data = "StringFragmentation:eMinLeftJunction = ".$_POST["48"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -791,4 +828,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

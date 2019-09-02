@@ -295,8 +295,8 @@ no free parameters.</option>
 <option value="2">a double Gaussian matter distribution, 
 with the two free parameters <ei>coreRadius</ei> and 
 <ei>coreFraction</ei>.</option> 
-<option value="3">an overlap function, i.e. the convolution of 
-the matter distributions of the two incoming hadrons, of the form 
+<option value="3">an overlap function (i.e. the convolution of 
+the matter distributions of the two incoming hadrons) of the form 
 <ei>exp(- b^expPow)</ei>, where <ei>expPow</ei> is a free 
 parameter.</option> 
 <option value="4">a Gaussian matter distribution with a width 
@@ -328,13 +328,21 @@ of the matter content of the hadron.
 <parm name="MultipartonInteractions:expPow" default="1.85" min="0.4" 
 max="10."> 
 When <ei>bProfile = 3</ei> it gives the power of the assumed overlap 
-shape <ei>exp(- b^expPow)</ei>. Default corresponds to a simple 
-exponential drop, which is not too dissimilar from the overlap 
-obtained with the standard double Gaussian parameters. For 
-<ei>expPow = 2</ei> we reduce to the simple Gaussian, <ei>bProfile = 1</ei>, 
-and for <ei>expPow &rarr; infinity</ei> to no impact parameter dependence 
-at all, <ei>bProfile = 0</ei>. For small <ei>expPow</ei> the program 
-becomes slow and unstable, so the min limit must be respected. 
+shape <ei>exp(- b^expPow)</ei>. Since the convolution of two Gaussians 
+is another Gaussian, the overlap shape obtained for <ei>expPow = 2</ei> 
+is the same as that obtained for a Gaussian matter distribution, 
+<ei>bProfile = 1</ei>. The limit <ei>expPow &rarr; infinity</ei> 
+corresponds to no impact parameter dependence at all, <ei>bProfile = 0</ei>. 
+The overlap shape that would be obtained for an exponential matter 
+distribution cannot be represented exactly on this form, but a similar 
+variance (for fixed normalisation and average <ei>b</ei>) is obtained 
+for <ei>expPow = 1.4</ei>. The double Gaussian matter profiles that 
+are obtained for <ei>bProfile = 2</ei> generally correspond to the range 
+between <ei>expPow = 1</ei> and <ei>expPow = 2</ei>, with the former 
+representing scenarios with pronounced "hot spots" and consequently 
+very significant fluctuations (high variance). Note that for small 
+<ei>expPow</ei> the program becomes slow and unstable, so the min 
+limit must be respected. 
 </parm> 
  
 <parm name="MultipartonInteractions:a1" default="0.15" min="0." max="2."> 
@@ -602,4 +610,4 @@ interactions.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

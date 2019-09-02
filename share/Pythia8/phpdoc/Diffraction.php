@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='Diffraction.php'>
  
 <h2>Diffraction</h2> 
+<ol id="toc">
+  <li><a href="#section0">Separation of soft diffraction into low and high masses</a></li>
+  <li><a href="#section1">Low-mass soft diffraction</a></li>
+  <li><a href="#section2">High-mass soft diffraction</a></li>
+  <li><a href="#section3">Hard diffraction</a></li>
+</ol>
+
  
 Diffraction is not well understood, and several alternative approaches 
 have been proposed, both for the cross section of diffractive events and 
@@ -101,6 +108,7 @@ survives as a diffractive event or not. The different diffractive types
 - low mass soft, high mass soft and hard diffraction - are described 
 in more detail below. 
  
+<a name="section0"></a> 
 <h3>Separation of soft diffraction into low and high masses</h3> 
  
 Preferably one would want to have a perturbative picture of the 
@@ -127,7 +135,7 @@ the CM energy then there will be no perturbative description at all,
 but only the older low-<i>pt</i> description. 
    
  
-<br/><br/><table><tr><td><strong>Diffraction:mWidthPert </td><td></td><td> <input type="text" name="2" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Diffraction:mWidthPert </td><td></td><td> <input type="text" name="2" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)</td></tr></table>
 The abovementioned threshold width <i>m_width.</i> 
    
  
@@ -138,6 +146,7 @@ be used to represent a small nonperturbative component also at
 high diffractive masses. 
    
  
+<a name="section1"></a> 
 <h3>Low-mass soft diffraction</h3> 
  
 When an incoming hadron beam is diffractively excited, it is modeled 
@@ -183,6 +192,7 @@ for a baryon beam) that knows no bounds. A suppression like
 <i>p</i> is the <code>diffLargeMassSuppress</code> parameter. 
    
  
+<a name="section2"></a> 
 <h3>High-mass soft diffraction</h3> 
  
 The perturbative description need to use parton densities of the 
@@ -301,6 +311,7 @@ at all, <i>bProfile = 0</i>. For small <i>expPow</i> the program
 becomes slow and unstable, so the min limit must be respected. 
    
  
+<a name="section3"></a> 
 <h3>Hard diffraction</h3> 
  
 When PYTHIA is requested to generate a hard process, by default it is 
@@ -371,6 +382,14 @@ distinguished either MPI-unchecked or MPI-checked.
 Allows for the possibility to include hard diffraction tests in a run. 
    
  
+<br/><br/><table><tr><td><strong>Diffraction:hardDiffSide  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
+Side which diffraction is evaluated for. Especially useful for diffraction 
+in ep, where experiments only look for gaps on the proton side. 
+<br/>
+<input type="radio" name="16" value="0" checked="checked"><strong>0 </strong>: Check for diffraction on boths sides A and B.  <br/>
+<input type="radio" name="16" value="1"><strong>1 </strong>: Check for diffraction on side A only.  <br/>
+<input type="radio" name="16" value="2"><strong>2 </strong>: Check for diffraction on side B only.  <br/>
+ 
 <p/> 
 There is also the possibility to select only a specific subset of events 
 in hard diffraction. 
@@ -379,10 +398,10 @@ in hard diffraction.
 Type of process the user wants to generate. Depends strongly on how an event 
 is classified as diffractive. 
 <br/>
-<input type="radio" name="16" value="1"><strong>1 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-unchecked.  <br/>
-<input type="radio" name="16" value="2" checked="checked"><strong>2 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-checked.  <br/>
-<input type="radio" name="16" value="3"><strong>3 </strong>: Generate an exclusive diffractive sample, MPI-unchecked.  <br/>
-<input type="radio" name="16" value="4"><strong>4 </strong>: Generate an exclusive diffractive sample, MPI-checked.  <br/>
+<input type="radio" name="17" value="1"><strong>1 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-unchecked.  <br/>
+<input type="radio" name="17" value="2" checked="checked"><strong>2 </strong>: Generate an inclusive sample of both diffractive and  nondiffractive hard processes, MPI-checked.  <br/>
+<input type="radio" name="17" value="3"><strong>3 </strong>: Generate an exclusive diffractive sample, MPI-unchecked.  <br/>
+<input type="radio" name="17" value="4"><strong>4 </strong>: Generate an exclusive diffractive sample, MPI-checked.  <br/>
  
 <p/> 
 The Pomeron PDFs have not been scaled to unit momentum sum by the 
@@ -394,7 +413,7 @@ It could be brought to unit momentum sum by picking the parameter
 convolution of the flux and the PDFs, the flux then needs to be rescaled 
 by the inverse. This introduces a new rescaling parameter: 
  
-<br/><br/><table><tr><td><strong>Diffraction:PomFluxRescale </td><td></td><td> <input type="text" name="17" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Diffraction:PomFluxRescale </td><td></td><td> <input type="text" name="18" value="1.0" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>1.0</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)</td></tr></table>
 Rescale the Pomeron flux by this uniform factor. It should be 
 <code>1 / PDF:PomRescale</code> to preserve the convolution of Pomeron 
 flux and PDFs, but for greater flxibility the two can be set separately. 
@@ -409,8 +428,8 @@ renormalize the flux. If you wish to use the renormalized flux of the
 MBR model, you must generate the MPI-unchecked samples, otherwise 
 diffractive events will be suppressed twice. 
  
-<br/><br/><strong>Diffraction:useMBRrenormalization</strong>  <input type="radio" name="18" value="on"><strong>On</strong>
-<input type="radio" name="18" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Diffraction:useMBRrenormalization</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
+<input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Use the renormalized MBR flux. 
    
@@ -428,9 +447,9 @@ factor for the Pomeron-proton subsystem when the MPI check is carried
 out. This affects the underlying-event activity in hard diffractive 
 events. 
 <br/>
-<input type="radio" name="19" value="1" checked="checked"><strong>1 </strong>: Use the same <ei>b</ei> as already assigned for the  proton-proton collision. This implicitly assumes that a Pomeron is  as big as a proton and centered in the same place. Since small  <ei>b</ei> values already have been suppressed, few events should  have high enhancement factors.  <br/>
-<input type="radio" name="19" value="2"><strong>2 </strong>: Use the square root of the <ei>b</ei> as already  assigned for the proton-proton collision, thereby making the  enhancement factor fluctuate less between events. If the Pomeron  is very tiny then what matters is where it strikes the other proton,  not the details of its shape. Thus the variation with <ei>b</ei> is  of one proton, not two, and so the square root of the normal variation,  loosely speaking. Tecnhically this is difficult to implement, but  the current simple recipe provides the main effect of reducing the  variation, bringing all <ei>b</ei> values closer to the average.  <br/>
-<input type="radio" name="19" value="3"><strong>3 </strong>: Pick a completely new <ei>b</ei>. This allows a broad  spread from central to peripheral values, and thereby also a more  varying MPI activity inside the diffractive system than the other two  options. This offers an extreme picture, even if not the most likely  one.  <br/>
+<input type="radio" name="20" value="1" checked="checked"><strong>1 </strong>: Use the same <ei>b</ei> as already assigned for the  proton-proton collision. This implicitly assumes that a Pomeron is  as big as a proton and centered in the same place. Since small  <ei>b</ei> values already have been suppressed, few events should  have high enhancement factors.  <br/>
+<input type="radio" name="20" value="2"><strong>2 </strong>: Use the square root of the <ei>b</ei> as already  assigned for the proton-proton collision, thereby making the  enhancement factor fluctuate less between events. If the Pomeron  is very tiny then what matters is where it strikes the other proton,  not the details of its shape. Thus the variation with <ei>b</ei> is  of one proton, not two, and so the square root of the normal variation,  loosely speaking. Tecnhically this is difficult to implement, but  the current simple recipe provides the main effect of reducing the  variation, bringing all <ei>b</ei> values closer to the average.  <br/>
+<input type="radio" name="20" value="3"><strong>3 </strong>: Pick a completely new <ei>b</ei>. This allows a broad  spread from central to peripheral values, and thereby also a more  varying MPI activity inside the diffractive system than the other two  options. This offers an extreme picture, even if not the most likely  one.  <br/>
  
 <input type="hidden" name="saved" value="1"/>
 
@@ -522,24 +541,29 @@ if($_POST["15"] != "off")
 $data = "Diffraction:doHard = ".$_POST["15"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["16"] != "2")
+if($_POST["16"] != "0")
 {
-$data = "Diffraction:sampleType = ".$_POST["16"]."\n";
+$data = "Diffraction:hardDiffSide = ".$_POST["16"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["17"] != "1.0")
+if($_POST["17"] != "2")
 {
-$data = "Diffraction:PomFluxRescale = ".$_POST["17"]."\n";
+$data = "Diffraction:sampleType = ".$_POST["17"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["18"] != "off")
+if($_POST["18"] != "1.0")
 {
-$data = "Diffraction:useMBRrenormalization = ".$_POST["18"]."\n";
+$data = "Diffraction:PomFluxRescale = ".$_POST["18"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["19"] != "1")
+if($_POST["19"] != "off")
 {
-$data = "Diffraction:bSelHard = ".$_POST["19"]."\n";
+$data = "Diffraction:useMBRrenormalization = ".$_POST["19"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["20"] != "1")
+{
+$data = "Diffraction:bSelHard = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -549,4 +573,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

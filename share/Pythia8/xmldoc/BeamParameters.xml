@@ -185,16 +185,118 @@ of particles three and four to 100 GeV and 50 GeV, respectively, provided
 that these particles have status 1. 
 </flag> 
  
+<h3>Variable collision energy</h3> 
+ 
+There are two different machineries that can provide an event-by-event 
+spread of collision energies. The one in this section is intended 
+to allow for very large variations in collision energy, more-or-less 
+from threshold to the highest LHC/FCC/cosmic-ray energies. This is made 
+possible by interpolation in a grid of CM energies. Such a strategy 
+requires the processes to have a smooth and well-understood energy 
+dependence. In practice this limits us to the soft QCD processes 
+betweeen two incoming hadrons. Thus the framework is convenient e.g. 
+for studies of cosmic-ray cascades, or for secondary collisions in 
+general. 
+ 
+<p/> 
+The core extension in this option is that the multiparticle interactions 
+(MPI) machinery is initialized over a (logarithmically spaced) grid of 
+collision energies, from the maximal energy provided at the 
+initialization down to a lower cutoff (see <code>eMinPert</code> below). 
+For each new event, with a new CM energy, a suitable interpolation is 
+then performed among the generation coefficients determined at 
+initialization. The MPI framework is what is needed to simulate 
+hadronic nondiffractive events (<code>SoftQCD:nonDiffractive</code>). 
+Pretty much the same strategy is already used for diffraction, to handle 
+MPIs inside the variable-mass diffractive systems. Thus all the 
+<aloc href="QCDProcesses">Soft QCD processes</aloc> can be used 
+within this framework. It is not possible to generate other processes 
+with this framework, however, and the program will abort if you try. 
+ 
+<p/> 
+The initalization of involves setting up optimal coefficients for 
+the kinematics selection in the subsequent MPI generation, and 
+finding the associated maximum of the differentialcross section. 
+At a fixed energy this typically takes less than a second, and so 
+normally is not noticeable.It is a major fraction of the full PYTHIA 
+initialization time, however. Thus the initialization over a grid of 
+energies raises the total initialization time appreciable, to the order 
+of ten seconds. Initialization of diffraction contributes comparable 
+numbers, when switched on. You should therefore not be surprised that 
+the startup time is longer than usual. The subsequent event generation 
+should not become noticeably slower, however. 
+ 
+<p/> 
+There are three main settings in this framework. 
+ 
+<flag name="Beams:allowVariableEnergy" default="off"> 
+Master switch to allow collision energies below the initialization one, 
+as described above. 
+</flag> 
+ 
+<parm name="Beams:eMinPert" default="10." min="10."> 
+The lowest CM energy that collisions are allowed to have. The highest 
+is set by the full energy at initialization, as calculated in the 
+respective options above. If you do not want to generate events with 
+a higher collision energy than this you can save some initialization 
+time by raising this number accordingly, so that fewer grid energies need 
+to be used. You should not lower the value below the default one, however, 
+since the perturbative MPI machinery cannot be made to work at lower 
+energies. If you do want to generate events with lower energies, it 
+is possible in a nonperturbative framework, see next. 
+</parm> 
+ 
+<parm name="Beams:eWidthPert" default="10." min="1."> 
+A simpler low-mass description can be used for energies below the 
+threshold energy <ei>e_min</ei> = <code>eMinPert</code> above, with 
+only longitudinally stretched strings. A gradual switch-over between 
+the simple low-energy and perturbative high-energy regimes is then 
+natural. The probability for the latter picture is parametrized as 
+<eq> 
+P_pert = 1 - exp( (e_CM - e_min) / e_width ) 
+</eq> 
+which vanishes for the CM energy <ei>e_CM &lt; e_min</ei>, and is 
+<ei>1 - 1/e = 0.632</ei> for <ei>e_CM = e_min + e_width</ei>. 
+The current parameter is this <ei>e_width.</ei> 
+</parm> 
+ 
+<p/> 
+To input the variable energy, the normal argument-less 
+<code>Pythia::next()</code> method has three siblings that take 
+relevent arguments as required by the <code>Beams:frameType</code>. 
+ 
+<method name="bool Pythia::next(double eCM)"> 
+events created by the collision of two particles coming in along the 
+<ei>+-z</ei> axis in their common rest frame, with the CM energy as 
+argument, to be used for <code>Beams:frameType = 1</code>. 
+</method> 
+ 
+<method name="bool Pythia::next(double eA, double eB)"> 
+events created by the collision of two particles coming in along the 
+<ei>+-z</ei> axis, with the respective energies as arguments, to be 
+used for <code>Beams:frameType = 2</code>. 
+</method> 
+ 
+<method name="bool Pythia::next(double pxA, double pyA, double pzA, 
+double pxB, double pyB, double pzB)"> 
+events created by two incoming particles with arbitrary three-momenta, 
+to be used for <code>Beams:frameType = 3</code>. 
+</method> 
+ 
+ 
 <h3>Beam momentum spread</h3> 
  
 This framework currently is intended for a modest beam spread, such as 
 experienced at hadron colliders. Thus it can be safely assumed that the 
 physics does not change over the CM energy range probed, so that the 
 parameters of the physics initialization at the nominal energy can be 
-used as is. Currently it can <b>not</b> be used for the more extensive 
-energy spread expected at linear <ei>e^+ e^-</ei> colliders. Also, 
+used as is. Therefore it can be used for all processes implemented in 
+PYTHIA. It can <b>not</b> be used for the more extensive energy spread, 
+however, e.g. as expected at linear <ei>e^+ e^-</ei> colliders. Also, 
 any attempt to combine it with external Les Houches input of 
-parton-level events is at own risk. 
+parton-level events is at own risk. This option cannot be combined with 
+the variable-collision-energy option above, but will be switced off in 
+such a case. 
  
 <p/> 
 On this page you can set the momentum spread according to a simple 
@@ -338,4 +440,4 @@ The time <ei>t</ei> of the interaction vertex is centered at this value.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

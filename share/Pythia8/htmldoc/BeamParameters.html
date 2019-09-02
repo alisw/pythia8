@@ -7,12 +7,20 @@
 <body>
  
 <h2>Beam Parameters</h2> 
+<ol id="toc">
+  <li><a href="#section0">Incoming beams</a></li>
+  <li><a href="#section1">Variable collision energy</a></li>
+  <li><a href="#section2">Beam momentum spread</a></li>
+  <li><a href="#section3">Beam interaction vertex</a></li>
+</ol>
+
  
 The settings on this page relate to the beam identities and energies, 
 to a beam momentum spread and to a beam interaction spot. 
 As always, momenta and energies are to be given in units of GeV, 
 and of space and time in mm. 
  
+<a name="section0"></a> 
 <h3>Incoming beams</h3> 
  
 The identities and energies of the two incoming beam particles 
@@ -229,16 +237,128 @@ of particles three and four to 100 GeV and 50 GeV, respectively, provided
 that these particles have status 1. 
    
  
+<a name="section1"></a> 
+<h3>Variable collision energy</h3> 
+ 
+There are two different machineries that can provide an event-by-event 
+spread of collision energies. The one in this section is intended 
+to allow for very large variations in collision energy, more-or-less 
+from threshold to the highest LHC/FCC/cosmic-ray energies. This is made 
+possible by interpolation in a grid of CM energies. Such a strategy 
+requires the processes to have a smooth and well-understood energy 
+dependence. In practice this limits us to the soft QCD processes 
+betweeen two incoming hadrons. Thus the framework is convenient e.g. 
+for studies of cosmic-ray cascades, or for secondary collisions in 
+general. 
+ 
+<p/> 
+The core extension in this option is that the multiparticle interactions 
+(MPI) machinery is initialized over a (logarithmically spaced) grid of 
+collision energies, from the maximal energy provided at the 
+initialization down to a lower cutoff (see <code>eMinPert</code> below). 
+For each new event, with a new CM energy, a suitable interpolation is 
+then performed among the generation coefficients determined at 
+initialization. The MPI framework is what is needed to simulate 
+hadronic nondiffractive events (<code>SoftQCD:nonDiffractive</code>). 
+Pretty much the same strategy is already used for diffraction, to handle 
+MPIs inside the variable-mass diffractive systems. Thus all the 
+<a href="QCDProcesses.html" target="page">Soft QCD processes</a> can be used 
+within this framework. It is not possible to generate other processes 
+with this framework, however, and the program will abort if you try. 
+ 
+<p/> 
+The initalization of involves setting up optimal coefficients for 
+the kinematics selection in the subsequent MPI generation, and 
+finding the associated maximum of the differentialcross section. 
+At a fixed energy this typically takes less than a second, and so 
+normally is not noticeable.It is a major fraction of the full PYTHIA 
+initialization time, however. Thus the initialization over a grid of 
+energies raises the total initialization time appreciable, to the order 
+of ten seconds. Initialization of diffraction contributes comparable 
+numbers, when switched on. You should therefore not be surprised that 
+the startup time is longer than usual. The subsequent event generation 
+should not become noticeably slower, however. 
+ 
+<p/> 
+There are three main settings in this framework. 
+ 
+<a name="anchor20"></a>
+<p/><code>flag&nbsp; </code><strong> Beams:allowVariableEnergy &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Master switch to allow collision energies below the initialization one, 
+as described above. 
+   
+ 
+<a name="anchor21"></a>
+<p/><code>parm&nbsp; </code><strong> Beams:eMinPert &nbsp;</strong> 
+ (<code>default = <strong>10.</strong></code>; <code>minimum = 10.</code>)<br/>
+The lowest CM energy that collisions are allowed to have. The highest 
+is set by the full energy at initialization, as calculated in the 
+respective options above. If you do not want to generate events with 
+a higher collision energy than this you can save some initialization 
+time by raising this number accordingly, so that fewer grid energies need 
+to be used. You should not lower the value below the default one, however, 
+since the perturbative MPI machinery cannot be made to work at lower 
+energies. If you do want to generate events with lower energies, it 
+is possible in a nonperturbative framework, see next. 
+   
+ 
+<a name="anchor22"></a>
+<p/><code>parm&nbsp; </code><strong> Beams:eWidthPert &nbsp;</strong> 
+ (<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)<br/>
+A simpler low-mass description can be used for energies below the 
+threshold energy <i>e_min</i> = <code>eMinPert</code> above, with 
+only longitudinally stretched strings. A gradual switch-over between 
+the simple low-energy and perturbative high-energy regimes is then 
+natural. The probability for the latter picture is parametrized as 
+<br/><i> 
+P_pert = 1 - exp( (e_CM - e_min) / e_width ) 
+</i><br/> 
+which vanishes for the CM energy <i>e_CM &lt; e_min</i>, and is 
+<i>1 - 1/e = 0.632</i> for <i>e_CM = e_min + e_width</i>. 
+The current parameter is this <i>e_width.</i> 
+   
+ 
+<p/> 
+To input the variable energy, the normal argument-less 
+<code>Pythia::next()</code> method has three siblings that take 
+relevent arguments as required by the <code>Beams:frameType</code>. 
+ 
+<a name="anchor23"></a>
+<p/><strong> bool Pythia::next(double eCM) &nbsp;</strong> <br/>
+events created by the collision of two particles coming in along the 
+<i>+-z</i> axis in their common rest frame, with the CM energy as 
+argument, to be used for <code>Beams:frameType = 1</code>. 
+   
+ 
+<a name="anchor24"></a>
+<p/><strong> bool Pythia::next(double eA, double eB) &nbsp;</strong> <br/>
+events created by the collision of two particles coming in along the 
+<i>+-z</i> axis, with the respective energies as arguments, to be 
+used for <code>Beams:frameType = 2</code>. 
+   
+ 
+<a name="anchor25"></a>
+<p/><strong> bool Pythia::next(double pxA, double pyA, double pzA, double pxB, double pyB, double pzB) &nbsp;</strong> <br/>
+events created by two incoming particles with arbitrary three-momenta, 
+to be used for <code>Beams:frameType = 3</code>. 
+   
+ 
+ 
+<a name="section2"></a> 
 <h3>Beam momentum spread</h3> 
  
 This framework currently is intended for a modest beam spread, such as 
 experienced at hadron colliders. Thus it can be safely assumed that the 
 physics does not change over the CM energy range probed, so that the 
 parameters of the physics initialization at the nominal energy can be 
-used as is. Currently it can <b>not</b> be used for the  extensive 
-energy spread expected at linear <i>e^+ e^-</i> colliders. Also, 
+used as is. Therefore it can be used for all processes implemented in 
+PYTHIA. It can <b>not</b> be used for the  extensive energy spread, 
+however, e.g. as expected at linear <i>e^+ e^-</i> colliders. Also, 
 any attempt to combine it with external Les Houches input of 
-parton-level events is at own risk. 
+parton-level events is at own risk. This option cannot be combined with 
+the variable-collision-energy option above, but will be switced off in 
+such a case. 
  
 <p/> 
 On this page you can set the momentum spread according to a simple 
@@ -246,35 +366,35 @@ Gaussian distribution. If you instead want a more sophisticated
 parametrization, you can write and link your own 
 <code><a href="BeamShape.html" target="page">BeamShape</a></code> class. 
  
-<a name="anchor20"></a>
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> Beams:allowMomentumSpread &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow the beam momenta to be smeared around their initialization 
 nominal values. 
    
  
-<a name="anchor21"></a>
+<a name="anchor27"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaPxA &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>p_x</i> spread of the 
 first incoming particle. 
    
  
-<a name="anchor22"></a>
+<a name="anchor28"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaPyA &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>p_y</i> spread of the 
 first incoming particle. 
    
  
-<a name="anchor23"></a>
+<a name="anchor29"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaPzA &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>p_z</i> spread of the 
 first incoming particle. 
    
  
-<a name="anchor24"></a>
+<a name="anchor30"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:maxDevA &nbsp;</strong> 
  (<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)<br/>
 The triply Gaussian distribution <i>(p_x, p_y, p_z)</i> is restricted to 
@@ -288,28 +408,28 @@ for the first incoming particle, like
 used to pick <i>(p_x, p_y, p_z)</i>.) 
    
  
-<a name="anchor25"></a>
+<a name="anchor31"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaPxB &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>p_x</i> spread of the 
 second incoming particle. 
    
  
-<a name="anchor26"></a>
+<a name="anchor32"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaPyB &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>p_y</i> spread of the 
 second incoming particle. 
    
  
-<a name="anchor27"></a>
+<a name="anchor33"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaPzB &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>p_z</i> spread of the 
 second incoming particle. 
    
  
-<a name="anchor28"></a>
+<a name="anchor34"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:maxDevB &nbsp;</strong> 
  (<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)<br/>
 The triply Gaussian distribution <i>(p_x, p_y, p_z)</i> is restricted to 
@@ -323,6 +443,7 @@ for the second incoming particle, like
 used to pick <i>(p_x, p_y, p_z)</i>.) 
    
  
+<a name="section3"></a> 
 <h3>Beam interaction vertex</h3> 
  
 On this page you can set the spread of the interaction vertex according to 
@@ -330,35 +451,35 @@ a simple Gaussian distribution. If you instead want a more sophisticated
 parametrization, you can write and link your own 
 <code><a href="BeamShape.html" target="page">BeamShape</a></code> class. 
  
-<a name="anchor29"></a>
+<a name="anchor35"></a>
 <p/><code>flag&nbsp; </code><strong> Beams:allowVertexSpread &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow the interaction vertex of the two colliding beams to be smeared. 
 If off, then the vertex is set to be the origin. 
    
  
-<a name="anchor30"></a>
+<a name="anchor36"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaVertexX &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>x</i> location of the 
 interaction vertex. 
    
  
-<a name="anchor31"></a>
+<a name="anchor37"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaVertexY &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>y</i> location of the 
 interaction vertex. 
    
  
-<a name="anchor32"></a>
+<a name="anchor38"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaVertexZ &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the <i>z</i> location of the 
 interaction vertex. 
    
  
-<a name="anchor33"></a>
+<a name="anchor39"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:maxDevVertex &nbsp;</strong> 
  (<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)<br/>
 The triply Gaussian distribution of interaction vertex position 
@@ -371,7 +492,7 @@ x^2/sigma_x^2 + y^2/sigma_y^2 + z^2/sigma_z^2 &lt; maxDevVertex^2
 used to pick <i>(x, y, z)</i>.) 
    
  
-<a name="anchor34"></a>
+<a name="anchor40"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:sigmaTime &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
 The width of a Gaussian distribution of the collision time (in units of 
@@ -383,7 +504,7 @@ velocity of the beams, which we expect is close to unity). For flexibility
 we have not enforced any such relation, however. 
    
  
-<a name="anchor35"></a>
+<a name="anchor41"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:maxDevTime &nbsp;</strong> 
  (<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)<br/>
 The collision time is restricted to be in the range 
@@ -396,25 +517,25 @@ possible to shift the above distributions to be centered around another
 nominal position. You must have <code>Beams:allowVertexSpread = on</code> 
 to use this possibility. 
  
-<a name="anchor36"></a>
+<a name="anchor42"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:offsetVertexX &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
 The <i>x</i> location of the interaction vertex is centered at this value. 
    
  
-<a name="anchor37"></a>
+<a name="anchor43"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:offsetVertexY &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
 The <i>y</i> location of the interaction vertex is centered at this value. 
    
  
-<a name="anchor38"></a>
+<a name="anchor44"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:offsetVertexZ &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
 The <i>z</i> location of the interaction vertex is centered at this value. 
    
  
-<a name="anchor39"></a>
+<a name="anchor45"></a>
 <p/><code>parm&nbsp; </code><strong> Beams:offsetTime &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
 The time <i>t</i> of the interaction vertex is centered at this value. 
@@ -423,4 +544,4 @@ The time <i>t</i> of the interaction vertex is centered at this value.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

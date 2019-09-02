@@ -28,6 +28,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='MadGraph5Processes.php'>
  
 <h2>MadGraph5 Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0">MadGraph5 code inside PYTHIA</a></li>
+  <li><a href="#section1">MadGraph5_aMC@NLO executable inside PYTHIA</a></li>
+</ol>
+
  
 Here we will describe two special ways to make use of MadGraph5 and 
 MadGraph5_aMC@NLO [<a href="Bibliography.php#refAlw11" target="page">Alw11</a>,<a href="Bibliography.php#refAlw14" target="page">Alw14</a>]inside PYTHIA, either by exporting 
@@ -41,6 +46,7 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>";?>LH
 that can be read in and processed further by PYTHIA 8. This is the 
 most commonly used approach, and requires no further description here. 
  
+<a name="section0"></a> 
 <h3>MadGraph5 code inside PYTHIA</h3> 
  
 By far the easiest way to implement new processes into PYTHIA 8 is 
@@ -156,6 +162,7 @@ files for different  kinematics cuts or parameter values.
 Please cite the MadGraph5 release paper [<a href="Bibliography.php#refAlw11" target="page">Alw11</a>] if you use 
 MadGraph5 to generate process libraries for PYTHIA 8. 
  
+<a name="section1"></a> 
 <h3>MadGraph5_aMC@NLO executable inside PYTHIA</h3> 
  
 The <code>Pythia::setLHAupPtr(LHAup* lhaUpPtr)</code> method allows 
@@ -275,4 +282,4 @@ initialization can be skipped after the initial run.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SigmaProcess.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -985,8 +985,8 @@ bool Sigma2Process::final2KinMPI( int i1Res, int i2Res, Vec4 p1Res, Vec4 p2Res,
   setIdColAcol();
 
   // Check that masses of outgoing particles not too big.
-  m3           = particleDataPtr->m0(idSave[3]);
-  m4           = particleDataPtr->m0(idSave[4]);
+  if (m3 == 0.) m3  = particleDataPtr->m0(idSave[3]);
+  if (m4 == 0.) m4  = particleDataPtr->m0(idSave[4]);
   mH           = sqrt(sH);
   if (m3 + m4 + MASSMARGIN > mH) return false;
   s3           = m3 * m3;

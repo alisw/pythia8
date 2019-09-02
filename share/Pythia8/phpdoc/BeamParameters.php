@@ -28,12 +28,20 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='BeamParameters.php'>
  
 <h2>Beam Parameters</h2> 
+<ol id="toc">
+  <li><a href="#section0">Incoming beams</a></li>
+  <li><a href="#section1">Variable collision energy</a></li>
+  <li><a href="#section2">Beam momentum spread</a></li>
+  <li><a href="#section3">Beam interaction vertex</a></li>
+</ol>
+
  
 The settings on this page relate to the beam identities and energies, 
 to a beam momentum spread and to a beam interaction spot. 
 As always, momenta and energies are to be given in units of GeV, 
 and of space and time in mm. 
  
+<a name="section0"></a> 
 <h3>Incoming beams</h3> 
  
 The identities and energies of the two incoming beam particles 
@@ -211,16 +219,125 @@ of particles three and four to 100 GeV and 50 GeV, respectively, provided
 that these particles have status 1. 
    
  
+<a name="section1"></a> 
+<h3>Variable collision energy</h3> 
+ 
+There are two different machineries that can provide an event-by-event 
+spread of collision energies. The one in this section is intended 
+to allow for very large variations in collision energy, more-or-less 
+from threshold to the highest LHC/FCC/cosmic-ray energies. This is made 
+possible by interpolation in a grid of CM energies. Such a strategy 
+requires the processes to have a smooth and well-understood energy 
+dependence. In practice this limits us to the soft QCD processes 
+betweeen two incoming hadrons. Thus the framework is convenient e.g. 
+for studies of cosmic-ray cascades, or for secondary collisions in 
+general. 
+ 
+<p/> 
+The core extension in this option is that the multiparticle interactions 
+(MPI) machinery is initialized over a (logarithmically spaced) grid of 
+collision energies, from the maximal energy provided at the 
+initialization down to a lower cutoff (see <code>eMinPert</code> below). 
+For each new event, with a new CM energy, a suitable interpolation is 
+then performed among the generation coefficients determined at 
+initialization. The MPI framework is what is needed to simulate 
+hadronic nondiffractive events (<code>SoftQCD:nonDiffractive</code>). 
+Pretty much the same strategy is already used for diffraction, to handle 
+MPIs inside the variable-mass diffractive systems. Thus all the 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='QCDProcesses.php?filepath=".$filepath."' target='page'>";?>Soft QCD processes</a> can be used 
+within this framework. It is not possible to generate other processes 
+with this framework, however, and the program will abort if you try. 
+ 
+<p/> 
+The initalization of involves setting up optimal coefficients for 
+the kinematics selection in the subsequent MPI generation, and 
+finding the associated maximum of the differentialcross section. 
+At a fixed energy this typically takes less than a second, and so 
+normally is not noticeable.It is a major fraction of the full PYTHIA 
+initialization time, however. Thus the initialization over a grid of 
+energies raises the total initialization time appreciable, to the order 
+of ten seconds. Initialization of diffraction contributes comparable 
+numbers, when switched on. You should therefore not be surprised that 
+the startup time is longer than usual. The subsequent event generation 
+should not become noticeably slower, however. 
+ 
+<p/> 
+There are three main settings in this framework. 
+ 
+<br/><br/><strong>Beams:allowVariableEnergy</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
+<input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Master switch to allow collision energies below the initialization one, 
+as described above. 
+   
+ 
+<br/><br/><table><tr><td><strong>Beams:eMinPert </td><td></td><td> <input type="text" name="20" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 10.</code>)</td></tr></table>
+The lowest CM energy that collisions are allowed to have. The highest 
+is set by the full energy at initialization, as calculated in the 
+respective options above. If you do not want to generate events with 
+a higher collision energy than this you can save some initialization 
+time by raising this number accordingly, so that fewer grid energies need 
+to be used. You should not lower the value below the default one, however, 
+since the perturbative MPI machinery cannot be made to work at lower 
+energies. If you do want to generate events with lower energies, it 
+is possible in a nonperturbative framework, see next. 
+   
+ 
+<br/><br/><table><tr><td><strong>Beams:eWidthPert </td><td></td><td> <input type="text" name="21" value="10." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)</td></tr></table>
+A simpler low-mass description can be used for energies below the 
+threshold energy <i>e_min</i> = <code>eMinPert</code> above, with 
+only longitudinally stretched strings. A gradual switch-over between 
+the simple low-energy and perturbative high-energy regimes is then 
+natural. The probability for the latter picture is parametrized as 
+<br/><i> 
+P_pert = 1 - exp( (e_CM - e_min) / e_width ) 
+</i><br/> 
+which vanishes for the CM energy <i>e_CM &lt; e_min</i>, and is 
+<i>1 - 1/e = 0.632</i> for <i>e_CM = e_min + e_width</i>. 
+The current parameter is this <i>e_width.</i> 
+   
+ 
+<p/> 
+To input the variable energy, the normal argument-less 
+<code>Pythia::next()</code> method has three siblings that take 
+relevent arguments as required by the <code>Beams:frameType</code>. 
+ 
+<a name="anchor2"></a>
+<p/><strong> bool Pythia::next(double eCM) &nbsp;</strong> <br/>
+events created by the collision of two particles coming in along the 
+<i>+-z</i> axis in their common rest frame, with the CM energy as 
+argument, to be used for <code>Beams:frameType = 1</code>. 
+   
+ 
+<a name="anchor3"></a>
+<p/><strong> bool Pythia::next(double eA, double eB) &nbsp;</strong> <br/>
+events created by the collision of two particles coming in along the 
+<i>+-z</i> axis, with the respective energies as arguments, to be 
+used for <code>Beams:frameType = 2</code>. 
+   
+ 
+<a name="anchor4"></a>
+<p/><strong> bool Pythia::next(double pxA, double pyA, double pzA, double pxB, double pyB, double pzB) &nbsp;</strong> <br/>
+events created by two incoming particles with arbitrary three-momenta, 
+to be used for <code>Beams:frameType = 3</code>. 
+   
+ 
+ 
+<a name="section2"></a> 
 <h3>Beam momentum spread</h3> 
  
 This framework currently is intended for a modest beam spread, such as 
 experienced at hadron colliders. Thus it can be safely assumed that the 
 physics does not change over the CM energy range probed, so that the 
 parameters of the physics initialization at the nominal energy can be 
-used as is. Currently it can <b>not</b> be used for the  extensive 
-energy spread expected at linear <i>e^+ e^-</i> colliders. Also, 
+used as is. Therefore it can be used for all processes implemented in 
+PYTHIA. It can <b>not</b> be used for the  extensive energy spread, 
+however, e.g. as expected at linear <i>e^+ e^-</i> colliders. Also, 
 any attempt to combine it with external Les Houches input of 
-parton-level events is at own risk. 
+parton-level events is at own risk. This option cannot be combined with 
+the variable-collision-energy option above, but will be switced off in 
+such a case. 
  
 <p/> 
 On this page you can set the momentum spread according to a simple 
@@ -229,29 +346,29 @@ parametrization, you can write and link your own
 <code><?php $filepath = $_GET["filepath"];
 echo "<a href='BeamShape.php?filepath=".$filepath."' target='page'>";?>BeamShape</a></code> class. 
  
-<br/><br/><strong>Beams:allowMomentumSpread</strong>  <input type="radio" name="19" value="on"><strong>On</strong>
-<input type="radio" name="19" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Beams:allowMomentumSpread</strong>  <input type="radio" name="22" value="on"><strong>On</strong>
+<input type="radio" name="22" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Allow the beam momenta to be smeared around their initialization 
 nominal values. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaPxA </td><td></td><td> <input type="text" name="20" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaPxA </td><td></td><td> <input type="text" name="23" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>p_x</i> spread of the 
 first incoming particle. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaPyA </td><td></td><td> <input type="text" name="21" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaPyA </td><td></td><td> <input type="text" name="24" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>p_y</i> spread of the 
 first incoming particle. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaPzA </td><td></td><td> <input type="text" name="22" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaPzA </td><td></td><td> <input type="text" name="25" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>p_z</i> spread of the 
 first incoming particle. 
    
  
-<br/><br/><table><tr><td><strong>Beams:maxDevA </td><td></td><td> <input type="text" name="23" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:maxDevA </td><td></td><td> <input type="text" name="26" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The triply Gaussian distribution <i>(p_x, p_y, p_z)</i> is restricted to 
 a maximal total deviation from the nominal values <i>(p_x0, p_y0, p_z0)</i> 
 for the first incoming particle, like 
@@ -263,22 +380,22 @@ for the first incoming particle, like
 used to pick <i>(p_x, p_y, p_z)</i>.) 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaPxB </td><td></td><td> <input type="text" name="24" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaPxB </td><td></td><td> <input type="text" name="27" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>p_x</i> spread of the 
 second incoming particle. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaPyB </td><td></td><td> <input type="text" name="25" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaPyB </td><td></td><td> <input type="text" name="28" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>p_y</i> spread of the 
 second incoming particle. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaPzB </td><td></td><td> <input type="text" name="26" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaPzB </td><td></td><td> <input type="text" name="29" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>p_z</i> spread of the 
 second incoming particle. 
    
  
-<br/><br/><table><tr><td><strong>Beams:maxDevB </td><td></td><td> <input type="text" name="27" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:maxDevB </td><td></td><td> <input type="text" name="30" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The triply Gaussian distribution <i>(p_x, p_y, p_z)</i> is restricted to 
 a maximal total deviation from the nominal values <i>(p_x0, p_y0, p_z0)</i>, 
 for the second incoming particle, like 
@@ -290,6 +407,7 @@ for the second incoming particle, like
 used to pick <i>(p_x, p_y, p_z)</i>.) 
    
  
+<a name="section3"></a> 
 <h3>Beam interaction vertex</h3> 
  
 On this page you can set the spread of the interaction vertex according to 
@@ -298,29 +416,29 @@ parametrization, you can write and link your own
 <code><?php $filepath = $_GET["filepath"];
 echo "<a href='BeamShape.php?filepath=".$filepath."' target='page'>";?>BeamShape</a></code> class. 
  
-<br/><br/><strong>Beams:allowVertexSpread</strong>  <input type="radio" name="28" value="on"><strong>On</strong>
-<input type="radio" name="28" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Beams:allowVertexSpread</strong>  <input type="radio" name="31" value="on"><strong>On</strong>
+<input type="radio" name="31" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Allow the interaction vertex of the two colliding beams to be smeared. 
 If off, then the vertex is set to be the origin. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaVertexX </td><td></td><td> <input type="text" name="29" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaVertexX </td><td></td><td> <input type="text" name="32" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>x</i> location of the 
 interaction vertex. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaVertexY </td><td></td><td> <input type="text" name="30" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaVertexY </td><td></td><td> <input type="text" name="33" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>y</i> location of the 
 interaction vertex. 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaVertexZ </td><td></td><td> <input type="text" name="31" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaVertexZ </td><td></td><td> <input type="text" name="34" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the <i>z</i> location of the 
 interaction vertex. 
    
  
-<br/><br/><table><tr><td><strong>Beams:maxDevVertex </td><td></td><td> <input type="text" name="32" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:maxDevVertex </td><td></td><td> <input type="text" name="35" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The triply Gaussian distribution of interaction vertex position 
 <i>(x, y, z)</i> is restricted to a maximal total deviation from the 
 origin, like 
@@ -331,7 +449,7 @@ x^2/sigma_x^2 + y^2/sigma_y^2 + z^2/sigma_z^2 &lt; maxDevVertex^2
 used to pick <i>(x, y, z)</i>.) 
    
  
-<br/><br/><table><tr><td><strong>Beams:sigmaTime </td><td></td><td> <input type="text" name="33" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:sigmaTime </td><td></td><td> <input type="text" name="36" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The width of a Gaussian distribution of the collision time (in units of 
 mm/c). Note that, if the above space parametrization is viewed as the 
 effect of two incoming beams along the <i>+-z</i> axis, with each beam 
@@ -341,7 +459,7 @@ velocity of the beams, which we expect is close to unity). For flexibility
 we have not enforced any such relation, however. 
    
  
-<br/><br/><table><tr><td><strong>Beams:maxDevTime </td><td></td><td> <input type="text" name="34" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:maxDevTime </td><td></td><td> <input type="text" name="37" value="5." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>5.</strong></code>; <code>minimum = 0.</code>)</td></tr></table>
 The collision time is restricted to be in the range 
 <i>|t| &lt; sigma_t * maxDevTime</i>. 
    
@@ -352,19 +470,19 @@ possible to shift the above distributions to be centered around another
 nominal position. You must have <code>Beams:allowVertexSpread = on</code> 
 to use this possibility. 
  
-<br/><br/><table><tr><td><strong>Beams:offsetVertexX </td><td></td><td> <input type="text" name="35" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:offsetVertexX </td><td></td><td> <input type="text" name="38" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
 The <i>x</i> location of the interaction vertex is centered at this value. 
    
  
-<br/><br/><table><tr><td><strong>Beams:offsetVertexY </td><td></td><td> <input type="text" name="36" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:offsetVertexY </td><td></td><td> <input type="text" name="39" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
 The <i>y</i> location of the interaction vertex is centered at this value. 
    
  
-<br/><br/><table><tr><td><strong>Beams:offsetVertexZ </td><td></td><td> <input type="text" name="37" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:offsetVertexZ </td><td></td><td> <input type="text" name="40" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
 The <i>z</i> location of the interaction vertex is centered at this value. 
    
  
-<br/><br/><table><tr><td><strong>Beams:offsetTime </td><td></td><td> <input type="text" name="38" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Beams:offsetTime </td><td></td><td> <input type="text" name="41" value="0." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.</strong></code>)</td></tr></table>
 The time <i>t</i> of the interaction vertex is centered at this value. 
    
  
@@ -475,102 +593,117 @@ fwrite($handle,$data);
 }
 if($_POST["19"] != "off")
 {
-$data = "Beams:allowMomentumSpread = ".$_POST["19"]."\n";
+$data = "Beams:allowVariableEnergy = ".$_POST["19"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["20"] != "0.")
+if($_POST["20"] != "10.")
 {
-$data = "Beams:sigmaPxA = ".$_POST["20"]."\n";
+$data = "Beams:eMinPert = ".$_POST["20"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["21"] != "0.")
+if($_POST["21"] != "10.")
 {
-$data = "Beams:sigmaPyA = ".$_POST["21"]."\n";
+$data = "Beams:eWidthPert = ".$_POST["21"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["22"] != "0.")
+if($_POST["22"] != "off")
 {
-$data = "Beams:sigmaPzA = ".$_POST["22"]."\n";
+$data = "Beams:allowMomentumSpread = ".$_POST["22"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["23"] != "5.")
+if($_POST["23"] != "0.")
 {
-$data = "Beams:maxDevA = ".$_POST["23"]."\n";
+$data = "Beams:sigmaPxA = ".$_POST["23"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["24"] != "0.")
 {
-$data = "Beams:sigmaPxB = ".$_POST["24"]."\n";
+$data = "Beams:sigmaPyA = ".$_POST["24"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["25"] != "0.")
 {
-$data = "Beams:sigmaPyB = ".$_POST["25"]."\n";
+$data = "Beams:sigmaPzA = ".$_POST["25"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["26"] != "0.")
+if($_POST["26"] != "5.")
 {
-$data = "Beams:sigmaPzB = ".$_POST["26"]."\n";
+$data = "Beams:maxDevA = ".$_POST["26"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["27"] != "5.")
+if($_POST["27"] != "0.")
 {
-$data = "Beams:maxDevB = ".$_POST["27"]."\n";
+$data = "Beams:sigmaPxB = ".$_POST["27"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["28"] != "off")
+if($_POST["28"] != "0.")
 {
-$data = "Beams:allowVertexSpread = ".$_POST["28"]."\n";
+$data = "Beams:sigmaPyB = ".$_POST["28"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["29"] != "0.")
 {
-$data = "Beams:sigmaVertexX = ".$_POST["29"]."\n";
+$data = "Beams:sigmaPzB = ".$_POST["29"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["30"] != "0.")
+if($_POST["30"] != "5.")
 {
-$data = "Beams:sigmaVertexY = ".$_POST["30"]."\n";
+$data = "Beams:maxDevB = ".$_POST["30"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["31"] != "0.")
+if($_POST["31"] != "off")
 {
-$data = "Beams:sigmaVertexZ = ".$_POST["31"]."\n";
+$data = "Beams:allowVertexSpread = ".$_POST["31"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["32"] != "5.")
+if($_POST["32"] != "0.")
 {
-$data = "Beams:maxDevVertex = ".$_POST["32"]."\n";
+$data = "Beams:sigmaVertexX = ".$_POST["32"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["33"] != "0.")
 {
-$data = "Beams:sigmaTime = ".$_POST["33"]."\n";
+$data = "Beams:sigmaVertexY = ".$_POST["33"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["34"] != "5.")
+if($_POST["34"] != "0.")
 {
-$data = "Beams:maxDevTime = ".$_POST["34"]."\n";
+$data = "Beams:sigmaVertexZ = ".$_POST["34"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["35"] != "0.")
+if($_POST["35"] != "5.")
 {
-$data = "Beams:offsetVertexX = ".$_POST["35"]."\n";
+$data = "Beams:maxDevVertex = ".$_POST["35"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["36"] != "0.")
 {
-$data = "Beams:offsetVertexY = ".$_POST["36"]."\n";
+$data = "Beams:sigmaTime = ".$_POST["36"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["37"] != "0.")
+if($_POST["37"] != "5.")
 {
-$data = "Beams:offsetVertexZ = ".$_POST["37"]."\n";
+$data = "Beams:maxDevTime = ".$_POST["37"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["38"] != "0.")
 {
-$data = "Beams:offsetTime = ".$_POST["38"]."\n";
+$data = "Beams:offsetVertexX = ".$_POST["38"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["39"] != "0.")
+{
+$data = "Beams:offsetVertexY = ".$_POST["39"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["40"] != "0.")
+{
+$data = "Beams:offsetVertexZ = ".$_POST["40"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["41"] != "0.")
+{
+$data = "Beams:offsetTime = ".$_POST["41"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -580,4 +713,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

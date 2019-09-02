@@ -1,5 +1,5 @@
 // Pythia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -10,8 +10,8 @@
 #define Pythia8_Pythia_H
 
 // Version number defined for use in macros and for consistency checks.
-#define PYTHIA_VERSION 8.235
-#define PYTHIA_VERSION_INTEGER 8235
+#define PYTHIA_VERSION 8.243
+#define PYTHIA_VERSION_INTEGER 8243
 
 // Header files for the Pythia class and for what else the user may need.
 #include "Pythia8/Analysis.h"
@@ -40,6 +40,8 @@
 #include "Pythia8/Ropewalk.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/SigmaTotal.h"
+#include "Pythia8/SimpleSpaceShower.h"
+#include "Pythia8/SimpleTimeShower.h"
 #include "Pythia8/SpaceShower.h"
 #include "Pythia8/StandardModel.h"
 #include "Pythia8/SLHAinterface.h"
@@ -101,6 +103,8 @@ public:
     PDF* pdfHardGamBPtrIn = 0, PDF* pdfUnresAPtrIn = 0,
     PDF* pdfUnresBPtrIn = 0, PDF* pdfUnresGamAPtrIn = 0,
     PDF* pdfUnresGamBPtrIn = 0, PDF* pdfVMDAPtrIn = 0, PDF* pdfVMDBPtrIn = 0);
+  bool setPDFAPtr( PDF* pdfAPtrIn );
+  bool setPDFBPtr( PDF* pdfBPtrIn );
 
   // Set photon fluxes externally. Used with option "PDF:lepton2gammaSet = 2".
   bool setPhotonFluxPtr( PDF* photonFluxAIn, PDF* photonFluxBIn) {
@@ -188,6 +192,12 @@ public:
 
   // Generate the next event.
   bool next();
+
+  // Generate the next event, either with new energies or new beam momenta.
+  bool next(double eCMin);
+  bool next(double eAin, double eBin);
+  bool next(double pxAin, double pyAin, double pzAin,
+            double pxBin, double pyBin, double pzBin);
 
   // Generate only a single timelike shower as in a decay.
   int forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0)
@@ -373,7 +383,8 @@ private:
 
   // Pointer to BeamShape object for beam momentum and interaction vertex.
   BeamShape* beamShapePtr;
-  bool       useNewBeamShape, doMomentumSpread, doVertexSpread;
+  bool       useNewBeamShape, doMomentumSpread, doVertexSpread, doVarEcm;
+  double     eMinPert, eWidthPert;
 
   // Pointers to external processes derived from the Pythia base classes.
   vector<SigmaProcess*> sigmaPtrs;

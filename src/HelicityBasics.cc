@@ -1,5 +1,5 @@
 // HelicityBasics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -110,7 +110,7 @@ ostream& operator<< (ostream& os, Wave4 w) {
 // paper. Gamma(4) gives the +--- metric, while Gamma(5) gives the gamma^5
 // matrix.
 
-GammaMatrix::GammaMatrix(int mu) {
+GammaMatrix::GammaMatrix(int mu) : index() {
 
   COMPLEXZERO = complex( 0., 0.);
 

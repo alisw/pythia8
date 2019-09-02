@@ -28,6 +28,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ParticleDecays.php'>
  
 <h2>Particle Decays</h2> 
+<ol id="toc">
+  <li><a href="#section0">Variables determining whether a particle decays</a></li>
+  <li><a href="#section1">Mixing</a></li>
+  <li><a href="#section2">Tau decays</a></li>
+  <li><a href="#section3">QED radiation</a></li>
+  <li><a href="#section4">Other variables</a></li>
+  <li><a href="#section5">Modes for Matrix Element Processing</a></li>
+</ol>
+
  
 The <code>ParticleDecays</code> class performs the sequential decays of 
 all unstable hadrons produced in the string fragmentation stage, 
@@ -45,6 +54,7 @@ tables and the number of decay models available. Recently a more
 sophisticated handling of <i>tau</i> decays has also been introduced. 
 Some issues may need further polishing. 
  
+<a name="section0"></a> 
 <h3>Variables determining whether a particle decays</h3> 
  
 Before a particle is actually decayed, a number of checks are made. 
@@ -134,6 +144,7 @@ The above <i>xyMax</i>, expressed in mm.
 The above <i>zMax</i>, expressed in mm. 
    
  
+<a name="section1"></a> 
 <h3>Mixing</h3> 
  
 <br/><br/><strong>ParticleDecays:mixB</strong>  <input type="radio" name="10" value="on" checked="checked"><strong>On</strong>
@@ -153,6 +164,7 @@ The mixing parameter <i>x_s = Delta(m_B_s^0)/Gamma_B_s^0</i> in the
 Gamma from RPP2006.) 
    
  
+<a name="section2"></a> 
 <h3>Tau decays</h3> 
  
 Decays of <i>tau</i> leptons can be performed using helicity 
@@ -278,6 +290,7 @@ positive identity code; to the extent an antiparticle exists it will
 automatically obtain the inverse polarization. 
    
  
+<a name="section3"></a> 
 <h3>QED radiation</h3> 
  
 So far PYTHIA does not have any generic machinery for handling QED radiation 
@@ -299,6 +312,7 @@ in order to avoid double-counting of emissions if you link to an external
 QED-radiation program, as is the norm in many collaborations. 
    
  
+<a name="section4"></a> 
 <h3>Other variables</h3> 
  
 <br/><br/><table><tr><td><strong>ParticleDecays:mSafety </td><td></td><td> <input type="text" name="18" value="0.0005" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>0.0005</strong></code>; <code>minimum = 0.</code>; <code>maximum = 0.01</code>)</td></tr></table>
@@ -377,6 +391,7 @@ shower to develop from it, before the partonic system is hadronized.
 In addition, some variables defined for string fragmentation and for 
 flavour production are used also here. 
  
+<a name="section5"></a> 
 <h3>Modes for Matrix Element Processing</h3> 
  
 Some decays can be treated better than what pure phase space allows, 
@@ -428,6 +443,12 @@ and avoid already explicitly listed non-partonic channels</li>
 and hadronize</li> 
 <li> 92 : decay onium to <i>g g g</i> or <i>g g gamma</i> 
 (with matrix element), which should shower and hadronize</li> 
+<li> 93 : decay of colour singlet to <i>q qbar</i> plus another singlet, 
+flat in phase space (and arbitrarily ordered), where the <i>q qbar</i> 
+pair should shower and hadronize</li> 
+<li> 94 : same as 93, but weighted with <i>V-A</i> weak matrix element 
+if the decay chain is of the type <i>neutrino \rarr; dbar u lepton</i> 
+in that order</li> 
 <li> 100 - : reserved for the description of partial widths of 
 <?php $filepath = $_GET["filepath"];
 echo "<a href='ResonanceDecays.php?filepath=".$filepath."' target='page'>";?>resonances</a></li> 
@@ -599,4 +620,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

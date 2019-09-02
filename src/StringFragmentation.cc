@@ -1,5 +1,5 @@
 // StringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -35,7 +35,8 @@ const double StringEnd::MEANPT   = 0.4;
 // Set up initial endpoint values from input.
 
 void StringEnd::setUp(bool fromPosIn, int iEndIn, int idOldIn, int iMaxIn,
-  double pxIn, double pyIn, double GammaIn, double xPosIn, double xNegIn) {
+  double pxIn, double pyIn, double GammaIn, double xPosIn, double xNegIn,
+  int colIn) {
 
   // Simple transcription from input.
   fromPos  = fromPosIn;
@@ -49,6 +50,7 @@ void StringEnd::setUp(bool fromPosIn, int iEndIn, int idOldIn, int iMaxIn,
   iNegOld  = (fromPos) ? iMax : 0;
   xPosOld  = xPosIn;
   xNegOld  = xNegIn;
+  colOld   = colIn;
 
 }
 
@@ -141,6 +143,7 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system,
 
     // Referance to current string region.
     StringRegion& region = system.region( iPosNew, iNegNew);
+    colNew = fromPos ? region.colPos : region.colNeg;
 
     // Now begin special section for rapid processing of low region.
     if (iStep == 0 && iPosOld + iNegOld == iMax) {
@@ -185,7 +188,9 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system,
     // Set up four-vectors in a region not visited before.
     if (!region.isSetUp) region.setUp(
       system.regionLowPos(iPosNew).pPos,
-      system.regionLowNeg(iNegNew).pNeg, true);
+      system.regionLowNeg(iNegNew).pNeg,
+      system.regionLowPos(iPosNew).colPos,
+      system.regionLowNeg(iNegNew).colNeg, true);
 
     // If new region is vanishingly small, continue immediately to next.
     // Negative energy signals failure to do this, i.e. moved too low.
@@ -235,7 +240,9 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system,
         StringRegion& regionGam =  system.region( iPos, iNeg);
         if (!regionGam.isSetUp) regionGam.setUp(
           system.regionLowPos(iPos).pPos,
-          system.regionLowNeg(iNeg).pNeg, true);
+          system.regionLowNeg(iNeg).pNeg,
+          system.regionLowPos(iPos).colPos,
+          system.regionLowNeg(iNeg).colNeg, true);
         double w2 = regionGam.w2;
         cGam1 += xDir * xInv * w2;
         if (iDir == iDirNew) cGam2 -= xInv * w2;
@@ -283,7 +290,9 @@ Vec4 StringEnd::kinematicsHadron( StringSystem& system,
     stringVertices.push_back( StringVertex( fromPos, iPosNew, iNegNew,
       xPosNew, xNegNew) );
 
-    // Else we have found the correct region, and can return four-momentum.
+    // Else we have found the correct region, and can set the new
+    // colour index and return four-momentum.
+    colNew = fromPos ? region.colPos : region.colNeg;
     if (useInputZ) return Vec4( 0., 0., 0., 0.);
     else return pSoFar + region.pHad( xPosHad, xNegHad, pxNew, pyNew);
 
@@ -403,7 +412,9 @@ Vec4 StringEnd::kinematicsHadronTmp( StringSystem system, Vec4 pRem,
     // Set up four-vectors in a region not visited before.
     if (!region.isSetUp) region.setUp(
       system.regionLowPos(iPosNewTmp).pPos,
-      system.regionLowNeg(iNegNewTmp).pNeg, true);
+      system.regionLowNeg(iNegNewTmp).pNeg,
+      system.regionLowPos(iPosNewTmp).colPos,
+      system.regionLowNeg(iNegNewTmp).colNeg, true);
 
     // If new region is vanishingly small, continue immediately to next.
     // Negative energy signals failure to do this, i.e. moved too low.
@@ -453,7 +464,9 @@ Vec4 StringEnd::kinematicsHadronTmp( StringSystem system, Vec4 pRem,
         StringRegion regionGam =  system.region( iPos, iNeg);
         if (!regionGam.isSetUp) regionGam.setUp(
           system.regionLowPos(iPos).pPos,
-          system.regionLowNeg(iNeg).pNeg, true);
+          system.regionLowNeg(iNeg).pNeg,
+          system.regionLowPos(iPos).colPos,
+          system.regionLowNeg(iNeg).colNeg, true);
         double w2 = regionGam.w2;
         cGam1 += xDir * xInv * w2;
         if (iDir == iDirNew) cGam2 -= xInv * w2;
@@ -519,6 +532,7 @@ void StringEnd::update() {
   GammaOld = GammaNew;
   xPosOld  = xPosNew;
   xNegOld  = xNegNew;
+  colOld   = colNew;
 
 }
 
@@ -605,6 +619,7 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   eMinLeftJunction
     = settings.parm("StringFragmentation:eMinLeftJunction");
 
+
   // Calculation and definition of hadron space-time production vertices.
   hadronVertex    = settings.mode("HadronVertex:mode");
   setVertices     = settings.flag("Fragmentation:setVertices");
@@ -612,6 +627,9 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   smearOn         = settings.flag("HadronVertex:smearOn");
   xySmear         = settings.parm("HadronVertex:xySmear");
   constantTau     = settings.flag("HadronVertex:constantTau");
+
+  // Tracing of colours for primary hadrons.
+  traceColours    = settings.flag("StringFragmentation:TraceColours");
 
   // Flavour Rope treatment.
   doFlavRope      = settings.flag("Ropewalk:RopeHadronization")
@@ -735,6 +753,10 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
     // Keep track of the momentum of hadrons taken from left and right.
     Vec4 hadMomPos, hadMomNeg;
 
+    // Inform the UserHooks about the string to he hadronised.
+    if ( userHooksPtr && userHooksPtr->canChangeFragPar() )
+      userHooksPtr->setStringEnds(&posEnd, &negEnd, iParton);
+
     for ( ; ; ) {
 
       // Take a step either from the positive or the negative end.
@@ -757,9 +779,10 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
          if ( !userHooksPtr->doChangeFragPar( flavSelPtr, zSelPtr, pTSelPtr,
            (fromPos ? idPos : idNeg),
-           (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton) )
+           (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()),
+           iParton, &nowEnd) )
            infoPtr->errorMsg("Error in StringFragmentation::fragment: "
-             "failed to change hadronisation parameters.");
+           "failed to change hadronisation parameters.");
       }
 
       // Construct trial hadron and check that energy remains.
@@ -792,7 +815,7 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
         // Provide full particle info for veto decision.
         if ( userHooksPtr->doVetoFragmentation( Particle( nowEnd.idHad,
-          statusHad, iPos, iNeg, 0, 0, 0, 0, pHad, nowEnd.mHad) ) )
+          statusHad, iPos, iNeg, 0, 0, 0, 0, pHad, nowEnd.mHad), &nowEnd ) )
           continue;
       }
 
@@ -801,8 +824,11 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       else         hadMomNeg += pHad;
 
       // Append produced hadron.
+      int colHadOld = nowEnd.colOld;
+      int colHadNew = nowEnd.colNew;
+      if ( !nowEnd.fromPos ) swap(colHadOld, colHadNew);
       hadrons.append( nowEnd.idHad, statusHad, iPos, iNeg,
-        0, 0, 0, 0, pHad, nowEnd.mHad);
+        0, 0, colHadOld, colHadNew, pHad, nowEnd.mHad);
       if (pHad.e() < 0.) break;
 
       // Update string end and remaining momentum.
@@ -927,11 +953,12 @@ StringSystem systemNow, int legNow) {
   }
 
   // Initialize two string endpoints.
-  posEnd.setUp(  true, iPos, idPos, systemNow.iMax,  px,  py,
-    Gamma, xPosFromPos, xNegFromPos);
+  posEnd.setUp( true, iPos, idPos, systemNow.iMax,  px,  py,
+                Gamma, xPosFromPos, xNegFromPos,
+                systemNow.regionLowPos(0).colPos);
   negEnd.setUp( false, iNeg, idNeg, systemNow.iMax, -px, -py,
-    Gamma, xPosFromNeg, xNegFromNeg);
-
+                Gamma, xPosFromNeg, xNegFromNeg,
+                systemNow.regionLowNeg(0).colPos);
   // Store breakup vertex information from the first and last points.
   if (setVertices) {
     if (legNow == legMin) legMinVertices.push_back(
@@ -1414,7 +1441,7 @@ void StringFragmentation::setHadronVertices( Event& event) {
           prodPoints = middlePoint + 0.5 * redOsc * pHad / kappaVtx;
         else {
           prodPoints = middlePoint - 0.5 * redOsc * pHad / kappaVtx;
-          if (prodPoints.m2Calc() < 0.) {
+          if (prodPoints.m2Calc() < 0. || prodPoints.e() < 0.) {
             double midpProd = redOsc * middlePoint * pHad;
             double tau0fac = 2. * (midpProd - sqrt( pow2(midpProd)
               - middlePoint.m2Calc() * pow2(redOsc * mHad)))
@@ -1425,6 +1452,7 @@ void StringFragmentation::setHadronVertices( Event& event) {
         }
         event[iHad].vProd( event[iHad].vProd() + prodPoints * FM2MM );
       }
+
       // End of the two legs loop. Number of hadrons with stored vertices.
       hadSoFar = hadSoFar + finalLocation.size() - 1;
     }
@@ -1452,7 +1480,7 @@ void StringFragmentation::setHadronVertices( Event& event) {
       prodPoints = middlePoint + 0.5 * redOsc * pHad / kappaVtx;
     else {
       prodPoints = middlePoint - 0.5 * redOsc * pHad / kappaVtx;
-      if (prodPoints.m2Calc() < 0.) {
+      if (prodPoints.m2Calc() < 0. || prodPoints.e() < 0.) {
         double midpProd = redOsc * middlePoint * pHad;
         double tau0fac = 2. * ( midpProd - sqrt( pow2(midpProd)
           - middlePoint.m2Calc() * pow2(redOsc * mHad))) / pow2(redOsc * mHad);
@@ -1660,11 +1688,23 @@ bool StringFragmentation::finalTwo(bool fromPos, Event& event,
     }
   }
 
+  int colMid = (fromPos? negEnd.colOld: posEnd.colOld);
+  // Possibility for a user to veto the hadron production.
+  if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
+    // Provide full particle info for veto decision.
+    if ( userHooksPtr->doVetoFragmentation(
+      Particle( posEnd.idHad, statusHadPos, posEnd.iEnd, negEnd.iEnd,
+        0, 0, posEnd.colOld, colMid, pHadPos, posEnd.mHad),
+      Particle( negEnd.idHad, statusHadNeg, posEnd.iEnd, negEnd.iEnd,
+        0, 0, colMid, negEnd.colOld, pHadNeg, negEnd.mHad),
+      &posEnd, &negEnd ) ) return false;
+  }
+
   // Add produced particles to the event record.
   hadrons.append( posEnd.idHad, statusHadPos, posEnd.iEnd, negEnd.iEnd,
-    0, 0, 0, 0, pHadPos, posEnd.mHad);
+    0, 0, posEnd.colOld, colMid, pHadPos, posEnd.mHad);
   hadrons.append( negEnd.idHad, statusHadNeg, posEnd.iEnd, negEnd.iEnd,
-    0, 0, 0, 0, pHadNeg, negEnd.mHad);
+    0, 0, colMid, negEnd.colOld, pHadNeg, negEnd.mHad);
 
   // It worked.
   return true;
@@ -1686,6 +1726,8 @@ StringRegion StringFragmentation::finalRegion() {
 
   // Add up all remaining p+.
   Vec4 pPosJoin;
+  int colPos = system.regionLowPos(posEnd.iPosOld).colPos;
+  int colNeg = system.regionLowNeg(negEnd.iNegOld).colNeg;
   if ( posEnd.iPosOld == negEnd.iPosOld) {
     double xPosJoin = posEnd.xPosOld - negEnd.xPosOld;
     if (xPosJoin < 0.) return region;
@@ -1741,7 +1783,7 @@ StringRegion StringFragmentation::finalRegion() {
   }
 
   // Construct a new region from remaining p+ and p-.
-  region.setUp( pPosJoin, pNegJoin);
+  region.setUp( pPosJoin, pNegJoin, colPos, colNeg);
   if (region.isEmpty) return region;
 
   // Project the existing pTold vectors onto the new directions.
@@ -1769,6 +1811,13 @@ void StringFragmentation::store(Event& event) {
 
   // Starting position.
   int iFirst = event.size();
+
+  // Remove colour indices to avoid confusion by default.
+  if ( !traceColours )
+    for (int i = 0; i < hadrons.size(); ++i) {
+      hadrons[i].col(0);
+      hadrons[i].acol(0);
+    }
 
   // Copy straight over from first two junction legs.
   if (hasJunction) {
@@ -1960,15 +2009,27 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
   Vec4 pOppose = pWTinJRF[legMin];
   pOppose.flip3();
   int idOppose = (rndmPtr->flat() > 0.5) ? 2 : 1;
-  if (event[ iPartonMin[0] ].col() > 0) idOppose = -idOppose;
-  int iOppose = event.append( idOppose, 77, 0, 0, 0, 0, 0, 0,
+  int colOppose = event[iPartonMin.back()].acol();
+  int acolOppose = 0;
+  if (event[ iPartonMin[0] ].col() > 0) {
+    idOppose = -idOppose;
+    colOppose = 0;
+    acolOppose = event[iPartonMin.back()].col();
+  }
+  int iOppose = event.append( idOppose, 77, 0, 0, 0, 0, colOppose, acolOppose,
     pOppose, 0.);
   iPartonMin.push_back( iOppose);
   pOppose = pWTinJRF[legMid];
   pOppose.flip3();
   idOppose = (rndmPtr->flat() > 0.5) ? 2 : 1;
-  if (event[ iPartonMid[0] ].col() > 0) idOppose = -idOppose;
-  iOppose = event.append( idOppose, 77, 0, 0, 0, 0, 0, 0,
+  colOppose = event[iPartonMid.back()].acol();
+  acolOppose = 0;
+  if (event[ iPartonMid[0] ].col() > 0) {
+    idOppose = -idOppose;
+    colOppose = 0;
+    acolOppose = event[iPartonMid.back()].col();
+  }
+  iOppose = event.append( idOppose, 77, 0, 0, 0, 0, colOppose, acolOppose,
     pOppose, 0.);
   iPartonMid.push_back( iOppose);
 
@@ -1993,10 +2054,9 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
 
         // Read in properties specific to this leg.
         StringSystem& systemNow = (legLoop == 0) ? systemMin : systemMid;
-        int idPos = (legLoop == 0) ? event[ iPartonMin[0] ].id()
-          : event[ iPartonMid[0] ].id();
-        idOppose = (legLoop == 0) ? event[ iPartonMin.back() ].id()
-          : event[ iPartonMid.back() ].id();
+        vector<int>& iPartonNow = (legLoop == 0) ? iPartonMin : iPartonMid;
+        int idPos = event[ iPartonNow[0] ].id();
+        idOppose = event[ iPartonNow.back() ].id();
         double eInJRF = pInJRF[legNow].e();
         int statusHad = (legLoop == 0) ? 85 : 86;
 
@@ -2023,6 +2083,11 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
 
           // Keep track of hadron momentum.
           Vec4 hadMom;
+
+          // Inform the UserHooks about the string to he hadronised.
+          if ( userHooksPtr && userHooksPtr->canChangeFragPar() )
+            userHooksPtr->setStringEnds(&posEnd, 0, iPartonNow);
+
           for ( ; ; ++nHadrons) {
 
             // The FlavourRope treatment changes the fragmentation parameters.
@@ -2037,8 +2102,7 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
             // Possibility for a user to change the fragmentation parameters.
             if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
               if ( !userHooksPtr->doChangeFragPar( flavSelPtr, zSelPtr,
-                pTSelPtr, idPos, hadMom.m2Calc(),
-                (legLoop == 0 ? iPartonMin : iPartonMid )) )
+                pTSelPtr, idPos, hadMom.m2Calc(), iPartonNow, &posEnd) )
                 infoPtr->errorMsg("Error in StringFragmentation::fragment"
                 "ToJunction: failed to change hadronisation parameters.");
             }
@@ -2046,6 +2110,15 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
             // Construct trial hadron from positive end.
             posEnd.newHadron();
             Vec4 pHad = posEnd.kinematicsHadron(systemNow, junctionVertices);
+
+            // Possibility for a user to veto the hadron production.
+            if ( (userHooksPtr != 0) && userHooksPtr->canChangeFragPar() ) {
+              // Provide full particle info for veto decision.
+              if ( userHooksPtr->doVetoFragmentation( Particle( posEnd.idHad,
+                statusHad, iPos, iNeg, 0, 0, 0, 0,
+                pHad, posEnd.mHad), &posEnd ) )
+                continue;
+            }
 
             // Negative energy signals failure in construction.
             if (pHad.e() < 0. ) { noNegE = false; break; }
@@ -2063,7 +2136,7 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
 
             // Else construct kinematics of the new hadron and store it.
             hadrons.append( posEnd.idHad, statusHad, iPos, iNeg,
-              0, 0, 0, 0, pHad, posEnd.mHad);
+              0, 0, posEnd.colOld, posEnd.colNew, pHad, posEnd.mHad);
 
             // Update hadron, string end and remaining momentum.
             hadMom += pHad;
@@ -2169,6 +2242,10 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
     --iPsize;
     iPartonMax[iPsize - 1] = iDiquark;
   }
+  if ( idDiquark > 0 )
+    event[iDiquark].acol(event[iPartonMax[iPsize - 2]].col());
+  else
+    event[iDiquark].col(event[iPartonMax[iPsize - 2]].acol());
 
   // Modify parton list to remaining leg + remnant of the first two.
   iParton = iPartonMax;

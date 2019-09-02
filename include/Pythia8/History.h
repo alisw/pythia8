@@ -1,5 +1,5 @@
 // History.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,7 +19,7 @@
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StandardModel.h"
-#include "Pythia8/WeakShowerMEs.h"
+#include "Pythia8/SimpleWeakShowerMEs.h"
 
 namespace Pythia8 {
 
@@ -58,49 +58,38 @@ public:
   // The recoiler before the splitting.
   int recBef;
 
+  bool hasProbSet;
+  double prob;
+
   // Default constructor
-  Clustering(){
-    emitted    = 0;
-    emittor    = 0;
-    recoiler   = 0;
-    partner    = 0;
-    flavRadBef = 0;
-    spinRad    = 9;
-    spinEmt    = 9;
-    spinRec    = 9;
-    spinRadBef = 9;
-    recBef     = 0;
-    radBef     = 0;
-  }
+  Clustering() : emitted(0), emittor(0), recoiler(0), partner(0), pTscale(),
+    flavRadBef(0), spinRad(9), spinEmt(9), spinRec(9), spinRadBef(9),
+    radBef(0), recBef(0), hasProbSet(false), prob(-1.) {}
 
   // Default destructor
   ~Clustering(){}
 
   // Copy constructor
-  Clustering( const Clustering& inSystem ){
-    emitted    = inSystem.emitted;
-    emittor    = inSystem.emittor;
-    recoiler   = inSystem.recoiler;
-    partner    = inSystem.partner;
-    pTscale    = inSystem.pTscale;
-    flavRadBef = inSystem.flavRadBef;
-    spinRad    = inSystem.spinRad;
-    spinEmt    = inSystem.spinEmt;
-    spinRec    = inSystem.spinRec;
-    spinRadBef = inSystem.spinRad;
-    radBef     = inSystem.radBef;
-    recBef     = inSystem.recBef;
-  }
+  Clustering( const Clustering& inSystem ) :
+    emitted(inSystem.emitted), emittor(inSystem.emittor),
+    recoiler(inSystem.recoiler), partner(inSystem.partner),
+    pTscale(inSystem.pTscale), flavRadBef(inSystem.flavRadBef),
+    spinRad(inSystem.spinRad), spinEmt(inSystem.spinEmt),
+    spinRec(inSystem.spinRec), spinRadBef(inSystem.spinRad),
+    radBef(inSystem.radBef), recBef(inSystem.recBef),
+    hasProbSet(inSystem.hasProbSet), prob(inSystem.prob) {}
 
   // Constructor with input
   Clustering( int emtIn, int radIn, int recIn, int partnerIn,
     double pTscaleIn, int flavRadBefIn = 0, int spinRadIn = 9,
     int spinEmtIn = 9, int spinRecIn = 9, int spinRadBefIn = 9,
-    int radBefIn = 0, int recBefIn = 0)
+    int radBefIn = 0, int recBefIn = 0, bool hasProbIn = false,
+    double probIn = -1.)
     : emitted(emtIn), emittor(radIn), recoiler(recIn), partner(partnerIn),
       pTscale(pTscaleIn), flavRadBef(flavRadBefIn), spinRad(spinRadIn),
       spinEmt(spinEmtIn), spinRec(spinRecIn), spinRadBef(spinRadBefIn),
-      radBef(radBefIn), recBef(recBefIn) {}
+      radBef(radBefIn), recBef(recBefIn), hasProbSet(hasProbIn),
+      prob(probIn) {}
 
   // Function to return pythia pT scale of clustering
   double pT() const { return pTscale; }
@@ -140,7 +129,7 @@ public:
   // clustering (=1 for FSR clusterings). \a probin is the accumulated
   // probabilities for the previous clusterings, and \ mothin is the
   // previous history node (null for the initial node).
-  History( int depth,
+  History( int depthIn,
            double scalein,
            Event statein,
            Clustering c,
@@ -161,6 +150,22 @@ public:
   // The destructor deletes each child.
   ~History() {
     for ( int i = 0, N = children.size(); i < N; ++i ) delete children[i];
+  }
+
+  void clear() {
+    map<double,History *>().swap(paths);
+    map<double,History *>().swap(goodBranches);
+    map<double,History *>().swap(badBranches);
+    for ( int i = 0, N = children.size(); i < N; ++i ) delete children[i];
+    vector<History *>().swap(children);
+  }
+
+  void clearPaths() {
+    bool allClear=true;
+    for ( int i = 0, N = children.size(); i < N; ++i )
+      if (children[i]->state.size()!= 0) allClear = false;
+    if (allClear) state.free();
+    return;
   }
 
   // Function to project paths onto desired paths.
@@ -199,16 +204,16 @@ public:
   // For unitary NL3:
   double weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-    int depth = -1);
+    int depthIn = -1);
   double weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-    int depth = -1);
+    int depthIn = -1);
   double weight_UNLOPS_LOOP(PartonLevel* trial, AlphaStrong * asFSR,
      AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-     int depth = -1);
+     int depthIn = -1);
   double weight_UNLOPS_SUBTNLO(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-    int depth = -1);
+    int depthIn = -1);
   double weight_UNLOPS_CORRECTION( int order, PartonLevel* trial,
     AlphaStrong* asFSR, AlphaStrong * asISR, AlphaEM * aemFSR,
     AlphaEM * aemISR, double RN, Rndm* rndmPtr );
@@ -233,6 +238,8 @@ public:
   // Function to return the depth of the history (i.e. the number of
   // reclustered splittings)
   int nClusterings();
+  int nOrdered(double maxscale);
+  vector<double> scales();
 
   // Function to get the lowest multiplicity reclustered event
   Event lowestMultProc( const double RN) {
@@ -796,10 +803,10 @@ private:
   void setSelectedChild();
 
   // Setup the weak dipole showers.
-  void setupWeakShower(int nSteps);
+  void setupSimpleWeakShower(int nSteps);
 
   // Update weak dipoles after an emission.
-  void transferWeakShower(vector<int> &mode, vector<Vec4> &mom,
+  void transferSimpleWeakShower(vector<int> &mode, vector<Vec4> &mom,
     vector<int> fermionLines, vector<pair<int,int> > &dipoles, int nSteps);
 
   // Update the weak modes after an emission.
@@ -901,7 +908,11 @@ private:
   MergingHooks* mergingHooksPtr;
 
    // The default constructor is private.
-  History() {}
+  History() : mother(), selectedChild(), sumpath(), sumGoodBranches(),
+    sumBadBranches(), foundOrderedPath(), foundStronglyOrderedPath(),
+    foundAllowedPath(), foundCompletePath(), scale(), nextInInput(), prob(),
+    iReclusteredOld(), iReclusteredNew(), doInclude(), mergingHooksPtr(),
+    particleDataPtr(), infoPtr(), showers(), coupSMPtr(), sumScalarPT() {}
 
   // The copy-constructor is private.
   History(const History &) {}
@@ -922,7 +933,7 @@ private:
   Info* infoPtr;
 
   // Class for calculation weak shower ME.
-  WeakShowerMEs weakShowerMEs;
+  SimpleWeakShowerMEs simpleWeakShowerMEs;
 
   // Pointer to showers, to simplify external clusterings.
   PartonLevel* showers;
@@ -932,6 +943,45 @@ private:
 
   // Minimal scalar sum of pT used in Herwig to choose history
   double sumScalarPT;
+
+  double probMaxSave;
+  double probMax() {
+    if (mother) return mother->probMax();
+    return probMaxSave;
+  }
+  void updateProbMax(double probIn, bool isComplete = false) {
+    if (mother) mother->updateProbMax(probIn, isComplete);
+    if (!isComplete && !foundCompletePath) return;
+    if (abs(probIn) > probMaxSave) probMaxSave = probIn;
+  }
+
+  int depth, minDepthSave;
+  int minDepth() {
+    if ( mother ) return mother->minDepth();
+    return minDepthSave;
+  }
+  void updateMinDepth(int depthIn) {
+    if ( mother ) return mother->updateMinDepth(depthIn);
+    minDepthSave = (minDepthSave>0) ? min(minDepthSave,depthIn) : depthIn;
+  }
+
+  int nMaxOrd;
+  int nMaxOrdered() {
+    if ( mother ) return mother->nMaxOrdered();
+    return nMaxOrd;
+  }
+  void updateNmaxOrdered(int nord) {
+    if ( mother ) mother->updateNmaxOrdered(nord);
+    nMaxOrd = max(nMaxOrd,nord);
+  }
+  int maxDepth() {
+    if ( mother ) return mother->maxDepth();
+    return depth;
+  }
+  int npaths() {
+    if ( mother ) return mother->npaths();
+    return paths.size();
+  }
 
 };
 

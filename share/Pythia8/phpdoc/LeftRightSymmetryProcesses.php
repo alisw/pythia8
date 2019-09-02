@@ -28,6 +28,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='LeftRightSymmetryProcesses.php'>
  
 <h2>Left-Right-Symmetry Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0">Production processes</a></li>
+  <li><a href="#section1">Parameters</a></li>
+</ol>
+
  
 At current energies, the world is left-handed, i.e. the Standard Model 
 contains an <i>SU(2)_L</i> group. Left-right symmetry at some larger 
@@ -74,6 +79,7 @@ has to be substituted by a sequential decay via a real <i>W_R^</i>
 (not implemented, but actually simpler to do than the one here). 
  
  
+<a name="section0"></a> 
 <h3>Production processes</h3> 
  
 A few different production processes have been implemented, which normally 
@@ -184,6 +190,7 @@ Scatterings <i>f fbar &rarr;  H_R^++ H_R^--</i>.
 Code 3146. 
    
  
+<a name="section1"></a> 
 <h3>Parameters</h3> 
  
 The basic couplings of the model are 
@@ -376,4 +383,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

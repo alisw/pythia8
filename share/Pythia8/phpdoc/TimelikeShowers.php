@@ -28,6 +28,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='TimelikeShowers.php'>
  
 <h2>Timelike Showers</h2> 
+<ol id="toc">
+  <li><a href="#section0">Main variables</a></li>
+  <li><a href="#section1">Interleaved evolution</a></li>
+  <li><a href="#section2">Global recoil</a></li>
+  <li><a href="#section3">Radiation off octet onium states</a></li>
+  <li><a href="#section4">Weak showers</a></li>
+  <li><a href="#section5">Further variables</a></li>
+</ol>
+
  
 The PYTHIA algorithm for timelike final-state showers is based on 
 the article [<a href="Bibliography.php#refSjo05" target="page">Sjo05</a>], where a transverse-momentum-ordered 
@@ -51,6 +60,7 @@ PYTHIA also incorporates an
 echo "<a href='Variations.php?filepath=".$filepath."' target='page'>";?>automated framework</a> 
 for shower uncertainty variations. 
  
+<a name="section0"></a> 
 <h3>Main variables</h3> 
  
 Often the maximum scale of the FSR shower evolution is understood from the 
@@ -260,6 +270,7 @@ Maximum invariant mass allowed for the created fermion pair in a
 <i>gamma &rarr; f fbar</i> branching in the shower. 
    
  
+<a name="section1"></a> 
 <h3>Interleaved evolution</h3> 
  
 Multiparton interactions (MPI) and initial-state showers (ISR) are 
@@ -385,6 +396,7 @@ not happen, except if rescattering is allowed, whereby two or more
 MPIs get interconnected. 
    
  
+<a name="section2"></a> 
 <h3>Global recoil</h3> 
  
 The final-state algorithm is based on dipole-style recoils, where 
@@ -526,6 +538,7 @@ emission rate is obtained, and  <?php $filepath = $_GET["filepath"];
 echo "<a href='UserHooks.php?filepath=".$filepath."' target='page'>";?>user hooks</a> 
 can provide the desired process-specific rejection factors. 
  
+<a name="section3"></a> 
 <h3>Radiation off octet onium states</h3> 
  
 In the current implementation, charmonium and bottomonium production 
@@ -600,6 +613,7 @@ splitting kernel. Thus the default corresponds to twice the radiation
 off a quark. The physically preferred range would be between 1 and 9/4. 
    
  
+<a name="section4"></a> 
 <h3>Weak showers</h3> 
  
 The emission of weak gauge bosons is an integrated part of the initial- 
@@ -627,6 +641,7 @@ Determine which branchings are allowed.
 Parton shower cut-off <i>pT</i> for weak branchings. 
    
  
+<a name="section5"></a> 
 <h3>Further variables</h3> 
  
 There are several possibilities you can use to switch on or off selected 
@@ -1077,4 +1092,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

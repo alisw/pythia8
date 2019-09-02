@@ -1,5 +1,5 @@
 // SigmaEW.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -3107,8 +3107,8 @@ void Sigma2gmgm2ffbar::sigmaKin() {
 
   // Calculate kinematics dependence.
   if (sH < 4. * s34Avg) sigTU = 0.;
-  else sigTU = 2. * (tHQ * uHQ - s34Avg * sH)
-    * (tHQ2 + uHQ2 + 2. * s34Avg * sH) / (tHQ2 * uHQ2);
+  else sigTU = 2. * ( tHQ2 + uHQ2 + 4. * s34Avg * sH
+             * (1. - s34Avg * sH / (tHQ * uHQ) ) ) / (tHQ * uHQ);
 
   // Answer.
   sigma = (M_PI / sH2) * pow2(alpEM) * ef4 * sigTU * openFracPair;
@@ -3197,8 +3197,8 @@ void Sigma2ggm2qqbar::sigmaKin() {
 
   // Calculate kinematics dependence.
   if (sH < 4. * s34Avg) sigTU = 0.;
-  else sigTU = (tHQ * uHQ - s34Avg * sH)
-    * (tHQ2 + uHQ2 + 2. * s34Avg * sH) / (tHQ2 * uHQ2);
+  else sigTU = ( tHQ2 + uHQ2
+    + 4. * s34Avg * sH * (1. - s34Avg * sH / (tHQ * uHQ) ) ) / (tHQ * uHQ);
 
   // Answer.
   sigma = (M_PI/sH2) * alpS * alpEM * ef2 * sigTU * openFracPair;

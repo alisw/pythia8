@@ -1,4 +1,3 @@
- 
 <html>
 <head>
 <title>ALPGEN Event Interface</title>
@@ -8,6 +7,11 @@
 <body>
  
 <h2>ALPGEN Event Interface</h2> 
+<ol id="toc">
+  <li><a href="#section0">ALPGEN main options</a></li>
+  <li><a href="#section1">Class information</a></li>
+</ol>
+
  
 This manual page describes the ALPGEN [<a href="Bibliography.html#refMan03" target="page">Man03</a>] event interface 
 for PYTHIA8.   While future versions of 
@@ -62,7 +66,8 @@ sample is enough to show the different components in action.
 </li> 
 </ul> 
  
-<h2>ALPGEN main options</h2> 
+<a name="section0"></a> 
+<h3>ALPGEN main options</h3> 
  
 These following options are provided by the AlpgenHooks class, 
 which must be loaded for this functionality to be present 
@@ -154,13 +159,14 @@ is set to the incoming <code>njet</code> ALPGEN parameter. Note that any
 existing value of this parameter is overwritten. 
    
  
-<h2>Class information</h2> 
+<a name="section1"></a> 
+<h3>Class information</h3> 
  
 Some more technical information about the different classes is given 
 below. For clarity, some limited information on certain private methods 
 is provided. 
  
-<h3>LHAupAlpgen</h3> 
+<h4>LHAupAlpgen</h4> 
  
 This class is derived from the 
 <a href="LesHouchesAccord.html" target="page"><code>LHAup</code></a> base class, and 
@@ -199,7 +205,7 @@ scaled to balance the outgoing particles. Finally, any intermediate
 resonances are recalculated from their decay products. 
    
  
-<h3>AlpgenPar</h3> 
+<h4>AlpgenPar</h4> 
  
 This class parses an ALPGEN parameter file and makes the information 
 available through a simple interface. The information is stored 
@@ -259,7 +265,7 @@ not present, 0 is returned.
 Method to print a list of stored parameters. 
    
  
-<h3>AlpgenHooks</h3> 
+<h4>AlpgenHooks</h4> 
  
 This <a href="UserHooks.html" target="page"><code>UserHooks</code></a> derived class 
 provides all the <code>Alpgen:*</code> options. It is provided as a 
@@ -288,4 +294,4 @@ present, which are then used to set further PYTHIA settings.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

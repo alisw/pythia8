@@ -1,5 +1,5 @@
 // MergingHooks.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -73,9 +73,10 @@ int Merging::mergeProcess(Event& process){
 
   // Reinitialise hard process.
   mergingHooksPtr->hardProcess->clear();
-  mergingHooksPtr->processSave = settingsPtr->word("Merging:Process");
+  mergingHooksPtr->processNow  = settingsPtr->word("Merging:Process");
   mergingHooksPtr->hardProcess->initOnProcess(
-    settingsPtr->word("Merging:Process"), particleDataPtr);
+    mergingHooksPtr->processNow, particleDataPtr);
+  settingsPtr->word("Merging:Process", mergingHooksPtr->processSave);
 
   mergingHooksPtr->doUserMergingSave
     = settingsPtr->flag("Merging:doUserMerging");
@@ -113,8 +114,19 @@ int Merging::mergeProcess(Event& process){
     = mergingHooksPtr->nJetMaxSave;
   mergingHooksPtr->nJetMaxNLOLocal
     = mergingHooksPtr->nJetMaxNLOSave;
-  mergingHooksPtr->nRequestedSave
-    = settingsPtr->mode("Merging:nRequested");
+  int nRequestedNow = settingsPtr->mode("Merging:nRequested");
+  if ( mergingHooksPtr->getProcessString().compare("pp>aj") != 0
+    && mergingHooksPtr->getProcessString().compare("pp>jj") != 0) {
+    int sizeOut1 = mergingHooksPtr->hardProcess->hardOutgoing1.size();
+    int sizeOut2 = mergingHooksPtr->hardProcess->hardOutgoing2.size();
+    for (int i=0; i < sizeOut1; ++i)
+      if (mergingHooksPtr->hardProcess->hardOutgoing1[i] == 2212)
+        nRequestedNow--;
+    for (int i=0; i < sizeOut2; ++i)
+      if (mergingHooksPtr->hardProcess->hardOutgoing2[i] == 2212)
+        nRequestedNow--;
+  }
+  mergingHooksPtr->nRequestedSave = nRequestedNow;
 
   // Ensure that merging weight is not counted twice.
   bool includeWGT = mergingHooksPtr->includeWGTinXSEC();
@@ -190,7 +202,7 @@ int Merging::mergeProcessCKKWL( Event& process) {
   int nSteps = mergingHooksPtr->getNumberOfClusteringSteps( newProcess, true);
 
   // Check if hard event cut should be applied later.
-  bool allowReject = settingsPtr->flag("Merging:applyVeto");
+  bool applyVeto = settingsPtr->flag("Merging:applyVeto");
 
   // Too few steps can be possible if a chain of resonance decays has been
   // removed. In this case, reject this event, since it will be handled in
@@ -201,14 +213,18 @@ int Merging::mergeProcessCKKWL( Event& process) {
   mergingHooksPtr->setHardProcessInfo(nSteps, tmsnow);
   mergingHooksPtr->setEventVetoInfo(-1, -1.);
 
-  if (nSteps < nRequested && allowReject) {
+  //if (nSteps < nRequested && applyVeto) {
+  if (nSteps < nRequested ) {
     if (!includeWGT) mergingHooksPtr->setWeightCKKWL(0.);
     if ( includeWGT) infoPtr->updateWeight(0.);
-    return -1;
+    if (applyVeto) return -1;
+    else return 1;
   }
 
   // Reset the minimal tms value, if necessary.
-  tmsNowMin     = (nSteps == 0) ? 0. : min(tmsNowMin, tmsnow);
+  //tmsNowMin     = (nSteps == 0) ? 0. : min(tmsNowMin, tmsnow);
+  tmsNowMin     = (nSteps > 0 && tmsnow < infoPtr->eCM())
+                ? min(tmsNowMin, tmsnow) : 0.;
 
   // Get random number to choose a path.
   double RN = rndmPtr->flat();
@@ -228,19 +244,19 @@ int Merging::mergeProcessCKKWL( Event& process) {
 
   // Do not apply cut if the configuration could not be projected onto an
   // underlying born configuration.
-  bool applyCut = allowReject
-                && nSteps > 0 && FullHistory.select(RN)->nClusterings() > 0;
+  bool applyCut = nSteps > 0 && FullHistory.select(RN)->nClusterings() > 0;
 
   // Enfore merging scale cut if the event did not pass the merging scale
   // criterion.
   bool enforceCutOnLHE  = settingsPtr->flag("Merging:enforceCutOnLHE");
-  if ( enforceCutOnLHE && applyCut && tmsnow < tmsval ) {
+  if ( enforceCutOnLHE && applyCut && tmsnow < tmsval && tmsnow >= 0. ) {
     string message="Warning in Merging::mergeProcessCKKWL: Les Houches Event";
     message+=" fails merging scale cut. Reject event.";
     infoPtr->errorMsg(message);
     if (!includeWGT) mergingHooksPtr->setWeightCKKWL(0.);
     if ( includeWGT) infoPtr->updateWeight(0.);
-    return -1;
+    if (applyVeto) return -1;
+    else return 1;
   }
 
   // Check if more steps should be taken.
@@ -261,7 +277,6 @@ int Merging::mergeProcessCKKWL( Event& process) {
 
   bool complete = (FullHistory.select(RN)->nClusterings() == nSteps) ||
     ( mergingHooksPtr->doWeakClustering() && nFinalP == 2 && nFinalW == 0 );
-
   if ( !complete ) {
     string message="Warning in Merging::mergeProcessCKKWL: No clusterings";
     message+=" found. History incomplete.";
@@ -301,7 +316,8 @@ int Merging::mergeProcessCKKWL( Event& process) {
   mergingHooksPtr->doIgnoreStep(false);
 
   // If no-emission probability is zero.
-  if ( allowReject && wgt == 0. ) return 0;
+  if ( applyVeto && wgt == 0. ) return 0;
+  //if ( wgt == 0. ) return 0;
 
   // Done
   return 1;
@@ -358,13 +374,17 @@ int Merging::mergeProcessUMEPS( Event& process) {
   int nSteps = mergingHooksPtr->getNumberOfClusteringSteps( newProcess, true);
   int nRequested = mergingHooksPtr->nRequested();
 
+  // Check if hard event cut should be applied later.
+  bool applyVeto = settingsPtr->flag("Merging:applyVeto");
+
   // Too few steps can be possible if a chain of resonance decays has been
   // removed. In this case, reject this event, since it will be handled in
   // lower-multiplicity samples.
   if (nSteps < nRequested) {
     if (!includeWGT) mergingHooksPtr->setWeightCKKWL(0.);
     if ( includeWGT) infoPtr->updateWeight(0.);
-    return -1;
+    if (applyVeto) return -1;
+    else return 1;
   }
 
   // Reset the minimal tms value, if necessary.
@@ -394,7 +414,8 @@ int Merging::mergeProcessUMEPS( Event& process) {
     infoPtr->errorMsg(message);
     if (!includeWGT) mergingHooksPtr->setWeightCKKWL(0.);
     if ( includeWGT) infoPtr->updateWeight(0.);
-    return -1;
+    if (applyVeto) return -1;
+    else return 1;
   }
 
   // Check reclustering steps to correctly apply MPI.
@@ -405,7 +426,8 @@ int Merging::mergeProcessUMEPS( Event& process) {
     // Discard if the state could not be reclustered to a state above TMS.
     if (!includeWGT) mergingHooksPtr->setWeightCKKWL(0.);
     if ( includeWGT) infoPtr->updateWeight(0.);
-    return -1;
+    if (applyVeto) return -1;
+    else return 1;
   }
 
   mergingHooksPtr->nMinMPI(nSteps - nPerformed);
@@ -475,7 +497,7 @@ int Merging::mergeProcessUMEPS( Event& process) {
   mergingHooksPtr->doIgnoreEmissions(false);
 
   // If no-emission probability is zero.
-  if ( wgt == 0. ) return 0;
+  if ( applyVeto && wgt == 0. ) return 0;
 
   // Done
   return 1;
@@ -731,6 +753,9 @@ int Merging::mergeProcessUNLOPS( Event& process) {
   if ( mergingHooksPtr->getProcessString().compare("pp>h") == 0)
     mergingHooksPtr->allowCutOnRecState(true);
 
+  // Ensure that merging weight is not counted twice.
+  bool includeWGT = mergingHooksPtr->includeWGTinXSEC();
+
   // Reset weight of the event.
   double wgt      = 1.;
   mergingHooksPtr->setWeightCKKWL(1.);
@@ -754,6 +779,11 @@ int Merging::mergeProcessUNLOPS( Event& process) {
   int nSteps = mergingHooksPtr->getNumberOfClusteringSteps( newProcess, true);
   int nRequested = mergingHooksPtr->nRequested();
 
+  mergingHooksPtr->nInProcessNow = nSteps;
+
+  // Check if hard event cut should be applied later.
+  bool allowReject = settingsPtr->flag("Merging:applyVeto");
+
   // Too few steps can be possible if a chain of resonance decays has been
   // removed. In this case, reject this event, since it will be handled in
   // lower-multiplicity samples.
@@ -763,7 +793,8 @@ int Merging::mergeProcessUNLOPS( Event& process) {
     infoPtr->errorMsg(message);
     mergingHooksPtr->setWeightCKKWL(0.);
     mergingHooksPtr->setWeightFIRST(0.);
-    return -1;
+    if ( includeWGT) infoPtr->updateWeight(0.);
+    return ((allowReject)? -1 : 1);
   }
 
   // Reset the minimal tms value, if necessary.
@@ -794,7 +825,9 @@ int Merging::mergeProcessUNLOPS( Event& process) {
     infoPtr->errorMsg(message);
     mergingHooksPtr->setWeightCKKWL(0.);
     mergingHooksPtr->setWeightFIRST(0.);
-    return -1;
+    if ( includeWGT) infoPtr->updateWeight(0.);
+    return ((allowReject)? -1 : 1);
+    //return -1;
   }
 
   // Potentially recluster real emission jets for powheg input containing
@@ -811,7 +844,9 @@ int Merging::mergeProcessUNLOPS( Event& process) {
     && FullHistory.select(RN)->nClusterings() == 0 ) {
     mergingHooksPtr->setWeightCKKWL(0.);
     mergingHooksPtr->setWeightFIRST(0.);
-    return -1;
+    if ( includeWGT) infoPtr->updateWeight(0.);
+    return ((allowReject)? -1 : 1);
+    //return -1;
   }
 
   // Discard if the state could not be reclustered to any state above TMS.
@@ -822,7 +857,9 @@ int Merging::mergeProcessUNLOPS( Event& process) {
           newProcess, nPerformed, false ) ) {
     mergingHooksPtr->setWeightCKKWL(0.);
     mergingHooksPtr->setWeightFIRST(0.);
-    return -1;
+    if ( includeWGT) infoPtr->updateWeight(0.);
+    return ((allowReject)? -1 : 1);
+    //return -1;
   }
 
   // Check reclustering steps to correctly apply MPI.
@@ -847,7 +884,9 @@ int Merging::mergeProcessUNLOPS( Event& process) {
       infoPtr->errorMsg(message);
       mergingHooksPtr->setWeightCKKWL(0.);
       mergingHooksPtr->setWeightFIRST(0.);
-      return -1;
+      if ( includeWGT) infoPtr->updateWeight(0.);
+      return ((allowReject)? -1 : 1);
+      //return -1;
     }
   }
 
@@ -1013,11 +1052,16 @@ int Merging::mergeProcessUNLOPS( Event& process) {
   // If necessary, reattach resonance decay products.
   if (!hasNewResonances) mergingHooksPtr->reattachResonanceDecays(process);
 
+  // Update the event weight.
+  double norm = (abs(infoPtr->lhaStrategy()) == 4) ? 1/1e9 : 1.;
+  if ( includeWGT) infoPtr->updateWeight(infoPtr->weight()*wgt*norm);
+
   // Allow merging hooks to remove emissions from now on.
   mergingHooksPtr->doIgnoreEmissions(false);
 
   // If no-emission probability is zero.
-  if ( wgt == 0. ) return 0;
+  //if ( wgt == 0. ) return 0;
+  if (allowReject && wgt == 0.) return 0;
 
   // If the resonance structure of the process has changed due to reclustering,
   // redo the resonance decays in Pythia::next()

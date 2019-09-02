@@ -1,5 +1,5 @@
 // MiniStringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -181,7 +181,7 @@ bool MiniStringFragmentation::ministring2two( int nTry, Event& event) {
 
   // Set up a string region based on the two effective endpoints.
   StringRegion region;
-  region.setUp( pSum1, pSum2);
+  region.setUp( pSum1, pSum2, 0, 0);
 
   // Generate an isotropic decay in the ministring rest frame,
   // suppressed at large pT by a fragmentation pT Gaussian.
@@ -406,7 +406,7 @@ bool MiniStringFragmentation::ministring2one( int iSub,
       double posMass = (id1 == 4 || id1 == 5) ? particleDataPtr->m0(id1) : 0.;
       double negMass = (id2 == 4 || id2 == 5) ? particleDataPtr->m0(id2) : 0.;
       redOsc = sqrtpos( pow2(pow2(mHad) - pow2(posMass) - pow2(negMass))
-        - 4. * pow2(posMass * negMass) ) / mHad;
+        - 4. * pow2(posMass * negMass) ) / pow2(mHad);
     }
 
     // Find hadron production points according to chosen definition.
@@ -546,7 +546,7 @@ void MiniStringFragmentation::setHadronVertices(Event& event,
       prodPoints[i] = middlePoint + 0.5 * redOsc * pHad / kappaVtx;
     else {
       prodPoints[i] = middlePoint - 0.5 * redOsc * pHad / kappaVtx;
-      if (prodPoints[i].m2Calc() < 0.) {
+      if (prodPoints[i].m2Calc() < 0. || prodPoints[i].e() < 0.) {
         double tau0fac = 2. * (redOsc * middlePoint * pHad
           - sqrt(pow2(middlePoint * redOsc * pHad) - middlePoint.m2Calc()
           * pow2(redOsc * mHad))) / pow2(redOsc * mHad);

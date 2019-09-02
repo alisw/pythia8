@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='NewGaugeBosonProcesses.php'>
  
 <h2>New-Gauge-Boson Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0"><ei>Z'^0</ei></a></li>
+  <li><a href="#section1"><ei>W'^+-</ei></a></li>
+  <li><a href="#section2"><ei>R^0</ei></a></li>
+</ol>
+
  
 This page contains the production of new <i>Z'^0</i> and 
 <i>W'^+-</i> gauge bosons, e.g. within the context of a new 
@@ -38,6 +44,7 @@ but are described
 <?php $filepath = $_GET["filepath"];
 echo "<a href='LeftRightSymmetryProcesses.php?filepath=".$filepath."' target='page'>";?>separately</a>. 
  
+<a name="section0"></a> 
 <h3><i>Z'^0</i></h3> 
  
 This group only contains one subprocess, with the full 
@@ -308,6 +315,7 @@ axial coupling of <i>nu_tau'</i> neutrinos.
    
  
  
+<a name="section1"></a> 
 <h3><i>W'^+-</i></h3> 
  
 The <i>W'^+-</i> implementation is less ambitious than the 
@@ -399,6 +407,7 @@ and potentially into other now unknown particles. Such possibilities
 clearly are quite model-dependent, and have not been included 
 for now. 
  
+<a name="section2"></a> 
 <h3><i>R^0</i></h3> 
  
 The <i>R^0</i> boson (particle code 41) represents one possible 
@@ -676,4 +685,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

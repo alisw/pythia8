@@ -7,6 +7,13 @@
 <body>
  
 <h2>Automated Variations of Shower Parameters for Uncertainty Bands</h2> 
+<ol id="toc">
+  <li><a href="#section0">Specifying the Variations</a></li>
+  <li><a href="#section1">Accessing the Uncertainty Weights</a></li>
+  <li><a href="#section2">NLO Compensation Term for Renormalisation-Scale Variations</a></li>
+  <li><a href="#section3">List of Recognised Keywords for Uncertainty Variations</a></li>
+</ol>
+
  
 While a number of different central "tunes" of the Pythia parameters 
 are provided, it is often desired  to study how event properties change when 
@@ -151,6 +158,7 @@ matrix elements. Currently that framework is not consistently combined
 with the variations introduced here, so the two should not be used 
 simultaneously. This restriction will be lifted in a future release. 
  
+<a name="section0"></a> 
 <h3>Specifying the Variations</h3> 
  
 When <code>UncertaintyBands:doVariations</code> is switched on, the user 
@@ -219,6 +227,7 @@ single combined variation. Note also that the beginning and end of the
 vector is marked by curly braces. 
  
 <a name="access"></a> 
+<a name="section1"></a> 
 <h3>Accessing the Uncertainty Weights</h3> 
  
 During the event generation, uncertainty weights will be calculated 
@@ -239,6 +248,7 @@ the order they were specified in <code>UncertaintyBands:List</code>.
 The total number of variations that have been defined, <code>N</code>, 
 can be queried using <code>Pythia::info.nWeights()</code>. 
  
+<a name="section2"></a> 
 <h3>NLO Compensation Term for Renormalisation-Scale Variations</h3> 
  
 Additionally, there is a run-time parameter: 
@@ -252,6 +262,7 @@ reduces their magnitude for soft emissions, as described in
    
  
 <a name="keywords"></a> 
+<a name="section3"></a> 
 <h3>List of Recognised Keywords for Uncertainty Variations</h3> 
  
 The following keywords adjust the renormalisation scales and 
@@ -322,4 +333,4 @@ values instead of the corresponding <code>Q2QG</code> ones.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

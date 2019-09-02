@@ -1098,12 +1098,14 @@ thus repeating a step in the hadronization procedure.
  
 <method name="virtual bool canChangeFragPar()"> 
 In the base class this method returns false. If you redefine it to 
-return true, it will enable the methods <code>doChangeFragPar(...)</code> 
-and <code>doVetoFragmentation(...)</code>. 
+return true, it will enable the methods <code>doChangeFragPar(...)</code>, 
+<code>doVetoFragmentation(...)</code> and 
+<code>setStringEnds(...)</code>. 
 </method> 
  
 <method name="virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, 
-StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton)"> 
+StringPT* pTPtr, int idEnd, double m2Had, vector&lt;int&gt; iParton, 
+const StringEnd * sEnd)"> 
 This is the method for changing fragmentation parameters. If all 
 parameters are changed as they should, the method should return true. 
 In case of errors the method returns false and a warning is printed. 
@@ -1142,13 +1144,32 @@ keep track of where we are on the string.
 <argument name="iParton"> contains the indices in the standard event 
 record for all the partons in the string currently being hadronized. 
 </argument> 
+<argument name="sEnd"> is a pointer to a <code>StringEnd</code> object 
+ containing additional information about the string break. 
+</argument> 
 </method> 
  
-<method name="virtual bool doVetoFragmentation(Particle had)"> 
+<method name="virtual bool doVetoFragmentation(Particle had, 
+const StringEnd * sEnd)"> 
 This method can veto the production of a hadron, whereby the current 
 string break is redone. 
 <argument name="had"> is a (copy of) the hadron being produced, 
 just before it is added to the event record. 
+</argument> 
+<argument name="sEnd"> is a pointer to a <code>StringEnd</code> object 
+containing additional information about the string break. 
+</argument> 
+</method> 
+ 
+<method name="virtual bool doVetoFragmentation(Particle had1, Particle had2, 
+const StringEnd * sEnd1, const StringEnd * sEnd1)"> 
+This method can veto the production of the final hadrons produced in the 
+fragmentation of a string. 
+<argument name="had1,had2"> are (copies of) the two final hadrons being 
+produced, just before they are added to the event record. 
+</argument> 
+<argument name="sEnd1,sEnd2"> are pointers to <code>StringEnd</code> objects 
+containing additional information about the string break. 
 </argument> 
 </method> 
  
@@ -1195,4 +1216,4 @@ occurs.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

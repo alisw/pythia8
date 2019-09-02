@@ -107,16 +107,18 @@ hard process and its associated resonance decays.
  
 <p/> 
 There is one key restriction on resonances: 
-<parm name="ResonanceWidths:minWidth" default="1e-20" min="1e-30"> 
+<parm name="ResonanceWidths:minWidth" default="1.97e-19" min="1e-30"> 
 Minimal allowed width of a resonance, in GeV. If the width falls below 
 this number the resonance is considered stable and will not be allowed 
 to decay. This is mainly intended as a technical parameter, to avoid 
 disasters in cases where no open decay channels exists at all. It could 
-be used for real-life decisions as well, however, but then typically 
-would have to be much bigger than the default value. Special caution 
-would be needed if coloured resonance particles were made stable, since 
-the program would not necessarily know how to hadronize them, and 
-therefore fail at that stage. 
+be used for real-life decisions as well, however. The default value 
+corresponds to an average lifetime <ei>c * tau</ei> of 1 km, meaning 
+such a particle would only rarely decay inside a typical detector. 
+Special caution would be needed if coloured resonance particles were 
+made stable, since the program would not necessarily know how to 
+hadronize them, and therefore fail at that stage (see further the 
+<aloc href="RHadrons">R-hadrons description</aloc>). 
 </parm> 
  
 <p/> 
@@ -374,4 +376,4 @@ stored in a work area.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -7,6 +7,13 @@
 <body>
  
 <h2>Histograms</h2> 
+<ol id="toc">
+  <li><a href="#section0">Basic principles</a></li>
+  <li><a href="#section1">Basic output format</a></li>
+  <li><a href="#section2">Matplotlib output format</a></li>
+  <li><a href="#section3">The methods</a></li>
+</ol>
+
  
 The <code>Hist</code> class gives a simple implementation of 
 one-dimensional histograms, useful for quick-and-dirty testing, 
@@ -15,6 +22,7 @@ For this reason it is used in many of the
 <a href="SampleMainPrograms.html" target="page">sample main programs</a> 
 found in the <code>examples</code> subdirectory. 
  
+<a name="section0"></a> 
 <h3>Basic principles</h3> 
  
 We here provide a simple overview of what is involved. 
@@ -66,6 +74,7 @@ The two kind of operations can be combined, e.g.
 Finally, also the <code>+=, -+, *=, /=</code> are overloaded, with 
 the right-hand side being either a histogram or a real number. 
  
+<a name="section1"></a> 
 <h3>Basic output format</h3> 
  
 A histogram can be printed by making use of the overloaded &lt;&lt; 
@@ -129,6 +138,7 @@ exactly at the border between two bins. Also note that the
 to double precision where necessary, i.e. <code>xValue</code> 
 can be an integer. 
  
+<a name="section2"></a> 
 <h3>Matplotlib output format</h3> 
  
 Assuming you have Python installed on your platform, it is possible to 
@@ -160,7 +170,7 @@ one by one:
 <pre> 
   hpl.add( ZpT, "-"); 
   hpl.add( WpT, "--,indigo"); 
-  hpl.add( allpT ); 
+  hpl.add( ZpT + 2. * WpT , "", "pT spectrum of Z, W+ and W-"); 
 </pre> 
 where the second argument tells how each histogram will be plotted. 
 Default is histogram style, "h", but the values can also be connected 
@@ -209,6 +219,7 @@ where the latter is the simpler one. The <code>main51.cc</code> example
 illustrates that the <i>x</i> scale can be chosen logarithmically, 
 by using an optional last argument when histograms are booked. 
  
+<a name="section3"></a> 
 <h3>The methods</h3> 
  
 We here collect a more complete and formal overview of the methods. 
@@ -596,4 +607,4 @@ is almost the same, the exception being that the two compulsory arguments
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

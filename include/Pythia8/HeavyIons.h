@@ -1,5 +1,5 @@
 // HeavyIons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -165,6 +165,20 @@ public:
   /// Set UserHooks for specific (or ALL) internal Pythia objects.
   bool setUserHooksPtr(PythiaObject sel, UserHooks * userHooksPtrIn);
 
+  /// Iterate over nucleons.
+  vector<Nucleon>::iterator projBegin() {
+   return projectile.begin();
+  }
+  vector<Nucleon>::iterator targBegin() {
+   return target.begin();
+  }
+  vector<Nucleon>::iterator projEnd() {
+   return projectile.end();
+  }
+  vector<Nucleon>::iterator targEnd() {
+   return target.end();
+  }
+
 protected:
 
   /// Setup an EventInfo object from a Pythia instance.
@@ -201,6 +215,13 @@ protected:
 
   bool setupFullCollision(EventInfo & ei, const SubCollision & coll,
                           Nucleon::Status ptype, Nucleon::Status ttype);
+  bool isRemnant(const EventInfo & ei, int i, int past = 1 ) const {
+    int statNow = ei.event[i].status()*past;
+    if ( statNow == 63 ) return true;
+    if ( statNow > 70 && statNow < 80 )
+      return isRemnant(ei, ei.event[i].mother1(), -1);
+    return false;
+  }
   bool fixIsoSpin(EventInfo & ei);
   EventInfo & shiftEvent(EventInfo & ei);
   static int getBeam(Event & ev, int i);

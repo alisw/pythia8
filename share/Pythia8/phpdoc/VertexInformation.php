@@ -56,6 +56,7 @@ So, while people are welcome to write their own derived classes,
 it is likely that these may need to be modified in later PYTHIA 
 versions. 
  
+<a name="section0"></a> 
 <h3>Rope Hadronization Parameters</h3> 
  
 Currently the base class implements two alternative approaches to 
@@ -94,6 +95,7 @@ but <i>pT</i> is limited to be above this parameter so as to avoid
 unreasonable values. 
    
  
+<a name="section1"></a> 
 <h3>External models</h3> 
  
 A derived class for setting parton vertex information can be provided 
@@ -218,4 +220,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

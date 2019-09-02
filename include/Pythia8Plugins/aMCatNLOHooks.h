@@ -1,5 +1,5 @@
 // aMCatNLOHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -42,7 +42,6 @@ public:
   // Set the number of partons.
   bool doVetoProcessLevel( Event& process) {
 
-    int nPartons = 0;
     normFactor = 1.;
 
     // Do not include resonance decay products in the counting.
@@ -52,7 +51,7 @@ public:
     int nQuarksMerge = settingsPtr->mode("Merging:nQuarksMerge");
 
     // Dynamically set the process string.
-    if ( settingsPtr->word("Merging:Process") == "guess" ) {
+    if (settingsPtr->word("Merging:Process").find("guess") != string::npos) {
       string processString = "";
       // Set incoming particles.
       int beamAid = beamAPtr->id();
@@ -83,11 +82,20 @@ public:
     }
 
     // Loop through event and count.
-    for(int i=0; i < int(workEvent.size()); ++i)
-      if ( workEvent[i].isFinal()
-        && workEvent[i].colType()!= 0
-        && ( workEvent[i].id() == 21 || workEvent[i].idAbs() <= nQuarksMerge))
-        nPartons++;
+    int nPartons = 0;
+    if (settingsPtr->flag("Merging:mayRemoveDecayProducts")) {
+      for(int i=0; i < int(workEvent.size()); ++i)
+        if ( workEvent[i].isFinal()
+          && workEvent[i].colType()!= 0
+          && ( workEvent[i].id() == 21 || workEvent[i].idAbs() <= nQuarksMerge))
+          nPartons++;
+    } else {
+      for(int i=0; i < int(process.size()); ++i)
+        if ( process[i].isFinal()
+          && process[i].colType()!= 0
+          && ( process[i].id() == 21 || process[i].idAbs() <= nQuarksMerge))
+          nPartons++;
+    }
 
     // Store merging scheme.
     bool isumeps  = (mergingScheme == 1);

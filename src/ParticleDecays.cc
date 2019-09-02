@@ -1,5 +1,5 @@
 // ParticleDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -594,7 +594,8 @@ bool ParticleDecays::threeBody(Event& event) {
       wtMEmax = xMax * (3. - 2. * xMax);
 
     // Matrix element for weak decay (only semileptonic for c and b).
-    } else if ((meMode == 22 || meMode == 23) && prod1.isLepton()) {
+    } else if ( ((meMode == 22 || meMode == 23) && prod1.isLepton())
+      || meMode == 94) {
       wtME = m0 * prod1.e() * (prod2.p() * prod3.p());
       wtMEmax = min( pow4(m0) / 16., m0 * (m0 - m1 - m2) * (m0 - m1 - m3)
         * (m0 - m2 - m3) );
@@ -1285,6 +1286,16 @@ bool ParticleDecays::setColours(Event& event) {
     acols[iGlu1] = newCol2;
     cols[iGlu2] = newCol2;
     acols[iGlu2] = newCol1;
+
+  // Decay to q qbar singlet, in whichever order.
+  } else if (meMode == 93 || meMode == 94) {
+    int newCol = event.nextColTag();
+    if (idProd[1] > 0 && idProd[1] <  9)  cols[1] = newCol;
+    if (idProd[1] < 0 && idProd[1] > -9) acols[1] = newCol;
+    if (idProd[2] > 0 && idProd[2] <  9)  cols[2] = newCol;
+    if (idProd[2] < 0 && idProd[2] > -9) acols[2] = newCol;
+    if (idProd[3] > 0 && idProd[3] <  9)  cols[3] = newCol;
+    if (idProd[3] < 0 && idProd[3] > -9) acols[3] = newCol;
 
   // Unknown decay mode means failure.
   } else return false;

@@ -1,5 +1,5 @@
 // SigmaCompositeness.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,7 +22,9 @@ class Sigma1qg2qStar : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1qg2qStar(int idqIn) : idq(idqIn) {}
+  Sigma1qg2qStar(int idqIn) : idq(idqIn), idRes(), codeSave(), mRes(),
+    GammaRes(), m2Res(), GamMRat(), Lambda(), coupFcol(), widthIn(),
+    sigBW(), qStarPtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -66,7 +68,9 @@ class Sigma1lgm2lStar : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1lgm2lStar(int idlIn) : idl(idlIn) {}
+  Sigma1lgm2lStar(int idlIn) : idl(idlIn), idRes(), codeSave(), mRes(),
+    GammaRes(), m2Res(), GamMRat(), Lambda(), coupChg(), widthIn(), sigBW(),
+    qStarPtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -110,7 +114,8 @@ class Sigma2qq2qStarq : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qq2qStarq(int idqIn) : idq(idqIn) {}
+  Sigma2qq2qStarq(int idqIn) : idq(idqIn), idRes(), codeSave(), Lambda(),
+    preFac(), openFracPos(), openFracNeg(), sigmaA(), sigmaB() {}
 
   // Initialize process.
   virtual void initProc();
@@ -151,7 +156,8 @@ class Sigma2qqbar2lStarlbar : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qqbar2lStarlbar(int idlIn) : idl(idlIn) {}
+  Sigma2qqbar2lStarlbar(int idlIn) : idl(idlIn), idRes(), codeSave(), Lambda(),
+    preFac(), openFracPos(), openFracNeg(), sigma() {}
 
   // Initialize process.
   virtual void initProc();
@@ -193,7 +199,8 @@ class Sigma2qqbar2lStarlStarBar: public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qqbar2lStarlStarBar(int idlIn) : idl(idlIn) {}
+  Sigma2qqbar2lStarlStarBar(int idlIn) : idl(idlIn), idRes(), codeSave(),
+    Lambda(), preFac(), openFracPos(), openFracNeg(), sigma() {}
 
   // Initialize process.
   void initProc();
@@ -236,7 +243,8 @@ class Sigma2QCqq2qq : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2QCqq2qq(){}
+  Sigma2QCqq2qq() : sigT(), sigU(), sigTU(), sigST(), sigSum(), sigQCSTU(),
+    sigQCUTS(), qCLambda2(), qCetaLL(), qCetaRR(), qCetaLR(){}
 
   // Initialize process.
   virtual void initProc();
@@ -277,7 +285,8 @@ class Sigma2QCqqbar2qqbar : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2QCqqbar2qqbar(){}
+  Sigma2QCqqbar2qqbar() : qCnQuarkNew(), idNew(), mNew(), m2New(), sigS(),
+    sigma(), qCLambda2(), qCetaLL(), qCetaRR(), qCetaLR(){}
 
   // Initialize process.
   virtual void initProc();
@@ -323,7 +332,10 @@ class Sigma2QCffbar2llbar : public Sigma2Process {
 public:
 
   // Constructor: bool Graviton  = true, to use LED graviton settings.
-  Sigma2QCffbar2llbar (int idIn, int codeIn) : idNew(idIn), codeNew(codeIn) {}
+  Sigma2QCffbar2llbar (int idIn, int codeIn) : idNew(idIn), codeNew(codeIn),
+    qCmNew(), qCmNew2(), qCmZ(), qCmZ2(), qCGZ(), qCGZ2(), sigma0(),
+    qCLambda2(), qCetaLL(), qCetaRR(), qCetaLR(), qCetaRL(), qCPropGm(),
+    qCrePropZ(), qCimPropZ() {}
 
   // Initialize process.
   virtual void initProc();

@@ -1,5 +1,5 @@
 // Pythia8Rivet.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -25,10 +25,10 @@ using namespace std;
  *
  * Usage: (1) Create an object giving the pythia object and a filename
  * as arguments. (2) Repeatedly specify (the name of an) analysis with
- * the addAnalysis() function. (3) initialize the underlying Rivet
- * object with the init() function. (4) Analyze an event with the
- * operator() function. (5) Dump the histograms to a file with the
- * done() function.
+ * the addAnalysis() function, possibly with analysis parameters.
+ * (3) initialize the underlying Rivet  object with the init() function.
+ * (4) Analyze an event with the operator() function. (5) Dump the
+ * histograms to a file with the done() function.
  */
 class Pythia8Rivet {
 
@@ -39,7 +39,7 @@ public:
    * name of the file where the histograms are dumped.
    */
   Pythia8Rivet(Pythia & pytin, string fname)
-    : pythia(&pytin), filename(fname), rivet(0) {}
+    : pythia(&pytin), filename(fname), rivet(0), igBeam(false) {}
 
   /**
    * The destructor will write the histogram file if this has not
@@ -50,11 +50,25 @@ public:
   }
 
   /**
-   * Add the name of an analysis to be performed. Will silently fail
-   * if rivet has already been initialized.
+   * Add the name of an analysis to be performed, with a list
+   * of analysis parameters.
    */
   void addAnalysis(string ana) {
     analyses.insert(ana);
+  }
+
+  /**
+   * Add a YODA file pre-load pre-filled histogram from.
+   */
+  void addPreload(string prel) {
+    preloads.push_back(prel);
+  }
+
+  /**
+   * Set "ignore beams" flag.
+   */
+  void ignoreBeams(bool flagIn) {
+    igBeam = flagIn;
   }
 
   /**
@@ -69,9 +83,14 @@ public:
   void init(const HepMC::GenEvent & gev) {
     if ( rivet ) return;
     rivet = new Rivet::AnalysisHandler(rname);
+    rivet->setIgnoreBeams(igBeam);
     Rivet::addAnalysisLibPath(".");
-    vector<string> anals(analyses.begin(), analyses.end());
-    rivet->addAnalyses(anals);
+    for(int i = 0, N = preloads.size(); i < N; ++i)
+      rivet->readData(preloads[i]);
+    for (set<string>::iterator it = analyses.begin();
+      it != analyses.end(); ++it) {
+      rivet->addAnalysis(*it);
+    }
     rivet->init(gev);
   }
 
@@ -137,9 +156,14 @@ private:
   string filename;
 
   /**
-   * The names of the selected analyses.
+   * Analyses with optional analysis parameters.
    */
   set<string> analyses;
+
+  /**
+   * The names of YODA files to preload.
+   */
+  vector<string> preloads;
 
   /**
    * The Rivet object.
@@ -155,6 +179,11 @@ private:
    * The Rivet run name
    */
   string rname;
+
+  /**
+   * Ignore beams flag.
+   */
+  bool igBeam;
 
 };
 

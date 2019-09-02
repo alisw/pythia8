@@ -28,7 +28,15 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='BeamRemnants.php'>
  
 <h2>Beam Remnants</h2> 
+<ol id="toc">
+  <li><a href="#section0">Introduction</a></li>
+  <li><a href="#section1">Primordial <ei>kT</ei></a></li>
+  <li><a href="#section2">Colour flow</a></li>
+  <li><a href="#section3">Further variables</a></li>
+</ol>
+
  
+<a name="section0"></a> 
 <h3>Introduction</h3> 
  
 The <code>BeamParticle</code> class contains information on all partons 
@@ -86,6 +94,7 @@ in the <code>Pythia</code> class. Then pointers to the pdf's are handed
 on to <code>BeamParticle</code> at initialization, for all subsequent 
 usage. 
  
+<a name="section1"></a> 
 <h3>Primordial <i>kT</i></h3> 
  
 The primordial <i>kT</i> of initiators of hard-scattering subsystems 
@@ -194,6 +203,7 @@ there is no obvious way to retain the invariant mass of the system in the
 first approach, so the second is always used. 
    
  
+<a name="section2"></a> 
 <h3>Colour flow</h3> 
  
 The colour in the separate subproccsses are tied together via the assignment 
@@ -247,6 +257,7 @@ used is <i>exp(-M / k)</i>, where M is the multiplet size and k is this
 parameter. Thus a small number will result in a large saturation. 
    
  
+<a name="section3"></a> 
 <h3>Further variables</h3> 
  
 <br/><br/><table><tr><td><strong>BeamRemnants:maxValQuark  </td><td></td><td> <input type="text" name="11" value="3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)</td></tr></table>
@@ -490,4 +501,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

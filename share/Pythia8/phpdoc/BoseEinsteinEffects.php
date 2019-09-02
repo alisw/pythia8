@@ -99,6 +99,7 @@ use only particles with a positive status code, i.e. ones for which
 <code>event[i].isFinal()</code> is <code>true</code>. 
  
  
+<a name="section0"></a> 
 <h3>Main parameters</h3> 
  
 Assuming you have set <code>HadronLevel:BoseEinstein = on</code>, 
@@ -199,4 +200,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -28,6 +28,11 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='AdvancedUsage.php'>
  
 <h2>Advanced Usage</h2> 
+<ol id="toc">
+  <li><a href="#section0">The subsystems</a></li>
+  <li><a href="#section1">The beams</a></li>
+</ol>
+
  
 On this page we collect information on a number of classes that 
 the normal user would not encounter. There are cases where the 
@@ -35,13 +40,16 @@ information is essential, however, for instance to
 <?php $filepath = $_GET["filepath"];
 echo "<a href='ImplementNewShowers.php?filepath=".$filepath."' target='page'>";?>implement your own showers</a>. 
  
+<a name="section0"></a> 
 <h3>The subsystems</h3> 
  
 One aspect that complicates administration is that an event 
-can contain several subsystems, each consisting of one MPI and its 
-associated ISR and FSR. To first approximation these systems are 
+can contain several subsystems, each consisting of either 1) one MPI 
+and its associated ISR and FSR or 2) one decaying resonance and its 
+associated FSR. To first approximation these systems are 
 assumed to evolve independently, but to second they are connected by 
-the interleaved evolution, and potentially by rescattering effects. 
+the interleaved evolution, and potentially by colour-reconnection or 
+rescattering effects. 
 The partons of a given subsystem therefore do not have to be stored 
 consecutively. 
  
@@ -50,13 +58,21 @@ The <code>PartonSystems</code> class is primarily used to keep track
 of the current positions of all partons belonging to each system, 
 represented by the index <code>iPos</code> for a parton stored in the 
 event-record slot <code>event[iPos]</code>. With "all" we mean the 
-currently defined two incoming partons, or none for a resonance decay, 
-and the current set of outgoing partons, but with all ISR and FSR 
-intermediate-state partons omitted. That is, it stores all partons 
+current set of outgoing partons, as well as the currently defined two 
+incoming partons that system (for 2&rarr;n processes) or 
+one incoming parton in the case of a decay (1&rarr;n) process. No 
+intermediate-state (off-shell) ISR or FSR 
+partons are present. That is, the parton system stores all partons 
 that could be subject to some action in the next step of the 
 combined MPI/ISR/FSR/BR description. As a special case, an outgoing 
 parton is stored even if it undergoes a rescattering, and thus no 
 longer belongs to the final state proper. 
+ 
+<p/> 
+Note also that an unstable (decaying) resonance will normally appear 
+in two different systems; once, as an outgoing parton in the system 
+that produced it (a hard process or the decay system of a previous 
+resonance decay), and once as an incoming parton in its own decay system. 
  
 <p/> 
 The <code>partonSystems</code> instance of <code>PartonSystems</code> 
@@ -81,6 +97,12 @@ where index 0 is the hardest subcollision and so on.</li>
 <code>iSys</code>'th subcollision. These values are 0 initially, and 
 should so remain if there are no beams, such as in resonance decays. 
 </li> 
+<li><code>setInRes(iSys, iPos)</code> stores position 
+<code>iPos</code> of the incoming (decaying) resonance whose 
+decay produced the outgoing partons for the  <code>iSys</code>'th 
+system. This value is 0 initially and should so remain for systems 
+that are not produced by the decay of a resonance, such as 
+2&rarr;n subcollision systems. </li> 
 <li><code>addOut(iSys, iPos)</code> store position <code>iPos</code> 
 of a new outgoing parton in the <code>iSys</code>'th subcollision, 
 by appending it at the end of the current vector, with beginning in 
@@ -100,6 +122,9 @@ for beam A or beam B (and hence should have been set for both) in the
 <li><code>getInA(iSys), getInB(iSys)</code> the position <code>iPos</code> 
 of the incoming parton from beam A or beam B to the <code>iSys</code>'th 
 subcollision.</li> 
+<li><code>hasInRes(iSys)</code> true if an incoming (decaying) 
+resonance has been set for the <code>iSys</code>'th parton system, 
+else false.</li> 
 <li><code>sizeOut(iSys)</code> the number of outgoing partons 
 in the <code>iSys</code>'th subcollision.</li> 
 <li><code>getOut(iSys, iMem)</code> the position <code>iPos</code> 
@@ -112,8 +137,19 @@ partons in the <code>iSys</code>'th subcollision.</li>
 of an incoming or outgoing parton in the <code>iSys</code>'th subcollision. 
 In case there are beams it gives same as <code>getInA(iSys) </code> and 
 <code> getInB(iSys)</code> for indices 0 and 1, and thereafter agrees with 
-<code>getOut(iSys, iMem)</code> offset two positions. If there are no 
-beams it is identical with <code>getOut(iSys, iMem)</code>.</li> 
+<code>getOut(iSys, iMem)</code> offset two positions. In case there is 
+an incoming (decaying) resonance set for the system, it gives the same 
+as <code>getInRes(iSys)</code> for index 0, and thereafter agrees with 
+<code>getOut(iSys, iMem)</code> offset one position. If there are 
+neither beams nor an incoming resonance set for the system, 
+it is identical with <code>getOut(iSys, iMem)</code>.</li> 
+<li><code>getSystemOf(iPos, alsoIn)</code> returns the system 
+(<code>iSys</code>) of the parton specified by <code>iPos</code>. 
+If the parton is outgoing in one system and incoming in another (eg a 
+decaying resonance), the system in which it is incoming will be returned if 
+<code>alsoIn == true</code>, else the system in which it is outgoing 
+will be returned. The default is <code>alsoIn = false</code>. 
+</li> 
 <li><code>getSHat(iSys)</code> the invariant squared mass 
 <code>sHat</code> of the <code>iSys</code>'th subcollision.</li> 
 <li><code>list()</code> print a listing of all the system information, 
@@ -121,12 +157,13 @@ except for the <code>sHat</code> values.</li>
 </ul> 
  
 <p/> 
-New systems are created from the hard process and by the MPI, not from 
-any of the other components. Both FSR and ISR modify the position 
-of partons, however. Since an FSR or ISR branching typically implies 
-a new state with one more parton than before, an outgoing parton must 
-be added to the system. Furthermore, in a branching, several existing 
-partons may also be moved to new slots, including the incoming beam ones. 
+New systems are created from the hard process, from resonance decays, and 
+by the MPI, not from  any of the other components. Both FSR and ISR 
+modify the position of partons, however. Since an FSR or ISR branching 
+typically implies a new state with one more parton than before, an 
+outgoing parton must be added to the system. Furthermore, in a 
+branching, several existing partons may also be moved to new slots, 
+including the incoming beam ones. 
 In a FSR <i>1 &rarr; 2</i> branching it is irrelevant which parton position 
 you let overwrite the existing slot and which is added to the end of 
 the system. 
@@ -149,6 +186,7 @@ hadronization stage, to collect the partons that belong to a resonance
 with preserved mass when a small string collapses to one particle, 
 but is not yet used for that. 
  
+<a name="section1"></a> 
 <h3>The beams</h3> 
  
 The different subsystems are tied together by them sharing the same 
@@ -235,4 +273,4 @@ therefore had better be redone.)
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

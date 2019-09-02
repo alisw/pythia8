@@ -36,7 +36,9 @@ Python/Matplotlib/Pyplot solution. </li>
  
 <li><code>main04.cc</code> : tests of cross sections, multiplicities and 
 average transverse momenta for elastic, diffractive and nondiffractive 
-topologies, using <code>main04.cmnd</code> to pick processes.</li> 
+topologies, using <code>main04.cmnd</code> to pick processes. For 
+photoproduction  one can use the alternative 
+<code>main04_photons.cmnd</code> input.</li> 
  
 <li><code>main05.cc</code> : generation of QCD jet events at the LHC, 
 with jet analysis using the <code>SlowJet</code> inclusive anti-<i>kT</i> 
@@ -306,6 +308,9 @@ to enhance the rate of rare emissions in the shower.</li>
 <li><code>main64.cc</code> : examplifies how LHEF version 3 events can 
 be written on an external file.</li> 
  
+<li><code>main68.cc</code> : examplifies hard diffraction in the 
+context of a photon-inside-lepton beam, like a HERA.</li> 
+ 
 <li><code>main69.cc</code> : examplifies how to generate all relevant 
 contributions for charged particle spectra in photon-photon and 
 photon-proton collisions. </li> 
@@ -330,8 +335,17 @@ contributed add-ons to the FastJet package. In this case the
 modified Mass Drop Tagger is used to improve the mass reconstruction 
 of a boosted hadronically decaying <i>Z^0</i>.</li> 
  
-<li><code>main75.cc</code> : setup for Dark Matter production, where the 
-visible jets are found with the FastJet package.</li> 
+<li><code>main75.cc</code> : setup (in <code>main75.cmnd</code>) 
+for Dark Matter production via an <i>s</i>-channel mediator, where a 
+mono-jet <i>pT</i> spectrum is found with the FastJet package.</li> 
+ 
+<li><code>main76.cc</code> : simple setup for Dark Matter production 
+in several different scenarios, as specified in <code>main76.cmnd</code>, 
+notably with long-lived particle signatures.</li> 
+ 
+<li><code>main77.cc</code> : example how double parton scattering events 
+can be reweighted according to a different model than default in Pythia. 
+Contributed by Boris Blok and Paolo Gunnellini.</li> 
  
 <li><code>main80.cc</code> : do CKKW-L merging with a merging scale 
 defined in <i>kT</i>. Input is provided by the <code>main80.cmnd</code> 
@@ -462,4 +476,4 @@ to PDFs and factorization and renormalization scales.</li>
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

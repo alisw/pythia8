@@ -1,5 +1,5 @@
 // main93.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -71,8 +71,11 @@ int main(int argc, char* argv[]) {
        "\t\tworking installation of Rivet, linked to main93).\n"
        "\t Main:analyses = ANALYSIS1,ANALYSIS2,...\n "
        "\t\tA comma separated list of desired Rivet analyses to be run.\n"
+       "\t\tAnalyses can be post-fixed with Rivet analysis parameters:\n"
+        "\t\tANALYSIS:parm->value.\n"
        "\t Main:rivetRunName = STRING \n\t\tAdd an optional run name to\n"
        "\t\tthe Rivet analysis.\n"
+       "\t Main:rivetIgnoreBeams = on\n\t\t Ignore beams in Rivet. \n"
        "\t Main:writeHepMC = on \n\t\tWrite HepMC output (requires\n"
        "\t\ta working installation of HepMC, linked to main93.)\n"
        "\t Main:writeRoot = on \n\t\tWrite a root tree defined in the\n"
@@ -88,7 +91,8 @@ int main(int argc, char* argv[]) {
   // Input command file.
   if(ip.hasOption("-c")) {
     cmndfile = ip.getOption("-c");
-    if(cmndfile.find(".cmnd") == string::npos) {
+    if(cmndfile.find(".cmnd") == string::npos &&
+        cmndfile.find(".dat") == string::npos) {
       cout << "Please provide a valid .cmnd file as "
       "argument to the -c option." << endl;
       return 1;
@@ -103,9 +107,10 @@ int main(int argc, char* argv[]) {
   string cmndfile2 = "";
   // Optional secondary input command file.
   if(ip.hasOption("-c2")) {
-    cmndfile = ip.getOption("-c2");
-    if(cmndfile.find(".cmnd") == string::npos) {
-      cout << "Please provide a valid .cmnd file as argument"
+    cmndfile2 = ip.getOption("-c2");
+    if(cmndfile2.find(".cmnd") == string::npos &&
+        cmndfile2.find(".dat") == string::npos) {
+      cout << "Please provide a valid .cmnd file as argument "
       "to the -c2 option." << endl;
       return 1;
     }
@@ -136,8 +141,10 @@ int main(int argc, char* argv[]) {
   pythia.settings.addFlag("Main:writeHepMC",false);
   pythia.settings.addFlag("Main:writeRoot",false);
   pythia.settings.addFlag("Main:runRivet",false);
+  pythia.settings.addFlag("Main:rivetIgnoreBeams",false);
   pythia.settings.addFlag("Main:outputLog",false);
   pythia.settings.addWVec("Main:analyses",vector<string>());
+  pythia.settings.addWVec("Main:preload",vector<string>());
   pythia.settings.addWord("Main:rivetRunName","");
   // Read input from external file.
   pythia.readFile(cmndfile);
@@ -156,9 +163,11 @@ int main(int argc, char* argv[]) {
   const bool hepmc = pythia.flag("Main:writeHepMC");
   const bool root = pythia.flag("Main:writeRoot");
   const bool runRivet = pythia.flag("Main:runRivet");
+  const bool ignoreBeams = pythia.flag("Main:rivetIgnoreBeams");
   const bool doLog = pythia.flag("Main:outputLog");
   const string rivetrName = pythia.settings.word("Main:rivetRunName");
   const vector<string> rAnalyses = pythia.settings.wvec("Main:analyses");
+  const vector<string> rPreload = pythia.settings.wvec("Main:preload");
   int nError = pythia.mode("Main:timesAllowErrors");
   bool countErrors = (nError > 0 ? true : false);
   // HepMC conversion object.
@@ -169,8 +178,30 @@ int main(int argc, char* argv[]) {
       : out + ".hepmc"),ios::out);
   // Rivet initialization.
   Pythia8Rivet rivet(pythia,(out == "" ? "Rivet.yoda" : out + ".yoda"));
-  for(int i = 0, N = rAnalyses.size(); i < N; ++i)
-    rivet.addAnalysis(rAnalyses[i]);
+  rivet.ignoreBeams(ignoreBeams);
+  for(int i = 0, N = rAnalyses.size(); i < N; ++i){
+    string analysis = rAnalyses[i];
+    size_t pos = analysis.find(":");
+    // Simple case, no analysis parameters.
+    if(pos == string::npos)
+      rivet.addAnalysis(analysis);
+    else {
+      string an = analysis.substr(0,pos);
+      analysis.erase(0, pos + 1);
+      pos = analysis.find(":");
+      string par = analysis.substr(0,pos);
+      size_t pos2 = par.find("->");
+      if (pos2 == string::npos){
+         pythia.info.errorMsg("Error in main93: malformed"
+          " parameter "+par);
+      }
+      string pKey = par.substr(0,pos2);
+      string pVal = par.substr(pos2+2,par.length());
+      rivet.addAnalysis(an+":"+pKey+"="+pVal);
+    }
+  }
+  for(int i = 0, N = rPreload.size(); i < N; ++i)
+    rivet.addPreload(rPreload[i]);
   rivet.addRunName(rivetrName);
   // Root initialization
   #ifdef USE_ROOT
@@ -226,6 +257,25 @@ int main(int argc, char* argv[]) {
     if (runRivet) rivet();
     if (hepmc) {
       HepMC::GenEvent* hepmcevt = new HepMC::GenEvent();
+      Info* pInfo = &pythia.info;
+      if ( pInfo && pInfo->hiinfo ) {
+      HepMC::HeavyIon ion;
+      ion.set_Ncoll_hard(pInfo->hiinfo->nCollNDTot());
+      ion.set_Ncoll(pInfo->hiinfo->nAbsProj() +
+                    pInfo->hiinfo->nDiffProj() +
+                    pInfo->hiinfo->nAbsTarg() +
+                    pInfo->hiinfo->nDiffTarg() -
+                    pInfo->hiinfo->nCollND() -
+                    pInfo->hiinfo->nCollDD());
+      ion.set_Npart_proj(pInfo->hiinfo->nAbsProj() +
+                         pInfo->hiinfo->nDiffProj());
+      ion.set_Npart_targ(pInfo->hiinfo->nAbsTarg() +
+                         pInfo->hiinfo->nDiffTarg());
+      ion.set_impact_parameter(pInfo->hiinfo->b());
+      hepmcevt->set_heavy_ion(ion);
+    }
+
+
       ToHepMC.fill_next_event( pythia, hepmcevt);
       (*hepmcIO) << hepmcevt;
       delete hepmcevt;

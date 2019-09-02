@@ -1,5 +1,5 @@
 // PythiaStdlib.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -75,7 +75,7 @@ double besselI0(double x){
   else if ( t < 1.) {
     result = 1.0 + 3.5156229 * t2 + 3.0899424 * pow2(t2)
            + 1.2067492 * pow3(t2) + 0.2659732 * pow4(t2)
-           + 0.0360768 * pow5(t2) * 0.0045813 * pow6(t2);
+           + 0.0360768 * pow5(t2) + 0.0045813 * pow6(t2);
   } else {
     double u = 1. / t;
     result = exp(x) / sqrt(x) * ( 0.39894228 + 0.01328592 * u
@@ -105,7 +105,7 @@ double besselI1(double x){
   else if ( t < 1.) {
     result = x * ( 0.5 + 0.87890594 * t2 + 0.51498869 * pow2(t2)
            + 0.15084934 * pow3(t2) + 0.02658733 * pow4(t2)
-           + 0.00301532 * pow5(t2) * 0.00032411 * pow6(t2) );
+           + 0.00301532 * pow5(t2) + 0.00032411 * pow6(t2) );
   } else {
     double u = 1. / t;
     result = exp(x) / sqrt(x) * ( 0.39894228 - 0.03988024 * u

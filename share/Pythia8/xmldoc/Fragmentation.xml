@@ -380,6 +380,19 @@ particle production. If not, i.e. if
 produced from what is currently left, if possible. (If not, the 
 fragmentation process is started over.) 
  
+<h3>Colour tracing</h3> 
+ 
+<flag name="StringFragmentation:TraceColours" default="off"> 
+In some cases it is interesting to trace the primary hadrons back 
+to the string pieces from which they were 
+formed. If <code>StringFragmentation:TraceColours</code> is switched 
+<code>on</code>, this is done by setting colour and anticolour 
+indices for the primary hadrons to the indices of the string piece 
+where the corresponding break-ups are assumed to have happened. To 
+avoid the possible confusion of having colour indices on colour 
+singlet particles, this flag is by default <code>off</code>. 
+</flag> 
+ 
 <h3>Simplifying systems</h3> 
  
 There are a few situations when it is meaningful to simplify the 
@@ -491,4 +504,4 @@ junction rest frame).
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

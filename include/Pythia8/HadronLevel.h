@@ -1,5 +1,5 @@
 // HadronLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,6 +12,7 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/BoseEinstein.h"
 #include "Pythia8/ColourTracing.h"
+#include "Pythia8/DeuteronProduction.h"
 #include "Pythia8/Event.h"
 #include "Pythia8/FragmentationFlavZpT.h"
 #include "Pythia8/FragmentationSystems.h"
@@ -41,7 +42,12 @@ class HadronLevel {
 public:
 
   // Constructor.
-  HadronLevel() {}
+  HadronLevel() : doHadronize(), doDecay(), doBoseEinstein(), doDeuteronProd(),
+    allowRH(), closePacking(), mStringMin(), eNormJunction(), widthSepBE(),
+    doHadronScatter(), hsAfterDecay(), hadronScatMode(), infoPtr(),
+    particleDataPtr(), rndmPtr(), userHooksPtr(), couplingsPtr(),
+    doRopes(), doShoving(), doFlavour(), doVertex(), doBuffon(), rHadronsPtr(),
+    useHiddenValley() {}
 
   // Initialize HadronLevel classes as required.
   bool init(Info* infoPtrIn, Settings& settings,
@@ -65,7 +71,8 @@ private:
   static const double MTINY;
 
   // Initialization data, read from Settings.
-  bool   doHadronize, doDecay, doBoseEinstein, allowRH, closePacking;
+  bool doHadronize, doDecay, doBoseEinstein, doDeuteronProd,
+       allowRH, closePacking;
   double mStringMin, eNormJunction, widthSepBE;
 
   // Settings for hadron scattering.
@@ -105,7 +112,7 @@ private:
   ParticleDecays decays;
 
   // The generator class for hadron scattering.
-  HadronScatter hadronScatter;
+  HadronScatter  hadronScatter;
 
   // Class for event geometry for Rope Hadronization. Production vertices.
   Ropewalk ropewalk;
@@ -116,6 +123,9 @@ private:
 
   // The generator class for Bose-Einstein effects.
   BoseEinstein boseEinstein;
+
+  // The generator class for deuteron production.
+  DeuteronProduction deuteronProd;
 
   // Classes for flavour, pT and z generation.
   StringFlav flavSel;

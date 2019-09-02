@@ -1,5 +1,5 @@
 // MiniStringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -31,7 +31,10 @@ class MiniStringFragmentation {
 public:
 
   // Constructor.
-  MiniStringFragmentation() {}
+  MiniStringFragmentation() : infoPtr(), particleDataPtr(), rndmPtr(),
+    flavSelPtr(), pTSelPtr(), zSelPtr(), setVertices(), constantTau(),
+    smearOn(), nTryMass(), hadronVertex(), bLund(), xySmear(), kappaVtx(),
+    mc(), mb(), isClosed(), mSum(), m2Sum() {}
 
   // Initialize and save pointers.
   void init(Info* infoPtrIn, Settings& settings,

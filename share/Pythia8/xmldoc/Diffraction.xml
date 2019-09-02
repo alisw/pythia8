@@ -97,7 +97,7 @@ the CM energy then there will be no perturbative description at all,
 but only the older low-<ei>pt</ei> description. 
 </parm> 
  
-<parm name="Diffraction:mWidthPert" default="10." min="0."> 
+<parm name="Diffraction:mWidthPert" default="10." min="1."> 
 The abovementioned threshold width <ei>m_width.</ei> 
 </parm> 
  
@@ -343,6 +343,17 @@ distinguished either MPI-unchecked or MPI-checked.
 Allows for the possibility to include hard diffraction tests in a run. 
 </flag> 
  
+<modepick name="Diffraction:hardDiffSide" default="0" min="0" max="2"> 
+Side which diffraction is evaluated for. Especially useful for diffraction 
+in ep, where experiments only look for gaps on the proton side. 
+<option value="0">Check for diffraction on boths sides A and B. 
+</option> 
+<option value="1">Check for diffraction on side A only. 
+</option> 
+<option value="2">Check for diffraction on side B only. 
+</option> 
+</modepick> 
+ 
 <p/> 
 There is also the possibility to select only a specific subset of events 
 in hard diffraction. 
@@ -429,4 +440,4 @@ one.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

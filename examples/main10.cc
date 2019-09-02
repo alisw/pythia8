@@ -1,5 +1,5 @@
 // main10.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,20 +11,6 @@ using namespace Pythia8;
 
 //==========================================================================
 
-// Put histograms here to make them global, so they can be used both
-// in MyUserHooks and in the main program.
-
-Hist pTtrial("trial pT spectrum", 100, 0., 400.);
-Hist pTselect("selected pT spectrum (before veto)", 100, 0., 400.);
-Hist pTaccept("accepted pT spectrum (after veto)", 100, 0., 400.);
-Hist nPartonsB("number of partons before veto", 20, -0.5, 19.5);
-Hist nJets("number of jets before veto", 20, -0.5, 19.5);
-Hist nPartonsA("number of partons after veto", 20, -0.5, 19.5);
-Hist nFSRatISR("number of FSR emissions at first ISR emission",
-  20, -0.5, 19.5);
-
-//==========================================================================
-
 // Write own derived UserHooks class.
 
 class MyUserHooks : public UserHooks {
@@ -32,10 +18,21 @@ class MyUserHooks : public UserHooks {
 public:
 
   // Constructor creates anti-kT jet finder with (-1, R, pTmin, etaMax).
-  MyUserHooks() { slowJet = new SlowJet(-1, 0.7, 10., 5.); }
+  MyUserHooks() { slowJet = new SlowJet(-1, 0.7, 10., 5.);
+    // Histograms for analysis inside User Hooks.
+    pTtrial = new Hist("trial pT spectrum", 100, 0., 400.);
+    pTselect = new Hist("selected pT spectrum (before veto)", 100, 0., 400.);
+    pTaccept = new Hist("accepted pT spectrum (after veto)", 100, 0., 400.);
+    nPartonsB = new Hist("number of partons before veto", 20, -0.5, 19.5);
+    nJets = new Hist("number of jets before veto", 20, -0.5, 19.5);
+    nPartonsA = new Hist("number of partons after veto", 20, -0.5, 19.5);
+    nFSRatISR = new Hist("number of FSR emissions at first ISR emission",
+        20, -0.5, 19.5);
+  }
 
-  // Destructor deletes anti-kT jet finder.
-  ~MyUserHooks() {delete slowJet;}
+  // Destructor deletes anti-kT jet finder and prints histograms.
+  ~MyUserHooks() {delete slowJet; cout << *pTtrial << *pTselect << *pTaccept
+       << *nPartonsB << *nJets << *nPartonsA << *nFSRatISR; }
 
   // Allow process cross section to be modified...
   virtual bool canModifySigma() {return true;}
@@ -52,7 +49,7 @@ public:
     if (inEvent) {
       pTHat = phaseSpacePtr->pTHat();
       // Fill histogram of pT spectrum.
-      pTtrial.fill( pTHat );
+      pTtrial->fill( pTHat );
     }
 
     // Here we do not modify 2 -> 2 cross sections.
@@ -72,23 +69,23 @@ public:
     if (iPos > 3) return false;
 
     // Fill histogram of pT spectrum at this stage.
-    pTselect.fill(pTHat);
+    pTselect->fill(pTHat);
 
     // Extract a copy of the partons in the hardest system.
     subEvent(event);
-    nPartonsB.fill( workEvent.size() );
+    nPartonsB->fill( workEvent.size() );
 
     // Find number of jets with given conditions.
     slowJet->analyze(event);
     int nJet = slowJet->sizeJet();
-    nJets.fill( nJet );
+    nJets->fill( nJet );
 
     // Veto events which do not have exactly three jets.
     if (nJet != 3) return true;
 
     // Statistics of survivors.
-    nPartonsA.fill( workEvent.size() );
-    pTaccept.fill(pTHat);
+    nPartonsA->fill( workEvent.size() );
+    pTaccept->fill(pTHat);
 
     // Do not veto events that got this far.
     return false;
@@ -102,7 +99,7 @@ public:
   virtual bool doVetoStep( int iPos, int nISR, int nFSR, const Event& ) {
 
     // Only want to study what happens at first ISR emission
-    if (iPos == 2 && nISR == 1) nFSRatISR.fill( nFSR );
+    if (iPos == 2 && nISR == 1) nFSRatISR->fill( nFSR );
 
     // Not intending to veto any events here.
     return false;
@@ -115,6 +112,10 @@ private:
 
   // Save the pThat scale.
   double pTHat;
+
+  // The list of histograms.
+  Hist *pTtrial, *pTselect, *pTaccept, *nPartonsB, *nJets, *nPartonsA,
+       *nFSRatISR;
 
 };
 
@@ -148,11 +149,8 @@ int main() {
   // End of event loop.
   }
 
-  // Statistics. Histograms.
+  // Statistics.
   pythia.stat();
-  cout << pTtrial << pTselect << pTaccept
-       << nPartonsB << nJets << nPartonsA
-       << nFSRatISR;
 
   // Done.
   delete myUserHooks;

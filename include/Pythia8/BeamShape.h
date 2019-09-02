@@ -1,5 +1,5 @@
 // BeamShape.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -23,7 +23,13 @@ class BeamShape {
 public:
 
   // Constructor.
-  BeamShape() {}
+  BeamShape() : deltaPxA(), deltaPyA(), deltaPzA(), deltaPxB(), deltaPyB(),
+    deltaPzB(), vertexX(), vertexY(), vertexZ(), vertexT(),
+    allowMomentumSpread(), allowVertexSpread(), sigmaPxA(), sigmaPyA(),
+    sigmaPzA(), maxDevA(), sigmaPxB(), sigmaPyB(), sigmaPzB(), maxDevB(),
+    sigmaVertexX(), sigmaVertexY(), sigmaVertexZ(), maxDevVertex(),
+    sigmaTime(), maxDevTime(), offsetX(), offsetY(), offsetZ(), offsetT(),
+    rndmPtr() {}
 
   // Destructor.
   virtual ~BeamShape() {}

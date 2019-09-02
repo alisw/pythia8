@@ -28,6 +28,16 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='TotalCrossSections.php'>
  
 <h2>Total Cross Sections</h2> 
+<ol id="toc">
+  <li><a href="#section0">Master switches</a></li>
+  <li><a href="#section1">Set your own cross sections</a></li>
+  <li><a href="#section2">Modify the SaS/DL cross sections</a></li>
+  <li><a href="#section3">Modify the MBR cross sections</a></li>
+  <li><a href="#section4">Modify the ABMST cross sections</a></li>
+  <li><a href="#section5">Modify the RPP cross sections</a></li>
+  <li><a href="#section6">Coulomb corrections to elastic scattering</a></li>
+</ol>
+
  
 The <code>SigmaTotal</code> class returns the total, elastic, diffractive 
 and nondiffractive cross sections in hadronic collisions. By implication 
@@ -105,6 +115,7 @@ For central diffraction <i>M^2_diff = xi_1 * xi_2 * s</i>, and
 additionally the cross section is differential in <i>t_1</i> and 
 <i>t_2</i>. 
  
+<a name="section0"></a> 
 <h3>Master switches</h3> 
  
 The total and elastic cross sections are intimately connected via the 
@@ -145,6 +156,7 @@ various values of the master switches are described. A final subsection
 covers the possibility to include Coulomb corrections in elastic scattering, 
 and is relevant for all scenarios. 
  
+<a name="section1"></a> 
 <h3>Set your own cross sections</h3> 
  
 The following four parameters can be set for the 
@@ -290,6 +302,7 @@ The smallest allowed central diffractive mass, with a sharp cut at
 this value. 
    
  
+<a name="section2"></a> 
 <h3>Modify the SaS/DL cross sections</h3> 
  
 The default description of total, elastic and diffractive interactions was 
@@ -417,6 +430,7 @@ principle the integrated diffractive cross sections ought to be
 recalculated accordingly, but for simplicity they are not modified. 
    
  
+<a name="section3"></a> 
 <h3>Modify the MBR cross sections</h3> 
  
 The MBR differential cross section also comes with a selection of 
@@ -481,6 +495,7 @@ low <i>dy</i> (non-diffractive region). The smaller this value, the
 narrow the rapidity region over which the suppression sets in. 
    
  
+<a name="section4"></a> 
 <h3>Modify the ABMST cross sections</h3> 
  
 The ABMST model provides a detailed description of the total, elastic 
@@ -655,11 +670,13 @@ Assume a minimal fall-off <i>exp(b_min * (t_1 + t_2))</i> in the extension
 of the ABMST model to central diffraction, as described above. 
    
  
+<a name="section5"></a> 
 <h3>Modify the RPP cross sections</h3> 
  
 The RPP approach only addresses total and (differential) elastic 
 cross sections, and there are no free parameters that can be changed. 
  
+<a name="section6"></a> 
 <h3>Coulomb corrections to elastic scattering</h3> 
  
 By default there is no Coulomb-term contribution to the elastic 
@@ -1012,4 +1029,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

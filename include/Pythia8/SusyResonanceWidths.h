@@ -1,5 +1,5 @@
 // SusyResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand
+// Copyright (C) 2019 Torbjorn Sjostrand
 // Main author of this file: N. Desai
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -23,7 +23,11 @@ class SUSYResonanceWidths : public ResonanceWidths{
 
 public:
 
-  SUSYResonanceWidths() {}
+  // Constructor
+  SUSYResonanceWidths() : coupSUSYPtr() {}
+
+  // Destructor
+  virtual ~SUSYResonanceWidths() {}
 
 protected:
 
@@ -49,7 +53,7 @@ class ResonanceSquark : public SUSYResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceSquark(int idResIn) {initBasic(idResIn);}
+  ResonanceSquark(int idResIn) : s2W() {initBasic(idResIn);}
 
 
 private:
@@ -108,7 +112,7 @@ class ResonanceNeut : public SUSYResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceNeut(int idResIn) {initBasic(idResIn);}
+  ResonanceNeut(int idResIn) : kinFac2(), s2W() {initBasic(idResIn);}
 
 private:
 
@@ -143,7 +147,7 @@ class ResonanceChar : public SUSYResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceChar(int idResIn) {initBasic(idResIn);}
+  ResonanceChar(int idResIn) : kinFac2(), s2W() {initBasic(idResIn);}
 
 private:
 
@@ -179,7 +183,7 @@ class ResonanceSlepton : public SUSYResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceSlepton(int idResIn) {initBasic(idResIn);}
+  ResonanceSlepton(int idResIn) : s2W() {initBasic(idResIn);}
 
 private:
 

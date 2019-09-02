@@ -729,20 +729,31 @@ The meaning of the various properties and the format used are explained
  <channel onMode="1" bRatio="0.025" products="53  53"/> 
 </particle> 
  
-<particle id="56" name="DM?1" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+<particle id="56" name="Sl (DM)" antiName="Slbar (DM)" spinType="1" chargeType="3" colType="0" 
           m0="100.00000"> 
+ <channel onMode="1" bRatio="1.00" products="11 52"/> 
+ <channel onMode="1" bRatio="0.00" products="13 52"/> 
+ <channel onMode="1" bRatio="0.00" products="15 52"/> 
 </particle> 
  
-<particle id="57" name="DM?2" antiName="DMbar?1" spinType="1" chargeType="0" colType="0" 
+<particle id="57" name="DM+" antiName="DM-" spinType="2" chargeType="3" colType="0" 
           m0="100.00000"> 
+  <channel onMode="1" bRatio="1.00" products="211 58"/> 
+  <channel onMode="1" bRatio="0.0" products="11 -12 52" /> 
+  <channel onMode="1" bRatio="0.0" products="13 -14 52" /> 
+  <channel onMode="1" bRatio="0.0" products="15 -16 52" /> 
+  <channel onMode="1" bRatio="0.0" products="-1 2 52" /> 
+  <channel onMode="1" bRatio="0.0" products="-3 4 52" /> 
 </particle> 
  
-<particle id="58" name="DM?3" antiName="DMbar?3" spinType="1" chargeType="0" colType="0" 
+<particle id="58" name="DM2" antiName="DMbar2" spinType="2" chargeType="0" colType="0" 
           m0="100.00000"> 
+ <channel onMode="1" bRatio="1.00" products="5 -5 52"/> 
 </particle> 
  
-<particle id="59" name="DM?4" antiName="DMbar?4" spinType="1" chargeType="0" colType="0" 
+<particle id="59" name="DM++" antiName="DM--" spinType="2" chargeType="6" colType="0" 
           m0="100.00000"> 
+  <channel onMode="1" bRatio="1.00" products="211 57"/> 
 </particle> 
  
 <particle id="60" name="DM?5" antiName="DMbar?5" spinType="1" chargeType="0" colType="0" 
@@ -9590,6 +9601,10 @@ The meaning of the various properties and the format used are explained
  <channel onMode="1" bRatio="1.0000000" products="200553 21"/> 
 </particle> 
  
+<particle id="1000010020" name="2H" antiName="2Hbar" 
+          spinType="1" chargeType="3" colType="0" m0="1.876"> 
+</particle> 
+ 
 <particle id="1000020040" name="4He" antiName="4Hebar" 
           spinType="1" chargeType="6" colType="0" m0="3.7284"> 
 </particle> 
@@ -9625,4 +9640,4 @@ The meaning of the various properties and the format used are explained
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

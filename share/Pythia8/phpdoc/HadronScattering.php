@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='HadronScattering.php'>
  
 <h2>Hadron Scattering</h2> 
+<ol id="toc">
+  <li><a href="#section0">The New Model for Hadron Scattering</a></li>
+  <li><a href="#section1">The Old Model for Hadron Scattering</a></li>
+  <li><a href="#section2">Hadron Production Vertices</a></li>
+</ol>
+
  
 This page describes a few simple hadron (re)scattering models. 
 They are intended to take into account 
@@ -54,6 +60,7 @@ option 2 respresents a different model.
 <input type="radio" name="1" value="1"><strong>1 </strong>:  The new model, based on separation in rapidity  and azimuthal angle as described in <ref>Fis16</ref>. Further options  are found  <a href="#HadScatNew2">here</a>.  <br/>
 <input type="radio" name="1" value="2"><strong>2 </strong>:  The old model. Further options are found  <a href="#HadScatOld">here</a>.  <note>Warning:</note> Option 2 is still at an experimental level,  and should not be used unless you know what you are doing.  <br/>
  
+<a name="section0"></a> 
 <h3>The New Model for Hadron Scattering</h3> 
  
 Within the new model, there are two options available for how hadron 
@@ -164,6 +171,7 @@ The following paramters are used for both the above cases:
    
  
 <a name="HadScatOld"></a> 
+<a name="section1"></a> 
 <h3>The Old Model for Hadron Scattering</h3> 
  
 <br/><b>Warning:</b> This is still at an experimental level, 
@@ -235,6 +243,7 @@ Use tiling in <i>(eta, phi)</i> to reduce number of pairwise tests.
    
  
  
+<a name="section2"></a> 
 <h3>Hadron Production Vertices</h3> 
  
 It is not trivial to define where in space-time that the primary 
@@ -529,4 +538,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

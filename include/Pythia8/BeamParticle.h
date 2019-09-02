@@ -1,5 +1,5 @@
 // BeamParticle.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -121,7 +121,23 @@ class BeamParticle {
 public:
 
   // Constructor.
-  BeamParticle() : nInit(0) {resolved.resize(0); Q2ValFracSav = -1.;}
+  BeamParticle() : infoPtr(), particleDataPtr(), rndmPtr(), pdfBeamPtr(),
+    pdfHardBeamPtr(), pdfUnresBeamPtr(), pdfBeamPtrSave(),
+    pdfHardBeamPtrSave(), flavSelPtr(), allowJunction(), beamJunction(),
+    maxValQuark(), companionPower(), valencePowerMeson(), valencePowerUinP(),
+    valencePowerDinP(), valenceDiqEnhance(), pickQuarkNorm(), pickQuarkPower(),
+    diffPrimKTwidth(), diffLargeMassSuppress(), beamSat(), gluonPower(),
+    xGluonCutoff(), idBeam(), idBeamAbs(), idVMDBeam(), mBeam(), mVMDBeam(),
+    scaleVMDBeam(), isUnresolvedBeam(), isLeptonBeam(), isHadronBeam(),
+    isMesonBeam(), isBaryonBeam(), isGammaBeam(), nValKinds(), idVal(), nVal(),
+    idSave(), iSkipSave(), nValLeft(), xqgTot(), xqVal(), xqgSea(),
+    xqCompSum(), doISR(), doMPI(), doND(), isResolvedGamma(),
+    hasResGammaInBeam(), isResUnres(), hasVMDstateInBeam(), pTminISR(),
+    pTminMPI(), pT2gm2qqbar(), iGamVal(), iPosVal(), gammaMode(), xGm(),
+    Q2gm(), kTgamma(), phiGamma(), resolved(), nInit(0), hasJunctionBeam(),
+    junCol(), nJuncs(), nAjuncs(), nDiffJuncs(), allowBeamJunctions(),
+    Q2ValFracSav(-1.), uValInt(), dValInt(), idVal1(), idVal2(), idVal3(),
+    zRel(), pxRel(), pyRel() { }
 
   // Initialize data on a beam particle and save pointers.
   void init( int idIn, double pzIn, double eIn, double mIn,
@@ -378,10 +394,9 @@ public:
     { kTgamma = kTIn; phiGamma = phiIn; }
 
   // Get the kinematic limits for photons emitted by the beam.
-  double Q2minPDF()      { return pdfHardBeamPtr->getQ2min(); }
-  double xGammaMin()     { return pdfHardBeamPtr->getXmin(); }
-  double xGammaHadr()    { return pdfHardBeamPtr->getXhadr(); }
-  double gammaFluxNorm() { return pdfHardBeamPtr->getGammaFluxNorm(); }
+  double xGammaMin()          { return pdfHardBeamPtr->getXmin(); }
+  double xGammaHadr()         { return pdfHardBeamPtr->getXhadr(); }
+  double gammaFluxIntApprox() { return pdfHardBeamPtr->intFluxApprox(); }
 
   // Get the kinematics related photons form lepton beams.
   double xGamma()   const { return xGm; }

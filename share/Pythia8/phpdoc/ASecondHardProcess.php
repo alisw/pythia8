@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ASecondHardProcess.php'>
  
 <h2>A Second Hard Process</h2> 
+<ol id="toc">
+  <li><a href="#section0">Process Selection</a></li>
+  <li><a href="#section1">Cuts and scales</a></li>
+  <li><a href="#section2">Cross-section calculation</a></li>
+  <li><a href="#section3">Event information</a></li>
+</ol>
+
  
 When you have selected a set of hard processes for hadron beams, the 
 <?php $filepath = $_GET["filepath"];
@@ -52,6 +59,19 @@ specify which set of processes to allow for the second hard one, see
 the following. 
    
  
+<br/><br/><table><tr><td><strong>SecondHard:maxPDFreweight </td><td></td><td> <input type="text" name="2" value="2." size="20"/>  &nbsp;&nbsp;(<code>default = <strong>2.</strong></code>; <code>minimum = 1.</code>; <code>maximum = 10.</code>)</td></tr></table>
+The two scatterings are first generated as if independent, but then 
+a weight is evaluated, that takes into account how the PDF of one is 
+modified by the presence of the other, averaged over the two possibilities. 
+This weight typically is a bit below unity, by momentum conservation, 
+but has a tail towards larger weights by correlations between partons. 
+The parameter tells how large such weights are compensated by standard 
+hit-and miss. A large value implies inefficiency in the generation, 
+while a small one means some events will be assigned a leftover weight 
+above unity. 
+   
+ 
+<a name="section0"></a> 
 <h3>Process Selection</h3> 
  
 In principle the whole <?php $filepath = $_GET["filepath"];
@@ -68,73 +88,73 @@ of possibilities.
 <p/> 
 Here comes the list of allowed sets of processes, to combine at will: 
  
-<br/><br/><strong>SecondHard:TwoJets</strong>  <input type="radio" name="2" value="on"><strong>On</strong>
-<input type="radio" name="2" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:TwoJets</strong>  <input type="radio" name="3" value="on"><strong>On</strong>
+<input type="radio" name="3" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Standard QCD <i>2 &rarr; 2</i> processes involving gluons and 
 <i>d, u, s, c, b</i> quarks. 
    
  
-<br/><br/><strong>SecondHard:PhotonAndJet</strong>  <input type="radio" name="3" value="on"><strong>On</strong>
-<input type="radio" name="3" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:PhotonAndJet</strong>  <input type="radio" name="4" value="on"><strong>On</strong>
+<input type="radio" name="4" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 A prompt photon recoiling against a quark or gluon jet. 
    
  
-<br/><br/><strong>SecondHard:TwoPhotons</strong>  <input type="radio" name="4" value="on"><strong>On</strong>
-<input type="radio" name="4" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:TwoPhotons</strong>  <input type="radio" name="5" value="on"><strong>On</strong>
+<input type="radio" name="5" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Two prompt photons recoiling against each other. 
    
  
-<br/><br/><strong>SecondHard:Charmonium</strong>  <input type="radio" name="5" value="on"><strong>On</strong>
-<input type="radio" name="5" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:Charmonium</strong>  <input type="radio" name="6" value="on"><strong>On</strong>
+<input type="radio" name="6" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Production of charmonium via colour singlet and colour octet channels. 
    
  
-<br/><br/><strong>SecondHard:Bottomonium</strong>  <input type="radio" name="6" value="on"><strong>On</strong>
-<input type="radio" name="6" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:Bottomonium</strong>  <input type="radio" name="7" value="on"><strong>On</strong>
+<input type="radio" name="7" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Production of bottomonium via colour singlet and colour octet channels. 
    
  
-<br/><br/><strong>SecondHard:SingleGmZ</strong>  <input type="radio" name="7" value="on"><strong>On</strong>
-<input type="radio" name="7" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:SingleGmZ</strong>  <input type="radio" name="8" value="on"><strong>On</strong>
+<input type="radio" name="8" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Scattering <i>q qbar &rarr; gamma^*/Z^0</i>, with full interference 
 between the <i>gamma^*</i> and <i>Z^0</i>. 
    
  
-<br/><br/><strong>SecondHard:SingleW</strong>  <input type="radio" name="8" value="on"><strong>On</strong>
-<input type="radio" name="8" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:SingleW</strong>  <input type="radio" name="9" value="on"><strong>On</strong>
+<input type="radio" name="9" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Scattering <i>q qbar' &rarr; W^+-</i>. 
    
  
-<br/><br/><strong>SecondHard:GmZAndJet</strong>  <input type="radio" name="9" value="on"><strong>On</strong>
-<input type="radio" name="9" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:GmZAndJet</strong>  <input type="radio" name="10" value="on"><strong>On</strong>
+<input type="radio" name="10" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Scattering <i>q qbar &rarr; gamma^*/Z^0 g</i> and 
 <i>q g &rarr; gamma^*/Z^0 q</i>. 
    
  
-<br/><br/><strong>SecondHard:WAndJet</strong>  <input type="radio" name="10" value="on"><strong>On</strong>
-<input type="radio" name="10" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:WAndJet</strong>  <input type="radio" name="11" value="on"><strong>On</strong>
+<input type="radio" name="11" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Scattering <i>q qbar' &rarr; W^+- g</i> and 
 <i>q g &rarr; W^+- q'</i>. 
    
  
-<br/><br/><strong>SecondHard:TopPair</strong>  <input type="radio" name="11" value="on"><strong>On</strong>
-<input type="radio" name="11" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:TopPair</strong>  <input type="radio" name="12" value="on"><strong>On</strong>
+<input type="radio" name="12" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Production of a top pair, either via QCD processes or via an 
 intermediate <i>gamma^*/Z^0</i> resonance. 
    
  
-<br/><br/><strong>SecondHard:SingleTop</strong>  <input type="radio" name="12" value="on"><strong>On</strong>
-<input type="radio" name="12" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:SingleTop</strong>  <input type="radio" name="13" value="on"><strong>On</strong>
+<input type="radio" name="13" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Production of a single top, either via a <i>t-</i> or 
 an <i>s-</i>channel <i>W^+-</i> resonance. 
@@ -143,8 +163,8 @@ an <i>s-</i>channel <i>W^+-</i> resonance.
 <p/> 
 A further process collection comes with a warning flag: 
  
-<br/><br/><strong>SecondHard:TwoBJets</strong>  <input type="radio" name="13" value="on"><strong>On</strong>
-<input type="radio" name="13" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>SecondHard:TwoBJets</strong>  <input type="radio" name="14" value="on"><strong>On</strong>
+<input type="radio" name="14" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 The <i>q qbar &rarr; b bbar</i> and <i>g g &rarr; b bbar</i> processes. 
 These are already included in the <code>TwoJets</code> sample above, 
@@ -155,6 +175,7 @@ contributions to the <i>b</i> rate, however, so, depending
 on the topology if interest, it may or may not be a good approximation. 
    
  
+<a name="section1"></a> 
 <h3>Cuts and scales</h3> 
  
 The second hard process obeys exactly the same selection rules for 
@@ -180,6 +201,7 @@ hard. But one is also free to make the second process harder than the
 first, if desired. So long as the two <i>pT</i> (or mass) ranges 
 overlap the ordering will not be the same in all events, however. 
  
+<a name="section2"></a> 
 <h3>Cross-section calculation</h3> 
  
 As an introduction, a brief reminder of Poissonian statistics. 
@@ -451,6 +473,7 @@ for <code>MultipartonInteractions:bProfile = 4</code>, i.e. when the
 radius depends on the <i>x</i> value. Results for the double 
 cross section therefore cannot be trusted in this case. 
  
+<a name="section3"></a> 
 <h3>Event information</h3> 
  
 Normally the <code>process</code> event record only contains the 
@@ -503,64 +526,69 @@ if($_POST["1"] != "off")
 $data = "SecondHard:generate = ".$_POST["1"]."\n";
 fwrite($handle,$data);
 }
-if($_POST["2"] != "off")
+if($_POST["2"] != "2.")
 {
-$data = "SecondHard:TwoJets = ".$_POST["2"]."\n";
+$data = "SecondHard:maxPDFreweight = ".$_POST["2"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["3"] != "off")
 {
-$data = "SecondHard:PhotonAndJet = ".$_POST["3"]."\n";
+$data = "SecondHard:TwoJets = ".$_POST["3"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["4"] != "off")
 {
-$data = "SecondHard:TwoPhotons = ".$_POST["4"]."\n";
+$data = "SecondHard:PhotonAndJet = ".$_POST["4"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["5"] != "off")
 {
-$data = "SecondHard:Charmonium = ".$_POST["5"]."\n";
+$data = "SecondHard:TwoPhotons = ".$_POST["5"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["6"] != "off")
 {
-$data = "SecondHard:Bottomonium = ".$_POST["6"]."\n";
+$data = "SecondHard:Charmonium = ".$_POST["6"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["7"] != "off")
 {
-$data = "SecondHard:SingleGmZ = ".$_POST["7"]."\n";
+$data = "SecondHard:Bottomonium = ".$_POST["7"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["8"] != "off")
 {
-$data = "SecondHard:SingleW = ".$_POST["8"]."\n";
+$data = "SecondHard:SingleGmZ = ".$_POST["8"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["9"] != "off")
 {
-$data = "SecondHard:GmZAndJet = ".$_POST["9"]."\n";
+$data = "SecondHard:SingleW = ".$_POST["9"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["10"] != "off")
 {
-$data = "SecondHard:WAndJet = ".$_POST["10"]."\n";
+$data = "SecondHard:GmZAndJet = ".$_POST["10"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["11"] != "off")
 {
-$data = "SecondHard:TopPair = ".$_POST["11"]."\n";
+$data = "SecondHard:WAndJet = ".$_POST["11"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["12"] != "off")
 {
-$data = "SecondHard:SingleTop = ".$_POST["12"]."\n";
+$data = "SecondHard:TopPair = ".$_POST["12"]."\n";
 fwrite($handle,$data);
 }
 if($_POST["13"] != "off")
 {
-$data = "SecondHard:TwoBJets = ".$_POST["13"]."\n";
+$data = "SecondHard:SingleTop = ".$_POST["13"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["14"] != "off")
+{
+$data = "SecondHard:TwoBJets = ".$_POST["14"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -570,4 +598,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

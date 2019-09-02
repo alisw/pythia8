@@ -27,7 +27,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 
 <form method='post' action='FlavourSelection.php'>
  
-<h2>Flavour Selection for Gaussian <i>pT</i> Distribution</h2> 
+<h2>Flavour Selection</h2> 
+<ol id="toc">
+  <li><a href="#section0">Flavour Selection for Gaussian <ei>pT</ei> Distribution</a></li>
+  <li><a href="#section1">Flavour Selection for Thermal <ei>pT</ei> Distribution</a></li>
+</ol>
+
  
 The <code>StringFlav</code> class handles the choice of a new flavour 
 in the fragmentation process, and the production of a new hadron 
@@ -37,7 +42,10 @@ in some particle decays and for some beam-remnant cases. The basic
 concepts are in agreement with [<a href="Bibliography.php#refAnd83" target="page">And83</a>]. An alternative 
 "thermal model" is described further below. 
  
-<p/> 
+<br/><br/><hr/> 
+<a name="section0"></a> 
+<h3>Flavour Selection for Gaussian <i>pT</i> Distribution</h3> 
+ 
 The relative production rates of different particle species is 
 influenced by the parameters below. Some have only an impact on 
 one specific quantity, but most directly or indirectly have 
@@ -45,7 +53,7 @@ consequences for many observables. Therefore the values to use have
 to be viewed in the context of a complete <?php $filepath = $_GET["filepath"];
 echo "<a href='Tunes.php?filepath=".$filepath."' target='page'>";?>tune</a>. 
  
-<h3>New flavours</h3> 
+<h4>New flavours</h4> 
  
 The main parameters of the selection of a new flavour are 
  
@@ -83,7 +91,7 @@ data, so very much a guesswork. Character-string input of this vector
 should be as a comma-separated list, without any blanks. 
    
  
-<h3>Standard-meson production</h3> 
+<h4>Standard-meson production</h4> 
  
 The bulk of the particle production corresponds to the lowest-lying 
 pseudoscalar and vector multiplets. Their production rates are 
@@ -158,7 +166,7 @@ normal production probability. Thus 0 means no <i>eta'</i> at all
 are produced, while 1 means full rate. 
    
  
-<h3>Excited-meson production</h3> 
+<h4>Excited-meson production</h4> 
  
 Several excited mesons, ie. with radial or orbital excitations, have been 
 observed at non-negligible production rates. Extrapolated to all states 
@@ -316,7 +324,7 @@ gives the mixing angle <i>theta</i> in the <i>(L=1,S=1,J=2)</i>
 tensor meson sector, expressed in degrees. 
    
  
-<h3>Baryon production</h3> 
+<h4>Baryon production</h4> 
  
 The relative rate of baryon production is mainly given by the quark 
 and diquark production parameters above, plus SU(6) Clebsch-Gordans. 
@@ -392,7 +400,9 @@ jet, i.e. <i>c</i> or <i>b</i>, when
 production at all, while 1 means full rate. 
    
  
-<h2>Flavour Selection for Thermal <i>pT</i> Distribution</h2> 
+<br/><br/><hr/> 
+<a name="section1"></a> 
+<h3>Flavour Selection for Thermal <i>pT</i> Distribution</h3> 
  
 If the hadronic <i>pT</i> is generated according to the non-default 
 thermal distribution, i.e. if <code>StringPT:thermalModel = on</code>, 
@@ -694,4 +704,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -191,13 +191,23 @@ In detail, the list of used or foreseen status codes is:
   <li>107 : two temporary leftover gluons joined into one in the formation 
             of a gluino-gluon R-hadron</li> 
   </ul> 
-<li>111 - 119 : hadrons with changed momentum due to hadron 
+<li>111 - 119 : new hadrons or hadrons with changed momentum due to hadron 
   (re)scattering</li> 
   <ul> 
-  <li>111 : first time scattering</li> 
-  <li>112 : second or more time scattering</li> 
+  <li>111 : inelastic nondiffractive collisions</li> 
+  <li>112 : elastic scattering</li> 
+  <li>113 : single diffraction, first particle excited</li> 
+  <li>114 : single diffraction, second particle excited</li> 
+  <li>115 : double diffraction</li> 
+  <li>116 : annihilation of incoming quark-antiquark pairs</li> 
+  <li>117 : intermediate resonance production and decay</li> 
   </ul> 
-<li>121 - 199 : reserved for future expansion</li> 
+<li>121 - 129 : other special hadron production mechanisms</li> 
+  <ul> 
+  <li>121 : deuteron formed by coalescence, and other particles formed 
+  simultaneously (like a <ei>gamma</ei> or <ei>pi</ei>)</li> 
+  </ul> 
+<li>131 - 199 : reserved for future expansion</li> 
 <li>201 - : free to be used by anybody.</li> 
 </ul> 
 <note>Note:</note> a clarification on the role of the "hardest" vs. the 
@@ -413,6 +423,10 @@ sets the four-momentum components in one go.
 <method name="void Particle::vProd(double xProd, double yProd, 
 double zProd, double tProd)"> 
 sets the production vertex components in one go. 
+</method> 
+ 
+<method name="void Particle::vProdAdd(Vec4 vProdIn)"> 
+shifts the production vertex four-vector by the input four-vector amount. 
 </method> 
  
 <h3>Further output methods</h3> 
@@ -889,8 +903,11 @@ as above, but also use <ei>gamma> = e/m</ei> to reduce roundoff errors.
 as above, but with sign of boost flipped. 
 </methodmore> 
  
-<method name="void Particle::rotbst(const RotBstMatrix& M)"> 
+<method name="void Particle::rotbst(const RotBstMatrix& M, 
+bool boostVertex = true)"> 
 combined rotation and boost of the four-momentum and production vertex. 
+If the optional second argument is false only the four-momentum is 
+boosted, and not the production vertex. 
 </method> 
  
 <method name="void Particle::offsetHistory( int minMother, int addMother, 
@@ -957,4 +974,4 @@ particle species.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

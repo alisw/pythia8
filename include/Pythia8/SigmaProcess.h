@@ -1,5 +1,5 @@
 // SigmaProcess.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -269,12 +269,27 @@ public:
     swap(pTFin, pTFinT); swap(cosTheta, cosThetaT);
     swap(sinTheta, sinThetaT); swap(phi, phiT); }
 
+  // Set the incoming ids for diffraction.
+  virtual void setIdInDiff(int, int) {}
+
 protected:
 
   // Constructor.
   SigmaProcess() : infoPtr(0), settingsPtr(0), particleDataPtr(0),
     rndmPtr(0), beamAPtr(0), beamBPtr(0), couplingsPtr(0), sigmaTotPtr(0),
-    slhaPtr(0), lhaUpPtr(0) {for (int i = 0; i < 12; ++i) mSave[i] = 0.;
+    slhaPtr(0), lhaUpPtr(0), nQuarkIn(), renormScale1(), renormScale2(),
+    renormScale3(), renormScale3VV(), factorScale1(), factorScale2(),
+    factorScale3(), factorScale3VV(), Kfactor(), mcME(), mbME(), mmuME(),
+    mtauME(), renormMultFac(), renormFixScale(), factorMultFac(),
+    factorFixScale(), higgsH1parity(), higgsH2parity(), higgsA3parity(),
+    higgsH1eta(), higgsH2eta(), higgsA3eta(), higgsH1phi(), higgsH2phi(),
+    higgsA3phi(), idA(), idB(), mA(), mB(), isLeptonA(), isLeptonB(),
+    hasLeptonBeams(), lepton2gammaA(), lepton2gammaB(), mH(), sH(), sH2(),
+    x1Save(), x2Save(), sigmaSumSave(), id1(), id2(), id3(), id4(), id5(),
+    idSave(), colSave(), acolSave(), mSave(), cosTheta(), sinTheta(), phi(),
+    sHMass(), sHBeta(), pT2Mass(), pTFin(), mSaveT(), pTFinT(), cosThetaT(),
+    sinThetaT(), phiT(), mME(), swapTU() {
+    for (int i = 0; i < 12; ++i) mSave[i] = 0.;
     Q2RenSave = alpEM = alpS = Q2FacSave = pdf1Save = pdf2Save = 0.; }
 
   // Constants: could only be changed in the code itself.
@@ -423,6 +438,9 @@ public:
   // Answer for these processes already in mb, so do not convert.
   virtual bool convert2mb() const {return false;}
 
+  // Set the incoming ids for diffraction.
+  virtual void setIdInDiff(int idAin, int idBin) { idA = idAin; idB = idBin; }
+
 protected:
 
   // Constructor.
@@ -564,7 +582,8 @@ public:
 protected:
 
   // Constructor.
-  Sigma3Process() {}
+  Sigma3Process() : m3(), s3(), m4(), s4(), m5(), s5(), runBW3(),
+    runBW4(), runBW5() {}
 
   // Store kinematics and set scales for resolved 2 -> 3 process.
   virtual void   store3Kin( double x1in, double x2in, double sHin,

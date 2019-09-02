@@ -82,6 +82,14 @@ Scatterings <i>gamma gamma &rarr; t tbar</i>.
 Code 606. 
    
  
+<br/><br/><strong>Top:ggm2ttbar</strong>  <input type="radio" name="8" value="on"><strong>On</strong>
+<input type="radio" name="8" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Scatterings <i>g gamma &rarr; t tbar</i>. 
+Code 607 when <i>g gamma &rarr; t tbar</i> and 617 
+when <i>gamma g &rarr; t tbar</i>. 
+   
+ 
 <p/> 
 By default top always decays to a <i>W</i> and a down-type quark. 
 It is possible to switch on the <i>t &rarr; H+ b</i> decay mode. 
@@ -140,6 +148,11 @@ if($_POST["7"] != "off")
 $data = "Top:gmgm2ttbar = ".$_POST["7"]."\n";
 fwrite($handle,$data);
 }
+if($_POST["8"] != "off")
+{
+$data = "Top:ggm2ttbar = ".$_POST["8"]."\n";
+fwrite($handle,$data);
+}
 fclose($handle);
 }
 
@@ -147,4 +160,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

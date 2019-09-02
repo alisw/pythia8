@@ -397,6 +397,12 @@ and avoid already explicitly listed non-partonic channels</li>
 and hadronize</li> 
 <li> 92 : decay onium to <ei>g g g</ei> or <ei>g g gamma</ei> 
 (with matrix element), which should shower and hadronize</li> 
+<li> 93 : decay of colour singlet to <ei>q qbar</ei> plus another singlet, 
+flat in phase space (and arbitrarily ordered), where the <ei>q qbar</ei> 
+pair should shower and hadronize</li> 
+<li> 94 : same as 93, but weighted with <ei>V-A</ei> weak matrix element 
+if the decay chain is of the type <ei>neutrino \rarr; dbar u lepton</ei> 
+in that order</li> 
 <li> 100 - : reserved for the description of partial widths of 
 <aloc href="ResonanceDecays">resonances</aloc></li> 
 </ul> 
@@ -422,4 +428,4 @@ multiplicity than the simple string assumed for 82, see the
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -96,6 +96,7 @@ ensure that the cuts used for generating input LHE files are always looser
 than the cut given by the merging scale value <code>Merging:TMS</code>. 
  
 <br/><br/><hr/> 
+<a name="section0"></a> 
 <h3>UMEPS merging with main86.cc</h3> 
  
 The UMEPS procedure is illustrated in the sample main program 
@@ -266,4 +267,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SigmaDM.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,6 +11,7 @@
 
 #include "Pythia8/PythiaComplex.h"
 #include "Pythia8/SigmaProcess.h"
+#include "Pythia8/StandardModel.h"
 
 namespace Pythia8 {
 
@@ -23,7 +24,8 @@ class Sigma1ffbar2Zp2XX : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1ffbar2Zp2XX() {}
+  Sigma1ffbar2Zp2XX() : kinMix(), mRes(), GammaRes(), m2Res(), sigma0(),
+    preFac(), gZp(), eps(), particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -45,12 +47,11 @@ public:
   virtual bool   isSChannel() const {return true;}
   virtual int    gmZmode()    const {return 3;}
 
-
-
 private:
 
   // Parameters set at initialization.
-  double mRes, GammaRes, m2Res, sigma0, preFac;
+  bool   kinMix;
+  double mRes, GammaRes, m2Res, sigma0, preFac, gZp, eps;
 
   // Pointer to properties of the particle species, to access decay channels.
   ParticleDataEntry* particlePtr;
@@ -64,7 +65,8 @@ class Sigma2qqbar2Zpg2XXj : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qqbar2Zpg2XXj() {}
+  Sigma2qqbar2Zpg2XXj() : kinMix(), mRes(), GammaRes(), m2Res(), preFac(),
+    sigma0(), gZp(), eps(), particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -91,7 +93,8 @@ public:
 protected:
 
   // Parameters set at initialization.
-  double mRes, GammaRes, m2Res, preFac, sigma0;
+  bool   kinMix;
+  double mRes, GammaRes, m2Res, preFac, sigma0, gZp, eps;
 
   // Pointer to properties of the particle species, to access decay channels.
   ParticleDataEntry* particlePtr;
@@ -124,7 +127,8 @@ class Sigma2ffbar2ZpH : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2ZpH() {}
+  Sigma2ffbar2ZpH() : kinMix(), mRes(), GammaRes(), m2Res(), sigma0(), gZp(),
+    eps(), coupZpH(), openFrac(), particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -148,12 +152,11 @@ public:
   virtual int    resonanceA() const {return 55;} // Zprime
   virtual int    gmZmode()    const {return 3;}
 
-  // virtual bool   convertM2()  const {return true;} // Use |M|^2
-
 private:
 
   // Parameters set at initialization.
-  double mRes, GammaRes, m2Res, sigma0, gZp, coupZpH, openFrac;
+  bool   kinMix;
+  double mRes, GammaRes, m2Res, sigma0, gZp, eps, coupZpH, openFrac;
 
   // Pointer to properties of the particle species, to access decay channels.
   ParticleDataEntry* particlePtr;
@@ -167,7 +170,7 @@ class Sigma1gg2S2XX : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1gg2S2XX() {}
+  Sigma1gg2S2XX() : mRes(), GammaRes(), m2Res(), sigma0(), particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -205,7 +208,8 @@ class Sigma2gg2Sg2XXj : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2gg2Sg2XXj() {}
+  Sigma2gg2Sg2XXj() : mRes(), GammaRes(), m2Res(), propS(), sigma0(),
+    particlePtr() {}
 
   // Initialize process.
   virtual void initProc();
@@ -254,6 +258,62 @@ public:
   virtual bool   isSChannel() const {return true;}
 
 };
+
+//==========================================================================
+
+class Sigma2qqbar2DY : public Sigma2Process {
+
+public:
+
+  // Constructor,
+  Sigma2qqbar2DY() : sigma0(), openFracPair(), propRes(), nameSave(), mRes(),
+    GammaRes(), m2Res(), M1(), M2(), Lambda(), mixN1(), mixN2(), xW(),
+    coupW11(), coupW12(), coupW2(), yuk(), type(), nplet(), isUD(),
+    particlePtr() {}
+
+  // Initialize process.
+  virtual void initProc();
+
+  // Calculate flavour-independent parts of cross section.
+  virtual void sigmaKin();
+
+  // Evaluate sigmaHat(sHat).
+  virtual double sigmaHat();
+
+  // Select flavour, colour and anticolour.
+  virtual void setIdColAcol();
+
+  // Info on the subprocess.
+  virtual string name()       const {return nameSave;}
+  virtual int    code()       const {return 6020;}
+  virtual string inFlux()     const {return "qqbar";}
+  virtual int    resonanceA() const {return 23;}
+  virtual bool   isSChannel() const {return true;}
+  virtual int    id3Mass()    const {return abs(id3);}
+  virtual int    id4Mass()    const {return abs(id4);}
+
+protected:
+
+  // Parameters set at initialization.
+  double  sigma0, openFracPair;
+  complex propRes;
+  string  nameSave;
+  double  mRes, GammaRes, m2Res;
+
+  // Couplings for 5-plet.
+  double M1, M2, Lambda, mixN1, mixN2, xW, coupW11, coupW12, coupW2;
+
+  // Variables for sleptons.
+  double yuk[4];
+
+  // Type of model and N-plet. Flag for HNL production.
+  int  type, nplet;
+  bool isUD;
+
+  // Pointer to properties of the particle species, to access decay channels.
+  ParticleDataEntry* particlePtr;
+
+  };
 
 //==========================================================================
 

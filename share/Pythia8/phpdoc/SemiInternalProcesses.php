@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='SemiInternalProcesses.php'>
  
 <h2>Semi-Internal Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0">The Cross Section Calculation</a></li>
+  <li><a href="#section1">The Cross Section Class</a></li>
+  <li><a href="#section2">Access to a process</a></li>
+  <li><a href="#section3">Implementing an external phase-space generator</a></li>
+</ol>
+
  
 Normally users are expected to implement new processes via the 
 <?php $filepath = $_GET["filepath"];
@@ -97,6 +104,7 @@ calculate the relevant cross section. There are no example programs
 illustrating how to do this yet, but the methodology is described 
 below, under "Implementing an external phase-space generator". 
  
+<a name="section0"></a> 
 <h3>The Cross Section Calculation</h3> 
  
 The key method for the cross section calculation is 
@@ -241,6 +249,7 @@ external matrix-element evaluation.
    
  
  
+<a name="section1"></a> 
 <h3>The Cross Section Class</h3> 
  
 The matrix-element information has to be encoded in a new class. 
@@ -603,6 +612,7 @@ mode is used, while 0 gives full <i>gamma^*/Z^0</i> interference,
 1 <i>gamma^*</i> only and 2 <i>Z^0</i> only. 
    
  
+<a name="section2"></a> 
 <h3>Access to a process</h3> 
  
 Once you have implemented a class, it is straightforward to make use of 
@@ -679,6 +689,7 @@ If so, the same basic matrix element may be recycled for a set of
 related processes, e.g. one for a composite <i>u</i> and one for 
 a composite <i>d</i>. Obviously these variations may be combined. 
  
+<a name="section3"></a> 
 <h3>Implementing an external phase-space generator</h3> 
  
 An external phase-space generator can be interfaced by encapsulating 
@@ -788,4 +799,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

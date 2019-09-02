@@ -11,6 +11,7 @@ Zp:vu = 0.50
 Zp:vd = 0.50
 Zp:vX = 1.0
 Zp:coupH = 0.5
+! Zp:epsilon = 0.1
 
 # Sdm:vf = 1.0
 # Sdm:vX = 1.0
@@ -18,22 +19,23 @@ Zp:coupH = 0.5
 ! Settings
 Beams:eCM = 13000.
 Next:numberCount = 100
-# Init:showOneParticleData = 55
+Init:showOneParticleData = 55
 Init:showChangedSettings = on      ! list changed settings
-Init:showChangedParticleData = on  ! list changed particle data
-Next:numberShowInfo = 2            ! print event information n times
-Next:numberShowProcess = 2         ! print process record n times
-Next:numberShowEvent = 2           ! print event record n times
+Init:showChangedParticleData = off ! list changed particle data
+Next:numberShowInfo = 0            ! print event information n times
+Next:numberShowProcess = 1         ! print process record n times
+Next:numberShowEvent = 0           ! print event record n times
 
 PartonLevel:MPI = off
 PartonLevel:ISR = on
 PartonLevel:FSR = on
 
 ! Process selection
+! DM:gg2S2XX = on
 ! DM:gg2S2XXj = on
-! DM:ffbar2Zp2XX = on
+DM:ffbar2Zp2XX = on
+DM:ffbar2Zp2XXj = on
 ! DM:ffbar2ZpH = on
-DM:ffbar2ZpH = on
 
 55:onMode = off
 55:onIfAny = 52

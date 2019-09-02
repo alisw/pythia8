@@ -1,5 +1,5 @@
 // ColourTracing.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,6 +22,9 @@ namespace Pythia8 {
 class ColourTracing {
 
 public:
+
+  // Constructor.
+  ColourTracing() : infoPtr() {}
 
   void init( Info* infoPtrIn) {infoPtr = infoPtrIn;}
 

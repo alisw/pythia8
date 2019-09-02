@@ -21,6 +21,18 @@ specify which set of processes to allow for the second hard one, see
 the following. 
 </flag> 
  
+<parm name="SecondHard:maxPDFreweight" default="2." min="1." max="10."> 
+The two scatterings are first generated as if independent, but then 
+a weight is evaluated, that takes into account how the PDF of one is 
+modified by the presence of the other, averaged over the two possibilities. 
+This weight typically is a bit below unity, by momentum conservation, 
+but has a tail towards larger weights by correlations between partons. 
+The parameter tells how large such weights are compensated by standard 
+hit-and miss. A large value implies inefficiency in the generation, 
+while a small one means some events will be assigned a leftover weight 
+above unity. 
+</parm> 
+ 
 <h3>Process Selection</h3> 
  
 In principle the whole <aloc href="ProcessSelection">process 
@@ -424,4 +436,4 @@ anyway less relevant, since systematical errors are likely to dominate.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

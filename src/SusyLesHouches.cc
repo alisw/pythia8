@@ -1,5 +1,5 @@
 // SusyLesHouches.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -155,7 +155,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
         string pdgString = blockIn.substr(pdgBegin,pdgEnd-pdgBegin);
         istringstream linestream(pdgString);
         // Create and add new block with this code as zero'th entry
-        LHblock<int> newQnumbers;
+        LHblock<double> newQnumbers;
         newQnumbers.set(0,linestream);
         qnumbers.push_back(newQnumbers);
         // Default name: PDG code

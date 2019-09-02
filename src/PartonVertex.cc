@@ -1,5 +1,5 @@
 // PartonVertex.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -33,10 +33,13 @@ void PartonVertex::init() {
 // Select vertex for a beam (remnant) particle.
 
 void PartonVertex::vertexBeam( int iNow, int iBeam, Event& event) {
+  double xbA = -bNow/2.;
+  double xbB = bNow/2.;
+  // Don't do any rotation in phi for these simple models.
   if(iBeam == 0)
-    event[iNow].vProd(-bNow/2., 0., 0., 0.);
+    event[iNow].vProd(xbA, 0., 0., 0.);
   else if(iBeam == 1)
-    event[iNow].vProd(bNow/2., 0. ,0. ,0.);
+    event[iNow].vProd(xbB, 0., 0. ,0.);
   else
     infoPtr->errorMsg("Error in PartonVertex:vertexBeam: Wrong beam index.");
 }

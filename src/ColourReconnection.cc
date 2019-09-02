@@ -1,5 +1,5 @@
 // ColourReconnection.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,7 +19,7 @@ public:
 
   // Constructor.
   BeamDipole( int colIn = 0, int iColIn = 0, int iAcolIn = 0)
-    : col(colIn), iCol(iColIn), iAcol(iAcolIn) {}
+    : col(colIn), iCol(iColIn), iAcol(iAcolIn), p1p2() {}
 
   // Members.
   int    col, iCol, iAcol;
@@ -160,9 +160,6 @@ const double ColourReconnection::MINIMUMGAIN = 1E-10;
 // Minimum needed gain in lambda for a junction.
 const double ColourReconnection::MINIMUMGAINJUN = 1E-10;
 
-// Conversion of GeV^{-1} to fm for time calculations.
-const double ColourReconnection::HBAR = 0.197327;
-
 // Require minimum squared invariant mass.
 const double ColourReconnection::TINYP1P2 = 1e-20;
 
@@ -218,10 +215,9 @@ bool ColourReconnection::init( Info* infoPtrIn, Settings& settings,
   allowJunctions      = settings.flag("ColourReconnection:allowJunctions");
   nReconCols          = settings.mode("ColourReconnection:nColours");
   sameNeighbourCol  = settings.flag("ColourReconnection:sameNeighbourColours");
-
   timeDilationMode    = settings.mode("ColourReconnection:timeDilationMode");
   timeDilationPar     = settings.parm("ColourReconnection:timeDilationPar");
-  timeDilationParGeV  = timeDilationPar / HBAR;
+  timeDilationParGeV  = timeDilationPar / HBARC;
 
   // Parameters of gluon-move model.
   m2Lambda            = settings.parm("ColourReconnection:m2Lambda");
@@ -293,6 +289,7 @@ bool ColourReconnection::nextNew( Event& event, int iFirst) {
 
   // Setup dipoles and make pseudo particles.
   setupDipoles(event, iFirst);
+  if (dipoles.size() == 0) return true;
   makeAllPseudoParticles(event, iFirst);
 
   // Setup all dipole reconnections.
@@ -572,6 +569,7 @@ void ColourReconnection::setupDipoles( Event& event, int iFirst) {
 
         // Need to check whether the quark comes from a g->qqbar split.
         // If that is the case, it can not have the same as qbar.
+        // Note: could relax this to allow colour-octet onium formation.
         if (j == 0 && !isAntiJun[i] && !isGluonLoop[i]) {
 
           int iMother = event[event[ chains[i][j] ].iTopCopy()].mother1();
@@ -3869,20 +3867,20 @@ bool ColourReconnection::reconnectMove( Event&  event, int oldSize) {
 
 bool ColourReconnection::reconnectTypeCommon( Event& event, int ) {
 
-  // Make storage containers. Check that at least two parton systems.
+  // Check that two final parton systems are from resonance decays.
+  int sizeSys = partonSystemsPtr->sizeSys();
+  if (sizeSys < 2 || partonSystemsPtr->hasInAB(sizeSys - 2)
+    || partonSystemsPtr->hasInAB(sizeSys - 1) ) return true;
+
+  // Set up storage containers.
   vector<vector< ColourDipole> > dips;
   int iBosons[2];
   Vec4 decays[2];
-  if (partonSystemsPtr->sizeSys() < 2) {
-    infoPtr->errorMsg("Error in ColourReconnection::reconnectTypeCommon: "
-                      "expect at least two parton systems");
-    return false;
-  }
 
   // Find the dipoles connected to their respective resonance decays.
   for (int i = 0; i < 2; ++i) {
     dips.push_back(vector<ColourDipole>());
-    int iSys = partonSystemsPtr->sizeSys() - i - 1;
+    int iSys = sizeSys - i - 1;
     for (int j = 0; j < partonSystemsPtr->sizeOut(iSys); ++j) {
       int iPar = partonSystemsPtr->getOut(iSys, j);
 
@@ -3910,6 +3908,9 @@ bool ColourReconnection::reconnectTypeCommon( Event& event, int ) {
         }
       }
     }
+
+    // Done if either system contains no dipoles.
+    if (dips.back().size() == 0) return true;
   }
 
   // Boost system to W+W- rest frame.
@@ -3922,7 +3923,7 @@ bool ColourReconnection::reconnectTypeCommon( Event& event, int ) {
     double mBoson = particleDataPtr->m0(event[iBoson].idAbs());
     double gammaBoson = particleDataPtr->mWidth(event[iBoson].idAbs());
     double mReal = event[iBoson].mCalc();
-    decays[i][0] = -HBAR * log(rndmPtr->flat()) * event[iBoson].e() /
+    decays[i][0] = -HBARC * log(rndmPtr->flat()) * event[iBoson].e() /
       sqrt(pow2(pow2(mBoson) - pow2(mReal)) + pow2(gammaBoson * pow2(mReal)
       / mBoson));
     for (int j = 1; j < 4; ++j)
@@ -3960,7 +3961,7 @@ bool ColourReconnection::reconnectTypeCommon( Event& event, int ) {
     if (singleReconOnly) break;
   }
 
-  // Boost system back to origianl rest frame.
+  // Boost system back to original rest frame.
   for (int i = 1; i < event.size(); ++i) event[i].bst(boost);
 
   // Done.

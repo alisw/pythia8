@@ -1,5 +1,5 @@
 // Settings.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -197,7 +197,8 @@ class Settings {
 public:
 
   // Constructor.
-  Settings() : isInit(false), readingFailedSave(false), lineSaved(false) {}
+  Settings() : infoPtr(), isInit(false), readingFailedSave(false),
+    lineSaved(false) {}
 
   // Initialize Info pointer.
   void initPtr(Info* infoPtrIn) {infoPtr = infoPtrIn;}
@@ -347,6 +348,9 @@ public:
 
   // Check whether input openend with { not yet closed with }.
   bool unfinishedInput() {return lineSaved;}
+
+  // Check whether any other processes than SoftQCD are switched on.
+  bool onlySoftQCD();
 
  private:
 

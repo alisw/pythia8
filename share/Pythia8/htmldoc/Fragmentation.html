@@ -7,6 +7,16 @@
 <body>
  
 <h2>Fragmentation</h2> 
+<ol id="toc">
+  <li><a href="#section0">Fragmentation functions</a></li>
+  <li><a href="#section1">Fragmentation <ei>pT</ei></a></li>
+  <li><a href="#section2">Jet joining procedure</a></li>
+  <li><a href="#section3">Colour tracing</a></li>
+  <li><a href="#section4">Simplifying systems</a></li>
+  <li><a href="#section5">Ministrings</a></li>
+  <li><a href="#section6">Junction treatment</a></li>
+</ol>
+
  
 Fragmentation in PYTHIA is based on the Lund string model 
 [<a href="Bibliography.html#refAnd83" target="page">And83</a>, <a href="Bibliography.html#refSjo84" target="page">Sjo84</a>]. Several different aspects are involved in 
@@ -25,6 +35,7 @@ other places of the program, notably particle decays, and is thus
 described on the separate <a href="FlavourSelection.html" target="page">Flavour 
 Selection</a> page. 
  
+<a name="section0"></a> 
 <h3>Fragmentation functions</h3> 
  
 The <code>StringZ</code> class handles the choice of longitudinal 
@@ -265,6 +276,7 @@ This allows a sensible scaling to a particle with an unknown higher
 mass without the need for a user intervention. 
    
  
+<a name="section1"></a> 
 <h3>Fragmentation <i>pT</i></h3> 
  
 The <code>StringPT</code> class handles the choice of fragmentation 
@@ -422,6 +434,7 @@ MPI regularization parameter <code>MultipartonInteractions:pT0Ref</code>.
 The width/temperature will get the prefactor <i>N(NSP)^expNSP</i>. 
    
  
+<a name="section2"></a> 
 <h3>Jet joining procedure</h3> 
  
 String fragmentation is carried out iteratively from both string ends 
@@ -463,12 +476,29 @@ particle production. If not, i.e. if
 produced from what is currently left, if possible. (If not, the 
 fragmentation process is started over.) 
  
+<a name="section3"></a> 
+<h3>Colour tracing</h3> 
+ 
+<a name="anchor40"></a>
+<p/><code>flag&nbsp; </code><strong> StringFragmentation:TraceColours &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+In some cases it is interesting to trace the primary hadrons back 
+to the string pieces from which they were 
+formed. If <code>StringFragmentation:TraceColours</code> is switched 
+<code>on</code>, this is done by setting colour and anticolour 
+indices for the primary hadrons to the indices of the string piece 
+where the corresponding break-ups are assumed to have happened. To 
+avoid the possible confusion of having colour indices on colour 
+singlet particles, this flag is by default <code>off</code>. 
+   
+ 
+<a name="section4"></a> 
 <h3>Simplifying systems</h3> 
  
 There are a few situations when it is meaningful to simplify the 
 original task, one way or another. 
  
-<a name="anchor40"></a>
+<a name="anchor41"></a>
 <p/><code>parm&nbsp; </code><strong> HadronLevel:mStringMin &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.5</code>)<br/>
 Decides whether a partonic system should be considered as a normal 
@@ -478,7 +508,7 @@ sum of quark/diquark constituent masses for a normal string description,
 else the ministring scenario is used. 
    
  
-<a name="anchor41"></a>
+<a name="anchor42"></a>
 <p/><code>parm&nbsp; </code><strong> FragmentationSystems:mJoin &nbsp;</strong> 
  (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 1.</code>)<br/>
 When two colour-connected partons are very nearby, with at least 
@@ -490,7 +520,7 @@ to the string region under consideration. (Note that, for technical
 reasons, the 0.2 GeV lower limit is de facto hardcoded.) 
    
  
-<a name="anchor42"></a>
+<a name="anchor43"></a>
 <p/><code>parm&nbsp; </code><strong> FragmentationSystems:mJoinJunction &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 2.</code>)<br/>
 When the invariant mass of two of the quarks in a three-quark junction 
@@ -503,6 +533,7 @@ four-momentum. Those on the two combined legs are clustered with the
 diquark when it is formed. 
    
  
+<a name="section5"></a> 
 <h3>Ministrings</h3> 
  
 The <code>MiniStringFragmentation</code> machinery is only used when a 
@@ -519,7 +550,7 @@ The current implementation does not completely abide to the scheme
 presented there, however, but has in part been simplified. (In part 
 for greater clarity, in part since the class is not quite finished yet.) 
  
-<a name="anchor43"></a>
+<a name="anchor44"></a>
 <p/><code>mode&nbsp; </code><strong> MiniStringFragmentation:nTry &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)<br/>
 Whenever the machinery is called, first this many attempts are made 
@@ -532,6 +563,7 @@ attempts at obtaining two hadrons will be made before eventually
 giving up. 
    
  
+<a name="section6"></a> 
 <h3>Junction treatment</h3> 
  
 A junction topology corresponds to an Y arrangement of strings 
@@ -543,7 +575,7 @@ the junction, where the baryon number topologically is located.
 The junction fragmentation scheme is described in [<a href="Bibliography.html#refSjo03" target="page">Sjo03</a>]. 
 The parameters in this section should not be touched except by experts. 
  
-<a name="anchor44"></a>
+<a name="anchor45"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eNormJunction &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)<br/>
 Used to find the effective rest frame of the junction, which is 
@@ -558,7 +590,7 @@ Should in principle be (close to) <i>sqrt((1 + a) / b)</i>, with
 fragmentation function. 
    
  
-<a name="anchor45"></a>
+<a name="anchor46"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eBothLeftJunction &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>)<br/>
 Retry (up to 10 times) when the first two considered strings in to a 
@@ -566,7 +598,7 @@ junction both have a remaining energy (in the junction rest frame)
 above this number. 
    
  
-<a name="anchor46"></a>
+<a name="anchor47"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eMaxLeftJunction &nbsp;</strong> 
  (<code>default = <strong>10.0</strong></code>; <code>minimum = 0.</code>)<br/>
 Retry (up to 10 times) when the first two considered strings in to a 
@@ -577,7 +609,7 @@ above a random energy evenly distributed between
 (drawn anew for each test). 
    
  
-<a name="anchor47"></a>
+<a name="anchor48"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eMinLeftJunction &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>)<br/>
 Retry (up to 10 times) when the invariant mass-squared of the final leg 
@@ -589,4 +621,4 @@ junction rest frame).
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

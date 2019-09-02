@@ -1,5 +1,5 @@
 // LHEF3.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -565,15 +565,17 @@ bool Reader::init() {
 
   // Loop over all lines until we hit the </init> tag.
   while ( getLine() && currentLine.find("</init>") == string::npos ) {
-    if ( currentLine.find("<header") != string::npos ) {
+    if ( currentLine.find("<header") != string::npos
+      && currentLine.find("#") == string::npos) {
       // We have hit the header block, so we should dump this and
       // all following lines to headerBlock until we hit the end of
       // it.
       readingHeader = true;
       headerBlock = currentLine + "\n";
     }
-    else if ( currentLine.find("<init>") != string::npos
-      || currentLine.find("<init ") != string::npos ) {
+    else if ( ( currentLine.find("<init>") != string::npos
+      || currentLine.find("<init ") != string::npos )
+      && currentLine.find("#") == string::npos) {
       // We have hit the init block, so we should expect to find the
       // standard information in the following.
       readingInit = true;
@@ -601,7 +603,8 @@ bool Reader::init() {
         }
       }
     }
-    else if ( currentLine.find("</header>") != string::npos ) {
+    else if ( currentLine.find("</header>") != string::npos
+      && currentLine.find("#") == string::npos) {
       // The end of the header block. Dump this line as well to the
       // headerBlock and we're done.
       readingHeader = false;

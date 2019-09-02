@@ -97,10 +97,15 @@ echo "<a href='SaveSettings.php?returning=1&filename=".$filename."' target='page
 <a href='StandardModelParameters.php?filepath=".$filepath."' target='page'>Standard-Model Parameters</a><br/> 
 <a href='TotalCrossSections.php?filepath=".$filepath."' target='page'>Total Cross Sections</a><br/> 
 <a href='ResonanceDecays.php?filepath=".$filepath."' target='page'>Resonance Decays</a><br/> 
+<a href='SimpleShowers.php?filepath=".$filepath."' target='page'>Simple Showers</a><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
 <a href='TimelikeShowers.php?filepath=".$filepath."' target='page'>Timelike Showers</a><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
 <a href='SpacelikeShowers.php?filepath=".$filepath."' target='page'>Spacelike Showers</a><br/> 
-<a href='Variations.php?filepath=".$filepath."' target='page'>Automated Shower Variations</a><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
 <a href='WeakShowers.php?filepath=".$filepath."' target='page'>Weak Showers</a><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
+<a href='Variations.php?filepath=".$filepath."' target='page'>Automated Variations</a><br/> 
 <a href='MultipartonInteractions.php?filepath=".$filepath."' target='page'>Multiparton Interactions</a><br/> 
 <a href='BeamRemnants.php?filepath=".$filepath."' target='page'>Beam Remnants</a><br/> 
 <a href='ColourReconnection.php?filepath=".$filepath."' target='page'>Colour Reconnection</a><br/> 
@@ -112,6 +117,7 @@ echo "<a href='SaveSettings.php?returning=1&filename=".$filename."' target='page
 <a href='ParticleDecays.php?filepath=".$filepath."' target='page'>Particle Decays</a><br/> 
 <a href='RHadrons.php?filepath=".$filepath."' target='page'>R-hadrons</a><br/> 
 <a href='BoseEinsteinEffects.php?filepath=".$filepath."' target='page'>Bose-Einstein Effects</a><br/> 
+<a href='DeuteronProduction.php?filepath=".$filepath."' target='page'>Deuteron Production</a><br/> 
 <a href='Photoproduction.php?filepath=".$filepath."' target='page'>Photoproduction</a><br/> 
 <a href='HeavyIons.php?filepath=".$filepath."' target='page'>Heavy Ion Collisions</a><br/> 
 <a href='HadronScattering.php?filepath=".$filepath."' target='page'>Hadron Scattering</a><br/> 
@@ -193,4 +199,4 @@ echo "<a href='LesHouchesAccord.php?filepath=".$filepath."' target='page'>Les Ho
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

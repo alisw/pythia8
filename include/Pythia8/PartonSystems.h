@@ -1,5 +1,5 @@
 // PartonSystems.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,10 +24,12 @@ class PartonSystem {
 public:
 
   // Constructors.
-  PartonSystem() : iInA(0), iInB(0), sHat(0.) {iOut.reserve(10);}
+  PartonSystem() : hard(false), iInA(0), iInB(0), iInRes(0), sHat(0.) {
+    iOut.reserve(10);}
 
   // Stored quantities.
-  int         iInA, iInB;
+  bool        hard;
+  int         iInA, iInB, iInRes;
   vector<int> iOut;
   double      sHat, pTHat;
 
@@ -53,8 +55,10 @@ public:
   int sizeSys() const {return systems.size();}
 
   // Set, add or replace info to one system.
+  void setHard(int iSys, bool hard) {systems[iSys].hard = hard;}
   void setInA(int iSys, int iPos) {systems[iSys].iInA = iPos;}
   void setInB(int iSys, int iPos) {systems[iSys].iInB = iPos;}
+  void setInRes(int iSys, int iPos) {systems[iSys].iInRes = iPos;}
   void addOut(int iSys, int iPos) {systems[iSys].iOut.push_back(iPos);}
   void popBackOut(int iSys) {systems[iSys].iOut.pop_back();}
   void setOut(int iSys, int iMem, int iPos) {systems[iSys].iOut[iMem] = iPos;}
@@ -65,13 +69,16 @@ public:
 
   // Get info on one system.
   bool hasInAB(int iSys)         const {return ( (systems[iSys].iInA > 0)
-                                        || (systems[iSys].iInB > 0) ) ;}
+                                        && (systems[iSys].iInB > 0) ) ;}
+  bool hasInRes(int iSys)        const {return (systems[iSys].iInRes > 0);}
+  bool getHard(int iSys)         const {return systems[iSys].hard;}
   int getInA(int iSys)           const {return systems[iSys].iInA;}
   int getInB(int iSys)           const {return systems[iSys].iInB;}
+  int getInRes(int iSys)         const {return systems[iSys].iInRes;}
   int sizeOut(int iSys)          const {return systems[iSys].iOut.size();}
   int getOut(int iSys, int iMem) const {return systems[iSys].iOut[iMem];}
-  int sizeAll(int iSys)          const {return (hasInAB(iSys))
-    ? systems[iSys].iOut.size() + 2 : systems[iSys].iOut.size();}
+  int sizeAll(int iSys)          const {return (systems[iSys].iOut.size()
+      + (hasInAB(iSys) ? 2 : 0) + (hasInRes(iSys) ? 1 : 0));}
   int getAll(int iSys, int iMem) const;
   double getSHat(int iSys)       const {return systems[iSys].sHat;}
   double getPTHat(int iSys)      const {return systems[iSys].pTHat;}

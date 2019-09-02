@@ -1,5 +1,5 @@
 // Settings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -485,7 +485,7 @@ bool Settings::readString(string line, bool warn) {
       savedLine = lineNow;
       return true;
     }
-    valueString = lineNow.substr( openBrace + 1, closeBrace - openBrace - 1);
+    valueString = lineNow.substr(openBrace, closeBrace - openBrace + 1);
   }
 
   // Update flag map; allow many ways to say yes.
@@ -1763,6 +1763,42 @@ void Settings::resetWVec(string keyIn) {
 
 //--------------------------------------------------------------------------
 
+// Check whether any other processes than SoftQCD are switched on.
+
+bool Settings::onlySoftQCD() {
+
+  // List of (most?) process name groups, in lowercase. Special cases.
+  string flagList[26] = { "hardqcd", "promptphoton", "weakbosonexchange",
+    "weaksingleboson", "weakdoubleboson", "weakbosonandparton",
+    "photoncollision", "photonparton", "onia:all", "charmonium:all",
+    "bottomonium:all", "top", "fourthbottom", "fourthtop", "fourthpair",
+    "higgssm", "higgsbsm", "susy", "newgaugeboson", "leftrightsymmetry",
+    "leptoquark", "excitedfermion", "contactinteractions", "hiddenvalley",
+    "extradimensions", "dm:" };
+  int sizeList = 26;
+  string flagExclude[2] = { "extradimensionsg*:vlvl", "higgssm:nlowidths"};
+  int sizeExclude = 2;
+
+  // Loop over the flag map (using iterator), and process names.
+  for (map<string,Flag>::iterator flagEntry = flags.begin();
+    flagEntry != flags.end(); ++flagEntry) {
+    string flagName = flagEntry->first;
+    bool doExclude = false;
+    for (int i = 0; i < sizeExclude; ++i)
+      if (flagName.find( flagExclude[i]) != string::npos) doExclude = true;
+    if (doExclude) continue;
+    for (int i = 0; i < sizeList; ++i)
+      if (flagName.find( flagList[i]) != string::npos
+      && flagEntry->second.valNow == true) return false;
+  }
+
+  // Done without having found a non-SoftQCD process on.
+  return true;
+
+}
+
+//--------------------------------------------------------------------------
+
 // Regulate level of printout by overall change of settings.
 
 void Settings::printQuiet(bool quiet) {
@@ -1911,6 +1947,9 @@ void Settings::resetTunePP() {
 // i.e. mainly for final-state radiation and hadronization.
 
 void Settings::initTuneEE( int eeTune) {
+
+  // Do nothing for tune 0.
+  if (eeTune == 0) return;
 
   // Restore all e+e- settings to their original values.
   // Is first step for setting up a specific tune.
@@ -2146,6 +2185,9 @@ void Settings::initTuneEE( int eeTune) {
 // i.e. mainly for initial-state radiation and multiparton interactions.
 
 void Settings::initTunePP( int ppTune) {
+
+  // Do nothing for tune 0.
+  if (ppTune == 0) return;
 
   // Restore all pp/ppbar settings to their original values.
   // Is first step for setting up a specific tune.
@@ -2432,7 +2474,7 @@ void Settings::initTunePP( int ppTune) {
   }
 
   // Several ATLAS and CMS tunes start out from Tune 4C.
-  else if (ppTune < 18) {
+  else if (ppTune > 0 && ppTune < 18) {
     parm("SigmaProcess:alphaSvalue",            0.135 );
     flag("SigmaTotal:zeroAXB",                  true  );
     flag("SigmaDiffractive:dampen",             true  );
@@ -3014,6 +3056,10 @@ vector<bool> Settings::boolVectorAttributeValue(string line,
   string attribute) {
   string valString = attributeValue(line, attribute);
   if (valString == "") return vector<bool>(1, false);
+  size_t openBrace  = valString.find_first_of("{");
+  size_t closeBrace = valString.find_last_of("}");
+  if (openBrace != string::npos)
+    valString = valString.substr(openBrace + 1, closeBrace - openBrace - 1);
   vector<bool> vectorVal;
   size_t       stringPos(0);
   while (stringPos != string::npos) {
@@ -3034,6 +3080,10 @@ vector<int> Settings::intVectorAttributeValue(string line,
   string attribute) {
   string valString = attributeValue(line, attribute);
   if (valString == "") return vector<int>(1, 0);
+  size_t openBrace  = valString.find_first_of("{");
+  size_t closeBrace = valString.find_last_of("}");
+  if (openBrace != string::npos)
+    valString = valString.substr(openBrace + 1, closeBrace - openBrace - 1);
   int         intVal;
   vector<int> vectorVal;
   size_t      stringPos(0);
@@ -3056,6 +3106,10 @@ vector<double> Settings::doubleVectorAttributeValue(string line,
   string attribute) {
   string valString = attributeValue(line, attribute);
   if (valString == "") return vector<double>(1, 0.);
+  size_t openBrace  = valString.find_first_of("{");
+  size_t closeBrace = valString.find_last_of("}");
+  if (openBrace != string::npos)
+    valString = valString.substr(openBrace + 1, closeBrace - openBrace - 1);
   double         doubleVal;
   vector<double> vectorVal;
   size_t         stringPos(0);
@@ -3078,6 +3132,10 @@ vector<string> Settings::stringVectorAttributeValue(string line,
   string attribute) {
   string valString = attributeValue(line, attribute);
   if (valString == "") return vector<string>(1, " ");
+  size_t openBrace  = valString.find_first_of("{");
+  size_t closeBrace = valString.find_last_of("}");
+  if (openBrace != string::npos)
+    valString = valString.substr(openBrace + 1, closeBrace - openBrace - 1);
   string         stringVal;
   vector<string> vectorVal;
   size_t         stringPos(0);

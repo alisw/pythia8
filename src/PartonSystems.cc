@@ -1,5 +1,5 @@
 // PartonSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -28,6 +28,9 @@ void PartonSystems::replace(int iSys, int iPosOld, int iPosNew) {
     systems[iSys].iInB = iPosNew;
     return;
   }
+  if (systems[iSys].iInRes == iPosOld) {
+    systems[iSys].iInRes = iPosNew;
+  }
   for (int i = 0; i < sizeOut(iSys); ++i)
   if (systems[iSys].iOut[i] == iPosOld) {
     systems[iSys].iOut[i] = iPosNew;
@@ -46,22 +49,34 @@ int PartonSystems::getAll(int iSys, int iMem) const {
     if (iMem == 0) return systems[iSys].iInA;
     if (iMem == 1) return systems[iSys].iInB;
     return systems[iSys].iOut[iMem - 2];
-  } else return systems[iSys].iOut[iMem];
+  } else if (hasInRes(iSys)) {
+    if (iMem == 0) return systems[iSys].iInRes;
+    return systems[iSys].iOut[iMem - 1];
+  }
+  return systems[iSys].iOut[iMem];
 
 }
 
 //--------------------------------------------------------------------------
 
 // Find system of given outgoing parton, optionally also incoming one.
+// If the parton is outgoing in one system and incoming in another (eg a
+// decaying resonance), the system in which it is incoming will be returned if
+// alsoIn == true, else the system in which it is outgoing will be returned.
 
 int PartonSystems::getSystemOf(int iPos, bool alsoIn) const {
 
-  // Loop over systems and over final-state members in each system.
-  for (int iSys = 0; iSys < sizeSys(); ++iSys) {
-    if (alsoIn) {
+  // If (alsoIn), first check if this parton appears as incoming in any system.
+  if (alsoIn) {
+    for (int iSys = 0; iSys < sizeSys(); ++iSys) {
       if (systems[iSys].iInA == iPos) return iSys;
       if (systems[iSys].iInB == iPos) return iSys;
+      if (systems[iSys].iInRes == iPos) return iSys;
     }
+  }
+
+  // Then check if it appears as outgoing in any system.
+  for (int iSys = 0; iSys < sizeSys(); ++iSys) {
     for (int iMem = 0; iMem < sizeOut(iSys); ++iMem)
       if (systems[iSys].iOut[iMem] == iPos) return iSys;
   }
@@ -97,8 +112,14 @@ void PartonSystems::list() const {
 
   // Loop over system list and over members in each system.
   for (int iSys = 0; iSys < sizeSys(); ++iSys) {
-    cout << " " << setw(3) << iSys << " " << setw(4) << systems[iSys].iInA
-         << " " << setw(4) << systems[iSys].iInB;
+    cout << " " << setw(3) << iSys << " ";
+    if (hasInAB(iSys)) {
+      cout << setw(4) << systems[iSys].iInA
+           << " " << setw(4) << systems[iSys].iInB;
+    } else if (hasInRes(iSys)) {
+      cout << "  (" << setw(4) << systems[iSys].iInRes
+           << ") ";
+    } else cout<< setw(9) <<" "<<endl;
     for (int iMem = 0; iMem < sizeOut(iSys); ++iMem) {
       if (iMem%16 == 0 && iMem > 0) cout << "\n              ";
       cout << " " << setw(4) << systems[iSys].iOut[iMem];

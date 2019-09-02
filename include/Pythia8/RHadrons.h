@@ -1,5 +1,5 @@
 // RHadrons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -30,7 +30,11 @@ class RHadrons {
 public:
 
   // Constructor.
-  RHadrons() : nRHad(0) {}
+  RHadrons() : allowRH(), allowRSb(), allowRSt(), allowRGo(), allowSomeR(),
+    setMassesRH(), idRSb(), idRSt(), idRGo(), maxWidthRH(), probGluinoballRH(),
+    mOffsetCloudRH(), mCollapseRH(), diquarkSpin1RH(), m0Sb(), m0St(), m0Go(),
+    nRHad(0), iRHad(), iBef(), iSys(), systemPtr(), infoPtr(),
+    particleDataPtr(), rndmPtr(), flavSelPtr(), zSelPtr() {}
 
   // Initialization of R-hadron handling.
   bool init( Info* infoPtrIn, Settings& settings,

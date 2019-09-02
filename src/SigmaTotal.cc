@@ -1,5 +1,5 @@
 // SigmaTotal.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -239,6 +239,122 @@ bool SigmaTotal::calc(int idA, int idB, double eCM) {
   isCalc = true;
   return true;
 
+}
+
+//--------------------------------------------------------------------------
+
+// Sample the VMD states for resolved photons.
+
+void SigmaTotal::chooseVMDstates(int idA, int idB, double eCM,
+  int processCode) {
+
+  // Constants and initial values.
+  double gammaFac[4] = {2.2, 23.6, 18.4, 11.5};
+  double alphaEM     = 0.00729353;
+  double idVMD[4]    = {113, 223, 333, 443};
+  double pVP[4]      = {0.};
+  double pVV[4][4]   = {{0.}};
+  double pSum        = 0.;
+  int nVMD           = 4;
+
+  // Values to start with.
+  pair<int, int> idAB = make_pair(idA, idB);
+
+  // gamma-gamma.
+  if (idA == 22 && idB == 22) {
+    for (int i = 0; i < nVMD; ++i)
+    for (int j = 0; j < nVMD; ++j) {
+      // Evaluate the cross sections individually.
+      calc(idVMD[i], idVMD[j], eCM);
+      pVV[i][j] = pow2(alphaEM) / (gammaFac[i] * gammaFac[j]);
+      if      (processCode == 101) pVV[i][j] *= sigmaND();
+      else if (processCode == 102) pVV[i][j] *= sigmaEl();
+      else if (processCode == 103) pVV[i][j] *= sigmaXB();
+      else if (processCode == 104) pVV[i][j] *= sigmaAX();
+      else if (processCode == 105) pVV[i][j] *= sigmaXX();
+      pSum     += pVV[i][j];
+    }
+
+    // Choose VMD states based on relative fractions.
+    double pickMode = rndmPtr->flat() * pSum;
+    bool pairFound  = false;
+    for (int i = 0; i < nVMD; ++i) {
+      for (int j = 0; j < nVMD; ++j) {
+        pickMode -= pVV[i][j];
+        if (pickMode < 0.) {
+          idAB = make_pair(113 + 110 * i, 113 + 110 * j);
+          pairFound = true;
+          break;
+        }
+      }
+      if (pairFound) break;
+    }
+
+  // gamma + p.
+  } else if (idA == 22 && idB == 2212) {
+    for (int i = 0; i < nVMD; ++i) {
+      // Evaluate the cross sections individually.
+      calc(idVMD[i], 2212, eCM);
+      pVP[i] = alphaEM / gammaFac[i];
+      if      (processCode == 101) pVP[i] *= sigmaND();
+      else if (processCode == 102) pVP[i] *= sigmaEl();
+      else if (processCode == 103) pVP[i] *= sigmaXB();
+      else if (processCode == 104) pVP[i] *= sigmaAX();
+      else if (processCode == 105) pVP[i] *= sigmaXX();
+      pSum     += pVP[i];
+    }
+
+    // Choose VMD state based on relative fractions.
+    double pickMode = rndmPtr->flat() * pSum;
+    for (int i = 0; i < nVMD; ++i){
+      pickMode -= pVP[i];
+      if (pickMode < 0.){
+         idAB = make_pair(113 + 110 * i, 2212);
+         break;
+      }
+    }
+
+  // p + gamma.
+  } else if (idA == 2212 && idB == 22) {
+    for (int i = 0; i < nVMD; ++i) {
+      // Evaluate the cross sections individually.
+      calc(2212, idVMD[i], eCM);
+      pVP[i] = alphaEM / gammaFac[i];
+      if      (processCode == 101) pVP[i] *= sigmaND();
+      else if (processCode == 102) pVP[i] *= sigmaEl();
+      else if (processCode == 103) pVP[i] *= sigmaXB();
+      else if (processCode == 104) pVP[i] *= sigmaAX();
+      else if (processCode == 105) pVP[i] *= sigmaXX();
+      pSum     += pVP[i];
+    }
+
+    // Choose VMD state based on relative fractions.
+    double pickMode = rndmPtr->flat() * pSum;
+    for (int i = 0; i < nVMD; ++i){
+      pickMode -= pVP[i];
+      if (pickMode < 0.){
+        idAB = make_pair(2212, 113 + 110 * i);
+        break;
+      }
+    }
+  }
+
+  // Reset to the original cross section.
+  calc(idA, idB, eCM);
+
+  // Propagate the selected states to Info class for further usage.
+  if (idAB.first == 113 || idAB.first == 223 || idAB.first == 333
+      || idAB.first == 443) {
+    double mA  = particleDataPtr->mSel(idAB.first);
+    double scA = alphaEM / gammaFac[idAB.first/100 - 1];
+    infoPtr->setVMDstateA(true, idAB.first, mA, scA);
+  }
+  if (idAB.second == 113 || idAB.second == 223 || idAB.second == 333
+      || idAB.second == 443) {
+    double mB  = particleDataPtr->mSel(idAB.second);
+    double scB = alphaEM / gammaFac[idAB.second/100 - 1];
+    infoPtr->setVMDstateB(true, idAB.second, mB, scB);
+  }
 }
 
 //==========================================================================
@@ -581,8 +697,12 @@ const double SigmaSaSDL::ALPHAPRIME = 0.25;
 const double SigmaSaSDL::CONVERTSD = 0.0336;
 const double SigmaSaSDL::CONVERTDD = 0.0084;
 
-const double SigmaSaSDL::GAMMAFAC[3] = {2.2, 23.6, 18.4};
-const double SigmaSaSDL::VMDMASS[3]  = {0.77549, 0.78265, 1.0146};
+// Factors related to VMD processes in gamma+gamma and gamma+p
+// Gammafac = f_V^2 / (4 pi) [cf. Schuler-Sjostrand 1996)
+const int SigmaSaSDL::NVMD = 4;
+const double SigmaSaSDL::GAMMAFAC[4] = {2.2, 23.6, 18.4, 11.5};
+const double SigmaSaSDL::VMDMASS[4]  = {0.77549, 0.78265, 1.01946,
+  3.09692};
 
 // Parameters and coefficients for single diffractive scattering.
 const int SigmaSaSDL::ISDTABLE[] = { 0, 0, 1, 1, 1, 2, 3, 4, 5,
@@ -685,7 +805,7 @@ bool SigmaSaSDL::calcTotEl( int idAin, int idBin, double sIn, double mAin,
     double sigElNow  = 0.;
 
     // Loop over VMD states on side A for elastic cross section.
-    for (int iA = 0; iA < 3; ++iA){
+    for (int iA = 0; iA < NVMD; ++iA){
       double bANow  = BHAD[iHadAtmp[iA]];
       double bBNow  = BHAD[iHadBtmp[iA]];
       double bElNow = 2. * bANow + 2. * bBNow + 4. * sEps - 4.2;
@@ -702,8 +822,8 @@ bool SigmaSaSDL::calcTotEl( int idAin, int idBin, double sIn, double mAin,
     double sigElNow  = 0.;
 
     // Loop over VMD states on side A and B for elastic cross section.
-    for (int iA = 0; iA < 3; ++iA)
-    for (int iB = 0; iB < 3; ++iB) {
+    for (int iA = 0; iA < NVMD; ++iA)
+    for (int iB = 0; iB < NVMD; ++iB) {
       double bANow  = BHAD[iHadAtmp[iA]];
       double bBNow  = BHAD[iHadBtmp[iB]];
       double bElNow = 2. * bANow + 2. * bBNow + 4. * sEps - 4.2;
@@ -744,7 +864,7 @@ double SigmaSaSDL::dsigmaEl( double t, bool useCoulomb, bool ) {
     double sEps     = pow( s, EPSILON);
     double sEta     = pow( s, ETA);
     double dsigNow  = 0.;
-    for (int iA = 0; iA < 3; ++iA){
+    for (int iA = 0; iA < NVMD; ++iA){
       // Elastic slope parameter and cross section.
       double bANow  = BHAD[iHadAtmp[iA]];
       double bBNow  = BHAD[iHadBtmp[iA]];
@@ -762,8 +882,8 @@ double SigmaSaSDL::dsigmaEl( double t, bool useCoulomb, bool ) {
     double sEps     = pow( s, EPSILON);
     double sEta     = pow( s, ETA);
     double dsigNow  = 0.;
-    for (int iA = 0; iA < 3; ++iA)
-    for (int iB = 0; iB < 3; ++iB){
+    for (int iA = 0; iA < NVMD; ++iA)
+    for (int iB = 0; iB < NVMD; ++iB){
       // Elastic slope parameter and cross section.
       double bANow  = BHAD[iHadAtmp[iA]];
       double bBNow  = BHAD[iHadBtmp[iB]];
@@ -893,7 +1013,7 @@ bool SigmaSaSDL::calcDiff(  int idAin, int idBin, double sIn, double mAin,
     double sigXBNow  = 0.;
     double sigXXNow  = 0.;
 
-    for (int iA = 0; iA < 3; ++iA){
+    for (int iA = 0; iA < NVMD; ++iA){
 
       // Lookup coefficients for single and double diffraction.
       int iSD = ISDTABLE[iProcVP[iA]];
@@ -967,7 +1087,7 @@ bool SigmaSaSDL::calcDiff(  int idAin, int idBin, double sIn, double mAin,
       swap( mResXB, mResAX);
       swap( iHadA, iHadB);
       swap( sigXBNow, sigAXNow);
-      for (int i = 0; i < 3; ++i){
+      for (int i = 0; i < NVMD; ++i){
         swap( iHadAtmp[i], iHadBtmp[i]);
         swap( mAtmp[i], mBtmp[i]);
       }
@@ -989,8 +1109,8 @@ bool SigmaSaSDL::calcDiff(  int idAin, int idBin, double sIn, double mAin,
     double sigAXNow  = 0.;
     double sigXBNow  = 0.;
     double sigXXNow  = 0.;
-    for (int iA = 0; iA < 3; ++iA)
-    for (int iB = 0; iB < 3; ++iB){
+    for (int iA = 0; iA < NVMD; ++iA)
+    for (int iB = 0; iB < NVMD; ++iB){
 
       // Lookup coefficients for single and double diffraction.
       int iSD = ISDTABLE[iProcVV[iA][iB]];
@@ -1110,7 +1230,7 @@ double SigmaSaSDL::dsigmaSD(double xi, double t, bool isXB, int ) {
   // gamma + p: loop over VMD states on side A.
   } else if (iProc == 13) {
     double sigNow   = 0.;
-    for (int iA = 0; iA < 3; ++iA){
+    for (int iA = 0; iA < NVMD; ++iA){
 
       // Mass thresholds depend on VMD state.
       mMinXB = mAtmp[iA] + mMin0;
@@ -1142,8 +1262,8 @@ double SigmaSaSDL::dsigmaSD(double xi, double t, bool isXB, int ) {
   // gamma + gamma: loop over VMD states on side A and B.
   } else if (iProc == 14) {
     double sigNow   = 0.;
-    for (int iA = 0; iA < 3; ++iA)
-    for (int iB = 0; iB < 3; ++iB){
+    for (int iA = 0; iA < NVMD; ++iA)
+    for (int iB = 0; iB < NVMD; ++iB){
 
       // Mass thresholds depend on VMD state.
       mMinXB = mAtmp[iA] + mMin0;
@@ -1205,7 +1325,7 @@ double SigmaSaSDL::dsigmaDD(double xi1, double xi2, double t, int ) {
   // gamma + p: loop over VMD states on side A.
   } else if (iProc == 13){
     double sigNow   = 0.;
-    for (int iA = 0; iA < 3; ++iA){
+    for (int iA = 0; iA < NVMD; ++iA){
 
       // Mass thresholds depend on VMD state.
       mMinXB = mAtmp[iA] + mMin0;
@@ -1231,8 +1351,8 @@ double SigmaSaSDL::dsigmaDD(double xi1, double xi2, double t, int ) {
   // gamma + gamma: loop over VMD states on side A and B.
   } else if (iProc == 14){
     double sigNow   = 0.;
-    for (int iA = 0; iA < 3; ++iA)
-    for (int iB = 0; iB < 3; ++iB){
+    for (int iA = 0; iA < NVMD; ++iA)
+    for (int iB = 0; iB < NVMD; ++iB){
 
       // Mass thresholds depend on VMD state.
       mMinXB = mAtmp[iA] + mMin0;
@@ -1349,28 +1469,41 @@ bool SigmaSaSDL::findBeamComb( int idAin, int idBin, double mAin,
 
   // Set up VMD global variables for gamma + p.
   if (iProc == 13){
-    for (int i = 0; i < 3; ++i){
+    for (int i = 0; i < NVMD; ++i){
       // VMD always on side a
       mAtmp[i]    = VMDMASS[i];
       mBtmp[i]    = mB;
-      iHadAtmp[i] = (i == 2) ? 2 : 1;
+      iHadAtmp[i] = (i < 2) ? 1 : i;
       iHadBtmp[i] = 0;
       multVP[i]   = ALPHAEM / GAMMAFAC[i];
-      iProcVP[i]  = (i == 2) ? 5 : 4;
+      if (i < 2) iProcVP[i]  = 4;
+      else if (i == 2) iProcVP[i]  = 5;
+      else if (i == 3) iProcVP[i]  = 6;
     }
   }
 
   // Set up VMD global variables for gamma + gamma.
   if (iProc == 14){
-    for (int i = 0; i < 3; ++i){
+    for (int i = 0; i < NVMD; ++i){
       mAtmp[i]      = VMDMASS[i];
       mBtmp[i]      = VMDMASS[i];
-      iHadAtmp[i]   = (i == 2) ? 2 : 1;
-      iHadBtmp[i]   = (i == 2) ? 2 : 1;
-      for (int j = 0; j < 3; ++j){
+      iHadAtmp[i]   = (i < 2) ? 1 : i;
+      iHadBtmp[i]   = (i < 2) ? 1 : i;
+      for (int j = 0; j < NVMD; ++j){
         multVV[i][j]  = pow2(ALPHAEM) / (GAMMAFAC[i] * GAMMAFAC[j]);
-        iProcVV[i][j] = (i == 2 || j == 2) ? 8 : 7;
-        if (i == 2 && j == 2) iProcVV[i][j] = 10;
+        if ( i < 2 ) {
+          if ( j < 2)  iProcVV[i][j] = 7;
+          else if ( j == 2) iProcVV[i][j] = 8;
+          else if ( j == 3) iProcVV[i][j] = 9;
+        } else if (i == 2) {
+          if ( j < 2)  iProcVV[i][j] = 8;
+          else if ( j == 2) iProcVV[i][j] = 10;
+          else if ( j == 3) iProcVV[i][j] = 11;
+        } else if ( i == 3) {
+          if ( j < 2)  iProcVV[i][j] = 9;
+          else if ( j == 2) iProcVV[i][j] = 11;
+          else if ( j == 3) iProcVV[i][j] = 12;
+        }
       }
     }
   }
@@ -1945,9 +2078,9 @@ complex SigmaABMST::amplitude( double t, bool useCoulomb,
     double phase   = (GAMMAEUL  + log( -0.5 * t * (bApp + 8. / LAM2FF)) +
                    - 4. * t / LAM2FF * log(- 4. * t / LAM2FF)
                    - 2. * t / LAM2FF) * (ispp ? 1. : -1.);
-    complex ampCou = exp( complex( 0., ALPHAEM * phase) ) * 8. * M_PI
+    complex ampCou = exp( complex( 0., -ALPHAEM * phase) ) * 8. * M_PI
                    * ALPHAEM * ampt / t;
-    ampSum += (ispp) ? -ampCou : +ampCou;
+    ampSum += (ispp) ? ampCou : -ampCou;
   }
 
   // Done.
@@ -2647,13 +2780,13 @@ complex SigmaRPP::amplitude( double t, bool useCoulomb) {
                  * 4. * M_PI * HBARC2 );
     double phase = (log( -0.5 * t * (bAppr + 8. / LAM2FF)) + GAMMAEUL
                  - 4. * t / LAM2FF * log(- 4. * t / LAM2FF)
-                 - 2. * t / LAM2FF) * (ispp ? 1. : -1.);
+                 - 2. * t / LAM2FF) * (ispp ? -1. : 1.);
     ampCou       = exp( complex( 0., ALPHAEM * phase) ) * 8. * M_PI * HBARC2
                  * ALPHAEM * s / t * pow(1 - t / LAM2FF, -4.);
   }
 
   // Combine and return.
-  return ispp ? ampSum - ampCou : ampSum + ampCou;
+  return ispp ? ampSum + ampCou : ampSum - ampCou;
 
 }
 

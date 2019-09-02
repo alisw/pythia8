@@ -1,5 +1,5 @@
 // HeavyIons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -125,6 +125,8 @@ void HeavyIons::sumUpMessages(Info & in, string tag, const Info & other) {
 
 void HeavyIons::clearProcessLevel(Pythia & pyt) {
   string path = pyt.settings.word("xmlPath");
+  pyt.settings.mode("Tune:ee", 0);
+  pyt.settings.mode("Tune:pp", 0);
   pyt.settings.init(path + "QCDProcesses.xml", true);
   pyt.settings.init(path + "ElectroweakProcesses.xml", true);
   pyt.settings.init(path + "OniaProcesses.xml", true);
@@ -495,6 +497,8 @@ bool Angantyr::init() {
     collPtr = new DoubleStrikman();
   else if ( settings.mode("Angantyr:CollisionModel") == 2 )
     collPtr = new DoubleStrikman(1);
+  else if ( settings.mode("Angantyr:CollisionModel") == 3 )
+    collPtr = new BlackSubCollisionModel();
   else
     collPtr = new NaiveSubCollisionModel();
 
@@ -1036,7 +1040,7 @@ bool Angantyr::fixIsoSpin(EventInfo & ei) {
 
   // Try to find corresponding remnants that change flavour
   for ( int i = ei.event.size()  - 1; i > 2 && ( pshift || tshift ); --i ) {
-    if ( pshift && ( ei.event[i].status() == 63 || ei.event[i].status() == 14 )
+    if ( pshift && ( isRemnant(ei, i) || ei.event[i].status() == 14 )
          &&  getBeam(ei.event, i) == 1 ) {
       int newid = 0;
       if ( ei.event[i].id() == 2*pshift ) newid = 1*pshift;
@@ -1050,7 +1054,7 @@ bool Angantyr::fixIsoSpin(EventInfo & ei) {
         continue;
       }
     }
-    if ( tshift && ( ei.event[i].status() == 63 || ei.event[i].status() == 14 )
+    if ( tshift && ( isRemnant(ei, i) || ei.event[i].status() == 14 )
          &&  getBeam(ei.event, i) == 2 ) {
       int newid = 0;
       if ( ei.event[i].id() ==    2*tshift ) newid =    1*tshift;
@@ -1158,6 +1162,7 @@ findRecoilers(const Event & e, bool tside, int beam, int end,
 bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
                                     bool colConnect) {
   fixIsoSpin(sub);
+  shiftEvent(sub);
   if ( HIHooksPtr && HIHooksPtr->canAddNucleonExcitation() )
     return HIHooksPtr->addNucleonExcitation(ei, sub, colConnect);
 
@@ -1202,7 +1207,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
       rec.push_back(4);
     else
       for ( int i = recbeam, N = recend; i < N; ++i )
-        if ( ei.event[i].status() == 63 && getBeam(ei.event, i) == recbeam )
+        if ( isRemnant(ei, i) && getBeam(ei.event, i) == recbeam )
           rec.push_back(i);
   }
   if ( rec.empty() ) return false;
@@ -1635,7 +1640,7 @@ bool Angantyr::next() {
     addSDsecond(subColls);
 
     // Collect full central diffraction collisions.
-    if ( !addSD(subColls, subevents) ) {
+    if ( !addCD(subColls, subevents) ) {
       mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
                                    " Could not setup CD sub collisions.");
       continue;

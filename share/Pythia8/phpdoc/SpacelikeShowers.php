@@ -28,6 +28,14 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='SpacelikeShowers.php'>
  
 <h2>Spacelike Showers</h2> 
+<ol id="toc">
+  <li><a href="#section0">Main variables</a></li>
+  <li><a href="#section1">Dipole showers</a></li>
+  <li><a href="#section2">Weak showers</a></li>
+  <li><a href="#section3">Further variables</a></li>
+  <li><a href="#section4">Technical notes</a></li>
+</ol>
+
  
 The PYTHIA algorithm for spacelike initial-state showers is 
 based on the article [<a href="Bibliography.php#refSjo05" target="page">Sjo05</a>], where a 
@@ -52,6 +60,7 @@ PYTHIA also incorporates an
 echo "<a href='Variations.php?filepath=".$filepath."' target='page'>";?>automated framework</a> for shower 
 uncertainty variations. 
  
+<a name="section0"></a> 
 <h3>Main variables</h3> 
  
 The maximum <i>pT</i> to be allowed in the shower evolution is 
@@ -322,6 +331,7 @@ scattering systems from MPIs are forced to be ordered in rapidity.
 Each MPI is ordered separately from the others. 
    
  
+<a name="section1"></a> 
 <h3>Dipole showers</h3> 
  
 By default the recoil of an ISR emission is taken by the whole final 
@@ -367,6 +377,7 @@ matrix-element behaviours match well over the whole phase space
 Option to switch on the dipole-recoil scheme as described above. 
    
  
+<a name="section2"></a> 
 <h3>Weak showers</h3> 
  
 The emission of weak gauge bosons is an integrated part of the initial- 
@@ -395,6 +406,7 @@ Determine which branchings are allowed.
 Parton shower cut-off <i>pT</i> for weak branchings. 
    
  
+<a name="section3"></a> 
 <h3>Further variables</h3> 
  
 These should normally not be touched. Their only function is for 
@@ -483,6 +495,7 @@ The fixed factorization scale, in GeV, that would be used in the
 evaluation of parton densities if the <code>flag</code> above is on. 
    
  
+<a name="section4"></a> 
 <h3>Technical notes</h3> 
  
 Almost everything is equivalent to the algorithm in 
@@ -738,4 +751,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

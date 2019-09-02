@@ -1,5 +1,5 @@
 // History.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -67,7 +67,7 @@ const int History::NTRIAL = 1;
 // probabilities for the previous clusterings, and \ mothin is the
 // previous history node (null for the initial node).
 
-History::History( int depth,
+History::History( int depthIn,
          double scalein,
          Event statein,
          Clustering c,
@@ -99,6 +99,7 @@ History::History( int depth,
       prob(probin),
       clusterIn(c),
       iReclusteredOld(0),
+      iReclusteredNew(),
       doInclude(true),
       mergingHooksPtr(mergingHooksPtrIn),
       beamA(beamAIn),
@@ -106,8 +107,11 @@ History::History( int depth,
       particleDataPtr(particleDataPtrIn),
       infoPtr(infoPtrIn),
       showers(showersIn),
-      coupSMPtr(coupSMPtrIn)
-
+      coupSMPtr(coupSMPtrIn),
+      probMaxSave(-1.),
+      depth(depthIn),
+      minDepthSave(-1),
+      nMaxOrd(0)
     {
 
   // Initialise beam particles
@@ -188,30 +192,84 @@ History::History( int depth,
   if ( clusterings.empty() ) {
     // Multiply with hard process matrix element.
     prob *= hardProcessME(state);
-    registerPath( *this, isOrdered, isStronglyOrdered, isAllowed, depth == 0 );
+    if (registerPath( *this, isOrdered, isStronglyOrdered, isAllowed,
+      depth == 0 )) {
+      updateMinDepth(depth);
+      double nord = nOrdered (infoPtr->eCM());
+      if (nord>-1) updateNmaxOrdered(nord);
+    } else {
+      state.free();
+    }
     return;
   }
 
-  // Now we sort the possible clusterings so that we try the
-  // smallest scale first.
-  multimap<double, Clustering *> sorted;
-  for ( int i = 0, N = clusterings.size(); i < N; ++i ) {
-    sorted.insert(make_pair(clusterings[i].pT(), &clusterings[i]));
+  // We'll now order the clusterings in such a way that an ordered
+  // history is found more rapidly. Following the branches with small pT is
+  // a good heuristic, as is following ISR clusterings.
+  double pMax = -1.;
+  map<int,multimap<double, Clustering *> > sort_ordered;
+  for (unsigned int i = 0; i < clusterings.size(); ++i) {
+    double t = clusterings[i].pT();
+    // Retain only clustering with highest probability.
+    if ( mergingHooksPtr->nMinJetWTA() > 0
+      && depth >= mergingHooksPtr->nMinJetWTA()) {
+      double p = getProb(clusterings[i]);
+      clusterings[i].prob = p;
+      clusterings[i].hasProbSet = true;
+      pMax = max(pMax,p);
+    }
+    int nord =  nOrdered(t);
+    if (nord >-1 && t>scale) nord++;
+    if (nord < 0) nord=0;
+    map<int,multimap<double, Clustering *> >::iterator it
+      = sort_ordered.find(nord);
+    if (it == sort_ordered.end()) {
+      sort_ordered[nord] = multimap<double, Clustering *>();
+      sort_ordered[nord].insert(make_pair(t, &clusterings[i]));
+    } else
+      sort_ordered[nord].insert(make_pair(t, &clusterings[i]));
   }
 
-  for ( multimap<double, Clustering *>::iterator it = sorted.begin();
-  it != sorted.end(); ++it ) {
+  for ( map<int,multimap<double, Clustering *> >::reverse_iterator
+    it0  = sort_ordered.rbegin();
+    it0 != sort_ordered.rend();
+    ++it0) {
 
+  // First go through potentially ordered clusterings.
+  for ( multimap<double, Clustering *>::iterator it = it0->second.begin();
+  it != it0->second.end(); ++it ) {
+
+  /*double pMax = -1.;
+  multimap<double, Clustering *> sort;
+  for (unsigned int i = 0; i < clusterings.size(); ++i) {
+    double t = clusterings[i].pT();
+    double index = t;
+    sort.insert(make_pair(index, &clusterings[i]));
+  }
+
+  for ( multimap<double, Clustering *>::iterator it = sort.begin();
+  it != sort.end(); ++it ) {*/
+
+    double t = it->second->pT();
     // If this path is not strongly ordered and we already have found an
     // ordered path, then we don't need to continue along this path.
     bool stronglyOrdered = isStronglyOrdered;
     if ( mergingHooksPtr->enforceStrongOrdering()
       && ( !stronglyOrdered
-         || ( mother && ( it->first <
+         || ( mother && ( t <
                 mergingHooksPtr->scaleSeparationFactor()*scale ) ))) {
       if ( onlyStronglyOrderedPaths()  ) continue;
       stronglyOrdered = false;
     }
+
+    int nord = nOrdered (t);
+    if (nord >-1 && nord + depth < nMaxOrdered()) continue;
+
+    // Retain only clustering with highest probability.
+    if ( mergingHooksPtr->nMinJetWTA() > 0
+      && depth >= mergingHooksPtr->nMinJetWTA()
+      && it->second->hasProbSet
+      && it->second->prob < pMax) continue;
 
     // Check if reclustering follows ordered sequence.
     bool ordered = isOrdered;
@@ -227,18 +285,18 @@ History::History( int depth,
                        clusterIn.flavRadBef);
       // If this path is not ordered in pT and y, and we already have found
       // an ordered path, then we don't need to continue along this path.
-      if ( !ordered || ( mother && (it->first < scale
-         || it->first < pow(1. - z,2) / (z * (1. - zOld ))*scale ))) {
+      if ( !ordered || ( mother && (t < scale
+         || t < pow(1. - z,2) / (z * (1. - zOld ))*scale ))) {
         if ( onlyOrderedPaths()  ) continue;
         ordered = false;
       }
-
     } else if ( mergingHooksPtr->orderHistories() ) {
       // If this path is not ordered in pT and we already have found an
       // ordered path, then we don't need to continue along this path, unless
       // we have not yet found an allowed path.
-      if ( !ordered || ( mother && (it->first < scale) ) ) {
-        if ( onlyOrderedPaths() && onlyAllowedPaths() ) continue;
+      if ( !ordered || ( mother && (t < scale) ) ) {
+        if ( depth >= minDepth() && onlyOrderedPaths() && onlyAllowedPaths() )
+          continue;
         ordered = false;
       }
     }
@@ -253,13 +311,24 @@ History::History( int depth,
       allowed = false;
     }
 
+    // Skip if this branch is already strongly suppressed.
+    double p = it->second->hasProbSet
+             ? it->second->prob :  getProb(*it->second);
+    if (abs(p)*prob < 1e-10*probMax()) continue;
+    //if (abs(p)*prob < 0.0*probMax()) continue;
+
     // Perform the clustering and recurse and construct the next
     // history node.
-    children.push_back(new History(depth - 1,it->first,cluster(*it->second),
+    children.push_back(new History(depth - 1, t, cluster(*it->second),
            *it->second, mergingHooksPtr, beamA, beamB, particleDataPtr,
            infoPtr, showers, coupSMPtr, ordered, stronglyOrdered, allowed,
-           true, prob*getProb(*it->second), this ));
+           true, prob*p, this ));
   }
+
+  }
+
+  clearPaths();
+
 }
 
 //--------------------------------------------------------------------------
@@ -390,7 +459,7 @@ double History::weightLOOP(PartonLevel* trial, double RN ) {
     infoPtr->errorMsg(message);
   }
 
-  // Select a path of clusterings
+  /*// Select a path of clusterings
   History *  selected = select(RN);
   // Set scales in the states to the scales pythia would have set
   selected->setScalesInHistory();
@@ -406,7 +475,39 @@ double History::weightLOOP(PartonLevel* trial, double RN ) {
                    maxScale );
   wt = mpiwt;
   // Done
-  return wt;
+  return wt;*/
+
+  // Select a path of clusterings
+  History *  selected = select(RN);
+  // Set scales in the states to the scales pythia would have set
+  selected->setScalesInHistory();
+  // So far, no reweighting
+  //double wt = 1.;
+
+  // Read alpha_S in ME calculation and maximal scale (eCM)
+  double maxScale = (foundCompletePath)
+                  ? infoPtr->eCM()
+                  : mergingHooksPtr->muFinME();
+
+  // Only allow two clusterings if all intermediate states above the
+  // merging scale.
+  int nSteps = mergingHooksPtr->getNumberOfClusteringSteps(state);
+  if ( nSteps == 2 && mergingHooksPtr->nRecluster() == 2
+    && ( !foundCompletePath
+      || !selected->allIntermediateAboveRhoMS( mergingHooksPtr->tms() )) )
+    return 0.;
+
+  // MPI no-emission probability.
+  int njetsMaxMPI = mergingHooksPtr->nMinMPI()+1;
+  double mpiwt = selected->weightTreeEmissions( trial, -1, 0, njetsMaxMPI,
+                   maxScale );
+
+  // Do PDF ratios
+  double pdfWeight = 1.;
+
+  // Set weight
+  return ( mergingHooksPtr->nRecluster() == 2 ) ? 1. : pdfWeight*mpiwt;
+
 }
 
 //--------------------------------------------------------------------------
@@ -543,7 +644,7 @@ double History::weight_UMEPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
 
 double History::weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
   AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-  int depth) {
+  int depthIn) {
 
   // Read alpha_S in ME calculation and maximal scale (eCM)
   double asME     = infoPtr->alphaS();
@@ -562,17 +663,17 @@ double History::weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
 
   // Do trial shower, calculation of alpha_S ratios, PDF ratios
   double wt = 1.;
-  if (depth < 0) wt = selected->weightTree(trial, asME, aemME, maxScale,
+  if (depthIn < 0) wt = selected->weightTree(trial, asME, aemME, maxScale,
     selected->clusterIn.pT(), asFSR, asISR, aemFSR, aemISR, asWeight,
     aemWeight, pdfWeight);
   else {
-    wt   = selected->weightTreeEmissions( trial, 1, 0, depth, maxScale );
+    wt   = selected->weightTreeEmissions( trial, 1, 0, depthIn, maxScale );
     if (wt != 0.) asWeight  = selected->weightTreeALPHAS( asME, asFSR, asISR,
-                             depth);
+                             depthIn);
     if (wt != 0.) aemWeight = selected->weightTreeALPHAEM( aemME, aemFSR,
-                             aemISR, depth);
+                             aemISR, depthIn);
     if (wt != 0.) pdfWeight = selected->weightTreePDFs( maxScale,
-                             selected->clusterIn.pT(), depth);
+                             selected->clusterIn.pT(), depthIn);
   }
 
   // MPI no-emission probability.
@@ -614,17 +715,18 @@ double History::weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
 
 double History::weight_UNLOPS_LOOP(PartonLevel* trial, AlphaStrong * asFSR,
   AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-  int depth) {
+  int depthIn) {
   // No difference to default NL3
-  if (depth < 0) return weightLOOP(trial, RN);
-  else return weight_UNLOPS_TREE(trial, asFSR,asISR, aemFSR,aemISR, RN,depth);
+  if (depthIn < 0) return weightLOOP(trial, RN);
+  else return weight_UNLOPS_TREE(trial, asFSR, asISR, aemFSR, aemISR, RN,
+    depthIn);
 }
 
 //--------------------------------------------------------------------------
 
 double History::weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
   AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-  int depth) {
+  int depthIn) {
 
   // Select a path of clusterings
   History *  selected = select(RN);
@@ -654,18 +756,18 @@ double History::weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
   double pdfWeight = 1.;
   // Do trial shower, calculation of alpha_S ratios, PDF ratios
   double sudakov = 1.;
-  if (depth < 0)
+  if (depthIn < 0)
     sudakov = selected->weightTree(trial, asME, aemME, maxScale,
       selected->clusterIn.pT(), asFSR, asISR, aemFSR, aemISR, asWeight,
       aemWeight, pdfWeight);
   else {
-    sudakov   = selected->weightTreeEmissions( trial, 1, 0, depth, maxScale );
+    sudakov = selected->weightTreeEmissions( trial, 1, 0, depthIn, maxScale );
     if (sudakov > 0.) asWeight  = selected->weightTreeALPHAS( asME, asFSR,
-                                  asISR, depth);
+                                  asISR, depthIn);
     if (sudakov > 0.) aemWeight  = selected->weightTreeALPHAEM( aemME, aemFSR,
-                                  aemISR, depth);
+                                  aemISR, depthIn);
     if (sudakov > 0.) pdfWeight = selected->weightTreePDFs( maxScale,
-                                  selected->clusterIn.pT(), depth);
+                                  selected->clusterIn.pT(), depthIn);
   }
 
   // MPI no-emission probability.
@@ -686,9 +788,9 @@ double History::weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
 
 double History::weight_UNLOPS_SUBTNLO(PartonLevel* trial, AlphaStrong * asFSR,
   AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
-  int depth) {
+  int depthIn) {
 
-  if (depth < 0) {
+  if (depthIn < 0) {
 
     // Select a path of clusterings
     History *  selected = select(RN);
@@ -707,7 +809,7 @@ double History::weight_UNLOPS_SUBTNLO(PartonLevel* trial, AlphaStrong * asFSR,
     return wt;
 
   } else return weight_UNLOPS_SUBT(trial, asFSR, asISR, aemFSR, aemISR, RN,
-                                   depth);
+                                   depthIn);
 
 }
 
@@ -874,7 +976,7 @@ void History::getStartingConditions( const double RN, Event& outState ) {
     mergingHooksPtr->muMI(outState.scale());
 
   // Setup the weak shower if W clustering is enabled.
-  if (mergingHooksPtr->doWeakClustering()) setupWeakShower(0);
+  if (mergingHooksPtr->doWeakClustering()) setupSimpleWeakShower(0);
 
 }
 
@@ -947,7 +1049,7 @@ bool History::getFirstClusteredEventAboveTMS( const double RN, int nDesired,
   select(RN)->setScalesInHistory();
 
   // Recluster until reclustered event is above the merging scale.
-  Event dummy = Event();
+  Event dummy(15);
   do {
     // Initialise temporary output of reclustering.
     dummy.clear();
@@ -1276,14 +1378,14 @@ double History::getSingleWeakProb(vector<int> &mode, vector<Vec4> &mom,
 
       // Calculate the ME depending on the top of process.
       if (mode[clusterIn.emittor] == 2)
-        localProb = weakShowerMEs.getMEqg2qgZ( pIn1, pIn2, p2, p3, p1)
-          / weakShowerMEs.getMEqg2qg( sHat, tHat, uHat);
+        localProb = simpleWeakShowerMEs.getMEqg2qgZ( pIn1, pIn2, p2, p3, p1)
+          / simpleWeakShowerMEs.getMEqg2qg( sHat, tHat, uHat);
       else if (mode[clusterIn.emittor] == 3)
-        localProb = weakShowerMEs.getMEqq2qqZ( pIn1, pIn2, p3, p2, p1)
-          / weakShowerMEs.getMEqq2qq( sHat, tHat, uHat, false);
+        localProb = simpleWeakShowerMEs.getMEqq2qqZ( pIn1, pIn2, p3, p2, p1)
+          / simpleWeakShowerMEs.getMEqq2qq( sHat, tHat, uHat, false);
       else if (mode[clusterIn.emittor] == 4)
-        localProb = weakShowerMEs.getMEqq2qqZ( pIn1, pIn2, p3, p2, p1)
-          / weakShowerMEs.getMEqq2qq( sHat, tHat, uHat, true);
+        localProb = simpleWeakShowerMEs.getMEqq2qqZ( pIn1, pIn2, p3, p2, p1)
+          / simpleWeakShowerMEs.getMEqq2qq( sHat, tHat, uHat, true);
       else {
         string message="Warning in History::getSingleWeakProb: Wrong";
         message+=" mode setup. Setting probability for path to zero.";
@@ -1370,14 +1472,14 @@ double History::getSingleWeakProb(vector<int> &mode, vector<Vec4> &mom,
       double jac = z / (4.*M_PI);
 
       if (mode[clusterIn.emittor] == 2)
-        localProb = weakShowerMEs.getMEqg2qgZ(pIn1, pIn2, p2, p3, p1)
-          / weakShowerMEs.getMEqg2qg(sHat, tHat, uHat);
+        localProb = simpleWeakShowerMEs.getMEqg2qgZ(pIn1, pIn2, p2, p3, p1)
+          / simpleWeakShowerMEs.getMEqg2qg(sHat, tHat, uHat);
       else if (mode[clusterIn.emittor] == 4)
-        localProb = weakShowerMEs.getMEqq2qqZ(pIn1, pIn2, p3, p2, p1)
-          / weakShowerMEs.getMEqq2qq(sHat, tHat, uHat, true);
+        localProb = simpleWeakShowerMEs.getMEqq2qqZ(pIn1, pIn2, p3, p2, p1)
+          / simpleWeakShowerMEs.getMEqq2qq(sHat, tHat, uHat, true);
       else if (mode[clusterIn.emittor] == 3)
-        localProb = weakShowerMEs.getMEqq2qqZ(pIn1, pIn2, p3, p2, p1)
-          / weakShowerMEs.getMEqq2qq(sHat, tHat, uHat, false);
+        localProb = simpleWeakShowerMEs.getMEqq2qqZ(pIn1, pIn2, p3, p2, p1)
+          / simpleWeakShowerMEs.getMEqq2qq(sHat, tHat, uHat, false);
       else {
         string message="Warning in History::getSingleWeakProb: Wrong";
         message+=" mode setup. Setting probability for path to zero.";
@@ -1993,6 +2095,27 @@ int History::nClusterings() {
   return w;
 }
 
+int History::nOrdered( double maxscale ) {
+  //return -1;
+  vector<double> s = scales();
+  if (s.empty()) return 0;
+  s.push_back(maxscale);
+  int no(0), nomax(0);
+  for (size_t i=0; i < s.size()-1; ++i) {
+    if (s[i]<s[i+1]) no++;
+    if (s[i]>s[i+1]) no=0;
+    nomax = max(no,nomax);
+  }
+  return nomax;
+}
+
+vector<double> History::scales() {
+  if ( !mother ) return vector<double>();
+  vector<double> ret = mother->scales();
+  ret.push_back(clusterIn.pT());
+  return ret;
+}
+
 //--------------------------------------------------------------------------
 
 // Functions to return the event after nSteps splittings of the 2->2 process
@@ -2078,6 +2201,10 @@ bool History::trimHistories() {
     // Check if history is allowed.
     if ( it->second->keep() && !it->second->keepHistory() )
       it->second->remove();
+    int nord = it->second->nOrdered(infoPtr->eCM());
+    if ( it->second->keep() && nord >-1
+      && nord != nMaxOrdered())
+      it->second->remove();
   }
   // Project onto desired / undesired branches.
   double sumold, sumnew, sumprob, mismatch;
@@ -2142,6 +2269,10 @@ bool History::keepHistory() {
 
   // More stringent criterion.
   //keepPath = allIntermediateAboveRhoMS( mergingHooksPtr->tms() );
+
+  // Do not keep extremely unlikely paths.
+  if (probMax() > 0. && abs(prob) < 1e-10*probMax()) keepPath=false;
+
 
   //Done
   return keepPath;
@@ -3008,7 +3139,7 @@ double History::doTrialShower( PartonLevel* trial, int type,
     // Reset trialShower object
     trial->resetTrial();
     // Construct event to be showered
-    Event event = Event();
+    Event event(15);
     event.init("(hard process-modified)", particleDataPtr);
     event.clear();
 
@@ -3039,7 +3170,7 @@ double History::doTrialShower( PartonLevel* trial, int type,
     infoPtr->hasHistory(true);
 
     // Setup weak shower settings.
-    if (mergingHooksPtr->doWeakClustering()) setupWeakShower(0);
+    if (mergingHooksPtr->doWeakClustering()) setupSimpleWeakShower(0);
 
     // Perform trial shower emission
     trial->next(process,event);
@@ -3186,7 +3317,7 @@ History::countEmissions(PartonLevel* trial, double maxscale,
     // Reset trialShower object
     trial->resetTrial();
     // Construct event to be showered
-    Event event = Event();
+    Event event(15);
     event.init("(hard process-modified)", particleDataPtr);
     event.clear();
 
@@ -3213,7 +3344,7 @@ History::countEmissions(PartonLevel* trial, double maxscale,
     }
 
     // Setup the weak shower information.
-    if (mergingHooksPtr->doWeakClustering()) setupWeakShower(0);
+    if (mergingHooksPtr->doWeakClustering()) setupSimpleWeakShower(0);
 
     // Perform trial shower emission
     trial->next(process,event);
@@ -3425,6 +3556,7 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundAllowedPath || !foundCompletePath ) {
       // If this is the first complete, allowed path, discard the
       // old, disallowed or incomplete ones.
+      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3437,6 +3569,7 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundStronglyOrderedPath || !foundCompletePath ) {
       // If this is the first complete, ordered path, discard the
       // old, non-ordered or incomplete ones.
+      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3449,6 +3582,7 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundOrderedPath || !foundCompletePath ) {
       // If this is the first complete, ordered path, discard the
       // old, non-ordered or incomplete ones.
+      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3461,6 +3595,7 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundCompletePath ) {
       // If this is the first complete path, discard the old,
       // incomplete ones.
+      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3477,11 +3612,25 @@ bool History::registerPath(History & l, bool isOrdered,
   if (mergingHooksPtr->doWeakClustering())
     weakProb = l.getWeakProb();
 
+  int nord = l.nOrdered (infoPtr->eCM());
+  if (nord>-1 && nord < l.nMaxOrdered()) return false;
+  if (nord>-1 && nord > l.nMaxOrdered() && l.nMaxOrdered() > 0) {
+    for ( map<double, History*>::iterator it = paths.begin();
+      it != paths.end(); ++it ) it->second->state.free();
+    map<double,History *>().swap(paths);
+    paths.clear();
+    sumpath = 0.0;
+  }
+  l.updateMinDepth(l.depth);
+  l.updateNmaxOrdered(nord);
+
   // Index path by probability
   sumpath += l.prob * weakProb;
   paths[sumpath] = &l;
 
- return true;
+  updateProbMax(l.prob * weakProb, isComplete);
+
+  return true;
 }
 
 //--------------------------------------------------------------------------
@@ -3537,7 +3686,7 @@ vector<Clustering> History::getAllQCDClusterings() {
   //  search again)
   else if ( ret.empty()
         && mergingHooksPtr->allowColourShuffling() ) {
-    Event NewState = Event(state);
+    Event NewState(state);
     // Start with changing final state quark colour
     for(int i = 0; i < int(posFinalQuark.size()); ++i) {
       // Never change the hard process candidates
@@ -3700,6 +3849,8 @@ void History::attachClusterings (vector<Clustering>& clus, int iEmt, int iRad,
 
   if ( !mergingHooksPtr->doWeakClustering() ) {
 
+    // Do nothing for kinematically forbidden state.
+    if (pT <= 0.) return;
     clus.push_back( Clustering(iEmt, iRad, iRec, iPartner,
       pT, 0, 0, 0, 0, 9));
 
@@ -5058,7 +5209,6 @@ double History::getProb(const Clustering & SystemIn) {
 
   if (isISR) {
     // Find incoming particles
-
     int inP = 0;
     int inM = 0;
     for(int i=0;i< int(state.size()); ++i) {
@@ -5240,6 +5390,7 @@ double History::getProb(const Clustering & SystemIn) {
 
     // Calculate branching probability for g -> q qbar
     } else if ( state[Emt].id() != 21 && state[Rad].id() == 21 ) {
+
       // Calculate splitting kernel
       double num = TR * ( pow(z1,2) + pow(1.-z1,2) );
       if (isMassive) num += TR * 2.*z1*(1.-z1)*(m2Emt0/pT1sq);
@@ -5289,16 +5440,18 @@ double History::getProb(const Clustering & SystemIn) {
       double m2QQsister =  2.*4.*m2Sister;
       double pT2QQcorr = Q1sq - z1*(m2Dip + Q1sq)*(Q1sq + m2QQsister)
                        / m2Dip;
-
       if (pT2QQcorr < 0.0) showerProb = 0.0;
     }
 
     // Check cuts on momentum fraction.
-    double pT2minNow = mergingHooksPtr->pTcut();
+    double pT2minNow
+      = pow2(mergingHooksPtr->settingsPtr->parm("SpaceShower:pTmin"));
+    //double pT2minNow = mergingHooksPtr->pTcut();
     double zMaxAbs   = 1. - 0.5 * (pT2minNow / m2Dip) *
                        ( sqrt( 1. + 4. * m2Dip / pT2minNow ) - 1. );
     zMaxAbs          = min(1.,zMaxAbs);
-    double zMinAbs   = max(0.,1. - zMaxAbs);
+    //double zMinAbs   = max(0.,1. - zMaxAbs);
+    double zMinAbs = 2. * state[Rad].e() / state[0].e() * z1;
 
     // Massive z limit.
     int radBefID = getRadBeforeFlav(Rad, Emt, state);
@@ -5481,8 +5634,6 @@ double History::getProb(const Clustering & SystemIn) {
     message+=" interpreted as FSR or ISR.";
     infoPtr->errorMsg(message);
   }
-
-  if (showerProb <= 0.) showerProb = 0.;
 
   if (mergingHooksPtr->doWeakClustering()) {
 
@@ -5733,33 +5884,33 @@ double History::hardProcessME( const Event& event ) {
       // incoming gluon pair.
       if (abs(idIn1) == 21 && abs(idIn2) == 21) {
         if (abs(idOut1) == 21 && abs(idOut2) == 21)
-          return cor * weakShowerMEs.getMEgg2gg(sH, tH, uH);
-        else return cor * weakShowerMEs.getMEgg2qqbar(sH, tH, uH);
+          return cor * simpleWeakShowerMEs.getMEgg2gg(sH, tH, uH);
+        else return cor * simpleWeakShowerMEs.getMEgg2qqbar(sH, tH, uH);
 
       // Incoming single gluon
       } else if (abs(idIn1) == 21 || abs(idIn2) == 21) {
         if (idIn1 != idOut1) swap(uH, tH);
-        return cor * weakShowerMEs.getMEqg2qg(sH, tH, uH);
+        return cor * simpleWeakShowerMEs.getMEqg2qg(sH, tH, uH);
       }
 
       // Incoming quarks
       else {
         if (abs(idOut1) == 21 && abs(idOut2) == 21)
-          return cor * weakShowerMEs.getMEqqbar2gg(sH, tH, uH);
+          return cor * simpleWeakShowerMEs.getMEqqbar2gg(sH, tH, uH);
         if (idIn1 == -idIn2) {
           if (abs(idIn1) == abs(idOut1)) {
             if (idIn1 != idOut1) swap(uH, tH);
-            return cor * weakShowerMEs.getMEqqbar2qqbar(sH, tH, uH, true);
+            return cor * simpleWeakShowerMEs.getMEqqbar2qqbar(sH,tH,uH,true);
           }
           else {
-            return cor * weakShowerMEs.getMEqqbar2qqbar(sH, tH, uH, false);
+            return cor * simpleWeakShowerMEs.getMEqqbar2qqbar(sH,tH,uH,false);
           }
         }
         else if (idIn1 == idIn2)
-          return cor * weakShowerMEs.getMEqq2qq(sH, tH, uH, true);
+          return cor * simpleWeakShowerMEs.getMEqq2qq(sH, tH, uH, true);
         else {
           if (idIn1 == idOut1) swap(uH,tH);
-          return cor * weakShowerMEs.getMEqq2qq(sH, tH, uH, false);
+          return cor * simpleWeakShowerMEs.getMEqq2qq(sH, tH, uH, false);
         }
       }
     }
@@ -5823,7 +5974,7 @@ Event History::cluster( Clustering & inSystem ) {
   int recType = state[Rec].isFinal() ? 1 : -1;
 
   // Construct the clustered event
-  Event NewEvent = Event();
+  Event NewEvent(15);
   NewEvent.init("(hard process-modified)", particleDataPtr);
   NewEvent.clear();
 
@@ -6157,7 +6308,7 @@ Event History::cluster( Clustering & inSystem ) {
   }
 
   // Build the clustered event
-  Event outState = Event();
+  Event outState(15);
   outState.init("(hard process-modified)", particleDataPtr);
   outState.clear();
 
@@ -7586,13 +7737,13 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
   vector<int> outgoingParticles;
   int nOut1 = int(mergingHooksPtr->hardProcess->PosOutgoing1.size());
   for ( int i=0; i < nOut1;  ++i ) {
-    int iPos = mergingHooksPtr->hardProcess->PosOutgoing1[i];
+    int iPos = mergingHooksPtr->hardProcess->PosOutgoing1[i].second;
     outgoingParticles.push_back(
                       mergingHooksPtr->hardProcess->state[iPos].id() );
   }
   int nOut2 = int(mergingHooksPtr->hardProcess->PosOutgoing2.size());
   for ( int i=0; i < nOut2; ++i ) {
-    int iPos = mergingHooksPtr->hardProcess->PosOutgoing2[i];
+    int iPos = mergingHooksPtr->hardProcess->PosOutgoing2[i].second;
     outgoingParticles.push_back(
                       mergingHooksPtr->hardProcess->state[iPos].id() );
   }
@@ -8930,11 +9081,11 @@ void History::setSelectedChild() {
 
 //--------------------------------------------------------------------------
 
-void History::setupWeakShower(int nSteps) {
+void History::setupSimpleWeakShower(int nSteps) {
 
   // Go back to original 2 to 2 process.
   if (selectedChild != -1) {
-    children[selectedChild]->setupWeakShower(nSteps+1);
+    children[selectedChild]->setupSimpleWeakShower(nSteps+1);
     return;
   }
 
@@ -8959,13 +9110,13 @@ void History::setupWeakShower(int nSteps) {
   }
 
   // Update the dipoles untill the desired number of emissions is reached.
-  transferWeakShower(mode, mom, fermionLines, dipoles, nSteps);
+  transferSimpleWeakShower(mode, mom, fermionLines, dipoles, nSteps);
 }
 
 //--------------------------------------------------------------------------
 
 // Update weak dipoles after an emission.
-void History::transferWeakShower(vector<int> &mode, vector<Vec4> &mom,
+void History::transferSimpleWeakShower(vector<int> &mode, vector<Vec4> &mom,
   vector<int> fermionLines, vector<pair<int,int> > &dipoles,
   int nSteps) {
 
@@ -8990,7 +9141,7 @@ void History::transferWeakShower(vector<int> &mode, vector<Vec4> &mom,
     stateTransfer);
 
   // Recursive call to transfer to desired final step.
-  mother->transferWeakShower(modeNew, mom, fermionLinesNew, dipolesNew,
+  mother->transferSimpleWeakShower(modeNew, mom, fermionLinesNew, dipolesNew,
     nSteps - 1);
 }
 

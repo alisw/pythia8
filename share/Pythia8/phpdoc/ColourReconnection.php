@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ColourReconnection.php'>
  
 <h2>Colour Reconnection</h2> 
+<ol id="toc">
+  <li><a href="#section0">The MPI-based scheme</a></li>
+  <li><a href="#section1">The newer scheme</a></li>
+  <li><a href="#section2">The gluon-move scheme</a></li>
+  <li><a href="#section3">The <ei>e^+ e^-</ei> colour reconnection schemes</a></li>
+</ol>
+
  
 The colour flows in the separate subprocesses defined in the 
 multiparton-interactions scenario are tied together via the assignment 
@@ -83,7 +90,9 @@ included among the standard options here.
 <p/> 
 Finally, the SK I and SK II models [<a href="Bibliography.php#refSjo94" target="page">Sjo94</a>] have a smaller range 
 of applicability, originally intended for <i>e^+ e^- &rarr; W^+ W^-</i>, 
-but in this context offers a more detailed approach. 
+but in this context offers a more detailed approach. They are not suitable 
+for hadronic collisions, since they would only address CR inside a gauge 
+boson pair, and not CR in the rest of the event. 
  
 <br/><br/><strong>ColourReconnection:reconnect</strong>  <input type="radio" name="1" value="on" checked="checked"><strong>On</strong>
 <input type="radio" name="1" value="off"><strong>Off</strong>
@@ -93,14 +102,13 @@ Allow or not a system to be merged with another one.
  
 <br/><br/><table><tr><td><strong>ColourReconnection:mode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)</td></tr></table>
 Determine which model is used for colour reconnection. Beware that 
-different <code>BeamRemnants:remnantMode</code> should be used for 
-different reconnection schemes. 
+some settings may need to be changed to match the model selected. 
 <br/>
 <input type="radio" name="2" value="0" checked="checked"><strong>0 </strong>:  The MPI-based original Pythia 8 scheme.  <br/>
-<input type="radio" name="2" value="1"><strong>1 </strong>:  The new more QCD based scheme.  <br/>
+<input type="radio" name="2" value="1"><strong>1 </strong>:  The new more QCD based scheme. Should be combined ewith  <code>BeamRemnants:remnantMode = 1.</code>  <br/>
 <input type="radio" name="2" value="2"><strong>2 </strong>:  The new gluon-move model.  <br/>
-<input type="radio" name="2" value="3"><strong>3 </strong>:  The SK I <ei>e^+ e^-</ei> CR model.  <br/>
-<input type="radio" name="2" value="4"><strong>4 </strong>:  The SK II <ei>e^+ e^-</ei> CR model.  <br/>
+<input type="radio" name="2" value="3"><strong>3 </strong>:  The SK I <ei>e^+ e^-</ei> CR model. Requires  <code>ColourReconnection:forceResonance = on</code> (and default  <code>PartonLevel:earlyResDec = off</code>) to give any CR.  <br/>
+<input type="radio" name="2" value="4"><strong>4 </strong>:  The SK II <ei>e^+ e^-</ei> CR model. Requires  <code>ColourReconnection:forceResonance = on</code> (and default  <code>PartonLevel:earlyResDec = off</code>) to give any CR.  <br/>
  
 <br/><br/><strong>ColourReconnection:forceHadronLevelCR</strong>  <input type="radio" name="3" value="on"><strong>On</strong>
 <input type="radio" name="3" value="off" checked="checked"><strong>Off</strong>
@@ -125,6 +133,7 @@ bosons is still a possibility, however. This option is not available for
 colored resonances, and not for the MPI-based model. 
    
  
+<a name="section0"></a> 
 <h3>The MPI-based scheme</h3> 
  
 In this scheme partons are classified by which MPI system they belong to. 
@@ -209,6 +218,7 @@ the <i>W</i>, <i>Z</i> and <i>t</i> have intermediate decay time
 scales, somewhat but not much shorter than typical hadronization times, 
 whereas the <i>H</i> is much  long-lived. 
  
+<a name="section1"></a> 
 <h3>The newer scheme</h3> 
  
 The newer CR scheme builds on the minimization of the string length as well as 
@@ -350,6 +360,7 @@ This is a tuneable parameter for the time dilation. The definition
 can be seen above under <code>timeDilationMode</code>. 
    
  
+<a name="section2"></a> 
 <h3>The gluon-move scheme</h3> 
  
 This approach contains two steps, a first "move" one and an optional 
@@ -438,6 +449,7 @@ Performing the flip step or not. Also possibility to omit the move step.
 <input type="radio" name="18" value="3"><strong>3 </strong>:  No move handling. Allow flips, but not for strings  in junction topologies.  <br/>
 <input type="radio" name="18" value="4"><strong>4 </strong>:  No move handling. Allow flips, including for strings  in junction topologies.  <br/>
  
+<a name="section3"></a> 
 <h3>The <i>e^+ e^-</i> colour reconnection schemes</h3> 
  
 The SK I and SK II models [<a href="Bibliography.php#refSjo94" target="page">Sjo94</a>] were specifically developed for 
@@ -668,4 +680,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

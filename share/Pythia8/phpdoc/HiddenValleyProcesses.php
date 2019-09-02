@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='HiddenValleyProcesses.php'>
  
 <h2>Hidden Valley Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0">Particle content and properties</a></li>
+  <li><a href="#section1">Production processes</a></li>
+  <li><a href="#section2">Timelike showers</a></li>
+  <li><a href="#section3">Hadronization</a></li>
+</ol>
+
  
 This Hidden Valley (HV) scenario has been developed specifically 
 to allow the study of visible consequences of radiation in a 
@@ -49,6 +56,7 @@ scenarios <code>StringPT:thermalModel = on</code> or
 Hidden Valley processes, since they have not been constructed to 
 work together. 
  
+<a name="section0"></a> 
 <h3>Particle content and properties</h3> 
  
 For simplicity we assume that the HV contains an unbroken <b>SU(N)</b> 
@@ -222,6 +230,7 @@ The simplest is to assume that <i>m_qv</i> defines a constituent
 mass, so that  <i>m_HVmeson = 2 m_qv</i>. The <i>hvMesonDiag</i> 
 decay modes also need to be set. 
  
+<a name="section1"></a> 
 <h3>Production processes</h3> 
  
 <br/><br/><strong>HiddenValley:all</strong>  <input type="radio" name="7" value="on"><strong>On</strong>
@@ -426,6 +435,7 @@ pair. Not part of the framework of the above processes, but as an
 alternative. Code 4941. 
    
  
+<a name="section2"></a> 
 <h3>Timelike showers</h3> 
  
 One key point of this HV scenario is that radiation off the 
@@ -496,6 +506,7 @@ or equal to 1.1 times <i>Lambda</i>, or it will be reset
 automatically. 
    
  
+<a name="section3"></a> 
 <h3>Hadronization</h3> 
  
 By default the HV particles with no Standard Model couplings 
@@ -878,4 +889,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

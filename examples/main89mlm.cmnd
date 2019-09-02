@@ -6,9 +6,9 @@ Main:numberOfEvents         = 10000 ! number of events generated
 Beams:frameType             = 4
 
 ! Use same PDFs and alpha_s as in ME calculation.
-!PDF:pSet                  = LHAPDF5:CT10.LHgrid
-!SpaceShower:alphaSvalue   = 0.118
-!TimeShower:alphaSvalue    = 0.118
+! PDF:pSet                  = LHAPDF6:CT10nlo
+! SpaceShower:alphaSvalue   = 0.118
+! TimeShower:alphaSvalue    = 0.118
 
 ! Specify jet matching parameters for MLM
 ! Note: Some of these settings might be read directly from the input LHE file.

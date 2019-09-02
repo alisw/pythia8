@@ -28,8 +28,18 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='Frontpage.php'>
  
 <h1>PYTHIA 8</h1> 
+<ol id="toc">
+  <li><a href="#section0">Welcome to PYTHIA - The Lund Monte Carlo!</a></li>
+  <li><a href="#section1">Documentation</a></li>
+  <li><a href="#section2">Authors</a></li>
+  <li><a href="#section3">Former authors</a></li>
+  <li><a href="#section4">Further contributions</a></li>
+  <li><a href="#section5">Licence</a></li>
+</ol>
+
  
-<h2>Welcome to PYTHIA - The Lund Monte Carlo!</h2> 
+<a name="section0"></a> 
+<h3>Welcome to PYTHIA - The Lund Monte Carlo!</h3> 
  
 <p/> 
 PYTHIA 8 is the successor to PYTHIA 6, rewritten from scratch in C++. 
@@ -40,7 +50,8 @@ period. PYTHIA 8.2 has a significantly extended physics scope, notably
 for LHC physics, relative to what PYTHIA 6.4 could offer. There are only 
 a few areas left where 6.4 still has a role to fill. 
  
-<h2>Documentation</h2> 
+<a name="section1"></a> 
+<h3>Documentation</h3> 
  
 On these webpages you will find the up-to-date manual for PYTHIA 8.2. 
 Use the left-hand index to navigate this documentation of program 
@@ -78,32 +89,27 @@ using the generator. It has been developed for and used at a few
 summer schools, with minor variations, but is also suited for 
 self-study. 
  
-<h2>Authors</h2> 
+<a name="section2"></a> 
+<h3>Authors</h3> 
  
 <p/> 
 <b>Christian Bierlich</b><br/> 
 Department of Astronomy and Theoretical Physics, Lund University, 
 S&ouml;lvegatan 14A, SE-223 62 Lund, Sweden<br/> 
+and Niels Bohr Institute, University of Copenhagen, Copenhagen, Denmark<br/> 
 e-mail: christian.bierlich@thep.lu.se 
  
 <p/> 
 <b>Nishita Desai</b><br/> 
-Laboratoire Charles Coulomb (L2C) & Laboratoire Univers et Particules 
-de Montpellier (LUPM), CNRS-Universit&eacute; de Montpellier, 
-34090 Montpellier, France<br/> 
-e-mail: nishita.desai@umontpellier.fr 
- 
-<p/> 
-<b>Nadine Fischer</b><br/> 
-School of Physics, Monash University, PO Box 27, 3800 Melbourne, 
-Australia<br/> 
-e-mail: nadine.fischer@monash.edu 
+Department of Theoretical Physics, Tata Institute of Fundamental Research, 
+Homi Bhabha Road, Mumbai 400005, India<br/> 
+e-mail: desai@theory.tifr.res.in 
  
 <p/> 
 <b>Ilkka Helenius</b><br/> 
-Institute for Theoretical Physics, Tuebingen University, 
-Auf der Morgenstelle 14, D-72076 Tuebingen, Germany<br/> 
-e-mail: ilkka.helenius@uni-tuebingen.de 
+Department of Physics, University of Jyv&auml;skyl&auml;, P.O. Box 35, 
+FI-40014 University of Jyv&auml;skyl&auml;, Finland<br/> 
+e-mail: ilkka.m.helenius@jyu.fi 
  
 <p/> 
 <b>Philip Ilten</b><br/> 
@@ -126,9 +132,9 @@ e-mail: mrenna@fnal.gov
  
 <p/> 
 <b>Stefan Prestel</b><br/> 
-Theoretical Physics Department, Fermi National Accelerator Laboratory, 
-MS 106, Batavia, IL 60510, USA<br/> 
-e-mail: sprestel@fnal.gov 
+Department of Astronomy and Theoretical Physics, Lund University, 
+S&ouml;lvegatan 14A, SE-223 62 Lund, Sweden<br/> 
+e-mail: stefan.prestel@thep.lu.se 
  
 <p/> 
 <b>Christine O. Rasmussen</b><br/> 
@@ -148,15 +154,19 @@ School of Physics, Monash University, PO Box 27, 3800 Melbourne,
 Australia<br/> 
 e-mail: peter.skands@monash.edu 
  
-<h2>Former authors</h2> 
+<a name="section3"></a> 
+<h3>Former authors</h3> 
  
-<p/><b>Stefan Ask</b>, e-mail: ask.stefan@gmail.com 
+<p/><b>Stefan Ask</b> 
  
 <p/><b>Jesper Roy Christiansen</b> 
  
-<p/><b>Richard Corke</b>, e-mail: r.corke@errno.net 
+<p/><b>Richard Corke</b> 
  
-<h2>Further contributions</h2> 
+<p/><b>Nadine Fischer</b> 
+ 
+<a name="section4"></a> 
+<h3>Further contributions</h3> 
  
 Makefiles, configure scripts and HepMC interface by <b>Mikhail Kirsanov</b>. 
 <br/>Conversion of XML files to PHP ones by <b>Ben Lloyd</b>. 
@@ -188,8 +198,8 @@ especially <b>Paul Newman</b>.
 by <b>Anil Pratap Singh</b>. 
 <br/>The pythia8-config script has been contributed by 
 <b>Andy Buckley</b>, along with many other helpful suggestions. 
-<br/>Code and data for several of the NNPDF2.3 QCD+QED sets provided by 
-<b>Juan Rojo</b> and <b>Stefano Carrazza</b>. 
+<br/>Code and data for several of the NNPDF2.3 QCD+QED sets, and further 
+later ones, provided by <b>Juan Rojo</b> and <b>Stefano Carrazza</b>. 
 <br/>The fjcore code from FastJet provided by <b>Matteo Cacciari</b>, 
 <b>Gavin Salam</b> and <b>Gregory Soyez</b>. 
 <br/>The initial-final dipole approach has been developed and 
@@ -198,26 +208,28 @@ implemented by <b>Baptiste Cabouat</b>.
 <b>Konstantin Savvidy</b> and <b>George Savvidy</b>. 
 <br/>Space-time hadronic production points in string fragmentation have 
 been studied and implemented by <b>Silvia Ferreres-Sol&eacute;</b>. 
+<br/>The code for deuteron production was tested by <b>Sophie Baker</b>. 
  
 <br/><b>Note</b>: in several cases modifications have been made to 
 the original code, in order to integrate it with PYTHIA. In these cases 
 the blame for any mistakes has to rest with the regular authors. 
  
-<h2>Licence</h2> 
+<a name="section5"></a> 
+<h3>Licence</h3> 
  
 PYTHIA 8 is licensed under the 
 <a href="COPYING" target="page"><b>GNU General Public Licence 
-version 2</b></a>. 
+version 2</b></a> or later. 
 <br/>Please respect the 
 <a href="GUIDELINES" target="page"><b>MCnet Guidelines</b></a> 
 for Event Generator Authors and Users. 
  
 <p/> 
 The program and the documentation is 
-Copyright &copy; 2018 Torbj&ouml;rn Sj&ouml;strand 
+Copyright &copy; 2019 Torbj&ouml;rn Sj&ouml;strand 
  
  
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

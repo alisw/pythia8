@@ -191,6 +191,11 @@ empties event record. Specifically the <code>Particle</code> vector
 size is reset to zero. 
 </method> 
  
+<method name="void Event::free()"> 
+empties event record, like <code>clear()</code> above, but also frees 
+up the memory of the <code>Particle</code> vector. 
+</method> 
+ 
 <method name="void Event::reset()"> 
 empties the event record, as <code>clear()</code> above, but then 
 fills the zero entry of the <code>Particle</code> vector with the 
@@ -283,6 +288,26 @@ read back in, you can use <code>restorePtrs()</code> afterwards to set
 these pointers appropriately. 
 </method> 
  
+<method name="int Event::nFinal(bool chargedOnly = false)"> 
+return the number of final-state particles in the current event record, 
+optionally counting charged particles only. 
+</method> 
+ 
+<method name="double Event::dyAbs(int i1, int i2)"> 
+</method> 
+<methodmore name="double Event::detaAbs(int i1, int i2)"> 
+</methodmore> 
+<methodmore name="double Event::dphiAbs(int i1, int i2)"> 
+</methodmore> 
+<methodmore name="double Event::RRapPhi(int i1, int i2)"> 
+</methodmore> 
+<methodmore name="double Event::REtaPhi(int i1, int i2)"> 
+return the separation between two particles in the event record, 
+in true rapidity, in pseudorapidity, in phi angle, and in the <ei>R</ei> 
+combination of true or pseudorapidity with phi, when required with 
+absolute sign so as to avoid negative numbers. 
+</methodmore> 
+ 
 <p/> 
 A few methods exist to rotate and boost events. These derive from the 
 <aloc href="FourVectors">Vec4</aloc> methods, and affect both the 
@@ -306,9 +331,12 @@ supply a <code>Vec4</code> four-vector, in which case the boost vector
 becomes <ei>beta = p/E</ei>. 
 </methodmore> 
  
-<method name="void Event::rotbst(const RotBstMatrix& M)"> 
+<method name="void Event::rotbst(const RotBstMatrix& M, 
+bool boostVertices = true)"> 
 rotate and boost by the combined action encoded in the 
 <code><aloc href="FourVectors">RotBstMatrix</aloc> M</code>. 
+If the optional second argument is false only the four-momenta are 
+boosted, and not the production vertices. 
 </method> 
  
 <h3>The Junction Class</h3> 
@@ -381,4 +409,4 @@ It is intended to be accessed only by experts, such as implementors of
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

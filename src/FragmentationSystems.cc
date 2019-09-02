@@ -1,5 +1,5 @@
 // FragmentationSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -193,6 +193,32 @@ bool ColConfig::insert( vector<int>& iPartonIn, Event& event) {
   if (iInsert < int(singlets.size()) - 1) singlets[iInsert] =
     ColSinglet(iPartonIn, pSumIn, massIn, massExcessIn,
     hasJunctionIn, isClosedIn);
+
+  // Done.
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Insert a new qqbar colour singlet system in ascending mass order.
+// Simple version for at most two triplet-antitriplet systems.
+
+bool ColConfig::simpleInsert( vector<int>& iPartonIn, Event& event) {
+
+  // Find momentum and invariant mass of system, minus endpoint masses.
+  Vec4 pSumIn   = event[ iPartonIn[0] ].p() + event[ iPartonIn[1] ].p();
+  double mSumIn = event[ iPartonIn[0] ].constituentMass()
+                + event[ iPartonIn[1] ].constituentMass();
+  double massIn = pSumIn.mCalc();
+  double massExcessIn = massIn - mSumIn;
+
+  // Store new colour singlet system at the end.
+  singlets.push_back( ColSinglet(iPartonIn, pSumIn, massIn,
+    massExcessIn, false, false) );
+
+  // If necessary flip so that smallest mass excesses come first.
+  if (singlets.size() == 2 && massExcessIn < singlets[0].massExcess)
+    swap( singlets[0], singlets[1]);
 
   // Done.
   return true;
@@ -494,7 +520,8 @@ bool StringRegion::massiveOffset( int iPos, int iNeg, int iMax,
 
 // Set up four-vectors for longitudinal and transverse directions.
 
-void StringRegion::setUp(Vec4 p1, Vec4 p2, bool isMassless) {
+void StringRegion::setUp(Vec4 p1, Vec4 p2, int col1, int col2,
+  bool isMassless) {
 
   // Store the original four-momenta; needed for the massive-quark case.
   pPosMass = p1;
@@ -576,6 +603,10 @@ void StringRegion::setUp(Vec4 p1, Vec4 p2, bool isMassless) {
   eX = kXX * (eX - kXNeg * pPos - kXPos * pNeg);
   eY = kYY * (eY - kYNeg * pPos - kYPos * pNeg - kYX * eX);
 
+  // Remember colour indices.
+  colPos = col1;
+  colNeg = col2;
+
   // Done.
   isSetUp = true;
   isEmpty = false;
@@ -616,6 +647,7 @@ void StringSystem::setUp(vector<int>& iSys, Event& event) {
   // Reserve space for the required number of regions.
   system.clear();
   system.resize(sizeRegions);
+  bool forward = ( event[iSys[0]].col() != 0 );
 
   // Set up the lowest-lying regions.
   for (int i = 0; i < sizeStrings; ++i) {
@@ -623,7 +655,8 @@ void StringSystem::setUp(vector<int>& iSys, Event& event) {
     if ( event[ iSys[i] ].isGluon() ) p1 *= 0.5;
     Vec4 p2 = event[ iSys[i+1] ].p();
     if ( event[ iSys[i+1] ].isGluon() ) p2 *= 0.5;
-    system[ iReg(i, iMax - i) ].setUp( p1, p2, false);
+    int col = forward ? event[ iSys[i] ].col() : event[ iSys[i] ].acol();
+    system[ iReg(i, iMax - i) ].setUp( p1, p2, col, col, false);
   }
 
 }

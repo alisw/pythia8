@@ -29,6 +29,14 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='NLOMerging.php'>
  
 <h2>NLO Merging</h2> 
+<ol id="toc">
+  <li><a href="#section0">Inputs for NLO merging</a></li>
+  <li><a href="#section1">NL<sup>3</sup> merging with main87.cc</a></li>
+  <li><a href="#section2">UNLOPS merging with main88.cc</a></li>
+  <li><a href="#section3">NLO merging and "exclusive" NLO inputs</a></li>
+  <li><a href="#section4">Further variables</a></li>
+</ol>
+
  
 Pythia offers two NLO merging approaches. Both of these methods have been 
 presented in [<a href="Bibliography.php#refLon13" target="page">Lon13</a>]. The goal of NLO merging is to extend tree-level 
@@ -147,6 +155,7 @@ examine the sample main programs <code>main87.cc</code> and
 respectively. 
  
 <br/><br/><hr/> 
+<a name="section0"></a> 
 <h3>Inputs for NLO merging</h3> 
  
 The NLO merging schemes in Pythia currently require Les Houches Event File 
@@ -227,6 +236,7 @@ event will be used instead.
 programs. 
  
 <br/><br/><hr/> 
+<a name="section1"></a> 
 <h3>NL<sup>3</sup> merging with main87.cc</h3> 
  
 NL<sup>3</sup>-style NLO merging in Pythia is illustrated by the sample 
@@ -452,6 +462,7 @@ NL<sup>3</sup>-merged total cross section.
  
  
 <br/><br/><hr/> 
+<a name="section2"></a> 
 <h3>UNLOPS merging with main88.cc</h3> 
  
 UNLOPS-style NLO merging in Pythia is illustrated by the sample 
@@ -685,6 +696,7 @@ UNLOPS-merged total cross section.
  
  
 <br/><br/><hr/> 
+<a name="section3"></a> 
 <h3>NLO merging and "exclusive" NLO inputs</h3> 
  
 Currently, both sample main programs for NLO merging (<code>main87.cc</code> 
@@ -818,7 +830,8 @@ achieved by adding the following code at the end of <code>main88.cc</code>.
   } 
 </pre> 
  
-<br/><br/><hr/> 
+<br/><hr/> 
+<a name="section4"></a> 
 <h3>Further variables</h3> 
  
 More advanced manipulations of the merging machinery are of 
@@ -846,6 +859,12 @@ samples. This might for example entail using the <code>MergingHooks</code>
 facilities, and the function 
 <code>double MergingHooks::dampenIfFailCuts(const Event& event)"</code> in 
 particular. 
+   
+ 
+<br/><br/><table><tr><td><strong>Merging:unlopsTMSdefinition  </td><td></td><td> <input type="text" name="18" value="-1" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)</td></tr></table>
+The definition of the merging scale for UNLOPS merging. Any value larger or 
+equal to zero means a user-defined merging scale function (to be defined 
+by supplying a <code>MergingHooks</code> class) is used for UNLOPS. 
    
  
 <input type="hidden" name="saved" value="1"/>
@@ -948,6 +967,11 @@ if($_POST["17"] != "off")
 $data = "Merging:allowIncompleteHistoriesInReal = ".$_POST["17"]."\n";
 fwrite($handle,$data);
 }
+if($_POST["18"] != "-1")
+{
+$data = "Merging:unlopsTMSdefinition = ".$_POST["18"]."\n";
+fwrite($handle,$data);
+}
 fclose($handle);
 }
 
@@ -955,4 +979,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

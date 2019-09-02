@@ -1,5 +1,5 @@
 // ParticleData.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -42,7 +42,7 @@ public:
     int prod4 = 0, int prod5 = 0, int prod6 = 0, int prod7 = 0)
     : onModeSave(onModeIn), bRatioSave(bRatioIn), currentBRSave(0.),
     onShellWidthSave(0.), openSecPos(1.), openSecNeg(1.),
-    meModeSave(meModeIn), nProd(0), hasChangedSave(true) {
+    meModeSave(meModeIn), nProd(0), prod(), hasChangedSave(true) {
     prod[0] = prod0; prod[1] = prod1; prod[2] = prod2; prod[3] = prod3;
     prod[4] = prod4; prod[5] = prod5; prod[6] = prod6; prod[7] = prod7;
     for (int j = 0; j < 8; ++j) if (prod[j] != 0 && j == nProd) ++nProd; }
@@ -125,8 +125,12 @@ public:
     nameSave(nameIn), antiNameSave("void"),  spinTypeSave(spinTypeIn),
     chargeTypeSave(chargeTypeIn), colTypeSave(colTypeIn), m0Save(m0In),
     mWidthSave (mWidthIn), mMinSave(mMinIn), mMaxSave(mMaxIn),
-    tau0Save(tau0In), hasAntiSave(false), hasChangedSave(true),
-    resonancePtr(0) {setDefaults();}
+    tau0Save(tau0In), constituentMassSave(), hasAntiSave(false),
+    isResonanceSave(), mayDecaySave(), doExternalDecaySave(), isVisibleSave(),
+    doForceWidthSave(), hasChangedSave(true), hasChangedMMinSave(false),
+    hasChangedMMaxSave(false), modeBWnow(), modeTau0now(), atanLow(),
+    atanDif(), mThr(), currentBRSum(), resonancePtr(0), particleDataPtr() {
+    setDefaults();}
   ParticleDataEntry(int idIn, string nameIn, string antiNameIn,
     int spinTypeIn = 0, int chargeTypeIn = 0, int colTypeIn = 0,
     double m0In = 0., double mWidthIn = 0., double mMinIn = 0.,
@@ -134,9 +138,12 @@ public:
     nameSave(nameIn), antiNameSave(antiNameIn), spinTypeSave(spinTypeIn),
     chargeTypeSave(chargeTypeIn), colTypeSave(colTypeIn), m0Save(m0In),
     mWidthSave (mWidthIn), mMinSave(mMinIn), mMaxSave(mMaxIn),
-    tau0Save(tau0In), hasAntiSave(true), hasChangedSave(true),
-    resonancePtr(0) {setDefaults();
-    if (toLower(antiNameIn) == "void") hasAntiSave = false;}
+    tau0Save(tau0In), constituentMassSave(), hasAntiSave(true),
+    isResonanceSave(), mayDecaySave(), doExternalDecaySave(), isVisibleSave(),
+    doForceWidthSave(), hasChangedSave(true), hasChangedMMinSave(false),
+    hasChangedMMaxSave(false), modeBWnow(), modeTau0now(), atanLow(),
+    atanDif(), mThr(), currentBRSum(), resonancePtr(0), particleDataPtr() {
+    setDefaults(); if (toLower(antiNameIn) == "void") hasAntiSave = false;}
 
   // Copy constructor.
   ParticleDataEntry& operator=( const ParticleDataEntry& oldPDE) {
@@ -207,7 +214,8 @@ public:
   // Special options specifically when cutting wings of Breit-Wigners.
   void setMMinNoChange(double mMinIn) {mMinSave = mMinIn;}
   void setMMaxNoChange(double mMaxIn) {mMaxSave = mMaxIn;}
-  void setTau0(double tau0In) {tau0Save = tau0In; hasChangedSave = true;}
+  void setTau0(double tau0In, bool countAsChanged = true)
+    {tau0Save = tau0In; if (countAsChanged) hasChangedSave = true;}
   void setIsResonance(bool isResonanceIn) {isResonanceSave = isResonanceIn;
     hasChangedSave = true;}
   void setMayDecay(bool mayDecayIn, bool countAsChanged = true) {
@@ -277,6 +285,7 @@ public:
   bool   isHadron()       const;
   bool   isMeson()        const;
   bool   isBaryon()       const;
+  bool   isOnium()        const;
 
   // Intermediate octet ccbar or bbar states in colour-octet model.
   bool   isOctetHadron()  const {return idSave >= 9940000
@@ -369,8 +378,10 @@ class ParticleData {
 public:
 
   // Constructor.
-  ParticleData() : infoPtr(0), settingsPtr(0), rndmPtr(0), couplingsPtr(0),
-    particlePtr(0), isInit(false), readingFailedSave(false) {}
+  ParticleData() : setRapidDecayVertex(), modeBreitWigner(), maxEnhanceBW(),
+    mQRun(), Lambda5Run(), intermediateTau0(), infoPtr(0), settingsPtr(0),
+    rndmPtr(0), couplingsPtr(0), particlePtr(0), isInit(false),
+    readingFailedSave(false) {}
 
   // Copy constructors.
   ParticleData& operator=( const ParticleData& oldPD) { if (this != &oldPD) {
@@ -665,6 +676,9 @@ public:
   bool isBaryon(int idIn) {
     const ParticleDataEntry* ptr = findParticle(idIn);
     return ( ptr ) ? ptr->isBaryon() : false ; }
+  bool isOnium(int idIn) {
+    const ParticleDataEntry* ptr = findParticle(idIn);
+    return ( ptr ) ? ptr->isOnium() : false ; }
   bool isOctetHadron(int idIn) {
     const ParticleDataEntry* ptr = findParticle(idIn);
     return ( ptr ) ? ptr->isOctetHadron() : false ; }

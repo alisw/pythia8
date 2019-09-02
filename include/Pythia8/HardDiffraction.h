@@ -1,5 +1,5 @@
 // HardDiffraction.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,7 +32,12 @@ class HardDiffraction {
 public:
 
   // Constructor and destructor.
-  HardDiffraction() {};
+  HardDiffraction() : isGammaA(), isGammaB(), isGammaGamma(), usePomInPhoton(),
+    pomFlux(), iBeam(), idA(), idB(), rescale(), normPom(), sigTotRatio(),
+    a1(), a2(), a3(), A1(), A2(), A3(), a0(), ap(), b0(), mA(), mB(), s(),
+    s1(), s2(), s3(), s4(), xPomA(), xPomB(), tPomA(), tPomB(), thetaPomA(),
+    thetaPomB(), infoPtr(), rndmPtr(), beamAPtr(), beamBPtr(), beamPomAPtr(),
+    beamPomBPtr(), tmpPomPtr(), sigTotPtr() {};
   ~HardDiffraction() {}
 
   // Initialise constants

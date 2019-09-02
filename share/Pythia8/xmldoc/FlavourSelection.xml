@@ -1,6 +1,6 @@
 <chapter name="Flavour Selection"> 
  
-<h2>Flavour Selection for Gaussian <ei>pT</ei> Distribution</h2> 
+<h2>Flavour Selection</h2> 
  
 The <code>StringFlav</code> class handles the choice of a new flavour 
 in the fragmentation process, and the production of a new hadron 
@@ -10,14 +10,16 @@ in some particle decays and for some beam-remnant cases. The basic
 concepts are in agreement with <ref>And83</ref>. An alternative 
 "thermal model" is described further below. 
  
-<p/> 
+<br/><br/><hr/> 
+<h3>Flavour Selection for Gaussian <ei>pT</ei> Distribution</h3> 
+ 
 The relative production rates of different particle species is 
 influenced by the parameters below. Some have only an impact on 
 one specific quantity, but most directly or indirectly have 
 consequences for many observables. Therefore the values to use have 
 to be viewed in the context of a complete <aloc href="Tunes">tune</aloc>. 
  
-<h3>New flavours</h3> 
+<h4>New flavours</h4> 
  
 The main parameters of the selection of a new flavour are 
  
@@ -56,7 +58,7 @@ data, so very much a guesswork. Character-string input of this vector
 should be as a comma-separated list, without any blanks. 
 </pvec> 
  
-<h3>Standard-meson production</h3> 
+<h4>Standard-meson production</h4> 
  
 The bulk of the particle production corresponds to the lowest-lying 
 pseudoscalar and vector multiplets. Their production rates are 
@@ -131,7 +133,7 @@ normal production probability. Thus 0 means no <ei>eta'</ei> at all
 are produced, while 1 means full rate. 
 </parm> 
  
-<h3>Excited-meson production</h3> 
+<h4>Excited-meson production</h4> 
  
 Several excited mesons, ie. with radial or orbital excitations, have been 
 observed at non-negligible production rates. Extrapolated to all states 
@@ -289,7 +291,7 @@ gives the mixing angle <ei>theta</ei> in the <ei>(L=1,S=1,J=2)</ei>
 tensor meson sector, expressed in degrees. 
 </parm> 
  
-<h3>Baryon production</h3> 
+<h4>Baryon production</h4> 
  
 The relative rate of baryon production is mainly given by the quark 
 and diquark production parameters above, plus SU(6) Clebsch-Gordans. 
@@ -363,7 +365,8 @@ jet, i.e. <ei>c</ei> or <ei>b</ei>, when
 production at all, while 1 means full rate. 
 </parm> 
  
-<h2>Flavour Selection for Thermal <ei>pT</ei> Distribution</h2> 
+<br/><br/><hr/> 
+<h3>Flavour Selection for Thermal <ei>pT</ei> Distribution</h3> 
  
 If the hadronic <ei>pT</ei> is generated according to the non-default 
 thermal distribution, i.e. if <code>StringPT:thermalModel = on</code>, 
@@ -426,4 +429,4 @@ nonet (L=1).
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

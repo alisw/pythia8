@@ -1,5 +1,5 @@
 // SigmaHiggs.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Part of code written by Marc Montull, CERN summer student 2007.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -23,7 +23,9 @@ class Sigma1ffbar2H : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1ffbar2H(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma1ffbar2H(int higgsTypeIn) : HResPtr(), mRes(), GammaRes(), m2Res(),
+    GamMRat(), sigBW(), widthOut(), higgsType(higgsTypeIn), codeSave(),
+    idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -65,7 +67,8 @@ class Sigma1gg2H : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1gg2H(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma1gg2H(int higgsTypeIn) : HResPtr(), mRes(), GammaRes(), m2Res(),
+    GamMRat(), sigma(), higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -107,7 +110,8 @@ class Sigma1gmgm2H : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1gmgm2H(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma1gmgm2H(int higgsTypeIn) : HResPtr(), mRes(), GammaRes(), m2Res(),
+    GamMRat(), sigma(), higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -149,7 +153,9 @@ class Sigma2ffbar2HZ : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2HZ(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2ffbar2HZ(int higgsTypeIn) : mZ(), widZ(), mZS(), mwZS(), thetaWRat(),
+    sigma0(), openFracPair(), coup2Z(), higgsType(higgsTypeIn), codeSave(),
+    idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -194,7 +200,9 @@ class Sigma2ffbar2HW : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2HW(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2ffbar2HW(int higgsTypeIn) : mW(), widW(), mWS(), mwWS(), thetaWRat(),
+    sigma0(), openFracPairPos(), openFracPairNeg(), coup2W(),
+    higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -239,7 +247,8 @@ class Sigma3ff2HfftZZ : public Sigma3Process {
 public:
 
   // Constructor.
-  Sigma3ff2HfftZZ(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma3ff2HfftZZ(int higgsTypeIn) : mZS(), prefac(), sigma1(), sigma2(),
+    openFrac(), coup2Z(), higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -287,7 +296,8 @@ class Sigma3ff2HfftWW : public Sigma3Process {
 public:
 
   // Constructor.
-  Sigma3ff2HfftWW(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma3ff2HfftWW(int higgsTypeIn) : mWS(), prefac(), sigma0(), openFrac(),
+    coup2W(), higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -335,8 +345,9 @@ class Sigma3gg2HQQbar : public Sigma3Process {
 public:
 
   // Constructor.
-  Sigma3gg2HQQbar(int idIn, int higgsTypeIn) : idNew(idIn),
-    higgsType(higgsTypeIn) {}
+  Sigma3gg2HQQbar(int idIn, int higgsTypeIn) : prefac(), sigma(),
+    openFracTriplet(), coup2Q(), idNew(idIn), higgsType(higgsTypeIn),
+    codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -387,8 +398,9 @@ class Sigma3qqbar2HQQbar : public Sigma3Process {
 public:
 
   // Constructor.
-  Sigma3qqbar2HQQbar(int idIn, int higgsTypeIn) : idNew(idIn),
-    higgsType(higgsTypeIn) {}
+  Sigma3qqbar2HQQbar(int idIn, int higgsTypeIn) : prefac(), sigma(),
+    openFracTriplet(), coup2Q(), idNew(idIn), higgsType(higgsTypeIn),
+    codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -439,8 +451,8 @@ class Sigma2qg2Hq : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qg2Hq(int idIn, int higgsTypeIn) : idNew(idIn),
-    higgsType(higgsTypeIn) {}
+  Sigma2qg2Hq(int idIn, int higgsTypeIn) : m2W(), thetaWRat(), sigma(),
+    openFrac(), idNew(idIn), higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -483,7 +495,8 @@ class Sigma2gg2Hglt : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2gg2Hglt(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2gg2Hglt(int higgsTypeIn) : widHgg(), sigma(), openFrac(),
+    higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -524,7 +537,8 @@ class Sigma2qg2Hqlt : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qg2Hqlt(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2qg2Hqlt(int higgsTypeIn) : widHgg(), sigma(), openFrac(),
+    higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -565,7 +579,8 @@ class Sigma2qqbar2Hglt : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2qqbar2Hglt(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2qqbar2Hglt(int higgsTypeIn) : widHgg(), sigma(), openFrac(),
+    higgsType(higgsTypeIn), codeSave(), idRes() {}
 
   // Initialize process.
   virtual void initProc();
@@ -605,7 +620,8 @@ class Sigma1ffbar2Hchg : public Sigma1Process {
 public:
 
   // Constructor.
-  Sigma1ffbar2Hchg() {}
+  Sigma1ffbar2Hchg() : HResPtr(), mRes(), GammaRes(), m2Res(), GamMRat(),
+    m2W(), thetaWRat(), tan2Beta(), sigBW(), widthOutPos(), widthOutNeg() {}
 
   // Initialize process.
   virtual void initProc();
@@ -647,7 +663,8 @@ public:
 
   // Constructor.
   Sigma2qg2Hchgq(int idIn, int codeIn, string nameIn) : idNew(idIn),
-    codeSave(codeIn), nameSave(nameIn) {}
+    codeSave(codeIn), idOld(), idUp(), idDn(), nameSave(nameIn), m2W(),
+    thetaWRat(), tan2Beta(), sigma(), openFracPos(), openFracNeg() {}
 
   // Initialize process.
   virtual void initProc();
@@ -689,7 +706,9 @@ class Sigma2ffbar2A3H12 : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2A3H12(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2ffbar2A3H12(int higgsTypeIn) : higgsType(higgsTypeIn), higgs12(),
+    codeSave(), coupZA3H12(), m2Z(), mGammaZ(), thetaWRat(), openFrac(),
+    sigma0() {}
 
   // Initialize process.
   virtual void initProc();
@@ -731,7 +750,9 @@ class Sigma2ffbar2HchgH12 : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2HchgH12(int higgsTypeIn) : higgsType(higgsTypeIn) {}
+  Sigma2ffbar2HchgH12(int higgsTypeIn) : higgsType(higgsTypeIn), higgs12(),
+    codeSave(), coupWHchgH12(), m2W(), mGammaW(), thetaWRat(), openFracPos(),
+    openFracNeg(), sigma0() {}
 
   // Initialize process.
   virtual void initProc();
@@ -774,7 +795,8 @@ class Sigma2ffbar2HposHneg : public Sigma2Process {
 public:
 
   // Constructor.
-  Sigma2ffbar2HposHneg() {}
+  Sigma2ffbar2HposHneg() : m2Z(), mGammaZ(), thetaWRat(), eH(), lH(),
+    openFrac(), gamSig(), intSig(), resSig() {}
 
   // Initialize process.
   virtual void initProc();

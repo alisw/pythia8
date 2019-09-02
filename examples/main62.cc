@@ -1,5 +1,5 @@
 // main62.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,13 +9,6 @@
 
 #include "Pythia8/Pythia.h"
 using namespace Pythia8;
-
-//==========================================================================
-
-// Book a histogram to test the angular distribution in the UserHook.
-// It is booked here so that it is global.
-
-Hist cosRaw("cos(the*) raw",100,-1.,1.);
 
 //==========================================================================
 
@@ -35,8 +28,11 @@ public:
 
   // Constructor can set helicity definition. Destructor does nothing.
   MyUserHooks(Info* infoPtrIn, bool inputOption = true)
-    : infoPtr(infoPtrIn), helicityDefinedByMother(inputOption) {}
-  ~MyUserHooks() {}
+    : infoPtr(infoPtrIn), helicityDefinedByMother(inputOption) {
+    // Book a histogram to test the angular distribution in the UserHook.
+    cosRaw = new Hist("cos(the*) raw", 100, -1., 1.);
+  }
+  ~MyUserHooks() { cout << *cosRaw; delete cosRaw; }
 
   // Allow a veto for the process level, to gain access to decays.
   bool canVetoProcessLevel() {return true;}
@@ -54,7 +50,7 @@ public:
         // based on polarization and particle/antiparticle.
         double cosThe = selectAngle( process[i].pol(), process[i].id() );
         // Accumulate the raw angular distribution.
-        cosRaw.fill( cosThe );
+        cosRaw->fill( cosThe );
         double sinThe = sqrt(1.0 - pow2(cosThe));
         double phi    = 2.0 * M_PI * rndmPtr->flat();
 
@@ -143,6 +139,7 @@ private:
   Info* infoPtr;
    // bool to define the frame for helicity.
   bool helicityDefinedByMother;
+  Hist* cosRaw;
 
 };
 
@@ -213,7 +210,7 @@ int main() {
 
   // Statistics. Histograms.
   pythia.stat();
-  cout << polarization << cosPlus << cosMinus << energy << cosRaw;
+  cout << polarization << cosPlus << cosMinus << energy;
 
   // Done.
   delete myUserHooks;

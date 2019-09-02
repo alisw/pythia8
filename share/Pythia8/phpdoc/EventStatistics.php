@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='EventStatistics.php'>
  
 <h2>Event Statistics</h2> 
+<ol id="toc">
+  <li><a href="#section0">Cross-section statistics</a></li>
+  <li><a href="#section1">Error messages</a></li>
+  <li><a href="#section2">Multiparton-interactions statistics</a></li>
+</ol>
+
  
 At the end of the run you will want to write out the final statistics 
 on number of events generated, the corresponding cross sections and 
@@ -37,6 +43,7 @@ instance of the <code>Pythia</code> class.The method is steered entirely
 by settings values, see <?php $filepath = $_GET["filepath"];
 echo "<a href='MainProgramSettings.php?filepath=".$filepath."' target='page'>";?>here</a>. 
  
+<a name="section0"></a> 
 <h3>Cross-section statistics</h3> 
  
 The <code>ProcessLevel::statistics()</code> method cannot be accessed 
@@ -72,6 +79,7 @@ and often vanish completely. Furthermore, while the number of events
 is shown for each user process, the cross section is only for the sum 
 of them. 
  
+<a name="section1"></a> 
 <h3>Error messages</h3> 
  
 When Pythia is run, errors may occur, and give rise to warning messages. 
@@ -110,6 +118,7 @@ The summary table printed by <code>Pythia::stat()</code>
 provides a table with all the different messages issued, in 
 alphabetical order, with the total number of times each was generated. 
  
+<a name="section2"></a> 
 <h3>Multiparton-interactions statistics</h3> 
  
 If you call <code>Pythia::stat()</code> with 
@@ -128,4 +137,4 @@ between the two.)
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

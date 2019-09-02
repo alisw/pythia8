@@ -28,7 +28,16 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='StandardModelParameters.php'>
  
 <h2>Standard-Model Parameters</h2> 
+<ol id="toc">
+  <li><a href="#section0">The strong coupling</a></li>
+  <li><a href="#section1">The electromagnetic coupling</a></li>
+  <li><a href="#section2">The electroweak couplings</a></li>
+  <li><a href="#section3">The quark weak-mixing matrix</a></li>
+  <li><a href="#section4">The CoupSM class</a></li>
+</ol>
+
  
+<a name="section0"></a> 
 <h3>The strong coupling</h3> 
  
 The <code>AlphaStrong</code> class is used to provide a first- or 
@@ -102,6 +111,7 @@ and that the CMW rescaling may need be taken into account in the context of
 matrix-element matching. Note also that this option has only been made 
 available for timelike and spacelike showers, not for hard processes. 
  
+<a name="section1"></a> 
 <h3>The electromagnetic coupling</h3> 
  
 The <code>AlphaEM</code> class is used to generate a running 
@@ -139,6 +149,7 @@ provided at <i>M_Z</i>.   Thereafter the value can be
 calculated by <code>alphaEM(scale2)</code>, where 
 <code>scale2</code> is the <i>Q^2</i> scale in GeV^2. 
  
+<a name="section2"></a> 
 <h3>The electroweak couplings</h3> 
  
 There are two degrees of freedom that can be set, related to the 
@@ -166,6 +177,7 @@ since it is redundant, but it is available:
 The Fermi coupling constant, in units of GeV<i>^-2</i>. 
    
  
+<a name="section3"></a> 
 <h3>The quark weak-mixing matrix</h3> 
  
 The absolute values of the Cabibbo-Kobayashi-Maskawa matrix elements are 
@@ -210,6 +222,7 @@ The <i>V_ts</i> CKM matrix element.
 The <i>V_tb</i> CKM matrix element. 
    
  
+<a name="section4"></a> 
 <h3>The CoupSM class</h3> 
  
 The <code><?php $filepath = $_GET["filepath"];
@@ -481,4 +494,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='Photoproduction.php'>
  
 <h2>Photoproduction</h2> 
+<ol id="toc">
+  <li><a href="#section0">Types of photon processes</a></li>
+  <li><a href="#section1">Resolved photon</a></li>
+  <li><a href="#section2">Photons from lepton beams</a></li>
+</ol>
+
  
 <p> 
 Interactions involving one or two photons, either in photon-photon or 
@@ -41,6 +47,7 @@ This page describes some of the special features related to these collisions
 and introduces the relevant parameters. 
 </p> 
  
+<a name="section0"></a> 
 <h3>Types of photon processes</h3> 
  
 <p> 
@@ -72,6 +79,7 @@ echo "<a href='EventInformation.php?filepath=".$filepath."' target='page'>";?>In
 <code>int Info::photonMode()</code> which follows the conventions above. 
 </p> 
  
+<a name="section1"></a> 
 <h3>Resolved photon</h3> 
  
 <p> 
@@ -274,6 +282,7 @@ primordial <i>kT</i>. This may cause some amount of errors especially when
 the invariant mass of <i>gamma-gamma</i> system is small. 
 </p> 
  
+<a name="section2"></a> 
 <h3>Photons from lepton beams</h3> 
  
 <p> 
@@ -437,4 +446,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -38,6 +38,7 @@ officially supported, some helpful hints are given below. The full RIVET
 manual is available <a href="http://arxiv.org/abs/1003.0694">online</a>. 
  
 <br/><br/> 
+<a name="section0"></a> 
 <h3>Using PYTHIA with RIVET</h3> 
 The following assumes that you already have RIVET installed. Instructions 
 for this may be found 
@@ -92,6 +93,7 @@ pipe. This is done with the <code>mkfifo</code> command
 </pre> 
 Note that <code>main42</code> is run in the background. 
  
+<a name="section1"></a> 
 <h3>Compiling PYTHIA with RIVET </h3> 
  
 It is also possible to compile a PYTHIA main program together with the RIVET 
@@ -171,4 +173,4 @@ They are all displayed by running <code>./main93 -h</code>.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

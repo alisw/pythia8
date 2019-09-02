@@ -1,5 +1,5 @@
 // Merging.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -64,9 +64,9 @@ protected:
   //----------------------------------------------------------------------//
 
   // Constructor.
-  Merging() { settingsPtr = 0; infoPtr = 0; particleDataPtr = 0;
-    rndmPtr = 0; beamAPtr = 0; beamBPtr = 0; trialPartonLevelPtr = 0;
-    mergingHooksPtr = 0; }
+  Merging() : settingsPtr(), infoPtr(), particleDataPtr(), rndmPtr(),
+    trialPartonLevelPtr(), mergingHooksPtr(), beamAPtr(), beamBPtr(),
+    coupSMPtr(), tmsNowMin() {}
 
   // Make Pythia class friend
   friend class Pythia;

@@ -28,7 +28,17 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='EventAnalysis.php'>
  
 <h2>Event Analysis</h2> 
+<ol id="toc">
+  <li><a href="#section0">Introduction</a></li>
+  <li><a href="#section1">Sphericity</a></li>
+  <li><a href="#section2">Thrust</a></li>
+  <li><a href="#section3">ClusterJet</a></li>
+  <li><a href="#section4">CellJet</a></li>
+  <li><a href="#section5">SlowJet</a></li>
+</ol>
+
  
+<a name="section0"></a> 
 <h3>Introduction</h3> 
  
 The routines in this section are intended to be used to analyze 
@@ -47,6 +57,7 @@ possibility to make use of <?php $filepath = $_GET["filepath"];
 echo "<a href='JetFinders.php?filepath=".$filepath."' target='page'>";?>external 
 jet finders </a>. 
  
+<a name="section1"></a> 
 <h3>Sphericity</h3> 
  
 The standard sphericity tensor is 
@@ -143,6 +154,7 @@ tells the number of times <code>analyze(...)</code> failed to analyze
 events, i.e. returned <code>false</code>. 
    
  
+<a name="section2"></a> 
 <h3>Thrust</h3> 
  
 Thrust is obtained by varying the thrust axis so that the longitudinal 
@@ -232,6 +244,7 @@ tells the number of times <code>analyze(...)</code> failed to analyze
 events, i.e. returned <code>false</code>. 
    
  
+<a name="section3"></a> 
 <h3>ClusterJet</h3> 
  
 <code>ClusterJet</code> (a.k.a. <code>LUCLUS</code> and 
@@ -394,6 +407,7 @@ tells the number of times <code>analyze(...)</code> failed to analyze
 events, i.e. returned <code>false</code>. 
    
  
+<a name="section4"></a> 
 <h3>CellJet</h3> 
  
 <code>CellJet</code> (a.k.a. <code>PYCELL</code>) is a simple cone jet 
@@ -567,6 +581,7 @@ tells the number of times <code>analyze(...)</code> failed to analyze
 events, i.e. returned <code>false</code>. 
    
  
+<a name="section5"></a> 
 <h3>SlowJet</h3> 
  
 <code>SlowJet</code> is a simple program for doing jet finding according 
@@ -1007,4 +1022,4 @@ individual particle.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

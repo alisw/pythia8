@@ -1,5 +1,4 @@
- 
-<chapter name="ALPGEN Event Interface"> 
+ <chapter name="ALPGEN Event Interface"> 
  
 <h2>ALPGEN Event Interface</h2> 
  
@@ -56,7 +55,7 @@ sample is enough to show the different components in action.
 </li> 
 </ul> 
  
-<h2>ALPGEN main options</h2> 
+<h3>ALPGEN main options</h3> 
  
 These following options are provided by the AlpgenHooks class, 
 which must be loaded for this functionality to be present 
@@ -138,13 +137,13 @@ is set to the incoming <code>njet</code> ALPGEN parameter. Note that any
 existing value of this parameter is overwritten. 
 </flag> 
  
-<h2>Class information</h2> 
+<h3>Class information</h3> 
  
 Some more technical information about the different classes is given 
 below. For clarity, some limited information on certain private methods 
 is provided. 
  
-<h3>LHAupAlpgen</h3> 
+<h4>LHAupAlpgen</h4> 
  
 This class is derived from the 
 <aloc href="LesHouchesAccord"><code>LHAup</code></aloc> base class, and 
@@ -181,7 +180,7 @@ scaled to balance the outgoing particles. Finally, any intermediate
 resonances are recalculated from their decay products. 
 </method> 
  
-<h3>AlpgenPar</h3> 
+<h4>AlpgenPar</h4> 
  
 This class parses an ALPGEN parameter file and makes the information 
 available through a simple interface. The information is stored 
@@ -235,7 +234,7 @@ not present, 0 is returned.
 Method to print a list of stored parameters. 
 </method> 
  
-<h3>AlpgenHooks</h3> 
+<h4>AlpgenHooks</h4> 
  
 This <aloc href="UserHooks"><code>UserHooks</code></aloc> derived class 
 provides all the <code>Alpgen:*</code> options. It is provided as a 
@@ -261,4 +260,4 @@ present, which are then used to set further PYTHIA settings.
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

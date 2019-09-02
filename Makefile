@@ -42,11 +42,17 @@ ifeq ($(ENABLE_SHARED),true)
 endif
 
 # LHAPDF.
+CXX_LHAPDF:=$(CXX_COMMON)
 ifeq ($(LHAPDF5_USE),true)
+  CXX_LHAPDF:=-I$(LHAPDF5_INCLUDE) $(CXX_LHAPDF)
   TARGETS+=$(LOCAL_LIB)/libpythia8lhapdf5.so
 endif
 ifeq ($(LHAPDF6_USE),true)
+  CXX_LHAPDF:=-I$(LHAPDF6_INCLUDE) $(CXX_LHAPDF)
   TARGETS+=$(LOCAL_LIB)/libpythia8lhapdf6.so
+endif
+ifeq ($(BOOST_USE),true)
+  CXX_LHAPDF:=-I$(BOOST_INCLUDE) $(CXX_LHAPDF)
 endif
 
 # POWHEG (needs directory that contains just POWHEG binaries and scripts).
@@ -109,8 +115,7 @@ $(LOCAL_LIB)/libpythia8$(LIB_SUFFIX): $(OBJECTS)
 
 # LHAPDF (turn off all warnings for readability).
 $(LOCAL_TMP)/LHAPDF%Plugin.o: $(LOCAL_INCLUDE)/Pythia8Plugins/LHAPDF%.h
-	$(CXX) -x c++ $< -o $@ -c -MD -w $(CXX_COMMON) -I$(LHAPDF$*_INCLUDE)\
-	 -I$(BOOST_INCLUDE) 
+	$(CXX) -x c++ $< -o $@ -c -MD -w $(CXX_LHAPDF)
 $(LOCAL_LIB)/libpythia8lhapdf5.so: $(LOCAL_TMP)/LHAPDF5Plugin.o\
 	$(LOCAL_LIB)/libpythia8.a
 	$(CXX) $^ -o $@ $(CXX_COMMON) $(CXX_SHARED) $(CXX_SONAME)$(notdir $@)\

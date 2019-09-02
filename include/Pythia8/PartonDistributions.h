@@ -1,5 +1,5 @@
 // PartonDistributions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -39,8 +39,10 @@ class PDF {
 public:
 
   // Constructor.
-  PDF(int idBeamIn = 2212) {idBeam = idBeamIn; idBeamAbs = abs(idBeam);
-    setValenceContent(); idSav = 9; xSav = -1.; Q2Sav = -1.;
+  PDF(int idBeamIn = 2212) : idBeam(idBeamIn), idBeamAbs(abs(idBeam)),
+    idVal1(), idVal2(), xsVal(), xcVal(), xbVal(), xsSea(), xcSea(), xbSea()
+    { setValenceContent();
+    idSav = 9; xSav = -1.; Q2Sav = -1.;
     xu = 0.; xd = 0.; xs = 0.; xubar = 0.; xdbar = 0.; xsbar = 0.; xc = 0.;
     xb = 0.; xg = 0.; xlepton = 0.; xgamma = 0.; xuVal = 0.; xuSea = 0.;
     xdVal = 0.; xdSea = 0.; isSet = true; isInit = false;
@@ -114,12 +116,11 @@ public:
   virtual double xfFlux(int , double , double )   { return 0.; }
   virtual double xfApprox(int , double , double ) { return 0.; }
   virtual double xfGamma(int , double , double )  { return 0.; }
+  virtual double intFluxApprox()                  { return 0.; }
 
   // Return the kinematical limits and sample Q2 and x.
-  virtual double getQ2min()             { return 0.; }
   virtual double getXmin()              { return 0.; }
   virtual double getXhadr()             { return 0.; }
-  virtual double getGammaFluxNorm()     { return 0.; }
   virtual double sampleXgamma(double )  { return 0.; }
   virtual double sampleQ2gamma(double ) { return 0.; }
 
@@ -229,11 +230,15 @@ public:
   // Constructor.
   MSTWpdf(int idBeamIn = 2212, int iFitIn = 1,
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-    : PDF(idBeamIn) {init( iFitIn,  xmlPath, infoPtr);}
+    : PDF(idBeamIn), iFit(), alphaSorder(), alphaSnfmax(), mCharm(), mBottom(),
+    alphaSQ0(), alphaSMZ(), distance(), tolerance(), xx(), qq(),
+    c() {init( iFitIn,  xmlPath, infoPtr);}
 
   // Constructor with a stream.
   MSTWpdf(int idBeamIn, istream& is, Info* infoPtr = 0)
-    : PDF(idBeamIn) {init( is, infoPtr);}
+    : PDF(idBeamIn), iFit(), alphaSorder(), alphaSnfmax(), mCharm(), mBottom(),
+    alphaSQ0(), alphaSMZ(), distance(), tolerance(), xx(), qq(),
+    c() {init( is, infoPtr);}
 
 private:
 
@@ -294,13 +299,21 @@ public:
   // Constructor.
   CTEQ6pdf(int idBeamIn = 2212, int iFitIn = 1, double rescaleIn = 1.,
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-    : PDF(idBeamIn), doExtraPol(false) {rescale = rescaleIn,
-    init( iFitIn, xmlPath, infoPtr);}
+    : PDF(idBeamIn), doExtraPol(false), iFit(), order(), nQuark(), nfMx(),
+    mxVal(), nX(), nT(), nG(), iGridX(), iGridQ(), iGridLX(), iGridLQ(),
+    rescale(rescaleIn), lambda(), mQ(), qIni(), qMax(), tv(), xMin(), xv(),
+    upd(), xvpow(), xMinEps(), xMaxEps(), qMinEps(), qMaxEps(), fVec(),
+    tConst(), xConst(), dlx(), xLast(),
+    qLast() {init( iFitIn, xmlPath, infoPtr);}
 
   // Constructor with a stream.
   CTEQ6pdf(int idBeamIn, istream& is, bool isPdsGrid = false,
-    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false) {
-    init( is, isPdsGrid, infoPtr);}
+    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false), iFit(), order(),
+    nQuark(), nfMx(), mxVal(), nX(), nT(), nG(), iGridX(), iGridQ(),
+    iGridLX(), iGridLQ(), rescale(), lambda(), mQ(), qIni(), qMax(), tv(),
+    xMin(), xv(), upd(), xvpow(), xMinEps(), xMaxEps(), qMinEps(), qMaxEps(),
+    fVec(), tConst(), xConst(), dlx(), xLast(),
+    qLast() { init( is, isPdsGrid, infoPtr); }
 
   // Allow extrapolation beyond boundaries. This is optional.
   void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
@@ -406,8 +419,8 @@ public:
     double PomStrangeSuppIn = 0.) : PDF(idBeamIn),
     PomGluonA(PomGluonAIn), PomGluonB(PomGluonBIn),
     PomQuarkA(PomQuarkAIn), PomQuarkB(PomQuarkBIn),
-    PomQuarkFrac(PomQuarkFracIn), PomStrangeSupp(PomStrangeSuppIn)
-    {init();}
+    PomQuarkFrac(PomQuarkFracIn), PomStrangeSupp(PomStrangeSuppIn),
+    normGluon(), normQuark() { init(); }
 
 private:
 
@@ -437,13 +450,15 @@ public:
   // Constructor.
  PomH1FitAB(int idBeamIn = 990, int iFit = 1, double rescaleIn = 1.,
    string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-   : PDF(idBeamIn), doExtraPol(false)  {rescale = rescaleIn;
-   init( iFit, xmlPath, infoPtr);}
+   : PDF(idBeamIn), doExtraPol(false), nx(), nQ2(), rescale(rescaleIn), xlow(),
+    xupp(), dx(), Q2low(), Q2upp(), dQ2(), gluonGrid(), quarkGrid()
+    { init( iFit, xmlPath, infoPtr); }
 
   // Constructor with a stream.
  PomH1FitAB(int idBeamIn, double rescaleIn, istream& is,
-   Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false) {
-   rescale = rescaleIn; init( is, infoPtr);}
+   Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false), nx(), nQ2(),
+    rescale(rescaleIn), xlow(),xupp(), dx(), Q2low(), Q2upp(), dQ2(),
+    gluonGrid(), quarkGrid() { init( is, infoPtr); }
 
   // Allow extrapolation beyond boundaries. This is optional.
   void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
@@ -482,13 +497,15 @@ public:
   // Constructor.
   PomH1Jets(int idBeamIn = 990, int iFit = 1, double rescaleIn = 1.,
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-    : PDF(idBeamIn), doExtraPol(false) {rescale = rescaleIn;
-    init( iFit, xmlPath, infoPtr);}
+    : PDF(idBeamIn), doExtraPol(false), rescale(rescaleIn), xGrid(), Q2Grid(),
+    gluonGrid(), singletGrid(), charmGrid()
+    {init( iFit, xmlPath, infoPtr);}
 
   // Constructor with a stream.
   PomH1Jets(int idBeamIn, double rescaleIn, istream& is,
-    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false) {rescale = rescaleIn;
-    init( is, infoPtr);}
+    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false), rescale(rescaleIn),
+    xGrid(), Q2Grid(), gluonGrid(), singletGrid(), charmGrid()
+    { init( is, infoPtr); }
 
   // Allow extrapolation beyond boundaries. This is optional.
   void setExtrapolate(bool doExtraPolIn) {doExtraPol = doExtraPolIn;}
@@ -568,11 +585,12 @@ class Lepton : public PDF {
 public:
 
   // Constructor.
-  Lepton(int idBeamIn = 11) : PDF(idBeamIn) {}
+  Lepton(int idBeamIn = 11) : PDF(idBeamIn), m2Lep(), Q2maxGamma(), infoPtr(),
+    rndmPtr() {}
 
   // Constructor with further info.
   Lepton(int idBeamIn, double Q2maxGammaIn, Info* infoPtrIn,
-    Rndm* rndmPtrIn = 0) : PDF(idBeamIn) { Q2maxGamma = Q2maxGammaIn;
+    Rndm* rndmPtrIn = 0) : PDF(idBeamIn), m2Lep() { Q2maxGamma = Q2maxGammaIn;
     infoPtr = infoPtrIn; rndmPtr = rndmPtrIn; }
 
   // Sample the Q2 value.
@@ -654,14 +672,15 @@ public:
   // Constructor.
   NNPDF(int idBeamIn = 2212, int iFitIn = 1,
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-    : PDF(idBeamIn), fPDFGrid(NULL), fXGrid(NULL), fLogXGrid(NULL),
-    fQ2Grid(NULL), fLogQ2Grid(NULL), fRes(NULL) {
+    : PDF(idBeamIn), iFit(), fNX(), fNQ2(), fPDFGrid(NULL), fXGrid(NULL),
+    fLogXGrid(NULL), fQ2Grid(NULL), fLogQ2Grid(NULL), fRes(NULL) {
     init( iFitIn, xmlPath, infoPtr); };
 
   // Constructor with a stream.
   NNPDF(int idBeamIn, istream& is, Info* infoPtr = 0)
-    : PDF(idBeamIn), fPDFGrid(NULL), fXGrid(NULL), fLogXGrid(NULL),
-    fQ2Grid(NULL), fLogQ2Grid(NULL), fRes(NULL) { init( is, infoPtr); };
+    : PDF(idBeamIn), iFit(), fNX(), fNQ2(), fPDFGrid(NULL), fXGrid(NULL),
+    fLogXGrid(NULL), fQ2Grid(NULL), fLogQ2Grid(NULL), fRes(NULL) {
+    init( is, infoPtr); };
 
   // Destructor.
   ~NNPDF() {
@@ -867,13 +886,15 @@ public:
   // Constructor.
   LHAGrid1(int idBeamIn = 2212, string pdfWord = "void",
     string xmlPath = "../share/Pythia8/xmldoc/", Info* infoPtr = 0)
-    : PDF(idBeamIn), doExtraPol(false), pdfGrid(NULL), pdfSlope(NULL) {
-    init( pdfWord, xmlPath, infoPtr); };
+    : PDF(idBeamIn), doExtraPol(false), nx(), nq(), nqSub(), xMin(), xMax(),
+    qMin(), qMax(), pdfVal(), pdfGrid(NULL),
+    pdfSlope(NULL) { init( pdfWord, xmlPath, infoPtr); };
 
   // Constructor with a stream.
   LHAGrid1(int idBeamIn, istream& is, Info* infoPtr = 0)
-    : PDF(idBeamIn), doExtraPol(false), pdfGrid(NULL), pdfSlope(NULL) {
-    init( is, infoPtr); };
+    : PDF(idBeamIn), doExtraPol(false), nx(), nq(), nqSub(), xMin(), xMax(),
+    qMin(), qMax(), pdfVal(), pdfGrid(NULL),
+    pdfSlope(NULL) { init( is, infoPtr); };
 
   // Destructor.
   ~LHAGrid1() { if (pdfGrid) { for (int iid = 0; iid < 12; ++iid) {
@@ -925,10 +946,10 @@ public:
 
   // Constructor.
   Lepton2gamma(int idBeamIn, double m2leptonIn, double Q2maxGamma,
-    PDF* gammaPDFPtrIn, Info* infoPtrIn, Rndm* rndmPtrIn) : PDF(idBeamIn) {
-    m2lepton = m2leptonIn; Q2max = Q2maxGamma; gammaPDFPtr = gammaPDFPtrIn;
-    infoPtr = infoPtrIn; rndmPtr = rndmPtrIn; hasGammaInLepton = true;
-    sampleXgamma = true; }
+    PDF* gammaPDFPtrIn, Info* infoPtrIn, Rndm* rndmPtrIn) : PDF(idBeamIn),
+    m2lepton(m2leptonIn), Q2max(Q2maxGamma), xGm(), sampleXgamma(true),
+    gammaPDFPtr(gammaPDFPtrIn), rndmPtr(rndmPtrIn), infoPtr(infoPtrIn)
+    { hasGammaInLepton = true; }
 
   // Overload the member function definitions where relevant.
   void xfUpdate(int id, double x, double Q2);
@@ -984,11 +1005,45 @@ private:
 
 class EPAexternal : public PDF {
 
+public:
+
+  // Constructor.
+  EPAexternal(int idBeamIn, double m2In, PDF* gammaFluxPtrIn,
+    PDF* gammaPDFPtrIn, Settings* settingsPtrIn, Info* infoPtrIn,
+    Rndm* rndmPtrIn ) : PDF(idBeamIn), m2(m2In), Q2max(), Q2min(), xMax(),
+    xMin(), xHadr(), norm(), xPow(), xCut(), norm1(), norm2(),
+    integral1(), integral2(), bmhbarc(), gammaFluxPtr(gammaFluxPtrIn),
+    gammaPDFPtr(gammaPDFPtrIn), rndmPtr(rndmPtrIn), infoPtr(infoPtrIn),
+    settingsPtr(settingsPtrIn) { hasGammaInLepton = true; init(); }
+
+  // Update PDFs.
+  void xfUpdate(int , double x, double Q2);
+
+  // External flux and photon PDFs, and approximated flux for sampling.
+  double xfFlux(int id, double x, double Q2 = 1.);
+  double xfGamma(int id, double x, double Q2);
+  double xfApprox(int id, double x, double Q2);
+  double intFluxApprox();
+
+  // Kinematics.
+  double getXmin()          { return xMin; }
+  double getXhadr()         { return xHadr; }
+
+  // Sampling of the x and Q2 according to differential flux.
+  double sampleXgamma(double xMinIn);
+  double sampleQ2gamma(double )
+    { return Q2min * pow(Q2max / Q2min, rndmPtr->flat()); }
+
 private:
+
+  // Initialization.
+  void init();
 
   // Kinematics.
   static const double ALPHAEM;
-  double m2, Q2max, Q2min, xMax, xMin, xHadr, norm;
+  double m2, Q2max, Q2min, xMax, xMin, xHadr, norm, xPow, xCut,
+         norm1, norm2, integral1, integral2, bmhbarc;
+  int    approxMode;
 
   // Photon Flux and PDF.
   PDF* gammaFluxPtr;
@@ -1003,40 +1058,6 @@ private:
   // Pointer to settings to get Q2max.
   Settings* settingsPtr;
 
-  // Initialization.
-  void init();
-
-public:
-
-  // Constructor.
-  EPAexternal(int idBeamIn, double m2In, PDF* gammaFluxPtrIn,
-    PDF* gammaPDFPtrIn, Settings* settingsPtrIn, Info* infoPtrIn,
-    Rndm* rndmPtrIn ) : PDF(idBeamIn) { m2 = m2In,
-    gammaFluxPtr = gammaFluxPtrIn; gammaPDFPtr = gammaPDFPtrIn;
-    hasGammaInLepton = true; infoPtr = infoPtrIn; settingsPtr = settingsPtrIn;
-    rndmPtr = rndmPtrIn; init(); }
-
-  // Update PDFs.
-  void xfUpdate(int , double x, double Q2);
-
-  // External flux and photon PDFs, and approximated flux for sampling.
-  double xfFlux(int id, double x, double Q2);
-  double xfGamma(int id, double x, double Q2);
-  double xfApprox(int id, double x, double Q2);
-
-  // Kinematics.
-  double getQ2min()         { return Q2min; }
-  double getXmin()          { return xMin; }
-  double getXhadr()         { return xHadr; }
-  double getGammaFluxNorm() { return norm; }
-
-  // Sampling of the x and Q2 according to 1/x and 1/Q2.
-  double sampleXgamma(double xMinIn)
-    { double xMinSample = (xMinIn < 0.) ? xMin : xMinIn;
-    return xMinSample * pow(xMax / xMinSample, rndmPtr->flat()); }
-  double sampleQ2gamma(double )
-    { return Q2min * pow(Q2max / Q2min, rndmPtr->flat()); }
-
 };
 
 //==========================================================================
@@ -1048,8 +1069,9 @@ class nPDF : public PDF {
 public:
 
   // Constructor.
-  nPDF(int idBeamIn = 2212, PDF* protonPDFPtrIn = 0) : PDF(idBeamIn)
-    { initNPDF(protonPDFPtrIn); }
+  nPDF(int idBeamIn = 2212, PDF* protonPDFPtrIn = 0) : PDF(idBeamIn), ruv(),
+    rdv(), ru(), rd(), rs(), rc(), rb(), rg(), a(), z(), za(), na(),
+    protonPDFPtr() { initNPDF(protonPDFPtrIn); }
 
   // Update parton densities.
   void xfUpdate(int id, double x, double Q2);
@@ -1114,9 +1136,9 @@ public:
 
   // Constructor.
   EPS09(int idBeamIn = 2212, int iOrderIn = 1, int iSetIn = 1,
-        string xmlPath = "../share/Pythia8/xmldoc/", PDF* protonPDFPtrIn = 0,
-        Info* infoPtrIn = 0) : nPDF(idBeamIn, protonPDFPtrIn)
-        { infoPtr = infoPtrIn; init(iOrderIn, iSetIn, xmlPath);}
+    string xmlPath = "../share/Pythia8/xmldoc/", PDF* protonPDFPtrIn = 0,
+    Info* infoPtrIn = 0) : nPDF(idBeamIn, protonPDFPtrIn), iSet(), iOrder(),
+    grid(), infoPtr(infoPtrIn) {init(iOrderIn, iSetIn, xmlPath);}
 
   // Update parton densities.
   void rUpdate(int id, double x, double Q2);
@@ -1154,9 +1176,10 @@ public:
 
   // Constructor.
   EPPS16(int idBeamIn = 2212, int iSetIn = 1,
-        string xmlPath = "../share/Pythia8/xmldoc/", PDF* protonPDFPtrIn = 0,
-        Info* infoPtrIn = 0) : nPDF(idBeamIn, protonPDFPtrIn)
-        { infoPtr = infoPtrIn; init(iSetIn, xmlPath);}
+    string xmlPath = "../share/Pythia8/xmldoc/", PDF* protonPDFPtrIn = 0,
+    Info* infoPtrIn = 0) : nPDF(idBeamIn, protonPDFPtrIn), iSet(), grid(),
+    logQ2min(), loglogQ2maxmin(), logX2min(), infoPtr(infoPtrIn)
+    { init(iSetIn, xmlPath); }
 
   // Update parton densities.
   void rUpdate(int id, double x, double Q2);

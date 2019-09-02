@@ -62,6 +62,7 @@ would decay later on. Currently this possibility is not handled; therefore
 the leptoquark is always assumed to decay before fragmentation. 
 For that reason the leptoquark can also not be put stable. 
  
+<a name="section0"></a> 
 <h3>Production processes</h3> 
  
 Four production processes have been implemented, which normally would 
@@ -102,6 +103,7 @@ Scatterings <i>q qbar &rarr; LQ LQbar</i>.
 Code 3204. 
    
  
+<a name="section1"></a> 
 <h3>Parameters</h3> 
  
 In the above scenario the main free parameters are the leptoquark flavour 
@@ -167,4 +169,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

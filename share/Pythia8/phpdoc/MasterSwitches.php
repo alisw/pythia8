@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='MasterSwitches.php'>
  
 <h2>Master Switches</h2> 
+<ol id="toc">
+  <li><a href="#section0">Process Level</a></li>
+  <li><a href="#section1">PartonLevel</a></li>
+  <li><a href="#section2">HadronLevel</a></li>
+  <li><a href="#section3">Printing</a></li>
+</ol>
+
  
 Sometimes it may be convenient to omit certain aspects of the event 
 generation chain. This cannot be motivated in a full-blown production 
@@ -39,6 +46,7 @@ The event generation is subdivided into three levels: the process
 level, the parton level and the hadron level, and flags are grouped 
 accordingly. 
  
+<a name="section0"></a> 
 <h3>Process Level</h3> 
  
 The <code>ProcessLevel</code> class administrates the initial step of 
@@ -85,6 +93,7 @@ since currently the program would not know how to handle this.
 It is possible to stop the generation immediately after the basic 
 process has been selected, see <code>PartonLevel:all</code> below. 
  
+<a name="section1"></a> 
 <h3>PartonLevel</h3> 
  
 The <code>PartonLevel</code> class administrates the middle step of the 
@@ -185,6 +194,7 @@ the program will complain and possibly crash unlike you also set
 It is possible to stop the generation immediately after the parton level 
 has been set up, see <code>HadronLevel:all</code> below. 
  
+<a name="section2"></a> 
 <h3>HadronLevel</h3> 
  
 The <code>HadronLevel</code> class administrates the final step of the 
@@ -247,10 +257,20 @@ on/off = true/false. Further options are found
 echo "<a href='BoseEinsteinEffects.php?filepath=".$filepath."' target='page'>";?>here</a>. 
    
  
+<br/><br/><strong>HadronLevel:DeuteronProduction</strong>  <input type="radio" name="16" value="on"><strong>On</strong>
+<input type="radio" name="16" value="off" checked="checked"><strong>Off</strong>
+ &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
+Master switch for the production of deuterons and anti-deuterons in an 
+event; on/off = true/false. Further options are found 
+<?php $filepath = $_GET["filepath"];
+echo "<a href='DeuteronProduction.php?filepath=".$filepath."' target='page'>";?>here</a>. 
+   
+ 
+<a name="section3"></a> 
 <h3>Printing</h3> 
  
-<br/><br/><strong>Print:quiet</strong>  <input type="radio" name="16" value="on"><strong>On</strong>
-<input type="radio" name="16" value="off" checked="checked"><strong>Off</strong>
+<br/><br/><strong>Print:quiet</strong>  <input type="radio" name="17" value="on"><strong>On</strong>
+<input type="radio" name="17" value="off" checked="checked"><strong>Off</strong>
  &nbsp;&nbsp;(<code>default = <strong>off</strong></code>)<br/>
 Can be set on to avoid the printing during program execution, to the 
 largest extent possible. This flag acts by setting the relevant values 
@@ -366,7 +386,12 @@ fwrite($handle,$data);
 }
 if($_POST["16"] != "off")
 {
-$data = "Print:quiet = ".$_POST["16"]."\n";
+$data = "HadronLevel:DeuteronProduction = ".$_POST["16"]."\n";
+fwrite($handle,$data);
+}
+if($_POST["17"] != "off")
+{
+$data = "Print:quiet = ".$_POST["17"]."\n";
 fwrite($handle,$data);
 }
 fclose($handle);
@@ -376,4 +401,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

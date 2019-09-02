@@ -1,5 +1,5 @@
 // HIUserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -319,8 +319,7 @@ protected:
 
   /// Setup the generation with a given nucleus radius, R, and a "skin
   /// width", a (both length in femtometers).
-  virtual
-bool init() {
+  virtual bool init() {
     intlo = R()*R()*R()/3.0;
     inthi0 = a()*R()*R();
     inthi1 = 2.0*a()*a()*R();
@@ -475,8 +474,8 @@ public:
 
   /// The default constructor is empty.
   SubCollisionModel(): sigTarg(8, 0.0), sigErr(8, 0.05), NInt(100000),
-                       NGen(20), NPop(20), sigFuzz(0.2),
-                       fitPrint(true), avNDb(1.0*femtometer) {}
+    NGen(20), NPop(20), sigFuzz(0.2), fitPrint(true), avNDb(1.0*femtometer),
+    projPtr(), targPtr(), sigTotPtr(), settingsPtr(), infoPtr(), rndPtr() {}
 
   /// Virtual destructor,
   virtual ~SubCollisionModel() {}
@@ -595,6 +594,33 @@ protected:
   Settings * settingsPtr;
   Info * infoPtr;
   Rndm * rndPtr;
+
+};
+
+
+//==========================================================================
+
+/// The most naive sub-collision model, asuming static nucleons and
+/// the absorptive cross section equal to the total inelastic. No
+///  fluctuations, meaning no diffraction.
+
+class BlackSubCollisionModel: public SubCollisionModel {
+
+public:
+
+  /// The default constructor simply lists the nucleon-nucleon cross
+  /// sections.
+  BlackSubCollisionModel() {}
+
+  /// Virtual destructor,
+  virtual ~BlackSubCollisionModel() {}
+
+  /// Take two vectors of Nucleons and an impact parameter vector and
+  /// produce the corrsponding sub-collisions. Note that states of the
+  /// nucleons may be changed.
+  virtual multiset<SubCollision>
+  getCollisions(vector<Nucleon> & proj, vector<Nucleon> & targ,
+                const Vec4 & bvec, double & T);
 
 };
 

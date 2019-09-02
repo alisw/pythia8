@@ -1,5 +1,5 @@
 // GammaKinematics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,7 +20,8 @@ namespace Pythia8 {
 // Initialize phase space limits.
 
 bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
-  Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn){
+  Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+  Couplings* couplingsPtrIn){
 
   // Store input pointers for future use.
   infoPtr       = infoPtrIn;
@@ -28,6 +29,7 @@ bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
   rndmPtr       = rndmPtrIn;
   beamAPtr      = beamAPtrIn;
   beamBPtr      = beamBPtrIn;
+  couplingsPtr  = couplingsPtrIn;
 
   // Rejection based on theta only when beams set in CM frame.
   bool rejectTheta = settingsPtr->mode("Beams:frameType") == 1;
@@ -56,6 +58,12 @@ bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
   m2BeamA       = pow2( beamAPtr->m() );
   m2BeamB       = pow2( beamBPtr->m() );
   sHatNew       = 0.;
+
+  // Id of the beam if not a photon inside the beam.
+  subInA = (beamAPtr->isGamma() || beamAPtr->isLepton()) ? 22
+         : beamAPtr->id();
+  subInB = (beamBPtr->isGamma() || beamBPtr->isLepton()) ? 22
+         : beamBPtr->id();
 
   // Calculate the CM-energies of incoming beams.
   eCM2A = 0.25 * pow2( sCM + m2BeamA - m2BeamB ) / sCM;
@@ -88,7 +96,7 @@ bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
 
 // Sample kinematics of one or two photon beams from the original beams.
 
-bool GammaKinematics::sampleKTgamma(bool nonDiff){
+bool GammaKinematics::sampleKTgamma(bool nonDiff) {
 
   // Get the sampled x_gamma values from beams.
   xGamma1 = beamAPtr->xGamma();
@@ -220,7 +228,7 @@ bool GammaKinematics::sampleKTgamma(bool nonDiff){
 // to sampled x_gamma. Check that sampled values within required limits.
 
 bool GammaKinematics::deriveKin(double xGamma, double Q2gamma,
-                                double m2Beam, double eCM2) {
+  double m2Beam, double eCM2) {
 
   // Sample azimuthal angle from flat [0,2*pi[.
   phi = 2. * M_PI * rndmPtr->flat();
@@ -281,25 +289,25 @@ double GammaKinematics::calcNewSHat(double sHatOld){
 double GammaKinematics::fluxWeight() {
 
   // Initially unit weight.
-  double wt = 1.;
+  double wtFlux = 1.;
 
   // Calculate the weight according to accurate flux.
   if ( sampleQ2) {
-    if (hasGammaA) wt *= beamAPtr->xfFlux(22, xGamma1, Q2gamma1) /
-                         beamAPtr->xfApprox(22, xGamma1, Q2gamma1);
-    if (hasGammaB) wt *= beamBPtr->xfFlux(22, xGamma2, Q2gamma2) /
-                         beamBPtr->xfApprox(22, xGamma2, Q2gamma2);
+    if (hasGammaA) wtFlux *= beamAPtr->xfFlux(22, xGamma1, Q2gamma1)
+                           / beamAPtr->xfApprox(22, xGamma1, Q2gamma1);
+    if (hasGammaB) wtFlux *= beamBPtr->xfFlux(22, xGamma2, Q2gamma2)
+                           / beamBPtr->xfApprox(22, xGamma2, Q2gamma2);
 
   // When no sampling of virtuality use the Q2-integrated flux.
   } else {
-    if (hasGammaA) wt *= beamAPtr->xfFlux(22, xGamma1, Q2gamma1) /
-                         beamAPtr->xf(22, xGamma1, Q2gamma1);
-    if (hasGammaB) wt *= beamBPtr->xfFlux(22, xGamma2, Q2gamma2) /
-                         beamBPtr->xf(22, xGamma2, Q2gamma2);
+    if (hasGammaA) wtFlux *= beamAPtr->xfFlux(22, xGamma1, Q2gamma1)
+                           / beamAPtr->xf(22, xGamma1, Q2gamma1);
+    if (hasGammaB) wtFlux *= beamBPtr->xfFlux(22, xGamma2, Q2gamma2)
+                           / beamBPtr->xf(22, xGamma2, Q2gamma2);
   }
 
   // Done.
-  return wt;
+  return wtFlux;
 }
 
 //--------------------------------------------------------------------------
@@ -329,6 +337,165 @@ bool GammaKinematics::finalize(){
   }
 
   // Done.
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Set up phase-space sampling for soft events.
+
+double GammaKinematics::setupSoftPhaseSpaceSampling(double sigmaMax) {
+
+  // Classification, constant and initial value.
+  sigmaEstimate    = 0.;
+  bool hasGamma    = settingsPtr->flag("PDF:lepton2gamma");
+  alphaEM          = couplingsPtr->alphaEM(Q2maxGamma);
+  gammaA  = beamAPtr->isGamma() || (beamAPtr->isLepton() && hasGamma);
+  gammaB  = beamBPtr->isGamma() || (beamBPtr->isLepton() && hasGamma);
+
+  // Get the masses of beam particles and derive useful ratios.
+  double m2sA      = 4. * m2BeamA / sCM;
+  double m2sB      = 4. * m2BeamB / sCM;
+
+  // Calculate the square of the minimum invariant mass for sampling.
+  double m2GmGmMin = pow2(Wmin);
+  double xGamAMax  = 1.;
+  double xGamBMax  = 1.;
+  double xGamAMin  = m2GmGmMin / sCM ;
+  double xGamBMin  = m2GmGmMin / sCM ;
+
+  // Default values to be modified.
+  xGamma1          = 1.;
+  xGamma2          = 1.;
+  log2xMinA        = 0.;
+  log2xMaxA        = 0.;
+  log2xMinB        = 0.;
+  log2xMaxB        = 0.;
+
+  // Calculate limit for x1 (if applicable) and derive useful logs.
+  if (gammaA) {
+    xGamAMax = 2. * ( 1. - 0.25 * Q2maxGamma / eCM2A - m2sA )
+      / ( 1. + sqrt( (1. + 4. * m2BeamA / Q2maxGamma) * (1. - m2sA) ) );
+    if ( !externalFlux) {
+      log2xMinA = pow2( log( Q2maxGamma/ ( m2BeamA * pow2(xGamAMin) ) ) );
+      log2xMaxA = pow2( log( Q2maxGamma/ ( m2BeamA * pow2(xGamAMax) ) ) );
+    }
+  }
+
+  // Calculate limit for x2 (if applicable) and derive useful logs.
+  if (gammaB) {
+    xGamBMax = 2. * ( 1. - 0.25 * Q2maxGamma / eCM2B - m2sB )
+      / ( 1. + sqrt( (1. + 4. * m2BeamB / Q2maxGamma) * (1. - m2sB) ) );
+    if ( !externalFlux) {
+      log2xMinB = pow2( log( Q2maxGamma/ ( m2BeamB * pow2(xGamBMin) ) ) );
+      log2xMaxB = pow2( log( Q2maxGamma/ ( m2BeamB * pow2(xGamBMax) ) ) );
+    }
+  }
+
+  // Derive the overestimate for sigmaND integral with l+l-/p -> gm+gm/p.
+  if ( !externalFlux) {
+    if ( gammaA && gammaB) {
+      sigmaEstimate = pow2( 0.5 * alphaEM / M_PI ) * 0.25
+        * (log2xMinA - log2xMaxA) * (log2xMinB - log2xMaxB) * sigmaMax;
+    } else if (gammaA) {
+      sigmaEstimate = 0.5 * alphaEM / M_PI
+        * 0.5 * (log2xMinA - log2xMaxA) * sigmaMax;
+    } else if (gammaB) {
+      sigmaEstimate = 0.5 * alphaEM / M_PI
+        * 0.5 * (log2xMinB - log2xMaxB) * sigmaMax;
+    }
+
+  // Slightly different overestimate for externally provided fluxes.
+  } else {
+
+    // Calculate the estimate for sigmaND using integrated flux approximations.
+    if ( gammaA && gammaB) {
+      sigmaEstimate = sigmaMax * beamAPtr->gammaFluxIntApprox()
+        * beamBPtr->gammaFluxIntApprox();
+    } else if (gammaA) {
+      sigmaEstimate = sigmaMax * beamAPtr->gammaFluxIntApprox();
+    } else if (gammaB) {
+      sigmaEstimate = sigmaMax * beamBPtr->gammaFluxIntApprox();
+    }
+  }
+
+  // Return the estimate.
+  return sigmaEstimate;
+}
+
+//--------------------------------------------------------------------------
+
+// Sample photon kinematics for soft events.
+
+bool GammaKinematics::trialKinSoftPhaseSpaceSampling(){
+
+  // Current weight.
+  wt = 1.0;
+
+  // Sample x_gamma's when using the internal photon flux.
+  if ( !externalFlux) {
+    if (gammaA) xGamma1 = sqrt( (Q2maxGamma / m2BeamA) * exp( -sqrt(
+      log2xMinA + rndmPtr->flat() * (log2xMaxA - log2xMinA) ) ) );
+    if (gammaB) xGamma2 = sqrt( (Q2maxGamma / m2BeamB) * exp( -sqrt(
+      log2xMinB + rndmPtr->flat() * (log2xMaxB - log2xMinB) ) ) );
+
+    // Save the x_gamma values to beam particles for further use.
+    beamAPtr->xGamma(xGamma1);
+    beamBPtr->xGamma(xGamma2);
+  }
+
+  // Sample the kT of photons, special behaviour for non-diffractive events.
+  if ( !(sampleKTgamma(true)) ) return false;
+
+  // Save the sampled x_gamma values with external flux.
+  if (externalFlux) {
+    xGamma1 = beamAPtr->xGamma();
+    xGamma2 = beamBPtr->xGamma();
+  }
+
+  // Correct for x1 and x2 oversampling.
+  double wt1 = 1.;
+  double wt2 = 1.;
+
+  // Calculate the weight for beam A from oversampling.
+  if ( gammaA) {
+    if ( !externalFlux) {
+      wt1 = ( 0.5 * ( 1. + pow2(1 - xGamma1) ) ) * log( Q2maxGamma/Q2min1 )
+        / log( Q2maxGamma / ( m2BeamA * pow2( xGamma1 ) ) );
+
+    // For external flux weight depends whether Q2 is sampled.
+    } else {
+      wt1 = sampleQ2 ? beamAPtr->xfFlux(22, xGamma1, Q2gamma1)
+        / beamAPtr->xfApprox(22, xGamma1, Q2gamma1)
+        : beamAPtr->xfFlux(22, xGamma1, Q2gamma1)
+        / beamAPtr->xf(22, xGamma1, Q2gamma1);
+    }
+  }
+
+  // Calculate the weight for beam B from oversampling.
+  if ( gammaB) {
+    if ( !externalFlux) {
+      wt2 = ( 0.5 * ( 1. + pow2(1 - xGamma2) ) ) * log( Q2maxGamma/Q2min2 )
+        / log( Q2maxGamma / ( m2BeamB * pow2( xGamma2 ) ) );
+
+    // For external flux weight depends whether Q2 is sampled.
+    } else {
+      wt2 = sampleQ2 ? beamBPtr->xfFlux(22, xGamma2, Q2gamma2)
+        / beamBPtr->xfApprox(22, xGamma2, Q2gamma2)
+        : beamBPtr->xfFlux(22, xGamma2, Q2gamma2)
+        / beamBPtr->xf(22, xGamma2, Q2gamma2);
+    }
+  }
+
+  // Correct for alpha_EM with the sampled Q2 values.
+  double wtAlphaEM1 = (gammaA && !externalFlux)
+                    ? couplingsPtr->alphaEM(Q2gamma1) / alphaEM : 1.;
+  double wtAlphaEM2 = (gammaB && !externalFlux)
+                    ? couplingsPtr->alphaEM(Q2gamma2) / alphaEM : 1.;
+  double wtAlphaEM  = wtAlphaEM1 * wtAlphaEM2;
+
+  wt = wt1 * wt2 * wtAlphaEM;
+
   return true;
 }
 

@@ -1,5 +1,5 @@
 // MergingHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -51,16 +51,16 @@ public:
   // Current reference event
   Event state;
   // Potential positions of outgoing particles in reference event
-  vector<int> PosOutgoing1;
-  vector<int> PosOutgoing2;
+  vector<pair<int,int> > PosOutgoing1;
+  vector<pair<int,int> > PosOutgoing2;
   // Potential positions of intermediate bosons in reference event
-  vector<int> PosIntermediate;
+  vector<pair<int,int> > PosIntermediate;
 
   // Information on merging scale read from LHE file
   double tms;
 
   // Default constructor
-  HardProcess(){}
+  HardProcess() : hardIncoming1(), hardIncoming2(), tms(){}
   // Default destructor
   virtual ~HardProcess(){}
 
@@ -85,7 +85,8 @@ public:
   }
 
   // Constructor with path to LHE file
-  HardProcess( string LHEfile, ParticleData* particleData) {
+  HardProcess( string LHEfile, ParticleData* particleData) : hardIncoming1(),
+    hardIncoming2(), tms() {
     state = Event();
     state.init("(hard process)", particleData);
     translateLHEFString(LHEfile);
@@ -108,8 +109,8 @@ public:
 
   // Function to check whether the sets of candidates Pos1, Pos2, together
   // with the proposed candidate iPos give an allowed hard process state
-  virtual bool allowCandidates(int iPos, vector<int> Pos1, vector<int> Pos2,
-    const Event& event);
+  virtual bool allowCandidates(int iPos, vector<pair<int,int> > Pos1,
+    vector<pair<int,int> > Pos2, const Event& event);
   // Function to identify the hard subprocess in the current event
   virtual void storeCandidates( const Event& event, string process);
   // Function to check if the particle event[iPos] matches any of
@@ -165,12 +166,21 @@ class MergingHooks {
 public:
 
   // Constructor.
-  MergingHooks() :
+  MergingHooks() : useShowerPluginSave(), showers(),
     doUserMergingSave(false),
     doMGMergingSave(false),
     doKTMergingSave(false),
     doPTLundMergingSave(false),
-    doCutBasedMergingSave(false),
+    doCutBasedMergingSave(false), includeMassiveSave(),
+    enforceStrongOrderingSave(),
+    orderInRapiditySave(), pickByFullPSave(), pickByPoPT2Save(),
+    includeRedundantSave(), pickBySumPTSave(), allowColourShufflingSave(),
+    resetHardQRenSave(), resetHardQFacSave(), unorderedScalePrescipSave(),
+    unorderedASscalePrescipSave(), unorderedPDFscalePrescipSave(),
+    incompleteScalePrescipSave(), ktTypeSave(), nReclusterSave(),
+    nQuarksMergeSave(), nRequestedSave(), scaleSeparationFactorSave(),
+    nonJoinedNormSave(), fsrInRecNormSave(), herwigAcollFSRSave(),
+    herwigAcollISRSave(), pT0ISRSave(), pTcutSave(),
     doNL3TreeSave(false),
     doNL3LoopSave(false),
     doNL3SubtSave(false),
@@ -180,16 +190,23 @@ public:
     doUNLOPSSubtNLOSave(false),
     doUMEPSTreeSave(false),
     doUMEPSSubtSave(false),
-    doEstimateXSection(false),
-    doRemoveDecayProducts(false),
+    doEstimateXSection(false), applyVeto(),
+    doRemoveDecayProducts(false), nInProcessNow(-1), muMISave(),
+    kFactor0jSave(), kFactor1jSave(),
+    kFactor2jSave(), tmsValueSave(), tmsValueNow(), DparameterSave(),
+    nJetMaxSave(), nJetMaxNLOSave(), nJetMinWTASave(-1),
     doOrderHistoriesSave(true),
     doCutOnRecStateSave(false),
     doWeakClusteringSave(false),
-    doSQCDClusteringSave(false),
+    doSQCDClusteringSave(false), muFSave(), muRSave(), muFinMESave(),
+    muRinMESave(),
     doIgnoreEmissionsSave(true),
-    doIgnoreStepSave(true),
+    doIgnoreStepSave(true), pTsave(), weightCKKWL1Save(), weightCKKWL2Save(),
+    nMinMPISave(), weightCKKWLSave(), weightFIRSTSave(), nJetMaxLocal(),
+    nJetMaxNLOLocal(),
     hasJetMaxLocal(false),
-    includeWGTinXSECSave(false) {
+    includeWGTinXSECSave(false), nHardNowSave(), nJetNowSave(),
+    tmsHardNowSave(), tmsNowSave() {
       inputEvent = Event(); resonances.resize(0); infoPtr = 0; settingsPtr = 0;
       particleDataPtr = 0; partonSystemsPtr = 0; useOwnHardProcess = false;
       hardProcess = 0; stopScaleSave= 0.0; }
@@ -306,8 +323,9 @@ public:
   // for which NLO corrections are available.
   int nMaxJetsNLO()
     { return (hasJetMaxLocal) ? nJetMaxNLOLocal : nJetMaxNLOSave;}
+  int nMinJetWTA() { return nJetMinWTASave;}
   // Function to return hard process string.
-  string getProcessString() { return processSave;}
+  string getProcessString() { return processNow;}
   // Function to return the number of outgoing partons in the core process
   int nHardOutPartons(){ return hardProcess->nQuarksOut();}
   // Function to return the number of outgoing leptons in the core process
@@ -535,6 +553,7 @@ public:
   Event inputEvent;
   vector< pair<int,int> > resonances;
   bool doRemoveDecayProducts;
+  int nInProcessNow;
 
   // Starting scale for attaching MPI.
   double muMISave;
@@ -548,8 +567,9 @@ public:
   double tmsValueSave, tmsValueNow, DparameterSave;
   int nJetMaxSave;
   int nJetMaxNLOSave;
+  int nJetMinWTASave;
 
-  string processSave;
+  string processSave, processNow;
 
   // List of cut values to used to define a merging scale. Ordering:
   // 0: DeltaR_{jet_i,jet_j,min}

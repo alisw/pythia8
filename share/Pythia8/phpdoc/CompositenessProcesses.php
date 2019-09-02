@@ -28,6 +28,13 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='CompositenessProcesses.php'>
  
 <h2>Compositeness Processes</h2> 
+<ol id="toc">
+  <li><a href="#section0">Excited fermions, production processes</a></li>
+  <li><a href="#section1">Excited fermions, parameters</a></li>
+  <li><a href="#section2">Contact interactions, production processes</a></li>
+  <li><a href="#section3">Contact interactions, parameters</a></li>
+</ol>
+
  
 Compositeness scenarios may give rise to sharp resonances of excited 
 quarks and leptons. An excited copy of the first generation is 
@@ -69,6 +76,7 @@ switch off other decay channels and set the minimal mass to be at the
 threshold for the studied pair production (or suitably below it, 
 if the excited fermions have a non-negligible width). 
  
+<a name="section0"></a> 
 <h3>Excited fermions, production processes</h3> 
  
 A few different production processes have been implemented, which normally 
@@ -256,6 +264,7 @@ Scatterings <i>q qbar &rarr; nu_tau^* nu_tau^*bar</i>.
 Code 4056. 
    
  
+<a name="section1"></a> 
 <h3>Excited fermions, parameters</h3> 
  
 The basic couplings of the model are 
@@ -283,6 +292,7 @@ and neutrinos, where unity corresponds to the same normalization
 as for the production channels. 
    
  
+<a name="section2"></a> 
 <h3>Contact interactions, production processes</h3> 
  
 The processes including contact interactions are 
@@ -322,6 +332,7 @@ Scatterings <i>f fbar &rarr; tau- tau+</i> including contact interactions.
 Code 4205. 
    
  
+<a name="section3"></a> 
 <h3>Contact interactions, parameters</h3> 
  
 <br/><br/><table><tr><td><strong>ContactInteractions:nQuarkNew  </td><td></td><td> <input type="text" name="37" value="3" size="20"/>  &nbsp;&nbsp;(<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)</td></tr></table>
@@ -601,4 +612,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

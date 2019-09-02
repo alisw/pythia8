@@ -289,6 +289,14 @@ setting <code>Merging:nJetMax</code>.
 </flag> 
  
  
+<flag name="Merging:doMerging" default="off"> 
+Finally, it is also possible to switch on the merging machinery without 
+switching on specific merging procedure, by turning this setting on. This 
+is not sufficient for the internal merging of PYTHIA itself, but convenient 
+when using an external shower plugin. 
+</flag> 
+ 
+ 
 <h4>Merging with merging scale defined in Pythia evolution <ei>pT</ei>:</h4> 
  
 If the LHE file has been regularised by cutting on the minimal Pythia 
@@ -573,6 +581,7 @@ simple BSM processes. Please use this feature with caution.
  
 <br/><br/><hr/> 
 <h3>Histogramming the events</h3> 
+ 
 After the event has been processed, histograms for observables of interest 
 need to be filled. In order to achieve good statistical accuracy for all jet 
 multiplicities and all subprocesses contributing to one jet multiplicity, 
@@ -1102,8 +1111,6 @@ a "merging of mergins" containing states with up to three partons, or up to
 two partons and one W-boson, or up to one parton and two W-bosons, or up to 
 three W-bosons. 
  
- 
- 
 <br/><br/><hr/> 
 <h3>Further variables</h3> 
  
@@ -1330,6 +1337,13 @@ the event weight <code>Info::weight()</code>, the merging weight
 by <code>Info::sigmaGen()</code> includes the effect of CKKW-L merging. 
 </flag> 
  
+<modeopen name="Merging:nJetMinWinnerTakesAll" default="-1" min="-1"> 
+Minimal number of additional jets in the matrix element that will be handled 
+by winner-takes-all cluctering. The default, negative value means that no 
+clusterings will be handled by winner-takes-all, and instead all histories 
+are constructed. 
+</modeopen> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

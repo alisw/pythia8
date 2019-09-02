@@ -154,7 +154,7 @@ one by one:
 <pre> 
   hpl.add( ZpT, "-"); 
   hpl.add( WpT, "--,indigo"); 
-  hpl.add( allpT ); 
+  hpl.add( ZpT + 2. * WpT , "", "pT spectrum of Z, W+ and W-"); 
 </pre> 
 where the second argument tells how each histogram will be plotted. 
 Default is histogram style, "h", but the values can also be connected 
@@ -553,4 +553,4 @@ is almost the same, the exception being that the two compulsory arguments
  
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

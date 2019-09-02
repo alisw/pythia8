@@ -34,7 +34,7 @@ includes a facility where a model for combining several nucleon-nucleon
 collisions into one heavy ion collision can be implemented. One such model, 
 called <a href="#Angantyr" target="page">Angantyr</a>, is provided with PYTHIA 
 and is inspired by the old Fritiof program from the Lund group 
-[<a href="Bibliography.php#refAnd86" target="page">And86</a>] with recent improvements [<a href="Bibliography.php#refBie16a" target="page">Bie16a</a>] (see below). 
+[<a href="Bibliography.php#refAnd87" target="page">And87</a>] with recent improvements [<a href="Bibliography.php#refBie16a" target="page">Bie16a</a>] (see below). 
  
 <p/> 
  
@@ -45,9 +45,9 @@ handful of nuclei with PDG numbers on the form 100ZZZAAAI:
 <sup>12</sup>C (1000060120), 
 <sup>16</sup>O (1000080160), 
 <sup>63</sup>Cu (1000290630), 
-<sup>129</sup>Xe (1000290630), 
+<sup>129</sup>Xe (1000541290), 
 <sup>197</sup>Au (1000791970), and 
-<sup>208</sup>Pb(1000822080), but  can be added using the function 
+<sup>208</sup>Pb (1000822080), but  can be added using the function 
 <code>ParticleData::addParticle</code>. 
  
 <br/><br/><table><tr><td><strong>HeavyIon:mode  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)</td></tr></table>
@@ -169,6 +169,7 @@ classes are used.
 </li> 
 </ul> 
  
+<a name="section0"></a> 
 <h3><a name="Angantyr">Angantyr</a> - the default heavy ion model</h3> 
  
 The default model in PYTHIA is called Angantyr and is inspired by the old 
@@ -266,12 +267,13 @@ fitting procedure. If on, extensive information about the fitting will be
 printed. 
    
  
-<br/><br/><table><tr><td><strong>Angantyr:CollisionModel  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)</td></tr></table>
+<br/><br/><table><tr><td><strong>Angantyr:CollisionModel  </td><td>  &nbsp;&nbsp;(<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)</td></tr></table>
 The Angantyr model has a couple of option for the SubCollisionModel 
 <br/>
-<input type="radio" name="13" value="0"><strong>0 </strong>:  A simplified model with fixed nucleon radii.  its normal machinery.  <br/>
+<input type="radio" name="13" value="0"><strong>0 </strong>:  A simplified model with fixed nucleon radii.  <br/>
 <input type="radio" name="13" value="1" checked="checked"><strong>1 </strong>:  The default model with fluctuating radii and cross  sections.  <br/>
 <input type="radio" name="13" value="2"><strong>2 </strong>:  Fluctuating radii and cross sections but different  treatment of opacity.  <br/>
+<input type="radio" name="13" value="3"><strong>3 </strong>:  Black disks with no fluctuations, ie. no diffraction.  <br/>
  
 <br/><br/><strong>Angantyr:GlauberOnly</strong>  <input type="radio" name="14" value="on"><strong>On</strong>
 <input type="radio" name="14" value="off" checked="checked"><strong>Off</strong>
@@ -534,4 +536,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

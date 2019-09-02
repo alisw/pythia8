@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='ImplementNewShowers.php'>
  
 <h2>Implement New Showers</h2> 
+<ol id="toc">
+  <li><a href="#section0">The event record and associated information</a></li>
+  <li><a href="#section1">The TimeShower interface</a></li>
+  <li><a href="#section2">The SpaceShower interface</a></li>
+</ol>
+
  
 In case you want to replace the PYTHIA initial- and final-state 
 showers by your own, it is possible but not trivial. The point is 
@@ -40,7 +46,7 @@ leaves the field open exactly how to define what to mean by
 <i>pT</i>, how to handle recoil effects, how the colour flow is 
 affected, and so on, so there is certainly room for alternative 
 showers. A first example of a shower implemented within the PYTHIA 
-context is <a href="http://home.fnal.gov/~skands/vincia/">VINCIA</a>. 
+context is <a href="https://vincia.hepforge.org">VINCIA</a>. 
  
 <p/> 
 For the moment we assume you want to keep the MPI part of the story 
@@ -91,6 +97,7 @@ can agree. The only tiny point to take into account then is that
 to <code>timesDecPtr</code> with beam pointers 0, and a second time 
 to <code>timesPtr</code> with nonvanishing beam pointers. 
  
+<a name="section0"></a> 
 <h3>The event record and associated information</h3> 
  
 Obviously the main place for sharing information is the event 
@@ -150,6 +157,7 @@ is stored in the
 echo "<a href='AdvancedUsage.php?filepath=".$filepath."' target='page'>";?>BeamParticle</a></code> 
 class. 
  
+<a name="section1"></a> 
 <h3>The TimeShower interface</h3> 
  
 If you want to replace the <code>TimeShower</code> class this would 
@@ -245,6 +253,15 @@ not the default value.
    
  
 <a name="anchor9"></a>
+<p/><strong> virtual int TimeShower::showerQEDafterRemnants( Event& event) &nbsp;</strong> <br/>
+ Optional method to add QED showers after beam remnants have been added 
+ but before hadronisation. 
+ It is called from the very end of <code>PartonLevel::next()</code>, 
+ after the main perturbative evolution has finished and all beam 
+ remnants have been added. 
+   
+ 
+<a name="anchor10"></a>
 <p/><strong> double TimeShower::pTLastInShower() &nbsp;</strong> <br/>
 Can be used to return the <i>pT</i> evolution scale of the last 
 branching in the cascade generated with the above 
@@ -253,7 +270,7 @@ branching in the cascade generated with the above
 were no branchings. Can be useful for matching studies. 
    
  
-<a name="anchor10"></a>
+<a name="anchor11"></a>
 <p/><strong> virtual void TimeShower::prepareGlobal( Event& event) &nbsp;</strong> <br/>
 This method resets some counters and extracts the locations of 
 outgoing partons, in preparation of using the optional global recoil 
@@ -262,7 +279,7 @@ once during the parton-level evolution, since it only relates to
 the hardest interaction. Is probably of no use to most people. 
    
  
-<a name="anchor11"></a>
+<a name="anchor12"></a>
 <p/><strong> virtual void TimeShower::prepare( int iSys, Event& event, bool limitPTmaxIn = true) &nbsp;</strong> <br/>
 This method is called immediately after a new interaction (or the 
 products of a resonance decay) has been added, and should then be used 
@@ -289,7 +306,7 @@ class variables <code>dopTlimit1</code> and <code>dopTlimit2</code>
 instead convey the choice made. 
    
  
-<a name="anchor12"></a>
+<a name="anchor13"></a>
 <p/><strong> virtual void TimeShower::rescatterUpdate( int iSys, Event& event) &nbsp;</strong> <br/>
 This method is called immediately after rescattering in the description 
 of multiparton interactions. Thus the information on one or several 
@@ -299,7 +316,7 @@ of new showers will want to touch the technicalities involved
 in obtaining a description of rescattering. 
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
 <p/><strong> virtual void TimeShower::update( int iSys, Event& event, bool hasWeakRad = false) &nbsp;</strong> <br/>
 This method is called immediately after a spacelike branching in the 
 <code>iSys</code>'th subsystem. Thus the information for that system is 
@@ -312,7 +329,7 @@ occured in the spacelike evolution, which might be used to switch off
 the timelike weak emissions. 
    
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><strong> virtual double TimeShower::pTnext( Event& event, double pTbegAll, double pTendAll, bool isFirstTrial = false) &nbsp;</strong> <br/>
 This is the main driver routine for the downwards evolution. A new 
 <i>pT</i> is to be selected based on the current information set up 
@@ -338,7 +355,7 @@ to assign the winner.
 very first emission, and is currently used in the global recoil option. 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><strong> virtual bool TimeShower::branch( Event& event, bool isInterleaved = false) &nbsp;</strong> <br/>
 This method will be called once FSR has won the competition with 
 MPI and ISR to do the next branching. The candidate branching found 
@@ -358,7 +375,7 @@ More precisely, it separates calls to the <code>timesDecPtr</code>
 and the <code>timesPtr</code> instances. 
    
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><strong> virtual bool TimeShower::rescatterPropogateRecoil( Event& event, Vec4& pNew) &nbsp;</strong> <br/>
 This method is only called if rescattering is switched on in the 
 description of multiparton interactions. It then propagates a recoil 
@@ -367,7 +384,7 @@ As for <code>rescatterUpdate</code> above, this is not likely to be
 of interest to most implementors of new showers. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><strong> int TimeShower::system() &nbsp;</strong> <br/>
 This method is not virtual. If a branching is constructed by the 
 previous routine this tiny method should be able to return the number 
@@ -377,13 +394,13 @@ if necessary. Therefore <code>iSysSel</code> must be set in
 <code>branch</code> (or already in <code>pTnext</code>). 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><strong> bool TimeShower::getHasWeaklyRadiated() &nbsp;</strong> <br/>
 This method is not virtual. It is used to tell whether a weak gauge 
 boson has been emitted in the shower evolution. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><strong> virtual void TimeShower::list() &nbsp;</strong> <br/>
 This method is not at all required. In the current implementation it 
 outputs a list of all the dipole ends, with information on the 
@@ -418,7 +435,7 @@ radiated parton, all after the splitting. (The ones before are stored in
 the distinctions between <code>iRad</code> and <code>iEmt</code>, or 
 between <code>iRad</code> and <code>iRec</code>, are a matter of choice. 
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><strong> virtual bool TimeShower::isTimelike( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return true if the splitting that produced the particles 
 <code>event[iRad]</code>, <code>event[iRec]</code> and 
@@ -428,7 +445,7 @@ can be used for additional flexibility, e.g. if multiple kernels with
 identical post-branching states exist. 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><strong> virtual Event TimeShower::clustered( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return a PYTHIA event record in which the emission 
 of the particle with index <code>iEmt</code> in the input 
@@ -440,7 +457,7 @@ Reclustered events are crucial in setting up consistent parton shower
 histories. 
    
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><strong> virtual map &lt;string,double&gt; TimeShower::getStateVariables( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return a map of variables related to the splitting 
 that produced the particles <code>event[iRad]</code>, <code>event[iRec]</code> 
@@ -460,7 +477,7 @@ kinematical invariants etc.).
 e.g. if multiple kernels with identical post-branching states exist. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><strong> virtual vector&lt;string&gt; TimeShower::getSplittingName( const Event& event, int iRad, int iEmt, int iRec) &nbsp;</strong> <br/>
 This function should return a vector of string identifiers of the 
 splitting producing the particles with indices 
@@ -474,7 +491,7 @@ for multiple string identifiers, e.g. if multiple splittings lead to identical
 final states. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><strong> virtual double TimeShower::getSplittingProb( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return the probability of an emission 
 of the particle with index <code>iEmt</code> from the particles 
@@ -483,7 +500,7 @@ All indices are relative to the input <code>event</code>. The identifier
 <code>name</code> can be used for additional flexibility. 
    
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><strong> virtual bool TimeShower::allowedSplitting( const Event& event, int iRad, int iEmt) &nbsp;</strong> <br/>
 This function is not used in the Pythia core code, and can thus be omitted. 
 The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
@@ -495,7 +512,7 @@ event. The function should return true if the combination was possible, and
 false otherwise. 
    
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><strong> virtual vector&lt;int&gt;TimeShower::getRecoilers(  const Event& event, int iRad, int iEmt, string name) &nbsp;</strong> <br/>
 This function is not used in the Pythia core code, and can thus be omitted. 
 The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
@@ -509,6 +526,7 @@ name is supplied. The function should return a vector of the positions of all
 possible allowed recoilers in the input event. 
    
  
+<a name="section2"></a> 
 <h3>The SpaceShower interface</h3> 
  
 If you want to replace the <code>SpaceShower</code> class this would 
@@ -519,23 +537,23 @@ description is simpler, since there are no special cases for resonance
 decays and non-interleaved evolution. Thus there is no correspondence 
 to the <code>TimeShower::shower(...)</code> routine. 
  
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><strong> SpaceShower::SpaceShower() &nbsp;</strong> <br/>
 The constructor does not need to do anything. 
    
  
-<a name="anchor28"></a>
+<a name="anchor29"></a>
 <p/><strong> virtual SpaceShower::~SpaceShower() &nbsp;</strong> <br/>
 Also the destructor does not need to do anything. 
    
  
-<a name="anchor29"></a>
+<a name="anchor30"></a>
 <p/><strong> void SpaceShower::initPtr(Info* infoPtrIn, Settings* settingsPtrIn, ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, CoupSM* coupSMPtrIn, PartonSystems* partonSystemsPtrIn, UserHooks* userHooksPtrIn, MergingHooks* mergingHooksPtrIn = 0) &nbsp;</strong> <br/>
 This method only imports pointers to standard facilities, 
 and is not virtual. 
    
  
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <p/><strong> virtual void SpaceShower::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) &nbsp;</strong> <br/>
 You have to store your local copy of the pointers to these objects, 
 since they have to be used during the generation, as explained above. 
@@ -544,7 +562,7 @@ you plan to use, e.g. by reading in them from a user-accessible
 database like the <code>Settings</code> one. 
    
  
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><strong> virtual bool SpaceShower::limitPTmax( Event& event, double Q2Fac = 0.,  double Q2Ren = 0.) &nbsp;</strong> <br/>
 The question is whether the ISR should be allowed to occur at larger 
 scales than the hard process it surrounds. This is process-dependent. 
@@ -563,7 +581,7 @@ the factorization or renormalization scale. Therefore the (square of the)
 latter two are provided as optional input parameters. 
    
  
-<a name="anchor32"></a>
+<a name="anchor33"></a>
 <p/><strong> virtual double SpaceShower::enhancePTmax() &nbsp;</strong> <br/>
 When the above method limits <i>pT_max</i> to the scale of the process, 
 it may still be convenient to vary the matching slightly for the hardest 
@@ -572,7 +590,7 @@ base-class implementation returns the value of the
 <code>SpaceShower:pTmaxFudge</code> parameter. 
    
  
-<a name="anchor33"></a>
+<a name="anchor34"></a>
 <p/><strong> virtual void SpaceShower::prepare( int iSys, Event& event, bool limitPTmaxIn = true) &nbsp;</strong> <br/>
 This method is called immediately after a new interaction has been 
 added, and should then be used to prepare the subsystem of partons 
@@ -590,7 +608,7 @@ subsequent MPI, since there an unlimited <i>pT</i> for sure
 would lead to double-counting. 
    
  
-<a name="anchor34"></a>
+<a name="anchor35"></a>
 <p/><strong> virtual void SpaceShower::update( int iSys, Event& event, bool hasWeakRad = false) &nbsp;</strong> <br/>
 This method is called immediately after a timelike branching in the 
 <code>iSys</code>'th subsystem. Thus the information for that system may 
@@ -601,7 +619,7 @@ if a weak radiation has occured in the timelike evolution, which might be
 used to switch off the spacelike weak emissions. 
    
  
-<a name="anchor35"></a>
+<a name="anchor36"></a>
 <p/><strong> virtual double SpaceShower::pTnext( Event& event, double pTbegAll, double pTendAll, int nRadIn = -1) &nbsp;</strong> <br/>
 This is the main driver routine for the downwards evolution. A new 
 <i>pT</i> is to be selected based on the current information set up 
@@ -628,7 +646,7 @@ ISR and FSR emissions already generated in the event, and so allows a
 special treatment for the very first emission, if desired. 
    
  
-<a name="anchor36"></a>
+<a name="anchor37"></a>
 <p/><strong> virtual bool SpaceShower::branch( Event& event) &nbsp;</strong> <br/>
 This method will be called once ISR has won the competition with 
 MPI and FSR to do the next branching. The candidate branching found 
@@ -644,7 +662,7 @@ could be carried out. Also a complete restart of the parton-level
 description may be necessary, see <code>doRestart()</code> below. 
    
  
-<a name="anchor37"></a>
+<a name="anchor38"></a>
 <p/><strong> int SpaceShower::system() &nbsp;</strong> <br/>
 This method is not virtual. If a branching is constructed by the 
 previous routine this tiny method should be able to return the number 
@@ -654,7 +672,7 @@ if necessary. Therefore <code>iSysSel</code> must be set in
 <code>branch</code> (or already in <code>pTnext</code>). 
    
  
-<a name="anchor38"></a>
+<a name="anchor39"></a>
 <p/><strong> bool SpaceShower::doRestart() &nbsp;</strong> <br/>
 This method is not virtual. If <code>branch(...)</code> above fails 
 to construct a branching, and the conditions are such that the whole 
@@ -664,13 +682,13 @@ this kind of failures, and so the internal <code>rescatterFail</code>
 boolean must be set true when this should happen, and else false. 
    
  
-<a name="anchor39"></a>
+<a name="anchor40"></a>
 <p/><strong> bool SpaceShower::getHasWeaklyRadiated() &nbsp;</strong> <br/>
 This method is not virtual. It is used to tell whether a weak gauge 
 boson has been emitted in the shower evolution. 
    
  
-<a name="anchor40"></a>
+<a name="anchor41"></a>
 <p/><strong> virtual void SpaceShower::list() &nbsp;</strong> <br/>
 This method is not at all required. In the current implementation it 
 outputs a list of all the dipole ends, with information on the 
@@ -688,7 +706,7 @@ variable, c) to parton shower splitting probabilities and d) to the
 (inverse) parton shower momentum mapping. Thus, as in the timelike case, 
 it can be beneficial to define the functions 
  
-<a name="anchor41"></a>
+<a name="anchor42"></a>
 <p/><strong> virtual bool SpaceShower::isSpacelike( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return true if the splitting that produced the particles 
 <code>event[iRad]</code>, <code>event[iRec]</code> and 
@@ -698,7 +716,7 @@ can be used for additional flexibility, e.g. if multiple kernels with
 identical post-branching states exist. 
    
  
-<a name="anchor42"></a>
+<a name="anchor43"></a>
 <p/><strong> virtual Event SpaceShower::clustered( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return a PYTHIA event record in which the emission 
 of the particle with index <code>iEmt</code> in the input 
@@ -708,7 +726,7 @@ is a string identifier for the splitting. Such reclustered events are
 crucial in setting up consistent parton shower histories. 
    
  
-<a name="anchor43"></a>
+<a name="anchor44"></a>
 <p/><strong> virtual map &lt;string,double&gt; SpaceShower::getStateVariables( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return a map of variables related to the splitting 
 that produced the particles <code>event[iRad]</code>, <code>event[iRec]</code> 
@@ -728,7 +746,7 @@ kinematical invariants etc.).
 e.g. if multiple kernels with identical post-branching states exist. 
    
  
-<a name="anchor44"></a>
+<a name="anchor45"></a>
 <p/><strong> virtual vector&lt;string&gt; SpaceShower::getSplittingName( const Event& event, int iRad, int iEmt, int iRec) &nbsp;</strong> <br/>
 This function should return a string identifier of the splitting producing 
 the particles with indices <code>iRad</code>, <code>iEmt</code> and 
@@ -741,7 +759,7 @@ for multiple string identifiers, e.g. if multiple splittings lead to identical
 final states. 
    
  
-<a name="anchor45"></a>
+<a name="anchor46"></a>
 <p/><strong> virtual double SpaceShower::getSplittingProb( const Event& event, int iRad, int iEmt, int iRec, string name) &nbsp;</strong> <br/>
 This function should return the probability of an emission 
 of the particle with index <code>iEmt</code> from the particle 
@@ -750,7 +768,7 @@ relative to the input <code>event</code>. The identifier
 <code>name</code> can be used for additional flexibility. 
    
  
-<a name="anchor46"></a>
+<a name="anchor47"></a>
 <p/><strong> virtual bool SpaceShower::allowedSplitting( const Event& event, int iRad, int iEmt) &nbsp;</strong> <br/>
 This function is not used in the Pythia core code, and can thus be omitted. 
 The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
@@ -762,7 +780,7 @@ event. The function should return true if the combination was possible, and
 false otherwise. 
    
  
-<a name="anchor47"></a>
+<a name="anchor48"></a>
 <p/><strong> virtual vector&lt;int&gt; SpaceShower::getRecoilers( const Event& event, int iRad, int iEmt, string name) &nbsp;</strong> <br/>
 This function is not used in the Pythia core code, and can thus be omitted. 
 The purpose of this function is to allow ME+PS plugins for Pythia to ask the 
@@ -779,4 +797,4 @@ possible allowed recoilers in the input event.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

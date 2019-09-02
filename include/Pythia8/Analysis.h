@@ -1,5 +1,5 @@
 // Analysis.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -30,7 +30,7 @@ public:
 
   // Constructor.
   Sphericity(double powerIn = 2., int selectIn = 2) : power(powerIn),
-    select(selectIn), nFew(0) {powerInt = 0;
+    select(selectIn), eVal1(), eVal2(), eVal3(), nFew(0) {powerInt = 0;
     if (abs(power - 1.) < 0.01) powerInt = 1;
     if (abs(power - 2.) < 0.01) powerInt = 2;
     powerMod = 0.5 * power - 1.;}
@@ -82,7 +82,8 @@ class Thrust {
 public:
 
   // Constructor.
-  Thrust(int selectIn = 2) : select(selectIn), nFew(0) {}
+  Thrust(int selectIn = 2) : select(selectIn), eVal1(), eVal2(), eVal3(),
+    nFew(0) {}
 
   // Analyze event.
   bool analyze(const Event& event);
@@ -179,11 +180,13 @@ public:
   ClusterJet(string measureIn = "Lund", int selectIn = 2, int massSetIn = 2,
     bool preclusterIn = false, bool reassignIn = false) : measure(1),
     select(selectIn), massSet(massSetIn), doPrecluster(preclusterIn),
-    doReassign(reassignIn), nFew(0) {
-    char firstChar = toupper(measureIn[0]);
-    if (firstChar == 'J') measure = 2;
-    if (firstChar == 'D') measure = 3;
-  }
+    doReassign(reassignIn), yScale(), pTscale(), nJetMin(), nJetMax(),
+    dist2Join(), dist2BigMin(), distPre(), dist2Pre(), nParticles(), nFew(0)
+    {
+      char firstChar = toupper(measureIn[0]);
+      if (firstChar == 'J') measure = 2;
+      if (firstChar == 'D') measure = 3;
+    }
 
   // Analyze event.
   bool analyze(const Event& event, double yScaleIn, double pTscaleIn,
@@ -307,7 +310,8 @@ public:
     double upperCutIn = 2., double thresholdIn = 0., Rndm* rndmPtrIn = 0)
     : etaMax(etaMaxIn), nEta(nEtaIn), nPhi(nPhiIn), select(selectIn),
     smear(smearIn), resolution(resolutionIn), upperCut(upperCutIn),
-    threshold(thresholdIn), nFew(0), rndmPtr(rndmPtrIn) { }
+    threshold(thresholdIn), eTjetMin(), coneRadius(), eTseed(), nFew(0),
+    rndmPtr(rndmPtrIn) { }
 
   // Analyze event.
   bool analyze(const Event& event, double eTjetMinIn = 20.,
@@ -422,10 +426,12 @@ public:
     bool useStandardRin = true) : power(powerIn), R(Rin),
     pTjetMin(pTjetMinIn), etaMax(etaMaxIn), select(selectIn),
     massSet(massSetIn), sjHookPtr(sjHookPtrIn), useFJcore(useFJcoreIn),
-    useStandardR(useStandardRin) { isAnti = (power < 0); isKT = (power > 0);
-    R2 = R*R; pT2jetMin = pTjetMin*pTjetMin; cutInEta = (etaMax <= 20.);
-    chargedOnly = (select > 2); visibleOnly = (select == 2);
-    modifyMass = (massSet < 2); noHook = (sjHookPtr == 0);}
+    useStandardR(useStandardRin), origSize(), clSize(), clLast(), jtSize(),
+    iMin(), jMin(), dPhi(), dijTemp(), dMin() { isAnti = (power < 0);
+    isKT = (power > 0); R2 = R*R; pT2jetMin = pTjetMin*pTjetMin;
+    cutInEta = (etaMax <= 20.); chargedOnly = (select > 2);
+    visibleOnly = (select == 2); modifyMass = (massSet < 2);
+    noHook = (sjHookPtr == 0);}
 
   // Destructor.
   virtual ~SlowJet() {};

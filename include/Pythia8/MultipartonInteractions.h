@@ -1,5 +1,5 @@
 // MultipartonInteractions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -36,7 +36,10 @@ class SigmaMultiparton {
 public:
 
   // Constructor.
-  SigmaMultiparton() {}
+  SigmaMultiparton() : nChan(), needMasses(), useNarrowBW3(), useNarrowBW4(),
+    m3Fix(), m4Fix(), sHatMin(), sigmaT(), sigmaU(), sigmaTval(), sigmaUval(),
+    sigmaTsum(), sigmaUsum(), pickOther(), pickedU(), particleDataPtr(),
+    rndmPtr() {}
 
   // Destructor.
   ~SigmaMultiparton() {
@@ -72,7 +75,7 @@ private:
 
   // Number of processes. Some use massive matrix elements.
   int            nChan;
-  vector<bool>   needMasses;
+  vector<bool>   needMasses, useNarrowBW3, useNarrowBW4;
   vector<double> m3Fix, m4Fix, sHatMin;
 
   // Vector of process list, one for t-channel and one for u-channel.
@@ -83,7 +86,8 @@ private:
   double         sigmaTsum, sigmaUsum;
   bool           pickOther, pickedU;
 
-  // Pointer to the random number generator.
+  // Pointers to the particle data and random number generator.
+  ParticleData*  particleDataPtr;
   Rndm*          rndmPtr;
 
 };
@@ -98,7 +102,39 @@ class MultipartonInteractions {
 public:
 
   // Constructor.
-  MultipartonInteractions() : bIsSet(false) {}
+  MultipartonInteractions() : allowRescatter(), allowDoubleRes(), canVetoMPI(),
+    doPartonVertex(), doVarEcm(), pTmaxMatch(), alphaSorder(), alphaEMorder(),
+    alphaSnfmax(), bProfile(), processLevel(), bSelScale(), rescatterMode(),
+    nQuarkIn(), nSample(), enhanceScreening(), pT0paramMode(), alphaSvalue(),
+    Kfactor(), pT0Ref(), ecmRef(), ecmPow(), pTmin(), coreRadius(),
+    coreFraction(), expPow(), ySepResc(), deltaYResc(), sigmaPomP(), mPomP(),
+    pPomP(), mMaxPertDiff(), mMinPertDiff(), a1(), a0now(), a02now(),
+    bstepNow(), a2max(), b2now(), enhanceBmax(), enhanceBnow(), id1Save(),
+    id2Save(), pT2Save(), x1Save(), x2Save(), sHatSave(), tHatSave(),
+    uHatSave(), alpSsave(), alpEMsave(), pT2FacSave(), pT2RenSave(),
+    xPDF1nowSave(), xPDF2nowSave(), scaleLimitPTsave(), dSigmaDtSelSave(),
+    vsc1(), vsc2(), hasBaryonBeams(), hasPomeronBeams(), hasLowPow(),
+    globalRecoilFSR(), iDiffSys(), nMaxGlobalRecoilFSR(), bSelHard(), eCM(),
+    sCM(), pT0(), pT20(), pT2min(), pTmax(), pT2max(), pT20R(), pT20minR(),
+    pT20maxR(), pT20min0maxR(), pT2maxmin(), sigmaND(), pT4dSigmaMax(),
+    pT4dProbMax(), dSigmaApprox(), sigmaInt(), sudExpPT(), zeroIntCorr(),
+    normOverlap(), nAvg(), kNow(), normPi(), bAvg(), bDiv(), probLowB(),
+    radius2B(), radius2C(), fracA(), fracB(), fracC(), fracAhigh(),
+    fracBhigh(), fracChigh(), fracABChigh(), expRev(), cDiv(), cMax(),
+    enhanceBavg(), bIsSet(false), bSetInFirst(), isAtLowB(), pickOtherSel(),
+    id1(), id2(), i1Sel(), i2Sel(), id1Sel(), id2Sel(), bNow(), enhanceB(),
+    pT2(), pT2shift(), pT2Ren(), pT2Fac(), x1(), x2(), xT(), xT2(), tau(),
+    y(), sHat(), tHat(), uHat(), alpS(), alpEM(), xPDF1now(), xPDF2now(),
+    dSigmaSum(), x1Sel(), x2Sel(), sHatSel(), tHatSel(), uHatSel(), nStep(),
+    iStepFrom(), iStepTo(), eCMsave(), eStepMin(), eStepMax(), eStepSize(),
+    eStepSave(), eStepFrom(), eStepTo(), pT0Save(), pT4dSigmaMaxSave(),
+    pT4dProbMaxSave(), sigmaIntSave(), sudExpPTSave(), zeroIntCorrSave(),
+    normOverlapSave(), kNowSave(), bAvgSave(), bDivSave(), probLowBSave(),
+    fracAhighSave(), fracBhighSave(), fracChighSave(), fracABChighSave(),
+    cDivSave(), cMaxSave(), beamOffset(), mGmGmMin(), mGmGmMax(), hasGamma(),
+    isGammaGamma(), isGammaHadron(), isHadronGamma(), infoPtr(), rndmPtr(),
+    beamAPtr(), beamBPtr(), couplingsPtr(), partonSystemsPtr(), sigmaTotPtr(),
+    userHooksPtr(), partonVertexPtr(), sigma2Sel(), dSigmaDtSel() {}
 
   // Initialize the generation process for given beams.
   bool init( bool doMPIinit, int iDiffSysIn, Info* infoPtrIn,
@@ -178,7 +214,7 @@ private:
                       SIGMAMBLIMIT;
 
   // Initialization data, read from Settings.
-  bool   allowRescatter, allowDoubleRes, canVetoMPI, doPartonVertex;
+  bool   allowRescatter, allowDoubleRes, canVetoMPI, doPartonVertex, doVarEcm;
   int    pTmaxMatch, alphaSorder, alphaEMorder, alphaSnfmax, bProfile,
          processLevel, bSelScale, rescatterMode, nQuarkIn, nSample,
          enhanceScreening, pT0paramMode;
@@ -238,12 +274,12 @@ private:
 
   // Stored values for mass interpolation for diffractive systems.
   int    nStep, iStepFrom, iStepTo;
-  double eCMsave, eStepSize, eStepSave, eStepFrom, eStepTo, pT0Save[5],
-         pT4dSigmaMaxSave[5], pT4dProbMaxSave[5], sigmaIntSave[5],
-         sudExpPTSave[5][101], zeroIntCorrSave[5], normOverlapSave[5],
-         kNowSave[5], bAvgSave[5], bDivSave[5], probLowBSave[5],
-         fracAhighSave[5], fracBhighSave[5], fracChighSave[5],
-         fracABChighSave[5], cDivSave[5], cMaxSave[5];
+  double eCMsave, eStepMin, eStepMax, eStepSize, eStepSave, eStepFrom, eStepTo,
+         pT0Save[20], pT4dSigmaMaxSave[20], pT4dProbMaxSave[20],
+         sigmaIntSave[20], sudExpPTSave[20][101], zeroIntCorrSave[20],
+         normOverlapSave[20], kNowSave[20], bAvgSave[20], bDivSave[20],
+         probLowBSave[20], fracAhighSave[20], fracBhighSave[20],
+         fracChighSave[20], fracABChighSave[20], cDivSave[20], cMaxSave[20];
 
   // Beam offset wrt. normal situation and other photon-related parameters.
   int    beamOffset;

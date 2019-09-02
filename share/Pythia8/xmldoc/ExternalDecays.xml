@@ -113,7 +113,7 @@ decays you do not handle.
  
 <p/> 
 The choice of which method to use can be done by the user in the method 
-<method name="virtual bool doChainDecay(int idMother) {return false;}"> 
+<method name="virtual bool doChainDecay(int idMother)"> 
 if true then <code>chainDecay</code> is called, else <code>decay</code>. 
 This method is called for each particle that is to be decayed externally. 
 <argument name="idMother"> is the PDG identity code of the decaying mother. 
@@ -139,4 +139,4 @@ event weights for forced decays, can be found in
 <a href="../pdfdoc/evtgen.pdf">this note</a>. 
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

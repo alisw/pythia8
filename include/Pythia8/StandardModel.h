@@ -1,5 +1,5 @@
 // StandardModel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -25,10 +25,10 @@ class AlphaStrong {
 public:
 
   // Constructors.
-  AlphaStrong() : isInit(false), order(0),
+  AlphaStrong() : isInit(false), order(0), nfmax(),
     Lambda3Save(0.), Lambda4Save(0.), Lambda5Save(0.), Lambda6Save(0.),
     Lambda3Save2(0.), Lambda4Save2(0.), Lambda5Save2(0.), Lambda6Save2(0.),
-    scale2Min(0.), mc(0.), mb(0.), mt(0.), mc2(0.), mb2(0.), mt2(0.),
+    scale2Min(0.), mc(0.), mb(0.), mt(0.), mc2(0.), mb2(0.), mt2(0.), useCMW(),
     lastCallToFull(false), valueRef(0.), valueNow(0.), scale2Now(0.) {}
 
   // Destructor.
@@ -108,7 +108,7 @@ class AlphaEM {
 public:
 
   // Constructors.
-  AlphaEM() {}
+  AlphaEM() : order(), alpEM0(), alpEMmZ(), mZ2(), bRun(), alpEMstep() {}
 
   // Initialization for a given order.
   void init(int orderIn, Settings* settingsPtr);
@@ -137,7 +137,9 @@ class CoupSM {
 public:
 
   // Constructor.
-  CoupSM() {}
+  CoupSM() : s2tW(), c2tW(), s2tWbar(), GFermi(), vfSave(), lfSave(), rfSave(),
+    ef2Save(), vf2Save(), af2Save(), efvfSave(), vf2af2Save(), VCKMsave(),
+    V2CKMsave(), V2CKMout(), rndmPtr() {}
 
   // Initialize, normally from Pythia::init().
   void init(Settings& settings, Rndm* rndmPtrIn);

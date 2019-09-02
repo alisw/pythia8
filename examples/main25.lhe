@@ -15,12 +15,19 @@
 # Event 10-19: copies of preceding, to test whether any failures are repeated
 # Event 20-25: examples with ME-generated BNV tbar->qq' decays and c.c.
 # Event 26-31: same as preceding, but without intermediate tops in event record
+# Event 32: pair production of millicharged scalars (treated as charge = 0 by 
+#           Pythia since bremsstrahlung corrections can be neglected)
 <header>
 <slha>
 Block QNUMBERS 9000006 # sextet 
         1 4  # 3 times electric charge
         2 1  # number of spin states (2S+1)
-        3 6  # colour rep (1: singlet, 3: triplet, 8: octet)
+        3 6  # colour rep (1: singlet, 3: triplet, 6: sextet, 8: octet)
+        4 1  # Particle/Antiparticle distinction (0=own anti)
+Block QNUMBERS 9000016 # milli millibar (illustrating millicharged scalar)
+        1 3.0e-6  # 3 times electric charge 
+        2 1  # number of spin states (2S+1)
+        3 0  # colour rep (1: singlet, 3: triplet, 8: octet)
         4 1  # Particle/Antiparticle distinction (0=own anti)
 DECAY 9000006 1.0 
     1.0 2 2 2  
@@ -82,6 +89,7 @@ BLOCK MASS  # Mass Spectrum
    1000024     1.81692495E+04   # ~chi_1+
    1000037     2.78328056E+04   # ~chi_2+
    9000006 5.000000e+02 # MSIX 
+   9000016 2.000000e+02 # M(millicharged scalar)
 #
 BLOCK NMIX  # Neutralino Mixing Matrix
   1  1     1.00000000E+00   # N_11
@@ -533,5 +541,13 @@ BLOCK MSOFT Q=  4.64669301E+02  # The soft SUSY breaking masses at the scale Q
         5    1    1    2  503    0  0.12311735588E+02  0.76079021489E+01  0.25250884129E+01  0.15424820251E+02  0.47000000000E+01 0.  1.
         4    1    1    2  504    0  0.35080206863E+02  0.65281062252E+02 -0.20447072707E+02  0.76891723772E+02  0.14200000000E+01 0. -1.
        13    1    1    2    0    0  0.40533317023E+02 -0.88855462822E+02 -0.73457060739E+02  0.12220553997E+03  0.10566000000E+00 0. -1.
+</event>
+# Event 32: 
+<event>
+4   5  0.4424100E-06  0.2180063E+03  0.7957747E-01  0.1142097E+00
+       2   -1    0    0  101    0  0.0000000000E+00  0.0000000000E+00  1.0838163607E+02  1.0838163607E+02  0.0000000000E+00 0. 9.
+      -2   -1    0    0    0  101  0.0000000000E+00  0.0000000000E+00 -2.7976111253E+02  2.7976111253E+02  0.0000000000E+00 0. 9.
+  9000016    1    1    2   0    0  3.3629095553E+01  8.9115695965E+00 -1.1059648961E+02  2.1241781824E+02  1.7798711709E+02 0. 9.
+ -9000016    1    1    2    0   0 -3.3629095553E+01 -8.9115695965E+00 -6.0782986840E+01  1.7572493036E+02  1.6116559038E+02 0. 9.
 </event>
 </LesHouchesEvents>

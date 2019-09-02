@@ -169,6 +169,7 @@ For the default  value of <code>POWHEG:pTemt = 0</code>, only
 photon and subsequent QCD radiation is retained. In many cases, particularly 
 when the Born contributions are small, the choice has little effect. 
  
+<a name="section0"></a> 
 <h3>The modes</h3> 
  
 Note that the modes have generally been defined with several default values 
@@ -305,4 +306,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

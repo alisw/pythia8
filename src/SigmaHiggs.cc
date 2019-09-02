@@ -1,5 +1,5 @@
 // SigmaHiggs.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // Part of code written by Marc Montull, CERN summer student 2007.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -908,6 +908,8 @@ double Sigma3ff2HfftWW::weightDecay( Event& process, int iResBeg,
 
 // Sigma3gg2HQQbar class.
 // Cross section for g g -> H0 Q Qbar (Q Qbar fusion of SM or BSM Higgs).
+// REDUCE output and part of the rest courtesy Z. Kunszt,
+// see Z. Kunszt, Nucl. Phys. B247 (1984) 339.
 
 //--------------------------------------------------------------------------
 

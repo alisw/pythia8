@@ -1,5 +1,5 @@
 // LesHouches.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -186,7 +186,7 @@ bool LHAup::initLHEF() {
 
 // Write event information to a Les Houches Event File.
 // Normal mode is to line up event info in columns, but the non-verbose
-// altnernative saves space at the expense of human readability.
+// alternative saves space at the expense of human readability.
 
 bool LHAup::eventLHEF(bool verbose) {
 
@@ -233,6 +233,11 @@ bool LHAup::eventLHEF(bool verbose) {
              << " " << setw(13) << pdf1Save
              << " " << setw(13) << pdf2Save << "\n";
 
+    // Optionally write information on shower scales, primarily in DPS events.
+    if (scaleShowersIsSetSave) osLHEF << "#scaleShowers"
+             << " " << setw(13) << scaleShowersSave[0]
+             << " " << setw(13) << scaleShowersSave[1] << "\n";
+
   // Alternative non-verbose option.
   } else {
 
@@ -264,6 +269,10 @@ bool LHAup::eventLHEF(bool verbose) {
              << " " << id2pdfSave << " " << x1pdfSave << " " << x2pdfSave
              << " " << scalePDFSave << " " << pdf1Save << " " << pdf2Save
              << "\n";
+
+    // Optionally write information on shower scales, primarily in DPS events.
+    if (scaleShowersIsSetSave) osLHEF << "#scaleShowers" << " "
+             << scaleShowersSave[0] << " " << scaleShowersSave[1] << "\n";
   }
 
   // Done.
@@ -561,8 +570,9 @@ bool LHAup::setNewEventLHEF(istream& is) {
   x2InSave  = (eBeamBSave > 0.) ? particlesSave[2].ePart / eBeamBSave : 0.;
 
   // Continue parsing till </event>. Look for optional info on the way.
-  getPDFSave = false;
-  getScale   = false;
+  getPDFSave      = false;
+  getScale        = false;
+  getScaleShowers = false;
   do {
     if (!getline(is, line)) return false;
     istringstream getinfo(line);
@@ -575,6 +585,12 @@ bool LHAup::setNewEventLHEF(istream& is) {
               >> scalePDFInSave >> pdf1InSave >> pdf2InSave;
       if (!getinfo) return false;
       getPDFSave = true;
+
+    // Extract shower scales info if present.
+    } else if (tag == "#scaleShowers") {
+      getinfo >> scaleShowersInSave[0] >> scaleShowersInSave[1];
+      if (!getinfo) return false;
+      getScaleShowers = true;
 
     // Extract scale info if present.
     } else if (tag == "#" && !getScale) {
@@ -611,12 +627,14 @@ bool LHAup::setNewEventLHEF(istream& is) {
 
 bool LHAup::setOldEventLHEF() {
 
-  // Store saved event, optionally also parton density information.
+  // Store saved event, optionally also parton density and scale information.
   setProcess( idprupSave, xwgtupSave, scalupSave, aqedupSave, aqcdupSave);
   for (int ip = 1; ip <= nupSave; ++ip) addParticle( particlesSave[ip] );
   setIdX( id1InSave, id2InSave, x1InSave, x2InSave);
   setPdf( id1pdfInSave, id2pdfInSave, x1pdfInSave, x2pdfInSave,
     scalePDFInSave, pdf1InSave, pdf2InSave, getPDFSave);
+  if (getScaleShowers)
+    setScaleShowers( scaleShowersInSave[0], scaleShowersInSave[1]);
 
   // Done;
   return true;
@@ -973,9 +991,10 @@ bool LHAupLHEF::setNewEventLHEF() {
   // Parse event comments and look for optional info on the way.
   std::string line, tag;
   std::stringstream ss(reader.eventComments);
-  getPDFSave = false;
-  getScale   = false;
-  getScale   = (setScalesFromLHEF && reader.version == 1) ? false : true;
+  getPDFSave      = false;
+  getScale        = false;
+  getScale        = (setScalesFromLHEF && reader.version == 1) ? false : true;
+  getScaleShowers = false;
   while (getline(ss, line)) {
     istringstream getinfo(line);
     getinfo >> tag;
@@ -986,6 +1005,11 @@ bool LHAupLHEF::setNewEventLHEF() {
               >> scalePDFInSave >> pdf1InSave >> pdf2InSave;
       if (!getinfo) return false;
       getPDFSave = true;
+    // Extract shower scales info if present.
+    } else if (tag == "#scaleShowers") {
+      getinfo >> scaleShowersInSave[0] >> scaleShowersInSave[1];
+      if (!getinfo) return false;
+      getScaleShowers = true;
     // Extract scale info if present.
     } else if (tag == "#" && !getScale) {
       double scaleIn = 0;
@@ -1103,6 +1127,7 @@ bool LHAupFromPYTHIA8::setEvent( int) {
   // Read in particle info one by one, excluding zero and beams, and store it.
   // Note unusual C++ loop range, to better reflect LHA/Fortran standard.
   int nup   = processPtr->size() - 3;
+  int n21   = 0;
   int    idup, statusup, istup, mothup1, mothup2, icolup1, icolup2;
   double pup1, pup2, pup3, pup4, pup5, vtimup, spinup;
   for (int ip = 1; ip <= nup; ++ip) {
@@ -1110,7 +1135,7 @@ bool LHAupFromPYTHIA8::setEvent( int) {
     idup     = particle.id();
     // Convert from PYTHIA8 to LHA status codes.
     statusup = particle.status();
-    if (ip < 3)            istup = -1;
+    if (statusup == -21)   istup = -1;
     else if (statusup < 0) istup =  2;
     else                   istup =  1;
     mothup1  = max(0, particle.mother1() - 2);
@@ -1126,6 +1151,7 @@ bool LHAupFromPYTHIA8::setEvent( int) {
     spinup   = particle.pol();
     addParticle(idup, istup, mothup1, mothup2, icolup1, icolup2,
       pup1, pup2, pup3, pup4, pup5, vtimup, spinup, -1.) ;
+    if (statusup == -21) ++n21;
   }
 
   // Extract hard-process initiator information from Info class, and store it.
@@ -1145,6 +1171,10 @@ bool LHAupFromPYTHIA8::setEvent( int) {
   double pdf2up     = infoPtr->pdf2();
   setPdf(id1pdfup, id2pdfup, x1pdfup, x2pdfup, scalePDFup, pdf1up,
     pdf2up, true);
+
+  // Extract parton shower scales from for DPS processes.
+  if (n21 == 4) setScaleShowers( processPtr->scale(),
+    processPtr->scaleSecond() );
 
   // Done.
   return true;

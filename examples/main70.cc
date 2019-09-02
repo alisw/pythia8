@@ -1,5 +1,5 @@
 // main70.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -103,6 +103,10 @@ int main() {
     pythia.readString("Beams:eCM = 5020.");
     // Use nuclear PDF for the hard process generation in the proton side.
     pythia.readString("PDF:useHardNPDFB = on");
+    // Modify the minimum impact parameter to match the flux defined above.
+    pythia.readString("PDF:gammaFluxApprox2bMin = 13.272");
+    // Optimized sampling for photon flux from nuclei.
+    pythia.readString("PDF:lepton2gammaApprox = 2");
     // Do not sample virtuality since use b-integrated flux here.
     pythia.readString("Photon:sampleQ2 = off");
     photonFlux = new Nucleus2gamma(-11);

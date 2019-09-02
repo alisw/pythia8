@@ -768,7 +768,7 @@ achieved by adding the following code at the end of <code>main88.cc</code>.
   } 
 </pre> 
  
-<br/><br/><hr/> 
+<br/><hr/> 
 <h3>Further variables</h3> 
  
 More advanced manipulations of the merging machinery are of 
@@ -795,6 +795,12 @@ facilities, and the function
 particular. 
 </flag> 
  
+<modeopen name="Merging:unlopsTMSdefinition" default="-1" min="-1"> 
+The definition of the merging scale for UNLOPS merging. Any value larger or 
+equal to zero means a user-defined merging scale function (to be defined 
+by supplying a <code>MergingHooks</code> class) is used for UNLOPS. 
+</modeopen> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -28,6 +28,14 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='SUSYLesHouchesAccord.php'>
  
 <h2>SUSY Les Houches Accord</h2> 
+<ol id="toc">
+  <li><a href="#section0">Sanity Checks</a></li>
+  <li><a href="#section1">SLHA Switches and Parameters</a></li>
+  <li><a href="#section2">SLHA DECAY Tables</a></li>
+  <li><a href="#section3">Internal SLHA Variables</a></li>
+  <li><a href="#section4">Using SLHA for generic BSM Models</a></li>
+</ol>
+
  
 The PYTHIA 8 program does not contain an internal spectrum calculator 
 (a.k.a. RGE package) to provide supersymmetric couplings, mixing angles, 
@@ -96,6 +104,7 @@ derived quantities of direct application to SUSY processes is done in the
 <code>CoupSUSY</code>, <code>SigmaSUSY</code>, 
 and <code>SUSYResonanceWidths</code> classes. 
  
+<a name="section0"></a> 
 <h3>Sanity Checks</h3> 
  
 As an aid for basic validation, some checks and ranges are imposed 
@@ -160,6 +169,7 @@ good idea, as is taking a look at any warnings or error messages printed by
 the SLHA interface during initialization. It is ultimately up to the user to 
 ensure that sensible input is being given. 
  
+<a name="section1"></a> 
 <h3>SLHA Switches and Parameters</h3> 
  
 <a name="anchor1"></a>
@@ -214,6 +224,7 @@ allowed to be modified by the user, using PYTHIA's standard
 <code>readString</code> and related methods. 
    
  
+<a name="section2"></a> 
 <h3>SLHA DECAY Tables</h3> 
  
 In addition to SUSY spectra, the SLHA also defines a set of conventions for 
@@ -276,6 +287,7 @@ fractions, etc, may be of assistance to validate the behaviour of the
 program. 
    
  
+<a name="section3"></a> 
 <h3>Internal SLHA Variables</h3> 
  
 <a name="anchor3"></a>
@@ -296,7 +308,8 @@ Corresponds to SLHA block MODSEL entry 3.
    
  
 <a name="generic"></a> 
-<h2>Using SLHA for generic BSM Models</h2> 
+<a name="section4"></a> 
+<h3>Using SLHA for generic BSM Models</h3> 
  
 <p> 
 Using the <code>QNUMBERS</code> extension [<a href="Bibliography.php#refAlw07" target="page">Alw07</a>], the SLHA 
@@ -420,4 +433,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

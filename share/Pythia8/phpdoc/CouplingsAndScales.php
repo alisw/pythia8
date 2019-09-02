@@ -28,6 +28,12 @@ echo "<font color='red'>NO FILE SELECTED YET.. PLEASE DO SO </font><a href='Save
 <form method='post' action='CouplingsAndScales.php'>
  
 <h2>Couplings and Scales</h2> 
+<ol id="toc">
+  <li><a href="#section0">Couplings and K factor</a></li>
+  <li><a href="#section1">Renormalization scales</a></li>
+  <li><a href="#section2">Factorization scales</a></li>
+</ol>
+
  
 Here is collected some possibilities to modify the scale choices 
 of couplings and parton densities for all internally implemented 
@@ -52,6 +58,7 @@ echo "<a href='SpacelikeShowers.php?filepath=".$filepath."' target='page'>";?>sp
 This allows a bigger flexibility, but also requires a bit more work 
 e.g. if you insist on using the same <i>alpha_s</i> everywhere. 
  
+<a name="section0"></a> 
 <h3>Couplings and K factor</h3> 
  
 The size of QCD cross sections is mainly determined by 
@@ -95,6 +102,7 @@ This degree of freedom is primarily intended for hadron colliders, and
 should not normally be used for <i>e^+e^-</i> annihilation processes. 
    
  
+<a name="section1"></a> 
 <h3>Renormalization scales</h3> 
  
 The <i>Q^2</i> renormalization scale can be chosen among a few different 
@@ -167,6 +175,7 @@ A fix <i>Q^2</i> value used as renormalization scale for
 in some of the options above. 
    
  
+<a name="section2"></a> 
 <h3>Factorization scales</h3> 
  
 Corresponding options exist for the <i>Q^2</i> factorization scale 
@@ -337,4 +346,4 @@ fclose($handle);
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // BeamParticle.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -81,9 +81,6 @@ void BeamParticle::init( int idIn, double pzIn, double eIn, double mIn,
   // Check whether beam has a supplementary photon beam.
   bool beamHasGamma  = settings.flag("PDF:lepton2gamma");
 
-  // To be set process by process but start with this.
-  hasResGammaInBeam  = beamHasGamma;
-
   // Maximum quark kind in allowed incoming beam hadrons.
   maxValQuark       = settings.mode("BeamRemnants:maxValQuark");
 
@@ -136,6 +133,9 @@ void BeamParticle::init( int idIn, double pzIn, double eIn, double mIn,
   initBeamKind();
   pBeam             = Vec4( 0., 0., pzIn, eIn);
   mBeam             = mIn;
+
+  // To be set process by process but start with this.
+  hasResGammaInBeam  = beamHasGamma && (isLepton() || isGamma());
 
   // Initialize parameters related to photon beams.
   resetGamma();
@@ -296,6 +296,10 @@ void BeamParticle::newValenceContent() {
       } else if (idTmp == 333) {
         idVal[0] = 3;
         idVal[1] = -3;
+      // COR: A J/psi is an ccbar system.
+      } else if (idTmp == 443) {
+        idVal[0] = 4;
+        idVal[1] = -4;
       } else return;
     // For non-VMD photons set an usused code to indicate that the flavour
     // is not chosen yet but will be done later.
@@ -307,6 +311,11 @@ void BeamParticle::newValenceContent() {
   // If phi meson set content to s sbar.
   } else if (idBeam == 333) {
     idVal[0] = 3;
+    idVal[1] = -idVal[0];
+
+  // COR: If J/Psi meson set content to c cbar.
+  } else if (idBeam == 443) {
+    idVal[0] = 4;
     idVal[1] = -idVal[0];
 
   // Other hadrons so far do not require any event-by-event change.
@@ -941,7 +950,7 @@ bool BeamParticle::remnantColours(Event& event, vector<int>& colFrom,
     iValSel = iVal[0];
     if (iVal.size() == 2) {
       if ( abs(resolved[iValSel].id()) > 10 ) iValSel = iVal[1];
-    } else {
+    } else if (iVal.size() >= 3) {
       double rndmValSel = 3. * rndmPtr->flat();
       if (rndmValSel > 1.) iValSel= iVal[1];
       if (rndmValSel > 2.) iValSel= iVal[2];

@@ -6,6 +6,12 @@
 </head>
 <body>
 <h2>The Settings Scheme</h2> 
+<ol id="toc">
+  <li><a href="#section0">Concepts</a></li>
+  <li><a href="#section1">Operation</a></li>
+  <li><a href="#section2">The public methods</a></li>
+</ol>
+
  
 The <code>Settings</code> class keeps track of all the flags, modes, 
 parameters and words used during the event generation. As such, it 
@@ -29,6 +35,7 @@ the set of properties that can be accessed. The subsequent sections
 provide a complete listing of the existing public methods, which most 
 users probably will have little interaction with. 
  
+<a name="section0"></a> 
 <h3>Concepts</h3> 
  
 We distinguish eight kinds of user-modifiable variables, by the way 
@@ -120,6 +127,7 @@ Technically, the <code>Settings</code> class is implemented with the
 help of eight separate maps, one for each kind of variable, with the 
 variable <code>name</code> used as key. 
  
+<a name="section1"></a> 
 <h3>Operation</h3> 
  
 The normal flow of setting values is: 
@@ -318,7 +326,9 @@ Some variants of this command are listed below.
 </li> 
 </ol> 
  
-<h3>Methods</h3> 
+<br/><hr/> 
+<a name="section2"></a> 
+<h3>The public methods</h3> 
  
 The complete list of methods and arguments is as follows. Most of the 
 ones of interest to the user have already been mentioned above. 
@@ -409,7 +419,7 @@ but if true then all settings are output.
    
  
 <a name="anchor9"></a>
-<p/><strong> bool writeFileXML(ostream& os = cout) &nbsp;</strong> <br/>
+<p/><strong> bool Settings::writeFileXML(ostream& os = cout) &nbsp;</strong> <br/>
 write out the information stored in xmldoc to be used later to 
 initialize Settings through an input stream. 
    
@@ -708,7 +718,17 @@ open brace { but no matching closing brace } has been found
 (so far), else false. 
    
  
+<a name="anchor80"></a>
+<p/><strong> bool Settings::onlySoftQCD() &nbsp;</strong> <br/>
+return true if the only processes switched on for generation belong 
+to the <code>SoftQCD</code> category, else false. Since the method 
+contains a hardcoding of what other process types exist, in order to 
+detect if any is on, it could be broken by the addition of new internal 
+processes. It is therefore mainly useful for warning purposes, not for 
+hard decisions. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

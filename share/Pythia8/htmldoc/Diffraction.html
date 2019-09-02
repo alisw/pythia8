@@ -7,6 +7,13 @@
 <body>
  
 <h2>Diffraction</h2> 
+<ol id="toc">
+  <li><a href="#section0">Separation of soft diffraction into low and high masses</a></li>
+  <li><a href="#section1">Low-mass soft diffraction</a></li>
+  <li><a href="#section2">High-mass soft diffraction</a></li>
+  <li><a href="#section3">Hard diffraction</a></li>
+</ol>
+
  
 Diffraction is not well understood, and several alternative approaches 
 have been proposed, both for the cross section of diffractive events and 
@@ -77,6 +84,7 @@ survives as a diffractive event or not. The different diffractive types
 - low mass soft, high mass soft and hard diffraction - are described 
 in more detail below. 
  
+<a name="section0"></a> 
 <h3>Separation of soft diffraction into low and high masses</h3> 
  
 Preferably one would want to have a perturbative picture of the 
@@ -107,7 +115,7 @@ but only the older low-<i>pt</i> description.
  
 <a name="anchor2"></a>
 <p/><code>parm&nbsp; </code><strong> Diffraction:mWidthPert &nbsp;</strong> 
- (<code>default = <strong>10.</strong></code>; <code>minimum = 0.</code>)<br/>
+ (<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)<br/>
 The abovementioned threshold width <i>m_width.</i> 
    
  
@@ -120,6 +128,7 @@ be used to represent a small nonperturbative component also at
 high diffractive masses. 
    
  
+<a name="section1"></a> 
 <h3>Low-mass soft diffraction</h3> 
  
 When an incoming hadron beam is diffractively excited, it is modeled 
@@ -173,6 +182,7 @@ for a baryon beam) that knows no bounds. A suppression like
 <i>p</i> is the <code>diffLargeMassSuppress</code> parameter. 
    
  
+<a name="section2"></a> 
 <h3>High-mass soft diffraction</h3> 
  
 The perturbative description need to use parton densities of the 
@@ -310,6 +320,7 @@ at all, <i>bProfile = 0</i>. For small <i>expPow</i> the program
 becomes slow and unstable, so the min limit must be respected. 
    
  
+<a name="section3"></a> 
 <h3>Hard diffraction</h3> 
  
 When PYTHIA is requested to generate a hard process, by default it is 
@@ -378,11 +389,24 @@ distinguished either MPI-unchecked or MPI-checked.
 Allows for the possibility to include hard diffraction tests in a run. 
    
  
+<a name="anchor16"></a>
+<p/><code>mode&nbsp; </code><strong> Diffraction:hardDiffSide &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+Side which diffraction is evaluated for. Especially useful for diffraction 
+in ep, where experiments only look for gaps on the proton side. 
+<br/><code>option </code><strong> 0</strong> : Check for diffraction on boths sides A and B. 
+   
+<br/><code>option </code><strong> 1</strong> : Check for diffraction on side A only. 
+   
+<br/><code>option </code><strong> 2</strong> : Check for diffraction on side B only. 
+   
+   
+ 
 <p/> 
 There is also the possibility to select only a specific subset of events 
 in hard diffraction. 
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>mode&nbsp; </code><strong> Diffraction:sampleType &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 4</code>)<br/>
 Type of process the user wants to generate. Depends strongly on how an event 
@@ -409,7 +433,7 @@ It could be brought to unit momentum sum by picking the parameter
 convolution of the flux and the PDFs, the flux then needs to be rescaled 
 by the inverse. This introduces a new rescaling parameter: 
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> Diffraction:PomFluxRescale &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)<br/>
 Rescale the Pomeron flux by this uniform factor. It should be 
@@ -426,7 +450,7 @@ renormalize the flux. If you wish to use the renormalized flux of the
 MBR model, you must generate the MPI-unchecked samples, otherwise 
 diffractive events will be suppressed twice. 
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> Diffraction:useMBRrenormalization &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Use the renormalized MBR flux. 
@@ -439,7 +463,7 @@ object in a localized part of the proton, but one should keep an open
 mind. Therefore below you find three extreme scenarios, which can be 
 compared to gauge the impact of this uncertainty. 
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>mode&nbsp; </code><strong> Diffraction:bSelHard &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 3</code>)<br/>
 Selection of impact parameter <i>b</i> and the related enhancement 
@@ -473,4 +497,4 @@ one.
 </body>
 </html>
  
-<!-- Copyright (C) 2018 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 

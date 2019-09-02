@@ -1,5 +1,5 @@
 // main69.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -93,9 +93,10 @@ int main() {
     pythia.readString("Photon:Wmin  = 10.0");
   }
 
-  // For photon-photon increase pT0Ref (for better agreement with LEP data).
-  if ( !photonProton)
-    pythia.readString("MultipartonInteractions:pT0Ref = 3.30");
+  // For photon-proton increase pT0Ref (for better agreement with HERA data).
+  // Photon-photon has a new default pT0 parametrization tuned to LEP data.
+  if ( photonProton)
+    pythia.readString("MultipartonInteractions:pT0Ref = 3.00");
 
   // Limit partonic pThat.
   settings.parm("PhaseSpace:pTHatMin", 5.0);

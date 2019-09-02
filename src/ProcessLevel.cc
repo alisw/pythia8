@@ -1,5 +1,5 @@
 // ProcessLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2019 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -68,8 +68,8 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   bool beamB2gamma = beamBPtr->isLepton() && beamHasGamma;
 
   // initialize gammaKinematics when relevant.
-  if (beamHasGamma)
-    gammaKin.init(infoPtr, &settings, rndmPtr, beamAPtr, beamBPtr);
+  if (beamHasGamma) gammaKin.init(infoPtr, &settings, rndmPtr,
+    beamAPtr, beamBPtr, couplingsPtr);
 
   // Initialize variables related to photon-inside-lepton.
   beamGamAPtr      = beamGamAPtrIn;
@@ -96,16 +96,17 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   sigmaND = sigmaTotPtr->sigmaND();
 
   // Options to allow second hard interaction and resonance decays.
-  doSecondHard  = settings.flag("SecondHard:generate");
-  doSameCuts    = settings.flag("PhaseSpace:sameForSecond");
-  doResDecays   = settings.flag("ProcessLevel:resonanceDecays");
-  startColTag   = settings.mode("Event:startColTag");
+  doSecondHard   = settings.flag("SecondHard:generate");
+  doSameCuts     = settings.flag("PhaseSpace:sameForSecond");
+  doResDecays    = settings.flag("ProcessLevel:resonanceDecays");
+  startColTag    = settings.mode("Event:startColTag");
+  maxPDFreweight = settings.parm("SecondHard:maxPDFreweight");
 
   // Check whether ISR or MPI applied. Affects processes with photon beams.
-  doISR         = ( settings.flag("PartonLevel:ISR")
-                &&  settings.flag("PartonLevel:all") );
-  doMPI         = ( settings.flag("PartonLevel:MPI")
-                &&  settings.flag("PartonLevel:all") );
+  doISR          = ( settings.flag("PartonLevel:ISR")
+                 &&  settings.flag("PartonLevel:all") );
+  doMPI          = ( settings.flag("PartonLevel:MPI")
+                 &&  settings.flag("PartonLevel:all") );
 
   // Second interaction not to be combined with biased phase space.
   if (doSecondHard && userHooksPtr != 0
@@ -172,8 +173,8 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   }
 
   // Check whether pT-based weighting in 2 -> 2 is requested.
+  bool bias2Sel = false;
   if (settings.flag("PhaseSpace:bias2Selection")) {
-    bool bias2Sel = false;
     if (sigmaPtrs.size() == 0 && !doLHA && !doSecondHard) {
       bias2Sel = true;
       for (int i = 0; i < int(containerPtrs.size()); ++i) {
@@ -236,6 +237,9 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
     for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
       sigma2MaxSum += container2Ptrs[i2]->sigmaMax();
   }
+
+  // Check whether to create event weight from components.
+  doWt2 = !doLHA && !bias2Sel && !settings.flag("PhaseSpace:increaseMaximum");
 
   // Printout during initialization is optional.
   if (settings.flag("Init:showProcesses")) {
@@ -478,7 +482,7 @@ void ProcessLevel::accumulate( bool doAccumulate) {
   // Cross section estimate for combination of first and second process.
   // Combine two possible ways and take average.
   double sigmaComb  = 0.5 * (sigmaSum * sig2SelSum + sigSelSum * sigma2Sum);
-  sigmaComb        *= impactFac / sigmaND;
+  sigmaComb        *= impactFac * maxPDFreweight / sigmaND;
   if (allHardSame) sigmaComb *= 0.5;
   double deltaComb  = (nAccSum == 0) ? 0. : sqrtpos(2. / nAccSum) * sigmaComb;
 
@@ -734,6 +738,8 @@ bool ProcessLevel::nextTwo( Event& process) {
 
   // Outer loop in case of rare failures.
   bool physical = true;
+  double wtViol1 = 1.;
+  double wtViol2 = 1.;
   for (int loop = 0; loop < MAXLOOP; ++loop) {
     if (!physical) process.clear();
     physical = true;
@@ -758,12 +764,13 @@ bool ProcessLevel::nextTwo( Event& process) {
         if (infoPtr->atEndOfFile()) return false;
       }
 
-      // Update sum of maxima if current maximum violated.
+      // Update sum of maxima if current maximum violated. Event weight.
       if (containerPtrs[iContainer]->newSigmaMax()) {
         sigmaMaxSum = 0.;
         for (int i = 0; i < int(containerPtrs.size()); ++i)
           sigmaMaxSum += containerPtrs[i]->sigmaMax();
       }
+      wtViol1 = (doWt2) ? infoPtr->weight() : 1.;
 
       // Loop internally over tries for second hardest process until succeeds.
       for ( ; ; ) {
@@ -785,6 +792,7 @@ bool ProcessLevel::nextTwo( Event& process) {
         for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
           sigma2MaxSum += container2Ptrs[i2]->sigmaMax();
       }
+      wtViol2 = (doWt2) ? infoPtr->weight() : 1.;
 
       // Pick incoming flavours (etc), needed for PDF reweighting.
       containerPtrs[iContainer]->constructState();
@@ -797,53 +805,72 @@ bool ProcessLevel::nextTwo( Event& process) {
       double xB2      = container2Ptrs[i2Container]->x2();
       if (xA1 + xA2 >= 1. || xB1 + xB2 >= 1.) continue;
 
-      // Reset beam contents. Naive parton densities for second interaction.
-      // (Subsequent procedure could be symmetrized, but would be overkill.)
-      beamAPtr->clear();
-      beamBPtr->clear();
+      // Parton densities for independent interactions.
       int    idA1     = containerPtrs[iContainer]->id1();
       int    idB1     = containerPtrs[iContainer]->id2();
       int    idA2     = container2Ptrs[i2Container]->id1();
       int    idB2     = container2Ptrs[i2Container]->id2();
       double Q2Fac1   = containerPtrs[iContainer]->Q2Fac();
       double Q2Fac2   = container2Ptrs[i2Container]->Q2Fac();
+      double pdfA1Raw = beamAPtr->xf( idA1, xA1,Q2Fac1);
+      double pdfB1Raw = beamBPtr->xf( idB1, xB1,Q2Fac1);
       double pdfA2Raw = beamAPtr->xf( idA2, xA2,Q2Fac2);
       double pdfB2Raw = beamBPtr->xf( idB2, xB2,Q2Fac2);
 
-      // Remove partons in first interaction from beams.
+      // Reset beam contents. Remove partons in second interaction from beams,
+      // and reevaluate pdf's for first interaction.
+      beamAPtr->clear();
+      beamBPtr->clear();
+      beamAPtr->append( 3, idA2, xA2);
+      beamAPtr->xfISR( 0, idA2, xA2, Q2Fac2);
+      beamAPtr->pickValSeaComp();
+      beamBPtr->append( 4, idB2, xB2);
+      beamBPtr->xfISR( 0, idB2, xB2, Q2Fac2);
+      beamBPtr->pickValSeaComp();
+      double pdfA1Mod = beamAPtr->xfMPI( idA1, xA1,Q2Fac1);
+      double pdfB1Mod = beamBPtr->xfMPI( idB1, xB1,Q2Fac1);
+
+      // Reset beam contents. Remove partons in first interaction from beams,
+      // and reevaluate pdf's for second interaction.
+      beamAPtr->clear();
+      beamBPtr->clear();
       beamAPtr->append( 3, idA1, xA1);
       beamAPtr->xfISR( 0, idA1, xA1, Q2Fac1);
       beamAPtr->pickValSeaComp();
       beamBPtr->append( 4, idB1, xB1);
       beamBPtr->xfISR( 0, idB1, xB1, Q2Fac1);
       beamBPtr->pickValSeaComp();
-
-      // Reevaluate pdf's for second interaction and weight by reduction.
       double pdfA2Mod = beamAPtr->xfMPI( idA2, xA2,Q2Fac2);
       double pdfB2Mod = beamBPtr->xfMPI( idB2, xB2,Q2Fac2);
-      double wtPdfMod = (pdfA2Mod * pdfB2Mod) / (pdfA2Raw * pdfB2Raw);
-      if (wtPdfMod < rndmPtr->flat()) continue;
+
+      // Define modified PDF weight as average of two orderings above.
+      double wtPdf1    = (pdfA1Mod * pdfB1Mod) / (pdfA1Raw * pdfB1Raw);
+      double wtPdf2    = (pdfA2Mod * pdfB2Mod) / (pdfA2Raw * pdfB2Raw);
+      double wtPdfSame = 0.5 * (wtPdf1 +  wtPdf2);
 
       // Reduce by a factor of 2 for identical processes when others not,
       // and when in same phase space region.
-      bool toLoop = false;
       if ( someHardSame && containerPtrs[iContainer]->isSame()
         && container2Ptrs[i2Container]->isSame()) {
-        if (cutsAgree) {
-          if (rndmPtr->flat() > 0.5) toLoop = true;
-        } else {
-        double mHat1 = containerPtrs[iContainer]->mHat();
-        double pTHat1 = containerPtrs[iContainer]->pTHat();
-        double mHat2 = container2Ptrs[i2Container]->mHat();
-        double pTHat2 = container2Ptrs[i2Container]->pTHat();
-        if (mHat1 > mHatMin2 && mHat1 < mHatMax2
-           && pTHat1 > pTHatMin2 && pTHat1 < pTHatMax2
-           && mHat2 > mHatMin1 && mHat2 < mHatMax1
-           && pTHat2 > pTHatMin1 && pTHat2 < pTHatMax1
-           && rndmPtr->flat() > 0.5) toLoop = true;
+        if (cutsAgree) wtPdfSame *= 0.5;
+        else {
+          double mHat1 = containerPtrs[iContainer]->mHat();
+          double pTHat1 = containerPtrs[iContainer]->pTHat();
+          double mHat2 = container2Ptrs[i2Container]->mHat();
+          double pTHat2 = container2Ptrs[i2Container]->pTHat();
+          if (mHat1 > mHatMin2 && mHat1 < mHatMax2
+             && pTHat1 > pTHatMin2 && pTHat1 < pTHatMax2
+             && mHat2 > mHatMin1 && mHat2 < mHatMax1
+             && pTHat2 > pTHatMin1 && pTHat2 < pTHatMax1) wtPdfSame *= 0.5;
         }
       }
-      if (toLoop) continue;
+
+      // Hit-and-miss to compensate for PDF weights. Catch maximum violation.
+      wtPdfSame *= wtViol1 * wtViol2 / maxPDFreweight;
+      if (doWt2) infoPtr->setWeight( max( 1., wtPdfSame), 0 );
+      if (wtPdfSame > 1.) infoPtr->errorMsg("Warning in ProcessLevel::next"
+        "Two: joint PDF correction gives weight above unity");
+      if (wtPdfSame < rndmPtr->flat()) continue;
 
       // If come this far then acceptable event.
       break;
@@ -1542,7 +1569,7 @@ void ProcessLevel::statistics2(bool reset) {
     sigma2SelSum      += container2Ptrs[i2]->sigmaSelMC();
     n2SelSum          += container2Ptrs[i2]->nSelected();
   }
-  double factor1       = impactFac * sigma2SelSum / sigmaND;
+  double factor1       = impactFac * maxPDFreweight * sigma2SelSum / sigmaND;
   double rel1Err       = sqrt(1. / max(1, n2SelSum));
   if (allHardSame) factor1 *= 0.5;
 
@@ -1553,7 +1580,7 @@ void ProcessLevel::statistics2(bool reset) {
     sigma1SelSum      += containerPtrs[i]->sigmaSelMC();
     n1SelSum          += containerPtrs[i]->nSelected();
   }
-  double factor2       = impactFac * sigma1SelSum / sigmaND;
+  double factor2       = impactFac * maxPDFreweight * sigma1SelSum / sigmaND;
   if (allHardSame) factor2 *= 0.5;
   double rel2Err       = sqrt(1. / max(1, n1SelSum));
 
