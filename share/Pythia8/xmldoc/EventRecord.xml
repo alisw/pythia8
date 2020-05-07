@@ -1,4 +1,4 @@
-<chapter name="The Event Record"> 
+<chapter name="Event Record"> 
  
 <h2>The Event Record</h2> 
  
@@ -105,7 +105,7 @@ directly in the event generation, a few are stored directly in the
 <methodmore name="double Event::scale()"> 
 set or get the scale (in GeV) of the hardest process in the event. 
 Matches the function of the <code>scale</code> variable in the 
-<aloc href="LesHouchesAccord">Les Houches Accord</aloc>. 
+<aloc href="LHA">Les Houches Accord</aloc>. 
 </methodmore> 
  
 <method name="void Event::scaleSecond( double scaleSecondIn)"> 
@@ -409,4 +409,4 @@ It is intended to be accessed only by experts, such as implementors of
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

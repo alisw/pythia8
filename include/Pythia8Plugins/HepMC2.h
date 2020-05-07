@@ -1,10 +1,10 @@
 // HepMC2.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Author: Mikhail Kirsanov, Mikhail.Kirsanov@cern.ch
-// Eexception classes provided by James Monk, with minor changes.
+// Exception classes provided by James Monk, with minor changes.
 // Header file and function definitions for the Pythia8ToHepMC class,
 // which converts a PYTHIA event record to the standard HepMC format.
 
@@ -86,7 +86,7 @@ public:
 
   // Alternative method to convert Pythia events into HepMC ones.
   bool fill_next_event( Pythia8::Event& pyev, GenEvent* evt,
-    int ievnum = -1, Pythia8::Info* pyinfo = 0,
+    int ievnum = -1, const Pythia8::Info* pyinfo = 0,
     Pythia8::Settings* pyset = 0, bool append = false,
     GenParticle* rootParticle = 0, int iBarcode = -1);
 
@@ -129,8 +129,9 @@ private:
 // append to an existing GenEvent, and return T/F = success/failure.
 
 inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
-  GenEvent* evt, int ievnum, Pythia8::Info* pyinfo, Pythia8::Settings* pyset,
-  bool append, GenParticle* rootParticle, int iBarcode) {
+  GenEvent* evt, int ievnum, const Pythia8::Info* pyinfo,
+  Pythia8::Settings* pyset, bool append, GenParticle* rootParticle,
+  int iBarcode) {
 
   // 1. Error if no event passed.
   if (!evt) {
@@ -323,7 +324,12 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
     xsec.set_cross_section( pyinfo->sigmaGen() * 1e9,
       pyinfo->sigmaErr() * 1e9);
     evt->set_cross_section(xsec);
-    evt->weights().push_back( pyinfo->weight() );
+    for (int iweight = 0; iweight < pyinfo->numberOfWeights();
+      ++iweight) {
+      std::string name  = pyinfo->weightNameByIndex(iweight);
+      double value      = pyinfo->weightValueByIndex(iweight);
+      evt->weights()[name] = value;
+    }
   }
 
   // Done for new event.

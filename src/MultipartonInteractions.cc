@@ -1,5 +1,5 @@
 // MultipartonInteractions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -35,12 +35,12 @@ const double SigmaMultiparton::OTHERFRAC  = 0.2;
 // Initialize the generation process for given beams.
 
 bool SigmaMultiparton::init(int inState, int processLevel, Info* infoPtr,
-    Settings* settingsPtr, ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtr, BeamParticle* beamBPtr, Couplings* couplingsPtr) {
+  BeamParticle* beamAPtr, BeamParticle* beamBPtr) {
 
   // Store input pointer for future use.
-  particleDataPtr  = particleDataPtrIn;
-  rndmPtr          = rndmPtrIn;
+  particleDataPtr           = infoPtr->particleDataPtr;
+  rndmPtr                   = infoPtr->rndmPtr;
+  Settings* settingsPtr     = infoPtr->settingsPtr;
 
   // Reset vector sizes (necessary in case of re-initialization).
   if (sigmaT.size() > 0) {
@@ -119,8 +119,8 @@ bool SigmaMultiparton::init(int inState, int processLevel, Info* infoPtr,
 
   // Optionally store charmonium and bottomonium production.
   if (processLevel > 2) {
-    SigmaOniaSetup charmonium(infoPtr, settingsPtr, particleDataPtr, 4);
-    SigmaOniaSetup bottomonium(infoPtr, settingsPtr, particleDataPtr, 5);
+    SigmaOniaSetup charmonium(infoPtr, 4);
+    SigmaOniaSetup bottomonium(infoPtr, 5);
     if (inState == 0) {
       charmonium.setupSigma2gg(sigmaT, true);
       charmonium.setupSigma2gg(sigmaU, true);
@@ -154,11 +154,11 @@ bool SigmaMultiparton::init(int inState, int processLevel, Info* infoPtr,
 
   // Initialize the processes.
   for (int i = 0; i < nChan; ++i) {
-    sigmaT[i]->init( infoPtr, settingsPtr, particleDataPtr, rndmPtr,
-      beamAPtr, beamBPtr, couplingsPtr);
+    sigmaT[i]->initInfoPtr(*infoPtr);
+    sigmaT[i]->init(beamAPtr, beamBPtr);
     sigmaT[i]->initProc();
-    sigmaU[i]->init( infoPtr, settingsPtr, particleDataPtr, rndmPtr,
-      beamAPtr, beamBPtr, couplingsPtr);
+    sigmaU[i]->initInfoPtr(*infoPtr);
+    sigmaU[i]->init(beamAPtr, beamBPtr);
     sigmaU[i]->initProc();
 
     // Prepare for massive kinematics where required.
@@ -355,22 +355,13 @@ const double MultipartonInteractions::SIGMAMBLIMIT  = 1.;
 // Initialize the generation process for given beams.
 
 bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
-  Info* infoPtrIn, Settings& settings, ParticleData* particleDataPtr,
-  Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
-  SigmaTotal* sigmaTotPtrIn, UserHooks* userHooksPtrIn,
-  PartonVertex* partonVertexPtrIn, bool hasGammaIn) {
+  BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+  PartonVertexPtr partonVertexPtrIn,  bool hasGammaIn) {
 
   // Store input pointers for future use. Done if no initialization.
-  iDiffSys         = iDiffSysIn;
-  infoPtr          = infoPtrIn;
-  rndmPtr          = rndmPtrIn;
   beamAPtr         = beamAPtrIn;
   beamBPtr         = beamBPtrIn;
-  couplingsPtr     = couplingsPtrIn;
-  partonSystemsPtr = partonSystemsPtrIn;
-  sigmaTotPtr      = sigmaTotPtrIn;
-  userHooksPtr     = userHooksPtrIn;
+  iDiffSys         = iDiffSysIn;
   partonVertexPtr  = partonVertexPtrIn;
   hasGamma         = hasGammaIn;
   if (!doMPIinit) return false;
@@ -380,18 +371,18 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   hasPomeronBeams = ( beamAPtr->id() == 990 || beamBPtr->id() == 990 );
 
   // Matching in pT of hard interaction to further interactions.
-  pTmaxMatch     = settings.mode("MultipartonInteractions:pTmaxMatch");
+  pTmaxMatch     = mode("MultipartonInteractions:pTmaxMatch");
 
   //  Parameters of alphaStrong generation.
-  alphaSvalue    = settings.parm("MultipartonInteractions:alphaSvalue");
-  alphaSorder    = settings.mode("MultipartonInteractions:alphaSorder");
-  alphaSnfmax    = settings.mode("StandardModel:alphaSnfmax");
+  alphaSvalue    = parm("MultipartonInteractions:alphaSvalue");
+  alphaSorder    = mode("MultipartonInteractions:alphaSorder");
+  alphaSnfmax    = mode("StandardModel:alphaSnfmax");
 
   // Parameters of alphaEM generation.
-  alphaEMorder   = settings.mode("MultipartonInteractions:alphaEMorder");
+  alphaEMorder   = mode("MultipartonInteractions:alphaEMorder");
 
   //  Parameters of cross section generation.
-  Kfactor        = settings.parm("MultipartonInteractions:Kfactor");
+  Kfactor        = parm("MultipartonInteractions:Kfactor");
 
   // Check if photon-photon or photon-hadron collision.
   isGammaGamma   = beamAPtr->isGamma()  && beamBPtr->isGamma();
@@ -401,79 +392,78 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   // Regularization of QCD evolution for pT -> 0.
   // Separate default parameters for photon-photon collisions.
   if (isGammaGamma) {
-    pT0paramMode = settings.mode("PhotonPhoton:pT0parametrization");
-    pT0Ref       = settings.parm("PhotonPhoton:pT0Ref");
-    ecmRef       = settings.parm("PhotonPhoton:ecmRef");
-    ecmPow       = settings.parm("PhotonPhoton:ecmPow");
-    pTmin        = settings.parm("PhotonPhoton:pTmin");
+    pT0paramMode = mode("PhotonPhoton:pT0parametrization");
+    pT0Ref       = parm("PhotonPhoton:pT0Ref");
+    ecmRef       = parm("PhotonPhoton:ecmRef");
+    ecmPow       = parm("PhotonPhoton:ecmPow");
+    pTmin        = parm("PhotonPhoton:pTmin");
   } else {
-    pT0paramMode = settings.mode("MultipartonInteractions:pT0parametrization");
-    pT0Ref       = settings.parm("MultipartonInteractions:pT0Ref");
-    ecmRef       = settings.parm("MultipartonInteractions:ecmRef");
-    ecmPow       = settings.parm("MultipartonInteractions:ecmPow");
-    pTmin        = settings.parm("MultipartonInteractions:pTmin");
+    pT0paramMode = mode("MultipartonInteractions:pT0parametrization");
+    pT0Ref       = parm("MultipartonInteractions:pT0Ref");
+    ecmRef       = parm("MultipartonInteractions:ecmRef");
+    ecmPow       = parm("MultipartonInteractions:ecmPow");
+    pTmin        = parm("MultipartonInteractions:pTmin");
   }
 
   // Impact parameter profile: nondiffractive topologies.
   if (iDiffSys == 0) {
-    bProfile     = settings.mode("MultipartonInteractions:bProfile");
-    coreRadius   = settings.parm("MultipartonInteractions:coreRadius");
-    coreFraction = settings.parm("MultipartonInteractions:coreFraction");
-    expPow       = settings.parm("MultipartonInteractions:expPow");
+    bProfile     = mode("MultipartonInteractions:bProfile");
+    coreRadius   = parm("MultipartonInteractions:coreRadius");
+    coreFraction = parm("MultipartonInteractions:coreFraction");
+    expPow       = parm("MultipartonInteractions:expPow");
     expPow       = max(EXPPOWMIN, expPow);
     // x-dependent impact parameter profile.
-    a1           = settings.parm("MultipartonInteractions:a1");
+    a1           = parm("MultipartonInteractions:a1");
 
   // Impact parameter profile: diffractive topologies.
   } else {
-    bProfile     = settings.mode("Diffraction:bProfile");
-    coreRadius   = settings.parm("Diffraction:coreRadius");
-    coreFraction = settings.parm("Diffraction:coreFraction");
-    expPow       = settings.parm("Diffraction:expPow");
+    bProfile     = mode("Diffraction:bProfile");
+    coreRadius   = parm("Diffraction:coreRadius");
+    coreFraction = parm("Diffraction:coreFraction");
+    expPow       = parm("Diffraction:expPow");
     expPow       = max(EXPPOWMIN, expPow);
   }
 
   // No x-dependent impact-parameter profile for diffraction.
-  if ((iDiffSys > 0 || settings.flag("Diffraction:doHard")) && bProfile == 4) {
+  if ((iDiffSys > 0 || flag("Diffraction:doHard")) && bProfile == 4) {
     infoPtr->errorMsg("Error in MultipartonInteractions::init:"
       " chosen b profile not allowed for diffraction");
     return false;
   }
 
   // Common choice of "pT" scale for determining impact parameter.
-  bSelScale      = settings.mode("MultipartonInteractions:bSelScale");
+  bSelScale      = mode("MultipartonInteractions:bSelScale");
 
   // Process sets to include in machinery.
-  processLevel   = settings.mode("MultipartonInteractions:processLevel");
+  processLevel   = mode("MultipartonInteractions:processLevel");
 
   // Parameters of rescattering description.
-  allowRescatter = settings.flag("MultipartonInteractions:allowRescatter");
-  allowDoubleRes
-    = settings.flag("MultipartonInteractions:allowDoubleRescatter");
-  rescatterMode  = settings.mode("MultipartonInteractions:rescatterMode");
-  ySepResc       = settings.parm("MultipartonInteractions:ySepRescatter");
-  deltaYResc     = settings.parm("MultipartonInteractions:deltaYRescatter");
+  allowRescatter = flag("MultipartonInteractions:allowRescatter");
+  allowDoubleRes = flag("MultipartonInteractions:allowDoubleRescatter");
+  rescatterMode  = mode("MultipartonInteractions:rescatterMode");
+  ySepResc       = parm("MultipartonInteractions:ySepRescatter");
+  deltaYResc     = parm("MultipartonInteractions:deltaYRescatter");
 
   // Rescattering not yet implemented for x-dependent impact profile.
   if (bProfile == 4) allowRescatter = false;
 
   // A global recoil FSR stategy restricts rescattering.
-  globalRecoilFSR     = settings.flag("TimeShower:globalRecoil");
-  nMaxGlobalRecoilFSR = settings.mode("TimeShower:nMaxGlobalRecoil");
+  globalRecoilFSR     = flag("TimeShower:globalRecoil");
+  nMaxGlobalRecoilFSR = mode("TimeShower:nMaxGlobalRecoil");
 
   // Various other parameters.
-  nQuarkIn       = settings.mode("MultipartonInteractions:nQuarkIn");
-  nSample        = settings.mode("MultipartonInteractions:nSample");
+  nQuarkIn       = mode("MultipartonInteractions:nQuarkIn");
+  nSample        = mode("MultipartonInteractions:nSample");
 
   // Optional dampening at small pT's when large multiplicities.
-  enhanceScreening = settings.mode("MultipartonInteractions:enhanceScreening");
+  enhanceScreening = mode("MultipartonInteractions:enhanceScreening");
 
   // Parameters for diffractive systems.
-  sigmaPomP      = settings.parm("Diffraction:sigmaRefPomP");
-  mPomP          = settings.parm("Diffraction:mRefPomP");
-  pPomP          = settings.parm("Diffraction:mPowPomP");
-  mMinPertDiff   = settings.parm("Diffraction:mMinPert");
-  bSelHard       = settings.mode("Diffraction:bSelHard");
+  sigmaPomP      = parm("Diffraction:sigmaRefPomP");
+  mPomP          = parm("Diffraction:mRefPomP");
+  pPomP          = parm("Diffraction:mPowPomP");
+  mMinPertDiff   = parm("Diffraction:mMinPert");
+  bSelHard       = mode("Diffraction:bSelHard");
 
   // Beam particles might not be found from the usual positions.
   beamOffset = 0;
@@ -483,7 +473,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
              : false;
 
   // Possibility to set parton vertex information.
-  doPartonVertex = settings.flag("PartonVertex:setVertex")
+  doPartonVertex = flag("PartonVertex:setVertex")
                 && (partonVertexPtr != 0);
 
   // Some common combinations for double Gaussian, as shorthand.
@@ -506,17 +496,13 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   double Lambda3 = alphaS.Lambda3();
 
   // Initialize alphaEM generation.
-  alphaEM.init( alphaEMorder, &settings);
+  alphaEM.init( alphaEMorder, settingsPtr);
 
   // Attach matrix-element calculation objects.
-  sigma2gg.init( 0, processLevel, infoPtr, &settings, particleDataPtr,
-    rndmPtr, beamAPtr, beamBPtr, couplingsPtr);
-  sigma2qg.init( 1, processLevel, infoPtr, &settings, particleDataPtr,
-    rndmPtr, beamAPtr, beamBPtr, couplingsPtr);
-  sigma2qqbarSame.init( 2, processLevel, infoPtr, &settings, particleDataPtr,
-    rndmPtr, beamAPtr, beamBPtr, couplingsPtr);
-  sigma2qq.init( 3, processLevel, infoPtr, &settings, particleDataPtr,
-    rndmPtr,  beamAPtr, beamBPtr, couplingsPtr);
+  sigma2gg.init( 0, processLevel, infoPtr, beamAPtr, beamBPtr);
+  sigma2qg.init( 1, processLevel, infoPtr, beamAPtr, beamBPtr);
+  sigma2qqbarSame.init( 2, processLevel, infoPtr, beamAPtr, beamBPtr);
+  sigma2qq.init( 3, processLevel, infoPtr, beamAPtr, beamBPtr);
 
   // Calculate invariant mass of system.
   eCM          = infoPtr->eCM();
@@ -525,12 +511,12 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   eCMsave      = eCM;
 
   // Allow for variable collision energies.
-  doVarEcm    = settings.flag("Beams:allowVariableEnergy");
+  doVarEcm    = flag("Beams:allowVariableEnergy");
   if (iDiffSys > 0 || hasGamma) doVarEcm = false;
 
   // Limits on invariant mass of gm+gm system.
-  mGmGmMin     = settings.parm("Photon:Wmin");
-  mGmGmMax     = settings.parm("Photon:Wmax");
+  mGmGmMin     = parm("Photon:Wmin");
+  mGmGmMax     = parm("Photon:Wmax");
   if ( mGmGmMax < mGmGmMin ) mGmGmMax = eCM;
 
   // Get the total inelastic and nondiffractive cross section.
@@ -549,7 +535,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   double sigmaMaxViol = 0.;
 
   // Output initialization info - first part.
-  bool showMPI = settings.flag("Init:showMultipartonInteractions");
+  bool showMPI = flag("Init:showMultipartonInteractions");
   if (showMPI) {
     cout << "\n *-------  PYTHIA Multiparton Interactions Initialization  "
          << "---------* \n"
@@ -592,7 +578,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   // For variable-energy beams cover range of cm energies.
   if (doVarEcm || iDiffSys > 0 || hasGamma) {
     if (doVarEcm) {
-      eStepMin  = settings.parm("Beams:eMinPert");
+      eStepMin  = parm("Beams:eMinPert");
       eStepMax  = eCM;
     // For diffraction cover range of diffractive masses.
     } else if (iDiffSys > 0) {
@@ -1118,7 +1104,6 @@ void MultipartonInteractions::setupFirstSys( Event& process) {
   if (doPartonVertex)
     partonVertexPtr->vertexMPI( sizeProc, 4, bNow, process);
 
-
   // Set scale from which to begin evolution.
   process.scale(  sqrt(pT2Fac) );
 
@@ -1156,7 +1141,8 @@ bool MultipartonInteractions::limitPTmax( Event& event) {
 
   // Always restrict SoftQCD processes.
   if (infoPtr->isNonDiffractive() || infoPtr->isDiffractiveA()
-    || infoPtr->isDiffractiveB() || infoPtr->isDiffractiveC() ) return true;
+    || infoPtr->isDiffractiveB() || infoPtr->isDiffractiveC() )
+    return true;
 
   // Look if only quarks (u, d, s, c, b), gluons and photons in final state.
   bool onlyQGP1      = true;
@@ -1712,28 +1698,32 @@ double MultipartonInteractions::sigmaPT2scatter(bool isFirst) {
   // For first interaction use normal densities.
   if (isFirst) {
     for (int id = -nQuarkIn; id <= nQuarkIn; ++id) {
-      if (id == 0) xPDF1[10] = (9./4.) * beamAPtr->xf(21, x1, pT2Fac);
-      else xPDF1[id+10] = beamAPtr->xf(id, x1, pT2Fac);
+      if (id == 0) {
+        xPDF1[10] = (9./4.) * beamAPtr->xf(21, x1, pT2Fac);
+        xPDF2[10] = (9./4.) * beamBPtr->xf(21, x2, pT2Fac);
+      } else {
+        xPDF1[id+10] = beamAPtr->xf(id, x1, pT2Fac);
+        xPDF2[id+10] = beamBPtr->xf(id, x2, pT2Fac);
+      }
       xPDF1sum += xPDF1[id+10];
-    }
-    for (int id = -nQuarkIn; id <= nQuarkIn; ++id) {
-      if (id == 0) xPDF2[10] = (9./4.) * beamBPtr->xf(21, x2, pT2Fac);
-      else xPDF2[id+10] = beamBPtr->xf(id, x2, pT2Fac);
       xPDF2sum += xPDF2[id+10];
     }
 
   // For subsequent interactions use rescaled densities.
   } else {
+    xfModPrepData xfDataA = beamAPtr->xfModPrep(-1, pT2Fac);
+    xfModPrepData xfDataB = beamBPtr->xfModPrep(-1, pT2Fac);
     for (int id = -nQuarkIn; id <= nQuarkIn; ++id) {
-      if (id == 0) xPDF1[10] = (9./4.) * beamAPtr->xfMPI(21, x1, pT2Fac);
-      else xPDF1[id+10] = beamAPtr->xfMPI(id, x1, pT2Fac);
+      if (id == 0) continue;
+      xPDF1[id+10] = beamAPtr->xfMPI(id, x1, pT2Fac, xfDataA);
+      xPDF2[id+10] = beamBPtr->xfMPI(id, x2, pT2Fac, xfDataB);
       xPDF1sum += xPDF1[id+10];
-    }
-    for (int id = -nQuarkIn; id <= nQuarkIn; ++id) {
-      if (id == 0) xPDF2[10] = (9./4.) * beamBPtr->xfMPI(21, x2, pT2Fac);
-      else xPDF2[id+10] = beamBPtr->xfMPI(id, x2, pT2Fac);
       xPDF2sum += xPDF2[id+10];
     }
+    xPDF1[10] = (9./4.) * beamAPtr->xfMPI(21, x1, pT2Fac, xfDataA);
+    xPDF2[10] = (9./4.) * beamBPtr->xfMPI(21, x2, pT2Fac, xfDataB);
+    xPDF1sum += xPDF1[10];
+    xPDF2sum += xPDF2[10];
   }
 
   // Select incoming flavours according to actual PDF's.
@@ -1903,6 +1893,7 @@ double MultipartonInteractions::sigmaPT2rescatter( Event& event) {
     int( rndmPtr->flat() * double(nScatA) ) );
 
   // Loop over all already scattered partons from side A.
+  xfModPrepData xfDataB = beamBPtr->xfModPrep(-1, pT2Fac);
   for (int iScat = 0; iScat < nScatA; ++iScat) {
     if (PREPICKRESCATTER && iScat != iScatA) continue;
     int iA         = scatteredA[iScat];
@@ -1934,10 +1925,12 @@ double MultipartonInteractions::sigmaPT2rescatter( Event& event) {
 
     // Use rescaled densities, with preweighting 9/4 for gluons.
     for (int id = -nQuarkIn; id <= nQuarkIn; ++id) {
-      if (id == 0) xPDF2[10] = (9./4.) * beamBPtr->xfMPI(21, x2Tmp, pT2Fac);
-      else xPDF2[id+10] = beamBPtr->xfMPI(id, x2Tmp, pT2Fac);
+      if (id == 0) continue;
+      xPDF2[id+10] = beamBPtr->xfMPI(id, x2Tmp, pT2Fac, xfDataB);
       xPDF2sum += xPDF2[id+10];
     }
+    xPDF2[10] = (9./4.) * beamBPtr->xfMPI(21, x2Tmp, pT2Fac, xfDataB);
+    xPDF2sum += xPDF2[10];
 
     // Select incoming flavour according to actual PDF's.
     int id2Tmp = -nQuarkIn - 1;
@@ -2002,6 +1995,7 @@ double MultipartonInteractions::sigmaPT2rescatter( Event& event) {
     int( rndmPtr->flat() * double(nScatB) ) );
 
   // Loop over all already scattered partons from side B.
+  xfModPrepData xfDataA = beamAPtr->xfModPrep(-1, pT2Fac);
   for (int iScat = 0; iScat < nScatB; ++iScat) {
     if (PREPICKRESCATTER && iScat != iScatB) continue;
     int iB         = scatteredB[iScat];
@@ -2033,10 +2027,12 @@ double MultipartonInteractions::sigmaPT2rescatter( Event& event) {
 
     // Use rescaled densities, with preweighting 9/4 for gluons.
     for (int id = -nQuarkIn; id <= nQuarkIn; ++id) {
-      if (id == 0) xPDF1[10] = (9./4.) * beamAPtr->xfMPI(21, x1Tmp, pT2Fac);
-      else xPDF1[id+10] = beamAPtr->xfMPI(id, x1Tmp, pT2Fac);
+      if (id == 0) continue;
+      xPDF1[id+10] = beamAPtr->xfMPI(id, x1Tmp, pT2Fac, xfDataA);
       xPDF1sum += xPDF1[id+10];
     }
+    xPDF1[10] = (9./4.) * beamAPtr->xfMPI(21, x1Tmp, pT2Fac, xfDataA);
+    xPDF1sum += xPDF1[10];
 
     // Select incoming flavour according to actual PDF's.
     int id1Tmp = -nQuarkIn - 1;

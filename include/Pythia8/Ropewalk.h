@@ -1,5 +1,5 @@
 // Ropewalk.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,6 +22,7 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/PythiaStdlib.h"
+#include "Pythia8/StringInteractions.h"
 
 namespace Pythia8 {
 
@@ -207,18 +208,19 @@ private:
 // The Ropewalk class keeps track of all the strings making up ropes
 // for shoving as well as flavour enhancement.
 
-class Ropewalk {
+class Ropewalk : public StringInteractions {
 
 public:
 
   // Constructor.
-  Ropewalk() : r0(), m0(), pTcut(), doShoving(), shoveJunctionStrings(),
+  Ropewalk() : r0(), m0(), pTcut(),
+    shoveJunctionStrings(),
     shoveMiniStrings(), shoveGluonLoops(), mStringMin(), limitMom(), rCutOff(),
     gAmplitude(), gExponent(), deltay(), deltat(), tShove(), tInit(),
-    showerCut(), alwaysHighest(), infoPtr(), rndmPtr() {}
+    showerCut(), alwaysHighest() {}
 
   // The Ropewalk init function sets parameters and pointers.
-  bool init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn);
+  virtual bool init();
 
   // Extract all dipoles from an event.
   bool extractDipoles(Event& event, ColConfig& colConfig);
@@ -250,8 +252,6 @@ private:
 
   // Parameters of the ropewalk.
   double r0, m0, pTcut;
-  // Do shoving flag.
-  bool doShoving;
   // Include junction strings in shoving.
   bool shoveJunctionStrings;
   // Include ministrings in shoving.
@@ -279,12 +279,6 @@ private:
   // Assume we are always in highest multiplet.
   bool alwaysHighest;
 
-  // Info pointer.
-  Info* infoPtr;
-
-  // Pointer the the random number generator.
-  Rndm* rndmPtr;
-
   // All dipoles in the event sorted by event record.
   // Index of the two partons.
   typedef multimap<pair<int,int>, RopeDipole> DMap;
@@ -298,7 +292,7 @@ private:
   vector<double> weights;
 
   // Private assignment operator.
-  Ropewalk& operator=(const Ropewalk);
+  Ropewalk& operator=(const Ropewalk) = delete;
 
 };
 
@@ -307,18 +301,18 @@ private:
 // RopeFragPars recalculates fragmentation parameters according to a
 // changed string tension. Helper class to FlavourRope.
 
-class RopeFragPars {
+class RopeFragPars : public PhysicsBase {
 
 public:
 
   // Constructor.
-  RopeFragPars() : infoPtr(), aIn(), adiqIn(), bIn(), rhoIn(), xIn(),
+  RopeFragPars() : aIn(), adiqIn(), bIn(), rhoIn(), xIn(),
     yIn(), xiIn(), sigmaIn(), kappaIn(), aEff(), adiqEff(), bEff(),
     rhoEff(), xEff(), yEff(), xiEff(), sigmaEff(), kappaEff(),
     beta() {}
 
   // The init function sets up initial parameters from settings.
-  void init(Info* infoPtrIn, Settings& settings);
+  bool init();
 
   // Return parameters at given string tension, ordered by their
   // name for easy insertion in settings.
@@ -350,9 +344,6 @@ private:
   // Helper function for integration.
   double trapIntegrate(double a, double b, double mT2, double sOld, int n);
 
-  // The info pointer.
-  Info* infoPtr;
-
   // Parameter caches to re-use calculations. Sets of parameters, ordered in h.
   map<double, map<string, double> > parameters;
 
@@ -380,41 +371,48 @@ private:
 // It is a UserHooks derived class, and one must make sure to add it
 // to the UserHooksVector in the main program or somewhere else.
 
-class FlavourRope {
+class FlavourRope : public FragmentationModifierBase {
 
 public:
 
   // Constructor.
-  FlavourRope() : settingsPtr(), rndmPtr(), particleDataPtr(), infoPtr(),
-    rwPtr(), ePtr(), doBuffon(), rapiditySpan(), stringProtonRatio(),
-    fixedKappa(), h() {}
+  FlavourRope(Ropewalk & rwIn) : rwPtr(&rwIn), ePtr(), doBuffon(),
+              rapiditySpan(), stringProtonRatio(), fixedKappa(), h() {}
 
   // Initialize. Set pointers.
-  void init(Settings* settingsPtrIn, Rndm* rndmPtrIn, ParticleData*
-    particleDataPtrIn, Info* infoPtrIn, Ropewalk* rwPtrIn) {
-    settingsPtr = settingsPtrIn, rndmPtr = rndmPtrIn,
-    particleDataPtr = particleDataPtrIn, infoPtr = infoPtrIn,
-    rwPtr = rwPtrIn;
+  virtual bool init() override {
+
     // Initialize event pointer such that it can be tested.
     ePtr = NULL;
-    h = settingsPtr->parm("Ropewalk:presetKappa");
-    fixedKappa = settingsPtr->flag("Ropewalk:setFixedKappa");
-    doBuffon = settingsPtr->flag("Ropewalk:doBuffon");
-    rapiditySpan = settingsPtr->parm("Ropewalk:rapiditySpan");
-    stringProtonRatio = settingsPtr->parm("Ropewalk:stringProtonRatio");
+    h = parm("Ropewalk:presetKappa");
+    fixedKappa = flag("Ropewalk:setFixedKappa");
+    doBuffon = flag("Ropewalk:doBuffon");
+    rapiditySpan = parm("Ropewalk:rapiditySpan");
+    stringProtonRatio = parm("Ropewalk:stringProtonRatio");
     // Initialize FragPar.
-    fp.init(infoPtr, *settingsPtr);
+    fp.init();
+    return true;
   }
 
   // Change the fragmentation parameters.
   bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
-   StringPT * pTPtr, double m2Had, vector<int> iParton, int endId);
+   StringPT * pTPtr, double m2Had, vector<int> iParton, int endId) override;
 
   // Set enhancement manually.
   void setEnhancement(double hIn) { h = hIn;}
 
   // Set pointer to the event.
   void setEventPtr(Event& event) { ePtr = &event;}
+
+  // Initialise the current event just before string fragmentation
+  // starts.
+  virtual bool initEvent(Event& event, ColConfig& colConfig) override;
+
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(fp);
+  }
 
 private:
 
@@ -425,18 +423,6 @@ private:
   // For simple Buffon model.
   map<string, double> fetchParametersBuffon(double m2Had, vector<int> iParton,
     int endId);
-
-  // Pointer to settings.
-  Settings* settingsPtr;
-
-  // Random number generator needed for reinitialization.
-  Rndm* rndmPtr;
-
-  // Particle data object needed for reinitialization.
-  ParticleData* particleDataPtr;
-
-  // Pythia info pointer.
-  Info* infoPtr;
 
   // Pointer to the ropewalk object.
   Ropewalk* rwPtr;
@@ -465,6 +451,30 @@ private:
 };
 
 //==========================================================================
+
+// Interface to RopeWalk via an ShoverBase object.
+
+class RopewalkShover : public StringRepulsionBase {
+
+public:
+
+  // RopeWalk is a friend.
+  friend class RopeWalk;
+
+  // The costructor needs a RopeWalk object be consistent.
+  RopewalkShover(Ropewalk & rwIn) : rwPtr(&rwIn) {}
+
+  // Empty virtual destructor.
+  virtual ~RopewalkShover() {};
+  // Main virtual function, called before the hadronisation.
+  virtual bool stringRepulsion(Event & event, ColConfig & colConfig);
+
+private:
+
+  // The Ropewalk object doing all the work.
+  Ropewalk * rwPtr;
+
+};
 
 } // end namespace Pythia8
 

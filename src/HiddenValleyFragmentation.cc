@@ -1,5 +1,5 @@
 // HiddenValleyFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,17 +18,11 @@ namespace Pythia8 {
 
 // Initialize data members of the flavour generation.
 
-void HVStringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
-  Rndm* rndmPtrIn, Info* infoPtrIn) {
-
-  // Save pointers.
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  infoPtr         = infoPtrIn;
+void HVStringFlav::init() {
 
   // Read in data from Settings.
-  nFlav           = settings.mode("HiddenValley:nFlav");
-  probVector      = settings.parm("HiddenValley:probVector");
+  nFlav           = mode("HiddenValley:nFlav");
+  probVector      = parm("HiddenValley:probVector");
   thermalModel    = false;
   useWidthPre     = false;
   closePacking    = false;
@@ -89,17 +83,11 @@ int HVStringFlav::combine(FlavContainer& flav1, FlavContainer& flav2) {
 
 // Initialize data members of the string pT selection.
 
-void HVStringPT::init(Settings& settings, ParticleData* particleDataPtrIn,
-  Rndm* rndmPtrIn, Info* infoPtrIn) {
-
-  // Save pointer.
-  particleDataPtr  = particleDataPtrIn;
-  rndmPtr          = rndmPtrIn;
-  infoPtr          = infoPtrIn;
+void HVStringPT::init() {
 
   // Parameter of the pT width. No enhancement, since this is finetuning.
-  double sigmamqv  = settings.parm("HiddenValley:sigmamqv");
-  double sigma     = sigmamqv * particleDataPtrIn->m0( 4900101);
+  double sigmamqv  = parm("HiddenValley:sigmamqv");
+  double sigma     = sigmamqv * particleDataPtr->m0( 4900101);
   sigmaQ           = sigma / sqrt(2.);
   enhancedFraction = 0.;
   enhancedWidth    = 0.;
@@ -120,24 +108,19 @@ void HVStringPT::init(Settings& settings, ParticleData* particleDataPtrIn,
 
 // Initialize data members of the string z selection.
 
-void HVStringZ::init(Settings& settings, ParticleData& particleData,
-  Rndm* rndmPtrIn, Info* infoPtrIn) {
-
-  // Save pointer.
-  rndmPtr  = rndmPtrIn;
-  infoPtr  = infoPtrIn;
+void HVStringZ::init() {
 
   // Paramaters of Lund/Bowler symmetric fragmentation function.
-  aLund    = settings.parm("HiddenValley:aLund");
-  bmqv2    = settings.parm("HiddenValley:bmqv2");
-  rFactqv  = settings.parm("HiddenValley:rFactqv");
+  aLund    = parm("HiddenValley:aLund");
+  bmqv2    = parm("HiddenValley:bmqv2");
+  rFactqv  = parm("HiddenValley:rFactqv");
 
   // Use qv mass to set scale of bEff = b * m^2;
-  mqv2     = pow2( particleData.m0( 4900101) );
+  mqv2     = pow2( particleDataPtr->m0( 4900101) );
   bLund    = bmqv2 / mqv2;
 
   // Mass of qv meson used to set stop scale for fragmentation iteration.
-  mhvMeson = particleData.m0( 4900111);
+  mhvMeson = particleDataPtr->m0( 4900111);
 
 }
 
@@ -162,21 +145,15 @@ double HVStringZ::zFrag( int , int , double mT2) {
 
 // Initialize and save pointers.
 
-bool HiddenValleyFragmentation::init(Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn) {
-
-  // Save pointers.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
+bool HiddenValleyFragmentation::init() {
 
   // Check whether Hidden Valley fragmentation switched on, and SU(N).
-  doHVfrag = settings.flag("HiddenValley:fragment");
-  if (settings.mode("HiddenValley:Ngauge") < 2) doHVfrag = false;
+  doHVfrag = flag("HiddenValley:fragment");
+  if (mode("HiddenValley:Ngauge") < 2) doHVfrag = false;
   if (!doHVfrag) return false;
 
   // Several copies of qv may be needed. Taken to have same mass.
-  nFlav = settings.mode("HiddenValley:nFlav");
+  nFlav = mode("HiddenValley:nFlav");
   if (nFlav > 1) {
     int spinType = particleDataPtr->spinType(4900101);
     double m0    = particleDataPtr->m0(4900101);
@@ -192,25 +169,20 @@ bool HiddenValleyFragmentation::init(Info* infoPtrIn, Settings& settings,
   hvEvent.init( "(Hidden Valley fragmentation)", particleDataPtr);
 
   // Create HVStringFlav instance for HV-flavour selection.
-  hvFlavSelPtr = new HVStringFlav();
-  hvFlavSelPtr->init( settings, particleDataPtr, rndmPtr, infoPtr);
+  hvFlavSel.init();
 
   // Create HVStringPT instance for pT selection in HV fragmentation.
-  hvPTSelPtr = new HVStringPT();
-  hvPTSelPtr->init( settings, particleDataPtr, rndmPtr, infoPtr);
+  hvPTSel.init();
 
   // Create HVStringZ instance for z selection in HV fragmentation.
-  hvZSelPtr = new HVStringZ();
-  hvZSelPtr->init( settings, *particleDataPtr, rndmPtr, infoPtr);
+  hvZSel.init();
 
   // Initialize auxiliary administrative class.
-  hvColConfig.init(infoPtr, settings, hvFlavSelPtr);
+  hvColConfig.init(infoPtr, &hvFlavSel);
 
   // Initialize HV-string and HV-ministring fragmentation.
-  hvStringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
-    hvFlavSelPtr, hvPTSelPtr, hvZSelPtr);
-  hvMinistringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
-    hvFlavSelPtr, hvPTSelPtr, hvZSelPtr);
+  hvStringFrag.init(&hvFlavSel, &hvPTSel, &hvZSel);
+  hvMinistringFrag.init(&hvFlavSel, &hvPTSel, &hvZSel);
 
   // Done.
   return true;

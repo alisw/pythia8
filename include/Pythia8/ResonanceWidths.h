@@ -1,5 +1,5 @@
 // ResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,7 +24,8 @@ namespace Pythia8 {
 class DecayChannel;
 class ParticleData;
 class ParticleDataEntry;
-class Couplings;
+class CoupSM;
+class CoupSUSY;
 
 //==========================================================================
 
@@ -42,8 +43,7 @@ public:
     idRes = idResIn; isGeneric = isGenericIn;}
 
   // Calculate and store partial and total widths at the nominal mass.
-  virtual bool init(Info* infoPtrIn, Settings* settingsPtrIn,
-    ParticleData* particleDataPtrIn, Couplings* couplingsPtrIn);
+  virtual bool init(Info* infoPtrIn);
 
   // Return identity of particle species.
   int id() const {return idRes;}
@@ -81,7 +81,8 @@ protected:
     meMode(), mult(), id1(), id2(), id3(), id1Abs(), id2Abs(), id3Abs(),
     idInFlav(), widNow(), mHat(), mf1(), mf2(), mf3(), mr1(), mr2(), mr3(),
     ps(), kinFac(), alpEM(), alpS(), colQ(), preFac(), particlePtr(),
-    infoPtr(), settingsPtr(), particleDataPtr(), couplingsPtr() {}
+    infoPtr(), settingsPtr(), particleDataPtr(), coupSMPtr(),
+    coupSUSYPtr(){}
 
   // Constants: could only be changed in the code itself.
   static const int    NPOINT;
@@ -112,7 +113,8 @@ protected:
   ParticleData* particleDataPtr;
 
   // Pointers to Standard Model and SUSY couplings.
-  Couplings*    couplingsPtr;
+  CoupSM*       coupSMPtr;
+  CoupSUSY*     coupSUSYPtr;
 
   // Initialize constants.
   virtual void initConstants() {}
@@ -152,7 +154,7 @@ public:
   ResonanceGeneric(int idResIn) {initBasic(idResIn, true);}
 
   // By default, assume no dedicated code exists to compute width.
-  virtual bool allowCalc() {return false;}
+  virtual bool allowCalc() override {return false;}
 
 };
 
@@ -175,13 +177,13 @@ private:
   double thetaWRat, ei2, eivi, vi2ai2, gamNorm, intNorm, resNorm;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -194,21 +196,21 @@ class ResonanceW : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceW(int idResIn) : thetaWRat(), alpEM() {initBasic(idResIn);}
+ ResonanceW(int idResIn) : ResonanceWidths(), thetaWRat() {initBasic(idResIn);}
 
 private:
 
   // Locally stored properties and couplings.
-  double thetaWRat, alpEM;
+  double thetaWRat;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -230,13 +232,13 @@ private:
   double thetaWRat, m2W, tanBeta, tan2Beta, mbRun;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -257,13 +259,13 @@ private:
   double thetaWRat, m2W;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -302,13 +304,13 @@ private:
          kinFacT[101], kinFacZ[101], kinFacW[101];
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
   // Sum up loop contributions in Higgs -> g + g.
   double eta2gg();
@@ -340,13 +342,13 @@ private:
   double thetaWRat, mW, tanBeta, tan2Beta, coup2H1W;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -373,13 +375,13 @@ private:
          gamNorm, gamZNorm, ZNorm, gamZpNorm, ZZpNorm, ZpNorm;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -392,22 +394,22 @@ class ResonanceWprime : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceWprime(int idResIn) : thetaWRat(), cos2tW(), alpEM(), aqWp(),
-    vqWp(), alWp(), vlWp(), coupWpWZ() {initBasic(idResIn);}
+ ResonanceWprime(int idResIn) : ResonanceWidths(), thetaWRat(), cos2tW(),
+    aqWp(), vqWp(), alWp(), vlWp(), coupWpWZ() {initBasic(idResIn);}
 
 private:
 
   // Locally stored properties and couplings.
-  double thetaWRat, cos2tW, alpEM, aqWp, vqWp, alWp, vlWp, coupWpWZ;
+  double thetaWRat, cos2tW, aqWp, vqWp, alWp, vlWp, coupWpWZ;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -428,13 +430,13 @@ private:
   double thetaWRat;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -456,13 +458,13 @@ private:
   double Lambda, coupF, coupFprime, coupFcol, contactDec, sin2tW, cos2tW;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -488,13 +490,13 @@ private:
   double eDcoupling[27];
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -524,13 +526,13 @@ private:
   int interfMode;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool calledFromInit = false);
+  virtual void calcPreFac(bool calledFromInit = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -551,13 +553,13 @@ private:
   double kCoup;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -578,13 +580,13 @@ private:
   double thetaWRat, mWR;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -605,13 +607,13 @@ private:
   double sin2tW, thetaWRat;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -632,13 +634,13 @@ private:
   double thetaWRat;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -660,13 +662,13 @@ private:
   double yukawa[4][4], gL, vL, mW;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 
@@ -689,13 +691,13 @@ private:
   double yukawa[4][4], gR;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool = false);
+  virtual void calcWidth(bool = false) override;
 
 };
 

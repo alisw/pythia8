@@ -1,5 +1,5 @@
 // HiddenValleyFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -36,8 +36,7 @@ public:
   ~HVStringFlav() {}
 
   // Initialize data members.
-  void init(Settings& settings, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, Info* infoPtrIn);
+  void init();
 
   // Pick a new flavour (including diquarks) given an incoming one.
   FlavContainer pick(FlavContainer& flavOld, double, double);
@@ -68,8 +67,7 @@ public:
   ~HVStringPT() {}
 
   // Initialize data members.
-  void init(Settings& settings, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, Info* infoPtrIn);
+  void init();
 
 };
 
@@ -88,8 +86,7 @@ public:
   virtual ~HVStringZ() {}
 
   // Initialize data members.
-  void init(Settings& settings, ParticleData& particleData,
-    Rndm* rndmPtrIn, Info* infoPtrIn);
+  void init();
 
   // Fragmentation function: top-level to determine parameters.
   double zFrag( int idOld, int idNew = 0, double mT2 = 1.);
@@ -111,38 +108,31 @@ private:
 // The HiddenValleyFragmentation class contains the routines
 // to fragment a Hidden Valley partonic system.
 
-class HiddenValleyFragmentation {
+class HiddenValleyFragmentation : public PhysicsBase {
 
 public:
 
   // Constructor.
-  HiddenValleyFragmentation() : infoPtr(), particleDataPtr(), rndmPtr(),
-    doHVfrag(false), nFlav(), hvOldSize(), hvNewSize(), mhvMeson(), mSys(),
-    hvFlavSelPtr(NULL), hvPTSelPtr(NULL), hvZSelPtr(NULL) {}
-
-  // Destructor.
-  ~HiddenValleyFragmentation() { if (doHVfrag) {
-    if (hvZSelPtr) delete hvZSelPtr;
-    if (hvPTSelPtr) delete hvPTSelPtr;
-    if (hvFlavSelPtr) delete hvFlavSelPtr;} }
+  HiddenValleyFragmentation() : doHVfrag(false), nFlav(), hvOldSize(),
+    hvNewSize(), mhvMeson(), mSys() {}
 
   // Initialize and save pointers.
-  bool init(Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn);
+  bool init();
 
   // Do the fragmentation: driver routine.
   bool fragment(Event& event);
 
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(hvStringFrag);
+    registerSubObject(hvMinistringFrag);
+    registerSubObject(hvFlavSel);
+    registerSubObject(hvPTSel);
+    registerSubObject(hvZSel);
+  }
+
 private:
-
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
 
   // Data mambers.
   bool          doHVfrag;
@@ -163,9 +153,9 @@ private:
   MiniStringFragmentation hvMinistringFrag;
 
   // Pointers to classes for flavour, pT and z generation in HV sector.
-  StringFlav*   hvFlavSelPtr;
-  StringPT*     hvPTSelPtr;
-  StringZ*      hvZSelPtr;
+  StringFlav hvFlavSel;
+  StringPT   hvPTSel;
+  StringZ    hvZSel;
 
   // Extract HV-particles from event to hvEvent. Assign HV-colours.
   bool extractHVevent(Event& event);

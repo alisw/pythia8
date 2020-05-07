@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,6 +9,48 @@
 #include "Pythia8/FragmentationFlavZpT.h"
 
 namespace Pythia8 {
+
+//==========================================================================
+
+// Functions for unnormalised and average Lund FF.
+
+//--------------------------------------------------------------------------
+
+// The unnormalised Lund FF
+
+double LundFFRaw(double z, double a, double b, double c, double mT2) {
+  if (z <= 0. || z >= 1.) return 0.;
+  return pow(1. - z, a) / pow(z, c) * exp(-b * mT2 / z);
+}
+
+//--------------------------------------------------------------------------
+
+// Average, <z>, of Lund FF.
+
+double LundFFAvg(double a, double b, double c,
+  double mT2, double tol = 1.e-6) {
+
+  // Checks whether the integration succeeded
+  bool check;
+
+  // Define lundFF as a function of only z, fixing a, b, c, mT2 as parameters
+  // Note that c must be captured by reference, since it is modified later
+  auto lundFF = [=, &c](double z) { return LundFFRaw(z, a, b, c, mT2); };
+
+  // Get denominator
+  double denominator = 1.;
+  check = integrateGauss(denominator, lundFF, 0, 1, tol);
+  if (!check || denominator <= 0.) return -1.;
+
+  // Get numerator
+  c -= 1;
+  double numerator = 0.;
+  check = integrateGauss(numerator, lundFF, 0., 1., tol);
+  if (!check || numerator <= 0.) return -1.;
+
+  // Done.
+  return numerator / denominator;
+}
 
 //==========================================================================
 
@@ -35,19 +77,14 @@ const double StringFlav::baryonCGDec[6]
 
 // Initialize data members of the flavour generation.
 
-void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
-  Rndm* rndmPtrIn, Info* infoPtrIn) {
+void StringFlav::init() {
 
   // Save pointers.
-  rndmPtr         = rndmPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  infoPtr         = infoPtrIn;
-
   // Basic parameters for generation of new flavour.
-  probQQtoQ       = settings.parm("StringFlav:probQQtoQ");
-  probStoUD       = settings.parm("StringFlav:probStoUD");
-  probSQtoQQ      = settings.parm("StringFlav:probSQtoQQ");
-  probQQ1toQQ0    = settings.parm("StringFlav:probQQ1toQQ0");
+  probQQtoQ       = parm("StringFlav:probQQtoQ");
+  probStoUD       = parm("StringFlav:probStoUD");
+  probSQtoQQ      = parm("StringFlav:probSQtoQQ");
+  probQQ1toQQ0    = parm("StringFlav:probQQ1toQQ0");
 
   // Parameters derived from above.
   probQandQQ      = 1. + probQQtoQ;
@@ -58,34 +95,34 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
   probQQ1norm     = probQQ1corr / (1. + probQQ1corr);
 
   // Spin parameters for combining two quarks to a diquark.
-  vector<double> pQQ1tmp = settings.pvec("StringFlav:probQQ1toQQ0join");
+  vector<double> pQQ1tmp = settingsPtr->pvec("StringFlav:probQQ1toQQ0join");
   for (int i = 0; i < 4; ++i)
     probQQ1join[i] = 3. * pQQ1tmp[i] / (1. + 3. * pQQ1tmp[i]);
 
   // Parameters for normal meson production.
   for (int i = 0; i < 4; ++i) mesonRate[i][0] = 1.;
-  mesonRate[0][1] = settings.parm("StringFlav:mesonUDvector");
-  mesonRate[1][1] = settings.parm("StringFlav:mesonSvector");
-  mesonRate[2][1] = settings.parm("StringFlav:mesonCvector");
-  mesonRate[3][1] = settings.parm("StringFlav:mesonBvector");
+  mesonRate[0][1] = parm("StringFlav:mesonUDvector");
+  mesonRate[1][1] = parm("StringFlav:mesonSvector");
+  mesonRate[2][1] = parm("StringFlav:mesonCvector");
+  mesonRate[3][1] = parm("StringFlav:mesonBvector");
 
   // Parameters for L=1 excited-meson production.
-  mesonRate[0][2] = settings.parm("StringFlav:mesonUDL1S0J1");
-  mesonRate[1][2] = settings.parm("StringFlav:mesonSL1S0J1");
-  mesonRate[2][2] = settings.parm("StringFlav:mesonCL1S0J1");
-  mesonRate[3][2] = settings.parm("StringFlav:mesonBL1S0J1");
-  mesonRate[0][3] = settings.parm("StringFlav:mesonUDL1S1J0");
-  mesonRate[1][3] = settings.parm("StringFlav:mesonSL1S1J0");
-  mesonRate[2][3] = settings.parm("StringFlav:mesonCL1S1J0");
-  mesonRate[3][3] = settings.parm("StringFlav:mesonBL1S1J0");
-  mesonRate[0][4] = settings.parm("StringFlav:mesonUDL1S1J1");
-  mesonRate[1][4] = settings.parm("StringFlav:mesonSL1S1J1");
-  mesonRate[2][4] = settings.parm("StringFlav:mesonCL1S1J1");
-  mesonRate[3][4] = settings.parm("StringFlav:mesonBL1S1J1");
-  mesonRate[0][5] = settings.parm("StringFlav:mesonUDL1S1J2");
-  mesonRate[1][5] = settings.parm("StringFlav:mesonSL1S1J2");
-  mesonRate[2][5] = settings.parm("StringFlav:mesonCL1S1J2");
-  mesonRate[3][5] = settings.parm("StringFlav:mesonBL1S1J2");
+  mesonRate[0][2] = parm("StringFlav:mesonUDL1S0J1");
+  mesonRate[1][2] = parm("StringFlav:mesonSL1S0J1");
+  mesonRate[2][2] = parm("StringFlav:mesonCL1S0J1");
+  mesonRate[3][2] = parm("StringFlav:mesonBL1S0J1");
+  mesonRate[0][3] = parm("StringFlav:mesonUDL1S1J0");
+  mesonRate[1][3] = parm("StringFlav:mesonSL1S1J0");
+  mesonRate[2][3] = parm("StringFlav:mesonCL1S1J0");
+  mesonRate[3][3] = parm("StringFlav:mesonBL1S1J0");
+  mesonRate[0][4] = parm("StringFlav:mesonUDL1S1J1");
+  mesonRate[1][4] = parm("StringFlav:mesonSL1S1J1");
+  mesonRate[2][4] = parm("StringFlav:mesonCL1S1J1");
+  mesonRate[3][4] = parm("StringFlav:mesonBL1S1J1");
+  mesonRate[0][5] = parm("StringFlav:mesonUDL1S1J2");
+  mesonRate[1][5] = parm("StringFlav:mesonSL1S1J2");
+  mesonRate[2][5] = parm("StringFlav:mesonCL1S1J2");
+  mesonRate[3][5] = parm("StringFlav:mesonBL1S1J2");
 
   // Store sum over multiplets for Monte Carlo generation.
   for (int i = 0; i < 4; ++i) mesonRateSum[i]
@@ -95,12 +132,12 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
   // Parameters for uubar - ddbar - ssbar meson mixing.
   for (int spin = 0; spin < 6; ++spin) {
     double theta;
-    if      (spin == 0) theta = settings.parm("StringFlav:thetaPS");
-    else if (spin == 1) theta = settings.parm("StringFlav:thetaV");
-    else if (spin == 2) theta = settings.parm("StringFlav:thetaL1S0J1");
-    else if (spin == 3) theta = settings.parm("StringFlav:thetaL1S1J0");
-    else if (spin == 4) theta = settings.parm("StringFlav:thetaL1S1J1");
-    else                theta = settings.parm("StringFlav:thetaL1S1J2");
+    if      (spin == 0) theta = parm("StringFlav:thetaPS");
+    else if (spin == 1) theta = parm("StringFlav:thetaV");
+    else if (spin == 2) theta = parm("StringFlav:thetaL1S0J1");
+    else if (spin == 3) theta = parm("StringFlav:thetaL1S1J0");
+    else if (spin == 4) theta = parm("StringFlav:thetaL1S1J1");
+    else                theta = parm("StringFlav:thetaL1S1J2");
     double alpha = (spin == 0) ? 90. - (theta + 54.7) : theta + 54.7;
     alpha *= M_PI / 180.;
     // Fill in (flavour, spin)-dependent probability of producing
@@ -119,11 +156,11 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
   }
 
   // Additional suppression of eta and etaPrime.
-  etaSup      = settings.parm("StringFlav:etaSup");
-  etaPrimeSup = settings.parm("StringFlav:etaPrimeSup");
+  etaSup      = parm("StringFlav:etaSup");
+  etaPrimeSup = parm("StringFlav:etaPrimeSup");
 
   // Sum of baryon octet and decuplet weights.
-  decupletSup = settings.parm("StringFlav:decupletSup");
+  decupletSup = parm("StringFlav:decupletSup");
   for (int i = 0; i < 6; ++i) baryonCGSum[i]
     = baryonCGOct[i] + decupletSup * baryonCGDec[i];
 
@@ -136,26 +173,26 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
   baryonCGMax[5] = baryonCGMax[4];
 
   // Popcorn baryon parameters.
-  popcornRate    = settings.parm("StringFlav:popcornRate");
-  popcornSpair   = settings.parm("StringFlav:popcornSpair");
-  popcornSmeson  = settings.parm("StringFlav:popcornSmeson");
+  popcornRate    = parm("StringFlav:popcornRate");
+  popcornSpair   = parm("StringFlav:popcornSpair");
+  popcornSmeson  = parm("StringFlav:popcornSmeson");
 
   // Suppression of leading (= first-rank) baryons.
-  suppressLeadingB = settings.flag("StringFlav:suppressLeadingB");
-  lightLeadingBSup = settings.parm("StringFlav:lightLeadingBSup");
-  heavyLeadingBSup = settings.parm("StringFlav:heavyLeadingBSup");
+  suppressLeadingB = flag("StringFlav:suppressLeadingB");
+  lightLeadingBSup = parm("StringFlav:lightLeadingBSup");
+  heavyLeadingBSup = parm("StringFlav:heavyLeadingBSup");
 
   // Use Gaussian model but with mT2 suppression?
-  mT2suppression   = settings.flag("StringPT:mT2suppression");
-  sigmaHad         = (sqrt(2.0)*settings.parm("StringPT:sigma"));
-  widthPreStrange  = settings.parm("StringPT:widthPreStrange");
-  widthPreDiquark  = settings.parm("StringPT:widthPreDiquark");
+  mT2suppression   = flag("StringPT:mT2suppression");
+  sigmaHad         = (sqrt(2.0)*parm("StringPT:sigma"));
+  widthPreStrange  = parm("StringPT:widthPreStrange");
+  widthPreDiquark  = parm("StringPT:widthPreDiquark");
   useWidthPre      = (widthPreStrange > 1.0) || (widthPreDiquark > 1.0);
 
   // Enhanded-rate prefactor for MPIs and/or nearby string pieces.
-  closePacking     = settings.flag("StringPT:closePacking");
-  exponentMPI      = settings.parm("StringPT:expMPI");
-  exponentNSP      = settings.parm("StringPT:expNSP");
+  closePacking     = flag("StringPT:closePacking");
+  exponentMPI      = parm("StringPT:expMPI");
+  exponentNSP      = parm("StringPT:expNSP");
 
   // Begin calculation of derived parameters for baryon production.
 
@@ -279,16 +316,16 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
   dWT[2][6] = dMB[ud1];
 
   // Use thermal model?
-  thermalModel = settings.flag("StringPT:thermalModel");
+  thermalModel = flag("StringPT:thermalModel");
   if (thermalModel || mT2suppression) {
 
     // Temperature parameters for thermal model.
-    temperature      = settings.parm("StringPT:temperature");
-    tempPreFactor    = settings.parm("StringPT:tempPreFactor");
+    temperature      = parm("StringPT:temperature");
+    tempPreFactor    = parm("StringPT:tempPreFactor");
 
     // Hadron multiplets in thermal model.
-    mesonNonetL1     = settings.flag("StringFlav:mesonNonetL1");
-    nNewQuark        = settings.mode("StringFlav:nQuark");
+    mesonNonetL1     = flag("StringFlav:mesonNonetL1");
+    nNewQuark        = mode("StringFlav:nQuark");
 
     // Fill list of possible hadrons that are allowed to be produced.
     // Also include a list of "emergency" hadrons that are needed to get
@@ -599,7 +636,7 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
     }
     // Spin 1 diquarks get extra factor of 3. And all factors
     // get relative baryon-to-meson ratio.
-    double BtoMratio = settings.parm("StringFlav:BtoMratio");
+    double BtoMratio = parm("StringFlav:BtoMratio");
     for (int q1 = 0; q1 < 6; q1++) {
       for (int q2 = 0; q2 < 6; q2++) {
         for (int q3 = 0; q3 < 6; q3++) {
@@ -617,7 +654,7 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
 
     // Go through the list of possible hadrons and calculate the prefactor
     // that will multiply the rate.
-    double strSup = settings.parm("StringFlav:StrangeSuppression");
+    double strSup = parm("StringFlav:StrangeSuppression");
     for (int iIDin = 0; iIDin < nIncome; iIDin++) {
       int idIn      = incomingIDs[iIDin];
       int idInAbs   = abs(idIn);
@@ -657,8 +694,13 @@ void StringFlav::init(Settings& settings, ParticleData* particleDataPtrIn,
           // Make sure ID2 is diquark.
           if (abs(ID2) < abs(ID1)) swap(ID1,ID2);
           // Extract quark flavours and spin from diquark.
-          int Q1      = ( (abs(ID2)/1000) % 10 );
-          int Q2      = ( (abs(ID2)/100)  % 10 );
+          int Q1 = ( (abs(ID2)/1000) % 10 );
+          int Q2 = ( (abs(ID2)/100)  % 10 );
+          if (Q1 > 5 || Q2 > 5) {
+            infoPtr->errorMsg("Error in StringFlav::init: invalid quark "
+                              "content flavours for diquark");
+            continue;
+          }
           int diqSpin = ( ((abs(ID2) % 10) == 1) ? 0 : 1 );
           // Single quark.
           int Q3      = abs(ID1);
@@ -1068,6 +1110,7 @@ int StringFlav::combine(FlavContainer& flav1, FlavContainer& flav2) {
   int spinFlav = spinQQ - 1;
   if (spinFlav == 2 && idQQ1 != idQQ2) spinFlav = 4;
   if (idMin != idQQ1 && idMin != idQQ2) spinFlav++;
+  if (spinFlav < 0 || spinFlav > 5) return 0;
   if (baryonCGSum[spinFlav] < rndmPtr->flat() * baryonCGMax[spinFlav])
     return 0;
 
@@ -1142,8 +1185,8 @@ int StringFlav::combineLastThermal(FlavContainer& flav1, FlavContainer& flav2,
   vector< pair<int,int> > possibleHadronsNow = possibleHadronsLast[inPr];
   int nPossHads = int(possibleHadronsNow.size());
   if (nPossHads < 1) {
-    infoPtr->errorMsg("Error in StringFlav::combineLastThermal: no possible "
-      "hadrons found for last two");
+    infoPtr->errorMsg("Error in StringFlav::combineLastThermal: no "
+      "possible hadrons found for last two");
     return 0;
   }
 
@@ -1280,58 +1323,53 @@ const double StringZ::EXPMAX     = 50.;
 
 // Initialize data members of the string z selection.
 
-void StringZ::init(Settings& settings, ParticleData& particleData,
-  Rndm* rndmPtrIn, Info* infoPtrIn) {
-
-  // Save pointers.
-  rndmPtr       = rndmPtrIn;
-  infoPtr       = infoPtrIn;
+void StringZ::init() {
 
   // c and b quark masses.
-  mc2           = pow2( particleData.m0(4));
-  mb2           = pow2( particleData.m0(5));
+  mc2           = pow2( particleDataPtr->m0(4));
+  mb2           = pow2( particleDataPtr->m0(5));
 
   // Paramaters of Lund/Bowler symmetric fragmentation function.
-  aLund         = settings.parm("StringZ:aLund");
-  bLund         = settings.parm("StringZ:bLund");
-  aExtraSQuark  = settings.parm("StringZ:aExtraSQuark");
-  aExtraDiquark = settings.parm("StringZ:aExtraDiquark");
-  rFactC        = settings.parm("StringZ:rFactC");
-  rFactB        = settings.parm("StringZ:rFactB");
-  rFactH        = settings.parm("StringZ:rFactH");
+  aLund         = parm("StringZ:aLund");
+  bLund         = parm("StringZ:bLund");
+  aExtraSQuark  = parm("StringZ:aExtraSQuark");
+  aExtraDiquark = parm("StringZ:aExtraDiquark");
+  rFactC        = parm("StringZ:rFactC");
+  rFactB        = parm("StringZ:rFactB");
+  rFactH        = parm("StringZ:rFactH");
 
   // Alternative parameterisation of Lund FF using average z(rho) instead of b.
-  if (settings.flag("StringZ:deriveBLund")) {
-    if (!deriveBLund(settings, particleData)) {
+  if (flag("StringZ:deriveBLund")) {
+    if (!deriveBLund()) {
       infoPtr->errorMsg("Error in StringZ::init: Derivation of b parameter "
         " failed. Reverting to default.");
-      settings.resetParm("StringZ:bLund");
+      settingsPtr->resetParm("StringZ:bLund");
     }
   }
 
   // Flags and parameters of nonstandard Lund fragmentation functions.
-  useNonStandC  = settings.flag("StringZ:useNonstandardC");
-  useNonStandB  = settings.flag("StringZ:useNonstandardB");
-  useNonStandH  = settings.flag("StringZ:useNonstandardH");
-  aNonC         = settings.parm("StringZ:aNonstandardC");
-  aNonB         = settings.parm("StringZ:aNonstandardB");
-  aNonH         = settings.parm("StringZ:aNonstandardH");
-  bNonC         = settings.parm("StringZ:bNonstandardC");
-  bNonB         = settings.parm("StringZ:bNonstandardB");
-  bNonH         = settings.parm("StringZ:bNonstandardH");
+  useNonStandC  = flag("StringZ:useNonstandardC");
+  useNonStandB  = flag("StringZ:useNonstandardB");
+  useNonStandH  = flag("StringZ:useNonstandardH");
+  aNonC         = parm("StringZ:aNonstandardC");
+  aNonB         = parm("StringZ:aNonstandardB");
+  aNonH         = parm("StringZ:aNonstandardH");
+  bNonC         = parm("StringZ:bNonstandardC");
+  bNonB         = parm("StringZ:bNonstandardB");
+  bNonH         = parm("StringZ:bNonstandardH");
 
   // Flags and parameters of Peterson/SLAC fragmentation function.
-  usePetersonC  = settings.flag("StringZ:usePetersonC");
-  usePetersonB  = settings.flag("StringZ:usePetersonB");
-  usePetersonH  = settings.flag("StringZ:usePetersonH");
-  epsilonC      = settings.parm("StringZ:epsilonC");
-  epsilonB      = settings.parm("StringZ:epsilonB");
-  epsilonH      = settings.parm("StringZ:epsilonH");
+  usePetersonC  = flag("StringZ:usePetersonC");
+  usePetersonB  = flag("StringZ:usePetersonB");
+  usePetersonH  = flag("StringZ:usePetersonH");
+  epsilonC      = parm("StringZ:epsilonC");
+  epsilonB      = parm("StringZ:epsilonB");
+  epsilonH      = parm("StringZ:epsilonH");
 
   // Parameters for joining procedure.
-  stopM         = settings.parm("StringFragmentation:stopMass");
-  stopNF        = settings.parm("StringFragmentation:stopNewFlav");
-  stopS         = settings.parm("StringFragmentation:stopSmear");
+  stopM         = parm("StringFragmentation:stopMass");
+  stopNF        = parm("StringFragmentation:stopNewFlav");
+  stopS         = parm("StringFragmentation:stopSmear");
 
 }
 
@@ -1340,41 +1378,43 @@ void StringZ::init(Settings& settings, ParticleData& particleData,
 // Alternative parameterisation of the Lund function. Derive the bLund
 // parameter given the average z for fixed a and mT2.
 
-bool StringZ::deriveBLund(Settings& settings, ParticleData& particleData) {
+bool StringZ::deriveBLund() {
 
   // Set up using reference mT2 = mRho^2 + 2*sigmaPT^2
-  double mRef   = particleData.m0(113);
-  double mT2ref = pow2(mRef) + 2.*pow2(settings.parm("stringPT:sigma"));
-  double avgZ   = settings.parm("StringZ:avgZLund");
-  double a      = settings.parm("StringZ:aLund");
+  double mRef   = particleDataPtr->m0(113);
+  double mT2ref = pow2(mRef) + 2.*pow2(parm("stringPT:sigma"));
+  double avgZ   = parm("StringZ:avgZLund");
+  double a      = parm("StringZ:aLund");
 
-  // Set up average FF encapsulator. Args: a, b (dummy), c, mT2
-  LundFFAvg lundFFAvg;
-  vector<double> args(4);
-  args[0] = a;
-  args[1] = 1.;
-  args[2] = 1.;
-  args[3] = mT2ref;
-  double bNow = 0.;
+  // Define lundFF as a function of only b, fixing a, c and mT2 as parameters
+  auto lundFF = [=](double b) { return LundFFAvg(a, b, 1., mT2ref, 1.e-6); };
+
+  // Solve for b
+  double bNow;
+  bool check = brent(bNow, lundFF, avgZ, 0.01, 20.0, 1.e-6);
 
   // Check if derived b fell inside the nominal range for bLund
-  bool check = lundFFAvg.brent(bNow, avgZ, 1, 0.01, 20.0, args, 1.e-6, 1000);
   if (check) {
-    settings.parm("StringZ:bLund", bNow, false);
+    settingsPtr->parm("StringZ:bLund", bNow, false);
 
     // Print out derived value for b (and mT2ref), noting if outside range.
-    cout << fixed << setprecision(2) << "\n <z(rho)> = " << setw(5)
+    stringstream msg;
+    msg << fixed << setprecision(2) << "\n <z(rho)> = " << setw(5)
          << avgZ << " for aLund = "<< a <<" & mT2ref = " << setw(5) << mT2ref
          << " GeV^2 gave bLund = " << setw(5) << bNow << " GeV^-2:";
-    if ( bNow == settings.parm("StringZ:bLund") ) cout <<" accepted" << endl;
-    else {
-      // If outside range, tell user but force anyway so fits can see behaviour
-      cout << " accepted (forced)" << endl;
-      settings.parm("StringZ:bLund", bNow, true);
+    if ( bNow == parm("StringZ:bLund") ) {
+      if (!settingsPtr->parm("Print:quiet"))
+        cout << msg.str() << " accepted" << endl;
+    } else {
+      // If outside range, tell user but force anyway so fits can see
+      // behaviour.
+      msg << " accepted (forced)";
+      infoPtr->errorMsg("Warning in StringZ::deriveBLund", msg.str());
+      settingsPtr->parm("StringZ:bLund", bNow, true);
     }
 
     // No further calls needed since b parameter updated in settings database.
-    settings.flag("StringZ:deriveBLund", false);
+    settingsPtr->flag("StringZ:deriveBLund", false);
   }
   return check;
 }
@@ -1590,35 +1630,29 @@ const double StringPT::SIGMAMIN     = 0.2;
 
 // Initialize data members of the string pT selection.
 
-void StringPT::init(Settings& settings,  ParticleData* particleDataPtrIn,
-  Rndm* rndmPtrIn, Info* infoPtrIn) {
-
-  // Save pointer.
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  infoPtr         = infoPtrIn;
+void StringPT::init() {
 
   // Parameters of the pT width and enhancement.
-  double sigma     = settings.parm("StringPT:sigma");
+  double sigma     = parm("StringPT:sigma");
   sigmaQ           = sigma / sqrt(2.);
-  enhancedFraction = settings.parm("StringPT:enhancedFraction");
-  enhancedWidth    = settings.parm("StringPT:enhancedWidth");
-  widthPreStrange  = settings.parm("StringPT:widthPreStrange");
-  widthPreDiquark  = settings.parm("StringPT:widthPreDiquark");
+  enhancedFraction = parm("StringPT:enhancedFraction");
+  enhancedWidth    = parm("StringPT:enhancedWidth");
+  widthPreStrange  = parm("StringPT:widthPreStrange");
+  widthPreDiquark  = parm("StringPT:widthPreDiquark");
   useWidthPre      = (widthPreStrange > 1.0) || (widthPreDiquark > 1.0);
 
   // Temperature for thermal model.
-  thermalModel     = settings.flag("StringPT:thermalModel");
-  temperature      = settings.parm("StringPT:temperature");
-  tempPreFactor    = settings.parm("StringPT:tempPreFactor");
+  thermalModel     = flag("StringPT:thermalModel");
+  temperature      = parm("StringPT:temperature");
+  tempPreFactor    = parm("StringPT:tempPreFactor");
 
   // Upper estimate of thermal spectrum: fraction at x = pT_quark/T < 1.
   fracSmallX       = 0.6 / (0.6 + (1.2/0.9) * exp(-0.9));
 
   // Enhanded-width prefactor for MPIs and/or nearby string pieces.
-  closePacking     = settings.flag("StringPT:closePacking");
-  exponentMPI      = settings.parm("StringPT:expMPI");
-  exponentNSP      = settings.parm("StringPT:expNSP");
+  closePacking     = flag("StringPT:closePacking");
+  exponentMPI      = parm("StringPT:expMPI");
+  exponentNSP      = parm("StringPT:expNSP");
 
   // Parameter for pT suppression in MiniStringFragmentation.
   sigma2Had        = 2. * pow2( max( SIGMAMIN, sigma) );

@@ -1,5 +1,5 @@
 // PhaseSpace.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,6 +18,7 @@
 #include "Pythia8/MultipartonInteractions.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/SigmaProcess.h"
 #include "Pythia8/SigmaTotal.h"
@@ -38,7 +39,7 @@ class UserHooks;
 // PhaseSpace is a base class for  phase space generators
 // used in the selection of hard-process kinematics.
 
-class PhaseSpace {
+class PhaseSpace : public PhysicsBase {
 
 public:
 
@@ -46,17 +47,13 @@ public:
   virtual ~PhaseSpace() {}
 
   // Perform simple initialization and store pointers.
-  void init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
-    Info* infoPtrIn, Settings* settingsPtrIn, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn,
-    UserHooks* userHooksPtrIn);
+  void init(bool isFirst, SigmaProcess* sigmaProcessPtrIn);
 
   // Update the CM energy of the event.
   void newECM(double eCMin) {eCM = eCMin; s = eCM * eCM;}
 
   // Store or replace Les Houches pointer.
-  void setLHAPtr(LHAup* lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;}
+  void setLHAPtr(LHAupPtr lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;}
 
   // A pure virtual method, wherein an optimization procedure
   // is used to determine how phase space should be sampled.
@@ -122,9 +119,7 @@ public:
 protected:
 
   // Constructor.
-  PhaseSpace() : sigmaProcessPtr(), infoPtr(), settingsPtr(),
-    particleDataPtr(), rndmPtr(), beamAPtr(), beamBPtr(), couplingsPtr(),
-    sigmaTotPtr(), userHooksPtr(), lhaUpPtr(), gammaKinPtr(),
+  PhaseSpace() : sigmaProcessPtr(), lhaUpPtr(), gammaKinPtr(),
     useBreitWigners(), doEnergySpread(), showSearch(), showViolation(),
     increaseMaximum(), hasQ2Min(), gmZmodeGlobal(), mHatGlobalMin(),
     mHatGlobalMax(), pTHatGlobalMin(), pTHatGlobalMax(), Q2GlobalMin(),
@@ -165,33 +160,8 @@ protected:
   // Pointer to cross section.
   SigmaProcess* sigmaProcessPtr;
 
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the settings database.
-  Settings*     settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
-
-  // Pointers to incoming beams.
-  BeamParticle* beamAPtr;
-  BeamParticle* beamBPtr;
-
-  // Pointer to Standard Model couplings.
-  Couplings*    couplingsPtr;
-
-  // Pointer to the total/elastic/diffractive cross section object.
-  SigmaTotal*   sigmaTotPtr;
-
-  // Pointer to userHooks object for user interaction with program.
-  UserHooks*    userHooksPtr;
-
   // Pointer to LHAup for generating external events.
-  LHAup*        lhaUpPtr;
+  LHAupPtr      lhaUpPtr;
 
   // Pointer to object that samples photon kinematics from leptons.
   GammaKinematics* gammaKinPtr;
@@ -417,7 +387,7 @@ private:
 
   // Constants: could only be changed in the code itself.
   static const int    NTRY;
-  static const double HBARC2, BNARROW, BWIDE, WIDEFRAC, TOFFSET;
+  static const double BNARROW, BWIDE, WIDEFRAC, TOFFSET;
 
   // Kinematics properties specific to 2 -> 2 elastic.
   bool   isOneExp, useCoulomb;
@@ -480,9 +450,9 @@ class PhaseSpace2to3diffractive : public PhaseSpace {
 public:
 
   // Constructor.
-  PhaseSpace2to3diffractive() : splitxit(), s1(), s2(), m5min(), s5min(), m5(),
-    sigNow(), sigMax(), sigMaxNow(), xiMin(), xi1(), xi2(), fWid1(), fWid2(),
-    fWid3(), fbWid1(), fbWid2(), fbWid3(), fbWid123() {}
+ PhaseSpace2to3diffractive() : PhaseSpace(), splitxit(), s1(), s2(), m5min(),
+    s5min(), sigNow(), sigMax(), sigMaxNow(), xiMin(), xi1(), xi2(), fWid1(),
+    fWid2(), fWid3(), fbWid1(), fbWid2(), fbWid3(), fbWid123() {}
 
   // Construct the trial or final event kinematics.
   virtual bool setupSampling();
@@ -503,7 +473,7 @@ public:
   bool   splitxit;
 
   // Local variables to calculate DPE kinematics.
-  double s1, s2, m5min, s5min, m5, sigNow, sigMax, sigMaxNow, xiMin, xi1, xi2,
+  double s1, s2, m5min, s5min, sigNow, sigMax, sigMaxNow, xiMin, xi1, xi2,
          fWid1, fWid2, fWid3, fbWid1, fbWid2, fbWid3, fbWid123;
   Vec4   p1, p2, p3, p4, p5;
 

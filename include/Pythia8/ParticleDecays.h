@@ -1,5 +1,5 @@
 // ParticleDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,6 +15,7 @@
 #include "Pythia8/FragmentationFlavZpT.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/TimeShower.h"
@@ -50,13 +51,13 @@ public:
 
 // The ParticleDecays class contains the routines to decay a particle.
 
-class ParticleDecays {
+class ParticleDecays : public PhysicsBase {
 
 public:
 
   // Constructor.
-  ParticleDecays() : infoPtr(), particleDataPtr(), rndmPtr(), couplingsPtr(),
-    timesDecPtr(), flavSelPtr(), decayHandlePtr(), limitTau0(), limitTau(),
+  ParticleDecays() : timesDecPtr(), flavSelPtr(), decayHandlePtr(),
+    limitTau0(), limitTau(),
     limitRadius(), limitCylinder(), limitDecay(), mixB(), doFSRinDecays(),
     doGammaRad(), tauMode(), mSafety(), tau0Max(), tauMax(), rMax(), xyMax(),
     zMax(), xBdMix(), xBsMix(), sigmaSoft(), multIncrease(),
@@ -65,11 +66,8 @@ public:
     meMode(), mult(), scale(), decDataPtr() {}
 
   // Initialize: store pointers and find settings
-  void init(Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    Couplings* couplingsPtrIn, TimeShower* timesDecPtrIn,
-    StringFlav* flavSelPtrIn, DecayHandler* decayHandlePtrIn,
-    vector<int> handledParticles);
+  void init(TimeShowerPtr timesDecPtrIn, StringFlav* flavSelPtrIn,
+            DecayHandlerPtr decayHandlePtrIn, vector<int> handledParticles);
 
   // Perform a decay of a single particle.
   bool decay(int iDec, Event& event);
@@ -77,32 +75,25 @@ public:
   // Did decay result in new partons to hadronize?
   bool moreToDo() const {return hasPartons && keepPartons;}
 
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(tauDecayer); }
+
 private:
 
   // Constants: could only be changed in the code itself.
   static const int    NTRYDECAY, NTRYPICK, NTRYMEWT, NTRYDALITZ;
   static const double MSAFEDALITZ, WTCORRECTION[11];
 
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
-
-  // Pointers to Standard Model couplings.
-  Couplings*    couplingsPtr;
-
   // Pointers to timelike showers, for decays to partons (e.g. Upsilon).
-  TimeShower*   timesDecPtr;
+  TimeShowerPtr timesDecPtr;
 
   // Pointer to class for flavour generation; needed when to pick hadrons.
   StringFlav*   flavSelPtr;
 
   // Pointer to a handler of external decays.
-  DecayHandler* decayHandlePtr;
+  DecayHandlerPtr decayHandlePtr;
 
   // Initialization data, read from Settings.
   bool   limitTau0, limitTau, limitRadius, limitCylinder, limitDecay,

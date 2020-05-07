@@ -1,5 +1,5 @@
 // TauDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -36,60 +36,51 @@ const double TauDecays::WTCORRECTION[11] = { 1., 1., 1.,
 // Additionally, the necessary matrix elements are initialized with the
 // Standard Model couplings, and particle data pointers.
 
-void TauDecays::init(Info* infoPtrIn, Settings* settingsPtrIn,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  Couplings* couplingsPtrIn) {
-
-  // Set the pointers.
-  infoPtr         = infoPtrIn;
-  settingsPtr     = settingsPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  couplingsPtr    = couplingsPtrIn;
+void TauDecays::init() {
 
   // Initialize the hard matrix elements.
   hmeTwoFermions2W2TwoFermions
-    .initPointers(particleDataPtr, couplingsPtr, settingsPtr);
+    .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
   hmeTwoFermions2GammaZ2TwoFermions
-    .initPointers(particleDataPtr, couplingsPtr, settingsPtr);
+    .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
   hmeW2TwoFermions
-    .initPointers(particleDataPtr, couplingsPtr, settingsPtr);
+    .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
   hmeZ2TwoFermions
-    .initPointers(particleDataPtr, couplingsPtr, settingsPtr);
+    .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
   hmeGamma2TwoFermions
-    .initPointers(particleDataPtr, couplingsPtr);
+    .initPointers(particleDataPtr, coupSMPtr);
   hmeHiggs2TwoFermions
-    .initPointers(particleDataPtr, couplingsPtr, settingsPtr);
+    .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
 
   // Initialize the tau decay matrix elements.
-  hmeTau2Meson                   .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2TwoLeptons              .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2TwoMesonsViaVector      .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2TwoMesonsViaVectorScalar.initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2ThreePions              .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2ThreeMesonsWithKaons    .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2ThreeMesonsGeneric      .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2TwoPionsGamma           .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2FourPions               .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2FivePions               .initPointers(particleDataPtr, couplingsPtr);
-  hmeTau2PhaseSpace              .initPointers(particleDataPtr, couplingsPtr);
+  hmeTau2Meson                   .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2TwoLeptons              .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2TwoMesonsViaVector      .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2TwoMesonsViaVectorScalar.initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2ThreePions              .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2ThreeMesonsWithKaons    .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2ThreeMesonsGeneric      .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2TwoPionsGamma           .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2FourPions               .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2FivePions               .initPointers(particleDataPtr, coupSMPtr);
+  hmeTau2PhaseSpace              .initPointers(particleDataPtr, coupSMPtr);
 
   // User selected tau settings.
-  tauExt    = settingsPtr->mode("TauDecays:externalMode");
-  tauMode   = settingsPtr->mode("TauDecays:mode");
-  tauMother = settingsPtr->mode("TauDecays:tauMother");
-  tauPol    = settingsPtr->parm("TauDecays:tauPolarization");
+  tauExt    = mode("TauDecays:externalMode");
+  tauMode   = mode("TauDecays:mode");
+  tauMother = mode("TauDecays:tauMother");
+  tauPol    = parm("TauDecays:tauPolarization");
 
   // Parameters to determine if correlated partner should decay.
-  limitTau0     = settingsPtr->flag("ParticleDecays:limitTau0");
-  tau0Max       = settingsPtr->parm("ParticleDecays:tau0Max");
-  limitTau      = settingsPtr->flag("ParticleDecays:limitTau");
-  tauMax        = settingsPtr->parm("ParticleDecays:tauMax");
-  limitRadius   = settingsPtr->flag("ParticleDecays:limitRadius");
-  rMax          = settingsPtr->parm("ParticleDecays:rMax");
-  limitCylinder = settingsPtr->flag("ParticleDecays:limitCylinder");
-  xyMax         = settingsPtr->parm("ParticleDecays:xyMax");
-  zMax          = settingsPtr->parm("ParticleDecays:zMax");
+  limitTau0     = flag("ParticleDecays:limitTau0");
+  tau0Max       = parm("ParticleDecays:tau0Max");
+  limitTau      = flag("ParticleDecays:limitTau");
+  tauMax        = parm("ParticleDecays:tauMax");
+  limitRadius   = flag("ParticleDecays:limitRadius");
+  rMax          = parm("ParticleDecays:rMax");
+  limitCylinder = flag("ParticleDecays:limitCylinder");
+  xyMax         = parm("ParticleDecays:xyMax");
+  zMax          = parm("ParticleDecays:zMax");
   limitDecay    = limitTau0 || limitTau || limitRadius || limitCylinder;
 }
 
@@ -615,24 +606,11 @@ void TauDecays::isotropicDecay(vector<HelicityParticle>& children) {
   // Perform two-particle decays in the respective rest frame.
   vector<Vec4> pInv(decayMult + 1);
   for (int i = 1; i < decayMult; ++i) {
-    double pAbs = 0.5 * sqrtpos( (mInv[i] - mInv[i+1] - children[i].m())
-                * (mInv[i] + mInv[i+1] + children[i].m())
-                * (mInv[i] + mInv[i+1] - children[i].m())
-                * (mInv[i] - mInv[i+1] + children[i].m()) ) / mInv[i];
-
-    // Isotropic angles give three-momentum.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi      = 2. * M_PI * rndmPtr->flat();
-    double pX       = pAbs * sinTheta * cos(phi);
-    double pY       = pAbs * sinTheta * sin(phi);
-    double pZ       = pAbs * cosTheta;
-
-    // Calculate energies, fill four-momenta.
-    double eHad     = sqrt( children[i].m()*children[i].m() + pAbs*pAbs);
-    double eInv     = sqrt( mInv[i+1]*mInv[i+1] + pAbs*pAbs);
-    children[i].p( pX, pY, pZ, eHad);
-    pInv[i+1].p( -pX, -pY, -pZ, eInv);
+    // Fill four-momenta
+    pair<Vec4, Vec4> ps =
+      rndmPtr->phaseSpace2(mInv[i], mInv[i+1], children[i].m());
+    pInv[i+1].p(ps.first);
+    children[i].p(ps.second);
   }
 
   // Boost decay products to the mother rest frame.

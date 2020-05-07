@@ -1,5 +1,5 @@
 // HadronScatter.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,6 +9,7 @@
 #include "Pythia8/Event.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/PythiaComplex.h"
 
@@ -16,15 +17,14 @@ namespace Pythia8 {
 
 //==========================================================================
 
-class SigmaPartialWave {
+class SigmaPartialWave : public PhysicsBase {
 public:
   // Constructor
-  SigmaPartialWave() : infoPtr(), particleDataPtr(), rndmPtr(), process(),
-    subprocess(), subprocessMax(), norm(), idA(), idB(), Lmax(), Imax(),
-    mA(), mB(), binMax(), sigElMax() {}
+  SigmaPartialWave() : process(), subprocess(), subprocessMax(), norm(),
+    idA(), idB(), Lmax(), Imax(), mA(), mB(), binMax(), sigElMax() {}
 
   // Initialisation
-  bool init(int, string, string, Info *, ParticleData *, Rndm *);
+  bool init(int, string, string);
 
   // Read data file
   bool readFile(string, string);
@@ -45,11 +45,6 @@ public:
   double getSigmaElMax() { return sigElMax; }
 
 private:
-
-  // Pointers
-  Info         *infoPtr;
-  ParticleData *particleDataPtr;
-  Rndm         *rndmPtr;
 
   // Constants
   static const int     LSHIFT, ISHIFT, SUBBIN, ITER;
@@ -138,12 +133,12 @@ public:
 
 // HadronScatter class
 
-class HadronScatter {
+class HadronScatter : public PhysicsBase {
 
 public:
 
   // Constructor.
-  HadronScatter() : infoPtr(), rndmPtr(), scatSameString(), scatMultTimes(),
+  HadronScatter() : scatSameString(), scatMultTimes(),
     scatterMode(), p2max(), yDiffMax(), Rmax(), maxProbDS(), neighNear(),
     neighFar(), minProbSS(), maxProbSS(), doOldScatter(), afterDecay(),
     allowDecayProd(), scatterRepeat(), doTile(), hadronSelect(), scatterProb(),
@@ -152,8 +147,7 @@ public:
     sigElMax() {}
 
   // Initialisation
-  bool init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
-            ParticleData *particleDataPtr);
+  bool init();
 
   // Perform all hadron scatterings - new version. Collective flow.
   void scatter(Event&);
@@ -162,10 +156,6 @@ public:
   void scatterOld(Event&);
 
 private:
-
-  // Pointer to various information on the generation.
-  Info* infoPtr;
-  Rndm* rndmPtr;
 
   // Settings for new model.
   bool   scatSameString, scatMultTimes;

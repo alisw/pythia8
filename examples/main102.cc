@@ -1,7 +1,11 @@
 // main102.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: hadronization; colour reconnection; rope hadronization;
+
+// Authors: Christian Bierlich <christian.bierlich@thep.lu.se>.
 
 // This program provides a demonstration of the flavour rope model supplied
 // in the Rope Hadronization framework. It produces four histograms
@@ -44,7 +48,7 @@ int main() {
 
   // Note: High statistics is needed to fill the high multiplicity
   // end of the histograms, especially for Omega.
-  const int nEvent = 100000;
+  const int nEvent = 4000;
   // Begin event loop. Generate event. Skip if error. List first one.
   for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
     if (!pythia.next()) continue;

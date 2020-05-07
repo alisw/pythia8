@@ -1,5 +1,5 @@
 // PowhegProcs.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Philip Ilten, May 2015.
@@ -30,11 +30,8 @@ class PowhegProcs {
 public:
 
   // Constructor.
-  PowhegProcs(Pythia *pythiaPtrIn, string procIn, string dirIn = "powhegrun",
+  PowhegProcs(Pythia *pythia, string procIn, string dirIn = "powhegrun",
     string pdfIn = "", bool random = true);
-
-  // Destructor.
-  ~PowhegProcs();
 
   // Read a POWHEG settings string.
   bool readString(string line);
@@ -45,14 +42,15 @@ public:
   // Write out the input for POWHEG.
   bool init();
 
-  // The POWHEG LHAup pointer.
-  LHAup *lhaup;
-
 private:
 
   // Typedefs of the hooks used to access the plugin.
-  typedef LHAup* NewLHAupPowheg(Pythia*);
-  typedef void DeleteLHAupPowheg(LHAup*);
+  //typedef LHAupPtr NewLHAupPowheg(Pythia*);
+  typedef LHAupPtr NewLHAupPowheg(Pythia*);
+  typedef void (*Symbol)();
+
+  // Acccess a plugin library symbol.
+  Symbol symbol(string symName);
 
   // The POWHEG process name, run directory, and PDF file (if not LHAPDF).
   string proc, dir, pdf;
@@ -60,14 +58,8 @@ private:
   // The map of POWHEG settings.
   map<string, string> settings;
 
-  // The associated PYTHIA pointer.
-  Pythia *pythia;
-
   // The POWHEG plugin library.
   void *lib;
-
-  // The POWHEG hooks.
-  PowhegHooks hooks;
 
 };
 
@@ -75,7 +67,7 @@ private:
 
 // Constructor.
 
-// pythiaPtrIn: The PYTHIA object the plugin will use for settings and
+// pythia: The PYTHIA object the plugin will use for settings and
 // random numbers.
 
 // procIn: the process name. An attempt is made to load the plugin
@@ -97,57 +89,39 @@ private:
 // using the POWHEGBOX random number generation (which can be modified
 // via the POWHEGBOX configuration).
 
-PowhegProcs::PowhegProcs(Pythia *pythiaPtrIn, string procIn, string dirIn,
-  string pdfIn, bool random) : lhaup(0), proc(procIn), dir(dirIn), pdf(pdfIn),
-  pythia(pythiaPtrIn), lib(0) {
-
-  if (!pythia) return;
-  NewLHAupPowheg *sym(0);
-  const char* error(0);
+PowhegProcs::PowhegProcs(Pythia *pythia, string procIn, string dirIn,
+  string pdfIn, bool random) : proc(procIn), dir(dirIn), pdf(pdfIn),
+  lib(0) {
 
   // Load the library.
-  lib = dlopen(("libpythia8powheg" + proc + ".so").c_str(), RTLD_LAZY);
-  error = dlerror();
-  if (error) {
-    pythia->info.errorMsg("Error from PowhegProcs::PowhegProcs: "
-      + string(error));
-    return;
-  }
-  dlerror();
+  if (!pythia) return;
+  lib = const_cast<Info&>(pythia->info).loadPlugin
+    ("libpythia8powheg" + proc + ".so");
+  if (lib == nullptr) return;
 
   // Load the LHAup pointer.
-  sym = (NewLHAupPowheg*)dlsym(lib, "newLHAupPowheg");
-  error = dlerror();
-  if (error) {
-    pythia->info.errorMsg("Error from PowhegProcs::PowhegProcs: "
-      + string(error));
-  }
-  dlerror();
+  NewLHAupPowheg* newLHAupPowheg = (NewLHAupPowheg*)symbol("newLHAupPowheg");
   pythia->settings.addWord("POWHEG:dir", dir);
   pythia->settings.addFlag("POWHEG:pythiaRandom", random);
-  if (sym) lhaup = sym(pythia);
-
-  // Configure PYTHIA.
-  pythia->setLHAupPtr(lhaup);
-  pythia->setUserHooksPtr(&hooks);
+  if (newLHAupPowheg) pythia->setLHAupPtr(newLHAupPowheg(pythia));
+  pythia->setUserHooksPtr(make_shared<PowhegHooks>());
 
 }
 
 //--------------------------------------------------------------------------
 
-// Destructor.
+// Access a plugin library symbol.
 
-PowhegProcs::~PowhegProcs() {
+PowhegProcs::Symbol PowhegProcs::symbol(string symName) {
+  Symbol sym(0);
+  const char* error(0);
 
-  // Delete the LHAup pointer.
-  if (lhaup && lib) {
-    DeleteLHAupPowheg *sym(0);
-    sym = (DeleteLHAupPowheg*)dlsym(lib, "deleteLHAupPowheg");
-    if (sym) sym(lhaup);
-  }
-
-  // Unload the library.
-  if (lib) {dlclose(lib); dlerror();}
+  // Load the symbol.
+  sym = (Symbol)dlsym(lib, symName.c_str());
+  error = dlerror();
+  if (error) cout << "Error in LHAupPowheg::symbol: " + string(error) + "\n";
+  dlerror();
+  return sym;
 
 }
 
@@ -159,7 +133,6 @@ PowhegProcs::~PowhegProcs() {
 bool PowhegProcs::readString(string line) {
 
   // Copy string without initial and trailing blanks.
-  if (!pythia) return false;
   if (line.find_first_not_of(" \n\t\v\b\r\f\a") == string::npos) return true;
   int firstChar = line.find_first_not_of(" \n\t\v\b\r\f\a");
   int lastChar  = line.find_last_not_of(" \n\t\v\b\r\f\a");
@@ -174,8 +147,8 @@ bool PowhegProcs::readString(string line) {
     && key.find_first_of("abcdedfghijklmnopqrtsuvwxyz") == 0) {
     map<string, string>::iterator setting = settings.find(key);
     if (setting != settings.end()) {
-      pythia->info.errorMsg("Warning from PowhegProcs::readString: replacing "
-        "previous POWHEG setting for " + key + ".");
+      cout << "Warning from PowhegProcs::readString: replacing "
+           << "previous POWHEG setting for " << key << "." << endl;
       setting->second = line;
     } else settings[key] = line;
   }

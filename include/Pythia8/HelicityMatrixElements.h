@@ -1,5 +1,5 @@
 // HelicityMatrixElements.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -27,11 +27,11 @@ public:
 
   // Constructor and destructor.
   HelicityMatrixElement() : DECAYWEIGHTMAX(), particleDataPtr(),
-    couplingsPtr(), settingsPtr() {};
+    coupSMPtr(), settingsPtr() {};
   virtual ~HelicityMatrixElement() {};
 
   // Initialize the physics matrices and pointers.
-  virtual void initPointers(ParticleData*, Couplings*, Settings* = 0);
+  virtual void initPointers(ParticleData*, CoupSM* , Settings* = 0);
 
   // Initialize the channel.
   virtual HelicityMatrixElement* initChannel(vector<HelicityParticle>&);
@@ -94,7 +94,7 @@ protected:
   ParticleData* particleDataPtr;
 
   // Pointer to Standard Model constants.
-  Couplings*    couplingsPtr;
+  CoupSM*       coupSMPtr;
 
   // Pointer to Settings.
   Settings*     settingsPtr;
@@ -395,7 +395,7 @@ class HMETau2ThreeMesons : public HMETauDecay {
 
 public:
 
-  HMETau2ThreeMesons() : s1(), s2(), s3(), s4() {}
+  HMETau2ThreeMesons() = default;
 
   void initConstants();
 
@@ -406,7 +406,7 @@ protected:
   // Decay mode of the tau.
   enum Mode{Pi0Pi0Pim, PimPimPip, Pi0PimK0b, PimPipKm, Pi0PimEta, PimKmKp,
             Pi0K0Km, KlPimKs, Pi0Pi0Km, KlKlPim, PimKsKs, PimK0bK0, Uknown};
-  Mode mode;
+  Mode mode{};
 
   // Initialize decay mode and resonance constants (called by initConstants).
   virtual void initMode();
@@ -416,11 +416,11 @@ protected:
   virtual void initMomenta(vector<HelicityParticle>&);
 
   // Center of mass energies and momenta.
-  double s1, s2, s3, s4;
-  Wave4  q, q2, q3, q4;
+  double s1{}, s2{}, s3{}, s4{};
+  Wave4  q{}, q2{}, q3{}, q4{};
 
   // Stored a1 Breit-Wigner (for speed).
-  complex a1BW;
+  complex a1BW{};
 
   // Form factors.
   virtual complex F1() {return complex(0, 0);}

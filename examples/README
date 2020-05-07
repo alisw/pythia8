@@ -2,11 +2,12 @@
 
    LIST OF SAMPLE MAIN PROGRAMS
 
-For a list of the sample main programs, with a brief description
-of each of them, see the "Sample Main Programs" in the HTML manual. 
-From this examples subdirectory, the list should be located at 
-"../share/Pythia8/htmldoc/SampleMainPrograms.html".  
-For further details consult the source of each mainNN program.
+For a list of the sample main programs, with a brief description of
+each of them, see the "Sample Main Programs" in the HTML manual.  From
+this examples subdirectory, the list should be located at
+"../share/Pythia8/htmldoc/SampleMainPrograms.html".  For further
+details consult the source of each mainNN program. Keywords are
+assigned at the start of each program to help categorize the examples.
 
 ----------------------------------------------------------------------
 
@@ -18,27 +19,27 @@ For further details consult the source of each mainNN program.
 
 2) You are now ready to test run the first thirty of the mainNN examples,
    see the manual page "Sample main program" for details.
-   Type "gmake mainNN" to build an executable "mainNN". 
+   Type "make mainNN" to build an executable "mainNN". 
    Type "./mainNN > output" to run this executable. 
-   Then study the output file. The existing files outNN are examples of 
-   possible outputs from several runs, so that you can compare.
+   Then study the output file.
 
 3) If you want to run your own programs from this directory you can edit
    the "Makefile", adding the name of your main program to the already
    existing ones. Note that different cases exist, depending on which 
-   external libraries are to be linked. The mymainNN.cc name series havs 
+   external libraries are to be linked. The mymainNN.cc name series have 
    been predefined to link to PYTHIA 8 standalone and produce executables 
    mymainNN, so programs with such names are free for you to create and 
    use without having to modify the Makefile.
 
-4) With ./runmains all the 30 first mainNN program will be run,
-   to get a thorough test of the installation. 
-   The runmains file can easily be edited to run the others as well,
-   but then you should first link to the appropriate external libraries.
-   The outref subdirectory contains the output of such a run, if you
-   want to compare with what you obtain.
+4) With ./runmains all the example programs will be run,
+   to get a thorough test of the installation. A number of arguments
+   can be passed: "--help" prints the help; "--threads=N" specifies
+   the number of threads to run with "N" is the number of threads,
+   e.g. "--threads=6" will run on 6 threads; "--skip=SKIP" skips the
+   examples specified, e.g. "--skip='01 03'" will skip main01 and
+   main03; and finally "--run='01 03'" will run only main01 and main03.
 
-5) Type "gmake clean" to clean up the examples directory (but not the
+5) Type "make clean" to clean up the examples directory (but not the
    output files).
 
 6) The variables controlling the location and usage of external

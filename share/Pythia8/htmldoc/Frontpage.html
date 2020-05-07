@@ -21,26 +21,31 @@
 <h3>Welcome to PYTHIA - The Lund Monte Carlo!</h3> 
  
 <p/> 
-PYTHIA 8 is the successor to PYTHIA 6, rewritten from scratch in C++. 
-At the release of the first public version, 8.100, it was untried and 
-also still missed a few relevant features. This has changed over the 
-years since then, and the release of 8.200 marks the end of a transition 
-period. PYTHIA 8.2 has a significantly extended physics scope, notably 
-for LHC physics, relative to what PYTHIA 6.4 could offer. There are only 
-a few areas left where 6.4 still has a role to fill. 
+PYTHIA is a general-purpose event generator for high-energy particle 
+collisions. PYTHIA 8 is the successor to PYTHIA 6, rewritten from 
+scratch in C++. It includes many new features, but rests on the same 
+historical physics base, including concepts such as soft and hard 
+processes, parton showers, multiparton interactions and string 
+fragmentation. With the current PYTHIA 8.3 version the step has been 
+taken from <code>C++98</code> to <code>C++11</code>, but the 
+transition from 8.2 should largely be transparent to users. Also 
+several new physics features are made available. 
  
 <a name="section1"></a> 
 <h3>Documentation</h3> 
  
-On these webpages you will find the up-to-date manual for PYTHIA 8.2. 
-Use the left-hand index to navigate this documentation of program 
-elements, especially of all possible program settings. All parameters 
-are provided with sensible default values, however, so you need only 
-change those of relevance to your particular study, such as choice of 
-beams, processes and phase space cuts. The pages also contain a fairly 
-extensive survey of all methods available to the user, e.g. to study 
-the produced events. What is lacking on these webpages is an overview, 
-on the one hand, and an in-depth physics description, on the other. 
+On these webpages you will find the manual for PYTHIA 8.3. The physics 
+descriptions may in places still need to be updated, but the 
+documentation of available settings and other practical details should 
+be fully up-to-date. Use the left-hand index to navigate this 
+documentation of program elements, especially of all possible program 
+settings. All parameters are provided with sensible default values, 
+however, so you need only change those of relevance to your particular 
+study, such as choice of beams, processes and phase space cuts. The 
+pages also contain a fairly extensive survey of all methods available 
+to the user, e.g. to study the produced events. What is lacking on 
+these webpages is an overview, on the one hand, and an in-depth 
+physics description, on the other. 
  
 <p/> 
 The overview can be found in the attached PDF file 
@@ -129,7 +134,7 @@ e-mail: torbjorn@thep.lu.se
  
 <p/> 
 <b>Peter Skands</b><br/> 
-School of Physics, Monash University, PO Box 27, 3800 Melbourne, 
+School of Physics and Astronomy, Monash University, PO Box 27, 3800 Melbourne, 
 Australia<br/> 
 e-mail: peter.skands@monash.edu 
  
@@ -188,6 +193,16 @@ implemented by <b>Baptiste Cabouat</b>.
 <br/>Space-time hadronic production points in string fragmentation have 
 been studied and implemented by <b>Silvia Ferreres-Sol&eacute;</b>. 
 <br/>The code for deuteron production was tested by <b>Sophie Baker</b>. 
+<br/>C++ interface to MG5 matrix elements by <b>V. Hirschi</b> with 
+additional work by <b>O. Mattelaer</b>. 
+<br/>Mass corrections and initial-state showers in Vincia by 
+<b>M. Ritzmann</b>. 
+<br/>Final-state sector showers in Vincia by <b>J. Lopez-Villarejo</b>. 
+<br/>Helicity-dependence in Vincia by <b>A. Larkoski</b>. 
+<br/>QED and Electroweak showers in Vincia by <b>R. Verheyen</b>. 
+<br/>Interleaved resonance showers and work on 
+sector merging and QED+EW showers in Vincia by <b>H. Brooks</b>. 
+<br/> 
  
 <br/><b>Note</b>: in several cases modifications have been made to 
 the original code, in order to integrate it with PYTHIA. In these cases 
@@ -211,4 +226,4 @@ Copyright &copy; 2019 Torbj&ouml;rn Sj&ouml;strand
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

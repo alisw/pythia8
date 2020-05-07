@@ -12,7 +12,8 @@ hadronization time, colour charges at string endpoints and in gluon "kinks"
 can act together coherently to form a "rope", which is hadronized with a 
 larger, effective string tension <ref>Bie14</ref>. 
 The latter has noticeable effects on the flavour composition of the hadronic 
-final state <ref>Bie15</ref>, and this effect is denoted "flavour ropes" below. 
+final state <ref>Bie15</ref>, and this effect is denoted "flavour ropes" 
+below. 
  
 <p/> 
 Since both models deal with string overlaps in transverse space, it is 
@@ -87,10 +88,10 @@ radius.
 <p/> 
 The model should be used with some caution. Simply switching it on, one will 
 not retain full description of single particle observables in minimum bias pp 
-collisions, as the excitation gluons will increase multiplicity. Besides normal 
-tuning, one can use the parameter <code>FragmentationSystems:mJoin</code> to 
-join the excitation gluons together, in order to recover single particle 
-observables. 
+collisions, as the excitation gluons will increase multiplicity. Besides 
+normal tuning, one can use the parameter 
+<code>FragmentationSystems:mJoin</code> to join the excitation gluons 
+together, in order to recover single particle observables. 
  
 <parm name="Ropewalk:rCutOff" default="6.0" min="0." max="100."> 
 This parameter gives the maximum cut-off radius, at which strings stops 
@@ -216,10 +217,10 @@ handled by colour reconnection and junction formation.
 </flag> 
  
 <flag name="Ropewalk:doBuffon" default="off"> 
-Setting this flag on, enables a simpler treatment of flavour ropes. This is not 
-reliant on vertex information, but string-string overlaps are decided randomly 
-&aacute; la Buffon's needle <ref>Bie16c</ref>: All strings are thrown randomly 
-into a circular area in transverse space to estimate overlaps. 
+Setting this flag on, enables a simpler treatment of flavour ropes. This is 
+not reliant on vertex information, but string-string overlaps are decided 
+randomly &aacute; la Buffon's needle <ref>Bie16c</ref>: All strings are 
+thrown randomly into a circular area in transverse space to estimate overlaps. 
 </flag> 
  
 <parm name="Ropewalk:stringProtonRatio" default="0.2" min="0." max="10.0"> 
@@ -229,8 +230,8 @@ overlap in collisions.
 </parm> 
  
 <parm name="Ropewalk:rapiditySpan" default="0.5" min="0." max="10.0"> 
-Only used if <code>Ropewalk:buffonRope</code> is enabled. Determines how far in 
-rapidity from a string break overlaps are counted. 
+Only used if <code>Ropewalk:buffonRope</code> is enabled. Determines how far 
+in rapidity from a string break overlaps are counted. 
 </parm> 
  
 <flag name="Ropewalk:setFixedKappa" default="off"> 
@@ -255,4 +256,4 @@ parameters, to allow for studies of exotic quark production in the Rope model.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

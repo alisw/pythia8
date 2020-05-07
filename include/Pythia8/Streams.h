@@ -1,5 +1,5 @@
 // Streams.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,13 +19,13 @@
 #include <sstream>
 #include <fstream>
 #include <string.h>
-#ifdef GZIPSUPPORT
+#ifdef GZIP
 #include <zlib.h>
 #endif
 
 namespace Pythia8 {
 
-#ifdef GZIPSUPPORT
+#ifdef GZIP
 
 //==========================================================================
 
@@ -38,10 +38,10 @@ private:
     static const int bufferSize = 47+256;    // size of data buff
     // totals 512 bytes under g++ for igzstream at the end.
 
-    gzFile           file;               // file handle for compressed file
-    char             buffer[bufferSize]; // data buffer
-    char             opened;             // open/close state of stream
-    int              mode;               // I/O mode
+    gzFile           file{};               // file handle for compressed file
+    char             buffer[bufferSize]{}; // data buffer
+    char             opened{};             // open/close state of stream
+    int              mode{};               // I/O mode
 
     int flush_buffer();
 public:

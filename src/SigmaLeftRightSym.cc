@@ -1,5 +1,5 @@
 // SigmaLeftRightSym.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -27,7 +27,7 @@ void Sigma1ffbar2ZRight::initProc() {
   GammaRes = particleDataPtr->mWidth(idZR);
   m2Res    = mRes*mRes;
   GamMRat  = GammaRes / mRes;
-  sin2tW   = couplingsPtr->sin2thetaW();
+  sin2tW   = coupSMPtr->sin2thetaW();
 
   // Set pointer to particle properties and decay table.
   ZRPtr    = particleDataPtr->particleDataEntryPtr(idZR);
@@ -175,7 +175,7 @@ void Sigma1ffbar2WRight::initProc() {
   GammaRes = particleDataPtr->mWidth(idWR);
   m2Res    = mRes*mRes;
   GamMRat  = GammaRes / mRes;
-  thetaWRat = 1. / (12. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (12. * coupSMPtr->sin2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(idWR);
@@ -215,7 +215,7 @@ void Sigma1ffbar2WRight::sigmaKin() {
 
       // Combine kinematics with colour factor and CKM couplings.
       widNow = kinFac;
-      if (id1Abs < 9) widNow *= colQ * couplingsPtr->V2CKMid(id1Abs, id2Abs);
+      if (id1Abs < 9) widNow *= colQ * coupSMPtr->V2CKMid(id1Abs, id2Abs);
 
       // Secondary width from top and righthanded neutrino decay.
       id1Neg    = (id1Abs < 19) ? -id1Now : id1Abs;
@@ -249,7 +249,7 @@ double Sigma1ffbar2WRight::sigmaHat() {
   // Secondary width for W_R^+ or W_R^-. CKM and colour factors.
   int idUp = (abs(id1)%2 == 0) ? id1 : id2;
   double sigma = (idUp > 0) ? sigma0Pos : sigma0Neg;
-  if (abs(id1) < 9) sigma *= couplingsPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
+  if (abs(id1) < 9) sigma *= coupSMPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
 
   // Answer.
   return sigma;
@@ -333,12 +333,12 @@ void Sigma1ll2Hchgchg::initProc() {
   }
 
   // Read in Yukawa matrix for couplings to a lepton pair.
-  yukawa[1][1]  = settingsPtr->parm("LeftRightSymmmetry:coupHee");
-  yukawa[2][1]  = settingsPtr->parm("LeftRightSymmmetry:coupHmue");
-  yukawa[2][2]  = settingsPtr->parm("LeftRightSymmmetry:coupHmumu");
-  yukawa[3][1]  = settingsPtr->parm("LeftRightSymmmetry:coupHtaue");
-  yukawa[3][2]  = settingsPtr->parm("LeftRightSymmmetry:coupHtaumu");
-  yukawa[3][3]  = settingsPtr->parm("LeftRightSymmmetry:coupHtautau");
+  yukawa[1][1]  = parm("LeftRightSymmmetry:coupHee");
+  yukawa[2][1]  = parm("LeftRightSymmmetry:coupHmue");
+  yukawa[2][2]  = parm("LeftRightSymmmetry:coupHmumu");
+  yukawa[3][1]  = parm("LeftRightSymmmetry:coupHtaue");
+  yukawa[3][2]  = parm("LeftRightSymmmetry:coupHtaumu");
+  yukawa[3][3]  = parm("LeftRightSymmmetry:coupHtautau");
 
   // Store H_L/R mass and width for propagator.
   mRes     = particleDataPtr->m0(idHLR);
@@ -436,17 +436,17 @@ void Sigma2lgm2Hchgchgl::initProc() {
 
   // Read in relevantYukawa matrix for couplings to a lepton pair.
   if (idLep == 11) {
-    yukawa[1]  = settingsPtr->parm("LeftRightSymmmetry:coupHee");
-    yukawa[2]  = settingsPtr->parm("LeftRightSymmmetry:coupHmue");
-    yukawa[3]  = settingsPtr->parm("LeftRightSymmmetry:coupHtaue");
+    yukawa[1]  = parm("LeftRightSymmmetry:coupHee");
+    yukawa[2]  = parm("LeftRightSymmmetry:coupHmue");
+    yukawa[3]  = parm("LeftRightSymmmetry:coupHtaue");
   } else if (idLep == 13) {
-    yukawa[1]  = settingsPtr->parm("LeftRightSymmmetry:coupHmue");
-    yukawa[2]  = settingsPtr->parm("LeftRightSymmmetry:coupHmumu");
-    yukawa[3]  = settingsPtr->parm("LeftRightSymmmetry:coupHtaumu");
+    yukawa[1]  = parm("LeftRightSymmmetry:coupHmue");
+    yukawa[2]  = parm("LeftRightSymmmetry:coupHmumu");
+    yukawa[3]  = parm("LeftRightSymmmetry:coupHtaumu");
   } else {
-    yukawa[1]  = settingsPtr->parm("LeftRightSymmmetry:coupHtaue");
-    yukawa[2]  = settingsPtr->parm("LeftRightSymmmetry:coupHtaumu");
-    yukawa[3]  = settingsPtr->parm("LeftRightSymmmetry:coupHtautau");
+    yukawa[1]  = parm("LeftRightSymmmetry:coupHtaue");
+    yukawa[2]  = parm("LeftRightSymmmetry:coupHtaumu");
+    yukawa[3]  = parm("LeftRightSymmmetry:coupHtautau");
   }
 
   // Secondary open width fractions.
@@ -562,9 +562,9 @@ void Sigma3ff2HchgchgfftWW::initProc() {
   double mW    = particleDataPtr->m0(24);
   double mWR   = particleDataPtr->m0(9900024);
   mWS          = (leftRight == 1) ? pow2(mW) : pow2(mWR);
-  double gL    = settingsPtr->parm("LeftRightSymmmetry:gL");
-  double gR    = settingsPtr->parm("LeftRightSymmmetry:gR");
-  double vL    = settingsPtr->parm("LeftRightSymmmetry:vL");
+  double gL    = parm("LeftRightSymmmetry:gL");
+  double gR    = parm("LeftRightSymmmetry:gR");
+  double vL    = parm("LeftRightSymmmetry:vL");
   prefac       = (leftRight == 1) ? pow2(pow4(gL) * vL)
                                   : 2. * pow2(pow3(gR) * mWR);
   // Secondary open width fractions.
@@ -615,8 +615,8 @@ double Sigma3ff2HchgchgfftWW::sigmaHat() {
 
   // Basic cross section. CKM factors for final states.
   double sigma = (id2 == id1 && id1Abs > 10) ? sigma0TU : sigma0T;
-  sigma       *= couplingsPtr->V2CKMsum(id1Abs)
-               * couplingsPtr->V2CKMsum(id2Abs);
+  sigma       *= coupSMPtr->V2CKMsum(id1Abs)
+               * coupSMPtr->V2CKMsum(id2Abs);
 
   // Secondary width for H0.
   sigma       *= (chg1 + chg2 == 2) ? openFracPos : openFracNeg;
@@ -639,8 +639,8 @@ void Sigma3ff2HchgchgfftWW::setIdColAcol() {
   // Pick out-flavours by relative CKM weights.
   int id1Abs   = abs(id1);
   int id2Abs   = abs(id2);
-  id4          = couplingsPtr->V2CKMpick(id1);
-  id5          = couplingsPtr->V2CKMpick(id2);
+  id4          = coupSMPtr->V2CKMpick(id1);
+  id5          = coupSMPtr->V2CKMpick(id2);
 
   // Find charge of Higgs .
   id3 = (( id1Abs%2 == 0 && id1 > 0) || (id1Abs%2 == 1 && id1 < 0) )
@@ -702,19 +702,19 @@ void Sigma2ffbar2HchgchgHchgchg::initProc() {
   }
 
   // Read in Yukawa matrix for couplings to a lepton pair.
-  yukawa[1][1] = settingsPtr->parm("LeftRightSymmmetry:coupHee");
-  yukawa[2][1] = settingsPtr->parm("LeftRightSymmmetry:coupHmue");
-  yukawa[2][2] = settingsPtr->parm("LeftRightSymmmetry:coupHmumu");
-  yukawa[3][1] = settingsPtr->parm("LeftRightSymmmetry:coupHtaue");
-  yukawa[3][2] = settingsPtr->parm("LeftRightSymmmetry:coupHtaumu");
-  yukawa[3][3] = settingsPtr->parm("LeftRightSymmmetry:coupHtautau");
+  yukawa[1][1] = parm("LeftRightSymmmetry:coupHee");
+  yukawa[2][1] = parm("LeftRightSymmmetry:coupHmue");
+  yukawa[2][2] = parm("LeftRightSymmmetry:coupHmumu");
+  yukawa[3][1] = parm("LeftRightSymmmetry:coupHtaue");
+  yukawa[3][2] = parm("LeftRightSymmmetry:coupHtaumu");
+  yukawa[3][3] = parm("LeftRightSymmmetry:coupHtautau");
 
   // Electroweak parameters.
   mRes         = particleDataPtr->m0(23);
   GammaRes     = particleDataPtr->mWidth(23);
   m2Res        = mRes*mRes;
   GamMRat      = GammaRes / mRes;
-  sin2tW       = couplingsPtr->sin2thetaW();
+  sin2tW       = coupSMPtr->sin2thetaW();
   preFac       = (1. - 2. * sin2tW) / ( 8. * sin2tW * (1. - sin2tW) );
 
   // Open fraction from secondary widths.
@@ -730,9 +730,9 @@ double Sigma2ffbar2HchgchgHchgchg::sigmaHat() {
 
   // Electroweak couplings to gamma^*/Z^0.
   int    idAbs   = abs(id1);
-  double ei      = couplingsPtr->ef(idAbs);
-  double vi      = couplingsPtr->vf(idAbs);
-  double ai      = couplingsPtr->af(idAbs);
+  double ei      = coupSMPtr->ef(idAbs);
+  double vi      = coupSMPtr->vf(idAbs);
+  double ai      = coupSMPtr->af(idAbs);
 
   // Part via gamma^*/Z^0 propagator. No Z^0 coupling to H_R.
   double resProp = 1. / ( pow2(sH - m2Res) + pow2(sH * GamMRat) );

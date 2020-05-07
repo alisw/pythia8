@@ -23,4 +23,4 @@ Tune:pp                   = 5
 SpaceShower:rapidityOrder = off
 
 ! Specify PDF set.
-PDF:pSet                  = LHAPDF5:cteq6ll.LHpdf
+PDF:pSet                  = LHAPDF6:cteq6l1

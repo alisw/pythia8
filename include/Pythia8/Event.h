@@ -1,5 +1,5 @@
 // Event.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -415,6 +415,14 @@ public:
   Particle& at(int i) {return entry.at(i);}
   Particle& back()    {return entry.back();}
 
+  // Implement iterators for the particle array.
+  vector<Pythia8::Particle>::iterator begin() { return entry.begin(); }
+  vector<Pythia8::Particle>::iterator end() { return entry.end(); }
+  vector<Pythia8::Particle>::const_iterator begin() const
+    { return entry.begin(); }
+  vector<Pythia8::Particle>::const_iterator end() const
+    { return entry.end(); }
+
   // Event record size.
   int size() const {return entry.size();}
 
@@ -522,8 +530,7 @@ public:
     return abs( entry[i1].eta() - entry[i2].eta() ); }
   double dphiAbs(int i1, int i2) const {
     double dPhiTmp = abs( entry[i1].phi() - entry[i2].phi() );
-    if (dPhiTmp > M_PI)
-      dPhiTmp = 2. * M_PI - dPhiTmp;
+    if (dPhiTmp > M_PI) dPhiTmp = 2. * M_PI - dPhiTmp;
     return dPhiTmp; }
   double RRapPhi(int i1, int i2) const {
     return sqrt( pow2(dyAbs(i1, i2)) + pow2(dphiAbs(i1, i2)) ); }

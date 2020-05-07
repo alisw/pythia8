@@ -1,7 +1,9 @@
 // main63.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: userhooks; biasing;
 
 // Example how you can use UserHooks to enhance rare emission rates,
 // in this case q -> q gamma.
@@ -61,9 +63,9 @@ int main() {
     int nEvent = pythia.mode("Main:numberOfEvents");
 
     // Set up a user hook and send it in.
-    UserHooks* enhanceHooks = 0;
+    shared_ptr<UserHooks> enhanceHooks = 0;
     if (iCase == 1) {
-      enhanceHooks = new EnhanceHooks();
+      enhanceHooks = make_shared<EnhanceHooks>();
       pythia.setUserHooksPtr( enhanceHooks);
     }
 
@@ -99,7 +101,6 @@ int main() {
          << sumWt / nEvent << endl;
 
     // End of case loop.
-    if (iCase == 1) delete enhanceHooks;
   }
 
   // Write histograms to output stream.

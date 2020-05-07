@@ -1,5 +1,5 @@
 // MiniStringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,6 +16,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PythiaStdlib.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/Settings.h"
 
 namespace Pythia8 {
@@ -26,20 +27,18 @@ namespace Pythia8 {
 // occasional low-mass colour singlet partonic systems, where the string
 // approach is not directly applicable (for technical reasons).
 
-class MiniStringFragmentation {
+class MiniStringFragmentation : public PhysicsBase {
 
 public:
 
   // Constructor.
-  MiniStringFragmentation() : infoPtr(), particleDataPtr(), rndmPtr(),
-    flavSelPtr(), pTSelPtr(), zSelPtr(), setVertices(), constantTau(),
-    smearOn(), nTryMass(), hadronVertex(), bLund(), xySmear(), kappaVtx(),
-    mc(), mb(), isClosed(), mSum(), m2Sum() {}
+  MiniStringFragmentation() : flavSelPtr(), pTSelPtr(), zSelPtr(),
+    setVertices(), constantTau(), smearOn(), nTryMass(), hadronVertex(),
+    bLund(), xySmear(), kappaVtx(), mc(), mb(), isClosed(), mSum(), m2Sum() {}
 
   // Initialize and save pointers.
-  void init(Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn, StringZ* zSelPtrIn);
+  void init(StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn,
+    StringZ* zSelPtrIn);
 
   // Do the fragmentation: driver routine.
   bool fragment( int iSub, ColConfig& colConfig, Event& event,
@@ -49,15 +48,6 @@ private:
 
   // Constants: could only be changed in the code itself.
   static const int    NTRYDIFFRACTIVE, NTRYLASTRESORT, NTRYFLAV;
-
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
 
   // Pointers to classes for flavour, pT and z generation.
   StringFlav*   flavSelPtr;

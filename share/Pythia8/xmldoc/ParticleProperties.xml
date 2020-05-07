@@ -228,7 +228,7 @@ beam remnant of one or two partons with status 63, that together define
 the mass and longitudinal axis of the diffractive system, for use in the 
 subsequent hadronization. An event may also contain two 20'ies 
 perturbative subcollisions if you use the 
-<aloc href="ASecondHardProcess">Second Hard Process</aloc> 
+<aloc href="SecondHardProcess">Second Hard Process</aloc> 
 generation machinery. 
 </method> 
  
@@ -974,4 +974,4 @@ particle species.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

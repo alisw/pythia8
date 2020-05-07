@@ -1,5 +1,5 @@
 // HelicityMatrixElements.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,10 +19,10 @@ namespace Pythia8 {
 // Initialize the helicity matrix element.
 
 void HelicityMatrixElement::initPointers(ParticleData* particleDataPtrIn,
-  Couplings* couplingsPtrIn, Settings* settingsPtrIn) {
+  CoupSM* coupSMPtrIn, Settings* settingsPtrIn) {
 
   particleDataPtr = particleDataPtrIn;
-  couplingsPtr    = couplingsPtrIn;
+  coupSMPtr       = coupSMPtrIn;
   settingsPtr     = settingsPtrIn;
   for(int i = 0; i <= 5; i++)
     gamma.push_back(GammaMatrix(i));
@@ -405,18 +405,18 @@ complex HMETwoFermions2W2TwoFermions::calculateME(vector<int> h) {
 void HMETwoFermions2GammaZ2TwoFermions::initConstants() {
 
   // Set the Weinberg angle.
-  sin2W = couplingsPtr->sin2thetaW();
-  cos2W = couplingsPtr->cos2thetaW();
+  sin2W = coupSMPtr->sin2thetaW();
+  cos2W = coupSMPtr->cos2thetaW();
   // Set the on-shell Z/Z' mass and width.
   zG  = particleDataPtr->mWidth(23);
   zM  = particleDataPtr->m0(23);
   zpG = particleDataPtr->mWidth(32);
   zpM = particleDataPtr->m0(32);
   // Set the Z vector and axial couplings to the fermions.
-  p0CAZ = couplingsPtr->af(abs(pID[0]));
-  p2CAZ = couplingsPtr->af(abs(pID[2]));
-  p0CVZ = couplingsPtr->vf(abs(pID[0]));
-  p2CVZ = couplingsPtr->vf(abs(pID[2]));
+  p0CAZ = coupSMPtr->af(abs(pID[0]));
+  p2CAZ = coupSMPtr->af(abs(pID[2]));
+  p0CVZ = coupSMPtr->vf(abs(pID[0]));
+  p2CVZ = coupSMPtr->vf(abs(pID[2]));
   // Turn off the gamma/Z/Z' channels.
   includeGamma = false;
   includeZ     = false;
@@ -477,8 +477,8 @@ void HMETwoFermions2GammaZ2TwoFermions::initWaves(vector<HelicityParticle>& p)
   // Center of mass energy.
   s = max( 1., pow2(p[4].m()));
   // Check if incoming fermions are oriented along z-axis.
-  zaxis = (p[0].pAbs() == fabs(p[0].pz())) &&
-    (p[1].pAbs() == fabs(p[1].pz()));
+  zaxis = (p[0].pAbs() == abs(p[0].pz())) &&
+    (p[1].pAbs() == abs(p[1].pz()));
 
 }
 
@@ -678,8 +678,8 @@ complex HMEGamma2TwoFermions::calculateME(vector<int> h) {
 void HMEZ2TwoFermions::initConstants() {
 
   // Set the vector and axial couplings to the fermions.
-  p2CA = couplingsPtr->af(abs(pID[2]));
-  p2CV = couplingsPtr->vf(abs(pID[2]));
+  p2CA = coupSMPtr->af(abs(pID[2]));
+  p2CV = coupSMPtr->vf(abs(pID[2]));
   if (settingsPtr && abs(pID[0]) == 32) {
     p2CA = zpCoupling(abs(pID[2]), "a");
     p2CV = zpCoupling(abs(pID[2]), "v");
@@ -877,7 +877,7 @@ double HMETauDecay::decayWeightMax(vector<HelicityParticle>& p) {
   double on  = real(p[0].rho[0][0]) > real(p[0].rho[1][1]) ?
     real(p[0].rho[0][0]) : real(p[0].rho[1][1]);
   // Determine the maximum off-diagonal element of rho.
-  double off = fabs(real(p[0].rho[0][1])) + fabs(imag(p[0].rho[0][1]));
+  double off = abs(real(p[0].rho[0][1])) + abs(imag(p[0].rho[0][1]));
   return  DECAYWEIGHTMAX * (on + off);
 
 }

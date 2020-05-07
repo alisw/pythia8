@@ -1,5 +1,5 @@
 // UserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,6 +12,7 @@
 
 #include "Pythia8/Event.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/SigmaProcess.h"
 
@@ -27,26 +28,12 @@ class StringEnd;
 
 // UserHooks is base class for user access to program execution.
 
-class UserHooks {
+class UserHooks : public PhysicsBase {
 
 public:
 
   // Destructor.
   virtual ~UserHooks() {}
-
-  // Initialize pointers and workEvent. Note: not virtual.
-  void initPtr( Info* infoPtrIn, Settings* settingsPtrIn,
-    ParticleData* particleDataPtrIn,  Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
-    CoupSM* coupSMPtrIn, PartonSystems* partonSystemsPtrIn,
-    SigmaTotal* sigmaTotPtrIn) { infoPtr = infoPtrIn;
-    settingsPtr = settingsPtrIn; particleDataPtr = particleDataPtrIn;
-    rndmPtr = rndmPtrIn; beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn;
-    beamPomAPtr = beamPomAPtrIn; beamPomBPtr = beamPomBPtrIn;
-    coupSMPtr = coupSMPtrIn; partonSystemsPtr = partonSystemsPtrIn;
-    sigmaTotPtr = sigmaTotPtrIn;
-    workEvent.init("(work event)", particleDataPtr);}
 
   // Initialisation after beams have been set by Pythia::init().
   virtual bool initAfterBeams() { return true; }
@@ -235,37 +222,14 @@ public:
 protected:
 
   // Constructor.
-  UserHooks() : infoPtr(0), settingsPtr(0), particleDataPtr(0), rndmPtr(0),
-    beamAPtr(0), beamBPtr(0), beamPomAPtr(0), beamPomBPtr(0), coupSMPtr(0),
-    partonSystemsPtr(0), sigmaTotPtr(0), selBias(1.), enhancedEventWeight(),
-    pTEnhanced(), wtEnhanced() {}
+  UserHooks() {}
 
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the settings database.
-  Settings*      settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*  particleDataPtr;
-
- // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
-  // Pointers to the two incoming beams and to Pomeron beam-inside-beam.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-  BeamParticle*  beamPomAPtr;
-  BeamParticle*  beamPomBPtr;
-
-  // Pointers to Standard Model couplings.
-  CoupSM*        coupSMPtr;
-
-  // Pointer to information on subcollision parton locations.
-  PartonSystems* partonSystemsPtr;
-
-  // Pointer to the total/elastic/diffractive cross sections.
-  SigmaTotal*    sigmaTotPtr;
+  // After initInfoPtr, initialize workEvent
+  virtual void onInitInfoPtr() override {
+    // Set smart pointer to null, in order to avoid circular dependency
+    userHooksPtr = nullptr;
+    workEvent.init("(work event)", particleDataPtr);
+  }
 
   // omitResonanceDecays omits resonance decay chains from process record.
   void omitResonanceDecays(const Event& process, bool finalOnly = false);
@@ -274,13 +238,13 @@ protected:
   void subEvent(const Event& event, bool isHardest = true);
 
   // Have one event object around as work area.
-  Event workEvent;
+  Event workEvent = {};
 
   // User-imposed selection bias.
-  double selBias;
+  double selBias = 1.;
 
   // Bookkept quantities for boosted event weights.
-  double enhancedEventWeight, pTEnhanced, wtEnhanced;
+  double enhancedEventWeight = {}, pTEnhanced = {}, wtEnhanced = {};
 
 };
 
@@ -327,14 +291,12 @@ private:
 
 class UserHooksVector: public UserHooks {
 
-private:
+public:
 
   // The default constructor is private, and should only be used
   // internally in Pythia.
-  UserHooksVector() {}
+  UserHooksVector() {};
   friend class Pythia;
-
-public:
 
   // Destructor.
   virtual ~UserHooksVector() {}
@@ -346,9 +308,7 @@ public:
     int nCanChangeFragPar      = 0;
     int nCanSetImpactParameter = 0;
     for ( int i = 0, N = hooks.size(); i < N; ++i ) {
-      hooks[i]->initPtr(infoPtr, settingsPtr, particleDataPtr, rndmPtr,
-                        beamAPtr, beamBPtr, beamPomAPtr, beamPomBPtr,
-                        coupSMPtr, partonSystemsPtr, sigmaTotPtr);
+      registerSubObject(*hooks[i]);
       if ( !hooks[i]->initAfterBeams() ) return false;
       if (hooks[i]->canSetResonanceScale()) ++nCanSetResonanceScale;
       if (hooks[i]->canChangeFragPar()) ++nCanChangeFragPar;
@@ -626,7 +586,6 @@ public:
     return false;
   }
 
-
   // Possibility to veto an MPI.
   virtual bool canVetoMPIEmission() {
     for ( int i = 0, N = hooks.size(); i < N; ++i )
@@ -730,9 +689,8 @@ public:
     return 0.0;
   }
 
-public:
-
-  vector<UserHooks*> hooks;
+  // The vector of user hooks.
+  vector< shared_ptr<UserHooks> > hooks = {};
 
 };
 

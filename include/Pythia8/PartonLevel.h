@@ -1,5 +1,5 @@
 // PartonLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,7 +12,6 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/BeamParticle.h"
 #include "Pythia8/BeamRemnants.h"
-#include "Pythia8/ColourReconnection.h"
 #include "Pythia8/Event.h"
 #include "Pythia8/HardDiffraction.h"
 #include "Pythia8/Info.h"
@@ -22,10 +21,13 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonSystems.h"
 #include "Pythia8/PartonVertex.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/ResonanceDecays.h"
 #include "Pythia8/RHadrons.h"
 #include "Pythia8/Settings.h"
+#include "Pythia8/Settings.h"
+#include "Pythia8/SharedPointers.h"
 #include "Pythia8/SigmaTotal.h"
 #include "Pythia8/SpaceShower.h"
 #include "Pythia8/StandardModel.h"
@@ -40,51 +42,18 @@ namespace Pythia8 {
 // The PartonLevel class contains the top-level routines to generate
 // the partonic activity of an event.
 
-class PartonLevel {
+class PartonLevel : public PhysicsBase {
 
 public:
 
   // Constructor.
-  PartonLevel() : timesDecPtr(), timesPtr(), spacePtr(), userHooksPtr(0),
-    doNonDiff(), doDiffraction(), doMPI(), doMPIMB(), doMPISDA(), doMPISDB(),
-    doMPICD(), doMPIinit(), doISR(), doFSRduringProcess(), doFSRafterProcess(),
-    doFSRinResonances(), doRemnants(), doSecondHard(), hasOneLeptonBeam(),
-    hasTwoLeptonBeams(), hasPointLeptons(), canVetoPT(), canVetoStep(),
-    canVetoMPIStep(), canVetoEarly(), canSetScale(), allowRH(), earlyResDec(),
-    vetoWeakJets(), canReconResSys(), doReconnect(), doHardDiff(),
-    forceResonanceCR(), doNDgamma(), doMPIgmgm(), showUnresGamma(),
-    pTmaxMatchMPI(), mMinDiff(), mWidthDiff(), pMaxDiff(), vetoWeakDeltaR2(),
-    doVeto(), nMPI(), nISR(), nFSRinProc(), nFSRinRes(), nISRhard(),
-    nFSRhard(), typeLatest(), nVetoStep(), typeVetoStep(), nVetoMPIStep(),
-    iSysNow(), reconnectMode(), hardDiffSide(), sampleTypeDiff(), pTsaveMPI(),
-    pTsaveISR(), pTsaveFSR(), pTvetoPT(), isNonDiff(), isDiffA(), isDiffB(),
-    isDiffC(), isDiff(), isSingleDiff(), isDoubleDiff(), isCentralDiff(),
-    isResolved(), isResolvedA(), isResolvedB(), isResolvedC(), isHardDiffA(),
-    isHardDiffB(), isHardDiff(), doDiffVeto(), hardDiffSet(), isElastic(),
-    twoHard(), sizeProcess(), sizeEvent(), nHardDone(), nHardDoneRHad(), iDS(),
-    eCMsave(), hasGammaA(), hasGammaB(), beamHasGamma(), beamAisGamma(),
-    beamBisGamma(), beamAhasGamma(), beamBhasGamma(), beamAhasResGamma(),
-    beamBhasResGamma(), beamHasResGamma(), isGammaHadronDir(), gammaMode(),
-    gammaModeEvent(), gammaOffset(), eCMsaveGamma(), infoPtr(),
-    particleDataPtr(), rndmPtr(), beamAPtr(), beamBPtr(), beamHadAPtr(),
-    beamHadBPtr(), beamPomAPtr(), beamPomBPtr(), beamGamAPtr(), beamGamBPtr(),
-    beamVMDAPtr(), beamVMDBPtr(), couplingsPtr(), partonSystemsPtr(),
-    partonVertexPtr(), multiPtr(), rHadronsPtr(), mergingHooksPtr(), doTrial(),
-    nTrialEmissions(), pTLastBranch(), typeLastBranch(), canRemoveEvent(),
-    canRemoveEmission() {}
+  PartonLevel() = default;
 
   // Initialization of all classes at the parton level.
-  bool init( Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
-    BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
-    BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
-    Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
-    SigmaTotal* sigmaTotPtr, TimeShower* timesDecPtrIn,
-    TimeShower* timesPtrIn, SpaceShower* spacePtrIn,
-    RHadrons* rHadronsPtrIn, UserHooks* userHooksPtrIn,
-    MergingHooks* mergingHooksPtr, PartonVertex* partonVertexPtrIn,
+  bool init( TimeShowerPtr timesDecPtrIn, TimeShowerPtr timesPtrIn,
+    SpaceShowerPtr spacePtrIn, RHadrons* rHadronsPtrIn,
+    MergingHooksPtr mergingHooksPtr, PartonVertexPtr partonVertexPtrIn,
+    StringIntPtr stringInteractionPtrIn,
     bool useAsTrial);
 
   // Generate the next parton-level process.
@@ -105,9 +74,6 @@ public:
   void accumulate() {if (isResolved && !isDiff) multiPtr->accumulate();}
   void statistics(bool reset = false) {
     if (doMPI) multiMB.statistics(reset);}
-    // For now no separate statistics for diffraction??
-    //if (doMPISDA && doDiffraction) multiSDA.statistics(reset);
-    //if (doMPISDB && doDiffraction) multiSDB.statistics(reset);}
   void resetStatistics() { if (doMPI) multiMB.resetStatistics(); }
 
   // Reset PartonLevel object for trial shower usage.
@@ -117,20 +83,46 @@ public:
   // Provide the type of the last branching in the shower.
   int typeLastInShower() { return typeLastBranch; }
 
-  // Make History and MergingHooks friends for access to private functions.
-  // This is helpful when merging with an external shower plugin.
-  friend class History;
-  friend class MergingHooks;
+  // Check of any trial emissions could have been enhanced.
+  bool canEnhanceTrial() {
+    if (userHooksPtr) return userHooksPtr->canEnhanceTrial();
+    return false;
+  }
+  // Get enhanced trial emission evolution variable.
+  double getEnhancedTrialPT() {
+    if (canEnhanceTrial()) return userHooksPtr->getEnhancedTrialPT();
+    return 0.;
+  }
+  // Get enhanced trial emission weight.
+  double getEnhancedTrialWeight() {
+    if (canEnhanceTrial()) return userHooksPtr->getEnhancedTrialWeight();
+    return 1.;
+  }
+
+  // Spare copies of normal beam pointers.
+  BeamParticle*  beamHadAPtr{};
+  BeamParticle*  beamHadBPtr{};
 
   // Pointers to timelike showers for resonance decays and the rest.
-  TimeShower*    timesDecPtr;
-  TimeShower*    timesPtr;
+  TimeShowerPtr  timesDecPtr{};
+  TimeShowerPtr  timesPtr{};
 
   // Pointer to spacelike showers.
-  SpaceShower*   spacePtr;
+  SpaceShowerPtr spacePtr{};
 
-  // Pointer to userHooks object for user interaction with program.
-  UserHooks*     userHooksPtr;
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(multiMB);
+    registerSubObject(multiSDA);
+    registerSubObject(multiSDB);
+    registerSubObject(multiCD);
+    registerSubObject(multiGmGm);
+    registerSubObject(remnants);
+    registerSubObject(resonanceDecays);
+    registerSubObject(junctionSplitting);
+    registerSubObject(hardDiffraction);
+  }
 
 private:
 
@@ -138,94 +130,64 @@ private:
   static const int NTRY;
 
   // Initialization data, mainly read from Settings.
-  bool   doNonDiff, doDiffraction, doMPI, doMPIMB, doMPISDA, doMPISDB,
-         doMPICD, doMPIinit, doISR, doFSRduringProcess, doFSRafterProcess,
-         doFSRinResonances, doRemnants, doSecondHard, hasOneLeptonBeam,
-         hasTwoLeptonBeams, hasPointLeptons, canVetoPT, canVetoStep,
-         canVetoMPIStep, canVetoEarly, canSetScale, allowRH, earlyResDec,
-         vetoWeakJets, canReconResSys, doReconnect, doHardDiff,
-         forceResonanceCR, doNDgamma, doMPIgmgm, showUnresGamma;
+  bool   doNonDiff{}, doDiffraction{}, doMPI{}, doMPIMB{}, doMPISDA{},
+         doMPISDB{}, doMPICD{}, doMPIinit{}, doISR{}, doFSRduringProcess{},
+         doFSRafterProcess{}, doFSRinResonances{}, doRemnants{},
+         doSecondHard{}, hasOneLeptonBeam{}, hasTwoLeptonBeams{},
+         hasPointLeptons{}, canVetoPT{}, canVetoStep{}, canVetoMPIStep{},
+         canVetoEarly{}, canSetScale{}, allowRH{}, earlyResDec{},
+         vetoWeakJets{}, canReconResSys{}, doReconnect{}, doHardDiff{},
+         forceResonanceCR{}, doNDgamma{}, doMPIgmgm{}, showUnresGamma{};
   int    pTmaxMatchMPI;
-  double mMinDiff, mWidthDiff, pMaxDiff, vetoWeakDeltaR2;
+  double mMinDiff{}, mWidthDiff{}, pMaxDiff{}, vetoWeakDeltaR2{};
 
   // Event generation strategy. Number of steps. Maximum pT scales.
-  bool   doVeto;
-  int    nMPI, nISR, nFSRinProc, nFSRinRes, nISRhard, nFSRhard,
-         typeLatest, nVetoStep, typeVetoStep, nVetoMPIStep, iSysNow,
-         reconnectMode, hardDiffSide, sampleTypeDiff;
-  double pTsaveMPI, pTsaveISR, pTsaveFSR, pTvetoPT;
+  bool   doVeto{};
+  int    nMPI{}, nISR{}, nFSRinProc{}, nFSRinRes{}, nISRhard{}, nFSRhard{},
+         typeLatest{}, nVetoStep{}, typeVetoStep{}, nVetoMPIStep{}, iSysNow{},
+         reconnectMode{}, hardDiffSide{}, sampleTypeDiff{};
+  double pTsaveMPI{}, pTsaveISR{}, pTsaveFSR{}, pTvetoPT{};
 
   // Current event properties.
-  bool   isNonDiff, isDiffA, isDiffB, isDiffC, isDiff, isSingleDiff,
-         isDoubleDiff, isCentralDiff, isResolved, isResolvedA,
-         isResolvedB, isResolvedC, isHardDiffA, isHardDiffB, isHardDiff,
-         doDiffVeto, hardDiffSet, isElastic, twoHard;
-  int    sizeProcess, sizeEvent, nHardDone, nHardDoneRHad, iDS;
+  bool   isNonDiff{}, isDiffA{}, isDiffB{}, isDiffC{}, isDiff{},
+         isSingleDiff{}, isDoubleDiff{}, isCentralDiff{},
+         isResolved{}, isResolvedA{}, isResolvedB{}, isResolvedC{},
+         isHardDiffA{}, isHardDiffB{}, isHardDiff{}, doDiffVeto{},
+         hardDiffSet{}, isElastic{}, twoHard{};
+  int    sizeProcess{}, sizeEvent{}, nHardDone{}, nHardDoneRHad{}, iDS{};
   double eCMsave;
   vector<bool> inRHadDecay;
   vector<int>  iPosBefShow;
 
   // Variables for photon inside electron.
-  bool   hasGammaA, hasGammaB, beamHasGamma, beamAisGamma, beamBisGamma,
-         beamAhasGamma, beamBhasGamma, beamAhasResGamma, beamBhasResGamma,
-         beamHasResGamma, isGammaHadronDir;
-  int    gammaMode, gammaModeEvent, gammaOffset;
-  double eCMsaveGamma;
-
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*  particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
-  // Pointers to the two incoming beams.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-
-  // Spare copies of normal pointers. Pointers to Pomeron beam-inside-beam.
-  BeamParticle*  beamHadAPtr;
-  BeamParticle*  beamHadBPtr;
-  BeamParticle*  beamPomAPtr;
-  BeamParticle*  beamPomBPtr;
-
-  // Pointers to photon beams inside lepton beams.
-  BeamParticle*  beamGamAPtr;
-  BeamParticle*  beamGamBPtr;
-  // Pointers to VMD beams inside gamma beams.
-  BeamParticle*  beamVMDAPtr;
-  BeamParticle*  beamVMDBPtr;
-
-  // Pointers to Standard Model couplings.
-  Couplings*     couplingsPtr;
-
-  // Pointer to information on subcollision parton locations.
-  PartonSystems* partonSystemsPtr;
+  bool   hasGammaA{}, hasGammaB{}, beamHasGamma{}, beamAisGamma{},
+         beamBisGamma{}, beamAhasGamma{}, beamBhasGamma{}, beamAhasResGamma{},
+         beamBhasResGamma{}, beamHasResGamma{}, isGammaHadronDir{};
+  int    gammaMode{}, gammaModeEvent{}, gammaOffset{};
+  double eCMsaveGamma{};
 
   // Pointer to assign space-time vertices during parton evolution.
-  PartonVertex*  partonVertexPtr;
+  PartonVertexPtr partonVertexPtr{};
 
   // The generator classes for multiparton interactions.
   MultipartonInteractions  multiMB;
   MultipartonInteractions  multiSDA;
   MultipartonInteractions  multiSDB;
   MultipartonInteractions  multiCD;
-  MultipartonInteractions* multiPtr;
+  MultipartonInteractions* multiPtr{};
   MultipartonInteractions  multiGmGm;
 
   // The generator class to construct beam-remnant kinematics.
   BeamRemnants remnants;
 
   // The RHadrons class is used to fragment off and decay R-hadrons.
-  RHadrons*    rHadronsPtr;
+  RHadrons*    rHadronsPtr{};
 
   // ResonanceDecay object does sequential resonance decays.
   ResonanceDecays resonanceDecays;
 
   // The Colour reconnection class used to do colour reconnection.
-  ColourReconnection colourReconnection;
+  ColRecPtr colourReconnectionPtr{};
 
   // The Junction splitting class used to split junctions systems.
   JunctionSplitting junctionSplitting;
@@ -266,15 +228,15 @@ private:
   void cleanEventFromGamma( Event& event);
 
   // Pointer to MergingHooks object for user interaction with the merging.
-  MergingHooks* mergingHooksPtr;
+  MergingHooksPtr mergingHooksPtr{};
   // Parameters to specify trial shower usage.
-  bool doTrial;
-  int nTrialEmissions;
+  bool doTrial{};
+  int nTrialEmissions{};
   // Parameters to store to veto trial showers.
-  double pTLastBranch;
-  int typeLastBranch;
+  double pTLastBranch{};
+  int typeLastBranch{};
   // Parameters to specify merging usage.
-  bool canRemoveEvent, canRemoveEmission;
+  bool canRemoveEvent{}, canRemoveEmission{};
 
 };
 

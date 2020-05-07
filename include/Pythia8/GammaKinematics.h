@@ -1,5 +1,5 @@
 // GammaKinematics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,6 +11,7 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/BeamParticle.h"
 #include "Pythia8/Info.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/Settings.h"
 
 namespace Pythia8 {
@@ -19,13 +20,12 @@ namespace Pythia8 {
 
 // Class to sample the virtuality and transverse momentum of emitted photons.
 
-class GammaKinematics {
+class GammaKinematics : public PhysicsBase {
 
 public:
 
   // Constructor.
-  GammaKinematics() : infoPtr(), settingsPtr(), rndmPtr(), beamAPtr(),
-    beamBPtr(), Q2maxGamma(), Wmin(), Wmax(), eCM(), sCM(), m2BeamA(),
+  GammaKinematics() : Q2maxGamma(), Wmin(), Wmax(), eCM(), sCM(), m2BeamA(),
     m2BeamB(), Q2min1(), Q2min2(), xGamma1(), xGamma2(), Q2gamma1(),
     Q2gamma2(), phi1(), phi2(), kT1(), kT2(), kz1(), kz2(), mGmGm(), m2GmGm(),
     theta1(), theta2(), theta1Max(), theta2Max(), eCM2A(), eCM2B(), sHatNew(),
@@ -35,9 +35,7 @@ public:
     hasGammaB(), externalFlux(), sampleQ2(), gammaA(), gammaB() {}
 
   // Sample the trial or final event kinematics.
-  bool init(Info* infoPtrIn, Settings* settingsPtrIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    Couplings* couplingsPtrIn);
+  bool init();
 
   // Sampling of the kinematics of the intermediate photon.
   bool   sampleKTgamma(bool nonDiff = false);
@@ -63,22 +61,6 @@ public:
   int    idInB()         const {return subInB;}
 
 private:
-
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the settings database.
-  Settings*     settingsPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
-
-  // Pointer to couplings.
-  Couplings*    couplingsPtr;
-
-  // Pointers to incoming beams.
-  BeamParticle* beamAPtr;
-  BeamParticle* beamBPtr;
 
   // Kinematics variables.
   double Q2maxGamma, Wmin, Wmax, eCM, sCM, m2BeamA, m2BeamB, Q2min1, Q2min2,

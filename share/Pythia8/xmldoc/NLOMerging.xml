@@ -709,7 +709,8 @@ achieved by adding the following code at the end of <code>main88.cc</code>.
     string LHEfile = iPathSubt + in.str(); 
  
     cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl 
-         &lt;&lt; "Start subtractive treatment for " &lt;&lt; njetcounterCT &lt;&lt; " jets\n" 
+         &lt;&lt; "Start subtractive treatment for " &lt;&lt; njetcounterCT 
+         &lt;&lt; " jets\n" 
          &lt;&lt; "Recluster at least 2 times" &lt;&lt; endl; 
  
     pythia.readString("Beams:frameType = 4"); 
@@ -803,4 +804,4 @@ by supplying a <code>MergingHooks</code> class) is used for UNLOPS.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

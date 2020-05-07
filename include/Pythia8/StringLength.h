@@ -1,5 +1,5 @@
 // StringLength.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -64,7 +64,7 @@ private:
   int lambdaForm;
 
   // Pointer to various information on the generation.
-  Info*          infoPtr;
+  Info* infoPtr;
 
   // This is only to access the function call junctionRestFrame.
   StringFragmentation stringFragmentation;

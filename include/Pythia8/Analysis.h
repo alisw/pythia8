@@ -1,5 +1,5 @@
 // Analysis.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -133,6 +133,10 @@ public:
   SingleClusterJet(Vec4 pJetIn = 0., int motherIn = 0) :
     pJet(pJetIn), mother(motherIn), daughter(0), multiplicity(1),
     isAssigned(false) {pAbs = max( PABSMIN, pJet.pAbs());}
+  SingleClusterJet(const SingleClusterJet& j) {
+    pJet = j.pJet;  mother = j.mother; daughter = j.daughter;
+    multiplicity = j.multiplicity; pAbs = j.pAbs;
+    isAssigned = j.isAssigned; }
   SingleClusterJet& operator=(const SingleClusterJet& j) { if (this != &j)
     { pJet = j.pJet;  mother = j.mother; daughter = j.daughter;
     multiplicity = j.multiplicity; pAbs = j.pAbs;

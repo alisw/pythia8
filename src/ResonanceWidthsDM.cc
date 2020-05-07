@@ -1,5 +1,5 @@
 // ResonanceWidthsDM.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -45,7 +45,7 @@ void ResonanceS::calcPreFac(bool) {
 
   // Common coupling factors.
   preFac = 1.0 / (12.0 * M_PI * mRes);
-  alpS   = couplingsPtr->alphaS(mHat * mHat);
+  alpS   = coupSMPtr->alphaS(mHat * mHat);
 
 }
 
@@ -127,14 +127,14 @@ void ResonanceZp::initConstants() {
 
   // SM fermion couplings for kinetic mixing case.
   if (kinMix) {
-    vu = eps * (2./3. + couplingsPtr->vf(2));
-    au = eps * couplingsPtr->af(2);
-    vd = eps * (-1./3. + couplingsPtr->vf(1));
-    ad = eps * couplingsPtr->af(1);
-    vl = eps * (-1. + couplingsPtr->vf(11));
-    al = eps * couplingsPtr->af(11);
-    vv = eps * couplingsPtr->vf(12);
-    av = eps * couplingsPtr->af(12);
+    vu = eps * (2./3. + coupSMPtr->vf(2));
+    au = eps * coupSMPtr->af(2);
+    vd = eps * (-1./3. + coupSMPtr->vf(1));
+    ad = eps * coupSMPtr->af(1);
+    vl = eps * (-1. + coupSMPtr->vf(11));
+    al = eps * coupSMPtr->af(11);
+    vv = eps * coupSMPtr->vf(12);
+    av = eps * coupSMPtr->af(12);
 
   // SM fermion couplings set by user.
   } else {
@@ -187,7 +187,7 @@ void ResonanceZp::calcWidth(bool) {
   // Set partial width.
   double coup = pow2(gZp);
   if (kinMix && id1Abs != 52)
-    coup = couplingsPtr->alphaEM(mRes * mRes) * 4.0 * M_PI;
+    coup = coupSMPtr->alphaEM(mRes * mRes) * 4.0 * M_PI;
   widNow = coup * fac * preFac;
 
 }
@@ -391,7 +391,7 @@ void ResonanceChaD::calcPreFac(bool) {
   // Common coupling factors.
   double dm = particleDataPtr->m0(59) - particleDataPtr->m0(57);
   preFac = (dm > 0.) ? 4.0 * 6.993e-13 * sqrtpos(1. - pow2(0.1396/dm))
-         * pow3(dm) : 0.;
+    * pow3(dm) : 0.;
 
 }
 

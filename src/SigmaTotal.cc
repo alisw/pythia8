@@ -1,5 +1,5 @@
 // SigmaTotal.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,7 +22,6 @@ namespace Pythia8 {
 const double SigmaTotAux::ALPHAEM    = 0.00729353;
 
 // Conversion coefficients = 1/(16pi) * (mb <-> GeV^2).
-const double SigmaTotAux::HBARC2     = 0.38938;
 const double SigmaTotAux::CONVERTEL  = 0.0510925;
 
 // Proton and pion masses, and their squares. Euler's constant.
@@ -147,18 +146,11 @@ const double SigmaTotal::MMIN  = 2.;
 
 // Store pointer to Info and initialize data members.
 
-void SigmaTotal::init( Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn) {
-
-  // Store pointers.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  settingsPtr     = &settings;
-  rndmPtr         = rndmPtrIn;
+void SigmaTotal::init() {
 
   // Choice of mode.
-  modeTotEl  = settings.mode("SigmaTotal:mode");
-  modeDiff   = settings.mode("SigmaDiffractive:mode");
+  modeTotEl  = mode("SigmaTotal:mode");
+  modeDiff   = mode("SigmaDiffractive:mode");
 
 }
 
@@ -210,7 +202,7 @@ bool SigmaTotal::calc(int idA, int idB, double eCM) {
   else                        sigTotElPtr = new SigmaRPP();
 
   // Initialize and calculate for selected total/elastic class.
-  sigTotElPtr->init( infoPtr, *settingsPtr, particleDataPtr, rndmPtr);
+  sigTotElPtr->init(infoPtr);
   if ( !sigTotElPtr->calcTotEl( idA, idB, s, mA, mB) ) return false;
 
   // Set up pointer to class that handles diffractive cross sections.
@@ -222,7 +214,7 @@ bool SigmaTotal::calc(int idA, int idB, double eCM) {
 
   // Initialize and calculate for selected diffractive class.
   if (sigDiffPtr != sigTotElPtr)
-    sigDiffPtr->init( infoPtr, *settingsPtr, particleDataPtr, rndmPtr);
+    sigDiffPtr->init(infoPtr);
   if ( !sigDiffPtr->calcDiff( idA, idB, s, mA, mB) ) return false;
 
   // Inelastic nondiffractive by unitarity.
@@ -367,8 +359,10 @@ void SigmaTotal::chooseVMDstates(int idA, int idB, double eCM,
 
 // Initialize data members.
 
-void SigmaTotOwn::init(Info* , Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm*) {
+void SigmaTotOwn::init(Info* infoPtrIn) {
+
+  // Use shorthand for settings
+  Settings& settings = *infoPtrIn->settingsPtr;
 
   // Main user-set values for total and elastic cross sections.
   sigTot  = settings.parm("SigmaTotal:sigmaTot");
@@ -376,7 +370,7 @@ void SigmaTotOwn::init(Info* , Settings& settings,
   bEl     = settings.parm("SigmaElastic:bSlope");
 
   // Initialize parameters for Coulomb corrections to elastic scattering.
-  initCoulomb( settings, particleDataPtrIn);
+  initCoulomb( settings, infoPtrIn->particleDataPtr);
 
   // User-set values for diffractive cross sections.
   sigXB   = settings.parm("SigmaTotal:sigmaXB");
@@ -391,7 +385,7 @@ void SigmaTotOwn::init(Info* , Settings& settings,
   a0      = 1. + settings.parm("SigmaDiffractive:PomFluxEpsilon");
   ap      = settings.parm("SigmaDiffractive:PomFluxAlphaPrime");
 
-  // Schuler-Sjöstrand.
+  // Schuler-Sjï¿½strand.
   if (pomFlux == 1) {
     b0    = 2.3;
 
@@ -488,7 +482,7 @@ double SigmaTotOwn::dsigmaSD(double xi, double t, bool , int ) {
   wtNow   = 1.;
   yNow    = -log(xi);
 
-  // Schuler-Sjöstrand.
+  // Schuler-Sjï¿½strand.
   if (pomFlux == 1) {
     b     = 2. * b0 + 2. * ap * yNow;
     wtNow = exp(b * t);
@@ -538,7 +532,7 @@ double SigmaTotOwn::dsigmaDD(double xi1, double xi2, double t, int ) {
   wtNow   = 1.;
   yNow    = - log(xi1 * xi2 * s / SPROTON);
 
-  // Schuler-Sjöstrand.
+  // Schuler-Sjï¿½strand.
   if (pomFlux == 1) {
     b     = max( bMinDD, 2. * ap * yNow);
     wtNow = exp(b * t);
@@ -589,7 +583,7 @@ double SigmaTotOwn::dsigmaCD( double xi1, double xi2, double t1, double t2,
   yNow1   = -log(xi1);
   yNow2   = -log(xi2);
 
-  // Schuler-Sjöstrand.
+  // Schuler-Sjï¿½strand.
   if (pomFlux == 1) {
     b1    = 2. * b0 + 2. * ap * yNow1;
     b2    = 2. * b0 + 2. * ap * yNow2;
@@ -738,14 +732,16 @@ const double SigmaSaSDL::CDD[10][9] = {
 
 // Store pointer to Info and initialize data members.
 
-void SigmaSaSDL::init( Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm*) {
+void SigmaSaSDL::init(Info* infoPtrIn) {
 
   // Store pointer.
-  infoPtr         = infoPtrIn;
+  infoPtr      = infoPtrIn;
+
+  // Use shorthand for settings
+  Settings& settings = *infoPtrIn->settingsPtr;
 
   // Initialize parameters for Coulomb corrections to elastic scattering.
-  initCoulomb( settings, particleDataPtrIn);
+  initCoulomb( settings, infoPtrIn->particleDataPtr);
 
   // User-set values to dampen diffractive cross sections.
   doDampen   = settings.flag("SigmaDiffractive:dampen");
@@ -1457,18 +1453,19 @@ bool SigmaSaSDL::findBeamComb( int idAin, int idBin, double mAin,
     if (idAbsA > 400) iProc                       = 12;
   } else if (idAbsA == 22 || idAbsB == 22) {
     if (idAbsA == idAbsB) iProc                   = 14;
-    if (idAbsA > 1000 || idAbsB > 1000) iProc     = 13;
+    if (idAbsB > 1000)    iProc                   = 13;
   }
   if (iProc == -1) return false;
 
   // Set up global variables.
-  iHadA = IHADATABLE[iProc];
-  iHadB = IHADBTABLE[iProc];
-  bA    = BHAD[iHadA];
-  bB    = BHAD[iHadB];
+  if (iProc < 13) {
+    iHadA = IHADATABLE[iProc];
+    iHadB = IHADBTABLE[iProc];
+    bA    = BHAD[iHadA];
+    bB    = BHAD[iHadB];
 
   // Set up VMD global variables for gamma + p.
-  if (iProc == 13){
+  } else if (iProc == 13){
     for (int i = 0; i < NVMD; ++i){
       // VMD always on side a
       mAtmp[i]    = VMDMASS[i];
@@ -1480,10 +1477,9 @@ bool SigmaSaSDL::findBeamComb( int idAin, int idBin, double mAin,
       else if (i == 2) iProcVP[i]  = 5;
       else if (i == 3) iProcVP[i]  = 6;
     }
-  }
 
   // Set up VMD global variables for gamma + gamma.
-  if (iProc == 14){
+  } else if (iProc == 14){
     for (int i = 0; i < NVMD; ++i){
       mAtmp[i]      = VMDMASS[i];
       mBtmp[i]      = VMDMASS[i];
@@ -1534,16 +1530,19 @@ const double SigmaMBR::FFB2    = 0.6;
 
 // Initialize data members.
 
-void SigmaMBR::init( Info*, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm*) {
+void SigmaMBR::init(Info* infoPtrIn) {
+
+  // Use shorthand for settings
+  Settings& settings = *infoPtrIn->settingsPtr;
+
 
   // Parameters for MBR model.
   eps         = settings.parm("SigmaDiffractive:MBRepsilon");
   alph        = settings.parm("SigmaDiffractive:MBRalpha");
   beta0gev    = settings.parm("SigmaDiffractive:MBRbeta0");
-  beta0mb     = beta0gev * sqrt(HBARC2);
+  beta0mb     = beta0gev * sqrt(HBARCSQ);
   sigma0mb    = settings.parm("SigmaDiffractive:MBRsigma0");
-  sigma0gev   = sigma0mb/HBARC2;
+  sigma0gev   = sigma0mb/HBARCSQ;
   m2min       = settings.parm("SigmaDiffractive:MBRm2Min");
   dyminSDflux = settings.parm("SigmaDiffractive:MBRdyminSDflux");
   dyminDDflux = settings.parm("SigmaDiffractive:MBRdyminDDflux");
@@ -1560,7 +1559,7 @@ void SigmaMBR::init( Info*, Settings& settings,
   b2          = FFB2;
 
   // Initialize parameters for Coulomb corrections to elastic scattering.
-  initCoulomb( settings, particleDataPtrIn);
+  initCoulomb( settings, infoPtrIn->particleDataPtr);
 
   // No rho parameter implemented.
   rhoOwn      = 0.;
@@ -1592,7 +1591,7 @@ bool SigmaMBR::calcTotEl( int idAin, int idBin, double sIn, double , double) {
     double sigCDF = 80.03;
     double sF     = pow2(22.);
     sigTot = sigCDF + ( pow2( log(s / sF)) - pow2( log(sCDF / sF)) )
-           * M_PI / (3.7 / HBARC2);
+           * M_PI / (3.7 / HBARCSQ);
     ratio  = 0.066 + 0.0119 * log(s);
   }
   sigEl = sigTot * ratio;
@@ -1913,11 +1912,13 @@ const int    SigmaABMST::NPOINTMCCD = 200000;
 
 // Initialize data members.
 
-void SigmaABMST::init( Info* , Settings& settings, ParticleData* ,
-   Rndm* rndmPtrIn) {
+void SigmaABMST::init(Info* infoPtrIn) {
+
+  // Use shorthand for settings
+  Settings& settings = *infoPtrIn->settingsPtr;
 
   // Save pointer.
-  rndmPtr    = rndmPtrIn;
+  rndmPtr    = infoPtrIn->rndmPtr;
 
   // Common setup.
   m2minp     = pow2(MPROTON + MPION);
@@ -1971,12 +1972,12 @@ bool SigmaABMST::calcTotEl( int idAin, int idBin, double sIn, double ,
   idB     = idBin;
   ispp    = (idA * idB > 0);
   s       = sIn;
-  facEl   = HBARC2 / (16. * M_PI);
+  facEl   = HBARCSQ / (16. * M_PI);
   isExpEl = false;
 
   // Total cross section and the rho parameter using the full expression.
   complex amp = amplitude( 0., false, false);
-  sigTot  = HBARC2 * imag(amp);
+  sigTot  = HBARCSQ * imag(amp);
   rhoOwn  = real(amp) / imag(amp);
 
   // Total elastic cross section, by integration in exp( MINSLOPEEL * t).
@@ -2063,7 +2064,7 @@ complex SigmaABMST::amplitude( double t, bool useCoulomb,
   amp[4]        *= LAM2P * complex( 0., 1.) / (16. * M_PI * snu);
 
   // Triple-gluon exchange.
-  amp[5] = sqrt(16. * M_PI / HBARC2) * TRIG[0] * ((t < -TRIG[1])
+  amp[5] = sqrt(16. * M_PI / HBARCSQ) * TRIG[0] * ((t < -TRIG[1])
          ? 1. / pow4(t) :  exp(4. + 4. * t / TRIG[1]) / pow4(TRIG[1]));
 
   // Add up contributions.
@@ -2100,11 +2101,11 @@ bool SigmaABMST::calcDiff( int idAin , int idBin, double sIn, double ,
   idB    = idBin;
   ispp   = (idA * idB > 0);
   s      = sIn;
-  facEl  = HBARC2 / (16. * M_PI);
+  facEl  = HBARCSQ / (16. * M_PI);
 
   // Total cross section needed for central diffraction.
   complex amp = amplitude( 0., false, true);
-  sigTot = HBARC2 * imag(amp);
+  sigTot = HBARCSQ * imag(amp);
 
   // Single diffractive cross sections by grid integration.
   sigXB  = dsigmaSDintXiT( 0., 1., -100., 0.);
@@ -2777,11 +2778,11 @@ complex SigmaRPP::amplitude( double t, bool useCoulomb) {
   complex ampCou = 0.;
   if (useCoulomb && t < 0.) {
     double bAppr = imag(ampSum) / ( sqrt(s * ( s - 4. * SPROTON))
-                 * 4. * M_PI * HBARC2 );
+                 * 4. * M_PI * HBARCSQ );
     double phase = (log( -0.5 * t * (bAppr + 8. / LAM2FF)) + GAMMAEUL
                  - 4. * t / LAM2FF * log(- 4. * t / LAM2FF)
                  - 2. * t / LAM2FF) * (ispp ? -1. : 1.);
-    ampCou       = exp( complex( 0., ALPHAEM * phase) ) * 8. * M_PI * HBARC2
+    ampCou       = exp( complex( 0., ALPHAEM * phase) ) * 8. * M_PI * HBARCSQ
                  * ALPHAEM * s / t * pow(1 - t / LAM2FF, -4.);
   }
 

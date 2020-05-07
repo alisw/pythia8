@@ -1,5 +1,5 @@
 // ProcessContainer.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,6 +20,7 @@
 #include "Pythia8/SigmaQCD.h"
 #include "Pythia8/SigmaSUSY.h"
 #include "Pythia8/SigmaDM.h"
+#include "Pythia8/SusyCouplings.h"
 
 namespace Pythia8 {
 
@@ -44,12 +45,10 @@ const int ProcessContainer::N3SAMPLE  = 1000;
 // Initialize phase space and counters.
 // Argument isFirst distinguishes two hard processes in same event.
 
-bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
-  Settings& settings, ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, Couplings* couplingsPtr,
-  SigmaTotal* sigmaTotPtrIn, ResonanceDecays* resDecaysPtrIn,
-  SLHAinterface* slhaInterfacePtr, UserHooks* userHooksPtrIn,
-  GammaKinematics* gammaKinPtrIn) {
+bool ProcessContainer::init(bool isFirst, ResonanceDecays* resDecaysPtrIn,
+  SLHAinterface* slhaInterfacePtr, GammaKinematics* gammaKinPtrIn) {
+
+  registerSubObject(*sigmaProcessPtr);
 
   // Extract info about current process from SigmaProcess object.
   isLHA       = sigmaProcessPtr->isLHA();
@@ -67,25 +66,23 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
 
   // Switch to ensure that the scales set in a LH input event are
   // respected, even in resonance showers.
-  useStrictLHEFscales = settings.flag("Beams:strictLHEFscale");
+  useStrictLHEFscales = flag("Beams:strictLHEFscale");
 
   // Maximal number of events for more in-depth control of
   // how many events are selected/tried/accepted.
-  nTryRequested = settings.mode("Main:numberOfTriedEvents");
-  nSelRequested = settings.mode("Main:numberOfSelectedEvents");
-  nAccRequested = settings.mode("Main:numberOfAcceptedEvents");
+  nTryRequested = mode("Main:numberOfTriedEvents");
+  nSelRequested = mode("Main:numberOfSelectedEvents");
+  nAccRequested = mode("Main:numberOfAcceptedEvents");
 
   // Flag for maximum violation handling.
-  increaseMaximum = settings.flag("PhaseSpace:increaseMaximum");
+  increaseMaximum = flag("PhaseSpace:increaseMaximum");
 
   // Store whether beam particle has a photon and save the mode.
-  beamAPtr           = beamAPtrIn;
-  beamBPtr           = beamBPtrIn;
   gammaKinPtr        = gammaKinPtrIn;
-  beamHasGamma       = settings.flag("PDF:lepton2gamma");
+  beamHasGamma       = flag("PDF:lepton2gamma");
 
   // Use external photon flux.
-  externalFlux = (settings.mode("PDF:lepton2gammaSet") == 2);
+  externalFlux = (mode("PDF:lepton2gammaSet") == 2);
 
   // Pick and create phase space generator. Send pointers where required.
   if (phaseSpacePtr != 0) ;
@@ -103,20 +100,14 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   else                  phaseSpacePtr = new PhaseSpace2to3tauycyl();
 
   // Store pointers and perform simple initialization.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
   resDecaysPtr    = resDecaysPtrIn;
-  sigmaTotPtr     = sigmaTotPtrIn;
-  userHooksPtr    = userHooksPtrIn;
   canVetoResDecay = (userHooksPtr != 0)
                   ? userHooksPtr->canVetoResonanceDecays() : false;
   if (isLHA) {
     sigmaProcessPtr->setLHAPtr(lhaUpPtr);
     phaseSpacePtr->setLHAPtr(lhaUpPtr);
   }
-  sigmaProcessPtr->init(infoPtr, &settings, particleDataPtr, rndmPtr,
-    beamAPtr, beamBPtr, couplingsPtr, sigmaTotPtr, slhaInterfacePtr);
+  sigmaProcessPtr->init(beamAPtr, beamBPtr, slhaInterfacePtr);
 
   // Store the state of photon beams using inFlux: 0 = not a photon beam;
   // 1 = resolved photon; 2 = unresolved photon.
@@ -146,9 +137,8 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   beamHasResGamma  = beamAhasResGamma || beamBhasResGamma;
 
   // Initialize also phaseSpace pointer.
-  phaseSpacePtr->init( isFirst, sigmaProcessPtr, infoPtr, &settings,
-    particleDataPtr, rndmPtr, beamAPtr,  beamBPtr, couplingsPtr, sigmaTotPtr,
-    userHooksPtr);
+  if (phaseSpacePtr) registerSubObject(*phaseSpacePtr);
+  phaseSpacePtr->init( isFirst, sigmaProcessPtr);
 
   // Send the pointer to gammaKinematics for sampling of soft QCD processes.
   if ( beamAhasResGamma || beamBhasResGamma )
@@ -199,12 +189,12 @@ bool ProcessContainer::init(bool isFirst, Info* infoPtrIn,
   }
 
   // Allow Pythia to overwrite incoming beams or parts of Les Houches input.
-  idRenameBeams = settings.mode("LesHouches:idRenameBeams");
-  setLifetime   = settings.mode("LesHouches:setLifetime");
-  setQuarkMass  = settings.mode("LesHouches:setQuarkMass");
-  setLeptonMass = settings.mode("LesHouches:setLeptonMass");
-  mRecalculate  = settings.parm("LesHouches:mRecalculate");
-  matchInOut    = settings.flag("LesHouches:matchInOut");
+  idRenameBeams = mode("LesHouches:idRenameBeams");
+  setLifetime   = mode("LesHouches:setLifetime");
+  setQuarkMass  = mode("LesHouches:setQuarkMass");
+  setLeptonMass = mode("LesHouches:setLeptonMass");
+  mRecalculate  = parm("LesHouches:mRecalculate");
+  matchInOut    = flag("LesHouches:matchInOut");
   for (int i = 0; i < 6; ++i) idNewM[i] = i;
   for (int i = 6; i < 9; ++i) idNewM[i] = 2 * i - 1;
   for (int i = 1; i < 9; ++i) mNewM[i]  = particleDataPtr->m0(idNewM[i]);
@@ -304,8 +294,8 @@ bool ProcessContainer::trialProcess() {
 
     // Incoming top beams will not be handled, although allowed by LHAPDF.
     if (isLHA && (abs(lhaUpPtr->id(1)) == 6 || abs(lhaUpPtr->id(2)) == 6)) {
-      infoPtr->errorMsg("Error in ProcessContainer::trialProcess(): top not "
-        "allowed incoming beam parton; event skipped");
+      infoPtr->errorMsg("Error in ProcessContainer::trialProcess(): top"
+        " not allowed incoming beam parton; event skipped");
       return false;
     }
 
@@ -466,10 +456,12 @@ void ProcessContainer::setBeamModes(bool setVMD, bool isSampled) {
 
   // Propagate the sampled VMD states to beams.
   if (isSampled) {
-    if (infoPtr->isVMDstateA()) beamAPtr->setVMDstate(true, infoPtr->idVMDA(),
-      infoPtr->mVMDA(), infoPtr->scaleVMDA(), false);
-    if (infoPtr->isVMDstateB()) beamBPtr->setVMDstate(true, infoPtr->idVMDB(),
-      infoPtr->mVMDB(), infoPtr->scaleVMDB(), false);
+    if (infoPtr->isVMDstateA()) beamAPtr->setVMDstate(true,
+      infoPtr->idVMDA(), infoPtr->mVMDA(), infoPtr->scaleVMDA(),
+      false);
+    if (infoPtr->isVMDstateB()) beamBPtr->setVMDstate(true,
+      infoPtr->idVMDB(), infoPtr->mVMDB(), infoPtr->scaleVMDB(),
+      false);
   }
 }
 
@@ -596,7 +588,7 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
       if ( beamAhasResGamma || beamBhasResGamma
          || (beamAgammaMode == 2 && beamBgammaMode == 0)
          || (beamAgammaMode == 0 && beamBgammaMode == 2) ) {
-        if (mother1 > 0)   mother1   += nOffsetGamma;
+        mother1 += nOffsetGamma;
         if (mother2 > 0)   mother2   += nOffsetGamma;
         if (daughter1 > 0) daughter1 += nOffsetGamma;
         if (daughter2 > 0) daughter2 += nOffsetGamma;
@@ -653,7 +645,8 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
 
     // COR: Special handling of soft QCD with photons. If VMD states,
     // then outgoing photon has to be changed to VMD
-    if (isSoftQCD() && (infoPtr->isVMDstateA() || infoPtr->isVMDstateB())) {
+    if (isSoftQCD() && (infoPtr->isVMDstateA()
+      || infoPtr->isVMDstateB())) {
       int id3orig = sigmaProcessPtr->id(3);
       int status3 = (id3orig == process[1+nOffsetGamma].id()) ? 14 : 15;
       int id3     = (status3 == 14 && infoPtr->isVMDstateA())
@@ -936,17 +929,19 @@ bool ProcessContainer::constructProcess( Event& process, bool isHardest) {
         pSumOut += process[iFinal[iF]].p();
       double e1 = 0.5 * (pSumOut.e() + pSumOut.pz());
       double e2 = 0.5 * (pSumOut.e() - pSumOut.pz());
+      if (max(e1, e2) > 0.500001 * process[0].e()) {
+        infoPtr->errorMsg("Error in ProcessContainer::constructProcess: "
+          "setting mass failed");
+        return false;
+      }
+      e1 = min( e1, 0.5 * process[0].e());
+      e2 = min( e2, 0.5 * process[0].e());
       process[3].pz( e1);
       process[3].e(  e1);
       process[3].m(  0.);
       process[4].pz(-e2);
       process[4].e(  e2);
       process[4].m(  0.);
-      if (max(e1, e2) > 0.500001 * process[0].e()) {
-        infoPtr->errorMsg("Error in ProcessContainer::constructProcess: "
-          "setting mass failed");
-        return false;
-      }
     }
   }
 
@@ -1348,8 +1343,7 @@ void ProcessContainer::sigmaDelta() {
 // Main routine to initialize list of processes.
 
 bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
-       Info *infoPtr, Settings& settings, ParticleData* particleDataPtr,
-       Couplings* couplings) {
+  Info* infoPtr) {
 
   // Reset process list, if filled in previous subrun.
   if (containerPtrs.size() > 0) {
@@ -1358,6 +1352,10 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
     containerPtrs.clear();
   }
   SigmaProcess* sigmaPtr;
+
+  // Reference to settings and pointer to particle data.
+  Settings& settings = *infoPtr->settingsPtr;
+  ParticleData* particleDataPtr = infoPtr->particleDataPtr;
 
   // Set up requested objects for soft QCD processes.
   bool softQCD = settings.flag("SoftQCD:all");
@@ -1611,8 +1609,7 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
   bool photonCollisions = settings.flag("PhotonCollision:all");
   bool hasGamma      = settings.flag("PDF:lepton2gamma");
   int  photonMode    = settings.mode("Photon:ProcessType");
-  bool initGmGm      = ( ( (photonMode == 4) || (photonMode == 0) )
-                     && hasGamma ) || !hasGamma;
+  bool initGmGm      = !hasGamma || ( (photonMode == 4) || (photonMode == 0) );
   if ( initGmGm && ( photonCollisions
     || settings.flag("PhotonCollision:gmgm2qqbar") ) ) {
     sigmaPtr = new Sigma2gmgm2ffbar(1, 261);
@@ -1720,8 +1717,8 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
   }
 
   // Set up requested objects for onia production.
-  charmonium = SigmaOniaSetup(infoPtr, &settings, particleDataPtr, 4);
-  bottomonium = SigmaOniaSetup(infoPtr, &settings, particleDataPtr, 5);
+  charmonium = SigmaOniaSetup(infoPtr, 4);
+  bottomonium = SigmaOniaSetup(infoPtr, 5);
   vector<SigmaProcess*> charmoniumSigmaPtrs, bottomoniumSigmaPtrs;
   charmonium.setupSigma2gg(charmoniumSigmaPtrs);
   charmonium.setupSigma2qg(charmoniumSigmaPtrs);
@@ -2147,8 +2144,8 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
   }
 
   // Set up requested objects for SUSY pair processes.
-  if (couplings->isSUSY) {
-    CoupSUSY* coupSUSY = (CoupSUSY *) couplings;
+  CoupSUSY* coupSUSYPtr = infoPtr->coupSUSYPtr;
+  if (coupSUSYPtr->isSUSY) {
 
     bool SUSYs = settings.flag("SUSY:all");
     bool nmssm = settings.flag("SLHA:NMSSM");
@@ -2276,7 +2273,7 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
           for (int iso = 1; iso <= 2; iso++) {
             if (iso == 2) isUp = true;
             iproc++;
-            int id3 = coupSUSY->idNeut(iNeut);
+            int id3 = coupSUSYPtr->idNeut(iNeut);
             int id4 = iso + ((idx <= 3)
                     ? 1000000+2*(idx-1) : 2000000+2*(idx-4));
             // Skip if outgoing codes not asked for
@@ -2297,7 +2294,7 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
           for (int iso = 1; iso <= 2; iso++) {
             if (iso == 2) isUp = true;
             iproc++;
-            int id3 = coupSUSY->idChar(iChar);
+            int id3 = coupSUSYPtr->idChar(iChar);
             int id4 = iso + ((idx <= 3)
                     ? 1000000+2*(idx-1) : 2000000+2*(idx-4));
             // Skip if outgoing codes not asked for
@@ -2316,8 +2313,8 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
         for (int iNeut1 = 1; iNeut1 <= iNeut2; iNeut1++) {
           iproc++;
           // Skip if outgoing codes not asked for
-          if (!allowIdVals( coupSUSY->idNeut(iNeut1),
-            coupSUSY->idNeut(iNeut2) ) ) continue;
+          if (!allowIdVals( coupSUSYPtr->idNeut(iNeut1),
+            coupSUSYPtr->idNeut(iNeut2) ) ) continue;
           sigmaPtr = new Sigma2qqbar2chi0chi0(iNeut1, iNeut2,iproc);
           containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
         }
@@ -2331,8 +2328,8 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
         for (int iChar = 1; iChar <= 2; ++iChar) {
           iproc += 2;
           // Skip if outgoing codes not asked for
-          if (!allowIdVals( coupSUSY->idNeut(iNeut),
-            coupSUSY->idChar(iChar) ) ) continue;
+          if (!allowIdVals( coupSUSYPtr->idNeut(iNeut),
+            coupSUSYPtr->idChar(iChar) ) ) continue;
           sigmaPtr = new Sigma2qqbar2charchi0( iChar, iNeut, iproc-1);
           containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
           sigmaPtr = new Sigma2qqbar2charchi0(-iChar, iNeut, iproc);
@@ -2348,8 +2345,8 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
         for (int j = 1; j <= 2; ++j) {
           iproc++;
           // Skip if outgoing codes not asked for
-          if (!allowIdVals( coupSUSY->idChar(i),
-            coupSUSY->idChar(j) ) ) continue;
+          if (!allowIdVals( coupSUSYPtr->idChar(i),
+            coupSUSYPtr->idChar(j) ) ) continue;
           sigmaPtr = new Sigma2qqbar2charchar( i,-j, iproc);
           containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
         }
@@ -2375,7 +2372,7 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
       for (int iNeut = 1; iNeut <= nNeut; iNeut++) {
         iproc++;
         // Skip if outgoing codes not asked for
-        if (!allowIdVals( coupSUSY->idNeut(iNeut), 1000021)) continue;
+        if (!allowIdVals( coupSUSYPtr->idNeut(iNeut), 1000021)) continue;
         sigmaPtr = new Sigma2qqbar2chi0gluino(iNeut, iproc);
         containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
       }
@@ -2387,7 +2384,7 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
       for (int iChar = 1; iChar <= 2; ++iChar) {
         iproc += 2;
         // Skip if outgoing codes not asked for
-        if (!allowIdVals( coupSUSY->idChar(iChar), 1000021)) continue;
+        if (!allowIdVals( coupSUSYPtr->idChar(iChar), 1000021)) continue;
         sigmaPtr = new Sigma2qqbar2chargluino( iChar, iproc-1);
         containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
         sigmaPtr = new Sigma2qqbar2chargluino( -iChar, iproc);
@@ -3008,6 +3005,9 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
   }
 
+  for ( ProcessContainer * cont : containerPtrs )
+    cont->initInfoPtr(*infoPtr);
+
   // Done.
   return true;
 
@@ -3018,7 +3018,9 @@ bool SetupContainers::init(vector<ProcessContainer*>& containerPtrs,
 // Routine to initialize list of second hard processes.
 
 bool SetupContainers::init2(vector<ProcessContainer*>& container2Ptrs,
-  Settings& settings) {
+  Info* infoPtr) {
+
+  Settings& settings = *infoPtr->settingsPtr;
 
   // Reset process list, if filled in previous subrun.
   if (container2Ptrs.size() > 0) {
@@ -3143,6 +3145,9 @@ bool SetupContainers::init2(vector<ProcessContainer*>& container2Ptrs,
     sigmaPtr = new Sigma2qqbar2QQbar(5, 124);
     container2Ptrs.push_back( new ProcessContainer(sigmaPtr) );
   }
+
+  for ( ProcessContainer * cont : container2Ptrs )
+    cont->initInfoPtr(*infoPtr);
 
   // Done.
   return true;

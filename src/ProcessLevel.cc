@@ -1,5 +1,5 @@
 // ProcessLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -41,25 +41,14 @@ ProcessLevel::~ProcessLevel() {
 
 // Main routine to initialize generation process.
 
-bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
-  BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
-  Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn, bool doLHA,
-  SLHAinterface* slhaInterfacePtrIn, UserHooks* userHooksPtrIn,
+bool ProcessLevel::init( bool doLHA, SLHAinterface* slhaInterfacePtrIn,
   vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs) {
 
-  // Store input pointers for future use.
-  infoPtr          = infoPtrIn;
-  particleDataPtr  = particleDataPtrIn;
-  rndmPtr          = rndmPtrIn;
-  beamAPtr         = beamAPtrIn;
-  beamBPtr         = beamBPtrIn;
-  couplingsPtr     = couplingsPtrIn;
-  sigmaTotPtr      = sigmaTotPtrIn;
-  userHooksPtr     = userHooksPtrIn;
+  // Store other input pointers.
   slhaInterfacePtr = slhaInterfacePtrIn;
+
+  // Reference to Settings.
+  Settings& settings = *settingsPtr;
 
   // Check whether photon inside lepton and save the mode.
   beamHasGamma     = settings.flag("PDF:lepton2gamma");
@@ -68,22 +57,13 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   bool beamB2gamma = beamBPtr->isLepton() && beamHasGamma;
 
   // initialize gammaKinematics when relevant.
-  if (beamHasGamma) gammaKin.init(infoPtr, &settings, rndmPtr,
-    beamAPtr, beamBPtr, couplingsPtr);
-
-  // Initialize variables related to photon-inside-lepton.
-  beamGamAPtr      = beamGamAPtrIn;
-  beamGamBPtr      = beamGamBPtrIn;
-
-  // Initialize variables related to VMD-inside-photon.
-  beamVMDAPtr      = beamVMDAPtrIn;
-  beamVMDBPtr      = beamVMDBPtrIn;
+  if (beamHasGamma)
+    gammaKin.init();
 
   // Send on some input pointers.
-  resonanceDecays.init( infoPtr, particleDataPtr, rndmPtr);
+  resonanceDecays.init();
 
   // Set up SigmaTotal. Store sigma_nondiffractive for future use.
-  sigmaTotPtr->init( infoPtr, settings, particleDataPtr, rndmPtr);
   int    idA = infoPtr->idA();
   int    idB = infoPtr->idB();
   double eCM = infoPtr->eCM();
@@ -145,20 +125,22 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
 
   // Set up containers for all the internal hard processes.
   SetupContainers setupContainers;
-  setupContainers.init(containerPtrs, infoPtr, settings, particleDataPtr,
-                       couplingsPtr);
+  setupContainers.init(containerPtrs, infoPtr);
 
   // Append containers for external hard processes, if any.
   if (sigmaPtrs.size() > 0) {
-    for (int iSig = 0; iSig < int(sigmaPtrs.size()); ++iSig)
+    for (int iSig = 0; iSig < int(sigmaPtrs.size()); ++iSig) {
       containerPtrs.push_back( new ProcessContainer(sigmaPtrs[iSig],
         true, phaseSpacePtrs[iSig]) );
+      containerPtrs.back()->initInfoPtr(*infoPtr);
+    }
   }
 
   // Append single container for Les Houches processes, if any.
   if (doLHA) {
     SigmaProcess* sigmaPtr = new SigmaLHAProcess();
     containerPtrs.push_back( new ProcessContainer(sigmaPtr) );
+    containerPtrs.back()->initInfoPtr(*infoPtr);
 
     // Store location of this container, and send in LHA pointer.
     iLHACont = containerPtrs.size() - 1;
@@ -196,21 +178,20 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
     if (containerPtrs[i]->isSUSY()) hasSUSY = true;
 
   // If SUSY processes requested but no SUSY couplings present
-  if (hasSUSY && !couplingsPtr->isSUSY) {
+  if (hasSUSY && !coupSUSYPtr->isSUSY) {
     infoPtr->errorMsg("Error in ProcessLevel::init: "
       "SUSY process switched on but no SUSY couplings found");
     return false;
   }
 
   // Fill SLHA blocks SMINPUTS and MASS from PYTHIA SM parameter values.
-  slhaInterfacePtr->pythia2slha(particleDataPtr);
+  slhaInterfacePtr->pythia2slha();
 
   // Initialize each process.
   int numberOn = 0;
   for (int i = 0; i < int(containerPtrs.size()); ++i)
-    if (containerPtrs[i]->init(true, infoPtr, settings, particleDataPtr,
-      rndmPtr, beamAPtr, beamBPtr, couplingsPtr, sigmaTotPtr,
-      &resonanceDecays, slhaInterfacePtr, userHooksPtr, &gammaKin))
+    if (containerPtrs[i]->init(true, &resonanceDecays, slhaInterfacePtr,
+      &gammaKin))
       ++numberOn;
 
   // Sum maxima for Monte Carlo choice.
@@ -221,17 +202,15 @@ bool ProcessLevel::init( Info* infoPtrIn, Settings& settings,
   // Option to pick a second hard interaction: repeat as above.
   int number2On = 0;
   if (doSecondHard) {
-    setupContainers.init2(container2Ptrs, settings);
+    setupContainers.init2(container2Ptrs, infoPtr);
     if ( int(container2Ptrs.size()) == 0) {
       infoPtr->errorMsg("Error in ProcessLevel::init: "
         "no second hard process switched on");
       return false;
     }
     for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
-      if (container2Ptrs[i2]->init(false, infoPtr, settings, particleDataPtr,
-        rndmPtr, beamAPtr, beamBPtr, couplingsPtr, sigmaTotPtr,
-        &resonanceDecays, slhaInterfacePtr, userHooksPtr, &gammaKin))
-        ++number2On;
+      if (container2Ptrs[i2]->init(false, &resonanceDecays,
+        slhaInterfacePtr, &gammaKin)) ++number2On;
 
     sigma2MaxSum = 0.;
     for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
@@ -458,8 +437,8 @@ void ProcessLevel::accumulate( bool doAccumulate) {
   // Normally only one hard interaction. Then store info and done.
   if (!doSecondHard) {
     double deltaSum = sqrtpos(delta2Sum);
-    infoPtr->setSigma( 0, "sum", nTrySum, nSelSum, nAccSum, sigmaSum, deltaSum,
-      weightSum);
+    infoPtr->setSigma( 0, "sum", nTrySum, nSelSum, nAccSum, sigmaSum,
+      deltaSum, weightSum);
     return;
   }
 
@@ -472,8 +451,10 @@ void ProcessLevel::accumulate( bool doAccumulate) {
   for (int i2 = 0; i2 < int(container2Ptrs.size()); ++i2)
   if (container2Ptrs[i2]->sigmaMax() != 0.) {
     nTrySum        += container2Ptrs[i2]->nTried();
-    if (doAccumulate) sigma2Sum  += container2Ptrs[i2]->sigmaMC();
-    if (doAccumulate) sig2SelSum += container2Ptrs[i2]->sigmaSelMC();
+    if (doAccumulate) {
+      sigma2Sum  += container2Ptrs[i2]->sigmaMC();
+      sig2SelSum += container2Ptrs[i2]->sigmaSelMC();
+    }
   }
 
   // Average impact-parameter factor.
@@ -487,8 +468,8 @@ void ProcessLevel::accumulate( bool doAccumulate) {
   double deltaComb  = (nAccSum == 0) ? 0. : sqrtpos(2. / nAccSum) * sigmaComb;
 
   // Store info and done.
-  infoPtr->setSigma( 0, "sum", nTrySum, nSelSum, nAccSum, sigmaComb, deltaComb,
-    weightSum);
+  infoPtr->setSigma( 0, "sum", nTrySum, nSelSum, nAccSum, sigmaComb,
+    deltaComb, weightSum);
 
 }
 
@@ -894,13 +875,15 @@ bool ProcessLevel::nextTwo( Event& process) {
       physical = false;
 
     // Append second hard interaction to normal process object.
-    if (physical) combineProcessRecords( process, process2);
+    if (physical) {
+      combineProcessRecords( process, process2);
 
-    // Add any junctions to the process event record list.
-    if (physical) findJunctions( process);
+      // Add any junctions to the process event record list.
+      findJunctions( process);
 
-    // Outer loop should normally work first time around.
-    if (physical) break;
+      // Outer loop should normally work first time around.
+      break;
+    }
   }
 
   // Done.
@@ -950,8 +933,7 @@ bool ProcessLevel::roomForRemnants() {
   double mTRem = 0;
 
   // Direct-resolved processes with photons from lepton beams.
-  if ( ( (resGammaA && !resGammaB) || (!resGammaA && resGammaB) )
-    && beamHasResGamma ) {
+  if ( resGammaA != resGammaB && beamHasResGamma ) {
     double wTot   = infoPtr->eCMsub();
     double w2scat = infoPtr->sHatNew();
     mTRem = wTot - sqrt(w2scat);

@@ -1,5 +1,5 @@
 // History.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -58,13 +58,10 @@ public:
   // The recoiler before the splitting.
   int recBef;
 
-  bool hasProbSet;
-  double prob;
-
   // Default constructor
   Clustering() : emitted(0), emittor(0), recoiler(0), partner(0), pTscale(),
     flavRadBef(0), spinRad(9), spinEmt(9), spinRec(9), spinRadBef(9),
-    radBef(0), recBef(0), hasProbSet(false), prob(-1.) {}
+    radBef(0), recBef(0) {}
 
   // Default destructor
   ~Clustering(){}
@@ -76,20 +73,17 @@ public:
     pTscale(inSystem.pTscale), flavRadBef(inSystem.flavRadBef),
     spinRad(inSystem.spinRad), spinEmt(inSystem.spinEmt),
     spinRec(inSystem.spinRec), spinRadBef(inSystem.spinRad),
-    radBef(inSystem.radBef), recBef(inSystem.recBef),
-    hasProbSet(inSystem.hasProbSet), prob(inSystem.prob) {}
+    radBef(inSystem.radBef), recBef(inSystem.recBef) {}
 
   // Constructor with input
   Clustering( int emtIn, int radIn, int recIn, int partnerIn,
     double pTscaleIn, int flavRadBefIn = 0, int spinRadIn = 9,
     int spinEmtIn = 9, int spinRecIn = 9, int spinRadBefIn = 9,
-    int radBefIn = 0, int recBefIn = 0, bool hasProbIn = false,
-    double probIn = -1.)
+    int radBefIn = 0, int recBefIn = 0)
     : emitted(emtIn), emittor(radIn), recoiler(recIn), partner(partnerIn),
       pTscale(pTscaleIn), flavRadBef(flavRadBefIn), spinRad(spinRadIn),
       spinEmt(spinEmtIn), spinRec(spinRecIn), spinRadBef(spinRadBefIn),
-      radBef(radBefIn), recBef(recBefIn), hasProbSet(hasProbIn),
-      prob(probIn) {}
+      radBef(radBefIn), recBef(recBefIn) {}
 
   // Function to return pythia pT scale of clustering
   double pT() const { return pTscale; }
@@ -133,7 +127,7 @@ public:
            double scalein,
            Event statein,
            Clustering c,
-           MergingHooks* mergingHooksPtrIn,
+           MergingHooksPtr mergingHooksPtrIn,
            BeamParticle beamAIn,
            BeamParticle beamBIn,
            ParticleData* particleDataPtrIn,
@@ -150,22 +144,6 @@ public:
   // The destructor deletes each child.
   ~History() {
     for ( int i = 0, N = children.size(); i < N; ++i ) delete children[i];
-  }
-
-  void clear() {
-    map<double,History *>().swap(paths);
-    map<double,History *>().swap(goodBranches);
-    map<double,History *>().swap(badBranches);
-    for ( int i = 0, N = children.size(); i < N; ++i ) delete children[i];
-    vector<History *>().swap(children);
-  }
-
-  void clearPaths() {
-    bool allClear=true;
-    for ( int i = 0, N = children.size(); i < N; ++i )
-      if (children[i]->state.size()!= 0) allClear = false;
-    if (allClear) state.free();
-    return;
   }
 
   // Function to project paths onto desired paths.
@@ -238,8 +216,6 @@ public:
   // Function to return the depth of the history (i.e. the number of
   // reclustered splittings)
   int nClusterings();
-  int nOrdered(double maxscale);
-  vector<double> scales();
 
   // Function to get the lowest multiplicity reclustered event
   Event lowestMultProc( const double RN) {
@@ -905,14 +881,15 @@ private:
   bool doInclude;
 
   // Pointer to MergingHooks object to get all the settings.
-  MergingHooks* mergingHooksPtr;
+  MergingHooksPtr mergingHooksPtr;
 
    // The default constructor is private.
   History() : mother(), selectedChild(), sumpath(), sumGoodBranches(),
     sumBadBranches(), foundOrderedPath(), foundStronglyOrderedPath(),
     foundAllowedPath(), foundCompletePath(), scale(), nextInInput(), prob(),
     iReclusteredOld(), iReclusteredNew(), doInclude(), mergingHooksPtr(),
-    particleDataPtr(), infoPtr(), showers(), coupSMPtr(), sumScalarPT() {}
+    particleDataPtr(), infoPtr(), showers(), coupSMPtr(), sumScalarPT(),
+    probMaxSave(), depth(), minDepthSave() {}
 
   // The copy-constructor is private.
   History(const History &) {}
@@ -939,7 +916,7 @@ private:
   PartonLevel* showers;
 
   // Pointer to standard model couplings.
-  CoupSM* coupSMPtr;
+  CoupSM*     coupSMPtr;
 
   // Minimal scalar sum of pT used in Herwig to choose history
   double sumScalarPT;
@@ -963,24 +940,6 @@ private:
   void updateMinDepth(int depthIn) {
     if ( mother ) return mother->updateMinDepth(depthIn);
     minDepthSave = (minDepthSave>0) ? min(minDepthSave,depthIn) : depthIn;
-  }
-
-  int nMaxOrd;
-  int nMaxOrdered() {
-    if ( mother ) return mother->nMaxOrdered();
-    return nMaxOrd;
-  }
-  void updateNmaxOrdered(int nord) {
-    if ( mother ) mother->updateNmaxOrdered(nord);
-    nMaxOrd = max(nMaxOrd,nord);
-  }
-  int maxDepth() {
-    if ( mother ) return mother->maxDepth();
-    return depth;
-  }
-  int npaths() {
-    if ( mother ) return mother->npaths();
-    return paths.size();
   }
 
 };

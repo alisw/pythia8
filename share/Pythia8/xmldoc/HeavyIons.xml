@@ -1,6 +1,6 @@
-<chapter name="Heavy Ions"> 
+<chapter name="Heavy Ion Collisions"> 
  
-<h2>Heavy Ions</h2> 
+<h2>Heavy Ion Collisions</h2> 
  
 PYTHIA does not normally handle collisions involving heavy ions, but it 
 includes a facility where a model for combining several nucleon-nucleon 
@@ -316,21 +316,23 @@ independent of the mass of the diffractive system.
 rescale the pomeron 
 proton non-diffractive cross section to match the pp non-diffractive one. 
 </option> 
-<option value="3"> (Experimental) As for option <code>1</code> but use the full 
-  nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron in the 
-  multiple interaction machinery. Also rescale the Pomeron PDF with the log of 
-  the ratio of maximum and minimum Pomeron-nucleon collision energy. 
+<option value="3"> (Experimental) As for option <code>1</code> but use the 
+full nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron 
+in the multiple interaction machinery. Also rescale the Pomeron PDF with 
+the log of the ratio of maximum and minimum Pomeron-nucleon collision 
+energy. 
 </option> 
-<option value="4"> As for option <code>3</code> but no rescaling of the Pomeron 
- PDF. 
+<option value="4"> As for option <code>3</code> but no rescaling of the 
+Pomeron  PDF. 
 </option> 
 </modepick> 
  
 <modepick name="Angantyr:impactMode" default="2" min="0" max="2"> 
-Determines how to bias non-diffractive minimum-bias sub-collisions in pythia to 
-be appropriately central. 
+Determines how to bias non-diffractive minimum-bias sub-collisions in 
+PYTHIA to be appropriately central. 
 <option value="0"> If we have N pirmary sub-collisions and Na secondary 
-sub-collisions, generate N+Na non-diffractive events and pick the N most central. 
+sub-collisions, generate N+Na non-diffractive events and pick the N most 
+central. 
 </option> 
 <option value="1"> Use UserHooks to force Pythia to produce events with a 
 particular impact parameter for the N primary sub collisions according to the 
@@ -398,4 +400,4 @@ complete the full nucleaus-nucleus collision.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

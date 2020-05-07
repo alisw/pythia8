@@ -1,7 +1,9 @@
 // main62.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: userhooks; LHE file; resonance decay; external resonance;
 
 // Example how you can use UserHooks to set angular decay distributions
 // for undecayed resonances from Les Houches input using the polarization
@@ -26,12 +28,14 @@ class MyUserHooks : public UserHooks {
 
 public:
 
-  // Constructor can set helicity definition. Destructor does nothing.
-  MyUserHooks(Info* infoPtrIn, bool inputOption = true)
+  // Constructor can set helicity definition and book a histogram.
+  MyUserHooks(const Info* infoPtrIn, bool inputOption = true)
     : infoPtr(infoPtrIn), helicityDefinedByMother(inputOption) {
     // Book a histogram to test the angular distribution in the UserHook.
     cosRaw = new Hist("cos(the*) raw", 100, -1., 1.);
   }
+
+  // Destructor prints histogram and deletes it.
   ~MyUserHooks() { cout << *cosRaw; delete cosRaw; }
 
   // Allow a veto for the process level, to gain access to decays.
@@ -136,7 +140,7 @@ public:
 
 private:
 
-  Info* infoPtr;
+  const Info* infoPtr;
    // bool to define the frame for helicity.
   bool helicityDefinedByMother;
   Hist* cosRaw;
@@ -155,8 +159,8 @@ int main() {
   //  Use this line for CMS definition of helicity.
   //  MyUserHooks* myUserHooks = new MyUserHooks(&pythia.info,false);
   // Default constructor uses mother frame for helicity.
-  MyUserHooks* myUserHooks = new MyUserHooks(&pythia.info);
-  pythia.setUserHooksPtr( myUserHooks);
+  shared_ptr<MyUserHooks> myUserHooks = make_shared<MyUserHooks>(&pythia.info);
+  pythia.setUserHooksPtr( (UserHooksPtr)myUserHooks);
   pythia.readFile("main62.cmnd");
   pythia.init();
 
@@ -213,6 +217,5 @@ int main() {
   cout << polarization << cosPlus << cosMinus << energy;
 
   // Done.
-  delete myUserHooks;
   return 0;
 }

@@ -1,5 +1,5 @@
 // RHadrons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,6 +16,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PythiaStdlib.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/Settings.h"
 
 namespace Pythia8 {
@@ -25,7 +26,7 @@ namespace Pythia8 {
 // The RHadrons class contains the routines for the production and decay
 // of long-lived heavy coloured particles.
 
-class RHadrons {
+class RHadrons : public PhysicsBase {
 
 public:
 
@@ -33,12 +34,10 @@ public:
   RHadrons() : allowRH(), allowRSb(), allowRSt(), allowRGo(), allowSomeR(),
     setMassesRH(), idRSb(), idRSt(), idRGo(), maxWidthRH(), probGluinoballRH(),
     mOffsetCloudRH(), mCollapseRH(), diquarkSpin1RH(), m0Sb(), m0St(), m0Go(),
-    nRHad(0), iRHad(), iBef(), iSys(), systemPtr(), infoPtr(),
-    particleDataPtr(), rndmPtr(), flavSelPtr(), zSelPtr() {}
+    nRHad(0), iRHad(), iBef(), iSys(), systemPtr(), flavSelPtr(), zSelPtr() {}
 
   // Initialization of R-hadron handling.
-  bool init( Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn);
+  bool init();
 
   // Pointers to flavours and z sent from HadronLevel.
   void fragPtrs( StringFlav* flavSelPtrIn, StringZ* zSelPtrIn)
@@ -79,15 +78,6 @@ private:
   vector<bool> isTriplet;
   int          nRHad, iRHad, iBef, iSys;
   ColSinglet*  systemPtr;
-
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*  particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
 
   // Pointers to classes for flavour and z generation.
   StringFlav*    flavSelPtr;

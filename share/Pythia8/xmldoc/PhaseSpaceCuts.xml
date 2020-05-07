@@ -176,41 +176,6 @@ any two outgoing partons in QCD <ei>2 &rarr; 3</ei> processes.
 </parm> 
  
  
-<h3>Cuts for a second hard process</h3> 
- 
-If you use the machinery that allows the generation of a specified 
-<aloc href="ASecondHardProcess">second hard process</aloc> then, 
-by default, the same phase space cuts will be used for it as listed 
-above. Optionally, however, you may use a second set of cuts, as 
-described here. In this context "first" and "second" is merely a 
-technical distinction; you are welcome e.g. to pick <ei>pT</ei> ranges 
-such that the second interaction always has a larger <ei>pT</ei> than 
-the first. 
- 
-<flag name="PhaseSpace:sameForSecond" default="on"> 
-By default use the same cuts for a second hard process as for the 
-first. If <code>off</code> then instead use the mass and <ei>pT</ei> 
-cuts below, where relevant. (The other cuts above still remain the same.) 
-</flag> 
- 
-<parm name="PhaseSpace:mHatMinSecond" default="4." min="0."> 
-The minimum invariant mass for a second interaction, if separate. 
-</parm> 
- 
-<parm name="PhaseSpace:mHatMaxSecond" default="-1."> 
-The maximum invariant mass for a second interaction, if separate. 
-A value below <code>mHatMin</code> means there is no upper limit. 
-</parm> 
- 
-<parm name="PhaseSpace:pTHatMinSecond" default="0." min="0."> 
-The minimum invariant <ei>pT</ei> for a second interaction, if separate. 
-</parm> 
- 
-<parm name="PhaseSpace:pTHatMaxSecond" default="-1."> 
-The maximum invariant <ei>pT</ei> for a second interaction, if separate. 
-A value below <code>pTHatMin</code> means there is no upper limit. 
-</parm> 
- 
 <h3>Generation strategy and documentation</h3> 
  
 During the initialization stage a simplified function is found, 
@@ -320,7 +285,7 @@ notably the <code>HardQCD</code> ones. That is, you cannot mix with
 <ei>2 &rarr; 1</ei> or <ei>2 &rarr; 3</ei> processes, nor with external 
 processes (notably Les Houches input) or <code>SoftQCD</code> ones, 
 and  you cannot use the option to define a 
-<aloc href="ASecondHardProcess">second hard process</aloc> in 
+<aloc href="SecondHardProcess">second hard process</aloc> in 
 the same event. Furthermore you have to be careful about the choice 
 of <code>PhaseSpace:pTHatMin</code>, since a <ei>pTHat = 0</ei> 
 event would come with an infinite weight. 
@@ -355,4 +320,4 @@ give "reasonably-sized" weights.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

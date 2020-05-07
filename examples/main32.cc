@@ -1,7 +1,9 @@
 // main32.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: matching; merging; MLM;
 
 // This is a sample program showing Alpgen- or Madgraph-style MLM matching
 // for Madgraph LHEF or native Alpgen format event files.
@@ -29,9 +31,7 @@ int main() {
 
   // Create UserHooks pointer. Stop if it failed. Pass pointer to Pythia.
   CombineMatchingInput combined;
-  UserHooks* matching = combined.getHook(pythia);
-  if (!matching) return 1;
-  pythia.setUserHooksPtr(matching);
+  combined.setHook(pythia);
 
   // Initialise Pythia.
   if (!pythia.init()) {
@@ -65,7 +65,6 @@ int main() {
 
   // Final statistics and done.
   pythia.stat();
-  delete matching;
 
   return 0;
 }

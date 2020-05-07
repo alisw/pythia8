@@ -1,5 +1,5 @@
 // SLHAinterface.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -29,36 +29,43 @@ class SLHAinterface {
 public:
 
   // Constructor.
-  SLHAinterface() : couplingsPtr(), infoPtr(), settingsPtr(), meMode() {} ;
+  SLHAinterface() : infoPtr(), settingsPtr(), particleDataPtr(),
+    rndmPtr(), coupSMPtr(), coupSUSYPtr(), meMode() {}
 
   // Set pointers
-  void setPtr( Info* infoPtrIn ) {infoPtr     = infoPtrIn;}
+  void setPtr( Info* infoPtrIn ) {infoPtr  = infoPtrIn;
+    settingsPtr     = infoPtr->settingsPtr;
+    particleDataPtr = infoPtr->particleDataPtr;
+    rndmPtr         = infoPtr->rndmPtr;
+    coupSMPtr       = infoPtr->coupSMPtr;
+    coupSUSYPtr     = infoPtr->coupSUSYPtr;
+}
 
   // Initialize and switch to SUSY couplings if reading SLHA spectrum
-  void init( Settings& settings, Rndm* rndmPtr, Couplings* couplingsPtrIn,
-    ParticleData* particleDataPtr, bool& useSHLAcouplings,
-    stringstream& ParticleDataBuffer );
+  void init( bool& useSHLAcouplings, stringstream& ParticleDataBuffer );
 
   // Initialize SUSY Les Houches Accord data.
-  bool initSLHA(Settings& settings, ParticleData* particleDataPtr);
+  bool initSLHA();
 
   // Initialize SLHA blocks SMINPUTS and MASS from PYTHIA SM parameter values.
   // E.g., to make sure that there are no important unfilled entries
-  void pythia2slha(ParticleData* particleDataPtr);
+  void pythia2slha();
 
   // SusyLesHouches - SLHA object for interface to SUSY spectra.
   SusyLesHouches slha;
 
-  // SLHA derived couplings class and pointer to Couplings object
-  CoupSUSY       coupSUSY;
-  Couplings*     couplingsPtr;
-
   // Pointers to PYTHIA objects
-  Info*          infoPtr;
-  Settings*      settingsPtr;
+  Info*                infoPtr;
+  Settings*            settingsPtr;
+  ParticleData*        particleDataPtr;
+  Rndm*                rndmPtr;
+
+  // SM couplings and SLHA derived couplings class.
+  CoupSM*              coupSMPtr;
+  CoupSUSY*            coupSUSYPtr;
 
   // Internal data members
-  int            meMode;
+  int                  meMode;
 
 };
 

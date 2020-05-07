@@ -1,6 +1,6 @@
 <chapter name="Event Statistics"> 
  
-<h2>Event Statistics</h2> 
+<h2>Event Statistics Summary</h2> 
  
 At the end of the run you will want to write out the final statistics 
 on number of events generated, the corresponding cross sections and 
@@ -9,8 +9,16 @@ the number of errors encountered. This is done with the
 instance of the <code>Pythia</code> class.The method is steered entirely 
 by settings values, see <aloc href="MainProgramSettings">here</aloc>. 
  
+<p/> 
+Note that further methods for user access to generated 
+cross sections and event weights are documented on the 
+<aloc href="CrossSectionsAndWeights">Cross Sections and Weights</aloc> 
+page. 
+ 
 <h3>Cross-section statistics</h3> 
  
+ 
+<p/> 
 The <code>ProcessLevel::statistics()</code> method cannot be accessed 
 directly, but only via the <code>Pythia::stat()</code> call above. 
 When called it will loop over the list of existing processes, and for 
@@ -98,4 +106,4 @@ between the two.)
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

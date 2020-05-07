@@ -1,5 +1,5 @@
 // SigmaExtraDim.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,25 +32,25 @@ complex ampLedS(double x, double n, double L, double M) {
   if (x < 0) {
     double sqrX = sqrt(-x);
     if (int(n) % 2 == 0) {
-      cS = -log(fabs(1 - 1/x));
+      cS = -log(abs(1 - 1/x));
     } else {
       cS = (2.*atan(sqrX) - M_PI)/sqrX;
     }
   } else if ((x > 0) && (x < 1)) {
     double sqrX = sqrt(x);
     if (int(n) % 2 == 0) {
-      cS = -log(fabs(1 - 1/x)) - M_PI*I;
+      cS = -log(abs(1 - 1/x)) - M_PI*I;
     } else {
       double rat = (sqrX + 1)/(sqrX - 1);
-      cS = log(fabs(rat))/sqrX - M_PI*I/sqrX;
+      cS = log(abs(rat))/sqrX - M_PI*I/sqrX;
     }
   } else if (x > 1){
     double sqrX = sqrt(x);
     if (int(n) % 2 == 0) {
-      cS = -log(fabs(1 - 1/x));
+      cS = -log(abs(1 - 1/x));
     } else {
       double rat = (sqrX + 1)/(sqrX - 1);
-      cS = log(fabs(rat))/sqrX;
+      cS = log(abs(rat))/sqrX;
     }
   }
 
@@ -102,22 +102,22 @@ void Sigma1gg2GravitonStar::initProc() {
 
   // SMinBulk = off/on, use universal coupling (kappaMG)
   // or individual (Gxx) between graviton and SM particles.
-  eDsmbulk   = settingsPtr->flag("ExtraDimensionsG*:SMinBulk");
+  eDsmbulk   = flag("ExtraDimensionsG*:SMinBulk");
   eDvlvl = false;
-  if (eDsmbulk) eDvlvl = settingsPtr->flag("ExtraDimensionsG*:VLVL");
-  kappaMG    = settingsPtr->parm("ExtraDimensionsG*:kappaMG");
+  if (eDsmbulk) eDvlvl = flag("ExtraDimensionsG*:VLVL");
+  kappaMG    = parm("ExtraDimensionsG*:kappaMG");
   for (int i = 0; i < 27; ++i) eDcoupling[i] = 0.;
-  double tmPcoup = settingsPtr->parm("ExtraDimensionsG*:Gqq");
+  double tmPcoup = parm("ExtraDimensionsG*:Gqq");
   for (int i = 1; i <= 4; ++i)  eDcoupling[i] = tmPcoup;
-  eDcoupling[5] = settingsPtr->parm("ExtraDimensionsG*:Gbb");
-  eDcoupling[6] = settingsPtr->parm("ExtraDimensionsG*:Gtt");
-  tmPcoup = settingsPtr->parm("ExtraDimensionsG*:Gll");
+  eDcoupling[5] = parm("ExtraDimensionsG*:Gbb");
+  eDcoupling[6] = parm("ExtraDimensionsG*:Gtt");
+  tmPcoup = parm("ExtraDimensionsG*:Gll");
   for (int i = 11; i <= 16; ++i) eDcoupling[i] = tmPcoup;
-  eDcoupling[21] = settingsPtr->parm("ExtraDimensionsG*:Ggg");
-  eDcoupling[22] = settingsPtr->parm("ExtraDimensionsG*:Ggmgm");
-  eDcoupling[23] = settingsPtr->parm("ExtraDimensionsG*:GZZ");
-  eDcoupling[24] = settingsPtr->parm("ExtraDimensionsG*:GWW");
-  eDcoupling[25] = settingsPtr->parm("ExtraDimensionsG*:Ghh");
+  eDcoupling[21] = parm("ExtraDimensionsG*:Ggg");
+  eDcoupling[22] = parm("ExtraDimensionsG*:Ggmgm");
+  eDcoupling[23] = parm("ExtraDimensionsG*:GZZ");
+  eDcoupling[24] = parm("ExtraDimensionsG*:GWW");
+  eDcoupling[25] = parm("ExtraDimensionsG*:Ghh");
 
   // Set pointer to particle properties and decay table.
   gStarPtr = particleDataPtr->particleDataEntryPtr(idGstar);
@@ -251,22 +251,22 @@ void Sigma1ffbar2GravitonStar::initProc() {
 
   // SMinBulk = off/on, use universal coupling (kappaMG)
   // or individual (Gxx) between graviton and SM particles.
-  eDsmbulk   = settingsPtr->flag("ExtraDimensionsG*:SMinBulk");
+  eDsmbulk   = flag("ExtraDimensionsG*:SMinBulk");
   eDvlvl = false;
-  if (eDsmbulk) eDvlvl = settingsPtr->flag("ExtraDimensionsG*:VLVL");
-  kappaMG    = settingsPtr->parm("ExtraDimensionsG*:kappaMG");
+  if (eDsmbulk) eDvlvl = flag("ExtraDimensionsG*:VLVL");
+  kappaMG    = parm("ExtraDimensionsG*:kappaMG");
   for (int i = 0; i < 27; ++i) eDcoupling[i] = 0.;
-  double tmPcoup = settingsPtr->parm("ExtraDimensionsG*:Gqq");
+  double tmPcoup = parm("ExtraDimensionsG*:Gqq");
   for (int i = 1; i <= 4; ++i)  eDcoupling[i] = tmPcoup;
-  eDcoupling[5] = settingsPtr->parm("ExtraDimensionsG*:Gbb");
-  eDcoupling[6] = settingsPtr->parm("ExtraDimensionsG*:Gtt");
-  tmPcoup = settingsPtr->parm("ExtraDimensionsG*:Gll");
+  eDcoupling[5] = parm("ExtraDimensionsG*:Gbb");
+  eDcoupling[6] = parm("ExtraDimensionsG*:Gtt");
+  tmPcoup = parm("ExtraDimensionsG*:Gll");
   for (int i = 11; i <= 16; ++i) eDcoupling[i] = tmPcoup;
-  eDcoupling[21] = settingsPtr->parm("ExtraDimensionsG*:Ggg");
-  eDcoupling[22] = settingsPtr->parm("ExtraDimensionsG*:Ggmgm");
-  eDcoupling[23] = settingsPtr->parm("ExtraDimensionsG*:GZZ");
-  eDcoupling[24] = settingsPtr->parm("ExtraDimensionsG*:GWW");
-  eDcoupling[25] = settingsPtr->parm("ExtraDimensionsG*:Ghh");
+  eDcoupling[21] = parm("ExtraDimensionsG*:Ggg");
+  eDcoupling[22] = parm("ExtraDimensionsG*:Ggmgm");
+  eDcoupling[23] = parm("ExtraDimensionsG*:GZZ");
+  eDcoupling[24] = parm("ExtraDimensionsG*:GWW");
+  eDcoupling[25] = parm("ExtraDimensionsG*:Ghh");
 
   // Set pointer to particle properties and decay table.
   gStarPtr = particleDataPtr->particleDataEntryPtr(idGstar);
@@ -411,19 +411,19 @@ void Sigma1qqbar2KKgluonStar::initProc() {
 
   // KK-gluon gv/ga couplings and interference.
   for (int i = 0; i < 10; ++i) { eDgv[i] = 0.; eDga[i] = 0.; }
-  double tmPgL = settingsPtr->parm("ExtraDimensionsG*:KKgqL");
-  double tmPgR = settingsPtr->parm("ExtraDimensionsG*:KKgqR");
+  double tmPgL = parm("ExtraDimensionsG*:KKgqL");
+  double tmPgR = parm("ExtraDimensionsG*:KKgqR");
   for (int i = 1; i <= 4; ++i) {
     eDgv[i] = 0.5 * (tmPgL + tmPgR);
     eDga[i] = 0.5 * (tmPgL - tmPgR);
   }
-  tmPgL = settingsPtr->parm("ExtraDimensionsG*:KKgbL");
-  tmPgR = settingsPtr->parm("ExtraDimensionsG*:KKgbR");
+  tmPgL = parm("ExtraDimensionsG*:KKgbL");
+  tmPgR = parm("ExtraDimensionsG*:KKgbR");
   eDgv[5] = 0.5 * (tmPgL + tmPgR); eDga[5] = 0.5 * (tmPgL - tmPgR);
-  tmPgL = settingsPtr->parm("ExtraDimensionsG*:KKgtL");
-  tmPgR = settingsPtr->parm("ExtraDimensionsG*:KKgtR");
+  tmPgL = parm("ExtraDimensionsG*:KKgtL");
+  tmPgR = parm("ExtraDimensionsG*:KKgtR");
   eDgv[6] = 0.5 * (tmPgL + tmPgR); eDga[6] = 0.5 * (tmPgL - tmPgR);
-  interfMode    = settingsPtr->mode("ExtraDimensionsG*:KKintMode");
+  interfMode    = mode("ExtraDimensionsG*:KKintMode");
 
   // Set pointer to particle properties and decay table.
   gStarPtr = particleDataPtr->particleDataEntryPtr(idKKgluon);
@@ -582,7 +582,7 @@ void Sigma2gg2GravitonStarg::initProc() {
   GamMRat  = GammaRes / mRes;
 
   // Overall coupling strength kappa * m_G*.
-  kappaMG  = settingsPtr->parm("ExtraDimensionsG*:kappaMG");
+  kappaMG  = parm("ExtraDimensionsG*:kappaMG");
 
    // Secondary open width fraction.
   openFrac = particleDataPtr->resOpenFrac(idGstar);
@@ -657,7 +657,7 @@ void Sigma2qg2GravitonStarq::initProc() {
   GamMRat  = GammaRes / mRes;
 
   // Overall coupling strength kappa * m_G*.
-  kappaMG  = settingsPtr->parm("ExtraDimensionsG*:kappaMG");
+  kappaMG  = parm("ExtraDimensionsG*:kappaMG");
 
    // Secondary open width fraction.
   openFrac = particleDataPtr->resOpenFrac(idGstar);
@@ -737,7 +737,7 @@ void Sigma2qqbar2GravitonStarg::initProc() {
   GamMRat  = GammaRes / mRes;
 
   // Overall coupling strength kappa * m_G*.
-  kappaMG  = settingsPtr->parm("ExtraDimensionsG*:kappaMG");
+  kappaMG  = parm("ExtraDimensionsG*:kappaMG");
 
    // Secondary open width fraction.
   openFrac = particleDataPtr->resOpenFrac(idGstar);
@@ -822,10 +822,10 @@ void Sigma2ffbar2TEVffbar::initProc() {
     = "f fbar -> nutau nutaubar (s-channel gamma_KK/Z_KK)";
 
   // Allow to pick only gamma* or Z0 part of full gamma*/Z0 expression.
-  gmZmode = settingsPtr->mode("ExtraDimensionsTEV:gmZmode");
+  gmZmode = mode("ExtraDimensionsTEV:gmZmode");
 
   // Pick number of KK excitations
-  nexcitationmax  = settingsPtr->mode("ExtraDimensionsTEV:nMax");
+  nexcitationmax  = mode("ExtraDimensionsTEV:nMax");
 
   // Initialize the widths of the KK propogators.
   // partial width of the KK photon
@@ -846,10 +846,10 @@ void Sigma2ffbar2TEVffbar::initProc() {
 
   // Store the KK mass parameter, equivalent to the mass of the first KK
   // excitation: particleDataPtr->m0(5000023);
-  mStar = (double)settingsPtr->parm("ExtraDimensionsTEV:mStar");
+  mStar = (double)parm("ExtraDimensionsTEV:mStar");
 
   // Get alphaEM - relevant for the calculation of the widths
-  alphaemfixed = settingsPtr->parm("StandardModel:alphaEM0");
+  alphaemfixed = parm("StandardModel:alphaEM0");
 
   // initialize imaginari number
   mI = complex(0.,1.);
@@ -863,28 +863,28 @@ void Sigma2ffbar2TEVffbar::initProc() {
       if (i==6) { continue; }
       if (i<9) {
         wgmKKFactor += ( (alphaemfixed / 6.) * 4.
-                    * couplingsPtr->ef(i) * couplingsPtr->ef(i) * 3. );
+                    * coupSMPtr->ef(i) * coupSMPtr->ef(i) * 3. );
       }
       else {
         wgmKKFactor += (alphaemfixed / 6.) * 4.
-                    * couplingsPtr->ef(i) * couplingsPtr->ef(i);
+                    * coupSMPtr->ef(i) * coupSMPtr->ef(i);
       }
     }
   }
 
   // Get the helicity-couplings of the Z0 to all the fermions except top
-  gMinusF  = ( couplingsPtr->t3f(idNew) - couplingsPtr->ef(idNew)
-           * couplingsPtr->sin2thetaW() )
-           / sqrt( couplingsPtr->sin2thetaW()*couplingsPtr->cos2thetaW() );
-  gPlusF   = -1. * couplingsPtr->ef(idNew) * couplingsPtr->sin2thetaW()
-           / sqrt( couplingsPtr->sin2thetaW() * couplingsPtr->cos2thetaW() );
+  gMinusF  = ( coupSMPtr->t3f(idNew) - coupSMPtr->ef(idNew)
+           * coupSMPtr->sin2thetaW() )
+           / sqrt( coupSMPtr->sin2thetaW()*coupSMPtr->cos2thetaW() );
+  gPlusF   = -1. * coupSMPtr->ef(idNew) * coupSMPtr->sin2thetaW()
+           / sqrt( coupSMPtr->sin2thetaW() * coupSMPtr->cos2thetaW() );
   // Get the helicity-couplings of the Z0 to the top quark
-  gMinusTop  = ( couplingsPtr->t3f(6) - couplingsPtr->ef(6)
-             * couplingsPtr->sin2thetaW() )
-             / sqrt( couplingsPtr->sin2thetaW()*couplingsPtr->cos2thetaW() );
+  gMinusTop  = ( coupSMPtr->t3f(6) - coupSMPtr->ef(6)
+             * coupSMPtr->sin2thetaW() )
+             / sqrt( coupSMPtr->sin2thetaW()*coupSMPtr->cos2thetaW() );
 
-  gPlusTop   = -1. * couplingsPtr->ef(6) * couplingsPtr->sin2thetaW()
-             / sqrt( couplingsPtr->sin2thetaW() * couplingsPtr->cos2thetaW() );
+  gPlusTop   = -1. * coupSMPtr->ef(6) * coupSMPtr->sin2thetaW()
+             / sqrt( coupSMPtr->sin2thetaW() * coupSMPtr->cos2thetaW() );
   // calculate the constant factor of the unique ttbar decay width
   ttbarwFactorA = pow2(gMinusTop) + pow2(gPlusTop);
   ttbarwFactorB = 6.*gMinusTop*gPlusTop - pow2(gMinusTop) - pow2(gPlusTop);
@@ -913,8 +913,8 @@ int Sigma2ffbar2TEVffbar::resonanceB() {
 int Sigma2ffbar2TEVffbar::resonanceA() {
 
   if (gmZmode>=3) {
-    phaseSpacemHatMin  = settingsPtr->parm("PhaseSpace:mHatMin");
-    phaseSpacemHatMax  = settingsPtr->parm("PhaseSpace:mHatMax");
+    phaseSpacemHatMin  = parm("PhaseSpace:mHatMin");
+    phaseSpacemHatMax  = parm("PhaseSpace:mHatMax");
     double mResFirstKKMode = sqrt(pow2(particleDataPtr->m0(23)) + pow2(mStar));
     if (mResFirstKKMode/2. <= phaseSpacemHatMax
         || 3*mResFirstKKMode/2. >= phaseSpacemHatMin) { return 5000023; }
@@ -960,11 +960,11 @@ double Sigma2ffbar2TEVffbar::sigmaHat() {
   int idAbs = abs(id1);
 
   // The couplings of the Z0 to the fermions for in/out flavors
-  gMinusf  = ( couplingsPtr->t3f(idAbs) - couplingsPtr->ef(idAbs)
-               * couplingsPtr->sin2thetaW() )
-           / sqrt( couplingsPtr->sin2thetaW()*couplingsPtr->cos2thetaW() );
-  gPlusf   = -1. * couplingsPtr->ef(idAbs)*couplingsPtr->sin2thetaW()
-           / sqrt( couplingsPtr->sin2thetaW()*couplingsPtr->cos2thetaW() );
+  gMinusf  = ( coupSMPtr->t3f(idAbs) - coupSMPtr->ef(idAbs)
+               * coupSMPtr->sin2thetaW() )
+           / sqrt( coupSMPtr->sin2thetaW()*coupSMPtr->cos2thetaW() );
+  gPlusf   = -1. * coupSMPtr->ef(idAbs)*coupSMPtr->sin2thetaW()
+           / sqrt( coupSMPtr->sin2thetaW()*coupSMPtr->cos2thetaW() );
 
   // Initialize the some values
   helicityME2 = 0.;
@@ -988,12 +988,12 @@ double Sigma2ffbar2TEVffbar::sigmaHat() {
       switch(gmZmode) {
         // SM photon and Z0 only
         case 0:
-          gammaProp = couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew)/sH;
+          gammaProp = coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew)/sH;
           resProp   = gf*gF/( sH - m2Res + mI*sH*(wZ0/mRes) );
           break;
         // SM photon only
         case 1:
-          gammaProp = couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew)/sH;
+          gammaProp = coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew)/sH;
           break;
         // SM Z0 only
         case 2:
@@ -1001,7 +1001,7 @@ double Sigma2ffbar2TEVffbar::sigmaHat() {
           break;
         // KK photon and Z
         case 3:
-          gammaProp = couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew)/sH;
+          gammaProp = coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew)/sH;
           resProp   = gf*gF/( sH - m2Res + mI*sH*(wZ0/mRes) );
           ZPropKK   = complex(0.,0.);
           gmPropKK  = complex(0.,0.);
@@ -1022,17 +1022,17 @@ double Sigma2ffbar2TEVffbar::sigmaHat() {
             // KK photon
             ttbarwgmKKn = 2.*(alphaemfixed*3./6.)*mgmKKn
                         * sqrt(1.-4.*m2Top/m2gmKKn)
-                        * 2.*pow2(couplingsPtr->ef(6))*(1.+2.*(m2Top/m2gmKKn));
+                        * 2.*pow2(coupSMPtr->ef(6))*(1.+2.*(m2Top/m2gmKKn));
             wgmKKn       = wgmKKFactor*mgmKKn+ttbarwgmKKn;
             // the propogators
-            gmPropKK += (2.*couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew))
+            gmPropKK += (2.*coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew))
                       / (sH-m2gmKKn+mI*sH*wgmKKn/mgmKKn);
             ZPropKK  += (2.*gf*gF)/(sH-m2ZKKn+mI*sH*wZKKn/mZKKn );
           }
           break;
         // SM photon and Z0 with KK photon only
         case 4:
-          gammaProp = couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew)/sH;
+          gammaProp = coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew)/sH;
           resProp   = gf*gF/( sH - m2Res + mI*sH*(wZ0/mRes) );
           gmPropKK  = complex(0.,0.);
           for (int nexcitation = 1; nexcitation <= nexcitationmax;
@@ -1042,16 +1042,16 @@ double Sigma2ffbar2TEVffbar::sigmaHat() {
 
             ttbarwgmKKn = 2.*(alphaemfixed*3./6.)*mgmKKn
                         * sqrt(1.-4.*m2Top/m2gmKKn)
-                        * 2.*pow2(couplingsPtr->ef(6))
+                        * 2.*pow2(coupSMPtr->ef(6))
                         * (1.+2.*(m2Top/m2gmKKn));
             wgmKKn         = wgmKKFactor*mgmKKn+ttbarwgmKKn;
-            gmPropKK += (2.*couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew))
+            gmPropKK += (2.*coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew))
                       / (sH-m2gmKKn+mI*sH*wgmKKn/mgmKKn);
           }
           break;
         // SM photon and Z0 with KK Z only
         case 5:
-          gammaProp = couplingsPtr->ef(idAbs)*couplingsPtr->ef(idNew)/sH;
+          gammaProp = coupSMPtr->ef(idAbs)*coupSMPtr->ef(idNew)/sH;
           resProp   = gf*gF/( sH - m2Res + mI*sH*(wZ0/mRes) );
           ZPropKK   = complex(0.,0.);
           for (int nexcitation = 1; nexcitation <= nexcitationmax;
@@ -1145,20 +1145,20 @@ void Sigma2gg2LEDUnparticleg::initProc() {
   // Init model parameters.
   eDidG    = 5000039;
   if (eDgraviton) {
-    eDspin     = (settingsPtr->flag("ExtraDimensionsLED:GravScalar")) ? 0 : 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDspin     = (flag("ExtraDimensionsLED:GravScalar")) ? 0 : 2;
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 0.5 * eDnGrav + 1;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:MD");
+    eDLambdaU  = parm("ExtraDimensionsLED:MD");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
-    eDcf       = settingsPtr->parm("ExtraDimensionsLED:c");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
+    eDcf       = parm("ExtraDimensionsLED:c");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsUnpart:CutOffMode");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
+    eDcutoff   = mode("ExtraDimensionsUnpart:CutOffMode");
   }
 
   // The A(dU) or S'(n) value.
@@ -1308,21 +1308,21 @@ void Sigma2qg2LEDUnparticleq::initProc() {
   // Init model parameters.
   eDidG    = 5000039;
   if (eDgraviton) {
-    eDspin     = (settingsPtr->flag("ExtraDimensionsLED:GravScalar")) ? 0 : 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDspin     = (flag("ExtraDimensionsLED:GravScalar")) ? 0 : 2;
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 0.5 * eDnGrav + 1;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:MD");
+    eDLambdaU  = parm("ExtraDimensionsLED:MD");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
-    eDgf       = settingsPtr->parm("ExtraDimensionsLED:g");
-    eDcf       = settingsPtr->parm("ExtraDimensionsLED:c");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
+    eDgf       = parm("ExtraDimensionsLED:g");
+    eDcf       = parm("ExtraDimensionsLED:c");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsUnpart:CutOffMode");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
+    eDcutoff   = mode("ExtraDimensionsUnpart:CutOffMode");
   }
 
   // The A(dU) or S'(n) value.
@@ -1489,21 +1489,21 @@ void Sigma2qqbar2LEDUnparticleg::initProc() {
   // Init model parameters.
   eDidG    = 5000039;
   if (eDgraviton) {
-    eDspin     = (settingsPtr->flag("ExtraDimensionsLED:GravScalar")) ? 0 : 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDspin     = (flag("ExtraDimensionsLED:GravScalar")) ? 0 : 2;
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 0.5 * eDnGrav + 1;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:MD");
+    eDLambdaU  = parm("ExtraDimensionsLED:MD");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
-    eDgf       = settingsPtr->parm("ExtraDimensionsLED:g");
-    eDcf       = settingsPtr->parm("ExtraDimensionsLED:c");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
+    eDgf       = parm("ExtraDimensionsLED:g");
+    eDcf       = parm("ExtraDimensionsLED:c");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsUnpart:CutOffMode");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
+    eDcutoff   = mode("ExtraDimensionsUnpart:CutOffMode");
   }
 
   // The A(dU) or S'(n) value.
@@ -1675,20 +1675,20 @@ void Sigma2ffbar2LEDUnparticleZ::initProc() {
   eDidG        = 5000039;
   if (eDgraviton) {
     eDspin     = 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 0.5 * eDnGrav + 1;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:MD");
+    eDLambdaU  = parm("ExtraDimensionsLED:MD");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
     eDratio    = FIXRATIO;
-    //         = settingsPtr->parm("ExtraDimensionsUnpart:ratio");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsUnpart:CutOffMode");
+    //         = parm("ExtraDimensionsUnpart:ratio");
+    eDcutoff   = mode("ExtraDimensionsUnpart:CutOffMode");
   }
 
   // Store Z0 mass and width for propagator.
@@ -1849,8 +1849,8 @@ double Sigma2ffbar2LEDUnparticleZ::sigmaHat() {
   int idAbs    = abs(id1);
   // Note: 1/2 * (g_L^2 + g_R^2) = (g_v^2 + g_a^2)
   double facEWS  = 4 * M_PI * alpEM
-                   / (couplingsPtr->sin2thetaW() * couplingsPtr->cos2thetaW())
-                   * ( 0.25 * 0.25 * couplingsPtr->vf2af2(idAbs) );
+                   / (coupSMPtr->sin2thetaW() * coupSMPtr->cos2thetaW())
+                   * ( 0.25 * 0.25 * coupSMPtr->vf2af2(idAbs) );
 
   // Mass Spectrum, (m^2)^(d-2)
   double tmpExp = eDdU - 2;
@@ -1929,20 +1929,20 @@ void Sigma2ffbar2LEDUnparticlegamma::initProc() {
   eDidG        = 5000039;
   if (eDgraviton) {
     eDspin     = 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 0.5 * eDnGrav + 1;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:MD");
+    eDLambdaU  = parm("ExtraDimensionsLED:MD");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
     eDratio    = FIXRATIO;
-    //         = settingsPtr->parm("ExtraDimensionsUnpart:ratio");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsUnpart:CutOffMode");
+    //         = parm("ExtraDimensionsUnpart:ratio");
+    eDcutoff   = mode("ExtraDimensionsUnpart:CutOffMode");
   }
 
   // Store Z0 mass.
@@ -2098,7 +2098,7 @@ double Sigma2ffbar2LEDUnparticlegamma::sigmaHat() {
 
   // Electroweak couplings..
   int idAbs    = abs(id1);
-  double facEWS = 4 * M_PI * alpEM * couplingsPtr->ef2(idAbs);
+  double facEWS = 4 * M_PI * alpEM * coupSMPtr->ef2(idAbs);
 
   // Mass Spectrum, (m^2)^(d-2)
   double tmpExp = eDdU - 2;
@@ -2157,18 +2157,18 @@ void Sigma2ffbar2LEDgammagamma::initProc() {
   // Init model parameters.
   if (eDgraviton) {
     eDspin     = 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 2;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
+    eDLambdaU  = parm("ExtraDimensionsLED:LambdaT");
     eDlambda   = 1;
-    eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+    eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
     eDnegInt   = 0;
   }
 
@@ -2251,7 +2251,7 @@ double Sigma2ffbar2LEDgammagamma::sigmaHat() {
   if (eDspin == 0) {
     sigma = pow2(eDlambda2chi) * eDterm1 / 8;
   } else {
-    double tmPe2Q2 = 4 * M_PI * alpEM * couplingsPtr->ef2(idAbs);
+    double tmPe2Q2 = 4 * M_PI * alpEM * coupSMPtr->ef2(idAbs);
     double tmPdUpi = eDdU * M_PI;
     sigma = pow2(tmPe2Q2) * eDterm1
           - tmPe2Q2 * eDlambda2chi * cos(tmPdUpi) * eDterm2
@@ -2294,17 +2294,17 @@ void Sigma2gg2LEDgammagamma::initProc() {
   // Init model parameters.
   if (eDgraviton) {
     eDspin     = 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 2;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
+    eDLambdaU  = parm("ExtraDimensionsLED:LambdaT");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
   }
 
   // Model dependent constants.
@@ -2412,20 +2412,20 @@ void Sigma2ffbar2LEDllbar::initProc() {
   // Init model parameters.
   if (eDgraviton) {
     eDspin     = 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 2;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
+    eDLambdaU  = parm("ExtraDimensionsLED:LambdaT");
     eDlambda   = 1;
-    eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+    eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
-    eDnxx      = settingsPtr->mode("ExtraDimensionsUnpart:gXX");
-    eDnxy      = settingsPtr->mode("ExtraDimensionsUnpart:gXY");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
+    eDnxx      = mode("ExtraDimensionsUnpart:gXX");
+    eDnxy      = mode("ExtraDimensionsUnpart:gXY");
     eDnegInt   = 0;
   }
 
@@ -2515,20 +2515,20 @@ double Sigma2ffbar2LEDllbar::sigmaHat() {
   int idAbs      = abs(id1);
 
   // Couplings and constants.
-  // Qq = couplingsPtr->ef(idAbs), quark, i.e. id > 0.
-  // Ql = couplingsPtr->ef(11), electron.
-  double tmPe2QfQl = 4 * M_PI * alpEM * couplingsPtr->ef(idAbs)
-                      * couplingsPtr->ef(11);
-  double tmPgvq = 0.25 * couplingsPtr->vf(idAbs);
-  double tmPgaq = 0.25 * couplingsPtr->af(idAbs);
+  // Qq = coupSMPtr->ef(idAbs), quark, i.e. id > 0.
+  // Ql = coupSMPtr->ef(11), electron.
+  double tmPe2QfQl = 4 * M_PI * alpEM * coupSMPtr->ef(idAbs)
+                      * coupSMPtr->ef(11);
+  double tmPgvq = 0.25 * coupSMPtr->vf(idAbs);
+  double tmPgaq = 0.25 * coupSMPtr->af(idAbs);
   double tmPgLq = tmPgvq  + tmPgaq;
   double tmPgRq = tmPgvq  - tmPgaq;
-  double tmPgvl = 0.25 * couplingsPtr->vf(11);
-  double tmPgal = 0.25 * couplingsPtr->af(11);
+  double tmPgvl = 0.25 * coupSMPtr->vf(11);
+  double tmPgal = 0.25 * coupSMPtr->af(11);
   double tmPgLl = tmPgvl  + tmPgal;
   double tmPgRl = tmPgvl  - tmPgal;
   double tmPe2s2c2 = 4 * M_PI * alpEM
-    / (couplingsPtr->sin2thetaW() * couplingsPtr->cos2thetaW());
+    / (coupSMPtr->sin2thetaW() * coupSMPtr->cos2thetaW());
 
   // LL, RR, LR, RL  couplings.
   vector<double> tmPcoupZ;
@@ -2654,17 +2654,17 @@ void Sigma2gg2LEDllbar::initProc() {
   // Init model parameters.
   if (eDgraviton) {
     eDspin     = 2;
-    eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
+    eDnGrav    = mode("ExtraDimensionsLED:n");
     eDdU       = 2;
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
+    eDLambdaU  = parm("ExtraDimensionsLED:LambdaT");
     eDlambda   = 1;
-    eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-    eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+    eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+    eDtff      = parm("ExtraDimensionsLED:t");
   } else {
-    eDspin     = settingsPtr->mode("ExtraDimensionsUnpart:spinU");
-    eDdU       = settingsPtr->parm("ExtraDimensionsUnpart:dU");
-    eDLambdaU  = settingsPtr->parm("ExtraDimensionsUnpart:LambdaU");
-    eDlambda   = settingsPtr->parm("ExtraDimensionsUnpart:lambda");
+    eDspin     = mode("ExtraDimensionsUnpart:spinU");
+    eDdU       = parm("ExtraDimensionsUnpart:dU");
+    eDLambdaU  = parm("ExtraDimensionsUnpart:LambdaU");
+    eDlambda   = parm("ExtraDimensionsUnpart:lambda");
   }
 
   // Model dependent constants.
@@ -2746,13 +2746,13 @@ void Sigma2gg2LEDllbar::setIdColAcol() {
 void Sigma2gg2LEDgg::initProc() {
 
   // Read model parameters.
-  eDopMode   = settingsPtr->mode("ExtraDimensionsLED:opMode");
-  eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
-  eDMD       = settingsPtr->parm("ExtraDimensionsLED:MD");
-  eDLambdaT  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
-  eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-  eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-  eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+  eDopMode   = mode("ExtraDimensionsLED:opMode");
+  eDnGrav    = mode("ExtraDimensionsLED:n");
+  eDMD       = parm("ExtraDimensionsLED:MD");
+  eDLambdaT  = parm("ExtraDimensionsLED:LambdaT");
+  eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+  eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+  eDtff      = parm("ExtraDimensionsLED:t");
 
 }
 
@@ -2855,14 +2855,14 @@ void Sigma2gg2LEDqqbar::initProc() {
 
   // Read number of quarks to be considered in massless approximation
   // as well as model parameters.
-  nQuarkNew  = settingsPtr->mode("ExtraDimensionsLED:nQuarkNew");
-  eDopMode   = settingsPtr->mode("ExtraDimensionsLED:opMode");
-  eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
-  eDMD       = settingsPtr->parm("ExtraDimensionsLED:MD");
-  eDLambdaT  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
-  eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-  eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-  eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+  nQuarkNew  = mode("ExtraDimensionsLED:nQuarkNew");
+  eDopMode   = mode("ExtraDimensionsLED:opMode");
+  eDnGrav    = mode("ExtraDimensionsLED:n");
+  eDMD       = parm("ExtraDimensionsLED:MD");
+  eDLambdaT  = parm("ExtraDimensionsLED:LambdaT");
+  eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+  eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+  eDtff      = parm("ExtraDimensionsLED:t");
 
 }
 
@@ -2954,13 +2954,13 @@ void Sigma2gg2LEDqqbar::setIdColAcol() {
 void Sigma2qg2LEDqg::initProc() {
 
   // Read model parameters.
-  eDopMode   = settingsPtr->mode("ExtraDimensionsLED:opMode");
-  eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
-  eDMD       = settingsPtr->parm("ExtraDimensionsLED:MD");
-  eDLambdaT  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
-  eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-  eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-  eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+  eDopMode   = mode("ExtraDimensionsLED:opMode");
+  eDnGrav    = mode("ExtraDimensionsLED:n");
+  eDMD       = parm("ExtraDimensionsLED:MD");
+  eDLambdaT  = parm("ExtraDimensionsLED:LambdaT");
+  eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+  eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+  eDtff      = parm("ExtraDimensionsLED:t");
 
 }
 
@@ -3045,13 +3045,13 @@ void Sigma2qg2LEDqg::setIdColAcol() {
 void Sigma2qq2LEDqq::initProc() {
 
   // Read model parameters.
-  eDopMode   = settingsPtr->mode("ExtraDimensionsLED:opMode");
-  eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
-  eDMD       = settingsPtr->parm("ExtraDimensionsLED:MD");
-  eDLambdaT  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
-  eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-  eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-  eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+  eDopMode   = mode("ExtraDimensionsLED:opMode");
+  eDnGrav    = mode("ExtraDimensionsLED:n");
+  eDMD       = parm("ExtraDimensionsLED:MD");
+  eDLambdaT  = parm("ExtraDimensionsLED:LambdaT");
+  eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+  eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+  eDtff      = parm("ExtraDimensionsLED:t");
 
 }
 
@@ -3163,13 +3163,13 @@ void Sigma2qq2LEDqq::setIdColAcol() {
 void Sigma2qqbar2LEDgg::initProc() {
 
   // Read model parameters.
-  eDopMode   = settingsPtr->mode("ExtraDimensionsLED:opMode");
-  eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
-  eDMD       = settingsPtr->parm("ExtraDimensionsLED:MD");
-  eDLambdaT  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
-  eDnegInt   = settingsPtr->mode("ExtraDimensionsLED:NegInt");
-  eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-  eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+  eDopMode   = mode("ExtraDimensionsLED:opMode");
+  eDnGrav    = mode("ExtraDimensionsLED:n");
+  eDMD       = parm("ExtraDimensionsLED:MD");
+  eDLambdaT  = parm("ExtraDimensionsLED:LambdaT");
+  eDnegInt   = mode("ExtraDimensionsLED:NegInt");
+  eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+  eDtff      = parm("ExtraDimensionsLED:t");
 
 }
 
@@ -3255,13 +3255,13 @@ void Sigma2qqbar2LEDqqbarNew::initProc() {
 
   // Read number of quarks to be considered in massless approximation
   // as well as model parameters.
-  nQuarkNew  = settingsPtr->mode("ExtraDimensionsLED:nQuarkNew");
-  eDopMode   = settingsPtr->mode("ExtraDimensionsLED:opMode");
-  eDnGrav    = settingsPtr->mode("ExtraDimensionsLED:n");
-  eDMD       = settingsPtr->parm("ExtraDimensionsLED:MD");
-  eDLambdaT  = settingsPtr->parm("ExtraDimensionsLED:LambdaT");
-  eDcutoff   = settingsPtr->mode("ExtraDimensionsLED:CutOffMode");
-  eDtff      = settingsPtr->parm("ExtraDimensionsLED:t");
+  nQuarkNew  = mode("ExtraDimensionsLED:nQuarkNew");
+  eDopMode   = mode("ExtraDimensionsLED:opMode");
+  eDnGrav    = mode("ExtraDimensionsLED:n");
+  eDMD       = parm("ExtraDimensionsLED:MD");
+  eDLambdaT  = parm("ExtraDimensionsLED:LambdaT");
+  eDcutoff   = mode("ExtraDimensionsLED:CutOffMode");
+  eDtff      = parm("ExtraDimensionsLED:t");
 
 }
 

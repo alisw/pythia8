@@ -1,5 +1,5 @@
 // SpaceShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,11 +16,13 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonSystems.h"
 #include "Pythia8/PartonVertex.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StandardModel.h"
 #include "Pythia8/UserHooks.h"
 #include "Pythia8/MergingHooks.h"
+#include "Pythia8/Weights.h"
 
 namespace Pythia8 {
 
@@ -28,34 +30,25 @@ namespace Pythia8 {
 
 // The SpaceShower class does spacelike showers.
 
-class SpaceShower {
+class SpaceShower : public PhysicsBase {
 
 public:
   // Constructor.
-  SpaceShower() : mergingHooksPtr(), infoPtr(), settingsPtr(),
-    particleDataPtr(), rndmPtr(), coupSMPtr(), beamAPtr(), beamBPtr(),
-    partonSystemsPtr(), userHooksPtr(), partonVertexPtr(),
-    doUncertainties(), uVarMuSoftCorr(), uVarMPIshowers(),
-    nUncertaintyVariations(), nVarQCD(), uVarNflavQ(),  dASmax(), cNSpTmin(),
-    uVarpTmin2(), overFactor(), varG2GGmuRfac(), varQ2QGmuRfac(),
-    varQ2GQmuRfac(), varG2QQmuRfac(), varX2XGmuRfac(), varG2GGcNS(),
-    varQ2QGcNS(), varQ2GQcNS(), varG2QQcNS(), varX2XGcNS(), varPDFplus(),
-    varPDFminus(), varPDFmember() {}
+  SpaceShower() = default;
 
   // Destructor.
   virtual ~SpaceShower() {}
 
   // Initialize various pointers.
   // (Separated from rest of init since not virtual.)
-  void initPtr(Info* infoPtrIn, Settings* settingsPtrIn,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, CoupSM* coupSMPtrIn,
-    PartonSystems* partonSystemsPtrIn, UserHooks* userHooksPtrIn,
-    MergingHooks* mergingHooksPtrIn, PartonVertex* partonVertexPtrIn) {
-    infoPtr = infoPtrIn; settingsPtr = settingsPtrIn;
-    particleDataPtr = particleDataPtrIn; rndmPtr = rndmPtrIn;
-    coupSMPtr = coupSMPtrIn; partonSystemsPtr = partonSystemsPtrIn;
-    userHooksPtr = userHooksPtrIn; mergingHooksPtr = mergingHooksPtrIn;
-    partonVertexPtr = partonVertexPtrIn; }
+  void initPtrs(MergingHooksPtr mergingHooksPtrIn,
+    PartonVertexPtr partonVertexPtrIn,
+    WeightContainer* weightContainerPtrIn) {
+    coupSMPtr = infoPtr->coupSMPtr;
+    mergingHooksPtr = mergingHooksPtrIn;
+    partonVertexPtr = partonVertexPtrIn;
+    weightContainerPtr = weightContainerPtrIn;
+  }
 
   // New beams possible for handling of hard diffraction. (Not virtual.)
   void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
@@ -152,43 +145,22 @@ public:
     { return vector<int>(); }
 
   // Pointer to MergingHooks object for NLO merging.
-  MergingHooks*  mergingHooksPtr;
+  MergingHooksPtr  mergingHooksPtr{};
+
+  WeightContainer* weightContainerPtr{};
 
 protected:
 
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the settings database.
-  Settings*      settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*  particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
-  // Pointer to Standard Model couplings.
-  CoupSM*        coupSMPtr;
-
-  // Pointers to the two incoming beams. Offset their location in event.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-  int            beamOffset;
-
-  // Pointer to information on subcollision parton locations.
-  PartonSystems* partonSystemsPtr;
-
-  // Pointer to userHooks object for user interaction with program.
-  UserHooks*     userHooksPtr;
+  // Beam location offset in event.
+  int            beamOffset{};
 
   // Pointer to assign space-time vertices during parton evolution.
-  PartonVertex*  partonVertexPtr;
+  PartonVertexPtr  partonVertexPtr{};
 
-  // Store uncertainty variations relevant to ISRshower.
-  bool   doUncertainties, uVarMuSoftCorr, uVarMPIshowers;
-  int    nUncertaintyVariations, nVarQCD, uVarNflavQ;
-  double dASmax, cNSpTmin, uVarpTmin2, overFactor;
+  // Store uncertainty variations relevant to SpaceShower.
+  bool   doUncertainties{}, uVarMuSoftCorr{}, uVarMPIshowers{};
+  int    nUncertaintyVariations{}, nVarQCD{}, uVarNflavQ{};
+  double dASmax{}, cNSpTmin{}, uVarpTmin2{}, overFactor{};
   map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varQ2GQmuRfac, varG2QQmuRfac,
     varX2XGmuRfac, varG2GGcNS, varQ2QGcNS, varQ2GQcNS, varG2QQcNS, varX2XGcNS;
   map<int,double>* varPDFplus;

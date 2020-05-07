@@ -5,7 +5,7 @@
 ! The changes here are illustrative, not always physics-motivated.
 
 # Number of events to generate in the main program.
-Main:numberOfEvents = 50000
+Main:numberOfEvents = 10000
 Next:numberCount    = 100
 
 # Retrieve a PDF set from LHAPDF6 (shower PDF variations need LHAPDF6)

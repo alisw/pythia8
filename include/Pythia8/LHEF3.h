@@ -1,5 +1,5 @@
 // LHEF3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -106,6 +106,7 @@ struct XMLTag {
 
       // Find the first tag.
       pos_t begin = str.find("<", curr);
+
       // Skip tags in lines beginning with #.
       pos_t lastbreak_before_begin = str.find_last_of("\n",begin);
       pos_t lastpound_before_begin = str.find_last_of("#",begin);
@@ -269,7 +270,7 @@ struct LHAweights {
   string contents;
 
   // Return number of weights.
-  int size() { return int(weights.size()); }
+  int size() const { return int(weights.size()); }
 
 };
 
@@ -461,7 +462,7 @@ struct LHAweightgroup {
   map<string,string> attributes;
 
   // Return number of weights.
-  int size() { return int(weights.size()); }
+  int size() const { return int(weights.size()); }
 
 };
 
@@ -499,7 +500,7 @@ struct LHArwgt {
   map<string,string> attributes;
 
   // Return number of weights.
-  int size() { return int(wgts.size()); }
+  int size() const { return int(wgts.size()); }
 
 };
 
@@ -542,10 +543,10 @@ struct LHAinitrwgt {
   map<string,string> attributes;
 
   // Return number of weights.
-  int size() { return int(weights.size());}
+  int size() const { return int(weights.size());}
 
   // Return number of weights.
-  int sizeWeightGroups() { return int(weightgroups.size()); }
+  int sizeWeightGroups() const { return int(weightgroups.size()); }
 
 };
 
@@ -875,6 +876,7 @@ public:
    hepeup.clear();
    eventComments = "";
    weights_detailed_vec.resize(0);
+   weightnames_detailed_vec.resize(0);
   }
 
 protected:
@@ -934,7 +936,11 @@ public:
 
   // The detailed weights associated with this event, linearized to a vector.
   vector<double> weights_detailed_vec;
-  vector<double> weights_detailed_vector() { return weights_detailed_vec; }
+  vector<double> weights_detailed_vector()
+    { return weights_detailed_vec; }
+  vector<string> weightnames_detailed_vec;
+  vector<string> weightnames_detailed_vector()
+    { return weightnames_detailed_vec; }
 
 private:
 

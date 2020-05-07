@@ -1,5 +1,5 @@
 // HadronLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,9 +20,11 @@
 #include "Pythia8/HiddenValleyFragmentation.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/JunctionSplitting.h"
+#include "Pythia8/LowEnergyProcess.h"
 #include "Pythia8/MiniStringFragmentation.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/ParticleDecays.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/RHadrons.h"
 #include "Pythia8/Settings.h"
@@ -37,24 +39,17 @@ namespace Pythia8 {
 // The HadronLevel class contains the top-level routines to generate
 // the transition from the partonic to the hadronic stage of an event.
 
-class HadronLevel {
+class HadronLevel : public PhysicsBase {
 
 public:
 
   // Constructor.
-  HadronLevel() : doHadronize(), doDecay(), doBoseEinstein(), doDeuteronProd(),
-    allowRH(), closePacking(), mStringMin(), eNormJunction(), widthSepBE(),
-    doHadronScatter(), hsAfterDecay(), hadronScatMode(), infoPtr(),
-    particleDataPtr(), rndmPtr(), userHooksPtr(), couplingsPtr(),
-    doRopes(), doShoving(), doFlavour(), doVertex(), doBuffon(), rHadronsPtr(),
-    useHiddenValley() {}
+  HadronLevel() = default;
 
   // Initialize HadronLevel classes as required.
-  bool init(Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    Couplings* couplingsPtrIn, TimeShower* timesDecPtr,
-    RHadrons* rHadronsPtrIn, DecayHandler* decayHandlePtr,
-    vector<int> handledParticles, UserHooks* userHooksPtrIn);
+  bool init( TimeShowerPtr timesDecPtr,
+    RHadrons* rHadronsPtrIn, DecayHandlerPtr decayHandlePtr,
+    vector<int> handledParticles, StringIntPtr stringInteractionsPtrIn);
 
   // Get pointer to StringFlav instance (needed by BeamParticle).
   StringFlav* getStringFlavPtr() {return &flavSel;}
@@ -65,37 +60,43 @@ public:
   // Special routine to allow more decays if on/off switches changed.
   bool moreDecays(Event& event);
 
+  // Special routine to do a low-energy hadron-hadron sscattering.
+  bool doLowEnergyProcess(int i1, int i2, int type, Event& event) {
+    return lowEnergyProcess.collide( i1, i2, type, event); }
+
+protected:
+
+  virtual void onInitInfoPtr() override{
+    registerSubObject(flavSel);
+    registerSubObject(pTSel);
+    registerSubObject(zSel);
+    registerSubObject(stringFrag);
+    registerSubObject(ministringFrag);
+    registerSubObject(decays);
+    registerSubObject(lowEnergyProcess);
+    registerSubObject(boseEinstein);
+    registerSubObject(hiddenvalleyFrag);
+    registerSubObject(junctionSplitting);
+    registerSubObject(deuteronProd);
+    registerSubObject(lowEnergyProcess);
+  }
+
 private:
 
   // Constants: could only be changed in the code itself.
   static const double MTINY;
 
   // Initialization data, read from Settings.
-  bool doHadronize, doDecay, doBoseEinstein, doDeuteronProd,
-       allowRH, closePacking;
-  double mStringMin, eNormJunction, widthSepBE;
+  bool doHadronize{}, doDecay{}, doBoseEinstein{}, doDeuteronProd{},
+       allowRH{}, closePacking{};
+  double mStringMin{}, eNormJunction{}, widthSepBE{};
 
   // Settings for hadron scattering.
-  bool   doHadronScatter, hsAfterDecay;
-  int    hadronScatMode;
-
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
-
-  // Pointer to the user hooks object.
-  UserHooks*    userHooksPtr;
-
-  // Pointers to Standard Model couplings.
-  Couplings*    couplingsPtr;
+  bool   doHadronScatter{}, hsAfterDecay{};
+  int    hadronScatMode{};
 
   // Configuration of colour-singlet systems.
-  ColConfig     colConfig;
+  ColConfig      colConfig;
 
   // Colour and mass information.
   vector<int>    iParton, iJunLegA, iJunLegB, iJunLegC,
@@ -114,12 +115,12 @@ private:
   // The generator class for hadron scattering.
   HadronScatter  hadronScatter;
 
-  // Class for event geometry for Rope Hadronization. Production vertices.
-  Ropewalk ropewalk;
-  bool doRopes, doShoving, doFlavour, doVertex, doBuffon;
+  // The generator class for low-energy hadron-hadron collisions.
+  LowEnergyProcess lowEnergyProcess;
 
-  // Flavour change with Rope Hadronization.
-  FlavourRope flavourRope;
+  // Class for event geometry for Rope Hadronization. Production vertices.
+  StringRepPtr stringRepulsionPtr;
+  FragModPtr fragmentationModifierPtr;
 
   // The generator class for Bose-Einstein effects.
   BoseEinstein boseEinstein;
@@ -143,7 +144,7 @@ private:
 
   // Special class for Hidden-Valley hadronization. Not always used.
   HiddenValleyFragmentation hiddenvalleyFrag;
-  bool useHiddenValley;
+  bool useHiddenValley{};
 
   // Special case: colour-octet onium decays, to be done initially.
   bool decayOctetOnia(Event& event);

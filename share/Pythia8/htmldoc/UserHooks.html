@@ -266,7 +266,7 @@ resonance decay chains, if any. Use the method
 decay chains. There are exceptions to this structure, 
 for <a href="QCDProcesses.html" target="page">soft QCD processes</a> (where 
 the partonic process may not yet have been selected at this stage), 
-and when <a href="ASecondHardProcess.html" target="page">a second hard process</a> has 
+and when <a href="SecondHardProcess.html" target="page">a second hard process</a> has 
 been requested (where two hard processes are bookkept). In general 
 it is useful to begin the development work by listing a few 
 <code>process</code> records, to clarify what the structure is for 
@@ -800,7 +800,7 @@ to return true then the method <code>biasSelectionBy(...)</code> will
 allow you to modify the phase space sampling, with a compensating 
 event weight, such that the cross section is unchanged. You cannot 
 combine this kind of reweighting with the selection of 
-<a href="ASecondHardProcess.html" target="page">a second hard process</a>. 
+<a href="SecondHardProcess.html" target="page">a second hard process</a>. 
    
  
 <a name="anchor34"></a>
@@ -841,7 +841,7 @@ you histogram results. It is the exact inverse of the weight you
 used to modify the phase-space sampling, a weight that must be stored 
 in the <code>selBias</code> member variable, such that this routine 
 can return <code>1/selBias</code>. The weight is also returned by the 
-<code>Info::weight()</code> method, which may be  convenient to use. 
+<code>Info::weight()</code> method, which may be more convenient to use. 
    
  
 <a name="section6"></a> 
@@ -1139,8 +1139,7 @@ These are handled internally, so that users only have to ensure that
 <code>Info::mergingWeightNLO()</code> are correctly taken into account. 
  
 <p/>A simple example of enhanced regular emissions is provided in 
-<code>main63.cc</code>, whereas <code>main64.cc</code> illustrates 
-the usefulness of enhanced trial emissions for expert users. 
+<code>main63.cc</code>. 
  
 <a name="section10"></a> 
 <h3>(x) Modified hadronization</h3> 
@@ -1150,7 +1149,7 @@ the string hadronization model, involving changes to hadronization
 parameters based on local properties of the string. Given information 
 on the hadronization history of a single string,  parameters can be 
 changed to control the selection of quark flavour, <i>z</i> and 
-<i>pT</i> in string breaks. Further there is a option to veto 
+<i>pT</i> in string breaks. Furthermore there is a option to veto 
 the creation of a hadron before it is added to the event record, 
 thus repeating a step in the hadronization procedure. 
  
@@ -1243,9 +1242,11 @@ This method allows the user to select a particular impact parameter in the
 MPI machinery in the generation of minimum-bias events. The function takes no 
 arguments and is intended for situations where the impact parameter is 
 generated from the outside, as is the case in the Angantyr model for Heavy Ion 
-collisions. Note that it does not modify the <a href="MultipartonInteractions.html" target="page"> 
+collisions. Note that it does not modify the 
+<a href="MultipartonInteractions.html" target="page"> 
   <code>MultipartonInteractions:bProfile</code></a> used in the MPI 
-machinery, and that currently it will only affect the <a href="QCDProcesses.html" target="page"> 
+  machinery, and that currently it will only affect the 
+  <a href="QCDProcesses.html" target="page"> 
   <code>SoftQCD</code></a> processes. 
    
  
@@ -1278,4 +1279,4 @@ occurs.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -1,7 +1,11 @@
 // main111.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors: Leif Lonnblad <leif.lonnblad@thep.lu.se>.
+
+// Keywords: heavy ions; rivet; angantyr;
 
 // This is a simple test program equivalent to main01.cc but using the
 // Angantyr model for Heavy Ion collisions. It is still proton
@@ -9,14 +13,14 @@
 // select collisions. It fits on one slide in a talk.  It studies the
 // charged multiplicity distribution at the LHC.
 
-// Optionally (by compiling with the flag -DUSE_PYTHIA8_RIVET and
+// Optionally (by compiling with the flag -DRIVET and
 // linking with rivet - see output of the command "rivet-config
 // --cppflags --libs") it will send the event to Rivet for an ATLAS
 // jet-analysis.
 
 #include "Pythia8/Pythia.h"
 
-#ifdef USE_PYTHIA8_RIVET
+#ifdef RIVET
 #include "Pythia8/HeavyIons.h"
 #include "Pythia8Plugins/Pythia8Rivet.h"
 #endif
@@ -43,12 +47,12 @@ int main() {
 
   pythia.init();
 
-#ifdef USE_PYTHIA8_RIVET
+#ifdef RIVET
   // Initialize the communication with the Rivet program.
   Pythia8Rivet rivet(pythia, "main111.yoda");
   // For the following analysis we need more statistics.
   rivet.addAnalysis("ATLAS_2010_S8817804");
-  nEvents = 1000000;
+  nEvents = 10000;
 #endif
 
   // Book a histogram of the multiplicity distribution
@@ -61,7 +65,7 @@ int main() {
   for (int iEvent = 0; iEvent < nEvents; ++iEvent) {
     if (!pythia.next()) continue;
 
-#ifdef USE_PYTHIA8_RIVET
+#ifdef RIVET
     // Send the event to Rivet.
     rivet();
 #endif
@@ -81,7 +85,7 @@ int main() {
   pythia.stat();
   cout << mult;
 
-#ifdef USE_PYTHIA8_RIVET
+#ifdef RIVET
   rivet.done();
 #endif
 

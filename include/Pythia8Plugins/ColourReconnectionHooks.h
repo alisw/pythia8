@@ -1,5 +1,5 @@
 // ColourReconnectionHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -60,7 +60,8 @@ public:
 
     // Double diffraction not yet implemented, so return without action.
     // (But works for internal move implementation.)
-    if (infoPtr->isDiffractiveA() && infoPtr->isDiffractiveB()) return true;
+    if (infoPtr->isDiffractiveA() && infoPtr->isDiffractiveB())
+      return true;
 
     // Initial setup: relevant gluons and coloured partons.
     if (!setupConfig( event)) return false;
@@ -876,7 +877,7 @@ private:
     }
     int nGR    = iGR.size();
     int iR, colT, acolT, iColT, iAcolT, colR, acolR, iColR, iAcolR;
-    double mTR2, mTR2now, dLam, lamT, lamNow, lamRec;
+    double mTR2, mTR2now, dLam = 0.0, lamT, lamNow, lamRec;
 
     // Loop through all top gluons; study fraction given by strength.
     if (nGT > 0 && nGR > 0)

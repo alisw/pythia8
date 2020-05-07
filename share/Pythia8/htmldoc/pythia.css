@@ -99,9 +99,65 @@ ul, ol {
     overflow:hidden;
 }
 #code li {
-        color:#0000bb;
-	list-style-type: none;
-	margin-top:1px;
-	margin-bottom:1px;
-        font-family: monospace;
+    color:#0000bb;
+    list-style-type: none;
+    margin-top:1px;
+    margin-bottom:1px;
+    font-family: monospace;
+}
+.expand {
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    padding: 6px;
+    width: 240px;
+    border: none;
+    font-size: 16px;
+    font-family: arial,verdana,geneva,helvetica;
+    text-align: left;
+    outline: none;
+    transition: 0.4s;
+}
+.active, .expand:hover {
+    background-color: #ccc;
+}
+.panel {
+    padding: 6px 6px;
+    display: none;
+    background-color: white;
+    overflow: hidden;
+}
+.expand:before {
+    content: "\25BA";
+    color: #bb4444;
+    display: inline;
+    margin-right: 6px;
+}
+.active:before {
+    content: "\25BC";
+    margin-right: 6px;
+}
+.expandAll {
+    background-color: white;
+    color: black;
+    cursor: pointer;
+    padding: 6px;
+    width: 240px;
+    border: none;
+    font-size: 16px;
+    font-family: arial,verdana,geneva,helvetica;
+    text-align: left;
+    outline: none;
+    transition: 0.4s;
+}
+.activeAll, .expandAll:hover {
+    background-color: #ccc;
+}
+.expandAll:before {
+    content: "\25BA\00A0 Expand ";
+    color: #000000;
+    display: inline;
+}
+.activeAll:before {
+    content: "\25BC\00A0 Collapse ";
 }

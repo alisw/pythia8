@@ -1,5 +1,5 @@
 // StandardModel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -141,6 +141,8 @@ public:
     ef2Save(), vf2Save(), af2Save(), efvfSave(), vf2af2Save(), VCKMsave(),
     V2CKMsave(), V2CKMout(), rndmPtr() {}
 
+  virtual ~CoupSM() {}
+
   // Initialize, normally from Pythia::init().
   void init(Settings& settings, Rndm* rndmPtrIn);
 
@@ -208,19 +210,6 @@ protected:
 
   // An AlphaEM instance for general use (but not MPI, ISR, FSR).
   AlphaEM     alphaEMlocal;
-
-};
-
-//==========================================================================
-
-// Generic couplings class
-
-class Couplings : public CoupSM {
-
-public:
-
-  Couplings(bool isSUSYin = false) : isSUSY(isSUSYin) {}
-  bool isSUSY;
 
 };
 

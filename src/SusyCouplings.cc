@@ -1,5 +1,5 @@
 // SusyCouplings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -21,21 +21,21 @@ namespace Pythia8 {
 // Constants: could be changed here if desired, but normally should not.
 // These are of technical nature, as described for each.
 
-// Allow verbose printout for debug purposes.
-  const bool CoupSUSY::DBSUSY = false;
-
 //--------------------------------------------------------------------------
 
 // Initialize SM+SUSY couplings (only performed once).
 
-void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
-    ParticleData* particleDataPtrIn, Settings* settingsPtrIn) {
+void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
 
   // Save pointers.
-  infoPtr         = infoPtrIn;
+  infoPtr      = infoPtrIn;
   slhaPtr         = slhaPtrIn;
-  settingsPtr     = settingsPtrIn;
-  particleDataPtr = particleDataPtrIn;
+  settingsPtr     = infoPtr->settingsPtr;
+  particleDataPtr = infoPtr->particleDataPtr;
+  coupSMPtr       = infoPtr->coupSMPtr;
+
+  // Allow verbose printout for debug purposes.
+  bool DBSUSY = settingsPtr->mode("SLHA:verbose") > 2 ? true : false;
 
   // Only initialize SUSY parts if SUSY is actually switched on
   if (!slhaPtr->modsel.exists()) return;
@@ -56,7 +56,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
   // (default to pole values if no running available)
   mW        = mWpole;
   mZ        = mZpole;
-  sin2W     = sin2thetaW();
+  sin2W     = coupSMPtr->sin2thetaW();
 
   if (settingsPtr->mode("SUSY:sin2thetaWMode") == 3) {
     // Possibility to force on-shell sin2W definition, mostly intended for
@@ -80,9 +80,6 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
         " not found or incomplete; using sin(thetaW) at mZ");
     }
   }
-
-  // Overload the SM value of sin2thetaW
-  s2tW = sin2W;
 
   sinW = sqrt(sin2W);
   cosW = sqrt(1.0-sin2W);
@@ -111,7 +108,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
     for (int i=1;i<=3;i++) {
       for (int j=1;j<=3;j++) {
         cout << " VCKM  [" << i << "][" << j << "] = "
-             << scientific << setw(10) << VCKMgen(i,j) << endl;
+             << scientific << setw(10) << coupSMPtr->VCKMgen(i,j) << endl;
       }
     }
   }
@@ -228,8 +225,8 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
   for (int i=1 ; i<=6 ; i++) {
 
     // q[i] q[i] Z (def with extra factor 2 compared to [Okun])
-    LqqZ[i] = af(i) - 2.0*ef(i)*sin2W ;
-    RqqZ[i] =       - 2.0*ef(i)*sin2W ;
+    LqqZ[i] = coupSMPtr->af(i) - 2.0*coupSMPtr->ef(i)*sin2W ;
+    RqqZ[i] =                  - 2.0*coupSMPtr->ef(i)*sin2W ;
 
     // tmp: verbose output
     if (DBSUSY) {
@@ -272,13 +269,13 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
 
       // tmp: verbose output
       if (DBSUSY) {
-        if (max(abs(LsdsdZ[i][j]),abs(RsdsdZ[i][j])) > 1e-6) {
+        if (max(norm(LsdsdZ[i][j]),norm(RsdsdZ[i][j])) > 1e-6) {
           cout << " LsdsdZ[" << i << "][" << j << "] = "
                << scientific << setw(10) << LsdsdZ[i][j]
                << " RsdsdZ[" << i << "][" << j << "] = "
                << scientific << setw(10) << RsdsdZ[i][j] << endl;
         }
-        if (max(abs(LsusuZ[i][j]),abs(RsusuZ[i][j]))> 1e-6) {
+        if (max(norm(LsusuZ[i][j]),norm(RsusuZ[i][j]))> 1e-6) {
           cout << " LsusuZ[" << i << "][" << j << "] = "
                << scientific << setw(10) << LsusuZ[i][j]
                << " RsusuZ[" << i << "][" << j << "] = "
@@ -361,8 +358,8 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
   // Construct llZ couplings;
   for (int i=11 ; i<=16 ; i++) {
 
-    LllZ[i-10] = af(i) - 2.0*ef(i)*sin2W ;
-    RllZ[i-10] =       - 2.0*ef(i)*sin2W ;
+    LllZ[i-10] = coupSMPtr->af(i) - 2.0*coupSMPtr->ef(i)*sin2W ;
+    RllZ[i-10] =                  - 2.0*coupSMPtr->ef(i)*sin2W ;
 
     // tmp: verbose output
     if (DBSUSY) {
@@ -396,13 +393,13 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
   for(int i=1;i<=6;i++){
     for(int j=1;j<=6;j++){
       if (DBSUSY) {
-        if (max(abs(LsvsvZ[i][j]),abs(RsvsvZ[i][j])) > 1e-6) {
+        if (max(norm(LsvsvZ[i][j]),norm(RsvsvZ[i][j])) > 1e-6) {
           cout << " LsvsvZ[" << i << "][" << j << "] = "
                << scientific << setw(10) << LsvsvZ[i][j]
                << " RsvsvZ[" << i << "][" << j << "] = "
                << scientific << setw(10) << RsvsvZ[i][j] << endl;
         }
-        if (max(abs(LslslZ[i][j]),abs(RslslZ[i][j]))> 1e-6) {
+        if (max(norm(LslslZ[i][j]),norm(RslslZ[i][j]))> 1e-6) {
           cout << " LslslZ[" << i << "][" << j << "] = "
                << scientific << setw(10) << LslslZ[i][j]
                << " RslslZ[" << i << "][" << j << "] = "
@@ -420,7 +417,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
       // CKM matrix (use Pythia one if no SLHA)
       // (NB: could also try input one if no running one found, but
       // would then need to compute from Wolfenstein)
-      complex Vij=VCKMgen(i,j);
+      complex Vij=coupSMPtr->VCKMgen(i,j);
       if (slhaPtr->vckm.exists()) {
         Vij=complex(slhaPtr->vckm(i,j),slhaPtr->imvckm(i,j));
       }
@@ -455,7 +452,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
           // CKM matrix (use Pythia one if no SLHA)
           // (NB: could also try input one if no running one found, but
           // would then need to compute from Wolfenstein)
-          complex Vij=VCKMgen(i,j);
+          complex Vij=coupSMPtr->VCKMgen(i,j);
           if (slhaPtr->vckm.exists()) {
             Vij=complex(slhaPtr->vckm(i,j),slhaPtr->imvckm(i,j));
           }
@@ -471,7 +468,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
 
       // tmp: verbose output
       if (DBSUSY) {
-        if (max(abs(LsusdW[k][l]),abs(RsusdW[k][l]))> 1e-6) {
+        if (max(norm(LsusdW[k][l]),norm(RsusdW[k][l]))> 1e-6) {
           cout << " LsusdW[" << k << "][" << l << "] = "
                << scientific << setw(10) << LsusdW[k][l]
                << " RsusdW[" << k << "][" << l << "] = "
@@ -703,22 +700,22 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
           + mu*cosW*conj(ni4)*conj(Rujk)/2.0/mW/sinb;
 
         if (DBSUSY) {
-          if (abs(LsddX[j][k][i]) > 1e-6) {
+          if (norm(LsddX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " LsddX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << LsddX[j][k][i] << endl;
           }
-          if (abs(RsddX[j][k][i]) > 1e-6) {
+          if (norm(RsddX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " RsddX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << RsddX[j][k][i] << endl;
           }
-          if (abs(LsuuX[j][k][i]) > 1e-6) {
+          if (norm(LsuuX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " LsuuX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << LsuuX[j][k][i] << endl;
           }
-          if (abs(RsuuX[j][k][i]) > 1e-6) {
+          if (norm(RsuuX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " RsuuX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << RsuuX[j][k][i] << endl;
@@ -760,17 +757,17 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
         }
 
         if (DBSUSY) {
-          if (abs(LsllX[j][k][i]) > 1e-6) {
+          if (norm(LsllX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " LsllX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << LsllX[j][k][i] << endl;
           }
-          if (abs(RsllX[j][k][i]) > 1e-6) {
+          if (norm(RsllX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " RsllX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << RsllX[j][k][i] << endl;
           }
-          if (abs(LsvvX[j][k][i]) > 1e-6) {
+          if (norm(LsvvX[j][k][i]) > 1e-6) {
             // tmp: verbose output
             cout << " LsvvX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << LsvvX[j][k][i] << endl;
@@ -888,8 +885,8 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
           // CKM matrix (use Pythia one if no SLHA)
           // (NB: could also try input one if no running one found, but
           // would then need to compute from Wolfenstein)
-          complex Vlk=VCKMgen(l,k);
-          complex Vkl=VCKMgen(k,l);
+          complex Vlk=coupSMPtr->VCKMgen(l,k);
+          complex Vkl=coupSMPtr->VCKMgen(k,l);
           if (slhaPtr->vckm.exists()) {
             Vlk=complex(slhaPtr->vckm(l,k),slhaPtr->imvckm(l,k));
             Vkl=complex(slhaPtr->vckm(k,l),slhaPtr->imvckm(k,l));
@@ -915,14 +912,14 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
         }
 
         if (DBSUSY) {
-          if (max(abs(LsduX[j][l][i]),abs(RsduX[j][l][i])) > 1e-6) {
+          if (max(norm(LsduX[j][l][i]),norm(RsduX[j][l][i])) > 1e-6) {
             // tmp: verbose output
             cout << " LsduX[" << j << "][" << l << "][" << i << "] = "
                  << scientific << setw(10) << LsduX[j][l][i];
             cout << " RsduX[" << j << "][" << l << "][" << i << "] = "
                  << scientific << setw(10) << RsduX[j][l][i] << endl;
           }
-          if (max(abs(LsudX[j][l][i]),abs(RsudX[j][l][i])) > 1e-6) {
+          if (max(norm(LsudX[j][l][i]),norm(RsudX[j][l][i])) > 1e-6) {
             // tmp: verbose output
             cout << " LsudX[" << j << "][" << l << "][" << i << "] = "
                  << scientific << setw(10) << LsudX[j][l][i];
@@ -959,14 +956,14 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
         }
 
         if (DBSUSY) {
-          if (max(abs(LslvX[j][k][i]),abs(RslvX[j][k][i])) > 1e-6) {
+          if (max(norm(LslvX[j][k][i]),norm(RslvX[j][k][i])) > 1e-6) {
             // tmp: verbose output
             cout << " LslvX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << LslvX[j][k][i];
             cout << " RslvX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << RslvX[j][k][i] << endl;
           }
-          if (max(abs(LsvlX[j][k][i]),abs(RsvlX[j][k][i])) > 1e-6) {
+          if (max(norm(LsvlX[j][k][i]),norm(RsvlX[j][k][i])) > 1e-6) {
             // tmp: verbose output
             cout << " LsvlX[" << j << "][" << k << "][" << i << "] = "
                  << scientific << setw(10) << LsvlX[j][k][i];

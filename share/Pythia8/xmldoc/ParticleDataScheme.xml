@@ -1,6 +1,6 @@
-<chapter name="The Particle Data Scheme"> 
+<chapter name="Particle Data Scheme"> 
  
-<h2>The Particle Data Scheme</h2> 
+<h2>Particle Data Scheme</h2> 
  
 The particle data scheme may take somewhat longer to understand than 
 the settings one. In particular the set of methods to access information 
@@ -94,6 +94,14 @@ and would typically be 0 there.</li>
  
 <li><code>tau0</code>: the nominal proper lifetime <ei>tau_0</ei> 
 (in mm/c).</li> 
+ 
+<li><code>tauCalc</code>: a flag telling whether the nominal proper 
+lifetime <ei>tau_0</ei> should be calculated from the particle width, 
+<ei>mWidth</ei>, at initialization (the default behavior). If set 
+false, then the proper lifetime can be varied independently from the 
+particle width. This capability is useful for simulating models of 
+long-lived particles where the dependence of a signature on the 
+particle width is negligible.</li> 
  
 <li><code>isResonance</code>: a flag telling whether a particle species 
 is considered as a resonance or not. Here 
@@ -218,12 +226,13 @@ The format of a <code>&lt;particle</code> tag is:
        m0="..." mWidth="..." mMin="..." mMax="..." tau0="..."&gt; 
     &lt;/particle&gt; 
 </pre> 
-where the fields are the properties already introduced above. 
-Note that <code>isResonance</code>, <code>mayDecay</code>, 
-<code>doExternalDecay</code>, <code>isVisible</code> and 
-<code>doForceWidth</code> are not set here, but are provided with 
-default values by the rules described above. Once initialized, also 
-these latter properties can be changed, see below.<br/> 
+where the fields are the properties already introduced above.  Note 
+that <code>tauCalc</code>, <code>isResonance</code>, 
+<code>mayDecay</code>, <code>doExternalDecay</code>, 
+<code>isVisible</code> and <code>doForceWidth</code> are not set here, 
+but are provided with default values by the rules described 
+above. Once initialized, also these latter properties can be changed, 
+see below.<br/> 
  
 The format of  a <code>&lt;channel></code> tag is: 
 <pre> 
@@ -260,11 +269,12 @@ separated by a colon.<br/>
 The allowed properties are: <code>name</code>, <code>antiName</code>, 
 <code>spinType</code>, <code>chargeType</code>, <code>colType</code>, 
 <code>m0</code>, <code>mWidth</code>, <code>mMin</code>, 
-<code>mMax</code>, <code>tau0</code>, <code>isResonance</code>, 
-<code>mayDecay</code>, <code>doExternalDecay</code>, 
-<code>isVisible</code> and <code>doForceWidth</code>. All of these 
-names are case-insensitive. Names that do not match an existing 
-variable are ignored.<br/> 
+<code>mMax</code>, <code>tau0</code>, <code>tauCalc</code>, 
+<code>isResonance</code>, <code>mayDecay</code>, 
+<code>doExternalDecay</code>, <code>isVisible</code> and 
+<code>doForceWidth</code>. All of these names are 
+case-insensitive. Names that do not match an existing variable are 
+ignored.<br/> 
  
 Strings beginning with a non-alphanumeric character, like # or !, 
 are assumed to be comments and are not processed at all. For 
@@ -285,18 +295,19 @@ name and antiname to be given. A more interesting one is the
     id:all = name antiName spinType chargeType colType m0 mWidth mMin mMax tau0 
 </pre> 
 where all the current information on the particle itself is replaced, 
-but any decay channels are kept unchanged. Using <code>new</code> instead 
-of <code>all</code> also removes any previous decay channels. 
+but any decay channels are kept unchanged. Using <code>new</code> 
+instead of <code>all</code> also removes any previous decay channels. 
 If the string contains fewer fields than expected the trailing 
 properties are set to vanish ("void", 0 or 0.). Note that such a 
 truncated string should not be followed by a comment, since this 
-comment would then be read in as if it contained the missing properties. 
-The truncation can be done anywhere, specifically a string with only 
-<code>id:new</code> defines a new "empty" particle. 
-As before, <code>isResonance</code>, <code>mayDecay</code>, 
-<code>doExternalDecay</code>, <code>isVisible</code> and 
-<code>doForceWidth</code> are (re)set to their default values, and 
-would have to be changed separately if required. 
+comment would then be read in as if it contained the missing 
+properties.  The truncation can be done anywhere, specifically a 
+string with only <code>id:new</code> defines a new "empty" particle. 
+As before, <code>tauCalc</code>, <code>isResonance</code>, 
+<code>mayDecay</code>, <code>doExternalDecay</code>, 
+<code>isVisible</code> and <code>doForceWidth</code> are (re)set to 
+their default values, and would have to be changed separately if 
+required. 
  
 <p/> 
 A further command is <code>rescaleBR</code>, which rescales each of the 
@@ -828,6 +839,18 @@ no width the <code>m0(id)</code> value is returned.
 the nominal proper lifetime <ei>tau_0</ei> (in mm/c). 
 </methodmore> 
  
+<method name="void ParticleData::tauCalc(int id, bool tauCalc)"> 
+</method> 
+<methodmore name="bool ParticleData::tauCalc(int id)"> 
+a flag telling whether the nominal proper lifetime <ei>tau_0</ei> 
+should be calculated from the particle width, <ei>mWidth</ei>, at 
+initialization (the default behavior). If set false, then the proper 
+lifetime can be varied independently from the particle width. This 
+capability is useful for simulating models of long-lived particles 
+where the dependence of a signature on the particle width is 
+negligible. 
+</methodmore> 
+ 
 <method name="void ParticleData::isResonance(int id, bool isResonance)"> 
 </method> 
 <methodmore name="bool ParticleData::isResonance(int id)"> 
@@ -1211,6 +1234,18 @@ the nominal proper lifetime <ei>tau_0</ei> (in mm/c). Second argument of
 input method for internal use only. 
 </methodmore> 
  
+<method name="void ParticleDataEntry::setTauCalc(bool tauCalc)"> 
+</method> 
+<methodmore name="bool ParticleDataEntry::tauCalc()"> 
+a flag telling whether the nominal proper lifetime <ei>tau_0</ei> 
+should be calculated from the particle width, <ei>mWidth</ei>, at 
+initialization (the default behavior). If set false, then the proper 
+lifetime can be varied independently from the particle width. This 
+capability is useful for simulating models of long-lived particles 
+where the dependence of a signature on the particle width is 
+negligible. 
+</methodmore> 
+ 
 <method name="void ParticleDataEntry::setIsResonance(bool isResonance)"> 
 </method> 
 <methodmore name="bool ParticleDataEntry::isResonance()"> 
@@ -1573,4 +1608,4 @@ positive and negative particles. For internal use.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // GammaKinematics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,34 +19,24 @@ namespace Pythia8 {
 
 // Initialize phase space limits.
 
-bool GammaKinematics::init(Info* infoPtrIn, Settings* settingsPtrIn,
-  Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  Couplings* couplingsPtrIn){
-
-  // Store input pointers for future use.
-  infoPtr       = infoPtrIn;
-  settingsPtr   = settingsPtrIn;
-  rndmPtr       = rndmPtrIn;
-  beamAPtr      = beamAPtrIn;
-  beamBPtr      = beamBPtrIn;
-  couplingsPtr  = couplingsPtrIn;
+bool GammaKinematics::init() {
 
   // Rejection based on theta only when beams set in CM frame.
-  bool rejectTheta = settingsPtr->mode("Beams:frameType") == 1;
+  bool rejectTheta = mode("Beams:frameType") == 1;
 
   // Save the applied cuts.
-  Q2maxGamma    = settingsPtr->parm("Photon:Q2max");
-  Wmin          = settingsPtr->parm("Photon:Wmin");
-  Wmax          = settingsPtr->parm("Photon:Wmax");
-  theta1Max     = rejectTheta ? settingsPtr->parm("Photon:thetaAMax") : -1.0;
-  theta2Max     = rejectTheta ? settingsPtr->parm("Photon:thetaBMax") : -1.0;
+  Q2maxGamma    = parm("Photon:Q2max");
+  Wmin          = parm("Photon:Wmin");
+  Wmax          = parm("Photon:Wmax");
+  theta1Max     = rejectTheta ? parm("Photon:thetaAMax") : -1.0;
+  theta2Max     = rejectTheta ? parm("Photon:thetaBMax") : -1.0;
 
   // Initial choice for the process type and whether to use external flux.
-  gammaMode     = settingsPtr->mode("Photon:ProcessType");
-  externalFlux  = settingsPtr->mode("PDF:lepton2gammaSet") == 2;
+  gammaMode     = mode("Photon:ProcessType");
+  externalFlux  = mode("PDF:lepton2gammaSet") == 2;
 
   // Flag from virtuality sampling.
-  sampleQ2      = settingsPtr->flag("Photon:sampleQ2");
+  sampleQ2      = flag("Photon:sampleQ2");
 
   // Check if photons from both beams or only from one beam.
   hasGammaA = beamAPtr->isLepton();
@@ -106,11 +96,11 @@ bool GammaKinematics::sampleKTgamma(bool nonDiff) {
   gammaMode = infoPtr->photonMode();
 
   // Reject already sampled x_gamma values outside kinematic bounds.
-  if ( hasGammaA && (!externalFlux || ( externalFlux
-    && (gammaMode == 3 || gammaMode == 4) ) ) && (xGamma1 > xGammaMax1) )
+  if ( hasGammaA && (!externalFlux || (gammaMode == 3 || gammaMode == 4) )
+       && (xGamma1 > xGammaMax1) )
        return false;
-  if ( hasGammaB && (!externalFlux || ( externalFlux
-    && (gammaMode == 2 || gammaMode == 4) ) ) && (xGamma2 > xGammaMax2) )
+  if ( hasGammaB && (!externalFlux || (gammaMode == 2 || gammaMode == 4) )
+       && (xGamma2 > xGammaMax2) )
        return false;
 
   // Sample virtuality for photon A.
@@ -348,8 +338,8 @@ double GammaKinematics::setupSoftPhaseSpaceSampling(double sigmaMax) {
 
   // Classification, constant and initial value.
   sigmaEstimate    = 0.;
-  bool hasGamma    = settingsPtr->flag("PDF:lepton2gamma");
-  alphaEM          = couplingsPtr->alphaEM(Q2maxGamma);
+  bool hasGamma    = flag("PDF:lepton2gamma");
+  alphaEM          = coupSMPtr->alphaEM(Q2maxGamma);
   gammaA  = beamAPtr->isGamma() || (beamAPtr->isLepton() && hasGamma);
   gammaB  = beamBPtr->isGamma() || (beamBPtr->isLepton() && hasGamma);
 
@@ -489,9 +479,9 @@ bool GammaKinematics::trialKinSoftPhaseSpaceSampling(){
 
   // Correct for alpha_EM with the sampled Q2 values.
   double wtAlphaEM1 = (gammaA && !externalFlux)
-                    ? couplingsPtr->alphaEM(Q2gamma1) / alphaEM : 1.;
+                    ? coupSMPtr->alphaEM(Q2gamma1) / alphaEM : 1.;
   double wtAlphaEM2 = (gammaB && !externalFlux)
-                    ? couplingsPtr->alphaEM(Q2gamma2) / alphaEM : 1.;
+                    ? coupSMPtr->alphaEM(Q2gamma2) / alphaEM : 1.;
   double wtAlphaEM  = wtAlphaEM1 * wtAlphaEM2;
 
   wt = wt1 * wt2 * wtAlphaEM;

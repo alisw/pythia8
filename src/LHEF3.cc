@@ -1,5 +1,5 @@
 // LHEF3.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -709,6 +709,7 @@ bool Reader::readEvent(HEPEUP * peup) {
   eup.clear();
   eup.heprup = &heprup;
   weights_detailed_vec.clear();
+  weightnames_detailed_vec.clear();
 
   // Check if the initialization was successful. Otherwise we will
   // not read any events.
@@ -812,6 +813,7 @@ bool Reader::readEvent(HEPEUP * peup) {
           LHAwgt wt(tagnow);
           eup.weights_detailed.insert(make_pair(wt.id, wt.contents));
           weights_detailed_vec.push_back(wt.contents);
+          weightnames_detailed_vec.push_back(wt.id);
         }
       }
       for ( int k = 0, M = tag.tags.size(); k < M; ++k ) {
@@ -820,6 +822,7 @@ bool Reader::readEvent(HEPEUP * peup) {
           LHAwgt wt(tagnow);
           eup.weights_detailed.insert(make_pair(wt.id, wt.contents));
           weights_detailed_vec.push_back(wt.contents);
+          weightnames_detailed_vec.push_back(wt.id);
         }
       }
     }

@@ -112,7 +112,7 @@ descending order,
    
  
 <a name="anchor6"></a>
-<p/><strong> Vec4 Sphericity::eventAxis(i) &nbsp;</strong> <br/>
+<p/><strong> Vec4 Sphericity::eventAxis(int i) &nbsp;</strong> <br/>
 gives the matching normalized eigenvector, as a <code>Vec4</code> 
 with vanishing time/energy component. 
    
@@ -496,7 +496,7 @@ gives the number of jets found, with jets numbered 0 through
    
  
 <a name="anchor31"></a>
-<p/><strong> double CellJet::eT(i) &nbsp;</strong> <br/>
+<p/><strong> double CellJet::eT(int i) &nbsp;</strong> <br/>
 gives the <i>eT</i> of the <i>i</i>'th jet, where jets have been 
 ordered with decreasing <i>eT</i> values, 
    
@@ -770,7 +770,7 @@ transverse momentum values w.r.t. the beam axis,
    
  
 <a name="anchor46"></a>
-<p/><strong> double SlowJet::pT(i) &nbsp;</strong> <br/>
+<p/><strong> double SlowJet::pT(int i) &nbsp;</strong> <br/>
 gives the transverse momentum <i>pT</i> of the <i>i</i>'th jet, 
    
  
@@ -899,7 +899,7 @@ With this extension, the methods <code>double pT(int i)</code>,
 <code>double y(int i)</code>, <code>double phi(int i)</code>, 
 <code>Vec4 p(int i)</code>, <code>double m(int i)</code> and 
 <code>int multiplicity(int i)</code> can be used as before. 
-Further, <code>list()</code> generalizes 
+Furthermore, <code>list()</code> generalizes 
  
 <a name="anchor62"></a>
 <p/><strong> void SlowJet::list(bool listAll = false) &nbsp;</strong> <br/>
@@ -999,4 +999,4 @@ individual particle.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
