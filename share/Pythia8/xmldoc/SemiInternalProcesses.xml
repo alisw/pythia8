@@ -3,7 +3,8 @@
 <h2>Semi-Internal Processes</h2> 
  
 Normally users are expected to implement new processes via the 
-<aloc href="LesHouchesAccord">Les Houches Accord</aloc>. Then 
+<aloc href="LHA">Les Houches Accord</aloc>, or by supplying 
+<aloc href="LHEF">Les Houches Event Files</aloc>. Then 
 you do all flavour, colour and phase-space selection externally, 
 before your process-level events are input for further processing 
 by PYTHIA. However, it is also possible to implement a 
@@ -681,4 +682,4 @@ evaluate the cross-section expressions.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

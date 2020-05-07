@@ -12,9 +12,8 @@
   <li><a href="#section1">Cuts in <ei>2 &rarr; 1</ei> processes</a></li>
   <li><a href="#section2">Cuts in <ei>2 &rarr; 2</ei> processes</a></li>
   <li><a href="#section3">Cuts in <ei>2 &rarr; 3</ei> processes</a></li>
-  <li><a href="#section4">Cuts for a second hard process</a></li>
-  <li><a href="#section5">Generation strategy and documentation</a></li>
-  <li><a href="#section6">Reweighting of <ei>2 &rarr; 2</ei> processes</a></li>
+  <li><a href="#section4">Generation strategy and documentation</a></li>
+  <li><a href="#section5">Reweighting of <ei>2 &rarr; 2</ei> processes</a></li>
 </ol>
 
  
@@ -225,52 +224,6 @@ any two outgoing partons in QCD <i>2 &rarr; 3</i> processes.
  
  
 <a name="section4"></a> 
-<h3>Cuts for a second hard process</h3> 
- 
-If you use the machinery that allows the generation of a specified 
-<a href="ASecondHardProcess.html" target="page">second hard process</a> then, 
-by default, the same phase space cuts will be used for it as listed 
-above. Optionally, however, you may use a second set of cuts, as 
-described here. In this context "first" and "second" is merely a 
-technical distinction; you are welcome e.g. to pick <i>pT</i> ranges 
-such that the second interaction always has a larger <i>pT</i> than 
-the first. 
- 
-<a name="anchor15"></a>
-<p/><code>flag&nbsp; </code><strong> PhaseSpace:sameForSecond &nbsp;</strong> 
- (<code>default = <strong>on</strong></code>)<br/>
-By default use the same cuts for a second hard process as for the 
-first. If <code>off</code> then instead use the mass and <i>pT</i> 
-cuts below, where relevant. (The other cuts above still remain the same.) 
-   
- 
-<a name="anchor16"></a>
-<p/><code>parm&nbsp; </code><strong> PhaseSpace:mHatMinSecond &nbsp;</strong> 
- (<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>)<br/>
-The minimum invariant mass for a second interaction, if separate. 
-   
- 
-<a name="anchor17"></a>
-<p/><code>parm&nbsp; </code><strong> PhaseSpace:mHatMaxSecond &nbsp;</strong> 
- (<code>default = <strong>-1.</strong></code>)<br/>
-The maximum invariant mass for a second interaction, if separate. 
-A value below <code>mHatMin</code> means there is no upper limit. 
-   
- 
-<a name="anchor18"></a>
-<p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHatMinSecond &nbsp;</strong> 
- (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>)<br/>
-The minimum invariant <i>pT</i> for a second interaction, if separate. 
-   
- 
-<a name="anchor19"></a>
-<p/><code>parm&nbsp; </code><strong> PhaseSpace:pTHatMaxSecond &nbsp;</strong> 
- (<code>default = <strong>-1.</strong></code>)<br/>
-The maximum invariant <i>pT</i> for a second interaction, if separate. 
-A value below <code>pTHatMin</code> means there is no upper limit. 
-   
- 
-<a name="section5"></a> 
 <h3>Generation strategy and documentation</h3> 
  
 During the initialization stage a simplified function is found, 
@@ -286,7 +239,7 @@ however. This then can lead to subsequent maximum violations, where the
 ratio is above unity. Two alternative strategies are implemented to 
 handle such situations, see below. 
  
-<a name="anchor20"></a>
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:showSearch &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Possibility to print information on the search for phase-space 
@@ -296,7 +249,7 @@ corresponding upper estimate of the cross section. Of interest
 for crosschecks by expert users only. 
    
  
-<a name="anchor21"></a>
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:showViolation &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Possibility to print information whenever the assumed maximum 
@@ -306,7 +259,7 @@ Also, should negative cross sections occur, print whenever a more
 negative value is encountered. 
    
  
-<a name="anchor22"></a>
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:increaseMaximum &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Strategy for handling cases where a larger cross section is 
@@ -336,7 +289,7 @@ easy to save-and-restore the <a href="RandomNumbers.html" target="page">random-n
 state</a> for debugging purposes. 
    
  
-<a name="section6"></a> 
+<a name="section5"></a> 
 <h3>Reweighting of <i>2 &rarr; 2</i> processes</h3> 
  
 Events normally come with unit weight, i.e. are distributed across 
@@ -380,19 +333,19 @@ As a simplified option, we here offer the possibility to bias the
 <i>2 &rarr; 2</i> sampling by a power of <i>pTHat</i>, then with 
 events having a weight the inverse of this. This fast track will only 
 work under a number of strict conditions, implemented to reduce the 
-risk of abuse. (Whereas a <code>UserHooks</code> setup can be  
+risk of abuse. (Whereas a <code>UserHooks</code> setup can be more 
 flexible.) Specifically it will work if only high-<i>pT</i> 
 <i>2 &rarr; 2</i> processes already implemented in PYTHIA are requested, 
 notably the <code>HardQCD</code> ones. That is, you cannot mix with 
 <i>2 &rarr; 1</i> or <i>2 &rarr; 3</i> processes, nor with external 
 processes (notably Les Houches input) or <code>SoftQCD</code> ones, 
 and  you cannot use the option to define a 
-<a href="ASecondHardProcess.html" target="page">second hard process</a> in 
+<a href="SecondHardProcess.html" target="page">second hard process</a> in 
 the same event. Furthermore you have to be careful about the choice 
 of <code>PhaseSpace:pTHatMin</code>, since a <i>pTHat = 0</i> 
 event would come with an infinite weight. 
  
-<a name="anchor23"></a>
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> PhaseSpace:bias2Selection &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Possibility to switch on a biased phase space sampling, 
@@ -402,7 +355,7 @@ the paragraph above; under other conditions the initialization
 will abort. 
    
  
-<a name="anchor24"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:bias2SelectionPow &nbsp;</strong> 
  (<code>default = <strong>4.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)<br/>
 If the above flag is on, then a <i>2 &rarr; 2</i> process at a scale 
@@ -416,7 +369,7 @@ The final overall normalization also involves the
 <code>Info::weightSum()</code> value. 
    
  
-<a name="anchor25"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> PhaseSpace:bias2SelectionRef &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 1.</code>)<br/>
 The reference scale <i>pTRef</i> introduced above, such that events 
@@ -429,4 +382,4 @@ give "reasonably-sized" weights.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -1,6 +1,6 @@
-<chapter name="Process Selection"> 
+<chapter name="Hard Process Selection"> 
  
-<h2>Process Selection</h2> 
+<h2>Hard Process Selection</h2> 
  
 There is no way PYTHIA could contain all processes of interest, 
 neither in terms of potential physics topics nor in terms of 
@@ -11,7 +11,8 @@ processes beyond that, again for low multiplicities. Combined with
 the PYTHIA parton showers, this should be enough to get a flying 
 start in the study of many physics scenarios. 
 Other processes could be fed in via the 
-<aloc href="LesHouchesAccord">Les Houches Accord</aloc> 
+<aloc href="LHA">Les Houches Accord</aloc> 
+or <aloc href="LHEF">Les Houches Event Files</aloc>, 
 or be implemented as a 
 <aloc href="SemiInternalProcesses">Semi-Internal Process</aloc>. 
 In the latter case the existing processes would act as obvious 
@@ -143,4 +144,4 @@ a few basic processes.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

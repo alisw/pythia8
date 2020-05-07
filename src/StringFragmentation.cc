@@ -1,5 +1,5 @@
 // StringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -314,7 +314,7 @@ Vec4 StringEnd::kinematicsHadronTmp( StringSystem system, Vec4 pRem,
   double meanM    = (mRem > 0.0) ? max( MEANMMIN, min( MEANM, mRem) ) : MEANM;
   double meanMT2  = pow2(meanM) + pow2(MEANPT);
   double GammaNow = (1.0 + aLund) / bLund;
-  // Modify Gamma value in case of ealier fails.
+  // Modify Gamma value in case of earlier fails.
   if (mult > 0.0) GammaNow *= mult;
   double tmp      = ( GammaNow + meanMT2 - GammaOld ) / GammaOld;
   double zPlus    = (-0.5 * tmp + sqrt(0.25 * pow2(tmp) + meanMT2 / GammaOld));
@@ -592,63 +592,38 @@ const double StringFragmentation::CHECKPOS     = 1e-10;
 
 // Initialize and save pointers.
 
-void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, StringFlav* flavSelPtrIn,
-  StringPT* pTSelPtrIn, StringZ* zSelPtrIn, FlavourRope* flavRopePtrIn,
-  UserHooks* userHooksPtrIn) {
+void StringFragmentation::init(StringFlav* flavSelPtrIn,
+  StringPT* pTSelPtrIn, StringZ* zSelPtrIn, FragModPtr fragModPtrIn) {
 
   // Save pointers.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
   flavSelPtr      = flavSelPtrIn;
   pTSelPtr        = pTSelPtrIn;
   zSelPtr         = zSelPtrIn;
-  flavRopePtr     = flavRopePtrIn;
-  userHooksPtr    = userHooksPtrIn;
+  flavRopePtr     = fragModPtrIn;
 
   // Initialize the StringFragmentation class.
-  stopMass        = zSelPtr->stopMass();
-  stopNewFlav     = zSelPtr->stopNewFlav();
-  stopSmear       = zSelPtr->stopSmear();
-  eNormJunction   = settings.parm("StringFragmentation:eNormJunction");
-  eBothLeftJunction
-     = settings.parm("StringFragmentation:eBothLeftJunction");
-  eMaxLeftJunction
-    = settings.parm("StringFragmentation:eMaxLeftJunction");
-  eMinLeftJunction
-    = settings.parm("StringFragmentation:eMinLeftJunction");
+  stopMass          = zSelPtr->stopMass();
+  stopNewFlav       = zSelPtr->stopNewFlav();
+  stopSmear         = zSelPtr->stopSmear();
+  eNormJunction     = parm("StringFragmentation:eNormJunction");
+  eBothLeftJunction = parm("StringFragmentation:eBothLeftJunction");
+  eMaxLeftJunction  = parm("StringFragmentation:eMaxLeftJunction");
+  eMinLeftJunction  = parm("StringFragmentation:eMinLeftJunction");
 
 
   // Calculation and definition of hadron space-time production vertices.
-  hadronVertex    = settings.mode("HadronVertex:mode");
-  setVertices     = settings.flag("Fragmentation:setVertices");
-  kappaVtx        = settings.parm("HadronVertex:kappa");
-  smearOn         = settings.flag("HadronVertex:smearOn");
-  xySmear         = settings.parm("HadronVertex:xySmear");
-  constantTau     = settings.flag("HadronVertex:constantTau");
+  hadronVertex    = mode("HadronVertex:mode");
+  setVertices     = flag("Fragmentation:setVertices");
+  kappaVtx        = parm("HadronVertex:kappa");
+  smearOn         = flag("HadronVertex:smearOn");
+  xySmear         = parm("HadronVertex:xySmear");
+  constantTau     = flag("HadronVertex:constantTau");
 
   // Tracing of colours for primary hadrons.
-  traceColours    = settings.flag("StringFragmentation:TraceColours");
-
-  // Flavour Rope treatment.
-  doFlavRope      = settings.flag("Ropewalk:RopeHadronization")
-                 && settings.flag("Ropewalk:doFlavour");
-
-  // Sanity check of flavour rope and vertex information.
-  if (doFlavRope) {
-    // Flavour ropes requires vertex information, unless an effective
-    // string tension is supplied by hand or Buffon treatment.
-    if (!settings.flag("PartonVertex:setVertex") &&
-      (!settings.flag("Ropewalk:setFixedKappa") &&
-      !settings.flag("Ropewalk:doBuffon")) ) {
-        infoPtr->errorMsg("Error in StringFragmentation::init: "
-          "failed initialization of flavour ropes");
-    }
-  }
+  traceColours    = flag("StringFragmentation:TraceColours");
 
   // Joining of nearby partons along the string.
-  mJoin           = settings.parm("FragmentationSystems:mJoin");
+  mJoin           = parm("FragmentationSystems:mJoin");
 
   // Initialize the b parameter of the z spectrum, used when joining jets.
   bLund           = zSelPtr->bAreaLund();
@@ -658,17 +633,17 @@ void StringFragmentation::init(Info* infoPtrIn, Settings& settings,
   mb              = particleDataPtr->m0(5);
 
   // MPI pT0, used for calculating effective number of strings.
-  pT20            = pow2(settings.parm("MultipartonInteractions:pT0Ref"));
+  pT20            = pow2(parm("MultipartonInteractions:pT0Ref"));
 
   // Initialize the hadrons instance of an event record.
   hadrons.init( "(string fragmentation)", particleDataPtr);
 
   // Send on pointers to the two StringEnd instances.
-  posEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr, settings);
-  negEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr, settings);
+  posEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr, *settingsPtr);
+  negEnd.init( particleDataPtr, flavSelPtr, pTSelPtr, zSelPtr, *settingsPtr);
 
   // Check for number of nearby string pieces (nNSP) or not.
-  closePacking    = settings.flag("StringPT:closePacking");
+  closePacking    = flag("StringPT:closePacking");
 
 }
 
@@ -714,9 +689,6 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
     idNeg  = event.back().id();
     pSum  -= pJunctionHadrons;
   }
-
-  // Set a pointer to the event in Flavour Ropes.
-  if (doFlavRope) flavRopePtr->setEventPtr(event);
 
   // Set up kinematics of string evolution ( = motion).
   system.setUp(iParton, event);
@@ -767,7 +739,7 @@ bool StringFragmentation::fragment( int iSub, ColConfig& colConfig,
       double nNSP = (closePacking) ? nearStringPieces(nowEnd, rapPairs) : 0.;
 
       // The FlavourRope treatment changes the fragmentation parameters.
-      if (doFlavRope) {
+      if (flavRopePtr) {
         if (!flavRopePtr->doChangeFragPar(flavSelPtr, zSelPtr, pTSelPtr,
           (fromPos ? hadMomPos.m2Calc() : hadMomNeg.m2Calc()), iParton,
           (fromPos ? idPos : idNeg)) )
@@ -913,10 +885,12 @@ vector<int> StringFragmentation::findFirstRegion(int iSub,
 
 // Set flavours and momentum position for initial string endpoints.
 
-void StringFragmentation::setStartEnds(int idPos, int idNeg,
+void StringFragmentation::setStartEnds(int idPosIn, int idNegIn,
 StringSystem systemNow, int legNow) {
 
   // Variables characterizing string endpoints: defaults for open string.
+  int    idPos       = idPosIn;
+  int    idNeg       = idNegIn;
   double px          = 0.;
   double py          = 0.;
   double Gamma       = 0.;
@@ -1127,8 +1101,8 @@ void StringFragmentation::setHadronVertices( Event& event) {
             longitudinal[i] = v1 + (pPosMass / mHad) * (v2 - v1);
             if (longitudinal[i].m2Calc()
               < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
-              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
-                "negative tau^2 for endpoint massive correction");
+              infoPtr->errorMsg("Warning in StringFragmentation::set"
+                "Vertices: negative tau^2 for endpoint massive correction");
           } else {
             StringRegion region2 = system.region( iPosIn2, iNegIn2);
             Vec4 gluonOffset = currentRegion.gluonOffset( iPartonIn, event,
@@ -1137,8 +1111,8 @@ void StringFragmentation::setHadronVertices( Event& event) {
             longitudinal[i] = v1 + (pPosMass / mHad) * (v2 - v1);
             if (longitudinal[i].m2Calc()
               < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
-              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
-                "negative tau^2 for endpoint massive correction");
+              infoPtr->errorMsg("Warning in StringFragmentation::set"
+                "Vertices: negative tau^2 for endpoint massive correction");
             continue;
           }
         }
@@ -1156,8 +1130,8 @@ void StringFragmentation::setHadronVertices( Event& event) {
             longitudinal[i] = v1 + (pNegMass / mHad) * (v2 - v1);
             if (longitudinal[i].m2Calc()
               < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
-              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
-                "negative tau^2 for endpoint massive correction");
+              infoPtr->errorMsg("Warning in StringFragmentation::set"
+                "Vertices: negative tau^2 for endpoint massive correction");
 
           } else {
             StringRegion region2 = system.region( iPosIn2, iNegIn2);
@@ -1168,8 +1142,8 @@ void StringFragmentation::setHadronVertices( Event& event) {
             longitudinal[i] = v1 + (pNegMass / mHad) * (v2 - v1);
             if (longitudinal[i].m2Calc()
               < -CHECKPOS * max(1., pow2(longitudinal[i].e())))
-              infoPtr->errorMsg("Warning in StringFragmentation::setVertices: "
-                "negative tau^2 for endpoint massive correction");
+              infoPtr->errorMsg("Warning in StringFragmentation::set"
+                "Vertices: negative tau^2 for endpoint massive correction");
             continue;
           }
         }
@@ -1322,8 +1296,8 @@ void StringFragmentation::setHadronVertices( Event& event) {
               longitudinalPos[i] = v1 + (pPosMass / mHad) * (v2 - v1);
               if (longitudinalPos[i].m2Calc()
                 < -CHECKPOS * max(1., pow2(longitudinalPos[i].e())))
-                infoPtr->errorMsg("Warning in StringFragmentation::setVertices"
-                  ": negative tau^2 for endpoint massive correction");
+                infoPtr->errorMsg("Warning in StringFragmentation::set"
+                  "Vertices: negative tau^2 for endpoint massive correction");
             } else {
               StringRegion region2 = systemNow.region( iPosIn2, iNegIn2);
               Vec4 gluonOffset =  currentRegion.gluonOffsetJRF( iPartonNow,
@@ -1332,8 +1306,8 @@ void StringFragmentation::setHadronVertices( Event& event) {
               longitudinalPos[i] = v1 + (pPosMass / mHad) * (v2 - v1);
               if (longitudinalPos[i].m2Calc()
                 < -CHECKPOS * max(1., pow2(longitudinalPos[i].e())))
-                infoPtr->errorMsg("Warning in StringFragmentation::setVertices"
-                  ": negative tau^2 for endpoint massive correction");
+                infoPtr->errorMsg("Warning in StringFragmentation::set"
+                  "Vertices: negative tau^2 for endpoint massive correction");
               continue;
             }
           }
@@ -2091,7 +2065,7 @@ bool StringFragmentation::fragmentToJunction(Event& event) {
           for ( ; ; ++nHadrons) {
 
             // The FlavourRope treatment changes the fragmentation parameters.
-            if (doFlavRope) {
+            if (flavRopePtr) {
               if (!flavRopePtr->doChangeFragPar(flavSelPtr, zSelPtr, pTSelPtr,
                 hadMom.m2Calc(), (legLoop == 0 ? iPartonMin : iPartonMid ),
                 idPos )) infoPtr->errorMsg("Error in StringFragmentation::"

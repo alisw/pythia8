@@ -1,5 +1,5 @@
 // BeamParticle.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,6 +16,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
@@ -113,15 +114,28 @@ private:
 
 //==========================================================================
 
+// The xfModPrepData struct saves information on the amount of x already used,
+// to speed up PDF evaluation.
+
+typedef struct {
+  double xValTot;
+  double xValLeft;
+  double xLeft;
+  double xCompAdded;
+  double rescaleGS;
+} xfModPrepData;
+
+//==========================================================================
+
 // This class holds info on a beam particle in the evolution of
 // initial-state radiation and multiparton interactions.
 
-class BeamParticle {
+class BeamParticle : public PhysicsBase {
 
 public:
 
   // Constructor.
-  BeamParticle() : infoPtr(), particleDataPtr(), rndmPtr(), pdfBeamPtr(),
+  BeamParticle() : pdfBeamPtr(),
     pdfHardBeamPtr(), pdfUnresBeamPtr(), pdfBeamPtrSave(),
     pdfHardBeamPtrSave(), flavSelPtr(), allowJunction(), beamJunction(),
     maxValQuark(), companionPower(), valencePowerMeson(), valencePowerUinP(),
@@ -134,23 +148,22 @@ public:
     xqCompSum(), doISR(), doMPI(), doND(), isResolvedGamma(),
     hasResGammaInBeam(), isResUnres(), hasVMDstateInBeam(), pTminISR(),
     pTminMPI(), pT2gm2qqbar(), iGamVal(), iPosVal(), gammaMode(), xGm(),
-    Q2gm(), kTgamma(), phiGamma(), resolved(), nInit(0), hasJunctionBeam(),
-    junCol(), nJuncs(), nAjuncs(), nDiffJuncs(), allowBeamJunctions(),
-    Q2ValFracSav(-1.), uValInt(), dValInt(), idVal1(), idVal2(), idVal3(),
-    zRel(), pxRel(), pyRel() { }
+    Q2gm(), kTgamma(), phiGamma(), cPowerCache(-100), xsCache(-1), resCache(),
+    resolved(), nInit(0), hasJunctionBeam(), junCol(), nJuncs(), nAjuncs(),
+    nDiffJuncs(), allowBeamJunctions(), Q2ValFracSav(-1.), uValInt(),
+    dValInt(), idVal1(), idVal2(), idVal3(), zRel(), pxRel(), pyRel() { }
 
   // Initialize data on a beam particle and save pointers.
   void init( int idIn, double pzIn, double eIn, double mIn,
-    Info* infoPtrIn, Settings& settings, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, PDF* pdfInPtr, PDF* pdfHardInPtr, bool isUnresolvedIn,
+    PDFPtr pdfInPtr, PDFPtr pdfHardInPtr, bool isUnresolvedIn,
     StringFlav* flavSelPtrIn);
 
   // Initialize only the two pdf pointers.
-  void initPDFPtr(PDF* pdfInPtr, PDF* pdfHardInPtr) {
+  void initPDFPtr(PDFPtr pdfInPtr, PDFPtr pdfHardInPtr) {
     pdfBeamPtr = pdfInPtr; pdfHardBeamPtr = pdfHardInPtr; }
 
   // Initialize additional PDF pointer for unresolved beam.
-  void initUnres(PDF* pdfUnresInPtr);
+  void initUnres(PDFPtr pdfUnresInPtr);
 
   // For mesons like pi0 valence content varies from event to event.
   void newValenceContent();
@@ -218,10 +231,16 @@ public:
 
   // Rescaled parton distributions, as needed for MPI and ISR.
   // For ISR also allow split valence/sea, and only return relevant part.
+  double xfMPI(int idIn, double x, double Q2, xfModPrepData& xfData)
+    {return xfISR(-1, idIn, x, Q2, xfData);}
   double xfMPI(int idIn, double x, double Q2)
-    {return xfModified(-1, idIn, x, Q2);}
+    {xfModPrepData xfData = xfModPrep(-1, Q2);
+    return xfISR(-1, idIn, x, Q2, xfData);}
+  double xfISR(int indexMPI, int idIn, double x, double Q2,
+    xfModPrepData& xfData) {return xfModified( indexMPI, idIn, x, Q2, xfData);}
   double xfISR(int indexMPI, int idIn, double x, double Q2)
-    {return xfModified( indexMPI, idIn, x, Q2);}
+    {xfModPrepData xfData= xfModPrep(indexMPI, Q2);
+    return xfModified( indexMPI, idIn, x, Q2, xfData);}
 
   // Check whether x and Q2 values fall inside the fit bounds (LHAPDF6 only).
   bool insideBounds(double x, double Q2)
@@ -416,29 +435,23 @@ public:
   double sampleQ2gamma(double Q2min)
     { Q2gm = pdfHardBeamPtr->sampleQ2gamma(Q2min); return Q2gm;}
 
+  // Prepare data on how much x has been used, for speedup of PDF evaluation.
+  xfModPrepData xfModPrep( int iSkip, double Q2);
+
 private:
 
   // Constants: could only be changed in the code itself.
   static const double XMINUNRESOLVED, POMERONMASS, XMAXCOMPANION, TINYZREL;
   static const int NMAX, NRANDOMTRIES;
 
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
-
   // Pointers to PDF sets.
-  PDF*          pdfBeamPtr;
-  PDF*          pdfHardBeamPtr;
+  PDFPtr          pdfBeamPtr;
+  PDFPtr          pdfHardBeamPtr;
 
   // Pointer to unresolved PDF and two others to save the resolved ptrs.
-  PDF*          pdfUnresBeamPtr;
-  PDF*          pdfBeamPtrSave;
-  PDF*          pdfHardBeamPtrSave;
+  PDFPtr          pdfUnresBeamPtr;
+  PDFPtr          pdfBeamPtrSave;
+  PDFPtr          pdfHardBeamPtrSave;
 
   // Pointer to class for flavour generation.
   StringFlav*   flavSelPtr;
@@ -474,6 +487,10 @@ private:
   // Variables for photon from lepton.
   double xGm, Q2gm, kTgamma, phiGamma;
 
+  // Cache values for xCompFrac method.
+  int    cPowerCache;
+  double xsCache, resCache;
+
   // The list of resolved partons.
   vector<ResolvedParton> resolved;
 
@@ -490,8 +507,14 @@ private:
   int nJuncs, nAjuncs, nDiffJuncs;
   bool allowBeamJunctions;
 
-  // Routine to calculate pdf's given previous interactions.
-  double xfModified( int iSkip, int idIn, double x, double Q2);
+  // Routine to calculate PDFs given previous interactions.
+  double xfModified( int iSkip, int idIn, double x, double Q2) {
+    xfModPrepData xfData = xfModPrep(iSkip, Q2);
+    return xfModified(iSkip, idIn, x, Q2, xfData);}
+  double xfModified( int iSkip, int idIn, double x, double Q2,
+    xfModPrepData& data);
+  // In case of resolved.size() === 0.
+  double xfModified0( int iSkip, int idIn, double x, double Q2);
 
   // Fraction of hadron momentum sitting in a valence quark distribution.
   double xValFrac(int j, double Q2);

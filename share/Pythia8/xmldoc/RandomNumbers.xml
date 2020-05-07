@@ -144,6 +144,12 @@ generate a pair of random numbers according to
 to <code>gauss()</code>. 
 </method> 
  
+<method name="pair&lt;Vec4, Vec4&gt; Rndm::phaseSpace2(double eCM, double m1, 
+double m2)"> 
+generate a pair of vectors according to the phase space distribution of two 
+particles at the specified eCM and with the specified masses. 
+</method> 
+ 
 <method name="int Rndm::pick(const vector&lt;double&gt;&amp; prob)"> 
 pick one option among vector of (positive) probabilities. 
 </method> 
@@ -169,4 +175,4 @@ to give a random number between 0 and 1.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

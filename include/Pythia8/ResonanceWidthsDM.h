@@ -1,5 +1,5 @@
 // ResonanceWidthsDM.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -25,24 +25,24 @@ class ResonanceS : public ResonanceWidths {
 public:
 
   // Constructor and destructor.
-  ResonanceS(int idResIn) : gq(), gX(), preFac(), alpS(), pScalar()
+  ResonanceS(int idResIn) : ResonanceWidths(), gq(), gX(), pScalar()
     {initBasic(idResIn);}
   virtual ~ResonanceS() {}
 
 private:
 
   // Couplings etc.
-  double gq, gX, preFac, alpS;
+  double gq, gX;
   bool pScalar;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
   // Loop integral for H -> gg coupling.
   virtual double eta2gg();
@@ -58,23 +58,23 @@ class ResonanceZp : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceZp(int idResIn) : kinMix(), gZp(), eps(), vX(), aX(), vu(), vd(),
-    vl(), vv(), au(), ad(), al(), av(), preFac() {initBasic(idResIn);}
+  ResonanceZp(int idResIn) : ResonanceWidths(), kinMix(), gZp(), eps(), vX(),
+    aX(), vu(), vd(), vl(), vv(), au(), ad(), al(), av() {initBasic(idResIn);}
 
 private:
 
   // Couplings etc.
   bool kinMix;
-  double gZp, eps, vX, aX, vu, vd, vl, vv, au, ad, al, av, preFac;
+  double gZp, eps, vX, aX, vu, vd, vl, vv, au, ad, al, av;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -95,13 +95,13 @@ private:
   double yuk[4];
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -114,13 +114,13 @@ class ResonanceCha : public ResonanceWidths {
 public:
 
   // Constructor.
-  ResonanceCha(int idResIn) : preFac(), mixN1(), mixN2(), mixing(), doDY()
-    {initBasic(idResIn);}
+  ResonanceCha(int idResIn) : ResonanceWidths(), mixN1(), mixN2(), mixing(),
+    doDY() {initBasic(idResIn);}
 
 protected:
 
   // Couplings etc.
-  double preFac, mixN1, mixN2, mixing;
+  double mixN1, mixN2, mixing;
   bool   doDY;
 
   // Set masses and mixing from settings.
@@ -129,13 +129,13 @@ protected:
 private:
 
   // Initialize constants.
-  virtual void initConstants() {setMassMix(); return;}
+  virtual void initConstants() override {setMassMix();}
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -158,13 +158,13 @@ private:
   double mHiggs, wHiggs;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -177,22 +177,18 @@ class ResonanceChaD : public ResonanceCha {
 public:
 
   // Constructor.
-  ResonanceChaD(int idResIn) : ResonanceCha(idResIn), preFac()
-    {initBasic(idResIn);}
+  ResonanceChaD(int idResIn) : ResonanceCha(idResIn) {initBasic(idResIn);}
 
 private:
 
-  // Couplings etc.
-  double preFac;
-
   // Initialize constants.
-  virtual void initConstants() {setMassMix();}
+  virtual void initConstants() override {setMassMix();}
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 

@@ -171,6 +171,15 @@ four-vector, as provided by <code>mCalc()</code> above, and it all
 ended with a newline. 
 </method> 
  
+<method name="friend bool isnan(const Vec4& v)">
+</method> 
+<methodmore name="friend double isinf(const Vec4& v)"> 
+returns true if any of the four elements is not a number or infinite. 
+</methodmore> 
+<methodmore name="friend bool isnan(const Vec4& v)">
+returns true if all four elements are finite.
+</methodmore> 
+ 
 <method name="friend double m(const Vec4& v1, const Vec4& v2)"> 
 </method> 
 <methodmore name="friend double m2(const Vec4& v1, const Vec4& v2)"> 
@@ -521,4 +530,4 @@ when in the rest frame.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -1,6 +1,6 @@
 
 // SusyCouplings.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -24,24 +24,23 @@ class ParticleData;
 // CoupSUSY
 // Auxiliary class to compute and store various SM and SUSY couplings.
 
-class CoupSUSY : public Couplings{
+class CoupSUSY {
 
 public:
 
   // Constructor
-  CoupSUSY() : Couplings(true), isInit(false), isNMSSM(false),
+  CoupSUSY() : isInit(false), isSUSY(false), isNMSSM(false),
     isLLE(false), isLQD(false), isUDD(false), mWpole(), wWpole(), mZpole(),
     wZpole(), mW(), mZ(), sin2W(), sinW(), cosW(), tanb(), cosb(), sinb(),
     muHiggs(), alphaHiggs(), mAHiggs(), LqqZ(), RqqZ(), LllZ(), RllZ(),
     rvLLE(), rvLQD(), rvUDD(), slhaPtr(), infoPtr(), settingsPtr(),
-    particleDataPtr() {}
+    particleDataPtr(), coupSMPtr() {}
 
   // Initialize
-  void initSUSY(SusyLesHouches* slhaPtrIn, Info* infoPtrIn,
-    ParticleData* particleDataPtrIn, Settings* settingsPtrIn);
+  void initSUSY(SusyLesHouches* slhaPtrIn, Info* infoPtrIn);
 
   // Status flag. Flags for NMSSM and RPV couplings.
-  bool isInit, isNMSSM, isLLE, isLQD, isUDD;
+  bool isInit, isSUSY, isNMSSM, isLLE, isLQD, isUDD;
 
   // Z and W pole masses and widths
   double mWpole, wWpole, mZpole, wZpole;
@@ -161,8 +160,6 @@ public:
   SusyLesHouches* slhaPtr;
 
 private:
-  // Debug flag
-  static const bool DBSUSY;
 
   // Pointer to the info class
   Info*          infoPtr;
@@ -172,6 +169,9 @@ private:
 
   // Pointer to the particle data table.
   ParticleData*  particleDataPtr;
+
+  // Pointer to the Standard Model couplings.
+  CoupSM*        coupSMPtr;
 
 };
 

@@ -2,9 +2,10 @@
  
 <h2>Event Information</h2> 
  
-The <code>Info</code> class collects various one-of-a-kind information, 
-some relevant for all events and others for the current event. 
-An object <code>info</code> is a public member of the <code>Pythia</code> 
+The <code>Info</code> class collects various one-of-a-kind 
+information, some relevant for all events and others for the current 
+event.  An object <code>info</code> is a public member of the 
+<code>Pythia</code> 
 class, so if you e.g. have declared <code>Pythia pythia</code>, the 
 <code>Info</code> methods can be accessed by 
 <code>pythia.info.method()</code>. Most of this is information that 
@@ -12,6 +13,11 @@ could also be obtained e.g. from the event record, but is here more
 directly available. It is primarily intended for processes generated 
 internally in PYTHIA, but many of the methods would work also for 
 events fed in via the Les Houches Accord. 
+ 
+<p/> 
+Note that further <code>Info</code> methods related to cross sections 
+and event weights are collected on the 
+<aloc  href="CrossSectionsAndWeights">Cross Sections and Weights</aloc> page. 
  
 <h3>List information</h3> 
  
@@ -330,9 +336,9 @@ subsystems. This argument can take four values:
 <li>0 : default argument, used for normal nondiffractive events or 
 the primary elastic/diffractive process (see above); </li> 
 <li>1 : the <ei>X1</ei> system in single diffraction 
-<ei>A B &rarr; X1 B</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>; </li> 
+<ei>A B &rarr; X1 B</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>;</li> 
 <li>2 : the <ei>X2</ei> system in single diffraction 
-<ei>A B &rarr; A X2</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>; </li> 
+<ei>A B &rarr; A X2</ei> or double diffraction <ei>A B &rarr; X1 X2</ei>;</li> 
 <li>3 : the <ei>X</ei> system in central diffraction 
 <ei>A B &rarr; A X B</ei>. </li> 
 </ul> 
@@ -394,44 +400,7 @@ Type of photon process, see
 <aloc href="Photoproduction">Photoproduction</aloc> for details. 
 </method> 
  
-<h3>Event weight and activity</h3> 
- 
-<method name="double Info::weight()"> 
-weight assigned to the current event. Is normally 1 and thus 
-uninteresting. However, there are several cases where one may have 
-nontrivial event weights. These weights must the be used e.g. when 
-filling histograms. 
-<br/>(i) In the <code><aloc href="PhaseSpaceCuts"> 
-PhaseSpace:increaseMaximum = off</aloc></code> default strategy, 
-an event with a differential cross-section above the assumed one 
-(in a given phase-space point) is assigned a weight correspondingly 
-above unity. This should happen only very rarely, if at all, and so 
-could normally be disregarded. 
-<br/>(ii) The <aloc href="UserHooks">User Hooks</aloc> class offers 
-the possibility to bias the selection of phase space points, which 
-means that events come with a compensating weight, stored here. 
-<br/>(iii) For Les Houches events some strategies allow negative weights, 
-which then after unweighting lead to events with weight -1. There are 
-also Les Houches strategies where no unweighting is done, so events 
-come with a weight. Specifically, for strategies <ei>+4</ei> and 
-<ei>-4</ei>, the event weight is in units of pb. (Internally in mb, 
-but converted at output.) 
-</method> 
- 
-<method name="double Info::weightSum()"> 
-Sum of weights accumulated during the run. For unweighted events this 
-agrees with the number of generated events. In order to obtain 
-histograms normalized "per event", at the end of a run, histogram 
-contents should be divided by this weight. (And additionally 
-divided by the bin width.) Normalization to cross section also 
-required multiplication by <code>sigmaGen()</code> below. 
-</method> 
- 
-<method name="int Info::lhaStrategy()"> 
-normally 0, but if Les Houches events are input then it gives the 
-event weighting strategy, see 
-<aloc href="LesHouchesAccord">Les Houches Accord</aloc>. 
-</method> 
+<h3>Event activity</h3> 
  
 <method name="int Info::nISR()"> 
 </method> 
@@ -457,27 +426,6 @@ evolution will run down from these scales.
 The current <ei>pT</ei> scale in the combined MPI, ISR and FSR evolution. 
 Useful for classification in <aloc href="UserHooks">user hooks</aloc>, 
 but not once the event has been evolved. 
-</method> 
- 
-<method name="double Info::mergingWeight()"> 
-combined leading-order merging weight assigned to the current event, if 
-tree-level multi-jet merging (i.e. 
-<aloc href="CKKWLMerging"> CKKW-L</aloc> or 
-<aloc href="UMEPSMerging"> UMEPS</aloc> merging) is attempted. 
-If tree-level multi-jet merging is performed, all histograms should be 
-filled with this weight, as discussed in 
-<aloc href="CKKWLMerging"> CKKW-L Merging</aloc> and 
-<aloc href="UMEPSMerging"> UMEPS Merging</aloc>. 
-</method> 
- 
-<method name="double Info::mergingWeightNLO()"> 
-combined NLO merging weight assigned to the current event, if 
-NLO multi-jet merging (i.e. 
-<aloc href="NLOMerging"> NL<sup>3</sup></aloc> or 
-<aloc href="NLOMerging"> UNLOPS</aloc> merging) is attempted. 
-If NLO multi-jet merging is performed, all histograms should be filled 
-with this weight, as discussed in 
-<aloc href="NLOMerging"> NLO Merging</aloc>. 
 </method> 
  
 <h3>Multiparton interactions</h3> 
@@ -567,53 +515,6 @@ afterwards overwritten when the Pomeron-hadron subcollision is considered.
 In such cases the old hadron-hadron values can be found here, while 
 <code>bMPI</code>, <code>enhanceMPI</code> and <code>enhanceMPIavg</code> 
 provide the new Pomeron-hadron ones. 
-</methodmore> 
- 
-<h3>Cross sections</h3> 
- 
-Here are the currently available methods related to the event sample 
-as a whole, for the default value <code>i = 0</code>, and otherwise for 
-the specific process code provided as argument. This is the number 
-obtained with <code>Info::code()</code>, while the further subdivision 
-given by <code>Info::codeSub()</code> is not bookkept. While continuously 
-updated during the run, it is recommended only to study these properties 
-at the end of the event generation, when the full statistics is available. 
-The individual process results are not available if 
-<aloc href="ASecondHardProcess">a second hard process</aloc> has been 
-chosen, but can be gleaned from the <code>pythia.stat()</code> output. 
- 
-<method name="vector&lt;int&gt; Info::codesHard()"> 
-returns a vector with all the process codes set up for the current run, 
-i.e. the valid nonzero arguments for the five methods below. 
-</method> 
- 
-<method name="string Info::nameProc(int i = 0)"> 
-returns the process name for process code <code>i</code>. 
-</method> 
- 
-<method name="long Info::nTried(int i = 0)"> 
-</method> 
-<methodmore name="long Info::nSelected(int i = 0)"> 
-</methodmore> 
-<methodmore name="long Info::nAccepted(int i = 0)"> 
-the total number of tried phase-space points, selected hard processes 
-and finally accepted events, summed over all allowed processes 
-(<code>i = 0</code>) or for the given process. 
-The first number is only intended for a study of the phase-space selection 
-efficiency. The last two numbers usually only disagree if the user introduces 
-some veto during the event-generation process; then the former is the number 
-of acceptable events found by PYTHIA and the latter the number that also 
-were approved by the user. If you set <aloc href="ASecondHardProcess">a 
-second hard process</aloc> there may also be a mismatch. 
-</methodmore> 
- 
-<method name="double Info::sigmaGen(int i = 0)"> 
-</method> 
-<methodmore name="double Info::sigmaErr(int i = 0)"> 
-the estimated cross section and its estimated error, 
-summed over all allowed processes (<code>i = 0</code>) or for the given 
-process, in units of mb. The numbers refer to the accepted event sample 
-above, i.e. after any user veto. 
 </methodmore> 
  
 <h3>Loop counters</h3> 
@@ -774,227 +675,21 @@ set/get value of <ei>z</ei> in latest ISR branching.
 set/get value of <ei>pT^2</ei> in latest ISR branching. 
 </methodmore> 
  
-<h3>Les Houches Event File 3.0 information</h3> 
+<h3>Les Houches Event File information</h3> 
  
-Les Houches Event files can conform to version 1.0 and version 3.0 
-of the standard (version 2.0 having been extended to 3.0). The LHEF version 
-of an input file can can be accessed by 
-<br/><methodmore name="int Info::LHEFversion()"> 
-</methodmore> 
- 
-<p/> 
-The <code>Info</code> class also provides a suitable interface to 
+Since the <code>Info</code> class is one of the main interfaces between 
+the PYTHIA generation and the user, it also handles the retrieval of 
+information that is passed to PYTHIA through input Les Houches Event 
+files. 
+The <code>Info</code> class further provides the interface to 
 the information stored after reading Les Houches Event files in the 
 updated format <ref>But14</ref>. An example main program using LHEF 3.0 
 information is <code>main38.cc</code>. 
  
-<p/> 
-LHEF 3.0 offers new features both in the initialisation and the event sections 
-of the input files. Possible information include extended 
-use of XML tags in the <code>&lt;header&gt;</code> and 
-<code>&lt;init&gt;</code> blocks.  The LHEF 3.0 information is stored 
-in a series <code>struct</code>'s: 
- 
-<p/> 
- -- &nbsp; &nbsp; The <code>&lt;initrwgt&gt;</code> tag is a container 
- tag for weight and weightgroup tags.   This information is stored 
- internally in <code>LHAinitrwgt</code>. 
- Currently, there is no dedicated 
- output for this tag. However, all the information stored in the tag can 
- be retrieved by using the <code>Info</code> class member pointer 
- <code>LHAinitrwgt Info::initrwgt</code>. 
- 
-<p/> 
- -- &nbsp; &nbsp; Multiple <code>&lt;weightgroup&gt;</code> tags: 
- Container tag for weight tags. Currently, there is no dedicated 
- output for this tag. However, all the information stored in the tag can 
- be retrieved by using the <code>Info</code> class member pointer 
- <code>vector&lt;LHAweightgroups&gt; * Info::weightgroups</code>. 
- 
-<p/> 
- -- &nbsp; &nbsp; Multiple <code>&lt;weight&gt;</code> tags: Tag defining 
- auxiliary information on an event weight, e.g. the identifier and information 
- on what the weight represents. All the information stored in the tag can 
- be retrieved by using the <code>Info</code> class member pointer 
- <code>vector&lt;LHAweightgroups&gt; * Info::init_weights</code>. This vector 
- contains all <code>&lt;weight&gt;</code> tags in the 
- <code>&lt;initrwgt&gt;</code> container and its subcontainer 
- <code>&lt;weightgroup&gt;</code> tags. The size of the vector can be accessed 
- through the method 
-<br/><methodmore name="int Info::getInitrwgtSize()"> 
-</methodmore> 
- 
-<p/> 
- -- &nbsp; &nbsp; Multiple <code>&lt;generator&gt;</code> tags: Store 
- information on the generators used in the event generation. All the 
- information stored in the tag can be retrieved by using the 
- <code>Info</code> class member pointer 
- <code>vector&lt;LHAgenerators&gt; * Info::generators</code>. More easy-to-use 
- output functions are available. The size of this vector can be obtained from 
-<br/><methodmore name="int Info::getGeneratorSize()"> 
-</methodmore> 
- 
-<p/> 
-The complete header can be obtained with the <code>Info</code> class 
-member <code>string getHeaderBlock()</code>. 
- 
-<p/> 
-The contents of a <code>&lt;generator&gt;</code> tag can be accessed through 
-the method 
-<br/><methodmore name="string Info::getGeneratorValue(unsigned int n = 0)"> 
-Return the contents of the n'th <code>&lt;generator&gt;</code> tag in 
-the vector of tags. 
-</methodmore> 
- 
-<p/> 
-Attributes of the <code>&lt;generator&gt;</code> tag (e.g. the generator 
-<code>name</code> and <code>version</code>) can be accessed via 
-<br/><methodmore name="string Info::getGeneratorAttribute(unsigned int n, string key, bool doRemoveWhitespace = false)"> 
-Return the value of the generator attribute named <code>key</code> for 
-the n'th generator in the vector. Setting <code>doRemoveWhitespace</code> to 
-true will return the value, stripped of any whitespace. An empty string is 
-returned if the attribute named <code>key</code> does not exist. 
-</methodmore> 
- 
-<p/> 
-To obtain information on cross sections, the following two methods can be 
-used 
-<br/><methodmore name="int Info::nProcessesLHEF()"> 
-return the number of processes for which the cross section is stored. 
-</methodmore> 
-<br/><methodmore name="double Info::sigmaLHEF(int iProcess)"> 
-return the cross section of the <code>iProcess</code>'th process. 
-</methodmore> 
- 
-<p/> 
-Possible information also includes extended use of XML tags in the 
-<code>&lt;event&gt;</code> blocks: 
- 
-<p/> 
- -- &nbsp; &nbsp; The <code>&lt;rwgt&gt;</code> tag is a container 
- tag for wgt tags. Currently, there is no dedicated 
- output for this tag. It can however be retrieved by using the 
- <code>Info</code> class member pointer 
- <code>LHArwgt Info::rwgt</code>. 
- 
-<p/> 
- -- &nbsp; &nbsp; Multiple <code>&lt;wgt&gt;</code> tags: Tag defining 
- the event weight in the detailed version of LHEF 3.0.  All the information 
- stored in the tag can be retrieved by using the <code>Info</code> class 
- member pointer <code>vector&lt;LHAwgt&gt; * Info::weights_detailed</code>. 
- More easy-to-use output functions are available. The size of this vector 
- can be obtained from 
-<br/><methodmore name="unsigned int Info::getWeightsDetailedSize()"> 
-</methodmore> 
- 
-<p/> 
-A convenient access point to the information stored in the 
-<code>&lt;wgt&gt;</code> tags is the <code>Info</code> class member 
-<code>vector&lt;double&gt; Info::weights_detailed_vector</code>. The 
-entries of this vector are ordered according to how <code>&lt;wgt&gt;</code> 
-tags appear in the event block. 
- 
-<p/> 
-The contents of a <code>&lt;wgt&gt;</code> tag can be accessed through the 
-method 
-<br/><methodmore name="double Info::getWeightsDetailedValue(string n)"> 
-Return the value of the n'th <code>&lt;wgt&gt;</code> tag in the 
-event. 
-</methodmore> 
- 
-<p/> 
-Attributes of the <code>&lt;wgt&gt;</code> tag (e.g. the weight 
-<code>id</code>) can be accessed via 
-<br/><methodmore name="string Info::getWeightsDetailedAttribute(string n, string key, bool doRemoveWhitespace = false)"> 
-Return the value of the wgt attribute named <code>key</code> for 
-the n'th wgt in the vector. Setting <code>doRemoveWhitespace</code> to 
-true will return the value, stripped of any whitespace. An empty string is 
-returned if the attribute named <code>key</code> does not exist. 
-</methodmore> 
- 
-<p/> 
- -- &nbsp; &nbsp; The <code>&lt;weights&gt;</code> tag: Tag containing 
- a vector of <code>double</code> entries for weights in the compressed version 
- of LHEF 3.0. All the information stored in the tag can be retrieved by using 
- the <code>Info</code> class member pointer <code> LHAweights * 
- Info::weights</code> and the vector <code> vector&lt;double&gt; 
- Info::weights_compressed</code>. More easy-to-use output functions are 
- available. The size of this vector can be obtained from 
-<br/><methodmore name="unsigned int Info::getWeightsCompressedSize()"> 
-</methodmore> 
- 
-<p/> 
-The n'th weight can be accessed through the method 
-<br/><methodmore name="double Info::getWeightsCompressedValue(unsigned int n)"> 
-</methodmore> 
- 
-<p/> 
-Attributes of the <code>&lt;weights&gt;</code> tag (not normally used) can be 
-accessed via 
-<br/><methodmore name="string Info::getWeightsCompressedAttribute(string key, bool doRemoveWhitespace = false)"> 
-Return the value of the <code>&lt;weights&gt;</code> tag's attribute 
-named <code>key</code>. Setting <code>doRemoveWhitespace</code> to 
-true will return the value, stripped of any whitespace. An empty string is 
-returned if the attribute named <code>key</code> does not exist. 
-</methodmore> 
- 
-<p/> 
- -- &nbsp; &nbsp; The <code>&lt;scales&gt;</code> tag: Contains information 
- on different scales used by the matrix element generator. All the information 
- stored in the tag can be retrieved by using the <code>Info</code> class 
- member pointer <code> LHAweights * Info::scales</code>. More easy-to-use 
- output functions are available. The contents of the scales tag can be 
- obtained from 
-<br/><methodmore name="string Info::getScalesValue()"> 
-</methodmore> 
- 
-<p/> 
-However, note that the actual scale values are stored as attributes (called 
-e.g. <code>muf</code> or <code>mur</code>). Attributes of the 
-<code>&lt;scales&gt;</code> tag can be accessed via 
-<br/><methodmore name="double Info::getScalesAttribute(string key)"> 
-Return the value of the <code>&lt;scales&gt;</code> tag's attribute 
-named <code>key</code>. Not-a-number will be returned if the attribute 
-named <code>key</code> does not exist. 
-</methodmore> 
- 
-<p/> 
-Finally, arbitrary attributes of the <code>&lt;event&gt;</code> tag are 
-supported. Attributes of the <code>&lt;event&gt;</code> tag can be accessed by 
-<br/><methodmore name="string Info::getEventAttribute(string key, bool doRemoveWhitespace = false)"> 
-return the value of the event attribute named <code>key</code>. Setting 
-<code>doRemoveWhitespace</code> to true will return the value, stripped of 
-any whitespace. An empty string is returned if the attribute named 
-<code>key</code> does not exist. 
-</methodmore> 
- 
-<p/> 
-Additional comments appearing in the <code>&lt;event&gt;</code> tag 
-can be obtained with the <code>Info</code> class member 
-<code>string getEventComments()</code>. 
- 
-<h3>Header information</h3> 
- 
-A simple string key/value store, mainly intended for accessing 
-information that is stored in the header block of Les Houches Event 
-(LHE) files. In principle, any <code>LHAup</code> derived class can set 
-this header information, which can then be read out later. Although the 
-naming convention is arbitrary, in practice, it is dictated by the 
-XML-like format of LHE files, see <aloc href="LesHouchesAccord"> 
-Les Houches Accord</aloc> for more details. 
- 
-<method name="string Info::header(string key)"> 
-return the header named <code>key</code> 
-</method> 
- 
-<method name="vector &lt;string&gt; Info::headerKeys()"> 
-return a vector of all header key names 
-</method> 
- 
-<method name="void Info::setHeader(string key, string val)"> 
-set the header named <code>key</code> with the contents of <code>val</code> 
-</method> 
+For the documentation of the necessary <code>Info</code> class 
+retrieval functions, please consult the 
+<aloc href="LHEF">Les Houches Event Files </aloc> section. 
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

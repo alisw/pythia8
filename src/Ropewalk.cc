@@ -1,5 +1,5 @@
 // Ropewalk.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,9 +24,9 @@ OverlappingRopeDipole::OverlappingRopeDipole(RopeDipole* d, double m0,
   RotBstMatrix& r) : dipole(d), dir(1) {
 
   // Coordinates in other dipole's rest frame
-  b1 = d->d1Ptr()->getParticlePtr()->vProd();
+  b1 = d->d1Ptr()->getParticlePtr()->vProd() * MM2FM;
   b1.rotbst(r);
-  b2 = d->d2Ptr()->getParticlePtr()->vProd();
+  b2 = d->d2Ptr()->getParticlePtr()->vProd() * MM2FM;
   b2.rotbst(r);
   y1 = d->d1Ptr()->rap(m0,r);
   y2 = d->d2Ptr()->rap(m0,r);
@@ -110,13 +110,12 @@ void RopeDipole::propagateInit(double deltat) {
       "propagate a RopeDipoleEnd with mT = 0");
 
   // New vertices in the lab frame.
-  Vec4 newv1 = Vec4(d1.getParticlePtr()->xProd() + deltat * pcm.px() / mTc,
-                d1.getParticlePtr()->yProd() + deltat * pcm.py() / mTc, 0, 0);
-  Vec4 newv2 = Vec4(d2.getParticlePtr()->xProd() + deltat * pam.px() / mTa,
-                d2.getParticlePtr()->yProd() + deltat * pam.py() / mTa, 0, 0);
+  Vec4 newv1 = Vec4( deltat * pcm.px() / mTc, deltat * pcm.py() / mTc, 0, 0);
+  Vec4 newv2 = Vec4( deltat * pam.px() / mTa, deltat * pam.py() / mTa, 0, 0);
+
   // Set the new vertices deep.
-  d1.getParticlePtr()->vProd(newv1);
-  d2.getParticlePtr()->vProd(newv2);
+  d1.getParticlePtr()->vProdAdd(newv1 * FM2MM);
+  d2.getParticlePtr()->vProdAdd(newv2 * FM2MM);
 
 }
 
@@ -136,11 +135,11 @@ void RopeDipole::propagate(double deltat, double m0) {
     // Propagate excitations.
 
     if (em.pT() > 0.0){
-      Vec4 newVert = Vec4(eItr->second->xProd() + deltat * em.px() / em.pT(),
-                eItr->second->yProd() + deltat * em.py() / em.pT(), 0, 0);
-      eItr->second->vProd(newVert);
+      Vec4 newVert = Vec4( deltat * em.px() / em.pT(),
+        deltat * em.py() / em.pT(), 0, 0);
+      eItr->second->vProdAdd(newVert * FM2MM);
     }
-    else eItr->second->vProd(bInterpolateLab(eItr->first,m0));
+    else eItr->second->vProd( bInterpolateLab(eItr->first,m0) * FM2MM);
   }
 
 }
@@ -352,9 +351,9 @@ Vec4 RopeDipole::dipoleMomentum() {
 
 Vec4 RopeDipole::bInterpolateDip(double y, double m0) {
   if(!hasRotTo) getDipoleRestFrame();
-  Vec4 bb1 = d1.getParticlePtr()->vProd();
+  Vec4 bb1 = d1.getParticlePtr()->vProd() * MM2FM;
   bb1.rotbst(rotTo);
-  Vec4 bb2 = d2.getParticlePtr()->vProd();
+  Vec4 bb2 = d2.getParticlePtr()->vProd() * MM2FM;
   bb2.rotbst(rotTo);
   double y1 = d1.rap(m0,rotTo);
   double y2 = d2.rap(m0,rotTo);
@@ -368,8 +367,8 @@ Vec4 RopeDipole::bInterpolateDip(double y, double m0) {
 
 Vec4 RopeDipole::bInterpolateLab(double y, double m0) {
 
-  Vec4 bb1 = d1.getParticlePtr()->vProd();
-  Vec4 bb2 = d2.getParticlePtr()->vProd();
+  Vec4 bb1 = d1.getParticlePtr()->vProd() * MM2FM;
+  Vec4 bb2 = d2.getParticlePtr()->vProd() * MM2FM;
   double y1 = d1.rap(m0);
   double y2 = d2.rap(m0);
   return bb1 + y * (bb2 - bb1) / (y2 - y1);
@@ -383,8 +382,8 @@ Vec4 RopeDipole::bInterpolateLab(double y, double m0) {
 
 Vec4 RopeDipole::bInterpolate(double y, RotBstMatrix rb, double m0) {
 
-  Vec4 bb1 = d1.getParticlePtr()->vProd();
-  Vec4 bb2 = d2.getParticlePtr()->vProd();
+  Vec4 bb1 = d1.getParticlePtr()->vProd() * MM2FM;
+  Vec4 bb2 = d2.getParticlePtr()->vProd() * MM2FM;
   bb1.rotbst(rb);
   bb2.rotbst(rb);
   double y1 = d1.rap(m0);
@@ -498,38 +497,63 @@ RopeDipole* dip2;
 
 // The Ropewalk init function sets parameters and pointers.
 
-bool Ropewalk::init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn) {
+bool Ropewalk::init() {
 
-  // Save pointers.
-  infoPtr = infoPtrIn;
-  rndmPtr = rndmPtrIn;
+  StringInteractions::init();
 
   // Parameters of the ropewalk.
-  doShoving            = settings.flag("Ropewalk:doShoving");
-  shoveMiniStrings     = settings.flag("Ropewalk:shoveMiniStrings");
-  shoveJunctionStrings = settings.flag("Ropewalk:shoveJunctionStrings");
-  shoveGluonLoops      = settings.flag("Ropewalk:shoveGluonLoops");
-  limitMom             = settings.flag("Ropewalk:limitMom");
-  mStringMin           = settings.parm("HadronLevel:mStringMin");
-  r0                   = settings.parm("Ropewalk:r0");
-  m0                   = settings.parm("Ropewalk:m0");
-  pTcut                = settings.parm("Ropewalk:pTcut");
-  rCutOff              = settings.parm("Ropewalk:rCutOff");
-  gAmplitude           = settings.parm("Ropewalk:gAmplitude");
-  gExponent            = settings.parm("Ropewalk:gExponent");
-  deltay               = settings.parm("Ropewalk:deltay");
-  deltat               = settings.parm("Ropewalk:deltat");
-  tShove               = settings.parm("Ropewalk:tShove");
-  tInit                = settings.parm("Ropewalk:tInit");
-  showerCut            = settings.parm("TimeShower:pTmin");
-  alwaysHighest        = settings.flag("Ropewalk:alwaysHighest");
+  shoveMiniStrings     = flag("Ropewalk:shoveMiniStrings");
+  shoveJunctionStrings = flag("Ropewalk:shoveJunctionStrings");
+  shoveGluonLoops      = flag("Ropewalk:shoveGluonLoops");
+  limitMom             = flag("Ropewalk:limitMom");
+  mStringMin           = parm("HadronLevel:mStringMin");
+  r0                   = parm("Ropewalk:r0");
+  m0                   = parm("Ropewalk:m0");
+  pTcut                = parm("Ropewalk:pTcut");
+  rCutOff              = parm("Ropewalk:rCutOff");
+  gAmplitude           = parm("Ropewalk:gAmplitude");
+  gExponent            = parm("Ropewalk:gExponent");
+  deltay               = parm("Ropewalk:deltay");
+  deltat               = parm("Ropewalk:deltat");
+  tShove               = parm("Ropewalk:tShove");
+  tInit                = parm("Ropewalk:tInit");
+  showerCut            = parm("TimeShower:pTmin");
+  alwaysHighest        = flag("Ropewalk:alwaysHighest");
 
-  // Check consistency.
-  if (deltat > tShove) {
-    infoPtr->errorMsg("Error in Ropewalk::init: "
-    "deltat cannot be larger than tShove");
-    return false;
+  // Creat the interface objects.
+  if ( flag("Ropewalk:doShoving") ) {
+    // Check consistency.
+    if (deltat > tShove) {
+      infoPtr->errorMsg("Error in Ropewalk::init: "
+                        "deltat cannot be larger than tShove");
+      return false;
+    }
+    if ( !flag("PartonVertex:setVertex") ) {
+      infoPtr->errorMsg("Error in Ropewalk::init: "
+                        "Shoving enabled, but no vertex information.");
+      return false;
+    }
+    stringrepPtr = make_shared<RopewalkShover>(*this);
+    registerSubObject(*stringrepPtr);
+    if ( !stringrepPtr->init() ) return false;
   }
+
+  if ( flag("Ropewalk:doFlavour") ) {
+    // Sanity check of flavour rope and vertex information.
+    // Flavour ropes requires vertex information, unless an effective
+    // string tension is supplied by hand or Buffon treatment.
+    if (!flag("PartonVertex:setVertex") &&
+        (!flag("Ropewalk:setFixedKappa") &&
+         !flag("Ropewalk:doBuffon")) ) {
+      infoPtr->errorMsg("Error in Ropewalk::init: "
+                        "failed initialization of flavour ropes");
+      return false;
+    }
+    fragmodPtr = make_shared<FlavourRope>(*this);
+    registerSubObject(*fragmodPtr);
+    if ( !fragmodPtr->init() ) return false;
+  }
+
   return true;
 
 }
@@ -753,7 +777,7 @@ void Ropewalk::shoveTheDipoles(Event& event) {
       // We boost the excitation back from dipole rest frame.
       tmp[j]->recoil(ex,false);
       Particle pp = Particle(21, 22, 0, 0, 0, 0, 0, 0, ex);
-      pp.vProd( tmp[j]->bInterpolateLab(ySample,m0) );
+      pp.vProd( tmp[j]->bInterpolateLab(ySample,m0) * FM2MM);
       eParticles[i].push_back(pp);
     }
   // Construct all pairs of possible excitations in this slice.
@@ -887,13 +911,10 @@ const double RopeFragPars::ZCUT = 1.0e-4;
 
 // The init function sets up initial parameters from settings.
 
-void RopeFragPars::init(Info* infoPtrIn, Settings& settings) {
-
-  // Info pointer.
-  infoPtr = infoPtrIn;
+bool RopeFragPars::init() {
 
   // The junction parameter.
-  beta = settings.parm("Ropewalk:beta");
+  beta = parm("Ropewalk:beta");
 
   // Initialize default values from input settings.
   const int len = 9;
@@ -903,13 +924,17 @@ void RopeFragPars::init(Info* infoPtrIn, Settings& settings) {
   "StringFlav:kappa"};
   double* variables[len] = {&sigmaIn, &aIn, &adiqIn, &bIn, &rhoIn, &xIn,
     &yIn, &xiIn, &kappaIn};
-  for (int i = 0; i < len; ++i) *variables[i] = settings.parm(params[i]);
+  for (int i = 0; i < len; ++i) *variables[i] = parm(params[i]);
 
   // Insert the h = 1 case immediately.
   sigmaEff = sigmaIn, aEff = aIn, adiqEff = adiqIn, bEff = bIn,
     rhoEff = rhoIn, xEff = xIn, yEff = yIn, xiEff = xiIn, kappaEff = kappaIn;
-  if (!insertEffectiveParameters(1.0)) infoPtr->errorMsg(
+  if (!insertEffectiveParameters(1.0)) { infoPtr->errorMsg(
     "Error in RopeFragPars::init: failed to insert defaults.");
+    return false;
+  }
+
+  return true;
 
 }
 
@@ -1149,9 +1174,9 @@ bool FlavourRope::doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr,
   for (map<string, double>::iterator itr = newPar.begin(); itr!=newPar.end();
     ++itr) settingsPtr->parm( itr->first, itr->second);
   // Re-initialize flavour, z, and pT selection with new settings.
-  flavPtr->init( *settingsPtr, particleDataPtr, rndmPtr, infoPtr);
-  zPtr->init( *settingsPtr, *particleDataPtr, rndmPtr, infoPtr);
-  pTPtr->init( *settingsPtr, particleDataPtr, rndmPtr, infoPtr);
+  flavPtr->init();
+  zPtr->init();
+  pTPtr->init();
   return true;
 
 }
@@ -1191,7 +1216,7 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
       // Initialize a bit
       Vec4 hadronic4Momentum(0,0,0,0);
       double enh = 1.0;
-      double dipFrac;
+      double dipFrac = -1.0;
       vector<int>::iterator dipItr;
       // Find out when invariant mass exceeds m2Had
       for(dipItr = iParton.begin(); dipItr != iParton.end(); ++dipItr){
@@ -1209,8 +1234,8 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
           }
           else{
             if(ePtr->at(*(dipItr - 1)).id() != 21) {
-              infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
-                " Connecting partons should always be gluons.");
+              infoPtr->errorMsg("Error in FlavourRope::fetchParameters"
+                "Buffon: Connecting partons should always be gluons.");
               return fp.getEffectiveParameters(1.0);
             }
 
@@ -1337,7 +1362,7 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   double dipFrac = 0;
   // We are in the first dipole.
   if (eventIndex == -1 || eventIndex == 0) {
-    eventIndex = 0;
+    eventIndex = 1;
     dipFrac = sqrt(m2Had / m2Here);
   }
   else {
@@ -1345,13 +1370,35 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
     double m2Small = mom.m2Calc();
     dipFrac = (sqrt(m2Had) - sqrt(m2Small)) / (sqrt(m2Here) - sqrt(m2Small));
   }
-  double enh = rwPtr->getKappaHere( iParton[eventIndex],
-    iParton[eventIndex + 1], dipFrac);
+  double enh = rwPtr->getKappaHere( iParton[eventIndex - 1],
+    iParton[eventIndex], dipFrac);
   return fp.getEffectiveParameters(enh);
 
 }
 
+//--------------------------------------------------------------------------
+// Inteface to he Ropewalk class.
+
+bool FlavourRope::initEvent(Event& event, ColConfig& colConfig) {
+
+  setEventPtr(event);
+  if (flag("PartonVertex:setVertex") && !flag("Ropewalk:doBuffon")) {
+    rwPtr->extractDipoles(event, colConfig);
+    rwPtr->calculateOverlaps();
+  }
+  return true;
+
+}
 
 //==========================================================================
+
+// The RopewalkShover class is an interface to shoving functions in
+// the Ropewalk class.
+
+bool RopewalkShover::stringRepulsion(Event & event, ColConfig & colConfig) {
+  rwPtr->extractDipoles(event, colConfig);
+  rwPtr->shoveTheDipoles(event);
+  return true;
+}
 
 } // End namespace Pythia8

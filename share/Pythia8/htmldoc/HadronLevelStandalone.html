@@ -155,7 +155,7 @@ complicated ones with junctions, and also how to force a shower.
  
 <p/> 
 As an alternative to setting up a topology with the methods above, 
-a <a href="LesHouchesAccord.html" target="page">Les Houches Event File</a> (LHEF) 
+a <a href="LHEF.html" target="page">Les Houches Event File</a> (LHEF) 
 can also provide the configurations, using the "no-beams" extension. 
 For parsing reasons the <code>&lt;init&gt;</code> and 
 <code>&lt;/init&gt;</code> tags need to be present as two separate 
@@ -250,7 +250,7 @@ hadronization history.
 A more limited form of repetition is if you want to decay a given kind 
 of particle repeatedly, without having to generate the rest of the event 
 anew. This could be the case e.g. in <i>B</i> physics applications. 
-Then you can use the <code>pythia.Decays()</code> method, which 
+Then you can use the <code>pythia.moreDecays()</code> method, which 
 decays all particles in the event record that have not been decayed 
 but should have been done so. The 
 <code>pythia.particleData.mayDecay( id, false/true)</code> method 
@@ -279,4 +279,4 @@ events.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

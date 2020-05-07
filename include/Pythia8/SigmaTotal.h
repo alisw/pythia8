@@ -1,5 +1,5 @@
 // SigmaTotal.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -17,6 +17,7 @@
 
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/PythiaComplex.h"
 #include "Pythia8/Settings.h"
@@ -43,7 +44,7 @@ public:
   virtual ~SigmaTotAux() {};
 
   // Store pointers and initialize data members.
-  virtual void init( Info* , Settings&, ParticleData*, Rndm* ) {}
+  virtual void init(Info*) = 0;
 
   // Calculate integrated total/elastic cross sections.
   // Usage: calcTotEl( idAin, idBin, sIn, mAin, mBin).
@@ -107,8 +108,8 @@ protected:
 
   // Constants: could only be changed in the code itself.
   static const int    NPOINTS;
-  static const double ALPHAEM, HBARC2, CONVERTEL, MPROTON, SPROTON, MPION,
-                      SPION, GAMMAEUL, TABSREF, TABSMAX, MINSLOPEEL;
+  static const double ALPHAEM, CONVERTEL, MPROTON, SPROTON, MPION, SPION,
+                      GAMMAEUL, TABSREF, TABSMAX, MINSLOPEEL;
 
   // Initialization data, normally only set once.
   int    idA, idB;
@@ -134,23 +135,21 @@ protected:
 // The SigmaTotal class contains parametrizations of total, elastic and
 // diffractive cross sections, and of the respective slope parameter.
 
-class SigmaTotal {
+class SigmaTotal : public PhysicsBase {
 
 public:
 
   // Constructor.
   SigmaTotal() : isCalc(false), ispp(), modeTotEl(), modeTotElNow(),
     modeDiff(), modeDiffNow(), idAbsA(), idAbsB(), s(), sigND(),
-    sigTotElPtr(NULL), sigDiffPtr(NULL), infoPtr(), settingsPtr(),
-    particleDataPtr(), rndmPtr() {};
+    sigTotElPtr(NULL), sigDiffPtr(NULL) {};
 
   // Destructor.
   virtual ~SigmaTotal() { if (sigTotElPtr) delete sigTotElPtr;
     if (sigDiffPtr) delete sigDiffPtr; }
 
   // Store pointers and initialize data members.
-  void   init( Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn);
+  void   init();
 
   // Calculate, or recalculate for new beams or new energy.
   bool   calc( int idA, int idB, double eCM);
@@ -229,18 +228,6 @@ private:
   // Pointer to class that handles diffractive cross sections.
   SigmaTotAux*  sigDiffPtr;
 
-  // Pointer to various information on the generation.
-  Info*         infoPtr;
-
-  // Pointer to the settings database.
-  Settings*     settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
 };
 
 //==========================================================================
@@ -259,8 +246,7 @@ public:
     Q2() {};
 
   // Store pointers and initialize data members.
-  virtual void init( Info* , Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* );
+  virtual void init(Info* infoPtrIn);
 
   // Calculate integrated total/elastic cross sections.
   virtual bool calcTotEl( int idAin, int idBin, double , double , double);
@@ -315,8 +301,7 @@ public:
     mBtmp(), multVP(), multVV(), infoPtr() {};
 
   // Store pointers and initialize data members.
-  virtual void init( Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* );
+  virtual void init(Info* infoPtrIn);
 
   // Calculate integrated total/elastic cross sections.
   virtual bool calcTotEl( int idAin, int idBin, double sIn, double mAin,
@@ -363,7 +348,7 @@ private:
   bool findBeamComb( int idAin, int idBin, double mAin, double mBin);
 
   // Pointer to various information on the generation.
-  Info*         infoPtr;
+  Info* infoPtr;
 
 };
 
@@ -384,8 +369,7 @@ public:
     sdpmax(), ddpmax(), dpepmax() {};
 
   // Initialize data members.
-  virtual void init( Info* , Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* );
+  virtual void init(Info* infoPtrIn);
 
   // Calculate integrated total/elastic cross sections.
   virtual bool calcTotEl( int idAin, int idBin, double sIn, double , double );
@@ -448,8 +432,7 @@ public:
     powCD(), mMinCDnow(), bMinSD(), bMinDD(), bMinCD() {};
 
   // Initialize data members.
-  virtual void init( Info* , Settings& settings, ParticleData* ,
-    Rndm* rndmPtrIn);
+  virtual void init(Info* infoPtrIn);
 
   // Calculate integrated total/elastic cross sections.
   virtual bool calcTotEl( int idAin, int idBin, double sIn, double , double );
@@ -543,9 +526,9 @@ public:
   SigmaRPP() : ispp(), s(), facEl() {};
 
   // Initialize data members.
-  virtual void init( Info* , Settings& settings, ParticleData* , Rndm* ) {
-    tryCoulomb = settings.flag("SigmaElastic:Coulomb");
-    tAbsMin = settings.parm("SigmaElastic:tAbsMin"); }
+  virtual void init(Info* infoPtrIn) {
+    tryCoulomb = infoPtrIn->settingsPtr->flag("SigmaElastic:Coulomb");
+    tAbsMin = infoPtrIn->settingsPtr->parm("SigmaElastic:tAbsMin"); }
 
   // Calculate integrated total/elastic cross sections.
   virtual bool calcTotEl( int idAin, int idBin, double sIn, double , double );

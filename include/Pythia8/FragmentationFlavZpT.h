@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,11 +12,21 @@
 #define Pythia8_FragmentationFlavZpT_H
 
 #include "Pythia8/Basics.h"
+#include "Pythia8/MathTools.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
 namespace Pythia8 {
+
+//==========================================================================
+
+// Functions for unnormalised and average Lund FF.
+
+double LundFFRaw(double z, double a, double b, double c, double mT2);
+
+double LundFFAvg(double a, double b, double c, double mT2, double tol);
 
 //==========================================================================
 
@@ -36,6 +46,11 @@ public:
   FlavContainer(int idIn = 0, int rankIn = 0, int nPopIn = 0,
     int idPopIn = 0, int idVtxIn = 0) : id(idIn), rank(rankIn),
     nPop(nPopIn), idPop(idPopIn), idVtx(idVtxIn) {}
+
+  // Copy constructor.
+  FlavContainer(const FlavContainer& flav) {
+    id = flav.id; rank = flav.rank; nPop = flav.nPop; idPop = flav.idPop;
+    idVtx = flav.idVtx;}
 
   // Overloaded equal operator.
   FlavContainer& operator=(const FlavContainer& flav) { if (this != &flav) {
@@ -66,12 +81,13 @@ public:
 
 // The StringFlav class is used to select quark and hadron flavours.
 
-class StringFlav {
+class StringFlav : public PhysicsBase {
 
 public:
 
   // Constructor.
-  StringFlav() : rndmPtr(), particleDataPtr(), infoPtr(), suppressLeadingB(),
+  StringFlav() :
+    suppressLeadingB(),
     mT2suppression(), useWidthPre(), probQQtoQ(), probStoUD(), probSQtoQQ(),
     probQQ1toQQ0(), probQandQQ(), probQandS(), probQandSinQQ(), probQQ1corr(),
     probQQ1corrInv(), probQQ1norm(), probQQ1join(), mesonRate(),
@@ -88,8 +104,7 @@ public:
   virtual ~StringFlav() {}
 
   // Initialize data members.
-  virtual void init(Settings& settings, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, Info* infoPtrIn);
+  virtual void init();
 
   // Pick a light d, u or s quark according to fixed ratios.
   int pickLightQ() { double rndmFlav = probQandS * rndmPtr->flat();
@@ -165,15 +180,6 @@ public:
 
 protected:
 
-  // Pointer to the random number generator.
-  Rndm*  rndmPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to event information.
-  Info* infoPtr;
-
   // Constants: could only be changed in the code itself.
   static const int    mesonMultipletCode[6];
   static const double baryonCGOct[6], baryonCGDec[6];
@@ -218,77 +224,9 @@ protected:
 
 //==========================================================================
 
-// Auxiliary class to encapsulate (unnormalised) Lund FF.
-
-class LundFFRaw : public FunctionEncapsulator {
-
-public:
-
-  // Constructor and destructor.
-  LundFFRaw() {};
-  virtual ~LundFFRaw() {};
-
-  // f(z) = (1-z)^a / z^c * Exp ( - b * mT2 / z).
-  virtual double f(vector<double> args) {
-    if (args.size() < 5) return -1.;
-    double z   = args[0];
-    if (z <= 0. || z >= 1.) return 0.;
-    double a   = args[1];
-    double b   = args[2];
-    double c   = args[3];
-    double mT2 = args[4];
-    return pow(1. - z, a) / pow(z, c) * exp(-b * mT2 / z);
-  }
-
-};
-
-//==========================================================================
-
-// Auxiliary class to encapsulate average, <z>, of Lund FF.
-
-class LundFFAvg : public FunctionEncapsulator {
-
-public:
-
-  // Constructor and destructor.
-  LundFFAvg() : check() {};
-  virtual ~LundFFAvg() {};
-
-  // <z> = integral( z * f(z) dz ) / integral( f(z) dz ),
-  // argsIn[] : a, b, c, mT2, and optionally integrator tolerance parameter.
-  virtual double f(vector<double> argsIn) {
-
-    // Do sanity checks and set initial values.
-    if (argsIn.size() < 4) return -1.;
-    double tol = 1.e-6;
-    if (argsIn.size() >= 5) tol = argsIn[4];
-    double denom = 1.;
-    double numerator = 0.;
-
-    // Evaluate denominator integral. LundFF expects args: z, a, b, c, mT2.
-    vector<double> args(1);
-    args.insert(args.end(), argsIn.begin(), argsIn.end());
-    check = lundFF.integrateGauss(denom, 0, 0., 1., args, tol);
-    if ( !check || denom <= 0. ) return -1.;
-
-    // Evaluate numerator integral. Evaluating z*f is equivalent to c -> c-1.
-    args[3] -= 1.;
-    check = lundFF.integrateGauss(numerator, 0, 0., 1., args, tol);
-    if ( !check || numerator < 0. ) return -1.;
-    return numerator/denom;
-  }
-
-private:
-
-  LundFFRaw lundFF;
-  bool check;
-};
-
-//==========================================================================
-
 // The StringZ class is used to sample the fragmentation function f(z).
 
-class StringZ {
+class StringZ : public PhysicsBase {
 
 public:
 
@@ -297,14 +235,13 @@ public:
     usePetersonB(), usePetersonH(), mc2(), mb2(), aLund(), bLund(),
     aExtraSQuark(), aExtraDiquark(), rFactC(), rFactB(), rFactH(), aNonC(),
     aNonB(), aNonH(), bNonC(), bNonB(), bNonH(), epsilonC(), epsilonB(),
-    epsilonH(), stopM(), stopNF(), stopS(), rndmPtr(), infoPtr() {}
+    epsilonH(), stopM(), stopNF(), stopS() {}
 
   // Destructor.
   virtual ~StringZ() {}
 
   // Initialize data members.
-  virtual void init(Settings& settings, ParticleData& particleData,
-    Rndm* rndmPtrIn, Info* infoPtrIn);
+  virtual void init();
 
   // Fragmentation function: top-level to determine parameters.
   virtual double zFrag( int idOld, int idNew = 0, double mT2 = 1.);
@@ -319,7 +256,7 @@ public:
   virtual double bAreaLund() {return bLund;}
 
   // Method to derive bLund from <z> (for fixed a and reference mT2).
-  bool deriveBLund(Settings& settings, ParticleData& particleData);
+  bool deriveBLund();
 
 protected:
 
@@ -337,19 +274,13 @@ protected:
   double zLund( double a, double b, double c = 1.);
   double zPeterson( double epsilon);
 
-  // Pointer to the random number generator.
-  Rndm*  rndmPtr;
-
-  // Pointer to event information.
-  Info* infoPtr;
-
 };
 
 //==========================================================================
 
 // The StringPT class is used to select select transverse momenta.
 
-class StringPT {
+class StringPT : public PhysicsBase {
 
 public:
 
@@ -357,14 +288,13 @@ public:
   StringPT() : useWidthPre(), sigmaQ(), enhancedFraction(), enhancedWidth(),
     sigma2Had(), widthPreStrange(), widthPreDiquark(), thermalModel(),
     temperature(), tempPreFactor(), fracSmallX(), closePacking(),
-    exponentMPI(), exponentNSP(), particleDataPtr(), rndmPtr(), infoPtr() {}
+    exponentMPI(), exponentNSP() {}
 
   // Destructor.
   virtual ~StringPT() {}
 
   // Initialize data members.
-  virtual void init(Settings& settings, ParticleData* particleDataPtr,
-    Rndm* rndmPtrIn, Info* infoPtrIn);
+  virtual void init();
 
   // General function, return px and py as a pair in the same call
   // in either model.
@@ -394,15 +324,6 @@ protected:
   // Both.
   bool   closePacking;
   double exponentMPI, exponentNSP;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*  rndmPtr;
-
-  // Pointer to event information.
-  Info* infoPtr;
 
 private:
 

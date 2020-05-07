@@ -1,5 +1,5 @@
 // Settings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -1953,7 +1953,7 @@ void Settings::initTuneEE( int eeTune) {
 
   // Restore all e+e- settings to their original values.
   // Is first step for setting up a specific tune.
-  if (eeTune != 0) resetTuneEE();
+  resetTuneEE();
 
   // Old flavour and FSR defaults carried over from very old JETSET tune,
   // only with alphaS roughly tuned for "new" pT-ordered shower.
@@ -2191,7 +2191,7 @@ void Settings::initTunePP( int ppTune) {
 
   // Restore all pp/ppbar settings to their original values.
   // Is first step for setting up a specific tune.
-  if (ppTune != 0) resetTunePP();
+  resetTunePP();
 
   // Set up e+e- tune that goes with the corresponding pp tune.
   if (ppTune > 0) {

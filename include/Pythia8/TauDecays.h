@@ -1,5 +1,5 @@
 // TauDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,6 +12,7 @@
 #include "Pythia8/Event.h"
 #include "Pythia8/HelicityBasics.h"
 #include "Pythia8/HelicityMatrixElements.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaComplex.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
@@ -23,21 +24,18 @@ namespace Pythia8 {
 // TauDecays class.
 // This class decays tau leptons, with helicity information.
 
-class TauDecays {
+class TauDecays : public PhysicsBase {
 
 public:
 
   // Constructor and destructor.
   TauDecays() : correlated(), tauExt(), tauMode(), tauMother(), tauPol(),
-    hardME(), decayME(), infoPtr(), settingsPtr(), particleDataPtr(),
-    rndmPtr(), couplingsPtr(), tau0Max(), tauMax(), rMax(), xyMax(), zMax(),
+    hardME(), decayME(), tau0Max(), tauMax(), rMax(), xyMax(), zMax(),
     limitTau0(), limitTau(), limitRadius(), limitCylinder(), limitDecay() {};
   ~TauDecays() {}
 
   // Initializer.
-  void init(Info* infoPtrIn, Settings* settingsPtrIn,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    Couplings* couplingsPtrIn);
+  void init();
 
   // Decay a tau or correlated tau pair.
   bool decay(int iDec, Event& event);
@@ -95,21 +93,6 @@ private:
   // Particles of the hard process.
   HelicityParticle in1, in2, mediator, out1, out2;
   vector<HelicityParticle> particles;
-
-  // The info pointer for the Pythia class.
-  Info*         infoPtr;
-
-  // Pointer to settings database.
-  Settings*     settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*         rndmPtr;
-
-  // Pointer to SM coupling data.
-  Couplings*    couplingsPtr;
 
   // Parameters to determine if correlated partner should decay.
   double tau0Max, tauMax, rMax, xyMax, zMax;

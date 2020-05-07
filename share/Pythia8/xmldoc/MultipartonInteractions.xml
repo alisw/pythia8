@@ -305,7 +305,7 @@ that varies according to the selected <ei>x</ei> value of an interaction,
 Note that once <ei>b</ei> has been selected for the hard process, 
 it remains fixed for the remainder of the evolution. Also note that 
 the machinery for 
-<aloc href="ASecondHardProcess">a second hard process</aloc> 
+<aloc href="SecondHardProcess">a second hard process</aloc> 
 is not adapted to calculate the impact-parameter enhancement factor 
 for this option. 
 </option> 
@@ -610,4 +610,4 @@ interactions.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

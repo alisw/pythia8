@@ -1,5 +1,5 @@
 // MultipartonInteractions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,6 +16,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/PartonSystems.h"
 #include "Pythia8/PartonVertex.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/SigmaTotal.h"
@@ -48,8 +49,7 @@ public:
 
   // Initialize list of processes.
   bool init(int inState, int processLevel, Info* infoPtr,
-    Settings* settingsPtr, ParticleData* particleDataPtr, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtr, BeamParticle* beamBPtr, Couplings* couplingsPtr);
+    BeamParticle* beamAPtr, BeamParticle* beamBPtr);
 
   // Calculate cross section summed over possibilities.
   double sigma( int id1, int id2, double x1, double x2, double sHat,
@@ -97,7 +97,7 @@ private:
 // The MultipartonInteractions class contains the main methods for the
 // generation of multiparton parton-parton interactions in hadronic collisions.
 
-class MultipartonInteractions {
+class MultipartonInteractions : public PhysicsBase {
 
 public:
 
@@ -132,17 +132,13 @@ public:
     normOverlapSave(), kNowSave(), bAvgSave(), bDivSave(), probLowBSave(),
     fracAhighSave(), fracBhighSave(), fracChighSave(), fracABChighSave(),
     cDivSave(), cMaxSave(), beamOffset(), mGmGmMin(), mGmGmMax(), hasGamma(),
-    isGammaGamma(), isGammaHadron(), isHadronGamma(), infoPtr(), rndmPtr(),
-    beamAPtr(), beamBPtr(), couplingsPtr(), partonSystemsPtr(), sigmaTotPtr(),
-    userHooksPtr(), partonVertexPtr(), sigma2Sel(), dSigmaDtSel() {}
+    isGammaGamma(), isGammaHadron(), isHadronGamma(),
+    partonVertexPtr(), sigma2Sel(), dSigmaDtSel() {}
 
   // Initialize the generation process for given beams.
-  bool init( bool doMPIinit, int iDiffSysIn, Info* infoPtrIn,
-    Settings& settings, ParticleData* particleDataPtr, Rndm* rndmPtrIn,
+  bool init( bool doMPIinit, int iDiffSysIn,
     BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
-    SigmaTotal* sigmaTotPtrIn, UserHooks* userHooksPtrIn,
-    PartonVertex* partonVertexPtrIn, bool hasGammaIn = false);
+    PartonVertexPtr partonVertexPtrIn, bool hasGammaIn = false);
 
   // Reset impact parameter choice and update the CM energy.
   void reset();
@@ -286,30 +282,8 @@ private:
   double mGmGmMin, mGmGmMax;
   bool   hasGamma, isGammaGamma, isGammaHadron, isHadronGamma;
 
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
-  // Pointers to the two incoming beams.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-
-  // Pointers to Standard Model couplings.
-  Couplings*     couplingsPtr;
-
-  // Pointer to information on subcollision parton locations.
-  PartonSystems* partonSystemsPtr;
-
-  // Pointer to total cross section parametrization.
-  SigmaTotal*    sigmaTotPtr;
-
-  // Pointer to user hooks.
-  UserHooks*     userHooksPtr;
-
   // Pointer to assign space-time vertices during parton evolution.
-  PartonVertex*  partonVertexPtr;
+  PartonVertexPtr  partonVertexPtr;
 
   // Collections of parton-level 2 -> 2 cross sections. Selected one.
   SigmaMultiparton  sigma2gg, sigma2qg, sigma2qqbarSame, sigma2qq;

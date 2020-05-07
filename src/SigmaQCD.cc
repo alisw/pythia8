@@ -1,5 +1,5 @@
 // SigmaQCD.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -159,7 +159,7 @@ void Sigma2gg2gg::setIdColAcol() {
 void Sigma2gg2qqbar::initProc() {
 
   // Read number of quarks to be considered in massless approximation.
-  nQuarkNew       = settingsPtr->mode("HardQCD:nQuarkNew");
+  nQuarkNew       = mode("HardQCD:nQuarkNew");
 
 }
 
@@ -353,7 +353,7 @@ void Sigma2qqbar2gg::setIdColAcol() {
 void Sigma2qqbar2qqbarNew::initProc() {
 
   // Read number of quarks to be considered in massless approximation.
-  nQuarkNew       = settingsPtr->mode("HardQCD:nQuarkNew");
+  nQuarkNew       = mode("HardQCD:nQuarkNew");
 
 }
 
@@ -817,7 +817,7 @@ void Sigma3qg2qgg::setIdColAcol(){
 void Sigma3gg2qqbarg::initProc() {
 
   // Read number of quarks to be considered in massless approximation.
-  nQuarkNew       = settingsPtr->mode("HardQCD:nQuarkNew");
+  nQuarkNew       = mode("HardQCD:nQuarkNew");
 
 }
 
@@ -1025,7 +1025,7 @@ inline void Sigma3qq2qqgDiff::mapFinal() {
 void Sigma3qqbar2qqbargDiff::initProc() {
 
   // Read number of quarks to be considered in massless approximation.
-  nQuarkNew       = settingsPtr->mode("HardQCD:nQuarkNew");
+  nQuarkNew       = mode("HardQCD:nQuarkNew");
 
 }
 
@@ -1125,7 +1125,7 @@ void Sigma3qqbar2qqbargDiff::setIdColAcol(){
 void Sigma3qg2qqqbarDiff::initProc() {
 
   // Read number of quarks to be considered in massless approximation.
-  nQuarkNew       = settingsPtr->mode("HardQCD:nQuarkNew");
+  nQuarkNew       = mode("HardQCD:nQuarkNew");
 
 }
 

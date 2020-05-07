@@ -19,7 +19,8 @@ well as the ability to produce <i>n</i>-leg matrix elements beyond
 the leading tree-level diagrams. The HelacOnia code can be downloaded 
 from 
 <br><a href="http://helac-phegas.web.cern.ch/helac-phegas/helac-onia.html" 
-target="page">http://helac-phegas.web.cern.ch/helac-phegas/helac-onia.html</a>, 
+       target="page"> 
+  http://helac-phegas.web.cern.ch/helac-phegas/helac-onia.html</a>, 
 </br>where only version 2 and above is compatible with PYTHIA. 
  
 <p/> 
@@ -33,7 +34,7 @@ wrap the HelacOnia generator as a PYTHIA Les Houches interface.
  
 <p/> 
 Of course, HelacOnia can also output files of parton-level events 
-according to the <a href="LesHouchesAccord.html" target="page">LHEF</a> standard, 
+according to the <a href="LHEF.html" target="page">LHEF</a> standard, 
 that can be read in and processed further by PYTHIA 8. This is the 
 most commonly used approach, and requires no further description here. 
  
@@ -42,7 +43,7 @@ most commonly used approach, and requires no further description here.
  
 The <code>Pythia::setLHAupPtr(LHAup* lhaUpPtr)</code> method allows 
 a Pythia generator to accept a pointer to an object derived from the 
-<code><a href="LesHouchesAccord.html" target="page">LHAup</a></code> base class. 
+<code><a href="LHA.html" target="page">LHAup</a></code> base class. 
 Such an object will be initialized from within Pythia, and be called 
 repeatedly to generate the next parton-level event, using the LHA 
 specification as a standard to transfer the relevant information back 
@@ -124,4 +125,4 @@ setEvents can be used to increase the number of events generated per run.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // SusyResonanceWidths.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand
+// Copyright (C) 2020 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -26,8 +26,7 @@ const bool SUSYResonanceWidths::DBSUSY = false;
 
 bool SUSYResonanceWidths::initBSM(){
 
-  if (couplingsPtr->isSUSY) {
-    coupSUSYPtr     = (CoupSUSY *) couplingsPtr;
+  if (coupSUSYPtr->isSUSY) {
     return true;
   }
 
@@ -39,7 +38,7 @@ bool SUSYResonanceWidths::initBSM(){
 bool SUSYResonanceWidths::allowCalc(){
 
   // Check if decay calculations at all possible
-  if ( !couplingsPtr->isSUSY ) return false;
+  if ( !coupSUSYPtr->isSUSY ) return false;
   if ( (idRes == 45 || idRes == 46 || idRes == 1000045)
        && !coupSUSYPtr->isNMSSM ) return false;
 
@@ -256,8 +255,8 @@ void ResonanceSquark::initConstants() {
 void ResonanceSquark::calcPreFac(bool) {
 
   // Common coupling factors.
-  alpS   = coupSUSYPtr->alphaS(mHat * mHat );
-  alpEM  = coupSUSYPtr->alphaEM(mHat * mHat);
+  alpS   = coupSMPtr->alphaS(mHat * mHat );
+  alpEM  = coupSMPtr->alphaEM(mHat * mHat);
   preFac = 1.0 / (s2W * pow(mHat,3));
   ps *= mHat * mHat;
 
@@ -416,6 +415,7 @@ void ResonanceSquark::calcWidth(bool) {
           * (1.0 - s2W)) * pow2(ps) ;
 
       int isq2 = (id1Abs/ksusy == 2) ? (id1Abs%10+1)/2 + 3: (id1Abs%10+1)/2;
+      isq2 = min(6, isq2);
 
       if (id2Abs == 23 && id1Abs%2 == idRes%2){
         if (idown)
@@ -549,7 +549,7 @@ void ResonanceGluino::initConstants() {
 void ResonanceGluino::calcPreFac(bool) {
 
   // Common coupling factors.
-  alpS  = coupSUSYPtr->alphaS(mHat * mHat);
+  alpS  = coupSMPtr->alphaS(mHat * mHat);
   preFac = alpS /( 8.0 * pow(mHat,3));
   return;
 
@@ -944,7 +944,7 @@ void ResonanceNeut::initConstants() {
 void  ResonanceNeut::calcPreFac(bool) {
 
   // Common coupling factors.
-  alpEM  = coupSUSYPtr->alphaEM(mHat * mHat);
+  alpEM  = coupSMPtr->alphaEM(mHat * mHat);
   preFac = alpEM / (8.0 * s2W * pow(mHat,3));
   return;
 
@@ -1170,7 +1170,7 @@ void ResonanceChar::initConstants() {
 
 void  ResonanceChar::calcPreFac(bool) {
 
-  alpEM  = coupSUSYPtr->alphaEM(mHat * mHat);
+  alpEM  = coupSMPtr->alphaEM(mHat * mHat);
   preFac = alpEM / (8.0 * s2W * pow(mHat,3));
   return;
 
@@ -1329,9 +1329,9 @@ bool ResonanceSlepton::getChannels(int idPDG){
     slepEntryPtr->addChannel(1, 0.0, 0, -6, 1);
     slepEntryPtr->addChannel(1, 0.0, 0, -6, 3);
     slepEntryPtr->addChannel(1, 0.0, 0, -6, 5);
-    slepEntryPtr->addChannel(1, 0.0, 0, 1000022, 111, 16);
-    slepEntryPtr->addChannel(1, 0.0, 0, 1000022, 113, 16);
-    slepEntryPtr->addChannel(1, 0.0, 0, 1000022, 900111, 16);
+    slepEntryPtr->addChannel(1, 0.0, 0, 1000022, -211, 16);
+    slepEntryPtr->addChannel(1, 0.0, 0, 1000022, -213, 16);
+    slepEntryPtr->addChannel(1, 0.0, 0, 1000022, -9000211, 16);
     slepEntryPtr->addChannel(1, 0.0, 0, 1000022, 16, 12, 11);
     slepEntryPtr->addChannel(1, 0.0, 0, 1000022, 16, 14, 13);
 
@@ -1376,7 +1376,7 @@ void ResonanceSlepton::initConstants() {
   s2W = coupSUSYPtr->sin2W;
 
   // Initialize functions for calculating 3-body widths
-  stauWidths.setPointers(particleDataPtr,coupSUSYPtr,infoPtr);
+  stauWidths.setPointers(infoPtr);
 
 }
 
@@ -1387,7 +1387,7 @@ void ResonanceSlepton::initConstants() {
 void ResonanceSlepton::calcPreFac(bool) {
 
   // Common coupling factors.
-  alpEM  = coupSUSYPtr->alphaEM(mHat * mHat);
+  alpEM  = coupSMPtr->alphaEM(mHat * mHat);
   preFac = 1.0 / (s2W * pow(mHat,3));
 
 }
@@ -1479,16 +1479,17 @@ void ResonanceSlepton::calcWidth(bool) {
           && idRes%2 != id2Abs%2){
 
           fac = alpEM *  preFac / (4.0 * (1 - s2W));
+
           if (islep)
             wid = kinFac * (norm(coupSUSYPtr->LslvX[isl][il][i])
-                + norm(coupSUSYPtr->RslvX[isl][il][i]))
-                - 4.0 * mHat * mf2 * real(coupSUSYPtr->LslvX[isl][il][i]
-                * conj(coupSUSYPtr->RslvX[isl][il][i]));
+              + norm(coupSUSYPtr->RslvX[isl][il][i]))
+              - 4.0 * mHat * mf2 * real(coupSUSYPtr->LslvX[isl][il][i]
+              * conj(coupSUSYPtr->RslvX[isl][il][i]));
           else
-            wid = kinFac * (norm(coupSUSYPtr->LslvX[isl][il][i])
-                + norm(coupSUSYPtr->RslvX[isl][il][i]))
-                - 4.0 * mHat * mf2 * real(coupSUSYPtr->LslvX[isl][il][i]
-                * conj(coupSUSYPtr->RslvX[isl][il][i]));
+            wid = kinFac * (norm(coupSUSYPtr->LsvvX[isl][il][i])
+              + norm(coupSUSYPtr->RsvvX[isl][il][i]))
+              - 4.0 * mHat * mf2 * real(coupSUSYPtr->LsvvX[isl][il][i]
+              * conj(coupSUSYPtr->RsvvX[isl][il][i]));
         }
       }
     }
@@ -1501,6 +1502,7 @@ void ResonanceSlepton::calcWidth(bool) {
       fac = alpEM * preFac/(16.0 * pow2(mf2) * (1.0 - s2W)) * pow2(ps) ;
 
       int isl2 = (id1Abs/ksusy == 2) ? (id1Abs%10+1)/2 + 3: (id1Abs%10+1)/2;
+      isl2 = min(6, isl2);
 
       if (id2Abs == 23 && id1Abs%2 == idRes%2){
         if (islep)
@@ -1530,12 +1532,20 @@ void ResonanceSlepton::calcWidth(bool) {
     // Case 4b: ~tau -> rho/a1 nu_tau ~chi0
     // Case 4c: ~tau -> l nu_l nu_tau ~chi0
 
+
+    // Check we are in the compressed regime
+    if (mRes - particleDataPtr->m0(1000022) > particleDataPtr->m0(15)) return;
+
+
     // Check that there is a stau component
     double staufac = norm(coupSUSYPtr->Rsl[isl][3])
                    + norm(coupSUSYPtr->Rsl[isl][6]);
-    if (staufac < 1.0e-6 || abs(mRes - particleDataPtr->m0(15)) > 0.0 ) return;
-    if(id2Abs > 17)
-      widNow = stauWidths.getWidth(idRes, id2Abs);
+
+    if (staufac < 1.0e-6) return;
+    if(id2Abs > 17) {
+      int idIn = id2Abs == 1000022 ? id1Abs : id2Abs;
+      widNow = stauWidths.getWidth(idRes, idIn);
+    }
     else
       widNow = stauWidths.getWidth(idRes, id3Abs);
 

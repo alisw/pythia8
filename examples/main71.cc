@@ -1,26 +1,27 @@
 // main71.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Richard Corke.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-/*
- * Simple example of fastjet analysis. Roughly follows analysis of:
- * T. Aaltonen et al. [CDF Collaboration],
- * Measurement of the cross section for W-boson production in association
- * with jets in ppbar collisions at sqrt(s)=1.96$ TeV
- * Phys. Rev. D 77 (2008) 011108
- * arXiv:0711.4044 [hep-ex]
- *
- * Cuts:
- *   ET(elec)     > 20GeV
- *   |eta(elec)|  < 1.1
- *   ET(missing)  > 30GeV
- *   ET(jet)      > 20GeV
- *   |eta(jet)|   < 2.0
- *   deltaR(elec, jet) > 0.52
- * Not used:
- *   mT(W)        > 20GeV
- */
+// Keywords: fastjet; jet finding;
+
+// Simple example of fastjet analysis. Roughly follows analysis of:
+// T. Aaltonen et al. [CDF Collaboration],
+// Measurement of the cross section for W-boson production in association
+// with jets in ppbar collisions at sqrt(s)=1.96$ TeV
+// Phys. Rev. D 77 (2008) 011108
+// arXiv:0711.4044 [hep-ex]
+//
+// Cuts:
+//   ET(elec)     > 20GeV
+//   |eta(elec)|  < 1.1
+//   ET(missing)  > 30GeV
+//   ET(jet)      > 20GeV
+//   |eta(jet)|   < 2.0
+//   deltaR(elec, jet) > 0.52
+// Not used:
+//   mT(W)        > 20GeV
+//
 
 #include "Pythia8/Pythia.h"
 

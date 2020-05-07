@@ -34,8 +34,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>  virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor16" target="page">canCutOnRecState()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor16" target="page">canCutOnRecState()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -46,44 +46,44 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>  virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor18" target="page">canVetoTrialEmission()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor18" target="page">canVetoTrialEmission()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor41" target="page">cosphi(...)</a></td>
+<td><a href="FourVectors.html#anchor44" target="page">cosphi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor43" target="page">cosphi(...)</a></td>
+<td><a href="FourVectors.html#anchor46" target="page">cosphi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor39" target="page">costheta(...)</a></td>
+<td><a href="FourVectors.html#anchor42" target="page">costheta(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor36" target="page">cross3(...)</a></td>
+<td><a href="FourVectors.html#anchor39" target="page">cross3(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor37" target="page">cross4(...)</a></td>
+<td><a href="FourVectors.html#anchor40" target="page">cross4(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>  virtual double</td>
-<td><a href="MatchingAndMerging.html#anchor15" target="page">dampenIfFailCuts(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor15" target="page">dampenIfFailCuts(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -100,8 +100,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>  virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor17" target="page">doCutOnRecState(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor17" target="page">doCutOnRecState(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -112,7 +112,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor35" target="page">dot3(...)</a></td>
+<td><a href="FourVectors.html#anchor38" target="page">dot3(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -130,25 +130,25 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>  virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor19" target="page">doVetoTrialEmission(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor19" target="page">doVetoTrialEmission(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor94" target="page">fromCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor97" target="page">fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor96" target="page">fromCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor99" target="page">fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor98" target="page">fromCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor101" target="page">fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -159,27 +159,51 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual MergingPtr</td>
+<td><a href="ImplementNewShowers.html#anchor4" target="page">getMerging()</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
+<td>virtual MergingHooksPtr</td>
+<td><a href="ImplementNewShowers.html#anchor5" target="page">getMergingHooks()</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
 <td>virtual int</td>
-<td><a href="MatchingAndMerging.html#anchor22" target="page">getNumberOfClusteringSteps(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor22" target="page">getNumberOfClusteringSteps(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>PDF*</td>
-<td><a href="ProgramFlow.html#anchor42" target="page">getPDFPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor44" target="page">getPDFPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
+<td>virtual SpaceShowerPtr</td>
+<td><a href="ImplementNewShowers.html#anchor3" target="page">getSpaceShower()</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
+<td>virtual TimeShowerPtr</td>
+<td><a href="ImplementNewShowers.html#anchor2" target="page">getTimeDecShower()</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
 <td>friend pair&lt;Vec4,Vec4&gt;</td>
-<td><a href="FourVectors.html#anchor47" target="page">getTwoPerpendicular(...)</a></td>
+<td><a href="FourVectors.html#anchor50" target="page">getTwoPerpendicular(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>  virtual double</td>
-<td><a href="MatchingAndMerging.html#anchor20" target="page">hardProcessME(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor20" target="page">hardProcessME(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -208,7 +232,25 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor33" target="page">m(...)</a></td>
+<td><a href="FourVectors.html#anchor34" target="page">isinf(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>friend bool</td>
+<td><a href="FourVectors.html#anchor33" target="page">isnan(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>friend bool</td>
+<td><a href="FourVectors.html#anchor35" target="page">isnan(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>friend double</td>
+<td><a href="FourVectors.html#anchor36" target="page">m(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -220,7 +262,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor34" target="page">m2(...)</a></td>
+<td><a href="FourVectors.html#anchor37" target="page">m2(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -238,7 +280,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend ostream&</td>
-<td><a href="FourVectors.html#anchor92" target="page">operator&lt;&lt;(...)</a></td>
+<td><a href="FourVectors.html#anchor95" target="page">operator&lt;&lt;(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -250,19 +292,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor55" target="page">operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor58" target="page">operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor56" target="page">operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor59" target="page">operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor58" target="page">operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor61" target="page">operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -286,7 +328,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor53" target="page">operator+(...)</a></td>
+<td><a href="FourVectors.html#anchor56" target="page">operator+(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -310,7 +352,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor54" target="page">operator-(...)</a></td>
+<td><a href="FourVectors.html#anchor57" target="page">operator-(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -334,7 +376,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor57" target="page">operator/(...)</a></td>
+<td><a href="FourVectors.html#anchor60" target="page">operator/(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -364,13 +406,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>ParticleDataEntry&</td>
-<td><a href="ParticleDataScheme.html#anchor95" target="page">operator=(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor97" target="page">operator=(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>DecayChannel&</td>
-<td><a href="ParticleDataScheme.html#anchor172" target="page">operator=(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor176" target="page">operator=(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -388,37 +430,37 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor40" target="page">phi(...)</a></td>
+<td><a href="FourVectors.html#anchor43" target="page">phi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor42" target="page">phi(...)</a></td>
+<td><a href="FourVectors.html#anchor45" target="page">phi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend bool</td>
-<td><a href="FourVectors.html#anchor46" target="page">pShift(...)</a></td>
+<td><a href="FourVectors.html#anchor49" target="page">pShift(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor45" target="page">REtaPhi(...)</a></td>
+<td><a href="FourVectors.html#anchor48" target="page">REtaPhi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor44" target="page">RRapPhi(...)</a></td>
+<td><a href="FourVectors.html#anchor47" target="page">RRapPhi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor83" target="page">setResonancePtr(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor85" target="page">setResonancePtr(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -436,38 +478,38 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor38" target="page">theta(...)</a></td>
+<td><a href="FourVectors.html#anchor41" target="page">theta(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="MatchingAndMerging.html#anchor21" target="page">tmsDefinition(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor21" target="page">tmsDefinition(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor93" target="page">toCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor96" target="page">toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor95" target="page">toCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor98" target="page">toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor97" target="page">toCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor100" target="page">toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>  virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor23" target="page">useShowerPlugin()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor23" target="page">useShowerPlugin()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -490,20 +532,44 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual</td>
-<td><a href="MatchingAndMerging.html#anchor24" target="page">~MyHardProcess()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor24" target="page">~MyHardProcess()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="MatchingAndMerging.html#anchor4" target="page">~MyMerging()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor4" target="page">~MyMerging()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="MatchingAndMerging.html#anchor8" target="page">~MyMergingHooks()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor8" target="page">~MyMergingHooks()</a></td>
+<td>Implement New Matching</td>
+</tr>
+
+<tr>
+<td>string Info::getGeneratorAttribute(unsigned int n,</td>
+<td><a href="LHEF.html#anchor16" target="page"></a></td>
+<td>L H E F</td>
+</tr>
+
+<tr>
+<td> int    Info::nVariationGroups()</td>
+<td><a href="CrossSectionsAndWeights.html#anchor16" target="page"></a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td> string Info::getGroupName(...)</td>
+<td><a href="CrossSectionsAndWeights.html#anchor17" target="page"></a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td> double Info::getGroupWeight(...)</td>
+<td><a href="CrossSectionsAndWeights.html#anchor18" target="page"></a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -723,6 +789,18 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>vector &lt;string&gt; Info::weightNameVector()</td>
+<td><a href="CrossSectionsAndWeights.html#anchor25" target="page">const</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>vector &lt;double&gt; Info::weightValueVector()</td>
+<td><a href="CrossSectionsAndWeights.html#anchor26" target="page">const</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
 <td>double</td>
 <td><a href="StandardModelParameters.html#anchor31" target="page">CoupSM::af(...)</a></td>
 <td>Standard Model Parameters</td>
@@ -904,145 +982,145 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor176" target="page">DecayChannel::bRatio()</a></td>
+<td><a href="ParticleDataScheme.html#anchor180" target="page">DecayChannel::bRatio()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor175" target="page">DecayChannel::bRatio(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor179" target="page">DecayChannel::bRatio(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor186" target="page">DecayChannel::contains(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor190" target="page">DecayChannel::contains(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor187" target="page">DecayChannel::contains(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor191" target="page">DecayChannel::contains(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor188" target="page">DecayChannel::contains(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor192" target="page">DecayChannel::contains(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor190" target="page">DecayChannel::currentBR()</a></td>
+<td><a href="ParticleDataScheme.html#anchor194" target="page">DecayChannel::currentBR()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor189" target="page">DecayChannel::currentBR(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor193" target="page">DecayChannel::currentBR(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="ParticleDataScheme.html#anchor171" target="page">DecayChannel::DecayChannel(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor175" target="page">DecayChannel::DecayChannel(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor185" target="page">DecayChannel::hasChanged()</a></td>
+<td><a href="ParticleDataScheme.html#anchor189" target="page">DecayChannel::hasChanged()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor179" target="page">DecayChannel::meMode()</a></td>
+<td><a href="ParticleDataScheme.html#anchor183" target="page">DecayChannel::meMode()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor178" target="page">DecayChannel::meMode(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor182" target="page">DecayChannel::meMode(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor181" target="page">DecayChannel::multiplicity()</a></td>
+<td><a href="ParticleDataScheme.html#anchor185" target="page">DecayChannel::multiplicity()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor180" target="page">DecayChannel::multiplicity(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor184" target="page">DecayChannel::multiplicity(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor174" target="page">DecayChannel::onMode()</a></td>
+<td><a href="ParticleDataScheme.html#anchor178" target="page">DecayChannel::onMode()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor173" target="page">DecayChannel::onMode(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor177" target="page">DecayChannel::onMode(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor192" target="page">DecayChannel::onShellWidth()</a></td>
+<td><a href="ParticleDataScheme.html#anchor196" target="page">DecayChannel::onShellWidth()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor191" target="page">DecayChannel::onShellWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor195" target="page">DecayChannel::onShellWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor193" target="page">DecayChannel::onShellWidthFactor(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor197" target="page">DecayChannel::onShellWidthFactor(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor194" target="page">DecayChannel::openSec(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor198" target="page">DecayChannel::openSec(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor195" target="page">DecayChannel::openSec(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor199" target="page">DecayChannel::openSec(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor182" target="page">DecayChannel::product(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor186" target="page">DecayChannel::product(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor183" target="page">DecayChannel::product(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor187" target="page">DecayChannel::product(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor177" target="page">DecayChannel::rescaleBR(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor181" target="page">DecayChannel::rescaleBR(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor184" target="page">DecayChannel::setHasChanged(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor188" target="page">DecayChannel::setHasChanged(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -1528,13 +1606,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor85" target="page">Info::a0MPI()</a></td>
+<td><a href="EventInformation.html#anchor80" target="page">Info::a0MPI()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="EventInformation.html#anchor107" target="page">Info::addCounter(...)</a></td>
+<td><a href="EventInformation.html#anchor95" target="page">Info::addCounter(...)</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -1558,13 +1636,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor86" target="page">Info::bMPI()</a></td>
+<td><a href="EventInformation.html#anchor81" target="page">Info::bMPI()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor95" target="page">Info::bMPIold()</a></td>
+<td><a href="EventInformation.html#anchor90" target="page">Info::bMPIold()</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -1576,14 +1654,14 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor90" target="page">Info::codeMPI(...)</a></td>
+<td><a href="EventInformation.html#anchor85" target="page">Info::codeMPI(...)</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>vector&lt;int&gt;</td>
-<td><a href="EventInformation.html#anchor98" target="page">Info::codesHard()</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor1" target="page">Info::codesHard()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -1618,127 +1696,121 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor94" target="page">Info::eMPI(...)</a></td>
+<td><a href="EventInformation.html#anchor89" target="page">Info::eMPI(...)</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor87" target="page">Info::enhanceMPI()</a></td>
+<td><a href="EventInformation.html#anchor82" target="page">Info::enhanceMPI()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor88" target="page">Info::enhanceMPIavg()</a></td>
+<td><a href="EventInformation.html#anchor83" target="page">Info::enhanceMPIavg()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor96" target="page">Info::enhanceMPIold()</a></td>
+<td><a href="EventInformation.html#anchor91" target="page">Info::enhanceMPIold()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor97" target="page">Info::enhanceMPIoldavg()</a></td>
+<td><a href="EventInformation.html#anchor92" target="page">Info::enhanceMPIoldavg()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor105" target="page">Info::getCounter(...)</a></td>
+<td><a href="EventInformation.html#anchor93" target="page">Info::getCounter(...)</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor129" target="page">Info::getEventAttribute(...)</a></td>
-<td>Event Information</td>
-</tr>
-
-<tr>
-<td>string</td>
-<td><a href="EventInformation.html#anchor118" target="page">Info::getGeneratorAttribute(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor27" target="page">Info::getEventAttribute(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor116" target="page">Info::getGeneratorSize()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor14" target="page">Info::getGeneratorSize()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor117" target="page">Info::getGeneratorValue(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor15" target="page">Info::getGeneratorValue(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor115" target="page">Info::getInitrwgtSize()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor13" target="page">Info::getInitrwgtSize()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor128" target="page">Info::getScalesAttribute(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor26" target="page">Info::getScalesAttribute(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor127" target="page">Info::getScalesValue()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor25" target="page">Info::getScalesValue()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor126" target="page">Info::getWeightsCompressedAttribute(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor24" target="page">Info::getWeightsCompressedAttribute(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>unsigned int</td>
-<td><a href="EventInformation.html#anchor124" target="page">Info::getWeightsCompressedSize()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor22" target="page">Info::getWeightsCompressedSize()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor125" target="page">Info::getWeightsCompressedValue(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor23" target="page">Info::getWeightsCompressedValue(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor123" target="page">Info::getWeightsDetailedAttribute(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor21" target="page">Info::getWeightsDetailedAttribute(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>unsigned int</td>
-<td><a href="EventInformation.html#anchor121" target="page">Info::getWeightsDetailedSize()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor19" target="page">Info::getWeightsDetailedSize()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor122" target="page">Info::getWeightsDetailedValue(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor20" target="page">Info::getWeightsDetailedValue(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="EventInformation.html#anchor109" target="page">Info::hasHistory()</a></td>
+<td><a href="EventInformation.html#anchor97" target="page">Info::hasHistory()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="EventInformation.html#anchor108" target="page">Info::hasHistory(...)</a></td>
+<td><a href="EventInformation.html#anchor96" target="page">Info::hasHistory(...)</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -1750,25 +1822,25 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor130" target="page">Info::header(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor7" target="page">Info::header(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>vector &lt;string&gt;</td>
-<td><a href="EventInformation.html#anchor131" target="page">Info::headerKeys()</a></td>
+<td><a href="LHEF.html#anchor8" target="page">Info::headerKeys()</a></td>
+<td>L H E F</td>
+</tr>
+
+<tr>
+<td>int</td>
+<td><a href="EventInformation.html#anchor87" target="page">Info::iAMPI(...)</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor92" target="page">Info::iAMPI(...)</a></td>
-<td>Event Information</td>
-</tr>
-
-<tr>
-<td>int</td>
-<td><a href="EventInformation.html#anchor93" target="page">Info::iBMPI(...)</a></td>
+<td><a href="EventInformation.html#anchor88" target="page">Info::iBMPI(...)</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -1876,14 +1948,14 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor75" target="page">Info::lhaStrategy()</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor9" target="page">Info::lhaStrategy()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor114" target="page">Info::LHEFversion()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor10" target="page">Info::LHEFversion()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
@@ -1918,14 +1990,14 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor83" target="page">Info::mergingWeight()</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor11" target="page">Info::mergingWeight()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor84" target="page">Info::mergingWeightNLO()</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor12" target="page">Info::mergingWeightNLO()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -1936,8 +2008,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>long</td>
-<td><a href="EventInformation.html#anchor102" target="page">Info::nAccepted(...)</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor5" target="page">Info::nAccepted(...)</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -1948,8 +2020,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>string</td>
-<td><a href="EventInformation.html#anchor99" target="page">Info::nameProc(...)</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor2" target="page">Info::nameProc(...)</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -1972,44 +2044,62 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor77" target="page">Info::nFSRinProc()</a></td>
+<td><a href="EventInformation.html#anchor74" target="page">Info::nFSRinProc()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor78" target="page">Info::nFSRinRes()</a></td>
+<td><a href="EventInformation.html#anchor75" target="page">Info::nFSRinRes()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor76" target="page">Info::nISR()</a></td>
+<td><a href="EventInformation.html#anchor73" target="page">Info::nISR()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor89" target="page">Info::nMPI()</a></td>
+<td><a href="EventInformation.html#anchor84" target="page">Info::nMPI()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="EventInformation.html#anchor119" target="page">Info::nProcessesLHEF()</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor11" target="page">Info::nProcessesLHEF()</a></td>
+<td>L H E F</td>
+</tr>
+
+<tr>
+<td>int</td>
+<td><a href="LHEF.html#anchor17" target="page">Info::nProcessesLHEF()</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
 <td>long</td>
-<td><a href="EventInformation.html#anchor101" target="page">Info::nSelected(...)</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor4" target="page">Info::nSelected(...)</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
 <td>long</td>
-<td><a href="EventInformation.html#anchor100" target="page">Info::nTried(...)</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor3" target="page">Info::nTried(...)</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>int</td>
+<td><a href="CrossSectionsAndWeights.html#anchor22" target="page">Info::numberOfWeights()</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>int</td>
+<td><a href="CrossSectionsAndWeights.html#anchor19" target="page">Info::nWeights()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -2044,13 +2134,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor113" target="page">Info::pT2NowISR()</a></td>
+<td><a href="EventInformation.html#anchor101" target="page">Info::pT2NowISR()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="EventInformation.html#anchor112" target="page">Info::pT2NowISR(...)</a></td>
+<td><a href="EventInformation.html#anchor100" target="page">Info::pT2NowISR(...)</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -2062,31 +2152,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor81" target="page">Info::pTmaxFSR()</a></td>
+<td><a href="EventInformation.html#anchor78" target="page">Info::pTmaxFSR()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor80" target="page">Info::pTmaxISR()</a></td>
+<td><a href="EventInformation.html#anchor77" target="page">Info::pTmaxISR()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor79" target="page">Info::pTmaxMPI()</a></td>
+<td><a href="EventInformation.html#anchor76" target="page">Info::pTmaxMPI()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor91" target="page">Info::pTMPI(...)</a></td>
+<td><a href="EventInformation.html#anchor86" target="page">Info::pTMPI(...)</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor82" target="page">Info::pTnow()</a></td>
+<td><a href="EventInformation.html#anchor79" target="page">Info::pTnow()</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -2152,14 +2242,14 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="EventInformation.html#anchor106" target="page">Info::setCounter(...)</a></td>
+<td><a href="EventInformation.html#anchor94" target="page">Info::setCounter(...)</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="EventInformation.html#anchor132" target="page">Info::setHeader(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor9" target="page">Info::setHeader(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
@@ -2170,20 +2260,26 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor104" target="page">Info::sigmaErr(...)</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor7" target="page">Info::sigmaErr(...)</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor103" target="page">Info::sigmaGen(...)</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor6" target="page">Info::sigmaGen(...)</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor120" target="page">Info::sigmaLHEF(...)</a></td>
-<td>Event Information</td>
+<td><a href="LHEF.html#anchor12" target="page">Info::sigmaLHEF(...)</a></td>
+<td>L H E F</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="LHEF.html#anchor18" target="page">Info::sigmaLHEF(...)</a></td>
+<td>L H E F</td>
 </tr>
 
 <tr>
@@ -2242,14 +2338,38 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor73" target="page">Info::weight()</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor10" target="page">Info::weight()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor74" target="page">Info::weightSum()</a></td>
-<td>Event Information</td>
+<td><a href="CrossSectionsAndWeights.html#anchor21" target="page">Info::weight(...)</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>string</td>
+<td><a href="CrossSectionsAndWeights.html#anchor20" target="page">Info::weightLabel(...)</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>string</td>
+<td><a href="CrossSectionsAndWeights.html#anchor23" target="page">Info::weightNameByIndex(...)</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="CrossSectionsAndWeights.html#anchor8" target="page">Info::weightSum()</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="CrossSectionsAndWeights.html#anchor24" target="page">Info::weightValueByIndex(...)</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -2308,13 +2428,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="EventInformation.html#anchor111" target="page">Info::zNowISR()</a></td>
+<td><a href="EventInformation.html#anchor99" target="page">Info::zNowISR()</a></td>
 <td>Event Information</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="EventInformation.html#anchor110" target="page">Info::zNowISR(...)</a></td>
+<td><a href="EventInformation.html#anchor98" target="page">Info::zNowISR(...)</a></td>
 <td>Event Information</td>
 </tr>
 
@@ -2356,494 +2476,494 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor32" target="page">LHAup::addParticle(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor32" target="page">LHAup::addParticle(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor8" target="page">LHAup::addProcess(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor8" target="page">LHAup::addProcess(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor37" target="page">LHAup::alphaQCD()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor37" target="page">LHAup::alphaQCD()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor36" target="page">LHAup::alphaQED()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor36" target="page">LHAup::alphaQED()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor83" target="page">LHAup::closeFile(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor77" target="page">LHAup::closeFile(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor88" target="page">LHAup::closeLHEF(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor82" target="page">LHAup::closeLHEF(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor43" target="page">LHAup::col1(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor43" target="page">LHAup::col1(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor44" target="page">LHAup::col2(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor44" target="page">LHAup::col2(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor48" target="page">LHAup::e(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor48" target="page">LHAup::e(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor15" target="page">LHAup::eBeamA()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor15" target="page">LHAup::eBeamA()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor16" target="page">LHAup::eBeamB()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor16" target="page">LHAup::eBeamB()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor87" target="page">LHAup::eventLHEF(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor81" target="page">LHAup::eventLHEF(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor78" target="page">LHAup::fileFound()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor72" target="page">LHAup::fileFound()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="LesHouchesAccord.html#anchor89" target="page">LHAup::getFileName()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor83" target="page">LHAup::getFileName()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor39" target="page">LHAup::id(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor39" target="page">LHAup::id(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor54" target="page">LHAup::id1()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor54" target="page">LHAup::id1()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor60" target="page">LHAup::id1pdf()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor60" target="page">LHAup::id1pdf()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor55" target="page">LHAup::id2()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor55" target="page">LHAup::id2()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor61" target="page">LHAup::id2pdf()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor61" target="page">LHAup::id2pdf()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor13" target="page">LHAup::idBeamA()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor13" target="page">LHAup::idBeamA()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor14" target="page">LHAup::idBeamB()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor14" target="page">LHAup::idBeamB()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor33" target="page">LHAup::idProcess()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor33" target="page">LHAup::idProcess()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor23" target="page">LHAup::idProcess(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor23" target="page">LHAup::idProcess(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor86" target="page">LHAup::initLHEF()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor80" target="page">LHAup::initLHEF()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="LesHouchesAccord.html#anchor1" target="page">LHAup::LHAup(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor1" target="page">LHAup::LHAup(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor67" target="page">LHAup::listEvent()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor67" target="page">LHAup::listEvent()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor29" target="page">LHAup::listInit()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor29" target="page">LHAup::listInit()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor49" target="page">LHAup::m(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor49" target="page">LHAup::m(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor41" target="page">LHAup::mother1(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor41" target="page">LHAup::mother1(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor42" target="page">LHAup::mother2(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor42" target="page">LHAup::mother2(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor81" target="page">LHAup::newEventFile(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor75" target="page">LHAup::newEventFile(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>istream*</td>
-<td><a href="LesHouchesAccord.html#anchor82" target="page">LHAup::openFile(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor76" target="page">LHAup::openFile(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor85" target="page">LHAup::openLHEF(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor79" target="page">LHAup::openLHEF(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor65" target="page">LHAup::pdf1()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor65" target="page">LHAup::pdf1()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor66" target="page">LHAup::pdf2()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor66" target="page">LHAup::pdf2()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor17" target="page">LHAup::pdfGroupBeamA()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor17" target="page">LHAup::pdfGroupBeamA()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor18" target="page">LHAup::pdfGroupBeamB()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor18" target="page">LHAup::pdfGroupBeamB()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor59" target="page">LHAup::pdfIsSet()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor59" target="page">LHAup::pdfIsSet()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor19" target="page">LHAup::pdfSetBeamA()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor19" target="page">LHAup::pdfSetBeamA()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor20" target="page">LHAup::pdfSetBeamB()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor20" target="page">LHAup::pdfSetBeamB()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor45" target="page">LHAup::px(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor45" target="page">LHAup::px(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor46" target="page">LHAup::py(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor46" target="page">LHAup::py(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor47" target="page">LHAup::pz(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor47" target="page">LHAup::pz(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor35" target="page">LHAup::scale()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor35" target="page">LHAup::scale()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor52" target="page">LHAup::scale(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor52" target="page">LHAup::scale(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor64" target="page">LHAup::scalePDF()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor64" target="page">LHAup::scalePDF()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor5" target="page">LHAup::setBeamA(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor5" target="page">LHAup::setBeamA(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor6" target="page">LHAup::setBeamB(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor6" target="page">LHAup::setBeamB(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="LesHouchesAccord.html#anchor30" target="page">LHAup::setEvent(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor30" target="page">LHAup::setEvent(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor53" target="page">LHAup::setIdX(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor53" target="page">LHAup::setIdX(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor12" target="page">LHAup::setInfoHeader(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor12" target="page">LHAup::setInfoHeader(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor80" target="page">LHAup::setInfoHeader(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor74" target="page">LHAup::setInfoHeader(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="LesHouchesAccord.html#anchor4" target="page">LHAup::setInit()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor4" target="page">LHAup::setInit()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor75" target="page">LHAup::setInitLHEF(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor69" target="page">LHAup::setInitLHEF(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor76" target="page">LHAup::setNewEventLHEF(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor70" target="page">LHAup::setNewEventLHEF(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor77" target="page">LHAup::setOldEventLHEF()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor71" target="page">LHAup::setOldEventLHEF()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor58" target="page">LHAup::setPdf(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor58" target="page">LHAup::setPdf(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor31" target="page">LHAup::setProcess(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor31" target="page">LHAup::setProcess(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor3" target="page">LHAup::setPtr(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor3" target="page">LHAup::setPtr(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor7" target="page">LHAup::setStrategy(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor7" target="page">LHAup::setStrategy(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor10" target="page">LHAup::setXErr(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor10" target="page">LHAup::setXErr(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor11" target="page">LHAup::setXMax(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor11" target="page">LHAup::setXMax(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor9" target="page">LHAup::setXSec(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor9" target="page">LHAup::setXSec(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor38" target="page">LHAup::sizePart()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor38" target="page">LHAup::sizePart()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor22" target="page">LHAup::sizeProc()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor22" target="page">LHAup::sizeProc()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="LesHouchesAccord.html#anchor68" target="page">LHAup::skipEvent(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor68" target="page">LHAup::skipEvent(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor51" target="page">LHAup::spin(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor51" target="page">LHAup::spin(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor40" target="page">LHAup::status(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor40" target="page">LHAup::status(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LesHouchesAccord.html#anchor21" target="page">LHAup::strategy()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor21" target="page">LHAup::strategy()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor50" target="page">LHAup::tau(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor50" target="page">LHAup::tau(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="LesHouchesAccord.html#anchor79" target="page">LHAup::useExternal()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor73" target="page">LHAup::useExternal()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor34" target="page">LHAup::weight()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor34" target="page">LHAup::weight()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor56" target="page">LHAup::x1()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor56" target="page">LHAup::x1()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor62" target="page">LHAup::x1pdf()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor62" target="page">LHAup::x1pdf()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor57" target="page">LHAup::x2()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor57" target="page">LHAup::x2()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor63" target="page">LHAup::x2pdf()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor63" target="page">LHAup::x2pdf()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor25" target="page">LHAup::xErr(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor25" target="page">LHAup::xErr(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor28" target="page">LHAup::xErrSum()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor28" target="page">LHAup::xErrSum()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor26" target="page">LHAup::xMax(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor26" target="page">LHAup::xMax(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor24" target="page">LHAup::xSec(...)</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor24" target="page">LHAup::xSec(...)</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LesHouchesAccord.html#anchor27" target="page">LHAup::xSecSum()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor27" target="page">LHAup::xSecSum()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="LesHouchesAccord.html#anchor2" target="page">LHAup::~LHAup()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor2" target="page">LHAup::~LHAup()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
@@ -2890,8 +3010,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="LesHouchesAccord.html#anchor84" target="page">LHAupLHEF::closeAllFiles()</a></td>
-<td>Les Houches Accord</td>
+<td><a href="LHA.html#anchor78" target="page">LHAupLHEF::closeAllFiles()</a></td>
+<td>L H A</td>
 </tr>
 
 <tr>
@@ -2992,8 +3112,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td> </td>
-<td><a href="MatchingAndMerging.html#anchor3" target="page">MergingHooks::setHardProcessPtr(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor3" target="page">MergingHooks::setHardProcessPtr(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -3022,98 +3142,98 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor28" target="page">MyHardProcess::allowCandidates(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor28" target="page">MyHardProcess::allowCandidates(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor31" target="page">MyHardProcess::exchangeCandidates(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor31" target="page">MyHardProcess::exchangeCandidates(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor30" target="page">MyHardProcess::findOtherCandidates(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor30" target="page">MyHardProcess::findOtherCandidates(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="MatchingAndMerging.html#anchor25" target="page">MyHardProcess::initOnProcess(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor25" target="page">MyHardProcess::initOnProcess(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor29" target="page">MyHardProcess::matchesAnyOutgoing(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor29" target="page">MyHardProcess::matchesAnyOutgoing(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="MatchingAndMerging.html#anchor27" target="page">MyHardProcess::storeCandidates(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor27" target="page">MyHardProcess::storeCandidates(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="MatchingAndMerging.html#anchor26" target="page">MyHardProcess::translateProcessString(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor26" target="page">MyHardProcess::translateProcessString(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="MatchingAndMerging.html#anchor5" target="page">MyMerging::init()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor5" target="page">MyMerging::init()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual int</td>
-<td><a href="MatchingAndMerging.html#anchor7" target="page">MyMerging::mergeProcess(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor7" target="page">MyMerging::mergeProcess(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="MatchingAndMerging.html#anchor6" target="page">MyMerging::statistics()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor6" target="page">MyMerging::statistics()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor12" target="page">MyMergingHooks::canVetoEmission()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor12" target="page">MyMergingHooks::canVetoEmission()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor10" target="page">MyMergingHooks::canVetoStep()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor10" target="page">MyMergingHooks::canVetoStep()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor11" target="page">MyMergingHooks::doVetoStep(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor11" target="page">MyMergingHooks::doVetoStep(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor13" target="page">MyMergingHooks::doVetoStep(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor13" target="page">MyMergingHooks::doVetoStep(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="MatchingAndMerging.html#anchor9" target="page">MyMergingHooks::init()</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor9" target="page">MyMergingHooks::init()</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="MatchingAndMerging.html#anchor14" target="page">MyMergingHooks::setShowerStartingScales(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor14" target="page">MyMergingHooks::setShowerStartingScales(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
@@ -3868,13 +3988,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor81" target="page">ParticleData::baryonNumberType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor83" target="page">ParticleData::baryonNumberType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor69" target="page">ParticleData::canDecay(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor71" target="page">ParticleData::canDecay(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -3916,31 +4036,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor66" target="page">ParticleData::constituentMass(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor68" target="page">ParticleData::constituentMass(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor58" target="page">ParticleData::doExternalDecay(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor60" target="page">ParticleData::doExternalDecay(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor57" target="page">ParticleData::doExternalDecays(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor59" target="page">ParticleData::doExternalDecays(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor61" target="page">ParticleData::doForceWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor63" target="page">ParticleData::doForceWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor62" target="page">ParticleData::doForceWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor64" target="page">ParticleData::doForceWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -3958,7 +4078,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor92" target="page">ParticleData::getIsInit()</a></td>
+<td><a href="ParticleDataScheme.html#anchor94" target="page">ParticleData::getIsInit()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -3982,19 +4102,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor63" target="page">ParticleData::hasChanged(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor65" target="page">ParticleData::hasChanged(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor64" target="page">ParticleData::hasChanged(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor66" target="page">ParticleData::hasChanged(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor80" target="page">ParticleData::heaviestQuark(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor82" target="page">ParticleData::heaviestQuark(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4018,49 +4138,49 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor77" target="page">ParticleData::isBaryon(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor79" target="page">ParticleData::isBaryon(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor73" target="page">ParticleData::isDiquark(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor75" target="page">ParticleData::isDiquark(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor72" target="page">ParticleData::isGluon(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor74" target="page">ParticleData::isGluon(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor75" target="page">ParticleData::isHadron(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor77" target="page">ParticleData::isHadron(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor70" target="page">ParticleData::isLepton(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor72" target="page">ParticleData::isLepton(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor76" target="page">ParticleData::isMeson(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor78" target="page">ParticleData::isMeson(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor79" target="page">ParticleData::isOctetHadron(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor81" target="page">ParticleData::isOctetHadron(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor78" target="page">ParticleData::isOnium(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor80" target="page">ParticleData::isOnium(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4072,37 +4192,37 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor74" target="page">ParticleData::isParton()</a></td>
+<td><a href="ParticleDataScheme.html#anchor76" target="page">ParticleData::isParton()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor71" target="page">ParticleData::isQuark(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor73" target="page">ParticleData::isQuark(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor53" target="page">ParticleData::isResonance(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor55" target="page">ParticleData::isResonance(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor54" target="page">ParticleData::isResonance(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor56" target="page">ParticleData::isResonance(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor59" target="page">ParticleData::isVisible(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor61" target="page">ParticleData::isVisible(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor60" target="page">ParticleData::isVisible(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor62" target="page">ParticleData::isVisible(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4174,13 +4294,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor55" target="page">ParticleData::mayDecay(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor57" target="page">ParticleData::mayDecay(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor56" target="page">ParticleData::mayDecay(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor58" target="page">ParticleData::mayDecay(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4210,13 +4330,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor68" target="page">ParticleData::mRun(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor70" target="page">ParticleData::mRun(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor67" target="page">ParticleData::mSel(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor69" target="page">ParticleData::mSel(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4264,7 +4384,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>ParticleDataEntry*</td>
-<td><a href="ParticleDataScheme.html#anchor91" target="page">ParticleData::particleDataEntryPtr(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor93" target="page">ParticleData::particleDataEntryPtr(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4294,49 +4414,49 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor82" target="page">ParticleData::rescaleBR(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor84" target="page">ParticleData::rescaleBR(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor84" target="page">ParticleData::resInit(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor86" target="page">ParticleData::resInit(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor88" target="page">ParticleData::resOpenFrac(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor90" target="page">ParticleData::resOpenFrac(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor85" target="page">ParticleData::resWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor87" target="page">ParticleData::resWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor90" target="page">ParticleData::resWidthChan(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor92" target="page">ParticleData::resWidthChan(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor86" target="page">ParticleData::resWidthOpen(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor88" target="page">ParticleData::resWidthOpen(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor89" target="page">ParticleData::resWidthRescaleFactor(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor91" target="page">ParticleData::resWidthRescaleFactor(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor87" target="page">ParticleData::resWidthStore(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor89" target="page">ParticleData::resWidthStore(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4371,470 +4491,494 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>void</td>
+<td><a href="ParticleDataScheme.html#anchor53" target="page">ParticleData::tauCalc(...)</a></td>
+<td>Particle Data Scheme</td>
+</tr>
+
+<tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor65" target="page">ParticleData::useBreitWigner(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor54" target="page">ParticleData::tauCalc(...)</a></td>
+<td>Particle Data Scheme</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ParticleDataScheme.html#anchor67" target="page">ParticleData::useBreitWigner(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor155" target="page">ParticleDataEntry::addChannel(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor159" target="page">ParticleDataEntry::addChannel(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor153" target="page">ParticleDataEntry::baryonNumberType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor157" target="page">ParticleDataEntry::baryonNumberType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor142" target="page">ParticleDataEntry::canDecay(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor146" target="page">ParticleDataEntry::canDecay(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>DecayChannel&</td>
-<td><a href="ParticleDataScheme.html#anchor157" target="page">ParticleDataEntry::channel(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor161" target="page">ParticleDataEntry::channel(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>const DecayChannel&</td>
-<td><a href="ParticleDataScheme.html#anchor158" target="page">ParticleDataEntry::channel(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor162" target="page">ParticleDataEntry::channel(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor110" target="page">ParticleDataEntry::charge(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor112" target="page">ParticleDataEntry::charge(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor109" target="page">ParticleDataEntry::chargeType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor111" target="page">ParticleDataEntry::chargeType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor154" target="page">ParticleDataEntry::clearChannels()</a></td>
+<td><a href="ParticleDataScheme.html#anchor158" target="page">ParticleDataEntry::clearChannels()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor112" target="page">ParticleDataEntry::colType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor114" target="page">ParticleDataEntry::colType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor138" target="page">ParticleDataEntry::constituentMass()</a></td>
+<td><a href="ParticleDataScheme.html#anchor142" target="page">ParticleDataEntry::constituentMass()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor130" target="page">ParticleDataEntry::doExternalDecay()</a></td>
+<td><a href="ParticleDataScheme.html#anchor134" target="page">ParticleDataEntry::doExternalDecay()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor134" target="page">ParticleDataEntry::doForceWidth()</a></td>
+<td><a href="ParticleDataScheme.html#anchor138" target="page">ParticleDataEntry::doForceWidth()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>ResonanceWidths*</td>
-<td><a href="ParticleDataScheme.html#anchor163" target="page">ParticleDataEntry::getResonancePtr()</a></td>
+<td><a href="ParticleDataScheme.html#anchor167" target="page">ParticleDataEntry::getResonancePtr()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor101" target="page">ParticleDataEntry::hasAnti()</a></td>
+<td><a href="ParticleDataScheme.html#anchor103" target="page">ParticleDataEntry::hasAnti()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor136" target="page">ParticleDataEntry::hasChanged(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor140" target="page">ParticleDataEntry::hasChanged(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor152" target="page">ParticleDataEntry::heaviestQuark(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor156" target="page">ParticleDataEntry::heaviestQuark(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor100" target="page">ParticleDataEntry::id()</a></td>
+<td><a href="ParticleDataScheme.html#anchor102" target="page">ParticleDataEntry::id()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor137" target="page">ParticleDataEntry::initBWmass()</a></td>
+<td><a href="ParticleDataScheme.html#anchor141" target="page">ParticleDataEntry::initBWmass()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor98" target="page">ParticleDataEntry::initPtr(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor100" target="page">ParticleDataEntry::initPtr(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor150" target="page">ParticleDataEntry::isBaryon()</a></td>
+<td><a href="ParticleDataScheme.html#anchor154" target="page">ParticleDataEntry::isBaryon()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor146" target="page">ParticleDataEntry::isDiquark()</a></td>
+<td><a href="ParticleDataScheme.html#anchor150" target="page">ParticleDataEntry::isDiquark()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor145" target="page">ParticleDataEntry::isGluon()</a></td>
+<td><a href="ParticleDataScheme.html#anchor149" target="page">ParticleDataEntry::isGluon()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor148" target="page">ParticleDataEntry::isHadron()</a></td>
+<td><a href="ParticleDataScheme.html#anchor152" target="page">ParticleDataEntry::isHadron()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor143" target="page">ParticleDataEntry::isLepton()</a></td>
+<td><a href="ParticleDataScheme.html#anchor147" target="page">ParticleDataEntry::isLepton()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor149" target="page">ParticleDataEntry::isMeson()</a></td>
+<td><a href="ParticleDataScheme.html#anchor153" target="page">ParticleDataEntry::isMeson()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor151" target="page">ParticleDataEntry::isOctetHadron()</a></td>
+<td><a href="ParticleDataScheme.html#anchor155" target="page">ParticleDataEntry::isOctetHadron()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor147" target="page">ParticleDataEntry::isParton()</a></td>
+<td><a href="ParticleDataScheme.html#anchor151" target="page">ParticleDataEntry::isParton()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor144" target="page">ParticleDataEntry::isQuark()</a></td>
+<td><a href="ParticleDataScheme.html#anchor148" target="page">ParticleDataEntry::isQuark()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor126" target="page">ParticleDataEntry::isResonance()</a></td>
+<td><a href="ParticleDataScheme.html#anchor130" target="page">ParticleDataEntry::isResonance()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor132" target="page">ParticleDataEntry::isVisible()</a></td>
+<td><a href="ParticleDataScheme.html#anchor136" target="page">ParticleDataEntry::isVisible()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor114" target="page">ParticleDataEntry::m0()</a></td>
+<td><a href="ParticleDataScheme.html#anchor116" target="page">ParticleDataEntry::m0()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor122" target="page">ParticleDataEntry::m0Max()</a></td>
+<td><a href="ParticleDataScheme.html#anchor124" target="page">ParticleDataEntry::m0Max()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor121" target="page">ParticleDataEntry::m0Min()</a></td>
+<td><a href="ParticleDataScheme.html#anchor123" target="page">ParticleDataEntry::m0Min()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor128" target="page">ParticleDataEntry::mayDecay()</a></td>
+<td><a href="ParticleDataScheme.html#anchor132" target="page">ParticleDataEntry::mayDecay()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor120" target="page">ParticleDataEntry::mMax()</a></td>
+<td><a href="ParticleDataScheme.html#anchor122" target="page">ParticleDataEntry::mMax()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor118" target="page">ParticleDataEntry::mMin()</a></td>
+<td><a href="ParticleDataScheme.html#anchor120" target="page">ParticleDataEntry::mMin()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor140" target="page">ParticleDataEntry::mRun(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor144" target="page">ParticleDataEntry::mRun(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor139" target="page">ParticleDataEntry::mSel()</a></td>
+<td><a href="ParticleDataScheme.html#anchor143" target="page">ParticleDataEntry::mSel()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor116" target="page">ParticleDataEntry::mWidth()</a></td>
+<td><a href="ParticleDataScheme.html#anchor118" target="page">ParticleDataEntry::mWidth()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="ParticleDataScheme.html#anchor105" target="page">ParticleDataEntry::name(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor107" target="page">ParticleDataEntry::name(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="ParticleDataScheme.html#anchor93" target="page">ParticleDataEntry::ParticleDataEntry(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor95" target="page">ParticleDataEntry::ParticleDataEntry(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="ParticleDataScheme.html#anchor94" target="page">ParticleDataEntry::ParticleDataEntry(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor96" target="page">ParticleDataEntry::ParticleDataEntry(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>DecayChannel&</td>
-<td><a href="ParticleDataScheme.html#anchor161" target="page">ParticleDataEntry::pickChannel()</a></td>
+<td><a href="ParticleDataScheme.html#anchor165" target="page">ParticleDataEntry::pickChannel()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor160" target="page">ParticleDataEntry::preparePick(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor164" target="page">ParticleDataEntry::preparePick(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor159" target="page">ParticleDataEntry::rescaleBR(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor163" target="page">ParticleDataEntry::rescaleBR(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor164" target="page">ParticleDataEntry::resInit(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor168" target="page">ParticleDataEntry::resInit(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor168" target="page">ParticleDataEntry::resOpenFrac(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor172" target="page">ParticleDataEntry::resOpenFrac(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor165" target="page">ParticleDataEntry::resWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor169" target="page">ParticleDataEntry::resWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor170" target="page">ParticleDataEntry::resWidthChan(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor174" target="page">ParticleDataEntry::resWidthChan(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor166" target="page">ParticleDataEntry::resWidthOpen(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor170" target="page">ParticleDataEntry::resWidthOpen(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor169" target="page">ParticleDataEntry::resWidthRescaleFactor()</a></td>
+<td><a href="ParticleDataScheme.html#anchor173" target="page">ParticleDataEntry::resWidthRescaleFactor()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor167" target="page">ParticleDataEntry::resWidthStore(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor171" target="page">ParticleDataEntry::resWidthStore(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor99" target="page">ParticleDataEntry::setAll(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor101" target="page">ParticleDataEntry::setAll(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor103" target="page">ParticleDataEntry::setAntiName(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor105" target="page">ParticleDataEntry::setAntiName(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor108" target="page">ParticleDataEntry::setChargeType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor110" target="page">ParticleDataEntry::setChargeType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor111" target="page">ParticleDataEntry::setColType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor113" target="page">ParticleDataEntry::setColType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor97" target="page">ParticleDataEntry::setDefaults()</a></td>
+<td><a href="ParticleDataScheme.html#anchor99" target="page">ParticleDataEntry::setDefaults()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor129" target="page">ParticleDataEntry::setDoExternalDecays(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor133" target="page">ParticleDataEntry::setDoExternalDecays(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor133" target="page">ParticleDataEntry::setDoForceWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor137" target="page">ParticleDataEntry::setDoForceWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor135" target="page">ParticleDataEntry::setHasChanged(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor139" target="page">ParticleDataEntry::setHasChanged(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor125" target="page">ParticleDataEntry::setIsResonance(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor129" target="page">ParticleDataEntry::setIsResonance(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor131" target="page">ParticleDataEntry::setIsVisible(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor135" target="page">ParticleDataEntry::setIsVisible(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor113" target="page">ParticleDataEntry::setM0(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor115" target="page">ParticleDataEntry::setM0(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor127" target="page">ParticleDataEntry::setMayDecay(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor131" target="page">ParticleDataEntry::setMayDecay(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor119" target="page">ParticleDataEntry::setMMax(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor121" target="page">ParticleDataEntry::setMMax(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor117" target="page">ParticleDataEntry::setMMin(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor119" target="page">ParticleDataEntry::setMMin(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor115" target="page">ParticleDataEntry::setMWidth(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor117" target="page">ParticleDataEntry::setMWidth(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor102" target="page">ParticleDataEntry::setName(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor104" target="page">ParticleDataEntry::setName(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor104" target="page">ParticleDataEntry::setNames(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor106" target="page">ParticleDataEntry::setNames(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor162" target="page">ParticleDataEntry::setResonancePtr(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor166" target="page">ParticleDataEntry::setResonancePtr(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor106" target="page">ParticleDataEntry::setSpinType(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor108" target="page">ParticleDataEntry::setSpinType(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ParticleDataScheme.html#anchor123" target="page">ParticleDataEntry::setTau0(...)</a></td>
+<td><a href="ParticleDataScheme.html#anchor125" target="page">ParticleDataEntry::setTau0(...)</a></td>
+<td>Particle Data Scheme</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="ParticleDataScheme.html#anchor127" target="page">ParticleDataEntry::setTauCalc(...)</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor156" target="page">ParticleDataEntry::sizeChannels()</a></td>
+<td><a href="ParticleDataScheme.html#anchor160" target="page">ParticleDataEntry::sizeChannels()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ParticleDataScheme.html#anchor107" target="page">ParticleDataEntry::spinType()</a></td>
+<td><a href="ParticleDataScheme.html#anchor109" target="page">ParticleDataEntry::spinType()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ParticleDataScheme.html#anchor124" target="page">ParticleDataEntry::tau0()</a></td>
+<td><a href="ParticleDataScheme.html#anchor126" target="page">ParticleDataEntry::tau0()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ParticleDataScheme.html#anchor141" target="page">ParticleDataEntry::useBreitWigner()</a></td>
+<td><a href="ParticleDataScheme.html#anchor128" target="page">ParticleDataEntry::tauCalc()</a></td>
+<td>Particle Data Scheme</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ParticleDataScheme.html#anchor145" target="page">ParticleDataEntry::useBreitWigner()</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="ParticleDataScheme.html#anchor96" target="page">ParticleDataEntry::~ParticleDataEntry</a></td>
+<td><a href="ParticleDataScheme.html#anchor98" target="page">ParticleDataEntry::~ParticleDataEntry</a></td>
 <td>Particle Data Scheme</td>
 </tr>
 
@@ -4852,97 +4996,205 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor10" target="page">Pythia8ToHepMC::convert_gluon_to_0()</a></td>
+<td><a href="HepMCInterface.html#anchor12" target="page">Pythia8ToHepMC3::convert_gluon_to_0()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor3" target="page">Pythia8ToHepMC::fill_next_event(...)</a></td>
+<td><a href="HepMCInterface.html#anchor10" target="page">Pythia8ToHepMC3::crash_on_problem()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor4" target="page">Pythia8ToHepMC::fill_next_event(...)</a></td>
+<td><a href="HepMCInterface.html#anchor3" target="page">Pythia8ToHepMC3::fill_next_event(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor8" target="page">Pythia8ToHepMC::free_parton_exception()</a></td>
+<td><a href="HepMCInterface.html#anchor4" target="page">Pythia8ToHepMC3::fill_next_event(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor6" target="page">Pythia8ToHepMC::print_inconsistency()</a></td>
+<td><a href="HepMCInterface.html#anchor8" target="page">Pythia8ToHepMC3::free_parton_warnings()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor6" target="page">Pythia8ToHepMC3::print_inconsistency()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="HepMCInterface.html#anchor1" target="page">Pythia8ToHepMC::Pythia8ToHepMC()</a></td>
+<td><a href="HepMCInterface.html#anchor1" target="page">Pythia8ToHepMC3::Pythia8ToHepMC()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HepMCInterface.html#anchor9" target="page">Pythia8ToHepMC::set_convert_gluon_to_0(...)</a></td>
+<td><a href="HepMCInterface.html#anchor11" target="page">Pythia8ToHepMC3::set_convert_gluon_to_0(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HepMCInterface.html#anchor7" target="page">Pythia8ToHepMC::set_free_parton_exception(...)</a></td>
+<td><a href="HepMCInterface.html#anchor9" target="page">Pythia8ToHepMC3::set_crash_on_problem(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HepMCInterface.html#anchor5" target="page">Pythia8ToHepMC::set_print_inconsistency(...)</a></td>
+<td><a href="HepMCInterface.html#anchor7" target="page">Pythia8ToHepMC3::set_free_parton_warnings(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HepMCInterface.html#anchor11" target="page">Pythia8ToHepMC::set_store_pdf(...)</a></td>
+<td><a href="HepMCInterface.html#anchor5" target="page">Pythia8ToHepMC3::set_print_inconsistency(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HepMCInterface.html#anchor13" target="page">Pythia8ToHepMC::set_store_proc(...)</a></td>
+<td><a href="HepMCInterface.html#anchor13" target="page">Pythia8ToHepMC3::set_store_pdf(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HepMCInterface.html#anchor15" target="page">Pythia8ToHepMC::set_store_xsec(...)</a></td>
+<td><a href="HepMCInterface.html#anchor15" target="page">Pythia8ToHepMC3::set_store_proc(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor17" target="page">Pythia8ToHepMC3::set_store_xsec(...)</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor12" target="page">Pythia8ToHepMC::store_pdf()</a></td>
+<td><a href="HepMCInterface.html#anchor14" target="page">Pythia8ToHepMC3::store_pdf()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="HepMCInterface.html#anchor14" target="page">Pythia8ToHepMC::store_proc()</a></td>
-<td>HepMC Interface</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="HepMCInterface.html#anchor16" target="page">Pythia8ToHepMC::store_xsec()</a></td>
+<td><a href="HepMCInterface.html#anchor18" target="page">Pythia8ToHepMC3::store_xsec()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="HepMCInterface.html#anchor2" target="page">Pythia8ToHepMC::~Pythia8ToHepMC()</a></td>
+<td><a href="HepMCInterface.html#anchor2" target="page">Pythia8ToHepMC3::~Pythia8ToHepMC3()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor28" target="page">Pythia8ToHepMC::convert_gluon_to_0()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor21" target="page">Pythia8ToHepMC::fill_next_event(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor22" target="page">Pythia8ToHepMC::fill_next_event(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor26" target="page">Pythia8ToHepMC::free_parton_exception()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor24" target="page">Pythia8ToHepMC::print_inconsistency()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td> </td>
+<td><a href="HepMCInterface.html#anchor19" target="page">Pythia8ToHepMC::Pythia8ToHepMC()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor27" target="page">Pythia8ToHepMC::set_convert_gluon_to_0(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor25" target="page">Pythia8ToHepMC::set_free_parton_exception(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor23" target="page">Pythia8ToHepMC::set_print_inconsistency(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor29" target="page">Pythia8ToHepMC::set_store_pdf(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor31" target="page">Pythia8ToHepMC::set_store_proc(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="HepMCInterface.html#anchor33" target="page">Pythia8ToHepMC::set_store_xsec(...)</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor30" target="page">Pythia8ToHepMC::store_pdf()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor16" target="page">Pythia8ToHepMC::store_proc()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor32" target="page">Pythia8ToHepMC::store_proc()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HepMCInterface.html#anchor34" target="page">Pythia8ToHepMC::store_xsec()</a></td>
+<td>HepMC Interface</td>
+</tr>
+
+<tr>
+<td>virtual</td>
+<td><a href="HepMCInterface.html#anchor20" target="page">Pythia8ToHepMC::~Pythia8ToHepMC()</a></td>
 <td>HepMC Interface</td>
 </tr>
 
@@ -4960,55 +5212,67 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>CoupSM</td>
-<td><a href="ProgramFlow.html#anchor49" target="page">Pythia::coupSM</a></td>
+<td><a href="ProgramFlow.html#anchor51" target="page">Pythia::coupSM</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor36" target="page">Pythia::doLowEnergyProcess(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Event</td>
-<td><a href="ProgramFlow.html#anchor44" target="page">Pythia::event</a></td>
+<td><a href="ProgramFlow.html#anchor46" target="page">Pythia::event</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor38" target="page">Pythia::flag(...)</a></td>
+<td><a href="ProgramFlow.html#anchor40" target="page">Pythia::flag(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor32" target="page">Pythia::forceHadronLevel(...)</a></td>
+<td><a href="ProgramFlow.html#anchor33" target="page">Pythia::forceHadronLevel(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor34" target="page">Pythia::forceRHadronDecays()</a></td>
+<td><a href="ProgramFlow.html#anchor35" target="page">Pythia::forceRHadronDecays()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ProgramFlow.html#anchor31" target="page">Pythia::forceTimeShower(...)</a></td>
+<td><a href="ProgramFlow.html#anchor32" target="page">Pythia::forceTimeShower(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>HeavyIons*</td>
-<td><a href="ProgramFlow.html#anchor24" target="page">Pythia::getHeavyIonsPtr()</a></td>
+<td><a href="ProgramFlow.html#anchor25" target="page">Pythia::getHeavyIonsPtr()</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>ShowerModelPtr</td>
+<td><a href="ProgramFlow.html#anchor23" target="page">Pythia::getShowerModelPtr()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Info</td>
-<td><a href="ProgramFlow.html#anchor45" target="page">Pythia::info</a></td>
+<td><a href="ProgramFlow.html#anchor47" target="page">Pythia::info</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor26" target="page">Pythia::init()</a></td>
+<td><a href="ProgramFlow.html#anchor27" target="page">Pythia::init()</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5020,37 +5284,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="ProgramFlow.html#anchor35" target="page">Pythia::LHAeventList()</a></td>
+<td><a href="ProgramFlow.html#anchor37" target="page">Pythia::LHAeventList()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor36" target="page">Pythia::LHAeventSkip(...)</a></td>
+<td><a href="ProgramFlow.html#anchor38" target="page">Pythia::LHAeventSkip(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ProgramFlow.html#anchor39" target="page">Pythia::mode(...)</a></td>
+<td><a href="ProgramFlow.html#anchor41" target="page">Pythia::mode(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor33" target="page">Pythia::moreDecays()</a></td>
+<td><a href="ProgramFlow.html#anchor34" target="page">Pythia::moreDecays()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor27" target="page">Pythia::next()</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="ProgramFlow.html#anchor28" target="page">Pythia::next(...)</a></td>
+<td><a href="ProgramFlow.html#anchor28" target="page">Pythia::next()</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5063,6 +5321,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 <tr>
 <td>bool</td>
 <td><a href="ProgramFlow.html#anchor30" target="page">Pythia::next(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor31" target="page">Pythia::next(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5086,25 +5350,25 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="ProgramFlow.html#anchor40" target="page">Pythia::parm(...)</a></td>
+<td><a href="ProgramFlow.html#anchor42" target="page">Pythia::parm(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>ParticleData</td>
-<td><a href="ProgramFlow.html#anchor47" target="page">Pythia::particleData</a></td>
+<td><a href="ProgramFlow.html#anchor49" target="page">Pythia::particleData</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>PartonSystems</td>
-<td><a href="ProgramFlow.html#anchor51" target="page">Pythia::partonSystems</a></td>
+<td><a href="ProgramFlow.html#anchor53" target="page">Pythia::partonSystems</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Event</td>
-<td><a href="ProgramFlow.html#anchor43" target="page">Pythia::process</a></td>
+<td><a href="ProgramFlow.html#anchor45" target="page">Pythia::process</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5158,7 +5422,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>Rndm</td>
-<td><a href="ProgramFlow.html#anchor48" target="page">Pythia::rndm</a></td>
+<td><a href="ProgramFlow.html#anchor50" target="page">Pythia::rndm</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5176,7 +5440,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor23" target="page">Pythia::setHeavyIonsPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor24" target="page">Pythia::setHeavyIonsPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5188,19 +5452,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td> </td>
-<td><a href="MatchingAndMerging.html#anchor2" target="page">Pythia::setMergingHooksPtr(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor2" target="page">Pythia::setMergingHooksPtr(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="MatchingAndMerging.html#anchor1" target="page">Pythia::setMergingPtr(...)</a></td>
-<td>Matching And Merging</td>
+<td><a href="ImplementNewMatching.html#anchor1" target="page">Pythia::setMergingPtr(...)</a></td>
+<td>Implement New Matching</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor25" target="page">Pythia::setPartonVertexPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor26" target="page">Pythia::setPartonVertexPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5230,7 +5494,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor22" target="page">Pythia::setShowerPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor22" target="page">Pythia::setShowerModelPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5242,7 +5506,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>Settings</td>
-<td><a href="ProgramFlow.html#anchor46" target="page">Pythia::settings</a></td>
+<td><a href="ProgramFlow.html#anchor48" target="page">Pythia::settings</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5254,19 +5518,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>SusyLesHouches</td>
-<td><a href="ProgramFlow.html#anchor50" target="page">Pythia::slha</a></td>
+<td><a href="ProgramFlow.html#anchor52" target="page">Pythia::slha</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ProgramFlow.html#anchor37" target="page">Pythia::stat()</a></td>
+<td><a href="ProgramFlow.html#anchor39" target="page">Pythia::stat()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="ProgramFlow.html#anchor41" target="page">Pythia::word(...)</a></td>
+<td><a href="ProgramFlow.html#anchor43" target="page">Pythia::word(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -5314,7 +5578,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="RandomNumbers.html#anchor12" target="page">Rndm::dumpState(...)</a></td>
+<td><a href="RandomNumbers.html#anchor13" target="page">Rndm::dumpState(...)</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -5349,14 +5613,20 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>pair&lt;Vec4, Vec4&gt;</td>
+<td><a href="RandomNumbers.html#anchor11" target="page">Rndm::phaseSpace2(...)</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
 <td>int</td>
-<td><a href="RandomNumbers.html#anchor11" target="page">Rndm::pick(...)</a></td>
+<td><a href="RandomNumbers.html#anchor12" target="page">Rndm::pick(...)</a></td>
 <td>Random Numbers</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="RandomNumbers.html#anchor13" target="page">Rndm::readState(...)</a></td>
+<td><a href="RandomNumbers.html#anchor14" target="page">Rndm::readState(...)</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -5386,20 +5656,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual double</td>
-<td><a href="RandomNumbers.html#anchor14" target="page">RndmEngine::flat()</a></td>
+<td><a href="RandomNumbers.html#anchor15" target="page">RndmEngine::flat()</a></td>
 <td>Random Numbers</td>
-</tr>
-
-<tr>
-<td>void</td>
-<td><a href="FourVectors.html#anchor78" target="page">RotBstMatrix::bst(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
-<td><a href="FourVectors.html#anchor79" target="page">RotBstMatrix::bst(...)</a></td>
-<td>Four-Vectors</td>
 </tr>
 
 <tr>
@@ -5410,97 +5668,109 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor80" target="page">RotBstMatrix::bstback(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>double</td>
-<td><a href="FourVectors.html#anchor91" target="page">RotBstMatrix::deviation()</a></td>
+<td><a href="FourVectors.html#anchor82" target="page">RotBstMatrix::bst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor83" target="page">RotBstMatrix::fromCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor84" target="page">RotBstMatrix::bst(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor83" target="page">RotBstMatrix::bstback(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="FourVectors.html#anchor94" target="page">RotBstMatrix::deviation()</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor86" target="page">RotBstMatrix::fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor88" target="page">RotBstMatrix::inverse()</a></td>
+<td><a href="FourVectors.html#anchor91" target="page">RotBstMatrix::inverse()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor87" target="page">RotBstMatrix::invert()</a></td>
+<td><a href="FourVectors.html#anchor90" target="page">RotBstMatrix::invert()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix&</td>
-<td><a href="FourVectors.html#anchor85" target="page">RotBstMatrix::operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor88" target="page">RotBstMatrix::operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4</td>
-<td><a href="FourVectors.html#anchor86" target="page">RotBstMatrix::operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor89" target="page">RotBstMatrix::operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix&</td>
-<td><a href="FourVectors.html#anchor75" target="page">RotBstMatrix::operator=(...)</a></td>
+<td><a href="FourVectors.html#anchor78" target="page">RotBstMatrix::operator=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor89" target="page">RotBstMatrix::reset()</a></td>
+<td><a href="FourVectors.html#anchor92" target="page">RotBstMatrix::reset()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor76" target="page">RotBstMatrix::rot(...)</a></td>
+<td><a href="FourVectors.html#anchor79" target="page">RotBstMatrix::rot(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor77" target="page">RotBstMatrix::rot(...)</a></td>
+<td><a href="FourVectors.html#anchor80" target="page">RotBstMatrix::rot(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor84" target="page">RotBstMatrix::rotbst(...);</a></td>
+<td><a href="FourVectors.html#anchor87" target="page">RotBstMatrix::rotbst(...);</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="FourVectors.html#anchor73" target="page">RotBstMatrix::RotBstMatrix()</a></td>
+<td><a href="FourVectors.html#anchor76" target="page">RotBstMatrix::RotBstMatrix()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="FourVectors.html#anchor74" target="page">RotBstMatrix::RotBstMatrix(...)</a></td>
+<td><a href="FourVectors.html#anchor77" target="page">RotBstMatrix::RotBstMatrix(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor82" target="page">RotBstMatrix::toCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor85" target="page">RotBstMatrix::toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="FourVectors.html#anchor90" target="page">RotBstMatrix::value(...)</a></td>
+<td><a href="FourVectors.html#anchor93" target="page">RotBstMatrix::value(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -5979,6 +6249,24 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual TimeShowerPtr</td>
+<td><a href="ImplementNewShowers.html#anchor1" target="page">ShowerModel::getTimeShower()</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
+<td><a href="ImplementNewShowers.html#anchor6" target="page">ShowerModel::init(...)</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ImplementNewShowers.html#anchor7" target="page">ShowerModel::initAfterBeams()</a></td>
+<td>Implement New Showers</td>
+</tr>
+
+<tr>
 <td>int</td>
 <td><a href="SemiInternalProcesses.html#anchor13" target="page">SigmaProcess::code()</a></td>
 <td>Semi Internal Processes</td>
@@ -6298,127 +6586,127 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor47" target="page">SpaceShower::allowedSplitting(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor54" target="page">SpaceShower::allowedSplitting(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor37" target="page">SpaceShower::branch(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor44" target="page">SpaceShower::branch(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual Event</td>
-<td><a href="ImplementNewShowers.html#anchor43" target="page">SpaceShower::clustered(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor50" target="page">SpaceShower::clustered(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ImplementNewShowers.html#anchor39" target="page">SpaceShower::doRestart()</a></td>
+<td><a href="ImplementNewShowers.html#anchor46" target="page">SpaceShower::doRestart()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="ImplementNewShowers.html#anchor33" target="page">SpaceShower::enhancePTmax()</a></td>
+<td><a href="ImplementNewShowers.html#anchor40" target="page">SpaceShower::enhancePTmax()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ImplementNewShowers.html#anchor40" target="page">SpaceShower::getHasWeaklyRadiated()</a></td>
+<td><a href="ImplementNewShowers.html#anchor47" target="page">SpaceShower::getHasWeaklyRadiated()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual vector&lt;int&gt;</td>
-<td><a href="ImplementNewShowers.html#anchor48" target="page">SpaceShower::getRecoilers(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor55" target="page">SpaceShower::getRecoilers(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual vector&lt;string&gt;</td>
-<td><a href="ImplementNewShowers.html#anchor45" target="page">SpaceShower::getSplittingName(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor52" target="page">SpaceShower::getSplittingName(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="ImplementNewShowers.html#anchor46" target="page">SpaceShower::getSplittingProb(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor53" target="page">SpaceShower::getSplittingProb(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual map &lt;string,double&gt;</td>
-<td><a href="ImplementNewShowers.html#anchor44" target="page">SpaceShower::getStateVariables(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor51" target="page">SpaceShower::getStateVariables(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor31" target="page">SpaceShower::init(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor38" target="page">SpaceShower::init(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ImplementNewShowers.html#anchor30" target="page">SpaceShower::initPtr(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor37" target="page">SpaceShower::initPtr(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor42" target="page">SpaceShower::isSpacelike(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor49" target="page">SpaceShower::isSpacelike(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor32" target="page">SpaceShower::limitPTmax(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor39" target="page">SpaceShower::limitPTmax(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor41" target="page">SpaceShower::list()</a></td>
+<td><a href="ImplementNewShowers.html#anchor48" target="page">SpaceShower::list()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor34" target="page">SpaceShower::prepare(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor41" target="page">SpaceShower::prepare(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="ImplementNewShowers.html#anchor36" target="page">SpaceShower::pTnext(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor43" target="page">SpaceShower::pTnext(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="ImplementNewShowers.html#anchor28" target="page">SpaceShower::SpaceShower()</a></td>
+<td><a href="ImplementNewShowers.html#anchor35" target="page">SpaceShower::SpaceShower()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ImplementNewShowers.html#anchor38" target="page">SpaceShower::system()</a></td>
+<td><a href="ImplementNewShowers.html#anchor45" target="page">SpaceShower::system()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor35" target="page">SpaceShower::update(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor42" target="page">SpaceShower::update(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="ImplementNewShowers.html#anchor29" target="page">SpaceShower::~SpaceShower()</a></td>
+<td><a href="ImplementNewShowers.html#anchor36" target="page">SpaceShower::~SpaceShower()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
@@ -6532,158 +6820,164 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor26" target="page">TimeShower::allowedSplitting(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor33" target="page">TimeShower::allowedSplitting(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor16" target="page">TimeShower::branch(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor23" target="page">TimeShower::branch(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual Event</td>
-<td><a href="ImplementNewShowers.html#anchor22" target="page">TimeShower::clustered(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor29" target="page">TimeShower::clustered(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ImplementNewShowers.html#anchor6" target="page">TimeShower::enhancePTmax()</a></td>
+<td><a href="ImplementNewShowers.html#anchor13" target="page">TimeShower::enhancePTmax()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ImplementNewShowers.html#anchor19" target="page">TimeShower::getHasWeaklyRadiated()</a></td>
+<td><a href="ImplementNewShowers.html#anchor26" target="page">TimeShower::getHasWeaklyRadiated()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual vector&lt;string&gt;</td>
-<td><a href="ImplementNewShowers.html#anchor24" target="page">TimeShower::getSplittingName(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor31" target="page">TimeShower::getSplittingName(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="ImplementNewShowers.html#anchor25" target="page">TimeShower::getSplittingProb(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor32" target="page">TimeShower::getSplittingProb(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual map &lt;string,double&gt;</td>
-<td><a href="ImplementNewShowers.html#anchor23" target="page">TimeShower::getStateVariables(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor30" target="page">TimeShower::getStateVariables(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor4" target="page">TimeShower::init(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor11" target="page">TimeShower::init(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ImplementNewShowers.html#anchor3" target="page">TimeShower::initPtr(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor10" target="page">TimeShower::initPtr(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor21" target="page">TimeShower::isTimelike(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor28" target="page">TimeShower::isTimelike(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor5" target="page">TimeShower::limitPTmax(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor12" target="page">TimeShower::limitPTmax(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor20" target="page">TimeShower::list()</a></td>
+<td><a href="ImplementNewShowers.html#anchor27" target="page">TimeShower::list()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor12" target="page">TimeShower::prepare(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor19" target="page">TimeShower::prepare(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor11" target="page">TimeShower::prepareGlobal(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor18" target="page">TimeShower::prepareGlobal(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ImplementNewShowers.html#anchor10" target="page">TimeShower::pTLastInShower()</a></td>
+<td><a href="ImplementNewShowers.html#anchor17" target="page">TimeShower::pTLastInShower()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="ImplementNewShowers.html#anchor15" target="page">TimeShower::pTnext(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor22" target="page">TimeShower::pTnext(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="ImplementNewShowers.html#anchor17" target="page">TimeShower::rescatterPropogateRecoil(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor24" target="page">TimeShower::rescatterPropogateRecoil(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor13" target="page">TimeShower::rescatterUpdate(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor20" target="page">TimeShower::rescatterUpdate(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual int</td>
-<td><a href="ImplementNewShowers.html#anchor7" target="page">TimeShower::shower(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor14" target="page">TimeShower::shower(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual int</td>
-<td><a href="ImplementNewShowers.html#anchor8" target="page">TimeShower::showerQED(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor15" target="page">TimeShower::showerQED(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual int</td>
-<td><a href="ImplementNewShowers.html#anchor9" target="page">TimeShower::showerQEDafterRemnants(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor16" target="page">TimeShower::showerQEDafterRemnants(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ImplementNewShowers.html#anchor18" target="page">TimeShower::system()</a></td>
+<td><a href="ImplementNewShowers.html#anchor25" target="page">TimeShower::system()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="ImplementNewShowers.html#anchor1" target="page">TimeShower::TimeShower()</a></td>
+<td><a href="ImplementNewShowers.html#anchor8" target="page">TimeShower::TimeShower()</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual void</td>
-<td><a href="ImplementNewShowers.html#anchor14" target="page">TimeShower::update(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor21" target="page">TimeShower::update(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="ImplementNewShowers.html#anchor2" target="page">TimeShower::~TimeShower()</a></td>
+<td><a href="ImplementNewShowers.html#anchor9" target="page">TimeShower::~TimeShower()</a></td>
 <td>Implement New Showers</td>
+</tr>
+
+<tr>
+<td>virtual double</td>
+<td><a href="CrossSectionsAndWeights.html#anchor14" target="page">UserHooks::biasedSelectionWeight()</a></td>
+<td>Cross Sections And Weights</td>
 </tr>
 
 <tr>
@@ -6867,6 +7161,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual double</td>
+<td><a href="CrossSectionsAndWeights.html#anchor15" target="page">UserHooks::getEnhancedEventWeight()</a></td>
+<td>Cross Sections And Weights</td>
+</tr>
+
+<tr>
 <td>virtual bool</td>
 <td><a href="UserHooks.html#anchor7" target="page">UserHooks::initAfterBeams()</a></td>
 <td>User Hooks</td>
@@ -6946,37 +7246,37 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor66" target="page">Vec4::bst(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
-<td><a href="FourVectors.html#anchor67" target="page">Vec4::bst(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
-<td><a href="FourVectors.html#anchor68" target="page">Vec4::bst(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
 <td><a href="FourVectors.html#anchor69" target="page">Vec4::bst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor70" target="page">Vec4::bstback(...)</a></td>
+<td><a href="FourVectors.html#anchor70" target="page">Vec4::bst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor71" target="page">Vec4::bstback(...)</a></td>
+<td><a href="FourVectors.html#anchor71" target="page">Vec4::bst(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor72" target="page">Vec4::bst(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor73" target="page">Vec4::bstback(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor74" target="page">Vec4::bstback(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -7012,13 +7312,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor61" target="page">Vec4::flip3()</a></td>
+<td><a href="FourVectors.html#anchor64" target="page">Vec4::flip3()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor62" target="page">Vec4::flip4()</a></td>
+<td><a href="FourVectors.html#anchor65" target="page">Vec4::flip4()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -7036,31 +7336,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor51" target="page">Vec4::operator*=(...)</a></td>
+<td><a href="FourVectors.html#anchor54" target="page">Vec4::operator*=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor49" target="page">Vec4::operator+=(...)</a></td>
+<td><a href="FourVectors.html#anchor52" target="page">Vec4::operator+=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4</td>
-<td><a href="FourVectors.html#anchor48" target="page">Vec4::operator-()</a></td>
+<td><a href="FourVectors.html#anchor51" target="page">Vec4::operator-()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor50" target="page">Vec4::operator-=(...)</a></td>
+<td><a href="FourVectors.html#anchor53" target="page">Vec4::operator-=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor52" target="page">Vec4::operator/=(...)</a></td>
+<td><a href="FourVectors.html#anchor55" target="page">Vec4::operator/=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -7174,13 +7474,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor59" target="page">Vec4::rescale3(...)</a></td>
+<td><a href="FourVectors.html#anchor62" target="page">Vec4::rescale3(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor60" target="page">Vec4::rescale4(...)</a></td>
+<td><a href="FourVectors.html#anchor63" target="page">Vec4::rescale4(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -7192,25 +7492,25 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor63" target="page">Vec4::rot(...)</a></td>
+<td><a href="FourVectors.html#anchor66" target="page">Vec4::rot(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor64" target="page">Vec4::rotaxis(...)</a></td>
+<td><a href="FourVectors.html#anchor67" target="page">Vec4::rotaxis(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor65" target="page">Vec4::rotaxis(...)</a></td>
+<td><a href="FourVectors.html#anchor68" target="page">Vec4::rotaxis(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor72" target="page">Vec4::rotbst(...)</a></td>
+<td><a href="FourVectors.html#anchor75" target="page">Vec4::rotbst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -7240,10 +7540,10 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual</td>
-<td><a href="ImplementNewShowers.html#anchor27" target="page">vector&lt;int&gt;TimeShower::getRecoilers(...)</a></td>
+<td><a href="ImplementNewShowers.html#anchor34" target="page">vector&lt;int&gt;TimeShower::getRecoilers(...)</a></td>
 <td>Implement New Showers</td>
 </tr>
 
 </table>
 
-<!-- Copyright (C) 2019 Torbjorn Sjostrand -->
+<!-- Copyright (C) 2020 Torbjorn Sjostrand -->

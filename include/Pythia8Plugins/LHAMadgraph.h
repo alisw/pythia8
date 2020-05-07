@@ -1,5 +1,5 @@
 // LHAMadgraph.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,8 +13,6 @@
 #include "Pythia8Plugins/GeneratorInput.h"
 #include <unistd.h>
 #include <sys/stat.h>
-
-using namespace std;
 
 namespace Pythia8 {
 
@@ -67,13 +65,14 @@ class LHAupMadgraph : public LHAup {
 public:
 
   // Types of MadGraph stages.
-    enum Stage{Auto, Configure, Generate, Launch};
+  enum Stage{Auto, Configure, Generate, Launch};
 
   // Constructor.
   LHAupMadgraph(Pythia* pythiaIn, bool matchIn = true,
                 string dirIn = "madgraphrun", string exeIn = "mg5_aMC");
 
-  // Destructor.
+  // Destructor: Print error statistics before exiting. Printing code
+  // basically copied from Info class.
   ~LHAupMadgraph();
 
   // Read a MadGraph command string.
@@ -97,7 +96,9 @@ public:
   // Set the event information.
   bool setEvent(int = 0);
 
-protected:
+  // Note: The functions below have been made public to ease the generation
+  // of Python bindings.
+  //protected:
 
   // Execute a system command.
   bool execute(string line);
@@ -117,16 +118,26 @@ protected:
   // Create the LHEF reader.
   bool reader(bool init);
 
+  // Print a message the first few times. Insert in database.
+  void errorMsg(string messageIn) {
+    // Recover number of times message occured. Also inserts new string.
+    int times = messages[messageIn];
+    ++messages[messageIn];
+    // Print message the first few times.
+    if (times < TIMESTOPRINT) cout << " PYTHIA " << messageIn << endl;
+  }
+
+private:
+
   // The PYTHIA object and LHEF file reader and matching hook.
   Pythia *pythia;
   LHAupLHEF *lhef;
-  JetMatchingMadgraph *hook;
+  shared_ptr<JetMatchingMadgraph> hook;
 
   // Stored members.
   int events, seed, runs, nRuns, jets;
   bool match, amcatnlo;
   string dir, exe, lhegz;
-  double sigWgt, wgt;
   vector< pair<string, string> > cards;
 
   // The MadGraph commands for the config, generate, and launch stages.
@@ -134,6 +145,11 @@ protected:
 
   // Vector of whether a command stage has been overridden by the user.
   vector<bool> override;
+
+  // Map for all error messages.
+  map<string, int> messages;
+  // Number of times the same error message is repeated, unless overridden.
+  static const int TIMESTOPRINT = 1;
 
 };
 
@@ -152,9 +168,44 @@ LHAupMadgraph::LHAupMadgraph(Pythia *pythiaIn, bool matchIn, string dirIn,
 
 //--------------------------------------------------------------------------
 
-// Destructor.
+// Destructor: Print error statistics before exiting. Printing code
+// basically copied from Info class.
+LHAupMadgraph::~LHAupMadgraph() {
 
-LHAupMadgraph::~LHAupMadgraph() {if (lhef) delete lhef; if (hook) delete hook;}
+  if (lhef) delete lhef;
+
+  // Header.
+  cout << "\n *-------  LHAupMadgraph Error and Warning Messages Statistics"
+       << "  ---------------------------------------------------* \n"
+       << " |                                                       "
+       << "                                                          | \n"
+       << " |  times   message                                      "
+       << "                                                          | \n"
+       << " |                                                       "
+       << "                                                          | \n";
+
+  // Loop over all messages
+  map<string, int>::iterator messageEntry = messages.begin();
+  if (messageEntry == messages.end())
+    cout << " |      0   no errors or warnings to report              "
+           << "                                                          | \n";
+  while (messageEntry != messages.end()) {
+    // Message printout.
+    string temp = messageEntry->first;
+    int len = temp.length();
+    temp.insert( len, max(0, 102 - len), ' ');
+    cout << " | " << setw(6) << messageEntry->second << "   "
+         << temp << " | \n";
+    ++messageEntry;
+  }
+
+  // Done.
+  cout << " |                                                       "
+       << "                                                          | \n"
+       << " *-------  End LHAupMadgraph Error and Warning Messages "
+       << "Statistics  -----------------------------------------------* "
+       << endl;
+}
 
 //--------------------------------------------------------------------------
 
@@ -237,13 +288,13 @@ bool LHAupMadgraph::setSeed(int seedIn, int runsIn) {
   if (seed < 0) {
     seed = pythia->settings.mode("Random:seed");
     if (seed < 1) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::setSeed: the given "
-                            "Pythia seed is less than 1."); return false;}
+      errorMsg("Error from LHAupMadgraph::setSeed: the given "
+               "Pythia seed is less than 1."); return false;}
   }
   runs = runsIn;
   if (seed * runs > 30081 * 30081) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::setSeed: the given seed "
-                          "exceeds the MadGraph limit."); return false;}
+    errorMsg("Error from LHAupMadgraph::setSeed: the given seed "
+             "exceeds the MadGraph limit."); return false;}
   nRuns = 0;
   return true;
 
@@ -321,8 +372,8 @@ bool LHAupMadgraph::generate() {
   setenv("HOME", home, 1);
   if (!success) {orig.close(); return false;}
   else if (access((dir + "/tmp/Cards/run_card.dat").c_str(), F_OK) == -1) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::generate: MadGraph "
-                          "failed to produce run_card.dat");
+    errorMsg("Error from LHAupMadgraph::generate: MadGraph "
+             "failed to produce run_card.dat");
     orig.close(); return false;
   } else execute("mv " + dir + "/tmp/* " + dir + "; rmdir " + dir + "/tmp");
 
@@ -378,16 +429,16 @@ bool LHAupMadgraph::launch() {
       " do TARG=`readlink $LINK`; if [[ $TARG = ../* ]]; then "
       "rm $LINK; ln -s ${TARG:3} $LINK; fi; done";
     if (!execute(line)) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::launch: failed to "
-                            "link aMC@NLO libraries"); return false;}
+      errorMsg("Error from LHAupMadgraph::launch: failed to "
+               "link aMC@NLO libraries"); return false;}
   }
 
   // Run MadGraph and create run scripts.
   if (!execute(exe + " " + dir + "/launch.py")) return false;
   if (amcatnlo) {
     if (access((dir + "/SubProcesses/results.dat").c_str(), F_OK) == -1) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::launch: aMC@NLO failed "
-                            "to produce results.dat"); return false;}
+      errorMsg("Error from LHAupMadgraph::launch: aMC@NLO failed "
+               "to produce results.dat"); return false;}
     fstream script((dir + "/run.sh").c_str(), ios::out);
     script << "#!/usr/bin/env bash\n"
            << "sed -i \"s/.*= *nevents/$1 = nevents/g\" ./Cards/run_card.dat\n"
@@ -398,15 +449,15 @@ bool LHAupMadgraph::launch() {
   } else {
     string gpk = "run_gridpack.tar.gz";
     if (access((dir + "/" + gpk).c_str(), F_OK) == -1) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::launch: MadEvent failed"
-                            " to produce " + gpk); return false;}
+      errorMsg("Error from LHAupMadgraph::launch: MadEvent failed"
+               " to produce " + gpk); return false;}
     string line = "cd " + dir + "; tar -xzf " + gpk + "; cd madevent/lib; "
       "LINK=`readlink libLHAPDF.a`; if [[ $LINK = ../* ]]; then "
       "rm libLHAPDF.a; ln -s ../$LINK libLHAPDF.a; fi; cd ../; "
       "./bin/compile dynamic; ./bin/clean4grid";
     if (!execute(line)) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::launch: failed to "
-                            "compile MadEvent code"); return false;}
+      errorMsg("Error from LHAupMadgraph::launch: failed to "
+               "compile MadEvent code"); return false;}
   }
   return true;
 
@@ -420,8 +471,8 @@ bool LHAupMadgraph::run(int eventsIn, int seedIn) {
 
   if (!pythia) return false;
   if (nRuns >= runs) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::run: maximum number "
-                          "of allowed runs exceeded."); return false;}
+    errorMsg("Error from LHAupMadgraph::run: maximum number "
+             "of allowed runs exceeded."); return false;}
   if (access((dir + "/run.sh").c_str(), F_OK) == -1) return false;
   if (seed < 0 && !setSeed(seed, runs)) return false;
   if (seedIn < 0) seedIn = (seed - 1) * runs + nRuns + 1;
@@ -445,13 +496,13 @@ bool LHAupMadgraph::reader(bool init) {
   if (!pythia) return false;
   if (lhef) delete lhef;
   bool setScales(pythia->settings.flag("Beams:setProductionScalesFromLHEF"));
-  lhef = new LHAupLHEF(&pythia->info, lhegz.c_str(), NULL, false, setScales);
+  lhef = new LHAupLHEF(infoPtr, lhegz.c_str(), NULL, false, setScales);
   if (!lhef->setInit()) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::reader: failed to "
-                          "initialize the LHEF reader"); return false;}
+    errorMsg("Error from LHAupMadgraph::reader: failed to "
+             "initialize the LHEF reader"); return false;}
   if (lhef->sizeProc() != 1) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::reader: number of "
-                          "processes is not 1"); return false;}
+    errorMsg("Error from LHAupMadgraph::reader: number of "
+             "processes is not 1"); return false;}
 
   if (init) {
 
@@ -463,8 +514,8 @@ bool LHAupMadgraph::reader(bool init) {
       string v; vector<double> vs;
       while (std::getline(results, v, ' ')) vs.push_back(atof(v.c_str()));
       if (vs.size() < 2) {
-        pythia->info.errorMsg("Error from LHAupMadgraph::reader: could not "
-                              "extract cross-section"); return false;}
+        errorMsg("Error from LHAupMadgraph::reader: could not "
+                 "extract cross-section"); return false;}
       sig = vs[0]; err = vs[1];
     }
 
@@ -494,14 +545,14 @@ bool LHAupMadgraph::setInit() {
   if (!pythia) return false;
   if (access((dir + "/run.sh").c_str(), F_OK) == -1) {
     if (!configure()) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::setInit: failed to "
-                        "create the MadGraph configuration"); return false;}
+      errorMsg("Error from LHAupMadgraph::setInit: failed to "
+               "create the MadGraph configuration"); return false;}
     if (!generate()) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::setInit: failed to "
-                            "generate the MadGraph process"); return false;}
+      errorMsg("Error from LHAupMadgraph::setInit: failed to "
+               "generate the MadGraph process"); return false;}
     if (!launch()) {
-      pythia->info.errorMsg("Error from LHAupMadgraph::setInit: failed to "
-                            "launch the MadGraph process"); return false;}
+      errorMsg("Error from LHAupMadgraph::setInit: failed to "
+               "launch the MadGraph process"); return false;}
   } else
     amcatnlo =
       access((dir + "/Cards/amcatnlo_configuration.txt").c_str(), F_OK) != -1;
@@ -511,7 +562,8 @@ bool LHAupMadgraph::setInit() {
 
     // Load the MadGraph parameters.
     ifstream card((dir + "/Cards/run_card.dat").c_str());
-    string str((istreambuf_iterator<char>(card)), istreambuf_iterator<char>());
+    string str((std::istreambuf_iterator<char>(card)),
+      std::istreambuf_iterator<char>());
     MadgraphPar mad;
     mad.parse(str);
     mad.printParams();
@@ -563,8 +615,8 @@ bool LHAupMadgraph::setInit() {
     } else set.parm("JetMatching:clFact", mad.getParam("alpsfact"));
 
     // Set the matching hook.
-    hook = new JetMatchingMadgraph();
-    pythia->setUserHooksPtr(hook);
+    hook = make_shared<JetMatchingMadgraph>();
+    pythia->setUserHooksPtr((UserHooksPtr)hook);
   }
 
   // Create the LHEF LHAup object and run setInit.
@@ -584,11 +636,11 @@ bool LHAupMadgraph::setEvent(int) {
   // Run setEvent from the LHEF object and launch MadGraph if failed.
   if (!pythia) return false;
   if (!lhef) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::setEvent: LHAupLHEF "
-                          "object not correctly initialized"); return false;}
+    errorMsg("Error from LHAupMadgraph::setEvent: LHAupLHEF "
+             "object not correctly initialized"); return false;}
   if (!lhef->fileFound()) {
-    pythia->info.errorMsg("Error from LHAupMadgraph::setEvent: LHEF "
-                          "event file was not found"); return false;}
+    errorMsg("Error from LHAupMadgraph::setEvent: LHEF "
+             "event file was not found"); return false;}
   if (!lhef->setEvent()) {
     if (!run(events)) return false;
     if (!reader(false)) return false;

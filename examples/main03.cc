@@ -1,7 +1,9 @@
 // main03.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: basic usage; process selection; command file; python; matplotlib;
 
 // This is a simple test program.
 // It illustrates how different processes can be selected and studied.
@@ -103,7 +105,8 @@ int main() {
   // Colours and other choices can be omitted, but are shown as illustration.
   HistPlot hpl("main03plot");
   hpl.plotFrame("out03plot", pThard, "$p_{\\perp}$ scale of hard interaction",
-    "$p_{\\perp}$ (GeV)", "$\\mathrm{d}\\sigma/\\mathrm{d}p_{\\perp}$ (nb/GeV)",
+    "$p_{\\perp}$ (GeV)",
+    "$\\mathrm{d}\\sigma/\\mathrm{d}p_{\\perp}$ (nb/GeV)",
     "h", "$p_{\\perp}$ of $2 \\to 2$ process", true);
   hpl.frame("", "Total and charged particle multiplicities",
     "$n$", "$\\mathrm{d}P/\\mathrm{d}n$");

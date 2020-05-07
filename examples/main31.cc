@@ -1,9 +1,11 @@
 // main31.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Richard Corke, Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Example how to perform merging with PWOHEG-BOX events,
+// Keywords: matching; merging; powheg;
+
+// Example how to perform merging with POWHEG-BOX events,
 // based on the code found in include/Pythia8Plugins/PowhegHooks.h.
 
 #include "Pythia8/Pythia.h"
@@ -29,7 +31,8 @@ int main() {
   bool loadHooks  = (vetoMode > 0 || MPIvetoMode > 0);
 
   // Add in user hooks for shower vetoing
-  PowhegHooks *powhegHooks = NULL;
+  //PowhegHooks *powhegHooks = NULL;
+  shared_ptr<PowhegHooks> powhegHooks;
   if (loadHooks) {
 
     // Set ISR and FSR to start at the kinematical limit
@@ -43,8 +46,8 @@ int main() {
       pythia.readString("MultipartonInteractions:pTmaxMatch = 2");
     }
 
-    powhegHooks = new PowhegHooks();
-    pythia.setUserHooksPtr((UserHooks *) powhegHooks);
+    powhegHooks = make_shared<PowhegHooks>();
+    pythia.setUserHooksPtr((UserHooksPtr)powhegHooks);
   }
 
   // Initialise and list settings
@@ -97,6 +100,6 @@ int main() {
   cout << endl;
 
   // Done.
-  if (powhegHooks) delete powhegHooks;
+  //if (powhegHooks) delete powhegHooks;
   return 0;
 }

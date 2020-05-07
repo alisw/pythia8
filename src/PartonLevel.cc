@@ -1,5 +1,5 @@
 // PartonLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Hard diffraction added by Christine Rasmussen.
@@ -7,6 +7,7 @@
 // Function definitions (not found in the header) for the PartonLevel class.
 
 #include "Pythia8/PartonLevel.h"
+#include "Pythia8/ColourReconnection.h"
 
 namespace Pythia8 {
 
@@ -26,41 +27,24 @@ const int PartonLevel::NTRY = 10;
 
 // Main routine to initialize the parton-level generation process.
 
-bool PartonLevel::init( Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
-  BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
-  BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
-  Couplings* couplingsPtrIn, PartonSystems* partonSystemsPtrIn,
-  SigmaTotal* sigmaTotPtr, TimeShower* timesDecPtrIn, TimeShower* timesPtrIn,
-  SpaceShower* spacePtrIn, RHadrons* rHadronsPtrIn, UserHooks* userHooksPtrIn,
-  MergingHooks* mergingHooksPtrIn, PartonVertex* partonVertexPtrIn,
-  bool useAsTrial ) {
+bool PartonLevel::init( TimeShowerPtr timesDecPtrIn,
+  TimeShowerPtr timesPtrIn, SpaceShowerPtr spacePtrIn, RHadrons* rHadronsPtrIn,
+  MergingHooksPtr mergingHooksPtrIn, PartonVertexPtr partonVertexPtrIn,
+  StringIntPtr stringInteractionsPtrIn,  bool useAsTrial ) {
 
-  // Store input pointers and modes for future use.
-  infoPtr            = infoPtrIn;
-  particleDataPtr    = particleDataPtrIn;
-  rndmPtr            = rndmPtrIn;
-  beamAPtr           = beamAPtrIn;
-  beamBPtr           = beamBPtrIn;
-  beamHadAPtr        = beamAPtr;
-  beamHadBPtr        = beamBPtr;
-  beamPomAPtr        = beamPomAPtrIn;
-  beamPomBPtr        = beamPomBPtrIn;
-  beamGamAPtr        = beamGamAPtrIn;
-  beamGamBPtr        = beamGamBPtrIn;
-  beamVMDAPtr        = beamVMDAPtrIn;
-  beamVMDBPtr        = beamVMDBPtrIn;
-  couplingsPtr       = couplingsPtrIn;
-  partonSystemsPtr   = partonSystemsPtrIn;
-  timesDecPtr        = timesDecPtrIn;
-  timesPtr           = timesPtrIn;
-  spacePtr           = spacePtrIn;
-  rHadronsPtr        = rHadronsPtrIn;
-  userHooksPtr       = userHooksPtrIn;
-  mergingHooksPtr    = mergingHooksPtrIn;
-  partonVertexPtr    = partonVertexPtrIn;
+  // Store other input pointers.
+  beamHadAPtr           = beamAPtr;
+  beamHadBPtr           = beamBPtr;
+  timesDecPtr           = timesDecPtrIn;
+  timesPtr              = timesPtrIn;
+  spacePtr              = spacePtrIn;
+  rHadronsPtr           = rHadronsPtrIn;
+  mergingHooksPtr       = mergingHooksPtrIn;
+  partonVertexPtr       = partonVertexPtrIn;
+  colourReconnectionPtr = stringInteractionsPtrIn->getColourReconnections();
+
+  // Reference to Settings.
+  Settings& settings = *settingsPtr;
 
   // Min bias and diffraction processes need special treatment.
   bool doSQ          = settings.flag("SoftQCD:all")
@@ -238,12 +222,10 @@ bool PartonLevel::init( Info* infoPtrIn, Settings& settings,
   if (beamHasResGamma && doND) doNDgamma = true;
 
   // Set info and initialize the respective program elements.
-  timesPtr->init( beamAPtr, beamBPtr);
-  if (doISR) spacePtr->init( beamAPtr, beamBPtr);
+  if (timesPtr) timesPtr->init( beamAPtr, beamBPtr);
+  if (doISR && spacePtr) spacePtr->init( beamAPtr, beamBPtr);
 
-  doMPIMB  =  multiMB.init( doMPIinit, 0, infoPtr, settings, particleDataPtr,
-    rndmPtr, beamAPtr, beamBPtr, couplingsPtr,
-    partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr);
+  doMPIMB  =  multiMB.init( doMPIinit, 0, beamAPtr, beamBPtr, partonVertexPtr);
 
   // Initialize MPIs for diffractive system, possibly photon beam from
   // lepton, possibly VMD from photon.
@@ -251,55 +233,44 @@ bool PartonLevel::init( Info* infoPtrIn, Settings& settings,
     || hardDiffSide == 1) && beamBPtr->getGammaMode() < 2 ) ) {
     BeamParticle* tmpBeamA = (beamAhasGamma) ? beamGamAPtr : beamAPtr;
     if (infoPtr->isVMDstateA()) tmpBeamA = beamVMDAPtr;
-    doMPISDA = multiSDA.init( !onlyDirGamma, 1, infoPtr, settings,
-      particleDataPtr, rndmPtr, tmpBeamA, beamPomBPtr, couplingsPtr,
-      partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr,
-      (beamAisGamma || beamAhasGamma) );
+    doMPISDA = multiSDA.init( !onlyDirGamma, 1, tmpBeamA, beamPomBPtr,
+      partonVertexPtr, (beamAisGamma || beamAhasGamma) );
   }
   if (doSD || doDD || doSQ || ( doHardDiff && (hardDiffSide == 0
     || hardDiffSide == 2) && beamAPtr->getGammaMode() < 2 ) ) {
     BeamParticle* tmpBeamB = (beamBhasGamma) ? beamGamBPtr : beamBPtr;
     if (infoPtr->isVMDstateB()) tmpBeamB = beamVMDBPtr;
-    doMPISDB = multiSDB.init( !onlyDirGamma, 2, infoPtr, settings,
-      particleDataPtr, rndmPtr, beamPomAPtr, tmpBeamB, couplingsPtr,
-      partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr,
-      (beamBisGamma || beamBhasGamma) );
+    doMPISDB = multiSDB.init( !onlyDirGamma, 2, beamPomAPtr, tmpBeamB,
+      partonVertexPtr, (beamBisGamma || beamBhasGamma) );
   }
-  if (doCD || doSQ) doMPICD = multiCD.init( doMPIinit, 3, infoPtr, settings,
-    particleDataPtr, rndmPtr, beamPomAPtr, beamPomBPtr, couplingsPtr,
-    partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr);
-  if (!remnants.init( infoPtr, settings, rndmPtr, beamAPtr, beamBPtr,
-    partonSystemsPtr, partonVertexPtr, particleDataPtr, &colourReconnection))
-    return false;
-  resonanceDecays.init( infoPtr, particleDataPtr, rndmPtr);
-  colourReconnection.init( infoPtr, settings, rndmPtr, particleDataPtr,
-    beamAPtr, beamBPtr, partonSystemsPtr);
-  junctionSplitting.init(infoPtr, settings, rndmPtr, particleDataPtr);
+  if (doCD || doSQ) doMPICD = multiCD.init( doMPIinit, 3, beamPomAPtr,
+    beamPomBPtr, partonVertexPtr);
+  if (!remnants.init( partonVertexPtr, colourReconnectionPtr)) return false;
+  resonanceDecays.init();
+  if (colourReconnectionPtr) colourReconnectionPtr->init();
+  junctionSplitting.init();
 
   // Initialize hard diffraction with possible photon beams from leptons.
-  if (doHardDiff && (gammaMode !=4) )
-    hardDiffraction.init(infoPtr, settings, rndmPtr, beamAhasGamma ?
-      beamGamAPtr : beamAPtr, beamBhasGamma ? beamGamBPtr : beamBPtr,
-      beamPomAPtr, beamPomBPtr, sigmaTotPtr);
+  if (doHardDiff && (gammaMode !=4) ) {
+    hardDiffraction.init(beamAhasGamma ? beamGamAPtr : beamAPtr,
+      beamBhasGamma ? beamGamBPtr : beamBPtr);
+  }
 
   // Initialize an MPI instance for photons from leptons.
   if ( beamHasResGamma && (doMPI || doNDgamma) ) {
     doMPIinit = true;
     // Lepton-hadron.
     if (beamAPtr->isLepton() && beamBPtr->isHadron() ) {
-      doMPIgmgm = multiGmGm.init( doMPIinit, 0, infoPtr, settings,
-        particleDataPtr, rndmPtr, beamGamAPtr, beamBPtr, couplingsPtr,
-        partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr, true);
+      doMPIgmgm = multiGmGm.init( doMPIinit, 0, beamGamAPtr, beamBPtr,
+        partonVertexPtr, true);
     // Hadron-lepton.
     } else if (beamBPtr->isLepton() && beamAPtr->isHadron() ) {
-      doMPIgmgm = multiGmGm.init( doMPIinit, 0, infoPtr, settings,
-        particleDataPtr, rndmPtr, beamAPtr, beamGamBPtr, couplingsPtr,
-        partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr, true);
+      doMPIgmgm = multiGmGm.init( doMPIinit, 0, beamAPtr, beamGamBPtr,
+        partonVertexPtr, true);
     // Lepton-lepton.
     } else {
-      doMPIgmgm = multiGmGm.init( doMPIinit, 0, infoPtr, settings,
-        particleDataPtr, rndmPtr, beamGamAPtr, beamGamBPtr, couplingsPtr,
-        partonSystemsPtr, sigmaTotPtr, userHooksPtr, partonVertexPtr, true);
+      doMPIgmgm = multiGmGm.init( doMPIinit, 0, beamGamAPtr, beamGamBPtr,
+        partonVertexPtr, true);
     }
     doMPIMB = doMPIgmgm;
   }
@@ -380,8 +351,8 @@ bool PartonLevel::next( Event& process, Event& event) {
   infoPtr->setAbortPartonLevel(false);
 
   // Update photon state according to beams set in processContainer.
-  beamAhasResGamma  = beamAPtr->hasResGamma();
-  beamBhasResGamma  = beamBPtr->hasResGamma();
+  beamAhasResGamma  = beamAPtr == nullptr ? false : beamAPtr->hasResGamma();
+  beamBhasResGamma  = beamBPtr == nullptr ? false : beamBPtr->hasResGamma();
   beamHasResGamma   = beamAhasResGamma || beamBhasResGamma;
 
   // Save if photoproduction from either side.
@@ -649,8 +620,9 @@ bool PartonLevel::next( Event& process, Event& event) {
 
     // Impact parameter has now been chosen, but not usefully for diffraction.
     // (Never chosen for low-mass diffraction, twice for double diffraction.)
-    if (!isDiff) infoPtr->setImpact( multiPtr->bMPI(), multiPtr->enhanceMPI(),
-      multiPtr->enhanceMPIavg(), true, (iHardDiffLoop == 2) );
+    if (!isDiff) infoPtr->setImpact( multiPtr->bMPI(),
+      multiPtr->enhanceMPI(), multiPtr->enhanceMPIavg(), true,
+      (iHardDiffLoop == 2) );
 
     // Set up initial veto scale.
     doVeto        = false;
@@ -719,7 +691,8 @@ bool PartonLevel::next( Event& process, Event& event) {
 
           // Break for hard diffraction with MPI veto.
           if (isHardDiff && sampleTypeDiff == 4 && iHardDiffLoop == 1) {
-            infoPtr->setHardDiff( false, false, false, false, 0., 0., 0., 0.);
+            infoPtr->setHardDiff( false, false, false, false, 0., 0.,
+              0., 0.);
             doDiffVeto = true;
             // Reset beam pointers and set event back to original frame.
             if (beamHasResGamma)
@@ -1088,11 +1061,11 @@ bool PartonLevel::next( Event& process, Event& event) {
   }
 
   // Do colour reconnection for non-diffractive events before resonance decays.
-  if (doReconnect && !doDiffCR && reconnectMode > 0) {
+  if ( colourReconnectionPtr && !doDiffCR && reconnectMode > 0) {
     Event eventSave = event;
     bool colCorrect = false;
     for (int i = 0; i < 10; ++i) {
-      colourReconnection.next(event, 0);
+      colourReconnectionPtr->next(event, 0);
       if (junctionSplitting.checkColours(event)) {
         colCorrect = true;
         break;
@@ -1133,12 +1106,12 @@ bool PartonLevel::next( Event& process, Event& event) {
   }
 
   // Do colour reconnection for resonance decays.
-  if (!earlyResDec && forceResonanceCR && doReconnect &&
+  if (!earlyResDec && forceResonanceCR && colourReconnectionPtr &&
       !doDiffCR && reconnectMode != 0) {
     Event eventSave = event;
     bool colCorrect = false;
     for (int i = 0; i < 10; ++i) {
-      colourReconnection.next(event, oldSizeEvt);
+      colourReconnectionPtr->next(event, oldSizeEvt);
       if (junctionSplitting.checkColours(event)) {
         colCorrect = true;
         break;
@@ -1750,7 +1723,7 @@ void PartonLevel::setupResolvedDiff( Event& process) {
   timesDecPtr->reassignBeamPtrs( beamAPtr, beamBPtr, beamOffset);
   spacePtr->reassignBeamPtrs( beamAPtr, beamBPtr, beamOffset);
   remnants.reassignBeamPtrs(  beamAPtr, beamBPtr, beamRemnOffset);
-  colourReconnection.reassignBeamPtrs(  beamAPtr, beamBPtr);
+  colourReconnectionPtr->reassignBeamPtrs(  beamAPtr, beamBPtr);
 
 
   // Reassign multiparton interactions pointer to right object.
@@ -1802,7 +1775,7 @@ void PartonLevel::leaveResolvedDiff( int iHardLoop, Event& process,
   timesDecPtr->reassignBeamPtrs( beamAPtr, beamBPtr, 0);
   spacePtr->reassignBeamPtrs( beamAPtr, beamBPtr, 0);
   remnants.reassignBeamPtrs(  beamAPtr, beamBPtr, 0);
-  colourReconnection.reassignBeamPtrs(  beamAPtr, beamBPtr);
+  colourReconnectionPtr->reassignBeamPtrs(  beamAPtr, beamBPtr);
 
   // Restore multiparton interactions pointer to default object.
   multiPtr = &multiMB;
@@ -2001,7 +1974,7 @@ void PartonLevel::setupHardDiff( Event& process) {
   timesDecPtr->reassignBeamPtrs( beamAPtr, beamBPtr, beamOffset);
   spacePtr->reassignBeamPtrs( beamAPtr, beamBPtr, beamOffset);
   remnants.reassignBeamPtrs(  beamAPtr, beamBPtr, beamRemnOffset);
-  colourReconnection.reassignBeamPtrs(  beamAPtr, beamBPtr);
+  colourReconnectionPtr->reassignBeamPtrs(  beamAPtr, beamBPtr);
 
   // Reassign multiparton interactions pointer to right object.
   if      (isHardDiffA) multiPtr = &multiSDA;
@@ -2064,7 +2037,7 @@ void PartonLevel::leaveHardDiff( Event& process, Event& event,
   timesDecPtr->reassignBeamPtrs( beamAPtr, beamBPtr, 0);
   spacePtr->reassignBeamPtrs( beamAPtr, beamBPtr, 0);
   remnants.reassignBeamPtrs(  beamAPtr, beamBPtr, 0);
-  colourReconnection.reassignBeamPtrs(  beamAPtr, beamBPtr);
+  colourReconnectionPtr->reassignBeamPtrs(  beamAPtr, beamBPtr);
 
   // Reset the beam offset to normal.
   multiPtr->setBeamOffset(0);
@@ -2163,7 +2136,7 @@ bool PartonLevel::setupResolvedLeptonGamma( Event& process) {
   timesDecPtr->reassignBeamPtrs( beamAPtr, beamBPtr, beamOffset);
   spacePtr->reassignBeamPtrs( beamAPtr, beamBPtr, beamOffset);
   remnants.reassignBeamPtrs(  beamAPtr, beamBPtr, beamOffset);
-  colourReconnection.reassignBeamPtrs(  beamAPtr, beamBPtr);
+  colourReconnectionPtr->reassignBeamPtrs(  beamAPtr, beamBPtr);
 
   // Set the MPI to point the gamma-gamma system.
   multiPtr = &multiGmGm;
@@ -2246,7 +2219,8 @@ void PartonLevel::leaveResolvedLeptonGamma( Event& process, Event& event,
       double mT2A    = pow2( beamAPtr->gammaKT() ) - pow2(mGamma1);
       double mT2B    = pow2( beamBPtr->gammaKT() ) - pow2(mGamma2);
       double sHatBef = infoPtr->sHat();
-      double sHatAft = infoPtr->sHat() + pow2(kTxA + kTxB) + pow2(kTyA + kTyB);
+      double sHatAft = infoPtr->sHat() + pow2(kTxA + kTxB)
+                     + pow2(kTyA + kTyB);
       double lambda  = pow2(sHatAft) + pow2(mT2A) + pow2(mT2B)
                      - 2. * ( sHatAft * (mT2A + mT2B) + mT2A * mT2B );
       double kz2New  = 0.25 * lambda / sHatAft;
@@ -2459,7 +2433,7 @@ void PartonLevel::leaveResolvedLeptonGamma( Event& process, Event& event,
   timesDecPtr->reassignBeamPtrs( beamAPtr, beamBPtr, 0);
   spacePtr->reassignBeamPtrs( beamAPtr, beamBPtr, 0);
   remnants.reassignBeamPtrs(  beamAPtr, beamBPtr, 0);
-  colourReconnection.reassignBeamPtrs(  beamAPtr, beamBPtr);
+  colourReconnectionPtr->reassignBeamPtrs(  beamAPtr, beamBPtr);
 
   // Set the MPI pointer back to the original collisions.
   multiPtr = &multiMB;
@@ -2593,6 +2567,8 @@ bool PartonLevel::resonanceShowers( Event& process, Event& event,
     int iHardMother      = process[iBegin].mother1();
     Particle& hardMother = process[iHardMother];
     int iBefMother       = iPosBefShow[iHardMother];
+    if (event[iBefMother].daughter1() >= event.size())
+      event[iBefMother].daughters( 0, 0);
     int iAftMother       = event[iBefMother].iBotCopyId();
     // Possibly trace across intermediate R-hadron state.
     if (allowRH) {
@@ -2899,10 +2875,10 @@ bool PartonLevel::wzDecayShowers( Event& event) {
       double li2, ri2, lf2, rf2;
       // Z couplings: make use of initial fermion polarization if set.
       if (event[iWZ].id() == 23) {
-        li2 = pow2(couplingsPtr->lf( event[iEmitter].idAbs() ));
-        ri2 = pow2(couplingsPtr->rf( event[iEmitter].idAbs() ));
-        lf2 = pow2(couplingsPtr->lf( event[sizeSave].idAbs() ));
-        rf2 = pow2(couplingsPtr->rf( event[sizeSave].idAbs() ));
+        li2 = pow2(coupSMPtr->lf( event[iEmitter].idAbs() ));
+        ri2 = pow2(coupSMPtr->rf( event[iEmitter].idAbs() ));
+        lf2 = pow2(coupSMPtr->lf( event[sizeSave].idAbs() ));
+        rf2 = pow2(coupSMPtr->rf( event[sizeSave].idAbs() ));
         if ( abs( event[iEmitter].pol() + 1.) < 0.1) ri2 = 0.;
         if ( abs( event[iEmitter].pol() - 1.) < 0.1) li2 = 0.;
       // W couplings.
@@ -3068,10 +3044,10 @@ bool PartonLevel::wzDecayShowers( Event& event) {
       double li2, ri2, lf2, rf2;
       // Z couplings: make use of initial fermion polarization if set.
       if (event[iWZ].id() == 23) {
-        li2 = pow2(couplingsPtr->lf( event[iMother].idAbs() ));
-        ri2 = pow2(couplingsPtr->rf( event[iMother].idAbs() ));
-        lf2 = pow2(couplingsPtr->lf( event[sizeSave].idAbs() ));
-        rf2 = pow2(couplingsPtr->rf( event[sizeSave].idAbs() ));
+        li2 = pow2(coupSMPtr->lf( event[iMother].idAbs() ));
+        ri2 = pow2(coupSMPtr->rf( event[iMother].idAbs() ));
+        lf2 = pow2(coupSMPtr->lf( event[sizeSave].idAbs() ));
+        rf2 = pow2(coupSMPtr->rf( event[sizeSave].idAbs() ));
         if ( abs( event[iMother].pol() + 1.) < 0.1) ri2 = 0.;
         if ( abs( event[iMother].pol() - 1.) < 0.1) li2 = 0.;
       // W couplings.

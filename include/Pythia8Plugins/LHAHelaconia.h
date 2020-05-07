@@ -1,5 +1,5 @@
 // LHAHelaconia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -40,7 +40,8 @@ public:
   LHAupHelaconia(Pythia *pythiaIn, string dirIn = "helaconiarun",
                  string exeIn = "ho_cluster");
 
-  // Destructor.
+  // Destructor: Print error statistics before exiting. Printing code
+  // basically copied from Info class.
   ~LHAupHelaconia();
 
   // Read a HelacOnia command string.
@@ -58,7 +59,9 @@ public:
   // Set the event information.
   bool setEvent(int = 0);
 
-protected:
+  // Note: The functions below have been made public to ease the generation
+  // of Python bindings.
+  //protected:
 
   // Execute a system command.
   bool execute(string line);
@@ -72,6 +75,17 @@ protected:
   // Convert the color octet HelacOnia ID to a Pythia 8 ID.
   int convert(int idIn);
 
+  // Print a message the first few times. Insert in database.
+  void errorMsg(string messageIn) {
+    // Recover number of times message occured. Also inserts new string.
+    int times = messages[messageIn];
+    ++messages[messageIn];
+    // Print message the first few times.
+    if (times < TIMESTOPRINT) cout << " PYTHIA " << messageIn << endl;
+  }
+
+private:
+
   // The PYTHIA object and LHEF file reader and matching hook.
   Pythia *pythia;
   LHAupLHEF *lhef;
@@ -79,10 +93,15 @@ protected:
   // Stored members.
   int events, seed, runs, nRuns, nId, nQ, nR, nL, nJ;
   string dir, exe, lhegz;
-  double sigWgt, wgt, mQ;
+  double mQ;
 
   // The HelacOnia commands.
   vector<string> lines;
+
+  // Map for all error messages.
+  map<string, int> messages;
+  // Number of times the same error message is repeated, unless overridden.
+  static const int TIMESTOPRINT = 1;
 
 };
 
@@ -103,7 +122,42 @@ LHAupHelaconia::LHAupHelaconia(Pythia *pythiaIn, string dirIn, string exeIn) :
 
 // Destructor.
 
-LHAupHelaconia::~LHAupHelaconia() {if (lhef) delete lhef;}
+LHAupHelaconia::~LHAupHelaconia() {
+
+  if (lhef) delete lhef;
+
+  // Header.
+  cout << "\n *-------  LHAupHelaconia Error and Warning Messages Statistics"
+       << "  --------------------------------------------------* \n"
+       << " |                                                       "
+       << "                                                          | \n"
+       << " |  times   message                                      "
+       << "                                                          | \n"
+       << " |                                                       "
+       << "                                                          | \n";
+
+  // Loop over all messages
+  map<string, int>::iterator messageEntry = messages.begin();
+  if (messageEntry == messages.end())
+    cout << " |      0   no errors or warnings to report              "
+         << "                                                          | \n";
+  while (messageEntry != messages.end()) {
+    // Message printout.
+    string temp = messageEntry->first;
+    int len = temp.length();
+    temp.insert( len, max(0, 102 - len), ' ');
+    cout << " | " << setw(6) << messageEntry->second << "   "
+         << temp << " | \n";
+    ++messageEntry;
+  }
+
+  // Done.
+  cout << " |                                                       "
+       << "                                                          | \n"
+       << " *-------  End LHAupHelaconia Error and Warning Messages "
+       << "Statistics  ----------------------------------------------* "
+       << endl;
+}
 
 //--------------------------------------------------------------------------
 
@@ -159,13 +213,13 @@ bool LHAupHelaconia::setSeed(int seedIn, int runsIn) {
   if (seed < 0) {
     seed = pythia->settings.mode("Random:seed");
     if (seed < 1) {
-      pythia->info.errorMsg("Error from LHAupHelaconia::setSeed: the given "
-                            "Pythia seed is less than 1."); return false;}
+      errorMsg("Error from LHAupHelaconia::setSeed: the given "
+               "Pythia seed is less than 1."); return false;}
   }
   runs = runsIn;
   if (seed * runs > 30081 * 30081) {
-    pythia->info.errorMsg("Error from LHAupHelaconia::setSeed: the given seed "
-                          "exceeds the HelacOnia limit."); return false;}
+    errorMsg("Error from LHAupHelaconia::setSeed: the given seed "
+             "exceeds the HelacOnia limit."); return false;}
   nRuns = 0;
   return true;
 
@@ -192,8 +246,8 @@ bool LHAupHelaconia::run(int eventsIn, int seedIn) {
   // Set up run and seed.
   if (!pythia) return false;
   if (nRuns >= runs) {
-    pythia->info.errorMsg("Error from LHAupHelaconia::run: maximum number "
-                          "of allowed runs exceeded."); return false;}
+    errorMsg("Error from LHAupHelaconia::run: maximum number "
+             "of allowed runs exceeded."); return false;}
   if (seed < 0 && !setSeed(seed, runs)) return false;
   if (seedIn < 0) seedIn = (seed - 1) * runs + nRuns + 1;
 
@@ -254,13 +308,13 @@ bool LHAupHelaconia::reader(bool init) {
   if (!pythia) return false;
   if (lhef) delete lhef;
   bool setScales(pythia->settings.flag("Beams:setProductionScalesFromLHEF"));
-  lhef = new LHAupLHEF(&pythia->info, lhegz.c_str(), NULL, false, setScales);
+  lhef = new LHAupLHEF(infoPtr, lhegz.c_str(), NULL, false, setScales);
   if (!lhef->setInit()) {
-    pythia->info.errorMsg("Error from LHAupHelaconia::reader: failed to "
-                          "initialize the LHEF reader"); return false;}
+    errorMsg("Error from LHAupHelaconia::reader: failed to "
+             "initialize the LHEF reader"); return false;}
   if (lhef->sizeProc() != 1) {
-    pythia->info.errorMsg("Error from LHAupHelaconia::reader: number of "
-                          "processes is not 1"); return false;}
+    errorMsg("Error from LHAupHelaconia::reader: number of "
+             "processes is not 1"); return false;}
 
   if (init) {
 
@@ -319,11 +373,11 @@ bool LHAupHelaconia::setEvent(int) {
   // Run setEvent from the LHEF object and launch HelacOnia if failed.
   if (!pythia) return false;
   if (!lhef) {
-    pythia->info.errorMsg("Error from LHAupHelaconia::setEvent: LHAupLHEF "
-                          "object not correctly initialized"); return false;}
+    errorMsg("Error from LHAupHelaconia::setEvent: LHAupLHEF "
+             "object not correctly initialized"); return false;}
   if (!lhef->fileFound()) {
-    pythia->info.errorMsg("Error from LHAupHelaconia::setEvent: LHEF "
-                          "event file was not found"); return false;}
+    errorMsg("Error from LHAupHelaconia::setEvent: LHEF "
+             "event file was not found"); return false;}
   if (!lhef->setEvent()) {
     if (!run(events)) return false;
     if (!reader(false)) return false;

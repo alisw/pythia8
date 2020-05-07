@@ -1,5 +1,5 @@
 // LesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -194,16 +194,17 @@ public:
 protected:
 
   // Constructor. Sets default to be that events come with unit weight.
-  LHAup(int strategyIn = 3) : infoPtr(), nupSave(), idprupSave(), xwgtupSave(),
-    scalupSave(), aqedupSave(), aqcdupSave(), xSecSumSave(), xErrSumSave(),
-    getPDFSave(), getScale(), getScaleShowers(), id1InSave(), id2InSave(),
-    id1pdfInSave(), id2pdfInSave(), x1InSave(), x2InSave(), x1pdfInSave(),
-    x2pdfInSave(), scalePDFInSave(), pdf1InSave(), pdf2InSave(),
-    scaleShowersInSave(), fileName("void"), dateNow(), timeNow(),
-    strategySave(strategyIn), idBeamASave(), idBeamBSave(), eBeamASave(),
-    eBeamBSave(), pdfGroupBeamASave(), pdfGroupBeamBSave(), pdfSetBeamASave(),
-    pdfSetBeamBSave(), idProc(), weightProc(), scaleProc(), alphaQEDProc(),
-    alphaQCDProc(), pdfIsSetSave(), scaleShowersIsSetSave(false), id1Save(),
+  LHAup(int strategyIn = 3) : infoPtr(), nupSave(), idprupSave(),
+    xwgtupSave(), scalupSave(), aqedupSave(), aqcdupSave(), xSecSumSave(),
+    xErrSumSave(), getPDFSave(), getScale(),  getScaleShowers(),
+    id1InSave(), id2InSave(), id1pdfInSave(), id2pdfInSave(), x1InSave(),
+    x2InSave(), x1pdfInSave(), x2pdfInSave(), scalePDFInSave(),
+    pdf1InSave(), pdf2InSave(), scaleShowersInSave(), fileName("void"),
+    dateNow(), timeNow(), strategySave(strategyIn), idBeamASave(),
+    idBeamBSave(), eBeamASave(), eBeamBSave(), pdfGroupBeamASave(),
+    pdfGroupBeamBSave(), pdfSetBeamASave(), pdfSetBeamBSave(), idProc(),
+    weightProc(), scaleProc(), alphaQEDProc(), alphaQCDProc(),
+    pdfIsSetSave(), scaleShowersIsSetSave(false), id1Save(),
     id2Save(), id1pdfSave(), id2pdfSave(), x1Save(), x2Save(), x1pdfSave(),
     x2pdfSave(), scalePDFSave(), pdf1Save(), pdf2Save(), scaleShowersSave() {
     processes.reserve(10); particles.reserve(20);
@@ -277,7 +278,7 @@ protected:
   bool setNewEventLHEF(istream& is);
   bool setOldEventLHEF();
 
-  // Helper routines to open and close a file handling GZIPSUPPORT:
+  // Helper routines to open and close a file handling GZIP:
   //   ifstream ifs;
   //   istream *is = openFile("myFile.txt", ifs);
   //   -- Process file using is --
@@ -347,20 +348,21 @@ public:
   // Constructor.
   LHAupLHEF(Pythia8::Info* infoPtrIn, istream* isIn, istream* isHeadIn,
     bool readHeadersIn = false, bool setScalesFromLHEFIn = false ) :
-    infoPtr(infoPtrIn), filename(""), headerfile(""),
+    filename(""), headerfile(""),
     is(isIn), is_gz(NULL), isHead(isHeadIn), isHead_gz(NULL),
     readHeaders(readHeadersIn), reader(is),
     setScalesFromLHEF(setScalesFromLHEFIn), hasExtFileStream(true),
-    hasExtHeaderStream(true) {}
+    hasExtHeaderStream(true) {setPtr(infoPtrIn);}
 
   LHAupLHEF(Pythia8::Info* infoPtrIn, const char* filenameIn,
     const char* headerIn = NULL, bool readHeadersIn = false,
     bool setScalesFromLHEFIn = false ) :
-    infoPtr(infoPtrIn), filename(filenameIn), headerfile(headerIn),
+    filename(filenameIn), headerfile(headerIn),
     is(NULL), is_gz(NULL), isHead(NULL), isHead_gz(NULL),
     readHeaders(readHeadersIn), reader(filenameIn),
     setScalesFromLHEF(setScalesFromLHEFIn), hasExtFileStream(false),
     hasExtHeaderStream(false) {
+    setPtr(infoPtrIn);
     is = (openFile(filenameIn, ifs));
     isHead = (headerfile == NULL) ? is : openFile(headerfile, ifsHead);
     is_gz = new igzstream(filename);
@@ -435,7 +437,7 @@ protected:
 
   // Used internally to read a single line from the stream.
   bool getLine(string & line, bool header = true) {
-#ifdef GZIPSUPPORT
+#ifdef GZIP
     if      ( isHead_gz &&  header && !getline(*isHead_gz, line)) return false;
     else if ( is_gz     && !header && !getline(*is_gz, line))     return false;
     if      (header && !getline(*isHead, line)) return false;
@@ -451,7 +453,6 @@ protected:
 
 private:
 
-  Info*  infoPtr;
   const char* filename;
   const char* headerfile;
 
@@ -483,7 +484,7 @@ class LHAupFromPYTHIA8 : public LHAup {
 public:
 
   // Constructor.
-  LHAupFromPYTHIA8(Event* processPtrIn, Info* infoPtrIn) {
+  LHAupFromPYTHIA8(Event* processPtrIn, const Info* infoPtrIn) {
     processPtr = processPtrIn; infoPtr = infoPtrIn;}
 
   // Destructor.
@@ -501,8 +502,8 @@ public:
 private:
 
   // Pointers to process event record and further information.
-  Event* processPtr;
-  Info*  infoPtr;
+  Event*   processPtr;
+  const Info* infoPtr;
 
 };
 
@@ -516,12 +517,12 @@ class LHEF3FromPythia8 : public LHAup {
 public:
 
   // Constructor.
-  LHEF3FromPythia8(Event* eventPtrIn, Settings* settingsPtrIn,
-    Info* infoPtrIn, ParticleData* particleDataPtrIn, int pDigitsIn = 15,
-    bool writeToFileIn = true) :
-    eventPtr(eventPtrIn),settingsPtr(settingsPtrIn), infoPtr(infoPtrIn),
-    particleDataPtr(particleDataPtrIn), writer(osLHEF), pDigits(pDigitsIn),
-    writeToFile(writeToFileIn) {}
+  LHEF3FromPythia8(Event* eventPtrIn, const Info* infoPtrIn,
+    int pDigitsIn = 15, bool writeToFileIn = true) :
+    eventPtr(eventPtrIn),infoPtr(infoPtrIn),
+    settingsPtr(infoPtrIn->settingsPtr),
+    particleDataPtr(infoPtrIn->particleDataPtr), writer(osLHEF),
+    pDigits(pDigitsIn), writeToFile(writeToFileIn) {}
 
   // Routine for reading, setting and printing the initialisation info.
   bool setInit();
@@ -543,8 +544,8 @@ private:
   Event* eventPtr;
 
   // Pointer to settings and info objects.
+  const Info* infoPtr;
   Settings* settingsPtr;
-  Info* infoPtr;
   ParticleData* particleDataPtr;
 
   // LHEF3 writer

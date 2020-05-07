@@ -1,7 +1,9 @@
 # main10.py is a part of the PYTHIA event generator.
-# Copyright (C) 2019 Torbjorn Sjostrand.
+# Copyright (C) 2020 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+# Keywords: userhooks; jet finding; anti-kT; process veto; python;
 
 # Example how you can use UserHooks to trace pT spectrum through
 # program, and veto undesirable jet multiplicities. To set the path to

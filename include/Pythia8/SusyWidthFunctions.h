@@ -1,5 +1,5 @@
 // SusyResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand
+// Copyright (C) 2020 Torbjorn Sjostrand
 // Main author of this file: N. Desai
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -10,6 +10,7 @@
 #ifndef Pythia8_SusyWidthFunctions_H
 #define Pythia8_SusyWidthFunctions_H
 
+#include "Pythia8/MathTools.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/SusyCouplings.h"
 
@@ -17,36 +18,29 @@ namespace Pythia8 {
 
 //==========================================================================
 
-class WidthFunction : public FunctionEncapsulator {
+class WidthFunction {
 
 public:
 
   // Constructor and destructor.
-  WidthFunction() : particleDataPtr(), coupSUSYPtr(), infoPtr(), idRes(),
-    idInt(), id1(), id2(), id3(), id4(), mRes(), mInt(), gammaInt(), m1(),
-      m2(), m3(), m4() { };
+  WidthFunction() : infoPtr(), particleDataPtr(), coupSMPtr(), coupSUSYPtr(),
+    idRes(), idInt(), id1(), id2(), id3(), id4(), mRes(),
+    mInt(), gammaInt(), m1(), m2(), m3(), m4() { };
   virtual ~WidthFunction() { };
 
   // Public methods.
-  void setPointers( ParticleData* particleDataPtrIn, CoupSUSY* coupSUSYPtrIn,
-    Info* infoPtrIn);
+  void setPointers(Info* infoPtrIn);
   virtual double getWidth( int, int) { return 0.0; };
 
   // Definition of width function.
-  virtual double f(double xIn);
+  virtual double f(double xIn) = 0;
 
 protected:
 
-  // Wrappers to simplify using FunctionEncapsulator's integrator.
-  virtual double f(vector<double> x) { return f(x[0]); }
-  bool integrateGauss(double& result, double xLo, double xHi, double tol) {
-    vector<double> tmp(1);
-    return FunctionEncapsulator::integrateGauss(result, 0, xLo, xHi, tmp, tol);
-  }
-
+  Info*         infoPtr;
   ParticleData* particleDataPtr;
-  CoupSUSY* coupSUSYPtr;
-  Info* infoPtr;
+  CoupSM*       coupSMPtr;
+  CoupSUSY*     coupSUSYPtr;
   int idRes, idInt, id1, id2, id3, id4;
   double mRes, mInt, gammaInt, m1, m2 , m3, m4;
 
@@ -67,13 +61,13 @@ public:
   ~StauWidths() { };
 
   // Public method.
-  double getWidth(int idResIn, int idIn);
+  double getWidth(int idResIn, int idIn) override;
 
 protected:
 
   int fnSwitch; // Switch between multiple functions
   void setChannel(int idResIn, int idIn);
-  double f(double xIn);
+  double f(double xIn) override;
 
   double delm, f0, gf, cons, wparam;
   complex gL, gR;

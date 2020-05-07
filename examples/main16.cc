@@ -1,7 +1,9 @@
 // main16.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: basic usage; command line option; command file; analysis;
 
 // This is a simple test program.
 // It illustrates (a) how to collect the analysis code in a separate class

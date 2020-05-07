@@ -1,12 +1,12 @@
 <html>
 <head>
-<title>Heavy Ions</title>
+<title>Heavy Ion Collisions</title>
 <link rel="stylesheet" type="text/css" href="pythia.css"/>
 <link rel="shortcut icon" href="pythia32.gif"/>
 </head>
 <body>
  
-<h2>Heavy Ions</h2> 
+<h2>Heavy Ion Collisions</h2> 
  
 PYTHIA does not normally handle collisions involving heavy ions, but it 
 includes a facility where a model for combining several nucleon-nucleon 
@@ -26,7 +26,7 @@ handful of nuclei with PDG numbers on the form 100ZZZAAAI:
 <sup>63</sup>Cu (1000290630), 
 <sup>129</sup>Xe (1000541290), 
 <sup>197</sup>Au (1000791970), and 
-<sup>208</sup>Pb (1000822080), but  can be added using the function 
+<sup>208</sup>Pb (1000822080), but more can be added using the function 
 <code>ParticleData::addParticle</code>. 
  
 <a name="anchor1"></a>
@@ -90,7 +90,7 @@ nucleon-nucleon  collision between a projectile and a target
 model for the distribution in impact parameter 
 space of nucleons in a nucleus. There are two ready-made subclasses called 
 <code>WoodsSaxonModel</code>, implementing a standard Woods-Saxon 
-distribution, and <code>GLISSANDOModel</code>, implementing the  
+distribution, and <code>GLISSANDOModel</code>, implementing the more 
 advanced model in [<a href="Bibliography.html#refBro09" target="page">Bro09</a>,<a href="Bibliography.html#refRyb14" target="page">Ryb14</a>]. 
 <a name="anchor3"></a>
 <p/><code>flag&nbsp; </code><strong> HeavyIon:WSHardCore &nbsp;</strong> 
@@ -357,23 +357,25 @@ independent of the mass of the diffractive system.
 rescale the pomeron 
 proton non-diffractive cross section to match the pp non-diffractive one. 
    
-<br/><code>option </code><strong> 3</strong> :  (Experimental) As for option <code>1</code> but use the full 
-  nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron in the 
-  multiple interaction machinery. Also rescale the Pomeron PDF with the log of 
-  the ratio of maximum and minimum Pomeron-nucleon collision energy. 
+<br/><code>option </code><strong> 3</strong> :  (Experimental) As for option <code>1</code> but use the 
+full nucleon-nucleon cross section for the non-diffractive nucleon-Pomeron 
+in the multiple interaction machinery. Also rescale the Pomeron PDF with 
+the log of the ratio of maximum and minimum Pomeron-nucleon collision 
+energy. 
    
-<br/><code>option </code><strong> 4</strong> :  As for option <code>3</code> but no rescaling of the Pomeron 
- PDF. 
+<br/><code>option </code><strong> 4</strong> :  As for option <code>3</code> but no rescaling of the 
+Pomeron  PDF. 
    
    
  
 <a name="anchor19"></a>
 <p/><code>mode&nbsp; </code><strong> Angantyr:impactMode &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
-Determines how to bias non-diffractive minimum-bias sub-collisions in pythia to 
-be appropriately central. 
+Determines how to bias non-diffractive minimum-bias sub-collisions in 
+PYTHIA to be appropriately central. 
 <br/><code>option </code><strong> 0</strong> :  If we have N pirmary sub-collisions and Na secondary 
-sub-collisions, generate N+Na non-diffractive events and pick the N most central. 
+sub-collisions, generate N+Na non-diffractive events and pick the N most 
+central. 
    
 <br/><code>option </code><strong> 1</strong> :  Use UserHooks to force Pythia to produce events with a 
 particular impact parameter for the N primary sub collisions according to the 
@@ -452,4 +454,4 @@ complete the full nucleaus-nucleus collision.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

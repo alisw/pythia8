@@ -142,7 +142,7 @@ complicated ones with junctions, and also how to force a shower.
  
 <p/> 
 As an alternative to setting up a topology with the methods above, 
-a <aloc href="LesHouchesAccord">Les Houches Event File</aloc> (LHEF) 
+a <aloc href="LHEF">Les Houches Event File</aloc> (LHEF) 
 can also provide the configurations, using the "no-beams" extension. 
 For parsing reasons the <code>&lt;init&gt;</code> and 
 <code>&lt;/init&gt;</code> tags need to be present as two separate 
@@ -263,4 +263,4 @@ events.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

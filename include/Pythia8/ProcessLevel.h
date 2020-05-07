@@ -1,5 +1,5 @@
 // ProcessLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,6 +15,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/ProcessContainer.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/ResonanceDecays.h"
@@ -32,36 +33,22 @@ namespace Pythia8 {
 // The ProcessLevel class contains the top-level routines to generate
 // the characteristic "hard" process of an event.
 
-class ProcessLevel {
+class ProcessLevel : public PhysicsBase {
 
 public:
 
   // Constructor.
-  ProcessLevel() : doSecondHard(), doSameCuts(), allHardSame(), noneHardSame(),
-    someHardSame(), cutsAgree(), cutsOverlap(), doResDecays(), doISR(),
-    doMPI(), doWt2(), startColTag(), maxPDFreweight(), mHatMin1(), mHatMax1(),
-    pTHatMin1(), pTHatMax1(), mHatMin2(), mHatMax2(), pTHatMin2(), pTHatMax2(),
-    sigmaND(), beamHasGamma(), gammaMode(), iContainer(), iLHACont(-1),
-    sigmaMaxSum(), i2Container(), sigma2MaxSum(), infoPtr(), particleDataPtr(),
-    rndmPtr(),  beamAPtr(), beamBPtr(), beamGamAPtr(), beamGamBPtr(),
-    beamVMDAPtr(), beamVMDBPtr(), couplingsPtr(), sigmaTotPtr(),
-    slhaInterfacePtr(), userHooksPtr(), lhaUpPtr() {}
+  ProcessLevel() = default;
 
   // Destructor to delete processes in containers.
   ~ProcessLevel();
 
   // Initialization.
-  bool init( Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    BeamParticle* beamGamAPtrIn, BeamParticle* beamGamBPtrIn,
-    BeamParticle* beamVMDAPtrIn, BeamParticle* beamVMDBPtrIn,
-    Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn, bool doLHAin,
-    SLHAinterface* slhaInterfacePtrIn, UserHooks* userHooksPtrIn,
+  bool init(bool doLHAin, SLHAinterface* slhaInterfacePtrIn,
     vector<SigmaProcess*>& sigmaPtrs, vector<PhaseSpace*>& phaseSpacePtrs);
 
   // Store or replace Les Houches pointer.
-  void setLHAPtr( LHAup* lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;
+  void setLHAPtr( LHAupPtr lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;
     if (iLHACont >= 0) containerPtrs[iLHACont]->setLHAPtr(lhaUpPtr);}
 
   // Generate the next "hard" process.
@@ -83,13 +70,18 @@ public:
   void findJunctions( Event& junEvent);
 
   // Initialize and call resonance decays separately.
-  void initDecays( Info* infoPtrIn, Settings &settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, LHAup* lhaUpPtrIn) {
-    infoPtr = infoPtrIn;
-    resonanceDecays.init( infoPtrIn, particleDataPtrIn, rndmPtrIn);
-    containerLHAdec.setLHAPtr(lhaUpPtrIn, particleDataPtrIn, &settings,
-      rndmPtrIn); }
+  void initDecays( LHAupPtr lhaUpPtrIn) {
+    containerLHAdec.setLHAPtr(lhaUpPtrIn, particleDataPtr, settingsPtr,
+      rndmPtr); }
+
   bool nextDecays( Event& process) { return resonanceDecays.next( process);}
+
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(resonanceDecays);
+    registerSubObject(gammaKin);
+  }
 
 private:
 
@@ -109,7 +101,7 @@ private:
 
   // Vector of containers of internally-generated processes.
   vector<ProcessContainer*> containerPtrs;
-  int    iContainer, iLHACont;
+  int    iContainer, iLHACont = -1;
   double sigmaMaxSum;
 
   // Ditto for optional choice of a second hard process.
@@ -120,41 +112,11 @@ private:
   // Single half-dummy container for LHA input of resonance decay only.
   ProcessContainer containerLHAdec;
 
-  // Pointer to various information on the generation.
-  Info*           infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*   particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*           rndmPtr;
-
-  // Pointers to the two incoming beams.
-  BeamParticle*   beamAPtr;
-  BeamParticle*   beamBPtr;
-
-  // Pointers to the two possible photon beams inside the incoming beams.
-  BeamParticle*   beamGamAPtr;
-  BeamParticle*   beamGamBPtr;
-
-  // Pointers to the two possible photon beams inside the incoming beams.
-  BeamParticle*   beamVMDAPtr;
-  BeamParticle*   beamVMDBPtr;
-
-  // Pointer to Standard Model couplings, including alphaS and alphaEM.
-  Couplings*      couplingsPtr;
-
-  // Pointer to SigmaTotal object needed to handle soft QCD processes.
-  SigmaTotal*     sigmaTotPtr;
-
   // Pointer to SusyLesHouches object for interface to SUSY spectra.
   SLHAinterface*  slhaInterfacePtr;
 
-  // Pointer to userHooks object for user interaction with program.
-  UserHooks*      userHooksPtr;
-
   // Pointer to LHAup for generating external events.
-  LHAup*          lhaUpPtr;
+  LHAupPtr          lhaUpPtr;
 
   // ResonanceDecay object does sequential resonance decays.
   ResonanceDecays resonanceDecays;

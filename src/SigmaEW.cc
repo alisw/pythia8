@@ -1,5 +1,5 @@
 // SigmaEW.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -37,7 +37,7 @@ double Sigma2qg2qgamma::sigmaHat() {
 
   // Incoming flavour gives charge factor.
   int idNow    = (id2 == 21) ? id1 : id2;
-  double eNow  = couplingsPtr->ef( abs(idNow) );
+  double eNow  = coupSMPtr->ef( abs(idNow) );
   return sigma0 * pow2(eNow);
 
 }
@@ -86,7 +86,7 @@ void Sigma2qqbar2ggamma::sigmaKin() {
 double Sigma2qqbar2ggamma::sigmaHat() {
 
   // Incoming flavour gives charge factor.
-  double eNow  = couplingsPtr->ef( abs(id1) );
+  double eNow  = coupSMPtr->ef( abs(id1) );
   return sigma0 * pow2(eNow);
 
 }
@@ -119,7 +119,7 @@ void Sigma2qqbar2ggamma::setIdColAcol() {
 void Sigma2gg2ggamma::initProc() {
 
   // Maximum quark flavour in loop.
-  int nQuarkLoop = settingsPtr->mode("PromptPhoton:nQuarkLoop");
+  int nQuarkLoop = mode("PromptPhoton:nQuarkLoop");
 
   // Calculate charge factor from the allowed quarks in the box.
   chargeSum                       = - 1./3. + 2./3. - 1./3.;
@@ -205,7 +205,7 @@ void Sigma2ffbar2gammagamma::sigmaKin() {
 double Sigma2ffbar2gammagamma::sigmaHat() {
 
   // Incoming flavour gives charge and colour factors.
-  double eNow   = couplingsPtr->ef( abs(id1) );
+  double eNow   = coupSMPtr->ef( abs(id1) );
   double colFac = (abs(id1) < 9) ? 1. / 3. : 1.;
   return  sigma0 * pow4(eNow) * colFac;
 
@@ -240,7 +240,7 @@ void Sigma2ffbar2gammagamma::setIdColAcol() {
 void Sigma2gg2gammagamma::initProc() {
 
   // Maximum quark flavour in loop.
-  int nQuarkLoop = settingsPtr->mode("PromptPhoton:nQuarkLoop");
+  int nQuarkLoop = mode("PromptPhoton:nQuarkLoop");
 
   // Calculate charge factor from the allowed quarks in the box.
   charge2Sum                       = 1./9. + 4./9. + 1./9.;
@@ -312,11 +312,11 @@ void Sigma2gg2gammagamma::setIdColAcol() {
 void Sigma2ff2fftgmZ::initProc() {
 
   // Store Z0 mass for propagator. Common coupling factor.
-  gmZmode   = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmode   = mode("WeakZ0:gmZmode");
   mZ        = particleDataPtr->m0(23);
   mZS       = mZ*mZ;
-  thetaWRat = 1. / (16. * couplingsPtr->sin2thetaW()
-            * couplingsPtr->cos2thetaW());
+  thetaWRat = 1. / (16. * coupSMPtr->sin2thetaW()
+            * coupSMPtr->cos2thetaW());
 
 }
 
@@ -346,13 +346,13 @@ double Sigma2ff2fftgmZ::sigmaHat() {
 
   // Couplings for current flavour combination.
   int id1Abs = abs(id1);
-  double  e1 = couplingsPtr->ef(id1Abs);
-  double  v1 = couplingsPtr->vf(id1Abs);
-  double  a1 = couplingsPtr->af(id1Abs);
+  double  e1 = coupSMPtr->ef(id1Abs);
+  double  v1 = coupSMPtr->vf(id1Abs);
+  double  a1 = coupSMPtr->af(id1Abs);
   int id2Abs = abs(id2);
-  double  e2 = couplingsPtr->ef(id2Abs);
-  double  v2 = couplingsPtr->vf(id2Abs);
-  double  a2 = couplingsPtr->af(id2Abs);
+  double  e2 = coupSMPtr->ef(id2Abs);
+  double  v2 = coupSMPtr->vf(id2Abs);
+  double  a2 = coupSMPtr->af(id2Abs);
 
   // Distinguish same-sign and opposite-sign fermions.
   double epsi = (id1 * id2 > 0) ? 1. : -1.;
@@ -410,7 +410,7 @@ void Sigma2ff2fftW::initProc() {
   // Store W+- mass for propagator. Common coupling factor.
   mW        = particleDataPtr->m0(24);
   mWS       = mW*mW;
-  thetaWRat = 1. / (4. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (4. * coupSMPtr->sin2thetaW());
 
 }
 
@@ -443,7 +443,7 @@ double Sigma2ff2fftW::sigmaHat() {
   if (id1 * id2 < 0) sigma *= uH2 / sH2;
 
   // CKM factors for final states.
-  sigma *= couplingsPtr->V2CKMsum(id1Abs) *  couplingsPtr->V2CKMsum(id2Abs);
+  sigma *= coupSMPtr->V2CKMsum(id1Abs) *  coupSMPtr->V2CKMsum(id2Abs);
 
   // Spin-state extra factor 2 per incoming neutrino.
   if (id1Abs == 12 || id1Abs == 14 || id1Abs == 16) sigma *= 2.;
@@ -461,8 +461,8 @@ double Sigma2ff2fftW::sigmaHat() {
 void Sigma2ff2fftW::setIdColAcol() {
 
   // Pick out-flavours by relative CKM weights.
-  id3 = couplingsPtr->V2CKMpick(id1);
-  id4 = couplingsPtr->V2CKMpick(id2);
+  id3 = coupSMPtr->V2CKMpick(id1);
+  id4 = coupSMPtr->V2CKMpick(id2);
   setId( id1, id2, id3, id4);
 
   // Colour flow topologies. Swap when antiquarks.
@@ -502,7 +502,7 @@ void Sigma2qq2QqtW::initProc() {
   // Store W+- mass for propagator. Common coupling factor.
   mW        = particleDataPtr->m0(24);
   mWS       = mW*mW;
-  thetaWRat = 1. / (4. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (4. * coupSMPtr->sin2thetaW());
 
   // Secondary open width fractions, relevant for top (or heavier).
   openFracPos = particleDataPtr->resOpenFrac(idNew);
@@ -546,15 +546,15 @@ double Sigma2qq2QqtW::sigmaHat() {
   bool diff1N = (id1Abs%2 != idNew%2);
   bool diff2N = (id2Abs%2 != idNew%2);
   if (diff1N && diff2N)
-    sigma *= ( couplingsPtr->V2CKMid(id1Abs, idNew) * openFrac1
-             * couplingsPtr->V2CKMsum(id2Abs) + couplingsPtr->V2CKMsum(id1Abs)
-             * couplingsPtr->V2CKMid(id2Abs, idNew) * openFrac2 );
+    sigma *= ( coupSMPtr->V2CKMid(id1Abs, idNew) * openFrac1
+             * coupSMPtr->V2CKMsum(id2Abs) + coupSMPtr->V2CKMsum(id1Abs)
+             * coupSMPtr->V2CKMid(id2Abs, idNew) * openFrac2 );
   else if (diff1N)
-    sigma *= couplingsPtr->V2CKMid(id1Abs, idNew) * openFrac1
-             * couplingsPtr->V2CKMsum(id2Abs);
+    sigma *= coupSMPtr->V2CKMid(id1Abs, idNew) * openFrac1
+             * coupSMPtr->V2CKMsum(id2Abs);
   else if (diff2N)
-    sigma *= couplingsPtr->V2CKMsum(id1Abs)
-             * couplingsPtr->V2CKMid(id2Abs, idNew) * openFrac2;
+    sigma *= coupSMPtr->V2CKMsum(id1Abs)
+             * coupSMPtr->V2CKMid(id2Abs, idNew) * openFrac2;
   else sigma = 0.;
 
   // Spin-state extra factor 2 per incoming neutrino.
@@ -577,11 +577,11 @@ void Sigma2qq2QqtW::setIdColAcol() {
   int id2Abs = abs(id2);
   int side   = 1;
   if ( (id1Abs + idNew)%2 == 1 && (id2Abs + idNew)%2 == 1 ) {
-    double prob1 = couplingsPtr->V2CKMid(id1Abs, idNew)
-                   * couplingsPtr->V2CKMsum(id2Abs);
+    double prob1 = coupSMPtr->V2CKMid(id1Abs, idNew)
+                   * coupSMPtr->V2CKMsum(id2Abs);
     prob1       *= (id1 > 0) ? openFracPos : openFracNeg;
-    double prob2 = couplingsPtr->V2CKMid(id2Abs, idNew)
-                   * couplingsPtr->V2CKMsum(id1Abs);
+    double prob2 = coupSMPtr->V2CKMid(id2Abs, idNew)
+                   * coupSMPtr->V2CKMsum(id1Abs);
     prob2       *= (id2 > 0) ? openFracPos : openFracNeg;
     if (prob2 > rndmPtr->flat() * (prob1 + prob2)) side = 2;
   }
@@ -591,12 +591,12 @@ void Sigma2qq2QqtW::setIdColAcol() {
   if (side == 1) {
     // q q' -> t q" : correct order from start.
     id3 = (id1 > 0) ? idNew : -idNew;
-    id4 = couplingsPtr->V2CKMpick(id2);
+    id4 = coupSMPtr->V2CKMpick(id2);
     setId( id1, id2, id3, id4);
   } else {
     // q q' -> q" t : stored as t q" so swap tHat <-> uHat.
     swapTU = true;
-    id3 = couplingsPtr->V2CKMpick(id1);
+    id3 = coupSMPtr->V2CKMpick(id1);
     id4 = (id2 > 0) ? idNew : -idNew;
     setId( id1, id2, id4, id3);
   }
@@ -636,15 +636,15 @@ double Sigma2qq2QqtW::weightDecay( Event& process, int iResBeg,
 void Sigma1ffbar2gmZ::initProc() {
 
   // Allow to pick only gamma* or Z0 part of full gamma*/Z0 expression.
-  gmZmode     = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmode     = mode("WeakZ0:gmZmode");
 
   // Store Z0 mass and width for propagator.
   mRes        = particleDataPtr->m0(23);
   GammaRes    = particleDataPtr->mWidth(23);
   m2Res       = mRes*mRes;
   GamMRat     = GammaRes / mRes;
-  thetaWRat   = 1. / (16. * couplingsPtr->sin2thetaW()
-              * couplingsPtr->cos2thetaW());
+  thetaWRat   = 1. / (16. * coupSMPtr->sin2thetaW()
+              * coupSMPtr->cos2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(23);
@@ -683,10 +683,10 @@ void Sigma1ffbar2gmZ::sigmaKin() {
         psaxi = pow3(betaf);
 
         // Combine phase space with couplings.
-        ef2    = couplingsPtr->ef2(idAbs) * psvec;
-        efvf   = couplingsPtr->efvf(idAbs) * psvec;
-        vf2af2 = couplingsPtr->vf2(idAbs) * psvec
-               + couplingsPtr->af2(idAbs) * psaxi;
+        ef2    = coupSMPtr->ef2(idAbs) * psvec;
+        efvf   = coupSMPtr->efvf(idAbs) * psvec;
+        vf2af2 = coupSMPtr->vf2(idAbs) * psvec
+               + coupSMPtr->af2(idAbs) * psaxi;
         colf   = (idAbs < 6) ? colQ : 1.;
 
         // Store sum of combinations. For outstate only open channels.
@@ -723,9 +723,9 @@ double Sigma1ffbar2gmZ::sigmaHat() {
 
   // Combine gamma, interference and Z0 parts.
   int idAbs = abs(id1);
-  double sigma = couplingsPtr->ef2(idAbs)    * gamProp * gamSum
-               + couplingsPtr->efvf(idAbs)   * intProp * intSum
-               + couplingsPtr->vf2af2(idAbs) * resProp * resSum;
+  double sigma = coupSMPtr->ef2(idAbs)    * gamProp * gamSum
+               + coupSMPtr->efvf(idAbs)   * intProp * intSum
+               + coupSMPtr->vf2af2(idAbs) * resProp * resSum;
 
   // Colour factor. Answer.
   if (idAbs < 9) sigma /= 3.;
@@ -761,13 +761,13 @@ double Sigma1ffbar2gmZ::weightDecay( Event& process, int iResBeg,
 
   // Couplings for in- and out-flavours.
   int idInAbs  = process[3].idAbs();
-  double ei    = couplingsPtr->ef(idInAbs);
-  double vi    = couplingsPtr->vf(idInAbs);
-  double ai    = couplingsPtr->af(idInAbs);
+  double ei    = coupSMPtr->ef(idInAbs);
+  double vi    = coupSMPtr->vf(idInAbs);
+  double ai    = coupSMPtr->af(idInAbs);
   int idOutAbs = process[6].idAbs();
-  double ef    = couplingsPtr->ef(idOutAbs);
-  double vf    = couplingsPtr->vf(idOutAbs);
-  double af    = couplingsPtr->af(idOutAbs);
+  double ef    = coupSMPtr->ef(idOutAbs);
+  double vf    = coupSMPtr->vf(idOutAbs);
+  double af    = coupSMPtr->af(idOutAbs);
 
   // Phase space factors. (One power of beta left out in formulae.)
   double mf    = process[6].m();
@@ -813,7 +813,7 @@ void Sigma1ffbar2W::initProc() {
   GammaRes = particleDataPtr->mWidth(24);
   m2Res    = mRes*mRes;
   GamMRat  = GammaRes / mRes;
-  thetaWRat = 1. / (12. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (12. * coupSMPtr->sin2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(24);
@@ -843,7 +843,7 @@ double Sigma1ffbar2W::sigmaHat() {
   // Secondary width for W+ or W-. CKM and colour factors.
   int idUp = (abs(id1)%2 == 0) ? id1 : id2;
   double sigma = (idUp > 0) ? sigma0Pos : sigma0Neg;
-  if (abs(id1) < 9) sigma *= couplingsPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
+  if (abs(id1) < 9) sigma *= coupSMPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
 
   // Answer.
   return sigma;
@@ -950,7 +950,7 @@ void Sigma2ffbar2ffbarsgm::sigmaKin() {
 double Sigma2ffbar2ffbarsgm::sigmaHat() {
 
   // Charge and colour factors.
-  double eNow  = couplingsPtr->ef( abs(id1) );
+  double eNow  = coupSMPtr->ef( abs(id1) );
   double sigma = sigma0 * pow2(eNow);
   if (abs(id1) < 9) sigma /= 3.;
 
@@ -991,15 +991,15 @@ void Sigma2ffbar2ffbarsgm::setIdColAcol() {
 void Sigma2ffbar2ffbarsgmZ::initProc() {
 
   // Allow to pick only gamma* or Z0 part of full gamma*/Z0 expression.
-  gmZmode     = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmode     = mode("WeakZ0:gmZmode");
 
   // Store Z0 mass and width for propagator.
   mRes        = particleDataPtr->m0(23);
   GammaRes    = particleDataPtr->mWidth(23);
   m2Res       = mRes*mRes;
   GamMRat     = GammaRes / mRes;
-  thetaWRat   = 1. / (16. * couplingsPtr->sin2thetaW()
-              * couplingsPtr->cos2thetaW());
+  thetaWRat   = 1. / (16. * coupSMPtr->sin2thetaW()
+              * coupSMPtr->cos2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(23);
@@ -1053,9 +1053,9 @@ void Sigma2ffbar2ffbarsgmZ::sigmaKin() {
         betaf = sqrtpos(1. - 4. * mr);
 
         // Combine couplings (including colour) with phase space.
-        ef    = couplingsPtr->ef(idAbs);
-        vf    = couplingsPtr->vf(idAbs);
-        af    = couplingsPtr->af(idAbs);
+        ef    = coupSMPtr->ef(idAbs);
+        vf    = coupSMPtr->vf(idAbs);
+        af    = coupSMPtr->af(idAbs);
         colf  = (idAbs < 6) ? colQ : 1.;
         gamTf = colf * ef * ef * betaf;
         gamLf = gamTf * 4. * mr;
@@ -1114,9 +1114,9 @@ double Sigma2ffbar2ffbarsgmZ::sigmaHat() {
 
   // Couplings for current in-flavour.
   int id1Abs = abs(id1);
-  double ei  = couplingsPtr->ef(id1Abs);
-  double vi  = couplingsPtr->vf(id1Abs);
-  double ai  = couplingsPtr->af(id1Abs);
+  double ei  = coupSMPtr->ef(id1Abs);
+  double vi  = coupSMPtr->vf(id1Abs);
+  double ai  = coupSMPtr->af(id1Abs);
 
   // Coefficients of angular expression.
   double coefT = ei*ei * gamProp * gamSumT + ei*vi * intProp * intSumT
@@ -1141,9 +1141,9 @@ void Sigma2ffbar2ffbarsgmZ::setIdColAcol() {
 
   // Couplings for chosen in-flavour.
   int id1Abs = abs(id1);
-  double ei  = couplingsPtr->ef(id1Abs);
-  double vi  = couplingsPtr->vf(id1Abs);
-  double ai  = couplingsPtr->af(id1Abs);
+  double ei  = coupSMPtr->ef(id1Abs);
+  double vi  = coupSMPtr->vf(id1Abs);
+  double ai  = coupSMPtr->af(id1Abs);
 
   // Contribution from each allowed out-flavour.
   sigTLA.resize(0);
@@ -1189,7 +1189,7 @@ void Sigma2ffbar2ffbarsW::initProc() {
   GammaRes = particleDataPtr->mWidth(24);
   m2Res    = mRes*mRes;
   GamMRat  = GammaRes / mRes;
-  thetaWRat = 1. / (12. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (12. * coupSMPtr->sin2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(24);
@@ -1229,7 +1229,7 @@ double Sigma2ffbar2ffbarsW::sigmaHat() {
 
   // Secondary width for W+-. CKM and colour factors.
   double sigma = sigma0;
-  if (abs(id1) < 9) sigma *= couplingsPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
+  if (abs(id1) < 9) sigma *= coupSMPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
 
   // Answer.
   return sigma;
@@ -1282,20 +1282,20 @@ void Sigma2ffbar2FFbarsgmZ::initProc() {
     nameSave   = "f fbar -> nu'_tau nu'bar_tau (s-channel gamma*/Z0)";
 
   // Allow to pick only gamma* or Z0 part of full gamma*/Z0 expression.
-  gmZmode      = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmode      = mode("WeakZ0:gmZmode");
 
   // Store Z0 mass and width for propagator.
   mRes         = particleDataPtr->m0(23);
   GammaRes     = particleDataPtr->mWidth(23);
   m2Res        = mRes*mRes;
   GamMRat      = GammaRes / mRes;
-  thetaWRat    = 1. / (16. * couplingsPtr->sin2thetaW()
-                 * couplingsPtr->cos2thetaW());
+  thetaWRat    = 1. / (16. * coupSMPtr->sin2thetaW()
+                 * coupSMPtr->cos2thetaW());
 
   // Store couplings of F.
-  ef           = couplingsPtr->ef(idNew);
-  vf           = couplingsPtr->vf(idNew);
-  af           = couplingsPtr->af(idNew);
+  ef           = coupSMPtr->ef(idNew);
+  vf           = coupSMPtr->vf(idNew);
+  af           = coupSMPtr->af(idNew);
 
   // Secondary open width fraction, relevant for top (or heavier).
   openFracPair = particleDataPtr->resOpenFrac(idNew, -idNew);
@@ -1350,9 +1350,9 @@ double Sigma2ffbar2FFbarsgmZ::sigmaHat() {
 
   // Couplings for in-flavours.
   int idAbs       = abs(id1);
-  double ei       = couplingsPtr->ef(idAbs);
-  double vi       = couplingsPtr->vf(idAbs);
-  double ai       = couplingsPtr->af(idAbs);
+  double ei       = coupSMPtr->ef(idAbs);
+  double vi       = coupSMPtr->vf(idAbs);
+  double ai       = coupSMPtr->af(idAbs);
 
   // Coefficients of angular expression.
   double coefTran = ei*ei * gamProp * ef*ef + ei * vi * intProp * ef * vf
@@ -1440,15 +1440,15 @@ void Sigma2ffbar2FfbarsW::initProc() {
   GammaRes  = particleDataPtr->mWidth(24);
   m2Res     = mRes*mRes;
   GamMRat   = GammaRes / mRes;
-  thetaWRat = 1. / (12. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (12. * coupSMPtr->sin2thetaW());
 
   // For t/t' want to use at least b mass.
   idPartner = idNew2;
   if ( (idNew == 6 || idNew == 8) && idNew2 == 0 ) idPartner = 5;
 
   // Sum of CKM weights for quarks.
-  V2New     = (idNew < 9) ? couplingsPtr->V2CKMsum(idNew) : 1.;
-  if (idNew2 != 0) V2New = couplingsPtr->V2CKMid(idNew, idNew2);
+  V2New     = (idNew < 9) ? coupSMPtr->V2CKMsum(idNew) : 1.;
+  if (idNew2 != 0) V2New = coupSMPtr->V2CKMid(idNew, idNew2);
 
   // Secondary open width fractions, relevant for top or heavier.
   openFracPos = particleDataPtr->resOpenFrac( idNew, -idNew2);
@@ -1503,7 +1503,7 @@ double Sigma2ffbar2FfbarsW::sigmaHat() {
 
   // CKM and colour factors.
   double sigma = sigma0;
-  if (abs(id1) < 9) sigma *= couplingsPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
+  if (abs(id1) < 9) sigma *= coupSMPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
 
   // Correction for secondary width in top (or heavier) decay.
   int idSame = ((abs(id1) + idNew)%2 == 0) ? id1 : id2;
@@ -1522,7 +1522,7 @@ void Sigma2ffbar2FfbarsW::setIdColAcol() {
 
   // Set outgoing flavours.
   id3 = idNew;
-  id4 = (idNew2 != 0) ? idNew2 : couplingsPtr->V2CKMpick(idNew);
+  id4 = (idNew2 != 0) ? idNew2 : coupSMPtr->V2CKMpick(idNew);
   if (idNew%2 == 0) {
     int idInUp = (abs(id1)%2 == 0) ? id1 : id2;
     if (idInUp > 0) id4 = -id4;
@@ -1663,15 +1663,15 @@ double Sigma2ffbargmZWgmZW::xjGK( double tHnow, double uHnow) {
 void Sigma2ffbar2gmZgmZ::initProc() {
 
   // Allow to pick only gamma* or Z0 part of full gamma*/Z0 expression.
-  gmZmode     = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmode     = mode("WeakZ0:gmZmode");
 
   // Store Z0 mass and width for propagator.
   mRes        = particleDataPtr->m0(23);
   GammaRes    = particleDataPtr->mWidth(23);
   m2Res       = mRes*mRes;
   GamMRat     = GammaRes / mRes;
-  thetaWRat   = 1. / (16. * couplingsPtr->sin2thetaW()
-                * couplingsPtr->cos2thetaW());
+  thetaWRat   = 1. / (16. * coupSMPtr->sin2thetaW()
+                * coupSMPtr->cos2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(23);
@@ -1690,11 +1690,11 @@ void Sigma2ffbar2gmZgmZ::sigmaKin() {
     - s3 * s4 * (1./tH2 + 1./uH2) );
 
   // Common coupling factors at the resonance masses
-  double alpEM3 = couplingsPtr->alphaEM(s3);
-  double alpS3  = couplingsPtr->alphaS(s3);
+  double alpEM3 = coupSMPtr->alphaEM(s3);
+  double alpS3  = coupSMPtr->alphaS(s3);
   double colQ3  = 3. * (1. + alpS3 / M_PI);
-  double alpEM4 = couplingsPtr->alphaEM(s4);
-  double alpS4  = couplingsPtr->alphaS(s4);
+  double alpEM4 = coupSMPtr->alphaEM(s4);
+  double alpS4  = coupSMPtr->alphaS(s4);
   double colQ4  = 3. * (1. + alpS4 / M_PI);
 
   // Reset quantities to sum. Declare variables in loop.
@@ -1724,10 +1724,10 @@ void Sigma2ffbar2gmZgmZ::sigmaKin() {
         psaxi  = pow3(betaf);
 
         // First Z0: combine phase space with couplings.
-        ef2    = couplingsPtr->ef2(idAbs) * psvec;
-        efvf   = couplingsPtr->efvf(idAbs) * psvec;
-        vf2af2 = couplingsPtr->vf2(idAbs) * psvec
-               + couplingsPtr->af2(idAbs) * psaxi;
+        ef2    = coupSMPtr->ef2(idAbs) * psvec;
+        efvf   = coupSMPtr->efvf(idAbs) * psvec;
+        vf2af2 = coupSMPtr->vf2(idAbs) * psvec
+               + coupSMPtr->af2(idAbs) * psaxi;
         colf   = (idAbs < 6) ? colQ3 : 1.;
 
         // First Z0: store sum of combinations for open outstate channels.
@@ -1746,10 +1746,10 @@ void Sigma2ffbar2gmZgmZ::sigmaKin() {
         psaxi = pow3(betaf);
 
         // Second Z0: combine phase space with couplings.
-        ef2    = couplingsPtr->ef2(idAbs) * psvec;
-        efvf   = couplingsPtr->efvf(idAbs) * psvec;
-        vf2af2 = couplingsPtr->vf2(idAbs) * psvec
-               + couplingsPtr->af2(idAbs) * psaxi;
+        ef2    = coupSMPtr->ef2(idAbs) * psvec;
+        efvf   = coupSMPtr->efvf(idAbs) * psvec;
+        vf2af2 = coupSMPtr->vf2(idAbs) * psvec
+               + coupSMPtr->af2(idAbs) * psaxi;
         colf   = (idAbs < 6) ? colQ4 : 1.;
 
         // Second Z0: store sum of combinations for open outstate channels.
@@ -1796,9 +1796,9 @@ double Sigma2ffbar2gmZgmZ::sigmaHat() {
 
   // Charge/2, left- and righthanded couplings for in-fermion.
   int idAbs = abs(id1);
-  double ei = 0.5 * couplingsPtr->ef(idAbs);
-  double li =       couplingsPtr->lf(idAbs);
-  double ri =       couplingsPtr->rf(idAbs);
+  double ei = 0.5 * coupSMPtr->ef(idAbs);
+  double li =       coupSMPtr->lf(idAbs);
+  double ri =       coupSMPtr->rf(idAbs);
 
   // Combine left/right gamma, interference and Z0 parts for each Z0.
   double left3  = ei * ei * gamProp3 * gamSum3
@@ -1859,17 +1859,17 @@ double Sigma2ffbar2gmZgmZ::weightDecayFlav( Event& process) {
 
   // Charge/2, left- and righthanded couplings for in- and out-fermions.
   int idAbs = process[i1].idAbs();
-  double ei = 0.5 * couplingsPtr->ef(idAbs);
-  double li =       couplingsPtr->lf(idAbs);
-  double ri =       couplingsPtr->rf(idAbs);
+  double ei = 0.5 * coupSMPtr->ef(idAbs);
+  double li =       coupSMPtr->lf(idAbs);
+  double ri =       coupSMPtr->rf(idAbs);
   idAbs     = process[i3].idAbs();
-  double e3  = 0.5 * couplingsPtr->ef(idAbs);
-  double l3  =       couplingsPtr->lf(idAbs);
-  double r3  =       couplingsPtr->rf(idAbs);
+  double e3  = 0.5 * coupSMPtr->ef(idAbs);
+  double l3  =       coupSMPtr->lf(idAbs);
+  double r3  =       coupSMPtr->rf(idAbs);
   idAbs      = process[i5].idAbs();
-  double e4  = 0.5 * couplingsPtr->ef(idAbs);
-  double l4  =       couplingsPtr->lf(idAbs);
-  double r4  =       couplingsPtr->rf(idAbs);
+  double e4  = 0.5 * coupSMPtr->ef(idAbs);
+  double l4  =       coupSMPtr->lf(idAbs);
+  double r4  =       coupSMPtr->rf(idAbs);
 
   // Left- and righthanded couplings combined with propagators.
   c3LL = ei * ei * gamProp3 * e3 * e3
@@ -1974,12 +1974,12 @@ void Sigma2ffbar2ZW::initProc() {
   mwWS = pow2(mW * widW);
 
   // Left-handed couplings for up/nu- and down/e-type quarks.
-  lun   = (hasLeptonBeams) ? couplingsPtr->lf(12) : couplingsPtr->lf(2);
-  lde   = (hasLeptonBeams) ? couplingsPtr->lf(11) : couplingsPtr->lf(1);
+  lun   = (hasLeptonBeams) ? coupSMPtr->lf(12) : coupSMPtr->lf(2);
+  lde   = (hasLeptonBeams) ? coupSMPtr->lf(11) : coupSMPtr->lf(1);
 
   // Common weak coupling factor.
-  sin2thetaW = couplingsPtr->sin2thetaW();
-  cos2thetaW = couplingsPtr->cos2thetaW();
+  sin2thetaW = coupSMPtr->sin2thetaW();
+  cos2thetaW = coupSMPtr->cos2thetaW();
   thetaWRat  = 1. / (4. * cos2thetaW);
   cotT       = sqrt(cos2thetaW / sin2thetaW);
   thetaWpt   = (9. - 8. * sin2thetaW) / 4.;
@@ -2041,7 +2041,7 @@ double Sigma2ffbar2ZW::sigmaHat() {
 
   // CKM and colour factors.
   double sigma = sigma0;
-  if (abs(id1) < 9) sigma *= couplingsPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
+  if (abs(id1) < 9) sigma *= coupSMPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
 
   // Corrections for secondary widths in Z0 and W+- decays.
   int idUp = (abs(id1)%2 == 0) ? id1 : id2;
@@ -2102,13 +2102,13 @@ double Sigma2ffbar2ZW::weightDecay( Event& process, int iResBeg, int iResEnd) {
 
   //  Couplings of incoming (anti)fermions and outgoing from Z0.
   int idAbs     = process[i1].idAbs();
-  double ai     = couplingsPtr->af(idAbs);
-  double li1    = couplingsPtr->lf(idAbs);
+  double ai     = coupSMPtr->af(idAbs);
+  double li1    = coupSMPtr->lf(idAbs);
   idAbs         = process[i2].idAbs();
-  double li2    = couplingsPtr->lf(idAbs);
+  double li2    = coupSMPtr->lf(idAbs);
   idAbs         = process[i5].idAbs();
-  double l4     = couplingsPtr->lf(idAbs);
-  double r4     = couplingsPtr->rf(idAbs);
+  double l4     = coupSMPtr->lf(idAbs);
+  double r4     = coupSMPtr->rf(idAbs);
 
   // W propagator/interference factor.
   double Wint   = cos2thetaW * (sH - mWS) / (pow2(sH - mWS) + mwWS);
@@ -2150,7 +2150,7 @@ void Sigma2ffbar2WW::initProc() {
   widZ         = particleDataPtr->mWidth(23);
   mZS          = mZ*mZ;
   mwZS         = pow2(mZ * widZ);
-  thetaWRat    = 1. / (4. * couplingsPtr->sin2thetaW());
+  thetaWRat    = 1. / (4. * coupSMPtr->sin2thetaW());
 
   // Secondary open width fraction.
   openFracPair = particleDataPtr->resOpenFrac(24, -24);
@@ -2199,9 +2199,9 @@ double Sigma2ffbar2WW::sigmaHat() {
 
   // Flavour-specific couplings.
   int idAbs = abs(id1);
-  double ei = couplingsPtr->ef(idAbs);
-  double vi = couplingsPtr->vf(idAbs);
-  double ai = couplingsPtr->af(idAbs);
+  double ei = coupSMPtr->ef(idAbs);
+  double vi = coupSMPtr->vf(idAbs);
+  double ai = coupSMPtr->af(idAbs);
 
   // Combine, with different cases for up- and down-type in-flavours.
   double sigma = sigma0;
@@ -2264,9 +2264,9 @@ double Sigma2ffbar2WW::weightDecay( Event& process, int iResBeg, int iResEnd) {
 
   //  Couplings of incoming (anti)fermion.
   int idAbs     = process[i1].idAbs();
-  double ai     = couplingsPtr->af(idAbs);
-  double li     = couplingsPtr->lf(idAbs);
-  double ri     = couplingsPtr->rf(idAbs);
+  double ai     = coupSMPtr->af(idAbs);
+  double li     = coupSMPtr->lf(idAbs);
+  double ri     = coupSMPtr->rf(idAbs);
 
   // gamma*/Z0 propagator/interference factor.
   double Zint   = mZS * (sH - mZS) / (pow2(sH - mZS) + mwZS);
@@ -2306,15 +2306,15 @@ double Sigma2ffbar2WW::weightDecay( Event& process, int iResBeg, int iResEnd) {
 void Sigma2ffbargmZggm::initProc() {
 
   // Allow to pick only gamma* or Z0 part of full gamma*/Z0 expression.
-  gmZmode     = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmode     = mode("WeakZ0:gmZmode");
 
   // Store Z0 mass and width for propagator.
   mRes        = particleDataPtr->m0(23);
   GammaRes    = particleDataPtr->mWidth(23);
   m2Res       = mRes*mRes;
   GamMRat     = GammaRes / mRes;
-  thetaWRat   = 1. / (16. * couplingsPtr->sin2thetaW()
-                * couplingsPtr->cos2thetaW());
+  thetaWRat   = 1. / (16. * coupSMPtr->sin2thetaW()
+                * coupSMPtr->cos2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(23);
@@ -2328,7 +2328,7 @@ void Sigma2ffbargmZggm::initProc() {
 void Sigma2ffbargmZggm::flavSum() {
 
   // Coupling factors for Z0 subsystem.
-  double alpSZ = couplingsPtr->alphaS(s3);
+  double alpSZ = coupSMPtr->alphaS(s3);
   double colQZ = 3. * (1. + alpSZ / M_PI);
 
   // Reset quantities to sum. Declare variables in loop.
@@ -2354,10 +2354,10 @@ void Sigma2ffbargmZggm::flavSum() {
         psaxi = pow3(betaf);
 
         // Combine phase space with couplings.
-        ef2    = couplingsPtr->ef2(idAbs) * psvec;
-        efvf   = couplingsPtr->efvf(idAbs) * psvec;
-        vf2af2 = couplingsPtr->vf2(idAbs) * psvec
-               + couplingsPtr->af2(idAbs) * psaxi;
+        ef2    = coupSMPtr->ef2(idAbs) * psvec;
+        efvf   = coupSMPtr->efvf(idAbs) * psvec;
+        vf2af2 = coupSMPtr->vf2(idAbs) * psvec
+               + coupSMPtr->af2(idAbs) * psaxi;
         colf   = (idAbs < 6) ? colQZ : 1.;
 
         // Store sum of combinations. For outstate only open channels.
@@ -2428,13 +2428,13 @@ double Sigma2ffbargmZggm::weightDecay( Event& process, int iResBeg,
 
   // Charge/2, left- and righthanded couplings for in- and out-fermion.
   int id1Abs   = process[i1].idAbs();
-  double ei    = 0.5 * couplingsPtr->ef(id1Abs);
-  double li    =       couplingsPtr->lf(id1Abs);
-  double ri    =       couplingsPtr->rf(id1Abs);
+  double ei    = 0.5 * coupSMPtr->ef(id1Abs);
+  double li    =       coupSMPtr->lf(id1Abs);
+  double ri    =       coupSMPtr->rf(id1Abs);
   int id3Abs   = process[i3].idAbs();
-  double ef    = 0.5 * couplingsPtr->ef(id3Abs);
-  double lf    =       couplingsPtr->lf(id3Abs);
-  double rf    =       couplingsPtr->rf(id3Abs);
+  double ef    = 0.5 * coupSMPtr->ef(id3Abs);
+  double lf    =       coupSMPtr->lf(id3Abs);
+  double rf    =       coupSMPtr->rf(id3Abs);
 
   // Combinations of left/right for in/out, gamma*/interference/Z0.
   double clilf = ei*ei * gamProp * ef*ef + ei*li * intProp * ef*lf
@@ -2495,9 +2495,9 @@ double Sigma2qqbar2gmZg::sigmaHat() {
   // Combine gamma, interference and Z0 parts.
   int idAbs    = abs(id1);
   double sigma = sigma0
-               * ( couplingsPtr->ef2(idAbs)    * gamProp * gamSum
-                 + couplingsPtr->efvf(idAbs)   * intProp * intSum
-                 + couplingsPtr->vf2af2(idAbs) * resProp * resSum);
+               * ( coupSMPtr->ef2(idAbs)    * gamProp * gamSum
+                 + coupSMPtr->efvf(idAbs)   * intProp * intSum
+                 + coupSMPtr->vf2af2(idAbs) * resProp * resSum);
 
   // Correct for the running-width Z0 propagater weight in PhaseSpace.
   sigma       /= runBW3;
@@ -2554,9 +2554,9 @@ double Sigma2qg2gmZq::sigmaHat() {
   // Combine gamma, interference and Z0 parts.
   int idAbs    = (id2 == 21) ? abs(id1) : abs(id2);
   double sigma = sigma0
-               * ( couplingsPtr->ef2(idAbs)    * gamProp * gamSum
-                 + couplingsPtr->efvf(idAbs)   * intProp * intSum
-                 + couplingsPtr->vf2af2(idAbs) * resProp * resSum);
+               * ( coupSMPtr->ef2(idAbs)    * gamProp * gamSum
+                 + coupSMPtr->efvf(idAbs)   * intProp * intSum
+                 + coupSMPtr->vf2af2(idAbs) * resProp * resSum);
 
   // Correct for the running-width Z0 propagater weight in PhaseSpace.
   sigma       /= runBW3;
@@ -2618,10 +2618,10 @@ double Sigma2ffbar2gmZgm::sigmaHat() {
 
   // Combine gamma, interference and Z0 parts.
   int idAbs    = abs(id1);
-  double sigma = sigma0 * couplingsPtr->ef2(idAbs)
-               * ( couplingsPtr->ef2(idAbs)    * gamProp * gamSum
-                 + couplingsPtr->efvf(idAbs)   * intProp * intSum
-                 + couplingsPtr->vf2af2(idAbs) * resProp * resSum);
+  double sigma = sigma0 * coupSMPtr->ef2(idAbs)
+               * ( coupSMPtr->ef2(idAbs)    * gamProp * gamSum
+                 + coupSMPtr->efvf(idAbs)   * intProp * intSum
+                 + coupSMPtr->vf2af2(idAbs) * resProp * resSum);
 
   // Correct for the running-width Z0 propagater weight in PhaseSpace.
   sigma       /= runBW3;
@@ -2679,10 +2679,10 @@ double Sigma2fgm2gmZf::sigmaHat() {
 
   // Combine gamma, interference and Z0 parts.
   int idAbs    = (id2 == 22) ? abs(id1) : abs(id2);
-  double sigma = sigma0 * couplingsPtr->ef2(idAbs)
-               * ( couplingsPtr->ef2(idAbs)    * gamProp * gamSum
-                 + couplingsPtr->efvf(idAbs)   * intProp * intSum
-                 + couplingsPtr->vf2af2(idAbs) * resProp * resSum);
+  double sigma = sigma0 * coupSMPtr->ef2(idAbs)
+               * ( coupSMPtr->ef2(idAbs)    * gamProp * gamSum
+                 + coupSMPtr->efvf(idAbs)   * intProp * intSum
+                 + coupSMPtr->vf2af2(idAbs) * resProp * resSum);
 
   // Correct for the running-width Z0 propagater weight in PhaseSpace.
   sigma         /= runBW3;
@@ -2787,7 +2787,7 @@ void Sigma2qqbar2Wg::initProc() {
 void Sigma2qqbar2Wg::sigmaKin() {
 
   // Cross section part common for all incoming flavours.
-  sigma0 = (M_PI / sH2) * (alpEM * alpS / couplingsPtr->sin2thetaW())
+  sigma0 = (M_PI / sH2) * (alpEM * alpS / coupSMPtr->sin2thetaW())
     * (2./9.) * (tH2 + uH2 + 2. * sH * s3) / (tH * uH);
 
 }
@@ -2799,7 +2799,7 @@ void Sigma2qqbar2Wg::sigmaKin() {
 double Sigma2qqbar2Wg::sigmaHat() {
 
   // CKM factor. Secondary width for W+ or W-.
-  double sigma = sigma0 * couplingsPtr->V2CKMid(abs(id1), abs(id2));
+  double sigma = sigma0 * coupSMPtr->V2CKMid(abs(id1), abs(id2));
   int idUp     = (abs(id1)%2 == 0) ? id1 : id2;
   sigma       *= (idUp > 0) ? openFracPos : openFracNeg;
 
@@ -2849,7 +2849,7 @@ void Sigma2qg2Wq::initProc() {
 void Sigma2qg2Wq::sigmaKin() {
 
   // Cross section part common for all incoming flavours.
-  sigma0 = (M_PI / sH2) * (alpEM * alpS / couplingsPtr->sin2thetaW())
+  sigma0 = (M_PI / sH2) * (alpEM * alpS / coupSMPtr->sin2thetaW())
     * (1./12.) * (sH2 + uH2 + 2. * tH * s3) / (-sH * uH);
 
 }
@@ -2862,7 +2862,7 @@ double Sigma2qg2Wq::sigmaHat() {
 
   // CKM factor. Secondary width for W+ or W-.
   int idAbs    = (id2 == 21) ? abs(id1) : abs(id2);
-  double sigma = sigma0 * couplingsPtr->V2CKMsum(idAbs);
+  double sigma = sigma0 * coupSMPtr->V2CKMsum(idAbs);
   int idUp     = (id2 == 21) ? id1 : id2;
   if (idAbs%2 == 1) idUp = -idUp;
   sigma       *= (idUp > 0) ? openFracPos : openFracNeg;
@@ -2882,7 +2882,7 @@ void Sigma2qg2Wq::setIdColAcol() {
   int idq           = (id2 == 21) ? id1 : id2;
   int sign          = 1 - 2 * (abs(idq)%2);
   if (idq < 0) sign = -sign;
-  id4 = couplingsPtr->V2CKMpick(idq);
+  id4 = coupSMPtr->V2CKMpick(idq);
 
   // Flavour set up for q g -> W q.
   setId( id1, id2, 24 * sign, id4);
@@ -2921,7 +2921,7 @@ void Sigma2ffbar2Wgm::initProc() {
 void Sigma2ffbar2Wgm::sigmaKin() {
 
   // Cross section part common for all incoming flavours.
-  sigma0 = (M_PI / sH2) * (alpEM*alpEM / couplingsPtr->sin2thetaW())
+  sigma0 = (M_PI / sH2) * (alpEM*alpEM / coupSMPtr->sin2thetaW())
     * 0.5 * (tH2 + uH2 + 2. * sH * s3) / (tH * uH);
 }
 
@@ -2938,7 +2938,7 @@ double Sigma2ffbar2Wgm::sigmaHat() {
   double sigma = sigma0 * pow2( chgUp - tH / (tH + uH) );
 
   // CKM and colour factors. Secondary width for W+ or W-.
-  if (id1Abs < 9) sigma *= couplingsPtr->V2CKMid(id1Abs, id2Abs) / 3.;
+  if (id1Abs < 9) sigma *= coupSMPtr->V2CKMid(id1Abs, id2Abs) / 3.;
   int idUp     = (abs(id1)%2 == 0) ? id1 : id2;
   sigma       *= (idUp > 0) ? openFracPos : openFracNeg;
 
@@ -2992,7 +2992,7 @@ void Sigma2fgm2Wf::initProc() {
 void Sigma2fgm2Wf::sigmaKin() {
 
   // Cross section part common for all incoming flavours.
-  sigma0 = (M_PI / sH2) * (alpEM*alpEM / couplingsPtr->sin2thetaW())
+  sigma0 = (M_PI / sH2) * (alpEM*alpEM / coupSMPtr->sin2thetaW())
     * 0.5 * (sH2 + uH2 + 2. * tH * s3) / (pT2 * s3 - sH * uH);
 
 }
@@ -3009,7 +3009,7 @@ double Sigma2fgm2Wf::sigmaHat() {
   double sigma  = sigma0 * pow2( charge  - sH / (sH + uH) );
 
   // CKM factor. Secondary width for W+ or W-.
-  sigma        *= couplingsPtr->V2CKMsum(idAbs);
+  sigma        *= coupSMPtr->V2CKMsum(idAbs);
   int idUp      = (id2 == 22) ? id1 : id2;
   if (idAbs%2 == 1) idUp = -idUp;
   sigma        *= (idUp > 0) ? openFracPos : openFracNeg;
@@ -3029,7 +3029,7 @@ void Sigma2fgm2Wf::setIdColAcol() {
   int idq           = (id2 == 22) ? id1 : id2;
   int sign          = 1 - 2 * (abs(idq)%2);
   if (idq < 0) sign = -sign;
-  id4 = couplingsPtr->V2CKMpick(idq);
+  id4 = coupSMPtr->V2CKMpick(idq);
 
   // Flavour set up for q gamma -> W q.
   setId( id1, id2, 24 * sign, id4);
@@ -3259,7 +3259,7 @@ double Sigma2qgm2qg::sigmaHat() {
 
   // Incoming flavour gives charge factor.
   int idNow    = (id2 == 22) ? id1 : id2;
-  double eNow  = couplingsPtr->ef( abs(idNow) );
+  double eNow  = coupSMPtr->ef( abs(idNow) );
   return sigma0 * pow2(eNow);
 
 }
@@ -3321,7 +3321,7 @@ double Sigma2qgm2qgm::sigmaHat() {
 
   // Incoming flavour gives charge factor.
   int idNow    = (id2 == 22) ? id1 : id2;
-  double eNow  = couplingsPtr->ef( abs(idNow) );
+  double eNow  = coupSMPtr->ef( abs(idNow) );
   return sigma0 * pow4(eNow);
 
 }

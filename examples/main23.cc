@@ -1,7 +1,10 @@
 // main23.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: external derived class; parton distribution;
+// random number generator; beam momentum; vertex spread;
 
 // Examples how to write external derived classes
 // that can be handed to Pythia for internal generation.
@@ -13,6 +16,7 @@
 // for the RanMar and MixMax random number generators.
 
 #include "Pythia8/Pythia.h"
+#include "Pythia8/BeamShape.h"
 #include "Pythia8Plugins/MixMax.h"
 
 using namespace Pythia8;
@@ -219,7 +223,7 @@ int main() {
     pythia.readString("Beams:pxB = 1.");
 
     // A class to generate beam parameters according to own parametrization.
-    BeamShape* myBeamShape = new MyBeamShape();
+    BeamShapePtr myBeamShape = make_shared<MyBeamShape>();
 
     // Hand pointer to Pythia.
     // If you comment this out you get internal Gaussian-style implementation.
@@ -255,8 +259,8 @@ int main() {
     }
 
     // Two classes to do the two PDFs externally. Hand pointers to Pythia.
-    PDF* pdfAPtr = new Scaling(2212);
-    PDF* pdfBPtr = new Scaling(2212);
+    PDFPtr pdfAPtr = make_shared<Scaling>(2212);
+    PDFPtr pdfBPtr = make_shared<Scaling>(2212);
     pythia.setPDFPtr( pdfAPtr, pdfBPtr);
 
     // Initialization.
@@ -321,10 +325,7 @@ int main() {
          << vtxX << vtxY << vtxZ << vtxT << vtxZT;
 
     // Remove created classes.
-    delete myBeamShape;
     if (iRNG == 1) delete rndm;
-    delete pdfAPtr;
-    delete pdfBPtr;
 
     // Check time; end of loop over random number generators. Done.
     clock_t stop = clock();

@@ -1,7 +1,9 @@
 // main52.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: parton distribution; LHAPDF; minimum bias; tuning;
 
 // Studies of hadron-level and parton-level minimum-bias quantities,
 // comparing the internal default PDF with an external one from LHAPDF.
@@ -54,6 +56,9 @@ int main() {
   Hist pTDistNew("MPI pT (=Q) distribution new PDF", 100, 0., 20.);
   Hist pTDistRat("MPI pT (=Q) distribution new/old PDF", 100, 0., 20.);
 
+  // PDF path.
+  string pdfPath;
+  
   // Loop over one default run and one with new PDF.
   for (int iRun = 0; iRun < 2; ++iRun) {
 
@@ -63,7 +68,8 @@ int main() {
     // Generator.
     Pythia pythia;
     Event& event = pythia.event;
-
+    pdfPath = pythia.settings.word("xmlPath") + "../pdfdata";
+    
     // Generate minimum-bias events, with or without double diffraction.
     pythia.readString("SoftQCD:nonDiffractive = on");
     //pythia.readString("SoftQCD:doubleDiffractive = on");
@@ -182,8 +188,9 @@ int main() {
   Info info;
   double Q2 = 10.;
   // Current default is NNPDF2.3 QCD+QED LO alpha_s(M_Z) = 0.130.
-  PDF* oldPDF = new NNPDF(2212, 1);
-  PDF* newPDF = new LHAPDF(2212, pdfSet, &info);
+  PDFPtr oldPDF = make_shared<LHAGrid1>(
+    2212, "NNPDF23_lo_as_0130_qed_0000.dat", pdfPath, &info);
+  PDFPtr newPDF = make_shared<LHAPDF>(2212, pdfSet, &info);
 
   // Histograms.
   Hist effFlinOld("F_effective( x, Q2 = 10) old", 100 , 0., 1.);
@@ -241,7 +248,5 @@ int main() {
        << effFlogOld  << effFlogNew  << effFlogRat;
 
   // Done.
-  delete oldPDF;
-  delete newPDF;
   return 0;
 }

@@ -1,5 +1,5 @@
 // SLHAinterface.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -16,16 +16,14 @@ namespace Pythia8 {
 
 // Initialize and switch to SUSY couplings if reading SLHA spectrum.
 
-void SLHAinterface::init( Settings& settings, Rndm* rndmPtr,
-  Couplings* couplingsPtrIn, ParticleData* particleDataPtr,
-  bool& useSLHAcouplings, stringstream& particleDataBuffer) {
+void SLHAinterface::init( bool& useSLHAcouplings,
+  stringstream& particleDataBuffer) {
 
-  // Initialize SLHA couplingsPtr to PYTHIA one by default
-  couplingsPtr     = couplingsPtrIn;
+  // By default no SLHA couplings.
   useSLHAcouplings = false;
 
   // Check if SUSY couplings need to be read in
-  if( !initSLHA(settings, particleDataPtr))
+  if( !initSLHA())
     infoPtr->errorMsg("Error in SLHAinterface::init: "
       "Could not read SLHA file");
 
@@ -33,20 +31,17 @@ void SLHAinterface::init( Settings& settings, Rndm* rndmPtr,
   string line;
   string warnPref = "Warning in SLHAinterface::init: ";
   while (getline(particleDataBuffer, line)
-    && settings.flag("SLHA:allowUserOverride")) {
+    && settingsPtr->flag("SLHA:allowUserOverride")) {
     bool pass = particleDataPtr->readString(line, true);
-    if (!pass) infoPtr->errorMsg(warnPref + "Unable to process line " + line);
+    if (!pass) infoPtr->errorMsg(warnPref + "Unable to process line "
+      + line);
     else infoPtr->errorMsg(warnPref + "Overwriting SLHA by " + line);
   }
 
   // SLHA sets isSUSY flag to tell us if there was an SLHA SUSY spectrum
-  if (couplingsPtr->isSUSY) {
-    // Initialize the derived SUSY couplings class (SM first, then SUSY)
-    coupSUSY.init( settings, rndmPtr);
-    coupSUSY.initSUSY(&slha, infoPtr, particleDataPtr, &settings);
-    // Switch couplingsPtr to point to the derived class
-    // and tell PYTHIA to use it
-    couplingsPtr = (Couplings *) &coupSUSY;
+  if (coupSUSYPtr->isSUSY) {
+    // Initialize the derived SUSY couplings class.
+    coupSUSYPtr->initSUSY(&slha, infoPtr);
     useSLHAcouplings = true;
   }
 
@@ -56,8 +51,7 @@ void SLHAinterface::init( Settings& settings, Rndm* rndmPtr,
 
 // Initialize SUSY Les Houches Accord data.
 
-bool SLHAinterface::initSLHA(Settings& settings,
-  ParticleData* particleDataPtr) {
+bool SLHAinterface::initSLHA() {
 
   // Error and warning prefixes for this method
   string errPref  = "Error in SLHAinterface::initSLHA: ";
@@ -67,20 +61,20 @@ bool SLHAinterface::initSLHA(Settings& settings,
   // Initial and settings values.
   int    ifailLHE    = 1;
   int    ifailSpc    = 1;
-  int    readFrom    = settings.mode("SLHA:readFrom");
-  string lhefFile    = settings.word("Beams:LHEF");
-  string lhefHeader  = settings.word("Beams:LHEFheader");
-  string slhaFile    = settings.word("SLHA:file");
-  int    verboseSLHA = settings.mode("SLHA:verbose");
-  bool   slhaUseDec  = settings.flag("SLHA:useDecayTable");
+  int    readFrom    = settingsPtr->mode("SLHA:readFrom");
+  string lhefFile    = settingsPtr->word("Beams:LHEF");
+  string lhefHeader  = settingsPtr->word("Beams:LHEFheader");
+  string slhaFile    = settingsPtr->word("SLHA:file");
+  int    verboseSLHA = settingsPtr->mode("SLHA:verbose");
+  bool   slhaUseDec  = settingsPtr->flag("SLHA:useDecayTable");
   bool   noSLHAFile  = ( slhaFile == "none" || slhaFile == "void"
                       || slhaFile == ""     || slhaFile == " " );
 
   // Set internal data members
-  meMode      = settings.mode("SLHA:meMode");
+  meMode      = settingsPtr->mode("SLHA:meMode");
 
   // No SUSY by default
-  couplingsPtr->isSUSY = false;
+  coupSUSYPtr->isSUSY = false;
 
   // Option with no SLHA read-in at all.
   if (readFrom == 0) return true;
@@ -105,7 +99,7 @@ bool SLHAinterface::initSLHA(Settings& settings,
   // If LHEF read successful, everything needed should already be ready
   if (ifailLHE == 0) {
     ifailSpc = 0;
-    couplingsPtr->isSUSY = true;
+    coupSUSYPtr->isSUSY = true;
     // If no LHEF file or no SLHA info in header, read from SLHA:file
   } else {
     lhefFile = "void";
@@ -118,7 +112,7 @@ bool SLHAinterface::initSLHA(Settings& settings,
     infoPtr->errorMsg(errPref + "problem reading SLHA file", slhaFile);
     return false;
   } else {
-    couplingsPtr->isSUSY = true;
+    coupSUSYPtr->isSUSY = true;
   }
 
   // Check spectrum for consistency. Switch off SUSY if necessary.
@@ -127,13 +121,14 @@ bool SLHAinterface::initSLHA(Settings& settings,
   // ifail >= 1 : no MODSEL found -> don't switch on SUSY
   if (ifailSpc == 1) {
     // no SUSY, but MASS ok
-    couplingsPtr->isSUSY = false;
+    coupSUSYPtr->isSUSY = false;
     infoPtr->errorMsg(infoPref +
       "No MODSEL found, keeping internal SUSY switched off");
   } else if (ifailSpc >= 2) {
     // no SUSY, but problems
-    infoPtr->errorMsg(warnPref + "Problem with SLHA MASS or QNUMBERS.");
-    couplingsPtr->isSUSY = false;
+    infoPtr->errorMsg(warnPref +
+      "No MASS or MODSEL blocks found.");
+    coupSUSYPtr->isSUSY = false;
   }
   // ifail = 0 : MODSEL found, spectrum OK
   else if (ifailSpc == 0) {
@@ -143,8 +138,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
   else if (ifailSpc < 0) {
     infoPtr->errorMsg(warnPref + "Problem with SLHA spectrum.",
       "\n Only using masses and switching off SUSY.");
-    settings.flag("SUSY:all", false);
-    couplingsPtr->isSUSY = false;
+    settingsPtr->flag("SUSY:all", false);
+    coupSUSYPtr->isSUSY = false;
     slha.listSpectrum(ifailSpc);
   }
 
@@ -373,8 +368,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
       + "using QNUMBERS for id codes < 1000000 may clash with SM.");
 
   // Import mass spectrum.
-  bool   keepSM            = settings.flag("SLHA:keepSM");
-  double minMassSM         = settings.parm("SLHA:minMassSM");
+  bool   keepSM            = settingsPtr->flag("SLHA:keepSM");
+  double minMassSM         = settingsPtr->parm("SLHA:minMassSM");
   map<int,bool> idModified;
   if (ifailSpc == 1 || ifailSpc == 0) {
 
@@ -394,14 +389,19 @@ bool SLHAinterface::initSLHA(Settings& settings,
       for (unsigned int iq = 0; iq<isQnumbers.size(); ++iq)
         if (id == isQnumbers[iq]) isInternal = false;
 
-      // Ignore masses for known SM particles or particles with
+     // Ignore masses for known SM particles or particles with
       // default masses < minMassSM; overwrite masses for rest.
-      if (keepSM && (id < 25 || (id > 80 && id < 1000000)) && isInternal)
-        ignoreMassKeepSM.push_back(id);
-      else if (id < 1000000 && particleDataPtr->m0(id) < minMassSM
-        && isInternal)
-        ignoreMassM0.push_back(id);
-      else {
+      // SM particles: (idRes < 25 || idRes > 80 && idRes < 1000000);
+      // Extra higgses (26 - 40) & DM (51 - 60) not SM
+      // keepSM : do not allow modification of any SM particles
+      // minMassSM : mass above which SM masses may be overwritten
+      bool isSM = id < 26 || ( id > 80 && id < 1000000);
+      if (isSM && isInternal) {
+        if (keepSM) ignoreMassKeepSM.push_back(id);
+        else if (particleDataPtr->m0(id) < minMassSM) {
+          ignoreMassM0.push_back(id);
+        }
+      } else {
         ParticleDataEntry* tmpPtr = particleDataPtr->findParticle(id);
         if( tmpPtr == NULL ) {
           ostringstream idCode;
@@ -482,22 +482,22 @@ bool SLHAinterface::initSLHA(Settings& settings,
     for (unsigned int iq = 0; iq<isQnumbers.size(); ++iq)
       if (idRes == isQnumbers[iq]) isInternal = false;
 
+
     // Ignore decay channels for known SM particles or particles with
     // default masses < minMassSM; overwrite masses for rest.
-    if (keepSM && (idRes < 25 || (idRes > 80 && idRes < 1000000))
-        && isInternal) {
-      ignoreDecayKeepSM.push_back(idRes);
-      continue;
-    }
-    else if (idRes < 1000000 && particleDataPtr->m0(idRes) < minMassSM
-             && isInternal) {
-      ignoreDecayM0.push_back(idRes);
-      continue;
+    // Let extra Higgses & Dark Matter sector be non-SM
+    bool isSM = idRes < 26 || ( idRes > 80 && idRes < 1000000);
+    if (isSM && isInternal) {
+      if (keepSM) { ignoreDecayKeepSM.push_back(idRes); continue; }
+      if(particleDataPtr->m0(idRes) < minMassSM) {
+        ignoreDecayM0.push_back(idRes);
+        continue;
+      }
     }
 
     // Extract and store total width (absolute value, neg -> switch off)
     double widRes         = abs(slhaTable->getWidth());
-    double pythiaMinWidth = settings.parm("ResonanceWidths:minWidth");
+    double pythiaMinWidth = settingsPtr->parm("ResonanceWidths:minWidth");
     if (widRes > 0. && widRes < pythiaMinWidth) {
       infoPtr->errorMsg(warnPref + "forcing width = 0 ","for id = "
         + idCode.str() + " (width < ResonanceWidths:minWidth)" , true);
@@ -678,8 +678,8 @@ bool SLHAinterface::initSLHA(Settings& settings,
     double wid = particlePtr->mWidth();
     // Always set massless particles stable
     if (m0 <= 0.0 && (wid > 0.0 || particlePtr->mayDecay())) {
-      infoPtr->errorMsg(warnPref + "massless particle forced stable"," id = "
-        + idCode.str(), true);
+      infoPtr->errorMsg(warnPref + "massless particle forced stable",
+        " id = " + idCode.str(), true);
       particlePtr->clearChannels();
       particlePtr->setMWidth(0.0);
       particlePtr->setMayDecay(false);
@@ -737,14 +737,14 @@ bool SLHAinterface::initSLHA(Settings& settings,
 // Initialize SLHA blocks SMINPUTS and MASS from PYTHIA SM parameter values.
 // E.g., to make sure that there are no important unfilled entries
 
-void SLHAinterface::pythia2slha(ParticleData* particleDataPtr) {
+void SLHAinterface::pythia2slha() {
 
   // Initialize block SMINPUTS.
   string blockName = "sminputs";
   double mZ = particleDataPtr->m0(23);
-  slha.set(blockName,1,1.0/couplingsPtr->alphaEM(pow2(mZ)));
-  slha.set(blockName,2,couplingsPtr->GF());
-  slha.set(blockName,3,couplingsPtr->alphaS(pow2(mZ)));
+  slha.set(blockName,1,1.0/coupSMPtr->alphaEM(pow2(mZ)));
+  slha.set(blockName,2,coupSMPtr->GF());
+  slha.set(blockName,3,coupSMPtr->alphaS(pow2(mZ)));
   slha.set(blockName,4,mZ);
   // b mass (should be running mass, here pole for time being)
   slha.set(blockName,5,particleDataPtr->m0(5));

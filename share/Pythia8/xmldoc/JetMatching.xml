@@ -1,10 +1,10 @@
  
-<chapter name="Jet Matching"> 
+<chapter name="MLM jet merging"> 
  
-<h2>Jet Matching</h2> 
+<h2>MLM jet merging</h2> 
  
 This manual page describes the parton-jet matching interfaces for 
-PYTHIA8. In this approach, usually referred to as MLM matching 
+PYTHIA8. In this approach, usually referred to as MLM merging 
 <ref>Man02, Man07</ref>, the final jets after parton-shower evolution 
 and jet clustering are matched to the original partons. The event is 
 accepted if a reasonable match is found, and rejected if not. The 
@@ -20,7 +20,7 @@ further down on this page.
  
 <p/>We also allow for two alternative sources of external events, 
 one in the ALPGEN native format and one in the Madgraph LHEF-based one. 
-All four combinations of input format and matching style are 
+All four combinations of input format and scheme are 
 implemented. In the following it is therefore important to keep 
 the two aspects apart, whenever the ALPGEN and Madgraph labels 
 are used. 
@@ -37,7 +37,7 @@ reading of ALPGEN event and parameter files, and one for the reading
 of Madgraph parameters. 
 </li> 
 <li><code>CombineMatchingInput.h</code> contains three classes that 
-combine the reading of events with the matching of them. 
+combine the reading of events with the merging of them. 
 </li> 
 <li> 
 <code>main32.cc, main32.cmnd</code> : a sample main program and card 
@@ -49,21 +49,19 @@ file showing the usage of the previous files/classes.
  
 External sources of partons are used in the parton-jet matching 
 process. The source of the partons has been separated from the 
-implementation of the matching algorithm. By default, PYTHIA8 
-contains a machinery to process Les Houches Event Files (LHEFs) 
-as described on the 
-<aloc href="LesHouchesAccord">Les Houches Accord</aloc> 
-and <aloc href="BeamParameters">Beam Parameters</aloc> 
-pages. Madgraph5 adheres to this format, but also contains some further 
+implementation of the algorithm. By default, PYTHIA8 
+contains a machinery to process 
+<aloc href="LHEF">Les Houches Event Files</aloc> (LHEFs) 
+Madgraph5 adheres to this format, but also contains some further 
 non-standardized information that can be used. The parsing of the native 
 ALPGEN file format is described on the 
 <aloc href="AlpgenEventInterface">Alpgen Event Interface</aloc> page. 
  
 <p/>Commonly, the source of external partons also contains information 
-about how a particular type of matching algorithm should be employed. 
+about how a particular type of algorithm should be employed. 
 This information is handled by the <code>AlpgenPar</code> class for 
 ALPGEN files, and <code>MadgraphPar</code> for LHEFs. 
-The user can choose to set default matching parameters using the 
+The user can choose to set default merging parameters using the 
 <code><aloc href="AlpgenEventInterface">Alpgen:setMLM</aloc></code> 
 flag for ALPGEN files. For LHEFs, instead, the setting of default 
 parameters is controlled with the <code>JetMatching:setMad</code> flag: 
@@ -95,7 +93,7 @@ used to define the basic structure of a parton-jet matching algorithm.
 Two versions are implemented here, based on the FORTRAN code provided 
 by the ALPGEN and Madgraph packages, respectively: 
 <code>JetMatchingAlpgen</code> and <code>JetMatchingMadgraph</code>. 
-The matching parameters are defined with the <code>JetMatching:*</code> 
+The merging parameters are defined with the <code>JetMatching:*</code> 
 keyword. 
  
 <h4> Scheme and Usage </h4> 
@@ -107,10 +105,10 @@ are rejected due to weighting or event processing problems).
 </flag> 
  
 <modepick name="JetMatching:scheme" default="1" min="1" max="2"> 
-The parton-jet MLM-style matching scheme. 
-<option value="1"> The one inspired by the Madgraph matching code, 
+The parton-jet MLM-style merging scheme. 
+<option value="1"> The one inspired by the Madgraph scheme, 
 here implemented in the <code>JetMatchingMadgraph</code> class.</option> 
-<option value="2"> The one inspired by the ALPGEN matching code, 
+<option value="2"> The one inspired by the ALPGEN scheme, 
 here implemented in the <code>JetMatchingAlpgen</code> class.</option> 
 </modepick> 
  
@@ -125,7 +123,7 @@ the settings below. The PYTHIA8 internal <code>CellJet</code> and
 The choice of jet algorithm to use when merging against hard partons. 
 Currently, only <code>SlowJet</code> with the k<sub>T</sub> algorithm (and 
 <code>useStandardR = false</code>) is supported for Madgraph-style 
-matching, while there is full freedom for the ALPGEN-style matching. 
+merging, while there is full freedom for the ALPGEN-style merging. 
 <option value="1">The <code>CellJet</code> cone algorithm.</option> 
 <option value="2">The <code>SlowJet</code> clustering algorithm.</option> 
 </modepick> 
@@ -168,7 +166,7 @@ ALPGEN file or LHEF.
 For the <code>CellJet</code> algorithm, this gives the minimum transverse 
 energy inside a cone for a jet to be accepted. For the <code>SlowJet</code> 
 algorithm, this is instead the minimum transverse momentum required for a 
-cluster to be accepted as a jet. For Madgraph-style matching, this 
+cluster to be accepted as a jet. For the Madgraph scheme, this 
 parameter should match the <code>qCut</code> parameter described later. 
 </parm> 
  
@@ -182,10 +180,10 @@ For the <code>SlowJet</code> algorithm, this gives the <ei>R</ei> parameter.
 For both jet algorithms, this defines the maximum pseudorapidity that 
 the detector is assumed to cover. In this context, however, it is tied 
 to the phase space region in which partons have been generated. 
-For the Alpgen-style matching, particles within 
+For the Alpgen scheme, particles within 
 <ei>etaJetMax + coneRadius</ei> are passed to the jet algorithm, 
 with only jets within <ei>etaJetMax</ei> retained in the merging. 
-For the Madgraph-style matching, only particles within <ei>etaJetMax</ei> 
+For the Madgraph scheme, only particles within <ei>etaJetMax</ei> 
 are used. 
 </parm> 
  
@@ -211,7 +209,7 @@ and no additional jets are allowed.
 </option> 
 <option value="2"> 
 If <ei>nJet &lt; nJetMax</ei>, then the merging is run in exclusive 
-mode, otherwise it is run in inclusive mode. For Madgraph-style matching, 
+mode, otherwise it is run in inclusive mode. For the Madgraph scheme, 
 this is checked on an event-by-event basis, which is useful when an LHEF 
 contains a "soup" of partonic multiplicities. 
 If <ei>nJetMax &lt; 0</ei> or <ei>nJet &lt; 0</ei>, then the 
@@ -289,14 +287,11 @@ The <ei>coneMatchHeavy</ei> parameter used when
 <h3>Madgraph-specific parameters </h3> 
  
 <flag name="JetMatching:doShowerKt" default="off"> 
-This switch changes the merging prescription to the shower-kT matching scheme 
+This switch changes the merging prescription to the shower-kT scheme 
 outlined in <ref>Alw08</ref>. This scheme differs from "classical" MLM jet 
-matching with respect to when the matching veto is checked. The shower-kT 
+merging with respect to when the matching veto is checked. The shower-kT 
 scheme considers already immediately after the first shower emission if an 
-event should be discarded. A detailed comparison of the "classical" MLM 
-prescription (e.g. Madgraph-style matching with 
-<code>JetMatching:doShowerKt = off</code>) and the shower-kT scheme are 
-in preparation. 
+event should be discarded. 
 </flag> 
  
 <parm name="JetMatching:qCut" default="10.0" min="0.0"> 
@@ -357,7 +352,7 @@ The cut applied to regulate multi-jet matrix elements. Note that this cut can
 differ from the matching scale. 
 </parm> 
  
-<h3>Alpgen-style parton-jet matching and merging</h3> 
+<h3>Alpgen-style parton-jet merging</h3> 
  
 This section describes the Alpgen-style MLM merging algorithm for PYTHIA8. 
 The most common reference to the algorithm is <ref>Man02</ref>. In many 
@@ -487,10 +482,10 @@ ALPGEN input is used and the hard process parameters are used to guide
 the merging procedure, it is enough to set the 
 <code>JetMatching:nJetMax</code> parameter. 
  
-<h3>Madgraph-style parton-jet Merging and Matching</h3> 
+<h3>Madgraph-style parton-jet merging</h3> 
  
 <p/> 
-This section describes the Madgraph-style parton-jet matching algorithm 
+This section describes the Madgraph parton-jet merging algorithm 
 for PYTHIA8. 
  
 <p/> 
@@ -575,13 +570,13 @@ runs with different jet multiplicities. In the simplest case, when
 the hard process parameters are used to guide the merging procedure, 
 events will be matched in the exclusive mode. 
  
-<h4>Madgraph-style jet matching with no internal vetoes (assuming an external 
+<h4>Madgraph scheme with no internal vetoes (assuming an external 
 veto implementation)</h4> 
  
 <p/> 
 This section describes the facilities that allow expert users to use their own 
-veto code to perform a Madgraph-style jet matching. This can e.g. be useful 
-to assess jet matching uncertainties without having to process the same input 
+veto code to perform a Madgraph-style merging. This can e.g. be useful 
+to assess parameter changes without having to process the same input 
 events multiple times. 
  
 <p/> As a first step, any vetoes in the Pythia Jet Matching need to be 
@@ -689,4 +684,4 @@ above example, the only shared methods are the constructor and
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

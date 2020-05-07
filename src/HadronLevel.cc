@@ -1,5 +1,5 @@
 // HadronLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,91 +24,75 @@ const double HadronLevel::MTINY = 0.1;
 
 // Find settings. Initialize HadronLevel classes as required.
 
-bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  Couplings* couplingsPtrIn, TimeShower* timesDecPtr,
-  RHadrons* rHadronsPtrIn, DecayHandler* decayHandlePtr,
-  vector<int> handledParticles, UserHooks* userHooksPtrIn) {
+bool HadronLevel::init( TimeShowerPtr timesDecPtr,
+  RHadrons* rHadronsPtrIn, DecayHandlerPtr decayHandlePtr,
+  vector<int> handledParticles, StringIntPtr stringInteractionsPtrIn) {
 
-  // Save pointers.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  couplingsPtr    = couplingsPtrIn;
+  // Store other input pointers.
   rHadronsPtr     = rHadronsPtrIn;
-  userHooksPtr    = userHooksPtrIn;
 
   // Main flags.
-  doHadronize     = settings.flag("HadronLevel:Hadronize");
-  doHadronScatter = settings.flag("hadronLevel:HadronScatter");
-  doDecay         = settings.flag("HadronLevel:Decay");
-  doBoseEinstein  = settings.flag("HadronLevel:BoseEinstein");
-  doDeuteronProd  = settings.flag("HadronLevel:DeuteronProduction");
+  doHadronize     = flag("HadronLevel:Hadronize");
+  doHadronScatter = flag("hadronLevel:HadronScatter");
+  doDecay         = flag("HadronLevel:Decay");
+  doBoseEinstein  = flag("HadronLevel:BoseEinstein");
+  doDeuteronProd  = flag("HadronLevel:DeuteronProduction");
 
   // Boundary mass between string and ministring handling.
-  mStringMin      = settings.parm("HadronLevel:mStringMin");
+  mStringMin      = parm("HadronLevel:mStringMin");
 
   // For junction processing.
-  eNormJunction   = settings.parm("StringFragmentation:eNormJunction");
+  eNormJunction   = parm("StringFragmentation:eNormJunction");
 
   // Allow R-hadron formation.
-  allowRH         = settings.flag("RHadrons:allow");
+  allowRH         = flag("RHadrons:allow");
 
   // Particles that should decay or not before Bose-Einstein stage.
-  widthSepBE      = settings.parm("BoseEinstein:widthSep");
+  widthSepBE      = parm("BoseEinstein:widthSep");
 
   // Need string density information be collected?
-  closePacking     = settings.flag("StringPT:closePacking");
+  closePacking     = flag("StringPT:closePacking");
 
   // Hadron scattering.
-  hadronScatMode  = settings.mode("HadronScatter:mode");
-  hsAfterDecay    = settings.flag("HadronScatter:afterDecay");
+  hadronScatMode  = mode("HadronScatter:mode");
+  hsAfterDecay    = flag("HadronScatter:afterDecay");
 
-  // Rope hadronization. Setting of partonic production vertices.
-  doRopes         = settings.flag("Ropewalk:RopeHadronization");
-  doShoving       = settings.flag("Ropewalk:doShoving");
-  doFlavour       = settings.flag("Ropewalk:doFlavour");
-  doVertex        = settings.flag("PartonVertex:setVertex");
-  doBuffon        = settings.flag("Ropewalk:doBuffon");
-
-  // Initialize Ropewalk and Flavour Ropes.
-  if (doRopes) {
-    if (!ropewalk.init(infoPtr, settings, rndmPtr)) return false;
-    flavourRope.init(&settings, rndmPtr, particleDataPtr, infoPtr, &ropewalk);
-  }
+  // Initialize string interactions (Ropewalk and Flavour Ropes) if present.
+  fragmentationModifierPtr =
+    stringInteractionsPtrIn->getFragmentationModifier();
+  stringRepulsionPtr = stringInteractionsPtrIn->getStringRepulsion();
 
   // Initialize auxiliary fragmentation classes.
-  flavSel.init(settings,  particleDataPtr, rndmPtr, infoPtr);
-  pTSel.init(  settings,  particleDataPtr, rndmPtr, infoPtr);
-  zSel.init(   settings, *particleDataPtr, rndmPtr, infoPtr);
+  flavSel.init();
+  pTSel.init();
+  zSel.init();
 
   // Initialize auxiliary administrative class.
-  colConfig.init(infoPtr, settings, &flavSel);
+  colConfig.init(infoPtr, &flavSel);
 
   // Initialize string and ministring fragmentation.
-  stringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
-    &flavSel, &pTSel, &zSel, &flavourRope, userHooksPtr);
-  ministringFrag.init(infoPtr, settings, particleDataPtr, rndmPtr,
-    &flavSel, &pTSel, &zSel);
+  stringFrag.init(&flavSel, &pTSel, &zSel, fragmentationModifierPtr);
+  ministringFrag.init(&flavSel, &pTSel, &zSel);
 
   // Initialize particle decays.
-  decays.init(infoPtr, settings, particleDataPtr, rndmPtr, couplingsPtr,
-    timesDecPtr, &flavSel, decayHandlePtr, handledParticles);
+  decays.init(timesDecPtr, &flavSel, decayHandlePtr, handledParticles);
 
   // Initialize BoseEinstein.
-  boseEinstein.init(infoPtr, settings, *particleDataPtr);
+  boseEinstein.init();
 
   // Initialize DeuteronProduction.
   if (doDeuteronProd)
-    deuteronProd.init(infoPtr, settings, particleDataPtr, rndmPtr);
+    deuteronProd.init();
 
   // Initialize HadronScatter.
   if (doHadronScatter)
-    hadronScatter.init(infoPtr, settings, rndmPtr, particleDataPtr);
+    hadronScatter.init();
+
+  // Initialize low-energy hadron-hadron collisions.
+  lowEnergyProcess.init(&stringFrag, &ministringFrag);
 
   // Initialize Hidden-Valley fragmentation, if necessary.
-  useHiddenValley = hiddenvalleyFrag.init(infoPtr, settings,
-    particleDataPtr, rndmPtr);
+  useHiddenValley = hiddenvalleyFrag.init();
 
   // Send flavour and z selection pointers to R-hadron machinery.
   rHadronsPtr->fragPtrs( &flavSel, &zSel);
@@ -117,7 +101,7 @@ bool HadronLevel::init(Info* infoPtrIn, Settings& settings,
   colTrace.init(infoPtr);
 
   // Initialize the junction splitting class.
-  junctionSplitting.init(infoPtr, settings, rndmPtr, particleDataPtr);
+  junctionSplitting.init();
 
   // Done.
   return true;
@@ -163,7 +147,8 @@ bool HadronLevel::next( Event& event) {
 
       // Find the complete colour singlet configuration of the event.
       // Keep junctions if we do shoving.
-      if (!findSinglets( event, (doRopes && doShoving) )) return false;
+      if (!findSinglets( event, (stringRepulsionPtr != nullptr) ))
+        return false;
 
       // Fragment off R-hadrons, if necessary.
       if (allowRH && !rHadronsPtr->produce( colConfig, event))
@@ -177,44 +162,26 @@ bool HadronLevel::next( Event& event) {
       }
 
       // Let strings interact in rope hadronization treatment.
-      if (doRopes) {
+      // Do the shoving treatment.
+      if ( stringRepulsionPtr ) {
 
-        // Do the shoving treatment.
-        if (doShoving) {
-          // For shoving we need explicit vertex information.
-          if (!doVertex) {
-            infoPtr->errorMsg("Error in HadronLevel::next: "
-              "shoving enabled, but no vertex info.");
-            return false;
-          }
-          // Extract all string segments from the event.
-          ropewalk.extractDipoles(event, colConfig);
-          // String shoving.
-          ropewalk.shoveTheDipoles(event);
-          // Find singlets again.
-          iParton.resize(0);
-          colConfig.clear();
-          if (!findSinglets( event)) {
-            infoPtr->errorMsg("Error in HadronLevel::next: "
-              "ropes: failed 2nd singlet tracing.");
-            return false;
-          }
-        }
+        // Extract all string segments from the event and do the
+        // string reulsion.
+        stringRepulsionPtr->stringRepulsion(event, colConfig);
 
-        // Prepare for flavour ropes.
-        if (doFlavour) {
-          if (doVertex && !doBuffon) {
-            ropewalk.extractDipoles(event, colConfig);
-            ropewalk.calculateOverlaps();
-          }
-          // Else default to Buffon treatment which
-          // does not need dipole extraction and overlaps.
-          else if (!doBuffon) {
-            infoPtr->errorMsg("Error in HadronLevel::next: "
-              "ropes: Flavour enabled, but no space time information.");
-          }
+        // Find singlets again.
+        iParton.resize(0);
+        colConfig.clear();
+        if (!findSinglets( event)) {
+          infoPtr->errorMsg("Error in HadronLevel::next: "
+            "ropes: failed 2nd singlet tracing.");
+          return false;
         }
       }
+
+      // Prepare for flavour ropes.
+      if (fragmentationModifierPtr)
+        fragmentationModifierPtr->initEvent(event, colConfig);
 
       // Process all colour singlet (sub)systems.
       for (int iSub = 0; iSub < colConfig.size(); ++iSub) {
@@ -228,7 +195,8 @@ bool HadronLevel::next( Event& event) {
 
         // Low-mass string treated separately. Tell if diffractive system.
         } else {
-          bool isDiff = infoPtr->isDiffractiveA() || infoPtr->isDiffractiveB();
+          bool isDiff = infoPtr->isDiffractiveA()
+                     || infoPtr->isDiffractiveB();
           if (!ministringFrag.fragment( iSub, colConfig, event, isDiff))
             return false;
         }

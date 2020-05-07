@@ -1,5 +1,5 @@
 // HIUserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -818,11 +818,16 @@ class EventInfo {
 public:
 
   /// Empty constructor.
-  EventInfo(): ordering(-1.0), coll(0), ok(false) {}
+  EventInfo(): code(0), ordering(-1.0), coll(0), ok(false) {}
 
-  /// The Event and info objects.
+  /// The Event object.
   Event event;
+
+  // The corresponding Info object.
   Info info;
+
+  /// The code for the subprocess.
+  int code;
 
   /// The ordering variable of this event.
   double ordering;
@@ -990,7 +995,7 @@ private:
   // Select the primary process.
   void select(Info & in) {
     primInfo = in;
-    primInfo.hiinfo = this;
+    primInfo.hiInfo = this;
   }
 
   // Accept an event and update statistics in info.

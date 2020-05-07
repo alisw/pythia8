@@ -1,5 +1,5 @@
 // Pythia8Rivet.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,8 +16,6 @@
 #include "Rivet/Rivet.hh"
 
 namespace Pythia8 {
-
-using namespace std;
 
 /**
  * Simplified interface to the Rivet program. Remember to link with
@@ -105,26 +103,27 @@ public:
   /**
    * Analyze the given event.
    */
-  void operator()(Event & event, int ievnum = -1, Pythia8::Info* pyinfo = 0,
+  void operator()(Event & event, int ievnum = -1,
+                  const Pythia8::Info* pyinfo = 0,
                   Pythia8::Settings* pyset = 0, bool append = false,
                   HepMC::GenParticle* rootParticle = 0, int iBarcode = -1) {
     HepMC::GenEvent geneve;
     converter.fill_next_event(event, &geneve, ievnum, pyinfo, pyset,
                               append, rootParticle, iBarcode);
-    if ( pyinfo && pyinfo->hiinfo ) {
+    if ( pyinfo && pyinfo->hiInfo ) {
       HepMC::HeavyIon ion;
-      ion.set_Ncoll_hard(pyinfo->hiinfo->nCollNDTot());
-      ion.set_Ncoll(pyinfo->hiinfo->nAbsProj() +
-                    pyinfo->hiinfo->nDiffProj() +
-                    pyinfo->hiinfo->nAbsTarg() +
-                    pyinfo->hiinfo->nDiffTarg() -
-                    pyinfo->hiinfo->nCollND() -
-                    pyinfo->hiinfo->nCollDD());
-      ion.set_Npart_proj(pyinfo->hiinfo->nAbsProj() +
-                         pyinfo->hiinfo->nDiffProj());
-      ion.set_Npart_targ(pyinfo->hiinfo->nAbsTarg() +
-                         pyinfo->hiinfo->nDiffTarg());
-      ion.set_impact_parameter(pyinfo->hiinfo->b());
+      ion.set_Ncoll_hard(pyinfo->hiInfo->nCollNDTot());
+      ion.set_Ncoll(pyinfo->hiInfo->nAbsProj() +
+                    pyinfo->hiInfo->nDiffProj() +
+                    pyinfo->hiInfo->nAbsTarg() +
+                    pyinfo->hiInfo->nDiffTarg() -
+                    pyinfo->hiInfo->nCollND() -
+                    pyinfo->hiInfo->nCollDD());
+      ion.set_Npart_proj(pyinfo->hiInfo->nAbsProj() +
+                         pyinfo->hiInfo->nDiffProj());
+      ion.set_Npart_targ(pyinfo->hiInfo->nAbsTarg() +
+                         pyinfo->hiInfo->nDiffTarg());
+      ion.set_impact_parameter(pyinfo->hiInfo->b());
       geneve.set_heavy_ion(ion);
     }
     if ( !rivet ) init(geneve);

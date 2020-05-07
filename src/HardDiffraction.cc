@@ -1,5 +1,5 @@
 // HardDiffraction.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -28,23 +28,15 @@ const double HardDiffraction::PROTONMASS  = 0.93827;
 const double HardDiffraction::DIFFMASSMARGIN = 0.2;
 //--------------------------------------------------------------------------
 
-void HardDiffraction::init(Info* infoPtrIn, Settings& settingsPtrIn,
-  Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
-  SigmaTotal* sigTotPtrIn) {
+void HardDiffraction::init(BeamParticle* beamAPtrIn,
+  BeamParticle* beamBPtrIn) {
 
-  // Store pointers.
-  infoPtr     = infoPtrIn;
-  settings    = settingsPtrIn;
-  rndmPtr     = rndmPtrIn;
+  // The beam pointers may differ from originally set in PhysicsBase.
   beamAPtr    = beamAPtrIn;
   beamBPtr    = beamBPtrIn;
-  beamPomAPtr = beamPomAPtrIn;
-  beamPomBPtr = beamPomBPtrIn;
-  sigTotPtr   = sigTotPtrIn;
 
   // Set diffraction parameters.
-  pomFlux     = settings.mode("SigmaDiffractive:PomFlux");
+  pomFlux     = mode("SigmaDiffractive:PomFlux");
 
   // Read out some properties of beams to allow shorthand.
   idA = (beamAPtr != 0) ? beamAPtr->id() : 0;
@@ -56,12 +48,12 @@ void HardDiffraction::init(Info* infoPtrIn, Settings& settingsPtrIn,
   isGammaGamma = (isGammaA && isGammaB);
 
   // Set up Pomeron flux constants.
-  rescale = settings.parm("Diffraction:PomFluxRescale");
-  a0      = 1. + settings.parm("SigmaDiffractive:PomFluxEpsilon");
-  ap      = settings.parm("SigmaDiffractive:PomFluxAlphaPrime");
+  rescale = parm("Diffraction:PomFluxRescale");
+  a0      = 1. + parm("SigmaDiffractive:PomFluxEpsilon");
+  ap      = parm("SigmaDiffractive:PomFluxAlphaPrime");
 
   if (pomFlux == 1) {
-    double sigmaRefPomP = settings.parm("Diffraction:sigmaRefPomP");
+    double sigmaRefPomP = parm("Diffraction:sigmaRefPomP");
     normPom = pow2(sigmaRefPomP) * 0.02;
     b0      = 2.3;
   } else if (pomFlux == 2) {
@@ -88,12 +80,12 @@ void HardDiffraction::init(Info* infoPtrIn, Settings& settingsPtrIn,
     a1      = 4.6;
     A2      = 0.1;
     a2      = 0.6;
-    a0      = 1. + settings.parm("SigmaDiffractive:MBRepsilon");
-    ap      = settings.parm("SigmaDiffractive:MBRalpha");
-    bool renormalize   = settings.flag("Diffraction:useMBRrenormalization");
+    a0      = 1. + parm("SigmaDiffractive:MBRepsilon");
+    ap      = parm("SigmaDiffractive:MBRalpha");
+    bool renormalize   = flag("Diffraction:useMBRrenormalization");
     double cflux       = 0.858;
-    double m2min       = settings.parm("SigmaDiffractive:MBRm2Min");
-    double dyminSDflux = settings.parm("SigmaDiffractive:MBRdyminSDflux");
+    double m2min       = parm("SigmaDiffractive:MBRm2Min");
+    double dyminSDflux = parm("SigmaDiffractive:MBRdyminSDflux");
     double dymaxSD     = log(infoPtr->eCM()*infoPtr->eCM() / m2min);
     double nGap        = 0.;
     if (renormalize){
@@ -132,10 +124,10 @@ void HardDiffraction::init(Info* infoPtrIn, Settings& settingsPtrIn,
   // Calculate rescaling factor for Pomeron flux in photons.
   sigTotRatio = 1.;
   if (isGammaA || isGammaB) {
-    sigTotPtr->calc(22, 2212, infoPtr->eCM());
-    double sigGamP = sigTotPtr->sigmaTot();
-    sigTotPtr->calc(2212, 2212, infoPtr->eCM());
-    double sigPP = sigTotPtr->sigmaTot();
+    sigmaTotPtr->calc(22, 2212, infoPtr->eCM());
+    double sigGamP = sigmaTotPtr->sigmaTot();
+    sigmaTotPtr->calc(2212, 2212, infoPtr->eCM());
+    double sigPP = sigmaTotPtr->sigmaTot();
     sigTotRatio = sigGamP / sigPP;
   }
 

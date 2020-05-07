@@ -1,5 +1,5 @@
 // History.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -8,6 +8,7 @@
 // Clustering and History classes.
 
 #include "Pythia8/History.h"
+#include "Pythia8/SharedPointers.h"
 
 namespace Pythia8 {
 
@@ -71,7 +72,7 @@ History::History( int depthIn,
          double scalein,
          Event statein,
          Clustering c,
-         MergingHooks* mergingHooksPtrIn,
+         MergingHooksPtr mergingHooksPtrIn,
          BeamParticle beamAIn,
          BeamParticle beamBIn,
          ParticleData* particleDataPtrIn,
@@ -110,8 +111,7 @@ History::History( int depthIn,
       coupSMPtr(coupSMPtrIn),
       probMaxSave(-1.),
       depth(depthIn),
-      minDepthSave(-1),
-      nMaxOrd(0)
+      minDepthSave(-1)
     {
 
   // Initialise beam particles
@@ -193,62 +193,32 @@ History::History( int depthIn,
     // Multiply with hard process matrix element.
     prob *= hardProcessME(state);
     if (registerPath( *this, isOrdered, isStronglyOrdered, isAllowed,
-      depth == 0 )) {
-      updateMinDepth(depth);
-      double nord = nOrdered (infoPtr->eCM());
-      if (nord>-1) updateNmaxOrdered(nord);
-    } else {
-      state.free();
-    }
+      depth == 0 )) updateMinDepth(depth);
     return;
   }
 
   // We'll now order the clusterings in such a way that an ordered
   // history is found more rapidly. Following the branches with small pT is
   // a good heuristic, as is following ISR clusterings.
-  double pMax = -1.;
-  map<int,multimap<double, Clustering *> > sort_ordered;
-  for (unsigned int i = 0; i < clusterings.size(); ++i) {
-    double t = clusterings[i].pT();
-    // Retain only clustering with highest probability.
-    if ( mergingHooksPtr->nMinJetWTA() > 0
-      && depth >= mergingHooksPtr->nMinJetWTA()) {
-      double p = getProb(clusterings[i]);
-      clusterings[i].prob = p;
-      clusterings[i].hasProbSet = true;
-      pMax = max(pMax,p);
-    }
-    int nord =  nOrdered(t);
-    if (nord >-1 && t>scale) nord++;
-    if (nord < 0) nord=0;
-    map<int,multimap<double, Clustering *> >::iterator it
-      = sort_ordered.find(nord);
-    if (it == sort_ordered.end()) {
-      sort_ordered[nord] = multimap<double, Clustering *>();
-      sort_ordered[nord].insert(make_pair(t, &clusterings[i]));
-    } else
-      sort_ordered[nord].insert(make_pair(t, &clusterings[i]));
-  }
-
-  for ( map<int,multimap<double, Clustering *> >::reverse_iterator
-    it0  = sort_ordered.rbegin();
-    it0 != sort_ordered.rend();
-    ++it0) {
-
-  // First go through potentially ordered clusterings.
-  for ( multimap<double, Clustering *>::iterator it = it0->second.begin();
-  it != it0->second.end(); ++it ) {
-
-  /*double pMax = -1.;
   multimap<double, Clustering *> sort;
   for (unsigned int i = 0; i < clusterings.size(); ++i) {
     double t = clusterings[i].pT();
     double index = t;
+    //// This might be a marginally faster ordering.
+    //double z = getCurrentZ(clusterings[i].emittor,
+    //             clusterings[i].recoiler,
+    //             clusterings[i].emitted,
+    //             clusterings[i].flavRadBef);
+    //double index = t/z;
+    //if (!state[clusterings[i].emittor].isFinal())
+    //  sort.insert(make_pair(-1./index, &clusterings[i]));
+    //else
+    //  sort.insert(make_pair(index, &clusterings[i]));
     sort.insert(make_pair(index, &clusterings[i]));
   }
 
   for ( multimap<double, Clustering *>::iterator it = sort.begin();
-  it != sort.end(); ++it ) {*/
+  it != sort.end(); ++it ) {
 
     double t = it->second->pT();
     // If this path is not strongly ordered and we already have found an
@@ -261,15 +231,6 @@ History::History( int depthIn,
       if ( onlyStronglyOrderedPaths()  ) continue;
       stronglyOrdered = false;
     }
-
-    int nord = nOrdered (t);
-    if (nord >-1 && nord + depth < nMaxOrdered()) continue;
-
-    // Retain only clustering with highest probability.
-    if ( mergingHooksPtr->nMinJetWTA() > 0
-      && depth >= mergingHooksPtr->nMinJetWTA()
-      && it->second->hasProbSet
-      && it->second->prob < pMax) continue;
 
     // Check if reclustering follows ordered sequence.
     bool ordered = isOrdered;
@@ -312,10 +273,9 @@ History::History( int depthIn,
     }
 
     // Skip if this branch is already strongly suppressed.
-    double p = it->second->hasProbSet
-             ? it->second->prob :  getProb(*it->second);
+    double p = getProb(*it->second);
     if (abs(p)*prob < 1e-10*probMax()) continue;
-    //if (abs(p)*prob < 0.0*probMax()) continue;
+    updateProbMax(abs(p)*prob,depth==0);
 
     // Perform the clustering and recurse and construct the next
     // history node.
@@ -324,10 +284,6 @@ History::History( int depthIn,
            infoPtr, showers, coupSMPtr, ordered, stronglyOrdered, allowed,
            true, prob*p, this ));
   }
-
-  }
-
-  clearPaths();
 
 }
 
@@ -459,7 +415,7 @@ double History::weightLOOP(PartonLevel* trial, double RN ) {
     infoPtr->errorMsg(message);
   }
 
-  /*// Select a path of clusterings
+  // Select a path of clusterings
   History *  selected = select(RN);
   // Set scales in the states to the scales pythia would have set
   selected->setScalesInHistory();
@@ -475,39 +431,7 @@ double History::weightLOOP(PartonLevel* trial, double RN ) {
                    maxScale );
   wt = mpiwt;
   // Done
-  return wt;*/
-
-  // Select a path of clusterings
-  History *  selected = select(RN);
-  // Set scales in the states to the scales pythia would have set
-  selected->setScalesInHistory();
-  // So far, no reweighting
-  //double wt = 1.;
-
-  // Read alpha_S in ME calculation and maximal scale (eCM)
-  double maxScale = (foundCompletePath)
-                  ? infoPtr->eCM()
-                  : mergingHooksPtr->muFinME();
-
-  // Only allow two clusterings if all intermediate states above the
-  // merging scale.
-  int nSteps = mergingHooksPtr->getNumberOfClusteringSteps(state);
-  if ( nSteps == 2 && mergingHooksPtr->nRecluster() == 2
-    && ( !foundCompletePath
-      || !selected->allIntermediateAboveRhoMS( mergingHooksPtr->tms() )) )
-    return 0.;
-
-  // MPI no-emission probability.
-  int njetsMaxMPI = mergingHooksPtr->nMinMPI()+1;
-  double mpiwt = selected->weightTreeEmissions( trial, -1, 0, njetsMaxMPI,
-                   maxScale );
-
-  // Do PDF ratios
-  double pdfWeight = 1.;
-
-  // Set weight
-  return ( mergingHooksPtr->nRecluster() == 2 ) ? 1. : pdfWeight*mpiwt;
-
+  return wt;
 }
 
 //--------------------------------------------------------------------------
@@ -547,7 +471,8 @@ double History::weightFIRST(PartonLevel* trial, AlphaStrong* asFSR,
           rndmPtr );
 
   // Get starting scale for trial showers.
-  double startingScale = (selected->mother) ? state.scale() : infoPtr->eCM();
+  double startingScale = (selected->mother) ? state.scale()
+    : infoPtr->eCM();
 
   // Count emissions: New variant
   // Generate true average, not only one-point
@@ -668,12 +593,12 @@ double History::weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
     aemWeight, pdfWeight);
   else {
     wt   = selected->weightTreeEmissions( trial, 1, 0, depthIn, maxScale );
-    if (wt != 0.) asWeight  = selected->weightTreeALPHAS( asME, asFSR, asISR,
-                             depthIn);
-    if (wt != 0.) aemWeight = selected->weightTreeALPHAEM( aemME, aemFSR,
-                             aemISR, depthIn);
-    if (wt != 0.) pdfWeight = selected->weightTreePDFs( maxScale,
-                             selected->clusterIn.pT(), depthIn);
+    if (wt != 0.) {
+      asWeight  = selected->weightTreeALPHAS( asME, asFSR, asISR, depthIn);
+      aemWeight = selected->weightTreeALPHAEM( aemME, aemFSR, aemISR, depthIn);
+      pdfWeight = selected->weightTreePDFs( maxScale,
+                                            selected->clusterIn.pT(), depthIn);
+    }
   }
 
   // MPI no-emission probability.
@@ -762,12 +687,12 @@ double History::weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
       aemWeight, pdfWeight);
   else {
     sudakov = selected->weightTreeEmissions( trial, 1, 0, depthIn, maxScale );
-    if (sudakov > 0.) asWeight  = selected->weightTreeALPHAS( asME, asFSR,
-                                  asISR, depthIn);
-    if (sudakov > 0.) aemWeight  = selected->weightTreeALPHAEM( aemME, aemFSR,
-                                  aemISR, depthIn);
-    if (sudakov > 0.) pdfWeight = selected->weightTreePDFs( maxScale,
-                                  selected->clusterIn.pT(), depthIn);
+    if (sudakov > 0.) {
+      asWeight  = selected->weightTreeALPHAS( asME, asFSR, asISR, depthIn);
+      aemWeight = selected->weightTreeALPHAEM( aemME, aemFSR, aemISR, depthIn);
+      pdfWeight = selected->weightTreePDFs( maxScale,
+                                            selected->clusterIn.pT(), depthIn);
+    }
   }
 
   // MPI no-emission probability.
@@ -857,25 +782,23 @@ double History::weight_UNLOPS_CORRECTION( int order, PartonLevel* trial,
 
   // Calculate sum of O(\alpha_s^1)-terms of the ckkw-l weight WITHOUT
   // the O(\alpha_s^1)-term of the last no-emission probability.
-  bool fixpdf = true;
-  bool fixas  = true;
   // Get first term in expansion of alpha_s ratios.
   double wA   = selected->weightFirstALPHAS( asME, muR, asFSR, asISR );
   // Add logarithm from \alpha_s expansion to weight.
-  wt         += (fixas) ? wA : 0.;
+  wt         += wA;
   // Generate true average, not only one-point.
   double nWeight = 0.;
   for ( int i=0; i < NTRIAL; ++i ) {
     // Get average number of emissions.
     double wE   = selected->weightFirstEmissions(trial,asME, maxScale,
-      asFSR, asISR, fixpdf, fixas );
+      asFSR, asISR, true, true );
     // Add average number of emissions off reconstructed states to weight.
     nWeight    += wE;
     // Get first term in expansion of PDF ratios.
     double pscale = selected->clusterIn.pT();
     double wP   = selected->weightFirstPDFs(asME, maxScale, pscale, rndmPtr);
     // Add integral of DGLAP shifted PDF ratios from \alpha_s expansion to wt.
-    nWeight    += (fixpdf) ? wP : 0.;
+    nWeight    += wP;
   }
   wt += nWeight/double(NTRIAL);
 
@@ -1002,7 +925,7 @@ void History::printStates() {
   }
 
   // Print.
-  double p = (mother) ? prob/mother->prob : prob;
+  double p = prob/mother->prob;
   cout << scientific << setprecision(6) << "Probability=" << p
        << " scale=" << clusterIn.pT() << endl;
   state.list();
@@ -1049,7 +972,7 @@ bool History::getFirstClusteredEventAboveTMS( const double RN, int nDesired,
   select(RN)->setScalesInHistory();
 
   // Recluster until reclustered event is above the merging scale.
-  Event dummy(15);
+  Event dummy = Event();
   do {
     // Initialise temporary output of reclustering.
     dummy.clear();
@@ -1113,20 +1036,13 @@ double History::getPDFratio( int side, bool forSudakov, bool useHardPDFs,
         pdfNum = mother->beamA.xfHard( flavNum, xNum, muNum*muNum);
       else
         pdfNum = beamA.xfHard( flavNum, xNum, muNum*muNum);
-      if (forSudakov)
-        pdfDen = max(1e-10, beamA.xfHard( flavDen, xDen, muDen*muDen));
-      else
-        pdfDen = max(1e-10, beamA.xfHard( flavDen, xDen, muDen*muDen));
+      pdfDen = max(1e-10, beamA.xfHard( flavDen, xDen, muDen*muDen));
     } else {
       if (forSudakov)
         pdfNum = mother->beamB.xfHard( flavNum, xNum, muNum*muNum);
       else
         pdfNum = beamB.xfHard( flavNum, xNum, muNum*muNum);
-
-      if (forSudakov)
-        pdfDen = max(1e-10,beamB.xfHard( flavDen, xDen, muDen*muDen));
-      else
-        pdfDen = max(1e-10,beamB.xfHard( flavDen, xDen, muDen*muDen));
+      pdfDen = max(1e-10,beamB.xfHard( flavDen, xDen, muDen*muDen));
     }
 
   // Use rescaled PDFs in the presence of multiparton interactions
@@ -1136,21 +1052,14 @@ double History::getPDFratio( int side, bool forSudakov, bool useHardPDFs,
         pdfNum = mother->beamA.xfISR(0, flavNum, xNum, muNum*muNum);
       else
         pdfNum = beamA.xfISR(0, flavNum, xNum, muNum*muNum);
-      if (forSudakov)
-        pdfDen = max(1e-10, beamA.xfISR(0, flavDen, xDen, muDen*muDen));
-      else
-        pdfDen = max(1e-10, beamA.xfISR(0, flavDen, xDen, muDen*muDen));
+      pdfDen = max(1e-10, beamA.xfISR(0, flavDen, xDen, muDen*muDen));
 
     } else {
       if (forSudakov)
         pdfNum = mother->beamB.xfISR(0, flavNum, xNum, muNum*muNum);
       else
         pdfNum = beamB.xfISR(0, flavNum, xNum, muNum*muNum);
-
-      if (forSudakov)
-        pdfDen = max(1e-10,beamB.xfISR(0, flavDen, xDen, muDen*muDen));
-      else
-        pdfDen = max(1e-10,beamB.xfISR(0, flavDen, xDen, muDen*muDen));
+      pdfDen = max(1e-10,beamB.xfISR(0, flavDen, xDen, muDen*muDen));
     }
   }
 
@@ -2095,27 +2004,6 @@ int History::nClusterings() {
   return w;
 }
 
-int History::nOrdered( double maxscale ) {
-  //return -1;
-  vector<double> s = scales();
-  if (s.empty()) return 0;
-  s.push_back(maxscale);
-  int no(0), nomax(0);
-  for (size_t i=0; i < s.size()-1; ++i) {
-    if (s[i]<s[i+1]) no++;
-    if (s[i]>s[i+1]) no=0;
-    nomax = max(no,nomax);
-  }
-  return nomax;
-}
-
-vector<double> History::scales() {
-  if ( !mother ) return vector<double>();
-  vector<double> ret = mother->scales();
-  ret.push_back(clusterIn.pT());
-  return ret;
-}
-
 //--------------------------------------------------------------------------
 
 // Functions to return the event after nSteps splittings of the 2->2 process
@@ -2200,10 +2088,6 @@ bool History::trimHistories() {
     it != paths.end(); ++it ) {
     // Check if history is allowed.
     if ( it->second->keep() && !it->second->keepHistory() )
-      it->second->remove();
-    int nord = it->second->nOrdered(infoPtr->eCM());
-    if ( it->second->keep() && nord >-1
-      && nord != nMaxOrdered())
       it->second->remove();
   }
   // Project onto desired / undesired branches.
@@ -2313,7 +2197,7 @@ bool History::allIntermediateAboveRhoMS( double rhoms, bool good ) {
   // Assume state from ME generator passes merging scale cut.
   if ( !mother ) return good;
   // Recurse.
-  return good && mother->allIntermediateAboveRhoMS( rhoms, (rhoNew > rhoms) );
+  return mother->allIntermediateAboveRhoMS( rhoms, (rhoNew > rhoms) );
 }
 
 //--------------------------------------------------------------------------
@@ -3131,15 +3015,14 @@ double History::doTrialShower( PartonLevel* trial, int type,
   // Set output.
   bool doVeto          = false;
   double wt            = 1.;
-  bool canEnhanceTrial = (trial->userHooksPtr!=0)
-         && trial->userHooksPtr->canEnhanceTrial();
+  bool canEnhanceTrial = trial->canEnhanceTrial();
 
   while ( true ) {
 
     // Reset trialShower object
     trial->resetTrial();
     // Construct event to be showered
-    Event event(15);
+    Event event = Event();
     event.init("(hard process-modified)", particleDataPtr);
     event.clear();
 
@@ -3182,10 +3065,8 @@ double History::doTrialShower( PartonLevel* trial, int type,
     trial->resetTrial();
 
     // Get enhanced trial emission weight.
-    double pTEnhanced = (canEnhanceTrial)
-                      ? trial->userHooksPtr->getEnhancedTrialPT() : 0.;
-    double wtEnhanced = (canEnhanceTrial)
-                      ? trial->userHooksPtr->getEnhancedTrialWeight() : 1.;
+    double pTEnhanced = trial->getEnhancedTrialPT();
+    double wtEnhanced = trial->getEnhancedTrialWeight();
     if ( canEnhanceTrial && pTEnhanced > 0.) pTtrial = pTEnhanced;
 
     // Get veto (merging) scale value
@@ -3310,14 +3191,13 @@ History::countEmissions(PartonLevel* trial, double maxscale,
       startingScale = min( startingScale, hardFacScale(process) );
 
   vector<double> wts;
-  bool canEnhanceTrial = (trial->userHooksPtr!=0)
-         && trial->userHooksPtr->canEnhanceTrial();
+  bool canEnhanceTrial = trial->canEnhanceTrial();
 
   while ( true ) {
     // Reset trialShower object
     trial->resetTrial();
     // Construct event to be showered
-    Event event(15);
+    Event event = Event();
     event.init("(hard process-modified)", particleDataPtr);
     event.clear();
 
@@ -3357,10 +3237,8 @@ History::countEmissions(PartonLevel* trial, double maxscale,
     trial->resetTrial();
 
     // Get enhanced trial emission weight.
-    double pTEnhanced = (canEnhanceTrial)
-                      ? trial->userHooksPtr->getEnhancedTrialPT() : 0.;
-    double wtEnhanced = (canEnhanceTrial)
-                      ? trial->userHooksPtr->getEnhancedTrialWeight() : 1.;
+    double pTEnhanced = trial->getEnhancedTrialPT();
+    double wtEnhanced = trial->getEnhancedTrialWeight();
     if ( canEnhanceTrial && pTEnhanced > 0.) pTtrial = pTEnhanced;
 
     // Get veto (merging) scale value
@@ -3556,7 +3434,6 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundAllowedPath || !foundCompletePath ) {
       // If this is the first complete, allowed path, discard the
       // old, disallowed or incomplete ones.
-      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3569,7 +3446,6 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundStronglyOrderedPath || !foundCompletePath ) {
       // If this is the first complete, ordered path, discard the
       // old, non-ordered or incomplete ones.
-      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3582,7 +3458,6 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundOrderedPath || !foundCompletePath ) {
       // If this is the first complete, ordered path, discard the
       // old, non-ordered or incomplete ones.
-      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3595,7 +3470,6 @@ bool History::registerPath(History & l, bool isOrdered,
     if ( !foundCompletePath ) {
       // If this is the first complete path, discard the old,
       // incomplete ones.
-      map<double,History *>().swap(paths);
       paths.clear();
       sumpath = 0.0;
     }
@@ -3611,18 +3485,6 @@ bool History::registerPath(History & l, bool isOrdered,
   double weakProb = 1.;
   if (mergingHooksPtr->doWeakClustering())
     weakProb = l.getWeakProb();
-
-  int nord = l.nOrdered (infoPtr->eCM());
-  if (nord>-1 && nord < l.nMaxOrdered()) return false;
-  if (nord>-1 && nord > l.nMaxOrdered() && l.nMaxOrdered() > 0) {
-    for ( map<double, History*>::iterator it = paths.begin();
-      it != paths.end(); ++it ) it->second->state.free();
-    map<double,History *>().swap(paths);
-    paths.clear();
-    sumpath = 0.0;
-  }
-  l.updateMinDepth(l.depth);
-  l.updateNmaxOrdered(nord);
 
   // Index path by probability
   sumpath += l.prob * weakProb;
@@ -3684,9 +3546,8 @@ vector<Clustering> History::getAllQCDClusterings() {
   // clusterings of diagrams that interfere with the current one
   // (i.e. change the colours of the current event slightly and run
   //  search again)
-  else if ( ret.empty()
-        && mergingHooksPtr->allowColourShuffling() ) {
-    Event NewState(state);
+  else if ( mergingHooksPtr->allowColourShuffling() ) {
+    Event NewState = Event(state);
     // Start with changing final state quark colour
     for(int i = 0; i < int(posFinalQuark.size()); ++i) {
       // Never change the hard process candidates
@@ -3732,12 +3593,6 @@ vector<Clustering> History::getAllQCDClusterings() {
           return ret;
         }
       }
-    }
-
-    if ( !ret.empty() ) {
-      string message="Warning in History::getAllQCDClusterings: Changed";
-      message+=" colour structure to allow at least one clustering.";
-      infoPtr->errorMsg(message);
     }
 
   }
@@ -5974,7 +5829,7 @@ Event History::cluster( Clustering & inSystem ) {
   int recType = state[Rec].isFinal() ? 1 : -1;
 
   // Construct the clustered event
-  Event NewEvent(15);
+  Event NewEvent = Event();
   NewEvent.init("(hard process-modified)", particleDataPtr);
   NewEvent.clear();
 
@@ -6308,7 +6163,7 @@ Event History::cluster( Clustering & inSystem ) {
   }
 
   // Build the clustered event
-  Event outState(15);
+  Event outState = Event();
   outState.init("(hard process-modified)", particleDataPtr);
   outState.clear();
 
@@ -6588,7 +6443,7 @@ int History::getRadBeforeFlav(const int RadAfter, const int EmtAfter,
     return -emtID;
   // Initial state t-channel gluon splitting
   if ( type ==-1 && !colConnected
-    && emtID != 21 && radID != 21 && abs(emtID) < 10 && abs(radID) < 10)
+    && radID != 21 && abs(emtID) < 10 && abs(radID) < 10)
     return 21;
 
   // SQCD splittings
@@ -7031,7 +6886,7 @@ int History::getRadBeforeCol(const int rad, const int emt,
     }
 
   // Get reconstructed quark colours
-  } else if ( radBeforeFlav != 21 && radBeforeFlav > 0) {
+  } else if (radBeforeFlav > 0) {
 
     // Quark emission in FSR
     if (type == 1 && event[emt].id() != 21) {
@@ -7124,7 +6979,7 @@ int History::getRadBeforeAcol(const int rad, const int emt,
     }
 
   // Get reconstructed anti-quark colours
-  } else if ( radBeforeFlav != 21 && radBeforeFlav < 0) {
+  } else if (radBeforeFlav < 0) {
 
     // Antiquark emission in FSR
     if (type == 1 && event[emt].id() != 21) {
@@ -7395,8 +7250,7 @@ bool History::isColSinglet( const Event& event,
        || event[system[i]].colType() == 2) ) {
       for(int j=0; j < int(system.size()); ++j)
         // If flavour matches, remove both partons and continue
-        if ( system[i] > 0
-          && system[j] > 0
+        if ( system[j] > 0
           && event[system[i]].col() == event[system[j]].acol()) {
           // Remove index and break
           system[i] = 0;
@@ -7410,8 +7264,7 @@ bool History::isColSinglet( const Event& event,
        || event[system[i]].colType() == 2) ) {
       for(int j=0; j < int(system.size()); ++j)
         // If flavour matches, remove both partons and continue
-        if ( system[i] > 0
-          && system[j] > 0
+        if ( system[j] > 0
           && event[system[i]].acol() == event[system[j]].col()) {
           // Remove index and break
           system[i] = 0;
@@ -7460,7 +7313,6 @@ bool History::isFlavSinglet( const Event& event,
           && event[i].idAbs() != 22
           && event[i].idAbs() != 23
           && event[i].idAbs() != 24
-          && system[i] > 0
           && system[j] > 0
           && event[system[i]].isFinal()
           && event[system[j]].isFinal()
@@ -7481,10 +7333,8 @@ bool History::isFlavSinglet( const Event& event,
           && event[i].idAbs() != 22
           && event[i].idAbs() != 23
           && event[i].idAbs() != 24
-          && system[i] > 0
           && system[j] > 0
-          && ( ( !event[system[i]].isFinal() && event[system[j]].isFinal())
-             ||( !event[system[j]].isFinal() && event[system[i]].isFinal()) )
+          && event[system[i]].isFinal() != event[system[j]].isFinal()
           && event[system[i]].id() == event[system[j]].id()) {
           // If we want to check if only one flavour of quarks
           // exists
@@ -7571,7 +7421,6 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
       &&(  event[i].id() == 22
         || event[i].id() == 23
         || event[i].id() == 24
-        ||(event[i].idAbs() > 10 && event[i].idAbs() < 20)
         ||(event[i].idAbs() > 10 && event[i].idAbs() < 20)
         ||(event[i].idAbs() > 1000010 && event[i].idAbs() < 1000020)
         ||(event[i].idAbs() > 2000010 && event[i].idAbs() < 2000020) ))
@@ -7737,13 +7586,13 @@ bool History::allowedClustering( int rad, int emt, int rec, int partner,
   vector<int> outgoingParticles;
   int nOut1 = int(mergingHooksPtr->hardProcess->PosOutgoing1.size());
   for ( int i=0; i < nOut1;  ++i ) {
-    int iPos = mergingHooksPtr->hardProcess->PosOutgoing1[i].second;
+    int iPos = mergingHooksPtr->hardProcess->PosOutgoing1[i];
     outgoingParticles.push_back(
                       mergingHooksPtr->hardProcess->state[iPos].id() );
   }
   int nOut2 = int(mergingHooksPtr->hardProcess->PosOutgoing2.size());
   for ( int i=0; i < nOut2; ++i ) {
-    int iPos = mergingHooksPtr->hardProcess->PosOutgoing2[i].second;
+    int iPos = mergingHooksPtr->hardProcess->PosOutgoing2[i];
     outgoingParticles.push_back(
                       mergingHooksPtr->hardProcess->state[iPos].id() );
   }

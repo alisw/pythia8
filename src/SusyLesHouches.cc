@@ -1,5 +1,5 @@
 // SusyLesHouches.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -28,8 +28,8 @@ int SusyLesHouches::readFile(string slhaFileIn, int verboseIn,
   // Exit if input file not found. Else print file name.
   if (!file.good()) {
     message(2,"readFile",slhaFile+" not found",0);
+    slhaRead = false;
     return -1;
-    slhaRead=false;
   }
   if (verboseSav >= 3) {
     message(0,"readFile","parsing "+slhaFile,0);
@@ -644,7 +644,7 @@ int SusyLesHouches::readFile(istream& is, int verboseIn,
 
 void SusyLesHouches::listHeader() {
   if (verboseSav == 0) return;
-  setprecision(3);
+  cout << setprecision(3);
   if (! headerPrinted) {
     cout << " *-----------------------  SusyLesHouches SUSY/BSM"
          << " Interface  ------------------------*\n";
@@ -1276,6 +1276,11 @@ void SusyLesHouches::listSpectrum(int ifail) {
 //--------------------------------------------------------------------------
 
 // Check consistency of spectrum, unitarity of matrices, etc.
+// Return codes:
+// 2  : no SUSY spectrum, and no MASS block either.
+// 1  : no SUSY spectrum; but there is a MASS block.
+// 0  : there is a SUSY spectrum and it looks ok.
+// -1 : there is a SUSY spectrum but it does not look ok.
 
 int SusyLesHouches::checkSpectrum() {
 
@@ -1291,7 +1296,6 @@ int SusyLesHouches::checkSpectrum() {
   if (!modsel.exists(1)) {
     message(1,"checkSpectrum","MODSEL(1) undefined. Assuming = 0",0);
     modsel.set(1,0);
-    ifail=0;
   }
   if (!modsel.exists(3)) modsel.set(3,0);
   if (!modsel.exists(4)) modsel.set(4,0);
@@ -1517,25 +1521,22 @@ int SusyLesHouches::checkSpectrum() {
         message(1,"checkSpectrum","quark FLV on but VCKMIN not found",0);
         ifail=-1;
       }
+      // The following checks are not considered crucial since the entries
+      // *may* not be needed to compute required derived couplings.
       if (!msq2in.exists()) {
         message(0,"checkSpectrum","note: quark FLV on but MSQ2IN not found",0);
-        ifail=min(ifail,0);
       }
       if (!msu2in.exists()) {
         message(0,"checkSpectrum","note: quark FLV on but MSU2IN not found",0);
-        ifail=min(ifail,0);
       }
       if (!msd2in.exists()) {
         message(0,"checkSpectrum","note: quark FLV on but MSD2IN not found",0);
-        ifail=min(ifail,0);
       }
       if (!tuin.exists()) {
         message(0,"checkSpectrum","note: quark FLV on but TUIN not found",0);
-        ifail=min(ifail,0);
       }
       if (!tdin.exists()) {
         message(0,"checkSpectrum","note: quark FLV on but TDIN not found",0);
-        ifail=min(ifail,0);
       }
     }
     // Lepton FLV
@@ -1543,17 +1544,14 @@ int SusyLesHouches::checkSpectrum() {
       if (!msl2in.exists()) {
         message(0,"checkSpectrum",
                   "note: lepton FLV on but MSL2IN not found",0);
-        ifail=min(ifail,0);
       }
       if (!mse2in.exists()) {
         message(0,"checkSpectrum",
                   "note: lepton FLV on but MSE2IN not found",0);
-        ifail=min(ifail,0);
       }
       if (!tein.exists()) {
         message(0,"checkSpectrum",
                   "note: lepton FLV on but TEIN not found",0);
-        ifail=min(ifail,0);
       }
     }
   }
@@ -1643,7 +1641,7 @@ int SusyLesHouches::checkSpectrum() {
         }
       }
       if (abs(1.0-cn1) > 1e-3 || abs(1.0-cn2) > 1e-3) {
-        ifail=2;
+        ifail=-1;
         message(2,"checkSpectrum","NMIX is not unitary (wrong format?)",0);
         break;
       }
@@ -1677,7 +1675,7 @@ int SusyLesHouches::checkSpectrum() {
         cu1 += pow(umix(1,1),2);
         cu2 += pow(umix(1,1),2);
         if (abs(1.0-cu1) > 1e-3 || abs(1.0-cu2) > 1e-3) {
-          ifail=max(1,ifail);
+          ifail=-1;
           message(2,"checkSpectrum","UMIX is not unitary (wrong format?)",0);
           break;
         } else {
@@ -1690,7 +1688,7 @@ int SusyLesHouches::checkSpectrum() {
         cv1 += pow(vmix(1,1),2);
         cv2 += pow(vmix(1,1),2);
         if (abs(1.0-cv1) > 1e-3 || abs(1.0-cv2) > 1e-3) {
-          ifail=max(1,ifail);
+          ifail=-1;
           message(2,"checkSpectrum","VMIX is not unitary (wrong format?)",0);
           break;
         } else {
@@ -1843,6 +1841,7 @@ int SusyLesHouches::checkSpectrum() {
         if (abs(1.0-cn1) > 1e-3) {
           ifail=-1;
           message(2,"checkSpectrum","NMAMIX is not unitary (wrong format?)",0);
+          break;
         }
       }
     }
@@ -1862,6 +1861,7 @@ int SusyLesHouches::checkSpectrum() {
         if (abs(1.0-cn1) > 1e-3 || abs(1.0-cn2) > 1e-3) {
           ifail=-1;
           message(2,"checkSpectrum","NMHMIX is not unitary (wrong format?)",0);
+          break;
         }
       }
     }
@@ -1888,6 +1888,8 @@ int SusyLesHouches::checkSpectrum() {
   //Give status
   if (ifail >= 2)
     message(0,"checkSpectrum","one or more serious problems were found");
+  else if (ifail == -1)
+    message(0,"checkSpectrum","one or more inconsistencies in SUSY setup");
 
   //Print Footer
   listFooter();

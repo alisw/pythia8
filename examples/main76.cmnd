@@ -43,7 +43,11 @@ DM:qqbar2DY = on  ! Drell-Yan production of
 DM:DYtype = 1     ! 1: scalar; 2: singly charged partner
                   ! 3: doubly charged partner; 4: neutral + charged partner
 
-! 6) Settings for the event generation process in the Pythia8 library.
+! 6) Lifetimes
+56:tauCalc = false ! turn off automatic lifetime calculation
+56:tau0 = 100      ! specify the lifetime to use
+
+! 7) Settings for the event generation process in the Pythia8 library.
 PartonLevel:MPI = off              ! no multiparton interactions
 PartonLevel:ISR = off              ! no initial-state radiation
 PartonLevel:FSR = off              ! no final-state radiation

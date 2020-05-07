@@ -221,67 +221,79 @@ ended with a newline.
    
  
 <a name="anchor33"></a>
-<p/><strong> friend double m(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
+<p/><strong> friend bool isnan(const Vec4& v) &nbsp;</strong> <br/>
    
 <a name="anchor34"></a>
+<strong> friend double isinf(const Vec4& v) &nbsp;</strong> <br/>
+returns true if any of the four elements is not a number or infinite. 
+   
+<a name="anchor35"></a>
+<strong> friend bool isnan(const Vec4& v) &nbsp;</strong> <br/>
+returns true if all four elements are finite.
+   
+ 
+<a name="anchor36"></a>
+<p/><strong> friend double m(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
+   
+<a name="anchor37"></a>
 <strong> friend double m2(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 the (squared) invariant mass. 
    
  
-<a name="anchor35"></a>
+<a name="anchor38"></a>
 <p/><strong> friend double dot3(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 the three-product. 
    
  
-<a name="anchor36"></a>
+<a name="anchor39"></a>
 <p/><strong> friend double cross3(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 the cross-product. 
    
  
-<a name="anchor37"></a>
+<a name="anchor40"></a>
 <p/><strong> friend double cross4(const Vec4& v1, const Vec4& v2, const Vec4& v3) &nbsp;</strong> <br/>
 the cross-product of three four-vectors: 
 <i>v_i = epsilon_{iabc} v1_a v2_b v3_c</i>. 
    
  
-<a name="anchor38"></a>
+<a name="anchor41"></a>
 <p/><strong> friend double theta(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
    
-<a name="anchor39"></a>
+<a name="anchor42"></a>
 <strong> friend double costheta(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 the (cosine) of the opening angle between the vectors, 
 in the range 0 through <i>pi</i>. 
    
  
-<a name="anchor40"></a>
+<a name="anchor43"></a>
 <p/><strong> friend double phi(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
    
-<a name="anchor41"></a>
+<a name="anchor44"></a>
 <strong> friend double cosphi(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 the (cosine) of the azimuthal angle between the vectors around the 
 <i>z</i> axis, in the range 0 through <i>pi</i>. 
    
  
-<a name="anchor42"></a>
+<a name="anchor45"></a>
 <p/><strong> friend double phi(const Vec4& v1, const Vec4& v2, const Vec4& v3) &nbsp;</strong> <br/>
    
-<a name="anchor43"></a>
+<a name="anchor46"></a>
 <strong> friend double cosphi(const Vec4& v1, const Vec4& v2, const Vec4& v3) &nbsp;</strong> <br/>
 the (cosine) of the azimuthal angle between the first two vectors 
 around the direction of the third, in the range 0 through <i>pi</i>. 
    
  
-<a name="anchor44"></a>
+<a name="anchor47"></a>
 <p/><strong> friend double RRapPhi(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
    
-<a name="anchor45"></a>
+<a name="anchor48"></a>
 <strong> friend double REtaPhi(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 the <i>R</i> distance measure, in <i>(y, phi)</i> or 
 <i>(eta, phi)</i> cylindrical coordinates, i.e. 
 <i>R^2 = (y_1 - y_2)^2 + (phi_1 - phi_2)^2</i> and equivalent. 
    
  
-<a name="anchor46"></a>
+<a name="anchor49"></a>
 <p/><strong> friend bool pShift( Vec4& p1Move, Vec4& p2Move, double m1New, double m2New) &nbsp;</strong> <br/>
 transfer four-momentum between the two four-vectors so that they get 
 the masses <code>m1New</code> and <code>m2New</code>, respectively. 
@@ -291,7 +303,7 @@ mass of the four-vectors is too small to accommodate the new masses,
 and then the four-vectors are not changed. 
    
  
-<a name="anchor47"></a>
+<a name="anchor50"></a>
 <p/><strong> friend pair&lt;Vec4,Vec4&gt; getTwoPerpendicular(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 create a pair of four-vectors that are perpendicular to both input vectors 
 and to each other, and have the squared norm <i>-1</i>. 
@@ -303,56 +315,56 @@ and to each other, and have the squared norm <i>-1</i>.
 Of course one should be able to add, subtract and scale four-vectors, 
 and more: 
  
-<a name="anchor48"></a>
+<a name="anchor51"></a>
 <p/><strong> Vec4 Vec4::operator-() &nbsp;</strong> <br/>
 return a vector with flipped sign for all components, while leaving 
 the original vector unchanged. 
    
  
-<a name="anchor49"></a>
+<a name="anchor52"></a>
 <p/><strong> Vec4& Vec4::operator+=(const Vec4& v) &nbsp;</strong> <br/>
 add a four-vector to an existing one. 
    
  
-<a name="anchor50"></a>
+<a name="anchor53"></a>
 <p/><strong> Vec4& Vec4::operator-=(const Vec4& v) &nbsp;</strong> <br/>
 subtract a four-vector from an existing one. 
    
  
-<a name="anchor51"></a>
+<a name="anchor54"></a>
 <p/><strong> Vec4& Vec4::operator*=(double f) &nbsp;</strong> <br/>
 multiply all four-vector components by a real number. 
    
  
-<a name="anchor52"></a>
+<a name="anchor55"></a>
 <p/><strong> Vec4& Vec4::operator/=(double f) &nbsp;</strong> <br/>
 divide all four-vector components by a real number. 
    
  
-<a name="anchor53"></a>
+<a name="anchor56"></a>
 <p/><strong> friend Vec4 operator+(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 add two four-vectors. 
    
  
-<a name="anchor54"></a>
+<a name="anchor57"></a>
 <p/><strong> friend Vec4 operator-(const Vec4& v1, const Vec4& v2) &nbsp;</strong> <br/>
 subtract two four-vectors. 
    
  
-<a name="anchor55"></a>
+<a name="anchor58"></a>
 <p/><strong> friend Vec4 operator*(double f, const Vec4& v) &nbsp;</strong> <br/>
    
-<a name="anchor56"></a>
+<a name="anchor59"></a>
 <strong> friend Vec4 operator*(const Vec4& v, double f) &nbsp;</strong> <br/>
 multiply a four-vector by a real number. 
    
  
-<a name="anchor57"></a>
+<a name="anchor60"></a>
 <p/><strong> friend Vec4 operator/(const Vec4& v, double f) &nbsp;</strong> <br/>
 divide a four-vector by a real number. 
    
  
-<a name="anchor58"></a>
+<a name="anchor61"></a>
 <p/><strong> friend double operator*(const Vec4& v1, const Vec4 v2) &nbsp;</strong> <br/>
 four-vector product. 
    
@@ -360,24 +372,24 @@ four-vector product.
 <p/> 
 There are also a few related operations that are normal member methods: 
  
-<a name="anchor59"></a>
+<a name="anchor62"></a>
 <p/><strong> void Vec4::rescale3(double f) &nbsp;</strong> <br/>
 multiply the three-vector components by <i>f</i>, but keep the 
 fourth component unchanged. 
    
  
-<a name="anchor60"></a>
+<a name="anchor63"></a>
 <p/><strong> void Vec4::rescale4(double f) &nbsp;</strong> <br/>
 multiply all four-vector components by <i>f</i>. 
    
  
-<a name="anchor61"></a>
+<a name="anchor64"></a>
 <p/><strong> void Vec4::flip3() &nbsp;</strong> <br/>
 flip the sign of the three-vector components, but keep the 
 fourth component unchanged. 
    
  
-<a name="anchor62"></a>
+<a name="anchor65"></a>
 <p/><strong> void Vec4::flip4() &nbsp;</strong> <br/>
 flip the sign of all four-vector components. 
    
@@ -390,62 +402,62 @@ four-vector is affected the operation may be performed directly on it.
 However, in case many particles are affected, the helper class 
 <code>RotBstMatrix</code> can be used to speed up operations. 
  
-<a name="anchor63"></a>
+<a name="anchor66"></a>
 <p/><strong> void Vec4::rot(double theta, double phi) &nbsp;</strong> <br/>
 rotate the three-momentum with the polar angle <i>theta</i> 
 and the azimuthal angle <i>phi</i>. 
    
  
-<a name="anchor64"></a>
+<a name="anchor67"></a>
 <p/><strong> void Vec4::rotaxis(double phi, double nx, double ny, double nz) &nbsp;</strong> <br/>
 rotate the three-momentum with the azimuthal angle <i>phi</i> 
 around the direction defined by the <i>(n_x, n_y, n_z)</i> 
 three-vector. 
    
  
-<a name="anchor65"></a>
+<a name="anchor68"></a>
 <p/><strong> void Vec4::rotaxis(double phi, Vec4& n) &nbsp;</strong> <br/>
 rotate the three-momentum with the azimuthal angle <i>phi</i> 
 around the direction defined by the three-vector part of <i>n</i>. 
    
  
-<a name="anchor66"></a>
+<a name="anchor69"></a>
 <p/><strong> void Vec4::bst(double betaX, double betaY, double betaZ) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (beta_x, beta_y, beta_z)</i>. 
    
  
-<a name="anchor67"></a>
+<a name="anchor70"></a>
 <p/><strong> void Vec4::bst(double betaX, double betaY, double betaZ, double gamma) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (beta_x, beta_y, beta_z)</i>, 
 where the <i>gamma = 1/sqrt(1 - beta^2)</i> is also input to allow 
 better precision when <i>beta</i> is close to unity. 
    
  
-<a name="anchor68"></a>
+<a name="anchor71"></a>
 <p/><strong> void Vec4::bst(const Vec4& p) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (p_x/E, p_y/E, p_z/E)</i>. 
    
  
-<a name="anchor69"></a>
+<a name="anchor72"></a>
 <p/><strong> void Vec4::bst(const Vec4& p, double m) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (p_x/E, p_y/E, p_z/E)</i>, 
 where the <i>gamma = E/m</i> is also calculated from input to allow 
 better precision when <i>beta</i> is close to unity. 
    
  
-<a name="anchor70"></a>
+<a name="anchor73"></a>
 <p/><strong> void Vec4::bstback(const Vec4& p) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (-p_x/E, -p_y/E, -p_z/E)</i>. 
    
  
-<a name="anchor71"></a>
+<a name="anchor74"></a>
 <p/><strong> void Vec4::bstback(const Vec4& p, double m) &nbsp;</strong> <br/>
 boost the four-momentum by <i>beta = (-p_x/E, -p_y/E, -p_z/E)</i>, 
 where the <i>gamma = E/m</i> is also calculated from input to allow 
 better precision when <i>beta</i> is close to unity. 
    
  
-<a name="anchor72"></a>
+<a name="anchor75"></a>
 <p/><strong> void Vec4::rotbst(const RotBstMatrix& M) &nbsp;</strong> <br/>
 perform a combined rotation and boost; see below for a description 
 of the <code>RotBstMatrix</code>. 
@@ -454,7 +466,7 @@ of the <code>RotBstMatrix</code>.
 <p/> 
 For a longer sequence of rotations and boosts, and where several 
 <code>Vec4</code> are to be rotated and boosted in the same way, 
-a  efficient approach is to define a <code>RotBstMatrix</code>, 
+a more efficient approach is to define a <code>RotBstMatrix</code>, 
 which forms a separate auxiliary class. You can build up this 
 4-by-4 matrix by successive calls to the methods of the class, 
 such that the matrix encodes the full sequence of operations. 
@@ -468,105 +480,105 @@ on the four-vector <i>p</i> are carried out in the order first
 <i>M_1, M_2, M_3</i> is also the order in which you should input 
 rotations and boosts to <i>M</i>.) 
  
-<a name="anchor73"></a>
+<a name="anchor76"></a>
 <p/><strong> RotBstMatrix::RotBstMatrix() &nbsp;</strong> <br/>
 creates a diagonal unit matrix, i.e. one that leaves a four-vector 
 unchanged. 
    
  
-<a name="anchor74"></a>
+<a name="anchor77"></a>
 <p/><strong> RotBstMatrix::RotBstMatrix(const RotBstMatrix& Min) &nbsp;</strong> <br/>
 creates a copy of the input matrix. 
    
  
-<a name="anchor75"></a>
+<a name="anchor78"></a>
 <p/><strong> RotBstMatrix& RotBstMatrix::operator=(const RotBstMatrix4& Min) &nbsp;</strong> <br/>
 copies the input matrix. 
    
  
-<a name="anchor76"></a>
+<a name="anchor79"></a>
 <p/><strong> void RotBstMatrix::rot(double theta = 0., double phi = 0.) &nbsp;</strong> <br/>
 rotate by this polar and azimuthal angle. 
    
  
-<a name="anchor77"></a>
+<a name="anchor80"></a>
 <p/><strong> void RotBstMatrix::rot(const Vec4& p) &nbsp;</strong> <br/>
 rotate so that a vector originally along the <i>+z</i> axis becomes 
 parallel with <i>p</i>. More specifically, rotate by <i>-phi</i>, 
 <i>theta</i> and <i>phi</i>, with angles defined by <i>p</i>. 
    
  
-<a name="anchor78"></a>
+<a name="anchor81"></a>
 <p/><strong> void RotBstMatrix::bst(double betaX = 0., double betaY = 0., double betaZ = 0.) &nbsp;</strong> <br/>
 boost by this <i>beta</i> vector. 
    
  
-<a name="anchor79"></a>
+<a name="anchor82"></a>
 <p/><strong> void RotBstMatrix::bst(const Vec4&) &nbsp;</strong> <br/>
    
-<a name="anchor80"></a>
+<a name="anchor83"></a>
 <strong> void RotBstMatrix::bstback(const Vec4&) &nbsp;</strong> <br/>
 boost with a <i>beta = p/E</i> or <i>beta = -p/E</i>, respectively. 
    
  
-<a name="anchor81"></a>
+<a name="anchor84"></a>
 <p/><strong> void RotBstMatrix::bst(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 boost so that <i>p_1</i> is transformed to <i>p_2</i>. It is assumed 
 that the two vectors obey <i>p_1^2 = p_2^2</i>. 
    
  
-<a name="anchor82"></a>
+<a name="anchor85"></a>
 <p/><strong> void RotBstMatrix::toCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 boost and rotate to the rest frame of <i>p_1</i> and <i>p_2</i>, 
 with <i>p_1</i> along the <i>+z</i> axis. 
    
  
-<a name="anchor83"></a>
+<a name="anchor86"></a>
 <p/><strong> void RotBstMatrix::fromCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 rotate and boost from the rest frame of <i>p_1</i> and <i>p_2</i>, 
 with <i>p_1</i> along the <i>+z</i> axis, to the actual frame of 
 <i>p_1</i> and <i>p_2</i>, i.e. the inverse of the above. 
    
  
-<a name="anchor84"></a>
+<a name="anchor87"></a>
 <p/><strong> void RotBstMatrix::rotbst(const RotBstMatrix& Min); &nbsp;</strong> <br/>
 combine the current matrix with another one. 
    
  
-<a name="anchor85"></a>
+<a name="anchor88"></a>
 <p/><strong> RotBstMatrix& RotBstMatrix::operator*(const RotBstMatrix& Min) &nbsp;</strong> <br/>
 return the combination of this and another matrix (corresponding to first 
 making the transformation <i>M_{in}</i> and then this transformation. 
    
  
-<a name="anchor86"></a>
+<a name="anchor89"></a>
 <p/><strong> Vec4 RotBstMatrix::operator*(Vec4 p) &nbsp;</strong> <br/>
 return a rotated and boosted version of <i>p</i>. 
    
  
-<a name="anchor87"></a>
+<a name="anchor90"></a>
 <p/><strong> void RotBstMatrix::invert() &nbsp;</strong> <br/>
 invert the matrix, which corresponds to an opposite sequence and sign 
 of rotations and boosts. 
    
  
-<a name="anchor88"></a>
+<a name="anchor91"></a>
 <p/><strong> RotBstMatrix RotBstMatrix::inverse() &nbsp;</strong> <br/>
 return the inverse matrix, which corresponds to an opposite sequence and sign 
 of rotations and boosts, without overwriting the original matrix. 
    
  
-<a name="anchor89"></a>
+<a name="anchor92"></a>
 <p/><strong> void RotBstMatrix::reset() &nbsp;</strong> <br/>
 reset to no rotation/boost; i.e. the default at creation. 
    
  
-<a name="anchor90"></a>
+<a name="anchor93"></a>
 <p/><strong> double RotBstMatrix::value(int i, int j) &nbsp;</strong> <br/>
 return the value of the (i,j) = [i][j] matrix element. 
    
  
-<a name="anchor91"></a>
+<a name="anchor94"></a>
 <p/><strong> double RotBstMatrix::deviation() &nbsp;</strong> <br/>
 crude estimate how much a matrix deviates from the unit matrix: 
 the sum of the absolute values of all non-diagonal matrix elements 
@@ -574,40 +586,40 @@ plus the sum of the absolute deviation of the diagonal matrix
 elements from unity. 
    
  
-<a name="anchor92"></a>
+<a name="anchor95"></a>
 <p/><strong> friend ostream& operator&lt;&lt;(ostream&, const RotBstMatrix& M) &nbsp;</strong> <br/>
 writes out the values of the sixteen components of a 
 <code>RotBstMatrix</code>, on four consecutive lines and 
 ended with a newline. 
    
  
-<a name="anchor93"></a>
+<a name="anchor96"></a>
 <p/><strong> RotBstMatrix toCMframe(const Vec4& p) &nbsp;</strong> <br/>
 Return a <code>RotBstMatrix</code> corresponding to a boost 
 to the rest frame of <i>p</i>. 
    
  
-<a name="anchor94"></a>
+<a name="anchor97"></a>
 <p/><strong> RotBstMatrix fromCMframe(const Vec4& p) &nbsp;</strong> <br/>
 Return a <code>RotBstMatrix</code> corresponding to a boost 
 from the rest frame of <i>p</i> . 
    
  
-<a name="anchor95"></a>
+<a name="anchor98"></a>
 <p/><strong> RotBstMatrix toCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 Return a <code>RotBstMatrix</code> corresponding to a boost and 
 rotation to the rest frame of <i>p_1</i> and <i>p_2</i>, with 
 <i>p_1</i> along the <i>+z</i> axis. 
    
  
-<a name="anchor96"></a>
+<a name="anchor99"></a>
 <p/><strong> RotBstMatrix fromCMframe(const Vec4& p1, const Vec4& p2) &nbsp;</strong> <br/>
 Return a <code>RotBstMatrix</code> corresponding to a boost and 
 rotation from the rest frame of <i>p_1</i> and <i>p_2</i>, with 
 <i>p_1</i> along the <i>+z</i> axis. 
    
  
-<a name="anchor97"></a>
+<a name="anchor100"></a>
 <p/><strong> RotBstMatrix toCMframe(const Vec4& ptot, const Vec4& pz, const Vec4& pxz) &nbsp;</strong> <br/>
 Return a <code>RotBstMatrix</code> corresponding to a boost and 
 rotation to the rest frame of <i>p_{tot}</i>, where additionally 
@@ -615,7 +627,7 @@ the <i>p_z</i> vector is put along the <i>+z</i> axis and the
 <i>p_{xz}</i> on put in the <i>xz</i> plane with positive <i>x</i>. 
    
  
-<a name="anchor98"></a>
+<a name="anchor101"></a>
 <p/><strong> RotBstMatrix fromCMframe(const Vec4& ptot, const Vec4& pz, const Vec4& pxz) &nbsp;</strong> <br/>
 Return a <code>RotBstMatrix</code> corresponding to a boost and 
 rotation from the rest frame of <i>p_{tot}</i>, where additionally 
@@ -627,4 +639,4 @@ when in the rest frame.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -5,7 +5,7 @@
 While a number of different central "tunes" of the Pythia parameters 
 are provided, it is often desired  to study how event properties change when 
 some of the parameters (such as those describing the parton showers) are 
-varied.   Pythia8 now has the ability to provide a series of weights 
+varied.   Pythia has the ability to provide a series of weights 
 to reflect the change in probability for a particular final state to occur 
 when a subset of parton-shower parameters are varied.  Details on the 
 implementation and interpretation of these weights can be found in 
@@ -135,9 +135,12 @@ simultaneously. This restriction will be lifted in a future release.
 <h3>Specifying the Variations</h3> 
  
 When <code>UncertaintyBands:doVariations</code> is switched on, the user 
-can define an arbitrary number of (combinations of) uncertainty variations 
-to perform. Each variation is defined by a string with the following 
-generic format: 
+can define an arbitrary number of uncertainty variations to perform. 
+To allow for combinations of individual parameter variations (such as 
+a simultaneous variation of both the ISR and FSR renormalisation scales), 
+the user generally requests <b>groups</b> of variations, each of 
+which may consist of one or several individual variations. The 
+format for specifying each variation group is: 
 <pre> 
     Label keyword1=value keyword2=value ... 
 </pre> 
@@ -165,9 +168,22 @@ variations, as follows:
     myVariation3 isr:muRfac=2.0 
 </pre> 
 Different histograms can then be filled with each set of weights as 
-desired (see <a href="#access">accessing the uncertainty weights</a> below). 
+desired (see the 
+<aloc href="CrossSectionsAndWeights">Cross Sections and Weights</aloc> 
+page for how to access the weights). 
 Variations by smaller or larger factors can obviously also be added in the 
 same way, again within one and the same run. 
+ 
+<p/>Note that, internally, Pythia only keeps track of the individual 
+component variations. These are then combined together suitably in the 
+output when requested. I.e., in the example above, Pythia only keeps 
+internal track of two weight variations, for <code>fsr:muRfac=2.0</code> and 
+<code>isr:muRfac=2.0</code> respectively; these are then combined together 
+on the fly if the user requests 
+the weight for the <code>myVariation1</code> group. 
+See the 
+<aloc href="CrossSectionsAndWeights">Cross Sections and Weights</aloc> 
+page for how to access both individual and group weights. 
  
 <p/> 
 Once a list of variations defined as above has been decided on, 
@@ -179,7 +195,7 @@ default="{alphaShi fsr:muRfac=0.5 isr:muRfac=0.5,
 alphaSlo fsr:muRfac=2.0 isr:muRfac=2.0, 
 hardHi fsr:cNS=2.0 isr:cNS=2.0, hardLo fsr:cNS=-2.0 isr:cNS=-2.0}"> 
 Vector of uncertainty-variation strings defining which variations will be 
-calculated by Pythia when<code>UncertaintyBands:doVariations</code> 
+calculated by Pythia when <code>UncertaintyBands:doVariations</code> 
 is switched on. 
 </wvec> 
  
@@ -194,32 +210,34 @@ equivalent to the above default variations could look as follows:
         hardLo fsr:cNS=-2.0 isr:cNS=-2.0 
     } 
 </pre> 
-Note that each of the individual uncertainty-variation definitions 
-(the elements of the vector) are separated by commas and that 
-keywords separated only by spaces are interpreted as belonging to a 
-single combined variation. Note also that the beginning and end of the 
-vector is marked by curly braces. 
+ 
+Note that keywords separated only by spaces are interpreted as 
+belonging to a single group of simultaneous variations, while 
+different groups are separated by commas. Note also that the beginning and 
+end of the  vector is marked by curly braces. 
+<p/> 
+The combination of variations in a group has a total weight 
+that is the product of those for the corresponding 
+individual parameter variations. 
+The individual parameter variations are bookkept separately because: 
+<br/>(1) there is some potential redundancy of 
+individual parameter variations between different groups, 
+<br/>(2) they are often accumulated in different parts of 
+the code,  and 
+<br/>(3) the user might want to deconvolute the products in the group. 
+ 
+<p/> 
+In the example given above, there are 8 individual parameter variations 
+<code> fsr:muRfac=0.5,isr:muRfac=0.5,fsr:muRfac=2.0,isr:muRfac=2.0, 
+fsr:cNS=2.0,isr:cNS=2.0,fsr:cNS=-2.0,isr:cNS=-2.0</code> 
+and 4 groups <code>alphaShi,alphaSlo,hardHi,hardLo</code>. 
  
 <a name="access"></a> 
 <h3>Accessing the Uncertainty Weights</h3> 
  
-During the event generation, uncertainty weights will be calculated 
-for each variation defined above, via the method described in 
-<ref>Mre16</ref>. The resulting alternative weights for the event are 
-accessible through the <code>Pythia::info.weight(int iWeight=0)</code> 
-method. 
- 
-<p/> 
-The baseline weight for each event (normally unity for an 
-ordinary unweighted event sample) is not modified and 
-corresponds to <code>iWeight = 0</code>. The uncertainty-variation 
-weights are thus enumerated starting from <code>iWeight = 1</code> for 
-the first variation up to <code>N</code> for the last variation, in 
-the order they were specified in <code>UncertaintyBands:List</code>. 
- 
-<p/> 
-The total number of variations that have been defined, <code>N</code>, 
-can be queried using <code>Pythia::info.nWeights()</code>. 
+The methods for how to access the uncertainty weights are collected 
+and documented on the 
+<aloc href="CrossSectionsAndWeights">Cross Sections and Weights</aloc> page. 
  
 <h3>NLO Compensation Term for Renormalisation-Scale Variations</h3> 
  
@@ -257,7 +275,8 @@ The keywords for PDF variations (plus and minus) is:
   <li><code>isr:PDF:minus</code> : any number </li> 
 </ul> 
 The number is not used, but is there for syntactical consistency. 
-Note, this uses the formula from the LHAPDF6 library to calculate the variation. 
+Note, this uses the formula from the LHAPDF6 library to calculate the 
+variation. 
  
 <p/> 
 Alternatively, the variation from the default to any other individual 
@@ -299,4 +318,4 @@ values instead of the corresponding <code>Q2QG</code> ones.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

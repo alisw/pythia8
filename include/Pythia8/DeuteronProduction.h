@@ -1,5 +1,5 @@
 // DeuteronProduction.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,6 +9,7 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/Event.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
@@ -18,18 +19,16 @@ namespace Pythia8 {
 
 // The DeuteronProduction class.
 
-class DeuteronProduction {
+class DeuteronProduction : public PhysicsBase {
 
 public:
 
   // Constructor.
   DeuteronProduction() : valid(true), models(), ids(), parms(), masses(),
-    norm(), mPion(), mSafety(), kMin(), kMax(), kTol(), kSteps(),
-    infoPtr(), pdbPtr(), rndmPtr() {}
+    norm(), mPion(), mSafety(), kMin(), kMax(), kTol(), kSteps() {}
 
   // Find settings. Precalculate table used to find momentum shifts.
-  bool init(Info* infoPtrIn, Settings& settings, ParticleData* pdbPtrIn,
-    Rndm* rndmPtrIn);
+  bool init();
 
   // Form deuterons in an event.
   bool combine(Event& event);
@@ -45,11 +44,6 @@ private:
   double mSafety;                        // Safety margin for decays.
   double kMin, kMax, kTol;               // Bracketing/tolerance in k for max.
   int kSteps;                            // Number of steps for grid search.
-
-  // Internal pointers.
-  Info* infoPtr;        // Information pointer.
-  ParticleData* pdbPtr; // Particle database pointer.
-  Rndm* rndmPtr;        // Random number generator pointer.
 
   // Constants: could only be changed in the code itself.
   static const int NTRYDECAY;           // Number of times to try a decay.

@@ -6,7 +6,7 @@
 </head>
 <body>
  
-<h2>Event Statistics</h2> 
+<h2>Event Statistics Summary</h2> 
 <ol id="toc">
   <li><a href="#section0">Cross-section statistics</a></li>
   <li><a href="#section1">Error messages</a></li>
@@ -21,9 +21,17 @@ the number of errors encountered. This is done with the
 instance of the <code>Pythia</code> class.The method is steered entirely 
 by settings values, see <a href="MainProgramSettings.html" target="page">here</a>. 
  
+<p/> 
+Note that further methods for user access to generated 
+cross sections and event weights are documented on the 
+<a href="CrossSectionsAndWeights.html" target="page">Cross Sections and Weights</a> 
+page. 
+ 
 <a name="section0"></a> 
 <h3>Cross-section statistics</h3> 
  
+ 
+<p/> 
 The <code>ProcessLevel::statistics()</code> method cannot be accessed 
 directly, but only via the <code>Pythia::stat()</code> call above. 
 When called it will loop over the list of existing processes, and for 
@@ -114,4 +122,4 @@ between the two.)
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

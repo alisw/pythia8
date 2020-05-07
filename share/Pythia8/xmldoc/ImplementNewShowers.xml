@@ -46,13 +46,52 @@ else, so are much simpler to administrate.
  
 <p/> 
 Therefore the <code><aloc href="ProgramFlow"> 
-pythia.setShowerPtr( timesDecPtr, timesPtr, spacePtr)</aloc></code> 
-method allows two separate pointers to be set to instances of 
-derived <code>TimeShower</code> classes. The first is only required 
-to handle decays, say of <ei>Z^0</ei> or <ei>Upsilon</ei>, with no 
-dependence on beam remnants or ISR. The second, as well as 
-<code>spacePtr</code>, has to handle the interleaved evolution of MPI, 
-ISR and FSR. Therefore you are free to implement only the first, and 
+pythia.setShowerModelPtr( showerModelPtr)</aloc></code> and 
+<code><aloc href="ProgramFlow"> 
+pythia.getShowerModelPtr()</aloc></code> methods allow access to the 
+various parts of the parton shower machinery as a whole, including the 
+time shower used for decays, time shower, space shower, merging 
+machinery, and merging hooks. The first is only required to handle 
+decays, say of <ei>Z^0</ei> or <ei>Upsilon</ei>, with no dependence on 
+beam remnants or ISR. The second and third, have to handle the 
+interleaved evolution of MPI, ISR and FSR. The
+<aloc href="SimpleShowers">simple</aloc>, <aloc href="Vincia">VINCIA</aloc>, 
+and <aloc href="DireShowers">Dire</aloc> showers each implement a 
+derived <code>ShowerModel</code> class which provides access to 
+pointers of all these objects. 
+<method name="virtual TimeShowerPtr ShowerModel::getTimeShower()"> 
+</method> 
+<methodmore name = "virtual TimeShowerPtr getTimeDecShower()"> 
+</methodmore> 
+<methodmore name = "virtual SpaceShowerPtr getSpaceShower()"> 
+</methodmore> 
+<methodmore name = "virtual MergingPtr getMerging()"> 
+</methodmore> 
+<methodmore name = "virtual MergingHooksPtr getMergingHooks()"> 
+  return the pointers for the time shower, decay time shower, space 
+  shower, merging, and mering hooks pointers, respectively. 
+</methodmore> 
+ 
+<p/> 
+Each <code>ShowerModel</code> is initialized by Pythia after the 
+shower pointers above have been set during creation. 
+<method name = "virtual bool ShowerModel::init(mergingPtr, mergingHooksPtr, 
+  partonVertexPtr, weightContainerPtr)"> 
+  set the merging, merging hooks, parton vertex, and weight container 
+  pointers. 
+</method> 
+The showers are are initialized prior to setting up the beam 
+particles, but it is also possible to initialize the showers after the 
+beams have been set by defining the following method to return true. 
+<method name = "bool ShowerModel::initAfterBeams()"> 
+  flag whether showers should be initialized after the beams. 
+</method> 
+Users who wish to introduce their own showers are expected to create a 
+new class which inherits from the <code>ShowerModel</code> base class, 
+and to set this with the <code>pythia.setShowerModelPtr( 
+showerModelPtr)</code> method. 
+ 
+Therefore you are free to implement only the first, and 
 let the PYTHIA default showers take care of the latter two. But, if 
 you wanted to, you could also set <code>timesDecPtr = 0</code> and 
 only provide a <code>timesPtr</code>, or only a <code>spacePtr</code>. 
@@ -670,8 +709,9 @@ is a string identifier for the splitting. Such reclustered events are
 crucial in setting up consistent parton shower histories. 
 </method> 
  
-<method name="virtual map &lt;string,double&gt; SpaceShower::getStateVariables( 
-const Event& event, int iRad, int iEmt, int iRec, string name)"> 
+<method name="virtual map &lt;string,double&gt; 
+SpaceShower::getStateVariables( const Event& event, int iRad, int iEmt, 
+int iRec, string name)"> 
 This function should return a map of variables related to the splitting 
 that produced the particles <code>event[iRad]</code>, <code>event[iRec]</code> 
 and <code>event[iEmt]</code>. Four entries are compulsory, 
@@ -740,4 +780,4 @@ possible allowed recoilers in the input event.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

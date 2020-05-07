@@ -1,11 +1,14 @@
 // main70.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
+// Authors: Ilkka Helenius <ilkka.helenius@jyu.fi>.
+
+// Keywords: photon beam; DIS; UPC; heavy ion; photoproduction;
+
 // Main program to demonstrate how to define a photon flux and use that
 // to generate charged-particle pT spectra in photo-production processes.
-// Author: Ilkka Helenius, September 2017.
 
 #include "Pythia8/Pythia.h"
 
@@ -78,7 +81,7 @@ int main() {
   int process = 1;
 
   // Pointer to externally defined photon flux.
-  PDF* photonFlux = 0;
+  PDFPtr photonFlux = 0;
 
   // Beam parameters.
   pythia.readString("Beams:idA = -11");
@@ -94,7 +97,7 @@ int main() {
     pythia.readString("Beams:frameType = 2");
     pythia.readString("Beams:eA = 27.5");
     pythia.readString("Beams:eB = 820.");
-    photonFlux = new Lepton2gamma2(-11);
+    photonFlux = make_shared<Lepton2gamma2>(-11);
 
   // Experimental UPC generation in PbPb at LHC.
   // Photon flux only from leptons but here need just the photon flux.
@@ -109,7 +112,7 @@ int main() {
     pythia.readString("PDF:lepton2gammaApprox = 2");
     // Do not sample virtuality since use b-integrated flux here.
     pythia.readString("Photon:sampleQ2 = off");
-    photonFlux = new Nucleus2gamma(-11);
+    photonFlux = make_shared<Nucleus2gamma>(-11);
   }
 
   // Set the external photon flux for beam A.
@@ -158,9 +161,6 @@ int main() {
     }
 
   } // End of event loop.
-
-  // Delete photon flux pointer.
-  delete photonFlux;
 
   // Show statistics.
   pythia.stat();

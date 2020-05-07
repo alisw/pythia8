@@ -89,7 +89,7 @@ gives one of the three eigenvalues for <ei>i</ei> = 1, 2 or 3, in
 descending order, 
 </method> 
  
-<method name="Vec4 Sphericity::eventAxis(i)"> 
+<method name="Vec4 Sphericity::eventAxis(int i)"> 
 gives the matching normalized eigenvector, as a <code>Vec4</code> 
 with vanishing time/energy component. 
 </method> 
@@ -451,7 +451,7 @@ gives the number of jets found, with jets numbered 0 through
 <code>size() - 1</code>, 
 </method> 
  
-<method name="double CellJet::eT(i)"> 
+<method name="double CellJet::eT(int i)"> 
 gives the <ei>eT</ei> of the <ei>i</ei>'th jet, where jets have been 
 ordered with decreasing <ei>eT</ei> values, 
 </method> 
@@ -711,7 +711,7 @@ gives the number of jets found, with jets numbered 0 through
 transverse momentum values w.r.t. the beam axis, 
 </method> 
  
-<method name="double SlowJet::pT(i)"> 
+<method name="double SlowJet::pT(int i)"> 
 gives the transverse momentum <ei>pT</ei> of the <ei>i</ei>'th jet, 
 </method> 
  
@@ -918,4 +918,4 @@ individual particle.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

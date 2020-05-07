@@ -24,7 +24,8 @@ hadronization time, colour charges at string endpoints and in gluon "kinks"
 can act together coherently to form a "rope", which is hadronized with a 
 larger, effective string tension [<a href="Bibliography.html#refBie14" target="page">Bie14</a>]. 
 The latter has noticeable effects on the flavour composition of the hadronic 
-final state [<a href="Bibliography.html#refBie15" target="page">Bie15</a>], and this effect is denoted "flavour ropes" below. 
+final state [<a href="Bibliography.html#refBie15" target="page">Bie15</a>], and this effect is denoted "flavour ropes" 
+below. 
  
 <p/> 
 Since both models deal with string overlaps in transverse space, it is 
@@ -111,10 +112,10 @@ radius.
 <p/> 
 The model should be used with some caution. Simply switching it on, one will 
 not retain full description of single particle observables in minimum bias pp 
-collisions, as the excitation gluons will increase multiplicity. Besides normal 
-tuning, one can use the parameter <code>FragmentationSystems:mJoin</code> to 
-join the excitation gluons together, in order to recover single particle 
-observables. 
+collisions, as the excitation gluons will increase multiplicity. Besides 
+normal tuning, one can use the parameter 
+<code>FragmentationSystems:mJoin</code> to join the excitation gluons 
+together, in order to recover single particle observables. 
  
 <a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> Ropewalk:rCutOff &nbsp;</strong> 
@@ -244,7 +245,7 @@ described in the section on <a href="Fragmentation.html" target="page">String
 Fragmentation</a>. One point to note regarding the rescaling is the 
 fragmentation parameter <code>StringFlav:probQQtoQ</code>, describing 
 baryon relative to meson production. Baryon production is, as suggested 
-by eg. the popcorn hadronization model [<a href="Bibliography.html#refEde97" target="page">Ede97</a>],  complicated 
+by eg. the popcorn hadronization model [<a href="Bibliography.html#refEde97" target="page">Ede97</a>], more complicated 
 than meson production. The current modelling of this in the flavour ropes 
 framework is limited, but intended to be extended in the future. 
  
@@ -271,10 +272,10 @@ handled by colour reconnection and junction formation.
 <a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> Ropewalk:doBuffon &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
-Setting this flag on, enables a simpler treatment of flavour ropes. This is not 
-reliant on vertex information, but string-string overlaps are decided randomly 
-&aacute; la Buffon's needle [<a href="Bibliography.html#refBie16c" target="page">Bie16c</a>]: All strings are thrown randomly 
-into a circular area in transverse space to estimate overlaps. 
+Setting this flag on, enables a simpler treatment of flavour ropes. This is 
+not reliant on vertex information, but string-string overlaps are decided 
+randomly &aacute; la Buffon's needle [<a href="Bibliography.html#refBie16c" target="page">Bie16c</a>]: All strings are 
+thrown randomly into a circular area in transverse space to estimate overlaps. 
    
  
 <a name="anchor21"></a>
@@ -288,8 +289,8 @@ overlap in collisions.
 <a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> Ropewalk:rapiditySpan &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.0</code>)<br/>
-Only used if <code>Ropewalk:buffonRope</code> is enabled. Determines how far in 
-rapidity from a string break overlaps are counted. 
+Only used if <code>Ropewalk:buffonRope</code> is enabled. Determines how far 
+in rapidity from a string break overlaps are counted. 
    
  
 <a name="anchor23"></a>
@@ -321,4 +322,4 @@ parameters, to allow for studies of exotic quark production in the Rope model.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

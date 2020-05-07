@@ -1,5 +1,5 @@
 // ColourReconnection.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -23,6 +23,7 @@
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StringLength.h"
+#include "Pythia8/StringInteractions.h"
 
 namespace Pythia8 {
 
@@ -154,7 +155,7 @@ public:
 
 //--------------------------------------------------------------------------
 
-class ColourReconnection {
+class ColourReconnection : public ColourReconnectionBase {
 
 public:
 
@@ -165,13 +166,10 @@ public:
     pT0(), pT20Rec(), pT0Ref(), ecmRef(), ecmPow(), reconnectRange(), m0(),
     m0sqr(), m2Lambda(), fracGluon(), dLambdaCut(), timeDilationPar(),
     timeDilationParGeV(), tfrag(), blowR(), blowT(), rHadron(), kI(),
-    infoPtr(), particleDataPtr(), rndmPtr(), beamAPtr(), beamBPtr(),
-    partonSystemsPtr(), nColMove() {}
+    nColMove() {}
 
   // Initialization.
-  bool init( Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
-    ParticleData* particleDataPtrIn, BeamParticle* beamAPtrIn,
-    BeamParticle* beamBPtrIn, PartonSystems* partonSystemsPtrIn);
+  bool init();
 
   // New beams possible for handling of hard diffraction.
   void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn)
@@ -201,22 +199,6 @@ private:
   vector<TrialReconnection> junTrials, dipTrials;
   vector<vector<int> > iColJun;
   map<int,double> formationTimes;
-
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to particle data table.
-  ParticleData*  particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
-  // Pointers to the two incoming beams.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-
-  // Pointer to information on subcollision parton locations.
-  PartonSystems* partonSystemsPtr;
 
   // This is only to access the function call junctionRestFrame.
   StringFragmentation stringFragmentation;

@@ -1,9 +1,11 @@
 # main34.py is a part of the PYTHIA event generator.
-# Copyright (C) 2019 Torbjorn Sjostrand.
+# Copyright (C) 2020 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-# Author: Philip Ilten, March 2016.
+# Authors: Philip Ilten <philten@cern.ch>.
+
+# Keywords: matching; madgraph; aMC@NLO; python;
 
 # An example where the hard process (p p -> mu+ mu-) is automatically
 # produced externally with MadGraph 5, read in, and the remainder of

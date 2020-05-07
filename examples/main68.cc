@@ -1,8 +1,11 @@
 // main68.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
-// Author: Christine O. Rasmussen.
+
+// Authors: Christine O. Rasmussen <christine.rasmussen@thep.lu.se>.
+
+// Keywords: diffraction; DIS; photoproduction; jets; hard diffraction;
 
 // The y, pT, x_Pomeron and t distributions for forward Z bosons at the LHC,
 // within the hard diffraction framework for an inclusive event sample.
@@ -16,7 +19,7 @@ int main() {
 
   // Create Pythia instance. Shorthand for event and info.
   Pythia pythia;
-  Info&  info  = pythia.info;
+  const Info& info = pythia.info;
 
   // Set it up to generate dijets at HERA.
   pythia.readString("Beams:frametype = 2");    // Beams with different energies
