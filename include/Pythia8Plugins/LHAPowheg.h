@@ -1,5 +1,5 @@
 // LHAPowheg.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Philip Ilten, May 2015.
@@ -58,9 +58,7 @@ class LHAupPowheg : public LHAupFortran {
 public:
 
   // Constructor.
-  LHAupPowheg(Pythia *pythiaIn);
-
-protected:
+  LHAupPowheg(Pythia *pythiaIn = nullptr);
 
   // Call pwhginit and fill the HEPRUP commonblock.
   bool fillHepRup();
@@ -70,14 +68,11 @@ protected:
 
 private:
 
-  // The PYTHIA object.
-  Pythia *pythia;
+  // The external random number generator.
+  Rndm* rndm;
 
   // The run directory.
   string dir;
-
-  // Flag to reset the random number generator from Pythia.
-  bool random;
 
   // The current working directory.
   char cwd[FILENAME_MAX];
@@ -88,13 +83,12 @@ private:
 
 // Constructor.
 
-LHAupPowheg::LHAupPowheg(Pythia *pythiaIn) : dir("./") {
+LHAupPowheg::LHAupPowheg(Pythia *pythia) : dir("./") {
 
-  pythia = pythiaIn;
   if (pythia && pythia->settings.isWord("POWHEG:dir"))
     dir = pythia->settings.word("POWHEG:dir");
-  if (pythia && pythia->settings.isFlag("POWHEG:pythiaRandom"))
-    random = pythia->settings.flag("POWHEG:pythiaRandom");
+  if (pythia && pythia->settings.flag("POWHEG:pythiaRandom"))
+    rndm = &pythia->rndm;
   mkdir(dir.c_str(), 0777);
 
 }
@@ -106,7 +100,6 @@ LHAupPowheg::LHAupPowheg(Pythia *pythiaIn) : dir("./") {
 bool LHAupPowheg::fillHepRup() {
 
   // Set multiple random seeds to none.
-  if (!pythia) return false;
   getcwd(cwd, sizeof(cwd));
   chdir(dir.c_str());
   strcpy(pwhg_rnd_.rnd_cwhichseed, "none");
@@ -131,16 +124,15 @@ bool LHAupPowheg::fillHepRup() {
 bool LHAupPowheg::fillHepEup() {
 
   // Change directory.
-  if (!pythia) return false;
   getcwd(cwd, sizeof(cwd));
   chdir(dir.c_str());
 
   // Reset the random block if requested.
-  if (random) {
+  if (rndm != nullptr) {
     r48st1_.i97 = 97;
     r48st1_.j97 = 33;
-    r48st1_.c = pythia->rndm.flat();
-    for (int i = 0; i < 97; ++i) r48st1_.u[i] = pythia->rndm.flat();
+    r48st1_.c = rndm->flat();
+    for (int i = 0; i < 97; ++i) r48st1_.u[i] = rndm->flat();
   }
 
   // Generate the event.
@@ -154,13 +146,8 @@ bool LHAupPowheg::fillHepEup() {
 
 // Define external handles to the plugin for dynamic loading.
 
-extern "C" {
-
-  LHAupPowheg* newLHAupPowheg(Pythia *PythiaIn) {
-    return new LHAupPowheg(PythiaIn);}
-
-  void deleteLHAupPowheg(LHAupPowheg *lhaupIn) {delete lhaupIn;}
-
+extern "C" LHAupPtr newLHAupPowheg(Pythia *pythia) {
+  return make_shared<LHAupPowheg>(pythia);
 }
 
 //==========================================================================

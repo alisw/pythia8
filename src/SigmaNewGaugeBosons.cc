@@ -1,5 +1,5 @@
 // SigmaNewGaugeBosons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -116,14 +116,14 @@ double Sigma1ffbarZprimeWprime::xjGK( double tHnow, double uHnow,
 void Sigma1ffbar2gmZZprime::initProc() {
 
   // Allow to pick only parts of full gamma*/Z0/Z'0 expression.
-  gmZmode     = settingsPtr->mode("Zprime:gmZmode");
+  gmZmode     = mode("Zprime:gmZmode");
 
   // Store Z'0 mass and width for propagator.
   mRes        = particleDataPtr->m0(32);
   GammaRes    = particleDataPtr->mWidth(32);
   m2Res       = mRes*mRes;
   GamMRat     = GammaRes / mRes;
-  sin2tW      = couplingsPtr->sin2thetaW();
+  sin2tW      = coupSMPtr->sin2thetaW();
   cos2tW      = 1. - sin2tW;
   thetaWRat   = 1. / (16. * sin2tW * cos2tW);
 
@@ -138,23 +138,23 @@ void Sigma1ffbar2gmZZprime::initProc() {
   for (int i = 0; i < 20; ++i) vfZp[i] = 0.;
 
   // Store first-generation axial and vector couplings.
-  afZp[1]     = settingsPtr->parm("Zprime:ad");
-  afZp[2]     = settingsPtr->parm("Zprime:au");
-  afZp[11]    = settingsPtr->parm("Zprime:ae");
-  afZp[12]    = settingsPtr->parm("Zprime:anue");
-  vfZp[1]     = settingsPtr->parm("Zprime:vd");
-  vfZp[2]     = settingsPtr->parm("Zprime:vu");
-  vfZp[11]    = settingsPtr->parm("Zprime:ve");
-  vfZp[12]    = settingsPtr->parm("Zprime:vnue");
+  afZp[1]     = parm("Zprime:ad");
+  afZp[2]     = parm("Zprime:au");
+  afZp[11]    = parm("Zprime:ae");
+  afZp[12]    = parm("Zprime:anue");
+  vfZp[1]     = parm("Zprime:vd");
+  vfZp[2]     = parm("Zprime:vu");
+  vfZp[11]    = parm("Zprime:ve");
+  vfZp[12]    = parm("Zprime:vnue");
 
   // Determine if the 4th generation should be included
-  bool coupZp2gen4    = settingsPtr->flag("Zprime:coup2gen4");
+  bool coupZp2gen4    = flag("Zprime:coup2gen4");
 
   maxZpGen = (coupZp2gen4) ? 8 : 6;
 
   // Second and third (and possibly 4th) generation could be carbon copy
   // of this...
-  if (settingsPtr->flag("Zprime:universality")) {
+  if (flag("Zprime:universality")) {
     for (int i = 3; i <= maxZpGen; ++i) {
       afZp[i]    = afZp[i-2];
       vfZp[i]    = vfZp[i-2];
@@ -164,37 +164,37 @@ void Sigma1ffbar2gmZZprime::initProc() {
 
   // ... or could have different couplings.
   } else {
-    afZp[3]   = settingsPtr->parm("Zprime:as");
-    afZp[4]   = settingsPtr->parm("Zprime:ac");
-    afZp[5]   = settingsPtr->parm("Zprime:ab");
-    afZp[6]   = settingsPtr->parm("Zprime:at");
-    afZp[13]  = settingsPtr->parm("Zprime:amu");
-    afZp[14]  = settingsPtr->parm("Zprime:anumu");
-    afZp[15]  = settingsPtr->parm("Zprime:atau");
-    afZp[16]  = settingsPtr->parm("Zprime:anutau");
-    vfZp[3]   = settingsPtr->parm("Zprime:vs");
-    vfZp[4]   = settingsPtr->parm("Zprime:vc");
-    vfZp[5]   = settingsPtr->parm("Zprime:vb");
-    vfZp[6]   = settingsPtr->parm("Zprime:vt");
-    vfZp[13]  = settingsPtr->parm("Zprime:vmu");
-    vfZp[14]  = settingsPtr->parm("Zprime:vnumu");
-    vfZp[15]  = settingsPtr->parm("Zprime:vtau");
-    vfZp[16]  = settingsPtr->parm("Zprime:vnutau");
+    afZp[3]   = parm("Zprime:as");
+    afZp[4]   = parm("Zprime:ac");
+    afZp[5]   = parm("Zprime:ab");
+    afZp[6]   = parm("Zprime:at");
+    afZp[13]  = parm("Zprime:amu");
+    afZp[14]  = parm("Zprime:anumu");
+    afZp[15]  = parm("Zprime:atau");
+    afZp[16]  = parm("Zprime:anutau");
+    vfZp[3]   = parm("Zprime:vs");
+    vfZp[4]   = parm("Zprime:vc");
+    vfZp[5]   = parm("Zprime:vb");
+    vfZp[6]   = parm("Zprime:vt");
+    vfZp[13]  = parm("Zprime:vmu");
+    vfZp[14]  = parm("Zprime:vnumu");
+    vfZp[15]  = parm("Zprime:vtau");
+    vfZp[16]  = parm("Zprime:vnutau");
     if( coupZp2gen4 ) {
-      afZp[7]   = settingsPtr->parm("Zprime:abPrime");
-      afZp[8]   = settingsPtr->parm("Zprime:atPrime");
-      vfZp[7]   = settingsPtr->parm("Zprime:vbPrime");
-      vfZp[8]   = settingsPtr->parm("Zprime:vtPrime");
-      afZp[17]  = settingsPtr->parm("Zprime:atauPrime");
-      afZp[18]  = settingsPtr->parm("Zprime:anutauPrime");
-      vfZp[17]  = settingsPtr->parm("Zprime:vtauPrime");
-      vfZp[18]  = settingsPtr->parm("Zprime:vnutauPrime");
+      afZp[7]   = parm("Zprime:abPrime");
+      afZp[8]   = parm("Zprime:atPrime");
+      vfZp[7]   = parm("Zprime:vbPrime");
+      vfZp[8]   = parm("Zprime:vtPrime");
+      afZp[17]  = parm("Zprime:atauPrime");
+      afZp[18]  = parm("Zprime:anutauPrime");
+      vfZp[17]  = parm("Zprime:vtauPrime");
+      vfZp[18]  = parm("Zprime:vnutauPrime");
     }
   }
 
   // Coupling for Z' -> W+ W- and decay angular admixture.
-  coupZpWW    = settingsPtr->parm("Zprime:coup2WW");
-  anglesZpWW  = settingsPtr->parm("Zprime:anglesWW");
+  coupZpWW    = parm("Zprime:coup2WW");
+  anglesZpWW  = parm("Zprime:anglesWW");
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(32);
@@ -242,9 +242,9 @@ void Sigma1ffbar2gmZZprime::sigmaKin() {
         ps        = sqrtpos(1. - 4. * mr);
 
         // Couplings of gamma^*/Z^0/Z'^0  to final flavour
-        ef        = couplingsPtr->ef(idAbs4);
-        af        = couplingsPtr->af(idAbs4);
-        vf        = couplingsPtr->vf(idAbs4);
+        ef        = coupSMPtr->ef(idAbs4);
+        af        = coupSMPtr->af(idAbs4);
+        vf        = coupSMPtr->vf(idAbs4);
         apf       = afZp[idAbs4];
         vpf       = vfZp[idAbs4];
 
@@ -318,9 +318,9 @@ double Sigma1ffbar2gmZZprime::sigmaHat() {
 
   // Couplings to an incoming flavour.
   int idAbs      = abs(id1);
-  double ei      = couplingsPtr->ef(idAbs);
-  double ai      = couplingsPtr->af(idAbs);
-  double vi      = couplingsPtr->vf(idAbs);
+  double ei      = coupSMPtr->ef(idAbs);
+  double ai      = coupSMPtr->af(idAbs);
+  double vi      = coupSMPtr->vf(idAbs);
   double api     = afZp[idAbs];
   double vpi     = vfZp[idAbs];
   double ei2     = ei * ei;
@@ -375,15 +375,15 @@ double Sigma1ffbar2gmZZprime::weightDecay( Event& process, int iResBeg,
     || (idOutAbs > 10 && idOutAbs <= maxZpGen+10) || idOutAbs > 4000000) ) {
 
     // Couplings for in- and out-flavours.
-    double ei  = couplingsPtr->ef(idInAbs);
-    double vi  = couplingsPtr->vf(idInAbs);
-    double ai  = couplingsPtr->af(idInAbs);
+    double ei  = coupSMPtr->ef(idInAbs);
+    double vi  = coupSMPtr->vf(idInAbs);
+    double ai  = coupSMPtr->af(idInAbs);
     double vpi = vfZp[idInAbs];
     double api = afZp[idInAbs];
     int idOutAbs4 = (idOutAbs < 4000000) ? idOutAbs : idOutAbs - 4000000;
-    double ef  = couplingsPtr->ef(idOutAbs4);
-    double vf  = couplingsPtr->vf(idOutAbs4);
-    double af  = couplingsPtr->af(idOutAbs4);
+    double ef  = coupSMPtr->ef(idOutAbs4);
+    double vf  = coupSMPtr->vf(idOutAbs4);
+    double af  = coupSMPtr->af(idOutAbs4);
     double vpf = vfZp[idOutAbs4];
     double apf = afZp[idOutAbs4];
 
@@ -515,17 +515,17 @@ void Sigma1ffbar2Wprime::initProc() {
   GammaRes = particleDataPtr->mWidth(34);
   m2Res    = mRes*mRes;
   GamMRat  = GammaRes / mRes;
-  thetaWRat = 1. / (12. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (12. * coupSMPtr->sin2thetaW());
 
   // Axial and vector couplings of fermions.
-  aqWp      = settingsPtr->parm("Wprime:aq");
-  vqWp      = settingsPtr->parm("Wprime:vq");
-  alWp      = settingsPtr->parm("Wprime:al");
-  vlWp      = settingsPtr->parm("Wprime:vl");
+  aqWp      = parm("Wprime:aq");
+  vqWp      = parm("Wprime:vq");
+  alWp      = parm("Wprime:al");
+  vlWp      = parm("Wprime:vl");
 
   // Coupling for W' -> W Z and decay angular admixture.
-  coupWpWZ    = settingsPtr->parm("Wprime:coup2WZ");
-  anglesWpWZ  = settingsPtr->parm("Wprime:anglesWZ");
+  coupWpWZ    = parm("Wprime:coup2WZ");
+  anglesWpWZ  = parm("Wprime:anglesWZ");
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(34);
@@ -555,7 +555,7 @@ double Sigma1ffbar2Wprime::sigmaHat() {
   // Secondary width for W+ or W-. CKM and colour factors.
   int idUp = (abs(id1)%2 == 0) ? id1 : id2;
   double sigma = (idUp > 0) ? sigma0Pos : sigma0Neg;
-  if (abs(id1) < 7) sigma *= couplingsPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
+  if (abs(id1) < 7) sigma *= coupSMPtr->V2CKMid(abs(id1), abs(id2)) / 3.;
 
   // Couplings.
   if (abs(id1) < 7) sigma *= 0.5 * (aqWp * aqWp + vqWp * vqWp);
@@ -680,8 +680,8 @@ double Sigma1ffbar2Wprime::weightDecay( Event& process, int iResBeg,
 
       //  Couplings of outgoing fermion from Z. Combine with kinematics.
       int idAbs     = process[i5].idAbs();
-      double lfZ    = couplingsPtr->lf(idAbs);
-      double rfZ    = couplingsPtr->rf(idAbs);
+      double lfZ    = coupSMPtr->lf(idAbs);
+      double rfZ    = coupSMPtr->rf(idAbs);
       wt            = lfZ*lfZ * fGK135 + rfZ*rfZ * fGK136;
       wtMax         = 4. * s3now * s4now * (lfZ*lfZ + rfZ*rfZ)
                     * (xiT + xiU - xjTU);
@@ -721,7 +721,7 @@ void Sigma1ffbar2Rhorizontal::initProc() {
   GammaRes = particleDataPtr->mWidth(41);
   m2Res    = mRes*mRes;
   GamMRat  = GammaRes / mRes;
-  thetaWRat = 1. / (12. * couplingsPtr->sin2thetaW());
+  thetaWRat = 1. / (12. * coupSMPtr->sin2thetaW());
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(41);

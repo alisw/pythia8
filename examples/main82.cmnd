@@ -17,4 +17,4 @@ Merging:TMS              = 30.
 Merging:nJetMax          = 2
 
 ! Specify PDF set.
-PDF:pSet                 = LHAPDF5:cteq6ll.LHpdf
+PDF:pSet                 = LHAPDF6:cteq6l1

@@ -1,5 +1,5 @@
 // CombineMatchingInput.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -118,7 +118,7 @@ public:
   ~CombineMatchingInput() {}
 
   // Return a hook relevant for combination of input and matching.
-  UserHooks* getHook(Pythia& pythia) {
+  void setHook(Pythia& pythia) {
 
     // Find input source and matching scheme.
     bool isAlpgenFile = ( pythia.word("Alpgen:file") != "void" );
@@ -126,18 +126,23 @@ public:
 
     // Return relevant UserHooks.
     if (isAlpgenFile) {
-      if (scheme == 2) return new JetMatchingAlpgenInputAlpgen(pythia);
-      if (scheme == 1) return new JetMatchingMadgraphInputAlpgen(pythia);
+      if (scheme == 2)
+        hook = make_shared<JetMatchingAlpgenInputAlpgen>(pythia);
+      if (scheme == 1)
+        hook = make_shared<JetMatchingMadgraphInputAlpgen>(pythia);
     } else {
-      if (scheme == 2) return new JetMatchingAlpgen();
-      if (scheme == 1) return new JetMatchingMadgraph();
+      if (scheme == 2)
+        hook = make_shared<JetMatchingAlpgen>();
+      if (scheme == 1)
+        hook = make_shared<JetMatchingMadgraph>();
     }
 
-    // If fail then abort message and return VOID.
-    pythia.info.errorMsg("Abort from CombinedInputMatching::getHook: "
-      "settings unavailable");
-    return NULL;
+    pythia.setUserHooksPtr(hook);
+
+    return;
   }
+
+  shared_ptr<UserHooks> hook;
 
 };
 

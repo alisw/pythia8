@@ -320,7 +320,7 @@ method
       pythia.setLHAupPtr( lhaUpPtr); 
 </pre> 
 where the  <code>lhaUpPtr</code> derives from the 
-<aloc href="LesHouchesAccord">LHAup</aloc> base class. 
+<aloc href="LHA">LHAup</aloc> base class. 
 </li> 
  
 <p/> 
@@ -432,11 +432,20 @@ resonances.
 If you are a real expert and want to <aloc href="ImplementNewShowers">replace 
 the PYTHIA initial- and final-state showers</aloc>, you can use 
 <pre> 
-      pythia.setShowerPtr( timesDecPtr, timesPtr, spacePtr); 
+      pythia.setShowerModelPtr( showerModelPtr); 
 </pre> 
-where <code>timesDecPtr</code> and <code>timesPtr</code> 
-derive from the <code>TimeShower</code> base class, and 
-<code>spacePtr</code> from <code>SpaceShower</code>. 
+where the <code>showerModelPtr</code> is a shared 
+<code>ShowerModel</code> pointer which stores the following shared 
+pointers: <code>timesPtr</code> and <code>timesDecPtr</code> of the 
+class <code>TimeShower</code>, <code>spacePtr</code> of the class 
+<code>SpaceShower</code>, <code>mergingPtr</code> of the class 
+<code>Merging</code>, and <code>mergingHooksPtr</code> of the class 
+<code>MergingHooks</code>. It is also possible to get back a pointer 
+to the parton shower machhinery and perform diagnostics. 
+<pre> 
+      pythia.getShowerModelPtr(); 
+</pre> 
+ 
 </li> 
  
 <p/> 
@@ -744,7 +753,7 @@ in your program.
 <method name="bool Pythia::setLHAupPtr( LHAup* lhaUpPtrIn)"> 
 offers linkage to an external generator that feeds in events 
 in the LHA format, see 
-<aloc href="LesHouchesAccord">Les Houches Accord</aloc>, 
+<aloc href="LHA">Les Houches Accord</aloc>, 
 assuming that 
 <code><aloc href="BeamParameters">Beams:frameType = 5</aloc></code> 
 has been set. 
@@ -870,44 +879,33 @@ must be instantiated by you in your program.
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::setShowerPtr( TimeShower* timesDecPtr, 
-TimeShower* timesPtr = 0, SpaceShower* spacePtr = 0)"> 
+<method name="bool Pythia::setShowerModelPtr( ShowerModelPtr showerModelPtr)"> 
 offers the possibility to link your own parton shower routines as 
-replacements for the default ones. This is much more complicated 
-since the showers are so central and are so interlinked with other 
-parts of the program. Therefore it is also possible to do the 
-replacement in stages, from the more independent to the more 
-intertwined. The rules for constructing your own classes from the 
-<code>TimeShower</code> and <code>SpaceShower</code>base classes 
-are described <aloc href="ImplementNewShowers">here</aloc>. These 
-objects must be instantiated by you in your program. 
-<argument name="timesDecPtr"> 
-pointer to a <code>TimeShower</code>-derived object for doing 
-timelike shower evolution in resonance decays, e.g. of a 
-<ei>Z^0</ei>. This is decoupled from beam remnants and parton 
-distributions, and is therefore the simplest kind of shower 
-to write. If you provide a value 0 then the internal shower 
-routine will be used. 
-</argument> 
-<argument name="timesPtr" default="0"> 
-pointer to a <code>TimeShower</code>-derived object for doing 
-all other timelike shower evolution, which is normally interleaved 
-with multiparton interactions and spacelike showers, introducing 
-both further physics and further technical issues. If you retain 
-the default value 0 then the internal shower routine will be used. 
-You are allowed to use the same pointer as above for the 
-<code>timesDecPtr</code> if the same shower can fulfill both tasks. 
-</argument> 
-<argument name="spacePtr" default="0"> 
-pointer to a <code>SpaceShower</code>-derived object for doing 
-all spacelike shower evolution, which is normally interleaved 
-with multiparton interactions and timelike showers. If you retain 
-the default value 0 then the internal shower routine will be used. 
+replacements for the default ones. This is much more complicated since 
+the showers are so central and are so interlinked with other parts of 
+the program. Therefore it is also possible to do the replacement in 
+stages, from the more independent to the more intertwined. The rules 
+for constructing your own shower from the <code>ShowerModel</code> 
+class is described <aloc href="ImplementNewShowers">here</aloc>. This 
+model, which includes <code>TimeShower</code> and 
+<code>SpaceShower</code> derived objects, must be instantiated by you 
+in your program. 
+<argument name="showerModelPtr"> 
+  shared pointer to a <code>ShowerModel</code>-derived object. This 
+  includes a decay time shower, time shower, space shower, merging 
+  pointer, and merging user hooks. 
 </argument> 
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::setHeavyIonsPtr( HeavyIons* heavyIonsPtr)"> 
+<method name="ShowerModelPtr Pythia::getShowerModelPtr()"> 
+gives access to the current <aloc href="ImplementNewShowers">parton 
+shower</aloc> model, either one the default internal Pythia models or 
+an external one fed in by the method above this. This way a number of 
+further shower properties can be interrogated. 
+</method> 
+ 
+<method name="bool Pythia::setHeavyIonsPtr( HeavyIonsPtr heavyIonsPtr)"> 
 offers the possibility to feed in an external Heavy Ion generator that 
 can use the internal <code>Pythia</code> machinery for its tasks, 
 see further <aloc href="HeavyIons">here</aloc>. 
@@ -925,7 +923,7 @@ one fed in by the method above this. This way a number of further
 event properties can be interrogated. 
 </method> 
  
-<method name="bool Pythia::setPartonVertexPtr( PartonVertex* 
+<method name="bool Pythia::setPartonVertexPtr( PartonVertexPtr 
 partonVertexPtrIn)"> 
 offers the possibility to set production vertices for the MPI, 
 FSR and ISR parton-level evolution, instead of the default framework, 
@@ -1063,9 +1061,19 @@ its four-momentum is changed. Further details are found
 event record is then not consistent and should not be studied. 
 </method> 
  
+<method name="bool Pythia::doLowEnergyProcess(int i1, int i2, int type)"> 
+Allow two hadrons, located in positions <ei>i1</ei> and <ei>i2</ei> of 
+the normal event record to interact with each other and give rise to new 
+hadrons. Only simple interaction types are offered, as relevent at low 
+energies. It can be used e.g. to model hadronic rescattering in the 
+final state. This method does not itself decay unstable hadrons, but 
+thst could be achieved e.g. with a <code>Pythia::moreDecays()</code> 
+call. This method is still under development. 
+</method> 
+ 
 <method name="void Pythia::LHAeventList()"> 
 list the Les Houches Accord information on the current event, see 
-<code><aloc href="LesHouchesAccord">LHAup::listEvent(...)</aloc></code>. 
+<code><aloc href="LHA">LHAup::listEvent(...)</aloc></code>. 
 (Other listings are available via the class members below, so this 
 listing is a special case that would not fit elsewhere.) 
 </method> 
@@ -1073,7 +1081,7 @@ listing is a special case that would not fit elsewhere.)
 <method name="bool Pythia::LHAeventSkip(int nSkip)"> 
 skip ahead a number of events in the Les Houches generation 
 sequence, without doing anything further with them, see 
-<code><aloc href="LesHouchesAccord">LHAup::skipEvent(nSkip)</aloc></code>. 
+<code><aloc href="LHA">LHAup::skipEvent(nSkip)</aloc></code>. 
 Mainly intended for debug purposes, e.g. when an event at a known 
 location in a Les Houches Event File is causing problems. 
 <argument name="nSkip"> 
@@ -1214,4 +1222,4 @@ see <aloc href="AdvancedUsage">here</aloc> for further details.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

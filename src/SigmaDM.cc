@@ -1,5 +1,5 @@
 // SigmaDM.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,20 +22,20 @@ namespace Pythia8 {
 void Sigma1ffbar2Zp2XX::initProc() {
 
   // Store mass and width for propagator, and couplings.
-  kinMix    = settingsPtr->parm("Zp:kineticMixing");
+  kinMix    = parm("Zp:kineticMixing");
   mRes      = particleDataPtr->m0(55);
   GammaRes  = particleDataPtr->mWidth(55);
   m2Res     = mRes*mRes;
-  alpEM     = couplingsPtr->alphaEM(m2Res);
-  gZp       = settingsPtr->parm("Zp:gZp");
-  eps       = settingsPtr->parm("Zp:epsilon");
+  alpEM     = coupSMPtr->alphaEM(m2Res);
+  gZp       = parm("Zp:gZp");
+  eps       = parm("Zp:epsilon");
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(55);
 
   // Loop over all Zp decay channels.
   double mf, mr, psvec, psaxi, betaf;
-  int decMode = settingsPtr->mode("Zp:decayMode");
+  int decMode = mode("Zp:decayMode");
   preFac = 0.0;
   for (int i = 0; i < particlePtr->sizeChannels(); ++i) {
     int idAbs = abs( particlePtr->channel(i).product(0));
@@ -64,19 +64,19 @@ void Sigma1ffbar2Zp2XX::initProc() {
     if (idAbs < 7) {
       if (abs(id1)%2 == 0) {
         if (kinMix) {
-          vf = eps * (2./3. + couplingsPtr->vf(2));
-          af = eps * couplingsPtr->af(2);
+          vf = eps * (2./3. + coupSMPtr->vf(2));
+          af = eps * coupSMPtr->af(2);
         } else {
-          vf = settingsPtr->parm("Zp:vu");
-          af = settingsPtr->parm("Zp:au");
+          vf = parm("Zp:vu");
+          af = parm("Zp:au");
         }
       } else {
         if (kinMix) {
-          vf = eps * (-1./3. + couplingsPtr->vf(1));
-          af = eps * couplingsPtr->af(1);
+          vf = eps * (-1./3. + coupSMPtr->vf(1));
+          af = eps * coupSMPtr->af(1);
         } else {
-          vf = settingsPtr->parm("Zp:vd");
-          af = settingsPtr->parm("Zp:ad");
+          vf = parm("Zp:vd");
+          af = parm("Zp:ad");
         }
       }
     }
@@ -85,27 +85,27 @@ void Sigma1ffbar2Zp2XX::initProc() {
     if (idAbs > 10 && idAbs < 17) {
       if (abs(id1)%2 == 0) {
         if (kinMix) {
-          vf = eps * couplingsPtr->vf(12);
-          af = eps * couplingsPtr->af(12);
+          vf = eps * coupSMPtr->vf(12);
+          af = eps * coupSMPtr->af(12);
         } else {
-          vf = settingsPtr->parm("Zp:vv");
-          af = settingsPtr->parm("Zp:av");
+          vf = parm("Zp:vv");
+          af = parm("Zp:av");
         }
       } else {
         if (kinMix) {
-          vf = eps * (-1. + couplingsPtr->vf(11));
-          af = eps * couplingsPtr->af(11);
+          vf = eps * (-1. + coupSMPtr->vf(11));
+          af = eps * coupSMPtr->af(11);
         } else {
-          vf = settingsPtr->parm("Zp:vl");
-          af = settingsPtr->parm("Zp:al");
+          vf = parm("Zp:vl");
+          af = parm("Zp:al");
         }
       }
     }
 
     // Set couplings: DM.
     if (idAbs == 52) {
-      vf = settingsPtr->parm("Zp:vX");
-      af = settingsPtr->parm("Zp:aX");
+      vf = parm("Zp:vX");
+      af = parm("Zp:aX");
     }
 
     // Check that mass is above threshold. Calculate phase space.
@@ -148,19 +148,19 @@ double Sigma1ffbar2Zp2XX::sigmaHat() {
   double vf, af;
   if (abs(id1)%2 == 0) {
     if (kinMix) {
-      vf = eps * couplingsPtr->vf(2);
-      af = eps * couplingsPtr->af(2);
+      vf = eps * coupSMPtr->vf(2);
+      af = eps * coupSMPtr->af(2);
     } else {
-      vf = settingsPtr->parm("Zp:vu");
-      af = settingsPtr->parm("Zp:au");
+      vf = parm("Zp:vu");
+      af = parm("Zp:au");
     }
   } else {
     if (kinMix) {
-      vf = eps * couplingsPtr->vf(1);
-      af = eps * couplingsPtr->af(1);
+      vf = eps * coupSMPtr->vf(1);
+      af = eps * coupSMPtr->af(1);
     } else {
-      vf = settingsPtr->parm("Zp:vd");
-      af = settingsPtr->parm("Zp:ad");
+      vf = parm("Zp:vd");
+      af = parm("Zp:ad");
     }
   }
 
@@ -204,13 +204,13 @@ void Sigma1ffbar2Zp2XX::setIdColAcol() {
 void Sigma2qqbar2Zpg2XXj::initProc() {
 
   // Store mass and width for propagator, and couplings.
-  kinMix    = settingsPtr->flag("Zp:kineticMixing");
+  kinMix    = flag("Zp:kineticMixing");
   mRes      = particleDataPtr->m0(55);
   GammaRes  = particleDataPtr->mWidth(55);
   m2Res     = mRes*mRes;
-  alpEM     = couplingsPtr->alphaEM(m2Res);
-  gZp       = settingsPtr->parm("Zp:gZp");
-  eps       = settingsPtr->parm("Zp:epsilon");
+  alpEM     = coupSMPtr->alphaEM(m2Res);
+  gZp       = parm("Zp:gZp");
+  eps       = parm("Zp:epsilon");
 
   // Set pointer to particle properties and decay table.
   particlePtr = particleDataPtr->particleDataEntryPtr(55);
@@ -252,19 +252,19 @@ double Sigma2qqbar2Zpg2XXj::sigmaHat() {
   double vf, af;
   if (abs(id1)%2 == 0) {
     if (kinMix) {
-      vf = eps * couplingsPtr->vf(2);
-      af = eps * couplingsPtr->af(2);
+      vf = eps * coupSMPtr->vf(2);
+      af = eps * coupSMPtr->af(2);
     } else {
-      vf = settingsPtr->parm("Zp:vu");
-      af = settingsPtr->parm("Zp:au");
+      vf = parm("Zp:vu");
+      af = parm("Zp:au");
     }
   } else {
     if (kinMix) {
-      vf = eps * couplingsPtr->vf(1);
-      af = eps * couplingsPtr->af(1);
+      vf = eps * coupSMPtr->vf(1);
+      af = eps * coupSMPtr->af(1);
     } else {
-      vf = settingsPtr->parm("Zp:vd");
-      af = settingsPtr->parm("Zp:ad");
+      vf = parm("Zp:vd");
+      af = parm("Zp:ad");
     }
   }
 
@@ -303,13 +303,13 @@ void Sigma2qqbar2Zpg2XXj::setIdColAcol() {
 void Sigma2ffbar2ZpH::initProc() {
 
   // Store mass and width for propagator, and couplings.
-  kinMix    = settingsPtr->flag("Zp:kineticMixing");
+  kinMix    = flag("Zp:kineticMixing");
   mRes      = particleDataPtr->m0(55);
   GammaRes  = particleDataPtr->mWidth(55);
   m2Res     = mRes*mRes;
-  coupZpH   = settingsPtr->parm("Zp:coupH");
-  gZp       = settingsPtr->parm("Zp:gZp");
-  eps       = settingsPtr->parm("Zp:epsilon");
+  coupZpH   = parm("Zp:coupH");
+  gZp       = parm("Zp:gZp");
+  eps       = parm("Zp:epsilon");
   if (kinMix) coupZpH = eps;
 
   // Set pointer to particle properties and decay table.
@@ -346,19 +346,19 @@ double Sigma2ffbar2ZpH::sigmaHat() {
   double vf = 0., af = 0.;
   if (abs(id1)%2 == 0) {
     if (kinMix) {
-      vf = eps * couplingsPtr->vf(2);
-      af = eps * couplingsPtr->af(2);
+      vf = eps * coupSMPtr->vf(2);
+      af = eps * coupSMPtr->af(2);
     } else {
-      vf = settingsPtr->parm("Zp:vu");
-      af = settingsPtr->parm("Zp:au");
+      vf = parm("Zp:vu");
+      af = parm("Zp:au");
     }
   } else {
     if (kinMix) {
-      vf = eps * couplingsPtr->vf(1);
-      af = eps * couplingsPtr->af(1);
+      vf = eps * coupSMPtr->vf(1);
+      af = eps * coupSMPtr->af(1);
     } else {
-      vf = settingsPtr->parm("Zp:vd");
-      af = settingsPtr->parm("Zp:ad");
+      vf = parm("Zp:vd");
+      af = parm("Zp:ad");
     }
   }
 
@@ -530,8 +530,8 @@ void Sigma2gg2Sg2XXj::setIdColAcol() {
 void Sigma2qqbar2DY::initProc() {
 
   // Type of model, notably outgoing DM particle pair.
-  type  = settingsPtr->mode("DM:DYtype");
-  nplet = settingsPtr->mode("DM:Nplet");
+  type  = mode("DM:DYtype");
+  nplet = mode("DM:Nplet");
   if (type == 1) {
     nameSave = "q qbar -> Sl(DM) Sl(DM)*";
     id3 = 56;
@@ -552,9 +552,9 @@ void Sigma2qqbar2DY::initProc() {
   }
 
   // Set particle masses based on couplings (next-to-minimal DM).
-  M1     = settingsPtr->parm("DM:M1");
-  M2     = settingsPtr->parm("DM:M2");
-  Lambda = settingsPtr->parm("DM:Lambda");
+  M1     = parm("DM:M1");
+  M2     = parm("DM:M2");
+  Lambda = parm("DM:Lambda");
 
   // Mixing parameters.
   double vev = 174.0;
@@ -591,7 +591,7 @@ void Sigma2qqbar2DY::initProc() {
     GammaRes  = particleDataPtr->mWidth(24);
     m2Res     = mRes*mRes;
   }
-  xW = couplingsPtr->sin2thetaW();
+  xW = coupSMPtr->sin2thetaW();
 
   // Secondary open width fraction.
   openFracPair = particleDataPtr->resOpenFrac(id3, id4);
@@ -622,8 +622,8 @@ double Sigma2qqbar2DY::sigmaHat() {
   int    id1A  = abs(id1);
   double eQ    = (id1A%2 == 0) ? 2./3. : -1./3. ;
   double eSl   = -1. ;
-  double LqZ   = couplingsPtr->lf(abs(id1));
-  double RqZ   = couplingsPtr->rf(abs(id1));
+  double LqZ   = coupSMPtr->lf(abs(id1));
+  double RqZ   = coupSMPtr->rf(abs(id1));
 
   double sumColS = 0., sumColT = 0., sumInterference = 0.;
   double LL = 0., RR = 0.;
@@ -638,7 +638,7 @@ double Sigma2qqbar2DY::sigmaHat() {
   // s-channel Z/photon and interference.
   if (abs(id1) == abs(id2) && abs(id3) == abs(id4)) {
     double CoupZ;
-    CoupZ =  couplingsPtr->rf(11);
+    CoupZ =  coupSMPtr->rf(11);
 
     // Scalar lepton production.
     if (type == 1) {

@@ -1,5 +1,5 @@
 // LesHouches.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -992,7 +992,6 @@ bool LHAupLHEF::setNewEventLHEF() {
   std::string line, tag;
   std::stringstream ss(reader.eventComments);
   getPDFSave      = false;
-  getScale        = false;
   getScale        = (setScalesFromLHEF && reader.version == 1) ? false : true;
   getScaleShowers = false;
   while (getline(ss, line)) {
@@ -1058,11 +1057,12 @@ bool LHAupLHEF::setNewEventLHEF() {
       &reader.hepeup.weights_detailed, &reader.hepeup.weights_compressed,
       &reader.hepeup.scalesSave, &reader.hepeup.weightsSave,
       &reader.hepeup.rwgtSave, reader.weights_detailed_vector(),
+      reader.weightnames_detailed_vector(),
       reader.eventComments, reader.hepeup.XWGTUP);
   // Try to at least set the event attributes for 1.0
   } else {
     infoPtr->setLHEF3EventInfo( &reader.hepeup.attributes, 0, 0, 0, 0, 0,
-       vector<double>(), "", 1.0);
+       vector<double>(), vector<string>(), "", 1.0);
   }
 
   // Reading worked.
@@ -1213,8 +1213,8 @@ bool LHEF3FromPythia8::openLHEF(string fileNameIn) {
   const char* cstring = fileName.c_str();
   osLHEF.open(cstring, ios::out | ios::trunc);
   if (!osLHEF) {
-    infoPtr->errorMsg("Error in LHAup::openLHEF:"
-      " could not open file", fileName);
+    cout << "Error in LHAup::openLHEF: could not open file "
+         <<  fileName << endl;
     return false;
   }
 
@@ -1259,7 +1259,7 @@ bool LHEF3FromPythia8::setInit() {
   // The cross sections for the different subprocesses in pb.
   vector<double> XSECUP;
   for ( int i=0; i < heprup.NPRUP; ++i)
-    XSECUP.push_back(CONVERTMB2PB * infoPtr->sigmaGen());
+    XSECUP.push_back(CONVERTMB2PB * (infoPtr->sigmaGen()));
   heprup.XSECUP = XSECUP;
 
   // The statistical error in the cross sections for the different
@@ -1280,16 +1280,20 @@ bool LHEF3FromPythia8::setInit() {
   heprup.LPRUP = LPRUP;
 
   // Contents of the LHAinitrwgt tag
-  if (infoPtr->initrwgt) heprup.initrwgt = *(infoPtr->initrwgt);
+  if (infoPtr->initrwgt )
+    heprup.initrwgt = *(infoPtr->initrwgt);
 
   // Contents of the LHAgenerator tags.
-  if (infoPtr->generators) heprup.generators = *(infoPtr->generators);
+  if (infoPtr->generators)
+    heprup.generators = *(infoPtr->generators);
 
   // A map of the LHAweightgroup tags, indexed by name.
-  if (infoPtr->weightgroups) heprup.weightgroups = *(infoPtr->weightgroups);
+  if (infoPtr->weightgroups)
+    heprup.weightgroups = *(infoPtr->weightgroups);
 
   // A map of the LHAweight tags, indexed by name.
-  if (infoPtr->init_weights) heprup.weights = *(infoPtr->init_weights);
+  if (infoPtr->init_weights)
+    heprup.weights = *(infoPtr->init_weights);
 
   // Get init information.
   writer.version = 3;
@@ -1538,24 +1542,27 @@ bool LHEF3FromPythia8::setEvent(int) {
 
   // The weights associated with this event, as given by the LHAwgt tags.
   if (infoPtr->weights_detailed)
-    hepeup.weights_detailed = *(infoPtr->weights_detailed);
+    hepeup.weights_detailed               = *(infoPtr->weights_detailed);
 
   // The weights associated with this event, as given by the LHAweights tags.
   if (infoPtr->weights_compressed)
-    hepeup.weights_compressed              = *(infoPtr->weights_compressed);
+    hepeup.weights_compressed             = *(infoPtr->weights_compressed);
 
   // Contents of the LHAscales tag
-  if (infoPtr->scales) hepeup.scalesSave   = *(infoPtr->scales);
+  if (infoPtr->scales)
+    hepeup.scalesSave                     = *(infoPtr->scales);
 
   // Contents of the LHAweights tag (compressed format)
-  if (infoPtr->weights) hepeup.weightsSave = *(infoPtr->weights);
+  if (infoPtr->weights)
+    hepeup.weightsSave                    = *(infoPtr->weights);
 
   // Contents of the LHArwgt tag (detailed format)
-  if (infoPtr->rwgt) hepeup.rwgtSave       = *(infoPtr->rwgt);
+  if (infoPtr->rwgt)
+    hepeup.rwgtSave                       = *(infoPtr->rwgt);
 
   // Any other attributes.
   if (infoPtr->eventAttributes)
-    hepeup.attributes                      = *(infoPtr->eventAttributes);
+    hepeup.attributes                     = *(infoPtr->eventAttributes);
 
   // Not implemented yet:
   // Write event comments of input LHEF.

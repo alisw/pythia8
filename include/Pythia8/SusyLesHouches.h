@@ -1,5 +1,5 @@
 // SusyLesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -28,7 +28,7 @@ namespace Pythia8 {
   public:
 
     //Constructor.
-    LHblock<T>() : idnow(0), qDRbar(), i() {} ;
+    LHblock<T>() : idnow(0), qDRbar(), i(), val() {} ;
 
     //Does block exist?
     bool exists() { return int(entry.size()) == 0 ? false : true ; };
@@ -141,7 +141,13 @@ namespace Pythia8 {
       };
     };
 
-    // Assignment
+    // Copy constructor.
+    LHmatrixBlock(const LHmatrixBlock& m) : val(m.val) {
+      for (i=0;i<size;i++) for (j=0;j<=size;j++) entry[i][j] = m(i,j);
+      qDRbar = m.qDRbar;
+      initialized = m.initialized; }
+
+    // Assignment.
     LHmatrixBlock& operator=(const LHmatrixBlock& m) {
       if (this != &m) {
         for (i=0;i<size;i++) for (j=0;j<=size;j++) entry[i][j] = m(i,j);
@@ -216,7 +222,14 @@ namespace Pythia8 {
       };
     };
 
-    // Assignment
+    // Copy constructor.
+    LHtensor3Block(const LHtensor3Block& m) : val(m.val) {
+      for (i=0;i<size;i++) for (j=0;j<=size;j++) for (k=0;k<=size;k++)
+        entry[i][j][k] = m(i,j,k);
+      qDRbar = m.qDRbar;
+      initialized = m.initialized; };
+
+    // Assignment.
     LHtensor3Block& operator=(const LHtensor3Block& m) {
       if (this != &m) {
         for (i=0;i<size;i++) for (j=0;j<=size;j++) for (k=0;k<=size;k++)
@@ -441,7 +454,7 @@ public:
 
     // Set and Get comment
     void setComment(string comment) {commentP=comment;}
-    void getComment(string comment) {comment=commentP;}
+    void getComment(string& comment) {comment=commentP;}
 
     // Generic functions to get value
     bool get(int& val) {val=n; return isIntP;}

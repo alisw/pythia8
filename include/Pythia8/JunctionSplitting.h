@@ -1,5 +1,5 @@
 // JunctionSplitting.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,6 +16,7 @@
 #include "Pythia8/FragmentationFlavZpT.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StringLength.h"
 
@@ -26,21 +27,28 @@ namespace Pythia8 {
 // JunctionSplitting takes an event and seperate junction chains from
 // each other, such that no junctions are colour connected to each other.
 
-class JunctionSplitting {
+class JunctionSplitting : public PhysicsBase {
 
 public:
 
   // Constructor
-  JunctionSplitting() : eNormJunction(), allowDoubleJunRem(), infoPtr(),
-    rndmPtr() {}
+  JunctionSplitting() : eNormJunction(), allowDoubleJunRem() {}
 
   // Initialization.
-  void init(Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
-    ParticleData* particleDataPtrIn);
+  void init();
 
   // Test whether an event has a physical colour configuration.
   // It also splits junction pairs into pieces that PYTHIA can hadronize.
   bool checkColours(Event& event);
+
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(flavSel);
+    registerSubObject(pTSel);
+    registerSubObject(zSel);
+    registerSubObject(stringFrag);
+  }
 
 private:
 
@@ -51,11 +59,6 @@ private:
 
   double eNormJunction;
   bool allowDoubleJunRem;
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
 
   // Classes for flavour, pT and z generation.
   StringFlav flavSel;

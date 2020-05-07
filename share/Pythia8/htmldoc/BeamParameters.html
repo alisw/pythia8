@@ -48,7 +48,7 @@ Allowed codes include
 <br/><i>990 = Pomeron</i> (used in diffractive machinery; 
 here mainly for debug purposes), 
 <br/><i>22 = gamma</i> (for <i>gamma-gamma</i> and <i>gamma-hadron</i> 
-interactions,  info <a href="Photoproduction.html" target="page">here</a>), 
+interactions, more info <a href="Photoproduction.html" target="page">here</a>), 
 <br/><i>11 = e^-</i>, <i>-11 = e^+</i>, 
 <br/><i>13 = mu^-</i>, <i>-13 = mu^+</i>, 
 <br/>and a few more leptons/neutrinos in a few combinations. 
@@ -88,11 +88,11 @@ three-momentum of each incoming particle needs to be specified, see
 <code>Beams:pxA</code> through <code>Beams:pzB</code> below. 
    
 <br/><code>option </code><strong> 4</strong> : the beam and event information is stored in a 
-<a href="LesHouchesAccord.html" target="page">Les Houches Event File</a>, 
+<a href="LHEF.html" target="page">Les Houches Event File</a>, 
 see <code>Beams:LHEF</code> below. 
    
 <br/><code>option </code><strong> 5</strong> : the beam and event information is obtained by a 
-pointer to an <code><a href="LesHouchesAccord.html" target="page">LHAup</a></code> 
+pointer to an <code><a href="LHA.html" target="page">LHAup</a></code> 
 class instance. 
    
    
@@ -194,7 +194,9 @@ Only useful when <code>Beams:frameType</code> = 4 or 5.
  (<code>default = <strong>on</strong></code>)<br/>
 Read in LHEF header blocks and store them in the 
 <a href="EventInformation.html" target="page">Info</a> class. See also 
-<a href="LesHouchesAccord.html" target="page">LHAupLHEF</a> for  information. 
+<a href="LHA.html" target="page">LHAupLHEF</a> 
+and the <a href="LHEF.html" target="page">Les Houches Event files</a> 
+section for more information. 
    
  
 <a name="anchor17"></a>
@@ -353,7 +355,7 @@ experienced at hadron colliders. Thus it can be safely assumed that the
 physics does not change over the CM energy range probed, so that the 
 parameters of the physics initialization at the nominal energy can be 
 used as is. Therefore it can be used for all processes implemented in 
-PYTHIA. It can <b>not</b> be used for the  extensive energy spread, 
+PYTHIA. It can <b>not</b> be used for the more extensive energy spread, 
 however, e.g. as expected at linear <i>e^+ e^-</i> colliders. Also, 
 any attempt to combine it with external Les Houches input of 
 parton-level events is at own risk. This option cannot be combined with 
@@ -544,4 +546,4 @@ The time <i>t</i> of the interaction vertex is centered at this value.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

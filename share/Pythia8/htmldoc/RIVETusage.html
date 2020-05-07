@@ -30,7 +30,7 @@ be compiled with HepMC support, using the same version of HepMC used when
 compiling RIVET. This is setup through the PYTHIA <code>configure</code> 
 script e.g. 
 <pre> 
-  ./configure --with-hepmc=/path/to/HepMC --with-hepmcversion=HepMC.version.number 
+  ./configure --with-hepmc=/path/to/HepMC 
 </pre> 
 The PYTHIA library itself does not need to be recompiled. 
  
@@ -58,7 +58,7 @@ analysis</a>, or one you have created yourself. The output of RIVET is in
 the form of <code>.aida</code> files, containing the histograms for the 
 analysis, which can be processed further with RIVET (see the 
 <a href="http://projects.hepforge.org/rivet/trac/wiki/FirstRivetRun"> 
-RIVET documentation</a> for  details). 
+RIVET documentation</a> for more details). 
  
 <br/><br/> 
 The above examples requires that (potentially large) HepMC events are stored 
@@ -137,10 +137,10 @@ point. The lines:
     Main:analyses = ATLAS_2010_S8817804,ALICE_2010_S8625980,CMS_2011_S8957746 
     Main:writeHepMC = on 
 </pre> 
-provides the switch to run RIVET, and gives the user the possibility to add 
-any number of (installed) RIVET analyses to the run, as a comma separated list. 
-The last line is the switch needed to write a HepMC file. 
-The example is run with: 
+provides the switch to run RIVET, and gives the user the possibility 
+to add any number of (installed) RIVET analyses to the run, as a comma 
+separated list. The last line is the switch needed to write a HepMC 
+file.  The example is run with: 
 <pre> 
     ./main93 -c main93.cmnd 
 </pre> 
@@ -152,4 +152,4 @@ They are all displayed by running <code>./main93 -h</code>.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

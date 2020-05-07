@@ -1,5 +1,5 @@
 // BoseEinstein.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -39,20 +39,16 @@ const int    BoseEinstein::NCOMPSTEP  = 10;
 
 // Find settings. Precalculate table used to find momentum shifts.
 
-bool BoseEinstein::init(Info* infoPtrIn, Settings& settings,
-  ParticleData& particleData) {
-
-  // Save pointer.
-  infoPtr         = infoPtrIn;
+bool BoseEinstein::init() {
 
   // Main flags.
-  doPion   = settings.flag("BoseEinstein:Pion");
-  doKaon   = settings.flag("BoseEinstein:Kaon");
-  doEta    = settings.flag("BoseEinstein:Eta");
+  doPion   = flag("BoseEinstein:Pion");
+  doKaon   = flag("BoseEinstein:Kaon");
+  doEta    = flag("BoseEinstein:Eta");
 
   // Shape of Bose-Einstein enhancement/suppression.
-  lambda   = settings.parm("BoseEinstein:lambda");
-  QRef     = settings.parm("BoseEinstein:QRef");
+  lambda   = parm("BoseEinstein:lambda");
+  QRef     = parm("BoseEinstein:QRef");
 
   // Multiples and inverses (= "radii") of distance parameters in Q-space.
   QRef2    = 2. * QRef;
@@ -63,7 +59,7 @@ bool BoseEinstein::init(Info* infoPtrIn, Settings& settings,
 
   // Masses of particles with Bose-Einstein implemented.
   for (int iSpecies = 0; iSpecies < 9; ++iSpecies)
-    mHadron[iSpecies] = particleData.m0( IDHADRON[iSpecies] );
+    mHadron[iSpecies] = particleDataPtr->m0( IDHADRON[iSpecies] );
 
   // Pair pi, K, eta and eta' masses for use in tables.
   mPair[0] = 2. * mHadron[0];

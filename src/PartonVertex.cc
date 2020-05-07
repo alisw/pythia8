@@ -1,5 +1,5 @@
 // PartonVertex.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,11 +19,11 @@ namespace Pythia8 {
 
 void PartonVertex::init() {
 
-    doVertex      = settingsPtr->flag("PartonVertex:setVertex");
-    modeVertex    = settingsPtr->mode("PartonVertex:modeVertex");
-    rProton       = settingsPtr->parm("PartonVertex:ProtonRadius");
-    pTmin         = settingsPtr->parm("PartonVertex:pTmin");
-    widthEmission = settingsPtr->parm("PartonVertex:EmissionWidth");
+    doVertex      = flag("PartonVertex:setVertex");
+    modeVertex    = mode("PartonVertex:modeVertex");
+    rProton       = parm("PartonVertex:ProtonRadius");
+    pTmin         = parm("PartonVertex:pTmin");
+    widthEmission = parm("PartonVertex:EmissionWidth");
     bScale        = 2.187 / (2. * rProton);
 
 }
@@ -33,15 +33,13 @@ void PartonVertex::init() {
 // Select vertex for a beam (remnant) particle.
 
 void PartonVertex::vertexBeam( int iNow, int iBeam, Event& event) {
-  double xbA = -bNow/2.;
-  double xbB = bNow/2.;
+  double xbA = -0.5 * bNow;
+  double xbB =  0.5 * bNow;
   // Don't do any rotation in phi for these simple models.
-  if(iBeam == 0)
-    event[iNow].vProd(xbA, 0., 0., 0.);
-  else if(iBeam == 1)
-    event[iNow].vProd(xbB, 0., 0. ,0.);
-  else
-    infoPtr->errorMsg("Error in PartonVertex:vertexBeam: Wrong beam index.");
+  if      (iBeam == 0) event[iNow].vProd( xbA * FM2MM, 0., 0., 0.);
+  else if (iBeam == 1) event[iNow].vProd( xbB * FM2MM, 0., 0. ,0.);
+  else infoPtr->errorMsg("Error in PartonVertex:vertexBeam: "
+      "Wrong beam index.");
 }
 
 //--------------------------------------------------------------------------
@@ -85,7 +83,7 @@ void PartonVertex::vertexMPI( int iBeg, int nAdd, double bNowIn,
     }
 
     // Set production vertices.
-    event[iNow].vProd( x, y, 0., 0.);
+    event[iNow].vProd( x * FM2MM, y * FM2MM, 0., 0.);
   }
 
 }
@@ -109,8 +107,7 @@ void PartonVertex::vertexFSR( int iNow, Event& event) {
   double pT = max( event[iNow].pT(), pTmin);
   pair<double, double> xy = rndmPtr->gauss2();
   Vec4 vSmear = (widthEmission / pT) * Vec4( xy.first, xy.second, 0., 0.);
-  event[iNow].vProd( vStart + vSmear);
-
+  event[iNow].vProd( vStart + vSmear * FM2MM);
 
 }
 
@@ -133,7 +130,7 @@ void PartonVertex::vertexISR( int iNow, Event& event) {
   double pT = max( event[iNow].pT(), pTmin);
   pair<double, double> xy = rndmPtr->gauss2();
   Vec4 vSmear = (widthEmission / pT) * Vec4( xy.first, xy.second, 0., 0.);
-  event[iNow].vProd( vStart + vSmear);
+  event[iNow].vProd( vStart + vSmear * FM2MM);
 
 }
 

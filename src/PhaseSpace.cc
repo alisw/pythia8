@@ -1,5 +1,5 @@
 // PhaseSpace.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -85,23 +85,10 @@ const double PhaseSpace::WTCORRECTION[11] = { 1., 1., 1.,
 
 // Perform simple initialization and store pointers.
 
-void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
-  Info* infoPtrIn, Settings* settingsPtrIn, ParticleData* particleDataPtrIn,
-  Rndm* rndmPtrIn, BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  Couplings* couplingsPtrIn, SigmaTotal* sigmaTotPtrIn,
-  UserHooks* userHooksPtrIn) {
+void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn) {
 
   // Store input pointers for future use.
   sigmaProcessPtr = sigmaProcessPtrIn;
-  infoPtr         = infoPtrIn;
-  settingsPtr     = settingsPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  beamAPtr        = beamAPtrIn;
-  beamBPtr        = beamBPtrIn;
-  couplingsPtr    = couplingsPtrIn;
-  sigmaTotPtr     = sigmaTotPtrIn;
-  userHooksPtr    = userHooksPtrIn;
 
   // Some commonly used beam information.
   idA             = beamAPtr->id();
@@ -153,49 +140,49 @@ void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
   }
 
   // Standard phase space cuts.
-  if (isFirst || settingsPtr->flag("PhaseSpace:sameForSecond")) {
-    mHatGlobalMin      = settingsPtr->parm("PhaseSpace:mHatMin");
-    mHatGlobalMax      = settingsPtr->parm("PhaseSpace:mHatMax");
-    pTHatGlobalMin     = settingsPtr->parm("PhaseSpace:pTHatMin");
-    pTHatGlobalMax     = settingsPtr->parm("PhaseSpace:pTHatMax");
+  if (isFirst || flag("PhaseSpace:sameForSecond")) {
+    mHatGlobalMin      = parm("PhaseSpace:mHatMin");
+    mHatGlobalMax      = parm("PhaseSpace:mHatMax");
+    pTHatGlobalMin     = parm("PhaseSpace:pTHatMin");
+    pTHatGlobalMax     = parm("PhaseSpace:pTHatMax");
 
   // Optionally separate phase space cuts for second hard process.
   } else {
-    mHatGlobalMin      = settingsPtr->parm("PhaseSpace:mHatMinSecond");
-    mHatGlobalMax      = settingsPtr->parm("PhaseSpace:mHatMaxSecond");
-    pTHatGlobalMin     = settingsPtr->parm("PhaseSpace:pTHatMinSecond");
-    pTHatGlobalMax     = settingsPtr->parm("PhaseSpace:pTHatMaxSecond");
+    mHatGlobalMin      = parm("PhaseSpace:mHatMinSecond");
+    mHatGlobalMax      = parm("PhaseSpace:mHatMaxSecond");
+    pTHatGlobalMin     = parm("PhaseSpace:pTHatMinSecond");
+    pTHatGlobalMax     = parm("PhaseSpace:pTHatMaxSecond");
   }
 
   // Cutoff against divergences at pT -> 0.
-  pTHatMinDiverge      = settingsPtr->parm("PhaseSpace:pTHatMinDiverge");
+  pTHatMinDiverge      = parm("PhaseSpace:pTHatMinDiverge");
 
   // Special cut on DIS Q2 = -tHat.
-  Q2GlobalMin          = settingsPtr->parm("PhaseSpace:Q2Min");
+  Q2GlobalMin          = parm("PhaseSpace:Q2Min");
   hasQ2Min             = ( Q2GlobalMin >= pow2(pTHatMinDiverge) );
 
   // For photons from lepton beams match the cuts to gm+gm system cuts.
   if ( beamHasResGamma ) {
-    double Wmax         = settingsPtr->parm("Photon:Wmax");
+    double Wmax         = parm("Photon:Wmax");
     if ( (mHatGlobalMax > Wmax) || mHatGlobalMax < 0.) mHatGlobalMax = Wmax;
   }
 
   // When to use Breit-Wigners.
-  useBreitWigners      = settingsPtr->flag("PhaseSpace:useBreitWigners");
-  minWidthBreitWigners = settingsPtr->parm("PhaseSpace:minWidthBreitWigners");
-  minWidthNarrowBW     = settingsPtr->parm("PhaseSpace:minWidthNarrowBW");
+  useBreitWigners      = flag("PhaseSpace:useBreitWigners");
+  minWidthBreitWigners = parm("PhaseSpace:minWidthBreitWigners");
+  minWidthNarrowBW     = parm("PhaseSpace:minWidthNarrowBW");
 
   // Whether generation is with variable energy.
-  doEnergySpread       = settingsPtr->flag("Beams:allowMomentumSpread")
-                      || settingsPtr->flag("Beams:allowVariableEnergy");
+  doEnergySpread       = flag("Beams:allowMomentumSpread")
+                      || flag("Beams:allowVariableEnergy");
 
   // Flags for maximization information and violation handling.
-  showSearch           = settingsPtr->flag("PhaseSpace:showSearch");
-  showViolation        = settingsPtr->flag("PhaseSpace:showViolation");
-  increaseMaximum      = settingsPtr->flag("PhaseSpace:increaseMaximum");
+  showSearch           = flag("PhaseSpace:showSearch");
+  showViolation        = flag("PhaseSpace:showViolation");
+  increaseMaximum      = flag("PhaseSpace:increaseMaximum");
 
   // Know whether a Z0 is pure Z0 or admixed with gamma*.
-  gmZmodeGlobal        = settingsPtr->mode("WeakZ0:gmZmode");
+  gmZmodeGlobal        = mode("WeakZ0:gmZmode");
 
   // Flags if user should be allowed to reweight cross section.
   canModifySigma   = (userHooksPtr != 0)
@@ -204,9 +191,9 @@ void PhaseSpace::init(bool isFirst, SigmaProcess* sigmaProcessPtrIn,
                    ? userHooksPtr->canBiasSelection() : false;
 
   // Parameters for simplified reweighting of 2 -> 2 processes.
-  canBias2Sel      = settingsPtr->flag("PhaseSpace:bias2Selection");
-  bias2SelPow      = settingsPtr->parm("PhaseSpace:bias2SelectionPow");
-  bias2SelRef      = settingsPtr->parm("PhaseSpace:bias2SelectionRef");
+  canBias2Sel      = flag("PhaseSpace:bias2Selection");
+  bias2SelPow      = parm("PhaseSpace:bias2SelectionPow");
+  bias2SelRef      = parm("PhaseSpace:bias2SelectionRef");
   if (canBias2Sel) pTHatGlobalMin = max( pTHatGlobalMin, pTHatMinDiverge);
 
   // Default event-specific kinematics properties.
@@ -317,23 +304,10 @@ void PhaseSpace::decayKinematicsStep( Event& process, int iRes) {
     double m1t  = process[i1].m();
     double m2t  = process[i2].m();
 
-    // Energies and absolute momentum in the rest frame.
-    double e1   = 0.5 * (m0*m0 + m1t*m1t - m2t*m2t) / m0;
-    double e2   = 0.5 * (m0*m0 + m2t*m2t - m1t*m1t) / m0;
-    double p12  = 0.5 * sqrtpos( (m0 - m1t - m2t) * (m0 + m1t + m2t)
-      * (m0 + m1t - m2t) * (m0 - m1t + m2t) ) / m0;
-
-    // Pick isotropic angles to give three-momentum.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi12    = 2. * M_PI * rndmPtr->flat();
-    double pX       = p12 * sinTheta * cos(phi12);
-    double pY       = p12 * sinTheta * sin(phi12);
-    double pZ       = p12 * cosTheta;
-
     // Fill four-momenta in mother rest frame and then boost to lab frame.
-    Vec4 p1(  pX,  pY,  pZ, e1);
-    Vec4 p2( -pX, -pY, -pZ, e2);
+    pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(m0, m1t, m2t);
+    Vec4 p1(ps.first);
+    Vec4 p2(ps.second);
     p1.bst( pRes );
     p2.bst( pRes );
 
@@ -381,32 +355,19 @@ void PhaseSpace::decayKinematicsStep( Event& process, int iRes) {
     } while ( wtPS < rndmPtr->flat() * wtPSmax );
 
     // Set up m23 -> m2 + m3 isotropic in its rest frame.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi23    = 2. * M_PI * rndmPtr->flat();
-    double pX       = p23Abs * sinTheta * cos(phi23);
-    double pY       = p23Abs * sinTheta * sin(phi23);
-    double pZ       = p23Abs * cosTheta;
-    double e2       = sqrt( m2t*m2t + p23Abs*p23Abs);
-    double e3       = sqrt( m3t*m3t + p23Abs*p23Abs);
-    Vec4 p2(  pX,  pY,  pZ, e2);
-    Vec4 p3( -pX, -pY, -pZ, e3);
+    pair<Vec4, Vec4> ps23 = rndmPtr->phaseSpace2(m23, m2t, m3t);
+    Vec4 p2(ps23.first);
+    Vec4 p3(ps23.second);
 
     // Set up 0 -> 1 + 23 isotropic in its rest frame.
-    cosTheta        = 2. * rndmPtr->flat() - 1.;
-    sinTheta        = sqrt(1. - cosTheta*cosTheta);
-    phi23           = 2. * M_PI * rndmPtr->flat();
-    pX              = p1Abs * sinTheta * cos(phi23);
-    pY              = p1Abs * sinTheta * sin(phi23);
-    pZ              = p1Abs * cosTheta;
-    double e1       = sqrt( m1t*m1t + p1Abs*p1Abs);
-    double e23      = sqrt( m23*m23 + p1Abs*p1Abs);
-    Vec4 p1( pX, pY, pZ, e1);
+    pair<Vec4, Vec4> ps123 = rndmPtr->phaseSpace2(m0, m1t, m23);
+    Vec4 p1(ps123.first);
 
-    // Boost 2 + 3 to the 0 rest frame and then boost to lab frame.
-    Vec4 p23( -pX, -pY, -pZ, e23);
-    p2.bst( p23 );
-    p3.bst( p23 );
+    // Boost 2 + 3 to the 0 rest frame.
+    p2.bst( ps123.second );
+    p3.bst( ps123.second );
+
+    // Boost from rest frame to lab frame.
     p1.bst( pRes );
     p2.bst( pRes );
     p3.bst( pRes );
@@ -484,23 +445,9 @@ void PhaseSpace::decayKinematicsStep( Event& process, int iRes) {
   vector<Vec4> pInv;
   pInv.resize(mult + 1);
   for (int i = 1; i < mult; ++i) {
-    double p12 = 0.5 * sqrtpos( (mInv[i] - mInv[i+1] - mProd[i])
-      * (mInv[i] + mInv[i+1] + mProd[i]) * (mInv[i] + mInv[i+1] - mProd[i])
-      * (mInv[i] - mInv[i+1] + mProd[i]) ) / mInv[i];
-
-    // Isotropic angles give three-momentum.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phiLoc   = 2. * M_PI * rndmPtr->flat();
-    double pX       = p12 * sinTheta * cos(phiLoc);
-    double pY       = p12 * sinTheta * sin(phiLoc);
-    double pZ       = p12 * cosTheta;
-
-    // Calculate energies, fill four-momenta.
-    double eHad     = sqrt( mProd[i]*mProd[i] + p12*p12);
-    double eInv     = sqrt( mInv[i+1]*mInv[i+1] + p12*p12);
-    pProd.push_back( Vec4( pX, pY, pZ, eHad) );
-    pInv[i+1].p( -pX, -pY, -pZ, eInv);
+    pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(mInv[i], mInv[i+1], mProd[i]);
+    pInv[i+1].p(ps.first);
+    pProd.push_back(ps.second);
   }
   pProd.push_back( pInv[mult] );
 
@@ -2173,7 +2120,7 @@ bool PhaseSpace2to2tauyz::finalKin() {
   // Special kinematics for DIS to preserve lepton mass.
   } else if ( ( (beamAPtr->isLepton() && beamBPtr->isHadron())
              || (beamBPtr->isLepton() && beamAPtr->isHadron()) )
-             && !settingsPtr->flag("PDF:lepton2gamma") ) {
+             && !flag("PDF:lepton2gamma") ) {
     mH[1] = mA;
     mH[2] = mB;
     double pzAcm = 0.5 * sqrtpos( (eCM + mA + mB) * (eCM - mA - mB)
@@ -2542,9 +2489,6 @@ double PhaseSpace2to2tauyz::weightGammaPDFApprox(){
 // Max number of tries to find acceptable t.
 const int    PhaseSpace2to2elastic::NTRY     = 1000;
 
-// Conversion coefficient (mb <-> GeV^2).
-const double PhaseSpace2to2elastic::HBARC2   = 0.38938;
-
 // Width and relative importance of two exponentials.
 const double PhaseSpace2to2elastic::BNARROW  = 10.;
 const double PhaseSpace2to2elastic::BWIDE    = 1.;
@@ -2559,7 +2503,7 @@ const double PhaseSpace2to2elastic::TOFFSET  = -0.2;
 bool PhaseSpace2to2elastic::setupSampling() {
 
   // Flag if a photon inside lepton beam.
-  hasGamma = settingsPtr->flag("PDF:lepton2gamma");
+  hasGamma = flag("PDF:lepton2gamma");
 
   // Flag if photon has a VMD state.
   hasVMD = infoPtr->isVMDstateA() || infoPtr->isVMDstateB();
@@ -2594,7 +2538,7 @@ bool PhaseSpace2to2elastic::setupSampling() {
   // Character of elastic generation.
   isOneExp   = sigmaTotPtr->bElIsExp();
   useCoulomb = sigmaTotPtr->hasCoulomb();
-  alphaEM0   = settingsPtr->parm("StandardModel:alphaEM0");
+  alphaEM0   = parm("StandardModel:alphaEM0");
 
   // Squared and outgoing masses of particles.
   // Recalculated later if photon fluctuates into different vector mesons.
@@ -2606,7 +2550,7 @@ bool PhaseSpace2to2elastic::setupSampling() {
   // Determine maximum possible t range.
   lambda12S  = pow2(s - s1 - s2) - 4. * s1 * s2 ;
   tLow       = - lambda12S / s;
-  tUpp       = (useCoulomb) ? -settingsPtr->parm("SigmaElastic:tAbsMin") : 0.;
+  tUpp       = (useCoulomb) ? -parm("SigmaElastic:tAbsMin") : 0.;
 
   // Upper estimate as sum of two exponentials and a Coulomb.
   // VMD: Start with bNarrow but recalculate when VM state sampled in trialKin.
@@ -2624,7 +2568,7 @@ bool PhaseSpace2to2elastic::setupSampling() {
     sigNorm1 = sigRef / (bSlope1 + rel2 * bSlope2);
     sigNorm2 = sigNorm1 * rel2;
   }
-  sigNorm3   = (useCoulomb) ? -2. * HBARC2 * 4. * M_PI * pow2(alphaEM0)
+  sigNorm3   = (useCoulomb) ? -2. * HBARCSQ * 4. * M_PI * pow2(alphaEM0)
                / tUpp : 0.;
   sigNormSum = sigNorm1 + sigNorm2 + sigNorm3;
 
@@ -2704,7 +2648,7 @@ bool PhaseSpace2to2elastic::trialKin( bool, bool ) {
     tempC    = (s3 - s1) * (s4 - s2) + (s1 + s4 - s2 - s3)
              * (s1 * s4 - s2 * s3) / s;
     tLow     = -0.5 * (tempA + tempB);
-    tUpp     = (useCoulomb) ? -settingsPtr->parm("SigmaElastic:tAbsMin")
+    tUpp     = (useCoulomb) ? -parm("SigmaElastic:tAbsMin")
              : tempC / tLow;
 
     // Recalculate the elastic cross section with the sampled state
@@ -2730,7 +2674,7 @@ bool PhaseSpace2to2elastic::trialKin( bool, bool ) {
       sigNorm1 = sigRef / (bSlope1 + rel2 * bSlope2);
       sigNorm2 = sigNorm1 * rel2;
     }
-    sigNorm3   = (useCoulomb) ? -2. * HBARC2 * 4. * M_PI * pow2(alphaEM0)
+    sigNorm3   = (useCoulomb) ? -2. * HBARCSQ * 4. * M_PI * pow2(alphaEM0)
                / tUpp : 0.;
     sigNormSum = sigNorm1 + sigNorm2 + sigNorm3;
   }
@@ -2886,7 +2830,7 @@ const double PhaseSpace2to2diffractive::SPROTON = 0.8803544;
 bool PhaseSpace2to2diffractive::setupSampling() {
 
   // Flag if a photon inside lepton beam.
-  hasGamma = settingsPtr->flag("PDF:lepton2gamma");
+  hasGamma = flag("PDF:lepton2gamma");
 
   // Flag if photon has a VMD state.
   hasVMD = infoPtr->isVMDstateA() || infoPtr->isVMDstateB();
@@ -3018,8 +2962,8 @@ bool PhaseSpace2to2diffractive::trialKin( bool, bool ) {
 
     // Calculate the total weight and warn if unphysical weight.
     wt *= wtSigma * gammaKinPtr->weight();
-    if ( wt > 1. ) infoPtr->errorMsg("Warning in PhaseSpace2to2diffractive::"
-      "trialKin: weight above unity");
+    if ( wt > 1. ) infoPtr->errorMsg("Warning in PhaseSpace2to2diffractive"
+      "::trialKin: weight above unity");
 
     // Correct for over-estimated cross section and x_gamma limits.
     if ( wt < rndmPtr->flat() ) return false;
@@ -3447,7 +3391,7 @@ bool PhaseSpace2to3diffractive::finalKin() {
 bool PhaseSpace2to2nondiffractive::setupSampling(){
 
   // Flag if a photon inside lepton beam.
-  hasGamma = settingsPtr->flag("PDF:lepton2gamma");
+  hasGamma = flag("PDF:lepton2gamma");
 
   // Default behaviour with usual hadron beams.
   if (!hasGamma) {
@@ -3491,8 +3435,8 @@ bool PhaseSpace2to2nondiffractive::trialKin( bool, bool) {
 
     // Calculate the total weight and warn if unphysical weight.
     wt *= wtSigma * gammaKinPtr->weight();
-    if ( wt > 1. ) infoPtr->errorMsg("Warning in PhaseSpace2to2nondiffractive"
-      "::trialKin: weight above unity");
+    if ( wt > 1. ) infoPtr->errorMsg("Warning in "
+      "PhaseSpace2to2nondiffractive::trialKin: weight above unity");
 
     // Correct for over-estimated cross section and x_gamma limits.
     if ( wt < rndmPtr->flat() ) return false;
@@ -3731,11 +3675,11 @@ bool PhaseSpace2to3tauycyl::finalKin() {
 bool PhaseSpace2to3yyycyl::setupSampling() {
 
   // Phase space cuts specifically for 2 -> 3 QCD processes.
-  pTHat3Min            = settingsPtr->parm("PhaseSpace:pTHat3Min");
-  pTHat3Max            = settingsPtr->parm("PhaseSpace:pTHat3Max");
-  pTHat5Min            = settingsPtr->parm("PhaseSpace:pTHat5Min");
-  pTHat5Max            = settingsPtr->parm("PhaseSpace:pTHat5Max");
-  RsepMin              = settingsPtr->parm("PhaseSpace:RsepMin");
+  pTHat3Min            = parm("PhaseSpace:pTHat3Min");
+  pTHat3Max            = parm("PhaseSpace:pTHat3Max");
+  pTHat5Min            = parm("PhaseSpace:pTHat5Min");
+  pTHat5Max            = parm("PhaseSpace:pTHat5Max");
+  RsepMin              = parm("PhaseSpace:RsepMin");
   R2sepMin             = pow2(RsepMin);
 
   // If both beams are baryons then softer PDF's than for mesons/Pomerons.
@@ -3789,7 +3733,7 @@ bool PhaseSpace2to3yyycyl::setupSampling() {
       pT4   = pT3 - pT5;
       p4cm  = pT4 * Vec4( -1., 0.,  sinhR, coshR );
       p5cm  = pT5 * Vec4( -1., 0., -sinhR, coshR );
-      y3    = -1.2 + 0.2 * (iStep/10);
+      y3    = -1.2 + 0.2 * int(iStep/10);
       p3cm  = pT3 * Vec4( 1., 0., sinh(y3), cosh(y3));
       betaZ = (p3cm.pz() + p4cm.pz() + p5cm.pz())
             / (p3cm.e()  + p4cm.e()  + p5cm.e());

@@ -1,5 +1,5 @@
-<chapter name="The Settings Scheme"> 
-<h2>The Settings Scheme</h2> 
+<chapter name="Settings Scheme"> 
+<h2>Settings Scheme</h2> 
  
 The <code>Settings</code> class keeps track of all the flags, modes, 
 parameters and words used during the event generation. As such, it 
@@ -658,4 +658,4 @@ hard decisions.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

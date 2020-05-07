@@ -1,5 +1,5 @@
 // GeneratorInput.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -37,7 +37,7 @@ class AlpgenPar {
 public:
 
   // Constructor
-  AlpgenPar(Info *infoPtrIn = NULL) : infoPtr(infoPtrIn) {}
+  AlpgenPar() {}
 
   // Parse as incoming ALPGEN parameter file (passed as string)
   bool parse(const string paramStr);
@@ -70,9 +70,6 @@ private:
   // Storage for parameters
   map<string,double> params;
 
-  // Info pointer if provided
-  Info* infoPtr;
-
   // Constants
   static const double ZEROTHRESHOLD;
 
@@ -88,7 +85,7 @@ class LHAupAlpgen : public LHAup {
 public:
 
   // Constructor and destructor.
-  LHAupAlpgen(const char *baseFNin, Info *infoPtrIn = NULL);
+  LHAupAlpgen(const char *baseFNin);
   ~LHAupAlpgen() { closeFile(isUnw, ifsUnw); }
 
   // Override fileFound routine from LHAup.
@@ -139,7 +136,7 @@ public:
 
   // Constructor and destructor
   AlpgenHooks(Pythia &pythia);
-  ~AlpgenHooks() { if (LHAagPtr) delete LHAagPtr; }
+  ~AlpgenHooks() {}
 
   // Override initAfterBeams routine from UserHooks
   bool initAfterBeams();
@@ -147,7 +144,7 @@ public:
 private:
 
   // LHAupAlpgen pointer
-  LHAupAlpgen* LHAagPtr;
+  shared_ptr<LHAupAlpgen> LHAagPtr;
 
 };
 
@@ -161,7 +158,7 @@ class MadgraphPar {
 public:
 
   // Constructor
-  MadgraphPar(Info *infoPtrIn = NULL) : infoPtr(infoPtrIn) {}
+  MadgraphPar() {}
 
   // Parse an incoming Madgraph parameter file string
   bool parse(const string paramStr);
@@ -193,9 +190,6 @@ private:
 
   // Storage for parameters
   map<string,double> params;
-
-  // Info pointer if provided
-  Info *infoPtr;
 
   // Constants
   static const double ZEROTHRESHOLD;
@@ -340,8 +334,8 @@ inline void AlpgenPar::warnParamOverwrite(const string &paramIn, double val) {
   // Check if present and if new value is different
   if (haveParam(paramIn) &&
       abs(getParam(paramIn) - val) > ZEROTHRESHOLD) {
-    if (infoPtr) infoPtr->errorMsg("Warning in LHAupAlpgen::"
-        "warnParamOverwrite: overwriting existing parameter", paramIn);
+    cout << "Warning in LHAupAlpgen::warnParamOverwrite:"
+         << " overwriting existing parameter" << paramIn << endl;
   }
 }
 
@@ -391,18 +385,15 @@ const double LHAupAlpgen::INCOMINGMIN     = 1e-3;
 
 // Constructor. Opens parameter file and parses then opens event file.
 
-LHAupAlpgen::LHAupAlpgen(const char* baseFNin, Info* infoPtrIn)
-  : baseFN(baseFNin), alpgenPar(infoPtrIn), isUnw(NULL) {
-
-  // Set the info pointer if given
-  if (infoPtrIn) setPtr(infoPtrIn);
+LHAupAlpgen::LHAupAlpgen(const char* baseFNin)
+  : baseFN(baseFNin), alpgenPar(), isUnw(NULL) {
 
   // Read in '_unw.par' file to get parameters
   ifstream  ifsPar;
   istream*  isPar = NULL;
 
   // Try gzip file first then normal file afterwards
-#ifdef GZIPSUPPORT
+#ifdef GZIP
   parFN = baseFN + "_unw.par.gz";
   isPar = openFile(parFN.c_str(), ifsPar);
   if (!ifsPar.is_open()) closeFile(isPar, ifsPar);
@@ -411,8 +402,8 @@ LHAupAlpgen::LHAupAlpgen(const char* baseFNin, Info* infoPtrIn)
     parFN = baseFN + "_unw.par";
     isPar = openFile(parFN.c_str(), ifsPar);
     if (!ifsPar.is_open()) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::LHAupAlpgen: "
-          "cannot open parameter file", parFN);
+      cout << "Error in LHAupAlpgen::LHAupAlpgen: "
+           << "cannot open parameter file " << parFN << endl;
       closeFile(isPar, ifsPar);
       return;
     }
@@ -424,18 +415,18 @@ LHAupAlpgen::LHAupAlpgen(const char* baseFNin, Info* infoPtrIn)
 
   // Make sure we reached EOF and not other error
   if (ifsPar.bad()) {
-    if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::LHAupAlpgen: "
-        "cannot read parameter file", parFN);
+    cout << "Error in LHAupAlpgen::LHAupAlpgen: "
+         << "cannot read parameter file " << parFN << endl;
     return;
   }
   closeFile(isPar, ifsPar);
 
   // Parse file and set LHEF header
   alpgenPar.parse(paramStr);
-  if (infoPtr) setInfoHeader("AlpgenPar", paramStr);
+  setInfoHeader("AlpgenPar", paramStr);
 
   // Open '.unw' events file (with possible gzip support)
-#ifdef GZIPSUPPORT
+#ifdef GZIP
   unwFN = baseFN + ".unw.gz";
   isUnw = openFile(unwFN.c_str(), ifsUnw);
   if (!ifsUnw.is_open()) closeFile(isUnw, ifsUnw);
@@ -444,8 +435,8 @@ LHAupAlpgen::LHAupAlpgen(const char* baseFNin, Info* infoPtrIn)
     unwFN = baseFN + ".unw";
     isUnw = openFile(unwFN.c_str(), ifsUnw);
     if (!ifsUnw.is_open()) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::LHAupAlpgen: "
-          "cannot open event file", unwFN);
+      cout << "Error in LHAupAlpgen::LHAupAlpgen: "
+           << "cannot open event file " << unwFN << endl;
       closeFile(isUnw, ifsUnw);
     }
   }
@@ -462,8 +453,8 @@ inline bool LHAupAlpgen::setInit() {
   if (!alpgenPar.haveParam("ih2") || !alpgenPar.haveParam("ebeam")  ||
       !alpgenPar.haveParam("hpc") || !alpgenPar.haveParam("xsecup") ||
       !alpgenPar.haveParam("xerrup")) {
-    if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setInit: "
-        "missing input parameters");
+    cout << "Error in LHAupAlpgen::setInit: "
+         << "missing input parameters" << endl;
     return false;
   }
 
@@ -490,8 +481,8 @@ inline bool LHAupAlpgen::setInit() {
 
   // Check for unsupported processes
   if (lprup == 7 || lprup == 8 || lprup == 13) {
-    if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setInit: "
-        "process not implemented");
+    cout << "Error in LHAupAlpgen::setInit: "
+         << "process not implemented" << endl;
     return false;
   }
 
@@ -502,8 +493,8 @@ inline bool LHAupAlpgen::setInit() {
   //   16 = QQbar + gamma   + jets
   if (lprup == 6 || lprup == 7 || lprup == 8 || lprup == 16) {
     if (!alpgenPar.haveParam("ihvy")) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setInit: "
-          "heavy flavour information not present");
+      cout << "Error in LHAupAlpgen::setInit: "
+           << "heavy flavour information not present" << endl;
       return false;
     }
     ihvy1 = alpgenPar.getParamAsInt("ihvy");
@@ -511,8 +502,8 @@ inline bool LHAupAlpgen::setInit() {
   } else ihvy1 = -1;
   if (lprup == 7) {
     if (!alpgenPar.haveParam("ihvy2")) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setInit: "
-          "heavy flavour information not present");
+      cout << "Error in LHAupAlpgen::setInit: "
+           << "heavy flavour information not present" << endl;
       return false;
     }
     ihvy2 = alpgenPar.getParamAsInt("ihvy2");
@@ -521,8 +512,8 @@ inline bool LHAupAlpgen::setInit() {
   mb = -1.;
   if (lprup == 13) {
     if (!alpgenPar.haveParam("mb")) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setInit: "
-          "heavy flavour information not present");
+      cout << "Error in LHAupAlpgen::setInit: "
+           << "heavy flavour information not present" << endl;
       return false;
     }
     mb = alpgenPar.getParam("mb");
@@ -558,13 +549,13 @@ inline bool LHAupAlpgen::setEvent(int) {
   if (!getline(*isUnw, line)) {
     // Read was bad
     if (ifsUnw.bad()) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setEvent: "
-          "could not read events from file");
+      cout << "Error in LHAupAlpgen::setEvent: "
+           << "could not read events from file" << endl;
       return false;
     }
     // End of file reached
-    if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setEvent: "
-        "end of file reached");
+    cout << "Error in LHAupAlpgen::setEvent: "
+         << "end of file reached" << endl;
     return false;
   }
   istringstream iss1(line);
@@ -590,8 +581,8 @@ inline bool LHAupAlpgen::setEvent(int) {
   for (int i = 0; i < nParton; i++) {
     // Get the next line
     if (!getline(*isUnw, line)) {
-      if (infoPtr) infoPtr->errorMsg("Error in LHAupAlpgen::setEvent: "
-          "could not read events from file");
+      cout << "Error in LHAupAlpgen::setEvent: "
+           << "could not read events from file" << endl;
       return false;
     }
     istringstream iss2(line);
@@ -714,16 +705,18 @@ inline bool LHAupAlpgen::addResonances() {
     // Check that we get the expected resonance type; Z/gamma*
     if (lprup == 2 || lprup == 4) {
       if (idT != 23) {
-        if (infoPtr) infoPtr->errorMsg("Error in "
-            "LHAupAlpgen::addResonances: wrong resonance type in event");
+        cout << "Error in "
+             << "LHAupAlpgen::addResonances: wrong resonance type in event"
+             << endl;
         return false;
       }
 
     // W's
     } else {
       if (abs(idT) != 24) {
-        if (infoPtr) infoPtr->errorMsg("Error in "
-            "LHAupAlpgen::addResonances: wrong resonance type in event");
+        cout << "Error in "
+             << "LHAupAlpgen::addResonances: wrong resonance type in event"
+             << endl;
         return false;
       }
     }
@@ -962,8 +955,8 @@ inline bool LHAupAlpgen::rescaleMomenta() {
 
     // Warn if resulting changes above warning threshold
     if (pxDiff > PTWARNTHRESHOLD || pyDiff > PTWARNTHRESHOLD) {
-      if (infoPtr) infoPtr->errorMsg("Warning in LHAupAlpgen::setEvent: "
-          "large pT imbalance in incoming event");
+      cout << "Warning in LHAupAlpgen::setEvent: "
+           << "large pT imbalance in incoming event" << endl;
 
       // Debug printout
       if (LHADEBUGRESCALE) {
@@ -999,8 +992,8 @@ inline bool LHAupAlpgen::rescaleMomenta() {
   // but still small in absolute terms.
   if (abs(a - 1.) * myParticles[0].ePart > EWARNTHRESHOLD ||
       abs(b - 1.) * myParticles[1].ePart > EWARNTHRESHOLD) {
-    if (infoPtr) infoPtr->errorMsg("Warning in LHAupAlpgen::setEvent: "
-        "large rescaling factor");
+    cout << "Warning in LHAupAlpgen::setEvent: "
+         << "large rescaling factor" << endl;
 
     // Debug printout
     if (LHADEBUGRESCALE) {
@@ -1050,12 +1043,12 @@ inline bool LHAupAlpgen::rescaleMomenta() {
 // Constructor: provides the 'Alpgen:file' option by directly
 //              changing the Pythia 'Beams' settings
 
-AlpgenHooks::AlpgenHooks(Pythia &pythia) : LHAagPtr(NULL) {
+AlpgenHooks::AlpgenHooks(Pythia &pythia) {
 
   // If LHAupAlpgen needed, construct and pass to Pythia
   string agFile = pythia.settings.word("Alpgen:file");
   if (agFile != "void") {
-    LHAagPtr = new LHAupAlpgen(agFile.c_str(), &pythia.info);
+    LHAagPtr = make_shared<LHAupAlpgen>(agFile.c_str());
     pythia.settings.mode("Beams:frameType", 5);
     pythia.setLHAupPtr(LHAagPtr);
   }
@@ -1078,7 +1071,7 @@ inline bool AlpgenHooks::initAfterBeams() {
   bool setMLM    = settingsPtr->flag("Alpgen:setMLM");
 
   // If ALPGEN parameters are present, then parse in AlpgenPar object
-  AlpgenPar par(infoPtr);
+  AlpgenPar par;
   string parStr = infoPtr->header("AlpgenPar");
   if (!parStr.empty()) {
     par.parse(parStr);
@@ -1102,8 +1095,8 @@ inline bool AlpgenHooks::initAfterBeams() {
     if (par.haveParam("njets"))
       settingsPtr->mode("JetMatching:nJet", par.getParamAsInt("njets"));
     else
-      infoPtr->errorMsg("Warning in AlpgenHooks:init: "
-          "no ALPGEN nJet parameter found");
+      cout << "Warning in AlpgenHooks:init: "
+           << "no ALPGEN nJet parameter found" << endl;
   }
 
   // Set MLM merging parameters if requested
@@ -1118,8 +1111,8 @@ inline bool AlpgenHooks::initAfterBeams() {
 
     // Warn if setMLM requested, but parameters not present
     } else {
-      infoPtr->errorMsg("Warning in AlpgenHooks:init: "
-          "no ALPGEN merging parameters found");
+      cout << "Warning in AlpgenHooks:init: "
+           << "no ALPGEN merging parameters found" << endl;
     }
   }
 
@@ -1219,8 +1212,9 @@ inline void MadgraphPar::warnParamOverwrite(const string &paramIn,
   // Check if present and if new value is different
   if (haveParam(paramIn) &&
       abs(getParam(paramIn) - val) > ZEROTHRESHOLD) {
-    if (infoPtr) infoPtr->errorMsg("Warning in LHAupAlpgen::"
-        "warnParamOverwrite: overwriting existing parameter", paramIn);
+    cout << "Warning in LHAupAlpgen::"
+         << "warnParamOverwrite: overwriting existing parameter"
+         << paramIn << endl;
   }
 }
 

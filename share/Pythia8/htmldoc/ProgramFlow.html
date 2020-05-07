@@ -31,7 +31,7 @@ intended for more special applications.
  
 <p/> 
 At the bottom of this webpage is a complete survey of all public 
-<code>Pythia</code> methods and data members, in a  formal style 
+<code>Pythia</code> methods and data members, in a more formal style 
 than the task-oriented descriptions found in the preceding sections. 
 This offers complementary information. 
  
@@ -334,7 +334,7 @@ method
       pythia.setLHAupPtr( lhaUpPtr); 
 </pre> 
 where the  <code>lhaUpPtr</code> derives from the 
-<a href="LesHouchesAccord.html" target="page">LHAup</a> base class. 
+<a href="LHA.html" target="page">LHAup</a> base class. 
 </li> 
  
 <p/> 
@@ -446,11 +446,20 @@ resonances.
 If you are a real expert and want to <a href="ImplementNewShowers.html" target="page">replace 
 the PYTHIA initial- and final-state showers</a>, you can use 
 <pre> 
-      pythia.setShowerPtr( timesDecPtr, timesPtr, spacePtr); 
+      pythia.setShowerModelPtr( showerModelPtr); 
 </pre> 
-where <code>timesDecPtr</code> and <code>timesPtr</code> 
-derive from the <code>TimeShower</code> base class, and 
-<code>spacePtr</code> from <code>SpaceShower</code>. 
+where the <code>showerModelPtr</code> is a shared 
+<code>ShowerModel</code> pointer which stores the following shared 
+pointers: <code>timesPtr</code> and <code>timesDecPtr</code> of the 
+class <code>TimeShower</code>, <code>spacePtr</code> of the class 
+<code>SpaceShower</code>, <code>mergingPtr</code> of the class 
+<code>Merging</code>, and <code>mergingHooksPtr</code> of the class 
+<code>MergingHooks</code>. It is also possible to get back a pointer 
+to the parton shower machhinery and perform diagnostics. 
+<pre> 
+      pythia.getShowerModelPtr(); 
+</pre> 
+ 
 </li> 
  
 <p/> 
@@ -487,7 +496,7 @@ so each instance could be run inside a separate thread.
  
 <p/> 
 <li> 
-In some cases it is convenient to use  than one <code>Pythia</code> 
+In some cases it is convenient to use more than one <code>Pythia</code> 
 object. The key example would be the simultaneous generation of signal 
 and pileup events, see <code>main19.cc</code>. The two objects are then 
 set up and initialized separately, and generate events completely 
@@ -761,7 +770,7 @@ in your program.
 <p/><strong> bool Pythia::setLHAupPtr( LHAup* lhaUpPtrIn) &nbsp;</strong> <br/>
 offers linkage to an external generator that feeds in events 
 in the LHA format, see 
-<a href="LesHouchesAccord.html" target="page">Les Houches Accord</a>, 
+<a href="LHA.html" target="page">Les Houches Accord</a>, 
 assuming that 
 <code><a href="BeamParameters.html" target="page">Beams:frameType = 5</a></code> 
 has been set. 
@@ -893,44 +902,35 @@ must be instantiated by you in your program.
    
  
 <a name="anchor22"></a>
-<p/><strong> bool Pythia::setShowerPtr( TimeShower* timesDecPtr, TimeShower* timesPtr = 0, SpaceShower* spacePtr = 0) &nbsp;</strong> <br/>
+<p/><strong> bool Pythia::setShowerModelPtr( ShowerModelPtr showerModelPtr) &nbsp;</strong> <br/>
 offers the possibility to link your own parton shower routines as 
-replacements for the default ones. This is much more complicated 
-since the showers are so central and are so interlinked with other 
-parts of the program. Therefore it is also possible to do the 
-replacement in stages, from the more independent to the more 
-intertwined. The rules for constructing your own classes from the 
-<code>TimeShower</code> and <code>SpaceShower</code>base classes 
-are described <a href="ImplementNewShowers.html" target="page">here</a>. These 
-objects must be instantiated by you in your program. 
-<br/><code>argument</code><strong> timesDecPtr </strong>  :  
-pointer to a <code>TimeShower</code>-derived object for doing 
-timelike shower evolution in resonance decays, e.g. of a 
-<i>Z^0</i>. This is decoupled from beam remnants and parton 
-distributions, and is therefore the simplest kind of shower 
-to write. If you provide a value 0 then the internal shower 
-routine will be used. 
-   
-<br/><code>argument</code><strong> timesPtr </strong> (<code>default = <strong>0</strong></code>) :  
-pointer to a <code>TimeShower</code>-derived object for doing 
-all other timelike shower evolution, which is normally interleaved 
-with multiparton interactions and spacelike showers, introducing 
-both further physics and further technical issues. If you retain 
-the default value 0 then the internal shower routine will be used. 
-You are allowed to use the same pointer as above for the 
-<code>timesDecPtr</code> if the same shower can fulfill both tasks. 
-   
-<br/><code>argument</code><strong> spacePtr </strong> (<code>default = <strong>0</strong></code>) :  
-pointer to a <code>SpaceShower</code>-derived object for doing 
-all spacelike shower evolution, which is normally interleaved 
-with multiparton interactions and timelike showers. If you retain 
-the default value 0 then the internal shower routine will be used. 
+replacements for the default ones. This is much more complicated since 
+the showers are so central and are so interlinked with other parts of 
+the program. Therefore it is also possible to do the replacement in 
+stages, from the more independent to the more intertwined. The rules 
+for constructing your own shower from the <code>ShowerModel</code> 
+class is described <a href="ImplementNewShowers.html" target="page">here</a>. This 
+model, which includes <code>TimeShower</code> and 
+<code>SpaceShower</code> derived objects, must be instantiated by you 
+in your program. 
+<br/><code>argument</code><strong> showerModelPtr </strong>  :  
+  shared pointer to a <code>ShowerModel</code>-derived object. This 
+  includes a decay time shower, time shower, space shower, merging 
+  pointer, and merging user hooks. 
    
 <br/><b>Note:</b> The method currently always returns true. 
    
  
 <a name="anchor23"></a>
-<p/><strong> bool Pythia::setHeavyIonsPtr( HeavyIons* heavyIonsPtr) &nbsp;</strong> <br/>
+<p/><strong> ShowerModelPtr Pythia::getShowerModelPtr() &nbsp;</strong> <br/>
+gives access to the current <a href="ImplementNewShowers.html" target="page">parton 
+shower</a> model, either one the default internal Pythia models or 
+an external one fed in by the method above this. This way a number of 
+further shower properties can be interrogated. 
+   
+ 
+<a name="anchor24"></a>
+<p/><strong> bool Pythia::setHeavyIonsPtr( HeavyIonsPtr heavyIonsPtr) &nbsp;</strong> <br/>
 offers the possibility to feed in an external Heavy Ion generator that 
 can use the internal <code>Pythia</code> machinery for its tasks, 
 see further <a href="HeavyIons.html" target="page">here</a>. 
@@ -941,7 +941,7 @@ Heavy Ions collisions.
 <br/><b>Note:</b> The method currently always returns true. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><strong> HeavyIons* Pythia::getHeavyIonsPtr() &nbsp;</strong> <br/>
 gives access to the current <a href="HeavyIons.html" target="page">Heavy Ions</a> 
 generator, either the default internal Angantyr one or an external 
@@ -949,8 +949,8 @@ one fed in by the method above this. This way a number of further
 event properties can be interrogated. 
    
  
-<a name="anchor25"></a>
-<p/><strong> bool Pythia::setPartonVertexPtr( PartonVertex* partonVertexPtrIn) &nbsp;</strong> <br/>
+<a name="anchor26"></a>
+<p/><strong> bool Pythia::setPartonVertexPtr( PartonVertexPtr partonVertexPtrIn) &nbsp;</strong> <br/>
 offers the possibility to set production vertices for the MPI, 
 FSR and ISR parton-level evolution, instead of the default framework, 
 see further <a href="VertexInformation.html" target="page">here</a>. 
@@ -967,7 +967,7 @@ processed, and the stage is set up for the subsequent generation
 of events. Currently only one <code>init</code> 
 method is available for this stage. 
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><strong> bool Pythia::init() &nbsp;</strong> <br/>
 initialize for collisions. The beams are not specified by input 
 arguments, but instead by the settings in the 
@@ -985,7 +985,7 @@ The <code>next()</code> method is the main one to generate events.
 In this section we also put a few other specialized methods that 
 may be useful in some circumstances. 
  
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><strong> bool Pythia::next() &nbsp;</strong> <br/>
 generate the next event. No input parameters are required; all 
 instructions have already been set up in the initialization stage. 
@@ -998,13 +998,13 @@ can be checked with the
 method. 
    
  
-<a name="anchor28"></a>
+<a name="anchor29"></a>
 <p/><strong> bool Pythia::next(double eCM) &nbsp;</strong> <br/>
    
-<a name="anchor29"></a>
+<a name="anchor30"></a>
 <strong> bool Pythia::next(double eA, double eB) &nbsp;</strong> <br/>
    
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <strong> bool Pythia::next(double pxA, double pyA, double pzA, double pxB, double pyB, double pzB) &nbsp;</strong> <br/>
 These three methods can only be used when variable event-energy has been 
 switched on, see the <a href="BeamParameters.html" target="page">Beam Parameters</a> 
@@ -1014,7 +1014,7 @@ three-momentum of the incoming particles, for <code>Beams:frameType</code>
 set to 1, 2 or 3, respectively. 
    
  
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><strong> int Pythia::forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0) &nbsp;</strong> <br/>
 perform a final-state shower evolution on partons in the 
 <code>event</code> event record. This could be used for externally 
@@ -1046,7 +1046,7 @@ will continue to the lower cutoff.
 has been generated. 
    
  
-<a name="anchor32"></a>
+<a name="anchor33"></a>
 <p/><strong> bool Pythia::forceHadronLevel(bool findJunctions = true) &nbsp;</strong> <br/>
 hadronize the existing event record, i.e. perform string fragmentation 
 and particle decays. There are two main applications. Firstly, 
@@ -1073,8 +1073,8 @@ fails. The event record is then not consistent and should not be
 studied. 
    
  
-<a name="anchor33"></a>
-<p/><strong> bool Pythia::Decays() &nbsp;</strong> <br/>
+<a name="anchor34"></a>
+<p/><strong> bool Pythia::moreDecays() &nbsp;</strong> <br/>
 perform decays of all particles in the event record that have not been 
 decayed but should have been done so. This can be used e.g. for 
 repeated decay attempts, in schemes intended to save computer time. 
@@ -1083,7 +1083,7 @@ Further details are found <a href="HadronLevelStandalone.html" target="page">her
 event record is then not consistent and should not be studied. 
    
  
-<a name="anchor34"></a>
+<a name="anchor35"></a>
 <p/><strong> bool Pythia::forceRHadronDecays() &nbsp;</strong> <br/>
 perform decays of R-hadrons that were previously considered stable. 
 This could be if an R-hadron is sufficiently long-lived that 
@@ -1094,19 +1094,30 @@ its four-momentum is changed. Further details are found
 event record is then not consistent and should not be studied. 
    
  
-<a name="anchor35"></a>
+<a name="anchor36"></a>
+<p/><strong> bool Pythia::doLowEnergyProcess(int i1, int i2, int type) &nbsp;</strong> <br/>
+Allow two hadrons, located in positions <i>i1</i> and <i>i2</i> of 
+the normal event record to interact with each other and give rise to new 
+hadrons. Only simple interaction types are offered, as relevent at low 
+energies. It can be used e.g. to model hadronic rescattering in the 
+final state. This method does not itself decay unstable hadrons, but 
+thst could be achieved e.g. with a <code>Pythia::moreDecays()</code> 
+call. This method is still under development. 
+   
+ 
+<a name="anchor37"></a>
 <p/><strong> void Pythia::LHAeventList() &nbsp;</strong> <br/>
 list the Les Houches Accord information on the current event, see 
-<code><a href="LesHouchesAccord.html" target="page">LHAup::listEvent(...)</a></code>. 
+<code><a href="LHA.html" target="page">LHAup::listEvent(...)</a></code>. 
 (Other listings are available via the class members below, so this 
 listing is a special case that would not fit elsewhere.) 
    
  
-<a name="anchor36"></a>
+<a name="anchor38"></a>
 <p/><strong> bool Pythia::LHAeventSkip(int nSkip) &nbsp;</strong> <br/>
 skip ahead a number of events in the Les Houches generation 
 sequence, without doing anything further with them, see 
-<code><a href="LesHouchesAccord.html" target="page">LHAup::skipEvent(nSkip)</a></code>. 
+<code><a href="LHA.html" target="page">LHAup::skipEvent(nSkip)</a></code>. 
 Mainly intended for debug purposes, e.g. when an event at a known 
 location in a Les Houches Event File is causing problems. 
 <br/><code>argument</code><strong> nSkip </strong>  :  
@@ -1124,7 +1135,7 @@ when and how you want. It is still recommended that you make it a
 routine to call the following method at the end. A second method provides 
 a deprecated alternative. 
  
-<a name="anchor37"></a>
+<a name="anchor39"></a>
 <p/><strong> void Pythia::stat() &nbsp;</strong> <br/>
 list statistics on the event generation, specifically total and partial 
 cross sections and the number of different errors. For more details see 
@@ -1147,7 +1158,7 @@ be the number of events to generate. For such applications the
 following shortcuts to some <code>Settings</code> methods may be 
 convenient. 
  
-<a name="anchor38"></a>
+<a name="anchor40"></a>
 <p/><strong> bool Pythia::flag(string key) &nbsp;</strong> <br/>
 read in a boolean variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1155,7 +1166,7 @@ the name of the variable to be read.
    
    
  
-<a name="anchor39"></a>
+<a name="anchor41"></a>
 <p/><strong> int Pythia::mode(string key) &nbsp;</strong> <br/>
 read in an integer variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1163,7 +1174,7 @@ the name of the variable to be read.
    
    
  
-<a name="anchor40"></a>
+<a name="anchor42"></a>
 <p/><strong> double Pythia::parm(string key) &nbsp;</strong> <br/>
 read in a double-precision variable from the <code>Settings</code> 
 database. 
@@ -1172,7 +1183,7 @@ the name of the variable to be read.
    
    
  
-<a name="anchor41"></a>
+<a name="anchor43"></a>
 <p/><strong> string Pythia::word(string key) &nbsp;</strong> <br/>
 read in a string variable from the <code>Settings</code> database. 
 <br/><code>argument</code><strong> key </strong>  :  
@@ -1186,7 +1197,7 @@ the name of the variable to be read.
 internally, plus an interface to LHAPDF (5 or 6). With the method below, 
 this machinery is also made available for external usage. 
  
-<a name="anchor42"></a>
+<a name="anchor44"></a>
 <p/><strong> PDF* getPDFPtr(int id, int sequence = 1) &nbsp;</strong> <br/>
 get a pointer to a PDF object. Which PDF is returned depends on the 
 <a href="PDFSelection.html" target="page">PDF Selection</a> settings. 
@@ -1206,55 +1217,55 @@ The <code>Pythia</code> class contains a few public data members,
 several of which play a central role. We list them here, with 
 links to the places where they are further described. 
  
-<a name="anchor43"></a>
+<a name="anchor45"></a>
 <p/><strong> Event Pythia::process &nbsp;</strong> <br/>
 the hard-process event record, see <a href="EventRecord.html" target="page">here</a> 
 for further details. 
    
  
-<a name="anchor44"></a>
+<a name="anchor46"></a>
 <p/><strong> Event Pythia::event &nbsp;</strong> <br/>
 the complete event record, see <a href="EventRecord.html" target="page">here</a> 
 for further details. 
    
  
-<a name="anchor45"></a>
+<a name="anchor47"></a>
 <p/><strong> Info Pythia::info &nbsp;</strong> <br/>
 further information on the event-generation process, see 
 <a href="EventInformation.html" target="page">here</a> for further details. 
    
  
-<a name="anchor46"></a>
+<a name="anchor48"></a>
 <p/><strong> Settings Pythia::settings &nbsp;</strong> <br/>
 the settings database, see <a href="SettingsScheme.html" target="page">here</a> 
 for further details. 
    
  
-<a name="anchor47"></a>
+<a name="anchor49"></a>
 <p/><strong> ParticleData Pythia::particleData &nbsp;</strong> <br/>
 the particle properties and decay tables database, see 
 <a href="ParticleDataScheme.html" target="page">here</a> for further details. 
    
  
-<a name="anchor48"></a>
+<a name="anchor50"></a>
 <p/><strong> Rndm Pythia::rndm &nbsp;</strong> <br/>
 the random number generator, see <a href="RandomNumberSeed.html" target="page">here</a> 
 and <a href="RandomNumbers.html" target="page">here</a> for further details. 
    
  
-<a name="anchor49"></a>
+<a name="anchor51"></a>
 <p/><strong> CoupSM Pythia::coupSM &nbsp;</strong> <br/>
 Standard Model couplings and mixing matrices, see 
 <a href="StandardModelParameters.html" target="page">here</a> for further details. 
    
  
-<a name="anchor50"></a>
+<a name="anchor52"></a>
 <p/><strong> SusyLesHouches Pythia::slha &nbsp;</strong> <br/>
 parameters and particle data in the context of supersymmetric models, 
 see <a href="SUSYLesHouchesAccord.html" target="page">here</a> for further details. 
    
  
-<a name="anchor51"></a>
+<a name="anchor53"></a>
 <p/><strong> PartonSystems Pythia::partonSystems &nbsp;</strong> <br/>
 a grouping of the partons in the event record by subsystem, 
 see <a href="AdvancedUsage.html" target="page">here</a> for further details. 
@@ -1263,4 +1274,4 @@ see <a href="AdvancedUsage.html" target="page">here</a> for further details.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

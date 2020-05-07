@@ -1,9 +1,12 @@
 // main41.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Author: Mikhail Kirsanov, Mikhail.Kirsanov@cern.ch, based on main01.cc.
+// Authors: Mikhail Kirsanov <Mikhail.Kirsanov@cern.ch>.
+
+// Keywords: basic usage; hepmc;
+
 // This program illustrates how HepMC can be interfaced to Pythia8.
 // It studies the charged multiplicity distribution at the LHC.
 // HepMC events are output to the hepmcout41.dat file.
@@ -12,17 +15,17 @@
 // Therefore large event samples may be impractical.
 
 #include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/HepMC2.h"
+#include "Pythia8Plugins/HepMC3.h"
 
 using namespace Pythia8;
 
 int main() {
 
   // Interface for conversion from Pythia8::Event to HepMC event.
-  HepMC::Pythia8ToHepMC ToHepMC;
+  HepMC3::Pythia8ToHepMC3 topHepMC;
 
   // Specify file where HepMC events will be stored.
-  HepMC::IO_GenEvent ascii_io("hepmcout41.dat", std::ios::out);
+  HepMC3::WriterAscii ascii_io("hepmcout41.dat");
 
   // Generator. Process selection. LHC initialization. Histogram.
   Pythia pythia;
@@ -44,14 +47,13 @@ int main() {
     mult.fill( nCharged );
 
     // Construct new empty HepMC event and fill it.
-    // Units will be as chosen for HepMC build; but can be changed
-    // by arguments, e.g. GenEvt( HepMC::Units::GEV, HepMC::Units::MM)
-    HepMC::GenEvent* hepmcevt = new HepMC::GenEvent();
-    ToHepMC.fill_next_event( pythia, hepmcevt );
+    // Default units are ( HepMC3::Units::GEV, HepMC3::Units::MM)
+    // but can be changed in the GenEvent constructor.
+    HepMC3::GenEvent hepmcevt;
+    topHepMC.fill_next_event( pythia, &hepmcevt );
 
-    // Write the HepMC event to file. Done with it.
-    ascii_io << hepmcevt;
-    delete hepmcevt;
+    // Write the HepMC event to file.
+    ascii_io.write_event(hepmcevt);
 
   // End of event loop. Statistics. Histogram.
   }

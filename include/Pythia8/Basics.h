@@ -1,5 +1,5 @@
 // Basics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,87 +16,6 @@
 #include "Pythia8/PythiaStdlib.h"
 
 namespace Pythia8 {
-
-//==========================================================================
-
-// RndmEngine is the base class for external random number generators.
-// There is only one pure virtual method, that should do the generation.
-
-class RndmEngine {
-
-public:
-
-  // Destructor.
-  virtual ~RndmEngine() {}
-
-  // A pure virtual method, wherein the derived class method
-  // generates a random number uniformly distributed between 1 and 1.
-  virtual double flat() = 0;
-
-};
-
-//==========================================================================
-
-// Rndm class.
-// This class handles random number generation according to the
-// Marsaglia-Zaman-Tsang algorithm.
-
-class Rndm {
-
-public:
-
-  // Constructors.
-  Rndm() : initRndm(false), i97(), j97(), seedSave(0), sequence(0), u(), c(),
-    cd(), cm(), useExternalRndm(false), rndmEngPtr(0) { }
-  Rndm(int seedIn) : initRndm(false), i97(), j97(), seedSave(0), sequence(0),
-    u(), c(), cd(), cm(), useExternalRndm(false), rndmEngPtr(0) {init(seedIn);}
-
-  // Possibility to pass in pointer for external random number generation.
-  bool rndmEnginePtr( RndmEngine* rndmEngPtrIn);
-
-  // Initialize, normally at construction or in first call.
-  void init(int seedIn = 0) ;
-
-  // Generate next random number uniformly between 0 and 1.
-  double flat() ;
-
-  // Generate random numbers according to exp(-x).
-  double exp() { return -log(flat()) ;}
-
-  // Generate random numbers according to x * exp(-x).
-  double xexp() { return -log(flat() * flat()) ;}
-
-  // Generate random numbers according to exp(-x^2/2).
-  double gauss() {return sqrt(-2. * log(flat())) * cos(M_PI * flat());}
-
-  // Generate two random numbers according to exp(-x^2/2-y^2/2).
-  pair<double, double> gauss2() {double r = sqrt(-2. * log(flat()));
-    double phi = 2. * M_PI * flat();
-    return pair<double, double>(r * sin(phi), r * cos(phi));}
-
-  // Pick one option among  vector of (positive) probabilities.
-  int pick(const vector<double>& prob) ;
-
-  // Save or read current state to or from a binary file.
-  bool dumpState(string fileName);
-  bool readState(string fileName);
-
-private:
-
-  // Default random number sequence.
-  static const int DEFAULTSEED;
-
-  // State of the random number generator.
-  bool   initRndm;
-  int    i97, j97, seedSave;
-  long   sequence;
-  double u[97], c, cd, cm;
-
-  // Pointer for external random number generation.
-  bool   useExternalRndm;
-  RndmEngine* rndmEngPtr;
-
-};
 
 //==========================================================================
 
@@ -201,11 +120,20 @@ public:
   inline double operator*(const Vec4& v) const {
     return tt*v.tt - xx*v.xx - yy*v.yy - zz*v.zz;}
 
-  // Operator overloading with friends
+  // Operator overloading with friends.
   friend Vec4 operator*(double f, const Vec4& v1);
 
   // Print a four-vector.
   friend ostream& operator<<(ostream&, const Vec4& v) ;
+
+  // Check if NaN, INF, or finite.
+  friend inline bool isnan(const Vec4 &v) {
+    return isnan(v.tt) || isnan(v.xx) || isnan(v.yy) || isnan(v.zz);}
+  friend inline bool isinf(const Vec4 &v) {
+    return isinf(v.tt) || isinf(v.xx) || isinf(v.yy) || isinf(v.zz);}
+  friend inline bool isfinite(const Vec4 &v) {
+    return isfinite(v.tt) && isfinite(v.xx) && isfinite(v.yy)
+      && isfinite(v.zz);}
 
   // Invariant mass of a pair and its square.
   friend double m(const Vec4& v1, const Vec4& v2);
@@ -391,6 +319,90 @@ inline RotBstMatrix toCMframe(const Vec4& ptot, const Vec4& pz,
 // z-axis and pxz is in the xz-plane with positive x.
 inline RotBstMatrix fromCMframe(const Vec4& ptot, const Vec4& pz,
   const Vec4 & pxz) { return toCMframe(ptot, pz, pxz).inverse(); }
+
+//==========================================================================
+
+// RndmEngine is the base class for external random number generators.
+// There is only one pure virtual method, that should do the generation.
+
+class RndmEngine {
+
+public:
+
+  // Destructor.
+  virtual ~RndmEngine() {}
+
+  // A pure virtual method, wherein the derived class method
+  // generates a random number uniformly distributed between 1 and 1.
+  virtual double flat() = 0;
+
+};
+
+//==========================================================================
+
+// Rndm class.
+// This class handles random number generation according to the
+// Marsaglia-Zaman-Tsang algorithm.
+
+class Rndm {
+
+public:
+
+  // Constructors.
+  Rndm() : initRndm(false), i97(), j97(), seedSave(0), sequence(0), u(), c(),
+    cd(), cm(), useExternalRndm(false), rndmEngPtr(0) { }
+  Rndm(int seedIn) : initRndm(false), i97(), j97(), seedSave(0), sequence(0),
+    u(), c(), cd(), cm(), useExternalRndm(false), rndmEngPtr(0) {init(seedIn);}
+
+  // Possibility to pass in pointer for external random number generation.
+  bool rndmEnginePtr( RndmEngine* rndmEngPtrIn);
+
+  // Initialize, normally at construction or in first call.
+  void init(int seedIn = 0) ;
+
+  // Generate next random number uniformly between 0 and 1.
+  double flat() ;
+
+  // Generate random numbers according to exp(-x).
+  double exp() { return -log(flat()) ;}
+
+  // Generate random numbers according to x * exp(-x).
+  double xexp() { return -log(flat() * flat()) ;}
+
+  // Generate random numbers according to exp(-x^2/2).
+  double gauss() {return sqrt(-2. * log(flat())) * cos(M_PI * flat());}
+
+  // Generate two random numbers according to exp(-x^2/2-y^2/2).
+  pair<double, double> gauss2() {double r = sqrt(-2. * log(flat()));
+    double phi = 2. * M_PI * flat();
+    return { r * sin(phi), r * cos(phi) };}
+
+  // Generate two random vectors according to the phase space distribution
+  pair<Vec4, Vec4> phaseSpace2(double eCM, double m1, double m2);
+
+  // Pick one option among  vector of (positive) probabilities.
+  int pick(const vector<double>& prob) ;
+
+  // Save or read current state to or from a binary file.
+  bool dumpState(string fileName);
+  bool readState(string fileName);
+
+private:
+
+  // Default random number sequence.
+  static const int DEFAULTSEED;
+
+  // State of the random number generator.
+  bool   initRndm;
+  int    i97, j97, seedSave;
+  long   sequence;
+  double u[97], c, cd, cm;
+
+  // Pointer for external random number generation.
+  bool   useExternalRndm;
+  RndmEngine* rndmEngPtr;
+
+};
 
 //==========================================================================
 

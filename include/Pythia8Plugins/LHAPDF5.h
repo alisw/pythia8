@@ -1,5 +1,5 @@
 // LHAPDF5.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -139,10 +139,9 @@ class LHAPDF5 : public PDF {
 public:
 
   // Constructor.
-  LHAPDF5(int idBeamIn, string setName, int member,  int nSetIn = -1,
-    Info* infoPtr = 0) : PDF(idBeamIn), doExtraPol(false), nSet(nSetIn)
-    { init(setName, member, infoPtr);
-    isPhoton = (idBeamIn == 22) ? true : false; }
+  LHAPDF5(int idBeamIn, string setName, int member,  int nSetIn = -1) :
+  PDF(idBeamIn), doExtraPol(false), nSet(nSetIn)
+    { init(setName, member); isPhoton = (idBeamIn == 22) ? true : false; }
 
   // Allow extrapolation beyond boundaries. This is optional.
   void setExtrapolate(bool extrapol);
@@ -150,7 +149,7 @@ public:
 private:
 
   // Initialization of PDF set.
-  void init(string setName, int member, Info* infoPtr);
+  void init(string setName, int member);
 
   // Update all PDF values.
   void xfUpdate(int , double x, double Q2);
@@ -168,7 +167,7 @@ private:
 
 // Initialize a parton density function from LHAPDF5.
 
-void LHAPDF5::init(string setName, int member, Info*) {
+void LHAPDF5::init(string setName, int member) {
 
   // If already initialized then need not do anything further.
   LHAPDF5Interface::LHAPDFInfo initializedInfo =
@@ -277,19 +276,10 @@ void LHAPDF5::xfUpdate(int, double x, double Q2) {
 
 // Define external handles to the plugin for dynamic loading.
 
-extern "C" {
-
-  LHAPDF5* newLHAPDF(int idBeamIn, string setName, int member,
-                    Info* infoPtr) {
-    int nSet = LHAPDF5Interface::findNSet(setName, member);
-    if (nSet == -1) nSet = LHAPDF5Interface::freeNSet();
-    return new LHAPDF5(idBeamIn, setName, member, nSet, infoPtr);
-  }
-
-  void deleteLHAPDF(LHAPDF5* pdf) {
-    delete pdf;
-  }
-
+extern "C" PDFPtr newLHAPDF(int idBeamIn, string setName, int member) {
+  int nSet = LHAPDF5Interface::findNSet(setName, member);
+  if (nSet == -1) nSet = LHAPDF5Interface::freeNSet();
+  return make_shared<LHAPDF5>(idBeamIn, setName, member, nSet);
 }
 
 //==========================================================================

@@ -1,5 +1,5 @@
 // BeamRemnants.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,6 +20,7 @@
 #include "Pythia8/PartonDistributions.h"
 #include "Pythia8/PartonSystems.h"
 #include "Pythia8/PartonVertex.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/StringLength.h"
@@ -31,7 +32,7 @@ namespace Pythia8 {
 // This class matches the kinematics of the hard-scattering subsystems
 // (with primordial kT added) to that of the two beam remnants.
 
-class BeamRemnants {
+class BeamRemnants : public PhysicsBase {
 
 public:
 
@@ -40,16 +41,12 @@ public:
     doReconnect(), primordialKTsoft(), primordialKThard(),
     primordialKTremnant(), halfScaleForKT(), halfMassForKT(),
     reducedKTatHighY(), remnantMode(), reconnectMode(), isDIS(), doMPI(),
-    nSys(), oldSize(), iDS(0), eCM(), sCM(), infoPtr(), rndmPtr(), beamAPtr(),
-    beamBPtr(), colourReconnectionPtr(), partonSystemsPtr(), partonVertexPtr(),
-    doPartonVertex(), particleDataPtr() { }
+    nSys(), oldSize(), iDS(0), eCM(), sCM(), colourReconnectionPtr(),
+    partonVertexPtr(), doPartonVertex() { }
 
   // Initialization.
-  bool init( Info* infoPtrIn, Settings& settings, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    PartonSystems* partonSystemsPtrIn, PartonVertex* partonVertexPtrIn,
-    ParticleData* particleDataPtrIn,
-    ColourReconnection * colourReconnectionPtrIn);
+  bool init( PartonVertexPtr partonVertexPtrIn,
+    ColRecPtr colourReconnectionPtrIn);
 
   // New beams possible for handling of hard diffraction.
   void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
@@ -57,6 +54,11 @@ public:
 
   // Select the flavours/kinematics/colours of the two beam remnants.
   bool add( Event& event, int iFirst = 0, bool doDiffCR = false);
+
+protected:
+
+  virtual void onInitInfoPtr() override {
+    registerSubObject(junctionSplitting); }
 
 private:
 
@@ -78,18 +80,8 @@ private:
   // Colour collapses (when one colour is mapped onto another).
   vector<int> colFrom, colTo;
 
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
-
-  // Pointers to the two incoming beams.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-
   // Pointer to the colour reconnection class.
-  ColourReconnection* colourReconnectionPtr;
+  ColRecPtr colourReconnectionPtr;
 
   // StringLength class.
   StringLength stringLength;
@@ -103,15 +95,9 @@ private:
   // Select the flavours/kinematics/colours of the two beam remnants.
   bool addNew( Event& event);
 
-  // Pointer to information on subcollision parton locations.
-  PartonSystems* partonSystemsPtr;
-
   // Pointer to assign space-time information.
-  PartonVertex* partonVertexPtr;
+  PartonVertexPtr partonVertexPtr;
   bool doPartonVertex;
-
-  // Pointer to the particle data table.
-  ParticleData* particleDataPtr;
 
   // Do the kinematics of the collision subsystems and two beam remnants.
   bool setKinematics( Event& event);

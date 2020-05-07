@@ -1,14 +1,26 @@
 // main93.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors: Christian Bierlich <christian.bierlich@thep.lu.se>.
+
+// Keywords: analysis; hepmc; command file; command line option; root; rivet;
+// tuning;
+
+// Streamlined event generation with possibility to output ROOT files,
+// output HepMC files and run RIVET analyses, all by specifying output modes
+// in a cmnd file, where also the event generator settings are specified.
+// The example is run with command line options, run ./main93 -h to see a
+// full list. See ROOT Usage for information about ROOT output, RIVET Usage
+// for information about RIVET and HepMC Interface for information about HepMC.
 
 #include "Pythia8/Pythia.h"
 #include "Pythia8/HeavyIons.h"
 
 #include "Pythia8Plugins/HepMC2.h"
 #include "Pythia8Plugins/Pythia8Rivet.h"
-#ifdef USE_ROOT
+#ifdef PY8ROOT
 #include "TTree.h"
 #include "TFile.h"
 #include "main93.h"
@@ -130,7 +142,7 @@ int main(int argc, char* argv[]) {
 
   // Catch the splash screen in a buffer.
   stringstream splashBuf;
-  streambuf* sBuf = cout.rdbuf();
+  std::streambuf* sBuf = cout.rdbuf();
   cout.rdbuf(splashBuf.rdbuf());
   // The Pythia object.
   Pythia pythia;
@@ -192,8 +204,7 @@ int main(int argc, char* argv[]) {
       string par = analysis.substr(0,pos);
       size_t pos2 = par.find("->");
       if (pos2 == string::npos){
-         pythia.info.errorMsg("Error in main93: malformed"
-          " parameter "+par);
+         cout << "Error in main93: malformed parameter " << par << endl;
       }
       string pKey = par.substr(0,pos2);
       string pVal = par.substr(pos2+2,par.length());
@@ -204,14 +215,14 @@ int main(int argc, char* argv[]) {
     rivet.addPreload(rPreload[i]);
   rivet.addRunName(rivetrName);
   // Root initialization
-  #ifdef USE_ROOT
+  #ifdef PY8ROOT
   TFile* file;
   RootEvent* re;
   TTree* tree;
   #endif
   if (root) {
    // First test if root is available on system.
-   #ifndef USE_ROOT
+   #ifndef PY8ROOT
         cout << "Option Main::writeRoot = on requires a working,\n"
                 "linked Root installation." << endl;
         return 1;
@@ -226,7 +237,7 @@ int main(int argc, char* argv[]) {
 
   // Logfile initialization.
   ofstream logBuf;
-  streambuf* oldCout;
+  std::streambuf* oldCout;
   if(doLog) {
     oldCout = cout.rdbuf(logBuf.rdbuf());
     logBuf.open((out == "" ? "pythia.log" : out + ".log"));
@@ -239,8 +250,8 @@ int main(int argc, char* argv[]) {
   pythia.init();
   // Make a sanity check of initialized Rivet analyses
   if (!runRivet && rAnalyses.size() > 0 )
-    pythia.info.errorMsg("Warning in main93: Rivet analyses initialized,"
-                    "but runRivet set to off.");
+    cout << "Warning in main93: Rivet analyses initialized, but runRivet "
+         << "set to off." << endl;
   // Loop over events.
   for ( int iEvent = 0; iEvent < nEvent; ++iEvent ) {
     if ( !pythia.next() ) {
@@ -257,21 +268,21 @@ int main(int argc, char* argv[]) {
     if (runRivet) rivet();
     if (hepmc) {
       HepMC::GenEvent* hepmcevt = new HepMC::GenEvent();
-      Info* pInfo = &pythia.info;
-      if ( pInfo && pInfo->hiinfo ) {
+      const Info* pInfo = &pythia.info;
+      if ( pInfo && pInfo->hiInfo ) {
       HepMC::HeavyIon ion;
-      ion.set_Ncoll_hard(pInfo->hiinfo->nCollNDTot());
-      ion.set_Ncoll(pInfo->hiinfo->nAbsProj() +
-                    pInfo->hiinfo->nDiffProj() +
-                    pInfo->hiinfo->nAbsTarg() +
-                    pInfo->hiinfo->nDiffTarg() -
-                    pInfo->hiinfo->nCollND() -
-                    pInfo->hiinfo->nCollDD());
-      ion.set_Npart_proj(pInfo->hiinfo->nAbsProj() +
-                         pInfo->hiinfo->nDiffProj());
-      ion.set_Npart_targ(pInfo->hiinfo->nAbsTarg() +
-                         pInfo->hiinfo->nDiffTarg());
-      ion.set_impact_parameter(pInfo->hiinfo->b());
+      ion.set_Ncoll_hard(pInfo->hiInfo->nCollNDTot());
+      ion.set_Ncoll(pInfo->hiInfo->nAbsProj() +
+                    pInfo->hiInfo->nDiffProj() +
+                    pInfo->hiInfo->nAbsTarg() +
+                    pInfo->hiInfo->nDiffTarg() -
+                    pInfo->hiInfo->nCollND() -
+                    pInfo->hiInfo->nCollDD());
+      ion.set_Npart_proj(pInfo->hiInfo->nAbsProj() +
+                         pInfo->hiInfo->nDiffProj());
+      ion.set_Npart_targ(pInfo->hiInfo->nAbsTarg() +
+                         pInfo->hiInfo->nDiffTarg());
+      ion.set_impact_parameter(pInfo->hiInfo->b());
       hepmcevt->set_heavy_ion(ion);
     }
 
@@ -280,7 +291,7 @@ int main(int argc, char* argv[]) {
       (*hepmcIO) << hepmcevt;
       delete hepmcevt;
     }
-    #ifdef USE_ROOT
+    #ifdef PY8ROOT
     if (root) {
       // If we want to write a root file, the event must be skimmed here.
       vector<RootTrack> rts;
@@ -300,7 +311,7 @@ int main(int argc, char* argv[]) {
   if(hepmc) delete hepmcIO;
 
   pythia.stat();
-  #ifdef USE_ROOT
+  #ifdef PY8ROOT
   if (root) {
    tree->Print();
    tree->Write();

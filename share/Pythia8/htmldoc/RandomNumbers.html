@@ -171,11 +171,17 @@ to <code>gauss()</code>.
    
  
 <a name="anchor11"></a>
+<p/><strong> pair&lt;Vec4, Vec4&gt; Rndm::phaseSpace2(double eCM, double m1, double m2) &nbsp;</strong> <br/>
+generate a pair of vectors according to the phase space distribution of two 
+particles at the specified eCM and with the specified masses. 
+   
+ 
+<a name="anchor12"></a>
 <p/><strong> int Rndm::pick(const vector&lt;double&gt;&amp; prob) &nbsp;</strong> <br/>
 pick one option among vector of (positive) probabilities. 
    
  
-<a name="anchor12"></a>
+<a name="anchor13"></a>
 <p/><strong> bool Rndm::dumpState(string fileName) &nbsp;</strong> <br/>
 save the current state of the random number generator to a binary 
 file. This involves two integers and 100 double-precision numbers. 
@@ -183,13 +189,13 @@ Intended for debug purposes. Note that binary files may be
 platform-dependent and thus not transportable. 
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
 <p/><strong> bool Rndm::readState(string fileName) &nbsp;</strong> <br/>
 set the state of the random number generator by reading in a binary 
 file saved by the above command. Comments as above. 
    
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><strong> virtual double RndmEngine::flat() &nbsp;</strong> <br/>
 if you want to construct an external random number generator 
 (or generator interface) then you must implement this method 
@@ -200,4 +206,4 @@ to give a random number between 0 and 1.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

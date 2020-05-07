@@ -99,8 +99,19 @@ is purely dictated by what is set for the <ei>Z^0</ei>.
  
 <h4>Boson exchange</h4> 
  
-The two processes in this subgroup is included as part of the 
-multiparton-interactions framework. 
+The two processes in this subgroup encode the standard Deeply Inelastic 
+Scattering (DIS) of lepton-hadron collisions. In the latter context, 
+it is useful to recall that the traditional <ei>Q^2</ei> facorization 
+and renormalization scales need be set explicitly by 
+<code>SigmaProcess:factorScale2 = 6</code> and 
+<code>SigmaProcess:renormScale2 = 6</code>. The special phase space 
+cut <code>PhaseSpace:Q2Min</code> may be more convenient than the 
+traditional <ei>pT</ei> cut; to cover the phase space edges it may also 
+be relevant to reduce <code>PhaseSpace:pTHatMinDiverge</code>. 
+ 
+<p/> 
+The processes are also included as part of the multiparton-interactions 
+framework in hadron-hadron collisions. 
  
 <flag name="WeakBosonExchange:all" default="off"> 
 Common switch for the group of <ei>gamma^*/Z^0</ei> 
@@ -345,4 +356,4 @@ Code 275 (285).
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

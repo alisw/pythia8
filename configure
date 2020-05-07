@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # configure is a part of the PYTHIA event generator.
-# Copyright (C) 2018 Torbjorn Sjostrand.
+# Copyright (C) 2020 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 # Author: Philip Ilten, October 2014 - November 2017.
@@ -27,15 +27,14 @@ by square brackets in the option description. Arguments to the options are
 indicated in caps, i.e. DIR.
 
 Configuration options.
---help          : Print this help message (also -h, --h, and -help).
---enable-debug  : Turn on debugging and disable optimization.
+--help            : Print this help message (also -h, --h, and -help).
+--enable-debug    : Turn on debugging and disable optimization.
 --enable-optdebug : Turn on debugging but allow optimization.
---enable-64bit  : Turn on 64-bit compilation.
---enable-shared : Build the shared PYTHIA library during compilation.
---lcg=PLATFORM  : Specify the LCG platform to use when the
-                  --with-PACKAGE-version option, described below, is set for a
-                  given optional package [x86_64-slc6-gcc48-opt]. The packages
-                  are accessed via the path /afs/cern.ch/sw/lcg/releases on AFS.
+--lcg=PLATFORM    : Specify the LCG platform to use when the
+                    --with-PACKAGE-version option, described below, is set for 
+                    a given optional package [x86_64-slc6-gcc48-opt]. The 
+                    packages are accessed via the path 
+                    /afs/cern.ch/sw/lcg/releases on AFS.
 
 Optional external packages.
 --with-PACKAGE[=DIR]       : Use the external PACKAGE from the list below with
@@ -45,6 +44,7 @@ Optional external packages.
 --with-PACKAGE-bin=DIR     : Set the path to the PACKAGE binaries.
 --with-PACKAGE-lib=DIR     : Set the path to the PACKAGE libraries.
 --with-PACKAGE-include=DIR : Set the path to the PACKAGE headers.
+--with-PACKAGE-config=BIN  : Set the package configuration script BIN.
 --with-PACKAGE-version=VER : When using an LCG platform, set with the option
                              --lcg above, automatically set the PACKAGE path
                              for the given version VER.
@@ -54,16 +54,18 @@ Optional external packages.
   hepmc2   : Export PYTHIA events to the HEPMC format, version 2.
   hepmc3   : Export PYTHIA events to the HEPMC format, version 3.
   lhapdf5  : Support the use of external PDF sets via LHAPDF, version 5.
-  lhapdf6  : Support the use of external PDF sets via LHAPDF, version 6.
+  lhapdf6  : Support the use of external PDF sets via LHAPDF, >= version 6.2.
   powheg   : Hard process production with POWHEGBOX matrix element executables.
-  promc    : Export PYTHIA events to the PROMC format.
+  rivet    : Support use of RIVET through direct interface.
   root     : Use ROOT trees and histograms with PYTHIA.
              Note: this option automatically invokes DIR/bin/root-config to set 
              the ROOT lib/ and include/ paths. To set your ROOT paths manually
              instead, use --with-root-lib=DIR and --with-root-include=DIR.
+  yoda     : Lightweight histogramming package for use with RIVET.
   gzip     : Enable reading of GZIPPED files using the libz library.
-  boost    : Needed for LHAPDF6 before version LHAPDF6.2.
-  python   : Interface to use PYTHIA in Python.
+  python   : Interface to use PYTHIA in Python, requires "Python.h".
+  mg5mes   : MadGraph matrix element plugins for parton showers.
+  openmp   : Multi-threading support via OpenMP.  
 
 Installation directories.
 --prefix=DIR           : Directory to install PYTHIA [$PWD].
@@ -86,27 +88,28 @@ Advanced options.
 --lib-suffix=SUF     : Shared library name suffix: [.so] for Linux and [.dylib]
                        for OS X.
 BLOCKTEXT
-OPTIONS="-h --h -help --help --enable-debug --enable-optdebug --enable-64bit"
-OPTIONS+=" --enable-shared --lcg"
+OPTIONS="-h --h -help --help --enable-debug --enable-optdebug --lcg"
 OPTIONS+=" --prefix --prefix-bin --prefix-lib --prefix-include --prefix-share"
 for PKG in "evtgen" "fastjet3" "hepmc2" "hepmc3" "lhapdf5" "lhapdf6" "powheg"\
-    "promc" "root" "gzip" "boost" "python"; do
+    "rivet" "root" "yoda" "gzip" "python" "mg5mes" "openmp"; do
     OPTIONS+=" --with-$PKG --with-$PKG-bin --with-$PKG-lib --with-$PKG-include"
-    OPTIONS+=" --with-$PKG-version"; done
+    OPTIONS+="  --with-$PKG-config --with-$PKG-version"; done
 OPTIONS+=" --arch --cxx --cxx-common --cxx-shared --cxx-soname --lib-suffix"
 
 ################################################################################
 # FUNCTION: Configure a package.
-#     configure_package <package> <LCG path> <relative bin path>
+#     configure_package <package> <LCG path> <config> <relative bin path>
 #                       <relative include path> <relative library path>
 #                       <bin deps> <header deps> <lib deps> <package deps>
+#                       <global compiler flags>
 # The following array structure stores the package configuration to the global
 # variable <upper-case package name>_CFG.
-#     0: Use the package.       5: Header dependencies.
-#     1: Binary directory.	6: Library dependencies.
-#     2: Include directory.     7: Package dependencies.
-#     3: Library directory.     8: Dependency messages (empty if success).
-#     4: Binary dependencies.
+#     0: Use the package.       5:  Header dependencies.
+#     1: Binary directory.	6:  Library dependencies.
+#     2: Include directory.     7:  Package dependencies.
+#     3: Library directory.     8:  Dependency messages (empty if success).
+#     4: Binary dependencies.   9:  Global compiler flags.
+#                               10: Package configure script.
 # Note that the global variable CXX must be defined prior to calling this
 # function.
 ################################################################################
@@ -116,20 +119,21 @@ function configure_package() {
     local PKG=$(echo $1 | awk '{print toupper($0)}')
     eval local PKG_CFG=\${${PKG}_CFG[0]}
     if [ "${PKG_CFG[0]}" != true ]; then PKG_CFG[0]=false; fi
-    PKG_CFG[4]=$6; PKG_CFG[5]=$7; PKG_CFG[6]=$8; PKG_CFG[7]=$9; PKG_CFG[8]=""
-    local LCG_DIR=$2; local PKG_BIN=$3; local PKG_INC=$4; local PKG_LIB=$5;
-    local WARN="$FGwarn$BGwarn WARNING: Disabling $PKG $FGBGdef -"
-    # Initialise BIN, INCLUDE, and LIB paths to user values (if specified)
+    PKG_CFG[4]=$7; PKG_CFG[5]=$8; PKG_CFG[6]=$9; PKG_CFG[7]=${10}
+    PKG_CFG[8]=""; PKG_CFG[9]=""; PKG_CFG[10]=""
+    local LCG_DIR=$2; local PKG_EXE=$3; local PKG_BIN=$4; local PKG_INC=$5;
+    local PKG_LIB=$6; local PKG_FLG=${11}
+    local WARN=$(warn "Disabling $PKG")" - "
+    
+    # Initialise binary, include, and library paths to specified user values.
     eval PKG_CFG[1]=\$${PKG}_BIN; eval PKG_CFG[2]=\$${PKG}_INCLUDE
-    eval PKG_CFG[3]=\$${PKG}_LIB
+    eval PKG_CFG[3]=\$${PKG}_LIB; eval PKG_CFG[10]=\$${PKG}_CONFIG
     eval local PKG_DIR=\$$PKG;    eval local PKG_SET=\$${PKG}_SET
     eval local PKG_VER=\$${PKG}_VERSION
     if [ "$PKG_SET" = true ] || [ -n "${PKG_CFG[1]}" ] || \
 	[ -n "${PKG_CFG[2]}" ] || [ -n "${PKG_CFG[3]}" ] || \
-	[ -n "${PKG_VER}" ]; then PKG_CFG[0]=true; fi
-    if [ -z "${PKG_CFG[2]}" ]; then PKG_CFG[2]="./"; fi
-    if [ -z "${PKG_CFG[3]}" ]; then PKG_CFG[3]="./"; fi
-
+	[ -n "${PKG_CFG[10]}" ] || [ -n "${PKG_VER}" ]; then PKG_CFG[0]=true; fi
+    
     # Set package path for LCG if available and requested.
     if [ -n "$PKG_VER" ] && [ -n "$LCG_DIR" ]; then
 	if [ ! -d $LCG_DIR/$PKG_VER ]; then
@@ -140,128 +144,136 @@ function configure_package() {
 	    PKG_DIR=$LCG_DIR/$PKG_VER/$LCG;
 	fi
     elif [ -n "$PKG_VER" ]; then
-	echo -e "$WARN package not available via LCG.";
-    fi
-    
-    # Set binary, include, and library paths from specified package path.
-    if [ -n "$PKG_DIR" ]; then
-	if [ -z "${PKG_CFG[1]}" ]; then
-	    PKG_CFG[1]=$PKG_DIR/$PKG_BIN;
-	fi;
-	if [ "${PKG_CFG[2]}" = "./" ]; then
-	    # Use root-config to set ROOT paths. (Check if exists.)
-	    if [ "$PKG" = "ROOT" ]; then
-		if type "${PKG_CFG[1]}/${PKG_CFG[4]}" &> /dev/null; then
-		    PKG_CFG[2]=`${PKG_CFG[1]}/${PKG_CFG[4]} --incdir`
-		fi
-	    else 
-		PKG_CFG[2]=$PKG_DIR/$PKG_INC;
-	    fi;
-	fi;
-	if [ "${PKG_CFG[3]}" = "./" ]; then
-	    # Use root-config to set ROOT paths. (Check if exists.)
-	    if [ "$PKG" = "ROOT" ]; then
-		if type "${PKG_CFG[1]}/${PKG_CFG[4]}" &> /dev/null; then
-		    PKG_CFG[3]=`${PKG_CFG[1]}/${PKG_CFG[4]} --libdir`
-		fi
-	    else 
-		PKG_CFG[3]=$PKG_DIR/$PKG_LIB;
-	    fi;
-	fi;
+	echo "$WARN package not available via LCG."
     fi
 
-    # Check header and library dependencies and store warnings.
-    IFS=","
+    # Set binary, include, and library paths from specified package path.
+    if [ -n "${PKG_CFG[10]}" ]; then PKG_EXE=${PKG_CFG[10]};
+    else PKG_CFG[10]=$PKG_EXE; fi
+    if [ -z "${PKG_CFG[1]}" ];  then
+	if $PKG_EXE $PKG_BIN &> /dev/null && [ -z "$PKG_DIR" ] &&
+	   [ -n "$PKG_BIN" ]; then PKG_CFG[1]=$($PKG_EXE $PKG_BIN)
+	elif [ -n "$PKG_DIR" ]; then
+	    if [ -d "$PKG_DIR/bin" ]; then PKG_CFG[1]=$PKG_DIR/bin
+	    else PKG_CFG[1]=$PKG_DIR; fi
+	fi
+    fi
+    if [ -z "${PKG_CFG[2]}" ]; then
+	if $PKG_EXE $PKG_INC &> /dev/null && [ -z "$PKG_DIR" ] &&
+	   [ -n "$PKG_INC" ]; then PKG_CFG[2]=$($PKG_EXE $PKG_INC)
+	elif [ -n "$PKG_DIR" ]; then
+	    if [ -d "$PKG_DIR/include" ]; then PKG_CFG[2]=$PKG_DIR/include
+	    else PKG_CFG[2]=$PKG_DIR; fi
+	fi
+    fi
+    if [ -z "${PKG_CFG[3]}" ]; then
+	if $PKG_EXE $PKG_LIB &> /dev/null && [ -z "$PKG_DIR" ] &&
+	   [ -n "$PKG_LIB" ]; then PKG_CFG[3]=$($PKG_EXE $PKG_LIB)
+	elif [ -n "$PKG_DIR" ]; then
+	    if [ -d "$PKG_DIR/lib" ]; then PKG_CFG[3]=$PKG_DIR/lib
+	    else PKG_CFG[3]=$PKG_DIR; fi
+	fi
+    fi
+
+    # Format include and library paths as compiler flags.
+    PKG_INC=(); PKG_LIB=()
+    for INC in ${PKG_CFG[2]}; do
+	INC=${INC#-I}
+	if [ "${INC:0:1}" = "-" ]; then continue; fi
+	PKG_INC+=("-I$INC"); done
+    for LIB in ${PKG_CFG[3]}; do
+	LIB=${LIB#-L}
+	if [ "${LIB:0:1}" = "-" ]; then continue; fi
+	PKG_LIB+=("-L$LIB")
+	PKG_LIB+=("-Wl,-rpath,$LIB")
+    done
+    PKG_CFG[2]="${PKG_INC[@]}"; PKG_CFG[3]="${PKG_LIB[@]}"
+    
+    # Check dependencies and store warnings.
+    IFS=";"
     for BIN in ${PKG_CFG[4]}; do
 	if [ -n "${PKG_CFG[1]}" ]; then
 	    if ! type "${PKG_CFG[1]}/$BIN" &> /dev/null; then
-		PKG_CFG[8]="${PKG_CFG[8]},$WARN binary $BIN missing.";
-	    fi;
+		PKG_CFG[8]="${PKG_CFG[8]};$WARN binary $BIN missing."
+	    fi
 	elif ! type "$BIN" &> /dev/null; then
-	    PKG_CFG[8]="${PKG_CFG[8]},$WARN binary $BIN missing.";
-	fi;
+	    PKG_CFG[8]="${PKG_CFG[8]};$WARN binary $BIN missing."
+	fi
     done
-    if [ -z "${PKG_CFG[2]}" ]; then
-	PKG_CFG[2]="./";
-    fi;
     for INC in ${PKG_CFG[5]}; do
-	local TEST=$(echo "#include \"$INC\"" | $CXX -o /dev/null -x c - \
-	    -I${PKG_CFG[2]} 2>&1 | grep -e "$INC: No such file" \
+	local TEST=$(echo "#include \"$INC\"" | $CXX -o /dev/null -c -xc - \
+	    ${PKG_INC[@]} 2>&1 | grep -e "$INC: No such file" \
 	    -e "'$INC' file not found")
 	if [ -n "$TEST" ]; then
-	    PKG_CFG[8]="${PKG_CFG[8]},$WARN header $INC missing.";
-	fi;
+	    PKG_CFG[8]="${PKG_CFG[8]};$WARN header $INC missing.";
+	fi
     done
-    if [ -z "${PKG_CFG[3]}" ]; then
-	PKG_CFG[1]="./";
-    fi;
     for LIB in ${PKG_CFG[6]}; do
-	local TEST=$(echo "int main(){}" | $CXX -o /dev/null -x c - \
-	    -L${PKG_CFG[3]} -l$LIB 2>&1 | grep "\-l$LIB")
+	local TEST=$(echo "int main(){}" | $CXX -o /dev/null -xc - \
+	    ${PKG_LIB[@]} -l$LIB 2>&1 | grep "\-l$LIB")
 	if [ -n "$TEST" ]; then
-	    PKG_CFG[8]="${PKG_CFG[8]},$WARN library $LIB missing.";
-	fi;
+	    PKG_CFG[8]="${PKG_CFG[8]};$WARN library $LIB missing."
+	fi
     done
     IFS=" "
 
+    # If global flags are defined, append include flags and libraries.
+    IFS=";"
+    for LIB in ${PKG_CFG[6]}; do PKG_CFG[3]+=" -l$LIB"; done
+    IFS=" "
+    if [ -n "$PKG_FLG" ]; then
+	PKG_CFG[9]="$PKG_FLG ${PKG_CFG[2]}";
+    fi
+    
     # Export local package to global variable and update global package list.
     for IDX in ${!PKG_CFG[@]}; do
-	eval ${PKG}_CFG[$IDX]=\"${PKG_CFG[$IDX]}\";
+	local VAL="${PKG_CFG[$IDX]}"
+	VAL="${VAL#"${VAL%%[![:space:]]*}"}"
+	VAL="${VAL%"${VAL##*[![:space:]]}"}"  
+	eval ${PKG}_CFG[$IDX]=\"$VAL\";
     done
     PKG_LIST+=($PKG)
 
     # Flag inter-package dependencies (if this package available).
     if [ "${PKG_CFG[0]}" = true ] && [ -z "${PKG_CFG[8]}" ]; then
-	IFS=","; for PKG in ${PKG_CFG[7]}; do
-		     eval ${PKG}_CFG[0]=true;
-		 done;
-	IFS=" "; fi
+	IFS=";"
+	for PKG in ${PKG_CFG[7]}; do eval ${PKG}_CFG[0]=true; done;
+	IFS=" "
+    fi
 }
 
 ################################################################################
-# System-agnostic definition of colour codes for enhanced terminal output
+# FUNCTION: Print formatted information to screen.
+#     bold/error/warn <message>
+# Errors are reported as white-on-red and warnings as black on yellow.
 ################################################################################
+function bold() {
+    if ! type "tput" &> /dev/null; then echo -e $@
+    else echo -e $(tput bold)$@$(tput sgr0); fi
+}
 
-FGerr=""
-BGerr=""
-FGwarn=""
-BGwarn=""
-FGcode=""
-BGcode=""
-FGbold=""
-FGBGdef=""
-# Use tput (if available) to define colour codes in terminal-agnostic way
-if type "tput" &> /dev/null; then
-    # White-on-red for errors (black-on-red not enough contrast on some
-    # systems and yellow-on-red not RG-colourblind safe.)
-    FGerr=$(tput setaf 7)
-    BGerr=$(tput setab 1)
-    # Black-on-yellow for warnings
-    FGwarn=$(tput setaf 0)
-    BGwarn=$(tput setab 3)
-    # White-on-black for code examples
-    FGcode=$(tput setaf 7)
-    BGcode=$(tput setab 0)
-    # Bold text
-    FGbold=$(tput bold)
-    # Revert to standard
-    FGBGdef=$(tput sgr0)
-fi
+function warn() {
+    if ! type "tput" &> /dev/null; then echo -e $@
+    else echo -e $(tput setaf 0)$(tput setab 3)WARNING: $@$(tput sgr0); fi
+}
+
+function error() {
+    if ! type "tput" &> /dev/null; then echo -e $@
+    else echo -e $(tput setaf 7)$(tput setab 1)ERROR: $@$(tput sgr0); fi
+}
 
 ################################################################################
 # MAIN: The main execution of the configuration script.
 ################################################################################
 
-echo
-echo "Running PYTHIA configuration script. Now is `date`"
-
 # Check if help requested.
+bold "Running PYTHIA configuration script. Now is `date`"
 for VAR in "$@"; do
     if [ "$VAR" = "-h" ] || [ "$VAR" = "--h" ] || [ "$VAR" = "-help" ] \
 	   || [ "$VAR" = "--help" ]; then
-	echo "$USAGE";
-	exit;
-    fi;
+	echo -e "$USAGE"
+	exit
+    fi
 done
 
 # Parse the user arguments and evaluate each as a global variable.
@@ -271,34 +283,27 @@ for VAR in "$@"; do
     if [[ $OPTIONS =~ (^| )${VAR%%=*}($| ) ]]; then
 	echo "# $VAR" >> $CFG_FILE;
     else
-	echo "WARNING: Ignoring invalid option \"${VAR%=*}\".";
+	warn "Ignoring invalid option \"${VAR%=*}\".";
 	continue;
-    fi;
+    fi
     VAR=${VAR#--with-}; VAR=${VAR#--};
     KEY=${VAR%%=*}; VAL=${VAR#$KEY}; VAL=${VAL#*=}; KEY=${KEY//"-"/"_"};
     KEY=$(echo $KEY | awk '{print toupper($0)}');  VAL=$(eval echo $VAL)
-    eval $KEY=\"$VAL\"; eval ${KEY}_SET=true; done
+    eval $KEY=\"$VAL\"; eval ${KEY}_SET=true
+done
 
 # Set the compilation flags and options (order matters).
 if [ "$LCG_SET" != true ]; then LCG=x86_64-slc6-gcc48-opt; fi
-[ "$ENABLE_DEBUG_SET"  = true ] && ENABLE_DEBUG="-g "   || ENABLE_DEBUG="-O2 "
-[ "$ENABLE_OPTDEBUG_SET"  = true ] && ENABLE_DEBUG="-g -O "
-[ "$ENABLE_64BIT_SET"  = true ] && ENABLE_64BIT="-m64 " || ENABLE_64BIT=""
-[ "$ENABLE_SHARED_SET" = true ] && ENABLE_SHARED="true" || ENABLE_SHARED="false"
-if [ -z "$ARCH" ]; then
-    ARCH=$(uname | grep -i -o -e Linux -e Darwin);
-fi
+[ "$ENABLE_DEBUG_SET"    = true ] && ENABLE_DEBUG="-g "   || ENABLE_DEBUG="-O2 "
+[ "$ENABLE_OPTDEBUG_SET" = true ] && ENABLE_DEBUG="-g -O "
+if [ -z "$ARCH" ]; then ARCH=$(uname | grep -i -o -e Linux -e Darwin); fi
 ARCH=$(echo $ARCH | awk '{print toupper($0)}')
 if [ "$ARCH" != "LINUX" ] && [ "$ARCH" != "DARWIN" ]; then
-    echo "WARNING: Unknown architecture $ARCH, set as LINUX."; ARCH="LINUX"; fi
-# If CXX environment variable not defined, default to g++
-if [ -z "$CXX" ]; then
-    echo "WARNING: setting default C++ compiler CXX=g++ (CXX environment variable not set)"
-    CXX="g++";
-fi
+    warn "Unknown architecture $ARCH, set as LINUX."; ARCH="LINUX"; fi
+if [ -z "$CXX" ]; then warn "CXX not set, using g++."; CXX="g++"; fi
 if [ -z "$CXX_COMMON" ]; then
     CXX_COMMON="${ENABLE_DEBUG}${ENABLE_64BIT}"
-    CXX_COMMON="$CXX_COMMON -pedantic -W -Wall -Wshadow -fPIC"; fi
+    CXX_COMMON="${CXX_COMMON}-std=c++11 -pedantic -W -Wall -Wshadow -fPIC"; fi
 if [ -z "$CXX_SHARED" ]; then
     if [ "$ARCH" = "LINUX" ];  then CXX_SHARED="-shared"; fi
     if [ "$ARCH" = "DARWIN" ]; then CXX_SHARED="-dynamiclib"; fi; fi
@@ -319,92 +324,90 @@ if [ -z "$PREFIX_SHARE" ];    then PREFIX_SHARE=$PREFIX/share/Pythia8; fi
 
 # Configure the packages (order does not matter).
 configure_package "EVTGEN"\
-    "/afs/cern.ch/sw/lcg/releases/MCGenerators/evtgen/1.3.0-9000e"\
-    "bin" "include" "lib" "" "EvtGen/EvtGen.hh" "EvtGen" "HEPMC2"
+    "/afs/cern.ch/sw/lcg/releases/MCGenerators/evtgen/1.3.0-9000e" ""\
+    "" "" "" "" "EvtGen/EvtGen.hh" "EvtGen;EvtGenExternal" "HEPMC2"
 configure_package "FASTJET3" "/afs/cern.ch/sw/lcg/releases/fastjet"\
-    "bin" "include" "lib" "" "fastjet/config.h" "fastjet" ""
-configure_package "HEPMC2" "/afs/cern.ch/sw/lcg/releases/HepMC"\
-    "bin" "include" "lib" "" "HepMC/GenEvent.h" "HepMC" ""
-configure_package "HEPMC3" "" \
-    "bin" "include" "lib" "" "HepMC/GenEvent.h" "HepMC" ""
+     "fastjet-config" "bin" "--cxxflags" "--libs"\
+     "" "fastjet/config.h" "fastjet" ""
+configure_package "HEPMC2" "/afs/cern.ch/sw/lcg/releases/HepMC" ""\
+    "" "" "" "" "HepMC/GenEvent.h" "HepMC" ""
+configure_package "HEPMC3" "" "HepMC3-config"\
+    "" "--includedir" "--libdir" "" "HepMC3/GenEvent.h" "HepMC3" ""
 configure_package "LHAPDF5" "/afs/cern.ch/sw/lcg/releases/MCGenerators/lhapdf"\
-    "bin" "include" "lib" "" "" "LHAPDF" ""
+    "lhapdf-config" "" "--incdir" "--libdir" "" "" "LHAPDF" ""
 configure_package "LHAPDF6" "/afs/cern.ch/sw/lcg/releases/MCGenerators/lhapdf6"\
-    "bin" "include" "lib" "" "LHAPDF/LHAPDF.h" "LHAPDF" ""
-configure_package "POWHEG" "" "bin" "" "lib" "hvq" "" "" ""
-configure_package "PROMC" ""\
-     "bin" "" "lib" "" "src/ProMCBook.h" "promc" "GZIP"
-configure_package "ROOT" "/afs/cern.ch/sw/lcg/releases/ROOT"\
-		  "bin" "include" "lib" "root-config" "TROOT.h" \
-		  "Core,Gpad,Graf,Hist,MathCore,Matrix,Thread,Tree" ""
-configure_package "GZIP" "" "" "include" "lib" "" "zlib.h" "z" ""
-configure_package "BOOST" "/afs/cern.ch/sw/lcg/releases/Boost"\
-    "bin" "include" "lib" "" "boost/shared_ptr.hpp" "" ""
+    "lhapdf-config" "" "--incdir" "--libdir" "" "LHAPDF/LHAPDF.h" "LHAPDF" ""
+configure_package "POWHEG" "" "" "" "" "" "hvq" "" "" ""
+configure_package "RIVET" "" "rivet-config" "" "--includedir" "--libdir" ""\
+    "Rivet/Rivet.hh" "Rivet" "FASTJET3;HEPMC2;YODA"
+configure_package "ROOT" "/afs/cern.ch/sw/lcg/releases/ROOT" "root-config"\
+    "--bindir" "--incdir" "--libdir" "rootcint;root-config" "TROOT.h" "Core" ""
+configure_package "YODA" "" "yoda-config" "" "--includedir" "--libdir" ""\
+    "YODA/YODA.h" "YODA" ""
+configure_package "GZIP" "" "" "" "" "" "" "zlib.h" "z" "" "-DGZIP"
 configure_package "PYTHON" "/afs/cern.ch/sw/lcg/external/Python"\
-    "bin" "include" "lib" "python" "Python.h" "" ""
+    "python-config" "" "--includes" "" "" "Python.h" "" ""
+configure_package "MG5MES" "" "" "" "echo plugins/mg5mes/sm" "" "" "PY8ME.h"\
+    "" ""
+configure_package "OPENMP" "" "" "" "" "" "" "" "gomp" "" "-fopenmp -DOPENMP"
 
 # Check package dependencies (order does not matter).
-for IDX in ${!PKG_LIST[@]}; do 
+for IDX in ${!PKG_LIST[@]}; do
     PKG=${PKG_LIST[$IDX]}
     eval PKG_USE=\${${PKG}_CFG[0]}; eval PKG_WRN=\${${PKG}_CFG[8]}
     if [ "$PKG_USE" = true ] && [ -n "$PKG_WRN" ]; then
-	eval ${PKG}_CFG[0]=false; IFS=","
-	echo ""
-	for WRN in $PKG_WRN; do 
-	    if [ -n "$WRN" ]; then 
-	       echo -e $WRN; 
-	    fi;
-	done;
-	IFS=" "; 
-    fi; 
+	eval ${PKG}_CFG[0]=false; IFS=";"
+	for WRN in $PKG_WRN; do if [ -n "$WRN" ]; then echo $WRN; fi; done
+	IFS=" "
+    fi
 done
 
 # Check package inter-dependencies (order does not matter).
-for IDX in ${!PKG_LIST[@]}; do PKG=${PKG_LIST[$IDX]}
+for IDX in ${!PKG_LIST[@]}; do
+    PKG=${PKG_LIST[$IDX]}
     eval PKG_USE=\${${PKG}_CFG[0]}; eval PKG_DPS=\${${PKG}_CFG[7]}
     if [ "$PKG_USE" = true ]; then
-	IFS=","
+	IFS=";"
 	for DEP in $PKG_DPS; do
-	    eval DEP_USE=\${${DEP}_CFG[0]}
+	    eval DEP_USE=\${${DEP}_CFG[0]}; eval DEP_INC=\${${DEP}_CFG[2]};
+	    eval DEP_LIB=\${${DEP}_CFG[3]};
+	    if [ -n "$DEP_INC" ]; then eval ${PKG}_CFG[2]+=\" $DEP_INC\"; fi
+	    if [ -n "$DEP_LIB" ]; then eval ${PKG}_CFG[3]+=\" $DEP_LIB\"; fi
 	    if [ "$DEP_USE" != true ]; then
 		eval ${PKG}_CFG[0]=false
-		echo "WARNING: Disabling $PKG - requires $DEP.";
-	    fi;
-	done;
-	IFS=" ";
-    fi;
+		echo $(warn "Disabling $PKG") " - requires $DEP."
+	    fi
+	done
+	IFS=" "
+    fi
+    eval PKG_USE=\${${PKG}_CFG[0]}; eval PKG_FLG=\${${PKG}_CFG[9]}
+    if [ "$PKG_USE" = true ] && [ -n "$PKG_FLG" ]; then
+	CXX_COMMON+=" $PKG_FLG"
+    fi
 done
 
-# Check whether to add package-dependent compilation flags (for ROOT)
-eval ROOT_USE=\${ROOT_CFG[0]}
-if [ "$ROOT_USE" = true ] && [ "$ROOT_SET" = true ] ; then
-    # Get ROOT-specific flags from root-config --cflags
-    # Get ROOT-specific libraries from root-config --glibs
-    if type "${ROOT_CFG[1]}/${ROOT_CFG[4]}" &> /dev/null; then
-	ROOT_FLAGS=`\${ROOT_CFG[1]}/\${ROOT_CFG[4]} --cflags`;
-	ROOT_LIBS=`\${ROOT_CFG[1]}/\${ROOT_CFG[4]} --glibs`;
-    fi
-    # Combine with common flags but remove --pedantic option
-    CXX_ROOT=`echo \${CXX_COMMON} ${ROOT_FLAGS} | sed s/"-pedantic"/""/`
-fi
-
+# Append the global flags.
+for IDX in ${!PKG_LIST[@]}; do
+    PKG=${PKG_LIST[$IDX]}
+    eval PKG_USE=\${${PKG}_CFG[0]}
+done
+    
 # Write the configuation to screen and file, update the pythia8-config script.
+mkdir -p bin;
 sed 's|^CFG_FILE=.*|CFG_FILE='"$PREFIX_SHARE"'/examples/Makefile.inc|;n' \
-    bin/pythia8-config > bin/tmp
-chmod a+x bin/tmp; mv bin/tmp bin/pythia8-config
+    pythia8-config.inc > bin/pythia8-config
+chmod a+x bin/pythia8-config
 echo "---------------------------------------------------------------------"
 echo "|                    PYTHIA Configuration Summary                   |"
 echo "---------------------------------------------------------------------"
 echo "  Architecture                = "$ARCH 
-echo "  C++ Compiler     CXX        = "$CXX
-echo "  C++ Flags        CXX_COMMON = "$CXX_COMMON
-echo "  C++ Flags (.so)  CXX_SHARED = "$CXX_SHARED
-echo -en "  Further options             = "
-if [ "$ENABLE_DEBUG_SET" = true ];  then echo -en "--enable-debug"; fi
-if [ "$ENABLE_OPTDEBUG_SET" = true ];  then echo -en "--enable-optdebug"; fi
-if [ "$ENABLE_64BIT_SET" = true ];  then echo -en "--enable-64bit"; fi
-if [ "$ENABLE_SHARED_SET" = true ]; then echo -en "--enable-shared"; fi
-if [ "$LCG_SET" = true ];           then echo -en "--lcg=$LCG"; fi
+echo "  C++ compiler     CXX        = "$CXX
+echo "  C++ flags        CXX_COMMON = "$CXX_COMMON
+echo "  C++ shared flag  CXX_SHARED = "$CXX_SHARED
+echo -n "  Further options             = "
+if [ "$ENABLE_DEBUG_SET" = true ];    then echo -n "--enable-debug ";    fi
+if [ "$ENABLE_OPTDEBUG_SET" = true ]; then echo -n "--enable-optdebug "; fi
+if [ "$LCG_SET" = true ];             then echo -n "--lcg=$LCG";         fi
 echo ""
 cat >> $CFG_FILE << BLOCKTEXT
 
@@ -415,46 +418,34 @@ PREFIX_LIB=$PREFIX_LIB
 PREFIX_SHARE=$PREFIX_SHARE
 
 # Compilation flags (see ./configure --help for further documentation).
-ENABLE_SHARED=$ENABLE_SHARED
 CXX=$CXX
 CXX_COMMON=$CXX_COMMON
 CXX_SHARED=$CXX_SHARED
 CXX_SONAME=$CXX_SONAME
 LIB_SUFFIX=$LIB_SUFFIX
 BLOCKTEXT
-echo ""
-echo "The following optional external packages will be used:"
+echo -e "\nThe following optional external packages will be used:"
 for IDX in ${!PKG_LIST[@]}; do
     PKG=${PKG_LIST[$IDX]}
     eval PKG_USE=\${${PKG}_CFG[0]}
     if [ "$PKG_USE" = true ]; then
-	eval PKG_BIN=\${${PKG}_CFG[1]}; eval PKG_INC=\${${PKG}_CFG[2]};
-	eval PKG_LIB=\${${PKG}_CFG[3]};
-	# GZIP libraries are included as a compiler option, not in a directory
-	if [ $PKG = "GZIP" ]; then
-        echo -e "$FGbold + $PKG$FGBGdef"
-	else
-	    echo -e "$FGbold + $PKG$FGBGdef (in "$PKG_LIB")"
-	fi
-    else PKG_BIN=""; PKG_INC=""; PKG_LIB=""; fi
+	eval PKG_BIN=\${${PKG}_CFG[1]}; eval PKG_INC=\${${PKG}_CFG[2]}
+	eval PKG_LIB=\${${PKG}_CFG[3]}; eval PKG_CONFIG=\${${PKG}_CFG[10]}
+	PKG_DIR=$PKG_INC
+	if [ -n "$PKG_BIN" ] && [ "${PKG_BIN: -1}" != "/" ]; then
+	    PKG_BIN="$PKG_BIN/"; fi
+	if [ -z "$PKG_DIR" ]; then PKG_DIR=$PKG_BIN; fi
+	if [ -z "$PKG_DIR" ]; then PKG_DIR="system"; fi
+	echo $(bold "  + $PKG")" ($PKG_DIR)"
+    else
+        PKG_BIN=""; PKG_INC=""; PKG_LIB="";
+    fi
     cat >> $CFG_FILE << BLOCKTEXT
 
-# $PKG configuration.
 ${PKG}_USE=$PKG_USE
+${PKG}_CONFIG=$PKG_CONFIG
 ${PKG}_BIN=$PKG_BIN
-BLOCKTEXT
-# ROOT: explicit list of libraries and compiler flags (e.g., ROOT uses C++11)
-if [ "$PKG" = "ROOT" ]; then
-    cat >> $CFG_FILE << BLOCKTEXT
-${PKG}_LIBS=$ROOT_LIBS
-CXX_${PKG}=$CXX_ROOT
-BLOCKTEXT
-else
-# All other packages, just put include/ and lib/ paths
-    cat >> $CFG_FILE << BLOCKTEXT
 ${PKG}_INCLUDE=$PKG_INC
 ${PKG}_LIB=$PKG_LIB
 BLOCKTEXT
-fi
 done
-echo ""

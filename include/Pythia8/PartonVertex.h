@@ -1,5 +1,5 @@
 // PartonVertex.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,6 +11,7 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/Event.h"
 #include "Pythia8/Info.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
@@ -20,22 +21,16 @@ namespace Pythia8 {
 
 // The PartonVertex class sets parton-level vertex information.
 
-class PartonVertex {
+class PartonVertex : public PhysicsBase {
 
 public:
 
   // Constructor.
-  PartonVertex() : infoPtr(), settingsPtr(), rndmPtr(), doVertex(),
-    modeVertex(), rProton(), pTmin(), widthEmission(), bScale(), bNow(),
-    xMax(), yMax(), mux() {}
+  PartonVertex() : doVertex(), modeVertex(), rProton(), pTmin(),
+    widthEmission(), bScale(), bNow(), xMax(), yMax(), mux() {}
 
   // Destructor.
   virtual ~PartonVertex() {}
-
-  // Initialize various pointers.
-  // (Separated from rest of init since not virtual.)
-  void initPtr(Info* infoPtrIn, Settings* settingsPtrIn, Rndm* rndmPtrIn) {
-    infoPtr = infoPtrIn; settingsPtr = settingsPtrIn; rndmPtr = rndmPtrIn;}
 
   // Initialize a few parameters from Settings.
   virtual void init();
@@ -51,17 +46,6 @@ public:
 
   // Select vertex for an ISR branching.
   virtual void vertexISR( int iNow, Event& event);
-
-protected:
-
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  // Pointer to the settings database.
-  Settings*      settingsPtr;
-
-  // Pointer to the random number generator.
-  Rndm*          rndmPtr;
 
 private:
 

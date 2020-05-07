@@ -1,5 +1,5 @@
 // HardDiffraction.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,6 +15,7 @@
 #include "Pythia8/BeamRemnants.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/MultipartonInteractions.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/SpaceShower.h"
@@ -27,7 +28,7 @@ namespace Pythia8 {
 // HardDiffraction class.
 // This class handles hard diffraction, together with PartonLevel.
 
-class HardDiffraction {
+class HardDiffraction : public PhysicsBase {
 
 public:
 
@@ -36,15 +37,11 @@ public:
     pomFlux(), iBeam(), idA(), idB(), rescale(), normPom(), sigTotRatio(),
     a1(), a2(), a3(), A1(), A2(), A3(), a0(), ap(), b0(), mA(), mB(), s(),
     s1(), s2(), s3(), s4(), xPomA(), xPomB(), tPomA(), tPomB(), thetaPomA(),
-    thetaPomB(), infoPtr(), rndmPtr(), beamAPtr(), beamBPtr(), beamPomAPtr(),
-    beamPomBPtr(), tmpPomPtr(), sigTotPtr() {};
+    thetaPomB(), tmpPomPtr() {};
   ~HardDiffraction() {}
 
-  // Initialise constants
-  void init(Info* infoPtrIn, Settings& settingsIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    BeamParticle* beamPomAPtrIn, BeamParticle* beamPomBPtrIn,
-    SigmaTotal* sigTotPtrIn);
+  // Initialise constant and the beams to be considered.
+  void init(BeamParticle* beamAPtrIn,  BeamParticle* beamBPtrIn);
 
   // Main routine to check if event is from diffractive PDF.
   bool isDiffractive(int iBeamIn = 1, int partonIn = 0,
@@ -75,26 +72,8 @@ private:
          mA, mB, s, s1, s2, s3, s4,
          xPomA, xPomB, tPomA, tPomB, thetaPomA, thetaPomB;
 
-  // Pointer to various information on the generation.
-  Info*           infoPtr;
-
-  // Pointer to the settings database.
-  Settings        settings;
-
-  // Pointer to the random number generator.
-  Rndm*           rndmPtr;
-
-  // Pointers to incoming beams.
-  BeamParticle*   beamAPtr;
-  BeamParticle*   beamBPtr;
-  BeamParticle*   beamPomAPtr;
-  BeamParticle*   beamPomBPtr;
-
   // Pointer to temporary Pomeron PDF.
   BeamParticle*   tmpPomPtr;
-
-  // Pointer to total cross sections
-  SigmaTotal* sigTotPtr;
 
   // Return Pomeron flux inside proton, integrated over t.
   double xfPom(double xIn = 0.);

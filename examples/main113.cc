@@ -1,7 +1,12 @@
 // main113.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors: Leif Lonnblad <leif.lonnblad@thep.lu.se>.
+
+// Keywords: heavy ions; charged multiplicity; centrality;
+// angantyr;
 
 // This test program will generate Pb-Pb collisions at
 // sqrt(S_NN)=2.76TeV using the Angantyr model for Heavy Ion
@@ -32,7 +37,7 @@ int main() {
 
   // Setup the beams.
   pythia.readString("Beams:idA = 1000822080");
-  pythia.readString("Beams:idB = 1000822080"); // The lead ion.
+  pythia.readString("Beams:idB = 1000822080"); // The lead ions.
   pythia.readString("Beams:eCM = 2760.0");
   pythia.readString("Beams:frameType = 1");
 
@@ -97,7 +102,7 @@ int main() {
   pythia.init();
 
   // Loop over events.
-  int nEvents = 10000;
+  int nEvents = 100;
   for ( int iEvent = 0; iEvent < nEvents; ++iEvent ) {
     if ( !pythia.next() ) continue;
 
@@ -134,10 +139,10 @@ int main() {
 
     // Also fill the number of (absorptively and diffractively)
     // wounded nucleaons.
-    int nw = pythia.info.hiinfo->nAbsTarg() +
-             pythia.info.hiinfo->nDiffTarg() +
-             pythia.info.hiinfo->nAbsProj() +
-             pythia.info.hiinfo->nDiffProj();
+    int nw = pythia.info.hiInfo->nAbsTarg() +
+      pythia.info.hiInfo->nDiffTarg() +
+      pythia.info.hiInfo->nAbsProj() +
+      pythia.info.hiInfo->nDiffProj();
     wounded.fill(nw, weight);
 
     // Find the correct centrality histograms.

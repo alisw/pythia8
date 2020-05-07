@@ -1,5 +1,5 @@
 // ParticleDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -43,17 +43,11 @@ const double ParticleDecays::WTCORRECTION[11] = { 1., 1., 1.,
 
 // Initialize and save pointers.
 
-void ParticleDecays::init(Info* infoPtrIn, Settings& settings,
-  ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-  Couplings* couplingsPtrIn, TimeShower* timesDecPtrIn,
-  StringFlav* flavSelPtrIn, DecayHandler* decayHandlePtrIn,
+void ParticleDecays::init(TimeShowerPtr timesDecPtrIn,
+  StringFlav* flavSelPtrIn, DecayHandlerPtr decayHandlePtrIn,
   vector<int> handledParticles) {
 
   // Save pointers to error messages handling and flavour generation.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
-  couplingsPtr    = couplingsPtrIn;
   flavSelPtr      = flavSelPtrIn;
 
   // Save pointer to timelike shower, as needed in some few decays.
@@ -68,52 +62,51 @@ void ParticleDecays::init(Info* infoPtrIn, Settings& settings,
     particleDataPtr->doExternalDecay(handledParticles[i], true);
 
   // Safety margin in mass to avoid troubles.
-  mSafety       = settings.parm("ParticleDecays:mSafety");
+  mSafety       = parm("ParticleDecays:mSafety");
 
   // Lifetime and vertex rules for determining whether decay allowed.
-  limitTau0     = settings.flag("ParticleDecays:limitTau0");
-  tau0Max       = settings.parm("ParticleDecays:tau0Max");
-  limitTau      = settings.flag("ParticleDecays:limitTau");
-  tauMax        = settings.parm("ParticleDecays:tauMax");
-  limitRadius   = settings.flag("ParticleDecays:limitRadius");
-  rMax          = settings.parm("ParticleDecays:rMax");
-  limitCylinder = settings.flag("ParticleDecays:limitCylinder");
-  xyMax         = settings.parm("ParticleDecays:xyMax");
-  zMax          = settings.parm("ParticleDecays:zMax");
+  limitTau0     = flag("ParticleDecays:limitTau0");
+  tau0Max       = parm("ParticleDecays:tau0Max");
+  limitTau      = flag("ParticleDecays:limitTau");
+  tauMax        = parm("ParticleDecays:tauMax");
+  limitRadius   = flag("ParticleDecays:limitRadius");
+  rMax          = parm("ParticleDecays:rMax");
+  limitCylinder = flag("ParticleDecays:limitCylinder");
+  xyMax         = parm("ParticleDecays:xyMax");
+  zMax          = parm("ParticleDecays:zMax");
   limitDecay    = limitTau0 || limitTau || limitRadius || limitCylinder;
 
   // B-Bbar mixing parameters.
-  mixB          = settings.flag("ParticleDecays:mixB");
-  xBdMix        = settings.parm("ParticleDecays:xBdMix");
-  xBsMix        = settings.parm("ParticleDecays:xBsMix");
+  mixB          = flag("ParticleDecays:mixB");
+  xBdMix        = parm("ParticleDecays:xBdMix");
+  xBsMix        = parm("ParticleDecays:xBsMix");
 
   // Suppression of extra-hadron momenta in semileptonic decays.
-  sigmaSoft     = settings.parm("ParticleDecays:sigmaSoft");
+  sigmaSoft     = parm("ParticleDecays:sigmaSoft");
 
   // Selection of multiplicity and colours in "phase space" model.
-  multIncrease     = settings.parm("ParticleDecays:multIncrease");
-  multIncreaseWeak = settings.parm("ParticleDecays:multIncreaseWeak");
-  multRefMass      = settings.parm("ParticleDecays:multRefMass");
-  multGoffset      = settings.parm("ParticleDecays:multGoffset");
-  colRearrange     = settings.parm("ParticleDecays:colRearrange");
+  multIncrease     = parm("ParticleDecays:multIncrease");
+  multIncreaseWeak = parm("ParticleDecays:multIncreaseWeak");
+  multRefMass      = parm("ParticleDecays:multRefMass");
+  multGoffset      = parm("ParticleDecays:multGoffset");
+  colRearrange     = parm("ParticleDecays:colRearrange");
 
   // Minimum energy in system (+ m_q) from StringFragmentation.
-  stopMass      = settings.parm("StringFragmentation:stopMass");
+  stopMass      = parm("StringFragmentation:stopMass");
 
   // Parameters for Dalitz decay virtual gamma mass spectrum.
   sRhoDal       = pow2(particleDataPtr->m0(113));
   wRhoDal       = pow2(particleDataPtr->mWidth(113));
 
   // Allow showers in decays to qqbar/gg/ggg/gammagg.
-  doFSRinDecays = settings.flag("ParticleDecays:FSRinDecays");
-  doGammaRad    = settings.flag("ParticleDecays:allowPhotonRadiation");
+  doFSRinDecays = flag("ParticleDecays:FSRinDecays");
+  doGammaRad    = flag("ParticleDecays:allowPhotonRadiation");
 
   // Use standard decays or dedicated tau decay package
-  tauMode       = settings.mode("TauDecays:mode");
+  tauMode       = mode("TauDecays:mode");
 
   // Initialize the dedicated tau decay handler.
-  if (tauMode) tauDecayer.init(infoPtr, &settings,
-    particleDataPtr, rndmPtr, couplingsPtr);
+  if (tauMode) tauDecayer.init();
 
 }
 
@@ -416,10 +409,6 @@ bool ParticleDecays::twoBody(Event& event) {
 
   // Energies and absolute momentum in the rest frame.
   if (m1 + m2 + mSafety > m0) return false;
-  double e1   = 0.5 * (m0*m0 + m1*m1 - m2*m2) / m0;
-  double e2   = 0.5 * (m0*m0 + m2*m2 - m1*m1) / m0;
-  double pAbs = 0.5 * sqrtpos( (m0 - m1 - m2) * (m0 + m1 + m2)
-    * (m0 + m1 - m2) * (m0 - m1 + m2) ) / m0;
 
   // When meMode = 2, for V -> PS2 + PS3 (V = vector, pseudoscalar),
   // need to check if production is PS0 -> PS1/gamma + V.
@@ -453,17 +442,10 @@ bool ParticleDecays::twoBody(Event& event) {
     wtMEmax = 1.;
     ++loop;
 
-    // Isotropic angles give three-momentum.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi      = 2. * M_PI * rndmPtr->flat();
-    double pX       = pAbs * sinTheta * cos(phi);
-    double pY       = pAbs * sinTheta * sin(phi);
-    double pZ       = pAbs * cosTheta;
-
-    // Fill four-momenta and boost them away from mother rest frame.
-    prod1.p(  pX,  pY,  pZ, e1);
-    prod2.p( -pX, -pY, -pZ, e2);
+    // Fill four-momenta in mother rest frame and then boost to lab frame.
+    pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(m0, m1, m2);
+    prod1.p(ps.first);
+    prod2.p(ps.second);
     prod1.bst( decayer.p(), decayer.m() );
     prod2.bst( decayer.p(), decayer.m() );
 
@@ -550,32 +532,17 @@ bool ParticleDecays::threeBody(Event& event) {
     } while ( wtPS < rndmPtr->flat() * wtPSmax );
 
     // Set up m23 -> m2 + m3 isotropic in its rest frame.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi      = 2. * M_PI * rndmPtr->flat();
-    double pX       = p23Abs * sinTheta * cos(phi);
-    double pY       = p23Abs * sinTheta * sin(phi);
-    double pZ       = p23Abs * cosTheta;
-    double e2       = sqrt( m2*m2 + p23Abs*p23Abs);
-    double e3       = sqrt( m3*m3 + p23Abs*p23Abs);
-    prod2.p(  pX,  pY,  pZ, e2);
-    prod3.p( -pX, -pY, -pZ, e3);
+    pair<Vec4, Vec4> ps23 = rndmPtr->phaseSpace2(m23, m2, m3);
+    prod2.p(ps23.first);
+    prod3.p(ps23.second);
 
     // Set up m0 -> m1 + m23 isotropic in its rest frame.
-    cosTheta        = 2. * rndmPtr->flat() - 1.;
-    sinTheta        = sqrt(1. - cosTheta*cosTheta);
-    phi             = 2. * M_PI * rndmPtr->flat();
-    pX              = p1Abs * sinTheta * cos(phi);
-    pY              = p1Abs * sinTheta * sin(phi);
-    pZ              = p1Abs * cosTheta;
-    double e1       = sqrt( m1*m1 + p1Abs*p1Abs);
-    double e23      = sqrt( m23*m23 + p1Abs*p1Abs);
-    prod1.p( pX, pY, pZ, e1);
+    pair<Vec4, Vec4> ps123 = rndmPtr->phaseSpace2(m0, m1, m23);
+    prod1.p(ps123.first);
 
     // Boost 2 + 3 to the 0 rest frame.
-    Vec4 p23( -pX, -pY, -pZ, e23);
-    prod2.bst( p23, m23 );
-    prod3.bst( p23, m23 );
+    prod2.bst( ps123.second, m23 );
+    prod3.bst( ps123.second, m23 );
 
     // Matrix-element weight for omega/phi -> pi+ pi- pi0.
     if (meMode == 1) {
@@ -707,23 +674,10 @@ bool ParticleDecays::mGenerator(Event& event) {
     // Perform two-particle decays in the respective rest frame.
     pInv.resize(mult + 1);
     for (int i = 1; i < mult; ++i) {
-      double pAbs = 0.5 * sqrtpos( (mInv[i] - mInv[i+1] - mProd[i])
-        * (mInv[i] + mInv[i+1] + mProd[i]) * (mInv[i] + mInv[i+1] - mProd[i])
-        * (mInv[i] - mInv[i+1] + mProd[i]) ) / mInv[i];
-
-      // Isotropic angles give three-momentum.
-      double cosTheta = 2. * rndmPtr->flat() - 1.;
-      double sinTheta = sqrt(1. - cosTheta*cosTheta);
-      double phi      = 2. * M_PI * rndmPtr->flat();
-      double pX       = pAbs * sinTheta * cos(phi);
-      double pY       = pAbs * sinTheta * sin(phi);
-      double pZ       = pAbs * cosTheta;
-
-      // Calculate energies, fill four-momenta.
-      double eHad     = sqrt( mProd[i]*mProd[i] + pAbs*pAbs);
-      double eInv     = sqrt( mInv[i+1]*mInv[i+1] + pAbs*pAbs);
-      event[iProd[i]].p( pX, pY, pZ, eHad);
-      pInv[i+1].p( -pX, -pY, -pZ, eInv);
+      // Fill four-momenta
+      pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(mInv[i], mInv[i+1], mProd[i]);
+      pInv[i+1].p(ps.first);
+      event[iProd[i]].p(ps.second);
     }
 
     // Boost decay products to the mother rest frame.

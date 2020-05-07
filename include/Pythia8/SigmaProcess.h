@@ -1,5 +1,5 @@
 // SigmaProcess.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -31,6 +31,7 @@
 #include "Pythia8/LesHouches.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaComplex.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/ResonanceWidths.h"
@@ -81,7 +82,7 @@ public:
 
 // SigmaProcess is the base class for cross section calculations.
 
-class SigmaProcess {
+class SigmaProcess : public PhysicsBase {
 
 public:
 
@@ -89,13 +90,11 @@ public:
   virtual ~SigmaProcess() {}
 
   // Perform simple initialization and store pointers.
-  void init(Info* infoPtrIn, Settings* settingsPtrIn,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-    BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, Couplings* couplings,
-    SigmaTotal* sigmaTotPtrIn = 0, SLHAinterface* slhaInterfacePtrIn = 0);
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    SLHAinterface* slhaInterfacePtrIn = 0);
 
   // Store or replace Les Houches pointer.
-  void setLHAPtr( LHAup* lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;}
+  void setLHAPtr( LHAupPtr lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;}
 
   // Initialize process. Only used for some processes.
   virtual void initProc() {}
@@ -275,14 +274,13 @@ public:
 protected:
 
   // Constructor.
-  SigmaProcess() : infoPtr(0), settingsPtr(0), particleDataPtr(0),
-    rndmPtr(0), beamAPtr(0), beamBPtr(0), couplingsPtr(0), sigmaTotPtr(0),
-    slhaPtr(0), lhaUpPtr(0), nQuarkIn(), renormScale1(), renormScale2(),
-    renormScale3(), renormScale3VV(), factorScale1(), factorScale2(),
-    factorScale3(), factorScale3VV(), Kfactor(), mcME(), mbME(), mmuME(),
-    mtauME(), renormMultFac(), renormFixScale(), factorMultFac(),
-    factorFixScale(), higgsH1parity(), higgsH2parity(), higgsA3parity(),
-    higgsH1eta(), higgsH2eta(), higgsA3eta(), higgsH1phi(), higgsH2phi(),
+  SigmaProcess() : slhaPtr(0), lhaUpPtr(0), nQuarkIn(), renormScale1(),
+    renormScale2(), renormScale3(), renormScale3VV(), factorScale1(),
+    factorScale2(), factorScale3(), factorScale3VV(), Kfactor(), mcME(),
+    mbME(), mmuME(), mtauME(), renormMultFac(), renormFixScale(),
+    factorMultFac(), factorFixScale(), higgsH1parity(), higgsH2parity(),
+    higgsA3parity(), higgsH1eta(), higgsH2eta(), higgsA3eta(),
+    higgsH1phi(), higgsH2phi(),
     higgsA3phi(), idA(), idB(), mA(), mB(), isLeptonA(), isLeptonB(),
     hasLeptonBeams(), lepton2gammaA(), lepton2gammaB(), mH(), sH(), sH2(),
     x1Save(), x2Save(), sigmaSumSave(), id1(), id2(), id3(), id4(), id5(),
@@ -296,33 +294,11 @@ protected:
   static const double CONVERT2MB, MASSMARGIN, COMPRELERR;
   static const int    NCOMPSTEP;
 
-  // Pointer to various information on the generation.
-  Info*           infoPtr;
-
-  // Pointer to the settings database.
-  Settings*       settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*   particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*           rndmPtr;
-
-  // Pointers to incoming beams.
-  BeamParticle*   beamAPtr;
-  BeamParticle*   beamBPtr;
-
-  // Pointer to Standard Model couplings, including alphaS and alphaEM.
-  Couplings*      couplingsPtr;
-
-  // Pointer to the total/elastic/diffractive cross section object.
-  SigmaTotal*     sigmaTotPtr;
-
   // Pointer to an SLHA object.
   SusyLesHouches* slhaPtr;
 
   // Pointer to LHAup for generating external events.
-  LHAup*          lhaUpPtr;
+  LHAupPtr        lhaUpPtr;
 
   // Initialization data, normally only set once.
   int    nQuarkIn, renormScale1, renormScale2, renormScale3, renormScale3VV,

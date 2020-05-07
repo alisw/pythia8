@@ -1,5 +1,5 @@
 // PartonSystems.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,8 +24,8 @@ class PartonSystem {
 public:
 
   // Constructors.
-  PartonSystem() : hard(false), iInA(0), iInB(0), iInRes(0), sHat(0.) {
-    iOut.reserve(10);}
+  PartonSystem() : hard(false), iInA(0), iInB(0), iInRes(0), sHat(0.),
+    pTHat(0.) {iOut.reserve(10);}
 
   // Stored quantities.
   bool        hard;

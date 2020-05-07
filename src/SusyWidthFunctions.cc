@@ -1,5 +1,5 @@
 // SusyWidthFunctions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand
+// Copyright (C) 2020 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -16,26 +16,17 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// The WidthFunctions class.
+// The WidthFunction class.
 // Functions to be integrated for calculating the 3-body decay widths.
 
 //--------------------------------------------------------------------------
 
-void WidthFunction::setPointers( ParticleData* particleDataPtrIn,
-  CoupSUSY* coupSUSYPtrIn, Info* infoPtrIn) {
+void WidthFunction::setPointers(Info* infoPtrIn) {
 
-  particleDataPtr = particleDataPtrIn;
-  coupSUSYPtr = coupSUSYPtrIn;
   infoPtr = infoPtrIn;
-}
-
-//--------------------------------------------------------------------------
-
-double WidthFunction::f(double) {
-
-  infoPtr->errorMsg("Error in WidthFunction::function: "
-    "using dummy width function");
-  return 0.;
+  particleDataPtr = infoPtrIn->particleDataPtr;
+  coupSUSYPtr = infoPtrIn->coupSUSYPtr;
+  coupSMPtr  =  infoPtr->coupSMPtr;
 }
 
 //==========================================================================
@@ -48,11 +39,14 @@ double WidthFunction::f(double) {
 double StauWidths::getWidth(int idResIn, int idIn){
 
   setChannel(idResIn, idIn);
-
-  // Calculate integration limits and return integrated width.
   if (idResIn % 2 == 0) return 0.0;
+
+  // Set up a function of only x, capturing the reference to 'this'
+  auto integrand = [&](double x) { return this->f(x); };
+
+  // Integrate f
   double width;
-  if (integrateGauss(width, 0.0, 1.0, 1.0e-3)) return width;
+  if (integrateGauss(width, integrand, 0.0, 1.0, 1.0e-3)) return width;
   else return 0.0;
 
 }
@@ -73,16 +67,16 @@ void StauWidths::setChannel(int idResIn, int idIn) {
 
   // Couplings etc.
   f0 = 92.4; //MeV
-  gf =   coupSUSYPtr->GF();
+  gf =   coupSMPtr->GF();
   delm = mRes - m1;
   cons = pow2(f0)*pow2(gf)*(pow2(delm) - pow2(m2))
-       * coupSUSYPtr->V2CKMid(1,1) / (128.0 * pow(mRes*M_PI,3));
+       * coupSMPtr->V2CKMid(1,1) / (128.0 * pow(mRes*M_PI,3));
 
-  if (idIn == 900111) wparam = 1.16;
-  else if (idIn == 113) wparam = 0.808;
+  if (idIn == 9000211) wparam = 1.16;
+  else if (idIn == 213) wparam = 0.808;
   else wparam = 1.0;
 
-  double g = coupSUSYPtr->alphaEM(mRes * mRes);
+  double g = coupSMPtr->alphaEM(mRes * mRes);
   int ksusy = 1000000;
   int isl = (abs(idRes)/ksusy == 2) ? (abs(idRes)%10+1)/2 + 3
                                     : (abs(idRes)%10+1)/2;
@@ -91,8 +85,8 @@ void StauWidths::setChannel(int idResIn, int idIn) {
   gR = g * coupSUSYPtr->RsllX[isl][3][1] / ( sqrt(2.0) * coupSUSYPtr->cosb);
 
   // Set function switch and internal propagators depending on decay product.
-  if (idIn == 111) fnSwitch = 1;
-  else if (idIn == 900111 || idIn == 113)  fnSwitch = 2;
+  if (idIn == 211) fnSwitch = 1;
+  else if (idIn == 9000211 || idIn == 213)  fnSwitch = 2;
   else if (idIn == 14 || idIn == 12) {
     m2 = particleDataPtr->m0(idIn-1);
     fnSwitch = 3;

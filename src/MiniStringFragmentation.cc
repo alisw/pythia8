@@ -1,5 +1,5 @@
 // MiniStringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,32 +32,28 @@ const int MiniStringFragmentation::NTRYFLAV        = 10;
 
 // Initialize and save pointers.
 
-void MiniStringFragmentation::init(Info* infoPtrIn, Settings& settings,
-   ParticleData* particleDataPtrIn, Rndm* rndmPtrIn,
-   StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn, StringZ* zSelPtrIn) {
+void MiniStringFragmentation::init(StringFlav* flavSelPtrIn,
+  StringPT* pTSelPtrIn, StringZ* zSelPtrIn) {
 
   // Save pointers.
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
   flavSelPtr      = flavSelPtrIn;
   pTSelPtr        = pTSelPtrIn;
   zSelPtr         = zSelPtrIn;
 
   // Calculation and definition of hadron space-time production vertices.
-  hadronVertex    = settings.mode("HadronVertex:mode");
-  setVertices     = settings.flag("Fragmentation:setVertices");
-  kappaVtx        = settings.parm("HadronVertex:kappa");
-  smearOn         = settings.flag("HadronVertex:smearOn");
-  xySmear         = settings.parm("HadronVertex:xySmear");
-  constantTau     = settings.flag("HadronVertex:constantTau");
+  hadronVertex    = mode("HadronVertex:mode");
+  setVertices     = flag("Fragmentation:setVertices");
+  kappaVtx        = parm("HadronVertex:kappa");
+  smearOn         = flag("HadronVertex:smearOn");
+  xySmear         = parm("HadronVertex:xySmear");
+  constantTau     = flag("HadronVertex:constantTau");
 
   // Charm and bottom quark masses used for space-time offset.
   mc              = particleDataPtr->m0(4);
   mb              = particleDataPtr->m0(5);
 
   // Initialize the MiniStringFragmentation class proper.
-  nTryMass        = settings.mode("MiniStringFragmentation:nTry");
+  nTryMass        = mode("MiniStringFragmentation:nTry");
 
   // Initialize the b parameter of the z spectrum, used when joining jets.
   bLund           = zSelPtr->bAreaLund();
@@ -460,8 +456,8 @@ void MiniStringFragmentation::setHadronVertices(Event& event,
         longitudinal[i] = v1 + (pNegMass / mHad) * (v2 - v1);
         if (longitudinal[i].m2Calc()
            < -1e-8 * max(1., pow2(longitudinal[i].e())))
-           infoPtr->errorMsg("Warning in MiniStringFragmentation::setVertices:"
-             " negative tau^2 for endpoint massive correction");
+           infoPtr->errorMsg("Warning in MiniStringFragmentation::set"
+             "Vertices: negative tau^2 for endpoint massive correction");
       }
 
       // Add mass offset for all breakup points.

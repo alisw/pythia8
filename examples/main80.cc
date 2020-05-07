@@ -1,9 +1,12 @@
 // main80.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// This program is written by Stefan Prestel.
+// Authors: Stefan Prestel <stefan.prestel@thep.lu.se>.
+
+// Keywords: merging; leading order;
+
 // It illustrates how to do CKKW-L merging,
 // see the Matrix Element Merging page in the online manual.
 

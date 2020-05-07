@@ -1,6 +1,6 @@
-<chapter name="POWHEG Merging"> 
+<chapter name="POWHEG Matching"> 
  
-<h2>POWHEG Merging</h2> 
+<h2>POWHEG Matching</h2> 
  
 POWHEG <ref>Nas04</ref> in its character is very much like a parton shower, 
 with a Sudakov factor arising from the ordering of emissions. Both 
@@ -239,4 +239,4 @@ Treatment of non-QCD radiation.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

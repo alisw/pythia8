@@ -1,5 +1,5 @@
 // HadronScatter.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -95,13 +95,7 @@ const double  SigmaPartialWave::GRIDSAFETY = 0.05;
 
 // Perform initialization and store pointers.
 
-bool SigmaPartialWave::init(int processIn, string xmlPath, string filename,
-                            Info *infoPtrIn, ParticleData *particleDataPtrIn,
-                            Rndm *rndmPtrIn) {
-  // Store incoming pointers
-  infoPtr         = infoPtrIn;
-  particleDataPtr = particleDataPtrIn;
-  rndmPtr         = rndmPtrIn;
+bool SigmaPartialWave::init(int processIn, string xmlPath, string filename) {
 
   // Check incoming process is okay
   if (processIn < 0 || processIn > 2) {
@@ -569,7 +563,7 @@ bool SigmaPartialWave::setSubprocess(int idAin, int idBin) {
 
 // Calculate: mode = 0 (sigma elastic), 1 (sigma total), 2 (dSigma/dcTheta)
 
-double SigmaPartialWave::sigma(int mode, double Wcm, double cTheta) {
+double SigmaPartialWave::sigma(int modeIn, double Wcm, double cTheta) {
   // Below threshold, return 0
   if (Wcm < (mA + mB + MASSSAFETY)) return 0.;
 
@@ -583,7 +577,7 @@ double SigmaPartialWave::sigma(int mode, double Wcm, double cTheta) {
 
   // Precompute all required Pl and Pl' values
   double sTheta = 0.;
-  if (mode == 2) {
+  if (modeIn == 2) {
     if (process == 2) sTheta = sqrt(1. - pow2(cTheta));
     legendreP(cTheta, ((process == 2) ? true : false));
   }
@@ -632,7 +626,7 @@ double SigmaPartialWave::sigma(int mode, double Wcm, double cTheta) {
     }
 
     // Partial wave sum. Sigma elastic
-    if (mode == 0) {
+    if (modeIn == 0) {
       if        (process == 0 || process == 1) {
         sig += (2. * L + 1.) * (ampJ[0] * conj(ampJ[0])).real();
       } else if (process == 2) {
@@ -641,7 +635,7 @@ double SigmaPartialWave::sigma(int mode, double Wcm, double cTheta) {
       }
 
     // Sigma total
-    } else if (mode == 1) {
+    } else if (modeIn == 1) {
       if        (process == 0 || process == 1) {
         sig += (2. * L + 1.) * ampJ[0].imag();
       } else if (process == 2) {
@@ -649,7 +643,7 @@ double SigmaPartialWave::sigma(int mode, double Wcm, double cTheta) {
       }
 
     // dSigma
-    } else if (mode == 2) {
+    } else if (modeIn == 2) {
       if        (process == 0 || process == 1) {
         amp[0] += (2. * L + 1.) * ampJ[0] * PlVec[L];
       } else if (process == 2) {
@@ -661,11 +655,11 @@ double SigmaPartialWave::sigma(int mode, double Wcm, double cTheta) {
   } // for (L)
 
   // Normalisation and return
-  if (mode == 0 || mode == 1) {
+  if (modeIn == 0 || modeIn == 1) {
     if      (norm == 0)  sig *= 4.  * M_PI / k2 * CONVERT2MB;
     else if (norm == 1)  sig *= 64. * M_PI / s  * CONVERT2MB;
 
-  } else if (mode == 2) {
+  } else if (modeIn == 2) {
     sig = (amp[0] * conj(amp[0])).real() + (amp[1] * conj(amp[1])).real();
     if      (norm == 0) sig *= 2.  * M_PI / k2 * CONVERT2MB;
     else if (norm == 1) sig *= 32. * M_PI / s  * CONVERT2MB;
@@ -700,48 +694,43 @@ void SigmaPartialWave::legendreP(double ct, bool deriv) {
 
 // Perform initialization and store pointers.
 
-bool HadronScatter::init(Info* infoPtrIn, Settings& settings,
-                         Rndm *rndmPtrIn, ParticleData *particleDataPtr) {
-  // Save incoming pointers
-  infoPtr = infoPtrIn;
-  rndmPtr = rndmPtrIn;
-
+bool HadronScatter::init() {
   // Settings for new model.
-  scatterMode     = settings.mode("HadronScatter:mode");
-  p2max           = pow2(settings.parm("HadronScatter:pMax"));
-  yDiffMax        = settings.parm("HadronScatter:yDiffMax");
-  Rmax            = settings.parm("HadronScatter:Rmax");
-  scatSameString  = settings.flag("HadronScatter:scatterSameString");
-  scatMultTimes   = settings.flag("HadronScatter:scatterMultipleTimes");
-  maxProbDS       = settings.parm("HadronScatter:maxProbDS");
-  neighNear       = double(settings.mode("HadronScatter:neighbourNear"));
-  neighFar        = double(settings.mode("HadronScatter:neighbourFar"));
-  minProbSS       = settings.parm("HadronScatter:minProbSS");
-  maxProbSS       = settings.parm("HadronScatter:maxProbSS");
+  scatterMode     = mode("HadronScatter:mode");
+  p2max           = pow2(parm("HadronScatter:pMax"));
+  yDiffMax        = parm("HadronScatter:yDiffMax");
+  Rmax            = parm("HadronScatter:Rmax");
+  scatSameString  = flag("HadronScatter:scatterSameString");
+  scatMultTimes   = flag("HadronScatter:scatterMultipleTimes");
+  maxProbDS       = parm("HadronScatter:maxProbDS");
+  neighNear       = double(mode("HadronScatter:neighbourNear"));
+  neighFar        = double(mode("HadronScatter:neighbourFar"));
+  minProbSS       = parm("HadronScatter:minProbSS");
+  maxProbSS       = parm("HadronScatter:maxProbSS");
 
   // Settings for old model.
   doOldScatter    = (scatterMode == 2);
-  afterDecay      = settings.flag("HadronScatter:afterDecay");
-  allowDecayProd  = settings.flag("HadronScatter:allowDecayProd");
-  scatterRepeat   = settings.flag("HadronScatter:scatterRepeat");
+  afterDecay      = flag("HadronScatter:afterDecay");
+  allowDecayProd  = flag("HadronScatter:allowDecayProd");
+  scatterRepeat   = flag("HadronScatter:scatterRepeat");
   // Hadron selection
-  hadronSelect    = settings.mode("HadronScatter:hadronSelect");
-  Npar            = settings.parm("HadronScatter:N");
-  kPar            = settings.parm("HadronScatter:k");
-  pPar            = settings.parm("HadronScatter:p");
+  hadronSelect    = mode("HadronScatter:hadronSelect");
+  Npar            = parm("HadronScatter:N");
+  kPar            = parm("HadronScatter:k");
+  pPar            = parm("HadronScatter:p");
   // Scattering probability
-  scatterProb     = settings.mode("HadronScatter:scatterProb");
-  jPar            = settings.parm("HadronScatter:j");
-  rMax            = settings.parm("HadronScatter:rMax");
+  scatterProb     = mode("HadronScatter:scatterProb");
+  jPar            = parm("HadronScatter:j");
+  rMax            = parm("HadronScatter:rMax");
   rMax2           = rMax * rMax;
-  doTile          = settings.flag("HadronScatter:tile");
+  doTile          = flag("HadronScatter:tile");
 
   // String fragmentation and MPI settings
-  pTsigma         = 2.0 * settings.parm("StringPT:sigma");
+  pTsigma         = 2.0 * parm("StringPT:sigma");
   pTsigma2        = pTsigma * pTsigma;
-  double pT0ref   = settings.parm("MultipartonInteractions:pT0ref");
-  double eCMref   = settings.parm("MultipartonInteractions:eCMref");
-  double eCMpow   = settings.parm("MultipartonInteractions:eCMpow");
+  double pT0ref   = parm("MultipartonInteractions:pT0ref");
+  double eCMref   = parm("MultipartonInteractions:eCMref");
+  double eCMpow   = parm("MultipartonInteractions:eCMpow");
   double eCMnow   = infoPtr->eCM();
   pT0MPI          = pT0ref * pow(eCMnow / eCMref, eCMpow);
 
@@ -784,12 +773,12 @@ bool HadronScatter::init(Info* infoPtrIn, Settings& settings,
     if (xmlPath[ xmlPath.length() - 1 ] != '/') xmlPath += "/";
 
     // Hadron scattering partial wave cross sections
-    if ( !sigmaPW[0].init(0, xmlPath, "pipi-Froggatt.dat",
-      infoPtr, particleDataPtr, rndmPtr) ) return false;
-    if ( !sigmaPW[1].init(1, xmlPath, "piK-Estabrooks.dat",
-      infoPtr, particleDataPtr, rndmPtr) ) return false;
-    if ( !sigmaPW[2].init(2, xmlPath, "piN-SAID-WI08.dat",
-      infoPtr, particleDataPtr, rndmPtr) ) return false;
+    registerSubObject(sigmaPW[0]);
+    registerSubObject(sigmaPW[1]);
+    registerSubObject(sigmaPW[2]);
+    if ( !sigmaPW[0].init(0, xmlPath, "pipi-Froggatt.dat") ) return false;
+    if ( !sigmaPW[1].init(1, xmlPath, "piK-Estabrooks.dat") ) return false;
+    if ( !sigmaPW[2].init(2, xmlPath, "piN-SAID-WI08.dat") ) return false;
     sigElMax = 0.;
     sigElMax = max(sigElMax, sigmaPW[0].getSigmaElMax());
     sigElMax = max(sigElMax, sigmaPW[1].getSigmaElMax());

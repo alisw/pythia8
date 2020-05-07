@@ -178,8 +178,8 @@ The number of events to be generated.
 </modeopen> 
  
 <modeopen name="Main:numberOfTriedEvents" default="0" min="0"> 
-The number of events to be tried during generation. Any number smaller than one 
-means that the setting will be ignored. 
+The number of events to be tried during generation. Any number smaller 
+than one means that the setting will be ignored. 
 </modeopen> 
  
 <modeopen name="Main:numberOfSelectedEvents" default="0" min="0"> 
@@ -284,4 +284,4 @@ and then use that value in the main program as desired.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

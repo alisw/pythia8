@@ -1,5 +1,5 @@
 // SigmaSUSY.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -25,6 +25,11 @@ double Sigma2SUSY::weightDecay( Event& process, int iResBeg, int iResEnd) {
   // Identity of mother of decaying resonance(s).
   int idMother = process[process[iResBeg].mother1()].idAbs();
 
+  // Do nothing for squarks/sleptons.
+  if ( (idMother > 1000000 && idMother < 1000020)
+    || (idMother > 2000000 && idMother < 2000020)
+    || idMother == 1000021) return 1.0;
+
   // For Higgs decay hand over to standard routine.
   if (idMother == 25 || idMother == 35 || idMother == 36)
     return weightHiggsDecay( process, iResBeg, iResEnd);
@@ -34,7 +39,7 @@ double Sigma2SUSY::weightDecay( Event& process, int iResBeg, int iResEnd) {
     return weightTopDecay( process, iResBeg, iResEnd);
 
   // For Neutralino(i) decay hand over to standard routine.
-  if ( settingsPtr->flag("SUSYResonance:3BodyMatrixElement")
+  if ( flag("SUSYResonance:3BodyMatrixElement")
     && (idMother == 1000023 || idMother == 1000025 || idMother == 1000035) ) {
 
     // Nj -> Ni f fbar
@@ -67,8 +72,8 @@ double Sigma2SUSY::weightDecay( Event& process, int iResBeg, int iResEnd) {
       if( idmo<0 || iddau<0 ) return(1.0);
 
       Sigma2qqbar2chi0chi0 localDecay(idmo,iddau,0);
-      localDecay.init(infoPtr, settingsPtr, particleDataPtr,NULL,NULL,
-                      NULL,couplingsPtr);
+      localDecay.initInfoPtr(*infoPtr);
+      localDecay.init(NULL, NULL);
       localDecay.initProc();
       localDecay.alpEM = 1;
       localDecay.id1 = process[iF].id();
@@ -112,6 +117,25 @@ double Sigma2SUSY::weightDecay( Event& process, int iResBeg, int iResEnd) {
 
 }
 
+//--------------------------------------------------------------------------
+
+void Sigma2SUSY::setPointers(string processIn){
+
+  // Set SUSY couplings
+  coupSUSYPtr = infoPtr->coupSUSYPtr;
+
+  // Set couplings if not already initialised
+  if (!coupSUSYPtr->isInit) coupSUSYPtr->initSUSY(slhaPtr, infoPtr);
+
+  // If still not initialised, print warning
+  if(!coupSUSYPtr->isInit) {
+    infoPtr->errorMsg("Warning from " + processIn + "::setPointers"
+      ,"; Unable to initialise Susy Couplings. ");
+
+  }
+
+}
+
 //==========================================================================
 
 // Sigma2qqbar2chi0chi0
@@ -123,8 +147,7 @@ double Sigma2SUSY::weightDecay( Event& process, int iResBeg, int iResEnd) {
 
 void Sigma2qqbar2chi0chi0::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qqbar2chi0chi0");
 
   // Construct name of process.
   nameSave = "q qbar' -> " + particleDataPtr->name(id3) + " "
@@ -682,8 +705,8 @@ double Sigma2qqbar2charchar::sigmaHat() {
 
 void Sigma2qg2chi0squark::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+
+  setPointers("qg2chi0squark");
 
   // Construct name of process.
   if (id4 % 2 == 0) {
@@ -814,8 +837,8 @@ void Sigma2qg2chi0squark::setIdColAcol() {
 
 void Sigma2qg2charsquark::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+
+    setPointers("qg2charsquark");
 
   // Construct name of process.
   if (id4 % 2 == 0) {
@@ -946,8 +969,7 @@ void Sigma2qg2charsquark::setIdColAcol() {
 
 void Sigma2qq2squarksquark::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qq2squarksquark");
 
   // Extract mass-ordering indices
   iGen3 = 3*(abs(id3Sav)/2000000) + (abs(id3Sav)%10+1)/2;
@@ -984,7 +1006,7 @@ void Sigma2qq2squarksquark::initProc() {
   openFracPair = particleDataPtr->resOpenFrac(id3Sav, id4Sav);
 
   // Selection of interference terms
-  onlyQCD = settingsPtr->flag("SUSY:qq2squarksquark:onlyQCD");
+  onlyQCD = flag("SUSY:qq2squarksquark:onlyQCD");
 }
 
 //--------------------------------------------------------------------------
@@ -1507,8 +1529,10 @@ void Sigma2qq2squarksquark::setIdColAcol() {
 
 void Sigma2qqbar2squarkantisquark::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qqbar2squarkantisquark");
+
+
+  coupSUSYPtr = infoPtr->coupSUSYPtr;
 
   // Is this a ~u_i ~d*_j, ~d_i ~u*_j final state or ~d_i ~d*_j, ~u_i ~u*_j
   if (abs(id3Sav) % 2 == abs(id4Sav) % 2) isUD = false;
@@ -1549,7 +1573,7 @@ void Sigma2qqbar2squarkantisquark::initProc() {
   openFracPair = particleDataPtr->resOpenFrac(id3Sav, id4Sav);
 
   // Select interference terms
-  onlyQCD = settingsPtr->flag("SUSY:qqbar2squarkantisquark:onlyQCD");
+  onlyQCD = flag("SUSY:qqbar2squarkantisquark:onlyQCD");
 }
 
 //--------------------------------------------------------------------------
@@ -1841,8 +1865,7 @@ void Sigma2qqbar2squarkantisquark::setIdColAcol() {
 
 void Sigma2gg2squarkantisquark::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("gg2squarkantisquark");
 
   // Process Name
   nameSave = "g g -> "+particleDataPtr->name(abs(id3Sav))+" "
@@ -1915,8 +1938,7 @@ void Sigma2gg2squarkantisquark::setIdColAcol() {
 
 void Sigma2qg2squarkgluino::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qg2squarkgluino");
 
   // Derive name
 
@@ -1975,8 +1997,12 @@ double Sigma2qg2squarkgluino::sigmaHat() {
   int idQ = (abs(idQA)+1)/2;
   idSq = 3 * (abs(id3) / 2000000) + (abs(id3) % 10 + 1)/2;
 
+  // For some reason this gets set to zero after init
+  coupSUSYPtr = infoPtr->coupSUSYPtr;
+
   double mixingFac;
   if(abs(idQA) % 2 == 1)
+
     mixingFac = norm(coupSUSYPtr->LsddG[idSq][idQ])
               + norm(coupSUSYPtr->RsddG[idSq][idQ]);
   else
@@ -2025,8 +2051,7 @@ void Sigma2qg2squarkgluino::setIdColAcol() {
 
 void Sigma2gg2gluinogluino::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("gg2gluinogluino");
 
   // Secondary open width fraction.
   openFracPair = particleDataPtr->resOpenFrac(1000021, 1000021);
@@ -2093,8 +2118,7 @@ void Sigma2gg2gluinogluino::setIdColAcol() {
 
 void Sigma2qqbar2gluinogluino::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qqbar2gluinogluino");
 
   // Secondary open width fraction.
   openFracPair = particleDataPtr->resOpenFrac(1000021, 1000021);
@@ -2134,6 +2158,9 @@ double Sigma2qqbar2gluinogluino::sigmaHat() {
 
   // In-pair must both be up-type or both down-type
   if ((id1+id2) % 2 != 0) return 0.0;
+
+  // For some reason this gets set to zero
+  coupSUSYPtr = infoPtr->coupSUSYPtr;
 
   // Flavor indices for the incoming quarks
   int iQA = (abs(id1)+1)/2;
@@ -2280,8 +2307,17 @@ void Sigma2qqbar2gluinogluino::setIdColAcol() {
 
 void Sigma1qq2antisquark::initProc(){
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+
+  // Set SUSY couplings
+  coupSUSYPtr = infoPtr->coupSUSYPtr;
+
+  // Set couplings if not already initialised
+  if (!coupSUSYPtr->isInit) coupSUSYPtr->initSUSY(slhaPtr, infoPtr);
+
+  // If still not initialised, print warning
+  if(!coupSUSYPtr->isInit) infoPtr->errorMsg("Warning from qq2antisquark"
+     "::setPointers", "; Unable to initialise Susy Couplings.");
+
 
   //Construct name of the process from lambda'' couplings
 
@@ -2393,8 +2429,7 @@ void Sigma1qq2antisquark::setIdColAcol() {
 
 void Sigma2qqbar2chi0gluino::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qqbar2chi0gluino");
 
   // Construct name of process.
   nameSave = "q qbar' -> " + particleDataPtr->name(id3) + " "
@@ -2573,8 +2608,7 @@ void Sigma2qqbar2chi0gluino::setIdColAcol() {
 
 void Sigma2qqbar2chargluino::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qqbar2chargluino");
 
   // Construct name of process.
   nameSave = "q qbar' -> " + particleDataPtr->name(id3) + " "
@@ -2726,8 +2760,7 @@ void Sigma2qqbar2chargluino::setIdColAcol() {
 
 void Sigma2qqbar2sleptonantislepton::initProc() {
 
-  //Typecast to the correct couplings
-  coupSUSYPtr = (CoupSUSY*) couplingsPtr;
+  setPointers("qqbar2sleptonantislepton");
 
   // Is this a ~e_i ~nu*_j, ~nu_i ~e*_j final state or ~e_i ~e*_j, ~nu_i ~nu*_j
   if (abs(id3Sav) % 2 == abs(id4Sav) % 2) isUD = false;

@@ -1,5 +1,5 @@
 // HeavyIons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,6 +13,7 @@
 #define Pythia8_HeavyIons_H
 
 #include "Pythia8/HIUserHooks.h"
+#include "Pythia8/PhysicsBase.h"
 
 namespace Pythia8 {
 
@@ -27,7 +28,7 @@ class Pythia;
 /// be implemented in a subclass overriding the the virtual'init()'
 /// and 'next()' functions.
 
-class HeavyIons {
+class HeavyIons : public PhysicsBase {
 
 public:
 
@@ -37,7 +38,6 @@ public:
   HeavyIons(Pythia & mainPythiaIn)
     : mainPythiaPtr(&mainPythiaIn), HIHooksPtr(0),
       pythia(vector<Pythia*>(1, &mainPythiaIn)) {
-    mainPythiaPtr->info.hiinfo = &hiinfo;
   }
 
   /// Destructor.
@@ -66,7 +66,7 @@ public:
   static bool isHeavyIon(Settings & settings);
 
   /// Possibility to pass in pointer for special heavy ion user hooks.
-  bool setHIUserHooksPtr(HIUserHooks * userHooksPtrIn) {
+  bool setHIUserHooksPtr(HIUserHooksPtr userHooksPtrIn) {
     HIHooksPtr = userHooksPtrIn; return true;
   }
 
@@ -75,10 +75,10 @@ protected:
   /// Subclasses will probably use several Pythia object and this
   /// helper function will sum up all warnings and errors of these and
   /// add them to the main Pythia object, prefixing them with a tag.
-  void sumUpMessages(Info & in, string tag, const Info & other);
+  void sumUpMessages(Info & in, string tag, const Info * other);
 
   /// Update the cross section in the main Pythia Info object using
-  /// information in the hiinfo object.
+  /// information in the hiInfo object.
   void updateInfo();
 
   /// If subclasses has additional Pythia objects for generating
@@ -105,7 +105,7 @@ protected:
 
   /// Optional HIUserHooks object able to modify the behavior of the
   /// HeavyIon model.
-  HIUserHooks * HIHooksPtr;
+  HIUserHooksPtr HIHooksPtr;
 
   /// The internal Pythia objects. Index zero will always correspond
   /// to the mainPythiaPtr.
@@ -114,12 +114,27 @@ protected:
   /// The names associated with the secondary pythia objects.
   vector<string> pythiaNames;
 
+  /// The Info objects associated to the secondary the secondary
+  /// pythia objects.
+  vector<Info*> info;
+
+  /// Helper class to gain access to the Info object in a pythia
+  /// instance.
+  struct InfoGrabber : public UserHooks {
+
+    /// Only one function: return the info object.
+    Info * getInfo() {
+      return infoPtr;
+    }
+
+  };
+
 public:
 
   /// This is the HIInfo object containing information about the last
   /// generated heavy ion event and som statistics of all such events
   /// generated since the last call to init();
-  HIInfo hiinfo;
+  HIInfo hiInfo;
 
   // Print out statistics.
   virtual void stat();
@@ -156,14 +171,13 @@ public:
   virtual ~Angantyr();
 
   /// Initialize Angantyr.
-  virtual bool init();
+  virtual bool init() override;
 
   /// Produce a collision involving heavy ions.
-  virtual bool next();
-
+  virtual bool next() override;
 
   /// Set UserHooks for specific (or ALL) internal Pythia objects.
-  bool setUserHooksPtr(PythiaObject sel, UserHooks * userHooksPtrIn);
+  bool setUserHooksPtr(PythiaObject sel, UserHooksPtr userHooksPtrIn);
 
   /// Iterate over nucleons.
   vector<Nucleon>::iterator projBegin() {
@@ -181,8 +195,15 @@ public:
 
 protected:
 
+  virtual void onInitInfoPtr() override {
+    registerSubObject(sigtot); }
+
+  /// Initiaize a specific Pythia object and optionally run a number
+  /// of events to get a handle of the cross section.
+  bool init(PythiaObject sel, string name, int n = 0);
+
   /// Setup an EventInfo object from a Pythia instance.
-  EventInfo mkEventInfo(Pythia & pyt, const SubCollision * coll = 0);
+  EventInfo mkEventInfo(Pythia &, Info &, const SubCollision * coll = 0);
 
   /// Generate events from the internal Pythia oblects;
   EventInfo getSignal(const SubCollision & coll);
@@ -256,8 +277,7 @@ public:
   getTransforms(Vec4 p1, Vec4 p2, const Vec4 & p1p,
                 pair<RotBstMatrix,RotBstMatrix> & R12, int, int);
   static double mT2(const Vec4 & p) { return p.pPos()*p.pNeg(); }
-  static double mT(const Vec4 & p) { return sqrt(max(mT2(p), 0.0));
-  }
+  static double mT(const Vec4 & p) { return sqrt(max(mT2(p), 0.0)); }
 
 private:
 
@@ -298,10 +318,10 @@ private:
   struct HoldProcess {
 
     // Set the given process for the given hook object.
-    HoldProcess(ProcessSelectorHook & hook, int proc, double b = -1.0)
-      : saveHook(&hook), saveProc(hook.proc), saveB(hook.b) {
-      hook.proc = proc;
-      hook.b = b;
+    HoldProcess(shared_ptr<ProcessSelectorHook> hook, int proc,
+      double b = -1.0) : saveHook(hook), saveProc(hook->proc), saveB(hook->b) {
+      hook->proc = proc;
+      hook->b = b;
     }
 
     // Reset the process of the hook object given in the constructor.
@@ -313,7 +333,7 @@ private:
     }
 
     // The hook object.
-    ProcessSelectorHook * saveHook;
+    shared_ptr<ProcessSelectorHook> saveHook;
 
     // The previous process of the hook object.
     int saveProc;
@@ -324,10 +344,10 @@ private:
   };
 
   // The process selector for standard minimum bias processes.
-  ProcessSelectorHook selectMB;
+  shared_ptr<ProcessSelectorHook> selectMB;
 
   // The process selector for the SASD object.
-  ProcessSelectorHook selectSASD;
+  shared_ptr<ProcessSelectorHook> selectSASD;
 
 private:
 

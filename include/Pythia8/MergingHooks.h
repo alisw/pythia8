@@ -1,5 +1,5 @@
 // MergingHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,6 +19,7 @@
 #include "Pythia8/Info.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
@@ -51,10 +52,10 @@ public:
   // Current reference event
   Event state;
   // Potential positions of outgoing particles in reference event
-  vector<pair<int,int> > PosOutgoing1;
-  vector<pair<int,int> > PosOutgoing2;
+  vector<int> PosOutgoing1;
+  vector<int> PosOutgoing2;
   // Potential positions of intermediate bosons in reference event
-  vector<pair<int,int> > PosIntermediate;
+  vector<int> PosIntermediate;
 
   // Information on merging scale read from LHE file
   double tms;
@@ -109,8 +110,8 @@ public:
 
   // Function to check whether the sets of candidates Pos1, Pos2, together
   // with the proposed candidate iPos give an allowed hard process state
-  virtual bool allowCandidates(int iPos, vector<pair<int,int> > Pos1,
-    vector<pair<int,int> > Pos2, const Event& event);
+  virtual bool allowCandidates(int iPos, vector<int> Pos1, vector<int> Pos2,
+    const Event& event);
   // Function to identify the hard subprocess in the current event
   virtual void storeCandidates( const Event& event, string process);
   // Function to check if the particle event[iPos] matches any of
@@ -123,7 +124,8 @@ public:
     bool doReplace);
   // Function to exchange a stored hard process candidate with another choice.
   virtual bool exchangeCandidates( vector<int> candidates1,
-    vector<int> candidates2, map<int,int> further1, map<int,int> further2);
+    vector<int> candidates2,
+    unordered_map<int,int> further1, unordered_map<int,int> further2);
 
   // Function to get the number of coloured final state partons in the
   // hard process
@@ -161,7 +163,7 @@ public:
 
 // MergingHooks is base class for user input to the merging procedure.
 
-class MergingHooks {
+class MergingHooks : public PhysicsBase {
 
 public:
 
@@ -191,10 +193,9 @@ public:
     doUMEPSTreeSave(false),
     doUMEPSSubtSave(false),
     doEstimateXSection(false), applyVeto(),
-    doRemoveDecayProducts(false), nInProcessNow(-1), muMISave(),
-    kFactor0jSave(), kFactor1jSave(),
+    doRemoveDecayProducts(false), muMISave(), kFactor0jSave(), kFactor1jSave(),
     kFactor2jSave(), tmsValueSave(), tmsValueNow(), DparameterSave(),
-    nJetMaxSave(), nJetMaxNLOSave(), nJetMinWTASave(-1),
+    nJetMaxSave(), nJetMaxNLOSave(),
     doOrderHistoriesSave(true),
     doCutOnRecStateSave(false),
     doWeakClusteringSave(false),
@@ -207,9 +208,8 @@ public:
     hasJetMaxLocal(false),
     includeWGTinXSECSave(false), nHardNowSave(), nJetNowSave(),
     tmsHardNowSave(), tmsNowSave() {
-      inputEvent = Event(); resonances.resize(0); infoPtr = 0; settingsPtr = 0;
-      particleDataPtr = 0; partonSystemsPtr = 0; useOwnHardProcess = false;
-      hardProcess = 0; stopScaleSave= 0.0; }
+      inputEvent = Event(); resonances.resize(0);
+      useOwnHardProcess = false; hardProcess = 0; stopScaleSave= 0.0; }
 
   // Make History class friend to allow access to advanced switches
   friend class History;
@@ -278,13 +278,6 @@ public:
   // Functions for internal use inside Pythia source code
   // Initialize.
   virtual void init();
-  // Functions for internal use inside Pythia source code
-  // Initialize.
-  void initPtr( Settings* settingsPtrIn, Info* infoPtrIn,
-    ParticleData* particleDataPtrIn, PartonSystems* partonSystemsPtrIn)
-    { settingsPtr = settingsPtrIn; infoPtr = infoPtrIn;
-      particleDataPtr = particleDataPtrIn;
-      partonSystemsPtr = partonSystemsPtrIn;}
 
   //----------------------------------------------------------------------//
   // Simple output functions
@@ -323,9 +316,8 @@ public:
   // for which NLO corrections are available.
   int nMaxJetsNLO()
     { return (hasJetMaxLocal) ? nJetMaxNLOLocal : nJetMaxNLOSave;}
-  int nMinJetWTA() { return nJetMinWTASave;}
   // Function to return hard process string.
-  string getProcessString() { return processNow;}
+  string getProcessString() { return processSave;}
   // Function to return the number of outgoing partons in the core process
   int nHardOutPartons(){ return hardProcess->nQuarksOut();}
   // Function to return the number of outgoing leptons in the core process
@@ -502,17 +494,6 @@ public:
   bool useOwnHardProcess;
   HardProcess* hardProcess;
 
-  // Pointer to various information on the generation.
-  Info*          infoPtr;
-
-  Settings* settingsPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*  particleDataPtr;
-
-  // Pointer to the particle systems.
-  PartonSystems* partonSystemsPtr;
-
   PartonLevel* showers;
   void setShowerPointer(PartonLevel* psIn ) {showers = psIn;}
 
@@ -553,7 +534,6 @@ public:
   Event inputEvent;
   vector< pair<int,int> > resonances;
   bool doRemoveDecayProducts;
-  int nInProcessNow;
 
   // Starting scale for attaching MPI.
   double muMISave;
@@ -567,9 +547,8 @@ public:
   double tmsValueSave, tmsValueNow, DparameterSave;
   int nJetMaxSave;
   int nJetMaxNLOSave;
-  int nJetMinWTASave;
 
-  string processSave, processNow;
+  string processSave;
 
   // List of cut values to used to define a merging scale. Ordering:
   // 0: DeltaR_{jet_i,jet_j,min}
@@ -751,7 +730,8 @@ public:
     mu = sqrt(mu);
     // Check the scales tag of the event.
     if (infoPtr->scales) mu = infoPtr->getScalesAttribute("muf");
-    return (mu > 0.) ? mu : (muFinMESave > 0.) ? muFinMESave : infoPtr->QFac();
+    return (mu > 0.) ? mu : (muFinMESave > 0.) ? muFinMESave
+      : infoPtr->QFac();
   }
   double muRinME() {
     // Start with checking the event attribute called "mur2".
@@ -760,7 +740,8 @@ public:
     mu = sqrt(mu);
     // Check the scales tag of the event.
     if (infoPtr->scales) mu = infoPtr->getScalesAttribute("mur");
-    return (mu > 0.) ? mu : (muRinMESave > 0.) ? muRinMESave : infoPtr->QRen();
+    return (mu > 0.) ? mu : (muRinMESave > 0.) ? muRinMESave
+      : infoPtr->QRen();
   }
 
 

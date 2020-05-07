@@ -1,12 +1,12 @@
 <html>
 <head>
-<title>The Particle Data Scheme</title>
+<title>Particle Data Scheme</title>
 <link rel="stylesheet" type="text/css" href="pythia.css"/>
 <link rel="shortcut icon" href="pythia32.gif"/>
 </head>
 <body>
  
-<h2>The Particle Data Scheme</h2> 
+<h2>Particle Data Scheme</h2> 
 <ol id="toc">
   <li><a href="#section0">Databases</a></li>
   <li><a href="#section1">Stored properties for particles</a></li>
@@ -110,6 +110,14 @@ and would typically be 0 there.</li>
  
 <li><code>tau0</code>: the nominal proper lifetime <i>tau_0</i> 
 (in mm/c).</li> 
+ 
+<li><code>tauCalc</code>: a flag telling whether the nominal proper 
+lifetime <i>tau_0</i> should be calculated from the particle width, 
+<i>mWidth</i>, at initialization (the default behavior). If set 
+false, then the proper lifetime can be varied independently from the 
+particle width. This capability is useful for simulating models of 
+long-lived particles where the dependence of a signature on the 
+particle width is negligible.</li> 
  
 <li><code>isResonance</code>: a flag telling whether a particle species 
 is considered as a resonance or not. Here 
@@ -236,12 +244,13 @@ The format of a <code>&lt;particle</code> tag is:
        m0="..." mWidth="..." mMin="..." mMax="..." tau0="..."&gt; 
     &lt;/particle&gt; 
 </pre> 
-where the fields are the properties already introduced above. 
-Note that <code>isResonance</code>, <code>mayDecay</code>, 
-<code>doExternalDecay</code>, <code>isVisible</code> and 
-<code>doForceWidth</code> are not set here, but are provided with 
-default values by the rules described above. Once initialized, also 
-these latter properties can be changed, see below.<br/> 
+where the fields are the properties already introduced above.  Note 
+that <code>tauCalc</code>, <code>isResonance</code>, 
+<code>mayDecay</code>, <code>doExternalDecay</code>, 
+<code>isVisible</code> and <code>doForceWidth</code> are not set here, 
+but are provided with default values by the rules described 
+above. Once initialized, also these latter properties can be changed, 
+see below.<br/> 
  
 The format of  a <code>&lt;channel></code> tag is: 
 <pre> 
@@ -278,11 +287,12 @@ separated by a colon.<br/>
 The allowed properties are: <code>name</code>, <code>antiName</code>, 
 <code>spinType</code>, <code>chargeType</code>, <code>colType</code>, 
 <code>m0</code>, <code>mWidth</code>, <code>mMin</code>, 
-<code>mMax</code>, <code>tau0</code>, <code>isResonance</code>, 
-<code>mayDecay</code>, <code>doExternalDecay</code>, 
-<code>isVisible</code> and <code>doForceWidth</code>. All of these 
-names are case-insensitive. Names that do not match an existing 
-variable are ignored.<br/> 
+<code>mMax</code>, <code>tau0</code>, <code>tauCalc</code>, 
+<code>isResonance</code>, <code>mayDecay</code>, 
+<code>doExternalDecay</code>, <code>isVisible</code> and 
+<code>doForceWidth</code>. All of these names are 
+case-insensitive. Names that do not match an existing variable are 
+ignored.<br/> 
  
 Strings beginning with a non-alphanumeric character, like # or !, 
 are assumed to be comments and are not processed at all. For 
@@ -303,18 +313,19 @@ name and antiname to be given. A more interesting one is the
     id:all = name antiName spinType chargeType colType m0 mWidth mMin mMax tau0 
 </pre> 
 where all the current information on the particle itself is replaced, 
-but any decay channels are kept unchanged. Using <code>new</code> instead 
-of <code>all</code> also removes any previous decay channels. 
+but any decay channels are kept unchanged. Using <code>new</code> 
+instead of <code>all</code> also removes any previous decay channels. 
 If the string contains fewer fields than expected the trailing 
 properties are set to vanish ("void", 0 or 0.). Note that such a 
 truncated string should not be followed by a comment, since this 
-comment would then be read in as if it contained the missing properties. 
-The truncation can be done anywhere, specifically a string with only 
-<code>id:new</code> defines a new "empty" particle. 
-As before, <code>isResonance</code>, <code>mayDecay</code>, 
-<code>doExternalDecay</code>, <code>isVisible</code> and 
-<code>doForceWidth</code> are (re)set to their default values, and 
-would have to be changed separately if required. 
+comment would then be read in as if it contained the missing 
+properties.  The truncation can be done anywhere, specifically a 
+string with only <code>id:new</code> defines a new "empty" particle. 
+As before, <code>tauCalc</code>, <code>isResonance</code>, 
+<code>mayDecay</code>, <code>doExternalDecay</code>, 
+<code>isVisible</code> and <code>doForceWidth</code> are (re)set to 
+their default values, and would have to be changed separately if 
+required. 
  
 <p/> 
 A further command is <code>rescaleBR</code>, which rescales each of the 
@@ -882,9 +893,23 @@ the nominal proper lifetime <i>tau_0</i> (in mm/c).
    
  
 <a name="anchor53"></a>
-<p/><strong> void ParticleData::isResonance(int id, bool isResonance) &nbsp;</strong> <br/>
+<p/><strong> void ParticleData::tauCalc(int id, bool tauCalc) &nbsp;</strong> <br/>
    
 <a name="anchor54"></a>
+<strong> bool ParticleData::tauCalc(int id) &nbsp;</strong> <br/>
+a flag telling whether the nominal proper lifetime <i>tau_0</i> 
+should be calculated from the particle width, <i>mWidth</i>, at 
+initialization (the default behavior). If set false, then the proper 
+lifetime can be varied independently from the particle width. This 
+capability is useful for simulating models of long-lived particles 
+where the dependence of a signature on the particle width is 
+negligible. 
+   
+ 
+<a name="anchor55"></a>
+<p/><strong> void ParticleData::isResonance(int id, bool isResonance) &nbsp;</strong> <br/>
+   
+<a name="anchor56"></a>
 <strong> bool ParticleData::isResonance(int id) &nbsp;</strong> <br/>
 a flag telling whether a particle species are considered as a resonance 
 or not. Here <a href="ResonanceDecays.html" target="page">"resonance"</a> 
@@ -901,10 +926,10 @@ All particles with <code>m0</code> above 20 GeV are by default
 initialized to be considered as resonances. 
    
  
-<a name="anchor55"></a>
+<a name="anchor57"></a>
 <p/><strong> void ParticleData::mayDecay(int id, bool mayDecay) &nbsp;</strong> <br/>
    
-<a name="anchor56"></a>
+<a name="anchor58"></a>
 <strong> bool ParticleData::mayDecay(int id) &nbsp;</strong> <br/>
 a flag telling whether a particle species may decay or not, offering 
 the main user switch. Whether a given particle of this kind then actually 
@@ -915,10 +940,10 @@ All particles with <code>tau0</code> below 1000 mm are
 by default initialized to allow decays. 
    
  
-<a name="anchor57"></a>
+<a name="anchor59"></a>
 <p/><strong> void ParticleData::doExternalDecays(int id, bool doExternalDecays) &nbsp;</strong> <br/>
    
-<a name="anchor58"></a>
+<a name="anchor60"></a>
 <strong> bool ParticleData::doExternalDecay(int id) &nbsp;</strong> <br/>
 a flag telling whether a particle should be handled by an external 
 decay package or not, with the latter default. Can be manipulated as 
@@ -927,10 +952,10 @@ described on this page, but should normally not be. Instead the
 method should be provided with the list of relevant particles. 
    
  
-<a name="anchor59"></a>
+<a name="anchor61"></a>
 <p/><strong> void ParticleData::isVisible(int id, bool isVisible) &nbsp;</strong> <br/>
    
-<a name="anchor60"></a>
+<a name="anchor62"></a>
 <strong> bool ParticleData::isVisible(int id) &nbsp;</strong> <br/>
 a flag telling whether a particle species is to be considered as 
 visible in a detector or not, as used e.g. in analysis routines. 
@@ -942,10 +967,10 @@ flag is only relevant if a particle is long-lived enough actually
 to make it to a detector. 
    
  
-<a name="anchor61"></a>
+<a name="anchor63"></a>
 <p/><strong> void ParticleData::doForceWidth(int id, bool doForceWidth) &nbsp;</strong> <br/>
    
-<a name="anchor62"></a>
+<a name="anchor64"></a>
 <strong> bool ParticleData::doForceWidth(int id) &nbsp;</strong> <br/>
 a flag applicable only for resonances (see <code>isResonance</code> above), 
 whereby it is possible to force resonances to retain their assigned widths, 
@@ -954,10 +979,10 @@ for details. The normal behaviour is <code>false</code>, i.e. the width
 is based on hardcoded calculations whenever available. 
    
  
-<a name="anchor63"></a>
+<a name="anchor65"></a>
 <p/><strong> void ParticleData::hasChanged(int id, bool hasChanged) &nbsp;</strong> <br/>
    
-<a name="anchor64"></a>
+<a name="anchor66"></a>
 <strong> bool ParticleData::hasChanged(int id) &nbsp;</strong> <br/>
 keep track of whether the data for a particle has been changed 
 in any respect between initialization and the current status. 
@@ -965,7 +990,7 @@ Is used e.g. by the <code>listChanged</code> method to determine
 which particles to list. 
    
  
-<a name="anchor65"></a>
+<a name="anchor67"></a>
 <p/><strong> bool ParticleData::useBreitWigner(int id) &nbsp;</strong> <br/>
 tells whether a particle will have a Breit-Wigner mass distribution or 
 not. Is determined by an internal logic based on the particle width and 
@@ -974,7 +999,7 @@ on the value of the
 switch. 
    
  
-<a name="anchor66"></a>
+<a name="anchor68"></a>
 <p/><strong> double ParticleData::constituentMass(int id) &nbsp;</strong> <br/>
 is the constituent mass for a quark, hardcoded as 
 <i>m_u = m_d = 0.325</i>, <i>m_s = 0.50</i>, <i>m_c = 1.60</i> 
@@ -982,14 +1007,14 @@ and <i>m_b = 5.0</i> GeV, for a diquark the sum of quark constituent
 masses, and for everything else the same as the ordinary mass. 
    
  
-<a name="anchor67"></a>
+<a name="anchor69"></a>
 <p/><strong> double ParticleData::mSel(int id) &nbsp;</strong> <br/>
 returns a mass distributed according to a truncated Breit-Wigner, 
 with parameters as described here. Is equal to <code>m0(id)</code> for 
 particles without width. 
    
  
-<a name="anchor68"></a>
+<a name="anchor70"></a>
 <p/><strong> double ParticleData::mRun(int id, double mH) &nbsp;</strong> <br/>
 calculate the running mass of species <code>id</code> when probed at a 
 hard mass scale of <code>mH</code>. Only applied to obtain the 
@@ -997,54 +1022,54 @@ running quark masses; for all other particle the normal fixed mass
 is used. 
    
  
-<a name="anchor69"></a>
+<a name="anchor71"></a>
 <p/><strong> bool ParticleData::canDecay(int id) &nbsp;</strong> <br/>
 true for a particle with at least one decay channel defined. 
    
  
-<a name="anchor70"></a>
+<a name="anchor72"></a>
 <p/><strong> bool ParticleData::isLepton(int id) &nbsp;</strong> <br/>
 true for a lepton or an antilepton (including neutrinos). 
    
  
-<a name="anchor71"></a>
+<a name="anchor73"></a>
 <p/><strong> bool ParticleData::isQuark(int id) &nbsp;</strong> <br/>
 true for a quark or an antiquark. 
    
  
-<a name="anchor72"></a>
+<a name="anchor74"></a>
 <p/><strong> bool ParticleData::isGluon(int id) &nbsp;</strong> <br/>
 true for a gluon. 
    
  
-<a name="anchor73"></a>
+<a name="anchor75"></a>
 <p/><strong> bool ParticleData::isDiquark(int id) &nbsp;</strong> <br/>
 true for a diquark or antidiquark. 
    
  
-<a name="anchor74"></a>
+<a name="anchor76"></a>
 <p/><strong> bool ParticleData::isParton() &nbsp;</strong> <br/>
 true for a gluon, a quark or antiquark up to the b (but excluding top), 
 and a diquark or antidiquark consisting of quarks up to the b. 
    
  
-<a name="anchor75"></a>
+<a name="anchor77"></a>
 <p/><strong> bool ParticleData::isHadron(int id) &nbsp;</strong> <br/>
 true for a hadron (made up out of normal quarks and gluons, 
 i.e. not for R-hadrons and other exotic states). 
    
  
-<a name="anchor76"></a>
+<a name="anchor78"></a>
 <p/><strong> bool ParticleData::isMeson(int id) &nbsp;</strong> <br/>
 true for a meson. 
    
  
-<a name="anchor77"></a>
+<a name="anchor79"></a>
 <p/><strong> bool ParticleData::isBaryon(int id) &nbsp;</strong> <br/>
 true for a baryon or antibaryon. 
    
  
-<a name="anchor78"></a>
+<a name="anchor80"></a>
 <p/><strong> bool ParticleData::isOnium(int id) &nbsp;</strong> <br/>
 true for a charmonium, bottomonium or (hypothetical) toponium state, 
 i.e any state composed of <i>c cbar</i>, <i>b bbar</i> or 
@@ -1052,32 +1077,32 @@ i.e any state composed of <i>c cbar</i>, <i>b bbar</i> or
 spin, angular momentum or radial excitation. 
    
  
-<a name="anchor79"></a>
+<a name="anchor81"></a>
 <p/><strong> bool ParticleData::isOctetHadron(int id) &nbsp;</strong> <br/>
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
 <a href="OniaProcesses.html" target="page">onia</a> production. 
    
  
-<a name="anchor80"></a>
+<a name="anchor82"></a>
 <p/><strong> int ParticleData::heaviestQuark(int id) &nbsp;</strong> <br/>
 extracts the heaviest quark or antiquark, i.e. one with largest 
 <code>id</code> number, for a hadron. 
    
  
-<a name="anchor81"></a>
+<a name="anchor83"></a>
 <p/><strong> int ParticleData::baryonNumberType(int id) &nbsp;</strong> <br/>
 is 1 for a quark, 2 for a diquark, 3 for a baryon, the same with a 
 minus sign for antiparticles, and else zero. 
    
  
-<a name="anchor82"></a>
+<a name="anchor84"></a>
 <p/><strong> void ParticleData::rescaleBR(int id, double newSumBR = 1.) &nbsp;</strong> <br/>
 rescales all partial branching ratios by a common factor, such that 
 the sum afterward becomes <code>newSumBR</code>. 
    
  
-<a name="anchor83"></a>
+<a name="anchor85"></a>
 <p/><strong> void setResonancePtr(int id, ResonanceWidths* resonancePtr) &nbsp;</strong> <br/>
 set a pointer for a particle kind to a <code>ResonanceWidths</code> object. 
 This is done, from inside <code>ParticleData::initWidths</code>, only for 
@@ -1087,12 +1112,12 @@ of such an object will allow a more dynamic calculation of partial and
 total widths, as illustrated by the following methods. 
    
  
-<a name="anchor84"></a>
+<a name="anchor86"></a>
 <p/><strong> void ParticleData::resInit(int id) &nbsp;</strong> <br/>
 initialize the treatment of a resonance. 
    
  
-<a name="anchor85"></a>
+<a name="anchor87"></a>
 <p/><strong> double ParticleData::resWidth(int id, double mHat, int idInFlav = 0, bool openOnly = false, bool setBR = false) &nbsp;</strong> <br/>
 calculate the total with for a resonance of a given current mass, 
 optionally including coupling to incoming flavour state (consider 
@@ -1101,19 +1126,19 @@ channels that have been closed by the user, and optionally storing
 the results in the normal decay table. 
    
  
-<a name="anchor86"></a>
+<a name="anchor88"></a>
 <p/><strong> double ParticleData::resWidthOpen(int id, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, but results are not stored in the normal decay table. 
    
  
-<a name="anchor87"></a>
+<a name="anchor89"></a>
 <p/><strong> double ParticleData::resWidthStore(int id, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, and results are stored in the normal decay table. 
    
  
-<a name="anchor88"></a>
+<a name="anchor90"></a>
 <p/><strong> double ParticleData::resOpenFrac(int id1, int id2 = 0, int id3 = 0) &nbsp;</strong> <br/>
 calculate the fraction of the full branching ratio that is left 
 open by the user choice of allowed decay channels. Can be applied 
@@ -1121,27 +1146,27 @@ to a final state with up to three resonances. Since the procedure
 is multiplicative, it would be easy to generalize also to more. 
    
  
-<a name="anchor89"></a>
+<a name="anchor91"></a>
 <p/><strong> double ParticleData::resWidthRescaleFactor(int id) &nbsp;</strong> <br/>
 the factor used to rescale all partial widths in case the total 
 width is being forced to a specific value by the user. 
    
  
-<a name="anchor90"></a>
+<a name="anchor92"></a>
 <p/><strong> double ParticleData::resWidthChan(int id, double mHat, int idAbs1 = 0, int idAbs2 = 0) &nbsp;</strong> <br/>
 special case to calculate one final-state width; currently only used 
 for Higgs decay to <i>q qbar</i>, <i>g g</i> or 
 <i>gamma gamma</i>. 
    
  
-<a name="anchor91"></a>
+<a name="anchor93"></a>
 <p/><strong> ParticleDataEntry* ParticleData::particleDataEntryPtr(int id) &nbsp;</strong> <br/>
 returns a pointer to the <code>ParticleDataEntry</code> object. 
 The methods in the next section can then be used to manipulate 
 this object. 
    
  
-<a name="anchor92"></a>
+<a name="anchor94"></a>
 <p/><strong> bool ParticleData::getIsInit() &nbsp;</strong> <br/>
 return true if the database has been initialized, else false. 
    
@@ -1158,10 +1183,10 @@ There are a few methods that are unique to each class, however.
 Furthermore, to avoid some naming ambiguities, many methods that 
 set values begin with <code>set</code>. 
  
-<a name="anchor93"></a>
+<a name="anchor95"></a>
 <p/><strong> ParticleDataEntry::ParticleDataEntry(int id = 0, string name = &quot; &quot;, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0., double tau0 = 0.) &nbsp;</strong> <br/>
    
-<a name="anchor94"></a>
+<a name="anchor96"></a>
 <strong> ParticleDataEntry::ParticleDataEntry(int id, string name, string antiName, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0., double tau0 = 0.) &nbsp;</strong> <br/>
 there are two alternative constructors, that both expect the 
 properties of a particle as input. The first assumes that there 
@@ -1170,124 +1195,124 @@ particle-antiparticle pair (but if the antiparticle name is
 <code>void</code> one reverts back to the particle-only case). 
    
  
-<a name="anchor95"></a>
+<a name="anchor97"></a>
 <p/><strong> ParticleDataEntry& operator=( const ParticleDataEntry& particleDataEntryIn) &nbsp;</strong> <br/>
 copy the values stored in an existing <code>ParticleDataEntry</code> 
 object. 
    
  
-<a name="anchor96"></a>
+<a name="anchor98"></a>
 <p/><strong> ParticleDataEntry::~ParticleDataEntry &nbsp;</strong> <br/>
 the destructor is needed to delete any <code>ResonanceWidths</code> 
 objects that have been created and linked to the respective particle. 
    
  
-<a name="anchor97"></a>
+<a name="anchor99"></a>
 <p/><strong> void ParticleDataEntry::setDefaults() &nbsp;</strong> <br/>
 initialize some particle flags with default values, e.g. whether 
 a particle is a resonance, may decay, or is visible. Is called from the 
 constructors and from <code>setAll</code>. 
    
  
-<a name="anchor98"></a>
+<a name="anchor100"></a>
 <p/><strong> void ParticleDataEntry::initPtr(ParticleData* particleDataPtrIn) &nbsp;</strong> <br/>
 initialize pointer back to the whole database (so that masses of 
 decay products can be accessed, e.g.). 
    
  
-<a name="anchor99"></a>
+<a name="anchor101"></a>
 <p/><strong> void ParticleDataEntry::setAll( string name, string antiName, int spinType = 0, int chargeType = 0, int colType = 0, double m0 = 0., double mWidth = 0., double mMin = 0., double mMax = 0.,double tau0 = 0.) &nbsp;</strong> <br/>
 change all the properties of the particle associated with a given 
 identity code. 
    
  
-<a name="anchor100"></a>
+<a name="anchor102"></a>
 <p/><strong> int ParticleDataEntry::id() &nbsp;</strong> <br/>
 the PDG identity code. 
    
  
-<a name="anchor101"></a>
+<a name="anchor103"></a>
 <p/><strong> bool ParticleDataEntry::hasAnti() &nbsp;</strong> <br/>
 tell whether a separate antiparticle exists. 
    
  
-<a name="anchor102"></a>
+<a name="anchor104"></a>
 <p/><strong> void ParticleDataEntry::setName(string name) &nbsp;</strong> <br/>
    
-<a name="anchor103"></a>
+<a name="anchor105"></a>
 <strong> void ParticleDataEntry::setAntiName(string antiName) &nbsp;</strong> <br/>
    
-<a name="anchor104"></a>
+<a name="anchor106"></a>
 <strong> void ParticleDataEntry::setNames(string name, string antiName) &nbsp;</strong> <br/>
    
-<a name="anchor105"></a>
+<a name="anchor107"></a>
 <strong> string ParticleDataEntry::name(int id = 1) &nbsp;</strong> <br/>
 set or get the particle or antiparticle name. Only the sign of 
 <code>id</code> is needed to distinguish particle/antiparticle. 
    
  
-<a name="anchor106"></a>
+<a name="anchor108"></a>
 <p/><strong> void ParticleDataEntry::setSpinType(int spinType) &nbsp;</strong> <br/>
    
-<a name="anchor107"></a>
+<a name="anchor109"></a>
 <strong> int ParticleDataEntry::spinType() &nbsp;</strong> <br/>
 set or get the particle spin type, i.e. <i>2 s + 1</i>, or 0 in some 
 special cases. 
    
  
-<a name="anchor108"></a>
+<a name="anchor110"></a>
 <p/><strong> void ParticleDataEntry::setChargeType(int chargeType) &nbsp;</strong> <br/>
    
-<a name="anchor109"></a>
+<a name="anchor111"></a>
 <strong> int ParticleDataEntry::chargeType(int id = 1) &nbsp;</strong> <br/>
    
-<a name="anchor110"></a>
+<a name="anchor112"></a>
 <strong> double ParticleDataEntry::charge(int id = 1) &nbsp;</strong> <br/>
 set or get the particle charge type, i.e. three times the charge, 
 or the charge itself. Only the sign of <code>id</code> is needed 
 to distinguish particle/antiparticle. 
    
  
-<a name="anchor111"></a>
+<a name="anchor113"></a>
 <p/><strong> void ParticleDataEntry::setColType(int colType) &nbsp;</strong> <br/>
    
-<a name="anchor112"></a>
+<a name="anchor114"></a>
 <strong> int ParticleDataEntry::colType(int id = 1) &nbsp;</strong> <br/>
 set or get the particle colour type, 0 for singlet, 1 for triplet, 
 -1 for antitriplet, 2 for octet. Only the sign of <code>id</code> 
 is needed to distinguish particle/antiparticle. 
    
  
-<a name="anchor113"></a>
+<a name="anchor115"></a>
 <p/><strong> void ParticleDataEntry::setM0(double m0) &nbsp;</strong> <br/>
    
-<a name="anchor114"></a>
+<a name="anchor116"></a>
 <strong> double ParticleDataEntry::m0() &nbsp;</strong> <br/>
 the nominal mass <i>m_0</i> (in GeV). 
    
  
-<a name="anchor115"></a>
+<a name="anchor117"></a>
 <p/><strong> void ParticleDataEntry::setMWidth(double mWidth) &nbsp;</strong> <br/>
    
-<a name="anchor116"></a>
+<a name="anchor118"></a>
 <strong> double ParticleDataEntry::mWidth() &nbsp;</strong> <br/>
 the width <i>Gamma</i> of the Breit-Wigner distribution (in GeV). 
    
  
-<a name="anchor117"></a>
+<a name="anchor119"></a>
 <p/><strong> void ParticleDataEntry::setMMin(double mMin) &nbsp;</strong> <br/>
    
-<a name="anchor118"></a>
+<a name="anchor120"></a>
 <strong> double ParticleDataEntry::mMin() &nbsp;</strong> <br/>
 the lower limit of the allowed mass range generated by the Breit-Wigner 
 (in GeV). Has no meaning for particles without width, and would 
 typically be 0 there. 
    
  
-<a name="anchor119"></a>
+<a name="anchor121"></a>
 <p/><strong> void ParticleDataEntry::setMMax(double mMax) &nbsp;</strong> <br/>
    
-<a name="anchor120"></a>
+<a name="anchor122"></a>
 <strong> double ParticleDataEntry::mMax() &nbsp;</strong> <br/>
 the upper limit of the allowed mass range generated by the Breit-Wigner 
 (in GeV). If <i>mMax &lt; mMin</i> then no upper limit is imposed. 
@@ -1295,31 +1320,45 @@ Has no meaning for particles without width, and would typically
 be 0 there. 
    
  
-<a name="anchor121"></a>
+<a name="anchor123"></a>
 <p/><strong> double ParticleDataEntry::m0Min() &nbsp;</strong> <br/>
 similar to <code>mMin()</code> above, except that for particles with 
 no width the <code>m0(id)</code> value is returned. 
    
  
-<a name="anchor122"></a>
+<a name="anchor124"></a>
 <p/><strong> double ParticleDataEntry::m0Max() &nbsp;</strong> <br/>
 similar to <code>mMax()</code> above, except that for particles with 
 no width the <code>m0(id)</code> value is returned. 
    
  
-<a name="anchor123"></a>
+<a name="anchor125"></a>
 <p/><strong> void ParticleDataEntry::setTau0(double tau0, bool countAsChanged = true) &nbsp;</strong> <br/>
    
-<a name="anchor124"></a>
+<a name="anchor126"></a>
 <strong> double ParticleDataEntry::tau0() &nbsp;</strong> <br/>
 the nominal proper lifetime <i>tau_0</i> (in mm/c). Second argument of 
 input method for internal use only. 
    
  
-<a name="anchor125"></a>
+<a name="anchor127"></a>
+<p/><strong> void ParticleDataEntry::setTauCalc(bool tauCalc) &nbsp;</strong> <br/>
+   
+<a name="anchor128"></a>
+<strong> bool ParticleDataEntry::tauCalc() &nbsp;</strong> <br/>
+a flag telling whether the nominal proper lifetime <i>tau_0</i> 
+should be calculated from the particle width, <i>mWidth</i>, at 
+initialization (the default behavior). If set false, then the proper 
+lifetime can be varied independently from the particle width. This 
+capability is useful for simulating models of long-lived particles 
+where the dependence of a signature on the particle width is 
+negligible. 
+   
+ 
+<a name="anchor129"></a>
 <p/><strong> void ParticleDataEntry::setIsResonance(bool isResonance) &nbsp;</strong> <br/>
    
-<a name="anchor126"></a>
+<a name="anchor130"></a>
 <strong> bool ParticleDataEntry::isResonance() &nbsp;</strong> <br/>
 a flag telling whether a particle species are considered as a resonance 
 or not. Here <a href="ResonanceDecays.html" target="page">"resonance"</a> 
@@ -1336,10 +1375,10 @@ All particles with <code>m0</code> above 20 GeV are by default
 initialized to be considered as resonances. 
    
  
-<a name="anchor127"></a>
+<a name="anchor131"></a>
 <p/><strong> void ParticleDataEntry::setMayDecay(bool mayDecay) &nbsp;</strong> <br/>
    
-<a name="anchor128"></a>
+<a name="anchor132"></a>
 <strong> bool ParticleDataEntry::mayDecay() &nbsp;</strong> <br/>
 a flag telling whether a particle species may decay or not, offering 
 the main user switch. Whether a given particle of this kind then actually 
@@ -1350,10 +1389,10 @@ All particles with <code>tau0</code> below 1000 mm are
 by default initialized to allow decays. 
    
  
-<a name="anchor129"></a>
+<a name="anchor133"></a>
 <p/><strong> void ParticleDataEntry::setDoExternalDecays(bool doExternalDecays) &nbsp;</strong> <br/>
    
-<a name="anchor130"></a>
+<a name="anchor134"></a>
 <strong> bool ParticleDataEntry::doExternalDecay() &nbsp;</strong> <br/>
 a flag telling whether a particle should be handled by an external 
 decay package or not, with the latter default. Can be manipulated as 
@@ -1362,10 +1401,10 @@ described on this page, but should normally not be. Instead the
 method should be provided with the list of relevant particles. 
    
  
-<a name="anchor131"></a>
+<a name="anchor135"></a>
 <p/><strong> void ParticleDataEntry::setIsVisible(bool isVisible) &nbsp;</strong> <br/>
    
-<a name="anchor132"></a>
+<a name="anchor136"></a>
 <strong> bool ParticleDataEntry::isVisible() &nbsp;</strong> <br/>
 a flag telling whether a particle species is to be considered as 
 visible in a detector or not, as used e.g. in analysis routines. 
@@ -1377,10 +1416,10 @@ flag is only relevant if a particle is long-lived enough actually
 to make it to a detector. 
    
  
-<a name="anchor133"></a>
+<a name="anchor137"></a>
 <p/><strong> void ParticleDataEntry::setDoForceWidth(bool doForceWidth) &nbsp;</strong> <br/>
    
-<a name="anchor134"></a>
+<a name="anchor138"></a>
 <strong> bool ParticleDataEntry::doForceWidth() &nbsp;</strong> <br/>
 a flag applicable only for resonances (see <code>isResonance</code> above), 
 whereby it is possible to force resonances to retain their assigned widths, 
@@ -1389,10 +1428,10 @@ for details. The normal behaviour is <code>false</code>, i.e. the width
 is based on hardcoded calculations whenever available. 
    
  
-<a name="anchor135"></a>
+<a name="anchor139"></a>
 <p/><strong> void ParticleDataEntry::setHasChanged(bool hasChanged) &nbsp;</strong> <br/>
    
-<a name="anchor136"></a>
+<a name="anchor140"></a>
 <p/><strong> void ParticleDataEntry::hasChanged(bool hasChanged) &nbsp;</strong> <br/>
 keep track of whether the data for a particle has been changed 
 in any respect between initialization and the current status. 
@@ -1400,13 +1439,13 @@ Is used e.g. by the <code>ParticleData::listChanged</code> method
 to determine which particles to list. 
    
  
-<a name="anchor137"></a>
+<a name="anchor141"></a>
 <p/><strong> void ParticleDataEntry::initBWmass() &nbsp;</strong> <br/>
 Prepare the Breit-Wigner mass selection by precalculating 
 frequently-used expressions. 
    
  
-<a name="anchor138"></a>
+<a name="anchor142"></a>
 <p/><strong> double ParticleDataEntry::constituentMass() &nbsp;</strong> <br/>
 is the constituent mass for a quark, hardcoded as 
 <i>m_u = m_d = 0.325</i>, <i>m_s = 0.50</i>, <i>m_c = 1.60</i> 
@@ -1414,19 +1453,19 @@ and <i>m_b = 5.0</i> GeV, for a diquark the sum of quark constituent
 masses, and for everything else the same as the ordinary mass. 
    
  
-<a name="anchor139"></a>
+<a name="anchor143"></a>
 <p/><strong> double ParticleDataEntry::mSel() &nbsp;</strong> <br/>
 give the mass of a particle, either at the nominal value 
 or picked according to a (linear or quadratic) Breit-Wigner. 
    
  
-<a name="anchor140"></a>
+<a name="anchor144"></a>
 <p/><strong> double ParticleDataEntry::mRun(double mH) &nbsp;</strong> <br/>
 calculate the running quark mass at a hard scale <code>mH</code>. 
 For other particles the on-shell mass is given. 
    
  
-<a name="anchor141"></a>
+<a name="anchor145"></a>
 <p/><strong> bool ParticleDataEntry::useBreitWigner() &nbsp;</strong> <br/>
 tells whether a particle will have a Breit-Wigner mass distribution or 
 not. Is determined by an internal logic based on the particle width and 
@@ -1434,118 +1473,118 @@ on the value of the <code><a href="ParticleData.html" target="page">
 ParticleData:modeBreitWigner</a></code> switch. 
    
  
-<a name="anchor142"></a>
+<a name="anchor146"></a>
 <p/><strong> bool ParticleDataEntry::canDecay(int id) &nbsp;</strong> <br/>
 true for a particle with at least one decay channel defined. 
    
  
-<a name="anchor143"></a>
+<a name="anchor147"></a>
 <p/><strong> bool ParticleDataEntry::isLepton() &nbsp;</strong> <br/>
 true for a lepton or an antilepton (including neutrinos). 
    
  
-<a name="anchor144"></a>
+<a name="anchor148"></a>
 <p/><strong> bool ParticleDataEntry::isQuark() &nbsp;</strong> <br/>
 true for a quark or an antiquark. 
    
  
-<a name="anchor145"></a>
+<a name="anchor149"></a>
 <p/><strong> bool ParticleDataEntry::isGluon() &nbsp;</strong> <br/>
 true for a gluon. 
    
  
-<a name="anchor146"></a>
+<a name="anchor150"></a>
 <p/><strong> bool ParticleDataEntry::isDiquark() &nbsp;</strong> <br/>
 true for a diquark or antidiquark. 
    
  
-<a name="anchor147"></a>
+<a name="anchor151"></a>
 <p/><strong> bool ParticleDataEntry::isParton() &nbsp;</strong> <br/>
 true for a gluon, a quark or antiquark up to the b (but excluding top), 
 and a diquark or antidiquark consisting of quarks up to the b. 
    
  
-<a name="anchor148"></a>
+<a name="anchor152"></a>
 <p/><strong> bool ParticleDataEntry::isHadron() &nbsp;</strong> <br/>
 true for a hadron (made up out of normal quarks and gluons, 
 i.e. not for R-hadrons and other exotic states). 
    
  
-<a name="anchor149"></a>
+<a name="anchor153"></a>
 <p/><strong> bool ParticleDataEntry::isMeson() &nbsp;</strong> <br/>
 true for a meson. 
    
  
-<a name="anchor150"></a>
+<a name="anchor154"></a>
 <p/><strong> bool ParticleDataEntry::isBaryon() &nbsp;</strong> <br/>
 true for a baryon or antibaryon. 
    
  
-<a name="anchor151"></a>
+<a name="anchor155"></a>
 <p/><strong> bool ParticleDataEntry::isOctetHadron() &nbsp;</strong> <br/>
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
 <a href="OniaProcesses.html" target="page">onia</a> production. 
    
  
-<a name="anchor152"></a>
+<a name="anchor156"></a>
 <p/><strong> int ParticleDataEntry::heaviestQuark(int id) &nbsp;</strong> <br/>
 extracts the heaviest quark or antiquark, i.e. one with largest 
 <code>id</code> number, for a hadron. Only the sign of the input 
 argument is relevant. 
    
  
-<a name="anchor153"></a>
+<a name="anchor157"></a>
 <p/><strong> int ParticleDataEntry::baryonNumberType(int id) &nbsp;</strong> <br/>
 is 1 for a quark, 2 for a diquark, 3 for a baryon, the same with a 
 minus sign for antiparticles, and else zero. Only the sign of the 
 input argument is relevant. 
    
  
-<a name="anchor154"></a>
+<a name="anchor158"></a>
 <p/><strong> void ParticleDataEntry::clearChannels() &nbsp;</strong> <br/>
 resets to an empty decay table. 
    
  
-<a name="anchor155"></a>
+<a name="anchor159"></a>
 <p/><strong> void ParticleDataEntry::addChannel(int onMode = 0, double bRatio = 0., int meMode = 0, int prod0 = 0, int prod1 = 0, int prod2 = 0, int prod3 = 0, int prod4 = 0, int prod5 = 0, int prod6 = 0,  int prod7 = 0,) &nbsp;</strong> <br/>
 adds a decay channel with up to 8 products. 
    
  
-<a name="anchor156"></a>
+<a name="anchor160"></a>
 <p/><strong> int ParticleDataEntry::sizeChannels() &nbsp;</strong> <br/>
 returns the number of decay channels for a particle. 
    
  
-<a name="anchor157"></a>
+<a name="anchor161"></a>
 <p/><strong> DecayChannel& ParticleDataEntry::channel(int i) &nbsp;</strong> <br/>
    
-<a name="anchor158"></a>
+<a name="anchor162"></a>
 <strong> const DecayChannel& ParticleDataEntry::channel(int i) &nbsp;</strong> <br/>
 gain access to a specified channel in the decay table. 
    
  
-<a name="anchor159"></a>
+<a name="anchor163"></a>
 <p/><strong> void ParticleDataEntry::rescaleBR(double newSumBR = 1.) &nbsp;</strong> <br/>
 rescales all partial branching ratios by a common factor, such that 
 the sum afterward becomes <code>newSumBR</code>. 
    
  
-<a name="anchor160"></a>
+<a name="anchor164"></a>
 <p/><strong> bool ParticleDataEntry::preparePick(int idSgn, double mHat = 0., int idInFlav = 0) &nbsp;</strong> <br/>
 prepare to pick a decay channel. 
    
  
-<a name="anchor161"></a>
+<a name="anchor165"></a>
 <p/><strong> DecayChannel& ParticleDataEntry::pickChannel() &nbsp;</strong> <br/>
 pick a decay channel according to branching ratios from 
 <code>preparePick</code>. 
    
  
-<a name="anchor162"></a>
+<a name="anchor166"></a>
 <p/><strong> void ParticleDataEntry::setResonancePtr(ResonanceWidths* resonancePtr) &nbsp;</strong> <br/>
    
-<a name="anchor163"></a>
+<a name="anchor167"></a>
 <strong> ResonanceWidths* ParticleDataEntry::getResonancePtr() &nbsp;</strong> <br/>
 set or get a pointer to an object that can be used for dynamic calculation 
 of partial and total resonance widths. Here a resonance is a particle 
@@ -1553,12 +1592,12 @@ such as top, <i>Z^0</i>, <i>W^+-</i>, Higgs, and new unstable states
 beyond the Standard Model. 
    
  
-<a name="anchor164"></a>
+<a name="anchor168"></a>
 <p/><strong> void ParticleDataEntry::resInit(Info* infoPtrIn, Settings* settingsPtrIn, ParticleData* particleDataPtrIn, CoupSM* coupSMPtrIn) &nbsp;</strong> <br/>
 initialize the treatment of a resonance. 
    
  
-<a name="anchor165"></a>
+<a name="anchor169"></a>
 <p/><strong> double ParticleDataEntry::resWidth(int idSgn, double mHat, int idInFlav = 0, bool openOnly = false, bool setBR = false) &nbsp;</strong> <br/>
 calculate the total with for a resonance of a given current mass, 
 optionally including coupling to incoming flavour state (consider 
@@ -1568,31 +1607,31 @@ the results in the normal decay table. For the first argument only
 the sign is relevant. 
    
  
-<a name="anchor166"></a>
+<a name="anchor170"></a>
 <p/><strong> double ParticleDataEntry::resWidthOpen(int idSgn, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, but results are not stored in the normal decay table. 
    
  
-<a name="anchor167"></a>
+<a name="anchor171"></a>
 <p/><strong> double ParticleDataEntry::resWidthStore(int idSgn, double mHat, int idInFlav = 0) &nbsp;</strong> <br/>
 special case of <code>resWidth</code>, where only open channels are 
 included, and results are stored in the normal decay table. 
    
  
-<a name="anchor168"></a>
+<a name="anchor172"></a>
 <p/><strong> double ParticleDataEntry::resOpenFrac(int idSgn) &nbsp;</strong> <br/>
 calculate the fraction of the full branching ratio that is left 
 open by the user choice of allowed decay channels. 
    
  
-<a name="anchor169"></a>
+<a name="anchor173"></a>
 <p/><strong> double ParticleDataEntry::resWidthRescaleFactor() &nbsp;</strong> <br/>
 the factor used to rescale all partial widths in case the total 
 width is being forced to a specific value by the user. 
    
  
-<a name="anchor170"></a>
+<a name="anchor174"></a>
 <p/><strong> double ParticleDataEntry::resWidthChan(double mHat, int idAbs1 = 0, int idAbs2 = 0) &nbsp;</strong> <br/>
 special case to calculate one final-state width; currently only used 
 for Higgs decay to <i>q qbar</i>, <i>g g</i> or 
@@ -1604,20 +1643,20 @@ for Higgs decay to <i>q qbar</i>, <i>g g</i> or
 The properties stored in an individual decay channel can be set or get 
 by the methods in this section. 
  
-<a name="anchor171"></a>
+<a name="anchor175"></a>
 <p/><strong> DecayChannel::DecayChannel(int onMode = 0, double bRatio = 0., int meMode = 0, int prod0 = 0, int prod1 = 0, int prod2 = 0, int prod3 = 0, int prod4 = 0, int prod5 = 0, int prod6 = 0, int prod7 = 0) &nbsp;</strong> <br/>
 the constructor for a decay channel. Internal. 
    
  
-<a name="anchor172"></a>
+<a name="anchor176"></a>
 <p/><strong> DecayChannel& operator=( const DecayChannel& decayChannelIn) &nbsp;</strong> <br/>
 copy the values stored in an existing <code>DecayChannel</code> object. 
    
  
-<a name="anchor173"></a>
+<a name="anchor177"></a>
 <p/><strong> void DecayChannel::onMode(int onMode) &nbsp;</strong> <br/>
    
-<a name="anchor174"></a>
+<a name="anchor178"></a>
 <strong> int DecayChannel::onMode() &nbsp;</strong> <br/>
 set or get the <code>onMode</code> of a decay channel,<br/> 
 0 if a channel is off,<br/> 
@@ -1632,98 +1671,98 @@ B decays, or to let the <i>W</i>'s in a <i>q qbar &rarr; W^+ W^-</i>
 process decay in different channels. 
    
  
-<a name="anchor175"></a>
+<a name="anchor179"></a>
 <p/><strong> void DecayChannel::bRatio(double bRatio, bool countAsChanged = true) &nbsp;</strong> <br/>
    
-<a name="anchor176"></a>
+<a name="anchor180"></a>
 <strong> double DecayChannel::bRatio() &nbsp;</strong> <br/>
 set or get the branching ratio of the channel. Second argument only 
 for internal use. 
    
  
-<a name="anchor177"></a>
+<a name="anchor181"></a>
 <p/><strong> void DecayChannel::rescaleBR(double fac) &nbsp;</strong> <br/>
 multiply the current branching ratio by <code>fac</code>. 
    
  
-<a name="anchor178"></a>
+<a name="anchor182"></a>
 <p/><strong> void DecayChannel::meMode(int meMode) &nbsp;</strong> <br/>
    
-<a name="anchor179"></a>
+<a name="anchor183"></a>
 <strong> int DecayChannel::meMode() &nbsp;</strong> <br/>
 set or get the mode of processing this channel, possibly with matrix 
 elements (see the <a href="ParticleDecays.html" target="page">particle decays</a> 
 and <a href="ResonanceDecays.html" target="page">resonance decays</a> descriptions). 
    
  
-<a name="anchor180"></a>
+<a name="anchor184"></a>
 <p/><strong> void DecayChannel::multiplicity(int multiplicity) &nbsp;</strong> <br/>
    
-<a name="anchor181"></a>
+<a name="anchor185"></a>
 <strong> int DecayChannel::multiplicity() &nbsp;</strong> <br/>
 set or get the number of decay products in a channel, at most 8. 
 (Is normally not to be set by hand, since it is automatically 
 updated whenever the products list is changed.) 
    
  
-<a name="anchor182"></a>
+<a name="anchor186"></a>
 <p/><strong> void DecayChannel::product(int i, int product) &nbsp;</strong> <br/>
    
-<a name="anchor183"></a>
+<a name="anchor187"></a>
 <strong> int DecayChannel::product(int i) &nbsp;</strong> <br/>
 set or get a list of the decay products, 8 products 0 &lt;= i &lt; 8, 
 with trailing unused ones set to 0. 
    
  
-<a name="anchor184"></a>
+<a name="anchor188"></a>
 <p/><strong> void DecayChannel::setHasChanged(bool hasChanged) &nbsp;</strong> <br/>
    
-<a name="anchor185"></a>
+<a name="anchor189"></a>
 <strong> bool DecayChannel::hasChanged() &nbsp;</strong> <br/>
 used for internal purposes, to know which decay modes have been changed. 
    
  
-<a name="anchor186"></a>
+<a name="anchor190"></a>
 <p/><strong> bool DecayChannel::contains(int id1) &nbsp;</strong> <br/>
    
-<a name="anchor187"></a>
+<a name="anchor191"></a>
 <strong> bool DecayChannel::contains(int id1, int id2) &nbsp;</strong> <br/>
    
-<a name="anchor188"></a>
+<a name="anchor192"></a>
 <strong> bool DecayChannel::contains(int id1, int id2, int id3) &nbsp;</strong> <br/>
 find if the decay product list contains the one, two or three particle 
 identities provided. If the same code is repeated then so must it be in 
 the products list. Matching also requires correct sign. 
    
  
-<a name="anchor189"></a>
+<a name="anchor193"></a>
 <p/><strong> void DecayChannel::currentBR(double currentBR) &nbsp;</strong> <br/>
    
-<a name="anchor190"></a>
+<a name="anchor194"></a>
 <strong> double DecayChannel::currentBR() &nbsp;</strong> <br/>
 set or get the current branching ratio, taking into account on/off 
 switches and dynamic width for resonances. For internal use. 
    
  
-<a name="anchor191"></a>
+<a name="anchor195"></a>
 <p/><strong> void DecayChannel::onShellWidth(double onShellWidth) &nbsp;</strong> <br/>
    
-<a name="anchor192"></a>
+<a name="anchor196"></a>
 <strong> double DecayChannel::onShellWidth() &nbsp;</strong> <br/>
 set or get the current partial width of the channel; intended for 
 resonances where the widths are recalculated based on the current 
 resonance mass. For internal use. 
    
  
-<a name="anchor193"></a>
+<a name="anchor197"></a>
 <p/><strong> void DecayChannel::onShellWidthFactor(double factor) &nbsp;</strong> <br/>
 multiply the current partial width by <code>factor</code>. 
    
  
-<a name="anchor194"></a>
+<a name="anchor198"></a>
 <p/><strong> void DecayChannel::openSec(int idSgn, double openSecIn) &nbsp;</strong> <br/>
    
-<a name="anchor195"></a>
+<a name="anchor199"></a>
 <strong> double DecayChannel::openSec(nt idSgn) &nbsp;</strong> <br/>
 set or get the fraction of secondary open widths, separately for 
 positive and negative particles. For internal use. 
@@ -1732,4 +1771,4 @@ positive and negative particles. For internal use.
 </body>
 </html>
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

@@ -1,10 +1,16 @@
 // main26.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
+// Authors: Stefan Ask <unavailable>
+
+// Contact: Nishita Desai <nishita.desai@tifr.res.in>
+
+// Keywords: extra dimensions; BSM;
+
 // This is a test program for the extra dimensions processes.
-// Author: Stefan Ask (Stefan DOT Ask AT cern DOT ch)
+
 // Documentation: S. Ask et al., arXiv:0809.4750 and arXiv:0912.4233
 
 #include "Pythia8/Pythia.h"

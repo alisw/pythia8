@@ -1,5 +1,5 @@
 // HeavyIons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -112,10 +112,9 @@ void HeavyIons::setupSpecials(Pythia & p, string match) {
 
 // Sum up info from all used Pythia objects.
 
-void HeavyIons::sumUpMessages(Info & in, string tag, const Info & other) {
-  for ( map<string,int>::const_iterator it = other.messages.begin();
-        it != other.messages.end(); ++it )
-    in.messages[tag + it->first] += it->second;
+void HeavyIons::sumUpMessages(Info & in, string tag, const Info * ihi) {
+  if ( !ihi ) return;
+  for ( auto it : ihi->messages ) in.messages[tag + it.first] += it.second;
 }
 
 //--------------------------------------------------------------------------
@@ -127,7 +126,8 @@ void HeavyIons::clearProcessLevel(Pythia & pyt) {
   string path = pyt.settings.word("xmlPath");
   pyt.settings.mode("Tune:ee", 0);
   pyt.settings.mode("Tune:pp", 0);
-  pyt.settings.init(path + "QCDProcesses.xml", true);
+  pyt.settings.init(path + "QCDSoftProcesses.xml", true);
+  pyt.settings.init(path + "QCDHardProcesses.xml", true);
   pyt.settings.init(path + "ElectroweakProcesses.xml", true);
   pyt.settings.init(path + "OniaProcesses.xml", true);
   pyt.settings.init(path + "TopProcesses.xml", true);
@@ -141,7 +141,7 @@ void HeavyIons::clearProcessLevel(Pythia & pyt) {
   pyt.settings.init(path + "HiddenValleyProcesses.xml", true);
   pyt.settings.init(path + "ExtraDimensionalProcesses.xml", true);
   pyt.settings.init(path + "DarkMatterProcesses.xml", true);
-  pyt.settings.init(path + "ASecondHardProcess.xml", true);
+  pyt.settings.init(path + "SecondHardProcess.xml", true);
   pyt.settings.init(path + "PhaseSpaceCuts.xml", true);
   // NOTE! if new processes are added in separate xml files these have
   // to be added here.
@@ -152,31 +152,35 @@ void HeavyIons::clearProcessLevel(Pythia & pyt) {
 // Update the Info object in the main Pythia object.
 
 void HeavyIons::updateInfo() {
-  map<string, int> saveMess = mainPythiaPtr->info.messages;
-  mainPythiaPtr->info = hiinfo.primInfo;
-  mainPythiaPtr->info.hiinfo = &hiinfo;
-  mainPythiaPtr->info.messages = saveMess;
-  mainPythiaPtr->info.updateWeight(hiinfo.weight());
-  mainPythiaPtr->info.sigmaReset();
-  double norm = 1.0/double(hiinfo.NSave);
+  map<string, int> saveMess = infoPtr->messages;
+  *infoPtr =  hiInfo.primInfo;
+  infoPtr->hiInfo = &hiInfo;
+  infoPtr->messages = saveMess;
+  infoPtr->updateWeight(hiInfo.weight());
+  // Also book and update weight in the weight container.
+  infoPtr->weightContainerPtr->weightsHI.bookWeight("HIweight");
+  infoPtr->weightContainerPtr->weightsHI.
+    reweightValueByName("HIweight", hiInfo.weight());
+  infoPtr->sigmaReset();
+  double norm = 1.0/double(hiInfo.NSave);
   int Nall = 0;
   double wall = 0.0;
   double w2all = 0.0;
-  for ( map<int,int>::iterator ip = hiinfo.NPrim.begin();
-        ip != hiinfo.NPrim.end(); ++ip ) {
+  for ( map<int,int>::iterator ip = hiInfo.NPrim.begin();
+        ip != hiInfo.NPrim.end(); ++ip ) {
     int N = ip->second;
     if ( !N ) continue;
     int pc = ip->first;
-    double w = hiinfo.sumPrimW[pc]/millibarn;
-    double w2 = hiinfo.sumPrimW2[pc]/pow2(millibarn);
-    mainPythiaPtr->info.setSigma(pc, hiinfo.NamePrim[pc], N, N, N,
-                                  w*norm, sqrt(w2*norm)/N, w);
+    double w = hiInfo.sumPrimW[pc]/millibarn;
+    double w2 = hiInfo.sumPrimW2[pc]/pow2(millibarn);
+    infoPtr->setSigma(pc, hiInfo.NamePrim[pc], N, N, N,
+                      w*norm, sqrt(w2*norm)/N, w);
     Nall += N;
     wall += w;
     w2all += w2;
   }
-  mainPythiaPtr->info.setSigma(0, "sum", hiinfo.NSave, Nall, Nall,
-                                wall*norm, sqrt(w2all*norm)/Nall, wall);
+  infoPtr->setSigma(0, "sum", hiInfo.NSave, Nall, Nall,
+                    wall*norm, sqrt(w2all*norm)/Nall, wall);
 }
 
 //--------------------------------------------------------------------------
@@ -184,11 +188,11 @@ void HeavyIons::updateInfo() {
 // Print out statistics from a HeavyIons run.
 
 void HeavyIons::stat() {
-  bool showPrL = mainPythiaPtr->flag("Stat:showProcessLevel");
+  bool showPrL = flag("Stat:showProcessLevel");
   //  bool showPaL = settings.flag("Stat:showPartonLevel");
-  bool showErr = mainPythiaPtr->flag("Stat:showErrors");
-  bool reset   = mainPythiaPtr->flag("Stat:reset");
-  Info & in = mainPythiaPtr->info;
+  bool showErr = flag("Stat:showErrors");
+  bool reset   = flag("Stat:reset");
+  Info & in = *infoPtr;
   // Header.
   if ( showPrL ) {
     cout << "\n *-----  HeavyIon Event and Cross Section Statistics  ------"
@@ -217,7 +221,7 @@ void HeavyIons::stat() {
            << setw(11) << in.sigmaGen(pc[i])
            << setw(11) << in.sigmaErr(pc[i]) << " |\n";
     }
-    if ( pc.empty() ) in.setSigma(0, "sum", hiinfo.NSave, 0, 0, 0.0, 0.0, 0.0);
+    if ( pc.empty() ) in.setSigma(0, "sum", hiInfo.NSave, 0, 0, 0.0, 0.0, 0.0);
 
     cout << " |                                                    |       "
          << "                            |                        |\n"
@@ -228,25 +232,25 @@ void HeavyIons::stat() {
          << in.sigmaGen(0) << setw(11) << in.sigmaErr(0) << " |\n";
     cout << " | " << left << setw(50) << "(Estimated total cross section)"
          << right << " | " << setw(11)
-         << hiinfo.nAttempts() << " " << setw(10) << 0 << " " << setw(10)
+         << hiInfo.nAttempts() << " " << setw(10) << 0 << " " << setw(10)
          << 0 << " | " << scientific << setprecision(3) << setw(11)
-         << hiinfo.sigmaTot() << setw(11) << hiinfo.sigmaTotErr() << " |\n";
+         << hiInfo.sigmaTot() << setw(11) << hiInfo.sigmaTotErr() << " |\n";
     cout << " | " << left << setw(50)
          << "(Estimated non-diffractive cross section)"
          << right << " | " << setw(11)
-         << hiinfo.nAttempts() << " " << setw(10) << 0 << " " << setw(10)
+         << hiInfo.nAttempts() << " " << setw(10) << 0 << " " << setw(10)
          << 0 << " | " << scientific << setprecision(3) << setw(11)
-         << hiinfo.sigmaND() << setw(11) << hiinfo.sigmaNDErr() << " |\n";
+         << hiInfo.sigmaND() << setw(11) << hiInfo.sigmaNDErr() << " |\n";
     // Listing finished.
     cout << " |                                                            "
          << "                                                     |\n"
          << " *-----  End HeavyIon Event and Cross Section Statistics -----"
          << "-----------------------------------------------------*" << endl;
   }
-  if ( reset ) hiinfo = HIInfo();
+  if ( reset ) hiInfo = HIInfo();
   if ( showErr ) {
     for ( int i = 1, np = pythia.size(); i < np; ++i )
-      sumUpMessages(in, "(" + pythiaNames[i] + ")", pythia[i]->info);
+      sumUpMessages(in, "(" + pythiaNames[i] + ")", info[i]);
     in.errorStatistics();
   }
   if ( reset ) in.errorReset();
@@ -274,7 +278,10 @@ bool HeavyIons::isHeavyIon(Settings & settings) {
 Angantyr::Angantyr(Pythia & mainPythiaIn)
   : HeavyIons(mainPythiaIn), hasSignal(true),
     bGenPtr(0), projPtr(0), targPtr(0), collPtr(0), recoilerMode(1), bMode(0) {
+  selectMB = make_shared<ProcessSelectorHook>();
+  selectSASD = make_shared<ProcessSelectorHook>();
   pythia.resize(ALL);
+  info.resize(ALL);
   pythiaNames.resize(ALL);
   pythiaNames[HADRON] = "HADRON";
   pythiaNames[MBIAS] = "MBIAS";
@@ -283,6 +290,7 @@ Angantyr::Angantyr(Pythia & mainPythiaIn)
   pythiaNames[SIGPN] = "SIGPN";
   pythiaNames[SIGNP] = "SIGNP";
   pythiaNames[SIGNN] = "SIGNN";
+
 }
 
 //--------------------------------------------------------------------------
@@ -306,7 +314,7 @@ Angantyr::~Angantyr() {
 
 // Add a HIUserHooks object to customise the Angantyr model.
 
-bool Angantyr::setUserHooksPtr(PythiaObject sel, UserHooks * uhook) {
+bool Angantyr::setUserHooksPtr(PythiaObject sel, shared_ptr<UserHooks> uhook) {
   for ( int i = HADRON; i < ALL; ++i )
     if ( ( i == sel || ALL == sel ) && !pythia[i]->setUserHooksPtr(uhook) )
       return false;
@@ -318,14 +326,16 @@ bool Angantyr::setUserHooksPtr(PythiaObject sel, UserHooks * uhook) {
 // Create an EventInfo object connected to a SubCollision from the
 // last event generated by the given PythiaObject.
 
-EventInfo Angantyr::mkEventInfo(Pythia & pyt, const SubCollision * coll) {
+EventInfo Angantyr::mkEventInfo(Pythia & pyt, Info & infoIn,
+                                const SubCollision * coll) {
     EventInfo ei;
     ei.coll = coll;
     ei.event = pyt.event;
-    ei.info = pyt.info;
+    ei.info = infoIn;
+    ei.code =  pyt.info.code();
     ei.ordering = ( ( HIHooksPtr && HIHooksPtr->hasEventOrdering() )?
-                    HIHooksPtr->eventOrdering(ei.event, ei.info):
-                    ei.info.bMPI() );
+                    HIHooksPtr->eventOrdering(ei.event, infoIn):
+                    pyt.info.bMPI() );
     if ( coll ) {
       ei.projs[coll->proj] = make_pair(1, ei.event.size());
       ei.targs[coll->targ] = make_pair(2, ei.event.size());
@@ -341,19 +351,17 @@ EventInfo Angantyr::mkEventInfo(Pythia & pyt, const SubCollision * coll) {
 
 bool Angantyr::init() {
 
-  Settings & settings = mainPythiaPtr->settings;
-  Info & info = mainPythiaPtr->info;
-  bool print = settings.flag("HeavyIon:showInit");
+  bool print = flag("HeavyIon:showInit");
 
-  int idProj = settings.mode("Beams:idA");
-  int idTarg = settings.mode("Beams:idB");
+  int idProj = mode("Beams:idA");
+  int idTarg = mode("Beams:idB");
   int idProjP = idProj;
   int idProjN = 0;
   int idTargP = idTarg;
   int idTargN = 0;
   bool isHIProj = ( abs(idProj/100000000) == 10 );
   bool isHITarg = ( abs(idTarg/100000000) == 10 );
-  bool isHI = isHIProj || isHITarg || settings.mode("HeavyIon:mode") > 1;
+  bool isHI = isHIProj || isHITarg || mode("HeavyIon:mode") > 1;
   if ( isHIProj ) {
     idProjP = idProj > 0? 2212: -2212;
     idProjN = idProj > 0? 2112: -2112;
@@ -362,50 +370,47 @@ bool Angantyr::init() {
     idTargP = idTarg > 0? 2212: -2212;
     idTargN = idTarg > 0? 2112: -2112;
   }
-  if ( settings.mode("HeavyIon:mode") == 1 && !isHI ) {
-    info.errorMsg("Angantyr Info: No heavy ions requested"
+  if ( mode("HeavyIon:mode") == 1 && !isHI ) {
+    infoPtr->errorMsg("Angantyr Info: No heavy ions requested"
                   " - reverting to normal Pythia behavior.");
-    settings.mode("HeavyIon:mode", 0);
+    settingsPtr->mode("HeavyIon:mode", 0);
     return false;
   }
 
-  recoilerMode = settings.mode("Angantyr:SDRecoil");
-  bMode = settings.mode("Angantyr:impactMode");
+  recoilerMode = mode("Angantyr:SDRecoil");
+  bMode = mode("Angantyr:impactMode");
 
-  int frame = settings.mode("Beams:frameType");
-  bool dohad = settings.flag("HadronLevel:all");
+  int frame = mode("Beams:frameType");
+  bool dohad = flag("HadronLevel:all");
   if ( frame > 2 )
-    info.errorMsg("Angantyr warning: Currently only Beams:frameType = 1 or 2 "
-                  "is supported. Assuming 2.");
-  double eAbm = settings.parm("Beams:eA");
-  double eBbm = settings.parm("Beams:eB");
-  if ( frame == 1 ) eAbm = eBbm = settings.parm("Beams:eCM")/2.0;
-  settings.parm("Beams:eA", eAbm);
-  settings.parm("Beams:eB", eBbm);
-  settings.mode("Beams:frameType", 2);
+    infoPtr->errorMsg("Angantyr warning: Currently only Beams:frameType "
+      "= 1 or 2 is supported. Assuming 2.");
+  double eAbm = parm("Beams:eA");
+  double eBbm = parm("Beams:eB");
+  if ( frame == 1 ) eAbm = eBbm = parm("Beams:eCM")/2.0;
+  settingsPtr->parm("Beams:eA", eAbm);
+  settingsPtr->parm("Beams:eB", eBbm);
+  settingsPtr->mode("Beams:frameType", 2);
 
-  settings.mode("Next:numberCount", 0);
-  settings.mode("Next:numberShowLHA", 0);
-  settings.mode("Next:numberShowInfo", 0);
-  settings.mode("Next:numberShowProcess", 0);
-  settings.mode("Next:numberShowEvent", 0);
-  settings.flag("HadronLevel:all", false);
-  settings.flag("SoftQCD:all", false);
-  settings.flag("SoftQCD:elastic", false);
-  settings.flag("SoftQCD:nonDiffractive", false);
-  settings.flag("SoftQCD:singleDiffractive", false);
-  settings.flag("SoftQCD:doubleDiffractive", false);
-  settings.flag("SoftQCD:centralDiffractive", false);
+  settingsPtr->mode("Next:numberCount", 0);
+  settingsPtr->mode("Next:numberShowLHA", 0);
+  settingsPtr->mode("Next:numberShowInfo", 0);
+  settingsPtr->mode("Next:numberShowProcess", 0);
+  settingsPtr->mode("Next:numberShowEvent", 0);
+  settingsPtr->flag("HadronLevel:all", false);
+  settingsPtr->flag("SoftQCD:all", false);
+  settingsPtr->flag("SoftQCD:elastic", false);
+  settingsPtr->flag("SoftQCD:nonDiffractive", false);
+  settingsPtr->flag("SoftQCD:singleDiffractive", false);
+  settingsPtr->flag("SoftQCD:doubleDiffractive", false);
+  settingsPtr->flag("SoftQCD:centralDiffractive", false);
 
   for ( int i = MBIAS; i < ALL; ++i ) {
-    pythia[i] = new Pythia(settings, mainPythiaPtr->particleData, false);
+    pythia[i] = new Pythia(*settingsPtr, *particleDataPtr, false);
     pythia[i]->settings.mode("HeavyIon:mode", 1);
   }
 
-  sigtot.init(&pythia[MBIAS]->info,
-              pythia[MBIAS]->settings,
-              &pythia[MBIAS]->particleData,
-              &pythia[MBIAS]->rndm);
+  sigtot.init();
   sigtot.calc(2212, 2212, sqrt(4.0*eAbm*eBbm));
 
   clearProcessLevel(*pythia[MBIAS]);
@@ -481,37 +486,34 @@ bool Angantyr::init() {
     projPtr = HIHooksPtr->projectileModel();
   else
     projPtr = new GLISSANDOModel();
-  projPtr->initPtr(idProj, settings, mainPythiaPtr->particleData,
-                   mainPythiaPtr->rndm);
+  projPtr->initPtr(idProj, *settingsPtr, *particleDataPtr, *rndmPtr);
 
   if ( HIHooksPtr && HIHooksPtr->hasTargetModel() )
     targPtr = HIHooksPtr->targetModel();
   else
     targPtr = new GLISSANDOModel();
-  targPtr->initPtr(idTarg, settings, mainPythiaPtr->particleData,
-                   mainPythiaPtr->rndm);
+  targPtr->initPtr(idTarg, *settingsPtr, *particleDataPtr, *rndmPtr);
 
   if ( HIHooksPtr && HIHooksPtr->hasSubCollisionModel() )
     collPtr = HIHooksPtr->subCollisionModel();
-  else if ( settings.mode("Angantyr:CollisionModel") == 1 )
+  else if ( mode("Angantyr:CollisionModel") == 1 )
     collPtr = new DoubleStrikman();
-  else if ( settings.mode("Angantyr:CollisionModel") == 2 )
+  else if ( mode("Angantyr:CollisionModel") == 2 )
     collPtr = new DoubleStrikman(1);
-  else if ( settings.mode("Angantyr:CollisionModel") == 3 )
+  else if ( mode("Angantyr:CollisionModel") == 3 )
     collPtr = new BlackSubCollisionModel();
   else
     collPtr = new NaiveSubCollisionModel();
 
-  collPtr->initPtr(*projPtr, *targPtr, sigtot, settings,
-                   info, mainPythiaPtr->rndm);
+  collPtr->initPtr(*projPtr, *targPtr, sigtot, *settingsPtr,
+                   *infoPtr, *rndmPtr);
   if ( !collPtr->init() ) return false;
 
   if ( HIHooksPtr && HIHooksPtr->hasImpactParameterGenerator() )
     bGenPtr = HIHooksPtr->impactParameterGenerator();
   else
     bGenPtr = new ImpactParameterGenerator();
-  bGenPtr->initPtr(*collPtr, *projPtr, *targPtr,
-                   settings, mainPythiaPtr->rndm);
+  bGenPtr->initPtr(*collPtr, *projPtr, *targPtr, *settingsPtr, *rndmPtr);
 
   if ( !projPtr->init() ) return false;
   if ( !targPtr->init() ) return false;
@@ -521,7 +523,7 @@ bool Angantyr::init() {
   if ( hasSignal ) {
     ostringstream oss;
     Redirect red(cout, oss);
-    hasSignal = pythia[SIGPP]->init();
+    hasSignal = init(SIGPP, "signal process (pp)", 10);
     output = oss.str();
   }
   if ( !hasSignal ) {
@@ -529,66 +531,48 @@ bool Angantyr::init() {
                       << "Assuming minimum bias." << endl;
   } else {
       if ( print )
-        cout << " Angantyr Info: Initializing signal process (pp)." << endl
-             << output
-             << "Generating a few signal events (pp) to build up statistics"
-             << endl;
-      // Generate a few signal events to get a first cross section estimate
-      for ( int i = 0; i < 10; ++i ) pythia[SIGPP]->next();
-
-      if ( idTargN ) {
-        if ( print )
-          cout << " Angantyr Info: Initializing signal process (pn)." << endl;
-        pythia[SIGPN]->init();
-        if ( print )
-          cout << "Generating a few signal events (pn) to build up statistics"
-               << endl;
-        // Generate a few signal events to get a first cross section estimate
-        for ( int i = 0; i < 10; ++i ) pythia[SIGPN]->next();
-      }
-      if ( idProjN ) {
-        if ( print )
-          cout << " Angantyr Info: Initializing signal process (np)." << endl;
-        pythia[SIGNP]->init();
-        if ( print )
-          cout << "Generating a few signal events (np) to build up statistics"
-               << endl;
-        // Generate a few signal events to get a first cross section estimate
-        for ( int i = 0; i < 10; ++i ) pythia[SIGNP]->next();
-      }
-      if ( idProjN && idTargN ) {
-        if ( print )
-          cout << " Angantyr Info: Initializing signal process (nn)." << endl;
-        pythia[SIGNN]->init();
-        if ( print )
-          cout << "Generating a few signal events (nn) to build up statistics"
-               << endl;
-        // Generate a few signal events to get a first cross section estimate
-        for ( int i = 0; i < 10; ++i ) pythia[SIGNN]->next();
-      }
+        cout << output;
+      if ( idTargN ) init(SIGPN, "signal process (pn)", 10);
+      if ( idProjN ) init(SIGNP, "signal process (np)", 10);
+      if ( idProjN && idTargN ) init(SIGNN, "signal process (nn)", 10);
 
   }
 
-  if ( print )
-    cout << " Angantyr Info: Initializing minimum bias processes." << endl;
-  pythia[MBIAS]->addUserHooksPtr(&selectMB);
-  pythia[MBIAS]->init();
+  pythia[MBIAS]->addUserHooksPtr(selectMB);
+  init(MBIAS, "minimum bias processes");
 
-  if ( print )
-    cout << " Angantyr Info: Initializing secondary absorptive processes as"
-       <<" single diffraction." << endl;
-  pythia[SASD]->addUserHooksPtr(&selectSASD);
-  pythia[SASD]->init();
+  pythia[SASD]->addUserHooksPtr(selectSASD);
+  init(SASD, "secondary absorptive processes as single diffraction.");
 
   if ( pythia[HADRON]->flag("HadronLevel:all") ) {
     if ( print )
       cout << " Angantyr Info: Initializing hadronisation processes." << endl;
   }
-  settings.flag("ProcessLevel:all", false);
+  settingsPtr->flag("ProcessLevel:all", false);
 
   return true;
 
 }
+
+//--------------------------------------------------------------------------
+
+// Initiaize a specific Pythia object and optionally run a number
+// of events to get a handle of the cross section.
+
+bool Angantyr::init(PythiaObject sel, string name, int n) {
+  bool print = flag("HeavyIon:showInit");
+  shared_ptr<InfoGrabber> ihg = make_shared<InfoGrabber>();
+  pythia[sel]->addUserHooksPtr(ihg);
+  if ( print ) cout << " Angantyr Info: Initializing " << name << "." << endl;
+  if ( !pythia[sel]->init() ) return false;
+  info[sel] = ihg->getInfo();
+  if ( n <= 0 ) return true;
+  if ( print ) cout << "Generating a few signal events for " << name
+                    << " to build up statistics" << endl;
+  for ( int i = 0; i < 10; ++i ) pythia[sel]->next();
+  return true;
+}
+
 
 //--------------------------------------------------------------------------
 
@@ -601,10 +585,10 @@ EventInfo Angantyr::getSignal(const SubCollision & coll) {
   int itry = MAXTRY;
   while ( itry-- ) {
     if ( pythia[pytsel]->next() )
-      return mkEventInfo(*pythia[pytsel], &coll);
+      return mkEventInfo(*pythia[pytsel], *info[pytsel], &coll);
   }
-  mainPythiaPtr->info.errorMsg("Warning from PyHIa::next: "
-                               "Could not setup signal sub collision.");
+  infoPtr->errorMsg("Warning from PyHIa::next: "
+                       "Could not setup signal sub collision.");
   return EventInfo();
 }
 
@@ -616,7 +600,7 @@ EventInfo Angantyr::getMBIAS(const SubCollision * coll, int procid) {
   while ( --itry ) {
     if ( !pythia[MBIAS]->next() ) continue;
     assert( pythia[MBIAS]->info.code() == procid );
-    return mkEventInfo(*pythia[MBIAS], coll);
+    return mkEventInfo(*pythia[MBIAS], *info[MBIAS], coll);
   }
   return EventInfo();
 }
@@ -629,7 +613,7 @@ EventInfo Angantyr::getSASD(const SubCollision * coll, int procid) {
   while ( --itry ) {
     if ( !pythia[SASD]->next() ) continue;
     assert( pythia[SASD]->info.code() == procid );
-    return mkEventInfo(*pythia[SASD], coll);
+    return mkEventInfo(*pythia[SASD], *info[SASD], coll);
   }
   return EventInfo();
 }
@@ -656,7 +640,7 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
       abscoll.push_back(cit);
       if ( bMode > 0 ) {
         EventInfo ie = getND(*cit);
-        assert( ie.info.code() == 101 );
+        assert( ie.code == 101 );
         ndeve.insert(ie);
       }
       cit->proj->select();
@@ -673,7 +657,7 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
   if ( bMode == 0 ) {
     for ( int i = 0; i < Nabs + Nadd; ++i ) {
       EventInfo ie = getND();
-      assert( ie.info.code() == 101 );
+      assert( ie.code == 101 );
       ndeve.insert(ie);
     }
   }
@@ -715,8 +699,7 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
   for ( int i = 0, N = abscoll.size(); i < N; ++i ) {
     int b = abscoll[i]->nucleons();
     if ( Nii[b]
-         && ( noSignal || w[b]*(wsum/P1 - 1.0)/(wsum - w[b]) >
-              mainPythiaPtr->rndm.flat() )
+         && ( noSignal || w[b]*(wsum/P1 - 1.0)/(wsum - w[b]) > rndmPtr->flat())
          && (ei = getSignal(*abscoll[i])).ok ) {
       noSignal = false;
     }
@@ -730,7 +713,7 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
 
   if ( noSignal ) return false;
 
-  hiinfo.reweight(P1);
+  hiInfo.reweight(P1);
 
   return true;
 
@@ -743,9 +726,9 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
 void Angantyr::addSASD(const multiset<SubCollision> & coll) {
   // Collect absorptively wounded nucleons in secondary
   // sub-collisions.
-  int ntry = mainPythiaPtr->mode("Angantyr:SDTries");
-  if ( mainPythiaPtr->settings.isMode("HI:SDTries") )
-    ntry = mainPythiaPtr->mode("HI:SDTries");
+  int ntry = mode("Angantyr:SDTries");
+  if ( settingsPtr->isMode("HI:SDTries") )
+    ntry = mode("HI:SDTries");
   for ( multiset<SubCollision>::iterator cit = coll.begin();
         cit != coll.end(); ++cit )
     if ( cit->type == SubCollision::ABS ) {
@@ -757,7 +740,7 @@ void Angantyr::addSASD(const multiset<SubCollision> & coll) {
             cit->proj->select(*evp, Nucleon::ABS);
             break;
           }
-          if ( itry == ntry - 1 ) hiinfo.failedExcitation();
+          if ( itry == ntry - 1 ) hiInfo.failedExcitation();
         }
       } else if ( cit->proj->done() && !cit->targ->done() ) {
         EventInfo * evp = cit->proj->event();
@@ -767,7 +750,7 @@ void Angantyr::addSASD(const multiset<SubCollision> & coll) {
             cit->targ->select(*evp, Nucleon::ABS);
             break;
           }
-          if ( itry == ntry - 1 ) hiinfo.failedExcitation();
+          if ( itry == ntry - 1 ) hiInfo.failedExcitation();
         }
       }
     }
@@ -825,9 +808,8 @@ bool Angantyr::addSD(const multiset<SubCollision> & coll,
 
 void Angantyr::addSDsecond(const multiset<SubCollision> & coll) {
   // Collect secondary single diffractive sub-collisions.
-  int ntry = mainPythiaPtr->mode("Angantyr:SDTries");
-  if ( mainPythiaPtr->settings.isMode("HI:SDTries") )
-    ntry = mainPythiaPtr->mode("HI:SDTries");
+  int ntry = mode("Angantyr:SDTries");
+  if ( settingsPtr->isMode("HI:SDTries") )  ntry = mode("HI:SDTries");
   for ( multiset<SubCollision>::iterator cit = coll.begin();
         cit != coll.end(); ++cit ) {
     if ( !cit->proj->done() &&
@@ -840,7 +822,7 @@ void Angantyr::addSDsecond(const multiset<SubCollision> & coll) {
           cit->proj->select(*evp, Nucleon::DIFF);
           break;
         }
-        if ( itry == ntry - 1 ) hiinfo.failedExcitation();
+        if ( itry == ntry - 1 ) hiInfo.failedExcitation();
       }
     }
     if ( !cit->targ->done() &&
@@ -853,7 +835,7 @@ void Angantyr::addSDsecond(const multiset<SubCollision> & coll) {
           cit->targ->select(*evp, Nucleon::DIFF);
           break;
         }
-        if ( itry == ntry - 1 ) hiinfo.failedExcitation();
+        if ( itry == ntry - 1 ) hiInfo.failedExcitation();
       }
     }
   }
@@ -964,8 +946,7 @@ EventInfo & Angantyr::shiftEvent(EventInfo & ei) {
   Vec4 bmin = ei.coll->targ->bPos();
   for ( int i = 0, N = ei.event.size(); i < N; ++i ) {
     Vec4 shift = bmin + (bmax - bmin)*(ei.event[i].y() - ymin)/(ymax - ymin);
-    ei.event[i].xProd(ei.event[i].xProd() + shift.px());
-    ei.event[i].yProd(ei.event[i].yProd() + shift.py());
+    ei.event[i].vProdAdd( shift * FM2MM);
   }
   return ei;
 }
@@ -1172,9 +1153,8 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   if ( recnuc != ei.projs.end() ) tside = true;
   NucPos rectarg = ei.targs.find(sub.coll->targ);
   if ( rectarg != ei.targs.end() ) {
-    if ( tside ) mainPythiaPtr->
-                   info.errorMsg("Warning from Angantyr::addNucleonExcitation:"
-                                 " Nucleon already added.");
+    if ( tside ) infoPtr->errorMsg("Warning from Angantyr::"
+      "addNucleonExcitation: Nucleon already added.");
     tside = false;
     recnuc = rectarg;
   }
@@ -1186,7 +1166,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   int recend = recnuc->second.second;
   Vec4 pbeam = sub.event[beam].p();
   Vec4 pdiff = sub.event[olddiff].p();
-  if ( sub.info.code() == 106 ) pdiff += sub.event[5].p();
+  if ( sub.code == 106 ) pdiff += sub.event[5].p();
   vector<int> rec;
   Vec4 prec;
   if ( HIHooksPtr && HIHooksPtr->canFindRecoilers() )
@@ -1195,15 +1175,15 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   else if ( recoilerMode == 2 )
     rec = findRecoilers(ei.event, tside, recbeam, recend, pdiff, pbeam);
   else {
-    if ( tside && ei.info.code() == 104 && ei.event[4].status() > 0 )
+    if ( tside && ei.code == 104 && ei.event[4].status() > 0 )
       rec.push_back(4);
-    else if ( !tside && ei.info.code() == 103 && ei.event[3].status() > 0 )
+    else if ( !tside && ei.code == 103 && ei.event[3].status() > 0 )
       rec.push_back(3);
     else if ( tside && ei.event[3].status() > 0 &&
-              ( ei.info.code() == 102 || ei.info.code() == 106 ) )
+              ( ei.code == 102 || ei.code == 106 ) )
       rec.push_back(3);
     else if ( !tside && ei.event[4].status() > 0 &&
-              ( ei.info.code() == 102 || ei.info.code() == 106 ) )
+              ( ei.code == 102 || ei.code == 106 ) )
       rec.push_back(4);
     else
       for ( int i = recbeam, N = recend; i < N; ++i )
@@ -1215,8 +1195,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
 
   // Find the ransform to the recoilers and the diffractive combined cms
   pair<RotBstMatrix,RotBstMatrix> R12;
-  if ( !getTransforms(prec, pdiff, pbeam, R12,
-                      ei.info.code(), sub.info.code()) )
+  if ( !getTransforms(prec, pdiff, pbeam, R12,  ei.code, sub.code) )
     return false;
 
   // Transform the recoilers.
@@ -1237,7 +1216,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   ei.event.back().rotbst(R12.second);
   ei.event.back().mother1(newbeam);
   ei.event.back().mother2(0);
-  if ( sub.info.code() == 102 ) {
+  if ( sub.code == 102 ) {
     if ( tside )
       ei.targs[sub.coll->targ] = make_pair(newbeam, ei.event.size());
     else
@@ -1246,7 +1225,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   }
 
   int idoff = tside? newdiff - olddiff: newdiff - olddiff - 1;
-  if ( sub.info.code() == 106 ) {
+  if ( sub.code == 106 ) {
     // Special handling of central diffraction.
     ++newdiff;
     ++nextpos;
@@ -1435,7 +1414,7 @@ bool Angantyr::nextSASD(int procid) {
   EventInfo ei = getSASD(&coll, procid);
   if ( !ei.ok ) return false;
   pythia[HADRON]->event = ei.event;
-  pythia[HADRON]->info = ei.info;
+  updateInfo();
   if ( pythia[HADRON]->flag("HadronLevel:all") ) {
     if ( HIHooksPtr && HIHooksPtr->canForceHadronLevel() ) {
       if ( !HIHooksPtr->forceHadronLevel(*pythia[HADRON]) ) return false;
@@ -1465,27 +1444,27 @@ bool Angantyr::buildEvent(list<EventInfo> & subevents,
       bool found = false;
       for ( list<EventInfo>::iterator sit = subevents.begin();
             sit != subevents.end(); ++sit  ) {
-        if ( sit->info.code() >= 101 && sit->info.code() <= 106 ) continue;
+        if ( sit->code >= 101 && sit->code <= 106 ) continue;
         addSubEvent(etmp, sit->event);
-        if ( !found ) hiinfo.select(sit->info);
-        hiinfo.addSubCollision(*sit->coll);
+        hiInfo.select(sit->info);
+        hiInfo.addSubCollision(*sit->coll);
         subevents.erase(sit);
         found = true;
         break;
       }
       if ( !found ) {
-        mainPythiaPtr->info.errorMsg("Warning from Angantyr::next:"
-                                     " Failed to generate signal event.");
+        infoPtr->errorMsg("Warning from Angantyr::next:"
+                             " Failed to generate signal event.");
         return false;
       }
     } else
-      hiinfo.select(subevents.begin()->info);
+      hiInfo.select(subevents.begin()->info);
 
     // Then all the others
     for ( list<EventInfo>::iterator sit = subevents.begin();
           sit != subevents.end(); ++sit  ) {
       addSubEvent(etmp, sit->event);
-      hiinfo.addSubCollision(*sit->coll);
+      hiInfo.addSubCollision(*sit->coll);
     }
 
     // Finally add all nucleon remnants.
@@ -1506,7 +1485,7 @@ addNucleusRemnants(const vector<Nucleon> & proj,
   int nnp = 0;
   Vec4 ppsum;
   for ( int i = 0, N = proj.size(); i< N; ++i ) {
-    if ( proj[i].event() ) hiinfo.addProjectileNucleon(proj[i]);
+    if ( proj[i].event() ) hiInfo.addProjectileNucleon(proj[i]);
     else {
       double e = pythia[HADRON]->parm("Beams:eA");
       double m = pythia[HADRON]->particleData.m0(proj[i].id());
@@ -1525,7 +1504,7 @@ addNucleusRemnants(const vector<Nucleon> & proj,
   int nnt = 0;
   Vec4 tpsum;
   for ( int i = 0, N = targ.size(); i< N; ++i ) {
-    if ( targ[i].event() ) hiinfo.addTargetNucleon(targ[i]);
+    if ( targ[i].event() ) hiInfo.addTargetNucleon(targ[i]);
     else {
       double e = pythia[HADRON]->parm("Beams:eB");
       double m = pythia[HADRON]->particleData.m0(targ[i].id());
@@ -1586,8 +1565,7 @@ addNucleusRemnants(const vector<Nucleon> & proj,
 
 bool Angantyr::next() {
 
-  if ( mainPythiaPtr->flag("Angantyr:SDTest") )
-    return nextSASD(104);
+  if ( flag("Angantyr:SDTest") ) return nextSASD(104);
 
   int itry = MAXTRY;
 
@@ -1601,19 +1579,17 @@ bool Angantyr::next() {
     Vec4 bvec = bGenPtr->generate(bweight);
     double T = 0.0;
     subColls = collPtr->getCollisions(projectile, target, bvec, T);
-    hiinfo.addAttempt(T, bvec.pT(), bweight);
-    hiinfo.subCollisionsPtr(&subColls);
-    if (mainPythiaPtr->flag("Angantyr:GlauberOnly") ) {
-      return true;
-    }
+    hiInfo.addAttempt(T, bvec.pT(), bweight);
+    hiInfo.subCollisionsPtr(&subColls);
+    if ( flag("Angantyr:GlauberOnly") ) return true;
     if ( subColls.empty() ) continue;
 
 
     list<EventInfo> subevents;
 
     if ( !genAbs(subColls, subevents) ) {
-      mainPythiaPtr->info.errorMsg("Warning from PyHIia::next: "
-                                   "Could not setup signal or ND collisions.");
+      infoPtr->errorMsg("Warning from PyHIia::next: "
+                           "Could not setup signal or ND collisions.");
       continue;
     }
     if ( hasSignal && subevents.empty() ) continue;
@@ -1624,14 +1600,14 @@ bool Angantyr::next() {
 
     // Collect full double diffraction collisions.
     if ( !addDD(subColls, subevents) ) {
-      mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
+      infoPtr->errorMsg("Warning from PyHIia::next:"
                                    " Could not setup DD sub collision.");
       continue;
     }
 
     // Collect full single diffraction collisions.
     if ( !addSD(subColls, subevents) ) {
-      mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
+      infoPtr->errorMsg("Warning from PyHIia::next:"
                                    " Could not setup SD sub collision.");
       continue;
     }
@@ -1641,7 +1617,7 @@ bool Angantyr::next() {
 
     // Collect full central diffraction collisions.
     if ( !addCD(subColls, subevents) ) {
-      mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
+      infoPtr->errorMsg("Warning from PyHIia::next:"
                                    " Could not setup CD sub collisions.");
       continue;
     }
@@ -1651,7 +1627,7 @@ bool Angantyr::next() {
 
     // Collect full elastic collisions.
     if ( !addEL(subColls, subevents) ) {
-      mainPythiaPtr->info.errorMsg("Warning from PyHIia::next:"
+      infoPtr->errorMsg("Warning from PyHIia::next:"
                                    " Could not setup elastic sub collisions.");
       continue;
     }
@@ -1673,7 +1649,7 @@ bool Angantyr::next() {
       }
     }
 
-    hiinfo.accept();
+    hiInfo.accept();
 
     updateInfo();
 
@@ -1682,10 +1658,10 @@ bool Angantyr::next() {
 
   }
 
-  mainPythiaPtr->info.errorMsg("Abort from Angantyr::next: Too many attempts "
-                               "to generate a working impact parameter point. "
-                               "Consider reducing HeavyIon:bWidth.");
-  hiinfo.reject();
+  infoPtr->errorMsg("Abort from Angantyr::next: Too many "
+    "attempts to generate a working impact parameter point. "
+    "Consider reducing HeavyIon:bWidth.");
+  hiInfo.reject();
   return false;
 
 }

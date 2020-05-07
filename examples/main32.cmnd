@@ -1,6 +1,6 @@
 ! 1) Settings used in the main program.
-Main:numberOfEvents   = -1         ! number of events to generate (-1 for all)
-Main:timesAllowErrors = 3          ! how many aborts before run stops
+Main:numberOfEvents   = 10         ! number of events to generate (-1 for all)
+Main:timesAllowErrors = 10000          ! how many aborts before run stops
 Main:spareMode1 = 0                ! skip n events at beginning of file
 
 ! 2) Settings related to output in init(), next() and stat().
@@ -12,17 +12,17 @@ Next:numberShowProcess = 1         ! print process record n times
 Next:numberShowEvent   = 1         ! print event record n times
 
 ! 3) Enable matching
-JetMatching:merge = on
+#JetMatching:merge = on
 
 ! Madgraph run:
 Beams:LHEF = w+_production_lhc_2.lhe
 Beams:frameType = 4
-JetMatching:scheme = 1
-JetMatching:setMad = off
-JetMatching:qCut = 20.0
-JetMatching:coneRadius = 1.0
-JetMatching:etaJetMax = 10.0
-JetMatching:nJetMax = 3
+#JetMatching:scheme = 1
+#JetMatching:setMad = off
+#JetMatching:qCut = 20.0
+#JetMatching:coneRadius = 1.0
+#JetMatching:etaJetMax = 10.0
+#JetMatching:nJetMax = 3
 
 ! Alpgen run
 ! Alpgen:file = main32
@@ -99,4 +99,4 @@ JetMatching:nJetMax = 3
 ! JetMatching:jetMatch        = 2
 
 ! 5) Other settings
-HadronLevel:all        = off       ! switch off hadronisation for testing only
+#HadronLevel:all        = off       ! switch off hadronisation for testing only

@@ -1,7 +1,9 @@
 // main38.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: basic usage; LHE file;
 
 // This is a simple test program.
 // It illustrates how Les Houches Event File version 3.0 information
@@ -38,7 +40,7 @@ int main() {
   cout << endl << "*****************************************************"
        << endl << "  RETRIEVE INITRWGT INFORMATION" << endl;
   if (hasRead) {
-    LHAinitrwgt* initrwgt = pythia.info.initrwgt;
+    const LHAinitrwgt* initrwgt = pythia.info.initrwgt;
     cout << endl << "Attributes: " << endl;
     for ( map<string,string>::const_iterator
       it = initrwgt->attributes.begin();
@@ -84,14 +86,12 @@ int main() {
   cout << "Number of generator tags " << ngen << endl;
   for (unsigned int igen = 0; igen < ngen; ++igen) {
     cout << ".  generator tag ." << igen << ". : ."
-         << (*pythia.info.generators)[igen].contents << ".\n"
-         << ".  name          ."
-         << (*pythia.info.generators)[igen].attributes["name"]
-         << ".  version       ."
-         << (*pythia.info.generators)[igen].attributes["version"]
-         << ".  random        ."
-         << (*pythia.info.generators)[igen].attributes["random"]
-         << "." << endl;
+         << pythia.info.generators->at(igen).contents << ".\n";
+    for ( map<string, string>::const_iterator
+            it = pythia.info.generators->at(igen).attributes.begin();
+          it != pythia.info.generators->at(igen).attributes.end(); ++it )
+      cout << ". " << it->first << " ." << it->second;
+    cout << "\n";
   }
   cout << "*****************************************************" << endl;
 
@@ -116,11 +116,11 @@ int main() {
     cout << endl << "*****************************************************"
          << endl << "  RETRIEVE EVENT INFORMATION" << endl;
     if (hasRead) {
-      map <string,string> eventAttributes =
-        *(pythia.info.eventAttributes);
+      const map <string,string>* eventAttributes =
+        pythia.info.eventAttributes;
       cout << endl << "Attributes:" << endl;
-      for ( map<string,string>::const_iterator
-        it = eventAttributes.begin(); it != eventAttributes.end(); ++it )
+      for ( map<string,string>::const_iterator it = eventAttributes->begin();
+            it != eventAttributes->end(); ++it )
           cout << "  Attribute\t" << it->first << " = " << it->second
                << endl;
     }
@@ -132,17 +132,16 @@ int main() {
     if (hasRead) {
       int nwgt = pythia.info.rwgt->size();
       cout << "Number of wgt tags " << nwgt << endl;
-      map<string,double> weights = *(pythia.info.weights_detailed);
-      for ( map<string,double>::const_iterator it = weights.begin();
-        it != weights.end(); ++it ) {
+      const map<string,double>* weights = pythia.info.weights_detailed;
+      for ( map<string,double>::const_iterator it = weights->begin();
+        it != weights->end(); ++it ) {
         cout << it->first << " " << it->second << " " << endl;
       }
       cout << "Second option, from ordered vector:" << endl;
-      for ( int i = 0;
-        i < int(pythia.info.weights_detailed_vector.size());
-        ++i ) {
+      for ( int i = 0; i < int(pythia.info.weights_detailed_vector.size());
+            ++i ) {
         cout << "Weight " << i << " : "
-             << pythia.info.weights_detailed_vector[i] << endl;
+             << pythia.info.weights_detailed_vector.at(i) << endl;
       }
     }
     cout << "*****************************************************" << endl;
@@ -154,7 +153,7 @@ int main() {
     if (hasRead) {
       int nweights = pythia.info.weights->size();
       cout << "Number of weights (only one tag!) " << nweights << endl;
-      LHAweights* weights = pythia.info.weights;
+      const LHAweights* weights = pythia.info.weights;
       cout << endl << "Attributes:" << endl;
       for ( map<string,string>::const_iterator
         it = weights->attributes.begin();
@@ -165,11 +164,10 @@ int main() {
         cout << "  Weight\t" << weights->weights[i] << endl;
       cout << endl << "Contents:" << weights->contents << endl;
       cout << "Second option, from stored vector:" << endl;
-      for ( int i = 0;
-        i < int(pythia.info.weights_compressed->size());
-        ++i ) {
+      for ( int i = 0; i < int(pythia.info.weights_compressed->size());
+            ++i ) {
         cout << "Weight\t" << i << " : "
-             << (*pythia.info.weights_compressed)[i] << endl;
+             << pythia.info.weights_compressed->at(1) << endl;
       }
     }
     cout << "*****************************************************" << endl;
@@ -178,7 +176,7 @@ int main() {
     cout << endl << "*****************************************************"
          << endl << "  RETRIEVE SCALES INFORMATION" << endl;
     if (hasRead) {
-      LHAscales* scales = pythia.info.scales;
+      const LHAscales* scales = pythia.info.scales;
       cout << endl << "Attributes:" << endl;
       for ( map<string,double>::const_iterator
         it = scales->attributes.begin(); it != scales->attributes.end(); ++it )

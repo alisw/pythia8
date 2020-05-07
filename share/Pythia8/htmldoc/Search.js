@@ -8,8 +8,7 @@ $(function() {
     
     // Search result format.
     var resultFormat = _.template(
-	'<a href="javascript:link(\'<%=result.link%>\')" ' +
-	    'style="white-space:nowrap"><%=result.name%></a>');
+	'<a href="<%=result.link%>" target="page"><%=result.name%></a>');
     
     // Search input.
     var searchInput = $('#search-input');
@@ -22,8 +21,9 @@ $(function() {
     }
     
     // Load the search index.
+    var code = $('script[src*=Search]');
     var load = document.createElement('script');
-    load.src = 'Index.js';
+    load.src = code.attr('index');
     document.head.appendChild(load);
 
     // Function to search the index.

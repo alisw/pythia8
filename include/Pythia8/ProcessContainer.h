@@ -1,5 +1,5 @@
 // ProcessContainer.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -17,6 +17,7 @@
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonDistributions.h"
 #include "Pythia8/PhaseSpace.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/ResonanceDecays.h"
 #include "Pythia8/Settings.h"
@@ -35,7 +36,7 @@ namespace Pythia8 {
 // The ProcessContainer class combines pointers to matrix element and
 // phase space generator with general generation info.
 
-class ProcessContainer {
+class ProcessContainer : public PhysicsBase {
 
 public:
 
@@ -43,13 +44,12 @@ public:
   ProcessContainer(SigmaProcess* sigmaProcessPtrIn = 0,
     bool externalPtrIn = false, PhaseSpace* phaseSpacePtrIn = 0) :
       sigmaProcessPtr(sigmaProcessPtrIn), externalPtr(externalPtrIn),
-      phaseSpacePtr(phaseSpacePtrIn), infoPtr(), particleDataPtr(), rndmPtr(),
-      resDecaysPtr(), sigmaTotPtr(), userHooksPtr(), lhaUpPtr(), beamAPtr(),
-      beamBPtr(), gammaKinPtr(), matchInOut(), idRenameBeams(), setLifetime(),
-      setQuarkMass(), setLeptonMass(), idNewM(), mRecalculate(), mNewM(),
-      isLHA(), isNonDiff(), isResolved(), isDiffA(), isDiffB(), isDiffC(),
-      isQCD3body(), allowNegSig(), isSameSave(), increaseMaximum(),
-      canVetoResDecay(), lhaStrat(), lhaStratAbs(), useStrictLHEFscales(),
+      phaseSpacePtr(phaseSpacePtrIn), resDecaysPtr(), gammaKinPtr(),
+      matchInOut(), idRenameBeams(), setLifetime(), setQuarkMass(),
+      setLeptonMass(), idNewM(), mRecalculate(), mNewM(), isLHA(), isNonDiff(),
+      isResolved(), isDiffA(), isDiffB(), isDiffC(), isQCD3body(),
+      allowNegSig(), isSameSave(), increaseMaximum(), canVetoResDecay(),
+      lhaStrat(), lhaStratAbs(), processCode(), useStrictLHEFscales(),
       newSigmaMx(), nTry(), nSel(), nAcc(), nTryStat(), sigmaMx(), sigmaSgn(),
       sigmaSum(), sigma2Sum(), sigmaNeg(), sigmaAvg(), sigmaFin(), deltaFin(),
       weightNow(), wtAccSum(), beamAhasResGamma(), beamBhasResGamma(),
@@ -62,14 +62,11 @@ public:
     if (!externalPtr) delete sigmaProcessPtr;}
 
   // Initialize phase space and counters.
-  bool init(bool isFirst, Info* infoPtrIn, Settings& settings,
-    ParticleData* particleDataPtrIn, Rndm* rndmPtrIn, BeamParticle* beamAPtr,
-    BeamParticle* beamBPtr, Couplings* couplings, SigmaTotal* sigmaTotPtrIn,
-    ResonanceDecays* resDecaysPtrIn, SLHAinterface* slhaInterfacePtr,
-    UserHooks* userHooksPtr, GammaKinematics* gammaKinPtrIn);
+  bool init(bool isFirst, ResonanceDecays* resDecaysPtrIn,
+    SLHAinterface* slhaInterfacePtr, GammaKinematics* gammaKinPtrIn);
 
   // Store or replace Les Houches pointer.
-  void setLHAPtr( LHAup* lhaUpPtrIn,  ParticleData* particleDataPtrIn = 0,
+  void setLHAPtr( LHAupPtr lhaUpPtrIn,  ParticleData* particleDataPtrIn = 0,
     Settings* settingsPtrIn = 0, Rndm* rndmPtrIn = 0)
     {lhaUpPtr = lhaUpPtrIn; setLifetime = 0;
     if (settingsPtrIn && rndmPtrIn) {
@@ -167,30 +164,11 @@ private:
   // Pointer to the phase space generator.
   PhaseSpace*      phaseSpacePtr;
 
-  // Pointer to various information on the generation.
-  Info*            infoPtr;
-
-  // Pointer to the particle data table.
-  ParticleData*    particleDataPtr;
-
-  // Pointer to the random number generator.
-  Rndm*            rndmPtr;
-
   // Pointer to ResonanceDecays object for sequential resonance decays.
   ResonanceDecays* resDecaysPtr;
 
-  // Pointer to SigmaTotal.
-  SigmaTotal* sigmaTotPtr;
-
-  // Pointer to userHooks object for user interaction with program.
-  UserHooks*       userHooksPtr;
-
   // Pointer to LHAup for generating external events.
-  LHAup*           lhaUpPtr;
-
-  // Pointers to the two incoming beams.
-  BeamParticle*    beamAPtr;
-  BeamParticle*    beamBPtr;
+  LHAupPtr         lhaUpPtr;
 
   // Pointer to the phase space generator of photons from leptons.
   GammaKinematics* gammaKinPtr;
@@ -247,11 +225,10 @@ public:
   SetupContainers() : nVecA(), nVecB() {}
 
   // Initialization assuming all necessary data already read.
-  bool init(vector<ProcessContainer*>& containerPtrs, Info* infoPtr,
-    Settings& settings, ParticleData* particleDataPtr, Couplings* couplings);
+  bool init(vector<ProcessContainer*>& containerPtrs, Info* infoPtr);
 
   // Initialization of a second hard process.
-  bool init2(vector<ProcessContainer*>& container2Ptrs, Settings& settings);
+  bool init2(vector<ProcessContainer*>& container2Ptrs, Info* infoPtr);
 
 private:
 

@@ -1,5 +1,5 @@
 // ResonanceDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -340,7 +340,6 @@ bool ResonanceDecays::pickMasses() {
   double psMax    = sqrtpos( pow2(1. - mr1 - mr2) - 4. * mr1 * mr2 );
   double wtMax   = 1.;
   if      (psMode == 1) wtMax = psMax;
-  else if (psMode == 2) wtMax = psMax * psMax;
   else if (psMode == 3) wtMax = pow3(psMax);
   else if (psMode == 5) wtMax = psMax
     * (pow2(1. - mr1 - mr2) + 8. * mr1 * mr2);
@@ -378,7 +377,6 @@ bool ResonanceDecays::pickMasses() {
       ps   = sqrtpos( pow2(1. - mr1 - mr2) - 4. * mr1 * mr2 );
       wt   = 1.;
       if      (psMode == 1) wt = ps;
-      else if (psMode == 2) wt = ps * ps;
       else if (psMode == 3) wt = pow3(ps);
       else if (psMode == 5) wt = ps
         * (pow2(1. - mr1 - mr2) + 8. * mr1 * mr2);
@@ -698,23 +696,10 @@ bool ResonanceDecays::pickKinematics() {
     double m1   = mProd[1];
     double m2   = mProd[2];
 
-    // Energies and absolute momentum in the rest frame.
-    double e1   = 0.5 * (m0*m0 + m1*m1 - m2*m2) / m0;
-    double e2   = 0.5 * (m0*m0 + m2*m2 - m1*m1) / m0;
-    double pAbs = 0.5 * sqrtpos( (m0 - m1 - m2) * (m0 + m1 + m2)
-      * (m0 + m1 - m2) * (m0 - m1 + m2) ) / m0;
-
-    // Pick isotropic angles to give three-momentum.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi      = 2. * M_PI * rndmPtr->flat();
-    double pX       = pAbs * sinTheta * cos(phi);
-    double pY       = pAbs * sinTheta * sin(phi);
-    double pZ       = pAbs * cosTheta;
-
-    // Fill four-momenta in mother rest frame and then boost to lab frame.
-    pProd.push_back( Vec4(  pX,  pY,  pZ, e1) );
-    pProd.push_back( Vec4( -pX, -pY, -pZ, e2) );
+     // Calculate four-momenta and boost to lab frame.
+    pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(m0, m1, m2);
+    pProd.push_back(ps.first);
+    pProd.push_back(ps.second);
     pProd[1].bst( pProd[0] );
     pProd[2].bst( pProd[0] );
 
@@ -757,34 +742,21 @@ bool ResonanceDecays::pickKinematics() {
     } while ( wtPS < rndmPtr->flat() * wtPSmax );
 
     // Set up m23 -> m2 + m3 isotropic in its rest frame.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi      = 2. * M_PI * rndmPtr->flat();
-    double pX       = p23Abs * sinTheta * cos(phi);
-    double pY       = p23Abs * sinTheta * sin(phi);
-    double pZ       = p23Abs * cosTheta;
-    double e2       = sqrt( m2*m2 + p23Abs*p23Abs);
-    double e3       = sqrt( m3*m3 + p23Abs*p23Abs);
-    Vec4 p2(  pX,  pY,  pZ, e2);
-    Vec4 p3( -pX, -pY, -pZ, e3);
+    pair<Vec4, Vec4> ps23 = rndmPtr->phaseSpace2(m23, m2, m3);
+    Vec4 p2(ps23.first);
+    Vec4 p3(ps23.second);
 
     // Set up 0 -> 1 + 23 isotropic in its rest frame.
-    cosTheta        = 2. * rndmPtr->flat() - 1.;
-    sinTheta        = sqrt(1. - cosTheta*cosTheta);
-    phi             = 2. * M_PI * rndmPtr->flat();
-    pX              = p1Abs * sinTheta * cos(phi);
-    pY              = p1Abs * sinTheta * sin(phi);
-    pZ              = p1Abs * cosTheta;
-    double e1       = sqrt( m1*m1 + p1Abs*p1Abs);
-    double e23      = sqrt( m23*m23 + p1Abs*p1Abs);
-    pProd.push_back( Vec4( pX, pY, pZ, e1) );
+    pair<Vec4, Vec4> ps123 = rndmPtr->phaseSpace2(m0, m1, m23);
+    pProd.push_back(ps123.first);
 
-    // Boost 2 + 3 to the 0 rest frame and then boost to lab frame.
-    Vec4 p23( -pX, -pY, -pZ, e23);
-    p2.bst( p23 );
-    p3.bst( p23 );
+    // Boost 2 + 3 to the 0 rest frame and fill.
+    p2.bst( ps123.second );
+    p3.bst( ps123.second );
     pProd.push_back( p2 );
     pProd.push_back( p3 );
+
+    // Boost from rest frame to lab frame.
     pProd[1].bst( pProd[0] );
     pProd[2].bst( pProd[0] );
     pProd[3].bst( pProd[0] );
@@ -851,23 +823,10 @@ bool ResonanceDecays::pickKinematics() {
   vector<Vec4> pInv;
   pInv.resize(mult + 1);
   for (int i = 1; i < mult; ++i) {
-    double pAbs = 0.5 * sqrtpos( (mInv[i] - mInv[i+1] - mProd[i])
-      * (mInv[i] + mInv[i+1] + mProd[i]) * (mInv[i] + mInv[i+1] - mProd[i])
-      * (mInv[i] - mInv[i+1] + mProd[i]) ) / mInv[i];
-
-    // Isotropic angles give three-momentum.
-    double cosTheta = 2. * rndmPtr->flat() - 1.;
-    double sinTheta = sqrt(1. - cosTheta*cosTheta);
-    double phi      = 2. * M_PI * rndmPtr->flat();
-    double pX       = pAbs * sinTheta * cos(phi);
-    double pY       = pAbs * sinTheta * sin(phi);
-    double pZ       = pAbs * cosTheta;
-
-    // Calculate energies, fill four-momenta.
-    double eHad     = sqrt( mProd[i]*mProd[i] + pAbs*pAbs);
-    double eInv     = sqrt( mInv[i+1]*mInv[i+1] + pAbs*pAbs);
-    pProd.push_back( Vec4( pX, pY, pZ, eHad) );
-    pInv[i+1].p( -pX, -pY, -pZ, eInv);
+    // Calculate four-momenta
+    pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(mInv[i], mInv[i+1], mProd[i]);
+    pInv[i+1].p(ps.first);
+    pProd.push_back(ps.second);
   }
   pProd.push_back( pInv[mult] );
 

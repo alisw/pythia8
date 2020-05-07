@@ -43,10 +43,6 @@
          switch optimization back on you have to rerun configure without
          this option, since default is to allow optimization.)
      --enable-optdebug : turns on debugging flags but allow optimization.
-     --enable-shared : turns on shared-library creation,
-         in addition to the archive libraries always built.
-     --enable-64bit : turns on 64 bits compilation flag
-         (is automatic on many 64-bit installations, but just in case).
      --lcg=PLATFORM : allows you to specify the platform assumed for
          compilation, which also affects the assumed location of the
          libraries below; default is x86_64-slc5-gcc43-opt while other
@@ -57,8 +53,9 @@
          a "gmake install" command subsequent to the "gmake" one.
          Note that the files in the current working directory are
          kept.
-     --prefix-COMPONENT=DIR : finer grain control over where the "bin", "lib",
-         "include", and "share" directories are copied for installation.
+     --prefix-COMPONENT=DIR : finer grain control over where the "bin",
+         "lib", "include", and "share" directories are copied for
+	 installation.
      --arch=ARCH : sets the architecture to be used. The two options
          are either "Darwin" for OS X, or "Linux" for other *nix
          platforms. The architecture is used to set automatically the
@@ -68,19 +65,19 @@
          been successfully compiled with GCC and LLVM
          (i.e. CLANG). Most systems will by default have "g++" aliased
          or linked to the appropriate compiler for your program.
-     --cxx-common='FLAGS' : the flags that are passed for all
+     --cxx-common="FLAGS" : the flags that are passed for all
          compilation statements. This is equivalent to the GNU
          configuration variable CXXFLAGS, which is not supported here.
-     --cxx-shared='FLAGS' : the flags that are passed when building
-         shared dynamic libraries. These are only used when building
-         "lib/libpythia8.[so,dylib]" and
-         "lib/libpythia8lhapdf[5,6].so".
-     --cxx-soname='FLAGS' : these flags are passed to the linker when
+     --cxx-shared="FLAGS" : the flags that are passed when building
+         shared dynamic libraries.
+     --cxx-soname="FLAGS" : these flags are passed to the linker when
          setting the shared library names. Normally this should not
          need to be changed.
      --lib-suffix=SUF : the shared library suffix to use. This only
          effects the name of "lib/libpythia8.SUF". Typically for *nix
-         systems this is ".so" and for OS X this is ".dylib".
+         systems this is ".so" and for OS X this is ".dylib". Note
+         that all plugin libraries, including the Python interface,
+         are always built with the ".so" suffix.
 
 1.2) All of the options listed above are formatted into
      "Makefile.inc", which is also copied to
@@ -90,8 +87,8 @@
      run. Each option corresponds to a variable in this file as
      follows: "--option-foo-bar" is translated to "OPTION_FOO_BAR".
 
-2) If you have two CPUs or cores on your computer then using the "-j"
-   option on make/gmake may speed up compilation.
+2) If you have two or more CPUs/cores on your computer then using the
+   "-j" option on make/gmake may speed up compilation.
 
 3) Necessary data are automatically loaded when you use the default
    PYTHIA installation directory structure and run the main programs in
@@ -118,8 +115,11 @@
      where again xx is the subversion number.
 
    When PYTHIA8DATA is set it takes precedence, else the path in the
-   constructor is used, else one defaults to the ../share/Pythia8/xmldoc
-   directory, which works fine when you run the examples/mainNN programs.
+   constructor is used, else one defaults to the
+   $PREFIX/share/Pythia8/xmldoc directory, where $PREFIX is defined by
+   the --prefix configuration flag. By default, this is just the top
+   level directory of the PYTHIA distribution. This final option is
+   what is typically used when you run the examples/mainNN programs.
 
 ----------------------------------------------------------------------
 
@@ -136,8 +136,10 @@
      interface is enabled, "configure" takes the following steps.
      a) It looks for the necessary binaries, headers, and libraries
         that are needed for the external package. If no paths for the
-        package have been defined it looks along the default paths
-        for the system. If it can not find the necessary files, it
+        package have been defined it looks along the default paths for
+        the system. If a configure script for the package is
+        available, "configure" attempts to use the script to find the
+        necessary files. If it can not find the necessary files, it
         disables the external package and issues a warning as to why.
      b) It looks for any external packages that this package might
         require, and enables them if needed. It then checks to see if
@@ -148,7 +150,7 @@
      enable LHAPDF6. The available "--with" arguments are
      described by "./configure --help", but further details are given
      here.
-     --with-PACKAGE=[DIR] : enables a package and if "DIR" is
+     --with-PACKAGE=[DIR] : enables a package, and if "DIR" is
          provided, then looks for the package at this root path. For
          example, if the command "--with-lhapdf6=/foo/bar" is passed,
          then "configure" will look for the library LHAPDF along the
@@ -168,6 +170,11 @@
          libraries.
      --with-PACKAGE-include=DIR : same as above for bin, but now for
           headers.
+     --with-PACKAGE-config=CFG  : for packages that provide a configure
+         script, "CFG" specifies the configure script to use. For
+         example, PYTHON is by default set with the configuration
+         script "python-config". However, to use Python 3, "CFG" could
+         be set to "python3-config".
      --with-PACKAGE-version=VER : is used when the "--lcg=PLATFORM"
          option is specified, and will cause "configure" to look for
          version "VER" of the package in the default LCG location.
@@ -181,49 +188,52 @@
      respectively.
 
 2) A variety of external packages can be enabled, with details given here.
+   EVTGEN) An external particle decayer designed specifically for B-decays,
+       https://evtgen.hepforge.org/.
    FASTJET3) The industry standard package to build jets,
-       http://fastjet.fr/.  An interface to FastJet is provided in the
+       http://fastjet.fr/. An interface to FastJet is provided in the
        "include/Pythia8Plugins/FastJet3.h" header and a variety of
        examples in "examples" link against the FastJet libraries.
    HEPMC2) An interface to the HepMC event record, version 2:
        http://lcgapp.cern.ch/project/simu/HepMC/. The interface
        between PYTHIA 8 and HepMC is provided via the
        "include/Pythia8Plugins/HepMC2.h" header.
-   HEPMC3) An interface for the upcoming HepMC 3 format. Currently this
-       package does nothing, as the record does not exist yet.
-   LHAPDF5) Provides an interface to the FORTRAN version of LHAPDF,
-       details can be found here:
-       http://lhapdf.hepforge.org/lhapdf5/. Because PDF sets are an
-       integral part of PYTHIA 8, the LHAPDF interface is handled
-       differently than for the other external packages. If LHAPDF5
-       support is enabled, then the shared library
-       "lib/pythia8lhapdf5.so" is built (even for OS X systems because
-       this library is not used for linking). This library is NOT
-       linked with PYTHIA, but rather is dynamically loaded at
-       runtime. Consequently, PYTHIA is no longer linked against
-       LHAPDF, but rather attempts to load it at runtime if an LHAPDF
-       set is requested. Note that the plugin library
-       "pythia8lhapdf5.so" must exist along the current library load
-       path. This can be set by the environment variable
+   HEPMC3) An interface to the HepMC event record, version 3:
+       https://hepmc.web.cern.ch/hepmc/. The interface
+       between PYTHIA 8 and HepMC is provided via the
+       "include/Pythia8Plugins/HepMC3.h" header.
+   LHAPDF6) The modern C++ version of LHAPDF,
+       http://lhapdf.hepforge.org/. Because PDF sets are an integral
+       part of PYTHIA 8, the LHAPDF interface is handled differently
+       than for the other external packages. If LHAPDF5 support is
+       enabled, then the shared library "lib/pythia8lhapdf5.so" is
+       built (even for OS X systems because this library is not used
+       for linking). This library is NOT linked with PYTHIA, but
+       rather is dynamically loaded at runtime. Consequently, PYTHIA
+       is no longer linked against LHAPDF, but rather attempts to load
+       it at runtime if an LHAPDF set is requested. Note that the
+       plugin library "pythia8lhapdf5.so" must exist along the current
+       library load path. This can be set by the environment variable
        "LD_LIBRARY_PATH" or at compile time using the "--Wl,-rpath"
-       linker flag.
-   LHAPDF6) The details for this package are the same as for LHAPDF5,
-       but now for the modern C++ version of LHAPDF,
-       http://lhapdf.hepforge.org/. There are three important things to
-       note here. First, the LHAPDF6 package provides the exact same C
-       interface as the LHAPDF5 package, and so technically supplying
-       LHAPDF6 libraries to the LHAPDF5 package option will work. This
-       is not recommended except for checking that the new C++
-       interface works properly. Second, both LHAPDF5 and LHAPDF6 can
-       be used simultaneously, technically. This behavior has not
-       been tested and is not recommended. Third, if using a version
-       earlier than 6.2, BOOST is required and can be specified using
-       "--with-boost".
+       linker flag. Versions earlier than 6.2 require BOOST and are
+       not supported.
+   POWHEG) Next-to-leading order matrix element generators,
+       http://powhegbox.mib.infn.it, available for a number of
+       processes. These MEs are written in FORTRAN, but a plugin-style
+       interface is provided for PYTHIA. To link against these MEs,
+       they must be build both as binaries and libraries. See
+       "examples/main33.cc" for more details on how to modify the
+       POWHEGBOX make structure accordingly.
+   RIVET) A toolkit for comparing MC and data,
+        https://rivet.hepforge.org/, used in "examples/main93.cc" and
+       "examples/main111.cc". The RIVET package requires FASTJET3,
+       HEPMC2, and YODA.
    ROOT) The ROOT HEP package used for data analysis and
        visualization, http://root.cern.ch. This package is only used
-       for the "examples/main9[1,2].cc" examples.
-   BOOST) Advanced C++ libraries, http://www.boost.org/, which are needed
-       when using the C++ interface for LHAPDF6 with version < 6.2.
+       for the "examples/main9[1,2].cc" examples and is optional for
+       "examples/main93.cc".
+   YODA) A lightweight histogramming package for RIVET,
+       https://yoda.hepforge.org/. This is required by RIVET.
    GZIP) Support for the reading of gzipped LHE files. It relies upon
        zlib to function. The "--with-gzip=PATH" provides the location
        for "zlib.h" and "libz.[so,dylib]". Note that when compiling a
@@ -231,14 +241,18 @@
        included, e.g.: "-lz". This is done automatically for the
        examples in "examples/" when GZIP support is enabled.
    PYTHON) Provides a Python interface to Pythia. To build this interface,
-       the executable "python" must be available, as well as the
-       Python system header "Python.h". Typically this can be found
-       under "/usr/include/pythonX.Y". Note that the interface
-       includes this header as "#include <Python.h>" so the user will
-       typically need to explicitly set the include path with
-       "--with-python-include=/usr/include/pythonX.Y" or something
-       similar. The interface works both with Python 2 and 3.
-
+       the Python system header "Python.h" must be
+       available. Typically this can be found under
+       "/usr/include/pythonX.Y". If "python-config" is available, the
+       location of this header is determined automatically, otherwise
+       the user will typically need to explicitly set the include path
+       with "--with-python-include=/usr/include/pythonX.Y" or
+       something similar. The interface works both with Python 2 and
+       3.
+    MG5MES) Matrix elements automatically generated by MadGraph5 that are
+       interfaced to both the Dire and Vincia parton showers.
+    OPENMP) Enable multi-processing via the OpenMP libraries.
+    
 ----------------------------------------------------------------------
 
    COMPILING PROGRAMS AGAINST PYTHIA 8
@@ -252,7 +266,7 @@ Extra compiler flags will be needed if you are making use of PYTHIA 8's
 external package features. To make this simpler,
 and so that an identical compilation recipe can be used with different
 builds of PYTHIA (e.g. for inclusion in shared Makefiles), a pythia8-config
-script will be installed into PREFIX_BIN/bin by the "make install" build
+script is installed into PREFIX_BIN/bin by the "make install" build
 target. A typical usage of this script is as follows:
 
 g++ myprog.cc -o myprog `pythia8-config --cppflags --libs`

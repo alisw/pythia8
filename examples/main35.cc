@@ -1,9 +1,11 @@
 // main35.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Author: Philip Ilten, January 2017.
+// Authors: Philip Ilten <philten@cern.ch>.
+
+// Keywords: onia; helaconia;
 
 // An example where the quarkonia hard process (p p -> J/psi g) is
 // automatically produced externally with HelacOnia, read in, and the
@@ -66,12 +68,13 @@ int main() {
 
   // Produce leading-order events with HelacOnia.
   pythia = new Pythia();
-  LHAupHelaconia helaconia(pythia, "helaconiarun", exe);
-  helaconia.readString("generate g g > cc~(3S11) g");
-  helaconia.readString("set energy_beam1 = 6500");
-  helaconia.readString("set energy_beam2 = 6500");
-  helaconia.readString("set minptconia = 2");
-  pythia->setLHAupPtr(&helaconia);
+  shared_ptr<LHAupHelaconia> helaconiaPtr;
+  helaconiaPtr = make_shared<LHAupHelaconia>(pythia, "helaconiarun", exe);
+  helaconiaPtr->readString("generate g g > cc~(3S11) g");
+  helaconiaPtr->readString("set energy_beam1 = 6500");
+  helaconiaPtr->readString("set energy_beam2 = 6500");
+  helaconiaPtr->readString("set minptconia = 2");
+  pythia->setLHAupPtr((LHAupPtr)helaconiaPtr);
   run(pythia, hoPtPsi, 1000);
   delete pythia;
 

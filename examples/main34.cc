@@ -1,9 +1,11 @@
 // main34.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Author: Philip Ilten, December 2015.
+// Authors: Philip Ilten <philten@cern.ch>.
+
+// Keywords: matching; madgraph; aMC@NLO;
 
 // An example where the hard process (p p -> mu+ mu-) is automatically
 // produced externally with MadGraph 5, read in, and the remainder of
@@ -76,25 +78,27 @@ int main() {
 
   // Produce leading-order events with MadGraph 5.
   pythia = new Pythia();
-  LHAupMadgraph madgraph(pythia, true, "madgraphrun", exe);
-  madgraph.readString("generate p p > mu+ mu-");
+  shared_ptr<LHAupMadgraph> madgraph = make_shared<LHAupMadgraph>(pythia,
+    true, "madgraphrun", exe);
+  madgraph->readString("generate p p > mu+ mu-");
   // Note the need for a blank character before "set".
-  madgraph.readString(" set ebeam1 6500");
-  madgraph.readString(" set ebeam2 6500");
-  madgraph.readString(" set mmll 80");
-  pythia->setLHAupPtr(&madgraph);
+  madgraph->readString(" set ebeam1 6500");
+  madgraph->readString(" set ebeam2 6500");
+  madgraph->readString(" set mmll 80");
+  pythia->setLHAupPtr((LHAupPtr)madgraph);
   run(pythia, mgPtZ, 1000);
   delete pythia;
 
   // Produce next-to-leading-order events with aMC@NLO.
   pythia = new Pythia();
-  LHAupMadgraph amcatnlo(pythia, true, "amcatnlorun", exe);
-  amcatnlo.readString("generate p p > mu+ mu- [QCD]");
+  shared_ptr<LHAupMadgraph> amcatnlo = make_shared<LHAupMadgraph>(pythia,
+    true, "amcatnlorun", exe);
+  amcatnlo->readString("generate p p > mu+ mu- [QCD]");
   // Note the need for a blank character before "set".
-  amcatnlo.readString(" set ebeam1 6500");
-  amcatnlo.readString(" set ebeam2 6500");
-  amcatnlo.readString(" set mll 80");
-  pythia->setLHAupPtr(&amcatnlo);
+  amcatnlo->readString(" set ebeam1 6500");
+  amcatnlo->readString(" set ebeam2 6500");
+  amcatnlo->readString(" set mll 80");
+  pythia->setLHAupPtr((LHAupPtr)amcatnlo);
   run(pythia, amPtZ, 1000);
   delete pythia;
 

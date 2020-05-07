@@ -1,7 +1,9 @@
 // main37.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords: basic usage; LHE file;
 
 // This is a simple test program.
 // It illustrates how Les Houches Event File version 3.0 input can be used
@@ -21,8 +23,7 @@ int main() {
   pythia.init();
 
   // Get number of event weights.
-  int ninitrwgt = 0;
-  if (pythia.info.initrwgt) ninitrwgt = pythia.info.initrwgt->size();
+  int ninitrwgt = pythia.info.initrwgt ? pythia.info.initrwgt->size() : 0;
 
   // Initialise as many histograms as there are event weights.
   vector<Hist> pTw;
@@ -47,13 +48,13 @@ int main() {
 
     // Loop over the event weights in the detailed format and histogram.
     int iwgt = 0;
-    map<string,double> weights;
-    if ( pythia.info.weights_detailed )
-      weights = *(pythia.info.weights_detailed);
-    for ( map<string,double>::const_iterator it = weights.begin();
-      it != weights.end(); ++it ) {
-      pTw[iwgt].fill( max(pT,0.5), it->second );
-      ++iwgt;
+    const map<string,double>* weights = pythia.info.weights_detailed;
+    if (weights) {
+      for ( map<string,double>::const_iterator it = weights->begin();
+            it != weights->end(); ++it ) {
+        pTw[iwgt].fill( max(pT,0.5), it->second );
+        ++iwgt;
+      }
     }
 
   // End of event loop.

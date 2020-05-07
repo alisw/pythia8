@@ -1,5 +1,5 @@
 // Settings.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -201,7 +201,7 @@ public:
     lineSaved(false) {}
 
   // Initialize Info pointer.
-  void initPtr(Info* infoPtrIn) {infoPtr = infoPtrIn;}
+  void initPtrs(Info* infoPtrIn) {infoPtr = infoPtrIn;}
 
   // Read in database from specific file.
   bool init(string startFile = "../share/Pythia8/xmldoc/Index.xml",

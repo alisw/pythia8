@@ -1,5 +1,5 @@
 // DeuteronProduction.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -31,32 +31,25 @@ const double DeuteronProduction::WTCORRECTION[11] = { 1., 1., 1.,
 
 // Find settings. Precalculate table used to find momentum shifts.
 
-bool DeuteronProduction::init(Info* infoPtrIn, Settings& settings,
- ParticleData* pdbPtrIn, Rndm* rndmPtrIn) {
-
-  // Save the pointers.
-  infoPtr = infoPtrIn;
-  pdbPtr  = pdbPtrIn;
-  rndmPtr = rndmPtrIn;
+bool DeuteronProduction::init() {
 
   // Parse the settings.
   valid = true; ids.clear(); parms.clear(); masses.clear();
-  models = settings.mvec("DeuteronProduction:models");
-  vector<string> wvec;
-  wvec = settings.wvec("DeuteronProduction:channels");
-  for (int iWvec = 0; iWvec < int(wvec.size()); ++iWvec)
-    ids.push_back(parseIds(wvec[iWvec]));
-  wvec = settings.wvec("DeuteronProduction:parms");
-  for (int iWvec = 0; iWvec < int(wvec.size()); ++iWvec)
-    parms.push_back(parseParms(wvec[iWvec]));
+  models = settingsPtr->mvec("DeuteronProduction:models");
+
+  for (string channelTmp : settingsPtr->wvec("DeuteronProduction:channels"))
+    ids.push_back(parseIds(channelTmp));
+
+  for (string parmTmp : settingsPtr->wvec("DeuteronProduction:parms"))
+    parms.push_back(parseParms(parmTmp));
 
   // Technical settings.
-  bool verbose(settings.flag("Init:showProcesses"));
-  mSafety = settings.parm("ParticleDecays:mSafety");
-  kMin    = settings.parm("DeuteronProduction:kMin");
-  kMax    = settings.parm("DeuteronProduction:kMax");
-  kTol    = settings.parm("DeuteronProduction:kTol");
-  kSteps  = settings.mode("DeuteronProduction:kSteps");
+  bool verbose(flag("Init:showProcesses"));
+  mSafety = parm("ParticleDecays:mSafety");
+  kMin    = parm("DeuteronProduction:kMin");
+  kMax    = parm("DeuteronProduction:kMax");
+  kTol    = parm("DeuteronProduction:kTol");
+  kSteps  = mode("DeuteronProduction:kSteps");
 
   // Check the configuration vectors.
   string pre("Error in DeuteronProduction::init: ");
@@ -70,29 +63,37 @@ bool DeuteronProduction::init(Info* infoPtrIn, Settings& settings,
 
   // Check each channel configuration.
   for (int chn = 0; chn < int(parms.size()); ++chn) {
+
+    // Check final and initial state sizes.
     if (ids[chn].size() < 3) {
       infoPtr->errorMsg(pre + "ids must have 3 or more IDs");
       valid = false;
     } else if (ids[chn][2] != 0) {
       infoPtr->errorMsg(pre + "ids initial state must be size 2");
       valid = false;
-    } if (models[chn] == 0 && parms[chn].size() != 2) {
-      infoPtr->errorMsg(pre + "model 0 channels must have", "2 coefficients");
+    }
+
+    // Check the necessary coefficients are provided.
+    if (models[chn] == 0 && parms[chn].size() != 2) {
+      infoPtr->errorMsg(pre + "model 0 channels must have",
+        "2 coefficients");
       valid = false;
-    } if (models[chn] == 1 && parms[chn].size() != 15) {
-      infoPtr->errorMsg(pre + "model 1 channels must have", "15 coefficients");
+    } else if (models[chn] == 1 && parms[chn].size() != 15) {
+      infoPtr->errorMsg(pre + "model 1 channels must have",
+        "15 coefficients");
       valid = false;
-    } if (models[chn] == 2 && parms[chn].size() != 5) {
-      infoPtr->errorMsg(pre + "model 2 channels must have", "2 coefficients");
+    } else if (models[chn] == 2 && parms[chn].size() != 5) {
+      infoPtr->errorMsg(pre + "model 2 channels must have",
+        "2 coefficients");
       valid = false;
-    } if (models[chn] == 3 && parms[chn].size()%5 != 0) {
+    } else if (models[chn] == 3 && parms[chn].size()%5 != 0) {
       infoPtr->errorMsg(pre + "model 3 channels must have",
         "a multiple of 5 coefficients");
       valid = false;
     }
   }
   if (!valid) return valid;
-  mPion = pdbPtr->m0(211);
+  mPion = particleDataPtr->m0(211);
 
   // Find channel maxima and set the normalization.
   if (verbose)
@@ -114,17 +115,18 @@ bool DeuteronProduction::init(Info* infoPtrIn, Settings& settings,
     // Set the nominal masses.
     vector<double> mass(ids[chn].size(), 0);
     for (int id = 0; id < int(ids[chn].size()); ++id)
-      mass[id] = pdbPtr->m0(ids[chn][id]);
+      mass[id] = particleDataPtr->m0(ids[chn][id]);
     masses.push_back(mass);
 
     // Calculate the maximum cross-section.
     maximum(k, s, chn);
     if (verbose) {
       string proc(" |");
-      for (int id = 0; id < 2; ++id) proc += " " + pdbPtr->name(ids[chn][id]);
+      for (int id = 0; id < 2; ++id)
+        proc += " " + particleDataPtr->name(ids[chn][id]);
       proc += " ->";
       for (int id = 3; id < int(ids[chn].size()); ++id)
-        proc += " " + pdbPtr->name(ids[chn][id]);
+        proc += " " + particleDataPtr->name(ids[chn][id]);
       cout << left << setw(43) << proc;
       cout << " | " << scientific << setprecision(3) << k
            << " | " << scientific << setprecision(3) << s << " |\n";
@@ -133,7 +135,7 @@ bool DeuteronProduction::init(Info* infoPtrIn, Settings& settings,
   }
 
   // Set normalization.
-  norm = settings.parm("DeuteronProduction:norm");
+  norm = parm("DeuteronProduction:norm");
   if (norm < 1) norm = max;
   else norm *= max;
   if (verbose)
@@ -216,7 +218,6 @@ void DeuteronProduction::bind(Event& event, vector<int>& prts) {
     double rndm(sum*rndmPtr->flat()); int chn(-1);
     do rndm -= sigmas[++chn];
     while (rndm > 0. && chn < int(sigmas.size()));
-    if (chn < 0) continue;
 
     // Generate the decay and add to the event record.
     decay(event, prt0.index(), prt1.index(), chn);
@@ -316,7 +317,7 @@ bool DeuteronProduction::decay(Event& event, int idx0, int idx1, int chn) {
   for (int tries = 0; tries < NTRYDECAY && mDiff < mSafety; ++tries) {
     mDiff = mProd[0];
     for (int i = 1; i <= mult; ++i) {
-      mProd[i] = pdbPtr->mSel(ids[chn][i + 2]);
+      mProd[i] = particleDataPtr->mSel(ids[chn][i + 2]);
       mDiff -= mProd[i];
     }
   }
@@ -330,7 +331,7 @@ bool DeuteronProduction::decay(Event& event, int idx0, int idx1, int chn) {
   vector<int> iProd(mult + 1);
   for (int i = 1; i <= mult; ++i) {
     int id(ids[chn][i + 2]);
-    if (event[idx0].id() < 0 && pdbPtr->hasAnti(id)) id *= -1;
+    if (event[idx0].id() < 0 && particleDataPtr->hasAnti(id)) id *= -1;
     iProd[i] = event.append(id, 121, idx0, idx1, 0, 0, 0, 0,
                             Vec4(0., 0., 0., 0.), mProd[i], 0);
   }
@@ -385,23 +386,10 @@ bool DeuteronProduction::decay(Event& event, int idx0, int idx1, int chn) {
 
     // Perform two-particle decays in the respective rest frame.
     for (int i = 1; i < mult; ++i) {
-      double pAbs = 0.5 * sqrtpos( (mInv[i] - mInv[i+1] - mProd[i])
-        * (mInv[i] + mInv[i+1] + mProd[i]) * (mInv[i] + mInv[i+1] - mProd[i])
-        * (mInv[i] - mInv[i+1] + mProd[i]) ) / mInv[i];
-
-      // Isotropic angles give three-momentum.
-      double cosTheta = 2. * rndmPtr->flat() - 1.;
-      double sinTheta = sqrt(1. - cosTheta*cosTheta);
-      double phi      = 2. * M_PI * rndmPtr->flat();
-      double pX       = pAbs * sinTheta * cos(phi);
-      double pY       = pAbs * sinTheta * sin(phi);
-      double pZ       = pAbs * cosTheta;
-
-      // Calculate energies, fill four-momenta.
-      double eHad     = sqrt( mProd[i]*mProd[i] + pAbs*pAbs);
-      double eInv     = sqrt( mInv[i+1]*mInv[i+1] + pAbs*pAbs);
-      event[iProd[i]].p( pX, pY, pZ, eHad);
-      pInv[i+1].p( -pX, -pY, -pZ, eInv);
+      // Fill four-momenta
+      pair<Vec4, Vec4> ps = rndmPtr->phaseSpace2(mInv[i], mInv[i+1], mProd[i]);
+      pInv[i+1].p(ps.first);
+      event[iProd[i]].p(ps.second);
     }
 
     // Boost decay products to the mother rest frame.

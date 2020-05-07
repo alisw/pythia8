@@ -17,9 +17,9 @@
  *
  *  Free to use, academic or commercial. Do not redistribute without permission.
  *
- *	G.K.Savvidy and N.G.Ter-Arutyunian,
+ *      G.K.Savvidy and N.G.Ter-Arutyunian,
  *  On the Monte Carlo simulation of physical systems,
- *	J.Comput.Phys. 97, 566 (1991);
+ *      J.Comput.Phys. 97, 566 (1991);
  *  Preprint EPI-865-16-86, Yerevan, Jan. 1986
  *
  *  K.Savvidy
@@ -44,7 +44,8 @@
 #include <exception>
 
 template <typename T, T __min, T __max> class _Generator
-// Boilerplate code, from Andrzej, it is required to be compatible with std::random interfaces, see example.cpp for how to use.
+// Boilerplate code, from Andrzej, it is required to be compatible
+// with std::random interfaces, see example.cpp for how to use.
 {
 public:
     using result_type = T;
@@ -102,7 +103,7 @@ typedef struct rng_state_st rng_state_t;     // struct alias
 rng_state_t S;
 
 public:
-	using T = result_type;								  // should it be double?
+        using T = result_type;                                                            // should it be double?
     static constexpr int rng_get_N() {return N;}
     static constexpr long long int rng_get_SPECIAL()    {return SPECIAL;}
     static constexpr int rng_get_SPECIALMUL() {return SPECIALMUL;}
@@ -118,7 +119,7 @@ public:
     mixmax_engine Branch();
     void BranchInplace();
 
-    mixmax_engine(myID_t clusterID, myID_t machineID, myID_t runID, myID_t  streamID );	   // Constructor with four 32-bit seeds
+    mixmax_engine(myID_t clusterID, myID_t machineID, myID_t runID, myID_t  streamID );    // Constructor with four 32-bit seeds
     void seed(uint64_t seedval){seed_uniquestream( &S, 0, 0, (myID_t)(seedval>>32), (myID_t)seedval );} // seed with one 64-bit seed
     mixmax_engine(); // Constructor, no seeds
 
@@ -235,7 +236,7 @@ PREF myuint mixmax_engine POST ::get_next() {
     }
 }
 
-PREF double mixmax_engine POST ::get_next_float()				// Returns a random double with all 53 bits random, in the range (0,1]
+PREF double mixmax_engine POST ::get_next_float()                               // Returns a random double with all 53 bits random, in the range (0,1]
 {    /* cast to signed int trick suggested by Andrzej Görlich     */
     int64_t Z=(int64_t)get_next();
     double F;
@@ -308,7 +309,7 @@ PREF myuint mixmax_engine POST ::apply_bigskip( myuint* Vout, myuint* Vin, myID_
 
 
 
-    const	myuint skipMat17[128][17] =
+    const       myuint skipMat17[128][17] =
 /*
  skipping coefficients for N=17
  three-parameter generator
@@ -317,9 +318,9 @@ PREF myuint mixmax_engine POST ::apply_bigskip( myuint* Vout, myuint* Vin, myID_
  *  A Pseudo-Random Number Generator
  *
  *
- *	G.K.Savvidy and N.G.Ter-Arutyunian,
+ *      G.K.Savvidy and N.G.Ter-Arutyunian,
  *  On the Monte Carlo simulation of physical systems,
- *	J.Comput.Phys. 97, 566 (1991);
+ *      J.Comput.Phys. 97, 566 (1991);
  *  Preprint EPI-865-16-86, Yerevan, Jan. 1986
  *
  *  K.Savvidy
@@ -595,7 +596,7 @@ PREF myuint mixmax_engine POST ::apply_bigskip( myuint* Vout, myuint* Vin, myID_
 
 };
     ;
-//    const	myuint skipMat8[128][8] =
+//    const     myuint skipMat8[128][8] =
 //#include "mixmax_skip_N8.c"
     ;
 
@@ -659,7 +660,7 @@ PREF myuint mixmax_engine POST ::apply_bigskip( myuint* Vout, myuint* Vin, myID_
 PREF inline myuint mixmax_engine POST ::mod128(__uint128_t s){
     myuint s1;
     s1 = ( (  ((myuint)s)&MERSBASE )    + (  ((myuint)(s>>64)) * 8 )  + ( ((myuint)s) >>BITS) );
-    return	MOD_MERSENNE(s1);
+    return      MOD_MERSENNE(s1);
 }
 
 PREF inline myuint mixmax_engine POST ::fmodmulM61(myuint cum, myuint a, myuint b){
@@ -759,7 +760,9 @@ public:
   // Return a flat random number.
   double flat() {return rndm.get_next_float();}
 
-protected:
+  // Note: The member(s) below have been made public to ease the generation
+  // of Python bindings.
+  // protected:
 
   // Internal MixMax randum number generator.
   mixmax_engine rndm;
@@ -768,4 +771,4 @@ protected:
 
 //==========================================================================
 
-#endif		// __MIXMAX_H
+#endif          // __MIXMAX_H

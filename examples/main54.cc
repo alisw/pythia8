@@ -1,11 +1,14 @@
 // main54.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
+// Authors: Juan Rojo <unavailable>.
+
+// Keywords: parton distribution; LHAPDF;
+
 // This program compares the internal and LHAPDF implementations of the
 // NNPDF 2.3 QCD+QED sets, for results and for timing.
-// Author: Juan Rojo.
 // Warning: this example is constructed to work for LHAPDF5.
 // There seem to be differences when instead comparing with LHAPDF6.
 
@@ -22,7 +25,7 @@ int main() {
 
   // Access the PDFs.
   int idBeamIn = 2212;
-  string xmlPath = "../xmldoc/";
+  string pdfPath = pythia.settings.word("xmlPath") + "../pdfdata";
   Info info;
 
   // Grid of studied points.
@@ -40,14 +43,14 @@ int main() {
   // and compare with their LHAPDF5 correspondents.
   for (int iFitIn = 3; iFitIn < 5; iFitIn++) {
 
-    // Constructor for internal PDFs.
-    NNPDF pdfs_nnpdf( idBeamIn, iFitIn, xmlPath, &info);
-
     // Constructor for LHAPDF.
-    if (iFitIn == 3) setName = "LHAPDF5:NNPDF23_nlo_as_0119_qed.LHgrid";
-    if (iFitIn == 4) setName = "LHAPDF5:NNPDF23_nnlo_as_0119_qed.LHgrid";
-    LHAPDF pdfs_nnpdf_lha( idBeamIn, setName, &info);
+    if (iFitIn == 3) setName = "NNPDF23_nlo_as_0119_qed";
+    if (iFitIn == 4) setName = "NNPDF23_nnlo_as_0119_qed";
+    LHAPDF pdfs_nnpdf_lha( idBeamIn, "LHAPDF5:" + setName + ".LHgrid", &info);
     cout << "\n PDF set = " << setName << " \n" << endl;
+
+    // Constructor for internal PDFs.
+    LHAGrid1 pdfs_nnpdf( idBeamIn, setName + "_0000.dat", pdfPath, &info);
 
     // Check quarks and gluons.
     for (int f = 0; f < 4; f++) {

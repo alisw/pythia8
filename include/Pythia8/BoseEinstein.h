@@ -1,5 +1,5 @@
 // Bose-Einstein.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,6 +13,7 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/Event.h"
 #include "Pythia8/ParticleData.h"
+#include "Pythia8/PhysicsBase.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 
@@ -44,18 +45,18 @@ public:
 // The BoseEinstein class shifts the momenta of identical particles relative
 // to each other, to simulate Bose-Einstein effects to some approximation.
 
-class BoseEinstein {
+class BoseEinstein : public PhysicsBase {
 
 public:
 
   // Constructor.
-  BoseEinstein() : doPion(), doKaon(), doEta(), lambda(), QRef(), infoPtr(),
+  BoseEinstein() : doPion(), doKaon(), doEta(), lambda(), QRef(),
     nStep(), nStep3(), nStored(), QRef2(), QRef3(), R2Ref(), R2Ref2(),
     R2Ref3(), mHadron(), mPair(), m2Pair(), deltaQ(), deltaQ3(), maxQ(),
     maxQ3(), shift(), shift3() {}
 
   // Find settings. Precalculate table used to find momentum shifts.
-  bool init(Info* infoPtrIn, Settings& settings, ParticleData& particleData);
+  bool init();
 
   // Perform Bose-Einstein corrections on an event.
   bool shiftEvent( Event& event);
@@ -69,9 +70,6 @@ private:
   // Initialization data, read from Settings.
   bool   doPion, doKaon, doEta;
   double lambda, QRef;
-
-  // Pointer to various information on the generation.
-  Info* infoPtr;
 
   // Table of momentum shifts for different hadron species.
   int    nStep[4], nStep3[4], nStored[10];

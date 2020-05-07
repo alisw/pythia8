@@ -68,11 +68,11 @@ three-momentum of each incoming particle needs to be specified, see
 <code>Beams:pxA</code> through <code>Beams:pzB</code> below. 
 </option> 
 <option value="4">the beam and event information is stored in a 
-<aloc href="LesHouchesAccord">Les Houches Event File</aloc>, 
+<aloc href="LHEF">Les Houches Event File</aloc>, 
 see <code>Beams:LHEF</code> below. 
 </option> 
 <option value="5">the beam and event information is obtained by a 
-pointer to an <code><aloc href="LesHouchesAccord">LHAup</aloc></code> 
+pointer to an <code><aloc href="LHA">LHAup</aloc></code> 
 class instance. 
 </option> 
 </modepick> 
@@ -148,7 +148,9 @@ Only useful when <code>Beams:frameType</code> = 4 or 5.
 <flag name="Beams:readLHEFheaders" default="on"> 
 Read in LHEF header blocks and store them in the 
 <aloc href="EventInformation">Info</aloc> class. See also 
-<aloc href="LesHouchesAccord">LHAupLHEF</aloc> for more information. 
+<aloc href="LHA">LHAupLHEF</aloc> 
+and the <aloc href="LHEF">Les Houches Event files</aloc> 
+section for more information. 
 </flag> 
  
 <mode name="Beams:nSkipLHEFatInit" default="0"> 
@@ -440,4 +442,4 @@ The time <ei>t</ei> of the interaction vertex is centered at this value.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

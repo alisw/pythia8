@@ -21,6 +21,7 @@ Beams:eCM = 13000.                 ! CM energy of collision
 
 ! 4) Read SLHA spectrum (a few examples are provided by default)
 SLHA:file = slha2-example.spc       ! Sample SLHA2 spectrum
+SLHA:verbose = 3                    ! Print all SLHA information
 #SLHA:file = slha1-example.spc       ! Sample SLHA1 spectrum, for CMSSM-10.1.1
 #SLHA:file = sps1aWithDecays.spc     ! Older sample spectrum with DECAY tables
 

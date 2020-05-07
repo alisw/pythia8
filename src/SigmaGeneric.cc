@@ -1,5 +1,5 @@
 // SigmaGeneric.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Johan Bijnens, Torbjorn Sjostrand.
+// Copyright (C) 2020 Johan Bijnens, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -30,8 +30,8 @@ namespace Pythia8 {
 void Sigma2gg2qGqGbar::initProc() {
 
   // Number of colours. Anomalous coupling kappa - 1 used for vector state.
-  nCHV         = settingsPtr->mode("HiddenValley:Ngauge");
-  kappam1      = settingsPtr->parm("HiddenValley:kappa") - 1.;
+  nCHV         = mode("HiddenValley:Ngauge");
+  kappam1      = parm("HiddenValley:kappa") - 1.;
   hasKappa     = (abs(kappam1) > 1e-8);
 
   // Secondary open width fraction.
@@ -150,8 +150,8 @@ void Sigma2gg2qGqGbar::setIdColAcol() {
 void Sigma2qqbar2qGqGbar::initProc() {
 
   // Number of colours. Coupling kappa used for vector state.
-  nCHV         = settingsPtr->mode("HiddenValley:Ngauge");
-  kappa        = settingsPtr->parm("HiddenValley:kappa");
+  nCHV         = mode("HiddenValley:Ngauge");
+  kappa        = parm("HiddenValley:kappa");
 
    // Secondary open width fraction.
   openFracPair = particleDataPtr->resOpenFrac(idNew, -idNew);
@@ -230,12 +230,12 @@ void Sigma2qqbar2qGqGbar::setIdColAcol() {
 void Sigma2ffbar2fGfGbar::initProc() {
 
   // Charge and number of colours. Coupling kappa used for vector state.
-  if (settingsPtr->flag("HiddenValley:doKinMix"))
-    eQHV2      = pow2(settingsPtr->parm("HiddenValley:kinMix"));
+  if (flag("HiddenValley:doKinMix"))
+    eQHV2      = pow2(parm("HiddenValley:kinMix"));
   else
     eQHV2      = pow2( particleDataPtr->charge(idNew) );
-  nCHV         = settingsPtr->mode("HiddenValley:Ngauge");
-  kappa        = settingsPtr->parm("HiddenValley:kappa");
+  nCHV         = mode("HiddenValley:Ngauge");
+  kappa        = parm("HiddenValley:kappa");
 
   // Coloured or uncoloured particle.
   hasColour    = (particleDataPtr->colType(idNew) != 0);
@@ -295,7 +295,7 @@ void Sigma2ffbar2fGfGbar::sigmaKin() {
 double Sigma2ffbar2fGfGbar::sigmaHat() {
 
   // Charge and colour factors.
-  double eNow  = couplingsPtr->ef( abs(id1) );
+  double eNow  = coupSMPtr->ef( abs(id1) );
   double sigma = sigma0 * pow2(eNow);
   if (abs(id1) < 9) sigma /= 3.;
 

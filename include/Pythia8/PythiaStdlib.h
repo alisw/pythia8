@@ -1,5 +1,5 @@
 // PythiaStdlib.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -14,11 +14,14 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
+#include <memory>
+#include <functional>
 
 // Stdlib header files for strings and containers.
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <deque>
 #include <set>
 #include <list>
@@ -55,6 +58,10 @@ using std::max;
 using std::min;
 using std::abs;
 using std::sort;
+using std::function;
+using std::isnan;
+using std::isinf;
+using std::isfinite;
 
 // Strings and containers.
 using std::pair;
@@ -63,6 +70,7 @@ using std::string;
 using std::vector;
 using std::map;
 using std::multimap;
+using std::unordered_map;
 using std::deque;
 using std::set;
 using std::multiset;
@@ -91,34 +99,59 @@ using std::right;
 using std::setw;
 using std::setprecision;
 
+// Pointers
+using std::shared_ptr;
+using std::weak_ptr;
+using std::dynamic_pointer_cast;
+using std::make_shared;
+
 } // end namespace Pythia8
 
 namespace Pythia8 {
 
-// Define conversion hbar * c = 0.2 GeV * fm = 1.
-#ifndef HBARC
-#define HBARC 0.19732698
-#endif
+// Define conversion hbar * c = 0.2 GeV * fm = 1 and related.
+constexpr double HBARC     = 0.19732698;
+constexpr double GEV2FMINV = 1. / HBARC;
+constexpr double GEVINV2FM = HBARC;
+constexpr double FM2GEVINV = 1./HBARC;
+constexpr double FMINV2GEV = HBARC;
+
+// Define conversion (hbar * c)^2 = 0.4 GeV^2 * mb = 1 and related.
+constexpr double HBARCSQ     = 0.38937937;
+constexpr double GEVSQ2MBINV = 1. / HBARCSQ;
+constexpr double GEVSQINV2MB = HBARCSQ;
+constexpr double MB2GEVSQINV = 1. / HBARCSQ;
+constexpr double MBINV2GEVSQ = HBARCSQ;
 
 // Define conversion between fm and mm, in both directions.
-#ifndef FM2MM
-#define FM2MM 1e-12
-#endif
-#ifndef MM2FM
-#define MM2FM 1e12
-#endif
+constexpr double FM2MM   = 1e-12;
+constexpr double MM2FM   = 1e12;
+
+// Define conversion between mb and pb or fb, in both directions.
+constexpr double MB2PB   = 1e9;
+constexpr double PB2MB   = 1e-9;
+constexpr double MB2FB   = 1e12;
+constexpr double FB2MB   = 1e-12;
+
+// Define conversion between fm^2 and mb, in both directions.
+constexpr double FMSQ2MB = 10.;
+constexpr double MB2FMSQ = 0.1;
 
 // Powers of small integers - for balance speed/code clarity.
-inline double pow2(const double& x) {return x*x;}
-inline double pow3(const double& x) {return x*x*x;}
-inline double pow4(const double& x) {return x*x*x*x;}
-inline double pow5(const double& x) {return x*x*x*x*x;}
-inline double pow6(const double& x) {return x*x*x*x*x*x;}
-inline double pow7(const double& x) {return x*x*x*x*x*x*x;}
-inline double pow8(const double& x) {return x*x*x*x*x*x*x*x;}
+constexpr double pow2(const double& x) {return x*x;}
+constexpr double pow3(const double& x) {return x*x*x;}
+constexpr double pow4(const double& x) {return x*x*x*x;}
+constexpr double pow5(const double& x) {return x*x*x*x*x;}
+constexpr double pow6(const double& x) {return x*x*x*x*x*x;}
+constexpr double pow7(const double& x) {return x*x*x*x*x*x*x;}
+constexpr double pow8(const double& x) {return x*x*x*x*x*x*x*x;}
 
 // Avoid problem with negative square root argument (from roundoff).
 inline double sqrtpos(const double& x) {return sqrt( max( 0., x));}
+
+// Restrinct value to lie in specified range.
+inline double clamp(const double& x, const double& xmin, const double& xmax) {
+  return (x < xmin) ? xmin : (x > xmax) ? xmax : x; }
 
 // Convert a string to lowercase for case-insensitive comparisons.
 // By default remove any initial and trailing blanks or escape characters.
@@ -127,30 +160,6 @@ string toLower(const string& name, bool trim = true);
 // Variant of above, with in-place replacement.
 inline void toLowerRep(string& name, bool trim = true) {
   name = toLower( name, trim);}
-
-// The Gamma function for real argument.
-double GammaReal(double x);
-
-// Modified Bessel functions of the first and second kinds.
-double besselI0(double x);
-double besselI1(double x);
-double besselK0(double x);
-double besselK1(double x);
-
-// Base class to encapsulate a (double) function of an arbitrary number
-// of (double) arguments (to avoid using function pointers).
-class FunctionEncapsulator  {
-public:
-  FunctionEncapsulator() {};
-  virtual ~FunctionEncapsulator() { };
-  virtual double f(vector<double> args);
-  // Integrate over function argument iArg, using Gaussian quadrature.
-  bool integrateGauss(double& result, int iArg, double xLo, double xHi,
-    vector<double> args, double tol=1e-6);
-  // Solve f(args) = target for argument iArg, using Brent's method
-  bool brent(double& solution, double target, int iArg, double xLo, double xHi,
-    vector<double> argsIn, double tol=1e-6, int maxIter=10000);
-};
 
 } // end namespace Pythia8
 

@@ -9,7 +9,7 @@ a PYTHIA Les Houches interface.
  
 <p/> 
 Of course, MadGraph5 can also output files of parton-level events 
-according to the <aloc href="LesHouchesAccord">LHEF</aloc> standard, 
+according to the <aloc href="LHEF">LHEF</aloc> standard, 
 that can be read in and processed further by PYTHIA 8. This is the 
 most commonly used approach, and requires no further description here. 
  
@@ -130,7 +130,7 @@ MadGraph5 to generate process libraries for PYTHIA 8.
  
 The <code>Pythia::setLHAupPtr(LHAup* lhaUpPtr)</code> method allows 
 a Pythia generator to accept a pointer to an object derived from the 
-<code><aloc href="LesHouchesAccord">LHAup</aloc></code> base class. 
+<code><aloc href="LHA">LHAup</aloc></code> base class. 
 Such an object will be initialized from within Pythia, and be called 
 repeatedly to generate the next parton-level event, using the LHA 
 specification as a standard to transfer the relevant information back 
@@ -241,4 +241,4 @@ initialization can be skipped after the initial run.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

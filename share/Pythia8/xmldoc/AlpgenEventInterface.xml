@@ -29,7 +29,7 @@ in the <code>include/Pythia8Plugins/</code> subdirectory:
 <li> 
 <code>GeneratorInput.h</code> : provides three classes for the reading of 
 ALPGEN event and parameter files. <code>LHAupAlpgen</code> is an 
-<aloc href="LesHouchesAccord"><code>LHAup</code></aloc> derived 
+<aloc href="LHA"><code>LHAup</code></aloc> derived 
 class for reading in ALPGEN native format event files. 
 <code>AlpgenPar</code> is a class for the parsing of ALPGEN parameter 
 files, making the information available through a simple interface. 
@@ -146,7 +146,7 @@ is provided.
 <h4>LHAupAlpgen</h4> 
  
 This class is derived from the 
-<aloc href="LesHouchesAccord"><code>LHAup</code></aloc> base class, and 
+<aloc href="LHA"><code>LHAup</code></aloc> base class, and 
 uses the standard machinery to pass initialisation and event data to 
 PYTHIA. These standard functions are not documented here. The complete 
 parameter file is stored in the PYTHIA Info object, if given, under the 
@@ -260,4 +260,4 @@ present, which are then used to set further PYTHIA settings.
  
 </chapter> 
  
-<!-- Copyright (C) 2019 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 

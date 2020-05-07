@@ -1,5 +1,5 @@
 // EvtGen.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand.
+// Copyright (C) 2020 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Philip Ilten.
@@ -20,7 +20,7 @@
 #include "EvtGenBase/EvtDecayBase.hh"
 #include "EvtGenExternal/EvtExternalGenList.hh"
 
-using namespace Pythia8;
+namespace Pythia8 {
 
 //==========================================================================
 
@@ -228,8 +228,8 @@ EvtGenDecays::EvtGenDecays(Pythia *pythiaPtrIn, string decayFile,
 
   // Initialize EvtGen.
   if (!extPtr && fsrPtr) {
-    if (pythiaPtr) pythiaPtr->info.errorMsg("Error in EvtGenDecays::"
-      "EvtGenDecays: extPtr is null but fsrPtr is provided");
+    cout << "Error in EvtGenDecays::"
+         << "EvtGenDecays: extPtr is null but fsrPtr is provided\n";
     return;
   }
   if (extPtr) extOwner = false;
@@ -345,8 +345,8 @@ double EvtGenDecays::decay() {
     if (pythiaPtr->rndm.flat() <= 1.0 / n) break;
     if (iTry == NTRYDECAY) {
       wgt = 2.;
-      pythiaPtr->info.errorMsg("Warning in EvtGenDecays::decay: maximum "
-        "number of signal decay attempts exceeded");
+      cout << "Warning in EvtGenDecays::decay: maximum "
+           << "number of signal decay attempts exceeded";
     }
   }
 
@@ -615,5 +615,7 @@ bool EvtGenDecays::checkOsc(EvtParticle *egPro) {
 }
 
 //==========================================================================
+
+} // end namespace Pythia8
 
 #endif // end Pythia8_EvtGen_H

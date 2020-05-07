@@ -1,5 +1,5 @@
 // SusyResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2019 Torbjorn Sjostrand
+// Copyright (C) 2020 Torbjorn Sjostrand
 // Main author of this file: N. Desai
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -24,7 +24,7 @@ class SUSYResonanceWidths : public ResonanceWidths{
 public:
 
   // Constructor
-  SUSYResonanceWidths() : coupSUSYPtr() {}
+  SUSYResonanceWidths() {}
 
   // Destructor
   virtual ~SUSYResonanceWidths() {}
@@ -32,14 +32,10 @@ public:
 protected:
 
   // Virtual methods to handle model-specific (non-SM) part of initialization
-  virtual bool initBSM();
-  virtual bool allowCalc();
+  virtual bool initBSM() override;
+  virtual bool allowCalc() override;
   virtual bool getChannels(int) { return false; };
 
-  double integrateGauss( WidthFunction* widthFn, double, double, double);
-
-  // SUSY couplings
-  CoupSUSY* coupSUSYPtr;
   static const bool DBSUSY;
 
 };
@@ -61,15 +57,15 @@ private:
   // Locally stored properties and couplings.
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
-  bool getChannels(int idPDG);
+  bool getChannels(int idPDG) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
   double s2W;
 
@@ -88,18 +84,18 @@ public:
 
 private:
 
-  bool getChannels(int idPDG);
+  bool getChannels(int idPDG) override;
 
   // Locally stored properties and couplings.
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
 };
 
@@ -116,18 +112,18 @@ public:
 
 private:
 
-  bool getChannels(int idPDG);
+  bool getChannels(int idPDG) override;
   // Locally stored properties and couplings.
   double kinFac2;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
   double s2W;
 
@@ -151,19 +147,19 @@ public:
 
 private:
 
-  bool getChannels(int idPDG);
+  bool getChannels(int idPDG) override;
 
   // Locally stored properties and couplings.
   double kinFac2;
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Caclulate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
   double s2W;
 
@@ -187,18 +183,18 @@ public:
 
 private:
 
-  bool getChannels(int idPDG);
+  bool getChannels(int idPDG) override;
 
   // Locally stored properties and couplings.
 
   // Initialize constants.
-  virtual void initConstants();
+  virtual void initConstants() override;
 
   // Calculate various common prefactors for the current mass.
-  virtual void calcPreFac(bool = false);
+  virtual void calcPreFac(bool = false) override;
 
   // Calculate width for currently considered channel.
-  virtual void calcWidth(bool calledFromInit = false);
+  virtual void calcWidth(bool calledFromInit = false) override;
 
   double s2W;
 
