@@ -9604,6 +9604,10 @@ The meaning of the various properties and the format used are explained
 <particle id="1000010020" name="2H" antiName="2Hbar" 
           spinType="1" chargeType="3" colType="0" m0="1.876"> 
 </particle> 
+
+<particle id="1000020030" name="3He" antiName="3Hebar" 
+          spinType="1" chargeType="6" colType="0" m0="2.8094"> 
+</particle> 
  
 <particle id="1000020040" name="4He" antiName="4Hebar" 
           spinType="1" chargeType="6" colType="0" m0="3.7284"> 
