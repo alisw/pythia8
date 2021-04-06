@@ -7,6 +7,7 @@
 // heavy ion classes classes, and some related global functions.
 
 #include "Pythia8/HeavyIons.h"
+#include "Pythia8/BeamShape.h"
 #include "Pythia8/Pythia.h"
 #include <cassert>
 
@@ -408,6 +409,7 @@ bool Angantyr::init() {
   for ( int i = MBIAS; i < ALL; ++i ) {
     pythia[i] = new Pythia(*settingsPtr, *particleDataPtr, false);
     pythia[i]->settings.mode("HeavyIon:mode", 1);
+    pythia[i]->settings.flag("Beams:allowVertexSpread", false);
   }
 
   sigtot.init();
@@ -1647,6 +1649,12 @@ bool Angantyr::next() {
       } else {
         if ( !pythia[HADRON]->forceHadronLevel(false) ) continue;
       }
+    }
+
+    if ( settingsPtr->flag("Beams:allowVertexSpread") ) {
+      pythia[HADRON]->getBeamShapePtr()->pick();
+      Vec4 vertex = pythia[HADRON]->getBeamShapePtr()->vertex();
+      for ( Particle & p : pythia[HADRON]->event ) p.vProdAdd( vertex);
     }
 
     hiInfo.accept();
