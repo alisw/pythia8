@@ -184,6 +184,9 @@ public:
   // collisions.
   HeavyIonsPtr getHeavyIonsPtr() { return heavyIonsPtr;}
 
+  // Possibility to access the pointer to the BeamShape object.
+  BeamShapePtr getBeamShapePtr() { return beamShapePtr; }
+  
   // Possibility to get the pointer to the parton-shower model.
   ShowerModelPtr getShowerModelPtr() { return showerModelPtr; }
 
