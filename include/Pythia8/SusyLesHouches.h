@@ -28,7 +28,7 @@ namespace Pythia8 {
   public:
 
     //Constructor.
-    LHblock<T>() : idnow(0), qDRbar(), i(), val() {} ;
+    LHblock() : idnow(0), qDRbar(), i(), val() {} ;
 
     //Does block exist?
     bool exists() { return int(entry.size()) == 0 ? false : true ; };
@@ -133,7 +133,7 @@ namespace Pythia8 {
   template <int size> class LHmatrixBlock {
   public:
     //Constructor. Set uninitialized and explicitly zero.
-    LHmatrixBlock<size>() : entry(), qDRbar(), val() {
+    LHmatrixBlock() : entry(), qDRbar(), val() {
       initialized=false;
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
@@ -212,7 +212,7 @@ namespace Pythia8 {
   template <int size> class LHtensor3Block {
   public:
     //Constructor. Set uninitialized and explicitly zero.
-    LHtensor3Block<size>() : entry(), qDRbar(), val() {
+    LHtensor3Block() : entry(), qDRbar(), val() {
       initialized=false;
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
