@@ -9,10 +9,12 @@
 typedef std::function< pybind11::module & (std::string const &) > ModuleGetter;
 
 void bind_std_exception(std::function< pybind11::module &(std::string const &namespace_) > &M);
+void bind_std_postypes(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_std_stdexcept(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_std_stl_vector(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_Basics(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_Basics_1(std::function< pybind11::module &(std::string const &namespace_) > &M);
+void bind_Pythia8_Basics_2(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_Info(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string const &namespace_) > &M);
@@ -20,11 +22,12 @@ void bind_Pythia8_ParticleData_1(std::function< pybind11::module &(std::string c
 void bind_Pythia8_Event(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_Event_1(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_Analysis(std::function< pybind11::module &(std::string const &namespace_) > &M);
+void bind_Pythia8_BeamShape(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_SigmaProcess(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_UserHooks(std::function< pybind11::module &(std::string const &namespace_) > &M);
 void bind_Pythia8_TimeShower(std::function< pybind11::module &(std::string const &namespace_) > &M);
-void bind_Pythia8_VinciaCommon(std::function< pybind11::module &(std::string const &namespace_) > &M);
-void bind_Pythia8_HeavyIons(std::function< pybind11::module &(std::string const &namespace_) > &M);
+void bind_Pythia8_Pythia(std::function< pybind11::module &(std::string const &namespace_) > &M);
+void bind_Pythia8_PythiaParallel(std::function< pybind11::module &(std::string const &namespace_) > &M);
 
 
 PYBIND11_MODULE(pythia8, root_module) {
@@ -47,10 +50,12 @@ PYBIND11_MODULE(pythia8, root_module) {
 	//pybind11::class_<std::shared_ptr<void>>(M(""), "_encapsulated_data_");
 
 	bind_std_exception(M);
+	bind_std_postypes(M);
 	bind_std_stdexcept(M);
 	bind_std_stl_vector(M);
 	bind_Pythia8_Basics(M);
 	bind_Pythia8_Basics_1(M);
+	bind_Pythia8_Basics_2(M);
 	bind_Pythia8_Info(M);
 	bind_Pythia8_Settings(M);
 	bind_Pythia8_ParticleData(M);
@@ -58,10 +63,11 @@ PYBIND11_MODULE(pythia8, root_module) {
 	bind_Pythia8_Event(M);
 	bind_Pythia8_Event_1(M);
 	bind_Pythia8_Analysis(M);
+	bind_Pythia8_BeamShape(M);
 	bind_Pythia8_SigmaProcess(M);
 	bind_Pythia8_UserHooks(M);
 	bind_Pythia8_TimeShower(M);
-	bind_Pythia8_VinciaCommon(M);
-	bind_Pythia8_HeavyIons(M);
+	bind_Pythia8_Pythia(M);
+	bind_Pythia8_PythiaParallel(M);
 
 }

@@ -1,5 +1,5 @@
 // DireHistory.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -180,6 +180,7 @@ DireHistory::DireHistory( int depthIn,
       beamB(beamBIn),
       particleDataPtr(particleDataPtrIn),
       infoPtr(infoPtrIn),
+      loggerPtr(infoPtrIn->loggerPtr),
       showers(showersIn),
       fsr(fsrIn),
       isr(isrIn),
@@ -277,21 +278,6 @@ DireHistory::DireHistory( int depthIn,
     << stringFlavs(state) << " found? " << hasMEweight << " ME "
     << MECnum << endl;
   }
-
-  int na=0, nf = 0;
-  for ( int i = 0; i < int(state.size()); ++i ) {
-    if ( state[i].status() > 0 ) nf++;
-    if ( state[i].status() > 0 && state[i].idAbs() == 22) na++;
-  }
-
-  // Check if more steps should be taken.
-  int nfqq = 0, nfhh = 0, nfgg = 0;
-  for ( int i = 0; i < int(state.size()); ++i )
-    if ( state[i].status() > 0) {
-      if ( state[i].idAbs() < 10) nfqq++;
-      if ( state[i].idAbs() == 21) nfgg++;
-      if ( state[i].idAbs() == 25) nfhh++;
-    }
 
   // If no clusterings were found, the recursion is done and we
   // register this node.
@@ -458,8 +444,10 @@ bool DireHistory::projectOntoDesiredHistories() {
         generationMin = it->second->generation;
         deepest = it->second;
       }
-    if (deepest->mother) deepest->mother->setProbabilities();
-    if (deepest->mother) deepest->mother->setEffectiveScales();
+    if (deepest != nullptr && deepest->mother)
+      deepest->mother->setProbabilities();
+    if (deepest != nullptr && deepest->mother)
+      deepest->mother->setEffectiveScales();
 
   }
 
@@ -527,8 +515,6 @@ double DireHistory::weightMOPS(PartonLevel* trial, AlphaStrong * /*as*/,
   vector<double> couplwt(createvector<double>(1.)(1.)(1.));
   if (nZero) couplwt = selected->weightCouplingsDenominator();
   for (size_t i=0; i < ret.size(); ++i) ret[i] *= couplwt[i];
-  nZero = false;
-  for (size_t i=0; i < ret.size(); ++i) if (abs(ret[i]) > 1e-12) nZero = true;
 
   double coupwt = couplEffective/couplwt.front();
 
@@ -611,22 +597,18 @@ double DireHistory::weightTREE(PartonLevel* trial, AlphaStrong * asFSR,
   AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN) {
 
   if ( mergingHooksPtr->canCutOnRecState() && !foundAllowedPath ) {
-    string message="Warning in DireHistory::weightTREE: No allowed history";
-    message+=" found. Using disallowed history.";
-    infoPtr->errorMsg(message);
+    loggerPtr->WARNING_MSG(
+      "no allowed history found. Using disallowed history");
   }
 
   if ( mergingHooksPtr->orderHistories() && !foundOrderedPath ) {
-    string message="Warning in DireHistory::weightTREE: No ordered history";
-    message+=" found. Using unordered history.";
-    infoPtr->errorMsg(message);
+    loggerPtr->WARNING_MSG(
+      "no ordered history found. Using unordered history");
   }
   if ( mergingHooksPtr->canCutOnRecState()
     && mergingHooksPtr->orderHistories()
     && !foundAllowedPath && !foundOrderedPath ) {
-    string message="Warning in DireHistory::weightTREE: No allowed or ordered";
-    message+=" history found.";
-    infoPtr->errorMsg(message);
+    loggerPtr->ERROR_MSG("no allowed or ordered history found");
   }
 
   // Read alpha_S in ME calculation and maximal scale (eCM)
@@ -738,9 +720,8 @@ double DireHistory::weightTREE(PartonLevel* trial, AlphaStrong * asFSR,
 double DireHistory::weightLOOP(PartonLevel* trial, double RN ) {
 
   if ( mergingHooksPtr->canCutOnRecState() && !foundAllowedPath ) {
-    string message="Warning in DireHistory::weightLOOP: No allowed history";
-    message+=" found. Using disallowed history.";
-    infoPtr->errorMsg(message);
+    loggerPtr->WARNING_MSG(
+      "no allowed history found. Using disallowed history");
   }
 
   // Select a path of clusterings
@@ -1153,10 +1134,6 @@ void DireHistory::getStartingConditions( const double RN, Event& outState ) {
 
   // Update the lowest order process.
   if (!selected->mother) {
-    int nFinal = 0;
-    for(int i=0; i < int(state.size()); ++i)
-      if ( state[i].isFinal()) nFinal++;
-
     if (nSteps == 0) {
       double startingScale = hardStartScale(state);
       state.scale(startingScale);
@@ -3058,7 +3035,7 @@ vector<double> DireHistory::doTrialShower( PartonLevel* trial, int type,
   // Set output.
   double wt            = 1.;
   vector <double> wtv(createvector<double>(1.)(1.)(1.));
-  int nFSRtry(0), nISRtry(0), nMPItry(0);
+  int nFSRtry(0), nISRtry(0);
 
   while (true) {
 
@@ -3108,7 +3085,7 @@ vector<double> DireHistory::doTrialShower( PartonLevel* trial, int type,
     double pTtrial   = trial->pTLastInShower();
     int typeTrial    = trial->typeLastInShower();
 
-    if      (typeTrial == 1) nMPItry++;
+    if      (typeTrial == 1) {}
     else if (typeTrial == 2) nISRtry++;
     else                     nFSRtry++;
 
@@ -3140,7 +3117,6 @@ vector<double> DireHistory::doTrialShower( PartonLevel* trial, int type,
 
     // Done if evolution scale has fallen below minimum
     if ( pTtrial < minScale ) {
-      wt     *= wtShower.second;
       wtv[0] *= wtShower.second;
       wtv[1] *= wt_isr_1.second*wt_fsr_1.second;
       wtv[2] *= wt_isr_2.second*wt_fsr_2.second;
@@ -3179,9 +3155,11 @@ vector<double> DireHistory::doTrialShower( PartonLevel* trial, int type,
       BeamParticle* beam = (particleDataPtr->isHadron(beamA.id())) ? &beamA
                          : (particleDataPtr->isHadron(beamB.id())) ? &beamB
                                                         : nullptr;
-      double m2cPhys     = (usePDFalphas) ? pow2(max(0.,beam->mQuarkPDF(4)))
+      double m2cPhys     = (usePDFalphas && beam != nullptr) ?
+                           pow2(max(0.,beam->mQuarkPDF(4)))
                          : mergingHooksPtr->AlphaS_ISR()->muThres2(4);
-      double m2bPhys     = (usePDFalphas) ? pow2(max(0.,beam->mQuarkPDF(5)))
+      double m2bPhys     = (usePDFalphas && beam != nullptr) ?
+                           pow2(max(0.,beam->mQuarkPDF(5)))
                          : mergingHooksPtr->AlphaS_ISR()->muThres2(5);
       if ( event[iEmt].idAbs() == 4 && minScale < sqrt(m2cPhys)
         && pTtrial > (1. - MCWINDOW)*sqrt(m2cPhys)
@@ -3979,9 +3957,8 @@ double DireHistory::hardProcessME( const Event& event ) {
     }
 
     else {
-      string message="Warning in DireHistory::hardProcessME: Only Z/W are";
-      message+=" supported as 2->1 processes. Skipping history.";
-      infoPtr->errorMsg(message);
+      loggerPtr->WARNING_MSG(
+        "only Z/W are supported as 2->1 processes. Skipping history");
       return 0;
     }
   }
@@ -5452,11 +5429,6 @@ bool DireHistory::allowedClustering( int rad, int emt, int rec, int partner,
         ||(event[i].idAbs() > 2000010 && event[i].idAbs() < 2000020) ))
       nFinalEW++;
 
-  int nFinalH = 0;
-  for(int i=0; i < int(event.size()); ++i)
-    if ( event[i].isFinal() && event[i].id() == 25)
-      nFinalH++;
-
   // Check if event after potential clustering contains an even
   // number of quarks and/or antiquarks
   // (otherwise no electroweak vertex could be formed!)
@@ -6762,7 +6734,6 @@ double DireHistory::pdfFactor( const Event&, const Event& e, const int type,
     // the weight, since it will drop out anyway.
     int sideSplit = ( e[iRecAft].pz() > 0.) ? 1 : -1;
     double pdfDen1, pdfDen2, pdfNum1, pdfNum2;
-    pdfDen1 = pdfDen2 = pdfNum1 = pdfNum2 = 1.;
     if ( sideSplit == 1 ) {
       pdfDen1 = (!hasPDFBef) ? 1.0 : (useSummedPDF)
               ? beamA.xf(flavBef, xBef, pow2(mu))
@@ -6808,7 +6779,6 @@ double DireHistory::pdfFactor( const Event&, const Event& e, const int type,
     // the weight, since it will drop out anyway.
     int sideSplit = ( e[iRadAft].pz() > 0.) ? 1 : -1;
     double pdfDen1, pdfDen2, pdfNum1, pdfNum2;
-    pdfDen1 = pdfDen2 = pdfNum1 = pdfNum2 = 1.;
     if ( sideSplit == 1 ) {
       pdfDen1 = (!hasPDFBef) ? 1.0 : (useSummedPDF)
               ? beamA.xf(flavBef, xBef, pow2(mu))
@@ -7126,23 +7096,20 @@ bool DireHistory::mayHaveEffectiveVertex( string process, vector<int> in,
 
   if ( process.compare("ta+ta->jj") == 0
     || process.compare("ta-ta+>jj") == 0 ) {
-    int nInFermions(0), nOutFermions(0), nOutBosons(0);
+    int nInFermions(0), nOutFermions(0);
     for (int i=0; i < int(in.size()); ++i)
       if (abs(in[i])<20) nInFermions++;
-    for (int i=0; i < int(out.size()); ++i) {
+    for (int i=0; i < int(out.size()); ++i)
       if (abs(out[i])<20) nOutFermions++;
-      if (abs(out[i])>20) nOutBosons++;
-    }
     return (nInFermions%2==0 && nOutFermions%2==0);
   }
 
-  int nInG(0), nOutZ(0), nOutWp(0), nOutWm(0), nOutH(0), nOutA(0), nOutG(0);
+  int nInG(0), nOutWp(0), nOutWm(0), nOutH(0), nOutA(0), nOutG(0);
   for (int i=0; i < int(in.size()); ++i)
     if (in[i]==21) nInG++;
   for (int i=0; i < int(out.size()); ++i) {
     if (out[i] == 21) nOutG++;
     if (out[i] == 22) nOutA++;
-    if (out[i] == 23) nOutZ++;
     if (out[i] == 24) nOutWp++;
     if (out[i] ==-24) nOutWm++;
     if (out[i] == 25) nOutH++;

@@ -1,9 +1,9 @@
 // main07.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: two-body decay; astroparticle; python; matplotlib;
+// Keywords: two-body decay; astroparticle; python; matplotlib
 
 // Illustration how to generate various two-body channels from
 // astroparticle processes, e.g. neutralino annihilation or decay.
@@ -53,10 +53,10 @@ int main() {
   Pythia pythia;
 
   // A class to generate the fictitious resonance initial state.
-  SigmaProcess* sigma1GenRes = new Sigma1GenRes();
+  SigmaProcessPtr sigma1GenRes = make_shared<Sigma1GenRes>();
 
   // Hand pointer to Pythia.
-  pythia.setSigmaPtr( sigma1GenRes);
+  pythia.addSigmaPtr( sigma1GenRes);
 
   // Read in the rest of the settings and data from a separate file.
   pythia.readFile("main07.cmnd");
@@ -104,13 +104,15 @@ int main() {
   // End of event loop.
   }
 
-  // Final statistics and histograms.
+  // Final statistics.
   pythia.stat();
-  eGamma *= 2.5 / nEvent;
-  eE     *= 2.5 / nEvent;
-  eP     *= 2.5 / nEvent;
-  eNu    *= 2.5 / nEvent;
-  eRest  *= 2.5 / nEvent;
+
+  // Divide histograms by bin width, and normalize by 1/nEvent.
+  eGamma.normalizeSpectrum(nEvent);
+  eE.normalizeSpectrum(nEvent);
+  eP.normalizeSpectrum(nEvent);
+  eNu.normalizeSpectrum(nEvent);
+  eRest.normalizeSpectrum(nEvent);
   cout << eGamma << eE << eP << eNu << eRest;
 
   // Write Python code that can generate a PDF file with the spectra.
@@ -129,6 +131,5 @@ int main() {
   hpl.plot( true);
 
   // Done.
-  delete sigma1GenRes;
   return 0;
 }

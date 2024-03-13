@@ -1,5 +1,5 @@
 // Ropewalk.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -37,11 +37,11 @@ class RopeDipoleEnd {
 public:
 
   // Constructors sets event pointer and event record index.
-  RopeDipoleEnd() : e(NULL), ne(-1) { }
+  RopeDipoleEnd() : e(nullptr), ne(-1) { }
   RopeDipoleEnd(Event* eIn, int neIn) : e(eIn), ne(neIn) { }
 
   // Get a pointer to the particle.
-  Particle* getParticlePtr() { if (!e) return NULL; return &(*e)[ne]; }
+  Particle* getParticlePtr() { if (!e) return nullptr; return &(*e)[ne]; }
 
   // Get the particle index in event record.
   int getNe() {return ne;}
@@ -107,7 +107,7 @@ public:
   // The RopeDipole constructor makes sure that d1 is always the colored
   // end and d2 the anti-colored.
   RopeDipole(RopeDipoleEnd d1In, RopeDipoleEnd d2In, int iSubIn,
-    Info* infoPtrIn);
+    Logger* loggerPtrIn);
 
   // Insert an excitation on dipole, if not already there.
   void addExcitation(double ylab, Particle* ex);
@@ -199,7 +199,7 @@ private:
   map<double, Particle*> excitations;
 
   bool isHadronized;
-  Info* infoPtr;
+  Logger* loggerPtr;
 
 };
 
@@ -383,7 +383,7 @@ public:
   virtual bool init() override {
 
     // Initialize event pointer such that it can be tested.
-    ePtr = NULL;
+    ePtr = nullptr;
     h = parm("Ropewalk:presetKappa");
     fixedKappa = flag("Ropewalk:setFixedKappa");
     doBuffon = flag("Ropewalk:doBuffon");
@@ -475,6 +475,8 @@ private:
   Ropewalk * rwPtr;
 
 };
+
+//==========================================================================
 
 } // end namespace Pythia8
 

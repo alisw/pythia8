@@ -1,5 +1,5 @@
 // JunctionSplitting.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,7 +32,7 @@ class JunctionSplitting : public PhysicsBase {
 public:
 
   // Constructor
-  JunctionSplitting() : eNormJunction(), allowDoubleJunRem() {}
+  JunctionSplitting() : pNormJunction(), allowDoubleJunRem() {}
 
   // Initialization.
   void init();
@@ -57,7 +57,7 @@ private:
   static const double JJSTRINGM2MAX, JJSTRINGM2FRAC, CONVJNREST, MTHAD,
                       MINANGLE;
 
-  double eNormJunction;
+  double pNormJunction;
   bool allowDoubleJunRem;
 
   // Classes for flavour, pT and z generation.

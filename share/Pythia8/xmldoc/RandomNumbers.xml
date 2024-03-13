@@ -154,6 +154,11 @@ particles at the specified eCM and with the specified masses.
 pick one option among vector of (positive) probabilities. 
 </method> 
  
+<method name="void Rndm::shuffle(vector&lt;T&gt;&amp; vec)"> 
+randomly shuffle a vector of objects (<code>type T</code>, i.e. any type, 
+templated method) according to the Fisher-Yates algorithm. 
+</method> 
+ 
 <method name="bool Rndm::dumpState(string fileName)"> 
 save the current state of the random number generator to a binary 
 file. This involves two integers and 100 double-precision numbers. 
@@ -166,6 +171,20 @@ set the state of the random number generator by reading in a binary
 file saved by the above command. Comments as above. 
 </method> 
  
+<method name="RndmState Rndm::getState()"> 
+save the current state of the random number generator as a 
+<code>struct RndmState</code>. This can then later be used within the 
+same run, e.g. as input to another <code>Pythia</code> instance. 
+It circumvents the intermediate file of <code>dumpState</code>, 
+but cannot be saved for a later run. 
+</method> 
+ 
+<method name="void Rndm::setState(RndmState&amp; state)"> 
+set the state of the random number generator by reading in a 
+<code>struct RndmState</code> saved by the above command. 
+Comments as above. 
+</method> 
+ 
 <method name="virtual double RndmEngine::flat()"> 
 if you want to construct an external random number generator 
 (or generator interface) then you must implement this method 
@@ -173,6 +192,130 @@ in your class derived from the <code>RndmEningen</code> base class,
 to give a random number between 0 and 1. 
 </method> 
  
+<h3>Random number debugging</h3> 
+ 
+In some cases, when trying to determine where two different versions 
+of the PYTHIA code might diverge, it can be useful to trace all random 
+numbers that are used. In this way, it is possible to see exactly 
+where a random sequence first diverges. An experimental random number 
+number debugging tool is available for advanced debugging. This tool 
+is only available when using the internal PYTHIA random number 
+generation class, <code>Rndm</code>, and can be enabled by specifying 
+the following during the configuration of PYTHIA. 
+<pre> 
+./configure --obj-common=-DRNGDEBUG 
+</pre> 
+Then, when building any of the examples, the random number debugging 
+will be enabled. The output, for example when running 
+<code>main01</code>, will look something like the following. 
+<pre> 
+ParticleDecays::twoBody:flat        3.5433e-01 src/ParticleDecays.cc:546 
+Rndm::exp:flat                      2.7883e-01 src/Basics.cc:96 
+Rndm::exp:flat                      7.8534e-01 src/Basics.cc:96 
+ParticleDataEntry::pickChannel:flat 8.4012e-01 src/ParticleData.cc:542 
+</pre> 
+The printout is specified by the following format. 
+<pre> 
+Class::ClassMethod:RndmMethod RandomNumber Location:LineNumber 
+</pre> 
+Here, <code>Class</code> is the class where the random number is being 
+called, <code>ClassMethod</code> is the method being called, and 
+<code>RndmMethod</code> is the method of <code>Rndm</code> that is 
+being called. This is followed by <code>RandomNumber</code> which is 
+the random number which was returned by the method, and then 
+<code>Location</code> which is the source file where the call was made 
+from, and <code>LineNumber</code> the line number of the call. In some 
+methods, more than just a single number is returned, for example 
+<code>Rndm::phaseSpace2</code>. In this case, all the elements of the 
+returned value are printed (here, four elements for two vectors). 
+ 
+<p/> 
+It is possible to control the output of the debugging with a number of 
+statically defined variables. These variables can be modified in 
+whatever code is being run. 
+<method name="bool Rndm::debugNow"> 
+This can be used to switch the debug statements on and off. If set to 
+<code>false</code> then the debug statements will not be printed. If 
+set to <code>true</code> (the default) they will be printed. In this 
+way, printing of the debugging can be turned on only after a certain 
+event has passed, for example. 
+</method> 
+<method name="bool Rndm::debugLocation"> 
+By default, set to <code>true</code>. If set to <code>false</code> the 
+location of the random number generator call within the source code 
+will no longer be printed. This is useful when running a difference on 
+two sets of output. 
+</method> 
+<method name="bool Rndm::debugIndex"> 
+By default, set to <code>false</code>. If set to <code>true</code> the 
+number of RNG calls will be counted, and the index of the RNG call 
+will be printed. This can be useful when comparing two different 
+outputs where other print statements have been inserted in the code. 
+</method> 
+<method name="int Rndm::debugCall"> 
+This integer tracks the number of random number generation calls, and 
+can be used to reset the index. 
+</method> 
+<method name="int Rndm::debugPrecision"> 
+Sets the precision of the random number values being printed. By 
+default, this is <code>4</code> but could be set to <code>17</code>, 
+for example, to print the full precision of a double. 
+</method> 
+ 
+<p/> 
+Because there are a large number of random number calls within PYTHIA, 
+one may wish to filter the output. This can be done by inserting 
+filter strings into the following static variables. These filter 
+strings are applied to the <code>Class::ClassMethod</code> portion of 
+the output, and if any of the defined sets are found, then the RNG 
+call is printed (an OR operation). 
+<method name="set&lt;string&gt; Rndm::debugStarts"> 
+Print the call if the class name and method starts with this string. 
+</method> 
+<method name="set&lt;string&gt; Rndm::debugEnds"> 
+Print the call if the class name and method ends with this string. 
+</method> 
+<method name="set&lt;string&gt; Rndm::debugContains"> 
+Print the call if the class name and method contains this string. 
+</method> 
+<method name="set&lt;string&gt; Rndm::debugContains"> 
+Print the call if the class name and method exactly matches this string. 
+</method> 
+For example, the following code only keeps calls if they begin with 
+<code>SimpleTimeShower</code> or <code>SimpleSpaceShower</code>. 
+<pre> 
+Rndm::debugStarts.insert("SimpleTimeShower"); 
+Rndm::debugStarts.insert("SimpleSpaceShower"); 
+</pre> 
+ 
+<p/> 
+There are some limitations to the tool. The biggest is that this level 
+of debugging is only possible when the <code>Rndm</code> method name 
+is not used elsewhere in the PYTHIA code. For example, the 
+<code>exp</code> method is used also as just the standard 
+exponential. This means that whenever <code>Rndm::exp</code> is 
+called, the location from where it was called can no longer be 
+reported, only that this method was called, and what value it produced 
+(this can be seen in the example above). In the PYTHIA code, this also 
+currently applies to the <code>pick</code> and <code>shuffle</code> 
+methods. This similarly applies to user code. If <code>flat</code> is 
+used as a method name in user code, than compiling with the 
+<code>-DRNGDEBUG</code> flag will result in the code failing to 
+compile. This can be overcome by including the 
+<code>include/Pythia8/RngDebug.h</code> header after any PYTHIA 
+headers, but before any additional headers. As an example, 
+<code>main93</code> will fail to compile with RNG debugging 
+on. However, the following modification in <code>main93.cc</code> 
+resolves the issue. 
+<pre> 
+#include "Pythia8/Pythia.h" 
+#include "Pythia8/HeavyIons.h" 
+#include "Pythia8/RngDebug.h" 
+#include "Pythia8Plugins/Pythia8Rivet.h" 
+</pre> 
+Here, <code>RngDebug.h</code> has been included after the last PYTHIA 
+header, but before additional headers. 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

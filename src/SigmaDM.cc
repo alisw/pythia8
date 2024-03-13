@@ -1,5 +1,5 @@
 // SigmaDM.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,7 +22,7 @@ namespace Pythia8 {
 void Sigma1ffbar2Zp2XX::initProc() {
 
   // Store mass and width for propagator, and couplings.
-  kinMix    = parm("Zp:kineticMixing");
+  kinMix    = flag("Zp:kineticMixing");
   mRes      = particleDataPtr->m0(55);
   GammaRes  = particleDataPtr->mWidth(55);
   m2Res     = mRes*mRes;

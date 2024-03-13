@@ -1,0 +1,249 @@
+<html><head><title>main301</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main301</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main301.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2024 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
+//            <a href="mailto:mrenna@fnal.gov">Stephen Mrenna</a>
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#hadronization">Hadronization</a>
+//            <a href="../ExampleKeywords.html#reweighting">Reweighting</a>
+//            <a href="../ExampleKeywords.html#tuning">Tuning</a>
+//            <a href="../ExampleKeywords.html#parallelism">Parallelism</a>
+//            <a href="../ExampleKeywords.html#matplotlib">Matplotlib</a>
+
+// Demonstrates how to reweight an event for different kinematic or flavor
+// hadronization parameters using in-situ reweighting.
+
+// Pythia includes.
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8/PythiaParallel.h&quot;
+
+using namespace Pythia8;
+
+int main() {
+
+  // Choose to reweight kinematic (0) or flavor (1) hadronization
+  // parameters. Both can be reweighted simultaneously, but the
+  // separation is kept here for illustrative purposes.
+  int type = 0;
+
+  // Number of events to generate per run.
+  int nEvent = 1e6;
+
+  // Define the new set of kinematic parameters that we wish to reweight to.
+  double aLund   = 0.6;  // StringZ:aLund, default 0.68
+  double bLund   = 0.9;  // StringZ:bLund, default 0.98
+  double rFactC  = 1.3;  // StringZ:rFactC, default 1.32
+  double rFactB  = 0.9;  // StringZ:rFactB, default 0.855
+  double ptSigma = 0.3;  // StringPT:sigma, default 0.335
+
+  // Define the new set of flavor parameters that we wish to reweight to.
+  double rho = 0.2;  // StringFlav:ProbStoUD, default 0.217
+  double xi  = 0.1;  // StringFlav:ProbQQtoQ, default 0.081
+  double x   = 0.9;  // StringFlav:ProbSQtoQQ, default 0.915
+  double y   = 0.04; // StringFlav:ProbQQ1toQQ0, default 0.0275
+
+  // Create and configure Pythia.
+  PythiaParallel pythia;
+  pythia.readString(&quot;Beams:idA = 11&quot;);
+  pythia.readString(&quot;Beams:idB = -11&quot;);
+  pythia.readString(&quot;Beams:eCM = 91.189&quot;);
+  pythia.readString(&quot;PDF:lepton = off&quot;);
+  pythia.readString(&quot;WeakSingleBoson:ffbar2gmZ = on&quot;);
+  pythia.readString(&quot;23:onMode = off&quot;);
+  pythia.readString(&quot;23:onIfAny = 1 2 3 4 5&quot;);
+
+  // Configure the in-situ kinematic or flavor reweighting.
+  if (type == 0) {
+    pythia.readString(&quot;VariationFrag:List = {kineVar frag:aLund=&quot;
+      + to_string(aLund) + &quot; frag:bLund=&quot; + to_string(bLund) + &quot; frag:rFactC=&quot;
+      + to_string(rFactC) + &quot; frag:rFactB=&quot; + to_string(rFactB)
+      + &quot; frag:ptSigma=&quot; + to_string(ptSigma) + &quot;}&quot;);
+  } else if (type == 1) {
+    pythia.readString(&quot;VariationFrag:List = {flavVar frag:rho=&quot;
+      + to_string(rho) + &quot; frag:xi=&quot; + to_string(xi) + &quot; frag:x=&quot;
+      + to_string(x) + &quot; frag:y=&quot; + to_string(y) + &quot;}&quot;);
+    pythia.readString(&quot;StringFlav:popcornRate = 0&quot;);
+    pythia.readString(&quot;HadronLevel:Decay = off&quot;);
+  }
+
+  // Initialize Pythia.
+  pythia.init();
+
+  // Define the plot title.
+  string title = &quot;default: (&quot;;
+  if (type == 0)
+    title +=
+      toString(pythia.settings.parm(&quot;StringZ:aLund&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringZ:bLund&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringZ:rFactC&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringZ:rFactB&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringPT:sigma&quot;)) + &quot;), &quot; +
+      &quot;variation: (&quot; + toString(aLund) + &quot;, &quot; + toString(bLund) + &quot;, &quot; +
+      toString(rFactC) + &quot;, &quot; + toString(rFactB) + &quot;, &quot; +
+      toString(ptSigma) + &quot;) &quot;;
+  else if (type == 1)
+    title +=
+      toString(pythia.settings.parm(&quot;StringFlav:ProbStoUD&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringFlav:ProbQQtoQ&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringFlav:ProbSQtoQQ&quot;)) + &quot;, &quot; +
+      toString(pythia.settings.parm(&quot;StringFlav:ProbQQ1toQQ0&quot;)) + &quot;), &quot; +
+      &quot;variation: (&quot; + toString(rho) + &quot;, &quot; + toString(xi) + &quot;, &quot; +
+      toString(x) + &quot;, &quot; + toString(y) + &quot;) &quot;;
+
+  // Identified final state hadrons to include in the flavor histograms.
+  vector&lt;int&gt; hadrons = {
+    211, 221, 331, 213, 223, 321, 311, 333, 2212, 2112, 2214, 2224, 3222,
+    3212, 3122, 3322, 3334};
+
+  // Define multiplicity histograms. For kinematics, we look at
+  // charged multiplicity while for flavor we look at multiplicity per
+  // species.
+  // default: the default parameters in Pythia
+  // insitu:  in-situ reweighted
+  // rerun:   a run with the varied parameters
+  vector&lt;string&gt; names = {&quot;default&quot;, &quot;insitu&quot;, &quot;rerun&quot;};
+  map&lt;string, Hist&gt; hists;
+  for (string &amp;name : names) {
+    if (type == 0)
+      hists[name] = Hist(name, 25, 2, 51);
+    else if (type == 1)
+      hists[name] = Hist(name, hadrons.size(), 0, hadrons.size());
+  }
+
+  // Track the weights.
+  map&lt;string, double&gt; wgts, sumWgts, sumWgt2s;
+  for (string &amp;name : names)
+    wgts[name] = sumWgts[name] = sumWgt2s[name] = 0;
+  names.pop_back();
+
+  // Run events.
+  // This defines a lambda function that acts as a callback.
+  // This function is called for each event generated.
+  // The argument is a pointer to the instance that generated the event.
+  // This is neccesary to use PythiaParallel (multi-core).
+  pythia.run( nEvent, [&amp;](Pythia* pythiaPtr) {
+
+    // For the default parameters, the weight is just 1.
+    wgts[&quot;default&quot;] = 1;
+
+    // The weight given by the in-situ reweighting.
+    wgts[&quot;insitu&quot;] = pythiaPtr-&gt;info.getGroupWeight(0);
+
+    // Keep track of the weights.
+    for (string &amp;name : names) {
+      sumWgts[name]  += wgts[name];
+      sumWgt2s[name] += pow2(wgts[name]);
+    }
+
+    // Fill the histograms.
+    int mult = 0;
+    for (const Particle &amp;prt : pythiaPtr-&gt;event) {
+      if (!prt.isFinal()) continue;
+      if (type == 0) {
+        if (prt.isCharged()) ++mult;
+      } else if (type == 1) {
+        int pid = prt.idAbs();
+        int idx = -1;
+        for (int iHad = 0; iHad &lt; (int)hadrons.size(); ++iHad)
+          if (pid == hadrons[iHad]) {idx = iHad; break;}
+        if (idx &lt; 0) continue;
+        for (string &amp;name : names) hists[name].fill(idx, wgts[name]);
+      }
+    }
+    if (type == 0)
+      for (string &amp;name : names) hists[name].fill(mult, wgts[name]);
+  });
+  pythia.stat();
+
+  // Rerun Pythia with the varied parameters.
+  if (type == 0) {
+    pythia.settings.parm(&quot;StringZ:aLund&quot;,  aLund);
+    pythia.settings.parm(&quot;StringZ:bLund&quot;,  bLund);
+    pythia.settings.parm(&quot;StringZ:rFactC&quot;, rFactC);
+    pythia.settings.parm(&quot;StringZ:rFactB&quot;, rFactB);
+    pythia.settings.parm(&quot;StringPT:sigma&quot;, ptSigma);
+  } else if (type == 1) {
+    pythia.settings.parm(&quot;StringFlav:ProbStoUD&quot;,    rho);
+    pythia.settings.parm(&quot;StringFlav:ProbQQtoQ&quot;,    xi);
+    pythia.settings.parm(&quot;StringFlav:ProbSQtoQQ&quot;,   x);
+    pythia.settings.parm(&quot;StringFlav:ProbQQ1toQQ0&quot;, y);
+  }
+  pythia.settings.wvec(&quot;VariationFrag:List&quot;, {});
+  pythia.init();
+
+  // Run events.
+  // This defines a lambda function that acts as a callback.
+  // This function is called for each event generated.
+  // The argument is a pointer to the instance that generated the event.
+  // This is neccesary to use PythiaParallel (multi-core).
+  pythia.run( nEvent, [&amp;](Pythia* pythiaPtr) {
+    sumWgts[&quot;rerun&quot;]  += 1;
+    sumWgt2s[&quot;rerun&quot;] += 1;
+    int mult = 0;
+    for (const Particle &amp;prt : pythiaPtr-&gt;event) {
+      if (!prt.isFinal()) continue;
+      if (type == 0) {
+        if (prt.isCharged()) ++mult;
+      } else if (type == 1) {
+        int pid = prt.idAbs();
+        int idx = -1;
+        for (int iHad = 0; iHad &lt; (int)hadrons.size(); ++iHad)
+          if (pid == hadrons[iHad]) {idx = iHad; break;}
+        if (idx &gt;= 0) hists[&quot;rerun&quot;].fill(idx, 1.);
+      }
+    }
+    if (type == 0) hists[&quot;rerun&quot;].fill(mult, 1);
+  });
+  pythia.stat();
+
+  // Normalize the histograms.
+  for (auto &amp;hist : hists) hist.second /= sumWgts[hist.first];
+
+  // Print the histogram ratios.
+  string xlabel;
+  if (type == 0) {
+    xlabel = &quot;multiplicity&quot;;
+  } else if (type == 1) {
+    for (int iHad = 0; iHad &lt; (int)hadrons.size(); ++iHad) {
+      string name = pythia.particleData.name(hadrons[iHad]);
+      cout &lt;&lt; left &lt;&lt; setw(3) &lt;&lt; iHad &lt;&lt; &quot;: &quot; &lt;&lt; name &lt;&lt; &quot;\n&quot;;
+      xlabel += &quot; &quot; + name + &quot;(&quot; + to_string(iHad) + &quot;)&quot;;
+    }
+  }
+  for (auto &amp;hist : hists)
+    cout &lt;&lt; &quot;\n&quot; &lt;&lt; hist.first &lt;&lt; hist.second/hists[&quot;default&quot;];
+
+  // Print the reweighting stats.
+  // The 1 - mu should be statistically consistent with zero if the
+  // reweighting has proper coverage.
+  // The n_eff gives the statistical power of the reweighted sample.
+  for (string &amp;name : names) {
+    double w(sumWgts[name]), w2(sumWgt2s[name]), n(sumWgts[&quot;default&quot;]);
+    cout &lt;&lt; name &lt;&lt; &quot;\n&quot;
+         &lt;&lt; &quot;\t1 - mu = &quot; &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; abs(1. - w/n)
+         &lt;&lt; &quot; +- &quot;&lt;&lt; abs(1. - sqrt((w2/n - pow2(w/n))*n/(n - 1)))/sqrt(n)
+         &lt;&lt; &quot;\n\tn_eff  = &quot; &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; w*w/(n*w2)
+         &lt;&lt; &quot;\n&quot;;
+  }
+
+  // Create the Python plot and return.
+  HistPlot hpl(&quot;main301plot&quot;);
+  hpl.frame(&quot;main301plot&quot;, title, xlabel, &quot;n(variation)/n(default)&quot;);
+  for (string &amp;name : names)
+    hpl.add(hists[name]/hists[&quot;default&quot;], &quot;e&quot;, name);
+  hpl.add(hists[&quot;rerun&quot;]/hists[&quot;default&quot;], &quot;e&quot;, &quot;rerun&quot;);
+  hpl.plot();
+  return 0;
+
+}
+</code></pre></body></html>

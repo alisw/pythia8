@@ -327,9 +327,9 @@ to perform the necessary vetoes.
 </flag> 
  
 <p/> 
-A preliminary implementation of the FxFx prescription for combining multiple 
-NLO calculations <ref>Fre12</ref> is available. We would like to stress that 
-this implementation is still undergoing validation. FxFx merging with aMC@NLO 
+An implementation of the FxFx prescription for combining multiple 
+NLO calculations <ref>Fre12</ref> and its updated treatment of non-enhanced 
+jets as described in <ref>Fre21</ref> is available. FxFx merging with aMC@NLO 
 shares most parameters with the leading-order (MadGraph-style) MLM 
 prescriptions and can be activated by using the three additional settings 
 below. 
@@ -684,4 +684,4 @@ above example, the only shared methods are the constructor and
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

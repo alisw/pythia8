@@ -1,5 +1,5 @@
 // Dire.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -232,10 +232,13 @@ void Dire::setup(BeamParticle* beamA, BeamParticle* beamB) {
   timesPtr->initSplits();
   spacePtr->initSplits();
 
-  weightsPtr->initPtrs(beamA, beamB, settingsPtr, &direInfo);
+  weightsPtr->initPtrs(beamA, beamB, settingsPtr, infoPtr, &direInfo);
   timesDecPtr->initVariations();
   timesPtr->initVariations();
   spacePtr->initVariations();
+  if (mergingPtr) mergingPtr->initPtrs( weightsPtr, timesPtr,
+    spacePtr, &direInfo);
+
 
 }
 
@@ -264,8 +267,14 @@ bool Dire::initAfterBeams() {
     settingsPtr->parm("Merging:TMS",0.0);
   }
 
+  // No QED radiation by default until properly validated
+  settingsPtr->flag("TimeShower:QEDshowerByQ",false);
+  settingsPtr->flag("TimeShower:QEDshowerByL",false);
+  settingsPtr->flag("SpaceShower:QEDshowerByQ",false);
+  settingsPtr->flag("SpaceShower:QEDshowerByL",false);
+
   // Setup weight container (after user-defined enhance factors have been read)
-  weightsPtr->initPtrs(beamAPtr, beamBPtr, settingsPtr, &direInfo);
+  weightsPtr->initPtrs(beamAPtr, beamBPtr, settingsPtr, infoPtr, &direInfo);
   weightsPtr->setup();
   setup(beamAPtr, beamBPtr);
   isInit = true;

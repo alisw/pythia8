@@ -1,5 +1,5 @@
 // StringLength.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,13 +32,13 @@ void StringLength::init(Info* infoPtrIn, Settings& settings) {
 
   // Save pointers.
   infoPtr = infoPtrIn;
+  loggerPtr  = infoPtrIn->loggerPtr;
 
   // Store variables.
   m0         = settings.parm("ColourReconnection:m0");
-  m0sqr      = pow2(m0);
+  lambdaForm = settings.mode("ColourReconnection:lambdaForm");
   juncCorr   = settings.parm("ColourReconnection:junctionCorrection");
   sqrt2      = sqrt(2.);
-  lambdaForm = settings.mode("ColourReconnection:lambdaForm");
 }
 
 //--------------------------------------------------------------------------
@@ -46,12 +46,7 @@ void StringLength::init(Info* infoPtrIn, Settings& settings) {
 // Calculate string length for two indices in the event record.
 
 double StringLength::getStringLength( Event& event, int i, int j) {
-
-  // Find rest frame of particles.
-  Vec4 p1 =  event[i].p();
-  Vec4 p2 =  event[j].p();
-
-  return getStringLength(p1, p2);
+  return getStringLength(event[i].p(), event[j].p());
 }
 
 //--------------------------------------------------------------------------
@@ -71,7 +66,7 @@ double StringLength::getStringLength( Vec4 p1, Vec4 p2) {
   // Calculate string length.
   Vec4 p0( 0., 0., 0., 1.);
 
-  return getLength(p1,p0) + getLength(p2,p0);
+  return getLength(p1, p0) + getLength(p2, p0);
 }
 
 //--------------------------------------------------------------------------
@@ -82,13 +77,20 @@ double StringLength::getStringLength( Vec4 p1, Vec4 p2) {
 
 double StringLength::getLength(Vec4 p, Vec4 v, bool isJunc) {
 
-  double m = m0;
-  if (isJunc) m *= juncCorr;
+  double e = v * p;
 
-  if      (lambdaForm == 0) return log (1. + sqrt2 * v * p/ m );
-  else if (lambdaForm == 1) return log (1. + 2 * v * p/ m );
-  else if (lambdaForm == 2) return log (2. * v * p / m);
-  else                      return 1e9;
+  // Javira + Harsh's changes for better treatment of massive partons.
+  if (lambdaForm == 0) {
+    double m = p.mCalc();
+    double mCorr = (isJunc) ? (m + m0) * juncCorr : m + m0;
+    return log ( max( 1. , (e + sqrt(pow2(e) - pow2(m))) / (mCorr) ) );
+
+  // Old standard string length measure.
+  } else {
+    double mCorr = (isJunc) ? m0 * juncCorr : m0;
+    return log (1. + sqrt2 * e / mCorr );
+  }
+
 }
 
 //--------------------------------------------------------------------------
@@ -99,11 +101,8 @@ double StringLength::getJuncLength( Event& event, int i, int j, int k) {
 
   if (i == j || i == k || j == k) return 1e9;
 
-  Vec4 p1 = event[i].p();
-  Vec4 p2 = event[j].p();
-  Vec4 p3 = event[k].p();
+  return getJuncLength( event[i].p(), event[j].p(), event[k].p());
 
-  return getJuncLength(p1, p2, p3);
 }
 //--------------------------------------------------------------------------
 
@@ -117,10 +116,12 @@ double StringLength::getJuncLength(Vec4 p1, Vec4 p2, Vec4 p3) {
     || theta(p2,p3) < MINANGLE) return 1e9;
 
   // Find the junction rest frame.
-  RotBstMatrix MfromJRF1 = stringFragmentation.junctionRestFrame(p1,p2,p3);
-  MfromJRF1.invert();
-  Vec4 v1( 0., 0., 0., 1.);
-  v1.rotbst(MfromJRF1);
+  Vec4 v1 = stringFragmentation.junctionRestFrame(p1,p2,p3);
+  if (isnan(v1.e())) {
+    loggerPtr->WARNING_MSG("invalid system for junction reconnection");
+    return 1e9;
+  }
+  v1 /= sqrt( 1 - v1.pAbs2() );
 
   // Possible problem when the right system rest frame system is not found.
   if ( pow2(p1*v1) - p1*p1 < 0. || pow2(p2*v1) - p2*p2 < 0.
@@ -148,12 +149,7 @@ double StringLength::getJuncLength( Event& event, int i, int j, int k, int l) {
 
   if (origLength < minLength) return minLength;
 
-  Vec4 p1 = event[i].p();
-  Vec4 p2 = event[j].p();
-  Vec4 p3 = event[k].p();
-  Vec4 p4 = event[l].p();
-
-  return getJuncLength(p1, p2, p3, p4);
+  return getJuncLength(event[i].p(), event[j].p(), event[k].p(), event[l].p());
 }
 
 //--------------------------------------------------------------------------
@@ -163,27 +159,33 @@ double StringLength::getJuncLength( Event& event, int i, int j, int k, int l) {
 
 double StringLength::getJuncLength(Vec4 p1, Vec4 p2, Vec4 p3, Vec4 p4) {
 
-  // Check for very small energies and angles.
+  // Check for very small energies, momenta, and angles.
   if ( p1.e() < TINY || p2.e() < TINY || p3.e() < TINY || p4.e() < TINY
+    || p1.pAbs2() < TINY || p2.pAbs2() < TINY
+    || p3.pAbs2() < TINY || p4.pAbs2() < TINY
     || theta(p1,p2) < MINANGLE || theta(p1,p3) < MINANGLE
     || theta(p1,p4) < MINANGLE || theta(p2,p3) < MINANGLE
     || theta(p2,p4) < MINANGLE || theta(p3,p4) < MINANGLE) return 1e9;
 
   // Calculate velocity of first junction.
-  Vec4 pSum1 = p3 +p4;
-
-  RotBstMatrix MfromJRF1 = stringFragmentation.junctionRestFrame(p1,p2,pSum1);
-  MfromJRF1.invert();
-  Vec4 v1( 0., 0., 0., 1.);
-  v1.rotbst(MfromJRF1);
+  Vec4 pSum1 = p3 + p4;
+  Vec4 v1 = stringFragmentation.junctionRestFrame(p1,p2,pSum1);
+  if (isnan(v1.e())) {
+    loggerPtr->WARNING_MSG(
+      "invalid system for junction-antijunction reconnection");
+    return 1e9;
+  }
+  v1 /= sqrt( 1 - v1.pAbs2() );
 
   // Calculate velocity of second junction.
   Vec4 pSum2 = p1 + p2;
-
-  RotBstMatrix MfromJRF2 = stringFragmentation.junctionRestFrame(p3,p4,pSum2);
-  MfromJRF2.invert();
-  Vec4 v2( 0., 0., 0., 1.);
-  v2.rotbst(MfromJRF2);
+  Vec4 v2 = stringFragmentation.junctionRestFrame(p3,p4,pSum2);
+  if (isnan(v2.e())) {
+    loggerPtr->WARNING_MSG(
+      "invalid system for junction-antijunction reconnection");
+    return 1e9;
+  }
+  v2 /= sqrt( 1 - v2.pAbs2() );
 
   // This only happens if it is not possible to find the correct rest frame.
   if ( pow2(p1*v1) - p1*p1 < 0. || pow2(p2*v1) - p2*p2 < 0.

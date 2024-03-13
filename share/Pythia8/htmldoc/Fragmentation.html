@@ -35,6 +35,23 @@ other places of the program, notably particle decays, and is thus
 described on the separate <a href="FlavourSelection.html" target="page">Flavour 
 Selection</a> page. 
  
+<p/> 
+Several methods are in place to allow the user to reweight generated 
+events in the parameters of the fragmentation model. This allows 
+the user to perform fast parameter variation or oversample rare 
+configurations, and reweight to the correct cross section. These 
+methods are documented on the separate 
+<a href="HadronizationVariations.html" target="page">Hadronization Variations</a> 
+page. 
+ 
+<p/> 
+Note that the fragmentation in a 
+<a href="HiddenValleyProcesses.html" target="page">Hidden Valley</a> scenario 
+is modelled in a similar spirit as for ordinary string fragmentation, 
+but with a separate set of parameters. Relevant parameters for it 
+are closely related to the scenario chosen, and therefore are 
+documented on the same page. 
+ 
 <a name="section0"></a> 
 <h3>Fragmentation functions</h3> 
  
@@ -394,46 +411,6 @@ determined to have the same average <i>pT</i> in <i>u/d &rarr; s</i>
 and <i>s &rarr; u/d</i> transistions. 
    
  
-<h4>Common setup for enhanced width</h4> 
- 
-If strings are closely packed, e.g. as a consequence of MPIs, it is 
-likely that they receive an increased string tension, which translates 
-into a broader <i>pT</i> spectrum, see further [<a href="Bibliography.html#refFis16" target="page">Fis16</a>]. 
-It also means an enhanced rate (or rather reduced suppression) of 
-heavy-particle production relative to pions. This can be regulated by 
-the flag and parameters below. 
- 
-<a name="anchor34"></a>
-<p/><code>flag&nbsp; </code><strong> StringPT:closePacking &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
-If switched on then the two following parameters modify either 
-<code>StringPT:sigma</code> or <code>StringPT:temperature</code>, 
-respectively. Normally only one of the options below would be used, 
-but technically both are allowed and then combine multiplicatively. 
-   
- 
-<a name="anchor35"></a>
-<p/><code>parm&nbsp; </code><strong> StringPT:expMPI &nbsp;</strong> 
- (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
-Exponent to the number of MPIs. The width/temparture will get the 
-prefactor <i>N(MPI)^expMPI</i>. 
-   
- 
-<a name="anchor36"></a>
-<p/><code>parm&nbsp; </code><strong> StringPT:expNSP &nbsp;</strong> 
- (<code>default = <strong>0.13</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
-Exponent for the number of effective nearby string pieces, calculated as 
-<br/><i> 
-    N(NSP) =1 + (N<sub>string</sub>-1)/(1+p<sup>2</sup><sub>T had</sub>/ 
-    p<sup>2</sup><sub>T 0</sub>) , 
-</i><br/> 
-where <i>p<sup>2</sup><sub>T had</sub> </i> is the transverse 
-momentum of the next produced hadron, estimated based on an educated 
-guess of its momentum, and <i>p<sup>2</sup><sub>T 0</sub></i> is the 
-MPI regularization parameter <code>MultipartonInteractions:pT0Ref</code>. 
-The width/temperature will get the prefactor <i>N(NSP)^expNSP</i>. 
-   
- 
 <a name="section2"></a> 
 <h3>Jet joining procedure</h3> 
  
@@ -445,7 +422,7 @@ parameters, but in a way too complicated to parametrize. The dependence
 is rather mild, however, so for a sensible range of variation the 
 parameters in this section should not be touched. 
  
-<a name="anchor37"></a>
+<a name="anchor34"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:stopMass &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 Is used to define a <i>W_min = m_q1 + m_q2 + stopMass</i>, 
@@ -453,7 +430,7 @@ where <i>m_q1</i> and <i>m_q2</i> are the masses of the two
 current endpoint quarks or diquarks. 
    
  
-<a name="anchor38"></a>
+<a name="anchor35"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:stopNewFlav &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 Add to <i>W_min</i> an amount <i>stopNewFlav * m_q_last</i>, 
@@ -461,7 +438,7 @@ where <i>q_last</i> is the last <i>q qbar</i> pair produced
 between the final two hadrons. 
    
  
-<a name="anchor39"></a>
+<a name="anchor36"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:stopSmear &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.5</code>)<br/>
 The <i>W_min</i> above is then smeared uniformly in the range 
@@ -479,7 +456,7 @@ fragmentation process is started over.)
 <a name="section3"></a> 
 <h3>Colour tracing</h3> 
  
-<a name="anchor40"></a>
+<a name="anchor37"></a>
 <p/><code>flag&nbsp; </code><strong> StringFragmentation:TraceColours &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 In some cases it is interesting to trace the primary hadrons back 
@@ -498,7 +475,7 @@ singlet particles, this flag is by default <code>off</code>.
 There are a few situations when it is meaningful to simplify the 
 original task, one way or another. 
  
-<a name="anchor41"></a>
+<a name="anchor38"></a>
 <p/><code>parm&nbsp; </code><strong> HadronLevel:mStringMin &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 1.5</code>)<br/>
 Decides whether a partonic system should be considered as a normal 
@@ -508,7 +485,7 @@ sum of quark/diquark constituent masses for a normal string description,
 else the ministring scenario is used. 
    
  
-<a name="anchor42"></a>
+<a name="anchor39"></a>
 <p/><code>parm&nbsp; </code><strong> FragmentationSystems:mJoin &nbsp;</strong> 
  (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 1.</code>)<br/>
 When two colour-connected partons are very nearby, with at least 
@@ -520,7 +497,7 @@ to the string region under consideration. (Note that, for technical
 reasons, the 0.2 GeV lower limit is de facto hardcoded.) 
    
  
-<a name="anchor43"></a>
+<a name="anchor40"></a>
 <p/><code>parm&nbsp; </code><strong> FragmentationSystems:mJoinJunction &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 2.</code>)<br/>
 When the invariant mass of two of the quarks in a three-quark junction 
@@ -550,7 +527,7 @@ The current implementation does not completely abide to the scheme
 presented there, however, but has in part been simplified. (In part 
 for greater clarity, in part since the class is not quite finished yet.) 
  
-<a name="anchor44"></a>
+<a name="anchor41"></a>
 <p/><code>mode&nbsp; </code><strong> MiniStringFragmentation:nTry &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 10</code>)<br/>
 Whenever the machinery is called, first this many attempts are made 
@@ -561,6 +538,18 @@ After <i>nTry</i> attempts, instead an attempt is made to produce a
 single hadron from the system. Should also this fail, some further 
 attempts at obtaining two hadrons will be made before eventually 
 giving up. 
+   
+ 
+<a name="anchor42"></a>
+<p/><code>flag&nbsp; </code><strong> MiniStringFragmentation:tryAfterFailedFrag &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+If normal string fragmentation fails for a parton system, it is optionally 
+possible to attempt to fragment it as if it had been a ministring 
+(c.f. <code>HadronLevel:mStringMin</code>). This is mainly relevant for 
+heavy-ion collisions and for the QCD-based colour-reconnection model, 
+where many high-multiplicity events have a higher probability to have 
+failed fragmentation (hence throwing the whole event away may skew the 
+multiplicity distribution). 
    
  
 <a name="section6"></a> 
@@ -575,22 +564,17 @@ the junction, where the baryon number topologically is located.
 The junction fragmentation scheme is described in [<a href="Bibliography.html#refSjo03" target="page">Sjo03</a>]. 
 The parameters in this section should not be touched except by experts. 
  
-<a name="anchor45"></a>
-<p/><code>parm&nbsp; </code><strong> StringFragmentation:eNormJunction &nbsp;</strong> 
+<a name="anchor43"></a>
+<p/><code>parm&nbsp; </code><strong> StringFragmentation:pNormJunction &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10</code>)<br/>
 Used to find the effective rest frame of the junction, which is 
 complicated when the three string legs may contain additional 
-gluons between the junction and the endpoint. To this end, 
-a pull is defined as a weighed sum of the momenta on each leg, 
-where the weight is <i>exp(- eSum / eNormJunction)</i>, with 
-<i>eSum</i> the summed energy of all partons closer to the junction 
-than the currently considered one (in the junction rest frame). 
-Should in principle be (close to) <i>sqrt((1 + a) / b)</i>, with 
-<i>a</i> and <i>b</i> the parameters of the Lund symmetric 
-fragmentation function. 
+gluons between the junction and the endpoint. Should in principle be 
+(close to) <i>sqrt((1 + a) / b)</i>, with <i>a</i> and <i>b</i> 
+the parameters of the Lund symmetric fragmentation function. 
    
  
-<a name="anchor46"></a>
+<a name="anchor44"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eBothLeftJunction &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.5</code>)<br/>
 Retry (up to 10 times) when the first two considered strings in to a 
@@ -598,7 +582,7 @@ junction both have a remaining energy (in the junction rest frame)
 above this number. 
    
  
-<a name="anchor47"></a>
+<a name="anchor45"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eMaxLeftJunction &nbsp;</strong> 
  (<code>default = <strong>10.0</strong></code>; <code>minimum = 0.</code>)<br/>
 Retry (up to 10 times) when the first two considered strings in to a 
@@ -609,7 +593,7 @@ above a random energy evenly distributed between
 (drawn anew for each test). 
    
  
-<a name="anchor48"></a>
+<a name="anchor46"></a>
 <p/><code>parm&nbsp; </code><strong> StringFragmentation:eMinLeftJunction &nbsp;</strong> 
  (<code>default = <strong>0.2</strong></code>; <code>minimum = 0.</code>)<br/>
 Retry (up to 10 times) when the invariant mass-squared of the final leg 
@@ -618,7 +602,57 @@ and the leftover momentum of the first two treated legs falls below
 junction rest frame). 
    
  
+<a name="anchor47"></a>
+<p/><code>flag&nbsp; </code><strong> StringFragmentation:pearlFragmentation &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Optionally allow to use a gluon approximation for pearl-on-a-string 
+junction topologies. Pearl-on-a-string is a junction topology such 
+that the junction gets stuck to a soft endpoint parton. In these cases 
+for light quarks, the propagation of the <i>pT</i> is similar to a 
+soft gluon kink, and can be fragmented by approximating the pearl as a 
+gluon. 
+   
+ 
+<a name="anchor48"></a>
+<p/><code>parm&nbsp; </code><strong> StringFragmentation:pearlProbFactor &nbsp;</strong> 
+ (<code>default = <strong>4</strong></code>; <code>minimum = 1</code>)<br/>
+The gluon approximation for pearl-on-a-string cases is chosen 
+probabilistically. This parameter, <i>f_pearl</i>, modifies the 
+probability distribution used and has the general form of 
+<br/><i> 
+    prob(x) = 1 / (1 + (4<i>&Delta;v</i>)<sup>f<sub>pearl</sub></sup>). 
+</i><br/> 
+Here <i>&Delta;v</i>, which varies between 0 and 1/2, is a measure 
+of the total deceleration the pearl (ie the soft parton) experiences 
+over a time characteristic of hadronization (here given by the 
+<code>pNormJunction</code> parameter above). 
+   
+ 
+<a name="anchor49"></a>
+<p/><code>flag&nbsp; </code><strong> StringFragmentation:strangeJunctions &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Switching this parameter on allows strangeness enhancement for string breaks 
+next to a junction. 
+   
+ 
+<a name="anchor50"></a>
+<p/><code>parm&nbsp; </code><strong> StringFragmentation:strangeJuncFactor &nbsp;</strong> 
+ (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
+This parameter, <i>s_J</i>, scales how much strangeness enhancement 
+around a junction by modifying the probability 
+<code>StringFlav:probStoUD</code>, 
+<br/><i> 
+    P'(s:u/d) = P(s:u/d)<sup>(1 - s_J)</sup>. 
+</i><br/> 
+   
+ 
+<a name="anchor51"></a>
+<p/><code>parm&nbsp; </code><strong> StringFragmentation:strangePearlFactor &nbsp;</strong> 
+ (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
+Allow a different strangeness enhancement around a pearl junction. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

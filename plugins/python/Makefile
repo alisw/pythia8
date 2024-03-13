@@ -1,5 +1,5 @@
 # Makefile is a part of the PYTHIA event generator.
-# Copyright (C) 2020 Torbjorn Sjostrand.
+# Copyright (C) 2024 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 # Author: Philip Ilten, October 2019.
@@ -26,7 +26,7 @@ LOCAL_SRC=src
 LOCAL_TMP=tmp
 LOCAL_INCLUDE=include
 LOCAL_MKDIRS:=$(shell mkdir -p $(LOCAL_TMP) $(TOP_LIB))
-OBJ_COMMON:=-MD $(CXX_COMMON) -Iinclude $(PYTHON_INCLUDE) -w -fpermissive
+OBJ_COMMON=-MD $(CXX_COMMON) -Iinclude $(PYTHON_INCLUDE) -w -fpermissive
 LIB_COMMON=-Wl,-rpath,$(TOP_LIB) -ldl $(GZIP_LIB)
 PYTHIA=$(TOP_LIB)/libpythia8$(LIB_SUFFIX)
 
@@ -56,6 +56,10 @@ $(PYTHIA):
 # Auto-dependencies.
 -include $(LOCAL_TMP)/*.d
 
+# Python version.
+$(LOCAL_TMP)/version: $(LOCAL_SRC)/version.cpp
+	$(CXX) $< -o $@ $(PYTHON_INCLUDE)
+
 # Build the headers.
 $(LOCAL_INCLUDE)/Pythia8%.h: $(TOP_INCLUDE)/Pythia8%.h
 	@mkdir -p $(dir $@)
@@ -64,8 +68,11 @@ $(LOCAL_INCLUDE)/Pythia8%.h: $(TOP_INCLUDE)/Pythia8%.h
 	"Info infoPython() {return Info(infoPrivate);}/g" > $@
 
 # Build the objects.
-$(LOCAL_TMP)/%.o: $(LOCAL_SRC)/%.cpp
-	$(CXX) $< -o $@ -c $(OBJ_COMMON) 
+$(LOCAL_TMP)/%.o: $(LOCAL_SRC)/%.cpp $(LOCAL_TMP)/version
+	$(eval OBJ_COMMON=-MD $(CXX_COMMON) -Iinclude\
+	 -Iinclude/$(shell $(LOCAL_TMP)/version) $(PYTHON_INCLUDE)\
+	 -w -fpermissive)
+	$(CXX) $< -o $@ -c $(OBJ_COMMON)
 
 # Build the library.
 $(TOP_LIB)/pythia8.so: $(PYTHIA) $(HEADERS) $(OBJECTS)

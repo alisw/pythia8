@@ -1,0 +1,101 @@
+<chapter name="Logging and diagnostics"> 
+ 
+<h2>Logging</h2> 
+ 
+<h3>Controlling printing</h3> 
+The following settings are used to control what is printed during 
+initialization and event generations. 
+ 
+<flag name="Print:init" default="on"> 
+If disabled, messages (except for errors) are suppressed during 
+initialization. In order to show only certain types of information, use the 
+<code>Init:showProcesses</code>, 
+<code>Init:showMultipartonInteractions</code>, 
+<code>Init:showChangedSettings</code>, 
+<code>Init:showAllSettings</code>, 
+<code>Init:showChangedParticleData</code>, 
+<code>Init:showChangedResonanceData</code>, 
+<code>Init:showAllParticleData</code>, and 
+<code>Init:showOneParticleData</code> settings. 
+</flag> 
+ 
+<flag name="Print:next" default="on"> 
+If disabled, messages (except for errors) are suppressed during event 
+generation. In order show only certain types of information, use the 
+<code>Next:numberCount</code>, 
+<code>Next:numberShowLHA</code>, 
+<code>Next:numberShowInfo</code>, 
+<code>Next:numberShowProcess</code>, and 
+<code>Next:numberShowEvent</code> settings. 
+</flag> 
+ 
+<flag name="Print:quiet" default="off"> 
+Can be set on to avoid the printing during program execution, to the 
+largest extent possible. This is equivalent to turning off the three flags 
+above. 
+</flag> 
+ 
+<h3>Error messages</h3> 
+Error messages are printed through the Logger class. There are five types 
+of error messages: 
+<ul> 
+<li>Abort: An abort message indicates a critical error that might 
+prevent further event generation from taking place. Examples: unable to 
+find particle database; invalid user settings; 
+calling <code>Pythia::next</code> after initialization failed.</li> 
+<li>Error: An error indicates that something has gone wrong during event 
+generation. When an error occurs in a function, it usually means that 
+function failed to execute. It is possible that the calling function is 
+able to recover, otherwise the event will fail to generate.</li> 
+<li>Warning: Warning messages indicate an exceptional case that the function 
+is able to recover from. They are usually not a cause for concern, but a 
+large number of warnings could indicate that there is something wrong with 
+your configuration.</li> 
+<li>Info: Info messages provide information that is not an error. Example: 
+when the parallel framework automatically detects the number of hardware 
+threads, this number is output as an Info message.</li> 
+<li>Report: Report messages are used to provide additional details that may 
+be relevant for debugging purposes. These messages are off by default.</li> 
+</ul> 
+In the <code>Logger</code> class, the <code>abortMsg</code>, 
+<code>errorMsg</code>, <code>warningMsg</code>, and <code>infoMsg</code> 
+methods are used to generate messages of the corresponding types. However, 
+the standard way to output error messages is through the 
+<code>ABORT_MSG</code>, <code>ERROR_MSG</code>, <code>WARNING_MSG</code>, 
+and <code>INFO_MSG</code> macros. These macros expand to the corresponding 
+methods, but automatically replaces the first argument by 
+<code>__METHOD_NAME__</code>. For example, the two lines are equivalent: 
+<ul> 
+<li><code>infoPtr->ERROR_MSG("an error occurred");</code></li> 
+<li><code>infoPtr->errorMsg(__METHOD_NAME__, "an error occurred");</code></li> 
+</ul> 
+The reason macros are used this way is that there is no other easy way to 
+automatically propagate the name of the method where the error occurred. 
+ 
+<p/> 
+The following settings are used to control error logging features. 
+<flag name="Print:errors" default="on"> 
+If on, error messages are printed to the console the first time each 
+of them occurs. Even if off, errors are still logged and displayed when 
+calling <code>Pythia::stat</code>. 
+</flag> 
+ 
+<modepick name="Print:verbosity" default="2" min="0" max="3"> 
+This setting determines which types of diagnostic messages are logged. 
+Messages that don't satisfy the verbosity level will not be printed 
+when calling <code>Pythia::stat</code>. 
+<option value="0">No error messages are logged.</option> 
+<option value="1">Only critical abort messages are logged.</option> 
+<option value="2">All normal messages are logged (default).</option> 
+<option value="3">Also report messages are logged.</option> 
+</modepick> 
+ 
+<flag name="Print:useErrorStream" default="off"> 
+By default, all logger messages are written to <code>cout</code>. If this 
+flag is turned on, error messages will instead be written 
+to <code>cerr</code>. 
+</flag> 
+ 
+</chapter> 
+ 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,0 +1,48 @@
+! File: main207.cmnd
+! This file contains commands to be read in for a PYTHIA8/VINCIA run.
+! Lines not beginning with a letter or digit are comments.
+! Names are case-insensitive  -  but spellings-sensitive!
+
+! Tell Pythia8 that an LHEF input is used.
+Beams:frameType = 4
+Beams:LHEF      = main207.lhe
+
+! Parton Shower Model Selection: 1) Pythia; 2) Vincia.
+PartonShowers:model   = 2
+
+! Weak Shower settings for Pythia's Weak Shower.
+TimeShower:weakShower = on
+WeakShower:singleEmission = off
+TimeShower:pTminWeak = 1.0000000000e-01
+
+! Weak Shower settings for Vincia's EW Shower.
+Vincia:helicityShower = on
+Vincia:ewMode         = 3
+
+! Switch off Initial-State Radiation and Multi-Parton Interactions.
+PDF:lepton = off
+PartonLevel:MPI = off ! MPI
+PartonLevel:ISR = off ! ISR
+
+! In Dark-Matter contexts, long-lived hadrons normally kept stable in
+! collider contexts should should also decay (see also main07.cc).
+13:mayDecay   = true                 ! mu+-
+211:mayDecay  = true                 ! pi+-
+321:mayDecay  = true                 ! K+-
+130:mayDecay  = true                 ! K0_L
+2112:mayDecay = true                 ! n
+
+! Info settings.
+Next:numberShowEvent   = 10     # print full event record n times
+Next:numberShowProcess = 10     # print hard-process record n times
+Next:numberShowInfo    = 10     # show event info n times
+Next:numberCount       = 10    # print message every n events to see progress.
+Init:showChangedParticleData = on
+Init:showChangedSettings     = on
+
+! Allow a few failures before quitting
+Main:timesAllowErrors = 10
+
+! Special settings to avoid pythia crashing when running with DM "beams".
+Check:beams = off
+Check:event = off

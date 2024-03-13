@@ -1,5 +1,5 @@
 // SimpleSpaceShower.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -131,6 +131,7 @@ void SimpleSpaceShower::init( BeamParticle* beamAPtrIn,
   factorMultFac     = parm("SpaceShower:factorMultFac");
   useFixedFacScale  = flag("SpaceShower:useFixedFacScale");
   fixedFacScale2    = pow2(parm("SpaceShower:fixedFacScale"));
+  pdfModeSave       = mode("SpaceShower:pdfMode");
 
   // Parameters of alphaStrong generation.
   alphaSvalue     = parm("SpaceShower:alphaSvalue");
@@ -194,7 +195,7 @@ void SimpleSpaceShower::init( BeamParticle* beamAPtrIn,
     pTmin         = pTminAbs;
     ostringstream newPTmin;
     newPTmin << fixed << setprecision(3) << pTmin;
-    infoPtr->errorMsg("Warning in SpaceShower::init: pTmin too low",
+    loggerPtr->WARNING_MSG("pTmin too low",
                       ", raised to " + newPTmin.str() );
     infoPtr->setTooLowPTmin(true);
   }
@@ -268,14 +269,24 @@ void SimpleSpaceShower::init( BeamParticle* beamAPtrIn,
   weakMaxWt          = 1.;
 
   // Disallow simultaneous splitting and trial emission enhancements.
-  canEnhanceEmission = hasUserHooks && userHooksPtr->canEnhanceEmission();
-  canEnhanceTrial    = hasUserHooks && userHooksPtr->canEnhanceTrial();
+  canEnhanceEmission = flag("Enhancements:doEnhance");
+  canEnhanceTrial    = flag("Enhancements:doEnhanceTrial");
   if (canEnhanceEmission && canEnhanceTrial) {
-    infoPtr->errorMsg("Error in SimpleSpaceShower::init: Enhance for both "
-    "actual and trial emissions not possible. Both switched off.");
+    loggerPtr->ERROR_MSG(
+      "enhance for both actual and trial emissions not possible;"
+      " both switched off");
     canEnhanceEmission = false;
     canEnhanceTrial    = false;
   }
+
+  if ((canEnhanceEmission || canEnhanceTrial) && !initEnhancements()) {
+    loggerPtr->ERROR_MSG("Initialization of enhanced emissions failed");
+    canEnhanceEmission = canEnhanceTrial = false;
+  }
+
+  // Initialize variables set in pTnext but not in showerQED.
+  doTrialNow = false;
+  canEnhanceET = (canEnhanceEmission || canEnhanceTrial);
 
   // Properties for enhanced emissions.
   splittingNameSel   = "";
@@ -296,7 +307,7 @@ void SimpleSpaceShower::init( BeamParticle* beamAPtrIn,
 
   // Possibility to set parton vertex information.
   doPartonVertex     = flag("PartonVertex:setVertex")
-                    && (partonVertexPtr != 0);
+                     && (partonVertexPtr != 0);
 
 }
 
@@ -312,14 +323,12 @@ bool SimpleSpaceShower::limitPTmax( Event& event, double Q2Fac, double Q2Ren) {
   bool dopTlimit = false;
   dopTlimit1 = dopTlimit2 = false;
   int nHeavyCol = 0;
-  if      (pTmaxMatch == 1) dopTlimit = dopTlimit1 = dopTlimit2 = true;
+  if (pTmaxMatch == 1) dopTlimit = dopTlimit1 = dopTlimit2 = true;
   else if (pTmaxMatch == 2) dopTlimit = dopTlimit1 = dopTlimit2 = false;
-
   // Always restrict SoftQCD processes.
   else if (infoPtr->isNonDiffractive() || infoPtr->isDiffractiveA()
     || infoPtr->isDiffractiveB() || infoPtr->isDiffractiveC() )
     dopTlimit = dopTlimit1 = dopTlimit2 = true;
-
   // Look if any quark (u, d, s, c, b), gluon or photon in final state.
   // Also count number of heavy coloured particles, like top.
   else {
@@ -411,8 +420,10 @@ void SimpleSpaceShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
       int iColPartner = (doDipoleRecoil)
                       ? findColPartner(event, in1, in2, iSys) : 0;
       int idColPartner = (iColPartner != 0) ? event[iColPartner].id() : 0;
+
       dipEnd.push_back( SpaceDipoleEnd( iSys, 1, in1, in2, pTmax1,
-        colType1, 0, 0, MEtype, canRadiate2, 0, iColPartner, idColPartner) );
+          colType1, 0, 0, MEtype, canRadiate2, 0, iColPartner,
+          idColPartner) );
     }
     int colType2 = event[in2].colType();
     if (canRadiate2) {
@@ -420,8 +431,11 @@ void SimpleSpaceShower::prepare( int iSys, Event& event, bool limitPTmaxIn) {
       int iColPartner = (doDipoleRecoil)
                       ? findColPartner(event, in2, in1, iSys) : 0;
       int idColPartner = (iColPartner != 0) ? event[iColPartner].id() : 0;
+
       dipEnd.push_back( SpaceDipoleEnd( iSys, 2, in2, in1, pTmax2,
-        colType2, 0, 0, MEtype, canRadiate1, 0, iColPartner, idColPartner) );
+          colType2, 0, 0, MEtype, canRadiate1, 0, iColPartner,
+          idColPartner) );
+
     }
   }
 
@@ -579,7 +593,7 @@ double SimpleSpaceShower::pTnext( Event& event, double pTbegAll,
   splittingNameSel = "";
   splittingNameNow = "";
   enhanceFactors.clear();
-  if (hasUserHooks) userHooksPtr->setEnhancedTrial(0., 1.);
+  weightContainerPtr->weightsSimpleShower.setEnhancedTrial(0., 1.);
 
   // Loop over all possible dipole ends.
   for (int iDipEnd = 0; iDipEnd < int(dipEnd.size()); ++iDipEnd) {
@@ -592,6 +606,7 @@ double SimpleSpaceShower::pTnext( Event& event, double pTbegAll,
 
     // Check whether dipole end should be allowed to shower.
     double pT2begDip = pow2(pTbegDip);
+
     if (pT2begDip > pT2sel && ( dipEndNow->colType != 0
       || dipEndNow->chgType != 0 || dipEndNow->weakType != 0) ) {
       double pT2endDip = 0.;
@@ -619,6 +634,9 @@ double SimpleSpaceShower::pTnext( Event& event, double pTbegAll,
 
       // If reconstructed back to the beam photon, no further ISR emissions.
       if ( beamNow.isGamma() && !(beamNow.resolvedGamma()) ) continue;
+
+      // Prevent emissions from unresolved beams.
+      if ( beamNow.isUnresolved() ) continue;
 
       // Note dipole mass correction when recoiler is a rescatter.
       m2Rec        = (dipEndNow->normalRecoil) ? 0. : event[iRec].m2();
@@ -660,6 +678,253 @@ double SimpleSpaceShower::pTnext( Event& event, double pTbegAll,
 
 //--------------------------------------------------------------------------
 
+// Function to directly extract the probability of no emission between two
+// scales. This function is not used in the Pythia core code, but can be used
+// by external programs to extract no-emission probabilities from Pythia.
+
+double SimpleSpaceShower::noEmissionProbability( double pTbegAll,
+  double pTendAll, double m2dip, int idA, int type, double s, double x) {
+
+  // First, create a dummy event with two entries from the inputs.
+  Event state;
+  state.init("(dummy event)", particleDataPtr);
+  // Setup two dipole ends for each flavor combination.
+  Vec4 pA(0., 0., 0.5*sqrt(m2dip), 0.5*sqrt(m2dip)), pB;
+  if (type < 0) pB.p(0., 0.,-0.5*sqrt(m2dip), 0.5*sqrt(m2dip));
+  if (type > 0) {
+    Vec4 pAtmp(pA);
+    double phi   = 2.*M_PI*rndmPtr->flat();
+    double theta = M_PI*rndmPtr->flat();
+    double sign_theta = rndmPtr->flat() > 0.5 ? 1. : -1.;
+    pAtmp.rot(sign_theta*theta,phi);
+    RotBstMatrix rotate;
+    rotate.bst( pAtmp, pA);
+    pB.p(-pAtmp.px(),-pAtmp.py(),-pAtmp.pz(), 0.5*sqrt(m2dip));
+    // After this, the inactive beam returns to the correct energy fraction.
+    pB.rotbst(rotate);
+  }
+
+  int iSys = 0;
+  int colA  = 1;
+  int acolA = 2;
+  if (particleDataPtr->colType(idA) == 1) {colA = 1; acolA = 0;}
+  if (particleDataPtr->colType(idA) ==-1) {colA = 0; acolA = 1;}
+
+  // Add recoiler. For 1->3 splitting, attach "dummy" recoiler.
+  double sign = (type<0) ? 1. : -1;
+  state.append( 90, -11, 0, 0, 0, 0, 0, 0, pA+sign*pB, (pA+sign*pB).mCalc(),
+    sqrt(m2dip) );
+  state.append( idA, -21, 0, 0, 0, 0, colA, acolA, pA, 0.0,
+    sqrt(m2dip) );
+  int idB  = (idA == 21) ? 21
+           : ((type < 0) ? -idA : idA);
+  vector<int> recids; recids.push_back(idB);
+  vector<int> recpos;
+  for (unsigned int i = 0; i < recids.size(); ++i) {
+    int colB(acolA), acolB(colA);
+    if (type > 0) swap(colB,acolB);
+    if ( type < 0
+      && particleDataPtr->colType(idA) == 1
+      && particleDataPtr->colType(recids[i])   ==-1) {colB = 0; acolB = colA;}
+    if ( type < 0
+      && particleDataPtr->colType(idA) ==-1
+      && particleDataPtr->colType(recids[i])   == 1) {colB = acolA; acolB = 0;}
+
+    if ( type < 0
+      && particleDataPtr->colType(idA) == 2
+      && particleDataPtr->colType(recids[i])   ==-1) {colB = 0; acolB = colA;}
+    if ( type < 0
+      && particleDataPtr->colType(idA) == 2
+      && particleDataPtr->colType(recids[i])   == 1) {colB = acolA; acolB = 0;}
+
+    if (type < 0) state.append( recids[i], -21, 0, 0, 0, 0, colB, acolB, pB,
+      0.0, sqrt(m2dip) );
+    if (type > 0) state.append( recids[i],  23, 0, 0, 0, 0, colB, acolB, pB,
+      0.0, sqrt(m2dip) );
+    recpos.push_back(i+1);
+  }
+
+  // Now initialize other internal classes from the inputs, so that parton
+  // shower methods that rely on beam and system information can be used.
+  // Current cm energy, in case it varies between events.
+  sCM       = s;
+  eCM       = sqrt(s);
+  pTbegRef  = pTbegAll;
+  double x1 = x;
+  double x2 = m2dip/s/x1;
+  beamAPtr->clear();
+  beamBPtr->clear();
+  beamAPtr->append( 1, idA, x1);
+  beamBPtr->append( 2, idB, x2);
+  beamAPtr->xfISR( 0, idA, x1, pTbegAll*pTbegAll);
+  int vsc1 = beamAPtr->pickValSeaComp();
+  beamBPtr->xfISR( 0, idB, x2, pTbegAll*pTbegAll);
+  int vsc2 = beamBPtr->pickValSeaComp();
+  infoPtr->setValence( (vsc1 == -3), (vsc2 == -3));
+  // Store participating partons as first set in list of all systems.
+  partonSystemsPtr->clear();
+  partonSystemsPtr->addSys();
+  partonSystemsPtr->setInA(0, 1);
+  partonSystemsPtr->setInB(0, 2);
+  partonSystemsPtr->setSHat( 0, m2dip);
+  partonSystemsPtr->setPTHat( 0, pTbegAll);
+
+  // Find positions of incoming colliding partons and extract all dipoles that
+  // should be used in the evolution.
+  vector<SpaceDipoleEnd> dipEnds;
+  prepare(iSys,state,true);
+  dipEnds = dipEnd;
+  dipEnd.clear();
+
+  // Set output and produce many trial showers (to obtain a statisically stable
+  // no-emission probability value)
+  double wt(0.);
+  int nTrialsMax(500000), nTrials(0);
+  for (int i=0; i < nTrialsMax; ++i) {
+
+    double startingScale = pTbegAll;
+    double wtnow = 1.;
+    doTrialNow = true;
+
+    while ( true ) {
+
+      // Reset process scale so that shower starting scale is correctly set.
+      state.scale(startingScale);
+
+      // Get pT before reclustering
+      double minScale = pTendAll;
+
+      mergingHooksPtr->setShowerStoppingScale(minScale);
+
+      // If the maximal scale and the minimal scale coincide (as would
+      // be the case for the corrected scales of unordered histories),
+      // do not generate Sudakov
+      if (minScale >= startingScale) break;
+
+      // Get trial shower pT.
+      double pTtrial = pTnext( dipEnds, state, startingScale, minScale,
+        m2dip, idA, type, s, x);
+
+      // Done if evolution scale has fallen below minimum
+      if ( pTtrial < minScale ) { wtnow *= 1.; break;}
+
+      // Reset starting scale.
+      startingScale = pTtrial;
+
+      if ( pTtrial > minScale) wtnow *= 0.;
+      if ( wtnow == 0.)        break;
+      if ( pTtrial > minScale) continue;
+
+      // Done
+      break;
+
+    }
+
+    nTrials++;
+    wt += wtnow;
+
+  }
+
+  // Calculate the value of the no-emssion probabilty.
+  wt /= nTrials;
+  if (wt < settingsPtr->parm("Dire:Sudakov:Min")) wt = 0.;
+
+  // Clean up, done.
+  beamAPtr->clear();
+  beamBPtr->clear();
+  partonSystemsPtr->clear();
+  return wt;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Function to select next pT in downwards evolution of the existing dipoles.
+// This function is not used in the Pythia core code, but can be used
+// by external programs. Thus, this function relies exclusively on its
+// inputs, such that it can be used by an external code. Apart from this,
+// this function is a copy of the internal-use function
+// "pTnext( event, pTbegAll, pTendAll, isFirstTrial, doTrialIn)" defined
+// above, but stripped of any non-QCD showers.
+
+double SimpleSpaceShower::pTnext( vector<SpaceDipoleEnd> dipEnds, Event event,
+  double pTbegAll, double pTendAll, double m2dip, int, int, double s,
+  double x) {
+
+  double x1 = x;
+  double x2 = m2dip/s/x1;
+  int iSys = 0;
+
+  // Starting values: no radiating dipole found.
+  double pT2sel = pow2(pTendAll);
+  iDipSel       = 0;
+  iSysSel       = 0;
+  dipEndSel     = 0;
+  pdfMode       = pdfModeSave;
+
+  bool hasEvolSideA(false);
+
+  // Loop over all possible dipole ends.
+  for (int iDipEnd = 0; iDipEnd < int(dipEnds.size()); ++iDipEnd) {
+
+    iDipNow         = iDipEnd;
+    dipEndNow       = &dipEnds[iDipEnd];
+    double pTbegDip = min( pTbegAll, dipEndNow->pTmax );
+
+    // Check whether dipole end should be allowed to shower.
+    double pT2begDip = pow2(pTbegDip);
+    double pT2endDip = 0.;
+    // Determine lower cut for evolution for QCD
+    pT2endDip = pTendAll*pTendAll;
+    pT2endDip = max(pT2endDip, pT2sel);
+
+    // Find properties of dipole and radiating dipole end.
+    sideA         = ( abs(dipEndNow->side) == 1 );
+
+    if (sideA!=1) continue;
+    if (sideA == 1 && hasEvolSideA) continue;
+    hasEvolSideA=true;
+
+    iNow          = dipEndNow->iRadiator;
+    iRec          = dipEndNow->iRecoiler;
+    idDaughter    = event[dipEndNow->iRadiator].id();
+    xDaughter=x1;
+    x1Now         = (sideA) ? x1 : x2;
+    x2Now         = (sideA) ? x2 : x1;
+    // Note dipole mass correction when recoiler is a rescatter.
+    m2Rec         = (dipEndNow->normalRecoil) ? 0. : event[iRec].m2();
+    m2Dip         = abs(2.*event[iNow].p()*event[iRec].p());
+
+    // Dipole properties.
+    dipEndNow->m2Dip  = m2Dip;
+    // Reset emission properties.
+    dipEndNow->pT2    =  0.0;
+    dipEndNow->z      = -1.0;
+
+    // Now do evolution in pT2, for QCD
+    if (pT2begDip > pT2endDip) {
+
+      if (dipEndNow->colType != 0) pT2nextQCD( pT2begDip, pT2endDip);
+
+      // Update if found larger pT than current maximum.
+      if (dipEndNow->pT2 > pT2sel) {
+        pT2sel    = dipEndNow->pT2;
+        iDipSel   = iDipNow;
+        iSysSel   = iSys;
+        dipEndSel = dipEndNow;
+      }
+    }// End loop over dipole ends.
+  }
+
+  pdfMode = 0;
+
+  // Return nonvanishing value if found pT is bigger than already found.
+  return (dipEndSel == 0) ? 0. : sqrt(pT2sel);
+
+}
+
+//--------------------------------------------------------------------------
+
 // Evolve a QCD dipole end.
 
 void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
@@ -674,11 +939,16 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
   double pT2          = pT2begDip;
   double xMaxAbs      = beam.xMax(iSysNow);
   double zMinAbs      = xDaughter / xMaxAbs;
-  if (xMaxAbs < 0.) {
-    infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextQCD: "
-    "xMaxAbs negative");
+  if (pdfMode == 0 && xMaxAbs < 0.) {
+    loggerPtr->WARNING_MSG("xMaxAbs negative");
     return;
   }
+
+  // Hard cut-off for z-integration if no bound from Bjorken x is possible.
+  if (pdfMode == 1) { zMinAbs = 1e-5; xMaxAbs = 1.;}
+  if (pdfMode == 2) { zMinAbs = 0.5; xMaxAbs = 1.;}
+  if (pdfMode!=0) isValence = false;
+  double NF = nQuarkIn;
 
   // Starting values for handling of massive quarks (c/b), if any.
   double idMassive    = 0;
@@ -701,7 +971,7 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
       double m2Red  = m2ColPair - m2ColPartner;
       zMaxMassive = m2Red / (m2Red + m2Massive);
     }
-    if (xDaughter > HEAVYXEVOL * zMaxMassive * xMaxAbs) return;
+    if (pdfMode == 0 && xDaughter > HEAVYXEVOL * zMaxMassive * xMaxAbs) return;
 
     // Find threshold scale below which only g -> Q + Qbar will be allowed.
     m2Threshold = (idMassive == 4) ? min( pT2, CTHRESHOLD * m2c)
@@ -749,9 +1019,9 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
   // Set default values for enhanced emissions.
   bool isEnhancedQ2QG, isEnhancedG2QQ, isEnhancedQ2GQ, isEnhancedG2GG;
-  isEnhancedQ2QG = isEnhancedG2QQ = isEnhancedQ2GQ = isEnhancedG2GG = false;
   double enhanceNow = 1.;
   string nameNow = "";
+  bool canEnhanceETnow = canEnhanceET;
 
   // Begin evolution loop towards smaller pT values.
   int    loopTinyPDFdau = 0;
@@ -767,9 +1037,8 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // Bad sign if repeated looping with small daughter PDF, so fail.
     // (Example: if all PDF's = 0 below Q_0, except for c/b companion.)
     if (hasTinyPDFdau) ++loopTinyPDFdau;
-    if (loopTinyPDFdau > MAXLOOPTINYPDF) {
-      infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextQCD: "
-      "small daughter PDF");
+    if (pdfMode == 0 && loopTinyPDFdau > MAXLOOPTINYPDF) {
+      loggerPtr->WARNING_MSG("small daughter PDF");
       return;
     }
 
@@ -823,12 +1092,15 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
       // Parton density of daughter at current scale.
       pdfScale2 = (useFixedFacScale) ? fixedFacScale2 : factorMultFac * pT2;
       xfModPrepData xfData = beam.xfModPrep(iSysNow, pdfScale2);
-      xPDFdaughter = beam.xfISR(iSysNow, idDaughter, xDaughter, pdfScale2,
-        xfData);
-      if (xPDFdaughter < TINYPDF) {
+      xPDFdaughter = (pdfMode == 0)
+        ? beam.xfISR(iSysNow, idDaughter, xDaughter, pdfScale2, xfData)
+        : 1.;
+      if (pdfMode == 0 && xPDFdaughter < TINYPDF) {
         xPDFdaughter  = TINYPDF;
         hasTinyPDFdau = true;
       }
+
+      if (pdfMode == 3) zMinAbs=1.-zMaxAbs;
 
       // Integrals of splitting kernels for gluons: g -> g, q -> g.
       if (isGluon) {
@@ -836,25 +1108,39 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
           * log(zMaxAbs * (1.-zMinAbs) / (zMinAbs * (1.-zMaxAbs)));
         if (doMEcorrections) g2gInt *= calcMEmax(MEtype, 21, 21);
         // Optionally enhanced branching rate.
-        if (canEnhanceET) g2gInt *= userHooksPtr->enhanceFactor("isr:G2GG");
+        if (canEnhanceETnow) g2gInt *= enhanceFactor("isr:G2GG");
         q2gInt = overFac * HEADROOMQ2G * (16./3.)
           * (1./sqrt(zMinAbs) - 1./sqrt(zMaxAbs));
+        // When calculating a Sudakov factor (and not a no-emission
+        // probability!), the set of kernels is defined by forward
+        // evolution of a gluon. Thus, use the overestimate of g->qq~
+        // kernels here, in this case.
+        if (pdfMode!=0) {
+          q2gInt = overFac * HEADROOMG2Q * 0.5
+            * (zMaxAbs - zMinAbs);
+          // There are NF possibilities, for g->qq~ and g->q~q alike.
+          q2gInt *= 2.*NF;
+        }
+        // Optionally matrix-element corrections.
         if (doMEcorrections) q2gInt *= calcMEmax(MEtype, 1, 21);
         // Optionally enhanced branching rate.
-        if (canEnhanceET) q2gInt *= userHooksPtr->enhanceFactor("isr:Q2GQ");
+        if (canEnhanceETnow) q2gInt *= enhanceFactor("isr:Q2GQ");
 
         // Parton density of potential quark mothers to a g.
         xPDFmotherSum  = 0.;
         xPDFmother[10] = 0.;
         for (int i = -nQuarkIn; i <= nQuarkIn; ++i) {
           if (i == 0) continue;
-          xPDFmother[i+10] = beam.xfISR(iSysNow, i, xDaughter, pdfScale2,
-            xfData);
+          xPDFmother[i+10] = (pdfMode == 0)
+            ? beam.xfISR(iSysNow, i, xDaughter, pdfScale2, xfData) : 1.;
           xPDFmotherSum += xPDFmother[i+10];
         }
 
         // Total QCD evolution coefficient for a gluon.
-        kernelPDF = g2gInt + q2gInt * xPDFmotherSum / xPDFdaughter;
+        kernelPDF  = g2gInt;
+        kernelPDF += (pdfMode == 0) ?
+          q2gInt * xPDFmotherSum / xPDFdaughter
+          : q2gInt;
 
       // For valence quark only need consider q -> q g branchings.
       // Introduce an extra factor sqrt(z) to smooth bumps.
@@ -864,7 +1150,7 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         q2qInt = coefColRec * overFac * (8./3.) * log( zRootMax / zRootMin );
         if (doMEcorrections) q2qInt *= calcMEmax(MEtype, 1, 1);
         // Optionally enhanced branching rate.
-        if (canEnhanceET) q2qInt *= userHooksPtr->enhanceFactor("isr:Q2QG");
+        if (canEnhanceETnow) q2qInt *= enhanceFactor("isr:Q2QG");
         kernelPDF = q2qInt;
 
       // Integrals of splitting kernels for quarks: q -> q, g -> q.
@@ -873,11 +1159,11 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
           * log( (1. - zMinAbs) / (1. - zMaxAbs) );
         if (doMEcorrections) q2qInt *= calcMEmax(MEtype, 1, 1);
         // Optionally enhanced branching rate.
-        if (canEnhanceET) q2qInt *= userHooksPtr->enhanceFactor("isr:Q2QG");
+        if (canEnhanceETnow) q2qInt *= enhanceFactor("isr:Q2QG");
         g2qInt = overFac * HEADROOMG2Q * 0.5 * (zMaxAbs - zMinAbs);
         if (doMEcorrections) g2qInt *= calcMEmax(MEtype, 21, 1);
         // Optionally enhanced branching rate.
-        if (canEnhanceET) g2qInt *= userHooksPtr->enhanceFactor("isr:G2QQ");
+        if (canEnhanceETnow) g2qInt *= enhanceFactor("isr:G2QQ");
 
         // Increase the upper weight for heavy quarks in photon beam
         // due to different behavior of the PDFs.
@@ -895,11 +1181,38 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
           g2qInt *= g2Qenhance;
         }
 
+        // When calculating a Sudakov factor (and not a no-emission
+        // probability!), the set of kernels is defined by forward
+        // evolution of a gluon. Thus, use the overestimate of q->gq
+        // kernels here, in this case.
+        if (pdfMode!=0) {
+          // Parton density of potential quark mothers to a g.
+          xPDFmotherSum = 0.;
+          for (int i = -nQuarkIn; i <= nQuarkIn; ++i) {
+            if (i == 0) {
+              xPDFmother[10] = 0.;
+            } else {
+              xPDFmother[i+10] = (pdfMode == 0)
+                ? beam.xfISR(iSysNow, i, xDaughter, pdfScale2, xfData)
+                : 1.;
+              xPDFmotherSum += xPDFmother[i+10];
+            }
+          }
+          g2qInt = overFac * HEADROOMQ2G * (16./3.)
+            * (1./sqrt(zMinAbs) - 1./sqrt(zMaxAbs));
+        }
+
         // Parton density of a potential gluon mother to a q.
-        xPDFgMother = beam.xfISR(iSysNow, 21, xDaughter, pdfScale2, xfData);
+        xPDFgMother = (pdfMode == 0)
+          ? beam.xfISR(iSysNow, 21, xDaughter, pdfScale2, xfData) : 1.;
+        if (nQuarkIn == 0) xPDFgMother = 0.;
 
         // Total QCD evolution coefficient for a quark.
-        kernelPDF = q2qInt + g2qInt * xPDFgMother / xPDFdaughter;
+        kernelPDF  = q2qInt;
+        kernelPDF += (pdfMode == 0) ?
+          g2qInt * xPDFgMother / xPDFdaughter
+          : g2qInt;
+
       }
 
       // End evaluation of splitting kernels and parton densities.
@@ -936,7 +1249,7 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
     // If fallen into b threshold region, force g -> b + bbar.
     if (idMassive == 5 && pT2 < m2Threshold) {
-      pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
+      if (!isValence) pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
         zMinAbs, zMaxMassive, iColPartner );
       return;
 
@@ -948,7 +1261,7 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
 
     // If fallen into c threshold region, force g -> c + cbar.
     } else if (idMassive == 4 && pT2 < m2Threshold) {
-      pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
+      if (!isValence) pT2nearThreshold( beam, m2Massive, m2Threshold, xMaxAbs,
         zMinAbs, zMaxMassive, iColPartner );
       return;
 
@@ -979,8 +1292,8 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         wt /= HEADROOMG2G;
         // Optionally enhanced branching rate.
         nameNow = "isr:G2GG";
-        if (canEnhanceET) {
-          double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (canEnhanceETnow) {
+          double enhance = enhanceFactor(nameNow);
           if (enhance != 1.) {
             enhanceNow = enhance;
             isEnhancedG2GG = true;
@@ -1002,13 +1315,25 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         wt /= HEADROOMQ2G;
         // Optionally enhanced branching rate.
         nameNow = "isr:Q2GQ";
-        if (canEnhanceET) {
-          double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (canEnhanceETnow) {
+          double enhance = enhanceFactor(nameNow);
           if (enhance != 1.) {
             enhanceNow = enhance;
             isEnhancedQ2GQ = true;
           }
         }
+
+        // When calculating a Sudakov factor, the set of kernels is defined
+        // by forward evolution. Thus, use g->qq~ kernels here, in this case.
+        if (pdfMode!=0) {
+          idMother = 21;
+          idSister = - idDaughter;
+          z = zMinAbs + rndmPtr->flat() * (zMaxAbs - zMinAbs);
+          wt = (pow2(z) + pow2(1.-z));
+          // Account for headroom factor for gluons.
+          wt /= HEADROOMG2Q;
+        }
+
       }
 
     // Select z value of branching to q, and corrective weight.
@@ -1043,8 +1368,8 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
              / ((m2ColPair * pow2(1. - z) + z * pT2) * coefColRec);
         // Optionally enhanced branching rate.
         nameNow = "isr:Q2QG";
-        if (canEnhanceET) {
-          double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (canEnhanceETnow) {
+          double enhance = enhanceFactor(nameNow);
           if (enhance != 1.) {
             enhanceNow = enhance;
             isEnhancedQ2QG = true;
@@ -1065,18 +1390,38 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
         // Account for headroom factor for gluons
         wt /= HEADROOMG2Q;
         // Optionally enhanced branching rate.
-        if      (abs(idSister) <  4) nameNow = "isr:G2QQ";
-        else if (abs(idSister) == 4) nameNow = "isr:G2QQ:cc";
-        else                         nameNow = "isr:G2QQ:bb";
-        if (canEnhanceET) {
-          double enhance = userHooksPtr->enhanceFactor(nameNow);
+        nameNow = "isr:G2QQ";
+        if (canEnhanceETnow) {
+          double enhance = enhanceFactor(nameNow);
           if (enhance != 1.) {
             enhanceNow = enhance;
             isEnhancedG2QQ = true;
           }
         }
+
+        // When calculating a Sudakov factor, the set of kernels is defined
+        // by forward evolution. Thus, use q->gq kernels here, in this case.
+        if (pdfMode!=0) {
+          // q -> g (+ q): also select flavour.
+          double temp = xPDFmotherSum * rndmPtr->flat();
+          idMother = -nQuarkIn - 1;
+          do { temp -= xPDFmother[(++idMother) + 10]; }
+          while (temp > 0. && idMother < nQuarkIn);
+          idSister = idMother;
+          z = (zMinAbs * zMaxAbs) / pow2( sqrt(zMinAbs) + rndmPtr->flat()
+            * ( sqrt(zMaxAbs)- sqrt(zMinAbs) ));
+          wt = 0.5 * (1. + pow2(1. - z)) * sqrt(z);
+          // Account for headroom factor used to enhance trial probability
+          wt /= HEADROOMQ2G;
+        }
+
       }
     }
+
+    // When calculating a Sudakov factor without any lower limit on the value
+    // of the energy fraction, regularize with a z "tagging factor".
+    // Note that this will give the correct integrals up to power corrections.
+    if (pdfMode == 1) wt *= z;
 
     // Cancel out uncertainty-band extra headroom factors.
     wt /= overFac;
@@ -1090,7 +1435,7 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
       if (sideA) xMother += (m2Rec / (x2Now * sCM)) * (1. / z - 1.);
       else       xMother += (m2Rec / (x1Now * sCM)) * (1. / z - 1.);
     }
-    if (xMother > xMaxAbs) { wt = 0.; continue; }
+    if (pdfMode == 0 && xMother > xMaxAbs) { wt = 0.; continue; }
 
     // Forbidden emission if outside allowed z range for given pT2.
     mSister = particleDataPtr->m0(idSister);
@@ -1168,28 +1513,30 @@ void SimpleSpaceShower::pT2nextQCD( double pT2begDip, double pT2endDip) {
     // Evaluation of new daughter and mother PDF's.
     pdfScale2 = (useFixedFacScale) ? fixedFacScale2 : factorMultFac * pT2;
     xfModPrepData xfData2 = beam.xfModPrep(iSysNow, pdfScale2);
-    double xPDFdaughterNew = max ( TINYPDF,
-      beam.xfISR(iSysNow, idDaughter, xDaughter, pdfScale2, xfData2) );
-    double xPDFmotherNew =
-      beam.xfISR(iSysNow, idMother, xMother, pdfScale2, xfData2);
+    double xPDFdaughterNew = (pdfMode == 0) ? max ( TINYPDF,
+      beam.xfISR(iSysNow, idDaughter, xDaughter, pdfScale2, xfData2) ) : 1.;
+    double xPDFmotherNew = (pdfMode == 0) ?
+      beam.xfISR(iSysNow, idMother, xMother, pdfScale2, xfData2) : 1.;
     wt *= xPDFmotherNew / xPDFdaughterNew;
 
     // If doing uncertainty variations, postpone accept/reject to branch()
-    if (wt > 0. && pT2 > pT2min && doUncertaintiesNow ) {
+    if ( (wt > 0. && pT2 > pT2min && doUncertaintiesNow )
+         || (wt > 0. && canEnhanceETnow && (isEnhancedQ2QG ||
+             isEnhancedG2QQ || isEnhancedQ2GQ || isEnhancedG2GG) ) ) {
       dipEndNow->pAccept = wt;
       wt      = 1.0;
     }
 
     // Check that valence step does not cause problem.
-    if (wt > 1. && pT2 > PT2MINWARN) infoPtr->errorMsg("Warning in "
-      "SimpleSpaceShower::pT2nextQCD: weight above unity");
+    if (wt > 1. && pT2 > PT2MINWARN)
+      loggerPtr->WARNING_MSG("weight above unity");
 
   // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat()) ;
 
   // Store outcome of enhanced branching rate analysis.
   splittingNameNow = nameNow;
-  if (canEnhanceET) {
+  if (canEnhanceETnow) {
     if (isEnhancedQ2QG) storeEnhanceFactor(pT2,"isr:Q2QG", enhanceNow);
     if (isEnhancedG2QQ) storeEnhanceFactor(pT2,"isr:G2QQ", enhanceNow);
     if (isEnhancedQ2GQ) storeEnhanceFactor(pT2,"isr:Q2GQ", enhanceNow);
@@ -1224,8 +1571,7 @@ void SimpleSpaceShower::pT2nearThreshold( BeamParticle& beam,
   double xPDFmotherOld = beam.xfISR(iSysNow, 21, xDaughter, pdfScale2);
   // Check that xPDF is not vanishing.
   if ( xPDFmotherOld < TINYPDF ) {
-    infoPtr->errorMsg("Error in SimpleSpaceShower::pT2nearThreshold: "
-      "xPDF = 0");
+    loggerPtr->ERROR_MSG("xPDF = 0");
     return;
   }
 
@@ -1252,8 +1598,7 @@ void SimpleSpaceShower::pT2nearThreshold( BeamParticle& beam,
 
     // Check that not caught in infinite loop with impossible kinematics.
     if (++loop > 100) {
-      infoPtr->errorMsg("Error in SimpleSpaceShower::pT2nearThreshold: "
-        "stuck in loop");
+      loggerPtr->ERROR_MSG("stuck in loop");
       return;
     }
 
@@ -1305,7 +1650,8 @@ void SimpleSpaceShower::pT2nearThreshold( BeamParticle& beam,
     }
 
     // If doing uncertainty variations, postpone accept/reject to branch().
-    if (wt > 0. && pT2 > pT2min && doUncertaintiesNow ) {
+    if ( (wt > 0. && pT2 > pT2min && doUncertaintiesNow)
+         || (wt > 0. && canEnhanceET) ) {
       dipEndNow->pAccept = wt;
       wt      = 1.0;
     }
@@ -1346,6 +1692,8 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
   // Currently no f -> gamma branching implemented for lepton or photon beams.
   if (isPhoton && (isLeptonBeam || isGammaBeam) ) return;
 
+  double overFac = ( canEnhanceET ) ? overFactor : 1.0;
+
   // alpha_em at maximum scale provides upper estimate.
   double alphaEMmax  = alphaEM.alphaEM(renormMultFac * pT2begDip);
   double alphaEM2pi  = alphaEMmax / (2. * M_PI);
@@ -1354,8 +1702,7 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
   double xMaxAbs  = (isLeptonBeam) ? LEPTONXMAX : beam.xMax(iSysNow);
   double zMinAbs  = xDaughter / xMaxAbs;
   if (xMaxAbs < 0.) {
-    infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextQED: "
-    "xMaxAbs negative");
+    loggerPtr->WARNING_MSG("xMaxAbs negative");
     return;
   }
 
@@ -1407,6 +1754,7 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
   isEnhancedQ2QA = isEnhancedQ2AQ = isEnhancedA2QQ = false;
   double enhanceNow = 1.;
   string nameNow = "";
+  bool canEnhanceETnow = canEnhanceET;
 
   // QED evolution of fermions
   if (!isPhoton) {
@@ -1452,13 +1800,14 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
     if ( (kernelPDF + gamma2f) < TINYKERNELPDF ) return;
 
     // Optionally enhanced branching rate.
-    if (canEnhanceET) kernelPDF *= userHooksPtr->enhanceFactor("isr:Q2QA");
-
-    // Optionally enhanced branching rate.
-    if (canEnhanceET) gamma2f *= userHooksPtr->enhanceFactor("isr:A2QQ");
+    if (canEnhanceETnow) {
+      kernelPDF *= enhanceFactor("isr:Q2QA");
+      gamma2f   *= enhanceFactor("isr:A2QQ");
+    }
 
     // Add gamma -> q qbar splittings to kernelPDF for photon beam.
     kernelPDF += gamma2f;
+    kernelPDF *= overFac;
 
     // Begin evolution loop towards smaller pT values.
     do {
@@ -1512,18 +1861,18 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
 
         // Optionally enhanced branching rate.
         nameNow = "isr:A2QQ";
-        if (canEnhanceET) {
-          double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (canEnhanceETnow) {
+          double enhance = enhanceFactor(nameNow);
           if (enhance != 1.) {
             enhanceNow = enhance;
             isEnhancedA2QQ = true;
           }
         }
+        wt /= overFac;
 
         // Check that gamma -> q qbar step does not cause problem.
         if (wt > 1. && pT2 > PT2MINWARN){
-          infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextQED: "
-            "weight above unity");
+          loggerPtr->WARNING_MSG("weight above unity");
         }
 
       // f -> f gamma splittings
@@ -1576,13 +1925,13 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
 
         // Optionally enhanced branching rate.
         nameNow = "isr:Q2QA";
-        if (canEnhanceET) {
-          double enhance = userHooksPtr->enhanceFactor(nameNow);
+        if (canEnhanceETnow) {
+          double enhance = enhanceFactor(nameNow);
           if (enhance != 1.) {
             enhanceNow = enhance;
             isEnhancedQ2QA = true;
           }
-       }
+        }
 
         // Derive Q2 and x of mother from pT2 and z.
         Q2      = pT2 / (1. - z);
@@ -1654,6 +2003,15 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
           beam.xfISR(iSysNow, idMother, xMother, pdfScale2, xfData);
         wt *= xPDFmotherNew / xPDFdaughterNew;
       }
+      wt /= overFac;
+
+      // If doing uncertainty variations, postpone accept/reject to
+      // branch().  Currently, there are no uncertainties enabled for
+      // QED.
+      if ( wt > 0. && canEnhanceETnow && isEnhancedQ2QA ) {
+        dipEndNow->pAccept = wt;
+        wt = 1.0;
+      }
 
     // Iterate until acceptable pT (or have fallen below pTmin).
     } while (wt < rndmPtr->flat()) ;
@@ -1687,8 +2045,7 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
       // Bad sign if repeated looping with small daughter PDF, so fail.
       if (hasTinyPDFdau) ++loopTinyPDFdau;
       if (loopTinyPDFdau > MAXLOOPTINYPDF) {
-        infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextQED: "
-          "small daughter PDF");
+        loggerPtr->WARNING_MSG("small daughter PDF");
         return;
       }
 
@@ -1729,7 +2086,7 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
         // (Charge-weighting happens below.)
         double q2gInt = 4. * (1./sqrt(zMinAbs) - 1./sqrt(zMaxAbs));
         // Optionally enhanced branching rate.
-        if (canEnhanceET) q2gInt *= userHooksPtr->enhanceFactor("isr:Q2QA");
+        if (canEnhanceETnow) q2gInt *= enhanceFactor("isr:Q2QA");
 
         // Charge-weighted parton density of potential quark mothers.
         xPDFmotherSum  = 0.;
@@ -1795,8 +2152,8 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
 
       // Optionally enhanced branching rate.
       nameNow      = "isr:Q2AQ";
-      if (canEnhanceET) {
-        double enhance = userHooksPtr->enhanceFactor(nameNow);
+      if (canEnhanceETnow) {
+        double enhance = enhanceFactor(nameNow);
         if (enhance != 1.) {
           enhanceNow = enhance;
           isEnhancedQ2AQ = true;
@@ -1846,13 +2203,22 @@ void SimpleSpaceShower::pT2nextQED( double pT2begDip, double pT2endDip) {
       // Trial weight: new pdf ratio
       wt *= xPDFmotherNew / xPDFdaughterNew;
 
-    // Iterate until acceptable pT (or have fallen below pTmin).
+
+      // If doing uncertainty variations, postpone accept/reject to
+      // branch().  Currently, there are no uncertainties enabled for
+      // QED
+      if ( wt > 0. && canEnhanceETnow && (isEnhancedQ2QA || isEnhancedQ2AQ) ) {
+        dipEndNow->pAccept = wt;
+        wt = 1.0;
+      }
+
+      // Iterate until acceptable pT (or have fallen below pTmin).
     } while (wt < rndmPtr->flat()) ;
   }
 
   // Store outcome of enhanced branching rate analysis.
   splittingNameNow = nameNow;
-  if (canEnhanceET) {
+  if (canEnhanceETnow) {
     if (isEnhancedQ2QA) storeEnhanceFactor(pT2,"isr:Q2QA", enhanceNow);
     if (isEnhancedQ2AQ) storeEnhanceFactor(pT2,"isr:Q2AQ", enhanceNow);
     if (isEnhancedA2QQ) storeEnhanceFactor(pT2,"isr:A2QQ", enhanceNow);
@@ -1886,8 +2252,7 @@ void SimpleSpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
   double xMaxAbs  = (isLeptonBeam) ? LEPTONXMAX : beam.xMax(iSysNow);
   double zMinAbs  = xDaughter / xMaxAbs;
   if (xMaxAbs < 0.) {
-    infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextWeak: "
-      "xMaxAbs negative");
+    loggerPtr->WARNING_MSG("xMaxAbs negative");
     return;
   }
 
@@ -1926,8 +2291,8 @@ void SimpleSpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
 
   // Set default values for enhanced emissions.
   bool isEnhancedQ2QW;
-  isEnhancedQ2QW = false;
   double enhanceNow = 1.;
+  bool canEnhanceETnow = canEnhanceET;
   string nameNow = "";
 
   // Weak evolution of fermions.
@@ -1982,8 +2347,7 @@ void SimpleSpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
   double xPDFdaughter = beam.xfISR(iSysNow, idDaughter, xDaughter, pdfScale2);
   if (xPDFdaughter < TINYPDF) {
     if (abs(idDaughter) == 1 || abs(idDaughter) == 2 || abs(idDaughter) == 21)
-      infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2nextWeak: "
-        "very small PDF");
+      loggerPtr->WARNING_MSG("very small PDF");
     return;
   }
 
@@ -2008,7 +2372,7 @@ void SimpleSpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
   kernelPDF *= fudge;
   if (kernelPDF < TINYKERNELPDF) return;
   // Optionally enhanced branching rate.
-  if (canEnhanceET) kernelPDF *= userHooksPtr->enhanceFactor("isr:Q2QW");
+  if (canEnhanceETnow) kernelPDF *= enhanceFactor("isr:Q2QW");
 
   // Begin evolution loop towards smaller pT values.
   do {
@@ -2060,8 +2424,8 @@ void SimpleSpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
 
     // Optionally enhanced branching rate.
     nameNow      = "isr:Q2QW";
-    if (canEnhanceET) {
-      double enhance = userHooksPtr->enhanceFactor(nameNow);
+    if (canEnhanceETnow) {
+      double enhance = enhanceFactor(nameNow);
       if (enhance != 1.) {
         enhanceNow = enhance;
         isEnhancedQ2QW = true;
@@ -2132,8 +2496,13 @@ void SimpleSpaceShower::pT2nextWeak( double pT2begDip, double pT2endDip) {
     }
 
     // Warn if too big weight.
-    if (wt > 1.) infoPtr->errorMsg("Warning in SimpleSpaceShower::pT2next"
-      "Weak: weight is above unity.");
+    if (wt > 1.)
+      loggerPtr->WARNING_MSG("weight is above unity");
+
+    if (wt > 0. && canEnhanceETnow && isEnhancedQ2QW ) {
+      dipEndNow->pAccept = wt;
+      wt = 1.0;
+    }
 
     // Iterate until acceptable pT (or have fallen below pTmin).
   } while (wt < rndmPtr->flat()) ;
@@ -2348,6 +2717,14 @@ bool SimpleSpaceShower::branch( Event& event) {
     int iNewCopy    = event.copy(iOldCopy, statusNew);
     if (statusOld < 0) event[iNewCopy].statusNeg();
     if (iOldCopy == iColPartner) iNewColPartner = iNewCopy;
+
+    // Also copy Hidden Valley colours where relevant.
+    if (event.hasHVcols()) {
+      int colvOld  = event[iOldCopy].colHV();
+      int acolvOld = event[iOldCopy].acolHV();
+      if (colvOld > 0 || acolvOld > 0)
+        event[iNewCopy].colsHV(colvOld, acolvOld);
+    }
   }
 
   // Define colour flow in branching.
@@ -2571,8 +2948,7 @@ bool SimpleSpaceShower::branch( Event& event) {
         event[iDaughter].p(), event[iRecoiler].p(), p1, p2, sister.p());
       if (wt > weakMaxWt) {
         weakMaxWt = wt;
-        infoPtr->errorMsg("Warning in SimpleSpaceShower::Branch: "
-          "weight is above unity for weak emission.");
+        loggerPtr->WARNING_MSG("weight is above unity for weak emission");
       }
 
       // If weighting fails then restore event record to state before emission.
@@ -2604,7 +2980,9 @@ bool SimpleSpaceShower::branch( Event& event) {
 
     // Find boost from daughter + colour partner rest frame to the event frame.
     RotBstMatrix MfromRest;
-    MfromRest.fromCMframe( event[iDaughter].p(), event[iColPartner].p() );
+    MfromRest.fromCMframe(event[iDaughter].p(), event[iColPartner].p(),
+      side != 1);
+
     // Boost mother, sister and new colour partner (recoiler already fine).
     mother.rotbst(MfromRest, false);
     sister.rotbst(MfromRest, false);
@@ -2656,10 +3034,7 @@ bool SimpleSpaceShower::branch( Event& event) {
         event[iP1].id() == - event[iP2].id()) {
       double dij = min(pP1.pT2(),pP2.pT2())
         * pow2(RRapPhi(pP1,pP2))/vetoWeakDeltaR2;
-      if (dij < d) {
-        d = dij;
-        cut = true;
-      }
+      if (dij < d) cut = true;
     }
 
     // Clean up event if the emission should be removed.
@@ -2701,16 +3076,15 @@ bool SimpleSpaceShower::branch( Event& event) {
 
   // Decide if we are going to accept or reject this branching.
   // (Without wasting time generating random numbers if pAccept = 1.)
-  bool acceptEvent = true;
-  if (pAccept < 1.0) acceptEvent = (rndmPtr->flat() < pAccept);
+  bool acceptEmission = true;
+  if (pAccept < 1.0) acceptEmission = (rndmPtr->flat() < pAccept);
 
   // Default values for uncertainty calculations
   double weight = 1.;
-  double vp = 0.;
   bool vetoedEnhancedEmission = false;
 
   // Calculate event weight for enhanced emission rate.
-  if (canEnhanceET) {
+  if (canEnhanceET  && !enhanceFactors.empty() ) {
     // Check if emission weight was enhanced. Get enhance weight factor.
     bool foundEnhance = false;
     // Move backwards as last elements have highest pT, thus are chosen
@@ -2722,42 +3096,45 @@ bool SimpleSpaceShower::branch( Event& event) {
         && abs(it->second.second-1.0) > 1e-9) {
         foundEnhance = true;
         weight       = it->second.second;
-        vp           = userHooksPtr->vetoProbability(splittingNameSel);
         break;
       }
     }
 
-    // Check emission veto.
-    if (foundEnhance && rndmPtr->flat() < vp ) vetoedEnhancedEmission = true;
     // Calculate new event weight.
     double rwgt = 1.;
-    if (foundEnhance && vetoedEnhancedEmission) rwgt *= (1.-1./weight)/vp;
-    else if (foundEnhance) rwgt *= 1./((1.-vp)*weight);
+    if( foundEnhance ) {
+      vetoedEnhancedEmission = !acceptEmission;
+      rwgt *= ( !acceptEmission )
+        ? (1.-pAccept/weight)/(1.-pAccept) : 1./weight;
+      if (!doTrialNow || !canEnhanceTrial)
+        weightContainerPtr->weightsSimpleShower.reweightValueByIndex(0,rwgt);
+    }
 
-    // Reset enhance factors after usage.
+    // Reset enhance factors after use
     enhanceFactors.clear();
 
-    // Set events weights, so that these could be used externally.
-    double wtOld = userHooksPtr->getEnhancedEventWeight();
-    if (!doTrialNow && canEnhanceEmission && !doUncertaintiesNow)
-      userHooksPtr->setEnhancedEventWeight(wtOld*rwgt);
-    if ( doTrialNow && canEnhanceTrial)
-      userHooksPtr->setEnhancedTrial(sqrt(pT2), weight);
     // Increment counter of rejected splittings.
-    if (vetoedEnhancedEmission && canEnhanceEmission)
-      infoPtr->addCounter(40);
+    if (vetoedEnhancedEmission && canEnhanceEmission) infoPtr->addCounter(40);
   }
 
-  if (vetoedEnhancedEmission) acceptEvent = false;
+  // Set enhanced trial.
+  if (canEnhanceET && doTrialNow && canEnhanceTrial)
+      weightContainerPtr->
+        weightsSimpleShower.setEnhancedTrial(sqrt(pT2), weight/pAccept);
+
+  // For enhanced trial shower: always accept here, and then reject in
+  // History::trialShower with 1-1/enhance
+  if (doTrialNow && canEnhanceTrial) acceptEmission = true;
 
   // If doing uncertainty variations, calculate accept/reject reweightings.
-  if (doUncertaintiesNow) calcUncertainties( acceptEvent, pAccept, pT20,
-    weight, vp, dipEndSel, &mother, &sister);
+  if (doUncertaintiesNow) calcUncertainties(acceptEmission, pAccept, pT20,
+    weight, dipEndSel, &mother, &sister);
 
   // Veto if necessary.
   // Return false if we decided to reject this branching.
-  if ( (doUncertainties && !acceptEvent)
-    || (vetoedEnhancedEmission && canEnhanceEmission) ) {
+  if ( !acceptEmission ) {
+    infoPtr->addCounter(40);
+
     // Restore kinematics before returning.
     event.popBack( event.size() - eventSizeOld);
     event[beamOff1].daughter1( ev1Dau1V);
@@ -2980,7 +3357,7 @@ bool SimpleSpaceShower::branch( Event& event) {
     //            rescattered parton to change sign. If this happens, tell
     //            parton level to try again.
     if (momFac < 0.0) {
-      infoPtr->errorMsg("Warning in SimpleSpaceShower::branch: "
+      loggerPtr->WARNING_MSG(
         "change in lightcone momentum sign; retrying parton level");
       rescatterFail = true;
       return false;
@@ -3022,9 +3399,8 @@ bool SimpleSpaceShower::branch( Event& event) {
 
   // Check that beam momentum not used up by rescattered-system boosts.
   if ( ( beamAPtr->xMax(-1) < 0.0 && !(beamAPtr->isUnresolved()) )
-         || (beamBPtr->xMax(-1) < 0.0 && !(beamBPtr->isUnresolved()) ) ) {
-    infoPtr->errorMsg("Warning in SimpleSpaceShower::branch: "
-      "used up beam momentum; retrying parton level");
+    || ( beamBPtr->xMax(-1) < 0.0 && !(beamBPtr->isUnresolved()) ) ) {
+    loggerPtr->WARNING_MSG("used up beam momentum; retrying parton level");
     rescatterFail = true;
     return false;
   }
@@ -3042,7 +3418,24 @@ bool SimpleSpaceShower::branch( Event& event) {
 
 // Initialize the choices of uncertainty variations of the shower.
 
+bool SimpleSpaceShower::initEnhancements() {
+  if (enhanceISR.empty()) {
+    if (weightContainerPtr->weightsSimpleShower.initEnhanceFactors())
+      enhanceISR = weightContainerPtr->weightsSimpleShower.getEnhanceFactors();
+    else return false;
+  }
+  return !enhanceISR.empty();
+}
+
+
+//--------------------------------------------------------------------------
+
+// Initialize the choices of uncertainty variations of the shower.
+
 bool SimpleSpaceShower::initUncertainties() {
+
+  // Only initialize once
+  if( nUncertaintyVariations ) return(nUncertaintyVariations);
 
   // Populate lists of uncertainty variations for SimpleSpaceShower,
   // by keyword.
@@ -3056,10 +3449,11 @@ bool SimpleSpaceShower::initUncertainties() {
   varX2XGmuRfac.clear();    varX2XGcNS.clear();
   varG2QQmuRfac.clear();    varG2QQcNS.clear();
   // Maps that must be known by TimeShower
-  varPDFplus   = &infoPtr->varPDFplus;
-  varPDFminus  = &infoPtr->varPDFminus;
-  varPDFmember = &infoPtr->varPDFmember;
-  varPDFplus->clear();       varPDFminus->clear();
+  varPDFplus   = &weightContainerPtr->weightsSimpleShower.varPDFplus;
+  varPDFminus  = &weightContainerPtr->weightsSimpleShower.varPDFminus;
+  varPDFmember = &weightContainerPtr->weightsSimpleShower.varPDFmember;
+  varPDFplus->clear();
+  varPDFminus->clear();
   varPDFmember->clear();
 
   vector<string> keys;
@@ -3083,67 +3477,54 @@ bool SimpleSpaceShower::initUncertainties() {
   // Store number of QCD variations (as separator to QED ones).
   int nKeysQCD=keys.size();
 
-  // Get uncertainty variations from Settings (as list of strings to parse).
-  vector<string> uVars = settingsPtr->wvec("UncertaintyBands:List");
-  size_t varSize = uVars.size();
-  nUncertaintyVariations = int(uVars.size());
-  if (nUncertaintyVariations == 0) return false;
+  // Get atomized variation strings, not necessarily all relevant for ISR.
+  vector<string> uniqueVarsIn = weightContainerPtr->weightsSimpleShower.
+    getUniqueShowerVars(keys);
+  size_t varSize = uniqueVarsIn.size();
+  if (varSize == 0) {
+    nUncertaintyVariations = varSize;
+    return false;
+  }
   vector<string> uniqueVars;
 
   // Expand uVars if PDFmembers has been chosen
   string tmpKey("isr:pdf:family");
-  // Parse each string in uVars to look for recognized keywords.
-  for (size_t iWeight = 0; iWeight < varSize; ++iWeight) {
-    // Convert to lowercase (to be case-insensitive). Also remove "=" signs
-    // and extra spaces, so "key=value", "key = value" mapped to "key value"
-    string uVarString = toLower(uVars[iWeight]);
-    while (uVarString.find(" ") == 0) uVarString.erase( 0, 1);
-    int iEnd = uVarString.find(" ", 0);
-    uVarString.erase(0,iEnd+1);
-    while (uVarString.find("=") != string::npos) {
-      int firstEqual = uVarString.find_first_of("=");
-      string testString = uVarString.substr(0, firstEqual);
-      iEnd = uVarString.find_first_of(" ", 0);
-      if( iEnd<0 ) iEnd = uVarString.length();
-      string insertString = uVarString.substr(0,iEnd);
-      // does the key match an fsr one?
-      if( find(keys.begin(), keys.end(), testString) != keys.end() ) {
-        if( uniqueVars.size() == 0 ) {
-          uniqueVars.push_back(insertString);
-        } else if ( find(uniqueVars.begin(), uniqueVars.end(), insertString)
+  // Parse each string in uniqueVarsIn to look for recognized keywords.
+  for (string uVarString: uniqueVarsIn) {
+    int firstEqual = uVarString.find_first_of("=");
+    string testString = uVarString.substr(0, firstEqual);
+    // does the key match an fsr one?
+    if( find(keys.begin(), keys.end(), testString) != keys.end() ) {
+      if( uniqueVars.size() == 0 ) {
+        uniqueVars.push_back(uVarString);
+      } else if ( find(uniqueVars.begin(), uniqueVars.end(), uVarString)
+      == uniqueVars.end() ) {
+        uniqueVars.push_back(uVarString);
+      }
+    } else if ( testString == tmpKey ) {
+      int nMembers(0);
+      BeamParticle& beam  = *beamAPtr;
+      nMembers = beam.nMembers();
+      for(int iMem=1; iMem<nMembers; ++iMem) {
+        ostringstream iss;
+        iss << iMem;
+        string tmpString("isr:pdf:member="+iss.str());
+        if (find(uniqueVars.begin(), uniqueVars.end(), tmpString)
         == uniqueVars.end() ) {
-          uniqueVars.push_back(insertString);
-        }
-      } else if ( testString == tmpKey ) {
-        int nMembers(0);
-        BeamParticle& beam  = *beamAPtr;
-        nMembers = beam.nMembers();
-        for(int iMem=1; iMem<nMembers; ++iMem) {
-          ostringstream iss;
-          iss << iMem;
-          string tmpString("isr:pdf:member="+iss.str());
-          if (find(uniqueVars.begin(), uniqueVars.end(), tmpString)
-          == uniqueVars.end() ) {
-            uniqueVars.push_back(tmpString);
-          }
+          uniqueVars.push_back(tmpString);
         }
       }
-      uVarString.erase(0,iEnd+1);
     }
   }
 
   nUncertaintyVariations = int(uniqueVars.size());
 
   if ( nUncertaintyVariations > 0 ) {
-    int nWeights = infoPtr->nWeights();
+    int nWeights = weightContainerPtr->weightsSimpleShower.getWeightsSize();
     int newSize = nWeights + nUncertaintyVariations;
-    infoPtr->setNWeights( newSize );
     for(int iWeight = nWeights; iWeight < newSize; ++iWeight) {
       string uVarString = uniqueVars[iWeight - nWeights];
-      // This should be removed later...
-      infoPtr->setWeightLabel(iWeight, uVarString);
-      // ... in favor of this
-      infoPtr->weightContainerPtr->weightsPS.bookWeight(uVarString);
+      weightContainerPtr->weightsSimpleShower.bookWeight(uVarString);
       // Parse each string in uVars to look for recognised keywords.
       // Convert to lowercase (to be case-insensitive). Also remove "=" signs
       // and extra spaces, so "key=value", "key = value" mapped to "key value"
@@ -3206,11 +3587,6 @@ bool SimpleSpaceShower::initUncertainties() {
     } // End loop over UVars.
   }
 
-  infoPtr->initUncertainties(&uVars,true);
-
-  // Now instead of putting everything into the InfoHub class, and cluttering
-  // the latter, we can put everything into the WeightContainer.
-
   // Let the calling function know if we found anything.
   return (nVarQCD > 0);
 }
@@ -3220,7 +3596,7 @@ bool SimpleSpaceShower::initUncertainties() {
 // Calculate uncertainties for the current event.
 
 void SimpleSpaceShower::calcUncertainties(bool accept, double pAccept,
-  double pT20in, double enhance, double vp, SpaceDipoleEnd* dip,
+  double pT20in, double enhance, SpaceDipoleEnd* dip,
   Particle* motPtr, Particle* sisPtr) {
 
   // Sanity check.
@@ -3234,13 +3610,13 @@ void SimpleSpaceShower::calcUncertainties(bool accept, double pAccept,
   // Make sure we have a dummy to point to if no map to be used.
   map<int,double> dummy;     dummy.clear();
 
-  int numWeights = infoPtr->nWeights();
+  int numWeights = weightContainerPtr->weightsSimpleShower.getWeightsSize();
   // Store uncertainty variation factors, initialised to unity.
   // Make vector sizes + 1 since 0 = default and variations start at 1.
   vector<double> uVarFac(numWeights, 1.0);
   vector<bool> doVar(numWeights, false);
   // When performing biasing, the nominal weight need not be unity.
-  doVar[0] = true;
+  doVar[0] = false;
   uVarFac[0] = 1.0;
 
   // Extract IDs, with standard ISR nomenclature: mot -> dau(Q2) + sis
@@ -3383,39 +3759,33 @@ void SimpleSpaceShower::calcUncertainties(bool accept, double pAccept,
     }
   }
 
+  double norm = (canEnhanceET) ?
+    ( (accept) ? 1/enhance : (1.-pAccept/enhance)/(1.-pAccept) ) : 1.;
+
   // Apply reject or accept reweighting factors according to input decision.
   for (int iWeight = 0; iWeight < numWeights; ++iWeight) {
     if (!doVar[iWeight]) continue;
     // If trial accepted: apply ratio of accept probabilities.
     if (accept) {
 
-      infoPtr->reWeight( iWeight, uVarFac[iWeight] / ((1.0 - vp) * enhance) );
-
-      // At some point, we should remove the weights structures in InfoHub in
-      // favor of WeightContainer.
-      weightContainerPtr->weightsPS.reweightValueByIndex(iWeight,
-        uVarFac[iWeight] / ((1.0 - vp) * enhance) );
+      weightContainerPtr->weightsSimpleShower.reweightValueByIndex(iWeight,
+        uVarFac[iWeight] / enhance / norm);
 
     // If trial rejected : apply Sudakov reweightings.
     } else {
       // Check for near-singular denominators (indicates too few failures,
       // and hence would need to increase headroom).
-      double denom = 1. - pAccept * (1.0 - vp);
+      double denom = 1. - pAccept;
       if (denom < REJECTFACTOR) {
         stringstream message;
         message << iWeight;
-        infoPtr->errorMsg("Warning in SimpleSpaceShower: reject denom for"
-          " iWeight = ", message.str());
+        loggerPtr->WARNING_MSG("reject denom","for iWeight = "+message.str());
       }
       // Force reweighting factor > 0.
       double reWtFail = max(0.01, (1. - uVarFac[iWeight] * pAccept / enhance )
-        / denom);
-      infoPtr->reWeight(iWeight, reWtFail);
-
-      // At some point, we should remove the weights structures in InfoHub in
-      // favor of WeightContainer.
-      weightContainerPtr->weightsPS.reweightValueByIndex(iWeight,
-        reWtFail);
+          / denom);
+      weightContainerPtr->weightsSimpleShower.reweightValueByIndex(iWeight,
+        reWtFail / norm);
     }
   }
 }
@@ -3686,6 +4056,9 @@ int SimpleSpaceShower::findColPartner(Event& event, int iSideA, int iSideB,
   if ( (colSideA != 0 && event[iSideB].acol() == colSideA)
     || (acolSideA != 0 && event[iSideB].col() == acolSideA) ) {
 
+    // Change to enable use for non-dipole recoil.
+    if (!doDipoleRecoil) return iSideB;
+
     // Another possible colour partner among the outgoing partons
     // in the case of a gluon.
     if (event[iSideA].id() == 21)
@@ -3703,6 +4076,10 @@ int SimpleSpaceShower::findColPartner(Event& event, int iSideA, int iSideB,
       int iOut = partonSystemsPtr->getOut(iSystem, i);
       if ( (colSideA != 0 && event[iOut].col() == colSideA)
         || (acolSideA != 0 && event[iOut].acol() == acolSideA) ) {
+
+        // Change to enable use for non-dipole recoil.
+        if (!doDipoleRecoil) return iOut;
+
         if (iColPartner == 0) iColPartner = iOut;
         // 50% for each IF in the case of a gluon.
         else if (rndmPtr->flat() < 0.5) iColPartner = iOut;

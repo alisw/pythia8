@@ -1,5 +1,5 @@
 // ShowerModel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -86,19 +86,21 @@ public:
   SimpleShowerModel() = default;
 
   // Empty virtual destructor
-  virtual ~SimpleShowerModel() {}
+  virtual ~SimpleShowerModel() override {}
 
   // Function called from Pythia after the basic pointers has been set.
   virtual bool init(MergingPtr mergPtrIn, MergingHooksPtr mergHooksPtrIn,
                     PartonVertexPtr partonVertexPtrIn,
-                    WeightContainer* weightContainerPtrIn);
+                    WeightContainer* weightContainerPtrIn) override;
 
   // Function called from Pythia after the beam particles have been set up,
   // so that showers may be initialized after the beams are initialized.
   // Currently only dummy dunction.
-  virtual bool initAfterBeams() { return true; }
+  virtual bool initAfterBeams() override { return true; }
 
 };
+
+//==========================================================================
 
 } // end namespace Pythia8
 

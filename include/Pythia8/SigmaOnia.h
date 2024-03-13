@@ -1,5 +1,5 @@
 // SigmaOnia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,25 +15,16 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// A helper class used to setup the onia processes.
+// A helper class used to check onia settings. Used for the parton shower
+// and hard process.
 
-class SigmaOniaSetup {
+class OniaSetup {
 
-public:
+protected:
 
   // Constructors.
-  SigmaOniaSetup() : infoPtr(), settingsPtr(), particleDataPtr(), onia(),
-    onia3S1(), onia3PJ(), onia3DJ(), oniaFlavour(), valid3S1(), valid3PJ(),
-    valid3DJ(), validDbl3S1(), flavour(), mSplit() {};
-  SigmaOniaSetup(Info* infoPtrIn, int flavourIn);
-
-  // Initialise the SigmaProcesses for gg, qg, qqbar, or double production.
-  void setupSigma2gg(vector<SigmaProcess*> &procs, bool oniaIn = false);
-  void setupSigma2qg(vector<SigmaProcess*> &procs, bool oniaIn = false);
-  void setupSigma2qq(vector<SigmaProcess*> &procs, bool oniaIn = false);
-  void setupSigma2dbl(vector<SigmaProcess*> &procs, bool oniaIn = false);
-
-private:
+  OniaSetup() = default;
+  OniaSetup(Info* infoPtrIn, int flavourIn, string pre = "");
 
   // Intialise and check settings.
   void initStates(string wave, const vector<int> &states,
@@ -44,29 +35,59 @@ private:
     const vector<string> &names, vector< vector<bool> > &fvecs, bool &valid);
 
   // Stored pointers.
-  Info* infoPtr;
-  Settings* settingsPtr;
-  ParticleData* particleDataPtr;
+  Info* infoPtr = {};
+  Logger* loggerPtr = {};
+  Settings* settingsPtr = {};
+  ParticleData* particleDataPtr = {};
 
   // Stored vectors of settings.
-  vector<int> states3S1, states3PJ, states3DJ, spins3S1, spins3PJ, spins3DJ,
-    states1Dbl3S1, states2Dbl3S1, spins1Dbl3S1, spins2Dbl3S1;
-  vector<string> meNames3S1, meNames3PJ, meNames3DJ, meNamesDbl3S1;
-  vector< vector<double> > mes3S1, mes3PJ, mes3DJ, mesDbl3S1;
+  vector<int> states3S1, states3PJ, spins3S1, spins3PJ;
+  vector<string> meNames3S1, meNames3PJ;
+  vector< vector<double> > mes3S1, mes3PJ;
+
+  // Stored validity and production flags.
+  bool onia{}, onia3S1{}, onia3PJ{}, oniaFlavour{},
+    valid3S1{true}, valid3PJ{true};
+  int flavour{};
+  string cat, key;
+
+  // Stored parameters.
+  double mSplit{};
+
+};
+
+//==========================================================================
+
+// A helper class used to setup the onia processes.
+
+class SigmaOniaSetup : public OniaSetup {
+
+public:
+
+  // Constructors.
+  SigmaOniaSetup() = default;
+  SigmaOniaSetup(Info* infoPtrIn, int flavourIn);
+
+  // Initialise the SigmaProcesses for gg, qg, qqbar.
+  void setupSigma2gg(vector<SigmaProcessPtr> &procs, bool oniaIn = false);
+  void setupSigma2qg(vector<SigmaProcessPtr> &procs, bool oniaIn = false);
+  void setupSigma2qq(vector<SigmaProcessPtr> &procs, bool oniaIn = false);
+
+private:
+
+  // Additional stored validity and production flags.
+  bool onia3DJ{true}, valid3DJ{true}, validDbl3S1{true};
+
+  // Stored vectors of settings.
+  vector<int> states3DJ, spins3DJ, states1Dbl3S1, states2Dbl3S1, spins1Dbl3S1,
+    spins2Dbl3S1;
+  vector<string> meNames3DJ, meNamesDbl3S1;
+  vector< vector<double> > mes3DJ, mesDbl3S1;
   vector<string> ggNames3S1, qgNames3S1, qqNames3S1,
     ggNames3PJ, qgNames3PJ, qqNames3PJ, ggNames3DJ, qgNames3DJ, qqNames3DJ,
     dblNames3S1;
   vector< vector<bool> > ggs3S1, qgs3S1, qqs3S1, ggs3PJ, qgs3PJ, qqs3PJ,
     ggs3DJ, qgs3DJ, qqs3DJ, dbls3S1;
-
-  // Stored validity and production flags.
-  bool onia, onia3S1, onia3PJ, onia3DJ, oniaFlavour;
-  bool valid3S1, valid3PJ, valid3DJ, validDbl3S1;
-  int flavour;
-  string cat, key;
-
-  // Stored parameters.
-  double mSplit;
 
 };
 
@@ -350,7 +371,7 @@ protected:
 //==========================================================================
 
 // A derived class for q qbar -> QQbar[X(8)] g (Q = c or b,
-//   X = 3S1, 1S0 or 3PJ).
+// X = 3S1, 1S0 or 3PJ).
 
 class Sigma2qqbar2QQbarX8g : public Sigma2gg2QQbarX8g {
 

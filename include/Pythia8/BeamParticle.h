@@ -1,5 +1,5 @@
 // BeamParticle.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -135,9 +135,9 @@ class BeamParticle : public PhysicsBase {
 public:
 
   // Constructor.
-  BeamParticle() : pdfBeamPtr(),
-    pdfHardBeamPtr(), pdfUnresBeamPtr(), pdfBeamPtrSave(),
-    pdfHardBeamPtrSave(), flavSelPtr(), allowJunction(), beamJunction(),
+  BeamParticle() : pdfBeamPtr(), pdfHardBeamPtr(), pdfUnresBeamPtr(),
+    pdfBeamPtrSave(), pdfHardBeamPtrSave(), pdfSavePtrs(),
+    pdfSaveIdx(-1), flavSelPtr(), allowJunction(), beamJunction(),
     maxValQuark(), companionPower(), valencePowerMeson(), valencePowerUinP(),
     valencePowerDinP(), valenceDiqEnhance(), pickQuarkNorm(), pickQuarkPower(),
     diffPrimKTwidth(), diffLargeMassSuppress(), beamSat(), gluonPower(),
@@ -146,17 +146,21 @@ public:
     isMesonBeam(), isBaryonBeam(), isGammaBeam(), nValKinds(), idVal(), nVal(),
     idSave(), iSkipSave(), nValLeft(), xqgTot(), xqVal(), xqgSea(),
     xqCompSum(), doISR(), doMPI(), doND(), isResolvedGamma(),
-    hasResGammaInBeam(), isResUnres(), hasVMDstateInBeam(), pTminISR(),
-    pTminMPI(), pT2gm2qqbar(), iGamVal(), iPosVal(), gammaMode(), xGm(),
-    Q2gm(), kTgamma(), phiGamma(), cPowerCache(-100), xsCache(-1), resCache(),
-    resolved(), nInit(0), hasJunctionBeam(), junCol(), nJuncs(), nAjuncs(),
-    nDiffJuncs(), allowBeamJunctions(), Q2ValFracSav(-1.), uValInt(),
-    dValInt(), idVal1(), idVal2(), idVal3(), zRel(), pxRel(), pyRel() { }
+    hasResGammaInBeam(), isResUnres(), hasVMDstateInBeam(), initGammaBeam(),
+    pTminISR(), pTminMPI(), pT2gm2qqbar(), iGamVal(), iPosVal(), gammaMode(),
+    xGm(), Q2gm(), kTgamma(), phiGamma(), cPowerCache(-100), xsCache(-1),
+    resCache(), resolved(), nInit(0), hasJunctionBeam(), junCol(), nJuncs(),
+    nAjuncs(), nDiffJuncs(), allowBeamJunctions(), Q2ValFracSav(-1.),
+    uValInt(), dValInt(), idVal1(), idVal2(), idVal3(), zRel(), pxRel(),
+    pyRel() { }
 
   // Initialize data on a beam particle and save pointers.
   void init( int idIn, double pzIn, double eIn, double mIn,
     PDFPtr pdfInPtr, PDFPtr pdfHardInPtr, bool isUnresolvedIn,
     StringFlav* flavSelPtrIn);
+
+  // Initialize only the id.
+  void initID( int idIn) { idBeam = idIn; initBeamKind();}
 
   // Initialize only the two pdf pointers.
   void initPDFPtr(PDFPtr pdfInPtr, PDFPtr pdfHardInPtr) {
@@ -165,8 +169,21 @@ public:
   // Initialize additional PDF pointer for unresolved beam.
   void initUnres(PDFPtr pdfUnresInPtr);
 
+  // Initialize array of PDFs for switching between them.
+  void initSwitchID( const vector<PDFPtr>& pdfSavePtrsIn) {
+    pdfSavePtrs = pdfSavePtrsIn; }
+
   // For mesons like pi0 valence content varies from event to event.
   void newValenceContent();
+  void setValenceContent(int idq1, int idq2 = 0, int idq3 = 0);
+
+  // Switch to new beam particle identity; for similar hadrons only.
+  void setBeamID( int idIn, int iPDFin = -1) {idBeam = idIn;
+    if ( iPDFin >= 0 && iPDFin < int(pdfSavePtrs.size())
+      && iPDFin != pdfSaveIdx ) {
+      pdfBeamPtr = pdfSavePtrs[iPDFin]; pdfHardBeamPtr = pdfBeamPtr;
+      pdfSaveIdx = iPDFin; }
+    mBeam = particleDataPtr->m0(idIn); pdfBeamPtr->setBeamID(idIn); }
 
   // Set new pZ and E, but keep the rest the same.
   void newPzE( double pzIn, double eIn) {pBeam = Vec4( 0., 0., pzIn, eIn);}
@@ -362,10 +379,12 @@ public:
 
   // Set and get the state (resolved and/or unresolved) of photon beam.
   void resolvedGamma(bool isResolved) { isResolvedGamma = isResolved; }
-  bool resolvedGamma()                { return isResolvedGamma; }
+  bool resolvedGamma() const          { return isResolvedGamma; }
   void setGammaMode(int gammaModeIn);
-  int  getGammaMode()                 { return gammaMode; }
-  bool isResolvedUnresolved()         { return isResUnres; }
+  int  getGammaMode() const           { return gammaMode; }
+  bool isResolvedUnresolved() const   { return isResUnres; }
+  void initGammaInBeam()              { initGammaBeam = true; }
+  bool gammaInBeam() const            { return initGammaBeam; }
 
   // Set state of VMD inside gamma.
   void setVMDstate(bool isVMDIn, int idIn, double mIn, double scaleIn,
@@ -417,6 +436,9 @@ public:
   double xGammaHadr()         { return pdfHardBeamPtr->getXhadr(); }
   double gammaFluxIntApprox() { return pdfHardBeamPtr->intFluxApprox(); }
 
+  // Do photon flux use an approximation for sampling.
+  bool hasApproxGammaFlux() { return pdfHardBeamPtr->hasApproxGammaFlux(); }
+
   // Get the kinematics related photons form lepton beams.
   double xGamma()   const { return xGm; }
   double Q2Gamma()  const { return Q2gm; }
@@ -453,6 +475,10 @@ private:
   PDFPtr          pdfBeamPtrSave;
   PDFPtr          pdfHardBeamPtrSave;
 
+  // Array of PDFs to be used when idA can be changed between events.
+  vector<PDFPtr>  pdfSavePtrs;
+  int             pdfSaveIdx;
+
   // Pointer to class for flavour generation.
   StringFlav*   flavSelPtr;
 
@@ -480,7 +506,7 @@ private:
 
   // Variables related to photon beams (also inside lepton).
   bool   doISR, doMPI, doND, isResolvedGamma, hasResGammaInBeam,
-         isResUnres, hasVMDstateInBeam;
+         isResUnres, hasVMDstateInBeam, initGammaBeam;
   double pTminISR, pTminMPI, pT2gm2qqbar;
   int    iGamVal, iPosVal, gammaMode;
 

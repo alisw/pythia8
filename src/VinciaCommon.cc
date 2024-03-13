@@ -1,5 +1,5 @@
 // VinciaCommon.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -7,120 +7,21 @@
 // VinciaCommon classes, and related auxiliary methods.
 
 #include "Pythia8/VinciaCommon.h"
+#include "Pythia8/MathTools.h"
 
 namespace Pythia8 {
 
-//==========================================================================
-
-// Rambo phase space generator.
-
-//--------------------------------------------------------------------------
-
-// Massless flat phase space generator. Generate a random (uniformly
-// distributed) massless PS point with nOut particles and total sqrt(s) = eCM.
-
-double Rambo::genPoint(double eCM, int nOut, vector<Vec4>& pOut) {
-
-  // Set size of output vector
-  pOut.resize(nOut);
-  // Create momentum-sum four-vector
-  Vec4 R;
-  // Generate nParticles independent massless 4-momenta with isotropic angles
-  for (int i = 0; i < nOut; ++i) {
-    // Cos(theta), sin(theta), and phi
-    double c   = 2.0*rndmPtr->flat() - 1.0;
-    double s   = sqrt(1.0-pow2(c));
-    double phi = 2.0*M_PI*rndmPtr->flat();
-    // Norm
-    double r12 = 0.0;
-    while (r12 == 0.0) {
-      double r1 = rndmPtr->flat();
-      double r2 = rndmPtr->flat();
-      r12 = r1*r2;
-    }
-    double En = -log(r12);
-    pOut[i].e(En);
-    pOut[i].pz(En*c);
-    pOut[i].py(En*s*cos(phi));
-    pOut[i].px(En*s*sin(phi));
-    // Add to vector and add to sum
-    R += pOut[i];
-  }
-  // Compute ECM and normalise to unity (with sign flip)
-  double Rmass = R.mCalc();
-  R /= -Rmass;
-  // Transform momenta so add up to (eCM, 0, 0, 0)
-  double a = 1.0/(1.0-R.e());
-  double x = eCM/Rmass;
-  for (int i = 0; i < nOut; ++i) {
-    double bq = dot3(R, pOut[i]);
-    pOut[i].px( x * (pOut[i].px()+R.px()*(pOut[i].e()+a*bq)) );
-    pOut[i].py( x * (pOut[i].py()+R.py()*(pOut[i].e()+a*bq)) );
-    pOut[i].pz( x * (pOut[i].pz()+R.pz()*(pOut[i].e()+a*bq)) );
-    pOut[i].e(  x * (-R.e()*pOut[i].e()+bq) );
-  }
-  // The weight is always unity for the massless algorithm.
-  return 1.0;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Massive flat phase space generator, generalised according to the
-// original paper. The momenta are not distributed flat in phase
-// space anymore, returns the weight of the phase space configutation.
-
-double Rambo::genPoint(double eCM, vector<double> mIn, vector<Vec4>& pOut) {
-
-  // Call the massless genPoint, initializing weight.
-  int nOut = mIn.size();
-  if (nOut <= 1 || eCM <= 0.) return 0.;
-  double weight = genPoint(eCM, nOut, pOut);
-  bool massesnonzero = false;
-
-  // Set up the function determining the rescaling parameter xi.
-  vector<double> energies;
-  for (int i = 0; i < nOut; i++) {
-    energies.push_back(pOut[i].e());
-    if (pow2(mIn[i]/eCM) > TINY) massesnonzero = true;
-  }
-
-  // If none of the reduced masses is > TINY, return
-  if (!massesnonzero) return weight;
-
-  // Rescale all the momenta.
-  TXiFunctor rhs = TXiFunctor(mIn, energies);
-  double xi = zbrent(rhs, eCM, 0., 1., 1e-10);
-  for (int iMom = 0; iMom < nOut; iMom++) {
-    pOut[iMom].rescale3(xi);
-    pOut[iMom].e( sqrt(pow2(mIn[iMom]) + pow2(xi)*pow2(pOut[iMom].e())) );
-  }
-
-  // Determine the quantities needed for the calculation of the weight.
-  double sumP(0.), prodPdivE(1.), sumP2divE(0.);
-  for (int iMom = 0; iMom < nOut; iMom++) {
-    double pAbs2 = pOut[iMom].pAbs2();
-    double pAbs  = sqrt(pAbs2);
-    sumP      += pAbs;
-    prodPdivE *= pAbs/pOut[iMom].e();
-    sumP2divE += pAbs2/pOut[iMom].e();
-  }
-
-  // There's a typo in eq. 4.11 of the Rambo paper by Kleiss, Stirling
-  // and Ellis, the Ecm below is not present there.
-  weight *= pow(sumP/eCM,2*nOut-3)*prodPdivE*eCM/sumP2divE;
-  return weight;
-}
+using namespace VinciaConstants;
 
 //==========================================================================
 
-// The Colour class.
+// The VinciaColour class.
 
 //--------------------------------------------------------------------------
 
 // Initialize.
 
-bool Colour::init() {
+bool VinciaColour::init() {
 
   // Sanity check.
   if (!isInitPtr) return false;
@@ -151,11 +52,11 @@ bool Colour::init() {
 //  coloured resonance itself does not appear explicitly in its
 //  corresponding decay partonSystem.
 
-bool Colour::colourise(int iSys, Event& event) {
+bool VinciaColour::colourise(int iSys, Event& event) {
 
   // Sanity checks.
   if (!isInit) {
-    printOut("Colour::colourise","ERROR! Colour not initialised");
+    printOut("VinciaColour::colourise", "ERROR! not initialised");
     return false;
   }
   else if (partonSystemsPtr->sizeAll(iSys) <= 1) return false;
@@ -181,8 +82,8 @@ bool Colour::colourise(int iSys, Event& event) {
 
     // Example: if startTag is 220-229, nextTagBase is 230.
     int nextTagBase = 10*int((startTag/10)+1);
-    for (int i=0; i<partonSystemsPtr->sizeAll(iSys); ++i) {
-      int i1 = partonSystemsPtr->getAll(iSys,i);
+    for (int i = 0; i<partonSystemsPtr->sizeAll(iSys); ++i) {
+      int i1 = partonSystemsPtr->getAll(iSys, i);
       if (i1 <= 0) continue;
       Particle* partonPtr = &event[i1];
       if (partonPtr->colType() == 0) continue;
@@ -237,14 +138,14 @@ bool Colour::colourise(int iSys, Event& event) {
 
     // Check if these assignments would produce any singlet gluons
     accept = true;
-    for (int i=0; i<partonSystemsPtr->sizeAll(iSys); ++i) {
-      int i1 = partonSystemsPtr->getAll(iSys,i);
+    for (int i = 0; i<partonSystemsPtr->sizeAll(iSys); ++i) {
+      int i1 = partonSystemsPtr->getAll(iSys, i);
       Particle* partonPtr = &event[i1];
       if (partonPtr->colType() != 2) continue;
       int colIndexNew  = colourMap[partonPtr->col()] % 10;
       int acolIndexNew = colourMap[partonPtr->acol()] % 10;
       if (colIndexNew == acolIndexNew) {
-        accept=false;
+        accept = false;
         break;
       }
     }
@@ -252,13 +153,13 @@ bool Colour::colourise(int iSys, Event& event) {
 
   // Check for failure to find acceptable conf.
   if (!accept) {
-    if (verbose >= 3) event.list();
-    printOut("Colour::colourise","Warning! failed to avoid singlet gluon(s).");
+    if (verbose >= Logger::REPORT) event.list();
+    printOut(__METHOD_NAME__, "Warning! failed to avoid singlet gluon(s).");
   }
 
   // Update event.
   for (int i = 0; i < partonSystemsPtr->sizeAll(iSys); ++i) {
-    int ip = partonSystemsPtr->getAll(iSys,i);
+    int ip = partonSystemsPtr->getAll(iSys, i);
     Particle* partonPtr = &event[ip];
     if (partonPtr->colType() == 0) continue;
     if ( colourMap[partonPtr->col()] > 0 )
@@ -268,7 +169,7 @@ bool Colour::colourise(int iSys, Event& event) {
 
     // Update max used colour tag.
     int lastTag = event.lastColTag();
-    int colMax  = max(abs(partonPtr->col()),abs(partonPtr->acol()));
+    int colMax  = max(abs(partonPtr->col()), abs(partonPtr->acol()));
     while (colMax > lastTag) lastTag = event.nextColTag();
   }
 
@@ -280,13 +181,13 @@ bool Colour::colourise(int iSys, Event& event) {
 
 // Order a list of partons in colour sequence.
 
-vector<int> Colour::colourSort(vector<Particle*> partons) {
+vector<int> VinciaColour::colourSort(vector<Particle*> partons) {
 
   // Output vector (starts empty).
   vector<int> iSorted;
 
   // Shorthand for final-state parton multiplicities.
-  int nPartons=partons.size();
+  int nPartons = partons.size();
   if (nPartons <= 1) return iSorted;
 
   // Find string endpoints and colour types of particles.
@@ -309,7 +210,7 @@ vector<int> Colour::colourSort(vector<Particle*> partons) {
   //  +- 8 : vigintiquartet (e.g., R-R-R-Gbar)  [3,1] / [1,3]
 
   map<int, int> iOfAcol;
-  for (int i=partons.size()-1; i>=0; --i) {
+  for (int i = partons.size()-1; i >= 0; --i) {
     int sign    = (partons[i]->isFinal() ? 1 : -1);
     int colType = particleDataPtr->colType(partons[i]->id());
 
@@ -399,9 +300,8 @@ vector<int> Colour::colourSort(vector<Particle*> partons) {
           beginNewChain = true;
         // Octet: continue chain and erase this octet from list.
         else {
-          beginNewChain = false;
           // Erase this endpoint from list.
-          for (int i=0; i<(int)iOct.size(); ++i) {
+          for (int i = 0; i<(int)iOct.size(); ++i) {
             if (iOct[i] == iNext) {
               iOct.erase(iOct.begin()+i);
               break;
@@ -421,9 +321,9 @@ vector<int> Colour::colourSort(vector<Particle*> partons) {
 
 // Make colour maps and construct list of parton pairs that form QCD dipoles.
 
-void Colour::makeColourMaps(const int iSysIn, const Event& event,
-  map<int,int>& indexOfAcol, map<int,int>& indexOfCol,
-  vector< pair<int,int> >& antLC, const bool findFF, const bool findIX) {
+void VinciaColour::makeColourMaps(const int iSysIn, const Event& event,
+  map<int, int>& indexOfAcol, map<int, int>& indexOfCol,
+  vector< pair<int, int> >& antLC, const bool findFF, const bool findIX) {
 
   // Loop over all parton systems.
   int iSysBeg = (iSysIn >= 0) ? iSysIn : 0;
@@ -456,8 +356,8 @@ void Colour::makeColourMaps(const int iSysIn, const Event& event,
       if (col > 0 && indexOfAcol.count(col) == 1) {
         int i2 = indexOfAcol[col];
         if ( event[i1].isFinal() && event[i2].isFinal() ) {
-          if (findFF) antLC.push_back( make_pair(i1,i2) );
-        } else if (findIX) antLC.push_back( make_pair(i1,i2) );
+          if (findFF) antLC.push_back( make_pair(i1, i2) );
+        } else if (findIX) antLC.push_back( make_pair(i1, i2) );
       }
 
       // Look for partner on anticolour side.
@@ -466,21 +366,21 @@ void Colour::makeColourMaps(const int iSysIn, const Event& event,
         // Coloured parton first -> i2, i1 instead of i1, i2)
         if (event[i1].isFinal() && event[i2].isFinal()) {
           if (findFF) antLC.push_back( make_pair(i2, i1) );
-        } else if (findIX) antLC.push_back( make_pair(i2,i1) );
+        } else if (findIX) antLC.push_back( make_pair(i2, i1) );
       }
 
       // Allow for sextets: negative acol -> extra positive col.
       if (acol < 0 && indexOfAcol.count(-acol) == 1) {
         int i2 = indexOfAcol[-acol];
         if (event[i1].isFinal() && event[i2].isFinal()) {
-          if (findFF) antLC.push_back( make_pair(i1,i2) );
-        } else if (findIX) antLC.push_back( make_pair(i1,i2) );
+          if (findFF) antLC.push_back( make_pair(i1, i2) );
+        } else if (findIX) antLC.push_back( make_pair(i1, i2) );
       }
       if (col < 0 && indexOfCol.count(-col) == 1) {
         int i2 = indexOfAcol[-acol];
         if (event[i1].isFinal() && event[i2].isFinal()) {
-          if (findFF) antLC.push_back( make_pair(i1,i2) );
-        } else if (findIX) antLC.push_back( make_pair(i1,i2) );
+          if (findFF) antLC.push_back( make_pair(i1, i2) );
+        } else if (findIX) antLC.push_back( make_pair(i1, i2) );
       }
     }
   }
@@ -494,11 +394,11 @@ void Colour::makeColourMaps(const int iSysIn, const Event& event,
 // branching. Default is that the largest invariant has the largest
 // probability to inherit, with a few alternatives also implemented.
 
-bool Colour::inherit01(double s01, double s12) {
+bool VinciaColour::inherit01(double s01, double s12) {
   // Initialization check.
   if (!isInit) {
     printOut("VinciaColour::inherit01",
-      "ERROR! Colour not initialised");
+      "ERROR! not initialised");
     if (isInitPtr && rndmPtr->flat() < 0.5) return false;
     else return true;
   }
@@ -527,13 +427,13 @@ bool Colour::inherit01(double s01, double s12) {
     else return false;
   }
   double p12 = 0.5;
-  if ( max(a12,a23) > TINY ) {
-    if ( a12 < TINY ) p12 = 0.;
-    else if ( a23 < TINY ) p12 = 1.;
+  if ( max(a12, a23) > NANO ) {
+    if ( a12 < NANO ) p12 = 0.;
+    else if ( a23 < NANO ) p12 = 1.;
     else {
       double r = a23/a12;
-      if (r < TINY) p12 = 1. - r;
-      else if (r > 1./TINY) p12 = 1./r;
+      if (r < NANO) p12 = 1. - r;
+      else if (r > 1./NANO) p12 = 1./r;
       else p12 = 1./(1. + r);
     }
   }
@@ -554,7 +454,7 @@ bool Resolution::init() {
 
   // Check that pointers initialized.
   if (!isInitPtr) {
-    printOut("Resolution::init","Cannot initialize, pointers not set.");
+    printOut("Resolution::init", "Cannot initialize, pointers not set.");
     return false;
   }
 
@@ -568,207 +468,599 @@ bool Resolution::init() {
 
 //--------------------------------------------------------------------------
 
-// Sector resolution functions.
+// Method to calculate evolution variable for a given clustering.
 
-double Resolution::q2sector2to3(const Particle* a, const Particle* b,
-  const Particle* j, bool) {
-
-  // Construct basic 4-products.
-  double saj  = 2*a->p()*j->p();
-  double sjb  = 2*b->p()*j->p();
-  double sab  = 2*a->p()*b->p();
-  // Gluon emission.
-  if (j->id() == 21) {
-    // FF emission.
-    if (a->isFinal() && b->isFinal()) {
-      return saj * sjb / (saj + sjb + sab) ;
-
-    // IF emission.
-    } else if (b->isFinal()) {
-      return saj * sjb / (saj + sab) ;
-
-    // IF emission (a <-> b).
-    } else if (a->isFinal()) {
-      return saj * sjb / (sjb + sab) ;
-
-    // II emission.
-    } else {
-      return saj * sjb / sab;
+double Resolution::q2evol(VinciaClustering& clus) {
+  // 2 -> 3 branchings.
+  if (clus.is2to3()) {
+    // Fetch invariants.
+    double sAB = 0., sar = 0., srb = 0., sab = 0.;
+    if (clus.invariants.size() >= 4) {
+      sAB = clus.invariants.at(0);
+      sar = clus.invariants.at(1);
+      srb = clus.invariants.at(2);
+      sab = clus.invariants.at(3);
     }
-
-  // FF Gluon splitting.
-  } else if (a->isFinal() && b->isFinal()) {
-    // Assume b is recoiler.
-    double m2j  = pow2(j->m());
-    double m2qq = saj + 2*m2j;
-    // Find colour-connected invariant.
-    double sX   = 0;
-    if (j->col() != 0 && j->col() == b->acol())
-      sX = sjb + m2j;
     else {
-      sX = sab + m2j;
+      loggerPtr->ERROR_MSG("invariant vectors not initialised");
+      return -1.;
     }
-    // Normalisation.
-    double sAnt   = saj + sjb + sab + 2 * m2j;
+    // Fetch masses.
+    double ma2 = 0., mr2 = 0., mb2 = 0.;
+    if (clus.mDau.size() >= 3) {
+      ma2 = pow2(clus.mDau.at(0));
+      mr2 = pow2(clus.mDau.at(1));
+      mb2 = pow2(clus.mDau.at(2));
+    }
+    double mA2 = 0., mB2 = 0.;
+    if (clus.mMot.size() >= 2) {
+      mA2 = pow2(clus.mMot.at(0));
+      mB2 = pow2(clus.mMot.at(1));
+    }
 
-    // Return the g->qq sector variable defined in arXiv:1109.3608.
-    return m2qq * sqrt(sX/sAnt);
-  } else {
-    cout << "Sector criterion not implemented for II/IF splittings/conversions"
-         << endl;
+    // Final-Final configuration.
+    if (clus.isFF()) {
+      double mar2 = sar + ma2 + mr2;
+      double mrb2 = srb + mr2 + mb2;
+      clus.q2evol = (mar2 - mA2) * (mrb2 - mB2) / sAB;
+      return clus.q2evol;
+    }
+
+    // Initial-Final/Resonance-Final configuration.
+    if (clus.isIF() || clus.isRF()) {
+      double mar2 = -sar + ma2 + mr2;
+      double mrb2 = srb + mb2 + mr2;
+      clus.q2evol = (mA2 - mar2) * (mrb2 - mB2) / (sar + sab);
+      return clus.q2evol;
+    }
+
+    // Initial-Initial configuration.
+    if (clus.isII()) {
+      double mar2 = -sar + ma2 + mr2;
+      double mrb2 = -srb + mb2 + mr2;
+      clus.q2evol = (mA2 - mar2) * (mB2 - mrb2) / sab;
+      return clus.q2evol;
+    }
   }
-  return -1;
+  // Implement other branchings here.
 
+  loggerPtr->ERROR_MSG("evolution variable not implemented");
+  return -1.;
+}
+
+//--------------------------------------------------------------------------
+
+// Get dimensionless evolution variable.
+
+double Resolution::xTevol(VinciaClustering& clus) {
+  // Calculate dimensionful evolution variable first.
+  double q2 = q2evol(clus);
+  if (q2 >= 0.) {
+    // Get normalisation.
+    double sNorm = -1.;
+    if (clus.isFF()) {
+      // Norm is sIK.
+      sNorm = clus.invariants.at(0);
+    }
+    else if (clus.isRF() || clus.isIF()) {
+      // Norm is saj+sak.
+      sNorm = clus.invariants.at(1) + clus.invariants.at(3);
+    }
+    else if (clus.isII()) {
+      // Norm is sab.
+      sNorm = clus.invariants.at(3);
+    }
+    double xT = q2 / sNorm;
+    if (xT >= 0. && xT <= 1.) return xT;
+  }
+
+  return -1.;
+}
+
+//--------------------------------------------------------------------------
+
+// Top-level function to calculate sector resolution for a given clustering.
+
+double Resolution::q2sector(VinciaClustering& clus) {
+  // 2 -> 3 branchings.
+  if (clus.is2to3()) {
+    if (clus.isFF()) return q2sector2to3FF(clus);
+    if (clus.isRF()) return q2sector2to3RF(clus);
+    if (clus.isIF()) return q2sector2to3IF(clus);
+    if (clus.isII()) return q2sector2to3II(clus);
+  }
+  // Implement other branchings here.
+
+  loggerPtr->ERROR_MSG("sector resolution not implemented");
+  return -1.;
+}
+
+//--------------------------------------------------------------------------
+
+// Top-level function to find sector with minimal resolution while resolving
+// a Born configuration.
+
+VinciaClustering Resolution::findSector(vector<Particle>& state,
+  map<int, int> nFlavsBorn) {
+
+  // Get all clusterings.
+  vector<VinciaClustering> clusterings;
+  clusterings = vinComPtr->findClusterings(state, nFlavsBorn);
+
+  // Sanity check.
+  if (clusterings.size() < 1) {
+    loggerPtr->WARNING_MSG("no sector found");
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__, "Born flavour list:");
+      for (auto it(nFlavsBorn.begin()); it != nFlavsBorn.end(); ++it) {
+        if (it->second > 0)
+          cout << "      " << it->first << ": " << it->second << endl;
+      }
+      vinComPtr->list(state);
+    }
+    return VinciaClustering();
+  }
+
+  // Return clustering with smallest resolution.
+  return getMinSector(clusterings);
+}
+
+//--------------------------------------------------------------------------
+
+// Top-level function to find sector with minimal resolution while retaining
+// a minimal number of quark pairs and gluons.
+
+VinciaClustering Resolution::findSector(vector<Particle>& state, int nqpMin,
+  int ngMin) {
+
+  // Get all clusterings.
+  vector<VinciaClustering> clusterings;
+  clusterings = vinComPtr->findClusterings(state, nqpMin, ngMin);
+
+  // Return clustering with smallest resolution.
+  return getMinSector(clusterings);
+}
+
+//--------------------------------------------------------------------------
+
+// Check sector veto, given two clusterings.
+
+bool Resolution::sectorVeto(const VinciaClustering& clusMin,
+  const VinciaClustering& clus) {
+  // Sanity check: always veto if NANs.
+  if (std::isnan(clusMin.q2res) || std::isnan(clus.q2res))
+    return true;
+
+  // Check resolution scales.
+  // Note: in principle, we could implement a random choice here,
+  // when the two scales are two close.
+  if (clus.q2res <= clusMin.q2res) return false;
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Private functions.
+
+//--------------------------------------------------------------------------
+
+// Sector resolution functions for final-final 2->3 branchings
+// as defined in sector shower paper.
+
+double Resolution::q2sector2to3FF(VinciaClustering& clus) {
+  // Fetch invariants and masses.
+  double sIK = clus.invariants[0];
+  double sij = clus.invariants[1];
+  double sjk = clus.invariants[2];
+  double mj2 = pow2(clus.mDau[1]);
+
+  // Gluon splitting.
+  // Note: it is assumed that the splitting was I -> ij (as in GXSplitFF).
+  if (clus.antFunType == GXSplitFF)
+    clus.q2res = (sij + 2.*mj2) * sqrt((sjk + mj2)/sIK);
+  // Gluon emission.
+  else clus.q2res = sij*sjk/sIK;
+
+  return clus.q2res;
+}
+
+//--------------------------------------------------------------------------
+
+// Sector resolution functions for resonance-final 2->3 branchings
+// as defined in sector shower paper.
+
+double Resolution::q2sector2to3RF(VinciaClustering& clus) {
+  // Fetch invariants and masses.
+  double saj = clus.invariants[1];
+  double sjk = clus.invariants[2];
+  double sak = clus.invariants[3];
+  double mj2 = pow2(clus.mDau[1]);
+
+  // Gluon splitting.
+  // Note: it is assumed that the splitting was J -> jk (as in XGSplitRF).
+  if (clus.antFunType == XGSplitRF)
+    clus.q2res = (sjk + 2.*mj2) * sqrt((saj - mj2)/(saj + sak));
+  // Gluon emission.
+  else clus.q2res = saj*sjk/(saj + sak);
+
+  return clus.q2res;
+}
+
+//--------------------------------------------------------------------------
+
+// Sector resolution functions for initial-final 2->3 branchings
+// as defined in sector shower paper.
+
+double Resolution::q2sector2to3IF(VinciaClustering& clus) {
+  // Fetch invariants and masses.
+  double saj = clus.invariants[1];
+  double sjk = clus.invariants[2];
+  double sak = clus.invariants[3];
+  double mj2 = pow2(clus.mDau[1]);
+
+  // Initial-state gluon splitting.
+  // Note: it is assumed that the splitting was a -> Aj (as in QXConvIF).
+  if (clus.antFunType == QXConvIF)
+    clus.q2res = saj * sqrt((sjk + mj2)/(saj + sak));
+  // (Initial-state) Quark conversion.
+  // Note: it is assumed that the conversion was a -> Aj (as in GXConvIF).
+  else if (clus.antFunType == GXConvIF)
+    clus.q2res = (saj - 2.*mj2) * sqrt((sjk + mj2)/(saj + sak));
+  // Final-state gluon splitting.
+  // Note: it is assumed that the splitting was J -> jk (as in XGSplitIF).
+  else if (clus.antFunType == XGSplitIF)
+    clus.q2res = (sjk + 2.*mj2) * sqrt((saj - mj2)/(saj + sak));
+  // Gluon emission.
+  else clus.q2res = saj*sjk/(saj + sak);
+
+  return clus.q2res;
+}
+
+//--------------------------------------------------------------------------
+
+// Sector resolution functions for initial-initial 2->3 branchings
+// as defined in sector shower paper.
+
+double Resolution::q2sector2to3II(VinciaClustering& clus) {
+  // Fetch invariants and masses.
+  double saj = clus.invariants[1];
+  double sjb = clus.invariants[2];
+  double sab = clus.invariants[3];
+  double mj  = clus.mDau[1];
+  double mj2 = (mj != 0.) ? 0. : pow2(mj);
+
+  // (Initial-state) Gluon splitting.
+  // Note: it is assumed that the splitting was a -> Aj (as in QXConvII).
+  if (clus.antFunType == QXConvII)
+    clus.q2res = (saj - 2.*mj2) * sqrt((sjb - mj2)/sab);
+  // (Initial-state) Quark conversion.
+  // Note: it is assumed that the conversion was a -> Aj (as in GXConvII).
+  else if (clus.antFunType == GXConvII)
+    clus.q2res = saj * sqrt((sjb - mj2)/sab);
+  // Gluon emission.
+  else clus.q2res = saj*sjb/sab;
+
+  return clus.q2res;
+}
+
+//--------------------------------------------------------------------------
+
+// Find sector with minimal q2sector in list of clusterings.
+
+VinciaClustering Resolution::getMinSector(
+  vector<VinciaClustering>& clusterings) {
+
+  // Set starting scale.
+  double q2min = 1.e19;
+
+  // Loop over all clusterings and save one with minimal resolution.
+  VinciaClustering clusMin;
+  for (int iClu(0); iClu<(int)clusterings.size(); ++iClu) {
+    VinciaClustering* clus = &clusterings.at(iClu);
+    q2sector(*clus);
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,
+        " Sector " + num2str(iClu, 2) + ": q2res = "
+        + num2str(clus->q2res, 6)
+        + " (q2min = " + num2str(q2min, 6) + ")");
+    if (clus->q2res < q2min) {
+      clusMin = *clus;
+      q2min = clusMin.q2res;
+    }
+  }
+  return clusMin;
 }
 
 //--------------------------------------------------------------------------
 
 // Sector resolution function for 3->4 branchings (currently only used
 // for gluon splitting, with m2qq as the measure).
+//TODO: currently disabled.
 
-double Resolution::q2sector3to4(const Particle*, const Particle* ,
-  const Particle* j1, const Particle* j2) {
-  Vec4   pqq  = j1->p() + j2->p();
-  double m2qq = pqq.m2Calc();
-  return m2qq;
-}
+// double Resolution::q2sector3to4(const Particle*, const Particle* ,
+//   const Particle* j1, const Particle* j2) {
+//   Vec4   pqq  = j1->p() + j2->p();
+//   double m2qq = pqq.m2Calc();
+//   return m2qq;
+// }
 
 //--------------------------------------------------------------------------
 
 // Sector resolution function for 2->4 branchings (double emission).
 // Assume j1 and j2 are colour connected, with a and b hard recoilers.
+//TODO: currently disabled.
 
-double Resolution::q2sector2to4(const Particle* a, const Particle* b,
-  const Particle* j1, const Particle* j2) {
-  return min(q2sector2to3(a,j2,j1),q2sector2to3(j1,b,j2));
-}
+// double Resolution::q2sector2to4(const Particle* a, const Particle* b,
+//   const Particle* j1, const Particle* j2) {
+//   // Double gluon emissions.
+//   if (j1->isGluon() && j2->isGluon()) {
+//     return min(q2sector2to3(a,j2,j1,a->id(),j2->id()),
+//       q2sector2to3(j1,b,j2,j1->id(),b->id()));
+//   }
+//   // Gluon Splittings.
+//   else {
+//     // Final-Final.
+//     if (a->isFinal() && b->isFinal()) {
+//       return -1.;
+//     }
+//     // Initial-Final with b in final state.
+//     else if (b->isFinal()) {
+//       return -1.;
+//     }
+//     // Initial-Final with a in final state.
+//     else if (a->isFinal()) {
+//       return -1.;
+//     }
+//     // Initial-Initial.
+//     else {
+//       return -1.;
+//     }
+//   }
+
+//   return -1.;
+// }
 
 //--------------------------------------------------------------------------
 
 // Sector resolution function for 3->5 branchings
 // (emission + splitting).
+//TODO: currently disabled.
 
-double Resolution::q2sector3to5(Particle* a, Particle* b,
-  Particle* j1, Particle* j2, Particle* j3) {
+// double Resolution::q2sector3to5(Particle* a, Particle* b,
+//   Particle* j1, Particle* j2, Particle* j3) {
 
-  // j3 is gluon.
-  Particle* gluPtr;
-  Particle* qPtr;
-  Particle* qBarPtr;
-  if (j1->id() == 21) {
-    gluPtr  = j1;
-    qPtr    = (j2->id() > 0 ? j2 : j3);
-    qBarPtr = (j2->id() < 0 ? j2 : j3);
-  } else if (j2->id() == 21) {
-    gluPtr  = j2;
-    qPtr    = (j1->id() > 0 ? j1 : j3);
-    qBarPtr = (j1->id() < 0 ? j1 : j3);
-  } else if (j3->id() == 21) {
-    gluPtr  = j3;
-    qPtr    = (j2->id() > 0 ? j2 : j1);
-    qBarPtr = (j2->id() < 0 ? j2 : j1);
-  } else {
-    cout << " q2sector3to5: unable to identify branching type" << endl;
-    return 1.e19;
-  }
-  Vec4   pqq  = qPtr->p() + qBarPtr->p();
-  double m2qq = pqq.m2Calc();
-  Particle* colPtr = a;
-  if (a->col()   != gluPtr->acol()) colPtr  = j1;
-  if (j1->col()  != gluPtr->acol()) colPtr  = j2;
-  if (j2->col()  != gluPtr->acol()) colPtr  = j3;
-  if (j3->col()  != gluPtr->acol()) colPtr  = b;
-  Particle* acolPtr = b;
-  if (b->acol()  != gluPtr->col())  acolPtr = j3;
-  if (j3->acol() != gluPtr->col())  acolPtr = j2;
-  if (j2->acol() != gluPtr->col())  acolPtr = j1;
-  if (j1->acol() != gluPtr->col())  acolPtr = a;
-  double q2emit = q2sector2to3(colPtr,acolPtr,gluPtr);
-  return min(q2emit,m2qq);
+//   // j3 is gluon.
+//   Particle* gluPtr;
+//   Particle* qPtr;
+//   Particle* qBarPtr;
+//   if (j1->id() == 21) {
+//     gluPtr  = j1;
+//     qPtr    = (j2->id() > 0 ? j2 : j3);
+//     qBarPtr = (j2->id() < 0 ? j2 : j3);
+//   } else if (j2->id() == 21) {
+//     gluPtr  = j2;
+//     qPtr    = (j1->id() > 0 ? j1 : j3);
+//     qBarPtr = (j1->id() < 0 ? j1 : j3);
+//   } else if (j3->id() == 21) {
+//     gluPtr  = j3;
+//     qPtr    = (j2->id() > 0 ? j2 : j1);
+//     qBarPtr = (j2->id() < 0 ? j2 : j1);
+//   } else {
+//     cout << " q2sector3to5: unable to identify branching type" << endl;
+//     return 1.e19;
+//   }
+//   Vec4   pqq  = qPtr->p() + qBarPtr->p();
+//   double m2qq = pqq.m2Calc();
+//   Particle* colPtr = a;
+//   if (a->col()   != gluPtr->acol()) colPtr  = j1;
+//   if (j1->col()  != gluPtr->acol()) colPtr  = j2;
+//   if (j2->col()  != gluPtr->acol()) colPtr  = j3;
+//   if (j3->col()  != gluPtr->acol()) colPtr  = b;
+//   Particle* acolPtr = b;
+//   if (b->acol()  != gluPtr->col())  acolPtr = j3;
+//   if (j3->acol() != gluPtr->col())  acolPtr = j2;
+//   if (j2->acol() != gluPtr->col())  acolPtr = j1;
+//   if (j1->acol() != gluPtr->col())  acolPtr = a;
+//   double q2emit = q2sector2to3(colPtr,acolPtr,gluPtr,21,gluPtr->id());
+//   return min(q2emit,m2qq);
 
+// }
+
+//==========================================================================
+
+// The VinciaClustering struct.
+
+//--------------------------------------------------------------------------
+
+// Set information based on current state and indices of daughters.
+
+void VinciaClustering::setDaughters(const Event& state, int dau1In,
+  int dau2In, int dau3In) {
+
+  // Store indices of daughters.
+  dau1 = dau1In;
+  dau2 = dau2In;
+  dau3 = dau3In;
+
+  setInvariantsAndMasses(state);
+
+}
+
+void VinciaClustering::setDaughters(const vector<Particle>& state, int dau1In,
+  int dau2In, int dau3In) {
+
+  // Store indices of daughters.
+  dau1 = dau1In;
+  dau2 = dau2In;
+  dau3 = dau3In;
+
+  setInvariantsAndMasses(state);
 }
 
 //--------------------------------------------------------------------------
 
-// Sector accept function. Optionally prevent g->qq clusterings if
-// that would reduce the number of fermion lines below some minimum
-// (cheap way to indicate that Z->qq/ll always has at least one
-// fermion pair).
+bool VinciaClustering::initInvariantAndMassVecs() {
+  // Save masses of daughters.
+  double ma = mDau[0];
+  double mj = mDau[1];
+  double mb = mDau[2];
 
-double Resolution::findSector(vector<int>& iSec, vector<Particle> state,
-  int nFmin) {
-
-  map<int, int> colMap, acolMap;
-  map<int, vector<int> > flavMap;
-  vector<int> helX;
-  int nFerm(0), nIn(0);
-  for (int i=0; i<(int)state.size(); ++i) {
-    colMap[state[i].isFinal() ? state[i].col() : state[i].acol()] = i;
-    acolMap[state[i].isFinal() ? state[i].acol() : state[i].col()] = i;
-    flavMap[state[i].isFinal() ? state[i].id() :
-      -state[i].id()].push_back(i);
-    helX.push_back(state[i].isFinal() ? state[i].pol() : -state[i].pol());
-    if (state[i].isQuark() || state[i].isLepton()) ++nFerm;
-    if (!state[i].isFinal()) ++nIn;
+  // Calculate sAB and masses of mothers according to configuration.
+  double mA = -1., mB = -1.;
+  double sAB = -1.;
+  if (isFSR) {
+    // Final-final gluon splitting.
+    if (antFunType == GXSplitFF) {
+      mA = 0.;
+      mB = mb;
+      sAB = saj + sab + sjb + pow2(ma) + pow2(mj);
+    }
+    // Final-final gluon emission.
+    else if (antFunType == QQEmitFF || antFunType == QGEmitFF ||
+      antFunType == GQEmitFF || antFunType == GGEmitFF) {
+      mA = ma;
+      mB = mb;
+      sAB = saj + sab + sjb;
+    }
+    // Resonance-final gluon splitting.
+    else if (antFunType == XGSplitRF) {
+      mA = ma;
+      mB = 0.;
+      sAB = saj + sab - sjb - pow2(mj) - pow2(mb);
+    }
+    // Resonance-final gluon emission.
+    else if (antFunType == QQEmitRF || antFunType == QGEmitRF) {
+      mA = ma;
+      mB = mb;
+      sAB = saj + sab - sjb;
+    }
   }
-  nFerm /= 2;
-
-  // Initialise.
-  double q2min = 1e19;
-  iSec.clear();
-
-  // Do all possible 2->3 clusterings. Note, needs modification for
-  // 3->4 and 2->4 showers.
-  for (int ir = 0; ir < (int)state.size(); ++ir) {
-    // There are no sectors for emission into the initial state.
-    if (!state[ir].isFinal()) continue;
-    // If a gluon, compute LC pT from colour partners.
-    if (state[ir].isGluon()) {
-      int ia = colMap[state[ir].acol()];
-      int ib = acolMap[state[ir].col()];
-      double q2this = q2sector2to3(&state[ia],&state[ib],&state[ir]);
-      if (q2this < q2min) {
-        q2min = q2this;
-        iSec.clear();
-        iSec.push_back(ia);
-        iSec.push_back(ib);
-        iSec.push_back(ir);
-      }
+  else {
+    // IF initial-state gluon splitting.
+    if (antFunType == QXConvIF) {
+      mA = mj;
+      mB = mb;
+      sAB = saj + sab - sjb - pow2(ma);
     }
-
-    // If fermion, check if we are allowed to look at this clustering.
-    if (state[ir].isQuark()) {
-      // Skip if this clustering would reduce below number requested.
-      if (nFerm <= nFmin) continue;
-      // Cluster quark: recoiler is the anticolour partner.
-      // Cluster antiquark: recoiler is colour partner.
-      int ib = (state[ir].id() > 0) ? acolMap[state[ir].col()]
-        : colMap[state[ir].acol()];
-
-      // Loop over all same-flavour (anti)quarks (must in principle
-      // also require opposite helicities).
-      vector<int> aList;
-      aList = flavMap[-state[ir].id()];
-      for (int ifa = 0; ifa < (int)aList.size(); ++ifa) {
-        int ia = aList[ifa];
-        if (helX[ir] != helX[ia] || helX[ia] == 9 || helX[ir] == 9) {
-          double q2this = q2sector2to3(&state[ia],&state[ib],&state[ir]);
-          if (q2this < q2min) {
-            q2min = q2this;
-            iSec.clear();
-            iSec.push_back(ia);
-            iSec.push_back(ib);
-            iSec.push_back(ir);
-          }
-        }
-      }
+    // IF quark conversion.
+    else if (antFunType == GXConvIF) {
+      mA = 0.;
+      mB = mb;
+      sAB = saj + sab - sjb - pow2(ma) - pow2(mj);
     }
-    // Other sectors (QED, EW, ...) to be implemented here.
-  } // End loop over ir.
+    // IF final-state gluon splitting.
+    else if (antFunType == XGSplitIF){
+      mA = ma;
+      mB = 0.;
+      sAB = saj + sab - sjb - pow2(mj) - pow2(mb);
+    }
+    // IF gluon emission.
+    else if (antFunType == QQEmitIF || antFunType == QGEmitIF ||
+      antFunType == GQEmitIF || antFunType == GGEmitIF) {
+      mA = ma;
+      mB = mb;
+      sAB = saj + sab - sjb;
+    }
+    // II initial-state gluon splitting.
+    else if (antFunType == QXConvII) {
+      mA = mj;
+      mB = mb;
+      sAB = sab - saj - sjb + pow2(ma);
+    }
+    // II quark conversion.
+    else if (antFunType == GXConvII) {
+      mA = 0.;
+      mB = mb;
+      sAB = sab - saj - sjb + pow2(ma) + pow2(mj);
+    }
+    // II Gluon emission.
+    else if (antFunType == QQEmitII || antFunType == GQEmitII ||
+      antFunType == GGEmitII) {
+      mA = ma;
+      mB = mb;
+      sAB = sab - saj - sjb;
+    }
+  }
 
-  // Return smallest scale found.
-  return q2min;
+  // Check if masses and antenna invariant make sense.
+  if (mA < 0. || mB < 0.) return false;
+  // Check if we have phase space left for this emission.
+  if (sAB < 0.) return false;
 
+  // Save masses and invariants
+  invariants.clear();
+  invariants.push_back(sAB);
+  invariants.push_back(saj);
+  invariants.push_back(sjb);
+  invariants.push_back(sab);
+  mMot.clear();
+  mMot.push_back(mA);
+  mMot.push_back(mB);
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+void VinciaClustering::setInvariantsAndMasses(const Event& state) {
+  // Save masses.
+  mDau.clear();
+  mDau.push_back(max(0., state[dau1].m()));
+  mDau.push_back(max(0., state[dau2].m()));
+  mDau.push_back(max(0., state[dau3].m()));
+
+  // Calculate invariants.
+  saj = 2. * state[dau1].p() * state[dau2].p();
+  sjb = 2. * state[dau2].p() * state[dau3].p();
+  sab = 2. * state[dau1].p() * state[dau3].p();
+}
+
+//--------------------------------------------------------------------------
+
+void VinciaClustering::setInvariantsAndMasses(const vector<Particle>& state) {
+  // Save masses.
+  mDau.clear();
+  mDau.push_back(max(0., state[dau1].m()));
+  mDau.push_back(max(0., state[dau2].m()));
+  mDau.push_back(max(0., state[dau3].m()));
+
+  // Calculate invariants.
+  saj = 2. * state[dau1].p() * state[dau2].p();
+  sjb = 2. * state[dau2].p() * state[dau3].p();
+  sab = 2. * state[dau1].p() * state[dau3].p();
+}
+
+//--------------------------------------------------------------------------
+
+// Get Vincia name of current antenna.
+
+string VinciaClustering::getAntName() const {
+  if (isFSR) {
+    if (antFunType == QQEmitFF) return "QQEmitFF";
+    if (antFunType == QGEmitFF) return "QGEmitFF";
+    if (antFunType == GQEmitFF) return "GQEmitFF";
+    if (antFunType == GGEmitFF) return "GGEmitFF";
+    if (antFunType == GXSplitFF) return "GXSplitFF";
+    if (antFunType == QQEmitRF) return "QQEmitRF";
+    if (antFunType == QGEmitRF) return "QGEmitRF";
+    if (antFunType == XGSplitRF) return "XGSplitRF";
+    return "noVinciaName";
+  }
+  else {
+    if (antFunType == QQEmitII) return "QQEmitII";
+    if (antFunType == GQEmitII) return "GQEmitII";
+    if (antFunType == GGEmitII) return "GGEmitII";
+    if (antFunType == QXConvII) return "QXConvII";
+    if (antFunType == GXConvII) return "GXConvII";
+    if (antFunType == QQEmitIF) return "QQEmitIF";
+    if (antFunType == QGEmitIF) return "QGEmitIF";
+    if (antFunType == GQEmitIF) return "GQEmitIF";
+    if (antFunType == GGEmitIF) return "GGEmitIF";
+    if (antFunType == QXConvIF) return "QXConvIF";
+    if (antFunType == GXConvIF) return "GXConvIF";
+    if (antFunType == XGSplitIF) return "XGSplitIF";
+    return "noVinciaName";
+  }
 }
 
 //==========================================================================
@@ -783,8 +1075,7 @@ bool VinciaCommon::init() {
 
   // Check initPtr.
   if (!isInitPtr) {
-    if (verbose >= 1)
-      printOut("VinciaCommon::init","Error! pointers not initialized");
+    printOut(__METHOD_NAME__, "Error! pointers not initialized");
     return false;
   }
 
@@ -804,45 +1095,43 @@ bool VinciaCommon::init() {
   nMotDau       = 0;
   nUnmatchedMass.resize(2);
   nEPcons.resize(2);
-  for (int i=0; i<2; i++) {
+  for (int i = 0; i<2; i++) {
     nUnmatchedMass[i] = 0;
     nEPcons[i]        = 0;
   }
 
   // Quark masses
   mt                 = particleDataPtr->m0(6);
-  if (mt < TINY) mt  = 171.0;
-  mb                 = min(mt,particleDataPtr->m0(5));
-  if (mb < TINY) mb  = min(mt,4.8);
-  mc                 = min(mb,particleDataPtr->m0(4));
-  if (mc < TINY) mc  = min(mb,1.5);
-  ms                 = min(mc,particleDataPtr->m0(3));
-  if (ms < TINY) ms  = min(mc,0.1);
+  if (mt < NANO) mt  = 171.0;
+  mb                 = min(mt, particleDataPtr->m0(5));
+  if (mb < NANO) mb  = min(mt, 4.8);
+  mc                 = min(mb, particleDataPtr->m0(4));
+  if (mc < NANO) mc  = min(mb, 1.5);
+  ms                 = min(mc, particleDataPtr->m0(3));
+  if (ms < NANO) ms  = min(mc, 0.1);
 
   // Number of flavours to treat as massless in clustering and
   // kinematics maps.
   nFlavZeroMass = settingsPtr->mode("Vincia:nFlavZeroMass");
 
+  // Strong coupling for use in merging.
+  double alphaSvalue  = settingsPtr->parm("Vincia:alphaSvalue");
+  int    alphaSorder  = settingsPtr->mode("Vincia:alphaSorder");
+  int    alphaSnfmax  = settingsPtr->mode("Vincia:alphaSnfmax");
+  bool   useCMW       = settingsPtr->flag("Vincia:useCMW");
+  alphaS.init(alphaSvalue, alphaSorder, alphaSnfmax, useCMW);
+
   // Default alphaS, with and without CMW.
-  double alphaSvalue = settingsPtr->parmDefault("Vincia:alphaSvalue");
-  int    alphaSorder = settingsPtr->modeDefault("Vincia:alphaSorder");
-  int    alphaSnfmax = settingsPtr->modeDefault("Vincia:alphaSnfmax");
-  bool   useCMW      = settingsPtr->flagDefault("Vincia:useCMW");
+  alphaSvalue = settingsPtr->parmDefault("Vincia:alphaSvalue");
+  alphaSorder = settingsPtr->modeDefault("Vincia:alphaSorder");
+  alphaSnfmax = settingsPtr->modeDefault("Vincia:alphaSnfmax");
   alphaStrongDef.init(    alphaSvalue, alphaSorder, alphaSnfmax, false);
   alphaStrongDefCMW.init( alphaSvalue, alphaSorder, alphaSnfmax, true);
-
-  // Strong coupling for use in merging.
-  alphaSvalue  = settingsPtr->parm("Vincia:alphaSvalue");
-  alphaSorder  = settingsPtr->mode("Vincia:alphaSorder");
-  alphaSnfmax  = settingsPtr->mode("Vincia:alphaSnfmax");
-  useCMW       = settingsPtr->flag("Vincia:useCMW");
-  alphaS.init(alphaSvalue, alphaSorder, alphaSnfmax, useCMW);
 
   // User alphaS, with and without CMW.
   alphaSvalue  = settingsPtr->parm("Vincia:alphaSvalue");
   alphaSorder  = settingsPtr->mode("Vincia:alphaSorder");
   alphaSnfmax  = settingsPtr->mode("Vincia:alphaSnfmax");
-  useCMW       = settingsPtr->flag("Vincia:useCMW");
   alphaStrong.init(    alphaSvalue, alphaSorder, alphaSnfmax, false);
   alphaStrongCMW.init( alphaSvalue, alphaSorder, alphaSnfmax, true);
 
@@ -852,7 +1141,7 @@ bool VinciaCommon::init() {
 
   // Find the overall minimum scale. Take into account the freezeout
   // scale, Lambda pole, and alphaSmax.
-  double muMin = max(sqrt(mu2freeze),1.05*alphaS.Lambda3());
+  double muMin = max(sqrt(mu2freeze), 1.05*alphaS.Lambda3());
   double muMinASmax;
   if (alphaStrong.alphaS(mu2min) < alphaSmax) {
     muMinASmax = muMin;
@@ -883,11 +1172,18 @@ bool VinciaCommon::init() {
 // consistent with assumption of string length > 1 meson.
 
 double VinciaCommon::mHadMin(const int id1in, const int id2in) {
+
+  // Treat gluons as down quarks for purposes of minimum meson mass.
   int id1 = abs(id1in);
   if (id1 == 21 || id1 <= 2) id1 = 1;
   int id2 = abs(id2in);
-  if (id2 == 21 || id1 <= 2) id2 = 1;
-  int idMes = max(id1,id2)*100 + min(id1,id2)*10 + 1;
+  if (id2 == 21 || id2 <= 2) id2 = 1;
+
+  // No hadronisation cut for ID codes >= 6.
+  if (max(id1, id2) >= 6) return 0.;
+
+  // ID of would-be pseudoscalar meson.
+  int idMes = max(id1, id2)*100 + min(id1, id2)*10 + 1;
 
   // Special for ssbar, use eta rather than eta'.
   if (idMes == 331) idMes = 221;
@@ -902,38 +1198,65 @@ double VinciaCommon::mHadMin(const int id1in, const int id2in) {
 
 bool VinciaCommon::showerChecks(Event& event, bool ISR) {
 
-  // Only for verbose >= 4.
-  if (verbose < 4) return true;
+  // Only for verbose >= Logger::REPORT.
+  if (verbose < Logger::REPORT) return true;
 
-  // Count incoming partons (beam daughters) with negative momentum and charge.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
+  // First check if this event has any beams.
+  bool hasBeams = false;
+  bool hasBeamRemnants = false;
+  int  iBeg     = 0;
+  for (int i = 0; i < event.size(); ++i) {
+    if (event[i].statusAbs() == 12) {
+      iBeg     = i+1;
+      hasBeams = true;
+    }
+    if (abs(event[i].status()) == 63) {
+      hasBeamRemnants = true;
+      break;
+    }
+  }
+
+  // Count incoming partons with negative momentum and charge.
   Vec4 pSum;
   double chargeSum = 0.0;
-  bool beamRemnantAdded = false;
-  for (int i = 0; i < event.size(); ++i){
-    if(!beamRemnantAdded){
-      if (!event[i].isFinal()) {
-        if ( (event[i].mother1() == 1) || (event[i].mother1() == 2) ) {
-          pSum      -= event[i].p();
-          chargeSum -= event[i].charge();
-        }
-      }
-      if(abs(event[i].status())==63){
-        beamRemnantAdded=true;
-        pSum = -(event[1].p() + event[2].p());
-        chargeSum = -(event[1].charge()+event[2].charge());
+  // If beam remnants were added, define incoming as sum of beams.
+  if (hasBeamRemnants) {
+    pSum = -(event[1].p() + event[2].p());
+    chargeSum = -(event[1].charge()+event[2].charge());
+  }
+  // If there are incoming beams (but no remnants yet), use incoming partons.
+  else if (hasBeams) {
+    for (int i = iBeg; i < event.size(); ++i) {
+      if ( (event[i].mother1() == 1) || (event[i].mother1() == 2) ) {
+        pSum      -= event[i].p();
+        chargeSum -= event[i].charge();
       }
     }
   }
+  // No beams. Incoming defined by partons with mother = 0.
+  else {
+    for (int i = 1; i < event.size(); ++i) {
+      if (event[i].mother1() == 0) {
+        pSum      -= event[i].p();
+        chargeSum -= event[i].charge();
+      }
+      else break;
+    }
+  }
+
   double eLab = abs(pSum.e());
 
   // Loop over particles in the event.
-  for (int i = 0; i < event.size(); ++i) {
+  for (int i = iBeg; i < event.size(); ++i) {
 
     // Look for any unrecognized particle codes.
     int id = event[i].id();
     if (id == 0 || !particleDataPtr->isParticle(id)) {
       nUnkownPDG++;
-      if (nUnkownPDG == 1){
+      if (nUnkownPDG == 1) {
         cout << "ERROR in Vincia::ShowerChecks" << (ISR ? "(ISR)" : "(FSR)")
              << ": unknown particle code"
              << ", i = " << i << ", id = " << id << endl;
@@ -951,7 +1274,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
         || (colType == -1 && (col  > 0 || acol <= 0))
         || (colType ==  2 && (col <= 0 || acol <= 0)) ) {
         nIncorrectCol++;
-        if (nIncorrectCol == 1){
+        if (nIncorrectCol == 1) {
           cout << "ERROR in Vincia::ShowerChecks" << (ISR ? "(ISR)" : "(FSR)")
                << ": incorrect colours"
                << ", i = " << i << ", id = " << id << " cols = " << col
@@ -970,7 +1293,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
 
       if (errMass > mTolErr) {
         nUnmatchedMass[0]++;
-        if (nUnmatchedMass[0] == 1){
+        if (nUnmatchedMass[0] == 1) {
           cout << "ERROR in Vincia::ShowerChecks" << (ISR ? "(ISR)" : "(FSR)")
                << ": unmatched particle energy/momentum/mass"
                << ", i = " << i << ", id = " << id << endl;
@@ -978,7 +1301,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
         }
       } else if (errMass > mTolWarn) {
         nUnmatchedMass[1]++;
-        if (nUnmatchedMass[1] == 1){
+        if (nUnmatchedMass[1] == 1) {
           cout << "WARNING in Vincia::ShowerChecks"
                << (ISR ? "(ISR)" : "(FSR)")
                << ": not quite matched particle energy/momentum/mass"
@@ -987,7 +1310,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
       }
     } else {
       nNAN++;
-      if (nNAN == 1){
+      if (nNAN == 1) {
         cout << "ERROR in Vincia::ShowerChecks" << (ISR ? "(ISR)" : "(FSR)")
              << ": not-a-number energy/momentum/mass"
              << ", i = " << i << ", id = " << id << endl;
@@ -1001,7 +1324,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
         && abs(event[i].tau())   >= 0.0) {
     } else {
       nVertex++;
-      if (nVertex == 1){
+      if (nVertex == 1) {
         cout << "ERROR in Vincia::ShowerChecks" << (ISR ? "(ISR)" : "(FSR)")
              << ": not-a-number vertex/lifetime"
              << ", i = " << i << ", id = " << id << endl;
@@ -1036,7 +1359,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
   }
   if (abs(chargeSum) > 0.1) {
     nChargeCons++;
-    if (nChargeCons == 1){
+    if (nChargeCons == 1) {
       cout << "ERROR in Vincia::ShowerChecks" << (ISR ? "(ISR)" : "(FSR)")
            << ": charge not conserved" << endl;
       return false;
@@ -1045,13 +1368,11 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
 
   // Check that mother and daughter information match for each particle.
   vector<int> noMot, noDau;
-  vector< pair<int,int> > noMotDau;
+  vector< pair<int, int> > noMotDau;
 
-  // Loop through the event and check that there are beam particles.
-  bool hasBeams = false;
-  for (int i = 0; i < event.size(); ++i) {
+  // Loop through the event and check mother/daughter lists.
+  for (int i = iBeg; i < event.size(); ++i) {
     int status = event[i].status();
-    if (abs(status) == 12) hasBeams = true;
 
     // Check that mother and daughter lists not empty where not expected to.
     vector<int> mList = event[i].motherList();
@@ -1137,7 +1458,7 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
     }
   }
 
-  //Made it to here: no major problems.
+  // Made it to here: no major problems.
   return true;
 
 }
@@ -1146,8 +1467,8 @@ bool VinciaCommon::showerChecks(Event& event, bool ISR) {
 
 // Get the shower starting scale.
 
-double VinciaCommon::getShowerStartingScale(int iSys,
-  PartonSystems* partonSystemsPtr, const Event& event, double sbbSav) {
+double VinciaCommon::getShowerStartingScale(int iSys, const Event& event,
+  double sbbSav) {
 
   // Depending on user choice shower starts at q2maxFudge *
   // factorization scale of phase space maximum.
@@ -1157,58 +1478,871 @@ double VinciaCommon::getShowerStartingScale(int iSys,
   int nOut = partonSystemsPtr->sizeOut(iSys);
   vector<int> iFS;
   for (int iOut = 0; iOut < nOut; ++iOut) {
-    int i = partonSystemsPtr->getOut(iSys,iOut);
+    int i = partonSystemsPtr->getOut(iSys, iOut);
     int idAbs = event[i].idAbs();
     if ((idAbs >= 1 && idAbs <= 5) || idAbs == 21) hasFSpartons = true;
     iFS.push_back(i);
   }
   if (qMaxMatch == 1 || (qMaxMatch == 0 && hasFSpartons) ) {
-    double Q2facSav = sbbSav;
-    double Q2facFix  = settingsPtr->parm("SigmaProcess:factorFixScale");
-    double Q2facMult = settingsPtr->parm("SigmaProcess:factorMultFac");
+    double q2facSav = sbbSav;
+    double q2facFix  = settingsPtr->parm("SigmaProcess:factorFixScale");
+    double q2facMult = settingsPtr->parm("SigmaProcess:factorMultFac");
 
     // Ask Pythia about 2 -> 1 scale.
     if (nOut == 1) {
       int factorScale1 = settingsPtr->mode("SigmaProcess:factorScale1");
-      Q2facSav = ( factorScale1 == 1 ? Q2facMult*event[iFS[0]].m2Calc() :
-        Q2facFix );
+      q2facSav = ( factorScale1 == 1 ? q2facMult*event[iFS[0]].m2Calc() :
+        q2facFix );
 
     // Ask Pythia about 2 -> 2 scale.
     } else if (iFS.size() == 2) {
       int factorScale2 = settingsPtr->mode("SigmaProcess:factorScale2");
       double mT21 = event[iFS[0]].mT2(), mT22 = event[iFS[1]].mT2();
-      double sHat = m2(event[iFS[0]],event[iFS[1]]);
-      double tHat = m2(event[3],event[iFS[0]]);
-      if (factorScale2 == 1) Q2facSav = min(mT21,mT22);
-      else if (factorScale2 == 2) Q2facSav = sqrt(mT21*mT22);
-      else if (factorScale2 == 3) Q2facSav = 0.5*(mT21+mT22);
-      else if (factorScale2 == 4) Q2facSav = sHat;
-      else if (factorScale2 == 5) Q2facSav = Q2facFix;
-      else if (factorScale2 == 6) Q2facSav = abs(-tHat);
-      if (factorScale2 != 5) Q2facSav *= Q2facMult;
+      double sHat = m2(event[iFS[0]], event[iFS[1]]);
+      double tHat = m2(event[3], event[iFS[0]]);
+      if (factorScale2 == 1) q2facSav = min(mT21, mT22);
+      else if (factorScale2 == 2) q2facSav = sqrt(mT21*mT22);
+      else if (factorScale2 == 3) q2facSav = 0.5*(mT21+mT22);
+      else if (factorScale2 == 4) q2facSav = sHat;
+      else if (factorScale2 == 5) q2facSav = q2facFix;
+      else if (factorScale2 == 6) q2facSav = abs(-tHat);
+      if (factorScale2 != 5) q2facSav *= q2facMult;
 
     // Ask Pythia about 2 -> 3 scale.
     } else if (iFS.size() == 3) {
       int factorScale3 = settingsPtr->mode("SigmaProcess:factorScale3");
       double mT21 = event[iFS[0]].mT2(), mT22 = event[iFS[1]].mT2(),
         mT23 = event[iFS[2]].mT2();
-      double mT2min1 = min(mT21,min(mT22,mT23));
-      double mT2min2 = max(max(min(mT21,mT22),min(mT21,mT23)),min(mT22,mT23));
-      double sHat    = m2(event[iFS[0]],event[iFS[1]],event[iFS[2]]);
-      if (factorScale3 == 1) Q2facSav = mT2min1;
-      else if (factorScale3 == 2) Q2facSav = sqrt(mT2min1*mT2min2);
-      else if (factorScale3 == 3) Q2facSav = pow(mT21*mT22*mT23,1.0/3.0);
-      else if (factorScale3 == 4) Q2facSav = (mT21+mT22+mT23)/3.0;
-      else if (factorScale3 == 5) Q2facSav = sHat;
-      else if (factorScale3 == 6) Q2facSav = Q2facFix;
-      if (factorScale3 != 6) Q2facSav *= Q2facMult;
+      double mT2min1 = min(mT21, min(mT22, mT23));
+      double mT2min2 = max(max(min(mT21, mT22), min(mT21, mT23)),
+        min(mT22, mT23));
+      double sHat    = m2(event[iFS[0]], event[iFS[1]], event[iFS[2]]);
+      if (factorScale3 == 1) q2facSav = mT2min1;
+      else if (factorScale3 == 2) q2facSav = sqrt(mT2min1*mT2min2);
+      else if (factorScale3 == 3) q2facSav = pow(mT21*mT22*mT23, 1.0/3.0);
+      else if (factorScale3 == 4) q2facSav = (mT21+mT22+mT23)/3.0;
+      else if (factorScale3 == 5) q2facSav = sHat;
+      else if (factorScale3 == 6) q2facSav = q2facFix;
+      if (factorScale3 != 6) q2facSav *= q2facMult;
 
     // Unknown, leave as is, all emissions allowed now.
     } else {;}
-    return q2maxFudge*Q2facSav;
+    return q2maxFudge*q2facSav;
   }
   return sbbSav;
 
+}
+
+//--------------------------------------------------------------------------
+
+// Find all possible clusterings for given configuration while retaining
+// a minimum number of quark pairs and gluons in the event.
+
+vector<VinciaClustering> VinciaCommon::findClusterings(
+  const vector<Particle>& state, int nqpMin, int ) {
+
+  // Initialise.
+  vector<VinciaClustering> clusterings;
+
+  // Dummy flavour map.
+  map<int, int> nFlavsBorn;
+  for (int i(-6); i <= 6; ++i) {
+    if (i == 0) nFlavsBorn[21] = 0;
+    nFlavsBorn[i] = 0;
+  }
+
+  // Find number of quark pairs in current state.
+  int nqpNow = 0;
+  for (auto& ptcl : state)
+    if (ptcl.isQuark()) ++nqpNow;
+  if (nqpNow % 2 != 0) return clusterings;
+  nqpNow /= 2;
+  if (nqpNow < nqpMin) return clusterings;
+
+  // Find all tentative clusterings.
+  clusterings = findClusterings(state, nFlavsBorn);
+
+  // Erase those reducing the number of quark pairs below the minimum.
+  // (Only when the current state has the minimum number of quark pairs).
+  if (nqpNow == nqpMin) {
+    auto itClus = clusterings.begin();
+    while (itClus != clusterings.end()) {
+      VinciaClustering clus = *itClus;
+      if (clus.isFSR) {
+        if (clus.antFunType == GXSplitFF || clus.antFunType == XGSplitRF) {
+          clusterings.erase(itClus);
+        }
+        else ++itClus;
+      }
+      else {
+        // Note: no QXSplit, as this leaves the total number of
+        // quark pairs invariant.
+        if (clus.antFunType == GXConvIF || clus.antFunType == GXConvII
+          || clus.antFunType == XGSplitIF)
+          clusterings.erase(itClus);
+        else ++itClus;
+      }
+    }
+  }
+
+  return clusterings;
+}
+
+//--------------------------------------------------------------------------
+
+bool VinciaCommon::isValidClustering(const VinciaClustering& clus,
+  const Event& event, int verboseIn) {
+  // Fetch daughters.
+  const Particle* a = &event[clus.dau1];
+  const Particle* j = &event[clus.dau2];
+  const Particle* b = &event[clus.dau3];
+
+  // Do not consider emissions into the initial state.
+  if (!j->isFinal()) return false;
+
+  // Fetch colour connection.
+  bool ajColCon = colourConnected(*a, *j);
+  bool jbColCon = colourConnected(*j, *b);
+  bool abColCon = colourConnected(*a, *b);
+
+  // Quark-antiquark clusterings.
+  if (j->isQuark()) {
+    // We can have multiple antennae contributing to this state.
+    // Only return false if nothing is found.
+    bool foundValid = false;
+    // (Initial-state) quark conversion on side a.
+    if (!a->isFinal() && a->isQuark()) {
+      // Quark a needs to have the same flavour as j and must not
+      // be colour-connected to it to not create singlet gluons.
+      if (!ajColCon && a->id() == j->id()) {
+        if (verboseIn >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__,
+            "Found valid quark conversion clustering on side a.");
+        foundValid = true;
+      }
+    }
+    // Initial-state gluon splitting on side a.
+    else if (!a->isFinal() && a->isGluon()) {
+      // Gluon a has to be colour-connected with both j and b.
+      if (ajColCon && abColCon) {
+        if (verboseIn >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__,
+            "Found valid initial-state gluon splitting clustering on side a.");
+        foundValid = true;
+      }
+    }
+    // Final-state gluon splitting on side a.
+    else if (a->isFinal() && a->isQuark()) {
+      // Quark a needs to have the antiflavour of j and must not
+      // be colour-connected to it to not create singlet gluons.
+      if (!ajColCon && a->id() == -j->id()) {
+        if (verboseIn >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__,
+            "Found valid final-state gluon splitting clustering on side a.");
+        foundValid = true;
+      }
+    }
+
+    // (Initial-state) quark conversion on side b.
+    if (!b->isFinal() && b->isQuark()) {
+      // Quark b needs to have the same flavour as j and must not
+      // be colour-connected to it to not create singlet gluons.
+      if (!jbColCon && b->id() == j->id()) {
+        if (verboseIn >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__,
+            "Found valid quark conversion clustering on side b.");
+        foundValid = true;
+      }
+    }
+    // Initial-state gluon splitting on side b.
+    else if (!b->isFinal() && b->isGluon()) {
+      // Gluon a has to be colour-connected with both j and b.
+      if (jbColCon && abColCon) {
+        if (verboseIn >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__,
+            "Found valid initial-state gluon splitting clustering on side b.");
+        foundValid = true;
+      }
+    }
+    // Final-state gluon splitting on side b.
+    else if (b->isFinal() && b->isQuark()) {
+      // Quark b needs to have the antiflavour of j and must not
+      // be colour-connected to it to not create singlet gluons.
+      if (!jbColCon && b->id() == -j->id()) {
+        if (verboseIn >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__,
+            "Found valid final-state gluon splitting clustering on side b.");
+        foundValid = true;
+      }
+    }
+
+    // If nothing was found, return false.
+    if (!foundValid) return false;
+  }
+  // For gluon emissions, dau2 should be colour-connected with 1 and 3.
+  else {
+    if (!ajColCon || !jbColCon)
+      return false;
+    if (verboseIn >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,
+        "Found valid gluon emission clustering.");
+  }
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+bool VinciaCommon::clus3to2(const VinciaClustering& clus,
+  const vector<Particle>& state, vector<Particle>& pClustered) {
+
+  pClustered.clear();
+
+  // Save indices of daughters in event.
+  int ia = clus.dau1;
+  int ij = clus.dau2;
+  int ib = clus.dau3;
+
+  //TODO polarisations.
+  int polA = 9;
+  int polB = 9;
+
+  // Find clustered colours.
+  pair<int, int> colsA;
+  pair<int, int> colsB;
+  if (!getCols3to2(&state[ia], &state[ij], &state[ib],
+      clus, colsA, colsB)) {
+    loggerPtr->ERROR_MSG("failed to cluster colours");
+    return false;
+  }
+  int colA  = colsA.first;
+  int acolA = colsA.second;
+  int colB  = colsB.first;
+  int acolB = colsB.second;
+  // Check if the colour assignment created singlet particles.
+  if ((colA == 0 && acolA == 0) || colA == acolA) {
+    loggerPtr->ERROR_MSG("created colour-singlet parent A");
+    return false;
+  }
+  if ((colB == 0 && acolB == 0) || colB == acolB) {
+    loggerPtr->ERROR_MSG("created colour-singlet parent B");
+    return false;
+  }
+
+  // Find clustered momenta.
+  vector<Vec4> momNow;
+  vector<Vec4> momClus;
+  for (int iPtcl(0); iPtcl<(int)state.size(); ++iPtcl)
+    momNow.push_back(state.at(iPtcl).p());
+  if (!getMomenta3to2(momNow, momClus, clus)) {
+    loggerPtr->ERROR_MSG("failed to cluster momenta");
+    return false;
+  }
+
+  // Initialise clustered particles (momenta are set in loop below).
+  Particle pAnew = state.at(ia);
+  pAnew.id(clus.idMot1);
+  pAnew.cols(colA, acolA);
+  pAnew.pol(polA);
+  pAnew.setPDEPtr(particleDataPtr->findParticle(clus.idMot1));
+  pAnew.m(clus.mMot.at(0));
+  Particle pBnew = state.at(ib);
+  pBnew.id(clus.idMot2);
+  pBnew.cols(colB, acolB);
+  pBnew.pol(polB);
+  pBnew.m(clus.mMot.at(1));
+  pBnew.setPDEPtr(particleDataPtr->findParticle(clus.idMot2));
+
+  // Set list of clustered particles with new momenta.
+  int iOffset = 0;
+  for (int iPtcl(0); iPtcl<(int)momNow.size(); ++iPtcl) {
+    if (iPtcl == ij) {
+      iOffset = 1;
+      continue;
+    }
+    else if (iPtcl == ia) {
+      pClustered.push_back(pAnew);
+      pClustered.back().p(momClus.at(iPtcl-iOffset));
+    }
+    else if (iPtcl == ib) {
+      pClustered.push_back(pBnew);
+      pClustered.back().p(momClus.at(iPtcl-iOffset));
+    }
+    else {
+      pClustered.push_back(state.at(iPtcl));
+      pClustered.back().p(momClus.at(iPtcl-iOffset));
+    }
+  }
+
+  // Done.
+  return true;
+}
+
+bool VinciaCommon::clus3to2(const VinciaClustering& clus, const Event& event,
+  vector<Particle>& pClustered) {
+
+  pClustered.clear();
+
+  // Save indices of daughters in event.
+  int iaEvt = clus.dau1;
+  int ijEvt = clus.dau2;
+  int ibEvt = clus.dau3;
+
+  //TODO polarisations.
+  int polA = 9;
+  int polB = 9;
+
+  // Find clustered colours.
+  pair<int, int> colsA;
+  pair<int, int> colsB;
+  if (!getCols3to2(&event[iaEvt], &event[ijEvt], &event[ibEvt],
+      clus, colsA, colsB)) {
+    loggerPtr->ERROR_MSG("failed to cluster colours");
+    return false;
+  }
+  int colA  = colsA.first;
+  int acolA = colsA.second;
+  int colB  = colsB.first;
+  int acolB = colsB.second;
+  // Check if the colour assignment created singlet particles.
+  if ((colA == 0 && acolA == 0) || colA == acolA) {
+    loggerPtr->ERROR_MSG("created colour-singlet parent A");
+    return false;
+  }
+  if ((colB == 0 && acolB == 0) || colB == acolB) {
+    loggerPtr->ERROR_MSG("created colour-singlet parent B");
+    return false;
+  }
+
+  // Find clustered momenta.
+  vector<Vec4> momNow;
+  vector<Vec4> momClus;
+  int iEvtOff = 3;
+  for (int iPtcl(iEvtOff); iPtcl<event.size(); ++iPtcl)
+    momNow.push_back(event[iPtcl].p());
+  if (!getMomenta3to2(momNow, momClus, clus, iEvtOff)) {
+    loggerPtr->ERROR_MSG("failed to cluster momenta");
+    return false;
+  }
+
+  // Initialise clustered particles (momenta are set in loop below).
+  Particle pAnew = event[iaEvt];
+  pAnew.id(clus.idMot1);
+  pAnew.cols(colA, acolA);
+  pAnew.pol(polA);
+  pAnew.m(clus.mMot.at(0));
+  pAnew.setPDEPtr(particleDataPtr->findParticle(clus.idMot1));
+  Particle pBnew = event[ibEvt];
+  pBnew.id(clus.idMot2);
+  pBnew.cols(colB, acolB);
+  pBnew.pol(polB);
+  pBnew.m(clus.mMot.at(1));
+  pBnew.setPDEPtr(particleDataPtr->findParticle(clus.idMot2));
+
+  // Set list of clustered particles with new momenta.
+  int iOffset = 0;
+  for (int iPtcl(0); iPtcl<(int)momNow.size(); ++iPtcl) {
+    if (iPtcl == ijEvt-iEvtOff) {
+      iOffset = 1;
+      continue;
+    }
+    else if (iPtcl == iaEvt-iEvtOff) {
+      pClustered.push_back(pAnew);
+      pClustered.back().p(momClus.at(iPtcl-iOffset));
+    }
+    else if (iPtcl == ibEvt-iEvtOff) {
+      pClustered.push_back(pBnew);
+      pClustered.back().p(momClus.at(iPtcl-iOffset));
+    }
+    else {
+      pClustered.push_back(event[iPtcl+3]);
+      pClustered.back().p(momClus.at(iPtcl-iOffset));
+    }
+  }
+
+  // Done.
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Get clustered colours in 3->2 clustering.
+
+bool VinciaCommon::getCols3to2(const Particle* a, const Particle* j,
+  const Particle* b, const VinciaClustering& clus,
+  pair<int, int>& colsA, pair<int, int>& colsB) {
+
+  // Is the emission an antiquark?
+  bool jIsAntiQ = j->isQuark() ? (j->id() < 0) : false;
+
+  // Colours and colour chains of clustered particles (mothers).
+  int  colA = 0;
+  int acolA = 0;
+  int  colB = 0;
+  int acolB = 0;
+  if (clus.isFSR) {
+    // Final-final gluon splitting.
+    if (clus.antFunType == GXSplitFF) {
+      colA = jIsAntiQ ? a->col() : j->col();
+      acolA = jIsAntiQ ? j->acol() : a->acol();
+      colB = b->col();
+      acolB = b->acol();
+    }
+    // Resonance-final gluon splitting.
+    else if (clus.antFunType == XGSplitRF) {
+      colA = a->col();
+      acolA = a->acol();
+      colB = jIsAntiQ ? b->col() : j->col();
+      acolB = jIsAntiQ ? j->acol() : b->acol();
+    }
+    // Gluon emission.
+    else {
+      // Choose to annihilate colour pair of dau2 and dau3.
+      colA = a->col();
+      acolA = a->acol();
+      // Note: by construction, b and j are always in the final state.
+      if (b->col() == j->acol()) {
+        colB  = j->col();
+        acolB = b->acol();
+      }
+      else if (b->acol() == j->col()) {
+        colB  = b->col();
+        acolB = j->acol();
+      }
+    }
+  }
+  else {
+    // Initial-state gluon splitting.
+    if (clus.antFunType == QXConvII || clus.antFunType == QXConvIF) {
+      colA = jIsAntiQ ? a->col() : 0;
+      acolA = jIsAntiQ ? 0 : a->acol();
+      colB = b->col();
+      acolB = b->acol();
+    }
+    // Quark conversion.
+    else if (clus.antFunType == GXConvII || clus.antFunType == GXConvIF) {
+      // Find out whether daughters have been swapped to not have "emissions
+      // into the initial state", cf. setClusterlist in VinciaHistory.
+      if (j->id() == a->id()
+        && !a->isFinal() ) { // && !ajColCon) {
+        colA = jIsAntiQ ? j->acol() : a->col();
+        acolA = jIsAntiQ ? a->acol() : j->col();
+        colB = b->col();
+        acolB = b->acol();
+      }
+      else if (j->id() == b->id()
+        && !b->isFinal() ) { // && jbColCon) {
+        colB = jIsAntiQ ? j->acol() : b->col();
+        acolB = jIsAntiQ ? b->acol() : j->col();
+        colA = a->col();
+        acolA = a->acol();
+      }
+      else {
+        loggerPtr->ERROR_MSG("failed to assign colour of parents"
+          " in quark conversion clustering");
+        return false;
+      }
+    }
+    // Final-state gluon splitting.
+    else if (clus.antFunType == XGSplitIF) {
+      colA = a->col();
+      acolA = a->acol();
+      colB = jIsAntiQ ? b->col() : j->col();
+      acolB = jIsAntiQ ? j->acol() : b->acol();
+    }
+    // Gluon emission.
+    else {
+      // Choose to annihilate colour pair of dau1 and dau2.
+      colB  = b->col();
+      acolB = b->acol();
+      // Dau1 is definitely initial and dau2 final.
+      if (a->col() == j->col()) {
+        colA  = j->acol();
+        acolA = a->acol();
+      }
+      else if (a->acol() == j->acol()) {
+        colA  = a->col();
+        acolA = j->col();
+      }
+      else {
+        loggerPtr->ERROR_MSG("failed to assign colour of parents"
+          " in gluon emission clustering");
+        return false;
+      }
+    }
+  }
+
+  colsA = make_pair(colA, acolA);
+  colsB = make_pair(colB, acolB);
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Get clustered momenta in 3->2 clustering.
+// Note: iOffset shifts the indices stored in the VinciaClustering object.
+//       Is needed when these point to an event record.
+
+bool VinciaCommon::getMomenta3to2(vector<Vec4>& momNow,
+  vector<Vec4>& momClus, const VinciaClustering& clus, int iOffset) {
+
+  momClus.clear();
+
+  // Fetch indices.
+  int ia = clus.dau1-iOffset;
+  int ij = clus.dau2-iOffset;
+  int ib = clus.dau3-iOffset;
+
+  // Fetch masses (for clarity).
+  double mj = clus.mDau.at(1);
+  double mk = clus.mDau.at(2);
+  double mA = clus.mMot.at(0);
+  double mB = clus.mMot.at(1);
+
+  // Cluster momenta according to antenna function.
+  if (clus.isFSR) {
+    // Use antenna index to identify resonance-final branchings.
+    if (clus.antFunType >= QQEmitRF) {
+      if (!map3to2RF(momClus, momNow, ia, ij, ib, mB))
+        return false;
+    }
+    // Otherwise final-final branching.
+    else {
+      if (!map3to2FF(momClus, momNow, clus.kMapType, ia, ij, ib, mA, mB))
+        return false;
+    }
+  }
+  else {
+    // Use antenna index to identify initial-final branchings.
+    if (clus.antFunType >= QQEmitIF) {
+      if (!map3to2IF(momClus, momNow, ia, ij, ib, mj, mk, mB))
+        return false;
+    }
+    // Otherwise initial-initial branching.
+    else {
+      if (!map3to2II(momClus, momNow, true, ia, ij, ib, mj))
+        return false;
+    }
+  }
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Find all possible clusterings for given configuration (optionally while
+// retaining a Born configuration).
+
+vector<VinciaClustering> VinciaCommon::findClusterings(
+  const vector<Particle>& state, map<int, int> nFlavsBorn) {
+
+  // Check if we have sufficient information about the flavours in Born.
+  if (nFlavsBorn.size() < 12) {
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__, "Will not resolve Born.");
+    }
+    for (int i(-6); i <= 6; ++i) {
+      if (i == 0) nFlavsBorn[21] = 0;
+      nFlavsBorn[i] = 0;
+    }
+  }
+
+  // Vector of all clusterings.
+  vector<VinciaClustering> allClusterings;
+
+  // Initialise information about state.
+  map<int, int> col2ind;
+  map<int, int> acol2ind;
+  map<int, vector<int>> flav2inds;
+  vector<int> hels;
+  map<int, int> nFlavs;
+  for (int i(-6); i <= 6; ++i) {
+    if (i == 0) nFlavs[21] = 0;
+    nFlavs[i] = 0;
+  }
+  for (int iPtcl(0); iPtcl<(int)state.size(); ++iPtcl) {
+    Particle thisPtcl = state[iPtcl];
+    if (!thisPtcl.isFinal()) {
+      // Initial-state colour treated as anticolour.
+      if (thisPtcl.col() != 0)
+        acol2ind[thisPtcl.col()] = iPtcl;
+      if (thisPtcl.acol() != 0)
+        col2ind[thisPtcl.acol()] = iPtcl;
+      // Helicity flipped for initial state.
+      hels.push_back(-thisPtcl.pol());
+      // Initial-state quark treated as antiquark (and vice versa).
+      if (thisPtcl.isQuark()) {
+        flav2inds[-thisPtcl.id()].push_back(iPtcl);
+        nFlavs[-thisPtcl.id()]++;
+      } else if (thisPtcl.isGluon()) nFlavs[21]++;
+    } else {
+      if (thisPtcl.col() != 0)
+        col2ind[thisPtcl.col()] = iPtcl;
+      if (thisPtcl.acol() != 0)
+        acol2ind[thisPtcl.acol()] = iPtcl;
+      hels.push_back(thisPtcl.pol());
+      if (thisPtcl.isQuark()) {
+        flav2inds[thisPtcl.id()].push_back(iPtcl);
+        nFlavs[thisPtcl.id()]++;
+      } else if (thisPtcl.isGluon()) nFlavs[21]++;
+    }
+  }
+
+  // Loop through all 3 -> 2 clusterings.
+  for (int ij(0); ij<(int)state.size(); ++ij) {
+    // Gluon emission.
+    if (state[ij].isGluon() && state[ij].isFinal()) {
+      // Check if we are allowed to cluster this gluon.
+      if (nFlavs[21] <= nFlavsBorn[21]) continue;
+
+      VinciaClustering thisClus;
+
+      // Get colour-connected partners.
+      int ia = col2ind[state[ij].acol()];
+      int ib = acol2ind[state[ij].col()];
+      thisClus.setDaughters(state, ia, ij, ib);
+      thisClus.setMothers(state[ia].id(), state[ib].id());
+
+      // Get antenna function information.
+      bool aIsGluon = state[ia].isGluon();
+      bool bIsGluon = state[ib].isGluon();
+      bool aIsFinal = state[ia].isFinal();
+      bool bIsFinal = state[ib].isFinal();
+      bool isFSR;
+      enum AntFunType antFunType = NoFun;
+      // Final-final.
+      if (aIsFinal && bIsFinal) {
+        isFSR = true;
+        if (aIsGluon && bIsGluon) antFunType = GGEmitFF;
+        else if (aIsGluon && !bIsGluon) antFunType = GQEmitFF;
+        else if (!aIsGluon && bIsGluon) antFunType = QGEmitFF;
+        else antFunType = QQEmitFF;
+      }
+      // Resonance-final.
+      else if (state[ia].isResonance() && bIsFinal) {
+        isFSR = true;
+        if (bIsGluon) antFunType = QGEmitRF;
+        else antFunType = QQEmitRF;
+      }
+      // Final-resonance: swap ia and ib.
+      else if (aIsFinal && state[ib].isResonance()) {
+        thisClus.swap13();
+        isFSR = true;
+        if (bIsGluon) antFunType = QGEmitRF;
+        else antFunType = QQEmitRF;
+      }
+      // Initial-final.
+      else if (!aIsFinal && bIsFinal) {
+        isFSR = false;
+        if (aIsGluon && bIsGluon) antFunType = GGEmitIF;
+        else if (aIsGluon && !bIsGluon) antFunType = GQEmitIF;
+        else if (!aIsGluon && bIsGluon) antFunType = QGEmitIF;
+        else antFunType = QQEmitIF;
+      }
+      // Final-initial: swap ia and ib.
+      else if (aIsFinal && !bIsFinal) {
+        thisClus.swap13();
+        swap(aIsGluon, bIsGluon);
+        isFSR = false;
+        if (aIsGluon && bIsGluon) antFunType = GGEmitIF;
+        else if (aIsGluon && !bIsGluon) antFunType = GQEmitIF;
+        else if (!aIsGluon && bIsGluon) antFunType = QGEmitIF;
+        else antFunType = QQEmitIF;
+      }
+      // Initial-initial.
+      else {
+        isFSR = false;
+        if (aIsGluon && bIsGluon) antFunType = GGEmitII;
+        else if (aIsGluon && !bIsGluon) antFunType = GQEmitII;
+        else if (!aIsGluon && bIsGluon) {
+          thisClus.swap13();
+          antFunType = GQEmitII;
+        }
+        else antFunType = QQEmitII;
+      }
+
+      // Save clustering to list of all clusterings.
+      thisClus.setAntenna(isFSR, antFunType);
+      if (!thisClus.initInvariantAndMassVecs()) {
+        stringstream ss;
+        ss << ": Couldn't initialise invariants and masses for "
+           << thisClus.getAntName() << ". Skip clustering.";
+        if (verbose >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__, ss.str());
+      }
+      else {
+        allClusterings.push_back(thisClus);
+      }
+    }
+
+    // For quarks, distinguish different cases.
+    else if (state[ij].isQuark()) {
+      // If initial-state quark: only conversion possible.
+      if (!state[ij].isFinal()) {
+        // Find colour-connected partner of j.
+        int ib = state[ij].id() > 0 ? col2ind[state[ij].col()]
+          : acol2ind[state[ij].acol()];
+
+        // Loop over all same-flavour (anti)quarks.
+        vector<int> aList = flav2inds[state[ij].id()];
+        for (int ifa = 0; ifa < (int)aList.size(); ++ifa) {
+          // Get flavour partner.
+          int ia = aList[ifa];
+
+          // Check that we do not try to cluster the colour partner.
+          if (ia == ib) continue;
+
+          // Check if we are allowed to cluster this flavour.
+          if (nFlavs[state[ia].id()] <= nFlavsBorn[state[ia].id()]) continue;
+
+          // Get antenna information.
+          bool isFSR = false;
+          enum AntFunType antFunType =
+            state[ib].isFinal() ? GXConvIF : GXConvII;
+
+          // Append clustering to list.
+          VinciaClustering thisClus;
+          thisClus.setDaughters(state, ij, ia, ib);
+          thisClus.setMothers(21, state[ib].id());
+          thisClus.setAntenna(isFSR, antFunType);
+          if (!thisClus.initInvariantAndMassVecs()) {
+            stringstream ss;
+            ss << ": Couldn't initialise invariants and masses for "
+               << thisClus.getAntName() << ". Skip clustering.";
+            if (verbose >= VinciaConstants::DEBUG)
+              printOut(__METHOD_NAME__, ss.str());
+          }
+          else {
+            allClusterings.push_back(thisClus);
+          }
+        }
+
+        // We do not consider any "other" emission into the initial state.
+        continue;
+      }
+
+      // From here on, j is guaranteed to be in the final state.
+
+      // Find colour-connected partner of j.
+      int ib = ((state[ij].id() > 0) ? acol2ind[state[ij].col()]
+        : col2ind[state[ij].acol()]);
+
+      // Gluon splitting in the initial state.
+      // Note: this does not reduce the total number of quarks!
+      if (state[ib].isGluon() && !state[ib].isFinal()) {
+        // The gluon now takes the role of a.
+        int ia = ib;
+        // The recoiler is the other parton colour-connected to the gluon.
+        int iRec = (state[ij].id() > 0) ? acol2ind[state[ia].acol()]
+          : col2ind[state[ia].col()];
+
+        // Get antenna information.
+        bool isFSR = false;
+        enum AntFunType antFunType =
+          state[iRec].isFinal() ? QXConvIF : QXConvII;
+
+        // Append clustering to list.
+        VinciaClustering thisClus;
+        thisClus.setDaughters(state, ia, ij, iRec);
+        thisClus.setMothers(-state[ij].id(), state[iRec].id());
+        thisClus.setAntenna(isFSR, antFunType);
+        if (!thisClus.initInvariantAndMassVecs()) {
+          stringstream ss;
+          ss << ": Couldn't initialise invariants and masses for "
+             << thisClus.getAntName() << ". Skip clustering.";
+          if (verbose >= VinciaConstants::DEBUG)
+            printOut(__METHOD_NAME__, ss.str());
+        }
+        else {
+          allClusterings.push_back(thisClus);
+        }
+      }
+
+      // From here on, we would reduce the number of quarks, so
+      // check if we are allowed to cluster this flavour.
+      if (nFlavs[state[ij].id()] <= nFlavsBorn[state[ij].id()]) continue;
+
+      // Loop over all same-flavour (anti)quarks.
+      vector<int> aList;
+      aList = flav2inds[-state[ij].id()];
+      for (int ifa = 0; ifa < (int)aList.size(); ++ifa) {
+        // Get flavour partner.
+        int ia = aList[ifa];
+
+        // Check that we do not try to cluster the colour partner.
+        if (ia == ib) continue;
+
+        // Get antenna information.
+        bool isFSR;
+        enum AntFunType antFunType = NoFun;
+        int  idA, idB;
+        // Gluon splitting in the final state.
+        if (state[ia].isFinal()) {
+          // Final-final gluon splitting.
+          if (state[ib].isFinal()) {
+            isFSR = true;
+            antFunType  = GXSplitFF;
+            idA   = 21;
+            idB   = state[ib].id();
+          }
+          // Final-resonance gluon splitting: swap ia and ib.
+          else if (state[ib].isResonance()) {
+            swap(ia, ib);
+            isFSR = true;
+            antFunType  = XGSplitRF;
+            idA   = state[ia].id();
+            idB   = 21;
+          }
+          // Final-initial gluon splitting: swap ia and ib.
+          else {
+            swap(ia, ib);
+            isFSR = false;
+            antFunType  = XGSplitIF;
+            idA   = state[ia].id();
+            idB   = 21;
+          }
+        }
+        // Quark conversion (in the initial state).
+        else {
+          isFSR = false;
+          idA   = 21;
+          idB   = state[ib].id();
+          // Initial-final quark conversion.
+          if (state[ib].isFinal()) antFunType  = GXConvIF;
+          // Initial-initial quark conversion.
+          else antFunType = GXConvII;
+        }
+
+        // Append clustering to list.
+        VinciaClustering thisClus;
+        thisClus.setDaughters(state, ia, ij, ib);
+        thisClus.setMothers(idA, idB);
+        thisClus.setAntenna(isFSR, antFunType);
+        if (!thisClus.initInvariantAndMassVecs()) {
+          stringstream ss;
+          ss << ": Couldn't initialise invariants and masses for "
+             << thisClus.getAntName() << ". Skip clustering.";
+          if (verbose >= VinciaConstants::DEBUG)
+            printOut(__METHOD_NAME__, ss.str());
+        }
+        else {
+          allClusterings.push_back(thisClus);
+        }
+      }
+    }
+  }
+  // Other clusterings (n -> m, QED, EW, ...) to be implemented here.
+
+  // Summary.
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "Found " + std::to_string(allClusterings.size())
+      + " sectors.");
+    list(allClusterings, "", false);
+    list(state, "Input State");
+  }
+
+  return allClusterings;
 }
 
 //--------------------------------------------------------------------------
@@ -1228,11 +2362,14 @@ double VinciaCommon::getShowerStartingScale(int iSys,
 bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
   int kMapType, int a, int r, int b) {
 
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
   // Intialize and sanity check.
-  pClu=pIn;
-  if (max(max(a,r),b) > int(pIn.size()) || min(min(a,r),b) < 0) {
-    if (verbose >= 3)
-      printOut("VinciaCommon::map3to2FFmassless",
+  pClu = pIn;
+  if (max(max(a, r), b) > int(pIn.size()) || min(min(a, r), b) < 0) {
+    if (verbose >= Logger::REPORT)
+      printOut(__METHOD_NAME__,
         "Error! Unable to cluster (a,r,b) = "+
         num2str(a)+num2str(r)+num2str(b)+" p.size ="
         +num2str(int(pIn.size())));
@@ -1240,8 +2377,8 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
   }
 
   // Verbose output.
-  if (verbose >= superdebug) {
-    printOut("VinciaCommon:map3to2FFmassless", "called with ");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "called with ");
     cout << "pi = " << pIn[a];
     cout << "pj = " << pIn[r];
     cout << "pk = " << pIn[b];
@@ -1251,8 +2388,8 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
   Vec4 pSum    = pIn[a] + pIn[r] + pIn[b];
   double m2Ant = pSum.m2Calc();
   if (m2Ant < 1e-20) {
-    printOut("VinciaCommon::map3to2FFmassless",
-             "Massless or spacelike system. Cannot find rest frame");
+    printOut(__METHOD_NAME__,
+      "Massless or spacelike system. Cannot find rest frame");
     return false;
   }
 
@@ -1269,12 +2406,12 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
 
     // Rotate so a goes into upper half of (x,z) plane.
     double phiA = paDum.phi();
-    paDum.rot(0.,-phiA);
-    pbDum.rot(0.,-phiA);
+    paDum.rot(0., -phiA);
+    pbDum.rot(0., -phiA);
 
     // Rotate so a goes onto z axis.
     double theta = paDum.theta();
-    pbDum.rot(-theta,0.);
+    pbDum.rot(-theta, 0.);
 
     // Rotate so (r,b) go into (x,z) plane.
     double phiB = pbDum.phi();
@@ -1310,16 +2447,16 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
     // CM -> LAB : -PSI, PHIB, THETA, PHIA, BOOST
 
     // Set up initial massless AHAT, BHAT with AHAT along z axis.
-    pClu[a] = Vec4(0.,0.,eCM/2.,eCM/2.);
-    pClu[b] = Vec4(0.,0.,-eCM/2.,eCM/2.);
+    pClu[a] = Vec4(0., 0., eCM/2., eCM/2.);
+    pClu[b] = Vec4(0., 0., -eCM/2., eCM/2.);
 
     // 1) Take into account antenna recoil, and rotate back in phiB.
-    pClu[a].rot(-psi,phiB);
-    pClu[b].rot(-psi,phiB);
+    pClu[a].rot(-psi, phiB);
+    pClu[b].rot(-psi, phiB);
 
     // 2) Rotate back in theta and phiA.
-    pClu[a].rot(theta,phiA);
-    pClu[b].rot(theta,phiA);
+    pClu[a].rot(theta, phiA);
+    pClu[b].rot(theta, phiA);
 
     // 3) Boost back to LAB.
     pClu[a].bst(pSum);
@@ -1336,8 +2473,8 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
 
     // Check whether the arguments need to be reversed for kMapType == 4.
     if (kMapType == 4 && ( ! (s01 < s12) ) ) {
-      if (verbose >= superdebug) {
-        printOut("VinciaCommon::map3to2FFmassless",
+      if (verbose >= VinciaConstants::DEBUG) {
+        printOut(__METHOD_NAME__,
           "choose parton i as the recoiler");
       }
       // Call the function with reverse arguments, then return.
@@ -1358,13 +2495,15 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
     pClu[b]     = (1-x)*pIn[a] + (1-rMap)*pIn[r] + (1-z)*pIn[b];
   }
 
-  // A dimensionless quantitiy to compare with TINY.
-  if (pClu[a].m2Calc()/m2Ant >= TINY || pClu[b].m2Calc()/m2Ant >= TINY) {
-    if (verbose >= 3)
-      printOut("VinciaCommon::map3to2FFmassless",
-               "on-shell check failed. m2I/sIK ="
-               + num2str(pClu[a].m2Calc()/m2Ant)+" m2K/m2Ant ="
-               + num2str(pClu[b].m2Calc()/m2Ant)+" m2Ant = "+num2str(m2Ant));
+  // A dimensionless quantitiy to compare with precision target.
+  // Note: allow bigger difference for events from Les Houches files.
+  double PREC = infoPtr->isLHA() ? DECI : NANO;
+  if (pClu[a].m2Calc()/m2Ant >= PREC || pClu[b].m2Calc()/m2Ant >= PREC) {
+    if (verbose >= Logger::REPORT)
+      printOut(__METHOD_NAME__,
+        "on-shell check failed. m2I/sIK ="
+        + num2str(pClu[a].m2Calc()/m2Ant)+" m2K/m2Ant ="
+        + num2str(pClu[b].m2Calc()/m2Ant)+" m2Ant = "+num2str(m2Ant));
     return false;
   }
 
@@ -1381,26 +2520,30 @@ bool VinciaCommon::map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
 // input of masses mI and mK for the first and second parent
 // particles.
 
-bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
-  int kMapType, int a, int r, int b, double mI, double mK) {
+bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, const vector<Vec4> pIn,
+  int kMapType, double mI, double mK, int a, int r, int b) {
+
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
   // If both parent masses are negligible and all the momenta are
   // measure off-shellness normalised to average energy of the partons
   // to be clustered, avoids small denominator for collinear massless
   // p_a, p_r, p_b.
   double eAv = 1.0/3.0*( pIn[a].e() + pIn[r].e() + pIn[b].e() );
-  if (mI/eAv < TINY && mK/eAv < TINY && pIn[a].mCalc()/eAv < TINY
-    && pIn[r].mCalc()/eAv < TINY && pIn[b].mCalc()/eAv < TINY ) {
+  if (mI/eAv < NANO && mK/eAv < NANO && pIn[a].mCalc()/eAv < NANO
+    && pIn[r].mCalc()/eAv < NANO && pIn[b].mCalc()/eAv < NANO ) {
     return map3to2FFmassless(pClu, pIn, kMapType, a, r, b);
   }
 
   // Intialize and sanity check.
   pClu = pIn;
-  if (max(max(a,r),b) > int(pIn.size()) || min(min(a,r),b) < 0) return false;
+  if (max(max(a, r), b) > int(pIn.size()) || min(min(a, r), b) < 0)
+    return false;
 
   // Verbose output.
-  if (verbose >= superdebug) {
-    printOut("VinciaCommon:map3to2FFmassive", "called with ");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "called with ");
     cout << "p0 = " << pIn[a];
     cout << "p1 = " << pIn[r];
     cout << "p2 = " << pIn[b];
@@ -1414,8 +2557,8 @@ bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
 
   // Forced-longitudinal maps.
   if (kMapType < 0) {
-    printOut("VinciaCommon::map3to2FFmassive", "longitudinal clustering maps "
-             "not yet implemented for massive partons.");
+    printOut(__METHOD_NAME__, "longitudinal clustering maps "
+      "not yet implemented for massive partons.");
     return false;
   }
 
@@ -1429,6 +2572,7 @@ bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
 
   // Check whether the arguments need to be reversed for mapType == 4.
   if (kMapType == 4 && (! (s01 < s12) ) ) {
+    // Call the function with reverse arguments, then return.
     return map3to2FFmassive(pClu, pIn, kMapType, b, r, a, mK, mI);
   }
   Vec4   pAnt    = pIn[a] + pIn[r] + pIn[b];
@@ -1451,7 +2595,7 @@ bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
   double yIK = 1. - pow2(muI) - pow2(muK);
   double yIKmin = 2*muI*muK;
   double sig2 = 1 + pow2(muI) - pow2(muK);
-  double gdetdimless = gramDet(y01,y12,y02,mu0,mu1,mu2);
+  double gdetdimless = gramDet(y01, y12, y02, mu0, mu1, mu2);
   double gdetdimless01 = (y02*y12-2.*pow2(mu2)*y01)/4.;
   double gdetdimless12 = (y02*y01-2.*pow2(mu0)*y12)/4.;
   double rMap = 1.;
@@ -1493,9 +2637,9 @@ bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
   // Check if on-shell.
   double offshellnessI = abs(pClu[a].m2Calc() - pow2(mI))/m2Ant;
   double offshellnessK = abs(pClu[b].m2Calc() - pow2(mK))/m2Ant;
-  if (offshellnessI > TINY || offshellnessK > TINY) {
-    if (verbose >= 3) {
-      printOut("VinciaCommon::map3to2FFmassive","on-shell check failed");
+  if (offshellnessI > NANO || offshellnessK > NANO) {
+    if (verbose >= Logger::REPORT) {
+      printOut(__METHOD_NAME__, "on-shell check failed");
     }
     return false;
   }
@@ -1508,16 +2652,153 @@ bool VinciaCommon::map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
 
 //--------------------------------------------------------------------------
 
-// Implementations of IF clustering maps for massive partons.
+// Inverse kinematic map for the resonance-final antenna.
 
-bool VinciaCommon::map3to2IFmassive(vector<Vec4>& pClu, vector<Vec4>& pIn,
-  double saj, double sjk, double sak) {
-  double sAK = saj + sak - sjk;
-  Vec4 pA = pIn[0];
-  pA.rescale4(sAK/(sAK + sjk));
-  Vec4 pK = pA - pIn[0] + pIn[1] + pIn[2];
-  pClu.push_back(pA);
-  pClu.push_back(pK);
+bool VinciaCommon::map3to2RF(vector<Vec4>& pClu, const vector<Vec4>& pIn,
+  int a, int r, int b, double mK){
+
+  // 1) Extract momenta.
+  if (pIn.size()<3) {
+    loggerPtr->ERROR_MSG("not enough input momenta");
+    return false;
+  }
+
+  // Momenta to cluster.
+  Vec4 pA = pIn.at(a);
+  Vec4 pj = pIn.at(r);
+  Vec4 pk = pIn.at(b);
+
+  // Get pX'.
+  Vec4 pXBeforeClus = pA - pj - pk;
+
+  // 2) Momenta are completely pre-determined by the masses.
+  // Take mK as input - may change if e.g. clustering a splitting.
+  double mA  = pA.mCalc();
+  double mX  = pXBeforeClus.mCalc();
+  double pXz = sqrt(kallenFunction( mA*mA , mX*mX , mK*mK ))/(2.*mA);
+  double EX  = sqrt(pXz*pXz + mX*mX);
+  double EK  = sqrt(pXz*pXz + mK*mK);
+
+  // 3) Boost to Top Centre of Mass frame.
+  Vec4 pXBeforeInCoM = pXBeforeClus;
+  pXBeforeInCoM.bstback(pA);
+  // pX along z.
+  Vec4 pX(0. , 0., pXz, EX);
+  Vec4 pK(0. , 0. , -pXz, EK);
+  // 4) Fetch the orientation of X' and rotate X
+  double phiX = pXBeforeInCoM.phi();
+  double thetaX = pXBeforeInCoM.theta();
+  pX.rot(thetaX, phiX);
+  pK.rot(thetaX, phiX);
+
+  // 5) Boost back to lab frame.
+  pX.bst(pA);
+  pK.bst(pA);
+
+  Vec4 diff = pA - pK - pX;
+  if( abs(diff.e())  / abs(pA.e()) > MILLI ||
+    abs(diff.px()) / abs(pA.e()) > MILLI ||
+    abs(diff.py()) / abs(pA.e()) > MILLI ||
+    abs(diff.pz()) / abs(pA.e()) > MILLI) {
+    loggerPtr->ERROR_MSG("failed momentum-conservation test");
+    return false;
+  }
+
+  // 6) Boost recoilers and save clustered momenta.
+  Vec4 recSumAfter(0., 0., 0., 0.);
+  pClu.clear();
+  for (int ip(0); ip<(int)pIn.size(); ++ip) {
+    if (ip == r) continue;
+    if (ip == a) pClu.push_back(pA);
+    else if (ip == b) pClu.push_back(pK);
+    else {
+      Vec4 pRecNow = pIn.at(ip);
+      pRecNow.bst(pX-pXBeforeClus);
+      pClu.push_back(pRecNow);
+      recSumAfter += pRecNow;
+    }
+  }
+
+  // Check sum.
+  recSumAfter -= pX;
+  if( abs(recSumAfter.e())  / abs(pX.e()) > MILLI ||
+    abs(recSumAfter.px()) / abs(pX.e()) > MILLI ||
+    abs(recSumAfter.py()) / abs(pX.e()) > MILLI ||
+    abs(recSumAfter.pz()) / abs(pX.e()) > MILLI) {
+    if(verbose >= Logger::NORMAL){
+      string msg = "Recoilers failed momentum conservation. Violation:";
+      printOut(__METHOD_NAME__, msg);
+      cout << "  " << num2str(abs(recSumAfter.e() / abs(pX.e())), 6) << endl;
+      cout << "  " << num2str(abs(recSumAfter.px() / abs(pX.px())), 6) << endl;
+      cout << "  " << num2str(abs(recSumAfter.py() / abs(pX.py())), 6) << endl;
+      cout << "  " << num2str(abs(recSumAfter.pz() / abs(pX.pz())), 6) << endl;
+    }
+    return false;
+  }
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Implementations of IF clustering maps for massive partons.
+// NOTE: particle A and a are assumed massless (no initial-state masses).
+
+bool VinciaCommon::map3to2IF(vector<Vec4>& pClu, const vector<Vec4>& pIn,
+  int a, int r, int b, double mj, double mk, double mK) {
+
+  // Initialise and sanity check.
+  pClu = pIn;
+  if (max(max(a, r), b) > int(pIn.size()) || min(min(a, r), b) < 0)
+    return false;
+
+  // Save momenta for clustering.
+  Vec4 pa = pIn[a];
+  Vec4 pr = pIn[r];
+  Vec4 pb = pIn[b];
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, " called with ");
+    cout << "  pa = " << pa;
+    cout << "  pr = " << pr;
+    cout << "  pb = " << pb;
+    cout << "  mK = " << mK << endl;
+  }
+
+  // Calculate invariants.
+  double saj = 2. * pa * pr;
+  double sjk = 2. * pr * pb;
+  double sak = 2. * pa * pb;
+  double m2K = (mK <= NANO ? 0. : pow2(mK));
+  double m2j = (mj <= NANO ? 0. : pow2(mj));
+  double m2k = (mk <= NANO ? 0. : pow2(mk));
+  double sAK = saj + sak - sjk + m2K - m2j - m2k;
+
+  Vec4 pA = pa;
+  pA.rescale4(sAK/(saj + sak));
+  Vec4 pK = pA - pa + pr + pb;
+
+  pClu[a] = pA;
+  pClu[b] = pK;
+  pClu.erase(pClu.begin()+r);
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, " after clustering: ");
+    cout << "  pA = " << pA;
+    cout << "  pK = " << pK;
+  }
+
+  Vec4 pTot(0., 0., 0., 0.);
+  for (const auto& p : pIn) pTot += p;
+  for (const auto& p : pClu) pTot -= p;
+  double m2tot = pTot.m2Calc();
+  if (m2tot >= MILLI) {
+    loggerPtr->ERROR_MSG("momentum not conserved",
+      "(m2tot = "+num2str(m2tot)+")");
+    return false;
+  }
+
   return true;
 
 }
@@ -1525,37 +2806,72 @@ bool VinciaCommon::map3to2IFmassive(vector<Vec4>& pClu, vector<Vec4>& pIn,
 //--------------------------------------------------------------------------
 
 // Implementations of II clustering maps for massive partons.
+// NOTE: particle A, a, B, and b are assumed massless.
 
-bool VinciaCommon::map3to2IImassive(vector<Vec4>& pClu, vector<Vec4>& pIn,
-  vector<Vec4>& pRec, double saj, double sjb, double sab, bool doBoost) {
+bool VinciaCommon::map3to2II(vector<Vec4>& pClu, const vector<Vec4>& pIn,
+  bool doBoost, int a, int r, int b, double mj) {
+
+  // Initialisation and sanity check.
+  pClu = pIn;
+  if (max(max(a, r), b) > int(pIn.size()) || min(min(a, r), b) < 0)
+    return false;
+
+  // Save momenta for clustering.
+  Vec4 pa = pIn[a];
+  Vec4 pr = pIn[r];
+  Vec4 pb = pIn[b];
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, " called with ");
+    cout << "\tpa = " << pa;
+    cout << "\tpr = " << pr;
+    cout << "\tpb = " << pb;
+    cout << "\tand " << pIn.size() - 3 << " recoilers." << endl;
+  }
+
+  // Calculate invariants.
+  double saj = 2. * pa * pr;
+  double sjb = 2. * pr * pb;
+  double sab = 2. * pa * pb;
+  double m2j = (mj <= NANO ? 0. : pow2(mj));
+  double sAB = sab - saj - sjb + m2j;
 
   // Scale factors and momenta.
-  double sAB = sab - saj - sjb;
   double rescaleFacA = 1./sqrt(sab/sAB * (sab - saj)/(sab - sjb));
   double rescaleFacB = 1./sqrt(sab/sAB * (sab - sjb)/(sab - saj));
-  Vec4 pA = pIn[0];
+  Vec4 pA = pa;
   pA.rescale4(rescaleFacA);
-  pClu.push_back(pA);
-  Vec4 pB = pIn[2];
+  Vec4 pB = pb;
   pB.rescale4(rescaleFacB);
-  pClu.push_back(pB);
-  Vec4 pInSum = pIn[0] + pIn[2] - pIn[1];
-  Vec4 pCluSum = pClu[0] + pClu[1];
-
+  Vec4 pInSum = pa + pb - pr;
+  Vec4 pCluSum = pA + pB;
+  // Clustered momenta and recoilers.
+  pClu[a] = pA;
+  pClu[b] = pB;
   // Perform boost - if doBoost, we boost back to the lab frame.
+  // Adjust recoiling momenta.
   if (doBoost) {
-    for (int i=0; i<(int)pRec.size(); i++) {
-      pRec[i].bstback(pInSum);
-      pRec[i].bst(pCluSum);
-    }
-
-  // Otherwise stay in the current frame. Adjust clustered momenta.
-  } else {
-    for (int i=0; i<(int)pClu.size(); i++) {
-      pClu[i].bstback(pCluSum);
-      pClu[i].bst(pInSum);
+    Vec4 pSum(0., 0., 0., 0.);
+    for (int i(0); i<(int)pClu.size(); ++i) {
+      if (i != a && i != r && i != b) {
+        pClu[i].bstback(pInSum);
+        pClu[i].bst(pCluSum);
+        pSum += pClu[i];
+      }
     }
   }
+  // Otherwise stay in the current frame. Adjust clustered momenta.
+  else {
+    for (int i = 0; i<(int)pClu.size(); ++i) {
+      if (i == a || i == b) {
+        pClu[i].bstback(pCluSum);
+        pClu[i].bst(pInSum);
+      }
+    }
+  }
+  pClu.erase(pClu.begin()+r);
+
   return true;
 
 }
@@ -1571,59 +2887,80 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
   const vector<Vec4>& pTwo, int kMapType, const vector<double>& invariants,
   double phi, vector<double> masses) {
 
-  // Hand off to massless map if all masses << sIK.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
+  // Check for ultrarelativistic particles.
+  // Gluon/Photon splitting assumed to happen on legs 01 with 2 as recoiler.
+  if (masses.size() >= 3) {
+    if (masses[0] > 0. && masses[0]/pTwo[0].e() < MICRO) masses[0] = 0.;
+    if (masses[1] > 0. && masses[1]/pTwo[0].e() < MICRO) masses[1] = 0.;
+    if (masses[2] > 0. && masses[2]/pTwo[1].e() < MICRO) masses[2] = 0.;
+  }
+
+  // Hand off to massless map if all masses < 1 keV.
   if (masses.size() < 3 ||
-    (masses[0] <= TINY && masses[1] <= TINY && masses[2] <= TINY))
-    return map2to3FFmassless(pThree,pTwo,kMapType,invariants,phi);
+    (masses[0] <= MICRO && masses[1] <= MICRO && masses[2] <= MICRO))
+    return map2to3FFmassless(pThree, pTwo, kMapType, invariants, phi);
 
   // Antenna invariant mass and sIK = 2*pI.pK.
-  double m2Ant = m2(pTwo[0],pTwo[1]);
+  double m2Ant = m2(pTwo[0], pTwo[1]);
   double mAnt  = sqrt(m2Ant);
   double sAnt  = invariants[0];
+  // Recompute sAnt if needed.
+  if (sAnt < 0.0 || std::isnan(sAnt)) {
+    double m2I = max(0.0, m2(pTwo[0]));
+    double m2K = max(0.0, m2(pTwo[1]));
+    sAnt = m2Ant - m2I - m2K;
+  }
   if (sAnt <= 0.0) return false;
 
   // Masses and invariants
-  double mass0 = max(0.,masses[0]);
-  double mass1 = max(0.,masses[1]);
-  double mass2 = max(0.,masses[2]);
+  double mass0 = max(0., masses[0]);
+  double mass1 = max(0., masses[1]);
+  double mass2 = max(0., masses[2]);
   // Check for totally closed phase space. Should normally have
   // happened before generation of invariants but put last-resort
   // check here since not caught by Gram determinant.
   if (mAnt < mass0 + mass1 + mass2) {
-    cout <<" (VinciaCommon::map2to3FFmassive:) "
-         <<"ERROR! unphysical phase space\n";
+    loggerPtr->WARNING_MSG("no on-shell solution",
+      "(antenna mass = " + to_string(mAnt)
+      + " GeV < sum of daughter masses = "
+      + to_string(mass0+mass1+mass2) + "GeV)");
     return false;
   }
-  double s01 = max(0.,invariants[1]);
-  double s12 = max(0.,invariants[2]);
+  double s01 = max(0., invariants[1]);
+  double s12 = max(0., invariants[2]);
   double s02 = m2Ant - s01 - s12 - pow2(mass0) - pow2(mass1) - pow2(mass2);
   if (s02 <= 0.) return false;
 
   // Check whether we are inside massive phase space.
   double gDet = gramDet(s01, s12, s02, mass0, mass1, mass2);
   if (gDet <= 0.) {
-    if (verbose >= 9)
-      cout << "   map2to3FFmassive: failed massive phase space check" << endl;
+    loggerPtr->WARNING_MSG("failed massive phase space check");
     return false;
   }
 
   // Verbose output.
-  if (verbose >= 7) {
-    cout << " (VinciaCommon::map2to3FFmassive:) m  = " << num2str(mAnt)
-         << " sqrtsIK = " << num2str(sqrt(sAnt)) << "   sqrts(ij,jk,ik) ="
-         << num2str(sqrt(s01)) << " " << num2str(sqrt(s12)) << " "
-         << num2str(sqrt(s02)) << "   m(i,j,k) =" << num2str(mass0) << " "
-         << num2str(mass1) << " " << num2str(mass2) << " D = " << gDet << endl;
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "mAnt =" << num2str(mAnt)
+       << "   sqrts(IK,ij,jk,ik) ="
+       << num2str(sqrt(sAnt)) << " " << num2str(sqrt(s01)) << " "
+       << num2str(sqrt(s12)) << " " << num2str(sqrt(s02))
+       << "   m(i,j,k) =" << num2str(mass0) << " "
+       << num2str(mass1) << " " << num2str(mass2) << " D = " << gDet;
+    printOut(__METHOD_NAME__, ss.str());
     RotBstMatrix M;
     Vec4 p1cm = pTwo[0];
     Vec4 p2cm = pTwo[1];
-    M.toCMframe(p1cm,p2cm);
+    M.toCMframe(p1cm, p2cm);
     p1cm.rotbst(M);
     p2cm.rotbst(M);
     Vec4 tot = p1cm+p2cm;
-    cout << " (VinciaCommon::map2to3FFmassive:) starting dipole in CM\n"
-         << " p1cm = " << p1cm << " p2cm = " << p2cm
-         << " total = " << tot << endl;
+    printOut(__METHOD_NAME__, "Pre-branching momenta in Antenna CM:");
+    cout << "  p1cm = " << p1cm << "  p2cm = " << p2cm
+         << "  total = " << tot;
   }
 
   // Set up kinematics in rest frame.
@@ -1634,8 +2971,7 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
   // Make sure energies > masses (should normally be ensured by
   // combination of open phase space and positive Gram determinant).
   if (E0 < mass0 || E1 < mass1 || E2 < mass2) {
-    cout <<" (VinciaCommon::map2to3FFmassive:) ERROR! "
-         <<"Unphysical energy value(s)\n";
+    loggerPtr->ERROR_MSG("daughter energy value(s) < mass(es)");
     return false;
   }
   double ap0 = sqrt( pow2(E0) - pow2(mass0) );
@@ -1654,16 +2990,17 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
 
   // Set momenta in CMz frame (frame with 1 oriented along positive z
   // axis and event in (x,z) plane).
-  Vec4 p1(0.0,0.0,ap0,E0);
-  Vec4 p2(-ap1*sin01,0.0,ap1*cos01,E1);
-  Vec4 p3(ap2*sin02,0.0,ap2*cos02,E2);
+  Vec4 p1(0.0, 0.0, ap0, E0);
+  Vec4 p2(-ap1*sin01, 0.0, ap1*cos01, E1);
+  Vec4 p3(ap2*sin02, 0.0, ap2*cos02, E2);
 
   // Verbose output.
-  if (verbose >= superdebug) {
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = p1+p2+p3;
-    cout  << " (map2to3FFmassive:) configuration in CM* (def: 1 along z)\n";
-    cout  << " k1* =  " << p1 << " k2* =  " << p2 << " k3* =  " << p3
-          << " total = " << tot << endl;
+    printOut(__METHOD_NAME__,
+      "Post-branching momenta in CM* (def: 1 along z):");
+    cout  << "  k1* =  " << p1 << "  k2* =  " << p2 << "  k3* =  " << p3
+          << "  total = " << tot << endl;
   }
 
   // Choose global rotation around axis perpendicular to event plane.
@@ -1674,13 +3011,13 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
   else if (kMapType == -1) psi = M_PI - acos(cos02);
   // Else general antenna-like recoils.
   else {
-    double m2I = max(0.0,m2(pTwo[0]));
-    double m2K = max(0.0,m2(pTwo[1]));
+    double m2I = max(0.0, m2(pTwo[0]));
+    double m2K = max(0.0, m2(pTwo[1]));
     double sig2 = m2Ant + m2I - m2K;
     double sAntMin = 2*sqrt(m2I*m2K);
-    double s01min = max(0.0,2*mass0*mass1);
-    double s12min = max(0.0,2*mass1*mass2);
-    double s02min = max(0.0,2*mass0*mass2);
+    double s01min = max(0.0, 2*mass0*mass1);
+    double s12min = max(0.0, 2*mass1*mass2);
+    double s02min = max(0.0, 2*mass0*mass2);
 
     // The r and R parameters in arXiv:1108.6172.
     double rAntMap = ( sig2 + sqrt( pow2(sAnt) - pow2(sAntMin) )
@@ -1690,11 +3027,10 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
       - (1.-rAntMap)*m2I - rAntMap*m2K )
       + ( pow2(s02) - pow2(s02min) )
       * ( pow2(sAnt) - pow2(sAntMin) );
-    if(bigRantMap2 < 0.){
+    if (bigRantMap2 < 0.) {
       stringstream ss;
-      ss<<"On line "<<__LINE__;
-      infoPtr->errorMsg("Warning in "+__METHOD_NAME__
-        +": kinematics map is broken.",ss.str());
+      ss<<" on line "<<__LINE__;
+      loggerPtr->WARNING_MSG("kinematics map is broken"+ss.str());
       return false;
     }
     double bigRantMap = sqrt( bigRantMap2 );
@@ -1711,9 +3047,8 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
       - 2*m2Ant*m2K - 2*m2I*m2K;
     if (apInum2 < 0.) {
       stringstream ss;
-      ss<<"On line "<<__LINE__;
-      infoPtr->errorMsg("Warning in "+__METHOD_NAME__
-        +": kinematics map is broken.",ss.str());
+      ss<<" on line "<<__LINE__;
+      loggerPtr->WARNING_MSG("kinematics map is broken"+ss.str());
       return false;
     }
     double apI = sqrt(apInum2)/(2*mAnt);
@@ -1725,60 +3060,79 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
       psi = 0.;
     } else if (cospsi <= -1.0) {
       psi = M_PI;
-    } else if(isnan(cospsi)){
-      psi= 0.;
-      stringstream ss;
-      ss << "ap0 = " << ap0;
-      ss << " apI = " << apI;
-      ss << " E0 = " << E0;
-      ss << " mass0 = " << mass0;
-      ss << " mAnt = " << mAnt;
-      ss << " sum1 = " << pow2(sAnt) + pow2(m2I) + pow2(m2K);
-      ss << " sum2 = " << 2*sAnt*m2I + 2*sAnt*m2K + 2*m2I*m2K;
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": cos(psi) = nan.",ss.str());
+    } else if(std::isnan(cospsi)){
+      loggerPtr->ERROR_MSG("cos(psi) is nan");
+      if (verbose >= Logger::REPORT) {
+        cout << " pIn0 = " << pTwo[0];
+        cout << " pIn1 = " << pTwo[1];
+        cout << " mAnt = " << mAnt << " sAnt = " << sAnt << " m2I = " << m2I
+             << " m2K = " << m2K
+             << " sum1 = " << pow2(sAnt) + pow2(m2I) + pow2(m2K)
+             << " sum2 = " << 2*sAnt*m2I + 2*sAnt*m2K + 2*m2I*m2K << endl
+             << "  ap0 = " << ap0 << " apI = " << apI << " E0 = " << E0
+             << " m0 = " << mass0 << " m1 = " << mass1  << " m2 = "
+             << mass2 << " s01 = " << s01 << " s02 = " << s02 << endl;
+      }
       return false;
-    }
-    else{
-      psi = acos( cospsi );
-    }
+    } else psi = acos(cospsi);
   }
 
   // Perform global rotations.
-  p1.rot(psi,phi);
-  p2.rot(psi,phi);
-  p3.rot(psi,phi);
+  p1.rot(psi, phi);
+  p2.rot(psi, phi);
+  p3.rot(psi, phi);
 
   // Verbose output.
-  if (verbose >= 7) {
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = p1+p2+p3;
-    printOut("VinciaCommon::map2to3FFmassive:", "phi = " + num2str(phi,6)
-             + " cospsi = " + num2str(cos(psi),6) +" psi = " + num2str(psi,6));
-    printOut("VinciaCommon::map2to3FFmassive:",
-             "mapType = " + num2str(kMapType));
-    printOut("VinciaCommon::map2to3FFmassive:","final momenta in CM");
-    cout << " k1cm = " << p1 << " k2cm = " << p2 << " k3cm = " << p3
-         << " total = " << tot << endl;
+    printOut(__METHOD_NAME__, "phi = " + num2str(phi, 6)
+      + " cospsi = " + num2str(cos(psi), 6) + " psi = " + num2str(psi, 6)
+      + " mapType = " + num2str(kMapType));
+    printOut(__METHOD_NAME__, "final post-branching momenta in Antenna CM:");
+    cout << "  k1cm = " << p1 << "  k2cm = " << p2 << "  k3cm = " << p3
+         << "  total = " << tot << endl;
+  }
+
+  // Check CM frame energy and momentum conservation
+  // Dimensionless, normalised by ECM, so that it does not fail for small
+  // differences of very large absolute momentum values (FCC, etc).
+  // Note masses can still be quite different from mass[i].
+  Vec4 pSumCM = (p1+p2+p3);
+  pSumCM /= mAnt;
+  if (abs(pSumCM.e() - 1) > MICRO || abs(pSumCM.px()) > MICRO
+    || abs(pSumCM.py()) > MICRO || abs(pSumCM.pz()) > MICRO ){
+    loggerPtr->ERROR_MSG("failed momentum conservation test; aborting");
+    if (verbose >= Logger::REPORT) {
+      cout << " pDiffCM/eCM = " << scientific << num2str(pSumCM.px()) << " "
+           << num2str(pSumCM.py()) << " " << num2str(pSumCM.pz()) <<" "
+           << num2str(pSumCM.e()-1.) << "    (" << num2str(pSumCM.mCalc()-1.)
+           << ")" << endl;
+    }
+    infoPtr->setAbortPartonLevel(true);
+    return false;
+  }
+  if (isnan(pSumCM)) {
+    loggerPtr->ERROR_MSG("(E,p) is nan");
+    return false;
   }
 
   // Rotate and boost to lab frame.
   RotBstMatrix M;
-  M.fromCMframe(pTwo[0],pTwo[1]);
-  if (verbose >= superdebug) {
+  M.fromCMframe(pTwo[0], pTwo[1]);
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = pTwo[0]+pTwo[1];
-    cout << " (VinciaCommon::map2to3FFmassive) boosting to LAB frame "
-         << "defined by\n";
-    cout << " p1 =   " << pTwo[0] << " p2 =   " << pTwo[1]
-         << " total = " << tot << endl;
+    printOut(__METHOD_NAME__, "boosting to LAB frame defined by:");
+    cout << "  p1 =   " << pTwo[0] << "  p2 =   " << pTwo[1]
+         << "  total = " << tot << endl;
   }
   p1.rotbst(M);
   p2.rotbst(M);
   p3.rotbst(M);
-  if (verbose >= 7) {
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = p1+p2+p3;
-    cout << " (VinciaCommon::map2to3FFmassive:) final momenta in LAB\n";
-    cout << " k1 =   " << p1 << " k2 =   " << p2 << " k3 =   " << p3
-         << " total = " << tot << endl;
+    printOut(__METHOD_NAME__, "final post-branching momenta in LAB frame:");
+    cout << "  k1 =   " << p1 << "  k2 =   " << p2 << "  k3 =   " << p3
+         << "  total = " << tot << endl;
   }
 
   // Save momenta.
@@ -1786,20 +3140,6 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
   pThree.push_back(p1);
   pThree.push_back(p2);
   pThree.push_back(p3);
-
-  Vec4 total = pTwo[0] + pTwo[1];
-  total -= (p1+p2+p3);
-  if (abs(total.e()) > SMALL || abs(total.px()) > SMALL
-    || abs(total.py()) > SMALL || abs(total.pz()) >  SMALL ){
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+
-      ": Failed momentum conservation test. Aborting.");
-    infoPtr->setAbortPartonLevel(true);
-    return false;
-  }
-  if (isnan(total)) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": (E,p) = nan.");
-    return false;
-  }
 
   // Return.
   return true;
@@ -1816,10 +3156,11 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
   const vector<Vec4>& pTwo, int kMapType, const vector<double>& invariants,
   double phi) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
   // Antenna invariant mass.
-  double m2Ant = m2(pTwo[0],pTwo[1]);
+  double m2Ant = m2(pTwo[0], pTwo[1]);
   double mAnt  = sqrt(m2Ant);
 
   // Compute invariants (massless relation).
@@ -1828,21 +3169,23 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
   double s02 = m2Ant - s01 - s12;
 
   // Can check alternative hadronization vetos here.
-  if (verbose >= 7) {
-    cout << " (VinciaCommon::map2to3FFmassless:) m  = " << num2str(mAnt)
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "m  = " << num2str(mAnt)
          << "   m12 =" << num2str(sqrt(s01))
          << "   m23 =" << num2str(sqrt(s12))
-         << "   m13 =" << num2str(sqrt(s02)) << endl;
+         << "   m13 =" << num2str(sqrt(s02));
+    printOut(__METHOD_NAME__, ss.str());
     RotBstMatrix M;
     Vec4 p1cm = pTwo[0];
     Vec4 p2cm = pTwo[1];
-    M.toCMframe(p1cm,p2cm);
+    M.toCMframe(p1cm, p2cm);
     p1cm.rotbst(M);
     p2cm.rotbst(M);
     Vec4 tot = p1cm+p2cm;
-    cout << " (VinciaCommon::map2to3FFmassless:) starting dipole in CM\n"
-         << " p1cm = " << p1cm << " p2cm = " << p2cm
-         << " total = " << tot<<endl;
+    printOut(__METHOD_NAME__, "Starting dipole in CM");
+    cout << " p1cm = " << p1cm << " p2cm = " << p2cm
+         << " total = " << tot;
   }
 
   // Set up kinematics in rest frame.
@@ -1863,16 +3206,16 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
 
   // Set momenta in CMz frame (with 1 oriented along positive z axis
   // and event in (x,z) plane).
-  Vec4 p1(0.0,0.0,ap0,E0);
-  Vec4 p2(-ap1*sin01,0.0,ap1*cos01,E1);
-  Vec4 p3(ap2*sin02,0.0,ap2*cos02,E2);
+  Vec4 p1(0.0, 0.0, ap0, E0);
+  Vec4 p2(-ap1*sin01, 0.0, ap1*cos01, E1);
+  Vec4 p3(ap2*sin02, 0.0, ap2*cos02, E2);
 
   // Verbose output.
-  if (verbose >= superdebug) {
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = p1+p2+p3;
-    cout << " (map2to3FFmassless:) configuration in CM* (def: 1 along z)\n"
-         << " k1* =  " << p1 << " k2* =  " << p2 << " k3* =  " << p3
-         << " total = " << tot << endl;
+    printOut(__METHOD_NAME__, "Configuration in CM* (def: 1 along z)");
+    cout << " k1* =  " << p1 << " k2* =  " << p2 << " k3* =  " << p3
+         << " total = " << tot;
   }
 
   // Choose global rotation around axis perpendicular to event plane.
@@ -1884,7 +3227,7 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
 
   // Force B to be longitudinal recoiler.
   } else if (kMapType == -1) {
-    psi = M_PI - acos(max(-1.,min(1.,cos02)));
+    psi = M_PI - acos(max(-1., min(1., cos02)));
 
   // ARIADNE map.
   } else if (kMapType == 1) {
@@ -1900,44 +3243,44 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
   } else {
     double rMap(1);
     if (kMapType == 3) rMap = s12/(s01+s12);
-    double rho=sqrt(1.0+4.0*rMap*(1.0-rMap)*s01*s12/s02/m2Ant);
-    double s00=-( (1.0-rho)*m2Ant*s02 + 2.0*rMap*s01*s12 ) / 2.0 /
+    double rho = sqrt(1.0+4.0*rMap*(1.0-rMap)*s01*s12/s02/m2Ant);
+    double s00 = -( (1.0-rho)*m2Ant*s02 + 2.0*rMap*s01*s12 ) / 2.0 /
       (m2Ant - s01);
-    psi=acos(1.0+2.0*s00/(m2Ant-s12));
+    psi = acos(1.0+2.0*s00/(m2Ant-s12));
   }
 
   // Perform global rotations.
-  p1.rot(psi,phi);
-  p2.rot(psi,phi);
-  p3.rot(psi,phi);
+  p1.rot(psi, phi);
+  p2.rot(psi, phi);
+  p3.rot(psi, phi);
 
   // Verbose output.
-  if (verbose >= 7) {
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = p1+p2+p3;
-    printOut(__METHOD_NAME__, "phi = " + num2str(phi,6) + "psi = " +
-             num2str(psi,6));
-    printOut(__METHOD_NAME__, "final momenta in CM");
+    printOut(__METHOD_NAME__, "phi = " + num2str(phi, 6) + "psi = " +
+             num2str(psi, 6));
+    printOut(__METHOD_NAME__, "Final momenta in CM:");
     cout << " k1cm = " << p1 << " k2cm = " << p2 << " k3cm = " << p3
-         << " total = " << tot << endl;
+         << " total = " << tot;
   }
 
   // Rotate and boost to lab frame.
   RotBstMatrix M;
-  M.fromCMframe(pTwo[0],pTwo[1]);
+  M.fromCMframe(pTwo[0], pTwo[1]);
   Vec4 total = pTwo[0] + pTwo[1];
-  if (verbose >= superdebug) {
-    cout  << " (VinciaCommon::map2to3FFmassless:) boosting to LAB frame "
-          << "defined by\n" << " p1 =   " << pTwo[0] << " p2 =   " << pTwo[1]
-          << " total = " << total << endl;
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "Boosting to LAB frame defined by");
+    cout << " p1 =   " << pTwo[0] << " p2 =   " << pTwo[1]
+         << " total = " << total;
   }
   p1.rotbst(M);
   p2.rotbst(M);
   p3.rotbst(M);
-  if (verbose >= 7) {
+  if (verbose >= VinciaConstants::DEBUG) {
     Vec4 tot = p1 + p2 + p3 ;
-    printOut(__METHOD_NAME__,"final momenta in LAB");
+    printOut(__METHOD_NAME__, "Final momenta in LAB");
     cout <<" k1 =   "<<p1<<" k2 =   "<<p2<<" k3 =   "<<p3
-         <<" total = "<<tot<<endl;
+         <<" total = "<<tot;
   }
 
   // Save momenta.
@@ -1948,14 +3291,15 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
 
   // Check momentum conservation.
   Vec4 diff = total - (p1+p2+p3);
-  if(abs(diff.e())  / abs(total.e()) > SMALL ||
-     abs(diff.px()) / abs(total.e()) > SMALL ||
-     abs(diff.py()) / abs(total.e()) > SMALL ||
-     abs(diff.pz()) / abs(total.e()) > SMALL) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": (E,p) not conserved.","Aborting.");
-    cout << setprecision(10) << " difference = " << total.px() << " "
-         << total.py() << " " << total.pz() << " " << total.e() << endl;
+  if (abs(diff.e())  / abs(total.e()) > MILLI ||
+     abs(diff.px()) / abs(total.e()) > MILLI ||
+     abs(diff.py()) / abs(total.e()) > MILLI ||
+     abs(diff.pz()) / abs(total.e()) > MILLI) {
+    loggerPtr->ERROR_MSG("(E,p) not conserved; aborting");
+    if (verbose >= VinciaConstants::DEBUG) {
+      cout << setprecision(10) << " difference = " << total.px() << " "
+           << total.py() << " " << total.pz() << " " << total.e() << endl;
+    }
     infoPtr->setAbortPartonLevel(true);
     return false;
   }
@@ -1969,16 +3313,16 @@ bool VinciaCommon::map2to3FFmassless(vector<Vec4>& pThree,
 
 // Implementations of RF clustering maps for massive partons.
 
-bool VinciaCommon::map2to3RFmassive(vector<Vec4>& pThree, vector<Vec4> pTwo,
-  vector<double> invariants,double phi,
+bool VinciaCommon::map2to3RF(vector<Vec4>& pThree, vector<Vec4> pTwo,
+  vector<double> invariants, double phi,
   vector<double> masses) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
   // Get momenta and boost to lab frame.
-  if(pTwo.size() != 2){
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Wrong number of momenta provided.");
+  if (pTwo.size() != 2) {
+    loggerPtr->ERROR_MSG("wrong number of momenta provided");
     return false;
   }
 
@@ -2015,35 +3359,35 @@ bool VinciaCommon::map2to3RFmassive(vector<Vec4>& pThree, vector<Vec4> pTwo,
   double EkAfter = sak/(2.0*mA);
   if (EkAfter < mk)  return false;
   else if (EjAfter < mj) return false;
-  else if (invDiff > SMALL) return false;
+  else if (invDiff > MILLI) return false;
 
   // Get cosTheta.
-  double cosTheta = getCosTheta(EjAfter,EkAfter, mj,mk, sjk);
+  double cosTheta = costheta(EjAfter, EkAfter, mj, mk, sjk);
   if (abs(cosTheta) > 1.0) return false;
   double sinTheta = sqrt(1.0 - cosTheta*cosTheta);
   double pk = sqrt(EkAfter*EkAfter-mk*mk);
   double pj = sqrt(EjAfter*EjAfter-mj*mj);
 
   // Construct three momenta, assuming k was along z.
-  Vec4 pkAfter(0.,0.,pk, EkAfter);
-  Vec4 pjAfter(pj*sinTheta,0.,pj*cosTheta, EjAfter);
+  Vec4 pkAfter(0., 0., pk, EkAfter);
+  Vec4 pjAfter(pj*sinTheta, 0., pj*cosTheta, EjAfter);
   Vec4 pajkAfter = pACoM - pkAfter - pjAfter;
 
   // Give some transverse recoil to k.
   double thetaEff = -(M_PI-pajkAfter.theta());
-  pkAfter.rot(thetaEff,0.);
-  pjAfter.rot(thetaEff,0.);
-  pajkAfter.rot(thetaEff,0.);
+  pkAfter.rot(thetaEff, 0.);
+  pjAfter.rot(thetaEff, 0.);
+  pajkAfter.rot(thetaEff, 0.);
 
   // Rotate by arbitrary phi.
-  pkAfter.rot(0.,phi);
-  pjAfter.rot(0.,phi);
-  pajkAfter.rot(0.,phi);
+  pkAfter.rot(0., phi);
+  pjAfter.rot(0., phi);
+  pajkAfter.rot(0., phi);
 
   // Rotate to recover original orientation of frame.
-  pkAfter.rot(thetaK,phiK);
-  pjAfter.rot(thetaK,phiK);
-  pajkAfter.rot(thetaK,phiK);
+  pkAfter.rot(thetaK, phiK);
+  pjAfter.rot(thetaK, phiK);
+  pajkAfter.rot(thetaK, phiK);
 
   // Boost to lab frame.
   pkAfter.bst(pABefore);
@@ -2055,6 +3399,64 @@ bool VinciaCommon::map2to3RFmassive(vector<Vec4>& pThree, vector<Vec4> pTwo,
   pThree.push_back(pkAfter);
 
   // Return.
+  return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// 1->2 decay map for (already offshell) resonance decay.
+
+bool VinciaCommon::map1to2RF(vector<Vec4>& pNew, Vec4 pRes, double m1,
+  double m2, double theta, double phi) {
+
+  pNew.clear();
+
+  // Fetch resonance mass.
+  double m2R = pRes.m2Calc();
+
+  // Square input masses.
+  double m21 = m1*m1;
+  double m22 = m2*m2;
+
+  // Set up kinematics in the CoM frame.
+  double p2z = kallenFunction(m2R, m21, m22)/(4.*m2R);
+
+  // No solution if kallenFunction negative.
+  if (p2z < 0.) return false;
+
+  double E1 = sqrt(m21 + p2z);
+  double E2 = sqrt(m22 + p2z);
+  double pz = sqrt(p2z);
+
+  Vec4 p1(0, 0, pz, E1);
+  Vec4 p2(0, 0, -pz, E2);
+
+  // Rotate.
+  p1.rot(theta, phi);
+  p2.rot(theta, phi);
+
+  // Boost to lab frame.
+  p1.bst(pRes);
+  p2.bst(pRes);
+
+  // Check.
+  if (verbose >= VinciaConstants::DEBUG) {
+    Vec4 total = pRes - p1 - p2;
+    printOut(__METHOD_NAME__, "Checking momentum in lab frame:");
+    cout<<" pRes = "<< pRes.e()<<" "<< pRes.px()
+        <<" "<< pRes.py()<<" "<< pRes.pz()<<endl;
+    cout<<" p1 = "<< p1.e()<<" "<< p1.px()
+        <<" "<< p1.py()<<" "<< p1.pz()<<endl;
+    cout<<" p2 = "<< p2.e()<<" "<< p2.px()
+        <<" "<< p2.py()<<" "<< p2.pz()<<endl;
+    cout<<" total = "<< total.e()<<" "<< total.px()
+        <<" "<< total.py()<<" "<< total.pz()<<endl;
+  }
+
+  pNew.push_back(p1);
+  pNew.push_back(p2);
+
   return true;
 
 }
@@ -2078,23 +3480,25 @@ bool VinciaCommon::map2to3RFmassive(vector<Vec4>& pThree, vector<Vec4> pTwo,
 //           [2]   = pk
 //           [i>3] = recoilers
 
-bool VinciaCommon::map2toNRFmassive(vector<Vec4>& pAfter, vector<Vec4> pBefore,
-  unsigned int posR, unsigned int posF, vector<double> invariants,double phi,
+bool VinciaCommon::map2toNRF(vector<Vec4>& pAfter, vector<Vec4> pBefore,
+  unsigned int posR, unsigned int posF, vector<double> invariants, double phi,
   vector<double> masses) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
   pAfter.clear();
 
   // Momentum of "R", "F" end of antenna, and sum of downstream recoilers.
   Vec4 pR = pBefore.at(posR);
   Vec4 pF = pBefore.at(posF);
-  Vec4 pSum(0.,0.,0.,0.);
+  Vec4 pSum(0., 0., 0., 0.);
   vector<Vec4> pRec;
-  for(unsigned int imom = 0; imom < pBefore.size(); imom++){
-    if (imom==posF || imom==posR) {
+  for(unsigned int imom = 0; imom < pBefore.size(); imom++) {
+    if (imom == posF || imom == posR) {
       continue;
     } else {
-      pSum+= pBefore.at(imom);
+      pSum += pBefore.at(imom);
       pRec.push_back(pBefore.at(imom));
     }
   }
@@ -2104,7 +3508,7 @@ bool VinciaCommon::map2toNRFmassive(vector<Vec4>& pAfter, vector<Vec4> pBefore,
   pTwo.push_back(pF);
 
   // Recoil AK system.
-  if (!map2to3RFmassive(pThree,pTwo,invariants,phi,masses)) {
+  if (!map2to3RF(pThree, pTwo, invariants, phi, masses)) {
     return false;
   } else if (pThree.size() != 3) {
     return false;
@@ -2115,9 +3519,8 @@ bool VinciaCommon::map2toNRFmassive(vector<Vec4>& pAfter, vector<Vec4> pBefore,
   pAfter.push_back(pThree.at(1));
   pAfter.push_back(pThree.at(2));
   Vec4 pSumAfter = pThree.at(0);
-  if (abs(pSumAfter.mCalc() - pSum.mCalc()) > SMALL) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Failed to conserve mass of system.");
+  if (abs(pSumAfter.mCalc() - pSum.mCalc()) > MILLI) {
+    loggerPtr->ERROR_MSG("failed to conserve mass of system");
     return false;
   }
 
@@ -2129,14 +3532,13 @@ bool VinciaCommon::map2toNRFmassive(vector<Vec4>& pAfter, vector<Vec4> pBefore,
   } else {
     for(unsigned int imom = 0; imom < pRec.size(); imom++) {
       double mRecBef = pRec.at(imom).mCalc();
-      pRec.at(imom).bstback(pSum,pSum.mCalc());
-      pRec.at(imom).bst(pSumAfter,pSum.mCalc());
+      pRec.at(imom).bstback(pSum, pSum.mCalc());
+      pRec.at(imom).bst(pSumAfter, pSum.mCalc());
       double mRecAfter = pRec.at(imom).mCalc();
 
       // Check mass.
-      if (abs(mRecAfter- mRecBef) > SMALL) {
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed to conserve mass of recoilers.");
+      if (abs(mRecAfter- mRecBef) > MILLI) {
+        loggerPtr->ERROR_MSG("failed to conserve mass of recoilers");
         return false;
       }
       pAfter.push_back(pRec.at(imom));
@@ -2151,15 +3553,12 @@ bool VinciaCommon::map2toNRFmassive(vector<Vec4>& pAfter, vector<Vec4> pBefore,
 
 // 2 -> 3 kinematics map for initial-initial antennae, for general mj.
 
-bool VinciaCommon::map2to3II(vector<Vec4>& pNew, vector<Vec4>& pRec,
+bool VinciaCommon::map2to3IImassive(vector<Vec4>& pNew, vector<Vec4>& pRec,
   vector<Vec4>& pOld, double sAB, double saj, double sjb, double sab,
   double phi, double mj2) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
-
-  // Hand off to massless map if mj2 = 0.
-  if (mj2 == 0.0)
-    return map2to3IImassless(pNew, pRec, pOld, sAB, saj, sjb, sab, phi);
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
   // Do massive mapping.
   pNew.clear();
@@ -2174,9 +3573,9 @@ bool VinciaCommon::map2to3II(vector<Vec4>& pNew, vector<Vec4>& pRec,
   double fac = sqrt(sAB/sCM);
   double e0 = pOld[0].e();
   double e1 = pOld[1].e();
-  if (abs(1. - fac) > TINY) {
-    if (verbose >= 3 && abs(1.-fac) > 1.01)
-      printOut("VinClu::map2to3II", "Warning: scaling AB so m2(AB) = sAB");
+  if (abs(1. - fac) > NANO) {
+    if (verbose >= Logger::REPORT && abs(1.-fac) > 1.01)
+      printOut(__METHOD_NAME__, "Warning: scaling AB so m2(AB) = sAB");
     e0 *= fac;
     e1 *= fac;
   }
@@ -2194,8 +3593,7 @@ bool VinciaCommon::map2to3II(vector<Vec4>& pNew, vector<Vec4>& pRec,
   double G = saj*sjb*sab - mj2*sab*sab;
   if (G < 0. || sab < 0.) return false;
   if ((sab <= sjb) || (sab <= saj)) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Incompatible invariants.");
+    loggerPtr->ERROR_MSG("incompatible invariants");
     return false;
   }
 
@@ -2212,8 +3610,8 @@ bool VinciaCommon::map2to3II(vector<Vec4>& pNew, vector<Vec4>& pRec,
   Vec4 pTrans(cos(phi), sin(phi), 0.0, 0.0);
   pNew[1] = preFacA*pOld[0] + preFacB*pOld[1] + preFacT*pTrans;
 
-  if (verbose >= superdebug) {
-    printOut("VinClu::map2to3II","Invariants are");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "Invariants are");
     cout << scientific << "    sAB = " << sAB << " saj = " << saj
          << " sjb = " << sjb << " sab = " << sab << endl
          << " Given momenta are" << endl;
@@ -2222,70 +3620,69 @@ bool VinciaCommon::map2to3II(vector<Vec4>& pNew, vector<Vec4>& pRec,
     for (int i = 0; i < 3; i++) cout << "    " << pNew[i];
   }
 
-  // Check the invariants, allow 0.0001% difference.
-  double check = 1e-6;
+  // Check the invariants, allow 0.1% difference.
   double sajNew = 2*pNew[0]*pNew[1];
   double sjbNew = 2*pNew[1]*pNew[2];
   double sabNew = 2*pNew[0]*pNew[2];
-  if (abs(sabNew - sab)/sab > check) {
-    if (verbose >= 5) {
-      printOut("VinClu::map2to3II","ERROR! Invariants differ!");
+  if (abs(sabNew - sab)/sab > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant(s)",
+      "yab ("+num2str(abs(sabNew - sab)/sab)+")");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " sab (" << sab << ") fracdiff = ydiff = "
            << abs(sabNew-sab)/sab << endl << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
     }
-    return false;
-  } else if (abs(sajNew - saj)/sab > check) {
-    if (verbose >= 5) {
-      printOut("VinClu::map2to3II","ERROR! Invariants differ!");
+  } else if (abs(sajNew - saj)/sab > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant(s)",
+      "yaj ("+num2str(abs(sajNew - saj)/sab)+")");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " saj (" << saj << ") fracdiff = "
            << abs(sajNew-saj)/saj << " ydiff = "
            << abs(sajNew-saj)/sab << endl << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
     }
-    return false;
-  } else if (abs(sjbNew - sjb)/sab > check) {
-    if (verbose >= 5) {
-      printOut("VinClu::map2to3II","ERROR! Invariants differ!");
+  } else if (abs(sjbNew - sjb)/sab > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant(s)",
+      "yjb ("+num2str(abs(sjbNew - sjb)/sab)+")");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " sjb (" << sjb << ") fracdiff = "
            << abs(sjbNew-sjb)/sjb << " ydiff = " << abs(sjbNew-sjb)/sab
            << endl << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
     }
-    return false;
   }
 
   // Change the final state recoiler. The recoiler is currently sum
   // of initial guys => E,0,0,pz. Boost in center-of-mass frame AB
   // E,0,0,0.
   Vec4 pSum = pOld[0] + pOld[1];
-  Vec4 pRecSumBefore(0.,0.,0.,0.);
-  Vec4 pRecSumAfter(0.,0.,0.,0.);
-  for (int i=0; i<(int)pRec.size(); i++){
-    pRecSumBefore+=pRec[i];
+  Vec4 pRecSumBefore(0., 0., 0., 0.);
+  Vec4 pRecSumAfter(0., 0., 0., 0.);
+  for (int i = 0; i<(int)pRec.size(); i++) {
+    pRecSumBefore += pRec[i];
     pRec[i].bstback(pSum);
   }
 
   // Now boost from E,0,0,0 to E',px',py',pz'.
   Vec4 pPrime = pNew[0] + pNew[2] - pNew[1];
-  for (int i=0; i<(int)pRec.size(); i++) {
+  for (int i = 0; i<(int)pRec.size(); i++) {
     pRec[i].bst(pPrime, pPrime.mCalc());
-    pRecSumAfter+=pRec[i];
+    pRecSumAfter += pRec[i];
   }
-  if(verbose >= superdebug) {
-    Vec4 total= pOld[0]+pOld[1];
-    cout << " Total In before" << total <<  endl
-         << " Total Out before" << pRecSumBefore <<  endl;
+  if (verbose >= VinciaConstants::DEBUG) {
+    Vec4 total = pOld[0]+pOld[1];
+    cout << " Total In  Before " << total
+         << " Total Out Before " << pRecSumBefore;
     total = pNew[0] + pNew[2] - pNew[1];
-    cout << " Total In After" << total <<  endl
-         << " Total Out After" << pRecSumAfter <<  endl
-         << " Total diff After" << total-pRecSumAfter <<  endl;
+    cout << " Total In  After  " << total
+         << " Total Out After  " << pRecSumAfter
+         << "  In - Out After  " << total-pRecSumAfter;
   }
   return true;
 
@@ -2299,7 +3696,9 @@ bool VinciaCommon::map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
   vector<Vec4>& pOld, double sAB, double saj, double sjb, double sab,
   double phi) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
   pNew.clear();
   pNew.resize(3);
 
@@ -2312,10 +3711,10 @@ bool VinciaCommon::map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
   double fac = sqrt(sAB/sCM);
   double e0 = pOld[0].e();
   double e1 = pOld[1].e();
-  if (abs(1. - fac) > TINY) {
-    if (verbose >= 3 && abs(1. - fac) > 1.01)
-      printOut("VinciaCommon::map2to3IImassless",
-               "Warning: scaling AB so m2(AB) = sAB");
+  if (abs(1. - fac) > NANO) {
+    if (verbose >= Logger::REPORT && abs(1. - fac) > 1.01)
+      printOut(__METHOD_NAME__,
+        "Warning: scaling AB so m2(AB) = sAB");
     e0 *= fac;
     e1 *= fac;
   }
@@ -2343,7 +3742,7 @@ bool VinciaCommon::map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
   pNew[1] = preFacA*pOld[0] + preFacB*pOld[1] + preFacT*pTrans;
 
   // Debugging info.
-  if (verbose >= superdebug) {
+  if (verbose >= VinciaConstants::DEBUG) {
     stringstream ss;
     ss << "Invariants are: "
        << scientific << "    sAB = " << sAB << " saj = " << saj
@@ -2355,55 +3754,54 @@ bool VinciaCommon::map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
     for (int i = 0; i < 3; i++) cout << "    " << pNew[i];
   }
 
-  // Check the invariants, allow 0.0001% difference.
-  double check = 1e-6;
+  // Check the invariants.
   double sajNew = 2*pNew[0]*pNew[1];
   double sjbNew = 2*pNew[1]*pNew[2];
   double sabNew = 2*pNew[0]*pNew[2];
-  if (abs(sabNew - sab)/sab > check) {
-    if (verbose >= 5) {
-      printOut("VinciaCommon::map2to3IImassless","ERROR! Invariants differ!");
+  if (abs(sabNew - sab)/sab > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant(s)",
+      "yab ("+num2str(abs(sabNew - sab)/sab)+")");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " sab (" << sab << ") fracdiff = ydiff = "
            << abs(sabNew - sab)/sab << endl
            << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
     }
-    return false;
-  } else if (abs(sajNew - saj)/sab > check) {
-    if (verbose >= 5) {
-      printOut("VinciaCommon::map2to3IImassless","ERROR! Invariants differ!");
+  } else if (abs(sajNew - saj)/sab > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant(s)",
+      "yaj ("+num2str(abs(sajNew - saj)/sab)+")");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " saj (" << saj << ") fracdiff = "
            << abs(sajNew-saj)/saj << " ydiff = "<< abs(sajNew - saj)/sab
            << endl << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
     }
-    return false;
-  } else if ( abs(sjbNew-sjb)/sab > check ) {
-    if (verbose >= 5) {
-      printOut("VinciaCommon::map2to3IImassless","ERROR! Invariants differ!");
+  } else if ( abs(sjbNew-sjb)/sab > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant(s)",
+      "yjb ("+num2str(abs(sjbNew - sjb)/sab)+")");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " sjb (" << sjb << ") fracdiff = "
            << abs(sjbNew-sjb)/sjb << " ydiff = "<< abs(sjbNew - sjb)/sab
            << endl << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
     }
-    return false;
   }
 
   // Change the final state recoiler. The recoiler is currently sum
   // of initial guys => E,0,0,pz. Boost in center-of-mass frame AB
   // E,0,0,0.
   Vec4 pSum = pOld[0] + pOld[1];
-  for (int i=0; i<(int)pRec.size(); i++) pRec[i].bstback(pSum);
+  for (int i = 0; i<(int)pRec.size(); i++) pRec[i].bstback(pSum);
 
   // Now boost from E,0,0,0 to E',px',py',pz' and return.
   Vec4 pPrime = pNew[0] + pNew[2] - pNew[1];
-  for (int i=0; i<(int)pRec.size(); i++) pRec[i].bst(pPrime);
+  for (int i = 0; i<(int)pRec.size(); i++) pRec[i].bst(pPrime);
   return true;
 
 }
@@ -2413,38 +3811,36 @@ bool VinciaCommon::map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
 // 2->3 kinematics map for local recoils, for general mj,mk. Assumes
 // partons from proton explicitly massless
 
-bool VinciaCommon::map2to3IFlocal(vector<Vec4>& pNew, vector<Vec4>& pOld,
+bool VinciaCommon::map2to3IFlocal(vector<Vec4>& pNew, const vector<Vec4>& pOld,
   double sAK, double saj, double sjk, double sak, double phi,
   double mK2, double mj2, double mk2) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
   pNew.clear();
   pNew.resize(3);
-  if (verbose >= superdebug) {
-    printOut("VinClu::map2to3IFlocal","Invariants are");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "Invariants are");
     cout << "    sAK = " << sAK << " saj = " << saj
          << " sjk = " << sjk << " sak = " << sak << endl
          << "    mK = " << sqrt(mK2) << " mj = " << sqrt(mj2)
          << " mk = " << sqrt(mk2) << endl
          << " Given momenta are" << endl;
-    for (int i=0; i<2; i++) cout << "    " << pOld[i];
+    for (int i = 0; i<2; i++) cout << "    " << pOld[i];
   }
 
   // Check invariants.
-  double check = 1.e-3;
   double inv1Norm = (saj + sak)/(sAK + sjk);
   double inv2Norm = 1.0  + (mj2 + mk2 - mK2)/(sAK + sjk);
   double diff = abs(inv1Norm-inv2Norm);
-  if(diff > check) {
-    if (verbose >= 2) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Inconsistent invariants.","Aborting.");
+  if (diff > MILLI) {
+    loggerPtr->WARNING_MSG("Inconsistent invariant(s)");
+    if (verbose >= Logger::REPORT) {
       cout <<" yaj + yak = " << inv1Norm
            << " 1 + muj2 + muk2 - muK2 = "<< inv2Norm
            << " Diff = " << diff << endl;
     }
-    infoPtr->setAbortPartonLevel(true);
-    return false;
   }
 
   // Check if we're inside massive phase space.
@@ -2464,11 +3860,8 @@ bool VinciaCommon::map2to3IFlocal(vector<Vec4>& pNew, vector<Vec4>& pOld,
   pTrans.bst(pSum);
 
   // Check if pT was properly boosted, allow 0.1% difference.
-  if (pTrans*pOld[0] > pOld[0][0]*1e-3 || pTrans*pOld[1] > pOld[1][0]*1e-3) {
-    if (verbose >= normal) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": The transverse momentum is not transverse after boosting");
-    }
+  if (pTrans*pOld[0] > pOld[0].e()*1e-3 || pTrans*pOld[1] > pOld[1].e()*1e-3) {
+    loggerPtr->ERROR_MSG("transverse momentum not transverse after boost");
     return false;
   }
   double sig = sak + saj;
@@ -2477,9 +3870,10 @@ bool VinciaCommon::map2to3IFlocal(vector<Vec4>& pNew, vector<Vec4>& pOld,
   double dj = saj/sig;
   double dk = sak/sig;
 
-  // Construct new momenta p_a, p_j, and p_k.
-  pNew[0] = pOld[0];
-  pNew[0].rescale4(sig/sAK);
+  // Construct post-branching initial-state momentum (explicitly massless).
+  double pzAnew = pOld[0].pz() * sig/sAK;
+  pNew[0] = Vec4(0., 0., pzAnew, abs(pzAnew));
+  // Construct post-branching final-state momenta.
   pNew[1] = cj*pOld[0] + dj*pOld[1] + (sqrt(G)/sig)*pTrans;
   pNew[2] = ck*pOld[0] + dk*pOld[1] - (sqrt(G)/sig)*pTrans;
 
@@ -2487,46 +3881,44 @@ bool VinciaCommon::map2to3IFlocal(vector<Vec4>& pNew, vector<Vec4>& pOld,
   double sakNew = pNew[0]*pNew[2]*2;
   double sajNew = pNew[0]*pNew[1]*2;
   double sjkNew = pNew[1]*pNew[2]*2;
-  if (abs(sakNew - sak)/sak > check) {
-    if (verbose >= 2) {
-      printOut("VinClu::map2to3IFlocal","ERROR! sak is inconsistent!");
+  if (abs(sakNew - sak)/sak > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant sak");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " sak (" << sak << ") diff = "
            << abs(sakNew-sak)/sak << endl
            << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
       cout <<"Masses:    mK2 = " << mK2 << " mj2 = " << mj2
            << " mk2 = " << mk2 << endl;
     }
-    return false;
-  } else if (abs(sajNew - saj)/saj > check) {
-    if (verbose >= 2 ) {
-      printOut("VinClu::map2to3IFlocal","ERROR! saj is inconsistent!");
+  }
+  if (abs(sajNew - saj)/saj > MILLI) {
+    loggerPtr->WARNING_MSG("inconsistent invariant saj");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " saj (" << saj << ") diff = ";
       cout << abs(sajNew-saj)/saj << endl;
       cout << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
       cout <<"Masses:    mK2 = " << mK2 << " mj2 = " << mj2
            << " mk2 = " << mk2 << endl;
     }
-    return false;
-  } else if ( abs(sjkNew-sjk)/sjk > check ) {
-    if (verbose >= 2 ){
-      printOut("VinClu::map2to3IFlocal","ERROR! sjk is inconsistent!");
+  }
+  if (abs(sjkNew-sjk)/sjk > MILLI) {
+    loggerPtr->ERROR_MSG("Inconsistent invariant sjk");
+    if (verbose >= Logger::REPORT) {
       cout << scientific << " sjk (" << sjk << ") diff = ";
       cout << abs(sjkNew-sjk)/sjk << endl;
       cout << " Old momenta are" << endl;
-      for (int i=0; i<2; i++) cout << "    " << pOld[i];
+      for (int i = 0; i<2; i++) cout << "    " << pOld[i];
       cout << " New momenta are" << endl;
-      for (int i=0; i<3; i++) cout << "    " << pNew[i];
+      for (int i = 0; i<3; i++) cout << "    " << pNew[i];
       cout <<"Masses:    mK2 = " << mK2 << " mj2 = " << mj2
            << " mk2 = " << mk2 << endl;
     }
-    infoPtr->setAbortPartonLevel(true);
-    return false;
   }
   return true;
 }
@@ -2537,11 +3929,13 @@ bool VinciaCommon::map2to3IFlocal(vector<Vec4>& pNew, vector<Vec4>& pOld,
 // partons from proton explicitly massless.
 
 bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
-  vector<Vec4>& pRec, vector<Vec4>& pOld, Vec4 &pB,
+  vector<Vec4>& pRec, const vector<Vec4>& pOld, const Vec4 &pB,
   double sAK, double saj, double sjk, double sak, double phi,
   double mK2, double mj2, double mk2) {
 
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
   pNew.clear();
   pNew.resize(3);
 
@@ -2559,26 +3953,34 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
 
   // Check if pT was properly boosted, allow 0.1% difference.
   if (pTrans*pOld[0] > pOld[0].e()*1e-3 || pTrans*pOld[1] > pOld[1].e()*1e-3) {
-    if (verbose >= superdebug) {
-      printOut("VinciaCommon:map2to3IFglobal",
-               "The transverse momentum is not transverse after boosting");
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__,
+        "The transverse momentum is not transverse after boosting");
     }
     return false;
   }
 
-  // Solution vector, start from massless values.
-  vector<double> v; v.resize(5);
+  // Set up starting (massless) solution. Saved in case of restart.
   double sig = sAK - saj;
-  v[0] = sak/sig;
-  v[1] = (saj*sjk)/(sAK*sig);
-  v[2] = sjk/sig;
-  v[3] = (saj*sak)/(sAK*sig);
-  v[4] = sjk*saj*sak/pow2(sig);
+  vector<double> vStart; vStart.resize(5);
+  vStart[0] = sak/sig;
+  vStart[1] = (saj*sjk)/(sAK*sig);
+  vStart[2] = sjk/sig;
+  vStart[3] = (saj*sak)/(sAK*sig);
+  vStart[4] = sqrt(sjk*saj*sak)/sig;
+
+  // Initialise from massless solution.
+  vector<double> v(vStart);
 
   // Root finding with Newton-Raphson in 5D.
   int nCount = 0;
-  while (true) {
-    nCount ++;
+  int nFails = 0;
+
+  // Current Newton-Raphson error
+  double eps = numeric_limits<double>::max();
+
+  do {
+    nCount++;
 
     // Construct function.
     vector<double> f(5, 0);
@@ -2596,12 +3998,12 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
     A[0][1] = v[0]*sAK + 2*v[1]*mK2;
     A[0][2] = 0;
     A[0][3] = 0;
-    A[0][4] = -1;
+    A[0][4] = -2*v[4];
     A[1][0] = 0;
     A[1][1] = 0;
     A[1][2] = v[3]*sAK;
     A[1][3] = v[2]*sAK + 2*v[3]*mK2;
-    A[1][4] = -1;
+    A[1][4] = -2*v[4];
     A[2][0] = (v[1] - v[3] + 1)*sAK;
     A[2][1] = (v[0] - v[2] - 1)*sAK + 2*(v[1] - v[3] + 1)*mK2;
     A[2][2] = -(v[1] - v[3] + 1)*sAK;
@@ -2611,7 +4013,7 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
     A[3][1] = v[2]*sAK + 2*v[3]*mK2;
     A[3][2] = v[1]*sAK;
     A[3][3] = v[0]*sAK + 2*v[1]*mK2;
-    A[3][4] = -2;
+    A[3][4] = -4*v[2];
     A[4][0] = v[3]*sAK;
     A[4][1] = v[2]*sAK + 2*v[3]*mK2;
     A[4][2] = (v[1] - 2*v[3] + 1)*sAK;
@@ -2629,7 +4031,7 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
       // Find column max.
       double eleMax = abs(A[i][i]);
       int rowMax = i;
-      for (int k=i+1; k<n; k++) {
+      for (int k = i+1; k<n; k++) {
         if (abs(A[k][i]) > eleMax) {
           eleMax = A[k][i];
           rowMax = k;
@@ -2673,34 +4075,104 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
     vector<double> vNew(5, 0);
     for (int i = 0; i < n; i++) {
       vNew[i] = v[i];
-      for (int j=0; j<n; j++) {
+      for (int j = 0; j<n; j++) {
         vNew[i] -= A[i][j]*f[j];
       }
     }
 
-    // Check if done.
-    double eps = 0;
-    for (int i=0; i<n; i++) {
-      if (abs(vNew[i] - v[i])/abs(v[i]) > eps) {
-        eps = abs(vNew[i] - v[i])/abs(v[i]);
-      }
-    }
-    v = vNew;
+    // Perform sanity checks to decide if we should reset.
+    bool resetToRandom = false;
 
-    // Break if iterations/precision reached or randomly vary the variables.
-    if (nCount == 1000) {return false;}
-    if ((nCount%100) == 0) {
-      for (int i=0; i<n; i++) {
+    // Check for nans.
+    for (int i = 0; i<n; i++) {
+      if (isnan(vNew[i])) {resetToRandom = true;}
+    }
+
+    // vNew[4] is a sqrt - should not be negative.
+    if (vNew[4] < 0) {resetToRandom = true;}
+
+    // Check for all negative solution.
+    if (vNew[0] < 0 && vNew[1] < 0 && vNew[2] < 0 &&
+        vNew[3] < 0) {
+      resetToRandom = true;
+    }
+
+    if (nCount == 100) {resetToRandom = true;}
+
+    // Do reset.
+    if (resetToRandom) {
+      nCount = 0;
+      nFails++;
+
+      // Start again from massless values.
+      v = vStart;
+
+      // Randomly vary variables.
+      for (int i = 0; i<n; i++) {
         v[i] *= (2*rndmPtr->flat() - 1);
       }
     }
-    if (eps < 1E-6) {break;}
+    else {
+      // Compute current error.
+      eps = 0;
+      for (int i = 0; i<n; i++) {
+        if (abs(vNew[i] - v[i])/abs(v[i]) > eps) {
+          eps = abs(vNew[i] - v[i])/abs(v[i]);
+        }
+      }
+
+      // Set to new values.
+      v = vNew;
+    }
+  }
+  while (eps > MICRO && nFails < 10);
+
+  // Did we fail solving?
+  if (nFails == 10) {
+    loggerPtr->ERROR_MSG("failed to converge");
+    return false;
   }
 
   // Construct post-branching momenta.
-  pNew[0] = v[0]*pOld[0] + v[1]*pOld[1] - sqrt(v[4])*pTrans;
-  pNew[1] = v[2]*pOld[0] + v[3]*pOld[1] - sqrt(v[4])*pTrans;
+  pNew[0] = v[0]*pOld[0] + v[1]*pOld[1] - v[4]*pTrans;
+  pNew[1] = v[2]*pOld[0] + v[3]*pOld[1] - v[4]*pTrans;
   pNew[2] = (v[0] - v[2] - 1)*pOld[0] + (v[1] - v[3] + 1)*pOld[1];
+
+  // Check if these momenta are on-shell
+  bool failedOnShell = false;
+
+  if (pNew[0].m2Calc() > MILLI) {
+    failedOnShell = true;
+  }
+
+  double mj2New = pNew[1].m2Calc();
+  if (mj2 == 0.) {
+    if (abs(mj2New) > MILLI) {
+      failedOnShell = true;
+    }
+  }
+  else {
+    if (abs(mj2New - mj2)/mj2 > 1E-4) {
+      failedOnShell = true;
+    }
+  }
+
+  double mk2New = pNew[2].m2Calc();
+  if (mk2 == 0.) {
+    if (abs(mk2New) > MILLI) {
+      failedOnShell = true;
+    }
+  }
+  else {
+    if (abs(mk2New - mk2)/mk2 > 1E-4) {
+      failedOnShell = true;
+    }
+  }
+
+  if (failedOnShell) {
+    loggerPtr->ERROR_MSG("failed on-shell check");
+    return false;
+  }
 
   // Set up the boost.
   Vec4 pa = pNew[0];
@@ -2710,13 +4182,13 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
   double qAa = pA*pa;
 
   // Perform boost.
-  for (int i=0; i<3; i++) {
+  for (int i = 0; i<3; i++) {
     Vec4 p = pNew[i];
     pNew[i] += pB*((pa*p)/qaB) - pa*((pB*p)/qaB) + pA*((pB*p)/qAB)
       - pB*((pA*p)/qAB) + pB*(qAa*(pB*p)/(qAB*qaB));
 
     // Force the initial state to be on the beam axis.
-    if (i==0) {
+    if (i == 0) {
       double ea = pNew[i].e();
       double sign = (pNew[0].pz() > 0) ? 1 : -1;
       pNew[0] = Vec4(0, 0, sign*ea, ea);
@@ -2724,89 +4196,39 @@ bool VinciaCommon::map2to3IFglobal(vector<Vec4>& pNew,
   }
 
   // Perform boost on the rest of the system and return.
-  for (int i=0; i<(int)pRec.size(); i++) {
+  for (int i = 0; i<(int)pRec.size(); i++) {
     Vec4 p = pRec[i];
     pRec[i] += pB*((pa*p)/qaB) - pa*((pB*p)/qaB) + pA*((pB*p)/qAB)
       - pB*((pA*p)/qAB) + pB*(qAa*(pB*p)/(qAB*qaB));
   }
+
   double sajNew = 2*pNew[0]*pNew[1];
   double sjkNew = 2*pNew[1]*pNew[2];
   double sakNew = 2*pNew[0]*pNew[2];
-  if (verbose >= 5) {
-    if (abs(sajNew - saj)/saj > 1E-3)
-      printOut("VinciaCommon:map2to3IFglobal", "saj not quite correct");
-    if (abs(sjkNew - sjk)/sjk > 1E-3)
-      printOut("VinciaCommon:map2to3IFglobal", "sjk not quite correct");
-    if (abs(sakNew - sak)/sak > 1E-3)
-      printOut("VinciaCommon:map2to3IFglobal", "sak not quite correct");
-  }
-  return true;
-}
 
-//--------------------------------------------------------------------------
+  double checkAJ = abs(sajNew - saj)/saj;
+  double checkJK = abs(sjkNew - sjk)/sjk;
+  double checkAK = abs(sakNew - sak)/sak;
 
-// pA + pK -> pa + pj + pk
-
-bool VinciaCommon::map2to3RFmassive(vector<Vec4>& pNew, vector<Vec4>& pRec,
-  vector<Vec4> pOld, double saj, double sjk, double phi,
-  double mA2 = 0.0, double mj2 = 0.0, double mK2 = 0.0) {
-
-  // Get momenta and boost to lab frame.
-  if (pOld.size() != 2) {return false;}
-  Vec4 pABefore = pOld[0];
-  Vec4 pKBefore = pOld[1];
-  Vec4 pAKBefore = pABefore - pKBefore;
-  Vec4 pACoM = pABefore;
-  double sAK = 2.0*pABefore*pKBefore;
-  double sak = sAK - saj + sjk;
-
-  // Check if inside phase space boundaries.
-  if (sak < 0) {return false;}
-  if (saj*sjk*sak - mA2*sjk*sjk - mj2*sak*sak - mK2*saj*saj < 0) return false;
-
-  // Boost to CoM frame.
-  pKBefore.bstback(pABefore);
-  pAKBefore.bstback(pABefore);
-  pACoM.bstback(pABefore);
-
-  // Get energies, cos(theta), and sin(theta).
-  double EjAfter    = saj/(2.0*sqrt(mA2));
-  double pVecjAfter = sqrt(pow2(EjAfter) - mj2);
-  double EkAfter    = sak/(2.0*sqrt(mA2));
-  double pVeckAfter = sqrt(pow2(EkAfter) - mK2);
-  double cosTheta   = (2.*EjAfter*EkAfter - sjk)/2./pVecjAfter/pVeckAfter;
-  if (abs(cosTheta) > 1) {return false;}
-  double sinTheta   = sqrt(1.0 - cosTheta*cosTheta);
-
-  // Construct three momenta.
-  Vec4 pkAfter(0., 0., pVeckAfter, EkAfter);
-  Vec4 pjAfter(pVecjAfter*sinTheta*cos(phi), pVecjAfter*sinTheta*sin(phi),
-               pVecjAfter*cosTheta, EjAfter);
-  Vec4 pajkAfter = pACoM - pkAfter - pjAfter;
-
-  // Boost to lab frame.
-  pkAfter.bst(pABefore);
-  pjAfter.bst(pABefore);
-  pajkAfter.bst(pABefore, sqrt(mA2));
-  pNew.clear();
-  pNew.push_back(pABefore);
-  pNew.push_back(pjAfter);
-  pNew.push_back(pkAfter);
-
-  // In case of a single recoiler, it just takes the remaining momentum.
-  if (pRec.size() == 1) {
-    pRec[0] = pajkAfter;
-
-  // Perform Lorentz boost for multiple recoilers, fails for a
-  // single massless recoiler
-  } else {
-    for(int i=0; i<(int)pRec.size(); i++) {
-      pRec[i].bstback(pAKBefore);
-      pRec[i].bst(pajkAfter);
+  if ( checkAJ > MILLI || checkJK > MILLI || checkAK > MILLI) {
+    loggerPtr->ERROR_MSG("inconsistent invariant(s)");
+    if (verbose >= Logger::REPORT) {
+      cout<<setprecision(3)
+          <<" Input:  sAK = "<<sAK<<"  saj = "<<saj<<"  sjk = "<<sjk
+          <<"  sak = "<<sak<<"  mK2 = "<<mK2<<"  mj2 = "<<mj2
+          <<"  mk2 = "<<mk2<<endl;
+      cout<< "   pA = "<<pOld[0];
+      cout<< "   pK = "<<pOld[1];
+      cout<<"=>"<<endl;
+      cout<< "   pa = "<<pNew[0];
+      cout<< "   pj = "<<pNew[1];
+      cout<< "   pk = "<<pNew[2];
+      cout<<"       delta(aj,jk,ak) = "<<checkAJ<<" "<<checkJK
+          <<" "<<checkAK<<"\n\n";
     }
+    return false;
   }
   return true;
-
 }
 
 //--------------------------------------------------------------------------
@@ -2816,28 +4238,31 @@ bool VinciaCommon::map2to3RFmassive(vector<Vec4>& pNew, vector<Vec4>& pRec,
 bool VinciaCommon::onShellCM(Vec4& p1, Vec4& p2, double m1, double m2,
   double tol) {
 
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
   double s1     = pow2(m1);
   double s2     = pow2(m2);
   double s01    = Vec4(p1+p2).m2Calc();
   double s1Calc = p1.m2Calc();
   double s2Calc = p2.m2Calc();
   if (abs(s1Calc-s1)/s01 > tol || abs(s2Calc-s2)/s01 > tol) {
-    if (verbose >= 3)
-      printOut("VinClu::onShellCM","forcing particles on mass shell");
+    if (verbose >= Logger::REPORT)
+      printOut(__METHOD_NAME__, "forcing particles on mass shell");
     RotBstMatrix M;
-    M.fromCMframe(p1,p2);
+    M.fromCMframe(p1, p2);
 
     // Define massive on-shell momenta.
     double E0 = (s01 + s1 - s2)/(2*sqrt(s01));
     double E1 = (s01 - s1 + s2)/(2*sqrt(s01));
     double pz = pow2(E0)-s1;
-    Vec4 p1new = Vec4(0.0,0.0,-pz,E0);
-    Vec4 p2new = Vec4(0.0,0.0,pz,E1);
+    Vec4 p1new = Vec4(0.0, 0.0, -pz, E0);
+    Vec4 p2new = Vec4(0.0, 0.0, pz, E1);
     p1new.rotbst(M);
     p2new.rotbst(M);
     double s1Test = p1new.m2Calc();
     double s2Test = p2new.m2Calc();
-    if (verbose >= 3) {
+    if (verbose >= Logger::REPORT) {
       cout << " p1   : " << p1 << " p1new: " << p1new
            << " p2   : " << p1 << " p2new: " << p1new;
     }
@@ -2861,8 +4286,10 @@ bool VinciaCommon::onShellCM(Vec4& p1, Vec4& p2, double m1, double m2,
 // Vec4 as input could in principle be split off from this, if needed,
 // but has not been required so far.
 
-bool VinciaCommon::mapToMassless(int iSys, Event& event,
-  PartonSystems* partonSystemsPtr, bool makeNewCopies) {
+bool VinciaCommon::mapToMassless(int iSys, Event& event, bool makeNewCopies) {
+
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
   // Start by making new copies, if requested to do so.
   if (makeNewCopies) {
@@ -2873,26 +4300,24 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
     // code -42, incoming copy of recoiler (as mother).
     if (partonSystemsPtr->hasInAB(iSys)) {
       iOld = partonSystemsPtr->getInA(iSys);
-      iNew = event.copy(iOld,-42);
+      iNew = event.copy(iOld, -42);
       partonSystemsPtr->replace(iSys, iOld, iNew);
       iOld = partonSystemsPtr->getInB(iSys);
-      iNew = event.copy(iOld,-42);
+      iNew = event.copy(iOld, -42);
       partonSystemsPtr->replace(iSys, iOld, iNew);
     }
     // Note, a decaying resonance is not copied to preserve structure
     // of production and decay. Copy outgoing partons (use status code
     // 52).
-    for (int i=0; i<partonSystemsPtr->sizeOut(iSys); ++i) {
-      iOld = partonSystemsPtr->getOut(iSys,i);
-      iNew = event.copy(iOld, 52);
-    } // End loop to make new copies.
+    for (int i = 0; i<partonSystemsPtr->sizeOut(iSys); ++i)
+      event.copy(partonSystemsPtr->getOut(iSys, i), 52);
   } // End if new copies requested.
 
   // Initial-state partons, always assumed massless in VINCIA.
   if (partonSystemsPtr->hasInAB(iSys) ) {
     int iA = partonSystemsPtr->getInA(iSys);
     int iB = partonSystemsPtr->getInB(iSys);
-    if (event[iA].mCalc() != 0.0 || event[iB].mCalc() != 0.0) {
+    if (event[iA].m() != 0.0 || event[iB].m() != 0.0) {
 
       // Below we assume iA is the one with pz > 0; swap if opposite case.
       if (event[iA].pz() < 0 || event[iB].pz() > 0) {
@@ -2902,18 +4327,17 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
 
       // Transverse components assumed zero: check.
       if (event[iA].pT() > 1.e-6 || event[iB].pT() > 1.e-6) {
-        cout<<"Vincia::VinciaCommon::mapToMassless) Error: incoming partons "
-          "have nonvanishing transverse momenta for system iSys = "
-            <<iSys<<"; giving up"<<endl;
+        stringstream ss;
+        ss << "incoming partons have non-vanishing transverse momenta"
+           << " for system iSys = " << iSys << "; giving up";
+        loggerPtr->ERROR_MSG(ss.str());
         return false;
       }
 
       // Verbose output.
-      if (verbose > superdebug) {
-        stringstream ss;
-        ss<<"Warning: forcing initial"
-          "-state partons to be massless for system "<<iSys;
-        printOut(__METHOD_NAME__,ss.str());
+      if (verbose >= VinciaConstants::DEBUG) {
+        loggerPtr->WARNING_MSG("forcing initial-state partons to be massless",
+          "for system " + to_string(iSys));
       }
 
       // Define explicitly massless momenta (same as in Pythia::PartonLevel).
@@ -2935,9 +4359,9 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
     bool makeMassless = false;
     Vec4 pSysOrg;
     for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i) {
-      momenta.push_back(event[partonSystemsPtr->getOut(iSys,i)].p());
-      massOrg.push_back(event[partonSystemsPtr->getOut(iSys,i)].m());
-      if (massOrg[i] > 0. && event[partonSystemsPtr->getOut(iSys,i)].idAbs()
+      momenta.push_back(event[partonSystemsPtr->getOut(iSys, i)].p());
+      massOrg.push_back(event[partonSystemsPtr->getOut(iSys, i)].m());
+      if (massOrg[i] > 0. && event[partonSystemsPtr->getOut(iSys, i)].idAbs()
         <= nFlavZeroMass) makeMassless = true;
       pSysOrg += momenta[i];
     }
@@ -2951,7 +4375,7 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
     double sCM = m2(pSysOrg);
     bool isInCM = ( pow2(pSysOrg.pAbs())/sCM < 1e-10 );
     if (!isInCM)
-      for (int i=0; i<(int)momenta.size(); ++i) momenta[i].bstback(pSysOrg);
+      for (int i = 0; i<(int)momenta.size(); ++i) momenta[i].bstback(pSysOrg);
 
     // Define vector for computing CM energy of modified system.
     Vec4 pSysNew;
@@ -2959,17 +4383,17 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
     // Identify particles to be made massless (by ID code) and rescale
     // their momenta along direction of motion.
     for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i) {
-      int ip = partonSystemsPtr->getOut(iSys,i);
+      int ip = partonSystemsPtr->getOut(iSys, i);
       if (event[ip].idAbs() <= nFlavZeroMass && event[ip].m() != 0.) {
         double facInv = momenta[i].pAbs()/momenta[i].e();
         // Sanity check.
         if (facInv <= 0.) {
-          if (verbose >= 2)
-            printOut("VinciaCommon:mapToMassless",
+          if (verbose >= Logger::NORMAL)
+            printOut(__METHOD_NAME__,
               "Remap failed. Particle is spacelike or at rest.");
           // Restore masses in case any were already changed.
-          for (int j=0; j < partonSystemsPtr->sizeOut(iSys); ++j)
-            event[partonSystemsPtr->getOut(iSys,j)].m(massOrg[j]);
+          for (int j = 0; j < partonSystemsPtr->sizeOut(iSys); ++j)
+            event[partonSystemsPtr->getOut(iSys, j)].m(massOrg[j]);
           // Failed.
           return false;
         }
@@ -2977,9 +4401,9 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
         event[ip].m(0.);
         // Check new 4-vector.
         double mNew = momenta[i].mCalc();
-        if (pow2(mNew/momenta[i].e()) > TINY) {
-          printOut("VinciaCommon:mapToMassless","Warning: rounding problem.");
-          if (verbose >= 7) {
+        if (pow2(mNew/momenta[i].e()) > NANO) {
+          printOut(__METHOD_NAME__, "Warning: rounding problem.");
+          if (verbose >= VinciaConstants::DEBUG) {
             cout<<scientific << "(p,e) = "<<momenta[i].pAbs() << "  "
                 << momenta[i].e() << " facInv = " << facInv
                 << " 1/facInv = " << 1./facInv << " mNew = " << mNew << endl;
@@ -2994,20 +4418,12 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
     // New system generally has smaller invariant mass and some
     // motion. Determine if additional scalings or boosts are needed.
     Vec4 delta = pSysOrg - pSysNew;
-    if (delta.e()/sqrt(sCM) < TINY && delta.pAbs()/sqrt(sCM) < TINY) {
+    if (delta.e()/sqrt(sCM) < NANO && delta.pAbs()/sqrt(sCM) < NANO) {
       // Update event record (masses already updated above).
       for (int i = 0; i < (int)momenta.size(); ++i)
-        event[partonSystemsPtr->getOut(iSys,i)].p(momenta[i]);
-      if (verbose >= superdebug)
-        printOut("VinciaCommon:mapToMassless","No further rescalings needed.");
-
-      //Check momentum conservation.
-      if (!checkCoM(iSys,event,partonSystemsPtr)) {
-        infoPtr->setAbortPartonLevel(true);
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__+
-          ": Failed (E,p) conservation check.","Aborting.");
-        return false;
-      }
+        event[partonSystemsPtr->getOut(iSys, i)].p(momenta[i]);
+      if (verbose >= VinciaConstants::DEBUG)
+        printOut(__METHOD_NAME__, "No further rescalings needed.");
       return true;
     }
 
@@ -3015,48 +4431,39 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
     // energies and momenta to restore the same CM energy as before.
     double sCMnew   = m2(pSysNew);
     double scaleFac = sqrt(sCM/sCMnew);
-    if (verbose >= 7 && pow2(scaleFac-1.0) > TINY)
-      printOut("VinciaCommon:mapToMassless",
-               "Rescaling 4-vectors to restore eCM");
+    if (verbose >= VinciaConstants::DEBUG && pow2(scaleFac-1.0) > NANO)
+      printOut(__METHOD_NAME__, "Rescaling 4-vectors to restore eCM");
     Vec4 pSysNewB;
     for (int i = 0; i < (int)momenta.size(); ++i) {
       momenta[i].rescale4(scaleFac);
       pSysNewB += momenta[i];
     }
     double sCMnewB = m2(pSysNewB);
-    if (verbose >= superdebug)
+    if (verbose >= VinciaConstants::DEBUG) {
       cout << "old CM energy = " << sqrt(sCM) << " intermediate CM energy = "
            << sqrt(sCMnew) << " new CM energy = " << sqrt(sCMnewB) << endl;
+      printOut(__METHOD_NAME__, "Boosting back to CM frame");
+    }
     // Then boost to CM frame (preserves CM energy).
-    if (verbose >= 7)
-      printOut("VinciaCommon:mapToMassless","Boosting back to CM frame");
-    for (int i=0; i<(int)momenta.size(); ++i) {
+    for (int i = 0; i<(int)momenta.size(); ++i) {
       // Boost to new CM frame
       momenta[i].bstback(pSysNewB);
       // If required, also boost back to frame of input system
       if (!isInCM) momenta[i].bst(pSysOrg);
 
       // Update event record (masses already updated above).
-      event[partonSystemsPtr->getOut(iSys,i)].p(momenta[i]);
+      event[partonSystemsPtr->getOut(iSys, i)].p(momenta[i]);
 
     } // End do boosts.
 
     // Verbose output: final configuration.
-    if (verbose >= 7) {
+    if (verbose >= VinciaConstants::DEBUG) {
       cout << "Final configuration:" << endl;
       for (int i = 0; i < (int)momenta.size(); ++i)
         cout << "  " << i << " " << momenta[i];
     }
 
   } // End make final-state momenta massless.
-
-  // Check momentum conservation.
-  if(!checkCoM(iSys, event,partonSystemsPtr)){
-    infoPtr->setAbortPartonLevel(true);
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Failed (E,p) conservation check.","Aborting.");
-    return false;
-  }
 
   // We made it.
   return true;
@@ -3065,72 +4472,440 @@ bool VinciaCommon::mapToMassless(int iSys, Event& event,
 
 //--------------------------------------------------------------------------
 
-// More lightweight function to check conservation of momentum.
+// Make list of particles as vector<Particle>.
 
-bool VinciaCommon::checkCoM(int iSys, Event& event,
-  PartonSystems* partonSystemsPtr){
-  Vec4 total(0.,0.,0.,0.);
-  if (!partonSystemsPtr->hasInRes(iSys)){
-    if (partonSystemsPtr->getInA(iSys) > 0)
-      total+= event[partonSystemsPtr->getInA(iSys)].p();
-    if (partonSystemsPtr->getInB(iSys) > 0)
-      total+= event[partonSystemsPtr->getInB(iSys)].p();
-  } else total+= event[partonSystemsPtr->getInRes(iSys)].p();
-  double sysMass = total.mCalc();
+vector<Particle> VinciaCommon::makeParticleList(const int iSys,
+  const Event& event, const vector<Particle> &pNew, const vector<int> &iOld) {
 
-  // Loop over members of current system.
-  for( int iPart=0; iPart<partonSystemsPtr->sizeOut(iSys); iPart++){
-    int iOut = partonSystemsPtr->getOut(iSys,iPart);
-
-    // Sum total FS momentum.
-    if (event[iOut].isFinal()) total -= event[iOut].p();
-    else {
-      stringstream ss;
-      ss << "iSys = " << iSys << " iOut = " << iOut;
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": isFinal()=false for outgoing parton.",ss.str());
-      partonSystemsPtr->list();
-      event.list();
-      return false;
+  // Put incoming ones (initial-state partons or decaying resonance) first.
+  vector<Particle> state;
+  // reserve size for state
+  state.reserve(3 + pNew.size() + partonSystemsPtr->sizeOut(iSys));
+  if (partonSystemsPtr->hasInAB(iSys)) {
+    int iA = partonSystemsPtr->getInA(iSys);
+    int iB = partonSystemsPtr->getInB(iSys);
+    for (int j = 0; j < (int)iOld.size(); ++j) {
+      // Exclude any partons in old state that should be replaced.
+      if (iOld[j] == iA) iA = -1;
+      if (iOld[j] == iB) iB = -1;
+      if (iA == -1 && iB == -1) break;
     }
+    if (iA >= 0) state.push_back(event[iA]);
+    if (iB >= 0) state.push_back(event[iB]);
+  } else if (partonSystemsPtr->hasInRes(iSys)) {
+    int iRes = partonSystemsPtr->getInRes(iSys);
+    for (int j = 0; j < (int)iOld.size(); ++j) {
+      // Exclude any partons in old state that should be replaced.
+      if (iOld[j] == iRes){
+        iRes = -1;
+        break;
+      }
+    }
+    if (iRes >= 0) state.push_back(event[iRes]);
+  } else {
+    // If neither hasInAB() nor hasInRes(), assume hadron decay. Find mother.
+    int iMot = event[partonSystemsPtr->getOut(iSys, 0)].mother1();
+    while (iMot > 0 && !event[iMot].mayDecay())
+      iMot = event[iMot].mother1();
+    if (iMot > 0) state.push_back(iMot);
   }
-  total/=sysMass;
-  if(abs(total.e()) > SMALL || abs(total.px()) > SMALL
-     || abs(total.py()) > SMALL || abs(total.pz()) >  SMALL) {
-    event.list();
-    cout << "total = " << setprecision(10) << total.e() << " " << total.px()
-         << " " << total.py() << " " << total.pz() << endl;
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +" Failed (E,p) conservation check.");
-    return false;
-  } else if(isnan(total)){
-    event.list();
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +" Failed (E,p) isnan check.");
-    return false;
-  } else return true;
+  // Add any post-branching incoming particles.
+  for (int j = 0; j < (int)pNew.size(); ++j) {
+    if (!pNew[j].isFinal()) state.push_back(pNew[j]);
+  }
+
+  // Note: state size can be zero at this point if this is a forced shower
+  // off a user-defined final state without any specified decaying resonance
+  // or incoming beams; see e.g., VinciaFSR::shower().
+
+  // Then put outgoing ones.
+  for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i) {
+    int i1 = partonSystemsPtr->getOut(iSys, i);
+    // Do not add any that are marked as branched.
+    for (int j = 0; j < (int)iOld.size(); ++j) {
+      if (iOld[j] == i1){
+        i1 = -1;
+        break;
+      }
+    }
+    if (i1 >= 0) state.push_back(event[i1]);
+  }
+  // Add any post-branching outgoing partons.
+  for (int j = 0; j<(int)pNew.size(); ++j)
+    if (pNew[j].isFinal()) state.push_back(pNew[j]);
+
+  // Return the state.
+  return state;
 
 }
-
-//==========================================================================
-
-// TXiFunctor helper class.
 
 //--------------------------------------------------------------------------
 
-// Constructor.
+// Based on current state, find all antennae
+// for this branching and swap daughters if needed.
 
-TXiFunctor::TXiFunctor(vector<double> mIn, vector<double> energiesIn) {
-  if (mIn.size() != energiesIn.size()) {
-    m = vector<double>(0); energies = vector<double>(0);
-  } else {m = mIn; energies = energiesIn;}
+vector<VinciaClustering> VinciaCommon::findAntennae(Event& state,
+  int i1, int i2, int i3) {
+  // Initialise.
+  vector<VinciaClustering> clusterings;
+  VinciaClustering clus;
+  clus.setDaughters(state, i1, i2, i3);
+
+  // Final-final branching.
+  if (state[clus.dau1].isFinal() && state[clus.dau3].isFinal()) {
+    clus.isFSR = true;
+
+    // Gluon emission.
+    if (state[clus.dau2].isGluon()) {
+      if (state[clus.dau1].isGluon()) {
+        if (state[clus.dau3].isGluon()) clus.antFunType = GGEmitFF;
+        else clus.antFunType = GQEmitFF;
+      }
+      else {
+        if (state[clus.dau3].isGluon()) clus.antFunType = QGEmitFF;
+        else clus.antFunType = QQEmitFF;
+      }
+
+      // No flavour change for gluon emissions.
+      clus.setMothers(state[clus.dau1].id(), state[clus.dau3].id());
+
+      // Save.
+      clusterings.push_back(clus);
+    }
+
+    // Gluon splitting.
+    else {
+      // Check colour connection to find out who is splitting.
+      bool colCon12 = colourConnected(state[clus.dau1], state[clus.dau2]);
+      bool colCon23 = colourConnected(state[clus.dau2], state[clus.dau3]);
+      if (colCon12 && !colCon23) {
+        clus.swap13();
+        std::swap(colCon12, colCon23);
+      }
+      // Check flavours.
+      if (state[clus.dau1].id() == -state[clus.dau2].id()) {
+        // Check colour connection.
+        if (!colCon12 && colCon23) {
+          // Daughters 1 and 2 are clustered to a gluon.
+          clus.antFunType = GXSplitFF;
+          clus.setMothers(21, state[clus.dau3].id());
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+    }
+  }
+
+  // Initial-initial branching.
+  else if (!state[clus.dau1].isFinal() && !state[clus.dau3].isFinal()) {
+    clus.isFSR = false;
+
+    // Gluon emission.
+    if (state[clus.dau2].isGluon()) {
+      if (state[clus.dau1].isGluon()) {
+        if (state[clus.dau3].isGluon()) clus.antFunType = GGEmitII;
+        else clus.antFunType = GQEmitII;
+      }
+      else {
+        if (state[clus.dau3].isGluon()) clus.antFunType = GQEmitII;
+        else clus.antFunType = QQEmitII;
+      }
+
+      // No flavour change for gluon emissions.
+      clus.setMothers(state[clus.dau1].id(), state[clus.dau3].id());
+
+      // Save.
+      clusterings.push_back(clus);
+    }
+
+    // For splittings, we can have more than one antenna.
+    else {
+      // Quark conversion of clus.dau1.
+      if (state[clus.dau2].id() == state[clus.dau1].id()) {
+        // Check that the colour connection is sensible, otherwise skip.
+        bool colCon12 = colourConnected(state[clus.dau1],
+          state[clus.dau2]);
+        bool colCon23 = colourConnected(state[clus.dau2],
+          state[clus.dau3]);
+        bool colCon13 = colourConnected(state[clus.dau1],
+          state[clus.dau3]);
+        if (!colCon12 && (colCon23 || colCon13)) {
+          // Daughters 1 and 2 are clustered to a gluon.
+          clus.setMothers(21, state[clus.dau3].id());
+          clus.antFunType = GXConvII;
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+      // Quark conversion of clus.dau3.
+      if (state[clus.dau2].id() == state[clus.dau3].id()) {
+        // Swap daughters.
+        clus.swap13();
+
+        // Check that the colour connection is sensible, otherwise skip.
+        bool colCon12 = colourConnected(state[clus.dau1],
+          state[clus.dau2]);
+        bool colCon23 = colourConnected(state[clus.dau2],
+          state[clus.dau3]);
+        bool colCon13 = colourConnected(state[clus.dau1],
+          state[clus.dau3]);
+        if (!colCon12 && (colCon23 || colCon13)) {
+          // Now daughters 1 and 2 are clustered to a gluon.
+          clus.setMothers(21, state[clus.dau3].id());
+          clus.antFunType = GXConvII;
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+
+      // Gluon splitting of clus.dau1.
+      if (state[clus.dau1].isGluon()) {
+        // Check that the colour connection is sensible, otherwise skip.
+        if (colourConnected(state[clus.dau1], state[clus.dau2])
+          && colourConnected(state[clus.dau1], state[clus.dau3])) {
+          // Daughters 1 and 2 are clustered to quark of anti-flavour of 2.
+          // Dau 3 does not change flavour.
+          clus.setMothers(-state[clus.dau2].id(), state[clus.dau3].id());
+          clus.antFunType = QXConvII;
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+      // Gluon splitting of clus.dau3.
+      if (state[clus.dau3].isGluon()) {
+        // Swap daughters.
+        clus.swap13();
+
+        // Check that the colour connection is sensible, otherwise skip.
+        if (colourConnected(state[clus.dau1], state[clus.dau2])
+          && colourConnected(state[clus.dau1], state[clus.dau3])) {
+          // Daughters 1 and 2 are clustered to quark of anti-flavour of 2.
+          // Dau 3 does not change flavour.
+          clus.setMothers(-state[clus.dau2].id(), state[clus.dau3].id());
+          clus.antFunType = QXConvII;
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+    }
+  }
+
+  // Resonance-final branching.
+  else if ((state[clus.dau1].isResonance() && !state[clus.dau1].isFinal())
+    || (state[clus.dau3].isResonance() && !state[clus.dau3].isFinal())) {
+    clus.isFSR = true;
+
+    // Always assume clus.dau1 is resonance.
+    if (!state[clus.dau1].isResonance()) clus.swap13();
+
+    // Resonance always stays the same.
+    int idA = state[clus.dau1].id();
+
+    // Gluon emission.
+    if (state[clus.dau2].isGluon()) {
+      if (state[clus.dau3].isGluon()) clus.antFunType = QGEmitRF;
+      else clus.antFunType = QQEmitRF;
+
+      // No flavour change for gluon emissions.
+      clus.setMothers(idA, state[clus.dau3].id());
+
+      // Save.
+      clusterings.push_back(clus);
+    }
+    else {
+      clus.antFunType = XGSplitRF;
+
+      // Explicitly check colour connection.
+      if (!colourConnected(state[clus.dau2], state[clus.dau3])
+        && colourConnected(state[clus.dau2], state[clus.dau1])) {
+        // Daughters 2 and 3 get clustered to a gluon.
+        clus.setMothers(idA, 21);
+
+        // Save.
+        clusterings.push_back(clus);
+      }
+    }
+  }
+
+  // Initial-final branching.
+  else {
+    clus.isFSR = false;
+
+    // Always assume dau1 is in the initial state.
+    if (state[clus.dau1].isFinal()) clus.swap13();
+
+    // Gluon emission.
+    if (state[clus.dau2].isGluon()) {
+      if (state[clus.dau1].isGluon()) {
+        if (state[clus.dau3].isGluon()) clus.antFunType = GGEmitIF;
+        else clus.antFunType = GQEmitIF;
+      }
+      else {
+        if (state[clus.dau3].isGluon()) clus.antFunType = QGEmitIF;
+        else clus.antFunType = QQEmitIF;
+      }
+
+      // No flavour change for gluon emissions.
+      clus.setMothers(state[clus.dau1].id(), state[clus.dau3].id());
+
+      // Save.
+      clusterings.push_back(clus);
+    }
+    // For gluon splittings, we have more than one antenna.
+    else {
+      // Gluon splitting in the final state.
+      if (state[clus.dau2].id() == -state[clus.dau3].id()
+        && !colourConnected(state[clus.dau2], state[clus.dau3])) {
+        // Daughters 2 and 3 are clustered to a gluon.
+        clus.setMothers(state[clus.dau1].id(), 21);
+        clus.antFunType = XGSplitIF;
+
+        // Save.
+        clusterings.push_back(clus);
+      }
+      // Gluon splitting in the initial state.
+      if (state[clus.dau1].isGluon()) {
+        // Check that the colour connection is sensible, skip otherwise.
+        if (colourConnected(state[clus.dau1], state[clus.dau2])
+          && colourConnected(state[clus.dau1], state[clus.dau3])) {
+          // Daughters 1 and 2 are clustered to quark of anti-flavour of 2.
+          // Dau 3 does not change flavour.
+          clus.setMothers(-state[clus.dau2].id(), state[clus.dau3].id());
+          clus.antFunType = QXConvIF;
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+      // Quark conversion (in the initial state).
+      if (state[clus.dau2].id() == state[clus.dau1].id()) {
+        // Check that the colour connection is sensible, skip otherwise.
+        bool colCon12 = colourConnected(state[clus.dau1],
+          state[clus.dau2]);
+        bool colCon23 = colourConnected(state[clus.dau2],
+          state[clus.dau3]);
+        bool colCon13 = colourConnected(state[clus.dau1],
+          state[clus.dau3]);
+        if (!colCon12 && (colCon23 || colCon13)) {
+          // Daughters 1 and 2 are clustered to a gluon.
+          clus.setMothers(21, state[clus.dau3].id());
+          clus.antFunType = GXConvIF;
+
+          // Save.
+          clusterings.push_back(clus);
+        }
+      }
+    }
+  }
+
+  return clusterings;
 }
 
-double TXiFunctor::operator() (double xi) {
-  double retval = 0.;
-  for (vector<double>::size_type i = 0; i < m.size(); i++)
-    retval += sqrt( pow2(m[i]) + pow2(xi)*pow2(energies[i]));
-  return retval;
+//--------------------------------------------------------------------------
+
+// Check whether two particles are colour-connected.
+
+bool VinciaCommon::colourConnected(const Particle& ptcl1,
+  const Particle& ptcl2) {
+  int  col1 = ptcl1.isFinal() ? ptcl1.col() : ptcl1.acol();
+  int acol1 = ptcl1.isFinal() ? ptcl1.acol() : ptcl1.col();
+  int  col2 = ptcl2.isFinal() ? ptcl2.col() : ptcl2.acol();
+  int acol2 = ptcl2.isFinal() ? ptcl2.acol() : ptcl2.col();
+
+  if ((col1 != 0 && col1 == acol2) || (acol1 != 0 && acol1 == col2))
+    return true;
+  return false;
+}
+
+//--------------------------------------------------------------------------
+
+// Print a list of particles.
+
+void VinciaCommon::list(const vector<Particle>& state, string title,
+  bool footer) {
+
+  if (title == "") title = " ------------------------";
+  else {
+    title = "- " + title + "  ";
+    int nDashes = 25 - title.size();
+    if (nDashes > 0)
+      for (int i(0); i<nDashes; ++i) title += "-";
+  }
+  cout << " --------  Particle List " << title << "----------";
+  cout << "----------------------";
+  cout << endl << endl;
+  cout << "   ind          id      colours"
+       << setw(14) << "px" << setw(10) << "py" << setw(10) << "pz"
+       << setw(10) << "e" << setw(11) << "m" << endl;
+  for (int i(0); i<(int)state.size(); ++i)
+    cout << " " << num2str(i, 5) << " " << num2str(state[i].id(), 9)
+         << "    "
+         << num2str(state[i].col(), 4) << " " << num2str(state[i].acol(), 4)
+         << "    " << state[i].p();
+  cout << endl;
+  if (footer) {
+    cout << " -----------------------------------------------------------";
+    cout << "-------------------";
+    cout << endl;
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Print a list of clusterings.
+
+void VinciaCommon::list(const vector<VinciaClustering>& clusterings,
+  string title, bool footer) {
+
+  // Get breakdown of clusterings.
+  int nTot = 0;
+  int nFF  = 0;
+  int nRF  = 0;
+  int nIF  = 0;
+  int nII  = 0;
+  for (const auto& c : clusterings) {
+    if (c.isFF()) ++nFF;
+    else if (c.isRF()) ++nRF;
+    else if (c.isIF()) ++nIF;
+    else if (c.isII()) ++nII;
+    ++nTot;
+  }
+
+  if (title == "") title = " ------------------------";
+  else {
+    title = "- " + title + "  ";
+    int nDashes = 25 - title.size();
+    if (nDashes > 0)
+      for (int i(0); i<nDashes; ++i) title += "-";
+  }
+  cout << " --------  Clusterings Summary " << title << "----";
+  cout << "-------------------";
+  cout << endl << endl;
+  cout << "  Found " << nTot << " clustering"
+       << (nTot != 1 ? "s." : ".") << endl;
+  cout << "    -> FF clusterings: " << setw(2) << nFF << endl;
+  cout << "    -> RF clusterings: " << setw(2) << nRF << endl;
+  cout << "    -> IF clusterings: " << setw(2) << nIF << endl;
+  cout << "    -> II clusterings: " << setw(2) << nII << endl;
+  cout << endl;
+  cout << "  Clusterings:" << endl;
+  for (int i(0); i<nTot; ++i) {
+    VinciaClustering c = clusterings.at(i);
+    cout << "    Sector " << i << ": " << num2str(c.dau1, 3) << " "
+         << num2str(c.dau2, 3) << " " << num2str(c.dau3, 3)
+         << " (" << c.getAntName() << ")" << endl;
+  }
+  cout << endl;
+  if (footer) {
+    cout << " -----------------------------------------------------------";
+    cout << "-------------------";
+    cout << endl;
+  }
 }
 
 //==========================================================================
@@ -3141,31 +4916,6 @@ double TXiFunctor::operator() (double xi) {
 
 // External auxiliaries, extra four-products.
 
-double m(const Vec4& v) {
-  double s = m2(v); return (s >= 0) ? sqrt(s) : -sqrt(-s);}
-
-double m2(const Vec4& v) {
-  return pow2(v.e()) - pow2(v.px()) - pow2(v.py()) - pow2(v.pz());}
-
-double m2(const Vec4& v1, const Vec4& v2, const Vec4& v3) {
-  return pow2(v1.e() + v2.e() + v3.e())
-    - pow2(v1.px() + v2.px() + v3.px())
-    - pow2(v1.py() + v2.py() + v3.py())
-    - pow2(v1.pz() + v2.pz() + v3.pz());}
-
-double m2(const Vec4& v1, const Vec4& v2, const Vec4& v3, const Vec4& v4) {
-  return pow2(v1.e() + v2.e() + v3.e() + v4.e())
-    - pow2(v1.px() + v2.px() + v3.px() + v4.px())
-    - pow2(v1.py() + v2.py() + v3.py() + v4.py())
-    - pow2(v1.pz() + v2.pz() + v3.pz() + v4.pz());}
-
-double m2(const Particle& p1, const Particle& p2, const Particle& p3) {
-  return m2(p1.p(), p2.p(), p3.p());}
-
-double dot4(const Particle& p1, const Particle& p2) {return p1.p()*p2.p();}
-
-double getCosTheta(double E1, double E2, double m1, double m2, double s12){
-  return  (2.0*E1*E2 - s12)/(2.0*sqrt(E1*E1 - m1*m1)*sqrt(E2*E2 - m2*m2));}
 
 //--------------------------------------------------------------------------
 
@@ -3179,10 +4929,10 @@ string num2str(int i, int width) {
   else {
     string ab = "k";
     double r = i;
-    if      (abs(i) < 1e5)       {r/=1e3;}
-    else if (abs(i) < 1e8)  {r/=1e6;  ab = "M";}
-    else if (abs(i) < 1e11) {r/=1e9;  ab = "G";}
-    else if (abs(i) < 1e14) {r/=1e12; ab = "T";}
+    if      (abs(i) < 1e5)       {r /= 1e3;}
+    else if (abs(i) < 1e8)  {r /= 1e6;  ab = "M";}
+    else if (abs(i) < 1e11) {r /= 1e9;  ab = "G";}
+    else if (abs(i) < 1e14) {r /= 1e12; ab = "T";}
     tmp << fixed << setw(width - 1)
         << (r > 10 ? setprecision(width-4) : setprecision(width-3)) << r << ab;
   }
@@ -3192,8 +4942,8 @@ string num2str(int i, int width) {
 string num2str(double r, int width) {
   ostringstream tmp;
   if (width <= 0) tmp << r;
-  else if (r == 0.0 || (abs(r) > 0.1 && abs(r) < pow(10., max(width-3,1)))
-           || width <= 8) tmp << fixed << setw(max(width,3))
+  else if (r == 0.0 || (abs(r) > 0.1 && abs(r) < pow(10., max(width-3, 1)))
+           || width <= 8) tmp << fixed << setw(max(width, 3))
                               << setprecision(min(3, max(1, width - 2))) << r;
   else tmp << scientific << setprecision(max(2, width - 7))
            << setw(max(9, width)) << r;
@@ -3207,146 +4957,20 @@ string bool2str(bool b, int width) {
   return tmp;
 }
 
-void printOut(string place, string message) {
+//--------------------------------------------------------------------------
+
+// Print "(place) message" with option for padding to len with padChar.
+
+void printOut(string place, string message, int len, char padChar) {
   cout.setf(ios::internal);
-  cout << " (" << (place + ") ") << message << "\n";
-}
-
-//--------------------------------------------------------------------------
-
-// Gram determinant, invariants used in the argument = 2*pi*pj.
-
-double gramDet( double s01tilde, double s12tilde, double s02tilde,
-  double m0, double m1, double m2) {
-  return ((s01tilde*s12tilde*s02tilde - pow2(s01tilde)*pow2(m2)
-           - pow2(s02tilde)*pow2(m1) - pow2(s12tilde)*pow2(m0))/4
-          + pow2(m0)*pow2(m1)*pow2(m2));
-}
-
-double gramDet(Vec4 p0, Vec4 p1, Vec4 p2) {
-  return gramDet(2*p0*p1, 2*p1*p2, 2*p0*p2, p0.mCalc(), p1.mCalc(),
-    p2.mCalc());
-}
-
-//--------------------------------------------------------------------------
-
-// Math support auxiliaries.
-
-// Dilogarithm.
-double Li2(const double x, const double kmax, const double xerr) {
-  if (x < 0.0) return 0.5*Li2(x*x) - Li2(-x);
-  if (x <= 0.5) {
-    double sum(x), term(x);
-    for (int k = 2; k < kmax; k++) {
-      double rk = (k-1.0)/k;
-      term *= x*rk*rk;
-      sum += term;
-      if (abs(term/sum) < xerr) return sum;
-    }
-    cout << "Maximum number of iterations exceeded in Li2" << endl;
-    return sum;
+  cout << " (" << (place + ") ") << message;
+  // Are we asked to pad until a certain length?
+  if (len > 0) {
+    int nPad = len - place.length() - 5 - message.length();
+    string padString(max(0, nPad), padChar);
+    cout<<" "<<padString;
   }
-  if (x < 1.0)  return M_PI*M_PI/6.0 - Li2(1.0 - x) - log(x)*log(1.0 - x);
-  if (x == 1.0) return M_PI*M_PI/6.0;
-  if (x <= 1.01) {
-    const double eps(x - 1.0), lne(log(eps)),
-      c0(M_PI*M_PI/6.0),         c1(  1.0 - lne),
-      c2(-(1.0 - 2.0*lne)/4.0),  c3( (1.0 - 3.0*lne)/9.0),
-      c4(-(1.0 - 4.0*lne)/16.0), c5( (1.0 - 5.0*lne)/25.0),
-      c6(-(1.0 - 6.0*lne)/36.0), c7( (1.0 - 7.0*lne)/49.0),
-      c8(-(1.0 - 8.0*lne)/64.0);
-    return c0 + eps*(c1 + eps*(c2 + eps*(c3 + eps*(c4 + eps*(c5 + eps*(
-                     c6 + eps*(c7 + eps*c8)))))));
-  }
-  double logx = log(x);
-  if (x<=2.0) return M_PI*M_PI/6.0 + Li2(1.0 - 1.0/x) -
-                logx*(log(1.0 - 1.0/x) + 0.5*logx);
-  return M_PI*M_PI/3.0 - Li2(1.0/x) - 0.5*logx*logx;
-}
-
-
-// Standard factorial.
-double factorial(const int n) {
-  double fac = 1;
-  for (int i = 2; i <= n; i++) fac *= i;
-  return fac;}
-
-// Binomial coefficient.
-int binomial(const int n, const int m) {
-  if (m < 0 || m > n) return 0;
-  else if (m == n || m == 0) return 1;
-  else if (m == 1 || m == n - 1) return n;
-  else return factorial(n)/factorial(m)/factorial(n - m) + 0.01;
-}
-
-// Lambert W function using the rational fit from Darko Veberic's
-// paper, arXiv:1209.0735v2.  Should give 5 digits of precision for
-// positive arguments x not too large (fit region was 0.3, 2e, but
-// still has 5-digit accuracy at zero).  Precision quickly drops for
-// negative values, but he has extra functions that can be implemented
-// if those are needed, and for very large values the asymptotic
-// log(x), log(log(x)) form could be used if precise solutions for
-// large values are needed. For now just write a warning if we are
-// ever asked for a value far outside region of validity.
-double LambertW(const double x) {
-  if (x == 0.) return 0.;
-  if (x < -0.2) {
-    cout << "Warning in "<<__METHOD_NAME__
-         << ": Accuracy less than three decimal places for x < -0.2";
-  } else if (x > 10.) {
-    cout << "Warning in "<<__METHOD_NAME__
-         <<": Accuracy less than three decimal places for x > 10.";
-  }
-  return x*(1. + x*(2.445053 + x*(1.343664 + x*(0.14844 + 0.000804*x))))
-    /(1. + x*(3.444708 + x*(3.292489 + x*(0.916460 + x*(0.053068)))));
-}
-
-// Version of zbrent using function pointers, solve fun(x) - r = 0 for x.
-double zbrent(TFunctor& fun, double r, double x1, double x2, double tol) {
-  int iter;
-  double a(x1), b(x2), c(x2), d(x2-x1), e(x2-x1), min1, min2;
-  double fa(fun(a) - r), fb(fun(b) - r), fc, p, q, r1, s, tol1, xm;
-  double REALTINY = min(TINY, 1e-12);
-  tol = max(tol, REALTINY);
-
-  // Check if there is a single zero in range.
-  if (fa*fb > 0) return 0.0;
-
-  // Start search.
-  fc = fb;
-  for (iter = 1; iter < max(1000, int(1.0/sqrt(tol))); iter++) {
-    if ((fb > 0.0 && fc > 0.0) || (fb < 0.0 && fc < 0.0)) {
-      c = a; fc = fa; e = d = b-a;
-    }
-    if (abs(fc) < abs(fb)) {
-      a = b; b = c; c= a; fa = fb; fb = fc; fc = fa;
-    }
-    tol1 = 2.0*REALTINY*abs(b) + 0.5*tol;
-    xm = 0.5*(c-b);
-    if (abs(xm) <= tol1 || fb == 0.0) return b;
-    if (abs(e) >= tol1 && abs(fa) > abs(fb)) {
-      s = fb/fa;
-      if (a == c) {p = 2.0*xm*s; q = 1.0-s;}
-      else {
-        q = fa/fc; r1 = fb/fc;
-        p = s*(2.0*xm*q*(q - r1) - (b - a)*(r1 - 1.0));
-        q = (q - 1.0)*(r1 - 1.0)*(s - 1.0);
-      }
-      if (p > 0.0) q = -q;
-      p = abs(p);
-      min1 = 3.0*xm*q - abs(tol1*q);
-      min2 = abs(e*q);
-      if (2.0*p < (min1 < min2 ? min1 : min2)) {e = d; d= p/q;}
-      else {d = xm; e = d;}
-    } else {d = xm; e = d;}
-    a = b;
-    fa = fb;
-    b += abs(d) > tol1 ? d : (xm > 1) ? tol1 : - tol1;
-    fb = fun(b) - r;
-  }
-  cerr << "(brent:) -> Maximum number of iterations exceeded" << endl;
-  return 0.0;
-
+  cout << "\n";
 }
 
 //==========================================================================

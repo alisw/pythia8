@@ -1,15 +1,15 @@
 // HeavyIons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the HeavyIons.h header) for the
 // heavy ion classes classes, and some related global functions.
 
-#include "Pythia8/HeavyIons.h"
 #include "Pythia8/BeamShape.h"
-#include "Pythia8/Pythia.h"
-#include <cassert>
+#include "Pythia8/HeavyIons.h"
+#include "Pythia8/HINucleusModel.h"
+#include "Pythia8/HISubCollisionModel.h"
 
 namespace Pythia8 {
 
@@ -89,7 +89,7 @@ void HeavyIons::setupSpecials(Pythia & p, string match) {
     opts.parm(it->second.name.substr(2), it->second.valNow, true);
   map<string, Word> words = opts.getWordMap(match);
   for ( map<string, Word>::iterator it = words.begin();
-        it != words.end(); ++it )
+       it != words.end(); ++it )
     opts.word(it->second.name.substr(2), it->second.valNow, true);
   map<string, FVec> fvecs = opts.getFVecMap(match);
   for ( map<string, FVec>::iterator it = fvecs.begin();
@@ -107,15 +107,6 @@ void HeavyIons::setupSpecials(Pythia & p, string match) {
   for ( map<string, WVec>::iterator it = wvecs.begin();
         it != wvecs.end(); ++it )
     opts.wvec(it->second.name.substr(2), it->second.valNow, true);
-}
-
-//--------------------------------------------------------------------------
-
-// Sum up info from all used Pythia objects.
-
-void HeavyIons::sumUpMessages(Info & in, string tag, const Info * ihi) {
-  if ( !ihi ) return;
-  for ( auto it : ihi->messages ) in.messages[tag + it.first] += it.second;
 }
 
 //--------------------------------------------------------------------------
@@ -153,15 +144,9 @@ void HeavyIons::clearProcessLevel(Pythia & pyt) {
 // Update the Info object in the main Pythia object.
 
 void HeavyIons::updateInfo() {
-  map<string, int> saveMess = infoPtr->messages;
   *infoPtr =  hiInfo.primInfo;
   infoPtr->hiInfo = &hiInfo;
-  infoPtr->messages = saveMess;
-  infoPtr->updateWeight(hiInfo.weight());
-  // Also book and update weight in the weight container.
-  infoPtr->weightContainerPtr->weightsHI.bookWeight("HIweight");
-  infoPtr->weightContainerPtr->weightsHI.
-    reweightValueByName("HIweight", hiInfo.weight());
+  infoPtr->weightContainerPtr->setWeightNominal(hiInfo.weight());
   infoPtr->sigmaReset();
   double norm = 1.0/double(hiInfo.NSave);
   int Nall = 0;
@@ -175,13 +160,13 @@ void HeavyIons::updateInfo() {
     double w = hiInfo.sumPrimW[pc]/millibarn;
     double w2 = hiInfo.sumPrimW2[pc]/pow2(millibarn);
     infoPtr->setSigma(pc, hiInfo.NamePrim[pc], N, N, N,
-                      w*norm, sqrt(w2*norm)/N, w);
+                      w*norm, sqrt(w2*norm)/N, w * millibarn);
     Nall += N;
     wall += w;
     w2all += w2;
   }
   infoPtr->setSigma(0, "sum", hiInfo.NSave, Nall, Nall,
-                    wall*norm, sqrt(w2all*norm)/Nall, wall);
+                    wall*norm, sqrt(w2all*norm)/Nall, wall * millibarn);
 }
 
 //--------------------------------------------------------------------------
@@ -251,10 +236,10 @@ void HeavyIons::stat() {
   if ( reset ) hiInfo = HIInfo();
   if ( showErr ) {
     for ( int i = 1, np = pythia.size(); i < np; ++i )
-      sumUpMessages(in, "(" + pythiaNames[i] + ")", info[i]);
-    in.errorStatistics();
+      loggerPtr->errorCombine(pythia[i]->logger, "(" + pythiaNames[i] + ")");
+    loggerPtr->errorStatistics();
   }
-  if ( reset ) in.errorReset();
+  if ( reset ) loggerPtr->errorReset();
 
 }
 
@@ -278,7 +263,8 @@ bool HeavyIons::isHeavyIon(Settings & settings) {
 
 Angantyr::Angantyr(Pythia & mainPythiaIn)
   : HeavyIons(mainPythiaIn), hasSignal(true),
-    bGenPtr(0), projPtr(0), targPtr(0), collPtr(0), recoilerMode(1), bMode(0) {
+    collPtr(0), bGenPtr(0), projPtr(0), targPtr(0), recoilerMode(1), bMode(0),
+    doAbort(false) {
   selectMB = make_shared<ProcessSelectorHook>();
   selectSASD = make_shared<ProcessSelectorHook>();
   pythia.resize(ALL);
@@ -301,14 +287,6 @@ Angantyr::Angantyr(Pythia & mainPythiaIn)
 
 Angantyr::~Angantyr() {
   for ( int i = MBIAS; i < ALL; ++i ) if ( pythia[i] ) delete pythia[i];
-  if ( !( HIHooksPtr && HIHooksPtr->hasImpactParameterGenerator() ) )
-    delete bGenPtr;
-  if ( !( HIHooksPtr && HIHooksPtr->hasProjectileModel() ) )
-    delete projPtr;
-  if ( !( HIHooksPtr && HIHooksPtr->hasTargetModel() ) )
-    delete targPtr;
-  if ( !( HIHooksPtr && HIHooksPtr->hasSubCollisionModel() ) )
-    delete collPtr;
 }
 
 //--------------------------------------------------------------------------
@@ -320,6 +298,23 @@ bool Angantyr::setUserHooksPtr(PythiaObject sel, shared_ptr<UserHooks> uhook) {
     if ( ( i == sel || ALL == sel ) && !pythia[i]->setUserHooksPtr(uhook) )
       return false;
   return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Figure out what beams the user wants.
+
+void Angantyr::setBeamKinematics(int idA, int idB) {
+  // We will use the MBIAS BeamSetup object to figure out what is
+  // happening. Whatever we do here will be overridden when we do the
+  // proper init().
+  beamSetupPtr = pythia[MBIAS]->info.beamSetupPtr;
+  pythia[MBIAS]->settings.mode("Beams:idA", idA);
+  pythia[MBIAS]->settings.mode("Beams:idB", idB);
+  beamSetupPtr->mA = particleDataPtr->m0(idA);
+  beamSetupPtr->mB = particleDataPtr->m0(idB);
+  beamSetupPtr->initFrame();
+  unifyFrames();
 }
 
 //--------------------------------------------------------------------------
@@ -348,14 +343,56 @@ EventInfo Angantyr::mkEventInfo(Pythia & pyt, Info & infoIn,
 
 //--------------------------------------------------------------------------
 
+void Angantyr::banner(int idProj, int idTarg) const {
+
+  string colOut = "              ";
+  string cols = particleDataPtr->name(idProj)+" on "+
+    particleDataPtr->name(idTarg);
+  colOut.replace(colOut.begin(), colOut.begin() + cols.size(), cols);
+
+  cout << " *----------------------  Initializing Angantyr  ----------------"
+        << "------*\n"
+        << " |                    We collide: " + colOut + "                 "
+        << "      |\n"
+        << " |                                                               "
+        << "      |\n"
+        << " |                    Below follows initialization               "
+        << "      |\n"
+        << " |                    of sub-collisions.                         "
+        << "      |\n"
+        << " |                                                               "
+        << "      |\n"
+        << " |                   //>________________________________         "
+        << "      |\n"
+        << " |          [########[]_________________________________>        "
+        << "      |\n"
+        << " |                   \\\\>                                       "
+        << "        |\n";
+  if (!settingsPtr->flag("HeavyIon:SigFitPrint"))
+    cout << " *-------------------------------------------------------------"
+          << "--------*" << endl;
+  else
+    cout << " |                                                             "
+          << "        |" << endl;
+
+}
+
+//--------------------------------------------------------------------------
+
 // Initialise Angantyr. Called from within Pythia::init().
 
 bool Angantyr::init() {
 
-  bool print = flag("HeavyIon:showInit");
-
+  // Read settings.
   int idProj = mode("Beams:idA");
   int idTarg = mode("Beams:idB");
+  doSDTest = flag("Angantyr:SDTest");
+  glauberOnly = flag("Angantyr:GlauberOnly");
+  recoilerMode = mode("Angantyr:SDRecoil");
+  bMode = mode("Angantyr:impactMode");
+  doVarECM = flag("Beams:allowVariableEnergy");
+  doHadronLevel = flag("HadronLevel:all");
+
   int idProjP = idProj;
   int idProjN = 0;
   int idTargP = idTarg;
@@ -367,32 +404,19 @@ bool Angantyr::init() {
     idProjP = idProj > 0? 2212: -2212;
     idProjN = idProj > 0? 2112: -2112;
   }
-  if ( abs(idTarg/100000000) == 10 ) {
+  if ( isHITarg ) {
     idTargP = idTarg > 0? 2212: -2212;
     idTargN = idTarg > 0? 2112: -2112;
   }
   if ( mode("HeavyIon:mode") == 1 && !isHI ) {
-    infoPtr->errorMsg("Angantyr Info: No heavy ions requested"
-                  " - reverting to normal Pythia behavior.");
-    settingsPtr->mode("HeavyIon:mode", 0);
+    loggerPtr->ABORT_MSG("no heavy ions requested");
     return false;
   }
 
-  recoilerMode = mode("Angantyr:SDRecoil");
-  bMode = mode("Angantyr:impactMode");
+  bool print = flag("HeavyIon:showInit") && !settingsPtr->flag("Print:quiet");
+  if ( print ) banner(idProj, idTarg);
 
-  int frame = mode("Beams:frameType");
-  bool dohad = flag("HadronLevel:all");
-  if ( frame > 2 )
-    infoPtr->errorMsg("Angantyr warning: Currently only Beams:frameType "
-      "= 1 or 2 is supported. Assuming 2.");
-  double eAbm = parm("Beams:eA");
-  double eBbm = parm("Beams:eB");
-  if ( frame == 1 ) eAbm = eBbm = parm("Beams:eCM")/2.0;
-  settingsPtr->parm("Beams:eA", eAbm);
-  settingsPtr->parm("Beams:eB", eBbm);
-  settingsPtr->mode("Beams:frameType", 2);
-
+  // Fix settings to be used for subobjects.
   settingsPtr->mode("Next:numberCount", 0);
   settingsPtr->mode("Next:numberShowLHA", 0);
   settingsPtr->mode("Next:numberShowInfo", 0);
@@ -406,20 +430,97 @@ bool Angantyr::init() {
   settingsPtr->flag("SoftQCD:doubleDiffractive", false);
   settingsPtr->flag("SoftQCD:centralDiffractive", false);
 
+  // Create Pythia subobjects.
   for ( int i = MBIAS; i < ALL; ++i ) {
     pythia[i] = new Pythia(*settingsPtr, *particleDataPtr, false);
     pythia[i]->settings.mode("HeavyIon:mode", 1);
     pythia[i]->settings.flag("Beams:allowVertexSpread", false);
+    if (i != MBIAS)
+      pythia[i]->settings.mode("MultipartonInteractions:reuseInit", 0);
   }
 
-  sigtot.init();
-  sigtot.calc(2212, 2212, sqrt(4.0*eAbm*eBbm));
+  // Allow for user to override with a custom HIUserHooks.
+  if ( HIHooksPtr ) HIHooksPtr->init(idProj, idTarg);
 
+  // Initialize kinematics and cross sections.
+  setBeamKinematics(idProjP, idTargP);
+  sigTotNN.init();
+  sigTotNN.calc(idProjP, idTargP, beamSetupPtr->eCM);
+
+  // Set up nucleus geometry.
+  if (HIHooksPtr && HIHooksPtr->hasProjectileModel())
+    projPtr = HIHooksPtr->projectileModel();
+  else
+    projPtr = NucleusModel::create(mode("Angantyr:NucleusModelA"));
+  if (!projPtr) {
+    loggerPtr->ABORT_MSG("nucleus model not found for projectile");
+    return false;
+  }
+  projPtr->initPtr(idProj, true, *infoPtr);
+  if (!projPtr->init()) {
+    loggerPtr->ABORT_MSG("projectile nucleus model failed to initialize");
+    return false;
+  }
+  projPtr->setPN(beamSetupPtr->pAinit);
+
+  if (HIHooksPtr && HIHooksPtr->hasTargetModel())
+    targPtr = HIHooksPtr->targetModel();
+  else
+    targPtr = NucleusModel::create(mode("Angantyr:NucleusModelB"));
+  if (!targPtr) {
+    loggerPtr->ABORT_MSG("nucleus model not found for target");
+    return false;
+  }
+  targPtr->initPtr(idTarg, false, *infoPtr);
+  if (!targPtr->init()) {
+    loggerPtr->ABORT_MSG("target nucleus model failed to initialize");
+    return false;
+  }
+  targPtr->setPN(beamSetupPtr->pBinit);
+
+  // Set up subcollision model.
+  if ( HIHooksPtr && HIHooksPtr->hasSubCollisionModel() )
+    collPtr = HIHooksPtr->subCollisionModel();
+  else
+    collPtr = SubCollisionModel::create(mode("Angantyr:CollisionModel"));
+  if (!collPtr) {
+    loggerPtr->ABORT_MSG("subcollision model not found");
+    return false;
+  }
+  collPtr->initPtr(*projPtr, *targPtr, sigTotNN, *settingsPtr,
+                   *infoPtr, *rndmPtr);
+  if (!collPtr->init(idProjP, idTargP, beamSetupPtr->eCM)) {
+    loggerPtr->ABORT_MSG("subcollision model failed to initialize");
+    return false;
+  }
+  hiInfo.avNDbSave = collPtr->avNDB();
+
+  // Set up impact parameter generator.
+  if ( HIHooksPtr && HIHooksPtr->hasImpactParameterGenerator() )
+    bGenPtr = HIHooksPtr->impactParameterGenerator();
+  else
+    bGenPtr = make_shared<ImpactParameterGenerator>();
+  bGenPtr->initPtr(*infoPtr, *collPtr, *projPtr, *targPtr);
+  if ( !bGenPtr->init() ) {
+    loggerPtr->ABORT_MSG("impact parameter generator failed to initialize");
+    return false;
+  }
+
+  // Initialize subobject for minimum bias processes.
   clearProcessLevel(*pythia[MBIAS]);
   pythia[MBIAS]->settings.flag("SoftQCD:all", true);
   pythia[MBIAS]->settings.mode("Beams:idA", idProjP);
   pythia[MBIAS]->settings.mode("Beams:idB", idTargP);
+  if ( beamSetupPtr->frameType > 3 ) {
+    pythia[MBIAS]->settings.mode("Beams:eA", beamSetupPtr->eA);
+    pythia[MBIAS]->settings.mode("Beams:eB", beamSetupPtr->eB);
+    pythia[MBIAS]->settings.mode("Beams:frameType", 2);
+  }
 
+  pythia[MBIAS]->addUserHooksPtr(selectMB);
+  init(MBIAS, "minimum bias processes");
+
+  // Initialize subobject for secondary absorptive processes.
   clearProcessLevel(*pythia[SASD]);
   Settings & sdabsopts = pythia[SASD]->settings;
   sdabsopts.flag("SoftQCD:singleDiffractive", true);
@@ -433,16 +534,22 @@ bool Angantyr::init() {
     double pT0Ref = sdabsopts.parm("MultipartonInteractions:pT0Ref");
     double ecmRef = sdabsopts.parm("MultipartonInteractions:ecmRef");
     double ecmPow = sdabsopts.parm("MultipartonInteractions:ecmPow");
-    double ecm = sqrt(4.0*eBbm*eAbm);
+    double ecm = beamSetupPtr->eCM;
     sdabsopts.parm("Beams:eCM", ecm);
     double pT0     = pT0Ref * pow(ecm / ecmRef, ecmPow);
     sdabsopts.parm("MultipartonInteractions:pT0Ref", pT0);
     sdabsopts.parm("MultipartonInteractions:ecmRef", ecm);
     sdabsopts.parm("MultipartonInteractions:ecmPow", 0.0);
     sdabsopts.word("PDF:PomSet", "11");
+    int reuseMpi = settingsPtr->mode("HeavyIon:SasdMpiReuseInit");
+    if (reuseMpi != 0) {
+      string initFile = settingsPtr->word("HeavyIon:SasdMpiInitFile");
+      sdabsopts.mode("MultipartonInteractions:reuseInit", reuseMpi);
+      sdabsopts.word("MultipartonInteractions:initFile", initFile);
+    }
     if ( sdabsopts.mode("Angantyr:SASDmode") == 2 ) {
       sdabsopts.parm("Diffraction:mRefPomP", ecm);
-      double sigND = sigtot.sigmaND();
+      double sigND = sigTotNN.sigmaND();
       double mmin = sdabsopts.parm("Diffraction:mMinPert");
       double powp = sdabsopts.parm("HIDiffraction:mPowPomP");
       sdabsopts.parm("Diffraction:mPowPomP", powp, true);
@@ -452,21 +559,31 @@ bool Angantyr::init() {
     }
     if ( sdabsopts.mode("Angantyr:SASDmode") >= 3 ) {
       sdabsopts.parm("Diffraction:mRefPomP", ecm);
-      double sigND = sigtot.sigmaND();
+      double sigND = sigTotNN.sigmaND();
       sdabsopts.parm("Diffraction:sigmaRefPomP", sigND, true);
       sdabsopts.parm("Diffraction:mPowPomP", 0.0);
     }
   }
   sdabsopts.mode("Beams:idA", idProjP);
   sdabsopts.mode("Beams:idB", idTargP);
+  if ( beamSetupPtr->frameType > 3 ) {
+    sdabsopts.mode("Beams:eA", beamSetupPtr->eA);
+    sdabsopts.mode("Beams:eB", beamSetupPtr->eB);
+    sdabsopts.mode("Beams:frameType", 2);
+  }
 
+  pythia[SASD]->addUserHooksPtr(selectSASD);
+  init(SASD, "secondary absorptive processes as single diffraction.");
+
+  // Initialize subobject for hadronization.
   clearProcessLevel(*pythia[HADRON]);
   pythia[HADRON]->settings.flag("ProcessLevel:all", false);
   pythia[HADRON]->settings.flag("PartonLevel:all", false);
-  pythia[HADRON]->settings.flag("HadronLevel:all", dohad);
+  pythia[HADRON]->settings.flag("HadronLevel:all", doHadronLevel);
   pythia[HADRON]->settings.mode("Beams:idA", idProj);
   pythia[HADRON]->settings.mode("Beams:idB", idTarg);
 
+  // Initialize subobjects for signal processes.
   pythia[SIGPP]->settings.mode("Beams:idA", idProjP);
   pythia[SIGPP]->settings.mode("Beams:idB", idTargP);
   if ( idTargN ) {
@@ -482,87 +599,32 @@ bool Angantyr::init() {
     pythia[SIGNN]->settings.mode("Beams:idB", idTargN);
   }
 
-  if ( HIHooksPtr ) HIHooksPtr->init(idProj, idTarg);
-
-  if ( HIHooksPtr && HIHooksPtr->hasProjectileModel() )
-    projPtr = HIHooksPtr->projectileModel();
-  else
-    projPtr = new GLISSANDOModel();
-  projPtr->initPtr(idProj, *settingsPtr, *particleDataPtr, *rndmPtr);
-
-  if ( HIHooksPtr && HIHooksPtr->hasTargetModel() )
-    targPtr = HIHooksPtr->targetModel();
-  else
-    targPtr = new GLISSANDOModel();
-  targPtr->initPtr(idTarg, *settingsPtr, *particleDataPtr, *rndmPtr);
-
-  if ( HIHooksPtr && HIHooksPtr->hasSubCollisionModel() )
-    collPtr = HIHooksPtr->subCollisionModel();
-  else if ( mode("Angantyr:CollisionModel") == 1 )
-    collPtr = new DoubleStrikman();
-  else if ( mode("Angantyr:CollisionModel") == 2 )
-    collPtr = new DoubleStrikman(1);
-  else if ( mode("Angantyr:CollisionModel") == 3 )
-    collPtr = new BlackSubCollisionModel();
-  else
-    collPtr = new NaiveSubCollisionModel();
-
-  collPtr->initPtr(*projPtr, *targPtr, sigtot, *settingsPtr,
-                   *infoPtr, *rndmPtr);
-  if ( !collPtr->init() ) return false;
-
-  if ( HIHooksPtr && HIHooksPtr->hasImpactParameterGenerator() )
-    bGenPtr = HIHooksPtr->impactParameterGenerator();
-  else
-    bGenPtr = new ImpactParameterGenerator();
-  bGenPtr->initPtr(*collPtr, *projPtr, *targPtr, *settingsPtr, *rndmPtr);
-
-  if ( !projPtr->init() ) return false;
-  if ( !targPtr->init() ) return false;
-  if ( !bGenPtr->init() ) return false;
-
-  string output;
+  if ( hasSignal )
+    hasSignal = pythia[SIGPP]->settings.hasHardProc() ||
+      pythia[SIGPP]->settings.mode("Beams:frameType") >= 4;
   if ( hasSignal ) {
-    ostringstream oss;
-    Redirect red(cout, oss);
-    hasSignal = init(SIGPP, "signal process (pp)", 10);
-    output = oss.str();
-  }
-  if ( !hasSignal ) {
-    if ( print ) cout << " Angantyr Info: No signal process specified. "
-                      << "Assuming minimum bias." << endl;
-  } else {
-      if ( print )
-        cout << output;
-      if ( idTargN ) init(SIGPN, "signal process (pn)", 10);
-      if ( idProjN ) init(SIGNP, "signal process (np)", 10);
-      if ( idProjN && idTargN ) init(SIGNN, "signal process (nn)", 10);
-
+    init(SIGPP, "signal process (pp)", 10);
+    if ( idTargN ) init(SIGPN, "signal process (pn)", 10);
+    if ( idProjN ) init(SIGNP, "signal process (np)", 10);
+    if ( idProjN && idTargN ) init(SIGNN, "signal process (nn)", 10);
   }
 
-  pythia[MBIAS]->addUserHooksPtr(selectMB);
-  init(MBIAS, "minimum bias processes");
-
-  pythia[SASD]->addUserHooksPtr(selectSASD);
-  init(SASD, "secondary absorptive processes as single diffraction.");
-
-  if ( pythia[HADRON]->flag("HadronLevel:all") ) {
+  if (doHadronLevel) {
     if ( print )
       cout << " Angantyr Info: Initializing hadronisation processes." << endl;
   }
   settingsPtr->flag("ProcessLevel:all", false);
-
   return true;
 
 }
 
 //--------------------------------------------------------------------------
 
-// Initiaize a specific Pythia object and optionally run a number
+// Initialize a specific Pythia object and optionally run a number
 // of events to get a handle of the cross section.
 
 bool Angantyr::init(PythiaObject sel, string name, int n) {
-  bool print = flag("HeavyIon:showInit");
+  bool print = flag("HeavyIon:showInit") && !flag("Print:quiet");
   shared_ptr<InfoGrabber> ihg = make_shared<InfoGrabber>();
   pythia[sel]->addUserHooksPtr(ihg);
   if ( print ) cout << " Angantyr Info: Initializing " << name << "." << endl;
@@ -589,8 +651,7 @@ EventInfo Angantyr::getSignal(const SubCollision & coll) {
     if ( pythia[pytsel]->next() )
       return mkEventInfo(*pythia[pytsel], *info[pytsel], &coll);
   }
-  infoPtr->errorMsg("Warning from PyHIa::next: "
-                       "Could not setup signal sub collision.");
+  loggerPtr->WARNING_MSG("could not setup signal sub-collision");
   return EventInfo();
 }
 
@@ -601,7 +662,11 @@ EventInfo Angantyr::getMBIAS(const SubCollision * coll, int procid) {
   HoldProcess hold(selectMB, procid, bp);
   while ( --itry ) {
     if ( !pythia[MBIAS]->next() ) continue;
-    assert( pythia[MBIAS]->info.code() == procid );
+    if (pythia[MBIAS]->info.code() != procid) {
+      loggerPtr->ERROR_MSG("MBIAS info code not equal to set procid",
+                          "contact the authors");
+      doAbort = true;
+    }
     return mkEventInfo(*pythia[MBIAS], *info[MBIAS], coll);
   }
   return EventInfo();
@@ -614,7 +679,11 @@ EventInfo Angantyr::getSASD(const SubCollision * coll, int procid) {
   HoldProcess hold(selectSASD, procid, bp);
   while ( --itry ) {
     if ( !pythia[SASD]->next() ) continue;
-    assert( pythia[SASD]->info.code() == procid );
+    if (pythia[SASD]->info.code() != procid) {
+      loggerPtr->ERROR_MSG("SASD info code not equal to set procid",
+                          "contact the authors");
+      doAbort = true;
+    }
     return mkEventInfo(*pythia[SASD], *info[SASD], coll);
   }
   return EventInfo();
@@ -625,30 +694,34 @@ EventInfo Angantyr::getSASD(const SubCollision * coll, int procid) {
 // Generate primary absorptive (non-diffractive) nucleon-nucleon
 // sub-collisions.
 
-bool Angantyr::genAbs(const multiset<SubCollision> & coll,
-                    list<EventInfo> & subevents) {
+bool Angantyr::genAbs(SubCollisionSet& subCollsIn,
+  list<EventInfo>& subEventsIn) {
   // The fully absorptive
-  vector<multiset<SubCollision>::const_iterator> abscoll;
+  vector<const SubCollision*> abscoll;
    // The partly absorptive
-  vector<multiset<SubCollision>::const_iterator> abspart;
+  vector<const SubCollision*> abspart;
   // The non-diffractive and signal events
   multiset<EventInfo> ndeve, sigeve;
 
   // Select the primary absorptive sub collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit ) {
-    if ( cit->type != SubCollision::ABS ) continue;
-    if (!cit->proj->done() && !cit->targ->done() ) {
-      abscoll.push_back(cit);
+  for (const SubCollision& subColl : subCollsIn) {
+
+    if ( subColl.type != SubCollision::ABS ) continue;
+    if (!subColl.proj->done() && !subColl.targ->done() ) {
+      abscoll.push_back(&subColl);
       if ( bMode > 0 ) {
-        EventInfo ie = getND(*cit);
-        assert( ie.code == 101 );
+        EventInfo ie = getND(subColl);
+        if (ie.code != 101) {
+          loggerPtr->ERROR_MSG("ND code not equal to 101",
+                            "contact the authors");
+          doAbort = true;
+        }
         ndeve.insert(ie);
       }
-      cit->proj->select();
-      cit->targ->select();
+      subColl.proj->select();
+      subColl.targ->select();
     } else
-      abspart.push_back(cit);
+      abspart.push_back(&subColl);
   }
 
   if ( abscoll.empty() ) return true;
@@ -659,7 +732,11 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
   if ( bMode == 0 ) {
     for ( int i = 0; i < Nabs + Nadd; ++i ) {
       EventInfo ie = getND();
-      assert( ie.code == 101 );
+      if (ie.code != 101) {
+        loggerPtr->ERROR_MSG("ND code not equal to 101",
+                            "contact the authors");
+        doAbort = true;
+      }
       ndeve.insert(ie);
     }
   }
@@ -707,8 +784,8 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
     }
     else
       ei =*it++;
-    subevents.push_back(ei);
-    if ( !setupFullCollision(subevents.back(), *abscoll[i],
+    subEventsIn.push_back(ei);
+    if ( !setupFullCollision(subEventsIn.back(), *abscoll[i],
                              Nucleon::ABS, Nucleon::ABS) )
       return false;
   }
@@ -725,31 +802,30 @@ bool Angantyr::genAbs(const multiset<SubCollision> & coll,
 
 // Add secondary absorptive sub-collisions to the primary ones.
 
-void Angantyr::addSASD(const multiset<SubCollision> & coll) {
+void Angantyr::addSASD(const SubCollisionSet& subCollsIn) {
   // Collect absorptively wounded nucleons in secondary
   // sub-collisions.
   int ntry = mode("Angantyr:SDTries");
   if ( settingsPtr->isMode("HI:SDTries") )
     ntry = mode("HI:SDTries");
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit )
-    if ( cit->type == SubCollision::ABS ) {
-      if ( cit->targ->done() && !cit->proj->done() ) {
-        EventInfo * evp = cit->targ->event();
+  for (const SubCollision& subColl : subCollsIn)
+    if ( subColl.type == SubCollision::ABS ) {
+      if ( subColl.targ->done() && !subColl.proj->done() ) {
+        EventInfo * evp = subColl.targ->event();
         for ( int itry = 0; itry < ntry; ++itry ) {
-          EventInfo add = getSDabsP(*cit);
+          EventInfo add = getSDabsP(subColl);
           if ( addNucleonExcitation(*evp, add, true) ) {
-            cit->proj->select(*evp, Nucleon::ABS);
+            subColl.proj->select(*evp, Nucleon::ABS);
             break;
           }
           if ( itry == ntry - 1 ) hiInfo.failedExcitation();
         }
-      } else if ( cit->proj->done() && !cit->targ->done() ) {
-        EventInfo * evp = cit->proj->event();
+      } else if ( subColl.proj->done() && !subColl.targ->done() ) {
+        EventInfo * evp = subColl.proj->event();
         for ( int itry = 0; itry < ntry; ++itry ) {
-          EventInfo add = getSDabsT(*cit);
+          EventInfo add = getSDabsT(subColl);
           if ( addNucleonExcitation(*evp, add, true) ) {
-            cit->targ->select(*evp, Nucleon::ABS);
+            subColl.targ->select(*evp, Nucleon::ABS);
             break;
           }
           if ( itry == ntry - 1 ) hiInfo.failedExcitation();
@@ -762,15 +838,14 @@ void Angantyr::addSASD(const multiset<SubCollision> & coll) {
 
 // Add primary double diffraction sub-collisions.
 
-bool Angantyr::addDD(const multiset<SubCollision> & coll,
-                   list<EventInfo> & subevents) {
+bool Angantyr::addDD(const SubCollisionSet& subCollsIn,
+  list<EventInfo>& subEventsIn) {
   // Collect full double diffraction collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit )
-    if ( cit->type == SubCollision::DDE &&
-         !cit->proj->done() && !cit->targ->done() ) {
-      subevents.push_back(getDD(*cit));
-      if ( !setupFullCollision(subevents.back(), *cit,
+  for (const SubCollision& subColl : subCollsIn)
+    if ( subColl.type == SubCollision::DDE &&
+         !subColl.proj->done() && !subColl.targ->done() ) {
+      subEventsIn.push_back(getDD(subColl));
+      if ( !setupFullCollision(subEventsIn.back(), subColl,
                                Nucleon::DIFF, Nucleon::DIFF) )
         return false;
     }
@@ -781,21 +856,20 @@ bool Angantyr::addDD(const multiset<SubCollision> & coll,
 
 // Add primary single diffraction sub-collisions.
 
-bool Angantyr::addSD(const multiset<SubCollision> & coll,
-                   list<EventInfo> & subevents) {
+bool Angantyr::addSD(const SubCollisionSet& subCollsIn,
+  list<EventInfo> & subEventsIn) {
   // Collect full single diffraction collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit )
-    if ( !cit->proj->done() && !cit->targ->done() ) {
-      if ( cit->type == SubCollision::SDEP ) {
-        subevents.push_back(getSDP(*cit));
-        if ( !setupFullCollision(subevents.back(), *cit,
+  for (const SubCollision& subColl : subCollsIn)
+    if ( !subColl.proj->done() && !subColl.targ->done() ) {
+      if ( subColl.type == SubCollision::SDEP ) {
+        subEventsIn.push_back(getSDP(subColl));
+        if ( !setupFullCollision(subEventsIn.back(), subColl,
                                  Nucleon::DIFF, Nucleon::ELASTIC) )
           return false;
       }
-      if ( cit->type == SubCollision::SDET ) {
-        subevents.push_back(getSDT(*cit));
-        if ( !setupFullCollision(subevents.back(), *cit,
+      if ( subColl.type == SubCollision::SDET ) {
+        subEventsIn.push_back(getSDT(subColl));
+        if ( !setupFullCollision(subEventsIn.back(), subColl,
                                  Nucleon::ELASTIC, Nucleon::DIFF) )
           return false;
       }
@@ -808,33 +882,32 @@ bool Angantyr::addSD(const multiset<SubCollision> & coll,
 // Add all secondary single diffractive sub-collisions to primary
 // ones.
 
-void Angantyr::addSDsecond(const multiset<SubCollision> & coll) {
+void Angantyr::addSDsecond(const SubCollisionSet& subCollsIn) {
   // Collect secondary single diffractive sub-collisions.
   int ntry = mode("Angantyr:SDTries");
   if ( settingsPtr->isMode("HI:SDTries") )  ntry = mode("HI:SDTries");
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit ) {
-    if ( !cit->proj->done() &&
-         ( cit->type == SubCollision::SDEP ||
-           cit->type == SubCollision::DDE ) ) {
-      EventInfo * evp = cit->targ->event();
+  for (const SubCollision& subColl : subCollsIn) {
+    if ( !subColl.proj->done() &&
+         ( subColl.type == SubCollision::SDEP ||
+           subColl.type == SubCollision::DDE ) ) {
+      EventInfo * evp = subColl.targ->event();
       for ( int itry = 0; itry < ntry; ++itry ) {
-        EventInfo add = getSDP(*cit);
+        EventInfo add = getSDP(subColl);
         if ( addNucleonExcitation(*evp, add, false) ) {
-          cit->proj->select(*evp, Nucleon::DIFF);
+          subColl.proj->select(*evp, Nucleon::DIFF);
           break;
         }
         if ( itry == ntry - 1 ) hiInfo.failedExcitation();
       }
     }
-    if ( !cit->targ->done() &&
-         ( cit->type == SubCollision::SDET ||
-           cit->type == SubCollision::DDE ) ) {
-      EventInfo * evp = cit->proj->event();
+    if ( !subColl.targ->done() &&
+         ( subColl.type == SubCollision::SDET ||
+           subColl.type == SubCollision::DDE ) ) {
+      EventInfo * evp = subColl.proj->event();
       for ( int itry = 0; itry < ntry; ++itry ) {
-        EventInfo add = getSDT(*cit);
+        EventInfo add = getSDT(subColl);
         if ( addNucleonExcitation(*evp, add, false) ) {
-          cit->targ->select(*evp, Nucleon::DIFF);
+          subColl.targ->select(*evp, Nucleon::DIFF);
           break;
         }
         if ( itry == ntry - 1 ) hiInfo.failedExcitation();
@@ -847,15 +920,14 @@ void Angantyr::addSDsecond(const multiset<SubCollision> & coll) {
 
 // Add all primary central diffraction sub-colliions
 
-bool Angantyr::addCD(const multiset<SubCollision> & coll,
-                   list<EventInfo> & subevents) {
+bool Angantyr::addCD(const SubCollisionSet& subCollsIn,
+  list<EventInfo>& subEventsIn) {
   // Collect full central diffraction collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit )
-    if ( cit->type == SubCollision::CDE &&
-         !cit->proj->done() && !cit->targ->done() ) {
-      subevents.push_back(getCD(*cit));
-      if ( !setupFullCollision(subevents.back(), *cit,
+  for (const SubCollision& subColl : subCollsIn)
+    if ( subColl.type == SubCollision::CDE &&
+         !subColl.proj->done() && !subColl.targ->done() ) {
+      subEventsIn.push_back(getCD(subColl));
+      if ( !setupFullCollision(subEventsIn.back(), subColl,
                                Nucleon::ELASTIC, Nucleon::ELASTIC) )
         return false;
     }
@@ -867,22 +939,21 @@ bool Angantyr::addCD(const multiset<SubCollision> & coll,
 // Add all secondary central diffraction sub-colliions to primary
 // ones.
 
-void Angantyr::addCDsecond(const multiset<SubCollision> & coll) {
+void Angantyr::addCDsecond(const SubCollisionSet& subCollsIn) {
   // Collect secondary central diffractive sub-collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit ) {
-    if ( !cit->proj->done() && cit->type == SubCollision::CDE ) {
-      EventInfo * evp = cit->targ->event();
-      EventInfo add = getCD(*cit);
+  for (const SubCollision& subColl : subCollsIn) {
+    if ( !subColl.proj->done() && subColl.type == SubCollision::CDE ) {
+      EventInfo * evp = subColl.targ->event();
+      EventInfo add = getCD(subColl);
       if ( addNucleonExcitation(*evp, add, false) ) {
-        cit->proj->select(*evp, Nucleon::ELASTIC);
+        subColl.proj->select(*evp, Nucleon::ELASTIC);
       }
     }
-    if ( !cit->targ->done() && cit->type == SubCollision::CDE ) {
-      EventInfo * evp = cit->proj->event();
-      EventInfo add = getCD(*cit);
+    if ( !subColl.targ->done() && subColl.type == SubCollision::CDE ) {
+      EventInfo * evp = subColl.proj->event();
+      EventInfo add = getCD(subColl);
       if ( addNucleonExcitation(*evp, add, false) ) {
-        cit->targ->select(*evp, Nucleon::ELASTIC);
+        subColl.targ->select(*evp, Nucleon::ELASTIC);
       }
     }
   }
@@ -892,16 +963,15 @@ void Angantyr::addCDsecond(const multiset<SubCollision> & coll) {
 
 // Add all primary elastic sub-colliions
 
-bool Angantyr::addEL(const multiset<SubCollision> & coll,
-                   list<EventInfo> & subevents) {
+bool Angantyr::addEL(const SubCollisionSet& subCollsIn,
+  list<EventInfo>& subEventsIn) {
   // Collect full elastic collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit )
-    if ( cit->type == SubCollision::ELASTIC &&
-         !cit->proj->done() && !cit->targ->done() ) {
-      subevents.push_back(getEl(*cit));
-      if ( !setupFullCollision(subevents.back(), *cit,
-                               Nucleon::ELASTIC, Nucleon::ELASTIC) )
+  for (const SubCollision& subColl : subCollsIn)
+    if ( subColl.type == SubCollision::ELASTIC &&
+         !subColl.proj->done() && !subColl.targ->done() ) {
+      subEventsIn.push_back(getEl(subColl));
+      if (!setupFullCollision(subEventsIn.back(), subColl,
+                              Nucleon::ELASTIC, Nucleon::ELASTIC))
         return false;
     }
   return true;
@@ -911,22 +981,21 @@ bool Angantyr::addEL(const multiset<SubCollision> & coll,
 
 // Add all secondary elastic sub-colliions to primary ones.
 
-void Angantyr::addELsecond(const multiset<SubCollision> & coll) {
+void Angantyr::addELsecond(const SubCollisionSet& subCollsIn) {
     // Collect secondary elastic sub-collisions.
-  for ( multiset<SubCollision>::iterator cit = coll.begin();
-        cit != coll.end(); ++cit ) {
-    if ( !cit->proj->done() && cit->type == SubCollision::ELASTIC ) {
-      EventInfo * evp = cit->targ->event();
-      EventInfo add = getEl(*cit);
+  for (const SubCollision& subColl : subCollsIn) {
+    if ( !subColl.proj->done() && subColl.type == SubCollision::ELASTIC ) {
+      EventInfo * evp = subColl.targ->event();
+      EventInfo add = getEl(subColl);
       if ( addNucleonExcitation(*evp, add, false) ) {
-        cit->proj->select(*evp, Nucleon::ELASTIC);
+        subColl.proj->select(*evp, Nucleon::ELASTIC);
       }
     }
-    if ( !cit->targ->done() && cit->type == SubCollision::ELASTIC ) {
-      EventInfo * evp = cit->proj->event();
-      EventInfo add = getEl(*cit);
+    if ( !subColl.targ->done() && subColl.type == SubCollision::ELASTIC ) {
+      EventInfo * evp = subColl.proj->event();
+      EventInfo add = getEl(subColl);
       if ( addNucleonExcitation(*evp, add, false) ) {
-        cit->targ->select(*evp, Nucleon::ELASTIC);
+        subColl.targ->select(*evp, Nucleon::ELASTIC);
       }
     }
   }
@@ -959,10 +1028,10 @@ EventInfo & Angantyr::shiftEvent(EventInfo & ei) {
 
 bool Angantyr::
 setupFullCollision(EventInfo & ei, const SubCollision & coll,
-                   Nucleon::Status ptype, Nucleon::Status ttype) {
+                   Nucleon::Status projStatus, Nucleon::Status targStatus) {
   if ( !ei.ok ) return false;
-  coll.proj->select(ei, ptype);
-  coll.targ->select(ei, ttype);
+  coll.proj->select(ei, projStatus);
+  coll.targ->select(ei, targStatus);
   ei.coll = &coll;
   ei.projs.clear();
   ei.projs[coll.proj] = make_pair(1, ei.event.size());
@@ -997,7 +1066,7 @@ int Angantyr::getBeam(Event & ev, int i) {
 
 // Minimum-bias sub-collisions are always generated as p-p events, and
 // it is assumed to be safe to be assumed that they are iso-spin
-// invariant so we can just modify the quark contet in the remnants to
+// invariant so we can just modify the quark content in the remnants to
 // get p-n, n-p, and n-n collisions.
 
 bool Angantyr::fixIsoSpin(EventInfo & ei) {
@@ -1155,8 +1224,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   if ( recnuc != ei.projs.end() ) tside = true;
   NucPos rectarg = ei.targs.find(sub.coll->targ);
   if ( rectarg != ei.targs.end() ) {
-    if ( tside ) infoPtr->errorMsg("Warning from Angantyr::"
-      "addNucleonExcitation: Nucleon already added.");
+    if ( tside ) loggerPtr->WARNING_MSG("nucleon already added");
     tside = false;
     recnuc = rectarg;
   }
@@ -1195,9 +1263,9 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
   if ( rec.empty() ) return false;
   for ( int i = 0, N = rec.size(); i < N; ++i ) prec += ei.event[rec[i]].p();
 
-  // Find the ransform to the recoilers and the diffractive combined cms
+  // Find the transform to the recoilers and the diffractive combined cms.
   pair<RotBstMatrix,RotBstMatrix> R12;
-  if ( !getTransforms(prec, pdiff, pbeam, R12,  ei.code, sub.code) )
+  if ( !getTransforms(prec, pdiff, pbeam, R12) )
     return false;
 
   // Transform the recoilers.
@@ -1277,12 +1345,7 @@ bool Angantyr::addNucleonExcitation(EventInfo & ei, EventInfo & sub,
 
 bool
 Angantyr::getTransforms(Vec4 prec, Vec4 pdiff, const Vec4 & pbeam,
-                      pair<RotBstMatrix,RotBstMatrix> & R12,
-                      int code1, int code2) {
-  code1 += code2;
-  // static ofstream os("testhi.out");
-  // os << "=== " << code1 << "+" << code2 << " ===" << endl;
-  // os << prec << pbeam << pdiff;
+                      pair<RotBstMatrix,RotBstMatrix> & R12) {
   RotBstMatrix Ri;
   Ri.toCMframe(pbeam, prec);
   Vec4 pr1 = prec;
@@ -1291,28 +1354,23 @@ Angantyr::getTransforms(Vec4 prec, Vec4 pdiff, const Vec4 & pbeam,
   pr1.rotbst(Ri);
   pb1.rotbst(Ri);
   pd1.rotbst(Ri);
-  // os << "=>" << endl << pr1 << pb1 << pd1;
   Vec4 pr2 = pr1;
   if ( pd1.pT() >= abs(pr2.pz()) ) {
-    // os << "*** failed to rotate ***" << endl;
     return false;
   }
   double the = asin(pd1.pT()/abs(pr2.pz()));
   RotBstMatrix R1;
   R1.rot(the, pd1.phi());
   pr2.rotbst(R1);
-  // os << "=>" << endl << pr2 << pd1;
 
   double S = (prec + pbeam).m2Calc();
   double mtr2 = pr2.pT2() + pr2.m2Calc();
   double mtd2 = pd1.pT2() + pd1.m2Calc();
   if ( sqrt(S) <= sqrt(mtr2) + sqrt(mtd2) ) {
-    // os << "*** failed to boost ***" << endl;
     return false;
   }
   double z2 = 0.25*(mtr2*mtr2 + (mtd2 - S)*(mtd2 - S) - 2.0*mtr2*(mtd2 + S))/S;
   if ( z2 <= 0.0 ) {
-    // os << "*** failed to boost ***" << endl;
     return false;
   }
   double z = sqrt(z2);
@@ -1328,14 +1386,13 @@ Angantyr::getTransforms(Vec4 prec, Vec4 pdiff, const Vec4 & pbeam,
   pr3.rotbst(R1);
   Vec4 pd3 = pd1;
   pd3.rotbst(R2);
-  // os << "=>" << endl << pr3 << pd3;
+
   RotBstMatrix Rf = Ri;
   Rf.invert();
   Vec4 pr4 = pr3;
   pr4.rotbst(Rf);
   Vec4 pd4 = pd3;
   pd4.rotbst(Rf);
-  // os << "=>" << endl << pr4 << pd4 << pr4 + pd4 << prec + pbeam;
 
   R12.first = R12.second = Ri;
   R12.first.rotbst(R1);
@@ -1344,7 +1401,6 @@ Angantyr::getTransforms(Vec4 prec, Vec4 pdiff, const Vec4 & pbeam,
   R12.second.rotbst(Rf);
   prec.rotbst(R12.first);
   pdiff.rotbst(R12.second);
-  // os << prec << pdiff;
 
   return true;
 
@@ -1405,7 +1461,7 @@ void Angantyr::addJunctions(Event & ev, Event & addev, int coloff) {
 
 //--------------------------------------------------------------------------
 
-// Special function to generatee secondary absorptive events as single
+// Special function to generate secondary absorptive events as single
 // diffraction. Called from Angantyr::next() and used for debugging
 // and tuning purposes.
 
@@ -1417,7 +1473,7 @@ bool Angantyr::nextSASD(int procid) {
   if ( !ei.ok ) return false;
   pythia[HADRON]->event = ei.event;
   updateInfo();
-  if ( pythia[HADRON]->flag("HadronLevel:all") ) {
+  if (doHadronLevel) {
     if ( HIHooksPtr && HIHooksPtr->canForceHadronLevel() ) {
       if ( !HIHooksPtr->forceHadronLevel(*pythia[HADRON]) ) return false;
     } else {
@@ -1431,46 +1487,47 @@ bool Angantyr::nextSASD(int procid) {
 
 // Take all sub-events and merge them together.
 
-bool Angantyr::buildEvent(list<EventInfo> & subevents,
-                        const vector<Nucleon> & proj,
-                        const vector<Nucleon> & targ) {
+bool Angantyr::buildEvent(list<EventInfo> & subEventsIn) {
     Event & etmp = pythia[HADRON]->event;
     etmp.reset();
-    etmp.append(projPtr->produceIon(false));
-    etmp.append(targPtr->produceIon(true));
+    etmp.append(projPtr->produceIon());
+    etmp.append(targPtr->produceIon());
     etmp[0].p(etmp[1].p() + etmp[2].p());
     etmp[0].m(etmp[0].mCalc());
+    double bx = 0.5*FM2MM*hiInfo.b()*cos(hiInfo.phi());
+    double by = 0.5*FM2MM*hiInfo.b()*sin(hiInfo.phi());
+    etmp[1].vProd( bx,  by, 0.0, 0.0);
+    etmp[2].vProd(-bx, -by, 0.0, 0.0);
 
     // Start with the signal event(s)
     if ( hasSignal ) {
       bool found = false;
-      for ( list<EventInfo>::iterator sit = subevents.begin();
-            sit != subevents.end(); ++sit  ) {
+      for ( list<EventInfo>::iterator sit = subEventsIn.begin();
+            sit != subEventsIn.end(); ++sit  ) {
         if ( sit->code >= 101 && sit->code <= 106 ) continue;
         addSubEvent(etmp, sit->event);
         hiInfo.select(sit->info);
         hiInfo.addSubCollision(*sit->coll);
-        subevents.erase(sit);
+        subEventsIn.erase(sit);
         found = true;
         break;
       }
       if ( !found ) {
-        infoPtr->errorMsg("Warning from Angantyr::next:"
-                             " Failed to generate signal event.");
+        loggerPtr->ERROR_MSG("failed to generate signal event");
         return false;
       }
     } else
-      hiInfo.select(subevents.begin()->info);
+      hiInfo.select(subEventsIn.begin()->info);
 
     // Then all the others
-    for ( list<EventInfo>::iterator sit = subevents.begin();
-          sit != subevents.end(); ++sit  ) {
+    for ( list<EventInfo>::iterator sit = subEventsIn.begin();
+          sit != subEventsIn.end(); ++sit  ) {
       addSubEvent(etmp, sit->event);
       hiInfo.addSubCollision(*sit->coll);
     }
 
     // Finally add all nucleon remnants.
-    return addNucleusRemnants(proj, targ);
+    return addNucleusRemnants();
 
 }
 
@@ -1479,46 +1536,46 @@ bool Angantyr::buildEvent(list<EventInfo> & subevents,
 // Construct nucleus remnants fron all non-interacting nucleons and
 // add them to the main event.
 
-bool Angantyr::
-addNucleusRemnants(const vector<Nucleon> & proj,
-                   const vector<Nucleon> & targ) {
+bool Angantyr::addNucleusRemnants() {
   Event & etmp = pythia[HADRON]->event;
   int npp = 0;
   int nnp = 0;
   Vec4 ppsum;
-  for ( int i = 0, N = proj.size(); i< N; ++i ) {
-    if ( proj[i].event() ) hiInfo.addProjectileNucleon(proj[i]);
+  for (const Nucleon& nucleon : proj) {
+    if (nucleon.event())
+      hiInfo.addProjectileNucleon(nucleon);
     else {
       double e = pythia[HADRON]->parm("Beams:eA");
-      double m = pythia[HADRON]->particleData.m0(proj[i].id());
+      double m = pythia[HADRON]->particleData.m0(nucleon.id());
       double pz = sqrt(max(e*e - m*m, 0.0));
-      if ( proj[i].id() == 2212 ) {
+      if ( nucleon.id() == 2212 ) {
         ++npp;
         ppsum += Vec4(0.0, 0.0, pz, e);
-      } else if ( proj[i].id() == 2112 ) {
+      } else if ( nucleon.id() == 2112 ) {
         ++nnp;
         ppsum += Vec4(0.0, 0.0, pz, e);
       } else
-        etmp.append(proj[i].id(), 14, 1, 0, 0, 0, 0, 0, 0.0, 0.0, pz, e, m);
+        etmp.append(nucleon.id(), 14, 1, 0, 0, 0, 0, 0, 0.0, 0.0, pz, e, m);
     }
   }
   int npt = 0;
   int nnt = 0;
   Vec4 tpsum;
-  for ( int i = 0, N = targ.size(); i< N; ++i ) {
-    if ( targ[i].event() ) hiInfo.addTargetNucleon(targ[i]);
+  for (const Nucleon& nucleon : targ) {
+    if (nucleon.event())
+      hiInfo.addTargetNucleon(nucleon);
     else {
       double e = pythia[HADRON]->parm("Beams:eB");
-      double m = pythia[HADRON]->particleData.m0(targ[i].id());
+      double m = pythia[HADRON]->particleData.m0(nucleon.id());
       double pz = -sqrt(max(e*e - m*m, 0.0));
-      if ( targ[i].id() == 2212 ) {
+      if ( nucleon.id() == 2212 ) {
         ++npt;
         tpsum += Vec4(0.0, 0.0, pz, e);
-      } else if ( targ[i].id() == 2112 ) {
+      } else if ( nucleon.id() == 2112 ) {
         ++nnt;
         tpsum += Vec4(0.0, 0.0, pz, e);
       } else
-        etmp.append(targ[i].id(), 14, 2, 0, 0, 0, 0, 0, 0.0, 0.0, pz, e, m);
+        etmp.append(nucleon.id(), 14, 2, 0, 0, 0, 0, 0, 0.0, 0.0, pz, e, m);
     }
   }
 
@@ -1563,54 +1620,131 @@ addNucleusRemnants(const vector<Nucleon> & proj,
 
 //--------------------------------------------------------------------------
 
+// Set beam kinematics.
+
+bool Angantyr::setKinematics(){
+  unifyFrames();
+  if (!sigTotNN.calc(beamSetupPtr->idA, beamSetupPtr->idB, beamSetupPtr->eCM))
+    return false;
+  collPtr->updateSig();
+  hiInfo.avNDbSave = collPtr->avNDB();
+  collPtr->setKinematics(beamSetupPtr->eCM);
+  bGenPtr->updateWidth();
+  projPtr->setPN(beamSetupPtr->pAinit);
+  targPtr->setPN(beamSetupPtr->pBinit);
+  return true;
+}
+
+bool Angantyr::setKinematics(double eCMIn) {
+  pythia[MBIAS]->setKinematics(eCMIn);
+  if (!glauberOnly)
+    pythia[SASD]->setKinematics(eCMIn);
+  return setKinematics();
+}
+
+bool Angantyr::setKinematics(double eAIn, double eBIn) {
+  pythia[MBIAS]->setKinematics(eAIn, eBIn);
+  if (!glauberOnly)
+    pythia[SASD]->setKinematics(eAIn, eBIn);
+  return setKinematics();
+}
+
+bool Angantyr::setKinematics(double pxAIn, double pyAIn, double pzAIn,
+  double pxBIn, double pyBIn, double pzBIn) {
+  pythia[MBIAS]->setKinematics(pxAIn, pyAIn, pzAIn, pxBIn, pyBIn, pzBIn);
+  if (!glauberOnly)
+    pythia[SASD]->setKinematics(pxAIn, pyAIn, pzAIn, pxBIn, pyBIn, pzBIn);
+  return setKinematics();
+}
+
+bool Angantyr::setKinematics(Vec4 pAIn, Vec4 pBIn) {
+  pythia[MBIAS]->setKinematics(pAIn, pBIn);
+  if (!glauberOnly)
+    pythia[SASD]->setKinematics(pAIn, pBIn);
+  return setKinematics();
+}
+
+//--------------------------------------------------------------------------
+
+// Make sure the correct information is available irrespective of frame type.
+
+void Angantyr::unifyFrames() {
+  BeamSetup &bs = *beamSetupPtr;
+
+  if ( bs.frameType == 1 ) {
+    bs.eA     = bs.eB = bs.eCM/2;
+    bs.pzA    =  sqrt(pow2(bs.eA) - pow2(bs.mA));
+    bs.pzB    = -sqrt(pow2(bs.eB) - pow2(bs.mB));
+    bs.pxA    = bs.pyA = bs.pxB = bs.pyB = 0.0;
+    bs.pAinit = Vec4(bs.pxA, bs.pyA, bs.pzA, bs.eA);
+    bs.pBinit = Vec4(bs.pxB, bs.pyB, bs.pzB, bs.eB);
+  } else if ( bs.frameType == 3 ) {
+    bs.eA     = sqrt(pow2(bs.pxA) + pow2(bs.pyA) + pow2(bs.pzA) + pow2(bs.mA));
+    bs.eB     = sqrt(pow2(bs.pxB) + pow2(bs.pyB) + pow2(bs.pzB) + pow2(bs.mB));
+    bs.pAinit = Vec4(bs.pxA, bs.pyA, bs.pzA, bs.eA);
+    bs.pBinit = Vec4(bs.pxB, bs.pyB, bs.pzB, bs.eB);
+    bs.eCM    = (bs.pAinit + bs.pBinit).mCalc();
+  } else {
+    bs.pzA    =  sqrt(pow2(bs.eA) - pow2(bs.mA));
+    bs.pzB    = -sqrt(pow2(bs.eB) - pow2(bs.mB));
+    bs.pxA    = bs.pyA = bs.pxB = bs.pyB = 0.0;
+    bs.pAinit = Vec4(bs.pxA, bs.pyA, bs.pzA, bs.eA);
+    bs.pBinit = Vec4(bs.pxB, bs.pyB, bs.pzB, bs.eB);
+    bs.eCM    = (bs.pAinit + bs.pBinit).mCalc();
+  }
+
+  if ( !bs.doMomentumSpread ) {
+    bs.pAnow = bs.pAinit;
+    bs.pBnow = bs.pBinit;
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
 // The main method called from Pythia::next().
 
 bool Angantyr::next() {
 
-  if ( flag("Angantyr:SDTest") ) return nextSASD(104);
+  if (doSDTest)
+    return nextSASD(104);
 
   int itry = MAXTRY;
 
-  while ( itry-- ) {
+  while ( itry-- && !doAbort) {
 
-    // Generate nuclei, impact paramter and nucleon sub-collisions.
-    projectile = projPtr->generate();
-    target = targPtr->generate();
-
+    // Generate impact parameter, nuclei, and sub-collisions.
     double bweight = 0.0;
     Vec4 bvec = bGenPtr->generate(bweight);
-    double T = 0.0;
-    subColls = collPtr->getCollisions(projectile, target, bvec, T);
-    hiInfo.addAttempt(T, bvec.pT(), bweight);
-    hiInfo.subCollisionsPtr(&subColls);
-    if ( flag("Angantyr:GlauberOnly") ) return true;
+    proj = Nucleus(projPtr->generate(), bvec / 2.);
+    targ = Nucleus(targPtr->generate(), -bvec / 2.);
+
+    subColls = collPtr->getCollisions(proj, targ);
+    hiInfo.addAttempt(subColls.T(), bvec.pT(), bvec.phi(), bweight);
+
     if ( subColls.empty() ) continue;
+    if ( glauberOnly ) return true;
 
+    list<EventInfo> subEvents;
 
-    list<EventInfo> subevents;
-
-    if ( !genAbs(subColls, subevents) ) {
-      infoPtr->errorMsg("Warning from PyHIia::next: "
-                           "Could not setup signal or ND collisions.");
+    if ( !genAbs(subColls, subEvents) ) {
+      loggerPtr->WARNING_MSG("could not setup signal or ND collisions");
       continue;
     }
-    if ( hasSignal && subevents.empty() ) continue;
+    if ( hasSignal && subEvents.empty() ) continue;
 
-    // Collect absorptively wounded nucleons in secondary
-    // sub-collisions.
+    // Collect absorptively wounded nucleons in secondary sub-collisions.
     addSASD(subColls);
 
     // Collect full double diffraction collisions.
-    if ( !addDD(subColls, subevents) ) {
-      infoPtr->errorMsg("Warning from PyHIia::next:"
-                                   " Could not setup DD sub collision.");
+    if ( !addDD(subColls, subEvents) ) {
+      loggerPtr->ERROR_MSG("could not setup DD sub-collision");
       continue;
     }
 
     // Collect full single diffraction collisions.
-    if ( !addSD(subColls, subevents) ) {
-      infoPtr->errorMsg("Warning from PyHIia::next:"
-                                   " Could not setup SD sub collision.");
+    if ( !addSD(subColls, subEvents) ) {
+      loggerPtr->ERROR_MSG("could not setup SD sub-collision");
       continue;
     }
 
@@ -1618,9 +1752,8 @@ bool Angantyr::next() {
     addSDsecond(subColls);
 
     // Collect full central diffraction collisions.
-    if ( !addCD(subColls, subevents) ) {
-      infoPtr->errorMsg("Warning from PyHIia::next:"
-                                   " Could not setup CD sub collisions.");
+    if ( !addCD(subColls, subEvents) ) {
+      loggerPtr->ERROR_MSG("could not setup CD sub-collision");
       continue;
     }
 
@@ -1628,9 +1761,8 @@ bool Angantyr::next() {
     addCDsecond(subColls);
 
     // Collect full elastic collisions.
-    if ( !addEL(subColls, subevents) ) {
-      infoPtr->errorMsg("Warning from PyHIia::next:"
-                                   " Could not setup elastic sub collisions.");
+    if ( !addEL(subColls, subEvents) ) {
+      loggerPtr->ERROR_MSG("could not setup elastic sub-collision");
       continue;
     }
 
@@ -1638,12 +1770,11 @@ bool Angantyr::next() {
     addELsecond(subColls);
 
     // Finally bunch all events together.
-    if ( subevents.empty() ) continue;
-
-    if ( !buildEvent(subevents, projectile, target) ) continue;
+    if ( subEvents.empty() ) continue;
+    if ( !buildEvent(subEvents) ) continue;
 
     // Finally we hadronise everything, if requested.
-    if ( pythia[HADRON]->flag("HadronLevel:all") ) {
+    if (doHadronLevel) {
       if ( HIHooksPtr && HIHooksPtr->canForceHadronLevel() ) {
         if ( !HIHooksPtr->forceHadronLevel(*pythia[HADRON]) ) continue;
       } else {
@@ -1665,10 +1796,11 @@ bool Angantyr::next() {
     return true;
 
   }
-
-  infoPtr->errorMsg("Abort from Angantyr::next: Too many "
-    "attempts to generate a working impact parameter point. "
-    "Consider reducing HeavyIon:bWidth.");
+  if (doAbort)
+    loggerPtr->ABORT_MSG("Angantyr was aborted due to a critical error");
+  else
+    loggerPtr->ABORT_MSG("too many attempts to generate a working impact "
+      "parameter point", "consider reducing HeavyIon:bWidth");
   hiInfo.reject();
   return false;
 

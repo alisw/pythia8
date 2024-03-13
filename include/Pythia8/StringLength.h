@@ -1,5 +1,5 @@
 // StringLength.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -25,7 +25,7 @@ class StringLength {
 public:
 
   // Constructor.
-  StringLength() : m0(), m0sqr(), sqrt2(), juncCorr(), lambdaForm(),
+  StringLength() : loggerPtr(), m0(), sqrt2(), juncCorr(), lambdaForm(),
     infoPtr() {}
 
   // Initialize.
@@ -60,7 +60,10 @@ private:
 
   static const double TINY, MINANGLE;
 
-  double m0, m0sqr, sqrt2, juncCorr;
+  // Pointer to logger.
+  Logger* loggerPtr;
+
+  double m0, sqrt2, juncCorr;
   int lambdaForm;
 
   // Pointer to various information on the generation.

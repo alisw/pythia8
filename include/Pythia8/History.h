@@ -1,5 +1,5 @@
 // History.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -58,10 +58,14 @@ public:
   // The recoiler before the splitting.
   int recBef;
 
+  // Map between particle positions in the clustered states -> particle
+  // positions in unclustered real-emission state.
+  map<int,int> iPosInMother;
+
   // Default constructor
   Clustering() : emitted(0), emittor(0), recoiler(0), partner(0), pTscale(),
     flavRadBef(0), spinRad(9), spinEmt(9), spinRec(9), spinRadBef(9),
-    radBef(0), recBef(0) {}
+    radBef(0), recBef(0), iPosInMother() {}
 
   // Default destructor
   ~Clustering(){}
@@ -73,17 +77,18 @@ public:
     pTscale(inSystem.pTscale), flavRadBef(inSystem.flavRadBef),
     spinRad(inSystem.spinRad), spinEmt(inSystem.spinEmt),
     spinRec(inSystem.spinRec), spinRadBef(inSystem.spinRad),
-    radBef(inSystem.radBef), recBef(inSystem.recBef) {}
+    radBef(inSystem.radBef), recBef(inSystem.recBef),
+    iPosInMother(inSystem.iPosInMother) {}
 
   // Constructor with input
   Clustering( int emtIn, int radIn, int recIn, int partnerIn,
     double pTscaleIn, int flavRadBefIn = 0, int spinRadIn = 9,
     int spinEmtIn = 9, int spinRecIn = 9, int spinRadBefIn = 9,
-    int radBefIn = 0, int recBefIn = 0)
+    int radBefIn = 0, int recBefIn = 0, map<int,int> posIn = map<int,int>())
     : emitted(emtIn), emittor(radIn), recoiler(recIn), partner(partnerIn),
       pTscale(pTscaleIn), flavRadBef(flavRadBefIn), spinRad(spinRadIn),
       spinEmt(spinEmtIn), spinRec(spinRecIn), spinRadBef(spinRadBefIn),
-      radBef(radBefIn), recBef(recBefIn) {}
+      radBef(radBefIn), recBef(recBefIn), iPosInMother(posIn) {}
 
   // Function to return pythia pT scale of clustering
   double pT() const { return pTscale; }
@@ -156,43 +161,45 @@ public:
   // IN  trialShower*    : Previously initialised trialShower object,
   //                       to perform trial showering and as
   //                       repository of pointers to initialise alphaS
-  //     PartonSystems* : PartonSystems object needed to initialise
-  //                      shower objects
-  // OUT double         : (Sukadov) , (alpha_S ratios) , (PDF ratios)
-  double weightTREE(PartonLevel* trial, AlphaStrong * asFSR,
+  //     PartonSystems*  : PartonSystems object needed to initialise
+  //                       shower objects
+  // OUT vector<double>  : (Sukadov) , (alpha_S ratios) , (PDF ratios)
+  vector<double> weightCKKWL(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
 
 
   // For default NL3:
   // Return weight of virtual correction and subtractive for NL3 merging
-  double weightLOOP(PartonLevel* trial, double RN);
+  vector<double> weightNL3Loop(PartonLevel* trial, double RN);
   // Return O(\alpha_s)-term of CKKWL-weight for NL3 merging
-  double weightFIRST(PartonLevel* trial, AlphaStrong* asFSR,
+  vector<double> weightNL3First(PartonLevel* trial, AlphaStrong* asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
     Rndm* rndmPtr);
+  vector<double> weightNL3Tree(PartonLevel* trial, AlphaStrong * asFSR,
+    AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
 
 
   // For UMEPS:
-  double weight_UMEPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
+  vector<double> weightUMEPSTree(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
-  double weight_UMEPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
+  vector<double> weightUMEPSSubt(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN);
 
 
   // For unitary NL3:
-  double weight_UNLOPS_TREE(PartonLevel* trial, AlphaStrong * asFSR,
+  vector<double> weightUNLOPSTree(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
     int depthIn = -1);
-  double weight_UNLOPS_SUBT(PartonLevel* trial, AlphaStrong * asFSR,
+  vector<double> weightUNLOPSSubt(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
     int depthIn = -1);
-  double weight_UNLOPS_LOOP(PartonLevel* trial, AlphaStrong * asFSR,
+  vector<double> weightUNLOPSLoop(PartonLevel* trial, AlphaStrong * asFSR,
      AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
      int depthIn = -1);
-  double weight_UNLOPS_SUBTNLO(PartonLevel* trial, AlphaStrong * asFSR,
+  vector<double> weightUNLOPSSubtNLO(PartonLevel* trial, AlphaStrong * asFSR,
     AlphaStrong * asISR, AlphaEM * aemFSR, AlphaEM * aemISR, double RN,
     int depthIn = -1);
-  double weight_UNLOPS_CORRECTION( int order, PartonLevel* trial,
+  vector<double> weightUNLOPSFirst( int order, PartonLevel* trial,
     AlphaStrong* asFSR, AlphaStrong * asISR, AlphaEM * aemFSR,
     AlphaEM * aemISR, double RN, Rndm* rndmPtr );
 
@@ -385,22 +392,23 @@ private:
   //                  ratio calculation
   //     AlphaStrong: Initialised shower alpha_s object for ISR alpha_s
   //                  ratio calculation (can be different from previous)
-  double weightTree(PartonLevel* trial, double as0, double aem0,
+  vector<double> weightTree(PartonLevel* trial, double as0, double aem0,
     double maxscale, double pdfScale, AlphaStrong * asFSR, AlphaStrong * asISR,
-    AlphaEM * aemFSR, AlphaEM * aemISR, double& asWeight, double& aemWeight,
-    double& pdfWeight);
+    AlphaEM * aemFSR, AlphaEM * aemISR, vector<double>& asWeight,
+    vector<double>& aemWeight, vector<double>& pdfWeight);
 
   // Function to return the \alpha_s-ratio part of the CKKWL weight.
-  double weightTreeALPHAS( double as0, AlphaStrong * asFSR,
-    AlphaStrong * asISR, int njetMax = -1 );
+  vector<double> weightTreeAlphaS( double as0, AlphaStrong * asFSR,
+    AlphaStrong * asISR, int njetMax = -1, bool asVarInME = false );
   // Function to return the \alpha_em-ratio part of the CKKWL weight.
-  double weightTreeALPHAEM( double aem0, AlphaEM * aemFSR,
+  vector<double> weightTreeAlphaEM( double aem0, AlphaEM * aemFSR,
     AlphaEM * aemISR, int njetMax = -1 );
   // Function to return the PDF-ratio part of the CKKWL weight.
-  double weightTreePDFs( double maxscale, double pdfScale, int njetMax = -1 );
+  vector<double> weightTreePDFs( double maxscale, double pdfScale,
+    int njetMax = -1 );
   // Function to return the no-emission probability part of the CKKWL weight.
-  double weightTreeEmissions( PartonLevel* trial, int type, int njetMin,
-    int njetMax, double maxscale );
+  vector<double> weightTreeEmissions( PartonLevel* trial, int type,
+    int njetMin, int njetMax, double maxscale );
 
   // Function to generate the O(\alpha_s)-term of the CKKWL-weight
   double weightFirst(PartonLevel* trial, double as0, double muR,
@@ -408,11 +416,11 @@ private:
 
   // Function to generate the O(\alpha_s)-term of the \alpha_s-ratios
   // appearing in the CKKWL-weight.
-  double weightFirstALPHAS( double as0, double muR, AlphaStrong * asFSR,
+  double weightFirstAlphaS( double as0, double muR, AlphaStrong * asFSR,
     AlphaStrong * asISR);
   // Function to generate the O(\alpha_em)-term of the \alpha_em-ratios
   // appearing in the CKKWL-weight.
-  double weightFirstALPHAEM( double aem0, double muR, AlphaEM * aemFSR,
+  double weightFirstAlphaEM( double aem0, double muR, AlphaEM * aemFSR,
     AlphaEM * aemISR);
   // Function to generate the O(\alpha_s)-term of the PDF-ratios
   // appearing in the CKKWL-weight.
@@ -436,7 +444,7 @@ private:
   // OUT  0.0       : trial shower emission outside allowed pT range
   //      1.0       : trial shower successful (any emission was below
   //                  the minimal scale )
-  double doTrialShower(PartonLevel* trial, int type, double maxscale,
+  vector<double> doTrialShower(PartonLevel* trial, int type, double maxscale,
     double minscale = 0.);
 
   // Function to bookkeep the indices of weights generated in countEmissions
@@ -888,8 +896,8 @@ private:
     sumBadBranches(), foundOrderedPath(), foundStronglyOrderedPath(),
     foundAllowedPath(), foundCompletePath(), scale(), nextInInput(), prob(),
     iReclusteredOld(), iReclusteredNew(), doInclude(), mergingHooksPtr(),
-    particleDataPtr(), infoPtr(), showers(), coupSMPtr(), sumScalarPT(),
-    probMaxSave(), depth(), minDepthSave() {}
+    particleDataPtr(), infoPtr(), loggerPtr(), showers(), coupSMPtr(),
+    sumScalarPT(), probMaxSave(), depth(), minDepthSave() {}
 
   // The copy-constructor is private.
   History(const History &) {}
@@ -908,6 +916,9 @@ private:
 
   // Info object to have access to all information read from LHE file
   Info* infoPtr;
+
+  // Logger object.
+  Logger* loggerPtr;
 
   // Class for calculation weak shower ME.
   SimpleWeakShowerMEs simpleWeakShowerMEs;

@@ -1,12 +1,12 @@
 // main77.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authorss: Boris Blok <blok@physics.technion.ac.il>
+// Authors: Boris Blok <blok@physics.technion.ac.il>
 //          Paolo Gunnellini <Paolo.Gunnellini@cern.ch>
 
-// Keywords: MPI; DPS;
+// Keywords: MPI; DPS
 
 // The program calculates the 4 jet DPS cross section as a function of
 // standard observables according to the model described in
@@ -131,7 +131,7 @@ int main(){
 
     // Identify incoming state of second MPI, if present.
     for (int i=7;i<pythia.event.size();++i){
-      if(fabs(pythia.event[i].status())==31){
+      if(pythia.event[i].statusAbs()==31){
         x3=pythia.event[i].e()/pythia.event[1].e();
         x4=pythia.event[i+1].e()/pythia.event[2].e();
         hasMPI=true;

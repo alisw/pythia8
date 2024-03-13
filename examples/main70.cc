@@ -1,11 +1,11 @@
 // main70.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Ilkka Helenius <ilkka.helenius@jyu.fi>.
+// Authors: Ilkka Helenius <ilkka.m.helenius@jyu.fi>
 
-// Keywords: photon beam; DIS; UPC; heavy ion; photoproduction;
+// Keywords: photon beam; DIS; UPC; heavy ions; photoproduction
 
 // Main program to demonstrate how to define a photon flux and use that
 // to generate charged-particle pT spectra in photo-production processes.
@@ -33,12 +33,12 @@ public:
 // Suitable for photo-nuclear processes but not for photon-photon.
 // This should be considered as an experimental setup and used with caution.
 
-class Nucleus2gamma : public PDF {
+class Nucleus2gamma2 : public PDF {
 
 public:
 
   // Constructor.
-  Nucleus2gamma(int idBeamIn) : PDF(idBeamIn) {}
+  Nucleus2gamma2(int idBeamIn) : PDF(idBeamIn) {}
 
   // Update the photon flux.
   void xfUpdate(int , double x, double ) {
@@ -75,7 +75,7 @@ int main() {
   pythia.readString("Next:numberCount = 1000");
   pythia.readString("Next:numberShowInfo = 0");
   pythia.readString("Next:numberShowProcess = 1");
-  pythia.readString("Next:numberShowEvent = 1");
+  pythia.readString("Next:numberShowEvent = 3");
 
   // Two possible process to consider here 1=ep at HERA, 2=UPC at LHC.
   int process = 1;
@@ -83,36 +83,42 @@ int main() {
   // Pointer to externally defined photon flux.
   PDFPtr photonFlux = 0;
 
-  // Beam parameters.
-  pythia.readString("Beams:idA = -11");
-  pythia.readString("Beams:idB = 2212");
-  pythia.readString("PDF:lepton2gamma = on");
-  pythia.readString("PDF:lepton2gammaSet = 2");
-
   // Photoproduction at HERA.
-  // NOTE: Same results more effectively could be obtained with
+  // NOTE: Same results more efficiently could be obtained with
   // pythia.readString("PDF:lepton2gammaSet = 1"), this is for demonstration
   // purposed only.
   if (process == 1) {
+
+    // Beam parameters.
     pythia.readString("Beams:frameType = 2");
+    pythia.readString("Beams:idA = -11");
+    pythia.readString("Beams:idB = 2212");
     pythia.readString("Beams:eA = 27.5");
     pythia.readString("Beams:eB = 820.");
+    pythia.readString("PDF:beamA2gamma = on");
+    pythia.readString("PDF:lepton2gammaSet = 0");
     photonFlux = make_shared<Lepton2gamma2>(-11);
 
-  // Experimental UPC generation in PbPb at LHC.
-  // Photon flux only from leptons but here need just the photon flux.
-  // Since the sampling is optimized for leptons this is not very efficient.
+  // Experimental UPC generation in PbPb at LHC. Use p+p collision with
+  // appropriate photon flux and nPDFs as a proxy for heavy-ion UPCs.
   } else if (process == 2) {
+
+    // Beam parameters.
     pythia.readString("Beams:eCM = 5020.");
+    pythia.readString("Beams:idA = 2212");
+    pythia.readString("Beams:idB = 2212");
+    pythia.readString("PDF:beamA2gamma = on");
+    pythia.readString("PDF:proton2gammaSet = 0");
+
     // Use nuclear PDF for the hard process generation in the proton side.
     pythia.readString("PDF:useHardNPDFB = on");
     // Modify the minimum impact parameter to match the flux defined above.
     pythia.readString("PDF:gammaFluxApprox2bMin = 13.272");
     // Optimized sampling for photon flux from nuclei.
-    pythia.readString("PDF:lepton2gammaApprox = 2");
+    pythia.readString("PDF:beam2gammaApprox = 2");
     // Do not sample virtuality since use b-integrated flux here.
     pythia.readString("Photon:sampleQ2 = off");
-    photonFlux = make_shared<Nucleus2gamma>(-11);
+    photonFlux = make_shared<Nucleus2gamma2>(2212);
   }
 
   // Set the external photon flux for beam A.

@@ -81,7 +81,7 @@ this ratio, i.e. the philosophy introduced in <ref>Ben87</ref>.
 processes are available. The code required for merging the PYTHIA 
 showers with POWHEG input can be found in 
 <code>include/Pythia8Plugins/PowHegHooks.h</code>, and is further 
-described on a <aloc href="POWHEGMerging">separate page</aloc>.  A 
+described on a <aloc href="POWHEGMatching">separate page</aloc>.  A 
 user example is found in <code>examples/main31</code>.</li> 
  
 <li>The other traditional approach for NLO calculations is the MC@NLO 
@@ -260,9 +260,10 @@ has be identical to <code>Merging:TMS</code> in the Pythia inputs.
 consecutively, and will automatically assign if an event will be used as 
 "standard" event or as "subtractive" contribution. Example UNLOPS 
 settings can be found in <code>main89umeps.cmnd</code>. Please 
-consult <aloc href="UNLOPSMerging">UMEPS merging</aloc> and 
+consult <aloc href="NLOMerging">NLO Merging</aloc>, 
+<aloc href="UMEPSMerging">UMEPS merging</aloc>, and 
 <aloc href="CKKWLMerging">CKKW-L merging</aloc> for more details. 
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

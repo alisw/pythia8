@@ -33,7 +33,7 @@ The <ei>alpha_strong</ei> value at scale <ei>M_Z^2</ei>.
 <p/> 
 The actual value is then regulated by the running to the <ei>Q^2</ei> 
 renormalization scale, at which <ei>alpha_strong</ei> is evaluated 
-<modepick name="SigmaProcess:alphaSorder" default="1" min="0" max="2"> 
+<modepick name="SigmaProcess:alphaSorder" default="1" min="0" max="3"> 
 Order at which <ei>alpha_strong</ei> runs, 
 <option value="0">zeroth order, i.e. <ei>alpha_strong</ei> is kept 
 fixed.</option> 
@@ -41,6 +41,8 @@ fixed.</option>
 <option value="2">second order. Since other parts of the code do 
 not go to second order there is no strong reason to use this option, 
 but there is also nothing wrong with it.</option> 
+<option value="3">third order, with the same comment as for second 
+order. The expression in the 2006 RPP is used here.</option> 
 </modepick> 
  
 <p/> 
@@ -303,4 +305,4 @@ above.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

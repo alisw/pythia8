@@ -1,0 +1,151 @@
+<chapter name="Close-packing"> 
+ 
+<h2>Close-packing</h2> 
+ 
+If strings are closely packed, e.g. as a consequence of MPIs, it is 
+likely that they receive an increased string tension, which translates 
+into a broader <ei>pT</ei> spectrum, see further 
+<ref>Fis16</ref>.  It also means an enhanced rate (or rather reduced 
+suppression) of strange quark production relative to up/down quark 
+production.  Close-packing effects are scaled by the effective number 
+of near strings, which is <ei>pT</ei> suppressed and given by 
+<eq> 
+    &kappa;<sub>eff</sub> = (1 + (k<sub>p</sub>p + k<sub>q</sub>q) 
+    /(1+p<sup>2</sup><sub>T had</sub>/p<sup>2</sup><sub>T0</sub>)) 
+    <sup>2r</sup>&kappa;<sub>0</sub>. 
+</eq> 
+ 
+This scales the probability <code>StringFlav:probStoUD</code> by 
+<eq> 
+    P'(s:u/d) = P(s:u/d)<sup>(&kappa;<sub>0</sub>/&kappa;<sub>eff</sub>)</sup> 
+</eq> 
+ 
+<code>StringFlav:probSQtoQQ</code> and <code>StringFlav:probQQ1toQQ0</code> 
+also scale in this way. The width of the <ei>pT</ei> spectrum, given by 
+<ei>&sigma;^2</ei> is scaled by 
+<eq> 
+    &sigma;'<sup>2</sup> = &sigma;<sup>2</sup> 
+    &kappa;<sub>eff</sub>/&kappa;<sub>0</sub>. 
+</eq> 
+ 
+<b>Note:</b> for the purpose of close-packing, string overlaps are 
+determined according to rapidity measured along the z axis. This 
+should be quite appropriate for multi-string 
+systems produced by MPI in pp collisions but would not make much sense 
+to apply to processes such as ee&rarr;WW&rarr;hadrons, for which the z 
+axis does not play any special role; such studies would be 
+interesting but would require a generalisation of the current 
+implementation. 
+ 
+<flag name="ClosePacking:doClosePacking" default="off"> 
+If switched on then the two following parameters modify either 
+<code>StringPT:sigma</code> or <code>StringPT:temperature</code>, 
+respectively. Normally only one of the options below would be used, 
+but technically both are allowed and then combine multiplicatively. 
+</flag> 
+ 
+<parm name="ClosePacking:tension" default="0.08" min="0.0"> 
+<ei>k<sub>p</sub></ei> parameter above. 
+</parm> 
+ 
+<parm name="ClosePacking:tensionRatio" default="0.5" min="0.0" max="1.0"> 
+<ei>k<sub>q</sub>/k<sub>p</sub></ei> ratio. 
+</parm> 
+ 
+<parm name="ClosePacking:PT0" default="2.0" min="0.0"> 
+<ei>p<sub>T0</sub></ei> parameter above. 
+</parm> 
+ 
+<parm name="ClosePacking:facPT" default="1.0" min="0.0"> 
+Allows scaling of close-packing effect on <ei>pT</ei> by introducing 
+<eq> 
+    R<sub>pT</sub> = facPT<sup>2</sup> 
+    (&kappa;<sub>eff</sub>/&kappa;<sub>0</sub> - 1) + 1, 
+</eq> 
+such that 
+<eq> 
+    &sigma;'<sup>2</sup> = &sigma;<sup>2</sup> * R<sub>pT</sub>. 
+</eq> 
+</parm> 
+ 
+<flag name="ClosePacking:qqKappa" default="off"> 
+Controls whether to increase the diquark probability 
+<code>StringFlav:probQQtoQ</code> which takes the form <ei>P(qq:q) = 
+&alpha; * P(ud0) / P(u)</ei>, where <ei>&alpha;</ei> is dependent on 
+<code>StringFlav:probStoUD</code>, <code>StringFlav:probSQtoQQ</code> 
+and <code>StringFlav:probQQ1toQQ0</code> (see further 
+<ref>Bie14</ref>). This scales the diquark probability due to the 
+diquark constituent mass relative to u/d quarks.  This scaling doesn't 
+necessarily translate to the popcorn mechanism for diquark creation. 
+</flag> 
+ 
+<parm name="ClosePacking:facQQ" default="1.0" min="0.0"> 
+Allows scaling of close-packing effect on 
+<code>StringFlav:probQQtoQ</code> by introducing 
+<eq> 
+    R<sub>QQ</sub> = facQQ<sup>2</sup> 
+    (&kappa;<sub>eff</sub>/&kappa;<sub>0</sub> - 1) + 1, 
+</eq> 
+where <code>StringFlav:probQQtoQ</code> is scaled by 
+<eq> 
+    P'(qq:q)=&alpha;'(P(qq:q)/&alpha;)<sup>1/R<sub>QQ</sub></sup>, 
+</eq> 
+and <ei>&alpha;'</ei> is <ei>&alpha;</ei> recalculated given 
+<ei>&kappa;<sub>eff</sub></ei>. 
+</parm> 
+ 
+Parameters <code>ClosePacking:expNSP</code> and 
+<code>ClosePacking:expMPI</code> are typically used for the thermal 
+model of string breaks. Normally only one of the options below would 
+be used, but technically both are allowed and then combine 
+multiplicatively. 
+ 
+<parm name="ClosePacking:expNSP" default="0.5" min="0.0" max="1.0"> 
+<ei>r</ei> parameter above to allow non-linear scaling of 
+<ei>&kappa;<sub>eff</sub></ei>. Default value is based on Gaussian string 
+breaks. For the thermal model, the default value is 0.13. 
+</parm> 
+ 
+<parm name="ClosePacking:expMPI" default="0.0" min="0.0" max="1.0"> 
+Allows scaling of width/temperature by number of MPI rather than number of 
+near strings. The width/temparture will get the prefactor 
+<i>N(MPI)<sup>expMPI</sup></i>. 
+</parm> 
+ 
+<h3>Popcorn destructive interference</h3> 
+ 
+The popcorn mechanism creates diquarks via a step-wise procedure of 
+two successive colour fluctuations on a string. By allowing the first 
+of these colour fluctuaions to break strings given the correct colour 
+configuration, the probability of forming a diquark is reduced in 
+densely packed string systems. To modify 
+<code>StringFlav:probQQtoQ</code>, the survival probability of a 
+diquark is considered, with <ei>f<sub>q</sub></ei> 
+and <ei>f<sub>p</sub></ei> being the probability of the colour fluctuation 
+to connect with an antiparallel or parallel nearby string 
+respectively. Connections with antiparallel strings is expected to be 
+dominant due to the favoured colour orientation. These probabilities 
+are <ei>pT</ei> suppressed the same way as 
+<ei>&kappa;<sub>eff</sub></ei> is for close-packing, using parameter 
+<code>ClosePacking:PT0</code>. 
+ 
+As colour indices used in colour reconnections are currently not 
+stored in the event, an equal distribution of colours is assumed 
+instead. Considering the survival probability of the first fluctuation 
+for a given colour configuration, the probability 
+<code>StringFlav:probQQtoQ</code> is modified by 
+ 
+<eq> 
+    P'(qq:q) = ((1-f<sub>q</sub>)<sup>n<sub>q</sub>/9</sup> 
+    (1-f<sub>p</sub>)<sup>n<sub>p</sub>/9</sup>) P(qq:q). 
+</eq> 
+ 
+<parm name="ClosePacking:qqFacQ" default="0.5" min="0." max="1.0"> 
+<ei>f<sub>q</sub></ei> parameter above. 
+</parm> 
+ 
+<parm name="ClosePacking:qqFacP" default="0." min="0." max="1.0"> 
+<ei>f<sub>p</sub></ei> parameter above. 
+</parm> 
+ 
+</chapter> 

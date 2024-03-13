@@ -239,10 +239,10 @@ amount of colour reconnection.
 <p/> 
 When the two strings are allowed to reconnect, they will reconnect if it 
 lowers the total string length. The total string length is in the model 
-defined by an approximation to the <i>lambda</i>-measure. Several options 
-for different approximations are available. The <i>lambda</i>-measure is not 
-well understood, especially for junction structures, and a tuneable parameter 
-is introduced to vary the behaviour between junctions and ordinary strings. 
+defined by an approximation to the <i>lambda</i>-measure. 
+The <i>lambda</i>-measure is not well understood, especially for junction 
+structures, and a tuneable parameter is introduced to vary the behaviour 
+between junctions and ordinary strings. 
  
 <p/> 
 To avoid problems with very low mass string and junction structures, these are 
@@ -261,24 +261,48 @@ starting point. Additional fragmentation variables were also adjusted in the
 first tune, but these provide a smaller change (see [<a href="Bibliography.html#refChr14a" target="page">Chr14a</a>] for a 
 complete list). 
  
- 
 <a name="anchor6"></a>
-<p/><code>parm&nbsp; </code><strong> ColourReconnection:m0 &nbsp;</strong> 
- (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 5.</code>)<br/>
-This is the variable used in the lambda measure for the string length. 
-See the different choices of lambda measure for exact formulas. This variable 
-is in the new model also used as a cut for forming pseudo particles that are 
-not colour reconnected. 
+<p/><code>mode&nbsp; </code><strong> ColourReconnection:lambdaForm &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
+This allows to switch between different options for what 
+<i>lambda</i>-measure to use. The formula shown are how much each 
+end of a dipole or junction contribute to the total 
+<i>lambda</i>-measure. The energies are defined in respectively the 
+dipole or junction rest frame. 
+<br/><code>option </code><strong> 0</strong> :  <i>lambda = ln( max(1., (E + p)/(m + m0)) )</i> 
+   
+<br/><code>option </code><strong> 1</strong> :  <i>lambda = ln (1 + sqrt(2) E/m0)</i> 
+   
    
  
 <a name="anchor7"></a>
-<p/><code>parm&nbsp; </code><strong> ColourReconnection:junctionCorrection &nbsp;</strong> 
- (<code>default = <strong>1.20</strong></code>; <code>minimum = 0.01</code>; <code>maximum = 10.</code>)<br/>
-This variable allows to use a different m0 for junction strings in the lambda 
-measure. It is multiplicative correction to the m0 chosen above. 
+<p/><code>parm&nbsp; </code><strong> ColourReconnection:m0 &nbsp;</strong> 
+ (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 5.</code>)<br/>
+Used in the <i>lambda</i>-measure as a protection against small mass 
+systems in <code>lambdaForm</code><i>=0</i>, and used as a regularisation 
+parameter in <code>lambdaForm</code><i>=1</i>. 
    
  
 <a name="anchor8"></a>
+<p/><code>parm&nbsp; </code><strong> ColourReconnection:junctionCorrection &nbsp;</strong> 
+ (<code>default = <strong>1.20</strong></code>; <code>minimum = 0.01</code>; <code>maximum = 10.</code>)<br/>
+Used in the <i>lambda</i>-measure for junction strings, this parameter 
+allows one to vary how easily junctions form. It is implemented as a 
+multiplicative correction to the mass term in the denominator of the 
+<i>lambda</i>-measure. For <code>lambdaForm = 0</code>, it multiplies 
+<i>(m+m0)</i> and results in a constant offset from the standard 
+<i>lambda</i>-measure. For <code>lambdaForm = 1</code>, this parameter 
+simply multiplies <i>m0</i>. 
+   
+ 
+<a name="anchor9"></a>
+<p/><code>parm&nbsp; </code><strong> ColourReconnection:mPseudo &nbsp;</strong> 
+ (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 5.</code>)<br/>
+This variable is used as a cut for forming pseudo particles that are not 
+colour reconnected. 
+   
+ 
+<a name="anchor10"></a>
 <p/><code>mode&nbsp; </code><strong> ColourReconnection:nColours &nbsp;</strong> 
  (<code>default = <strong>9</strong></code>; <code>minimum = 1</code>; <code>maximum = 30</code>)<br/>
 The number of reconnection colours, this should not be confused with the 
@@ -294,7 +318,7 @@ The behaviour of junction formation therefore only changes slightly with this
 variable. 
    
  
-<a name="anchor9"></a>
+<a name="anchor11"></a>
 <p/><code>flag&nbsp; </code><strong> ColourReconnection:sameNeighbourColours &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 In the normal colour reconnection two neighbouring strings are not allowed 
@@ -306,29 +330,28 @@ this variable needs to be turned on, since it is not possible to have
 different neighbouring colours. 
    
  
-<a name="anchor10"></a>
+<a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> ColourReconnection:allowJunctions &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 This switch disables the formation of junctions in the colour reconnection. 
    
  
-<a name="anchor11"></a>
-<p/><code>mode&nbsp; </code><strong> ColourReconnection:lambdaForm &nbsp;</strong> 
+<a name="anchor13"></a>
+<p/><code>mode&nbsp; </code><strong> ColourReconnection:heavyLambdaForm &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
-This allows to switch between different options for what 
-<i>lambda</i>-measure to use. 
-The formula shown are how much each end of a dipole or junction contribute to 
-the total <i>lambda</i>-measure. The energies are defined in respectively 
-the dipole or junction rest frame. 
-<br/><code>option </code><strong> 0</strong> :  <i>lambda = ln (1 + sqrt(2) E/m0)</i> 
+This allows to include a pure rapidity-based <i>lambda</i>-measure 
+independent of <i>m0</i> in case a dipole end is a heavy quark 
+(<i>c</i> or <i>b</i>): <i>lambda = ln ((E + p)/mq)</i>. 
+<br/><code>option </code><strong> 0</strong> :  No special treatment of heavy quarks. 
    
-<br/><code>option </code><strong> 1</strong> :  <i>lambda = ln (1 + 2 E/m0)</i> 
+<br/><code>option </code><strong> 1</strong> :  Rapidity-based <i>lambda</i> for heavy quarks attached to 
+ junctions only. 
    
-<br/><code>option </code><strong> 2</strong> :  <i>lambda = ln (2 E/m0)</i> 
+<br/><code>option </code><strong> 2</strong> :  Rapidity-based <i>lambda</i> for all heavy quarks. 
    
    
  
-<a name="anchor12"></a>
+<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> ColourReconnection:allowDoubleJunRem &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 This parameter tells whether or not to allow a directly connected 
@@ -339,7 +362,7 @@ system is inserted between the junctions by removing some energy/momentum from
 the other legs. 
    
  
-<a name="anchor13"></a>
+<a name="anchor15"></a>
 <p/><code>mode&nbsp; </code><strong> ColourReconnection:timeDilationMode &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Disallow colour reconnection between strings that are not in causal 
@@ -379,11 +402,36 @@ the perturbative expansion).
    
    
  
-<a name="anchor14"></a>
+<a name="anchor16"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:timeDilationPar &nbsp;</strong> 
  (<code>default = <strong>0.18</strong></code>; <code>minimum = 0</code>; <code>maximum = 100</code>)<br/>
 This is a tuneable parameter for the time dilation. The definition 
 can be seen above under <code>timeDilationMode</code>. 
+   
+ 
+<a name="anchor17"></a>
+<p/><code>parm&nbsp; </code><strong> ColourReconnection:dipoleMaxDist &nbsp;</strong> 
+ (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 50.0</code>)<br/>
+This is a tuneable parameter for the allowed maximum impact parameter 
+distance between the centres of two dipoles to be Colour 
+reconnected. It also restricts CR from three dipoles, all of the 
+dipoles pairs have to be seperated not more than the value of this 
+parameter. The distance is measured in the unit of fm. If set to 
+<i>0</i>, there is no maximum. 
+   
+ 
+<a name="anchor18"></a>
+<p/><code>flag&nbsp; </code><strong> ColourReconnection:allowDiquarkJunctionCR &nbsp;</strong> 
+ (<code>default = <strong>on</strong></code>)<br/>
+This flag decides whether or not to allow dipoles containing 
+diquarks to participate in junction colour reconnections. If it's 
+<code>off</code> then dipoles containing diquarks cannot be 
+reconnected into junction systems. Reconnections not 
+involving junctions are still allowed. Contextual note: this parameter 
+was introduced to disallow junctions connected (directly) to diquarks, 
+because they caused a lot of hadronization failures in the heavy-ion 
+remnant region (many, largely parallel, diquarks that attempt 
+junction reconnections). 
    
  
 <a name="section2"></a> 
@@ -445,7 +493,7 @@ As an option, singlet subsystems containing a junction may or may not
 be allowed to take part in the flip step. Since the number of junction 
 systems is limited in this model the differences are not so important. 
  
-<a name="anchor15"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:m2Lambda &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.25</code>; <code>maximum = 16.</code>)<br/>
 The <i>m2Lambda</i> parameter used in the definition of the approximate 
@@ -456,14 +504,14 @@ a potential move or flip is rather insensitive to the precise value,
 owing to large cancellations. 
    
  
-<a name="anchor16"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:fracGluon &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 The probability that a given gluon will be considered for being moved. 
 It thus gives the average fraction of gluons being considered. 
    
  
-<a name="anchor17"></a>
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:dLambdaCut &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 10.</code>)<br/>
 Restrict gluon moves and colour flips to those that reduce <i>lambda</i> 
@@ -472,7 +520,7 @@ will be performed, but those that remain are the ones most likely to produce
 large effects. 
    
  
-<a name="anchor18"></a>
+<a name="anchor22"></a>
 <p/><code>mode&nbsp; </code><strong> ColourReconnection:flipMode &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 4</code>)<br/>
 Performing the flip step or not. Also possibility to omit the move step. 
@@ -532,19 +580,19 @@ more convenient for tunes to data. The LEP collaborations have used SK I
 as a common reference to establish the existence of CR in <i>W^+ W^-</i> 
 events. 
  
-<a name="anchor19"></a>
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> ColourReconnection:lowerLambdaOnly &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Only allow overlaps that lowers the total string length. 
    
  
-<a name="anchor20"></a>
+<a name="anchor24"></a>
 <p/><code>flag&nbsp; </code><strong> ColourReconnection:singleReconnection &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Limit the number of reconnections to a single reconnection. 
    
  
-<a name="anchor21"></a>
+<a name="anchor25"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:kI &nbsp;</strong> 
  (<code>default = <strong>0.6</strong></code>; <code>minimum = 0.</code>; <code>maximum = 100.</code>)<br/>
 kI is the main free parameter in the reconnection probability for SK I. 
@@ -552,7 +600,7 @@ This probability is given by kI times the space-time overlap volume,
 up to saturation effects. 
    
  
-<a name="anchor22"></a>
+<a name="anchor26"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:fragmentationTime &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 1.</code>; <code>maximum = 2.</code>)<br/>
 This parameter specifies the average fragmentation time of the string, 
@@ -563,21 +611,21 @@ fragmentation function as well as to the string tension. It is therefore
 not a quite free parameter. 
    
  
-<a name="anchor23"></a>
+<a name="anchor27"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:rHadron &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.3</code>; <code>maximum = 1.</code>)<br/>
 Width of the type I string in reconnection calculations, in fm, giving the 
 radius of the Gaussian distribution in <i>x</i> and <i>y</i> separately. 
    
  
-<a name="anchor24"></a>
+<a name="anchor28"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:blowR &nbsp;</strong> 
  (<code>default = <strong>2.5</strong></code>; <code>minimum = 1.</code>; <code>maximum = 4.</code>)<br/>
 Technical parameter used in the Monte Carlo sampling of the spatial 
 phase space volume in SK I. There is no real reason to change this number. 
    
  
-<a name="anchor25"></a>
+<a name="anchor29"></a>
 <p/><code>parm&nbsp; </code><strong> ColourReconnection:blowT &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 1.</code>; <code>maximum = 4.</code>)<br/>
 Technical parameter used in the Monte Carlo sampling of the temporal 
@@ -587,4 +635,4 @@ phase space volume in SK I. There is no real reason to change this number.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -19,10 +19,11 @@ as core parts of the PYTHIA 8.3 distribution.
 The prepending of "simple" was a minimalistic choice under the 
 circumstances; more fancy names could have been chosen. What it 
 refers to is that showers like VINCIA and Dire aim higher, in 
-striving to achieve full NLL accuracy, whereas the simple ones 
-operate in an improved LL approximation. In other respects the 
-simple showers can do more different physics than the other two, 
-at least currently. Some examples of the broad approach are 
+striving to achieve better coherence and higher-logarithmic accuracy, 
+whereas the simple ones operate in an improved LL approximation. In 
+other respects the  simple showers can do more different physics than 
+the other two, at least currently. Some examples of the broad approach 
+are 
 <ul> 
 <li>Matrix elements corrections for the first ("hardest") gluon 
 emission in most two-body resonance decays, effectively making the 
@@ -80,7 +81,8 @@ The full description of settings in the Simple Shower framework
 is spread across several pages: 
 <ul> 
 <li>The final-state <aloc href="TimelikeShowers">Timelike Showers</aloc> 
-cover all aspects of QCD and QED FSR.</li> 
+cover all aspects of QCD and QED FSR, including also options for 
+interleaved resonance decays.</li> 
 <li>The initial-state <aloc href="SpacelikeShowers">Spacelike Showers</aloc> 
 cover all aspects of QCD and QED ISR.</li> 
 <li>While the main switches for weak radiation of <ei>W^+-</ei> and 
@@ -106,4 +108,4 @@ help of <aloc href="UserHooks">User Hooks</aloc>.</li>
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

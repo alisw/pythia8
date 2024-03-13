@@ -1,5 +1,5 @@
 // LHAPDF5.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,6 +9,7 @@
 #define Pythia8_LHAPDF5_H
 
 #include "Pythia8/PartonDistributions.h"
+#include "Pythia8/Plugins.h"
 
 namespace Pythia8 {
 
@@ -139,17 +140,22 @@ class LHAPDF5 : public PDF {
 public:
 
   // Constructor.
-  LHAPDF5(int idBeamIn, string setName, int member,  int nSetIn = -1) :
-  PDF(idBeamIn), doExtraPol(false), nSet(nSetIn)
-    { init(setName, member); isPhoton = (idBeamIn == 22) ? true : false; }
+  LHAPDF5(Pythia*, Settings* settingsPtr, Logger*) :
+    PDF(), doExtraPol(false) {
+    if (settingsPtr == nullptr) return;
+    sSymmetric(settingsPtr->flag("LHAPDF:sSymmetric"));
+    cSymmetric(settingsPtr->flag("LHAPDF:cSymmetric"));
+    bSymmetric(settingsPtr->flag("LHAPDF:bSymmetric"));
+  }
+
+  // Initialization of PDF set.
+  bool init(int idBeamIn, string setName, int member, Logger* loggerPtr)
+    override;
 
   // Allow extrapolation beyond boundaries. This is optional.
   void setExtrapolate(bool extrapol);
 
 private:
-
-  // Initialization of PDF set.
-  void init(string setName, int member);
 
   // Update all PDF values.
   void xfUpdate(int , double x, double Q2);
@@ -167,7 +173,13 @@ private:
 
 // Initialize a parton density function from LHAPDF5.
 
-void LHAPDF5::init(string setName, int member) {
+bool LHAPDF5::init(int idBeamIn, string setName, int member,
+  Logger* loggerPtr) {
+  idBeam = idBeamIn;
+  idBeamAbs = abs(idBeamIn);
+  isPhoton = idBeamIn == 22;
+  nSet = LHAPDF5Interface::findNSet(setName, member);
+  if (nSet == -1) nSet = LHAPDF5Interface::freeNSet();
 
   // If already initialized then need not do anything further.
   LHAPDF5Interface::LHAPDFInfo initializedInfo =
@@ -175,7 +187,8 @@ void LHAPDF5::init(string setName, int member) {
   string initializedSetName   = initializedInfo.name;
   int    initializedMember    = initializedInfo.member;
   hasPhoton                   = initializedInfo.photon;
-  if (setName == initializedSetName && member == initializedMember) return;
+  if (setName == initializedSetName && member == initializedMember)
+    return true;
 
   // Initialize set. If first character is '/' then assume that name
   // is given with path, else not.
@@ -200,6 +213,7 @@ void LHAPDF5::init(string setName, int member) {
   initializedInfo.member = member;
   initializedInfo.photon = hasPhoton;
   if (nSet > 0) LHAPDF5Interface::initializedSets[nSet] = initializedInfo;
+  return true;
 
 }
 
@@ -251,21 +265,17 @@ void LHAPDF5::xfUpdate(int, double x, double Q2) {
 
   // Update values.
   xg     = xfArray[6];
-  xu     = xfArray[8];
   xd     = xfArray[7];
-  xs     = xfArray[9];
-  xubar  = xfArray[4];
   xdbar  = xfArray[5];
-  xsbar  = xfArray[3];
+  xu     = xfArray[8];
+  xubar  = xfArray[4];
+  xs     = xfArray[9];
   xc     = xfArray[10];
   xb     = xfArray[11];
+  xsbar  = sSymmetricSave ? xs : xfArray[3];
+  xcbar  = cSymmetricSave ? xc : xfArray[2];
+  xbbar  = bSymmetricSave ? xb : xfArray[1];
   xgamma = xPhoton;
-
-  // Subdivision of valence and sea.
-  xuVal  = xu - xubar;
-  xuSea  = xubar;
-  xdVal  = xd - xdbar;
-  xdSea  = xdbar;
 
   // idSav = 9 to indicate that all flavours reset.
   idSav = 9;
@@ -274,13 +284,10 @@ void LHAPDF5::xfUpdate(int, double x, double Q2) {
 
 //--------------------------------------------------------------------------
 
-// Define external handles to the plugin for dynamic loading.
+// Declare the plugin.
 
-extern "C" PDFPtr newLHAPDF(int idBeamIn, string setName, int member) {
-  int nSet = LHAPDF5Interface::findNSet(setName, member);
-  if (nSet == -1) nSet = LHAPDF5Interface::freeNSet();
-  return make_shared<LHAPDF5>(idBeamIn, setName, member, nSet);
-}
+PYTHIA8_PLUGIN_CLASS(PDF, LHAPDF5, false, false, false)
+PYTHIA8_PLUGIN_VERSIONS(PYTHIA_VERSION_INTEGER)
 
 //==========================================================================
 

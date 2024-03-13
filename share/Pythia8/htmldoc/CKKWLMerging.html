@@ -51,10 +51,9 @@ inbuilt PDF,  as outlined in the
 HepMC dependence can be removed by erasing the code allowing for HepMC 
 output. 
  
-<p/> Please note that a detailed tutorial on merging in Pythia is available 
-from 
-<a href="http://home.thep.lu.se/Pythia/pythia8/mergingworksheet8160.pdf"> 
-http://home.thep.lu.se/Pythia/pythia8/mergingworksheet8160.pdf</a>. 
+<p/> The attached <a href="../pdfdoc/worksheet8309.pdf"> 
+PYTHIA 8.3 Worksheet</a> contains a Section 6 that walks you through 
+the basics of setting up a merging in PYTHIA. 
  
 <p/> Three very short LHE files (<code>w+_production_lhc_0.lhe</code>, 
 <code>w+_production_lhc_1.lhe</code>, <code>w+_production_lhc_2.lhe</code>) 
@@ -976,9 +975,9 @@ that <code>main85.cc</code> assumes the naming
 convention <i>name_tree_#nAdditionalJets.lhe</i>. All settings can 
 be included though the input file, so that <code>main85.cc</code> does not 
 have to be changed explicitly. <code>main85.cc</code> first switches off 
-showers, multiparton interactions and hadronisation, and estimates the cross 
+showers, multiparton interactions and hadronization, and estimates the cross 
 sections (after enforcing the merging scale cut) of samples for different 
-numbers of additional jets. Then, showers, MPI and hadronisation are switched 
+numbers of additional jets. Then, showers, MPI and hadronization are switched 
 on again, and the CKKW-L merging procedure is performed. Events will be read 
 in a decreasing sequence of jet multiplicities, which also means that e.g. 
 events with two additional partons in the LHE file will be printed to the 
@@ -1453,7 +1452,17 @@ the event weight <code>Info::weight()</code>, the merging weight
 by <code>Info::sigmaGen()</code> includes the effect of CKKW-L merging. 
    
  
+<a name="anchor58"></a>
+<p/><code>flag&nbsp; </code><strong> Merging:runtimeAMCATNLOInterface &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+This setting should only be touched by experts. 
+If on, then the merging machinery will only be used to generate and 
+extract information necessary for the runtime interface of Pythia and aMC@NLO. 
+This is usually done via runtime calls by aMC@NLO. Read further details about 
+the method in [<a href="Bibliography.html#refFre20" target="page">Fre20</a>]. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

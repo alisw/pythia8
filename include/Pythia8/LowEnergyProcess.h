@@ -1,5 +1,5 @@
 // LowEnergyProcess.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,12 +11,11 @@
 #include "Pythia8/Basics.h"
 #include "Pythia8/Event.h"
 #include "Pythia8/FragmentationSystems.h"
-#include "Pythia8/Info.h"
+#include "Pythia8/SigmaLowEnergy.h"
 #include "Pythia8/MiniStringFragmentation.h"
-#include "Pythia8/ParticleData.h"
-#include "Pythia8/PhysicsBase.h"
+#include "Pythia8/HadronWidths.h"
+#include "Pythia8/NucleonExcitations.h"
 #include "Pythia8/PythiaStdlib.h"
-#include "Pythia8/Settings.h"
 #include "Pythia8/StringFragmentation.h"
 
 namespace Pythia8 {
@@ -30,36 +29,47 @@ class LowEnergyProcess : public PhysicsBase {
 
 public:
 
-  // Constructor. Still to be expanded with further default values.
-  LowEnergyProcess() : stringFragPtr(), ministringFragPtr() {}
+  // Constructor.
+  LowEnergyProcess() = default;
 
   // Initialize the class.
-  bool init(StringFragmentation* stringFragPtrIn,
-    MiniStringFragmentation* ministringFragPtrIn);
+  void init( StringFlav* flavSelPtrIn, StringFragmentation* stringFragPtrIn,
+    MiniStringFragmentation* ministringFragPtrIn,
+    SigmaLowEnergy* sigmaLowEnergyPtrIn,
+    NucleonExcitations* nucleonExcitationsPtrIn);
 
   // Produce outgoing primary hadrons from collision of incoming pair.
-  bool collide( int i1, int i2, int type, Event& event, Vec4 vtx = Vec4() );
+  bool collide( int i1, int i2, int typeIn, Event& event, Vec4 vtx = Vec4(),
+    Vec4 vtx1 = Vec4(), Vec4 vtx2 = Vec4());
 
   // Event record to handle hadronization.
   Event         leEvent;
 
+  // Give access to b slope in elastic and diffractive interactions.
+  double bSlope( int id1In, int id2In, double eCMIn, double mAIn, double mBIn,
+    int typeIn = 2) { id1 = id1In; id2 = id2In; eCM = eCMIn, sCM = eCM * eCM;
+    mA = mAIn; mB = mBIn; type = typeIn; return bSlope();}
+
 private:
 
-  // Constants: could only be changed in the code itself.
-  static const int MAXLOOP;
-  static const double MASSREDUCERATE, MDIFFMIN, ALPHAPRIME;
+  // Initialization flag.
+  bool isInit = false;
 
   // Parameters of the generation process.
   double probStoUD, fracEtass, fracEtaPss, xPowMes, xPowBar, xDiqEnhance,
-         sigmaQ, mStringMin;
+         sigmaQ, mStringMin, sProton, probDoubleAnn;
 
   // Properties of the current collision. 1 or 2 is two incoming hadrons.
   // "c" or "ac" is colour or anticolour component of hadron.
   bool   isBaryon1, isBaryon2;
-  int    sizeOld, id1, id2, idc1, idac1, idc2, idac2;
-  double m1, m2, eCM, sCM, z1, z2, mT1, mT2, mA, mB,
+  int    type, sizeOld, id1, id2, idc1, idac1, idc2, idac2, nHadron,
+         id1sv = {}, id2sv = {};
+  double m1, m2, eCM, sCM, mThr1, mThr2, z1, z2, mT1, mT2, mA, mB,
          mc1, mac1, px1, py1, pTs1, mTsc1, mTsac1, mTc1, mTac1,
-         mc2, mac2, px2, py2, pTs2, mTsc2, mTsac2, mTc2, mTac2;
+         mc2, mac2, px2, py2, pTs2, mTsc2, mTsac2, mTc2, mTac2, bA, bB;
+
+  // Pointer to class for flavour generation.
+  StringFlav* flavSelPtr;
 
   // Pointer to the generator for normal string fragmentation.
   StringFragmentation* stringFragPtr;
@@ -68,23 +78,41 @@ private:
   MiniStringFragmentation* ministringFragPtr;
 
   // Separate configuration for simple collisions.
-  ColConfig     simpleColConfig;
+  ColConfig simpleColConfig;
+
+  // Cross sections for low-energy processes.
+  SigmaLowEnergy* sigmaLowEnergyPtr;
+
+  // Pointer to class for handling nucleon excitations
+  NucleonExcitations* nucleonExcitationsPtr;
 
   // Handle inelastic nondiffractive collision.
   bool nondiff();
 
   // Handle elastic and diffractive collisions.
-  bool eldiff( int type);
+  bool eldiff();
+
+  // Handle excitation collisions.
+  bool excitation();
 
   // Handle annihilation collisions.
   bool annihilation();
 
+  // Handle resonant collisions.
+  bool resonance();
+
   // Simple version of hadronization for low-energy hadronic collisions.
-  bool simpleHadronization(Event& event, bool isDiff = false);
+  bool simpleHadronization();
+
+  // Special case with isotropic two-body final state.
+  bool twoBody();
+
+  // Special case with isotropic three-body final state.
+  bool threeBody();
 
   // Split up hadron A or B into a colour pair, with masses and pT values.
-  bool splitA( double redMpT);
-  bool splitB( double redMpT);
+  bool splitA( double mMax, double redMpT, bool splitFlavour = true);
+  bool splitB( double mMax, double redMpT, bool splitFlavour = true);
 
   // Split a hadron inte a colour and an anticolour part.
   pair< int, int> splitFlav( int id);
@@ -95,8 +123,11 @@ private:
   // Estimate lowest possible mass state for flavour combination.
   double mThreshold( int iq1, int iq2);
 
+  // Estimate lowest possible mass state for diffractive excitation.
+  double mDiffThr( int idNow, double mNow);
+
   // Pick slope b of exp(b * t) for elastic and diffractive events.
-  double bSlope( int type);
+  double bSlope();
 
 };
 

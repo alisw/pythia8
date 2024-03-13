@@ -98,13 +98,13 @@ which makes sense, since they are all dominated by the same kind of
 reweighting that cancels the low-<ei>pT</ei> divergence. 
  
 <p/> 
-An eikonalized description of these processes, excluding double onia 
-production, is included in the multiparton-interactions 
-framework. Here the low-<ei>pT</ei> damping is automatic, and 
-additionally the framework is more consistent (e.g. with respect to 
-energy-momentum constraints and the impact-parameter description) for 
-events where the onium production is not the hardest subprocess, as 
-would often be the case in the low-<ei>pT</ei> limit. 
+An eikonalized description of these processes is included in the 
+multiparton-interactions framework. Here the low-<ei>pT</ei> damping 
+is automatic, and additionally the framework is more consistent 
+(e.g. with respect to energy-momentum constraints and the 
+impact-parameter description) for events where the onium production is 
+not the hardest subprocess, as would often be the case in the 
+low-<ei>pT</ei> limit. 
  
 <flag name="Onia:forceMassSplit" default="on"> 
 Force the mass splitting between the colour-singlet states and their 
@@ -146,7 +146,7 @@ e.g. <ei>Upsilon</ei> and <ei>chi_b</ei>.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Charmonium:states(3S1)" default="443,100443" 
+<mvec name="Charmonium:states(3S1)" default="{443,100443}" 
 min="0"> 
 The <ei>3S1</ei> charmonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
@@ -154,93 +154,93 @@ either of flags or parameters, must be the same length as this
 vector. 
 </mvec> 
  
-<pvec name="Charmonium:O(3S1)[3S1(1)]" default="1.16,0.76" min="0.0"> 
+<pvec name="Charmonium:O(3S1)[3S1(1)]" default="{1.16,0.76}" min="0.0"> 
 The colour-singlet long-distance matrix 
 elements <ei>&lt;O[3S1(1)]&gt;</ei> for the <ei>3S1</ei> charmonium states. 
 </pvec> 
  
-<pvec name="Charmonium:O(3S1)[3S1(8)]" default="0.0119,0.0050" 
+<pvec name="Charmonium:O(3S1)[3S1(8)]" default="{0.0119,0.0050}" 
 min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[3S1(8)]&gt;</ei> for the <ei>3S1</ei> charmonium states. 
 </pvec> 
  
-<pvec name="Charmonium:O(3S1)[1S0(8)]" default="0.01,0.004" min="0.0"> 
+<pvec name="Charmonium:O(3S1)[1S0(8)]" default="{0.01,0.004}" min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[1S0(8)]&gt;</ei> for the <ei>3S1</ei> 
 charmonium states. 
 </pvec> 
  
-<pvec name="Charmonium:O(3S1)[3P0(8)]" default="0.01,0.004" min="0.0"> 
+<pvec name="Charmonium:O(3S1)[3P0(8)]" default="{0.01,0.004}" min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[3P0(8)]&gt;/m_Q^2</ei> for the <ei>3S1</ei> charmonium 
 states. The remaining <ei>&lt;O[3PJ(8)]&gt;/m_Q^2</ei> 
 are calculated from these long-distance matrix elements. 
 </pvec> 
  
-<fvec name="Charmonium:gg2ccbar(3S1)[3S1(1)]g" default="off,off"> 
+<fvec name="Charmonium:gg2ccbar(3S1)[3S1(1)]g" default="{off,off}"> 
 Colour-singlet production of <ei>3S1</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3S1(1)] g</ei>. 
 Code 401. 
 </fvec> 
  
-<fvec name="Charmonium:gg2ccbar(3S1)[3S1(1)]gm" default="off,off"> 
+<fvec name="Charmonium:gg2ccbar(3S1)[3S1(1)]gm" default="{off,off}"> 
 Colour-singlet production of <ei>3S1</ei> charmonium states via 
-<ei>g g &rarr; ccbar[3S1(1)] g</ei> with a hard <ei>gamma</ei>. 
+<ei>g g &rarr; ccbar[3S1(1)] gamma</ei>. 
 Code 441. 
 </fvec> 
  
-<fvec name="Charmonium:gg2ccbar(3S1)[3S1(8)]g" default="off,off"> 
+<fvec name="Charmonium:gg2ccbar(3S1)[3S1(8)]g" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3S1(8)] g</ei>. 
 Code 402. 
 </fvec> 
  
-<fvec name="Charmonium:qg2ccbar(3S1)[3S1(8)]q" default="off,off"> 
+<fvec name="Charmonium:qg2ccbar(3S1)[3S1(8)]q" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>q g &rarr; ccbar[3S1(8)] q</ei>. 
 Code 403. 
 </fvec> 
  
-<fvec name="Charmonium:qqbar2ccbar(3S1)[3S1(8)]g" default="off,off"> 
+<fvec name="Charmonium:qqbar2ccbar(3S1)[3S1(8)]g" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>q qbar &rarr; ccbar[3S1(8)] g</ei>. 
 Code 404. 
 </fvec> 
  
-<fvec name="Charmonium:gg2ccbar(3S1)[1S0(8)]g" default="off,off"> 
+<fvec name="Charmonium:gg2ccbar(3S1)[1S0(8)]g" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>g g &rarr; ccbar[1S0(8)] g</ei>. 
 Code 405. 
 </fvec> 
  
-<fvec name="Charmonium:qg2ccbar(3S1)[1S0(8)]q" default="off,off"> 
+<fvec name="Charmonium:qg2ccbar(3S1)[1S0(8)]q" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>q g &rarr; ccbar[1S0(8)] q</ei>. 
 Code 406. 
 </fvec> 
  
-<fvec name="Charmonium:qqbar2ccbar(3S1)[1S0(8)]g" default="off,off"> 
+<fvec name="Charmonium:qqbar2ccbar(3S1)[1S0(8)]g" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>q qbar &rarr; ccbar[1S0(8)] g</ei>. 
 Code 407. 
 </fvec> 
  
-<fvec name="Charmonium:gg2ccbar(3S1)[3PJ(8)]g" default="off,off"> 
+<fvec name="Charmonium:gg2ccbar(3S1)[3PJ(8)]g" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3PJ(8)] g</ei>. 
 Code 408. 
 </fvec> 
  
-<fvec name="Charmonium:qg2ccbar(3S1)[3PJ(8)]q" default="off,off"> 
+<fvec name="Charmonium:qg2ccbar(3S1)[3PJ(8)]q" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
 <ei>q g &rarr; ccbar[3PJ(8)] q</ei>. 
 Code 409. 
 </fvec> 
  
-<fvec name="Charmonium:qqbar2ccbar(3S1)[3PJ(8)]g" default="off,off"> 
+<fvec name="Charmonium:qqbar2ccbar(3S1)[3PJ(8)]g" default="{off,off}"> 
 Colour-octet production of <ei>3S1</ei> charmonium states via 
-<ei>q qbar &rarr; ccbar[3SJ(8)] g</ei>. 
+<ei>q qbar &rarr; ccbar[3PJ(8)] g</ei>. 
 Code 410. 
 </fvec> 
  
@@ -250,14 +250,14 @@ Code 410.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Charmonium:states(3PJ)" default="10441,20443,445"> 
+<mvec name="Charmonium:states(3PJ)" default="{10441,20443,445}"> 
 The <ei>3PJ</ei> charmonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
 vector. 
 </mvec> 
  
-<pvec name="Charmonium:O(3PJ)[3P0(1)]" default="0.05,0.05,0.05" 
+<pvec name="Charmonium:O(3PJ)[3P0(1)]" default="{0.05,0.05,0.05}" 
 min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3P0(1)]&gt;/m_Q^2</ei> for the <ei>3PJ</ei> charmonium 
@@ -265,43 +265,43 @@ states. The remaining <ei>&lt;O[3PJ(1)]&gt;/m_Q^2</ei>
 are calculated from these long-distance matrix elements. 
 </pvec> 
  
-<pvec name="Charmonium:O(3PJ)[3S1(8)]" default="0.0031,0.0031,0.0031" 
+<pvec name="Charmonium:O(3PJ)[3S1(8)]" default="{0.0031,0.0031,0.0031}" 
 min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3S1(8)]&gt;</ei> for the <ei>3PJ</ei> charmonium states. 
 </pvec> 
  
-<fvec name="Charmonium:gg2ccbar(3PJ)[3PJ(1)]g" default="off,off,off"> 
+<fvec name="Charmonium:gg2ccbar(3PJ)[3PJ(1)]g" default="{off,off,off}"> 
 Colour-singlet production of <ei>3PJ</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3PJ(1)] g</ei>. 
 Code 411. 
 </fvec> 
  
-<fvec name="Charmonium:qg2ccbar(3PJ)[3PJ(1)]q" default="off,off,off"> 
+<fvec name="Charmonium:qg2ccbar(3PJ)[3PJ(1)]q" default="{off,off,off}"> 
 Colour-singlet production of <ei>3PJ</ei> charmonium states via 
 <ei>q g &rarr; ccbar[3PJ(1)] q</ei>. 
 Code 412. 
 </fvec> 
  
-<fvec name="Charmonium:qqbar2ccbar(3PJ)[3PJ(1)]g" default="off,off,off"> 
+<fvec name="Charmonium:qqbar2ccbar(3PJ)[3PJ(1)]g" default="{off,off,off}"> 
 Colour-singlet production of <ei>3PJ</ei> charmonium states via 
 <ei>q qbar &rarr; ccbar[3PJ(1)] g</ei>. 
 Code 413. 
 </fvec> 
  
-<fvec name="Charmonium:gg2ccbar(3PJ)[3S1(8)]g" default="off,off,off"> 
+<fvec name="Charmonium:gg2ccbar(3PJ)[3S1(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3PJ</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3S1(8)] g</ei>. 
 Code 414. 
 </fvec> 
  
-<fvec name="Charmonium:qg2ccbar(3PJ)[3S1(8)]q" default="off,off,off"> 
+<fvec name="Charmonium:qg2ccbar(3PJ)[3S1(8)]q" default="{off,off,off}"> 
 Colour-octet production of <ei>3PJ</ei> charmonium states via 
 <ei>q g &rarr; ccbar[3S1(8)] q</ei>. 
 Code 415. 
 </fvec> 
  
-<fvec name="Charmonium:qqbar2ccbar(3PJ)[3S1(8)]g" default="off,off,off"> 
+<fvec name="Charmonium:qqbar2ccbar(3PJ)[3S1(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3PJ</ei> charmonium states via 
 <ei>q qbar &rarr; ccbar[3S1(8)] g</ei>. 
 Code 416. 
@@ -313,14 +313,14 @@ Code 416.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Charmonium:states(3DJ)" default="30443"> 
+<mvec name="Charmonium:states(3DJ)" default="{30443}"> 
 The <ei>3DJ</ei> charmonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
 vector. 
 </mvec> 
  
-<pvec name="Charmonium:O(3DJ)[3D1(1)]" default="0.161" min="0.0"> 
+<pvec name="Charmonium:O(3DJ)[3D1(1)]" default="{0.161}" min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3D1(1)]&gt;</ei> for the <ei>3PJ</ei> charmonium 
 states. For a <ei>3DJ</ei> charmonium state where <ei>J</ei> is 
@@ -330,32 +330,32 @@ by <ei>(2J+1)&lt;O[3D1(1)]/3&gt;</ei> using leading order spin symmetry
 relations. 
 </pvec> 
  
-<pvec name="Charmonium:O(3DJ)[3P0(8)]" default="0.01" min="0.0"> 
+<pvec name="Charmonium:O(3DJ)[3P0(8)]" default="{0.01}" min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[3P0(8)]&gt;/m_Q^2</ei> for the 3DJ charmonium 
 states. The remaining <ei>&lt;O[3PJ(8)]&gt;/m_Q^2</ei> 
 are calculated from these long-distance matrix elements. 
 </pvec> 
  
-<fvec name="Charmonium:gg2ccbar(3DJ)[3DJ(1)]g" default="off"> 
+<fvec name="Charmonium:gg2ccbar(3DJ)[3DJ(1)]g" default="{off}"> 
 Colour-singlet production of <ei>3PJ</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3DJ(1)] g</ei>. 
 Code 417. 
 </fvec> 
  
-<fvec name="Charmonium:gg2ccbar(3DJ)[3PJ(8)]g" default="off"> 
+<fvec name="Charmonium:gg2ccbar(3DJ)[3PJ(8)]g" default="{off}"> 
 Colour-octet production of <ei>3DJ</ei> charmonium states via 
 <ei>g g &rarr; ccbar[3PJ(8)] g</ei>. 
 Code 418. 
 </fvec> 
  
-<fvec name="Charmonium:qg2ccbar(3DJ)[3PJ(8)]q" default="off"> 
+<fvec name="Charmonium:qg2ccbar(3DJ)[3PJ(8)]q" default="{off}"> 
 Colour-octet production of <ei>3DJ</ei> charmonium states via 
 <ei>q g &rarr; ccbar[3PJ(8)] q</ei>. 
 Code 419. 
 </fvec> 
  
-<fvec name="Charmonium:qqbar2ccbar(3DJ)[3PJ(8)]g" default="off"> 
+<fvec name="Charmonium:qqbar2ccbar(3DJ)[3PJ(8)]g" default="{off}"> 
 Colour-octet production of <ei>3DJ</ei> charmonium states via 
 <ei>q qbar &rarr; ccbar[3PJ(8)] g</ei>. 
 Code 420. 
@@ -367,39 +367,39 @@ Code 420.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Charmonium:states(3S1)1" default="443,443,100443"> 
+<mvec name="Charmonium:states(3S1)1" default="{443,443,100443}"> 
 The first <ei>3S1</ei> charmonium states of the charmonium pairs that 
 can be produced from the following processes. Note that all vectors 
 within this section, either of modes, flags, or parameters, must be 
 the same length as this vector. 
 </mvec> 
  
-<mvec name="Charmonium:states(3S1)2" default="443,100443,100443"> 
+<mvec name="Charmonium:states(3S1)2" default="{443,100443,100443}"> 
 The second <ei>3S1</ei> charmonium states of the charmonium pairs that 
 can be produced from the following processes. 
 </mvec> 
  
-<pvec name="Charmonium:O(3S1)[3S1(1)]1" default="1.16,1.16,0.76" min="0.0"> 
+<pvec name="Charmonium:O(3S1)[3S1(1)]1" default="{1.16,1.16,0.76}" min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3S1(1)]&gt;</ei> for the first <ei>3S1</ei> charmonium 
 states. 
 </pvec> 
  
-<pvec name="Charmonium:O(3S1)[3S1(1)]2" default="1.16,0.76,0.76" min="0.0"> 
+<pvec name="Charmonium:O(3S1)[3S1(1)]2" default="{1.16,0.76,0.76}" min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3S1(1)]&gt;</ei> for the second <ei>3S1</ei> charmonium 
 states. 
 </pvec> 
  
 <fvec name="Charmonium:gg2doubleccbar(3S1)[3S1(1)]" 
-default="off,off,off"> 
+default="{off,off,off}"> 
 Colour-singlet production of <ei>3S1</ei> charmonium state pairs via 
 <ei>g g &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </ei>. 
 Code 421. 
 </fvec> 
  
 <fvec name="Charmonium:qqbar2doubleccbar(3S1)[3S1(1)]" 
-default="off,off,off"> 
+default="{off,off,off}"> 
 Colour-singlet production of <ei>3S1</ei> charmonium state pairs via 
 <ei>q qbar &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </ei>. 
 Code 422. 
@@ -411,7 +411,7 @@ Code 422.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Bottomonium:states(3S1)" default="553,100553,200553" 
+<mvec name="Bottomonium:states(3S1)" default="{553,100553,200553}" 
 min="0"> 
 The <ei>3S1</ei> bottomonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
@@ -419,93 +419,93 @@ either of flags or parameters, must be the same length as this
 vector. 
 </mvec> 
  
-<pvec name="Bottomonium:O(3S1)[3S1(1)]" default="9.28,4.63,3.54" min="0.0"> 
+<pvec name="Bottomonium:O(3S1)[3S1(1)]" default="{9.28,4.63,3.54}" min="0.0"> 
 The colour-singlet long-distance matrix 
 elements <ei>&lt;O[3S1(1)]&gt;</ei> for the <ei>3S1</ei> bottomonium states. 
 </pvec> 
  
-<pvec name="Bottomonium:O(3S1)[3S1(8)]" default="0.15,0.045,0.075" 
+<pvec name="Bottomonium:O(3S1)[3S1(8)]" default="{0.15,0.045,0.075}" 
 min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[3S1(8)]&gt;</ei> for the <ei>3S1</ei> bottomonium states. 
 </pvec> 
  
-<pvec name="Bottomonium:O(3S1)[1S0(8)]" default="0.02,0.006,0.01" min="0.0"> 
+<pvec name="Bottomonium:O(3S1)[1S0(8)]" default="{0.02,0.006,0.01}" min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[1S0(8)]&gt;</ei> for the <ei>3S1</ei> 
 bottomonium states. 
 </pvec> 
  
-<pvec name="Bottomonium:O(3S1)[3P0(8)]" default="0.02,0.006,0.01" min="0.0"> 
+<pvec name="Bottomonium:O(3S1)[3P0(8)]" default="{0.02,0.006,0.01}" min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[3P0(8)]&gt;/m_Q^2</ei> for the <ei>3S1</ei> bottomonium 
 states. The remaining <ei>&lt;O[3PJ(8)]&gt;/m_Q^2</ei> 
 are calculated from these long-distance matrix elements. 
 </pvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(1)]g" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(1)]g" default="{off,off,off}"> 
 Colour-singlet production of <ei>3S1</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3S1(1)] g</ei>. 
 Code 501. 
 </fvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(1)]gm" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(1)]gm" default="{off,off,off}"> 
 Colour-singlet production of <ei>3S1</ei> bottomonium states via 
-<ei>g g &rarr; ccbar[3S1(1)] g</ei> with a hard <ei>gamma</ei>. 
+<ei>g g &rarr; ccbar[3S1(1)] gamma</ei>. 
 Code 551. 
 </fvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3S1)[3S1(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3S1(8)] g</ei>. 
 Code 502. 
 </fvec> 
  
-<fvec name="Bottomonium:qg2bbbar(3S1)[3S1(8)]q" default="off,off,off"> 
+<fvec name="Bottomonium:qg2bbbar(3S1)[3S1(8)]q" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>q g &rarr; bbbar[3S1(8)] q</ei>. 
 Code 503. 
 </fvec> 
  
-<fvec name="Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>q qbar &rarr; bbbar[3S1(8)] g</ei>. 
 Code 504. 
 </fvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3S1)[1S0(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3S1)[1S0(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[1S0(8)] g</ei>. 
 Code 505. 
 </fvec> 
  
-<fvec name="Bottomonium:qg2bbbar(3S1)[1S0(8)]q" default="off,off,off"> 
+<fvec name="Bottomonium:qg2bbbar(3S1)[1S0(8)]q" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>q g &rarr; bbbar[1S0(8)] q</ei>. 
 Code 506. 
 </fvec> 
  
-<fvec name="Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>q qbar &rarr; bbbar[1S0(8)] g</ei>. 
 Code 507. 
 </fvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3S1)[3PJ(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3S1)[3PJ(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3PJ(8)] g</ei>. 
 Code 508. 
 </fvec> 
  
-<fvec name="Bottomonium:qg2bbbar(3S1)[3PJ(8)]q" default="off,off,off"> 
+<fvec name="Bottomonium:qg2bbbar(3S1)[3PJ(8)]q" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
 <ei>q g &rarr; bbbar[3PJ(8)] q</ei>. 
 Code 509. 
 </fvec> 
  
-<fvec name="Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3S1</ei> bottomonium states via 
-<ei>q qbar &rarr; bbbar[3SJ(8)] g</ei>. 
+<ei>q qbar &rarr; bbbar[3PJ(8)] g</ei>. 
 Code 510. 
 </fvec> 
  
@@ -515,14 +515,14 @@ Code 510.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Bottomonium:states(3PJ)" default="10551,20553,555"> 
+<mvec name="Bottomonium:states(3PJ)" default="{10551,20553,555}"> 
 The <ei>3PJ</ei> bottomonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
 vector. 
 </mvec> 
  
-<pvec name="Bottomonium:O(3PJ)[3P0(1)]" default="0.085,0.085,0.085" 
+<pvec name="Bottomonium:O(3PJ)[3P0(1)]" default="{0.085,0.085,0.085}" 
 min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3P0(1)]&gt;/m_Q^2</ei> for the <ei>3PJ</ei> bottomonium 
@@ -530,43 +530,43 @@ states. The remaining <ei>&lt;O[3PJ(1)]&gt;/m_Q^2</ei>
 are calculated from these long-distance matrix elements. 
 </pvec> 
  
-<pvec name="Bottomonium:O(3PJ)[3S1(8)]" default="0.04,0.04,0.04" 
+<pvec name="Bottomonium:O(3PJ)[3S1(8)]" default="{0.04,0.04,0.04}" 
 min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3S1(8)]&gt;</ei> for the <ei>3PJ</ei> bottomonium states. 
 </pvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g" default="{off,off,off}"> 
 Colour-singlet production of <ei>3PJ</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3PJ(1)] g</ei>. 
 Code 511. 
 </fvec> 
  
-<fvec name="Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q" default="off,off,off"> 
+<fvec name="Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q" default="{off,off,off}"> 
 Colour-singlet production of <ei>3PJ</ei> bottomonium states via 
 <ei>q g &rarr; bbbar[3PJ(1)] q</ei>. 
 Code 512. 
 </fvec> 
  
-<fvec name="Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g" default="off,off,off"> 
+<fvec name="Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g" default="{off,off,off}"> 
 Colour-singlet production of <ei>3PJ</ei> bottomonium states via 
 <ei>q qbar &rarr; bbbar[3PJ(1)] g</ei>. 
 Code 513. 
 </fvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3PJ)[3S1(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:gg2bbbar(3PJ)[3S1(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3PJ</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3S1(8)] g</ei>. 
 Code 514. 
 </fvec> 
  
-<fvec name="Bottomonium:qg2bbbar(3PJ)[3S1(8)]q" default="off,off,off"> 
+<fvec name="Bottomonium:qg2bbbar(3PJ)[3S1(8)]q" default="{off,off,off}"> 
 Colour-octet production of <ei>3PJ</ei> bottomonium states via 
 <ei>q g &rarr; bbbar[3S1(8)] q</ei>. 
 Code 515. 
 </fvec> 
  
-<fvec name="Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g" default="off,off,off"> 
+<fvec name="Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g" default="{off,off,off}"> 
 Colour-octet production of <ei>3PJ</ei> bottomonium states via 
 <ei>q qbar &rarr; bbbar[3S1(8)] g</ei>. 
 Code 516. 
@@ -578,7 +578,7 @@ Code 516.
 <code>pvec</code> values must be provided as a comma-separated list 
 with the right number of elements, without any blanks inside the list. 
  
-<mvec name="Bottomonium:states(3DJ)" default=""> 
+<mvec name="Bottomonium:states(3DJ)" default="{}"> 
 The <ei>3DJ</ei> bottomonium states that can be produced from the following 
 processes. Currently, no <ei>3DJ</ei> states are included in the 
 default <code>ParticleData</code> and so none are included here. Note 
@@ -586,7 +586,7 @@ that all vectors within this section, either of flags or parameters,
 must be the same length as this vector. 
 </mvec> 
  
-<pvec name="Bottomonium:O(3DJ)[3D1(1)]" default="" min="0.0"> 
+<pvec name="Bottomonium:O(3DJ)[3D1(1)]" default="{}" min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3D1(1)]&gt;</ei> for the <ei>3PJ</ei> bottomonium 
 states. For a <ei>3DJ</ei> bottomonium state where <ei>J</ei> is 
@@ -596,32 +596,32 @@ by <ei>(2J+1)&lt;O[3D1(1)]/3&gt;</ei> using leading order spin symmetry
 relations. 
 </pvec> 
  
-<pvec name="Bottomonium:O(3DJ)[3P0(8)]" default="" min="0.0"> 
+<pvec name="Bottomonium:O(3DJ)[3P0(8)]" default="{}" min="0.0"> 
 The colour-octet long-distance matrix 
 elements <ei>&lt;O[3P0(8)]&gt;/m_Q^2</ei> for the 3DJ bottomonium 
 states. The remaining <ei>&lt;O[3PJ(8)]&gt;/m_Q^2</ei> 
 are calculated from these long-distance matrix elements. 
 </pvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g" default=""> 
+<fvec name="Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g" default="{}"> 
 Colour-singlet production of <ei>3PJ</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3DJ(1)] g</ei>. 
 Code 517. 
 </fvec> 
  
-<fvec name="Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g" default=""> 
+<fvec name="Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g" default="{}"> 
 Colour-octet production of <ei>3DJ</ei> bottomonium states via 
 <ei>g g &rarr; bbbar[3PJ(8)] g</ei>. 
 Code 518. 
 </fvec> 
  
-<fvec name="Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q" default=""> 
+<fvec name="Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q" default="{}"> 
 Colour-octet production of <ei>3DJ</ei> bottomonium states via 
 <ei>q g &rarr; bbbar[3PJ(8)] q</ei>. 
 Code 519. 
 </fvec> 
  
-<fvec name="Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g" default=""> 
+<fvec name="Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g" default="{}"> 
 Colour-octet production of <ei>3DJ</ei> bottomonium states via 
 <ei>q qbar &rarr; bbbar[3PJ(8)] g</ei>. 
 Code 520. 
@@ -634,7 +634,7 @@ Code 520.
 with the right number of elements, without any blanks inside the list. 
  
 <mvec name="Bottomonium:states(3S1)1" 
-default="553,553,553,100553,100553,200553"> 
+default="{553,553,553,100553,100553,200553}"> 
 The first <ei>3S1</ei> bottomonium states of the bottomonium pairs 
 that can be produced from the following processes. Note that all 
 vectors within this section, either of modes, flags, or parameters, 
@@ -642,34 +642,34 @@ must be the same length as this vector.
 </mvec> 
  
 <mvec name="Bottomonium:states(3S1)2" 
-default="553,100553,200553,100553,200553,200553"> 
+default="{553,100553,200553,100553,200553,200553}"> 
 The second <ei>3S1</ei> bottomonium states of the bottomonium pairs that 
 can be produced from the following processes. 
 </mvec> 
  
 <pvec name="Bottomonium:O(3S1)[3S1(1)]1" 
-default="9.28,9.28,9.28,4.63,4.63,3.54" min="0.0"> 
+default="{9.28,9.28,9.28,4.63,4.63,3.54}" min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3S1(1)]&gt;</ei> for the first <ei>3S1</ei> bottomonium 
 states. 
 </pvec> 
  
 <pvec name="Bottomonium:O(3S1)[3S1(1)]2" 
-default="9.28,4.63,3.54,4.63,3.54,3.54" min="0.0"> 
+default="{9.28,4.63,3.54,4.63,3.54,3.54}" min="0.0"> 
 The color-singlet long-distance matrix elements 
 <ei>&lt;O[3S1(1)]&gt;</ei> for the second <ei>3S1</ei> bottomonium 
 states. 
 </pvec> 
  
 <fvec name="Bottomonium:gg2doublebbbar(3S1)[3S1(1)]" 
-default="off,off,off,off,off,off"> 
+default="{off,off,off,off,off,off}"> 
 Colour-singlet production of <ei>3S1</ei> bottomonium state pairs via 
 <ei>g g &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </ei>. 
 Code 521. 
 </fvec> 
  
 <fvec name="Bottomonium:qqbar2doublebbbar(3S1)[3S1(1)]" 
-default="off,off,off,off,off,off"> 
+default="{off,off,off,off,off,off}"> 
 Colour-singlet production of <ei>3S1</ei> bottomonium state pairs via 
 <ei>q qbar &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </ei>. 
 Code 522. 
@@ -677,4 +677,4 @@ Code 522.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -24,8 +24,9 @@ rules, as we will outline further below. Of course, this still
 leaves the field open exactly how to define what to mean by 
 <i>pT</i>, how to handle recoil effects, how the colour flow is 
 affected, and so on, so there is certainly room for alternative 
-showers. A first example of a shower implemented within the PYTHIA 
-context is <a href="https://vincia.hepforge.org">VINCIA</a>. 
+showers. Two examples of alternative shower implementations are 
+provided with PYTHIA, by the <a href="Vincia.html" target="page">VINCIA</a> 
+and <a href="DireShowers.html" target="page">Dire</a> shower options. 
  
 <p/> 
 For the moment we assume you want to keep the MPI part of the story 
@@ -66,8 +67,9 @@ time shower used for decays, time shower, space shower, merging
 machinery, and merging hooks. The first is only required to handle 
 decays, say of <i>Z^0</i> or <i>Upsilon</i>, with no dependence on 
 beam remnants or ISR. The second and third, have to handle the 
-interleaved evolution of MPI, ISR and FSR. The
-<a href="SimpleShowers.html" target="page">simple</a>, <a href="SimpleShowers.html.html" target="page">VINCIA</a>, 
+interleaved evolution of MPI, ISR and FSR. 
+The <a href="SimpleShowers.html" target="page">simple</a>, 
+<a href="Vincia.html" target="page">VINCIA</a>, 
 and <a href="DireShowers.html" target="page">Dire</a> showers each implement a 
 derived <code>ShowerModel</code> class which provides access to 
 pointers of all these objects. 
@@ -273,7 +275,7 @@ not the default value.
 <a name="anchor16"></a>
 <p/><strong> virtual int TimeShower::showerQEDafterRemnants( Event& event) &nbsp;</strong> <br/>
  Optional method to add QED showers after beam remnants have been added 
- but before hadronisation. 
+ but before hadronization. 
  It is called from the very end of <code>PartonLevel::next()</code>, 
  after the main perturbative evolution has finished and all beam 
  remnants have been added. 
@@ -815,4 +817,4 @@ possible allowed recoilers in the input event.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

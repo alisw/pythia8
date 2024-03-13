@@ -51,7 +51,7 @@ An incomplete list is as follows.
 
  8. Begin each code file with
 // (filename) is a part of the PYTHIA event generator.
-// Copyright (C) 2018 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
     to establish the legal structure. Follow that with specific
@@ -159,7 +159,7 @@ An incomplete list is as follows.
 30. Use the Pythia Vec4 class for four-vectors.
 
 31. Use string for all text, except when C++ leaves you no option but
-    to use char or char*, e.g. for the name of a file to be opened.
+    to use char or char*.
 
 32. Use the Boolean operators &&, || and !, not the alternative old
     cleartext "and", "or" and "not".
@@ -188,7 +188,8 @@ An incomplete list is as follows.
     During running printing should either be located in special methods
     that the user has to call explicitly (with ostream& os = cout as
     last argument) or, for error messages, make use of the
-    Info::errorMsg(..) method.
+    Logger class. Read the manual for a description of what types of
+    error messages are available.
 
 38. No global variables. It should be possible to have several
     instances of Pythia running without any risk of interference

@@ -1,9 +1,9 @@
 // main53.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: photon beam; parton distribution; LHAPDF;
+// Keywords: photon beam; parton distribution; LHAPDF
 
 // This is a simple test program.
 // It illustrates how to interface an external process with an incoming photon

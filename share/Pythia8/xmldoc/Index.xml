@@ -35,7 +35,10 @@
 <aidx href="MasterSwitches">Master Switches</aidx><br/> 
 <aidx href="RandomNumberSeed">Random-Number Seed</aidx><br/> 
 <aidx href="Tunes">Tunes</aidx><br/> 
+<aidx href="Logging">Logging and Diagnostics</aidx><br/> 
 <aidx href="ErrorChecks">Error Checks</aidx><br/> 
+<aidx href="Parallelism">Parallelism</aidx><br/> 
+<aidx href="Plugins">Plugins</aidx><br/> 
 </div> 
  
 <button class="expand" style="font-size:20px;">Beams</button> 
@@ -83,6 +86,7 @@
 <aidx href="SecondHardProcess">Second Hard Process</aidx><br/> 
 <aidx href="TotalCrossSections">Total Cross Sections</aidx><br/> 
 <aidx href="QCDSoftProcesses">Soft QCD Processes</aidx><br/> 
+<aidx href="QCDLowEnergyProcesses">Low-energy QCD Processes</aidx><br/> 
 <aidx href="MultipartonInteractions">Multiparton Interactions</aidx><br/> 
 <aidx href="Diffraction">Diffraction</aidx><br/> 
 </div> 
@@ -107,14 +111,19 @@ Hard Processes</button>
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="SpacelikeShowers">Spacelike Showers</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
+<aidx href="OniaShowers">Onia Showers</aidx><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="WeakShowers">Weak Showers</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
-<aidx href="Variations">Automated Variations</aidx><br/> 
-<aidx href="Vincia">Antenna Showers (VINCIA)</aidx><br/> 
+<aidx href="Variations">Automated Variations and Enhanced Emissions</aidx> 
+<br/> 
+<aidx href="Vincia">Antenna Showers (Vincia)</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
-<aidx href="VinciaQCD">QCD</aidx><br/> 
+<aidx href="VinciaQCD">QCD Showers</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
-<aidx href="VinciaQED">QED</aidx><br/> 
+<aidx href="VinciaEW">QED/EW Showers</aidx><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
+<aidx href="VinciaMECs">ME Corrections</aidx><br/> 
 <aidx href="DireShowers">The Dire Shower</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="DireWeights">Enhancements</aidx><br/> 
@@ -127,7 +136,7 @@ Hard Processes</button>
 <div class="panel"> 
 <aidx href="MatchingAndMerging">Matching and Merging</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
-<aidx href="POWHEGMerging">POWHEG Matching</aidx><br/> 
+<aidx href="POWHEGMatching">POWHEG Matching</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="aMCatNLOMatching">aMC@NLO Matching</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
@@ -135,22 +144,26 @@ Hard Processes</button>
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="CKKWLMerging">CKKW-L Merging</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
+<aidx href="VinciaMerging">MESS Merging (Vincia)</aidx><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="UMEPSMerging">UMEPS Merging</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="NLOMerging">NLO Merging</aidx><br/> 
+<aidx href="MergingVariations">Merging Variations</aidx><br/> 
 <aidx href="ImplementNewMatching">Implement New Schemes</aidx><br/> 
 </div> 
  
 <button class="expand" style="font-size:20px;">Particles &amp; Decays</button> 
 <div class="panel"> 
 <aidx href="ParticleData">Particle Data</aidx><br/> 
+<aidx href="HadronWidths">Mass-dependent Hadron Widths</aidx><br/> 
 <aidx href="ResonanceDecays">Resonance Decays</aidx><br/> 
 <aidx href="ParticleDecays">Hadron &amp; Tau Decays</aidx><br/> 
 <aidx href="SemiInternalResonances">Semi-Internal Resonances</aidx><br/> 
 <aidx href="ExternalDecays">External Decays</aidx><br/> 
 </div> 
  
-<button class="expand" style="font-size:20px;">Hadronisation</button> 
+<button class="expand" style="font-size:20px;">Hadronization</button> 
 <div class="panel"> 
 <aidx href="BeamRemnants">Beam Remnants</aidx><br/> 
 <aidx href="ColourReconnection">Colour Reconnection</aidx><br/> 
@@ -158,13 +171,17 @@ Hard Processes</button>
 &nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="FlavourSelection">Flavour Selection</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
+<aidx href="HadronizationVariations">Hadronization Variations</aidx><br/> 
+&nbsp;&nbsp;--&nbsp;&nbsp; 
 <aidx href="RopeHadronization">Rope Hadronization</aidx><br/> 
 &nbsp;&nbsp;--&nbsp;&nbsp; 
-<aidx href="VertexInformation">Vertex Information</aidx><br/> 
+<aidx href="ClosePacking">Close Packing</aidx><br/> 
+<aidx href="PartonVertexInformation">Parton Vertex Information</aidx><br/> 
+<aidx href="HadronVertexInformation">Hadron Vertex Information</aidx><br/> 
+<aidx href="HadronicRescattering">Hadronic Rescattering</aidx><br/> 
 <aidx href="RHadrons">R-hadrons</aidx><br/> 
 <aidx href="BoseEinsteinEffects">Bose-Einstein Effects</aidx><br/> 
 <aidx href="DeuteronProduction">Deuteron Production</aidx><br/> 
-<aidx href="HadronScattering">Hadron Scattering</aidx><br/> 
 <aidx href="HadronLevelStandalone">Hadron-Level Standalone</aidx><br/> 
 </div> 
  
@@ -184,6 +201,7 @@ Hard Processes</button>
 <button class="expand" style="font-size:20px;">Other Interfaces</button> 
 <div class="panel"> 
 <aidx href="SUSYLesHouchesAccord">Susy Les Houches Accord (SLHA)</aidx><br/> 
+<aidx href="LHAHDF5">HDF5 Les Houches Accord (LHAHDF5)</aidx><br/> 
 <aidx href="HepMCInterface">HepMC Interface</aidx><br/> 
 <aidx href="UserHooks">User Hooks</aidx><br/> 
 <aidx href="BeamShape">Beam Shape</aidx><br/> 
@@ -208,8 +226,8 @@ Hard Processes</button>
  
 <button class="expand" style="font-size:20px;">Separate Documents</button> 
 <div class="panel"> 
-<a href="../pdfdoc/pythia8200.pdf" target="page">Introduction</a><br/> 
-<a href="../pdfdoc/worksheet8200.pdf" target="page">Worksheet</a> 
+<a href="../pdfdoc/pythia8300.pdf" target="page">Introduction</a><br/> 
+<a href="../pdfdoc/worksheet8309.pdf" target="page">Worksheet</a> 
 </div> 
  
 <button class="expandAll" style="font-size:20px;">All</button> 
@@ -217,4 +235,4 @@ Hard Processes</button>
 <script src="Expand.js"></script> 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

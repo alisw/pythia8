@@ -1,11 +1,14 @@
 #include <Pythia8/Basics.h>
-#include <Pythia8/BeamParticle.h>
+#include <Pythia8/BeamSetup.h>
+#include <Pythia8/HadronWidths.h>
 #include <Pythia8/Info.h>
 #include <Pythia8/LHEF3.h>
+#include <Pythia8/Logger.h>
 #include <Pythia8/ParticleData.h>
 #include <Pythia8/PartonSystems.h>
 #include <Pythia8/ResonanceWidths.h>
 #include <Pythia8/Settings.h>
+#include <Pythia8/SigmaLowEnergy.h>
 #include <Pythia8/SigmaTotal.h>
 #include <Pythia8/StandardModel.h>
 #include <Pythia8/SusyCouplings.h>
@@ -15,6 +18,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <sstream> // __str__
 #include <string>
 #include <utility>
@@ -24,11 +28,12 @@
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -98,7 +103,8 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"));
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6, double const & a7){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"));
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6, double const & a7, double const & a8){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7, a8); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"));
-		cl.def( pybind11::init<int, std::string, int, int, int, double, double, double, double, double>(), pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In") );
+		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6, double const & a7, double const & a8, double const & a9){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"));
+		cl.def( pybind11::init<int, std::string, int, int, int, double, double, double, double, double, bool>(), pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"), pybind11::arg("varWidthIn") );
 
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, class std::basic_string<char> const & a2){ return new Pythia8::ParticleDataEntry(a0, a1, a2); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"));
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, class std::basic_string<char> const & a2, int const & a3){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"));
@@ -108,7 +114,8 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, class std::basic_string<char> const & a2, int const & a3, int const & a4, int const & a5, double const & a6, double const & a7){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"));
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, class std::basic_string<char> const & a2, int const & a3, int const & a4, int const & a5, double const & a6, double const & a7, double const & a8){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7, a8); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"));
 		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, class std::basic_string<char> const & a2, int const & a3, int const & a4, int const & a5, double const & a6, double const & a7, double const & a8, double const & a9){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"));
-		cl.def( pybind11::init<int, std::string, std::string, int, int, int, double, double, double, double, double>(), pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In") );
+		cl.def( pybind11::init( [](int const & a0, class std::basic_string<char> const & a1, class std::basic_string<char> const & a2, int const & a3, int const & a4, int const & a5, double const & a6, double const & a7, double const & a8, double const & a9, double const & a10){ return new Pythia8::ParticleDataEntry(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"));
+		cl.def( pybind11::init<int, std::string, std::string, int, int, int, double, double, double, double, double, bool>(), pybind11::arg("idIn"), pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"), pybind11::arg("varWidthIn") );
 
 		cl.def( pybind11::init( [](Pythia8::ParticleDataEntry const &o){ return new Pythia8::ParticleDataEntry(o); } ) );
 		cl.def("assign", (class Pythia8::ParticleDataEntry & (Pythia8::ParticleDataEntry::*)(const class Pythia8::ParticleDataEntry &)) &Pythia8::ParticleDataEntry::operator=, "C++: Pythia8::ParticleDataEntry::operator=(const class Pythia8::ParticleDataEntry &) --> class Pythia8::ParticleDataEntry &", pybind11::return_value_policy::reference, pybind11::arg("oldPDE"));
@@ -122,7 +129,8 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def("setAll", [](Pythia8::ParticleDataEntry &o, class std::basic_string<char> const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6) -> void { return o.setAll(a0, a1, a2, a3, a4, a5, a6); }, "", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"));
 		cl.def("setAll", [](Pythia8::ParticleDataEntry &o, class std::basic_string<char> const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6, double const & a7) -> void { return o.setAll(a0, a1, a2, a3, a4, a5, a6, a7); }, "", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"));
 		cl.def("setAll", [](Pythia8::ParticleDataEntry &o, class std::basic_string<char> const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6, double const & a7, double const & a8) -> void { return o.setAll(a0, a1, a2, a3, a4, a5, a6, a7, a8); }, "", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"));
-		cl.def("setAll", (void (Pythia8::ParticleDataEntry::*)(std::string, std::string, int, int, int, double, double, double, double, double)) &Pythia8::ParticleDataEntry::setAll, "C++: Pythia8::ParticleDataEntry::setAll(std::string, std::string, int, int, int, double, double, double, double, double) --> void", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"));
+		cl.def("setAll", [](Pythia8::ParticleDataEntry &o, class std::basic_string<char> const & a0, class std::basic_string<char> const & a1, int const & a2, int const & a3, int const & a4, double const & a5, double const & a6, double const & a7, double const & a8, double const & a9) -> void { return o.setAll(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); }, "", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"));
+		cl.def("setAll", (void (Pythia8::ParticleDataEntry::*)(std::string, std::string, int, int, int, double, double, double, double, double, bool)) &Pythia8::ParticleDataEntry::setAll, "C++: Pythia8::ParticleDataEntry::setAll(std::string, std::string, int, int, int, double, double, double, double, double, bool) --> void", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"), pybind11::arg("spinTypeIn"), pybind11::arg("chargeTypeIn"), pybind11::arg("colTypeIn"), pybind11::arg("m0In"), pybind11::arg("mWidthIn"), pybind11::arg("mMinIn"), pybind11::arg("mMaxIn"), pybind11::arg("tau0In"), pybind11::arg("varWidthIn"));
 		cl.def("setName", (void (Pythia8::ParticleDataEntry::*)(std::string)) &Pythia8::ParticleDataEntry::setName, "C++: Pythia8::ParticleDataEntry::setName(std::string) --> void", pybind11::arg("nameIn"));
 		cl.def("setAntiName", (void (Pythia8::ParticleDataEntry::*)(std::string)) &Pythia8::ParticleDataEntry::setAntiName, "C++: Pythia8::ParticleDataEntry::setAntiName(std::string) --> void", pybind11::arg("antiNameIn"));
 		cl.def("setNames", (void (Pythia8::ParticleDataEntry::*)(std::string, std::string)) &Pythia8::ParticleDataEntry::setNames, "C++: Pythia8::ParticleDataEntry::setNames(std::string, std::string) --> void", pybind11::arg("nameIn"), pybind11::arg("antiNameIn"));
@@ -138,6 +146,7 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def("setMMaxNoChange", (void (Pythia8::ParticleDataEntry::*)(double)) &Pythia8::ParticleDataEntry::setMMaxNoChange, "C++: Pythia8::ParticleDataEntry::setMMaxNoChange(double) --> void", pybind11::arg("mMaxIn"));
 		cl.def("setTau0", [](Pythia8::ParticleDataEntry &o, double const & a0) -> void { return o.setTau0(a0); }, "", pybind11::arg("tau0In"));
 		cl.def("setTau0", (void (Pythia8::ParticleDataEntry::*)(double, bool)) &Pythia8::ParticleDataEntry::setTau0, "C++: Pythia8::ParticleDataEntry::setTau0(double, bool) --> void", pybind11::arg("tau0In"), pybind11::arg("countAsChanged"));
+		cl.def("setVarWidth", (void (Pythia8::ParticleDataEntry::*)(bool)) &Pythia8::ParticleDataEntry::setVarWidth, "C++: Pythia8::ParticleDataEntry::setVarWidth(bool) --> void", pybind11::arg("varWidthIn"));
 		cl.def("setIsResonance", (void (Pythia8::ParticleDataEntry::*)(bool)) &Pythia8::ParticleDataEntry::setIsResonance, "C++: Pythia8::ParticleDataEntry::setIsResonance(bool) --> void", pybind11::arg("isResonanceIn"));
 		cl.def("setMayDecay", [](Pythia8::ParticleDataEntry &o, bool const & a0) -> void { return o.setMayDecay(a0); }, "", pybind11::arg("mayDecayIn"));
 		cl.def("setMayDecay", (void (Pythia8::ParticleDataEntry::*)(bool, bool)) &Pythia8::ParticleDataEntry::setMayDecay, "C++: Pythia8::ParticleDataEntry::setMayDecay(bool, bool) --> void", pybind11::arg("mayDecayIn"), pybind11::arg("countAsChanged"));
@@ -148,6 +157,7 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def("setDoForceWidth", (void (Pythia8::ParticleDataEntry::*)(bool)) &Pythia8::ParticleDataEntry::setDoForceWidth, "C++: Pythia8::ParticleDataEntry::setDoForceWidth(bool) --> void", pybind11::arg("doForceWidthIn"));
 		cl.def("setHasChanged", (void (Pythia8::ParticleDataEntry::*)(bool)) &Pythia8::ParticleDataEntry::setHasChanged, "C++: Pythia8::ParticleDataEntry::setHasChanged(bool) --> void", pybind11::arg("hasChangedIn"));
 		cl.def("id", (int (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::id, "C++: Pythia8::ParticleDataEntry::id() const --> int");
+		cl.def("antiId", (int (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::antiId, "C++: Pythia8::ParticleDataEntry::antiId() const --> int");
 		cl.def("hasAnti", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::hasAnti, "C++: Pythia8::ParticleDataEntry::hasAnti() const --> bool");
 		cl.def("name", [](Pythia8::ParticleDataEntry const &o) -> std::string { return o.name(); }, "");
 		cl.def("name", (std::string (Pythia8::ParticleDataEntry::*)(int) const) &Pythia8::ParticleDataEntry::name, "C++: Pythia8::ParticleDataEntry::name(int) const --> std::string", pybind11::arg("idIn"));
@@ -166,6 +176,7 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def("m0Max", (double (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::m0Max, "C++: Pythia8::ParticleDataEntry::m0Max() const --> double");
 		cl.def("tau0", (double (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::tau0, "C++: Pythia8::ParticleDataEntry::tau0() const --> double");
 		cl.def("isResonance", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::isResonance, "C++: Pythia8::ParticleDataEntry::isResonance() const --> bool");
+		cl.def("varWidth", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::varWidth, "C++: Pythia8::ParticleDataEntry::varWidth() const --> bool");
 		cl.def("mayDecay", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::mayDecay, "C++: Pythia8::ParticleDataEntry::mayDecay() const --> bool");
 		cl.def("tauCalc", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::tauCalc, "C++: Pythia8::ParticleDataEntry::tauCalc() const --> bool");
 		cl.def("doExternalDecay", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::doExternalDecay, "C++: Pythia8::ParticleDataEntry::doExternalDecay() const --> bool");
@@ -189,6 +200,7 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def("isMeson", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::isMeson, "C++: Pythia8::ParticleDataEntry::isMeson() const --> bool");
 		cl.def("isBaryon", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::isBaryon, "C++: Pythia8::ParticleDataEntry::isBaryon() const --> bool");
 		cl.def("isOnium", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::isOnium, "C++: Pythia8::ParticleDataEntry::isOnium() const --> bool");
+		cl.def("isExotic", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::isExotic, "C++: Pythia8::ParticleDataEntry::isExotic() const --> bool");
 		cl.def("isOctetHadron", (bool (Pythia8::ParticleDataEntry::*)() const) &Pythia8::ParticleDataEntry::isOctetHadron, "C++: Pythia8::ParticleDataEntry::isOctetHadron() const --> bool");
 		cl.def("heaviestQuark", [](Pythia8::ParticleDataEntry const &o) -> int { return o.heaviestQuark(); }, "");
 		cl.def("heaviestQuark", (int (Pythia8::ParticleDataEntry::*)(int) const) &Pythia8::ParticleDataEntry::heaviestQuark, "C++: Pythia8::ParticleDataEntry::heaviestQuark(int) const --> int", pybind11::arg("idIn"));
@@ -216,6 +228,8 @@ void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string con
 		cl.def("preparePick", [](Pythia8::ParticleDataEntry &o, int const & a0, double const & a1) -> bool { return o.preparePick(a0, a1); }, "", pybind11::arg("idSgn"), pybind11::arg("mHat"));
 		cl.def("preparePick", (bool (Pythia8::ParticleDataEntry::*)(int, double, int)) &Pythia8::ParticleDataEntry::preparePick, "C++: Pythia8::ParticleDataEntry::preparePick(int, double, int) --> bool", pybind11::arg("idSgn"), pybind11::arg("mHat"), pybind11::arg("idInFlav"));
 		cl.def("pickChannel", (class Pythia8::DecayChannel & (Pythia8::ParticleDataEntry::*)()) &Pythia8::ParticleDataEntry::pickChannel, "C++: Pythia8::ParticleDataEntry::pickChannel() --> class Pythia8::DecayChannel &", pybind11::return_value_policy::reference);
+		cl.def("setResonancePtr", (void (Pythia8::ParticleDataEntry::*)(class std::shared_ptr<class Pythia8::ResonanceWidths>)) &Pythia8::ParticleDataEntry::setResonancePtr, "C++: Pythia8::ParticleDataEntry::setResonancePtr(class std::shared_ptr<class Pythia8::ResonanceWidths>) --> void", pybind11::arg("resonancePtrIn"));
+		cl.def("getResonancePtr", (class std::shared_ptr<class Pythia8::ResonanceWidths> (Pythia8::ParticleDataEntry::*)()) &Pythia8::ParticleDataEntry::getResonancePtr, "C++: Pythia8::ParticleDataEntry::getResonancePtr() --> class std::shared_ptr<class Pythia8::ResonanceWidths>");
 		cl.def("resInit", (void (Pythia8::ParticleDataEntry::*)(class Pythia8::Info *)) &Pythia8::ParticleDataEntry::resInit, "C++: Pythia8::ParticleDataEntry::resInit(class Pythia8::Info *) --> void", pybind11::arg("infoPtrIn"));
 		cl.def("resWidth", [](Pythia8::ParticleDataEntry &o, int const & a0, double const & a1) -> double { return o.resWidth(a0, a1); }, "", pybind11::arg("idSgn"), pybind11::arg("mHat"));
 		cl.def("resWidth", [](Pythia8::ParticleDataEntry &o, int const & a0, double const & a1, int const & a2) -> double { return o.resWidth(a0, a1, a2); }, "", pybind11::arg("idSgn"), pybind11::arg("mHat"), pybind11::arg("idIn"));

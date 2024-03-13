@@ -1,11 +1,11 @@
 // main111.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Leif Lonnblad <leif.lonnblad@thep.lu.se>.
+// Authors: Leif Lonnblad <leif.lonnblad@fysik.lu.se>
 
-// Keywords: heavy ions; rivet; angantyr;
+// Keywords: heavy ions; rivet; angantyr
 
 // This is a simple test program equivalent to main01.cc but using the
 // Angantyr model for Heavy Ion collisions. It is still proton

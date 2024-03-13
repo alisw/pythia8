@@ -1,5 +1,5 @@
 // ColourTracing.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -120,8 +120,7 @@ bool ColourTracing::traceFromAcol(int indxCol, Event& event, int iJun,
 
   // Something went wrong in colour tracing.
   if (!hasFound || loop == loopMax) {
-    infoPtr->errorMsg("Error in ColourTracing::traceFromAcol: "
-      "colour tracing failed");
+    loggerPtr->ERROR_MSG("colour tracing from anti-colour to colour failed");
     return false;
   }
 
@@ -219,8 +218,7 @@ bool ColourTracing::traceFromCol(int indxCol, Event& event, int iJun,
 
   // Something went wrong in colour tracing.
   if (!hasFound || loop == loopMax) {
-    infoPtr->errorMsg("Error in ColourTracing::traceFromCol: "
-      "colour tracing failed");
+    loggerPtr->ERROR_MSG("colour tracing from colour to anti-colour failed");
     return false;
   }
 
@@ -264,8 +262,7 @@ bool ColourTracing::traceInLoop(Event& event, vector<int>& iParton) {
 
   // Something went wrong in colour tracing.
   if (!hasFound || loop == loopMax) {
-    infoPtr->errorMsg("Error in ColourTracing::traceInLoop: "
-      "colour tracing failed");
+    loggerPtr->ERROR_MSG("colour tracing in loop failed");
 
     return false;
   }

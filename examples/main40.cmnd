@@ -1,0 +1,35 @@
+# Number of events to generate.
+Main:numberOfEvents = 10000
+
+# Switch on all onia splittings.
+OniaShower:all = on
+
+# Optionally enhance the quarkonia splittings.
+OniaShower:ldmeFac = 10
+
+# Turn off or change the colour-octet radiation of gluons.
+#OniaShower:octetSplit = 0
+
+# Optional fine-grain control of the charmonium splittings.
+#CharmoniumShower:c2ccbar(1S0)[1S0(1)]c = {off}
+#CharmoniumShower:g2ccbar(1S0)[1S0(1)]g = {off}
+#CharmoniumShower:g2ccbar(1S0)[3S1(8)] = {off}
+#CharmoniumShower:c2ccbar(3S1)[3S1(1)]c = {off,off}
+#CharmoniumShower:g2ccbar(3S1)[3S1(1)]gg = {off,off}
+#CharmoniumShower:g2ccbar(3S1)[3S1(8)] = {off,off}
+#CharmoniumShower:c2ccbar(3PJ)[3PJ(1)]c = {off,off,off}
+#CharmoniumShower:c2ccbar(3PJ)[3S1(8)]c = {off,off,off}
+#CharmoniumShower:g2ccbar(3PJ)[3PJ(1)]g = {off,off,off}
+#CharmoniumShower:g2ccbar(3PJ)[3S1(8)] = {off,off,off}
+
+# Optional fine-grain control of the bottomonium splittings.
+#BottomoniumShower:b2bbbar(1S0)[1S0(1)]b = {off}
+#BottomoniumShower:g2bbbar(1S0)[1S0(1)]g = {off}
+#BottomoniumShower:g2bbbar(1S0)[3S1(8)] = {off}
+#BottomoniumShower:b2bbbar(3S1)[3S1(1)]b = {off,off,off}
+#BottomoniumShower:g2bbbar(3S1)[3S1(1)]gg = {off,off,off}
+#BottomoniumShower:g2bbbar(3S1)[3S1(8)] = {off,off,off}
+#BottomoniumShower:b2bbbar(3PJ)[3PJ(1)]b = {off,off,off}
+#BottomoniumShower:b2bbbar(3PJ)[3S1(8)]b = {off,off,off}
+#BottomoniumShower:g2bbbar(3PJ)[3PJ(1)]g = {off,off,off}
+#BottomoniumShower:g2bbbar(3PJ)[3S1(8)] = {off,off,off}

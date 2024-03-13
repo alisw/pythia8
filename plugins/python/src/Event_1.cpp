@@ -3,22 +3,27 @@
 #include <Pythia8/Info.h>
 #include <Pythia8/ParticleData.h>
 #include <Pythia8/ResonanceWidths.h>
+#include <functional>
 #include <istream>
 #include <iterator>
+#include <map>
 #include <memory>
+#include <ostream>
 #include <sstream> // __str__
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <pybind11/pybind11.h>
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -30,13 +35,16 @@
 
 void bind_Pythia8_Event_1(std::function< pybind11::module &(std::string const &namespace_) > &M)
 {
-	// Pythia8::m(const class Pythia8::Particle &, const class Pythia8::Particle &) file:Pythia8/Event.h line:318
-	M("Pythia8").def("m", (double (*)(const class Pythia8::Particle &, const class Pythia8::Particle &)) &Pythia8::m, "C++: Pythia8::m(const class Pythia8::Particle &, const class Pythia8::Particle &) --> double", pybind11::arg(""), pybind11::arg(""));
+	// Pythia8::m(const class Pythia8::Particle &, const class Pythia8::Particle &) file:Pythia8/Event.h line:327
+	M("Pythia8").def("m", (double (*)(const class Pythia8::Particle &, const class Pythia8::Particle &)) &Pythia8::m, "C++: Pythia8::m(const class Pythia8::Particle &, const class Pythia8::Particle &) --> double", pybind11::arg("pp1"), pybind11::arg("pp2"));
 
-	// Pythia8::m2(const class Pythia8::Particle &, const class Pythia8::Particle &) file:Pythia8/Event.h line:319
-	M("Pythia8").def("m2", (double (*)(const class Pythia8::Particle &, const class Pythia8::Particle &)) &Pythia8::m2, "C++: Pythia8::m2(const class Pythia8::Particle &, const class Pythia8::Particle &) --> double", pybind11::arg(""), pybind11::arg(""));
+	// Pythia8::m2(const class Pythia8::Particle &, const class Pythia8::Particle &) file:Pythia8/Event.h line:328
+	M("Pythia8").def("m2", (double (*)(const class Pythia8::Particle &, const class Pythia8::Particle &)) &Pythia8::m2, "C++: Pythia8::m2(const class Pythia8::Particle &, const class Pythia8::Particle &) --> double", pybind11::arg("pp1"), pybind11::arg("pp2"));
 
-	{ // Pythia8::Event file:Pythia8/Event.h line:379
+	// Pythia8::m2(const class Pythia8::Particle &, const class Pythia8::Particle &, const class Pythia8::Particle &) file:Pythia8/Event.h line:329
+	M("Pythia8").def("m2", (double (*)(const class Pythia8::Particle &, const class Pythia8::Particle &, const class Pythia8::Particle &)) &Pythia8::m2, "C++: Pythia8::m2(const class Pythia8::Particle &, const class Pythia8::Particle &, const class Pythia8::Particle &) --> double", pybind11::arg("pp1"), pybind11::arg("pp2"), pybind11::arg("pp3"));
+
+	{ // Pythia8::Event file:Pythia8/Event.h line:453
 		pybind11::class_<Pythia8::Event, std::shared_ptr<Pythia8::Event>> cl(M("Pythia8"), "Event", "");
 		pybind11::handle cl_type = cl;
 
@@ -128,7 +136,14 @@ void bind_Pythia8_Event_1(std::function< pybind11::module &(std::string const &n
 		cl.def("saveJunctionSize", (void (Pythia8::Event::*)()) &Pythia8::Event::saveJunctionSize, "C++: Pythia8::Event::saveJunctionSize() --> void");
 		cl.def("restoreJunctionSize", (void (Pythia8::Event::*)()) &Pythia8::Event::restoreJunctionSize, "C++: Pythia8::Event::restoreJunctionSize() --> void");
 		cl.def("listJunctions", (void (Pythia8::Event::*)() const) &Pythia8::Event::listJunctions, "C++: Pythia8::Event::listJunctions() const --> void");
+		cl.def("hasHVcols", (bool (Pythia8::Event::*)() const) &Pythia8::Event::hasHVcols, "C++: Pythia8::Event::hasHVcols() const --> bool");
+		cl.def("listHVcols", (void (Pythia8::Event::*)() const) &Pythia8::Event::listHVcols, "C++: Pythia8::Event::listHVcols() const --> void");
+		cl.def("maxHVcols", (int (Pythia8::Event::*)() const) &Pythia8::Event::maxHVcols, "C++: Pythia8::Event::maxHVcols() const --> int");
+		cl.def("saveHVcolsSize", (void (Pythia8::Event::*)()) &Pythia8::Event::saveHVcolsSize, "C++: Pythia8::Event::saveHVcolsSize() --> void");
+		cl.def("restoreHVcolsSize", (void (Pythia8::Event::*)()) &Pythia8::Event::restoreHVcolsSize, "C++: Pythia8::Event::restoreHVcolsSize() --> void");
 		cl.def("savePartonLevelSize", (void (Pythia8::Event::*)()) &Pythia8::Event::savePartonLevelSize, "C++: Pythia8::Event::savePartonLevelSize() --> void");
+		cl.def("clearStringBreaks", (void (Pythia8::Event::*)()) &Pythia8::Event::clearStringBreaks, "C++: Pythia8::Event::clearStringBreaks() --> void");
 		cl.def("__iadd__", (class Pythia8::Event & (Pythia8::Event::*)(const class Pythia8::Event &)) &Pythia8::Event::operator+=, "C++: Pythia8::Event::operator+=(const class Pythia8::Event &) --> class Pythia8::Event &", pybind11::return_value_policy::reference, pybind11::arg("addEvent"));
+		cl.def("particles", (const class std::vector<class Pythia8::Particle, class std::allocator<class Pythia8::Particle> > * (Pythia8::Event::*)() const) &Pythia8::Event::particles, "C++: Pythia8::Event::particles() const --> const class std::vector<class Pythia8::Particle, class std::allocator<class Pythia8::Particle> > *", pybind11::return_value_policy::automatic);
 	}
 }

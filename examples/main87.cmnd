@@ -40,6 +40,6 @@ SpaceShower:rapidityOrder = off
 ! scales. Until a NLO-merged tune becomes available, LO PDFs should be used
 ! throughout the shower.
 ! Example PDF files generated with CTEQ6M PDFs.
-PDF:pSet                  = LHAPDF6:cteq6l1
+!PDF:pSet                  = LHAPDF6:cteq6l1
 SpaceShower:alphaSvalue   = 0.118
 TimeShower:alphaSvalue    = 0.118

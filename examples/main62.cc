@@ -1,9 +1,9 @@
 // main62.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: userhooks; LHE file; resonance decay; external resonance;
+// Keywords: userhooks; LHE file; resonance decay; external resonance
 
 // Example how you can use UserHooks to set angular decay distributions
 // for undecayed resonances from Les Houches input using the polarization

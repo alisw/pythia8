@@ -59,12 +59,20 @@ Code 102. It is possible to include <aloc href="TotalCrossSections">
 Coulomb corrections</aloc>, but by default this is off. 
 </flag> 
  
+<flag name="SoftQCD:singleDiffractiveXB" default="off"> 
+Single diffractive scattering <ei>A B &rarr; X B</ei>. 
+See pages on <aloc href="TotalCrossSections">Total Cross Sections</aloc> 
+and <aloc href="Diffraction">Diffraction</aloc> for details. Code 103. 
+</flag> 
+ 
+<flag name="SoftQCD:singleDiffractiveAX" default="off"> 
+Single diffractive scattering <ei>A B &rarr; A X</ei>. 
+See pages on <aloc href="TotalCrossSections">Total Cross Sections</aloc> 
+and <aloc href="Diffraction">Diffraction</aloc> for details. Code 104. 
+</flag> 
+ 
 <flag name="SoftQCD:singleDiffractive" default="off"> 
-Single diffractive scattering <ei>A B &rarr; X B</ei> and 
-<ei>A B &rarr; A X</ei>. See pages on 
-<aloc href="TotalCrossSections">Total Cross Sections</aloc> 
-and <aloc href="Diffraction"> Diffraction</aloc> for details. 
-Codes 103 and 104. 
+Both of the above single diffractive processes. Codes 103 and 104. 
 </flag> 
  
 <flag name="SoftQCD:doubleDiffractive" default="off"> 
@@ -90,7 +98,19 @@ All of the above processes, except for elastic. Codes 101,
 103, 104, 105 and 106. 
 </flag> 
  
+<p/> 
+<note>Note</note>: The repertoire of 
+<aloc href="QCDLowEnergyProcesses">Low-energy QCD processes</aloc> 
+largely overlaps with the one here, but in a simplified form 
+without any perturbative activity at all. It is thus mainly suited 
+for low energies, where also some special processes occur, such as 
+annihilation or scattering through a resonance. The 
+<aloc href="BeamParameters">variable-energy beams</aloc> 
+framework allow a smooth transition between the two, assuming you have 
+enabled matching sets of processes for the two scenarios. A normal 
+choice would be to enable all the processes, but one could e.g. decide 
+to use the nonDiffractive subprocess only. 
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

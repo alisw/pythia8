@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main73.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,9 +12,9 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 //            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
 //            <a href="../ExampleKeywords.html#hadronization">Hadronization</a>
 
-// Example how to compare "parton-level" and "hadron-level" properties.
+// Example how to compare &quot;parton-level&quot; and &quot;hadron-level&quot; properties.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 //--------------------------------------------------------------------------
@@ -22,16 +22,16 @@ using namespace Pythia8;
 // Generic routine to extract the particles that existed right before
 // the hadronization machinery was invoked.
 
-void getPartonLevelEvent( Event& event, Event& partonLevelEvent) {
+void getPartonLevelEvent( Event&amp; event, Event&amp; partonLevelEvent) {
 
   // Copy over all particles that existed right before hadronization.
   partonLevelEvent.reset();
-  for (int i = 0; i < event.size(); ++i)
+  for (int i = 0; i &lt; event.size(); ++i)
   if (event[i].isFinalPartonLevel()) {
     int iNew = partonLevelEvent.append( event[i] );
 
     // Set copied properties more appropriately: positive status,
-    // original location as "mother", and with no daughters.
+    // original location as &quot;mother&quot;, and with no daughters.
     partonLevelEvent[iNew].statusPos();
     partonLevelEvent[iNew].mothers( i, i);
     partonLevelEvent[iNew].daughters( 0, 0);
@@ -46,11 +46,11 @@ void getPartonLevelEvent( Event& event, Event& partonLevelEvent) {
 // contains the standard possibilities preprogrammed, but this
 // method illustrates further discrimination.
 
-void getHadronLevelEvent( Event& event, Event& hadronLevelEvent) {
+void getHadronLevelEvent( Event&amp; event, Event&amp; hadronLevelEvent) {
 
   // Iterate over all final particles.
   hadronLevelEvent.reset();
-  for (int i = 0; i < event.size(); ++i) {
+  for (int i = 0; i &lt; event.size(); ++i) {
     bool accept = false;
     if (event[i].isFinal()) accept = true;
 
@@ -58,10 +58,10 @@ void getHadronLevelEvent( Event& event, Event& hadronLevelEvent) {
     int idAbs = event[i].idAbs();
     if (idAbs == 12 || idAbs == 14 || idAbs == 16) accept = false;
 
-    // Example 2: reject particles with pT < 0.1 GeV (new possibility).
-    if (event[i].pT() < 0.1) accept = false;
+    // Example 2: reject particles with pT &lt; 0.1 GeV (new possibility).
+    if (event[i].pT() &lt; 0.1) accept = false;
 
-    // Copy over accepted particles, with original location as "mother".
+    // Copy over accepted particles, with original location as &quot;mother&quot;.
     if (accept) {
       int iNew = hadronLevelEvent.append( event[i] );
       hadronLevelEvent[iNew].mothers( i, i);
@@ -81,19 +81,19 @@ int main() {
 
   // Generator. LHC process and output selection. Initialization.
   Pythia pythia;
-  pythia.readString("Beams:eCM = 13000.");
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhaseSpace:pTHatMin = 200.");
-  pythia.readString("Next:numberShowInfo = 0");
-  pythia.readString("Next:numberShowProcess = 0");
-  pythia.readString("Next:numberShowEvent = 0");
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 200.&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
   pythia.init();
 
   // Parton and Hadron Level event records. Remeber to initalize.
   Event partonLevelEvent;
-  partonLevelEvent.init("Parton Level event record", &pythia.particleData);
+  partonLevelEvent.init(&quot;Parton Level event record&quot;, &amp;pythia.particleData);
   Event hadronLevelEvent;
-  hadronLevelEvent.init("Hadron Level event record", &pythia.particleData);
+  hadronLevelEvent.init(&quot;Hadron Level event record&quot;, &amp;pythia.particleData);
 
   //  Parameters for the jet finders. Need select = 1 to catch partons.
   double radius   = 0.5;
@@ -106,16 +106,16 @@ int main() {
   SlowJet antiKThadrons( -1, radius, pTjetMin, etaMax, select);
 
   // Histograms.
-  Hist nJetsP("number of jets, parton level", 50, -0.5, 49.5);
-  Hist nJetsH("number of jets, hadron level", 50, -0.5, 49.5);
-  Hist pTallP("pT for jets, parton level", 100, 0., 500.);
-  Hist pTallH("pT for jets, hadron level", 100, 0., 500.);
-  Hist pThardP("pT for hardest jet, parton level", 100, 0., 500.);
-  Hist pThardH("pT for hardest jet, hadron level", 100, 0., 500.);
-  Hist pTdiff("pT for hardest jet, hadron - parton", 100, -100., 100.);
+  Hist nJetsP(&quot;number of jets, parton level&quot;, 50, -0.5, 49.5);
+  Hist nJetsH(&quot;number of jets, hadron level&quot;, 50, -0.5, 49.5);
+  Hist pTallP(&quot;pT for jets, parton level&quot;, 100, 0., 500.);
+  Hist pTallH(&quot;pT for jets, hadron level&quot;, 100, 0., 500.);
+  Hist pThardP(&quot;pT for hardest jet, parton level&quot;, 100, 0., 500.);
+  Hist pThardH(&quot;pT for hardest jet, hadron level&quot;, 100, 0., 500.);
+  Hist pTdiff(&quot;pT for hardest jet, hadron - parton&quot;, 100, -100., 100.);
 
   // Begin event loop. Generate event. Skip if error.
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
     if (!pythia.next()) continue;
 
     // Construct parton and hadron level event.
@@ -123,7 +123,7 @@ int main() {
     getHadronLevelEvent( pythia.event, hadronLevelEvent);
 
     // List first few events.
-    if (iEvent < nListEvts) {
+    if (iEvent &lt; nListEvts) {
       pythia.event.list();
       partonLevelEvent.list();
       hadronLevelEvent.list();
@@ -132,7 +132,7 @@ int main() {
     // Analyze jet properties and list first few analyses.
     antiKTpartons.analyze( partonLevelEvent );
     antiKThadrons.analyze( hadronLevelEvent );
-    if (iEvent < nListJets) {
+    if (iEvent &lt; nListJets) {
       antiKTpartons.list();
       antiKThadrons.list();
     }
@@ -140,11 +140,11 @@ int main() {
     // Fill jet properties distributions.
     nJetsP.fill( antiKTpartons.sizeJet() );
     nJetsH.fill( antiKThadrons.sizeJet() );
-    for (int i = 0; i < antiKTpartons.sizeJet(); ++i)
+    for (int i = 0; i &lt; antiKTpartons.sizeJet(); ++i)
       pTallP.fill( antiKTpartons.pT(i) );
-    for (int i = 0; i < antiKThadrons.sizeJet(); ++i)
+    for (int i = 0; i &lt; antiKThadrons.sizeJet(); ++i)
       pTallH.fill( antiKThadrons.pT(i) );
-    if ( antiKTpartons.sizeJet() > 0 && antiKThadrons.sizeJet() > 0) {
+    if ( antiKTpartons.sizeJet() &gt; 0 &amp;&amp; antiKThadrons.sizeJet() &gt; 0) {
       pThardP.fill( antiKTpartons.pT(0) );
       pThardH.fill( antiKThadrons.pT(0) );
       pTdiff.fill( antiKThadrons.pT(0) - antiKTpartons.pT(0) );
@@ -153,8 +153,8 @@ int main() {
   // End of event loop. Statistics. Histograms.
   }
   pythia.stat();
-  cout << nJetsP << nJetsH << pTallP << pTallH
-       <<  pThardP << pThardH << pTdiff;
+  cout &lt;&lt; nJetsP &lt;&lt; nJetsH &lt;&lt; pTallP &lt;&lt; pTallH
+       &lt;&lt;  pThardP &lt;&lt; pThardH &lt;&lt; pTdiff;
 
   // Done.
   return 0;

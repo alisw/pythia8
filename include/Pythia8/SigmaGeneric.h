@@ -1,5 +1,5 @@
 // SigmaGeneric.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Johan Bijnens,Torbjorn Sjostrand.
+// Copyright (C) 2024 Johan Bijnens,Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -185,7 +185,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, sigOut;
 
   // Pointer to properties of Zv, to access decay width.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 

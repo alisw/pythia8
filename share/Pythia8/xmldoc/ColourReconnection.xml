@@ -214,10 +214,10 @@ amount of colour reconnection.
 <p/> 
 When the two strings are allowed to reconnect, they will reconnect if it 
 lowers the total string length. The total string length is in the model 
-defined by an approximation to the <ei>lambda</ei>-measure. Several options 
-for different approximations are available. The <ei>lambda</ei>-measure is not 
-well understood, especially for junction structures, and a tuneable parameter 
-is introduced to vary the behaviour between junctions and ordinary strings. 
+defined by an approximation to the <ei>lambda</ei>-measure. 
+The <ei>lambda</ei>-measure is not well understood, especially for junction 
+structures, and a tuneable parameter is introduced to vary the behaviour 
+between junctions and ordinary strings. 
  
 <p/> 
 To avoid problems with very low mass string and junction structures, these are 
@@ -236,19 +236,40 @@ starting point. Additional fragmentation variables were also adjusted in the
 first tune, but these provide a smaller change (see <ref>Chr14a</ref> for a 
 complete list). 
  
+<modepick name="ColourReconnection:lambdaForm" default="0" min="0" max="1"> 
+This allows to switch between different options for what 
+<ei>lambda</ei>-measure to use. The formula shown are how much each 
+end of a dipole or junction contribute to the total 
+<ei>lambda</ei>-measure. The energies are defined in respectively the 
+dipole or junction rest frame. 
+<option value="0"> <ei>lambda = ln( max(1., (E + p)/(m + m0)) )</ei> 
+</option> 
+<option value="1"> <ei>lambda = ln (1 + sqrt(2) E/m0)</ei> 
+</option> 
+</modepick> 
  
 <parm name="ColourReconnection:m0" default="0.3" min="0.1" 
   max="5."> 
-This is the variable used in the lambda measure for the string length. 
-See the different choices of lambda measure for exact formulas. This variable 
-is in the new model also used as a cut for forming pseudo particles that are 
-not colour reconnected. 
+Used in the <ei>lambda</ei>-measure as a protection against small mass 
+systems in <code>lambdaForm</code><ei>=0</ei>, and used as a regularisation 
+parameter in <code>lambdaForm</code><ei>=1</ei>. 
 </parm> 
  
 <parm name="ColourReconnection:junctionCorrection" default="1.20" min="0.01" 
   max="10."> 
-This variable allows to use a different m0 for junction strings in the lambda 
-measure. It is multiplicative correction to the m0 chosen above. 
+Used in the <ei>lambda</ei>-measure for junction strings, this parameter 
+allows one to vary how easily junctions form. It is implemented as a 
+multiplicative correction to the mass term in the denominator of the 
+<ei>lambda</ei>-measure. For <code>lambdaForm = 0</code>, it multiplies 
+<ei>(m+m0)</ei> and results in a constant offset from the standard 
+<ei>lambda</ei>-measure. For <code>lambdaForm = 1</code>, this parameter 
+simply multiplies <ei>m0</ei>. 
+</parm> 
+ 
+<parm name="ColourReconnection:mPseudo" default="0.3" min="0.1" 
+  max="5."> 
+This variable is used as a cut for forming pseudo particles that are not 
+colour reconnected. 
 </parm> 
  
 <modeopen name="ColourReconnection:nColours" default="9" min="1" max="30"> 
@@ -279,17 +300,17 @@ different neighbouring colours.
 This switch disables the formation of junctions in the colour reconnection. 
 </flag> 
  
-<modepick name="ColourReconnection:lambdaForm" default="0" min="0" max="2"> 
-This allows to switch between different options for what 
-<ei>lambda</ei>-measure to use. 
-The formula shown are how much each end of a dipole or junction contribute to 
-the total <ei>lambda</ei>-measure. The energies are defined in respectively 
-the dipole or junction rest frame. 
-<option value="0"> <ei>lambda = ln (1 + sqrt(2) E/m0)</ei> 
+<modepick name="ColourReconnection:heavyLambdaForm" default="0" min="0" 
+          max="2"> 
+This allows to include a pure rapidity-based <ei>lambda</ei>-measure 
+independent of <ei>m0</ei> in case a dipole end is a heavy quark 
+(<ei>c</ei> or <ei>b</ei>): <ei>lambda = ln ((E + p)/mq)</ei>. 
+<option value="0"> No special treatment of heavy quarks. 
 </option> 
-<option value="1"> <ei>lambda = ln (1 + 2 E/m0)</ei> 
+<option value="1"> Rapidity-based <ei>lambda</ei> for heavy quarks attached to 
+ junctions only. 
 </option> 
-<option value="2"> <ei>lambda = ln (2 E/m0)</ei> 
+<option value="2"> Rapidity-based <ei>lambda</ei> for all heavy quarks. 
 </option> 
 </modepick> 
  
@@ -346,6 +367,28 @@ the perturbative expansion).
 This is a tuneable parameter for the time dilation. The definition 
 can be seen above under <code>timeDilationMode</code>. 
 </parm> 
+ 
+<parm name="ColourReconnection:dipoleMaxDist" default="0.0" min="0.0" 
+      max="50.0"> 
+This is a tuneable parameter for the allowed maximum impact parameter 
+distance between the centres of two dipoles to be Colour 
+reconnected. It also restricts CR from three dipoles, all of the 
+dipoles pairs have to be seperated not more than the value of this 
+parameter. The distance is measured in the unit of fm. If set to 
+<ei>0</ei>, there is no maximum. 
+</parm> 
+ 
+<flag name="ColourReconnection:allowDiquarkJunctionCR" default="on"> 
+This flag decides whether or not to allow dipoles containing 
+diquarks to participate in junction colour reconnections. If it's 
+<code>off</code> then dipoles containing diquarks cannot be 
+reconnected into junction systems. Reconnections not 
+involving junctions are still allowed. Contextual note: this parameter 
+was introduced to disallow junctions connected (directly) to diquarks, 
+because they caused a lot of hadronization failures in the heavy-ion 
+remnant region (many, largely parallel, diquarks that attempt 
+junction reconnections). 
+</flag> 
  
 <h3>The gluon-move scheme</h3> 
  
@@ -524,4 +567,4 @@ phase space volume in SK I. There is no real reason to change this number.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

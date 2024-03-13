@@ -139,7 +139,7 @@ different jet multiplicities. For this, the switch
 <code>Merging:doXSectionEstimate</code> is invoked together with the merging 
 scale definition of <code>Merging:doUMEPSTree</code>, which corresponds to the 
 minimal Pythia evolution pT value. We will come back to the latter switch 
-below. All showering, multiparton interactions and hadronisation is, for speed 
+below. All showering, multiparton interactions and hadronization is, for speed 
 reasons, switched off when estimating the cross section, since the hard cross 
 section estimate would not be influenced by the event evolution anyway. 
  
@@ -198,4 +198,4 @@ after UMEPS merging.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

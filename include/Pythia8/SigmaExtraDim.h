@@ -1,5 +1,5 @@
 // SigmaExtraDim.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -59,7 +59,7 @@ private:
   double eDcoupling[27];
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* gStarPtr;
+  ParticleDataEntryPtr gStarPtr;
 
 };
 
@@ -108,7 +108,7 @@ private:
   double eDcoupling[27];
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* gStarPtr;
+  ParticleDataEntryPtr gStarPtr;
 
 };
 
@@ -163,7 +163,7 @@ private:
 
   // Pointer to properties of the particle species, to access decay
   // channels.
-  ParticleDataEntry* gStarPtr;
+  ParticleDataEntryPtr gStarPtr;
 
 };
 

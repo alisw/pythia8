@@ -1,5 +1,5 @@
 // GeneratorInput.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -89,7 +89,7 @@ public:
   ~LHAupAlpgen() { closeFile(isUnw, ifsUnw); }
 
   // Override fileFound routine from LHAup.
-  bool fileFound() { return (isUnw != NULL); }
+  bool fileFound() { return (isUnw != nullptr); }
 
   // Override setInit/setEvent routines from LHAup.
   bool setInit();
@@ -383,47 +383,10 @@ const double LHAupAlpgen::INCOMINGMIN     = 1e-3;
 
 // ----------------------------------------------------------------------
 
-// Constructor. Opens parameter file and parses then opens event file.
+// Constructor. Opens event file.
 
 LHAupAlpgen::LHAupAlpgen(const char* baseFNin)
-  : baseFN(baseFNin), alpgenPar(), isUnw(NULL) {
-
-  // Read in '_unw.par' file to get parameters
-  ifstream  ifsPar;
-  istream*  isPar = NULL;
-
-  // Try gzip file first then normal file afterwards
-#ifdef GZIP
-  parFN = baseFN + "_unw.par.gz";
-  isPar = openFile(parFN.c_str(), ifsPar);
-  if (!ifsPar.is_open()) closeFile(isPar, ifsPar);
-#endif
-  if (isPar == NULL) {
-    parFN = baseFN + "_unw.par";
-    isPar = openFile(parFN.c_str(), ifsPar);
-    if (!ifsPar.is_open()) {
-      cout << "Error in LHAupAlpgen::LHAupAlpgen: "
-           << "cannot open parameter file " << parFN << endl;
-      closeFile(isPar, ifsPar);
-      return;
-    }
-  }
-
-  // Read entire contents into string and close file
-  string paramStr((std::istreambuf_iterator<char>(isPar->rdbuf())),
-                   std::istreambuf_iterator<char>());
-
-  // Make sure we reached EOF and not other error
-  if (ifsPar.bad()) {
-    cout << "Error in LHAupAlpgen::LHAupAlpgen: "
-         << "cannot read parameter file " << parFN << endl;
-    return;
-  }
-  closeFile(isPar, ifsPar);
-
-  // Parse file and set LHEF header
-  alpgenPar.parse(paramStr);
-  setInfoHeader("AlpgenPar", paramStr);
+  : baseFN(baseFNin), alpgenPar(), isUnw(nullptr) {
 
   // Open '.unw' events file (with possible gzip support)
 #ifdef GZIP
@@ -431,7 +394,7 @@ LHAupAlpgen::LHAupAlpgen(const char* baseFNin)
   isUnw = openFile(unwFN.c_str(), ifsUnw);
   if (!ifsUnw.is_open()) closeFile(isUnw, ifsUnw);
 #endif
-  if (isUnw == NULL) {
+  if (isUnw == nullptr) {
     unwFN = baseFN + ".unw";
     isUnw = openFile(unwFN.c_str(), ifsUnw);
     if (!ifsUnw.is_open()) {
@@ -445,9 +408,46 @@ LHAupAlpgen::LHAupAlpgen(const char* baseFNin)
 // ----------------------------------------------------------------------
 
 // setInit is a virtual method that must be finalised here.
-// Sets up beams, strategy and processes.
+// Opens parameter file and parses it, sets up beams, strategy and processes.
 
 inline bool LHAupAlpgen::setInit() {
+
+  // Read in '_unw.par' file to get parameters
+  ifstream  ifsPar;
+  istream*  isPar = nullptr;
+
+  // Try gzip file first then normal file afterwards
+#ifdef GZIP
+  parFN = baseFN + "_unw.par.gz";
+  isPar = openFile(parFN.c_str(), ifsPar);
+  if (!ifsPar.is_open()) closeFile(isPar, ifsPar);
+#endif
+  if (isPar == nullptr) {
+    parFN = baseFN + "_unw.par";
+    isPar = openFile(parFN.c_str(), ifsPar);
+    if (!ifsPar.is_open()) {
+      cout << "Error in LHAupAlpgen::LHAupAlpgen: "
+           << "cannot open parameter file " << parFN << endl;
+      closeFile(isPar, ifsPar);
+      return false;
+    }
+  }
+
+  // Read entire contents into string and close file
+  string paramStr((std::istreambuf_iterator<char>(isPar->rdbuf())),
+                   std::istreambuf_iterator<char>());
+
+  // Make sure we reached EOF and not other error
+  if (ifsPar.bad()) {
+    cout << "Error in LHAupAlpgen::LHAupAlpgen: "
+         << "cannot read parameter file " << parFN << endl;
+    return false;
+  }
+  closeFile(isPar, ifsPar);
+
+  // Parse file and set LHEF header
+  alpgenPar.parse(paramStr);
+  setInfoHeader("AlpgenPar", paramStr);
 
   // Check that all required parameters are present
   if (!alpgenPar.haveParam("ih2") || !alpgenPar.haveParam("ebeam")  ||
@@ -785,8 +785,7 @@ inline bool LHAupAlpgen::addResonances() {
         flav = (flav > 0) ? 24 : (flav < 0) ? -24 : 23;
         if (flav != myParticles[i].idPart) {
           if (infoPtr)
-            infoPtr->errorMsg("Error in LHAupAlpgen::addResonance: "
-                "resonance does not match decay products");
+            loggerPtr->ERROR_MSG("resonance does not match decay products");
           return false;
         }
 
@@ -841,8 +840,7 @@ inline bool LHAupAlpgen::addResonances() {
           // Error if wrong flavour
           if (wrongFlavour) {
             if (infoPtr)
-              infoPtr->errorMsg("Error in LHAupAlpgen::addResonance: "
-                  "resonance does not match decay products");
+              loggerPtr->ERROR_MSG("resonance does not match decay products");
             return false;
           }
         }

@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main03.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,7 +20,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // All input is specified in the main03.cmnd file.
 // Also illustrated output to be plotted by Python/Matplotlib/pyplot.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -32,35 +32,35 @@ int main() {
   Pythia pythia;
 
   // Shorthand for the event record in pythia.
-  Event& event = pythia.event;
+  Event&amp; event = pythia.event;
 
   // Read in commands from external file.
-  pythia.readFile("main03.cmnd");
+  pythia.readFile(&quot;main03.cmnd&quot;);
 
   // Extract settings to be used in the main program.
-  int nEvent = pythia.mode("Main:numberOfEvents");
-  int nAbort = pythia.mode("Main:timesAllowErrors");
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort = pythia.mode(&quot;Main:timesAllowErrors&quot;);
 
   // Initialize.
   pythia.init();
 
   // Book histograms.
-  Hist pThard("process pT scale", 100, 0., 500.);
-  Hist nFinal("final particle multiplicity", 100, -0.5, 1599.5);
-  Hist nCharged("charged particle multiplicity", 100, -0.5, 799.5);
-  Hist dndy("dn/dy for charged particles", 100, -10., 10.);
-  Hist dndeta("dn/d(eta) for charged particles", 100, -10., 10.);
-  Hist dndpT("dn/dpT for charged particles", 100, 0., 10.);
-  Hist epCons("deviation from energy-momentum conservation", 100, 0., 1e-6);
+  Hist pThard(&quot;process pT scale&quot;, 100, 0., 500.);
+  Hist nFinal(&quot;final particle multiplicity&quot;, 100, -0.5, 1599.5);
+  Hist nCharged(&quot;charged particle multiplicity&quot;, 100, -0.5, 799.5);
+  Hist dndy(&quot;dn/dy for charged particles&quot;, 100, -10., 10.);
+  Hist dndeta(&quot;dn/d(eta) for charged particles&quot;, 100, -10., 10.);
+  Hist dndpT(&quot;dn/dpT for charged particles&quot;, 100, 0., 10.);
+  Hist epCons(&quot;deviation from energy-momentum conservation&quot;, 100, 0., 1e-6);
 
   // Begin event loop.
   int iAbort = 0;
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
 
     // Generate events. Quit if many failures.
     if (!pythia.next()) {
-      if (++iAbort < nAbort) continue;
-      cout << " Event generation aborted prematurely, owing to error!\n";
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
       break;
     }
 
@@ -71,7 +71,7 @@ int main() {
     int  nFin = 0;
     int  nChg = 0;
     Vec4 pSum;
-    for (int i = 0; i < event.size(); ++i) if (event[i].isFinal()) {
+    for (int i = 0; i &lt; event.size(); ++i) if (event[i].isFinal()) {
 
        // Analyze all particles.
       nFin++;
@@ -106,32 +106,32 @@ int main() {
   dndy     *=  5. / nEvent;
   dndeta   *=  5. / nEvent;
   dndpT    *= 10. / nEvent;
-  cout << pThard << nFinal << nCharged << dndy << dndeta << dndpT << epCons;
+  cout &lt;&lt; pThard &lt;&lt; nFinal &lt;&lt; nCharged &lt;&lt; dndy &lt;&lt; dndeta &lt;&lt; dndpT &lt;&lt; epCons;
 
   // Write Python code that can generate a PDF file with the spectra.
   // Assuming you have Python installed on your platform, do as follows.
-  // After the program has run, type "python main03plot.py" (without the " ")
-  // in a terminal window, and open "out03plot.pdf" in a PDF viewer.
+  // After the program has run, type &quot;python main03plot.py&quot; (without the &quot; &quot;)
+  // in a terminal window, and open &quot;out03plot.pdf&quot; in a PDF viewer.
   // Colours and other choices can be omitted, but are shown as illustration.
-  HistPlot hpl("main03plot");
-  hpl.plotFrame("out03plot", pThard, "$p_{\\perp}$ scale of hard interaction",
-    "$p_{\\perp}$ (GeV)",
-    "$\\mathrm{d}\\sigma/\\mathrm{d}p_{\\perp}$ (nb/GeV)",
-    "h", "$p_{\\perp}$ of $2 \\to 2$ process", true);
-  hpl.frame("", "Total and charged particle multiplicities",
-    "$n$", "$\\mathrm{d}P/\\mathrm{d}n$");
-  hpl.add( nFinal, "h,royalblue", "total");
-  hpl.add( nCharged, "h,orange", "charged (even only!)");
+  HistPlot hpl(&quot;main03plot&quot;);
+  hpl.plotFrame(&quot;out03plot&quot;, pThard, &quot;$p_{\\perp}$ scale of hard interaction&quot;,
+    &quot;$p_{\\perp}$ (GeV)&quot;,
+    &quot;$\\mathrm{d}\\sigma/\\mathrm{d}p_{\\perp}$ (nb/GeV)&quot;,
+    &quot;h&quot;, &quot;$p_{\\perp}$ of $2 \\to 2$ process&quot;, true);
+  hpl.frame(&quot;&quot;, &quot;Total and charged particle multiplicities&quot;,
+    &quot;$n$&quot;, &quot;$\\mathrm{d}P/\\mathrm{d}n$&quot;);
+  hpl.add( nFinal, &quot;h,royalblue&quot;, &quot;total&quot;);
+  hpl.add( nCharged, &quot;h,orange&quot;, &quot;charged (even only!)&quot;);
   hpl.plot();
-  hpl.frame( "", "Charged (pseudo)rapidity distribution", "$y$ or $\\eta$",
-    "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}(y/\\eta)$");
-  hpl.add( dndy, "-", "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}y$");
-  hpl.add( dndeta, "--,magenta",
-    "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}\\eta$");
+  hpl.frame( &quot;&quot;, &quot;Charged (pseudo)rapidity distribution&quot;, &quot;$y$ or $\\eta$&quot;,
+    &quot;$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}(y/\\eta)$&quot;);
+  hpl.add( dndy, &quot;-&quot;, &quot;$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}y$&quot;);
+  hpl.add( dndeta, &quot;--,magenta&quot;,
+    &quot;$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}\\eta$&quot;);
   hpl.plot();
-  hpl.plotFrame("", dndpT, "Charged $p_{\\perp}$ spectrum",
-    "$p_{\\perp}$ (GeV)", "$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}"
-    "p_{\\perp}$ (GeV$^{-1}$)", "", "charged", true);
+  hpl.plotFrame(&quot;&quot;, dndpT, &quot;Charged $p_{\\perp}$ spectrum&quot;,
+    &quot;$p_{\\perp}$ (GeV)&quot;, &quot;$\\mathrm{d}n_{\\mathrm{charged}}/\\mathrm{d}&quot;
+    &quot;p_{\\perp}$ (GeV$^{-1}$)&quot;, &quot;&quot;, &quot;charged&quot;, true);
 
   // Done.
   return 0;

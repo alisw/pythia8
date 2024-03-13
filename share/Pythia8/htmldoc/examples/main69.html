@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main69.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -33,11 +33,11 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 //  - resolved
 //  - direct
 // When the photon is from beam A the relevant contributions are
-// set with "Photon:ProcessType" values 1 (resolved) and 3 (direct) as the
+// set with &quot;Photon:ProcessType&quot; values 1 (resolved) and 3 (direct) as the
 // convention follows the photon-photon case above.
-// Also lepton->photon + proton can be generated.
+// Also lepton-&gt;photon + proton can be generated.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -47,16 +47,16 @@ int main() {
   Pythia pythia;
 
   // Decrease the output.
-  pythia.readString("Init:showChangedSettings = off");
-  pythia.readString("Init:showChangedParticleData = off");
-  pythia.readString("Next:numberCount = 0");
-  pythia.readString("Next:numberShowInfo = 0");
-  pythia.readString("Next:numberShowProcess = 0");
-  pythia.readString("Next:numberShowEvent = 0");
+  pythia.readString(&quot;Init:showChangedSettings = off&quot;);
+  pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  pythia.readString(&quot;Next:numberCount = 0&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
 
   // Shorthand for some public members of pythia (also static ones).
-  Settings& settings  = pythia.settings;
-  const Info& info = pythia.info;
+  Settings&amp; settings  = pythia.settings;
+  const Info&amp; info = pythia.info;
 
   // Photon-proton collisions.
   bool photonProton         = false;
@@ -69,53 +69,54 @@ int main() {
 
   // Optionally use different PDFs from LHAPDF for hard process.
   // Requires linkin with LHAPDF5.
-  // pythia.readString("PDF:useHard = on");
-  // pythia.readString("PDF:GammaHardSet = LHAPDF5:SASG.LHgrid/5");
+  // pythia.readString(&quot;PDF:useHard = on&quot;);
+  // pythia.readString(&quot;PDF:GammaHardSet = LHAPDF5:SASG.LHgrid/5&quot;);
 
   // Beam parameters.
-  pythia.readString("Beams:eCM = 200.");
+  pythia.readString(&quot;Beams:eCM = 200.&quot;);
 
-  // Set up beam particles for electron -> photon + proton.
+  // Set up beam particles for electron -&gt; photon + proton.
   if ( photonProton) {
     if ( photonsFromElectrons) {
-      pythia.readString("Beams:idA = 11");
-      pythia.readString("Beams:idB = 2212");
-      pythia.readString("PDF:lepton2gamma = on");
+      pythia.readString(&quot;Beams:idA = 11&quot;);
+      pythia.readString(&quot;Beams:idB = 2212&quot;);
+      pythia.readString(&quot;PDF:beamA2gamma = on&quot;);
 
     // Set up beam particles for photon + proton.
     } else {
-      pythia.readString("Beams:idA = 22");
-      pythia.readString("Beams:idB = 2212");
+      pythia.readString(&quot;Beams:idA = 22&quot;);
+      pythia.readString(&quot;Beams:idB = 2212&quot;);
     }
 
   // Set up beam particles for photon-photon in e+e-.
   } else if ( photonsFromElectrons) {
-    pythia.readString("Beams:idA = -11");
-    pythia.readString("Beams:idB =  11");
-    pythia.readString("PDF:lepton2gamma = on");
+    pythia.readString(&quot;Beams:idA = -11&quot;);
+    pythia.readString(&quot;Beams:idB =  11&quot;);
+    pythia.readString(&quot;PDF:beamA2gamma = on&quot;);
+    pythia.readString(&quot;PDF:beamB2gamma = on&quot;);
 
   // Set up beam particles for photon-photon.
   } else {
-    pythia.readString("Beams:idA = 22");
-    pythia.readString("Beams:idB = 22");
+    pythia.readString(&quot;Beams:idA = 22&quot;);
+    pythia.readString(&quot;Beams:idB = 22&quot;);
   }
 
   // Cuts on photon virtuality and invariant mass of gamma-gamma/hadron pair.
   if ( photonsFromElectrons) {
-    pythia.readString("Photon:Q2max = 1.0");
-    pythia.readString("Photon:Wmin  = 10.0");
+    pythia.readString(&quot;Photon:Q2max = 1.0&quot;);
+    pythia.readString(&quot;Photon:Wmin  = 10.0&quot;);
   }
 
   // For photon-proton increase pT0Ref (for better agreement with HERA data).
   // Photon-photon has a new default pT0 parametrization tuned to LEP data.
   if ( photonProton)
-    pythia.readString("MultipartonInteractions:pT0Ref = 3.00");
+    pythia.readString(&quot;MultipartonInteractions:pT0Ref = 3.00&quot;);
 
   // Limit partonic pThat.
-  settings.parm("PhaseSpace:pTHatMin", 5.0);
+  settings.parm(&quot;PhaseSpace:pTHatMin&quot;, 5.0);
 
   // Reset statistics after each subrun.
-  pythia.readString("Stat:reset = on");
+  pythia.readString(&quot;Stat:reset = on&quot;);
 
   // Parameters for histograms.
   double pTmin = 0.0;
@@ -123,20 +124,25 @@ int main() {
   int nBinsPT  = 40;
 
   // Initialize the histograms.
-  Hist pTtot("Total charged hadron pT distribution", nBinsPT, pTmin, pTmax);
-  Hist pTresres("Resolved-resolved contribution", nBinsPT, pTmin, pTmax);
-  Hist pTresdir("Resolved-direct contribution", nBinsPT, pTmin, pTmax);
-  Hist pTdirres("Direct-resolved contribution", nBinsPT, pTmin, pTmax);
-  Hist pTdirdir("Direct-direct contribution", nBinsPT, pTmin, pTmax);
-  Hist pTiRun("Contribution from Run i", nBinsPT, pTmin, pTmax);
+  Hist pTtot(&quot;Total charged hadron pT distribution&quot;, nBinsPT, pTmin, pTmax);
+  Hist pTresres(&quot;Resolved-resolved contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTresdir(&quot;Resolved-direct contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTdirres(&quot;Direct-resolved contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTdirdir(&quot;Direct-direct contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTiRun(&quot;Contribution from Run i for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
 
   // Initialize hard QCD processes with 0, 1, or 2 initial photons.
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhotonParton:all = on");
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhotonParton:all = on&quot;);
   if ( !photonProton) {
-    pythia.readString("PhotonCollision:gmgm2qqbar = on");
-    pythia.readString("PhotonCollision:gmgm2ccbar = on");
-    pythia.readString("PhotonCollision:gmgm2bbbar = on");
+    pythia.readString(&quot;PhotonCollision:gmgm2qqbar = on&quot;);
+    pythia.readString(&quot;PhotonCollision:gmgm2ccbar = on&quot;);
+    pythia.readString(&quot;PhotonCollision:gmgm2bbbar = on&quot;);
   }
 
   // Number of runs.
@@ -147,13 +153,13 @@ int main() {
   int nEvent = 10000;
 
   // Loop over relevant processes.
-  for ( int iRun = 1; iRun < nRuns + 1; ++iRun) {
+  for ( int iRun = 1; iRun &lt; nRuns + 1; ++iRun) {
 
     // Turn of MPIs for processes with unresolved photons.
-    if (iRun == 2) pythia.readString("PartonLevel:MPI = off");
+    if (iRun == 2) pythia.readString(&quot;PartonLevel:MPI = off&quot;);
 
     // For photon+proton direct contribution with processType = 3.
-    if (photonProton && iRun == 2) iRun = 3;
+    if (photonProton &amp;&amp; iRun == 2) iRun = 3;
 
     // Set the type of gamma-gamma process:
     // 0 = mix of all below,
@@ -161,8 +167,8 @@ int main() {
     // 2 = resolved-direct,
     // 3 = direct-resolved,
     // 4 = direct-direct.
-    if (automaticMix) settings.mode("Photon:ProcessType", 0);
-    else              settings.mode("Photon:ProcessType", iRun);
+    if (automaticMix) settings.mode(&quot;Photon:ProcessType&quot;, 0);
+    else              settings.mode(&quot;Photon:ProcessType&quot;, iRun);
 
     // Initialize the generator.
     pythia.init();
@@ -171,7 +177,7 @@ int main() {
     pTiRun.null();
 
     // Begin event loop. Skip if fails.
-    for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
 
       // Generate next event.
       if (!pythia.next()) continue;
@@ -186,8 +192,8 @@ int main() {
       double weight = info.weight();
 
       // Loop over event record and find charged final state particles.
-      for (int i = 0; i < pythia.event.size(); ++i){
-        if ( pythia.event[i].isFinal() && pythia.event[i].isCharged() ) {
+      for (int i = 0; i &lt; pythia.event.size(); ++i){
+        if ( pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged() ) {
 
           // Store the pT value.
           double pTch = pythia.event[i].pT();
@@ -235,7 +241,7 @@ int main() {
   }
 
   // Print histograms.
-  cout << pTresres << pTresdir << pTdirres << pTdirdir << pTtot;
+  cout &lt;&lt; pTresres &lt;&lt; pTresdir &lt;&lt; pTdirres &lt;&lt; pTdirdir &lt;&lt; pTtot;
 
   // Done.
   return 0;

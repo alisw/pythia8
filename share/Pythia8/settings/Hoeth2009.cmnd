@@ -1,0 +1,29 @@
+! Full e+e- tune of flavours and FSR to LEP1 data within the
+! Rivet + Professor framework, by Hendrik Hoeth (June 2009).
+StringFlav:probStoUD = 0.19
+StringFlav:probQQtoQ = 0.09
+StringFlav:probSQtoQQ = 1.00
+StringFlav:probQQ1toQQ0 = 0.027
+StringFlav:mesonUDvector = 0.62
+StringFlav:mesonSvector = 0.725
+StringFlav:mesonCvector = 1.06
+StringFlav:mesonBvector = 3.0
+StringFlav:etaSup = 0.63
+StringFlav:etaPrimeSup = 0.12
+StringFlav:popcornSpair = 0.5
+StringFlav:popcornSmeson = 0.5
+StringFlav:suppressLeadingB = false
+StringZ:aLund = 0.3
+StringZ:bLund = 0.8
+StringZ:aExtraSquark = 0.00
+StringZ:aExtraDiquark = 0.50
+StringZ:rFactC = 1.00
+StringZ:rFactB = 0.67
+StringPT:sigma = 0.304
+StringPT:enhancedFraction = 0.01
+StringPT:enhancedWidth = 2.0
+TimeShower:alphaSvalue = 0.1383);
+"TimeShower:alphaSorder = 1
+TimeShower:alphaSuseCMW = false
+TimeShower:pTmin = 0.4
+TimeShower:pTminChgQ = 0.4

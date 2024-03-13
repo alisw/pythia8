@@ -1,5 +1,5 @@
 # Makefile is a part of the PYTHIA event generator.
-# Copyright (C) 2020 Torbjorn Sjostrand.
+# Copyright (C) 2024 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 # Author: Philip Ilten, September 2014.
@@ -25,9 +25,27 @@ ifneq ("$(wildcard ../lib/libpythia8.*)","")
   PREFIX_LIB=../lib
   PREFIX_INCLUDE=../include
 endif
-CXX_COMMON:=-I$(PREFIX_INCLUDE) $(CXX_COMMON) $(GZIP_LIB)
+CXX_COMMON:=$(OBJ_COMMON) -I$(PREFIX_INCLUDE) $(CXX_COMMON) $(GZIP_LIB)
 CXX_COMMON+= -L$(PREFIX_LIB) -Wl,-rpath,$(PREFIX_LIB) -lpythia8 -ldl
 PYTHIA=$(PREFIX_LIB)/libpythia8$(LIB_SUFFIX)
+
+# Fix missing runtime paths from RIVET and determine C++ standard used.
+ifeq ($(RIVET_USE),true)
+  COMMA=,
+  RIVET_LPATH=$(filter -L%,$(shell $(RIVET_BIN)$(RIVET_CONFIG) --ldflags))
+  RIVET_RPATH=$(subst -L,-Wl$(COMMA)-rpath$(COMMA),$(RIVET_LPATH))
+  RIVET_FLAGS=-DRIVET
+  RIVET_VERSION=$(shell $(RIVET_BIN)$(RIVET_CONFIG) --version)
+  RIVET_CSTD=c++14
+  ifeq ("4.0.0","$(word 1, $(sort 4.0.0 $(RIVET_VERSION)))")
+    RIVET_CSTD=c++17
+  endif
+  DTAGS=$(shell echo "int main(){}" | $(CXX) -Wl,--disable-new-dtags -o \
+     /dev/null -xc - 2>&1)
+  ifeq ($(DTAGS),)
+    RIVET_FLAGS+= -Wl,--disable-new-dtags
+  endif
+endif
 
 ################################################################################
 # RULES: Definition of the rules used to build the PYTHIA examples.
@@ -50,30 +68,49 @@ $(PYTHIA):
 main%: $(PYTHIA) main%.cc
 	$(CXX) $@.cc -o $@ $(CXX_COMMON)
 
+# User-written examples for tutorials, without external dependencies.
+mymain%: $(PYTHIA) mymain%.cc
+	$(CXX) $@.cc -o $@ $(CXX_COMMON)
+
+# Internally used tests, without external dependencies.
+test%: $(PYTHIA) test%.cc
+	$(CXX) $@.cc -o $@ $(CXX_COMMON)
+
 # MixMax (remove warnings).
-main23: $(PYTHIA) main23.cc
+main23: $(PYTHIA) $$@.cc
 	$(CXX) $@.cc -o $@ -w $(CXX_COMMON)
 
-# HEPMC3.
-main41 main42 main43 main45 main85 main86 main87 main88 main89: $(PYTHIA) $$@.cc
+# HEPMC2 or HEPMC3 (use HEPMC3 if both).
+main41 main42 main43 main44 main45 main85 main86 main87 main88 main89 main280:\
+	$(PYTHIA) $$@.cc
 ifeq ($(HEPMC3_USE),true)
-	$(CXX) $@.cc -o $@ $(HEPMC3_INCLUDE) $(CXX_COMMON) $(HEPMC3_LIB)
+	$(CXX) $@.cc -o $@ $(CXX_COMMON) $(HEPMC3_INCLUDE) $(HEPMC3_LIB)\
+	 -DHEPMC3
+else ifeq ($(HEPMC2_USE),true)
+	$(CXX) $@.cc -o $@ $(CXX_COMMON) $(HEPMC2_INCLUDE) $(HEPMC2_LIB)\
+	 -DHEPMC2
 else
-	$(error Error: $@ requires HEPMC3)
+	$(error Error: $@ requires HEPMC2 or HEPMC3)
 endif
 
-# HEPMC2.
-main44: $(PYTHIA) $$@.cc
-ifeq ($(HEPMC2_USE),true)
-	$(CXX) $@.cc -o $@ $(HEPMC2_INCLUDE) $(CXX_COMMON) $(HEPMC2_LIB)
+# HDF5, HIGHFIVE, and HepMC2 or HepMC3.
+main46: $(PYTHIA) $$@.cc
+ifeq ($(HDF5_USE)$(HIGHFIVE_USE)$(HEPMC3_USE),truetruetrue)
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON)\
+	 $(HDF5_INCLUDE) $(HIGHFIVE_INCLUDE) $(HEPMC3_INCLUDE)\
+	 $(HDF5_LIB) $(HEPMC3_LIB) -DHEPMC3
+else ifeq ($(HDF5_USE)$(HIGHFIVE_USE)$(HEPMC2_USE),truetruetrue)
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(MPICH_INCLUDE)\
+	 $(HDF5_INCLUDE) $(HIGHFIVE_INCLUDE) $(HEPMC2_INCLUDE)\
+	 $(HDF5_LIB) $(HEPMC2_LIB) -DHEPMC2
 else
-	$(error Error: $@ requires HEPMC2)
+	$(error Error: $@ requires MPICH, HDF5, HIGHFIVE, and HEPMC2 or HEPMC3)
 endif
 
 # EVTGEN.
 main48: $(PYTHIA) $$@.cc
 ifeq ($(EVTGEN_USE)$(HEPMC2_USE),truetrue)
-	$(CXX) $@.cc -o $@ $(EVTGEN_INCLUDE) -w $(CXX_COMMON)\
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(EVTGEN_INCLUDE)\
 	 -DEVTGEN_PYTHIA -DEVTGEN_EXTERNAL $(EVTGEN_LIB)
 else
 	$(error Error: $@ requires EVTGEN)
@@ -82,7 +119,7 @@ endif
 # FASTJET3.
 main71 main72 main75 main81 main82 main83: $(PYTHIA) $$@.cc
 ifeq ($(FASTJET3_USE),true)
-	$(CXX) $@.cc -o $@ $(FASTJET3_INCLUDE) -w $(CXX_COMMON) $(FASTJET3_LIB)
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(FASTJET3_INCLUDE) $(FASTJET3_LIB)
 else
 	$(error Error: $@ requires FASTJET3)
 endif
@@ -90,7 +127,7 @@ endif
 # FASTJET3 with recursive tools.
 main74: $(PYTHIA) $$@.cc
 ifeq ($(FASTJET3_USE),true)
-	$(CXX) $@.cc -o $@ $(FASTJET3_INCLUDE) -w $(CXX_COMMON)\
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(FASTJET3_INCLUDE)\
 	 $(FASTJET3_LIB) -lfastjettools -lRecursiveTools
 else
 	$(error Error: $@ requires FASTJET3)
@@ -99,51 +136,62 @@ endif
 # FASTJET3 and HEPMC3.
 main84: $(PYTHIA) $$@.cc
 ifeq ($(FASTJET3_USE)$(HEPMC3_USE),truetrue)
-	$(CXX) $@.cc -o $@ $(FASTJET3_INCLUDE) $(HEPMC3_INCLUDE) -w\
-	 $(CXX_COMMON) $(FASTJET3_LIB) $(HEPMC3_LIB)
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(FASTJET3_INCLUDE)\
+	 $(HEPMC3_INCLUDE) $(FASTJET3_LIB) $(HEPMC3_LIB)
 else
 	$(error Error: $@ requires FASTJET3 and HEPMC3)
 endif
 
+# Plugin libraries.
+lib%.so: %.cc $(PYTHIA)
+	$(CXX) $< -o $@ -w $(CXX_COMMON) $(CXX_SHARED) -Wl,--no-as-needed
+
 # ROOT libraries generated via CINT.
 main%.so: main%Dct.cc
-	$(CXX) $< -o $@ -w $(CXX_SHARED) $(CXX_COMMON)\
-	 $(ROOT_LIB) `$(ROOT_CONFIG) --cflags`
+	$(CXX) $< -o $@ -DPY8ROOT -w $(CXX_SHARED) $(CXX_COMMON)\
+	 $(ROOT_LIB) $(shell $(ROOT_CONFIG) --cflags)
 main%Dct.cc: main%.h main%LinkDef.h
 ifeq ($(ROOT_USE),true)
-	$(ROOT_BIN)rootcint -f $@ -c -I$(PREFIX_INCLUDE) $^
+	$(ROOT_BIN)rootcint -f $@ -DPY8ROOT -I$(PREFIX_INCLUDE) $^
 else
 	$(error Error: $@ requires ROOT)
 endif
 
-# ROOT (turn off all warnings for readability).
-main91: $(PYTHIA) $$@.cc
+# General ROOT examples without other external dependencies. 
+main91 main94: $(PYTHIA) $$@.cc
 ifeq ($(ROOT_USE),true)
 	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(ROOT_LIB)\
-	 `$(ROOT_CONFIG) --cflags --glibs`
+	 $(shell $(ROOT_CONFIG) --cflags --glibs)
 else
 	$(error Error: $@ requires ROOT)
 endif
-main92: $(PYTHIA) $$@.cc main92.so
-	$(CXX) $@.cc main92.so -o $@ -w $(CXX_COMMON) -Wl,-rpath,./\
-	 `$(ROOT_CONFIG) --cflags --glibs`
 
-# RIVET with optional ROOT.
+# RIVET with optional ROOT (if RIVET, use C++14).
 main93: $(PYTHIA) $$@.cc $(if $(filter true,$(ROOT_USE)),main93.so)
 ifeq ($(RIVET_USE),true)
-	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) -Wl,-rpath,./\
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON:c++11=$(RIVET_CSTD)) -Wl,-rpath,./\
 	 $(if $(filter true,$(ROOT_USE)),main93.so -DPY8ROOT\
-         $(ROOT_LIB) `$(ROOT_CONFIG) --cflags --glibs`)\
-	 $(RIVET_INCLUDE) $(RIVET_LIB)
+         $(ROOT_LIB) $(shell $(ROOT_CONFIG) --cflags --glibs)) $(RIVET_FLAGS)\
+         $(RIVET_RPATH) $(shell $(RIVET_BIN)$(RIVET_CONFIG) --cppflags --libs)
 else
 	$(error Error: $@ requires RIVET)
 endif
 
-# RIVET.
+# ROOT with FastJet. 
+main95: $(PYTHIA) $$@.cc 
+ifeq ($(ROOT_USE)$(FASTJET3_USE),truetrue)
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(FASTJET3_INCLUDE)\
+         $(FASTJET3_LIB) $(ROOT_LIB) $(shell $(ROOT_CONFIG) --cflags --glibs)
+else	
+	$(error Error: $@ requires ROOT and FASTJET3)
+endif
+
+# RIVET (if RIVET use C++14).
 main111: $(PYTHIA) $$@.cc
 ifeq ($(RIVET_USE),true)
-	$(CXX) $@.cc -o $@ -w $(CXX_COMMON) $(RIVET_INCLUDE) $(RIVET_LIB)\
-	 -DRIVET
+	@echo $(RIVET_VERSION)
+	$(CXX) $@.cc -o $@ -w $(CXX_COMMON:c++11=$(RIVET_CSTD)) $(RIVET_FLAGS)\
+	 $(shell $(RIVET_BIN)$(RIVET_CONFIG) --cppflags --libs) $(RIVET_RPATH)
 else
 	$(CXX) $@.cc -o $@ -w $(CXX_COMMON)
 endif
@@ -151,19 +199,11 @@ endif
 # HEPMC3.
 main300: $(PYTHIA) $$@.cc
 ifeq ($(HEPMC3_USE),true)
-	$(CXX) $@.cc -o $@ $(HEPMC3_INCLUDE) $(CXX_COMMON) $(HEPMC3_LIB)\
+	$(CXX) $@.cc -o $@ $(CXX_COMMON) $(HEPMC3_INCLUDE) $(HEPMC3_LIB)\
 	 -DHEPMC3
 else
 	$(CXX) $@.cc -o $@ $(CXX_COMMON)
 endif
-
-# User-written examples for tutorials, without external dependencies.
-mymain%: $(PYTHIA) mymain%.cc
-	$(CXX) $@.cc -o $@ $(CXX_COMMON)
-
-# Internally used tests, without external dependencies.
-test%: $(PYTHIA) test%.cc
-	$(CXX) $@.cc -o $@ $(CXX_COMMON)
 
 # Clean.
 clean:
@@ -173,4 +213,5 @@ clean:
 	rm -f test[0-9][0-9][0-9]; rm -f *.dat;\
 	rm -f weakbosons.lhe; rm -f hist.root;\
 	rm -f *~; rm -f \#*; rm -f core*; rm -f *Dct.*; rm -f *.so;\
-	rm -f *.log; rm -f *plot.py; rm -f *.pcm;
+	rm -f *.log; rm -f *plot.py; rm -f *.pcm; rm -f *.mpi;\
+	rm -f *.hepmc; rm -f *.yoda; rm -f *.root;

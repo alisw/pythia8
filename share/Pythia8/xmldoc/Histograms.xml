@@ -35,8 +35,9 @@ been omitted in this case.
 <p/> 
 A set of overloaded operators have been defined, so that histograms 
 can be added, subtracted, divided or multiplied by each other. Then the 
-contents are modified accordingly bin by bin. Thus the relative 
-deviation between two histograms <code>data</code> and 
+contents (and associated statistical errors) are modified accordingly 
+bin by bin. Thus the relative deviation between two histograms 
+<code>data</code> and 
 <code>theory</code> can be found as 
 <pre> 
   diff = (data - theory) / (data + theory); 
@@ -106,19 +107,38 @@ or more precisely in the range 342.5 to 347.5.
  
 <p/> 
 The printout also provides some other information, such as the 
-number of entries, i.e. how many times the histogram has been filled, 
-the total weight inside the histogram, the total weight in underflow 
-and overflow, and the mean value and root-mean-square width (disregarding 
-underflow and overflow). The mean and width assumes that all the 
-contents is in the middle of the respective bin. This is especially 
-relevant when you plot a integer quantity, such as a multiplicity. 
+number of entries, i.e. how many times the histogram has been filled 
+(including both underflow and overflow), the total weight inside the 
+histogram (excluding underflow and overflow), the total weight in underflow 
+and overflow, and the statistical power of the contents inside the 
+histogram expressed in terms of 
+<ei>nEffective = ( sum ( w ) )^2 / ( sum w^2 )</ei>. For an 
+unweighted histogram, the latter is equal to the number of entries 
+(excluding underflow and overflow), while for one filled with 
+varying weights, it is less than that. 
+ 
+<p/> 
+Also printed are the mean value, median, and root-mean-square width 
+(RMS). (Further moments about the mean can be computed via dedicated 
+getter methods, see below.) If <code>doStats == true</code> then 
+statistical errors are also printed, summed in quadrature with an 
+estimate of the error due to the finite bin granularity (calculated as 
+the difference with respect to unbinned estimates of the same quantities). 
+ 
+<p/> 
+In the printout, the moments and the median all disregard underflow 
+and overflow and assume that all the contents is in the middle of the 
+respective bin (with the median using a linear interpolation inside the median 
+bin). This is especially relevant when you plot an integer quantity, 
+such as a multiplicity. 
 Then it makes sense to book with limits that are half-integers, e.g. 
 <pre> 
    Hist multMPI( "number of multiparton interactions", 20, -0.5, 19.5); 
 </pre> 
 so that the bins are centered at 0, 1, 2, ..., respectively.  This also 
 avoids ambiguities which bin gets to be filled if entries are 
-exactly at the border between two bins. Also note that the 
+exactly at the border between two bins. 
+Also note that the 
 <code>fill( xValue)</code> method automatically performs a cast 
 to double precision where necessary, i.e. <code>xValue</code> 
 can be an integer. 
@@ -160,10 +180,12 @@ where the second argument tells how each histogram will be plotted.
 Default is histogram style, "h", but the values can also be connected 
 with full lines "-", dashed ones "--", or dash-dotted ones "-.", or 
 plotted as points "." or crosses "x", to mention some of the many 
-options offered by Pyplot. Here you can also specify the colour, 
-separated by a comma from the line style, to override the normal 
-colour cycle. The most common colours can be given just as a single 
-letter, such as "r", "g", "b", but a more extensive 
+options offered by Pyplot. As alternative to "h", the argument "e" can 
+be specified which provides the same style as "h" but with error bars 
+included. You can also specify the colour, separated by a comma from 
+the line style, to override the normal colour cycle. The most common 
+colours can be given just as a single letter, such as "r", "g", "b", 
+but a more extensive 
 <a href="https://matplotlib.org/examples/color/named_colors.html"> 
 colour palette</a> allow finetuning to nuances such as "orange", 
 "gold", "darkgreen", "royalblue", "crimson", and so on. 
@@ -203,6 +225,21 @@ where the latter is the simpler one. The <code>main51.cc</code> example
 illustrates that the <ei>x</ei> scale can be chosen logarithmically, 
 by using an optional last argument when histograms are booked. 
  
+<p/> 
+Alternatively, it also straight forward to produce histograms direcly 
+through the <aloc href="PythonInterface">Python interface</aloc> using 
+the <code>binEdges</code> and <code>binContents</code> methods of the 
+<code>Hist</code> class. 
+<pre> 
+  import pythia8, random 
+  from matplotlib import pyplot 
+  hst = pythia8.Hist("log", 100, 0.1, 4, True) 
+  for i in range(0, int(1e6)): hst.Fill(random.gauss(0, 1)) 
+  pyplot.hist(hst.getBinEdges()[:-1], hst.getBinEdges(), 
+               weights = hst.getBinContents(), 
+               histtype = "step", label = hst.getTitle()) 
+</pre> 
+ 
 <h3>The methods</h3> 
  
 We here collect a more complete and formal overview of the methods. 
@@ -212,7 +249,7 @@ declare a histogram, but does not define it.
 </method> 
  
 <method name="Hist::Hist(string title, int numberOfBins, double xMin, 
-double xMax, bool logX = false)"> 
+double xMax, bool logX = false, bool doStats = false)"> 
 declare and define a histogram, where 
 <argument name="title"> 
 is a string with the title of the histogram at output, 
@@ -233,6 +270,12 @@ gives a logarithmic <ei>x</ei> scale between <code>xMin</code> and
 <code>xMin</code> must be above 1e-20 so as to stay with positive 
 numbers. 
 </argument> 
+<argument name="doStats"> 
+  decides whether statistics allowing unbinned higher moments to be 
+  calculated are saved (up to n = 7) and also whether the histogram summary 
+  printout via the <code>&lt;&lt;</code> operator includes 
+  <ei>+/-</ei> uncertainty estimates on the Mean, Median, and RMS values. 
+</argument> 
 </method> 
  
 <method name="Hist::Hist(const Hist&amp; h)"> 
@@ -252,9 +295,15 @@ except that the original histogram title is retained.
 </method> 
  
 <method name="void Hist::book(string title, int numberOfBins, 
-double xMin, double xMax, bool logXIn = false)"> 
+double xMin, double xMax, bool logXIn = false, bool doStatsIn = false)"> 
 define a histogram that previously was only declared; 
 see above for the meaning of the arguments. 
+</method> 
+ 
+<method name="static Hist Hist::plotFunc(function&lt;double(double)&gt; f, 
+string title, int nBin, double xMin, double xMax, bool logX = false)"> 
+create a histogram out of a provided function <ei>f(x)</ei>. 
+The function is evaluated in the middle of each bin. 
 </method> 
  
 <method name="void Hist::title(string title)"> 
@@ -291,13 +340,13 @@ The Pyplot interface will display correct values, however.
 </method> 
  
 <method name="void Hist::table(ostream&amp; os = cout, 
-bool printOverUnder = false, bool xMidBin = true)"> 
+bool printOverUnder = false, bool xMidBin = true, bool printError = true)"> 
 </method> 
 <methodmore name="void Hist::table(string fileName, 
-bool printOverUnder = false, bool xMidBin = true)"> 
-print a two-column table, where the first column gives the center of 
-each bin and the second one the corresponding bin contents. The table 
-may be useful for plotting e.g. with Gnuplot. 
+bool printOverUnder = false, bool xMidBin = true, bool printError = true)"> 
+print a three-column table, where the first column gives the center of 
+each bin, the second one the corresponding bin contents, and the bin 
+errors. The table may be useful for plotting e.g. with Gnuplot. 
 <br/>The desired output stream or file name can be provided as argument. 
 The former is more flexible (e.g., it allows easy append to an existing 
 file), whereas the latter is simpler for the case that each histogram 
@@ -308,26 +357,23 @@ coordinates for these are placed as if corresponding to same-size bins
 just below or above the regular histogram bins.) 
 <br/>An optional <code>xMidBin = false</code> argument will have the 
 <ei>x</ei> value at the beginning of each bin printed, rather than the 
-default midpoint value. 
+default midpoint value. Finally, the optional <code>printError = 
+false</code> will force the values in the third column to be zero. 
 </methodmore> 
  
 <method name="void Hist::rivetTable(ostream&amp; os = cout, 
-bool printError = false)"> 
+bool printError = true)"> 
 </method> 
 <methodmore name="void Hist::rivetTable(string fileName, 
-bool printError = false)"> 
+bool printError = true)"> 
 print a five-column table, where the first two columns give the lower 
 and upper borders of each bin, the third one the bin contents, and the 
 fourth and fifth the error (up and down) associated with the contents. 
 This format matches the one that Rivet uses for its histograms. 
 The choice between the two methods is the same as above for the 
 <code>table</code> methods. 
-<br/>The error bins are put to zero by default, since the PYTHIA 
-histogramming is not sophisticated enough to compensate for rescalings 
-or other operations, or for weighted events. With the optional 
-<code>printError = true</code> the error will be taken as the 
-square root of the bin content, as is relevant if this content has 
-the same unit weight for each entry to it. 
+<br/>With the optional <code>printError = false</code> the errors will 
+be output as zero. 
 </methodmore> 
  
 <method name="void Hist::pyplotTable(ostream&amp; os = cout, 
@@ -344,6 +390,17 @@ line is provided, that gives no further histogram contents but provides
 the upper border of the last bin. This format is used for plotting with 
 Pyplot, see below. The choice between the two methods is the same as 
 above for the <code>table</code> methods. 
+</methodmore> 
+ 
+<method name="void Hist::fillTable(ostream&amp; os = cout)"> 
+</method> 
+<methodmore name="void Hist::fillTable(string fileName)"> 
+fill the contents of a two-column table into the histogram. The first 
+column should give the center of each bin and the second one the 
+corresponding bin contents to be filled. This is basically the inverse 
+of the <code>table</code> methods above, whereby a written histogram 
+contents can be read back in. Over- and underflow will be read back in 
+if provided, but the <code>xMidBin = false</code> option will not work. 
 </methodmore> 
  
 <method name="friend void table(const Hist&amp; h1, const Hist&amp; h2, 
@@ -368,10 +425,84 @@ return the title of the histogram.
 return the number of bins in the histogram. 
 </method> 
  
+<method name="int Hist::getNonFinite()"> 
+return the number of entries that are neither infinite nor NaN. 
+</method> 
+ 
 <method name="bool Hist::getLinX()"> 
 return true if the histogram has a linear <ei>x</ei> scale and 
 false if a logarithmic one. 
 </method> 
+ 
+<method name="bool Hist::getXMin()"> 
+</method> 
+<methodmore name="bool Hist::getXMax()"> 
+return the lower and upper edge of the booked <ei>x</ei> range. 
+</methodmore> 
+ 
+<method name="bool Hist::getYMin()"> 
+</method> 
+<methodmore name="bool Hist::getYMax()"> 
+return the highest and lowest value of any bin inside the histogram, 
+i.e. excluding underflow and overflow. 
+</methodmore> 
+ 
+<method name="double Hist::getYAbsMin()"> 
+returns the smallest absolute value (above 1e-20, to sidestep bins with 
+zero content) in any of the bins inside the histogram. 
+</method> 
+ 
+<method name="double getXMean(bool unbinned=true)"> 
+</method> 
+<methodmore name="double getXMeanErr(bool unbinned=true)"> 
+Return mean in X and error on mean, either unbinned from saved weight 
+sums (default) or explicitly from the histogram bins <code>(unbinned = 
+false)</code>. 
+In the latter case, the error estimate includes a measure of the error 
+due to the finite bin granularity, calculated as the difference between 
+the binned and unbinned values and summed in quadrature with the 
+statistical error. 
+</methodmore> 
+ 
+<method name="double getXMedian(bool includeOverUnder=true)"> 
+</method> 
+<methodmore name="double getXMedianErr(bool unbinned=true)"> 
+Return median in X and its statistical error, ignoring underflow and 
+ overflow (default) or including them <code>(includeOverUnder = 
+ true)</code>. By default, the reported error includes the same granularity 
+ estimate as for the mean value (and also computed using the mean, not the 
+ median), but this can be switched off <code>(unbinned = false)</code>. 
+</methodmore> 
+ 
+<method name="double getYMean()"> 
+Return the average value in Y, calculated as the sum of weights inside 
+the histogram range divided by the number of times it was filled. 
+</method> 
+ 
+<method name="double getXRMN(int n=2, bool unbinned=true)"> 
+</method> 
+<methodmore name="double getXRMNErr(int n=2, bool unbinned=true)"> 
+Return the <ei>n</ei>'th root of the <ei>n</ei>'th moment about the mean, 
+<ei>&lt; (x - &lt;x&gt;)^n &gt;</ei>, and its estimated statistical error. 
+The default value <ei>n = 2</ei> corresponds to the standard root-mean-square 
+width. Up to <ei>n = 6</ei>, both unbinned and binned moments can 
+be calculated. For <ei>n >= 7</ei>, and for all error estimates, only 
+binned calculations are available. Note that (unlike ROOT), the error 
+estimates do not assume normal distributions. If <code>unbinned = 
+false</code> an estimate of the bin granularity error is added in 
+quadrature to the statistical error (up to <ei>n = 6</ei>, beyond 
+which the bin granularity error is not estimated). 
+</methodmore> 
+ 
+<method name="double getXRMS(bool unbinned=true)"> 
+</method> 
+<methodmore name="double getXRMSErr(bool unbinned=true)"> 
+Wrapper of <code>getXRMN()</code> to return the root-mean-square 
+width (aka the root of the second central moment, aka the 
+root-mean-square deviation about the mean), and its error. If <code>unbinned = 
+false</code> an estimate of the bin granularity error is added in 
+quadrature to the statistical error. 
+</methodmore> 
  
 <method name="double Hist::getBinContent(int iBin)"> 
 return the value in bin <code>iBin</code>, ranging from 1 through 
@@ -379,14 +510,55 @@ return the value in bin <code>iBin</code>, ranging from 1 through
 <code>numberOfBins + 1</code> for overflow. 
 </method> 
  
-<method name="int Hist::getEntries()"> 
-return the number of entries, i.e. the number of time that 
-<code>fill(...)</code> has been called. 
+<method name="double Hist::getBinEdge(int iBin)"> 
+return the lower edge of bin <code>iBin</code>, ranging from 1 through 
+<code>numberOfBins</code>. 
 </method> 
+ 
+<method name="double Hist::getBinWidth(int iBin)"> 
+return the width of bin <code>iBin</code>, ranging from 1 through 
+<code>numberOfBins</code>. 
+</method> 
+ 
+<method name="vector&lt;double&gt; Hist::getBinContents()"> 
+return the bin contents. 
+</method> 
+ 
+<method name="vector&lt;double&gt; Hist::getBinEdges()"> 
+return the bin edges. 
+</method> 
+ 
+<method name="int Hist::getEntries(bool alsoNonFinite = true)"> 
+return the number of entries, i.e. the number of time that 
+<code>fill(...)</code> has been called. If <code>alsoNonFinite</code> 
+is false, then entries that are infinity or NaN are ignored. 
+</method> 
+ 
+<method name="double Hist::getWeightSum(bool alsoOverUnder = true)"> 
+  return the sum of weights with which the histogram was filled. The 
+  output of this method only differs from that of 
+  <code>getEntries()</code> above if non-unity weights were used when 
+  the histogram was filled. If <code>alsoOverUnder</code> is true, then 
+  the overflow and underflow bins are included in the weight sum, 
+  otherwise not. 
+</method> 
+ 
+<method name="double Hist::getNEffective()"> 
+ Return effective entries (for weighted histograms = number 
+ of equivalent unweighted events for same statistical power), 
+ calculated as <ei>(sum(w))^2 / sum(w^2)</ei>. 
+</method> 
+ 
  
 <method name="bool Hist::sameSize(const Hist&amp; h)"> 
 checks that the number of bins and upper and lower limits are the 
 same as in the histogram in the argument. 
+</method> 
+ 
+<method name="void Hist::takeFunc(function&lt;double(double)&gt; func)"> 
+pass an arbitrary function that takes as an argument a 
+<code>double</code> and returns a <code>double</code>. This function 
+is applied to the current contents bin by bin. 
 </method> 
  
 <method name="void Hist::takeLog(bool tenLog = true)"> 
@@ -401,9 +573,42 @@ take square root of current contents bin by bin, with negative contents
 set to zero. 
 </method> 
  
-<method name="double Hist::smallestAbsValue()"> 
-returns the smallest absolute value (above 1e-20, to sidestep bins with zero 
-content) in any of the bins. 
+<method name="void Hist::normalize( double f = 1., 
+bool overflow = true)"> 
+Rescale the histogram to a given sum of all bin contents, where 
+<argument name="sum" default="1."> 
+is the intended sum of all bin contents after rescaling, and 
+</argument> 
+<argument name="overflow" default="on"> 
+includes the underflow and overflow bins in the definition of the 
+original area to be rescaled, or not. Either way, the under/overflow 
+are always rescaled by the same factor as the histogram proper. 
+</argument> 
+</method> 
+ 
+<method name="void Hist::normalizeIntegral( double f = 1., 
+bool alsoOverflow = true)"> 
+Rescale the histogram so that it integrates to the value given by 
+<argument name="f" default="1."/>. This is the appropriate 
+normalization if the histogram represents a probability 
+distribution. The argument <argument name="overflow" default="on"/> 
+specifies whether the underflow and overflow bins in the definition of 
+the original area to be rescaled, or not. Either way, the 
+under/overflow are always rescaled by the same factor, except the bin 
+width, as the histogram proper. Bin widths are handled for both linear 
+and log plots. 
+</method> 
+ 
+<method name="void Hist::normalizeSpectrum( double wtSum)"> 
+Rescale the histogram by a factor <code>1/(wtSum * dx)</code> where 
+<code>dx</code> is the bin width. This is the appropriate 
+renormalization if the histogram represents a spectrum on the form 
+<ei>(1/N_{ev}) dN/dx</ei>. <argument name="wtSum" default="1."/> is 
+the total weight of the events, which if events are unweighted is just 
+the total number of successfully generated events. The under/overflow 
+are always rescaled by the same factor, except the bin width, as the 
+histogram proper. Bin widths are handled for both linear and log 
+plots. 
 </method> 
  
 <method name="Hist&amp; Hist::operator+=(const Hist&amp; h)"> 
@@ -469,33 +674,44 @@ divide a constant by a histogram, a histogram by a constant,
 or two histograms by each other, bin by bin. 
 </methodmore> 
  
-<method name="HistPlot::HistPlot(string pythonName)"> 
+<method name="HistPlot::HistPlot(string pythonName, bool useLegacy = true)"> 
 create a file to which successively Python commands can be written. 
 <argument name="pythonName"> 
 the name of the Python code file will become <code>pythonName.py</code>. 
 When later executed with <code>python pythonName.py</code> the frames 
 defined below will be drawn and output. 
 </argument> 
+<argument name="useLegacy"> 
+A parameter necessary for compatibility with older versions of Matplotlib. 
+For Matplotlib version 3.2 and earlier, this argument must be false; 
+for version 3.5 or later, it must be true. 
+</argument> 
 </method> 
  
 <method name="void HistPlot::frame( string frameName, string title = 
-&quot;&quot;, string xLabel = &quot;&quot;, string yLabel = &quot;&quot;)"> 
+&quot;&quot;, string xLabel = &quot;&quot;, string yLabel = &quot;&quot;, 
+double xSize = 8., double ySize = 6.)"> 
 command to open a frame where successive histograms can be added and 
-plotted, where 
+plotted. 
 <argument name="frameName"> 
-is the frame that will become a PFD file <code>frameName.pdf</code> when 
-the Python program is run; if left blank the frame will be appended to the 
-most recent previous  PDF file, so clearly it cannot be left blank for the 
-first call, 
+the name of the frame. When the Python program is run, the output PDF 
+file will be <code>frameName.pdf</code>. If this is blank or it is the 
+same name as the previous frame, then the frame will be appended to 
+the most recent previous PDF file. It cannot be left blank for the 
+first call. 
 </argument> 
 <argument name="title"> 
-is an optional title of the histogram, plotted on top of the frame, 
+an optional title of the histogram, plotted on top of the frame. 
 </argument> 
 <argument name="xLabel"> 
-is an optional label plotted below the <ei>x</ei> axis, and 
+an optional label plotted below the <ei>x</ei> axis. 
 </argument> 
 <argument name="yLabel"> 
-is an optional label plotted to the right of the <ei>y</ei> axis. 
+an optional label plotted to the right of the <ei>y</ei> axis. 
+</argument> 
+<argument name="xSize, ySize"> 
+specifies the <ei>x</ei> and <ei>y</ei> size, in inches, of the canvas 
+(the full figure area). Default values agree with the Pyplot defaults. 
 </argument> 
 <note>Note:</note> the title and labels may contain special LaTeX symbols, 
 e.g. simple math formulae enclosed by dollar signs $...$, that are 
@@ -511,12 +727,13 @@ is the name of the histogram to be plotted,
 </argument> 
 <argument name="style"> 
 tells how the histogram data will be represented in the figure, where 
-default "h" is histogram style, "-" full lines, "--" dashed ones, 
-"-." dash-dotted ones, "." points, "o" circles, "+" and "x" crosses, 
-"*" stars, and so on as described in the Pyplot manual; additionally a 
-colour may also be specified as described earlier, separated by a comma 
-from the symbol; either of both can be used, e.g. "h,r", ",magenta", 
-"+,", "--" or just ""; and 
+default "h" is histogram style, "-" full lines, "--" dashed ones, "-." 
+dash-dotted ones, "." points, "o" circles, "+" and "x" crosses, "*" 
+stars, and so on as described in the Pyplot manual; alternatively to 
+"h" the argument "e" can be specified which will include error bars on 
+the histogram; additionally a colour may also be specified as 
+described earlier, separated by a comma from the symbol; either of 
+both can be used, e.g. "h,r", ",magenta", "+,", "--" or just ""; and 
 </argument> 
 <argument name="legend"> 
 is the text written in association with the plotting symbol, where the 
@@ -526,7 +743,47 @@ above.
 </argument> 
 </method> 
  
-<method name="void HistPlot::plot( bool logY = false)"> 
+<method name="void HistPlot::addFile(string file, 
+string style = &quot;o&quot;, string legend = &quot;void&quot;, 
+string xyerr = &quot;&quot;)"> 
+add data in an already existing file to the current plot frame, where 
+<argument name="file"> 
+is the name of the file to be plotted, 
+</argument> 
+<argument name="style"> 
+tells how the data will be represented in the figure, just like in the 
+<code>add</code> method above, but by default intended for discrete 
+points rather than histograms or connected lines; 
+</argument> 
+<argument name="legend"> 
+is the text written in association with the plotting symbol, where the 
+default <code>void</code> is replaced by the name of the input file, 
+and LaTex input may be used as described in the note above for 
+<code>frame</code>; and 
+</argument> 
+<argument name="xyerr"> 
+can be used to provide error bars for a point, where the options are 
+to give an <code>x</code> to plot a symmetric error bar in the <ei>x</ei> 
+direction, an <code>X</code> for an asymmetric ditto, a <code>y</code> for 
+a symmetric error bar in the <ei>y</ei> direction, and a <code>Y</code> for 
+an asymmetric ditto, and where both <ei>x</ei> and <ei>y</ei> can be 
+combined or omitted as desired. 
+</argument> 
+<note>Note:</note> this method is primarily intended to overlay data 
+points over existing histograms, and not for standalone usage. The data 
+file is expected to contain at least two columns, where the first two 
+give the <ei>(x,y)</ei> coordinates of the points. Then up to four 
+error columns can follow, first the ones pertaining to the <ei>x</ei> 
+error, if any, and then to <ei>y</ei>. Symmetric errors require one 
+column with length in both directions, whereas asymetric gives first the 
+length downwards and then the length upwards, both as non-negative numbers. 
+For example, to plot the point (1.0, 2.0) with a symmetric error +/-0.5 in the 
+x-direction and an asymmetric error +0.2/-0.5 in the y-direction, the file 
+should contain the row <code>1.0 2.0 0.5 0.2 -0.5</code> and the value of 
+<code>xyerr</code> might be <code>"xY"</code>. 
+</method> 
+ 
+<method name="void HistPlot::plot( bool logY = false, bool logX = false)"> 
 write the Pyplot commands for the current frame, as defined by the input 
 from the two methods above, and additionally write the data files needed 
 when the Python code is to be run. 
@@ -535,9 +792,23 @@ By default a linear <ei>y</ei> scale is used, but when true the <ei>y</ei>
 scale is instead logarithmic, except that a linear scale is used the very 
 last step to zero bin content. 
 </argument> 
-<note>Note:</note> whether the <ei>x</ei> scale is linear or logarithmic 
-depends on what choice was made when the histogram was booked, and cannot 
-be changed later. 
+<argument name="logX"> 
+By default a linear or logarithmic <ei>x</ei> scale is used depending on 
+how the histograms were booked, i.e. by default linear, and this should 
+not be overridden. For the case that the only input comes from 
+<code>addFile</code> commands, however, this option gives the possibility 
+to pick a logarithmic <ei>x</ei> scale instead of the default linear one. 
+(Presumably you would then use the <code>plot</code>variant below.) 
+Note the confusing order of the two arguments, which is caused by the 
+first presumably being much more commonly used than the second. 
+</argument> 
+</method> 
+ 
+<method name="void HistPlot::plot( double xMin, double xMax, double yMin, 
+double yMax, bool logY = false, bool logX = false)"> 
+a variant of the <code>plot</code> method above, where the <ei>x</ei> 
+and <ei>y</ei> ranges of the plot frame can be set by hand instead of 
+calculated from the histogram information. 
 </method> 
  
 <method name="void HistPlot::plotFrame( string frameName, const Hist& hist, 
@@ -553,4 +824,4 @@ is almost the same, the exception being that the two compulsory arguments
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

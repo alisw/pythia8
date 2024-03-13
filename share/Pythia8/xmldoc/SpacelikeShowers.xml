@@ -139,12 +139,12 @@ where <ei>Q_ren</ei> is the renormalization scale and <ei>k</ei> is a
 multiplicative fudge factor stored in <code>pTdampFudge</code> below. 
 </option> 
 <option value="3">as option 1, but in addition to the standard requirements 
-for dampening it is further necessary to have ar least two top or 
+for dampening it is further necessary to have at least two top or 
 beyond-the-Standard-Model coloured particles in the final state. 
 Examples include <ei>t tbar</ei> and <ei>squark gluino</ei> production. 
 </option> 
 <option value="4">as option 2, but in addition to the standard requirements 
-for dampening it is further necessary to have ar least two top or 
+for dampening it is further necessary to have at least two top or 
 beyond-the-Standard-Model coloured particles in the final state. 
 Examples include <ei>t tbar</ei> and <ei>squark gluino</ei> production. 
 </option> 
@@ -172,7 +172,7 @@ The <ei>alpha_strong</ei> value at scale <code>M_Z^2</code>.
 <p/> 
 The actual value is then regulated by the running to the scale 
 <ei>pT^2</ei>, at which it is evaluated 
-<modepick name="SpaceShower:alphaSorder" default="1" min="0" max="2"> 
+<modepick name="SpaceShower:alphaSorder" default="1" min="0" max="3"> 
 Order at which <ei>alpha_strong</ei> runs, 
 <option value="0">zeroth order, i.e. <ei>alpha_strong</ei> is kept 
 fixed.</option> 
@@ -180,6 +180,8 @@ fixed.</option>
 <option value="2">second order. Since other parts of the code do 
 not go to second order there is no strong reason to use this option, 
 but there is also nothing wrong with it.</option> 
+<option value="3">third order, with the same comment as for second 
+order. The expression in the 2006 RPP is used here.</option> 
 </modepick> 
  
 <p/> 
@@ -476,6 +478,27 @@ The fixed factorization scale, in GeV, that would be used in the
 evaluation of parton densities if the <code>flag</code> above is on. 
 </parm> 
  
+<modepick name="SpaceShower:pdfMode" default="0" min="0" max="2"> 
+This setting should not be touched by non-experts. Deviating 
+from the default setting will only lead to consistent results 
+after explicit external intervention. This setting can be useful 
+in the context of interfaces to external code as done when using 
+the flag <code>Merging:runtimeAMCATNLOInterface</code> described under 
+<aloc href="CKKWLMerging">Merging</aloc>. 
+<option value="0">this default setting corresponds to the typical 
+shower treatment of including PDF ratios in the backwards-evolution 
+branching rates, leading to the generation of normal no-emission 
+probabilities. 
+</option> 
+<option value="1">disable the PDF dependence, which leads to the 
+generation of Sudakov factors according to the momentum sum rule. 
+</option> 
+<option value="2">disable the PDF dependence, which leads to the 
+generation of Sudakov factors like option 1, but with a lower cut-off 
+<ei>zMin = 0.5</ei> on the energy-fraction integral. 
+</option> 
+</modepick> 
+ 
 <h3>Technical notes</h3> 
  
 Almost everything is equivalent to the algorithm in 
@@ -526,4 +549,4 @@ photon backwards-evolution in lepton beams.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

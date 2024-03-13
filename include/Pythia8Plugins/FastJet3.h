@@ -1,5 +1,5 @@
 // FastJet3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -101,7 +101,11 @@ FASTJET_BEGIN_NAMESPACE // place the code here inside the FJ namespace
 class Py8Particle: public Pythia8::Particle,
                    public PseudoJet::UserInfoBase {
 public:
-  Py8Particle(const Pythia8::Particle & particle) : Particle(particle) {}
+  Py8Particle(const Pythia8::Particle & particle) : Particle(particle),
+    mIndex(particle.index()) {}
+   virtual int index() const override {return mIndex;}
+private:
+  int mIndex;
 };
 
 /// specialization of the PseudoJet constructor so that it can take a
@@ -109,6 +113,7 @@ public:
 template<>
 inline PseudoJet::PseudoJet(const Pythia8::Particle & particle) {
   reset(particle.px(),particle.py(),particle.pz(), particle.e());
+  set_user_index( particle.index() );
   set_user_info(new Py8Particle(particle));
 }
 

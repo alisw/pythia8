@@ -10,9 +10,12 @@
 #include <Pythia8/ResonanceWidths.h>
 #include <Pythia8/SLHAinterface.h>
 #include <Pythia8/SigmaProcess.h>
+#include <functional>
 #include <istream>
 #include <iterator>
+#include <map>
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <sstream> // __str__
 #include <string>
@@ -23,11 +26,12 @@
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -37,7 +41,7 @@
 	PYBIND11_MAKE_OPAQUE(std::shared_ptr<void>);
 #endif
 
-// Pythia8::SigmaProcess file:Pythia8/SigmaProcess.h line:85
+// Pythia8::SigmaProcess file:Pythia8/SigmaProcess.h line:86
 struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 	using Pythia8::SigmaProcess::SigmaProcess;
 
@@ -47,7 +51,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -60,7 +64,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -73,7 +77,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -86,7 +90,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4, a5, a6, a7);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -99,7 +103,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -112,7 +116,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -125,7 +129,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -138,7 +142,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -151,7 +155,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -164,7 +168,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4);
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -177,7 +181,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -190,7 +194,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4, a5);
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -203,7 +207,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -216,7 +220,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2);
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -229,7 +233,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -242,7 +246,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<class std::basic_string<char>>::value) {
-				static pybind11::detail::overload_caster_t<class std::basic_string<char>> caster;
+				static pybind11::detail::override_caster_t<class std::basic_string<char>> caster;
 				return pybind11::detail::cast_ref<class std::basic_string<char>>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<class std::basic_string<char>>(std::move(o));
@@ -255,7 +259,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -268,7 +272,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -281,7 +285,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<class std::basic_string<char>>::value) {
-				static pybind11::detail::overload_caster_t<class std::basic_string<char>> caster;
+				static pybind11::detail::override_caster_t<class std::basic_string<char>> caster;
 				return pybind11::detail::cast_ref<class std::basic_string<char>>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<class std::basic_string<char>>(std::move(o));
@@ -294,7 +298,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -307,7 +311,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -320,7 +324,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -333,7 +337,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -346,7 +350,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -359,7 +363,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -372,7 +376,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -385,7 +389,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -398,7 +402,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -411,7 +415,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -424,7 +428,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -437,7 +441,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -450,7 +454,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -463,7 +467,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -476,7 +480,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -489,7 +493,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -502,7 +506,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -515,7 +519,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -528,7 +532,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -541,7 +545,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -554,7 +558,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -567,7 +571,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::overload_caster_t<double> caster;
+				static pybind11::detail::override_caster_t<double> caster;
 				return pybind11::detail::cast_ref<double>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<double>(std::move(o));
@@ -580,7 +584,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -593,7 +597,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::overload_caster_t<int> caster;
+				static pybind11::detail::override_caster_t<int> caster;
 				return pybind11::detail::cast_ref<int>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<int>(std::move(o));
@@ -606,7 +610,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -619,7 +623,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::overload_caster_t<bool> caster;
+				static pybind11::detail::override_caster_t<bool> caster;
 				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
@@ -632,7 +636,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -645,7 +649,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -658,7 +662,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -671,7 +675,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::overload_caster_t<void> caster;
+				static pybind11::detail::override_caster_t<void> caster;
 				return pybind11::detail::cast_ref<void>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
@@ -682,7 +686,7 @@ struct PyCallBack_Pythia8_SigmaProcess : public Pythia8::SigmaProcess {
 
 void bind_Pythia8_SigmaProcess(std::function< pybind11::module &(std::string const &namespace_) > &M)
 {
-	{ // Pythia8::SigmaProcess file:Pythia8/SigmaProcess.h line:85
+	{ // Pythia8::SigmaProcess file:Pythia8/SigmaProcess.h line:86
 		pybind11::class_<Pythia8::SigmaProcess, std::shared_ptr<Pythia8::SigmaProcess>, PyCallBack_Pythia8_SigmaProcess> cl(M("Pythia8"), "SigmaProcess", "");
 		pybind11::handle cl_type = cl;
 
@@ -690,6 +694,7 @@ void bind_Pythia8_SigmaProcess(std::function< pybind11::module &(std::string con
 		cl.def( pybind11::init( [](PyCallBack_Pythia8_SigmaProcess const &o){ return new PyCallBack_Pythia8_SigmaProcess(o); } ) );
 		cl.def( pybind11::init( [](Pythia8::SigmaProcess const &o){ return new Pythia8::SigmaProcess(o); } ) );
 		cl.def_readwrite("lhaUpPtr", &Pythia8::SigmaProcess::lhaUpPtr);
+		cl.def_readwrite("doVarE", &Pythia8::SigmaProcess::doVarE);
 		cl.def_readwrite("nQuarkIn", &Pythia8::SigmaProcess::nQuarkIn);
 		cl.def_readwrite("renormScale1", &Pythia8::SigmaProcess::renormScale1);
 		cl.def_readwrite("renormScale2", &Pythia8::SigmaProcess::renormScale2);
@@ -724,8 +729,9 @@ void bind_Pythia8_SigmaProcess(std::function< pybind11::module &(std::string con
 		cl.def_readwrite("isLeptonA", &Pythia8::SigmaProcess::isLeptonA);
 		cl.def_readwrite("isLeptonB", &Pythia8::SigmaProcess::isLeptonB);
 		cl.def_readwrite("hasLeptonBeams", &Pythia8::SigmaProcess::hasLeptonBeams);
-		cl.def_readwrite("lepton2gammaA", &Pythia8::SigmaProcess::lepton2gammaA);
-		cl.def_readwrite("lepton2gammaB", &Pythia8::SigmaProcess::lepton2gammaB);
+		cl.def_readwrite("beamA2gamma", &Pythia8::SigmaProcess::beamA2gamma);
+		cl.def_readwrite("beamB2gamma", &Pythia8::SigmaProcess::beamB2gamma);
+		cl.def_readwrite("hasGamma", &Pythia8::SigmaProcess::hasGamma);
 		cl.def_readwrite("inBeamA", &Pythia8::SigmaProcess::inBeamA);
 		cl.def_readwrite("inBeamB", &Pythia8::SigmaProcess::inBeamB);
 		cl.def_readwrite("inPair", &Pythia8::SigmaProcess::inPair);
@@ -759,6 +765,7 @@ void bind_Pythia8_SigmaProcess(std::function< pybind11::module &(std::string con
 		cl.def_readwrite("phiT", &Pythia8::SigmaProcess::phiT);
 		cl.def_readwrite("swapTU", &Pythia8::SigmaProcess::swapTU);
 		cl.def("setLHAPtr", (void (Pythia8::SigmaProcess::*)(class std::shared_ptr<class Pythia8::LHAup>)) &Pythia8::SigmaProcess::setLHAPtr, "C++: Pythia8::SigmaProcess::setLHAPtr(class std::shared_ptr<class Pythia8::LHAup>) --> void", pybind11::arg("lhaUpPtrIn"));
+		cl.def("updateBeamIDs", (void (Pythia8::SigmaProcess::*)()) &Pythia8::SigmaProcess::updateBeamIDs, "C++: Pythia8::SigmaProcess::updateBeamIDs() --> void");
 		cl.def("initProc", (void (Pythia8::SigmaProcess::*)()) &Pythia8::SigmaProcess::initProc, "C++: Pythia8::SigmaProcess::initProc() --> void");
 		cl.def("initFlux", (bool (Pythia8::SigmaProcess::*)()) &Pythia8::SigmaProcess::initFlux, "C++: Pythia8::SigmaProcess::initFlux() --> bool");
 		cl.def("set1Kin", (void (Pythia8::SigmaProcess::*)(double, double, double)) &Pythia8::SigmaProcess::set1Kin, "C++: Pythia8::SigmaProcess::set1Kin(double, double, double) --> void", pybind11::arg(""), pybind11::arg(""), pybind11::arg(""));

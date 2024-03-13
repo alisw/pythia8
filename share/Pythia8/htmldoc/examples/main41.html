@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main41.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,51 +22,48 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // WARNING: typically one needs 25 MB/100 events at the LHC.
 // Therefore large event samples may be impractical.
 
-#include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/HepMC3.h"
+#include &quot;Pythia8/Pythia.h&quot;
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
 
 using namespace Pythia8;
 
 int main() {
 
-  // Interface for conversion from Pythia8::Event to HepMC event.
-  HepMC3::Pythia8ToHepMC3 topHepMC;
-
-  // Specify file where HepMC events will be stored.
-  HepMC3::WriterAscii ascii_io("hepmcout41.dat");
+  // Interface for conversion from Pythia8::Event to HepMC
+  // event. Specify file where HepMC events will be stored.
+  Pythia8::Pythia8ToHepMC topHepMC(&quot;hepmcout41.dat&quot;);
 
   // Generator. Process selection. LHC initialization. Histogram.
   Pythia pythia;
-  pythia.readString("Beams:eCM = 8000.");
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhaseSpace:pTHatMin = 20.");
+  pythia.readString(&quot;Beams:eCM = 8000.&quot;);
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 20.&quot;);
   pythia.init();
-  Hist mult("charged multiplicity", 100, -0.5, 799.5);
+  Hist mult(&quot;charged multiplicity&quot;, 100, -0.5, 799.5);
 
   // Begin event loop. Generate event. Skip if error.
-  for (int iEvent = 0; iEvent < 100; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; 100; ++iEvent) {
     if (!pythia.next()) continue;
 
     // Find number of all final charged particles and fill histogram.
     int nCharged = 0;
-    for (int i = 0; i < pythia.event.size(); ++i)
-      if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
         ++nCharged;
     mult.fill( nCharged );
 
-    // Construct new empty HepMC event and fill it.
-    // Default units are ( HepMC3::Units::GEV, HepMC3::Units::MM)
-    // but can be changed in the GenEvent constructor.
-    HepMC3::GenEvent hepmcevt;
-    topHepMC.fill_next_event( pythia, &hepmcevt );
+    // Construct new empty HepMC event, fill it and write it out.
+    topHepMC.writeNextEvent( pythia );
 
-    // Write the HepMC event to file.
-    ascii_io.write_event(hepmcevt);
 
   // End of event loop. Statistics. Histogram.
   }
   pythia.stat();
-  cout << mult;
+  cout &lt;&lt; mult;
 
   // Done.
   return 0;

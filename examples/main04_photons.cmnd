@@ -24,7 +24,7 @@ Beams:eCM = 100.                 ! CM energy of collision
 #Beams:frameType = 2             ! Beams with different energies
 #Beams:eA = 920                  ! p+ at 920 GeV
 #Beams:eB = 27.5                 ! e+ at 27.5 GeV
-#PDF:lepton2gamma                ! Allow for photon-from-lepton
+#PDF:beamB2gamma = on            ! Allow for photon-from-lepton
 
 ! 4) Settings for the hard-process generation.
 SoftQCD:all = on                   ! Allow total sigma = elastic/SD/DD/ND

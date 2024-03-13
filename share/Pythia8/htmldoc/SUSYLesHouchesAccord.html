@@ -86,7 +86,7 @@ and <code>SUSYResonanceWidths</code> classes.
 As an aid for basic validation, some checks and ranges are imposed 
  on SLHA input during initialization, as follows: 
 <ul> 
-<li>Several parameters (<code>SLHA:keepSM</code>, <code>minMassSM</code>, 
+<li>Several parameters (<code>minMassSM</code>, 
 and <code>SLHA:allowUserOverride</code>) provide some safety against 
 unintentionally overwriting PYTHIA's Standard-Model information. 
 These parameters can be altered to hand over more or less control to the SLHA 
@@ -169,19 +169,6 @@ signals that no such file has been assigned.
    
  
 <a name="anchor3"></a>
-<p/><code>flag&nbsp; </code><strong> SLHA:keepSM &nbsp;</strong> 
- (<code>default = <strong>on</strong></code>)<br/>
-Some programs write SLHA output also for SM particles where normally 
-one would not want to have masses and decay modes changed unwittingly. 
-Therefore, by default, known SM particles are ignored in SLHA files. 
-To be more specific, particle data for identity codes in the ranges 
-1 - 24 and 81 - 999,999 are ignored. Notably this includes <i>Z^0</i>, 
-<i>W^+-</i> and <i>t</i>. The SM Higgs is modified by the SLHA input, 
-as is other codes in the range 25 - 80 and 1,000,000 - . If you 
-switch off this flag then also SM particles are modified by SLHA input. 
-   
- 
-<a name="anchor4"></a>
 <p/><code>parm&nbsp; </code><strong> SLHA:minMassSM &nbsp;</strong> 
  (<code>default = <strong>100.0</strong></code>)<br/>
 This parameter provides an alternative possibility to ignore SLHA input 
@@ -193,7 +180,7 @@ some threshold value, given by this parameter. The default value of
 <i>Z^0</i> and <i>W^+-</i> bosons. 
    
  
-<a name="anchor5"></a>
+<a name="anchor4"></a>
 <p/><code>flag&nbsp; </code><strong> SLHA:allowUserOverride &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Flag to set whether the user is allowed to modify the parameters read 
@@ -216,7 +203,7 @@ sanity checks above.
 <br/><b>Note</b>: the PYTHIA SLHA interface is limited to at most 
 <code>1&rarr;8</code> decays. 
  
-<a name="anchor6"></a>
+<a name="anchor5"></a>
 <p/><code>flag&nbsp; </code><strong> SLHA:useDecayTable &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Switch to choose whether to read in SLHA <code>DECAY</code> tables or not. 
@@ -230,6 +217,14 @@ found. (To set a particle stable, you may either omit an SLHA
 use PYTHIA's internal <code>id:MayDecay</code> switch for that 
 particle, or you may include an SLHA <code>DECAY</code> table for it, 
 with the width set explicitly to zero.) 
+   
+ 
+<a name="anchor6"></a>
+<p/><code>flag&nbsp; </code><strong> SLHA:allowOnlyOffShell &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Switch to allow a decay table with only off-shell decays. By default, 
+internal checks require particles to have at least one on-shell decay 
+mode. 
    
  
 <a name="anchor7"></a>
@@ -362,4 +357,4 @@ recompute the EW parameters as best suited for the application at hand.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // TauDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2024 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -62,8 +62,9 @@ private:
   // Flag whether a correlated tau decay should be performed.
   bool correlated;
 
-  // User selected mode and mother for tau decays.
-  int tauExt, tauMode, tauMother, tauPol;
+  // User selected mode, mother, and polarization for tau decays.
+  int tauExt, tauMode, tauMother;
+  double tauPol;
 
   // Helicity matrix element pointers.
   HelicityMatrixElement* hardME;
@@ -72,6 +73,7 @@ private:
   // Hard process helicity matrix elements.
   HMETwoFermions2W2TwoFermions      hmeTwoFermions2W2TwoFermions;
   HMETwoFermions2GammaZ2TwoFermions hmeTwoFermions2GammaZ2TwoFermions;
+  HMETwoGammas2TwoFermions          hmeTwoGammas2TwoFermions;
   HMEW2TwoFermions                  hmeW2TwoFermions;
   HMEZ2TwoFermions                  hmeZ2TwoFermions;
   HMEGamma2TwoFermions              hmeGamma2TwoFermions;
@@ -104,4 +106,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_TauDecays_H
+#endif // Pythia8_TauDecays_H

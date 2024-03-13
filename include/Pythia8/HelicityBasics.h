@@ -1,5 +1,5 @@
 // HelicityBasics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2024 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -220,6 +220,10 @@ public:
   double m() {return mSave;}
   void   m(double mIn) {mSave = mIn; initRhoD();}
 
+  // Set the helicity state (redefine from Particle).
+  double pol() {return polSave;}
+  void   pol(double hIn);
+
   // Event record position (redefine from Particle).
   int  index() const {return indexSave;}
   void index(int indexIn) {indexSave = indexIn;}
@@ -236,14 +240,7 @@ public:
 private:
 
   // Initialize the helicity density and decay matrix.
-  void initRhoD() {
-    rho = vector< vector<complex> >(spinStates(),
-      vector<complex>(spinStates(), 0));
-    D   = vector< vector<complex> >(spinStates(),
-      vector<complex>(spinStates(), 0));
-    for (int i = 0; i < spinStates(); i++) {
-      rho[i][i] = 1.0 / spinStates(); D[i][i] = 1;}
-  }
+  void initRhoD();
 
   // Particle index in the event record.
   int indexSave;
@@ -254,4 +251,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_HelicityBasics_H
+#endif // Pythia8_HelicityBasics_H

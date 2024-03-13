@@ -1,5 +1,5 @@
 // LHEF3.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -626,7 +626,7 @@ bool Reader::init() {
     }
   }
 
-  if ( file == NULL ) heprup.NPRUP = -42;
+  if ( file == nullptr ) heprup.NPRUP = -42;
 
   // Scan the header block for XML tags
   string leftovers;
@@ -765,7 +765,7 @@ bool Reader::readEvent(HEPEUP * peup) {
   while ( getLine() && currentLine.find("</event>") == string::npos )
     eventComments += currentLine + "\n";
 
-  if ( file == NULL ) return false;
+  if ( file == nullptr ) return false;
 
   eup.scalesSave = LHAscales(eup.SCALUP);
 

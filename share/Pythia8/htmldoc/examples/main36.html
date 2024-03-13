@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main36.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -14,7 +14,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 
 // Basic setup for Deeply Inelastic Scattering at HERA.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 int main() {
@@ -27,51 +27,51 @@ int main() {
 
   // Generator. Shorthand for event.
   Pythia pythia;
-  Event& event = pythia.event;
+  Event&amp; event = pythia.event;
 
   // Set up incoming beams, for frame with unequal beam energies.
-  pythia.readString("Beams:frameType = 2");
+  pythia.readString(&quot;Beams:frameType = 2&quot;);
   // BeamA = proton.
-  pythia.readString("Beams:idA = 2212");
-  pythia.settings.parm("Beams:eA", eProton);
+  pythia.readString(&quot;Beams:idA = 2212&quot;);
+  pythia.settings.parm(&quot;Beams:eA&quot;, eProton);
   // BeamB = electron.
-  pythia.readString("Beams:idB = 11");
-  pythia.settings.parm("Beams:eB", eElectron);
+  pythia.readString(&quot;Beams:idB = 11&quot;);
+  pythia.settings.parm(&quot;Beams:eB&quot;, eElectron);
 
   // Set up DIS process within some phase space.
   // Neutral current (with gamma/Z interference).
-  pythia.readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
+  pythia.readString(&quot;WeakBosonExchange:ff2ff(t:gmZ) = on&quot;);
   // Uncomment to allow charged current.
-  //pythia.readString("WeakBosonExchange:ff2ff(t:W) = on");
+  //pythia.readString(&quot;WeakBosonExchange:ff2ff(t:W) = on&quot;);
   // Phase-space cut: minimal Q2 of process.
-  pythia.settings.parm("PhaseSpace:Q2Min", Q2min);
+  pythia.settings.parm(&quot;PhaseSpace:Q2Min&quot;, Q2min);
 
   // Set dipole recoil on. Necessary for DIS + shower.
-  pythia.readString("SpaceShower:dipoleRecoil = on");
+  pythia.readString(&quot;SpaceShower:dipoleRecoil = on&quot;);
 
   // Allow emissions up to the kinematical limit,
   // since rate known to match well to matrix elements everywhere.
-  pythia.readString("SpaceShower:pTmaxMatch = 2");
+  pythia.readString(&quot;SpaceShower:pTmaxMatch = 2&quot;);
 
   // QED radiation off lepton not handled yet by the new procedure.
-  pythia.readString("PDF:lepton = off");
-  pythia.readString("TimeShower:QEDshowerByL = off");
+  pythia.readString(&quot;PDF:lepton = off&quot;);
+  pythia.readString(&quot;TimeShower:QEDshowerByL = off&quot;);
 
   // Initialize.
   pythia.init();
 
   // Histograms.
   double Wmax = sqrt(4.* eProton * eElectron);
-  Hist Qhist("Q [GeV]", 100, 0., 50.);
-  Hist Whist("W [GeV]", 100, 0., Wmax);
-  Hist xhist("x", 100, 0., 1.);
-  Hist yhist("y", 100, 0., 1.);
-  Hist pTehist("pT of scattered electron [GeV]", 100, 0., 50.);
-  Hist pTrhist("pT of radiated parton [GeV]", 100, 0., 50.);
-  Hist pTdhist("ratio pT_parton/pT_electron", 100, 0., 5.);
+  Hist Qhist(&quot;Q [GeV]&quot;, 100, 0., 50.);
+  Hist Whist(&quot;W [GeV]&quot;, 100, 0., Wmax);
+  Hist xhist(&quot;x&quot;, 100, 0., 1.);
+  Hist yhist(&quot;y&quot;, 100, 0., 1.);
+  Hist pTehist(&quot;pT of scattered electron [GeV]&quot;, 100, 0., 50.);
+  Hist pTrhist(&quot;pT of radiated parton [GeV]&quot;, 100, 0., 50.);
+  Hist pTdhist(&quot;ratio pT_parton/pT_electron&quot;, 100, 0., 5.);
 
   // Begin event loop.
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
     if (!pythia.next()) continue;
 
     // Four-momenta of proton, electron, virtual photon/Z^0/W^+-.
@@ -94,7 +94,7 @@ int main() {
     pTehist.fill( event[6].pT() );
 
     // pT spectrum of partons being radiated in shower.
-    for (int i = 0; i < event.size(); ++i) if (event[i].statusAbs() == 43) {
+    for (int i = 0; i &lt; event.size(); ++i) if (event[i].statusAbs() == 43) {
       pTrhist.fill( event[i].pT() );
       pTdhist.fill( event[i].pT() / event[6].pT() );
     }
@@ -102,7 +102,7 @@ int main() {
   // End of event loop. Statistics and histograms.
   }
   pythia.stat();
-  cout << Qhist << Whist << xhist << yhist << pTehist << pTrhist << pTdhist;
+  cout &lt;&lt; Qhist &lt;&lt; Whist &lt;&lt; xhist &lt;&lt; yhist &lt;&lt; pTehist &lt;&lt; pTrhist &lt;&lt; pTdhist;
 
   // Done.
   return 0;

@@ -1,4 +1,4 @@
-// fjcore -- extracted from FastJet v3.2.1 (http://fastjet.fr)
+// fjcore -- extracted from FastJet v3.4.0 (http://fastjet.fr)
 //
 // fjcore constitutes a digest of the main FastJet functionality.
 // The files fjcore.hh and fjcore.cc are meant to provide easy access to these 
@@ -51,10 +51,13 @@
 //   EPJC72(2012)1896 [arXiv:1111.6097] (FastJet User Manual)
 //   and, optionally, Phys.Lett.B641 (2006) 57 [arXiv:hep-ph/0512210]
 //
-// Copyright (c) 2005-2016, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
+//FJSTARTHEADER
+// $Id$
+//
+// Copyright (c) 2005-2021, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
 //
 //----------------------------------------------------------------------
-// This file is part of FastJet.
+// This file is part of FastJet (fjcore).
 //
 //  FastJet is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -62,9 +65,11 @@
 //  (at your option) any later version.
 //
 //  The algorithms that underlie FastJet have required considerable
-//  development and are described in hep-ph/0512210. If you use
+//  development. They are described in the original FastJet paper,
+//  hep-ph/0512210 and in the manual, arXiv:1111.6097. If you use
 //  FastJet as part of work towards a scientific publication, please
-//  include a citation to the FastJet paper.
+//  quote the version you use and include a citation to the manual and
+//  optionally also to hep-ph/0512210.
 //
 //  FastJet is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -74,9 +79,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with FastJet. If not, see <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
-//
-//#include "fjcore.hh"
-// For inclusion in Pythia8 line above is replaced by line below.
+//FJENDHEADER
 #include "Pythia8/FJcore.h"
 #ifndef __FJCORE_VERSION_HH__
 #define __FJCORE_VERSION_HH__
@@ -107,14 +110,12 @@ template<class BJ> void ClusterSequence::_simple_N2_cluster() {
     diJ[i] = _bj_diJ(jetA);
     jetA++; // have jetA follow i
   }
-  int history_location = n-1;
   while (tail != head) {
     double diJ_min = diJ[0];
     int diJ_min_jet = 0;
     for (int i = 1; i < n; i++) {
       if (diJ[i] < diJ_min) {diJ_min_jet = i; diJ_min  = diJ[i];}
     }
-    history_location++;
     jetA = & briefjets[diJ_min_jet];
     jetB = static_cast<BJ *>(jetA->NN);
     diJ_min *= _invR2; 
@@ -1405,7 +1406,11 @@ FJCORE_END_NAMESPACE
 #include<set>
 FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 using namespace std;
-std::ostream * ClusterSequence::_fastjet_banner_ostr = &cout;
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+atomic<ostream *> ClusterSequence::_fastjet_banner_ostr{&cout};
+#else
+ostream * ClusterSequence::_fastjet_banner_ostr = &cout;
+#endif  // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 ClusterSequence::~ClusterSequence () {
   if (_structure_shared_ptr){
     ClusterSequenceStructure* csi = dynamic_cast<ClusterSequenceStructure*>(_structure_shared_ptr.get()); 
@@ -1444,12 +1449,9 @@ void ClusterSequence::_initialise_and_run_no_decant () {
       _invR2 = 1.0;
     } else {
       if (_Rparam > pi) {
-	// choose a value that ensures that back-to-back particles will
-	// always recombine 
-	//_R2 = 4.0000000000001;
-	_R2 = 2 * ( 3.0 + cos(_Rparam) );
+        _R2 = 2 * ( 3.0 + cos(_Rparam) );
       } else {
-	_R2    = 2 * ( 1.0 - cos(_Rparam) );
+        _R2    = 2 * ( 1.0 - cos(_Rparam) );
       }
       _invR2 = 1.0/_R2;
     }
@@ -1544,14 +1546,13 @@ void ClusterSequence::_initialise_and_run_no_decant () {
     throw Error(err.str());
   }
 }
-bool ClusterSequence::_first_time = true;
+thread_safety_helpers::FirstTimeTrue ClusterSequence::_first_time;
 LimitedWarning ClusterSequence::_exclusive_warnings;
 string fastjet_version_string() {
   return "FastJet version "+string(fastjet_version)+" [fjcore]";
 }
 void ClusterSequence::print_banner() {
-  if (!_first_time) {return;}
-  _first_time = false;
+  if (!_first_time()) return;
   ostream * ostr = _fastjet_banner_ostr;
   if (!ostr) return;  
   (*ostr) << "#--------------------------------------------------------------------------\n";
@@ -1563,7 +1564,7 @@ void ClusterSequence::print_banner() {
   (*ostr) << "# Please cite EPJC72(2012)1896 [arXiv:1111.6097] if you use this package\n";
   (*ostr) << "# for scientific work and optionally PLB641(2006)57 [hep-ph/0512210].   \n";
   (*ostr) << "#                                                                       \n";
-  (*ostr) << "# FastJet is provided without warranty under the terms of the GNU GPLv2.\n";
+  (*ostr) << "# FastJet is provided without warranty under the GNU GPL v2 or higher.  \n";
   (*ostr) << "# It uses T. Chan's closest pair algorithm, S. Fortune's Voronoi code";
 #ifndef __FJCORE_DROP_CGAL
   (*ostr) << ",\n# CGAL ";
@@ -2464,8 +2465,8 @@ void ClusterSequence::_delaunay_cluster () {
     points[i] = EtaPhi(_jets[i].rap(),_jets[i].phi_02pi());
     points[i].sanitize(); // make sure things are in the right range
   }
-  SharedPtr<DynamicNearestNeighbours> DNN;
   const bool verbose = false;
+  SharedPtr<DynamicNearestNeighbours> DNN;
 #ifndef __FJCORE_DROP_CGAL // strategy = NlnN* are not supported if we drop CGAL...
   bool ignore_nearest_is_mirror = (_Rparam < twopi);
   if (_strategy == NlnN4pi) {
@@ -2895,14 +2896,12 @@ void ClusterSequence::_tiled_N2_cluster() {
     diJ[i] = _bj_diJ(jetA);
     jetA++; // have jetA follow i
   }
-  int history_location = n-1;
   while (tail != head) {
     double diJ_min = diJ[0];
     int diJ_min_jet = 0;
     for (int i = 1; i < n; i++) {
       if (diJ[i] < diJ_min) {diJ_min_jet = i; diJ_min  = diJ[i];}
     }
-    history_location++;
     jetA = & briefjets[diJ_min_jet];
     jetB = jetA->NN;
     diJ_min *= _invR2; 
@@ -3054,7 +3053,6 @@ void ClusterSequence::_faster_tiled_N2_cluster() {
     jetA->diJ_posn = i; // one-to-one corresp. with non-compact jets,
     jetA++; // have jetA follow i 
   }
-  int history_location = n-1;
   while (n > 0) {
     diJ_plus_link * best, *stop; // pointers a bit faster than indices
     double diJ_min = diJ[0].diJ; // initialise the best one here.
@@ -3063,7 +3061,6 @@ void ClusterSequence::_faster_tiled_N2_cluster() {
     for (diJ_plus_link * here = diJ+1; here != stop; here++) {
       if (here->diJ < diJ_min) {best = here; diJ_min  = here->diJ;}
     }
-    history_location++;
     jetA = best->jet;
     jetB = jetA->NN;
     diJ_min *= _invR2; 
@@ -3183,11 +3180,9 @@ void ClusterSequence::_minheap_faster_tiled_N2_cluster() {
   MinHeap minheap(diJs);
   vector<TiledJet *> jets_for_minheap;
   jets_for_minheap.reserve(n); 
-  int history_location = n-1;
   while (n > 0) {
     double diJ_min = minheap.minval() *_invR2;
     jetA = head + minheap.minloc();
-    history_location++;
     jetB = jetA->NN;
     if (jetB != NULL) {
       if (jetA < jetB) {std::swap(jetA,jetB);}
@@ -3318,19 +3313,36 @@ FJCORE_END_NAMESPACE      // defined in fastjet/internal/base.hh
 #include <sstream>
 FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 using namespace std;
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+atomic<bool> Error::_print_errors{true};
+atomic<bool> Error::_print_backtrace{false};
+atomic<ostream *> Error::_default_ostr{& cerr};
+atomic<mutex *>   Error::_stream_mutex{nullptr};
+#else
 bool Error::_print_errors = true;
 bool Error::_print_backtrace = false;
 ostream * Error::_default_ostr = & cerr;
+#endif  // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 #if (!defined(FJCORE_HAVE_EXECINFO_H)) || defined(__FJCORE__)
   LimitedWarning Error::_execinfo_undefined;
 #endif
 Error::Error(const std::string & message_in) {
   _message = message_in; 
-  if (_print_errors && _default_ostr){
+  ostream* ostr = _default_ostr;
+  if (_print_errors && ostr){
     ostringstream oss;
     oss << "fjcore::Error:  "<< message_in << endl;
-    *_default_ostr << oss.str();
-    _default_ostr->flush(); 
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+    if (_stream_mutex){
+      std::lock_guard<std::mutex> guard(*_stream_mutex);
+      *ostr << oss.str();
+      ostr->flush(); // get something written to file even if the program aborts
+    } else
+#endif //  FJCORE_HAVE_LIMITED_THREAD_SAFETY
+    {
+      *ostr << oss.str();
+      ostr->flush(); // get something written to file even if the program aborts
+    }
   }
 }
 void Error::set_print_backtrace(bool enabled) {
@@ -3462,7 +3474,7 @@ void JetDefinition::set_recombiner(const JetDefinition &other_jet_def){
   }
   _recombiner = other_jet_def._recombiner;
   _default_recombiner = DefaultRecombiner(external_scheme);
-  _shared_recombiner.reset(other_jet_def._shared_recombiner);
+  _shared_recombiner = other_jet_def._shared_recombiner;
 }
 bool JetDefinition::has_same_recombiner(const JetDefinition &other_jd) const{
   const RecombinationScheme & scheme = recombination_scheme();
@@ -3647,36 +3659,69 @@ FJCORE_END_NAMESPACE
 #include <limits>
 using namespace std;
 FJCORE_BEGIN_NAMESPACE
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+atomic<ostream *> LimitedWarning::_default_ostr{&cerr};
+atomic<mutex *> LimitedWarning::_stream_mutex{nullptr};
+atomic<int> LimitedWarning::_max_warn_default{5};
+std::mutex LimitedWarning::_global_warnings_summary_mutex;
+#else
 ostream * LimitedWarning::_default_ostr = &cerr;
-std::list< LimitedWarning::Summary > LimitedWarning::_global_warnings_summary;
 int LimitedWarning::_max_warn_default = 5;
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
+std::list< LimitedWarning::Summary > LimitedWarning::_global_warnings_summary;
+int LimitedWarning::n_warn_so_far() const{
+  if (((LimitedWarning::Summary *)_this_warning_summary) == 0) return 0;
+  return (*_this_warning_summary).second;
+}
 void LimitedWarning::warn(const char * warning, std::ostream * ostr) {
-  if (_this_warning_summary == 0) {
+  if (((LimitedWarning::Summary *)_this_warning_summary) == 0){
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+    std::lock_guard<std::mutex> guard(_global_warnings_summary_mutex);
+    if (((LimitedWarning::Summary *)_this_warning_summary) == 0){
+      _global_warnings_summary.push_back(Summary(warning, 0));
+      _this_warning_summary = & (_global_warnings_summary.back());
+    }
+#else  
     _global_warnings_summary.push_back(Summary(warning, 0));
     _this_warning_summary = & (_global_warnings_summary.back());
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
   }
-  if (_n_warn_so_far < _max_warn) {
+  unsigned int count = (*_this_warning_summary).second.step();
+  if ((_max_warn<0) || (count < (unsigned int)_max_warn)) {
     ostringstream warnstr;
     warnstr << "WARNING from FastJet: ";
     warnstr << warning;
-    _n_warn_so_far++;
-    if (_n_warn_so_far == _max_warn) warnstr << " (LAST SUCH WARNING)";
+    if ((_max_warn>0) && (count+1 == (unsigned int)_max_warn))
+      warnstr << " (LAST SUCH WARNING)";
     warnstr << std::endl;
     if (ostr) {
-      (*ostr) << warnstr.str();
-      ostr->flush(); // get something written to file even if the program aborts
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+      if (_stream_mutex){
+        std::lock_guard<std::mutex> guard(*_stream_mutex);
+        (*ostr) << warnstr.str();
+        ostr->flush(); // get something written to file even if the program aborts
+      } else 
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY      
+      {
+        (*ostr) << warnstr.str();
+        ostr->flush(); // get something written to file even if the program aborts
+      }
     }
-  }
-  if (_this_warning_summary->second < numeric_limits<unsigned>::max()) {
-    _this_warning_summary->second++;
   }
 }
 string LimitedWarning::summary() {
   ostringstream str;
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  {
+    std::lock_guard<std::mutex> guard(_global_warnings_summary_mutex);
+#endif
   for (list<Summary>::const_iterator it = _global_warnings_summary.begin();
        it != _global_warnings_summary.end(); it++) {
     str << it->second << " times: " << it->first << endl;
   }
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  }
+#endif
   return str.str();
 }
 FJCORE_END_NAMESPACE
@@ -3719,7 +3764,7 @@ void MinHeap::update(unsigned int loc, double new_value) {
     if (here->minloc == start) {
       here->minloc = here; change_made = true;
     }
-    ValueLoc * child = &(_heap[2*loc+1]);
+    ValueLoc * child = &(_heap[0]) + (2*loc+1);
     if (child < heap_end && child->minloc->value < here->minloc->value ) {
       here->minloc = child->minloc;
       change_made = true;}
@@ -3748,11 +3793,50 @@ PseudoJet::PseudoJet(const double px_in, const double py_in, const double pz_in,
   this->_finish_init();
   _reset_indices();
 }
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+PseudoJet & PseudoJet::operator=(const PseudoJet & other_pj){
+  _structure = other_pj._structure;
+  _user_info = other_pj._user_info;
+  _kt2 = other_pj._kt2; 
+  _cluster_hist_index = other_pj._cluster_hist_index;
+  _user_index = other_pj._user_index;
+  _px = other_pj._px;
+  _py = other_pj._py;
+  _pz = other_pj._pz;
+  _E  = other_pj._E;
+  _phi = other_pj._phi; 
+  _rap = other_pj._rap;
+  _init_status.store(other_pj._init_status);
+  return *this;
+}
+#endif // FJCORE_HAVE_THREAD_SAFETY
 void PseudoJet::_finish_init () {
   _kt2 = this->px()*this->px() + this->py()*this->py();
   _phi = pseudojet_invalid_phi;
   _rap = pseudojet_invalid_rap;
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  _init_status = Init_NotDone;
+#endif
 }
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+void PseudoJet::_ensure_valid_rap_phi() const{
+  if (_init_status!=Init_Done){
+    int expected = Init_NotDone;
+    if (_init_status.compare_exchange_strong(expected, Init_InProgress,
+                                             std::memory_order_seq_cst,
+                                             std::memory_order_relaxed)){
+      _set_rap_phi();
+      _init_status = Init_Done; // can safely be done after all physics varlables are set
+    } else {
+      do{
+        expected = Init_Done;
+      } while (!_init_status.compare_exchange_weak(expected, Init_Done,
+                                                   std::memory_order_relaxed,
+                                                   std::memory_order_relaxed));
+    }
+  }
+}
+#endif
 void PseudoJet::_set_rap_phi() const {
   if (_kt2 == 0.0) {
     _phi = 0.0; } 
@@ -3799,9 +3883,9 @@ double PseudoJet::operator () (int i) const {
 double PseudoJet::pseudorapidity() const {
   if (px() == 0.0 && py() ==0.0) return MaxRap;
   if (pz() == 0.0) return 0.0;
-  double theta = atan(perp()/pz());
-  if (theta < 0) theta += pi;
-  return -log(tan(theta/2));
+  double thetaCalc = atan(perp()/pz());
+  if (thetaCalc < 0) thetaCalc += pi;
+  return -log(tan(thetaCalc/2));
 }
 PseudoJet operator+ (const PseudoJet & jet1, const PseudoJet & jet2) {
   return PseudoJet(jet1.px()+jet2.px(),
@@ -3827,30 +3911,34 @@ PseudoJet operator* (const PseudoJet & jet, double coeff) {
 PseudoJet operator/ (const PseudoJet & jet, double coeff) {
   return (1.0/coeff)*jet;
 } 
-void PseudoJet::operator*=(double coeff) {
+PseudoJet & PseudoJet::operator*=(double coeff) {
   _ensure_valid_rap_phi(); 
   _px *= coeff;
   _py *= coeff;
   _pz *= coeff;
   _E  *= coeff;
   _kt2*= coeff*coeff;
+  return *this;
 }
-void PseudoJet::operator/=(double coeff) {
+PseudoJet & PseudoJet::operator/=(double coeff) {
   (*this) *= 1.0/coeff;
+  return *this;
 }
-void PseudoJet::operator+=(const PseudoJet & other_jet) {
+PseudoJet & PseudoJet::operator+=(const PseudoJet & other_jet) {
   _px += other_jet._px;
   _py += other_jet._py;
   _pz += other_jet._pz;
   _E  += other_jet._E ;
   _finish_init(); // we need to recalculate phi,rap,kt2
+  return *this;
 }
-void PseudoJet::operator-=(const PseudoJet & other_jet) {
+PseudoJet & PseudoJet::operator-=(const PseudoJet & other_jet) {
   _px -= other_jet._px;
   _py -= other_jet._py;
   _pz -= other_jet._pz;
   _E  -= other_jet._E ;
   _finish_init(); // we need to recalculate phi,rap,kt2
+  return *this;
 }
 bool operator==(const PseudoJet & a, const PseudoJet & b) {
   if (a.px() != b.px()) return false;
@@ -3909,6 +3997,9 @@ void PseudoJet::set_cached_rap_phi(double rap_in, double phi_in) {
   _rap = rap_in; _phi = phi_in;
   if (_phi >= twopi) _phi -= twopi;
   if (_phi < 0)      _phi += twopi;
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  _init_status = Init_Done;
+#endif
 }
 void PseudoJet::reset_momentum_PtYPhiM(double pt_in, double y_in, double phi_in, double m_in) {
   assert(phi_in < 2*twopi && phi_in > -twopi);
@@ -3975,7 +4066,7 @@ void PseudoJet::set_structure_shared_ptr(const SharedPtr<PseudoJetStructureBase>
   _structure = structure_in;
 }
 bool PseudoJet::has_structure() const{
-  return bool(_structure);
+  return (bool) _structure; // cast to bool has to be made explicit
 }
 const PseudoJetStructureBase* PseudoJet::structure_ptr() const {
   return _structure.get();
@@ -5271,11 +5362,9 @@ void LazyTiling25::run() {
   MinHeap minheap(diJs);
   vector<TiledJet *> jets_for_minheap;
   jets_for_minheap.reserve(n); 
-  int history_location = n-1;
   while (n > 0) {
     double diJ_min = minheap.minval() *_invR2;
     jetA = head + minheap.minloc();
-    history_location++;
     jetB = jetA->NN;
     if (jetB != NULL) {
       if (jetA < jetB) {std::swap(jetA,jetB);}
@@ -5656,11 +5745,9 @@ void LazyTiling9::run() {
   MinHeap minheap(diJs);
   vector<TiledJet *> jets_for_minheap;
   jets_for_minheap.reserve(n); 
-  int history_location = n-1;
   while (n > 0) {
     double diJ_min = minheap.minval() *_invR2;
     jetA = head + minheap.minloc();
-    history_location++;
     jetB = jetA->NN;
     if (jetB != NULL) {
       if (jetA < jetB) {std::swap(jetA,jetB);}
@@ -6027,11 +6114,9 @@ void LazyTiling9Alt::run() {
   MinHeap minheap(diJs);
   vector<TiledJet *> jets_for_minheap;
   jets_for_minheap.reserve(n); 
-  int history_location = n-1;
   while (n > 0) {
     double diJ_min = minheap.minval() *_invR2;
     jetA = head + minheap.minloc();
-    history_location++;
     jetB = jetA->NN;
     if (jetB != NULL) {
       if (jetA < jetB) {std::swap(jetA,jetB);}

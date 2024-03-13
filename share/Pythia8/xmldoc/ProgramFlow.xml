@@ -5,7 +5,7 @@
 Recall that, to first order, the event generation process can be 
 subdivided into three stages: 
 <ol> 
-<li>Initializaion.</li> 
+<li>Initialization.</li> 
 <li>The event loop.</li> 
 <li>Finishing.</li> 
 </ol> 
@@ -370,7 +370,7 @@ matrix element + parton shower merging, you can call
       pythia.setMergingHooksPtr( mergingHooksPtr); 
 </pre> 
 where <code>mergingHooksPtr</code> derives from the 
-<code><aloc href="MatrixElementMerging">MergingHooks</aloc></code> base class. 
+<code><aloc href="CKKWLMerging">MergingHooks</aloc></code> base class. 
 </li> 
  
 <p/> 
@@ -389,25 +389,28 @@ where <code>beamShapePtr</code> derives from the
 <li> 
 If you want to implement a cross section of your own, you can use 
 <pre> 
-      pythia.setSigmaPtr( sigmaPtr ); 
+      pythia.addSigmaPtr( sigmaPtr ); 
 </pre> 
 or, optionally, 
 <pre> 
-      pythia.setSigmaPtr( sigmaPtr, phaseSpacePtr ); 
+      pythia.addSigmaPtr( sigmaPtr, phaseSpacePtr ); 
 </pre> 
-where <code>sigmaPtr</code> is of type <code>SigmaProcess*</code> 
-and <code>phaseSpacePtr</code> is of type <code>PhaseSpace*</code>. 
-When only the cross-section expression is provided, the built-in 
-phase-space selection machinery will be used. Then <code>sigmaPtr</code> 
-must be an instance of a class derived from one of the 
-<code>Sigma1Process</code>, <code>Sigma2Process</code> and 
-<code>Sigma3Process</code> classes for 1-, 2- and 3- particle production, 
-in their turn derived from 
+where <code>sigmaPtr</code> is a shared pointer of type 
+<code>SigmaProcess</code> and <code>phaseSpacePtr</code> is a shared 
+pointer of type <code>PhaseSpace</code>. When only the cross-section 
+expression is provided, the built-in phase-space selection machinery 
+will be used. Then <code>sigmaPtr</code> must be an instance of a 
+class derived from one of the <code>Sigma1Process</code>, 
+<code>Sigma2Process</code> and <code>Sigma3Process</code> classes for 
+1-, 2- and 3- particle production, in their turn derived from 
 <code><aloc href="SemiInternalProcesses">SigmaProcess</aloc></code>. 
 When you supply your own phase-space generator there is no fundamental 
-limit on the complexity of the process. 
-This call can be used repeatedly to hand in several different processes, 
-mixing ones with and ones without their own phase-space generators. 
+limit on the complexity of the process.  This call can be used 
+repeatedly to hand in several different processes, mixing ones with 
+and without their own phase-space generators. To reset the user provided 
+cross sections to a single cross section, the 
+<code>setSigmaPtr</code> method can be called, using the same 
+arguments as <code>addSigmaPtr</code>. 
 </li> 
  
 <p/> 
@@ -416,15 +419,18 @@ If your cross section contains the production of a new resonance
 with known analytical expression for all the relevant partial widths, 
 you can make this resonance available to the program with 
 <pre> 
-      pythia.setResonancePtr( resonancePtr); 
+      pythia.addResonancePtr( resonancePtr); 
 </pre> 
-where <code>resonancePtr</code> of type <code>ResonanceWidths*</code> 
-is an instance of a class derived from the 
-<code><aloc href="SemiInternalResonances">ResonanceWidths</aloc></code> 
-base class. In addition you need to add the particle to the normal 
-<aloc href="ParticleDataScheme">particle and decay database</aloc>. 
-This procedure can be used repeatedly to hand in several different 
-resonances. 
+where <code>resonancePtr</code> is a shared pointer of type 
+<code>ResonanceWidths</code>, and is an instance of a class derived 
+from the 
+<code><aloc href="SemiInternalResonances">ResonanceWidths</aloc></code> base 
+class. In addition you need to add the particle to the normal 
+<aloc  href="ParticleDataScheme">particle and decay database</aloc>. This 
+procedure can be used repeatedly to hand in several different 
+resonances. To reset the user provided resonance widths to a single 
+pointer, the method <code>setResonancePtr</code> can be used instead, 
+with the same arguments as <code>addResonancePtr</code>. 
 </li> 
  
 <p/> 
@@ -441,11 +447,10 @@ class <code>TimeShower</code>, <code>spacePtr</code> of the class
 <code>SpaceShower</code>, <code>mergingPtr</code> of the class 
 <code>Merging</code>, and <code>mergingHooksPtr</code> of the class 
 <code>MergingHooks</code>. It is also possible to get back a pointer 
-to the parton shower machhinery and perform diagnostics. 
+to the parton shower machinery and perform diagnostics. 
 <pre> 
       pythia.getShowerModelPtr(); 
 </pre> 
- 
 </li> 
  
 <p/> 
@@ -836,32 +841,39 @@ must be instantiated by you in your program.
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::setSigmaPtr( SigmaProcess* sigmaPtr, 
-PhaseSpace* phaseSpacePtrIn = 0)"> 
+<method name="bool Pythia::setSigmaPtr( SigmaProcessPtr sigmaPtr, 
+PhaseSpacePtr phaseSpacePtrIn = 0)"> 
 offers the possibility to link your own implementation of a process 
 and its cross section, to make it a part of the normal process 
 generation machinery, without having to recompile the 
 <code>Pythia</code> library itself.  The rules for constructing your 
 own class from the <code>SigmaProcess</code> base class are described 
-<aloc href="SemiInternalProcesses">here</aloc>. You may call this 
-routine repeatedly, to add as many new processes as you wish. 
+<aloc href="SemiInternalProcesses">here</aloc>. Calling this method 
+removes any previously user provided processes. To add multiple 
+processes, use <code>addSigmaPtr</code>. 
 <argument name="sigmaPtr"> 
-pointer to a <code>SigmaProcess</code>-derived object. This object 
-must be instantiated by you in your program. 
+shared pointer to a <code>SigmaProcess</code>-derived object. 
 </argument> 
 <argument name="phaseSpacePtr"> 
-pointer to a <code>PhaseSpace</code>-derived object. When not provided 
-the internal phase-space selection machinery wll be used. Then 
-<code>sigmaPtr</code> should be an instance of a class derived from 
-one of the <code>Sigma1Process</code>, <code>Sigma2Process</code> and 
-<code>Sigma3Process</code> classes for 1-, 2- and 3- particle production, 
-in their turn derived from <code>SigmaProcess</code>. 
-When provided, this object must be instantiated by you in your program. 
+shared pointer to a <code>PhaseSpace</code>-derived object. When not 
+provided the internal phase-space selection machinery will be 
+used. Then <code>sigmaPtr</code> should be an instance of a class 
+derived from one of the <code>Sigma1Process</code>, 
+<code>Sigma2Process</code> and <code>Sigma3Process</code> classes for 
+1-, 2- and 3- particle production, in their turn derived from 
+<code>SigmaProcess</code>. 
 </argument> 
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::setResonancePtr( ResonanceWidths* resonancePtr)"> 
+<method name="bool Pythia::addSigmaPtr( SigmaProcessPtr sigmaPtr, 
+PhaseSpacePtr phaseSpacePtrIn = 0)"> 
+offers the possibility to add further processes, see 
+<code>setSigmaPtr</code> above for further information. 
+<note>Note:</note> The method currently always returns true. 
+</method> 
+ 
+<method name="bool Pythia::setResonancePtr( ResonanceWidthsPtr resonancePtr)"> 
 offers the possibility to link your own implementation of the 
 calculation of partial resonance widths, to make it a part of the 
 normal process generation machinery, without having to recompile the 
@@ -869,13 +881,20 @@ normal process generation machinery, without having to recompile the
 resonances to be handled internally, when combined with new particle 
 data. Note that the decay of normal hadrons cannot be modeled here; 
 this is for New Physics resonances. The rules for constructing your 
-own class from the <code>ResonanceWidths</code> base class are described 
-<aloc href="SemiInternalResonances">here</aloc>. You may call this 
-routine repeatedly, to add as many new resonances as you wish. 
+own class from the <code>ResonanceWidths</code> base class are 
+described <aloc href="SemiInternalResonances">here</aloc>. Calling 
+this method removes any previously user provided resonances. To add as 
+many new resonances as you wish, instead call 
+<code>addResonancePtr</code> repeatedly. 
 <argument name="resonancePtr"> 
-pointer to a <code>ResonanceWidths</code>-derived object. This object 
-must be instantiated by you in your program. 
+shared pointer to a <code>ResonanceWidths</code>-derived object. 
 </argument> 
+<note>Note:</note> The method currently always returns true. 
+</method> 
+ 
+<method name="bool Pythia::addResonancePtr( ResonanceWidthsPtr resonancePtr)"> 
+offers the possibility to add further resonances, see 
+<code>setResonancePtr</code> above for further information. 
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
@@ -927,7 +946,7 @@ event properties can be interrogated.
 partonVertexPtrIn)"> 
 offers the possibility to set production vertices for the MPI, 
 FSR and ISR parton-level evolution, instead of the default framework, 
-see further <aloc href="VertexInformation">here</aloc>. 
+see further <aloc href="PartonVertexInformation">here</aloc>. 
 This part of the program is still in the early stages, and is 
 likely to evolve further. Currently it is only used for the 
 <aloc href="RopeHadronization">Rope Hadronization</aloc> framework. 
@@ -970,19 +989,44 @@ can be checked with the
 method. 
 </method> 
  
-<method name="bool Pythia::next(double eCM)"> 
+<method name="bool Pythia::next(int procType)"> 
+By default all initialized processes are generated, properly mixed. 
+By specifying a <code>procType</code>, it possible to force a specific 
+process type, assuming that you start out e.g. from <code>SoftQCD:all 
+= on</code>. The possible interaction <code>procType</code>s are (1) 
+inelastic nondiffractive, (2) elastic, (3, 4) single diffractive where 
+either the first or second hadron is broken up, (5) double 
+diffractive, and (6) central diffraction. This matches the order of 
+the <code>SoftQCD</code> process codes 101 - 106.<br/> If the 
+collision energy can be so low that the <code>LowEnergyQCD</code> 
+processes are used, then also the options (7) excitation, (8) 
+annihilation and (9) resonant can be used. Then all the input numbers 
+match the order of the <code>LowEnergQCD</code> codes 151 - 159. In 
+the higher-energy description process types 7 - 9 default back to the 
+0 mixed option. 
 </method> 
-<methodmore name="bool Pythia::next(double eA, double eB)"> 
+ 
+<method name="bool Pythia::setKinematics(double eCM)"> 
+</method> 
+<methodmore name="bool Pythia::setKinematics(double eA, double eB)"> 
 </methodmore> 
-<methodmore name="bool Pythia::next(double pxA, double pyA, double pzA, 
-double pxB, double pyB, double pzB)"> 
-These three methods can only be used when variable event-energy has been 
-switched on, see the <aloc href="BeamParameters">Beam Parameters</aloc> 
-description. Then they can be used to give in the new event CM energy, 
-the two back-to-back incoming particle energies, or the full 
-three-momentum of the incoming particles, for <code>Beams:frameType</code> 
-set to 1, 2 or 3, respectively. 
+<methodmore name="bool Pythia::setKinematics(double pxA, double pyA, 
+                  double pzA, double pxB, double pyB, double pzB)"> 
 </methodmore> 
+<methodmore name="bool Pythia::setKinematics(Vec4 pA, Vec4 pB)"> 
+When variable energy is set with 
+<code>Beams:allowVariableEnergy</code> change the beam energy. 
+</methodmore> 
+ 
+<method name="bool Pythia::setBeamIDs( int idAin, int idBin)"> 
+Provides limited support for changing beam particles. Using this 
+method, <code>idA</code> can be changed to any hadron, while 
+<code>idB</code> must be a proton or a neutron when using this 
+feature. This is useful for example in hadronic cascades in a 
+medium. It is here assumed that only the <code>SoftQCD</code> (and 
+<code>LowEnergyQCD</code> if relevant) hadron-nucleon processes are 
+being used. 
+</method> 
  
 <method name="int Pythia::forceTimeShower( int iBeg, int iEnd, 
 double pTmax, int nBranchMax = 0)"> 
@@ -1051,6 +1095,12 @@ Further details are found <aloc href="HadronLevelStandalone">here</aloc>.
 event record is then not consistent and should not be studied. 
 </method> 
  
+<method name="bool Pythia::moreDecays(int i)"> 
+perform decay of the particle at index <code>i</code> of the event record, 
+when possible. Sequential decays are not performed, but have to be taken 
+care of successively, if so desired. 
+</method> 
+ 
 <method name="bool Pythia::forceRHadronDecays()"> 
 perform decays of R-hadrons that were previously considered stable. 
 This could be if an R-hadron is sufficiently long-lived that 
@@ -1061,15 +1111,87 @@ its four-momentum is changed. Further details are found
 event record is then not consistent and should not be studied. 
 </method> 
  
-<method name="bool Pythia::doLowEnergyProcess(int i1, int i2, int type)"> 
-Allow two hadrons, located in positions <ei>i1</ei> and <ei>i2</ei> of 
+<method name="bool Pythia::doLowEnergyProcess(int i1, int i2, int procType)"> 
+allow two hadrons, located in positions <ei>i1</ei> and <ei>i2</ei> of 
 the normal event record to interact with each other and give rise to new 
-hadrons. Only simple interaction types are offered, as relevent at low 
-energies. It can be used e.g. to model hadronic rescattering in the 
-final state. This method does not itself decay unstable hadrons, but 
-thst could be achieved e.g. with a <code>Pythia::moreDecays()</code> 
-call. This method is still under development. 
+hadrons by 
+<aloc href="QCDLowEnergyProcesses">Low-energy QCD Processes</aloc>. 
+The possible interaction <code>procType</code>s are 
+(1) inelastic nondiffractive, (2) elastic, (3, 4) single diffractive 
+where either first or second hadron is broken up, (5) double diffractive, 
+(7) excitation, (8) annihilation and (9) resonant. It is also possible to 
+specify the formation of a specific resonance by setting 
+<code>procType</code> to the id of that particle. No perturbative stage 
+is applied in either case, as relevant at low energies. It can be used 
+e.g. to model <aloc href="HadronicRescattering">Hadronic Rescattering</aloc> 
+in the final state, where partial cross sections are first calculated 
+to provide the relevant mix of different collision types. This method 
+does not itself decay unstable hadrons, but that could be achieved e.g. 
+with a <code>Pythia::moreDecays()</code> call. 
 </method> 
+ 
+<method name="double Pythia::getSigmaTotal()"> 
+</method> 
+<methodmore name="double Pythia::getSigmaTotal(double eCM12, 
+int mixLoHi = 0)"> 
+</methodmore> 
+<methodmore name="double Pythia::getSigmaTotal(int id1, int id2, double eCM12, 
+int mixLoHi = 0)"> 
+</methodmore> 
+<methodmore name="double Pythia::getSigmaTotal(int id1, int id2, double eCM12, 
+double m1, double m2, int mixLoHi = 0)"> 
+these four methods return a total cross section for two hadrons to collide. 
+It can be useful to have this access for some applications, where one needs 
+to decide whether two hadrons should be allowed to collide or not before 
+calling Pythia. One example is for the already-mentioned 
+<aloc href="HadronicRescattering">Hadronic Rescattering</aloc>, 
+but it could also involve tracking a particle through a medium. 
+It combines separate low-energy and a high-energy descriptions, with a 
+reasonably transition. 
+<argument name="id1, id2"> 
+the identity codes of the two colliding hadrons. If unspecified, 
+the ids are taken from the beam configuration of the 
+<code>Pythia</code> object. 
+</argument> 
+<argument name="eCM12"> 
+the collision center-of-mass energy. If unspecified, the beam energy 
+is taken from the beam configuration of the <code>Pythia</code> object. 
+</argument> 
+<argument name="m1, m2"> 
+the masses of the two incoming hadrons. If unspecified, the particles are 
+assumed to be on-shell. 
+</argument> 
+<argument name="mixLoHi"> 
+Gives a choice of cross section description. 
+<br/>Option <ei>-1</ei> gives the low-energy cross sections implemented 
+for hadronic rescattering in <ref>Sjo20</ref>. 
+<br/>Option <ei>1</ei> gives high-energy cross sections based on the 
+SaS/DL setup in <aloc href="TotalCrossSections">TotalCrossSections</aloc>, 
+as extended in <ref>Sjo21</ref>. 
+<br/>Default option <ei>0</ei> gives the former behaviour at low energies 
+and the latter at high, with a mix in between. 
+</argument> 
+</methodmore> 
+ 
+<method name="double Pythia::getSigmaPartial(int procType)"> 
+</method> 
+<methodmore name="double Pythia::getSigmaPartial(double eCM, int procType, 
+int mixLoHi = 0)"> 
+</methodmore> 
+<methodmore name="double Pythia::getSigmaPartial(int id1, int id2, 
+double eCM12, int procType, int mixLoHi = 0)"> 
+</methodmore> 
+<methodmore name="double Pythia::getSigmaPartial(int id1, int id2, 
+double eCM12, double m1, double m2, int procType, int mixLoHi = 0)"> 
+these two methods match the <code>getSigmaTotal</code> ones above, but 
+offers the total cross section split into interaction <code>procType</code>, 
+(1) inelastic nondiffractive, (2) elastic, (3, 4) single diffractive 
+where either first or second hadron is broken up, (5) double diffractive, 
+(7) excitation, (8) annihilation and (9) resonant. You can also get the 
+same total cross sections as in <code>getSigmaTotal</code> for 
+<code>procType = 0</code>, but with a larger time consumption if this is 
+the only number you want. 
+</methodmore> 
  
 <method name="void Pythia::LHAeventList()"> 
 list the Les Houches Accord information on the current event, see 
@@ -1222,4 +1344,4 @@ see <aloc href="AdvancedUsage">here</aloc> for further details.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

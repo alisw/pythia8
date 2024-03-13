@@ -250,74 +250,75 @@ primordial <ei>kT</ei>. This may cause some amount of errors especially when
 the invariant mass of <ei>gamma-gamma</ei> system is small. 
 </p> 
  
-<h3>Photons from lepton beams</h3> 
+<h3>Photons from lepton or hadron beams</h3> 
  
 <p> 
-Interaction of photons from leptons including photon-photon interactions in 
-lepton-lepton collisions and photon-hadron lepton-hadron collisions can be 
-set up as described in 
-<aloc href="PDFSelection">PDF selection</aloc>. Since the current 
-framework can handle only (quasi-)real photons, a upper limit for the 
-photon virtuality needs to be set. This can be done with the parameter 
-<code>Photon:Q2max</code>. The upper limit for virtuality will set also 
+Interaction of photons from leptons, including photon-photon interactions in 
+lepton-lepton collisions and photon-hadron ones in lepton-hadron collisions, 
+can be set up as described in 
+<aloc href="PDFSelection">PDF selection</aloc>. It is also possible to 
+consider photons from proton beams. Since the current 
+framework can handle only (quasi-)real photons, an upper limit needs to be set 
+for the photon virtuality. This can be done with the parameter 
+<code>Photon:Q2max</code>. The upper virtuality limit will also set 
 the upper limit for the <ei>k_T</ei> of the photon, which in turn will 
 be the same as the <ei>k_T</ei> of the scattered lepton. Also some other 
 cuts can be imposed. 
  
 <parm name="Photon:Q2max" default="1.0" max="2.0"> 
-Upper limit for (quasi-)real photon virtuality in <ei>GeV^2</ei>. Too low 
+Upper limit for (quasi-)real photon virtuality in <ei>GeV^2</ei>. Too low a 
 value might cause problems, e.g. if the lower <ei>Q^2</ei> limit derived from 
-kinematics becomes larger than upper limit. 
+kinematics becomes larger than the upper limit. 
 </parm> 
  
 <parm name="Photon:Wmin" default="10.0" min="5.0"> 
-Lower limit for invariant mass of <ei>gamma-gamma</ei> system in <ei>GeV</ei>. 
-In lepton-hadron collisions <ei>W</ei> corresponds to invariant mass of 
-photon-hadron system. 
+Lower limit for invariant mass of <ei>gamma-gamma</ei> or 
+<ei>photon-hadron</ei> system in <ei>GeV</ei>. 
 </parm> 
  
 <parm name="Photon:Wmax" default="-1.0"> 
 Upper limit for invariant mass of <ei>gamma-gamma</ei> 
 (<ei>gamma-hadron</ei>) system in <ei>GeV</ei>. 
 A value below <code>Photon:Wmin</code> means that the invariant mass of 
-the original <ei>l+l-</ei> (<ei>lepton-hadron</ei>) system is used as an 
-upper limit. 
+the original system (<ei>lepton+lepton</ei>, <ei>lepton+hadron</ei> or 
+<ei>hadron+hadron</ei>) is used as an upper limit. 
 </parm> 
  
 <parm name="Photon:thetaAMax" default="-1.0" max="3.141593"> 
-Upper limit for scattering angle of lepton A in <ei>rad</ei>. A negative 
-value means that no cut is applied. Since <ei>k_T</ei> depends on virtuality 
-of the emitted photon, the <code>Photon:Q2max</code> cut is usually more 
-restrictive unless a very small angle is used. This cut is only applied 
-when the colliding beams are defined in their CM frame 
-(<code>Beams:frameType=1</code>). Furthermore, in case of <ei>2 &rarr; 1</ei> 
-processes with direct photons the scattered lepton kinematics is modified 
-later in the event generation, so accurate rejection can be obtained only 
-based on the final lepton momenta in the event record. 
+Upper limit for scattering angle of scattered beam particle on side A 
+in <ei>rad</ei>. A negative value means that no cut is applied. Since 
+<ei>k_T</ei> depends on the virtuality of the emitted photon, the 
+<code>Photon:Q2max</code> cut is usually more restrictive unless a 
+very small angle is used. This cut is only applied when the colliding 
+beams are defined in their CM frame 
+(<code>Beams:frameType=1</code>). Furthermore, in case of <ei>2 &rarr; 
+1</ei> processes with unresolved photons, the scattered beam particle 
+kinematics is modified later in the event generation, to keep the mass 
+of the intermediate particle intact, so an accurate rejection can be 
+obtained only based on the final momenta of the scattered beam 
+particles in the event record. 
 </parm> 
  
 <parm name="Photon:thetaBMax" default="-1.0" max="3.141593"> 
-As above but for lepton B. 
+As above but for side B. 
 </parm> 
  
 <flag name="Photon:sampleQ2" default="on"> 
-Determines whether the sampling for the photon virtuality is done. This can 
-be used only with <code>PDF:lepton2gammaSet = 2</code> option where 
-<ei>Q^2</ei>-integrated photon is provided by the user with 
-<code>Pythia::setPhotonFluxPtr(PDF*, PDF*)</code> method. In this case the 
-virtuality and the transverse momentum of the photon (and recoiling particle) 
-is set to zero which strictly speaking is kinematically not possible. The 
-error here is, however, very small for the cases where the virtualities 
-are negligible (e.g. photons from heavy ions).</flag> 
+Determines whether the sampling for the photon virtuality is done. This has 
+to be used when and <ei>Q^2</ei>-integrated photon flux is used. In this case 
+the virtuality and the transverse momentum of the photon (and the recoiling 
+particle) is set to zero, which strictly speaking is kinematically impossible. 
+The error here is very small for the cases where the virtualities 
+are negligible, however (e.g. photons from heavy ions).</flag> 
 </p> 
  
-<h4>MPIs with lepton beams</h4> 
+<h4>MPIs with photons</h4> 
  
 <p> 
-The invariant mass of <ei>gamma-gamma</ei> or <ei>gamma-hadron</ei> system 
-from lepton beams will vary. Therefore, to generate MPIs and non-diffractive 
-events in <ei>gamma-gamma</ei> and <ei>gamma-hadron</ei> 
-collisions from lepton beams, the MPI framework is initialized with five 
+The invariant mass of a <ei>gamma-gamma</ei> or <ei>gamma-hadron</ei> system 
+from lepton or hadron beams will vary. Therefore, to generate MPIs and 
+non-diffractive events in <ei>gamma-gamma</ei> and <ei>gamma-hadron</ei> 
+collisions, the MPI framework is initialized with several 
 values of <ei>W</ei> from <code>Photon:Wmin</code> to 
 <code>Photon:Wmax</code>. The parameter values are then interpolated 
 for the sampled <ei>W</ei>. 
@@ -325,4 +326,4 @@ for the sampled <ei>W</ei>.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // TimeShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -76,6 +76,11 @@ public:
   // but before hadronisation. (Called from PartonLevel.)
   virtual int showerQEDafterRemnants(Event&) { return 0; }
 
+  // Prepare process-level event for shower + interleaved resonance decays.
+  // Usage: prepareProcess( process, event, iPos).
+  // iPos provides mapping from process to event entries (before showering).
+  virtual void prepareProcess( Event&, Event&, vector<int>&) {};
+
   // Global recoil: reset counters and store locations of outgoing partons.
   // Usage: prepareGlobal( event).
   virtual void prepareGlobal( Event& ) {}
@@ -97,15 +102,31 @@ public:
   virtual double pTnext( Event& , double , double , bool = false, bool = false)
     { return 0.;}
 
+  // Select next pT for interleaved resonance decays.
+  virtual double pTnextResDec() { return 0.; }
+
   // ME corrections and kinematics that may give failure.
   // Usage: branch( event, isInterleaved).
   virtual bool branch( Event& , bool = false) {return true;}
+
+  // Handle a resonance decay + resonance shower (including any nested decays).
+  // Assumes decay channel and kinematics already selected and present in
+  // either the process or event record.
+  // May be called recursively for nested decays.
+  // Usage: resonanceShower( process, event, iPos, pTmerge), where iPos
+  // maps process to event entries, and pTmerge is the scale at which this
+  // system should be merged into its parent system.
+  virtual bool resonanceShower( Event&, Event&, vector<int>&, double = 0.)
+    { return false;}
 
   // Print dipole list; for debug mainly.
   virtual void list() const {}
 
   // Initialize data members for calculation of uncertainty bands.
   virtual bool initUncertainties() {return false;}
+
+  // Initialize data members for application of enhancements.
+  virtual bool initEnhancements() {return false;}
 
   // Tell whether FSR has done a weak emission.
   virtual bool getHasWeaklyRadiated() {return false;}
@@ -161,6 +182,18 @@ public:
   virtual vector<int> getRecoilers( const Event&, int, int, string)
     { return vector<int>(); }
 
+  virtual double enhanceFactor(const string& name) {
+    unordered_map<string, double>::iterator it = enhanceFSR.find(name);
+    if ( it == enhanceFSR.end() ) return 1.;
+    return it->second;
+  }
+
+  // Functions to directly extract the probability of no emission between two
+  // scales. This functions is not used in the Pythia core code, but can be
+  // used by external programs to interface with the shower directly.
+  virtual double noEmissionProbability( double, double, double, int, int,
+    double, double) { return 1.; }
+
   // Pointer to MergingHooks object for NLO merging.
   MergingHooksPtr  mergingHooksPtr{};
 
@@ -178,12 +211,13 @@ protected:
   bool   doUncertainties{}, uVarMuSoftCorr{}, uVarMPIshowers{},
          noResVariations{}, noProcVariations{};
   int    nUncertaintyVariations{}, nVarQCD{}, uVarNflavQ{};
-  double dASmax{}, cNSpTmin{}, uVarpTmin2{}, overFactor{};
+  double dASmax{}, cNSpTmin{}, uVarpTmin2{}, overFactor{}, overFactorEnhance{};
   map<int,double> varG2GGmuRfac, varQ2QGmuRfac, varG2QQmuRfac, varX2XGmuRfac,
                   varG2GGcNS, varQ2QGcNS, varG2QQcNS, varX2XGcNS;
   map<int,double>* varPDFplus;
   map<int,double>* varPDFminus;
   map<int,double>* varPDFmember;
+  unordered_map<string,double> enhanceFSR;
 
 };
 

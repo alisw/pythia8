@@ -9,8 +9,9 @@
 <h2>Multiparton Interactions</h2> 
 <ol id="toc">
   <li><a href="#section0">Main variables</a></li>
-  <li><a href="#section1">Further variables</a></li>
-  <li><a href="#section2">Technical notes</a></li>
+  <li><a href="#section1">Initialization speed-up</a></li>
+  <li><a href="#section2">Further variables</a></li>
+  <li><a href="#section3">Technical notes</a></li>
 </ol>
 
  
@@ -104,7 +105,7 @@ The actual value is then regulated by the running to the scale
 <i>pT^2</i>, at which it is evaluated 
 <a name="anchor3"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:alphaSorder &nbsp;</strong> 
- (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+ (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 The order at which <i>alpha_strong</i> runs at scales away from 
 <i>m_Z</i>. 
 <br/><code>option </code><strong> 0</strong> : zeroth order, i.e. <i>alpha_strong</i> is kept 
@@ -113,6 +114,8 @@ fixed.
 <br/><code>option </code><strong> 2</strong> : second order. Since other parts of the code do 
 not go to second order there is no strong reason to use this option, 
 but there is also nothing wrong with it.   
+<br/><code>option </code><strong> 3</strong> : third order, with the same comment as for second 
+order. The expression in the 2006 RPP is used here.   
    
  
 <p/> 
@@ -331,8 +334,8 @@ that varies according to the selected <i>x</i> value of an interaction,
 <i>1. + a1 log (1 / x)</i>, where <i>a1</i> is a free parameter. 
 Note that once <i>b</i> has been selected for the hard process, 
 it remains fixed for the remainder of the evolution. Also note that 
-the machinery for 
-<a href="SecondHardProcess.html" target="page">a second hard process</a> 
+the machinery for a 
+<a href="SecondHardProcess.html" target="page">second hard process</a> 
 is not adapted to calculate the impact-parameter enhancement factor 
 for this option. 
    
@@ -500,12 +503,97 @@ as a potential rescatterer.
  
  
 <a name="section1"></a> 
+<h3>Initialization speed-up</h3> 
+ 
+The initialization of the MPI framework is the most time-consuming part 
+of the whole initialization step. This is because the jet cross section 
+has to be integrated numerically for the given <i>pT0</i> choice, and 
+shown to be larger than the total cross section of the relevant event 
+class (nondiffractive or diffractive). If not, the <i>pT0</i> value has 
+to be reduced. Sudakov factors also need to be tabulated for usage during 
+the generation. If the collision energy is kept fixed and diffraction is 
+not simulated, then the time usage is still hardly noticeable, at or below 
+the order of a second. For diffraction, however, the diffractive masses 
+vary between events, which requires a setup in a grid of masses for 
+subsequent interpolation. This is similar for nondiffractive events, if the 
+collision energy is allowed to vary. In total, this can give up to a 
+hundred process+energy/mass points to consider, requiring tens of seconds. 
+It can become problematic if additionally several different Pythia objects 
+are required to handle many different beam-particle combinations, or if 
+the <code>Beams:allowIDAswitch</code> is used to handle several 
+beam-particle combinations inside a single Pythia object. 
+ 
+<p/> 
+It is therefore possible to save the outcome of one initialization step 
+on file, and then read it back in for subsequent runs. This can save a 
+significant time, notably for short test runs. A warning is that all relevant 
+settings must be the same in the two runs. It is up to the user to 
+ensure that this is the case; it would be next-to-impossible to catch 
+any possible conflict. The most obvious aspects that must agree are 
+incoming beam particles and (maximum) collision energy, all MPI-related 
+settings and PDFs. Aspects that could be different without causing problems 
+include ISR and FSR, and all hadronization steps. 
+ 
+<p/> 
+This trick also works for the initialization of several particles. 
+Specifically, when the <code>Beams:allowIDAswitch</code> switch is 
+on, some 20 different incoming beam particles are initialized 
+in succession, and all of these can be saved and reused with the methods 
+below. Since we now need a few hundred seconds to initialize all of them, 
+the time savings can be considerable for repeated use. 
+ 
+<a name="anchor24"></a>
+<p/><code>mode&nbsp; </code><strong> MultipartonInteractions:reuseInit &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
+Action taken with respect to using MPI initialization data as above. 
+<br/><code>option </code><strong> 0</strong> : current run is self-contained.   
+<br/><code>option </code><strong> 1</strong> : MPI initialization is done as usual, but afterwards 
+the results of this initialization are saved on file.   
+<br/><code>option </code><strong> 2</strong> : initialization data is read in from a file, saved 
+from a previous initialization, thereby saving time. If the file is not 
+found, initialization fails.   
+<br/><code>option </code><strong> 3</strong> : as option 2, but if the file is not found, it will be 
+generated and saved after normal initialization.   
+   
+ 
+<a name="anchor25"></a>
+<p/><code>word&nbsp; </code><strong> MultipartonInteractions:initFile &nbsp;</strong> 
+ (<code>default = <strong>pp14000.mpi</strong></code>)<br/>
+The file name used to store or read MPI initialization data. It is up 
+to the user to pick a suitable name (including path if relevant) for the 
+case at hand. 
+   
+ 
+<p/> 
+Another possible speed-up, in some contexts, is to symmetrize the 
+description between particles and antiparticles, so that e.g. 
+<i>pi^+ p</i> and <i>pi^- p</i> are handled identically in the 
+MPI initialization, and thus could use the same initialization file. 
+This is used for the <code>Beams:allowIDAswitch = on</code> option, 
+to limit the number of options needed to cover, but can also be used 
+in other contexts. 
+ 
+<a name="anchor26"></a>
+<p/><code>flag&nbsp; </code><strong> MultipartonInteractions:setAntiSame &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+The cross sections for particle-particle and particle-antiparticle 
+collisions are symmetrized at initialization. For the perturbative 
+cross section this is achieved by symmetrizing the PDFs of one 
+particle between quarks and antiquarks. For the nonperturbative 
+cross sections this is done by averaging two separate calls. If 
+either of the two particles is its own antiparticle the procedure 
+can be skipped. In the actual event generation the proper PDFs are 
+used for real parton-parton collisions, but combined with the 
+symmetrized Sudakov factor table and nondiffractive cross section. 
+   
+ 
+<a name="section2"></a> 
 <h3>Further variables</h3> 
  
 These should normally not be touched. Their only function is for 
 cross-checks. 
  
-<a name="anchor24"></a>
+<a name="anchor27"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:nQuarkIn &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed incoming quark flavours in the beams; a change 
@@ -513,7 +601,7 @@ to 4 would thus exclude <i>b</i> and <i>bbar</i> as incoming
 partons, etc. 
    
  
-<a name="anchor25"></a>
+<a name="anchor28"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:nSample &nbsp;</strong> 
  (<code>default = <strong>1000</strong></code>; <code>minimum = 100</code>)<br/>
 The allowed <i>pT</i> range is split (unevenly) into 100 bins, 
@@ -524,7 +612,7 @@ at initialization, and the differential one during the run as a
 A larger number implies increased accuracy of the calculations. 
    
  
-<a name="section2"></a> 
+<a name="section3"></a> 
 <h3>Technical notes</h3> 
  
 Relative to the articles mentioned above, not much has happened. 
@@ -658,4 +746,4 @@ interactions.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

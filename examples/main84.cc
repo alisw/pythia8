@@ -1,11 +1,13 @@
 // main84.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Stefan Prestel <stefan.prestel@thep.lu.se>.
+// Authors: Stefan Prestel
 
-// Keywords: merging; leading order; CKKW-L; hepmc;
+// Contact: Christian Preuss <preuss@uni-wuppertal.de>
+
+// Keywords: merging; leading order; CKKW-L; hepmc
 
 // It illustrates how to do CKKW-L merging, see the Matrix Element
 // Merging page in the online manual. An example command is
@@ -111,6 +113,9 @@ int main( int argc, char* argv[] ){
   // First argument: Get input from an input file
   pythia.readFile(argv[1]);
   int nEvent = pythia.mode("Main:numberOfEvents");
+
+  // Deactivate AUX_ weight output
+  pythia.readString("Weights:suppressAUX = on");
 
   // Interface for conversion from Pythia8::Event to HepMC event.
   // Will fill cross section and event weight directly in this program,
@@ -227,6 +232,8 @@ int main( int argc, char* argv[] ){
   double sigma = 0.0;
   double sigma2 = 0.0;
 
+  bool wroteRunInfo = false;
+
   while(njetCounter >= 0) {
 
     cout << "   Path to lhe files: " << iPath << "_*" << endl;
@@ -284,7 +291,9 @@ int main( int argc, char* argv[] ){
         // Generate next event
         if( pythia.next()) {
 
-          double weight = pythia.info.mergingWeight();
+          double evtweight = pythia.info.weight();
+          double weight    = pythia.info.mergingWeight();
+          weight      *= evtweight;
           nAccepEvents++;
 
           // Jet pT's
@@ -303,6 +312,18 @@ int main( int argc, char* argv[] ){
           histPTSixth.fill( pTsixth, weight);
 
           if(weight > 0.){
+            // Create a GenRunInfo object with the necessary weight
+            // names and write them to the HepMC3 file only once.
+            if (!wroteRunInfo) {
+              shared_ptr<HepMC3::GenRunInfo> genRunInfo;
+              genRunInfo = make_shared<HepMC3::GenRunInfo>();
+              vector<string> weight_names = pythia.info.weightNameVector();
+              genRunInfo->set_weight_names(weight_names);
+              ascii_io.set_run_info(genRunInfo);
+              ascii_io.write_run_info();
+              wroteRunInfo = true;
+            }
+
             // Construct new empty HepMC event and fill it.
             // Units will be as chosen for HepMC build, but can be changed
             // by arguments, e.g. GenEvt( HepMC::Units::GEV, HepMC::Units::MM)
@@ -315,8 +336,6 @@ int main( int argc, char* argv[] ){
 
             sigma += weight*normhepmc;
             sigma2 += pow(weight*normhepmc,2);
-            // Set event weight
-            hepmcevt.weights().push_back(weight*normhepmc);
 
             // Fill summed histograms
             histPTFirstSum.fill( pTfirst, weight*normhepmc);
@@ -328,8 +347,11 @@ int main( int argc, char* argv[] ){
             // Report cross section to hepmc.
             shared_ptr<HepMC3::GenCrossSection> xsec;
             xsec = make_shared<HepMC3::GenCrossSection>();
-            xsec->set_cross_section( sigma*1e9, pythia.info.sigmaErr()*1e9 );
+            // First add object to event, then set cross section. This
+            // order ensures that the lengths of the cross section and
+            // the weight vector agree.
             hepmcevt.set_cross_section( xsec );
+            xsec->set_cross_section( sigma*1e9, pythia.info.sigmaErr()*1e9 );
             // Write the HepMC event to file.
             ascii_io.write_event(hepmcevt);
           }

@@ -27,6 +27,6 @@ Stat:showPartonLevel = on          ! additional statistics on MPI
 Main:runRivet = on              ! Run Rivet (specify analyses below)
 Main:analyses = ATLAS_2010_S8817804,ALICE_2010_S8625980,CMS_2011_S8957746
           ! Names of Rivet analyses to be run, as a comma-separated list
-Main:writeHepMC = on            ! Write .hepmc events to a file.
-Main:writeRoot = on             ! Write particle level output to a root file
+Main:writeHepMC = off           ! Write .hepmc events to a file.
+Main:writeRoot = off            ! Write particle level output to a root file
 Main:outputLog = on             ! Put all printed output to a log file.

@@ -90,6 +90,11 @@ interactions, <i>m</i> the mass of the system, and
 <i>m_half</i> and <i>y_damp</i> parameters defined below. 
 Furthermore each separately defined beam remnant has a distribution 
 of width <i>sigma_remn</i>, independently of kinematical variables. 
+<p/> 
+Note that, for external (LHE) events <i>Q_half</i> is treated as 
+zero. This is so that LHE events with low-pT extra jets (e.g., in 
+the context of POWHEG-style merging) are given the same primordial kT 
+as their Born-level counterparts. 
  
 <a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:primordialKT &nbsp;</strong> 
@@ -102,7 +107,8 @@ parameter values below.
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:primordialKTsoft &nbsp;</strong> 
  (<code>default = <strong>0.9</strong></code>; <code>minimum = 0.</code>)<br/>
 The width <i>sigma_soft</i> in the above equation, assigned as a 
-primordial <i>kT</i> to initiators in the soft-interaction limit. 
+primordial <i>kT</i> to initiators in the soft-interaction 
+limit. 
    
  
 <a name="anchor3"></a>
@@ -116,7 +122,8 @@ primordial <i>kT</i> to initiators in the hard-interaction limit.
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:halfScaleForKT &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 0.</code>)<br/>
 The scale <i>Q_half</i> in the equation above, defining the 
-half-way point between hard and soft interactions. 
+half-way point between hard and soft interactions. For external (LHE) 
+events, this parameter is treated as zero. 
    
  
 <a name="anchor5"></a>
@@ -126,19 +133,19 @@ The scale <i>m_half</i> in the equation above, defining the
 half-way point between low-mass and high-mass subsystems. 
 (Kinematics construction can easily fail if a system is assigned 
 a primordial <i>kT</i> value higher than its mass, so the 
-mass-dampening is intended to reduce some troubles later on.) 
+mass-damping is intended to reduce some troubles later on.) 
    
  
 <a name="anchor6"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:reducedKTatHighY &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 For a system of mass <i>m</i> and energy <i>E</i> the 
-dampening factor <i>y_damp</i> above is defined as 
+damping factor <i>y_damp</i> above is defined as 
 <i>y_damp = pow( E/m, r_red)</i>, where <i>r_red</i> is the 
 current parameter. The effect is to reduce the primordial <i>kT</i> 
 of low-mass systems extra much if they are at large rapidities (recall 
 that <i>E/m = cosh(y)</i> before <i>kT</i> is added). The reason 
-for this dampening is purely technical, and for reasonable values 
+for this damping is purely technical, and for reasonable values 
 should not have dramatic consequences overall. 
    
  
@@ -153,7 +160,7 @@ to beam-remnant partons.
 A net <i>kT</i> imbalance is obtained from the vector sum of the 
 primordial <i>kT</i> values of all initiators and all beam remnants. 
 This quantity is compensated by a shift shared equally between 
-all partons, except that the dampening factor <i>m / (m_half + m)</i> 
+all partons, except that the damping factor <i>m / (m_half + m)</i> 
 is again used to suppress the role of small-mass systems. 
  
 <p/> 
@@ -253,12 +260,11 @@ parameter. Thus a small number will result in a large saturation.
  
 <a name="anchor11"></a>
 <p/><code>mode&nbsp; </code><strong> BeamRemnants:maxValQuark &nbsp;</strong> 
- (<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
+ (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 The maximum valence quark kind allowed in acceptable incoming beams, 
 for which multiparton interactions are simulated. Default is that hadrons 
-may contain <i>u</i>, <i>d</i> and <i>s</i> quarks, 
-but not <i>c</i> and <i>b</i> ones, since sensible 
-kinematics has not really been worked out for the latter. 
+may contain all quarks except top, but e.g. a change to 3 would also 
+exclude <i>c</i> and <i>b</i> hadrons. 
    
  
 <a name="anchor12"></a>
@@ -377,7 +383,48 @@ a proton that does not break up in the process.
 <br/><code>option </code><strong> 3</strong> :  Both hadronic beams are unresolved.    
    
  
+<p/> 
+Empirically it is known that the leading baryon in the fragmentation 
+region is softer in PYTHIA than in data. The following settings 
+allow the possibility to modify the leading-diquark fragmentation to 
+(partly) address this issue. 
+ 
+<a name="anchor23"></a>
+<p/><code>parm&nbsp; </code><strong> BeamRemnants:dampPopcorn &nbsp;</strong> 
+ (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
+Controls whether a beam remnant diquark can hadronize to a leading meson 
+(by the popcorn mechanism) or not. If 1 then a remnant behaves just like 
+in ordinary hadronization, while if 0 then a diquark will always produce 
+a leading baryon. Intermediate values will interpolate between these two 
+extremes. Has no influence on diquarks not coming from a beam remnant. 
+   
+ 
+<a name="anchor24"></a>
+<p/><code>flag&nbsp; </code><strong> BeamRemnants:hardRemnantBaryon &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Allows a remnant diquark to hadronize to a harder-than-normal baryon, 
+assuming that <code>forbidPopcorn</code> is switched on. Then the next 
+two parameters override the normal <i>a</i> and <i>b</i> of the 
+Lund symmetric fragmentation function. 
+   
+ 
+<a name="anchor25"></a>
+<p/><code>parm&nbsp; </code><strong> BeamRemnants:aRemnantBaryon &nbsp;</strong> 
+ (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 2.</code>)<br/>
+For the special hard remnant baryon handling above, this parameter is 
+the power <i>a</i> in the <i>(1-z)^a</i> factor of the fragmentation 
+function. 
+   
+ 
+<a name="anchor26"></a>
+<p/><code>parm&nbsp; </code><strong> BeamRemnants:bRemnantBaryon &nbsp;</strong> 
+ (<code>default = <strong>2.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 5.</code>)<br/>
+For the special hard remnant baryon handling above, this parameter is 
+the factor <i>b</i> in the <i>exp(-b m_T^2/z</i> factor of the 
+fragmentation function. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

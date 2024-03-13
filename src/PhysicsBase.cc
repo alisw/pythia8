@@ -1,10 +1,11 @@
 // PhysicsBase.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the PhysicsBase class.
 
+#include "Pythia8/BeamSetup.h"
 #include "Pythia8/PhysicsBase.h"
 
 namespace Pythia8 {
@@ -25,20 +26,25 @@ void PhysicsBase::initInfoPtr(Info& infoIn) {
   // Other objects extracted from Info.
   settingsPtr      = infoPtr->settingsPtr;
   particleDataPtr  = infoPtr->particleDataPtr;
+  loggerPtr        = infoPtr->loggerPtr;
+  hadronWidthsPtr  = infoPtr->hadronWidthsPtr;
   rndmPtr          = infoPtr->rndmPtr;
+  beamSetupPtr     = infoPtr->beamSetupPtr;
   coupSMPtr        = infoPtr->coupSMPtr;
   coupSUSYPtr      = infoPtr->coupSUSYPtr;
-  beamAPtr         = infoPtr->beamAPtr;
-  beamBPtr         = infoPtr->beamBPtr;
-  beamPomAPtr      = infoPtr->beamPomAPtr;
-  beamPomBPtr      = infoPtr->beamPomBPtr;
-  beamGamAPtr      = infoPtr->beamGamAPtr;
-  beamGamBPtr      = infoPtr->beamGamBPtr;
-  beamVMDAPtr      = infoPtr->beamVMDAPtr;
-  beamVMDBPtr      = infoPtr->beamVMDBPtr;
   partonSystemsPtr = infoPtr->partonSystemsPtr;
   sigmaTotPtr      = infoPtr->sigmaTotPtr;
+  sigmaCmbPtr      = infoPtr->sigmaCmbPtr;
   userHooksPtr     = infoPtr->userHooksPtr;
+
+  beamAPtr         = &beamSetupPtr->beamA;
+  beamBPtr         = &beamSetupPtr->beamB;
+  beamPomAPtr      = &beamSetupPtr->beamPomA;
+  beamPomBPtr      = &beamSetupPtr->beamPomB;
+  beamGamAPtr      = &beamSetupPtr->beamGamA;
+  beamGamBPtr      = &beamSetupPtr->beamGamB;
+  beamVMDAPtr      = &beamSetupPtr->beamVMDA;
+  beamVMDBPtr      = &beamSetupPtr->beamVMDB;
 
   // If the class has sub objects, register them now.
   onInitInfoPtr();

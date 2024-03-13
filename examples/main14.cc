@@ -1,9 +1,9 @@
 // main14.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: pythia 6; process cross sections;
+// Keywords: pythia 6; process cross sections
 
 // Comparison with some PYTHIA 6.413 cross sections process by process.
 // Several processes have been left out to keep reasonable execution time.

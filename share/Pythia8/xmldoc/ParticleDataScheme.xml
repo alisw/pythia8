@@ -581,7 +581,8 @@ read in an XML-style file with particle data and initialize the
 particle data tables accordingly. This command is executed 
 in the <code>Pythia</code> constructor, i.e. is mainly for 
 internal use. 
-<argument name="startFile" default ="../share/Pythia8/xmldoc/ParticleData.xml"> 
+<argument name="startFile" 
+default ="../share/Pythia8/xmldoc/ParticleData.xml"> 
 the name of the data file to be read. When called from the 
 <code>Pythia</code> constructor the directory is provided by the 
 <code><aloc href="ProgramFlow">PYTHIA8DATA</aloc></code> 
@@ -615,7 +616,7 @@ specifying in which order properties are stored).
 </method> 
  
 <method name="void ParticleData::initWidths( 
-vector&lt;ResonanceWidths*&gt; resonancePtrs)"> 
+vector&lt;ResonanceWidthsPtr&gt; resonancePtrs)"> 
 initialize Breit-Wigner shape parameters for all particles, 
 and the detailed handling of resonances, i.e. particles with 
 perturbatively calculable partial widths, which can be used to 
@@ -666,6 +667,11 @@ make sense out of the input string.
 </methodmore> 
 <methodmore name="void ParticleData::list(bool changedOnly = false, 
 bool changedRes = true)"> 
+</methodmore> 
+<methodmore name="void ParticleData::listAll(ostream& stream)"> 
+</methodmore> 
+<methodmore name="void ParticleData::list(ostream& stream, 
+bool changedOnly = false, bool changedRes = true)"> 
 methods intended to present a listing of particle data in a readable 
 format. The first two are special cases of the third. The first 
 lists all particle data, the second only data for those particles that 
@@ -674,6 +680,7 @@ Resonances are a special case since they can get their data changed
 by being linked to an object that does the calculation of branching 
 ratios. By default the second method does not count such resonances 
 as changed, whereas the third does and thus lists all resonances. 
+The last two methods are simple variants where the output can be redirected. 
 </methodmore> 
  
 <method name="void ParticleData::list(int idList)"> 
@@ -740,7 +747,8 @@ identity code.
  
 <method name="ParticleDataEntry* ParticleData::findParticle(int id)"> 
 </method> 
-<methodmore name="const ParticleDataEntry* ParticleData::findParticle(int id)"> 
+<methodmore name="const ParticleDataEntry* 
+ParticleData::findParticle(int id)"> 
 query whether the particle data table contains the particle of the 
 identity code, and if so return a (const) iterator to it. 
 </methodmore> 
@@ -749,10 +757,21 @@ identity code, and if so return a (const) iterator to it.
 return the identity code of the sequentially next particle stored in table. 
 </method> 
  
+<method name="map&lt;int, ParticleDataEntry&gt;::iterator begin()"> 
+</method> 
+<methodmore name="map&lt;int, ParticleDataEntry&gt;::iterator end()"> 
+iterators over all the entries in the particle data table. 
+</methodmore> 
+ 
 <method name="bool ParticleData::hasAnti(int id)"> 
 bool whether a distinct antiparticle exists or not. Is true if an 
 antiparticle name has been set (and is different from 
 <code>void</code>). 
+</method> 
+ 
+<method name="int ParticleData::antiId(int id)"> 
+gets the id of the antiparticle of this particle, which is <code>-id</code> if 
+a distinct antiparticle exists, and <code>id</code> otherwise. 
 </method> 
  
 <method name="void ParticleData::name(int id, string name)"> 
@@ -932,6 +951,12 @@ on the value of the
 switch. 
 </method> 
  
+<method name="bool ParticleData::varWidth(int id)"> 
+returns whether this particle has a defined mass-dependent width. These widths 
+are parametrised in the 
+<aidx href="HadronWidths"><code>HadronWidths</code></aidx> class. 
+</method> 
+ 
 <method name="double ParticleData::constituentMass(int id)"> 
 is the constituent mass for a quark, hardcoded as 
 <ei>m_u = m_d = 0.325</ei>, <ei>m_s = 0.50</ei>, <ei>m_c = 1.60</ei> 
@@ -997,6 +1022,11 @@ i.e any state composed of <ei>c cbar</ei>, <ei>b bbar</ei> or
 spin, angular momentum or radial excitation. 
 </method> 
  
+<method name="bool ParticleData::isExotic(int id)"> 
+true for an exotic hadron (the 9th PDG ID digit is 9 and the remaining 
+digits are consistent with a hadron). 
+</method> 
+ 
 <method name="bool ParticleData::isOctetHadron(int id)"> 
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
@@ -1018,13 +1048,14 @@ rescales all partial branching ratios by a common factor, such that
 the sum afterward becomes <code>newSumBR</code>. 
 </method> 
  
-<method name="void setResonancePtr(int id, ResonanceWidths* resonancePtr)"> 
-set a pointer for a particle kind to a <code>ResonanceWidths</code> object. 
-This is done, from inside <code>ParticleData::initWidths</code>, only for 
-resonances, i.e. for particles such as <ei>Z^0</ei>, <ei>W^+-</ei>, top, 
-Higgs, and new unstable states beyond the Standard Model. The presence 
-of such an object will allow a more dynamic calculation of partial and 
-total widths, as illustrated by the following methods. 
+<method name="void setResonancePtr(int id, ResonanceWidthsPtr resonancePtr)"> 
+set a shared pointer for a particle kind to a 
+<code>ResonanceWidths</code> object.  This is done, from inside 
+<code>ParticleData::initWidths</code>, only for resonances, i.e. for 
+particles such as <ei>Z^0</ei>, <ei>W^+-</ei>, top, Higgs, and new 
+unstable states beyond the Standard Model. The presence of such an 
+object will allow a more dynamic calculation of partial and total 
+widths, as illustrated by the following methods. 
 </method> 
  
 <method name="void ParticleData::resInit(int id)"> 
@@ -1115,11 +1146,6 @@ particle-antiparticle pair (but if the antiparticle name is
 particleDataEntryIn)"> 
 copy the values stored in an existing <code>ParticleDataEntry</code> 
 object. 
-</method> 
- 
-<method name="ParticleDataEntry::~ParticleDataEntry"> 
-the destructor is needed to delete any <code>ResonanceWidths</code> 
-objects that have been created and linked to the respective particle. 
 </method> 
  
 <method name="void ParticleDataEntry::setDefaults()"> 
@@ -1311,6 +1337,14 @@ for details. The normal behaviour is <code>false</code>, i.e. the width
 is based on hardcoded calculations whenever available. 
 </methodmore> 
  
+<method name="void ParticleDataEntry::setVarWidth(bool varWidth)"> 
+</method> 
+<methodmore name="bool ParticleDataEntry::varWidth()"> 
+sets or returns whether this particle has a defined mass-dependent width. 
+These widths are parametrised in the 
+<aidx href="HadronWidths"><code>HadronWidths</code></aidx> class. 
+</methodmore> 
+ 
 <method name="void ParticleDataEntry::setHasChanged(bool hasChanged)"> 
 </method> 
 <method name="void ParticleDataEntry::hasChanged(bool hasChanged)"> 
@@ -1387,6 +1421,18 @@ true for a meson.
 true for a baryon or antibaryon. 
 </method> 
  
+<method name="bool ParticleDataEntry::isOnium()"> 
+true for a charmonium, bottomonium or (hypothetical) toponium state, 
+i.e any state composed of <ei>c cbar</ei>, <ei>b bbar</ei> or 
+<ei>t tbar</ei> irrespective of colour (singlet or octet) and 
+spin, angular momentum or radial excitation. 
+</method> 
+ 
+<method name="bool ParticleDataEntry::isExotic()"> 
+true for an exotic hadron (the 9th PDG ID digit is 9 and the remaining 
+digits are consistent with a hadron). 
+</method> 
+ 
 <method name="bool ParticleDataEntry::isOctetHadron()"> 
 true for an intermediate hadron-like state with a colour octet charge 
 as used in the colour octet model for 
@@ -1441,14 +1487,14 @@ pick a decay channel according to branching ratios from
 <code>preparePick</code>. 
 </method> 
  
-<method name="void ParticleDataEntry::setResonancePtr(ResonanceWidths* 
+<method name="void ParticleDataEntry::setResonancePtr(ResonanceWidthsPtr 
 resonancePtr)"> 
 </method> 
-<methodmore name="ResonanceWidths* ParticleDataEntry::getResonancePtr()"> 
-set or get a pointer to an object that can be used for dynamic calculation 
-of partial and total resonance widths. Here a resonance is a particle 
-such as top, <ei>Z^0</ei>, <ei>W^+-</ei>, Higgs, and new unstable states 
-beyond the Standard Model. 
+<methodmore name="ResonanceWidthsPtr ParticleDataEntry::getResonancePtr()"> 
+set or get a shared pointer to an object that can be used for dynamic 
+calculation of partial and total resonance widths. Here a resonance is 
+a particle such as top, <ei>Z^0</ei>, <ei>W^+-</ei>, Higgs, and new 
+unstable states beyond the Standard Model. 
 </methodmore> 
  
 <method name="void ParticleDataEntry::resInit(Info* infoPtrIn, 
@@ -1608,4 +1654,4 @@ positive and negative particles. For internal use.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

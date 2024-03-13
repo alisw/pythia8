@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main20.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,7 +15,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // This is a simple test program. It shows how PYTHIA 8 can write
 // a Les Houches Event File based on its process-level events.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 int main() {
 
@@ -23,22 +23,22 @@ int main() {
   Pythia pythia;
 
   // Process selection. Minimal masses for gamma*/Z and W+-.
-  pythia.readString("WeakDoubleBoson:all = on");
-  pythia.readString("23:mMin = 50.");
-  pythia.readString("24:mMin = 50.");
+  pythia.readString(&quot;WeakDoubleBoson:all = on&quot;);
+  pythia.readString(&quot;23:mMin = 50.&quot;);
+  pythia.readString(&quot;24:mMin = 50.&quot;);
 
   // Switch off generation of steps subsequent to the process level one.
   // (These will not be stored anyway, so only steal time.)
-  pythia.readString("PartonLevel:all = off");
+  pythia.readString(&quot;PartonLevel:all = off&quot;);
 
   // Create an LHAup object that can access relevant information in pythia.
-  LHAupFromPYTHIA8 myLHA(&pythia.process, &pythia.info);
+  LHAupFromPYTHIA8 myLHA(&amp;pythia.process, &amp;pythia.info);
 
   // Open a file on which LHEF events should be stored, and write header.
-  myLHA.openLHEF("weakbosons.lhe");
+  myLHA.openLHEF(&quot;weakbosons.lhe&quot;);
 
   // LHC 8 TeV initialization.
-  pythia.readString("Beams:eCM = 8000.");
+  pythia.readString(&quot;Beams:eCM = 8000.&quot;);
   pythia.init();
 
   // Store initialization info in the LHAup object.
@@ -48,7 +48,7 @@ int main() {
   myLHA.initLHEF();
 
   // Loop over events.
-  for (int i = 0; i < 100; ++i) {
+  for (int i = 0; i &lt; 100; ++i) {
 
     // Generate an event.
     pythia.next();

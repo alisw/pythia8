@@ -1,5 +1,5 @@
 // DireWeightContainer.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -38,9 +38,9 @@ public:
 
   void init();
 
-  // VARIABLES
+  // Class members.
   double sumCharge2Tot, sumCharge2L, sumCharge2Q, aem0, enhance, pT2min,
-         pT2minL, pT2minQ, pT2minForcePos;
+         pT2minL, pT2minQ, pT2minA, pT2minForcePos;
   bool doQEDshowerByQ, doQEDshowerByL, doForcePos;
 
   AlphaEM     alphaEM;
@@ -970,6 +970,8 @@ public:
 
 };
 
+//==========================================================================
+
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireSplittingsQED_H
+#endif // Pythia8_DireSplittingsQED_H

@@ -192,7 +192,7 @@ extension to double diffraction, but the other alternatives have been
 extended in a minimal manner consistent with Pomeron phenomenology. 
 These basic shapes can be further modified by the other settings below. 
  
-<modepick name="SigmaDiffractive:PomFlux" default="1" min="1" max="7"> 
+<modepick name="SigmaDiffractive:PomFlux" default="1" min="1" max="8"> 
 Parametrization of the Pomeron flux <ei>f_Pom/p( x_Pom, t)</ei>. 
 <option value="1"> Schuler and Sj&ouml;strand <ref>Sch94</ref>: based on a 
 critical Pomeron, giving a mass spectrum roughly like <ei>dm^2/m^2</ei>; 
@@ -229,29 +229,44 @@ Pomeron intercept has been fitted to H1 data.
 <option value="7"> The H1 Fit B parametrisation of the Pomeron flux 
 <ref>H1P06,H1P06a</ref>. 
 </option> 
+<option value="8"> The same functional form as with the H1 Fit A and B above, 
+<ei> f_Pom(x_Pom) = exp(B0 t) / x_Pom^(2 \alpha(t) - 1)</ei>, 
+but with user-supplied values for parameters <ei>alpha'</ei>, 
+<ei>epsilon</ei> and <ei>B0</ei> described below. 
+</option> 
 </modepick> 
  
 <p/> 
-In options 3, 4, 6, and 7 above, the Pomeron Regge trajectory is 
+In options 3, 4, 6, 7 and 8 above, the Pomeron Regge trajectory is 
 parametrized as 
 <eq> 
 alpha(t) = 1 + epsilon + alpha' t 
 </eq> 
 The <ei>epsilon</ei> and <ei>alpha'</ei> parameters can be set 
 separately in options 3 and 4, and additionally <ei>alpha'</ei> 
-is set in option 1, while values are fixed in options 6 and 7: 
+is set in option 1, while values are fixed in options 6 and 7 
+as these are linked to specific Pomeron PDF fits. The option 8 
+applies the same form as 6 and 7 but provides user a freedom to 
+change the values of above parameters along with the slope 
+parameter <ei>B0</ei> to modify the shape of Pomeron flux. 
  
 <parm name="SigmaDiffractive:PomFluxEpsilon" default="0.085" min="0.02" 
 max="0.15"> 
-The Pomeron trajectory intercept <ei>epsilon</ei> above for the 3 and 4 
+The Pomeron trajectory intercept <ei>epsilon</ei> above for the 3, 4 and 8 
 flux options. For technical reasons <ei>epsilon &gt; 0</ei> is necessary 
 in the current implementation. 
 </parm> 
  
-<parm name="SigmaDiffractive:PomFluxAlphaPrime" default="0.25" min="0.1" 
+<parm name="SigmaDiffractive:PomFluxAlphaPrime" default="0.25" min="0.05" 
 max="0.4"> 
-The Pomeron trajectory slope <ei>alpha'</ei> above for the 1, 3 and 4 
+The Pomeron trajectory slope <ei>alpha'</ei> above for the 1, 3, 4 and 8 
 flux options. 
+</parm> 
+ 
+<parm name="SigmaDiffractive:PomFluxB0" default="5.5" min="0.5" 
+max="500."> 
+The <ei>B0</ei> parameter for the H1-like Pomeron flux parametrization 
+applied with option 8 above. 
 </parm> 
  
 <p/> 
@@ -737,6 +752,68 @@ is used in the own, SaS/DL and MBR models, where the hadronic cross
 section is modelled as a simple <ei>exp(B t)</ei>. 
 </parm> 
  
+<h3>Low-energy and combined cross sections</h3> 
+ 
+The above descriptions are mainly aimed for high-energy applications. 
+The SaS/DL and especially the ABMST ones still are intended to be used 
+down to reasonably low energies, say around or a bit below 10 GeV CM 
+energy, also for diffraction. 
+ 
+<p/> 
+In hadronic rescattering typical energy scales are much lower, and 
+extend all the way down to the kinematical threshold. For the studies 
+in <ref>Sjo20</ref> it was therefore necessary to implement separate 
+low-energy cross sections. This was done using data and/or models from 
+various sources. The Additive Quark Model was applied to extend the 
+expressions to unconstrained cross sections. These cross sections are 
+encoded in the <code>SigmaLowEnergy</code> class, which exists 
+separately from the other options on this page. 
+ 
+<p/> 
+There are other applications where it is necessary to have access to 
+cross sections at all energy scales. One example is a high-energy 
+particle cascading in a medium, giving rise to more and more particles 
+of lower and lower energy. A special <code>SigmaCombined</code> class 
+has therefore been created, that contains one <code>SigmaLowEnergy</code> 
+object and one <code>SigmaSaSDL</code> object. The latter class has been 
+extended to cover a wide range of incoming particles; see <ref>Sjo21</ref> 
+for details. For now, the medium is assumed to consist of a mix of 
+protons and neutrons, thereby somewhat limiting the list of 
+required hadron combinations. Output from the 
+<code>Pythia::getSigmaTotal</code> and <code>Pythia::getSigmaPartial</code> 
+methods provides user-access to these cross sections, see 
+<aloc href="ProgramFlow">Program Flow</aloc>. This output can be based 
+purely on the assumed low-energy or high-energy behaviour, but the default 
+is a mix of the two. This is done by a linear transition specified by 
+the following two parameters. 
+ 
+<parm name="SigmaCombined:eMinHigh" default="6." min="5." max="20."> 
+Energy below which the low-energy cross sections are used exclusively. 
+The number actually applies for collisions of hadrons with up to the 
+proton mass; to allow for heavier hadrons with masses <ei>m_A</ei> and 
+<ei>m_B</ei> the threshold is at 
+<ei>eMinHigh + max(0., m_A - m_p) + max(0., m_B - m_p)</ei>. 
+</parm> 
+ 
+<parm name="SigmaCombined:deltaEHigh" default="8." min="0." max="20."> 
+If the energy is above <ei>eMinHigh + deltaEHigh</ei> the high-energy 
+cross sections are used exclusively, while in between the two cross 
+sections are mixed, with a fraction <code>(e - eMinHigh) / deltaEHigh</code> 
+taken by the high-energy expressions. This applies for <ei>pp</ei> 
+collisions; otherwise there is an offset for <ei>eMinHigh</ei> as 
+already explained. 
+</parm> 
+ 
+<p/> 
+It is worth noting that the transition is far from perfect, and 
+typically worse for some partial cross sections than for the total ones. 
+In some cases the disagreement can be less than it seems, with 
+<ei>pp/pbarp</ei> as the prime example. The low-energy description 
+includes an explicit nucleon excitation term, which is absent in the 
+high-energy formulae. There, instead, the enhanced low-mass spectrum 
+in diffraction fills a similar function, but with a different 
+classification. 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

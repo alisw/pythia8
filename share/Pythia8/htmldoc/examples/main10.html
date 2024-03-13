@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main10.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -17,7 +17,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // Example how you can use UserHooks to trace pT spectrum through program,
 // and veto undesirable jet multiplicities.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 //==========================================================================
@@ -29,21 +29,19 @@ class MyUserHooks : public UserHooks {
 public:
 
   // Constructor creates anti-kT jet finder with (-1, R, pTmin, etaMax).
-  MyUserHooks() { slowJet = new SlowJet(-1, 0.7, 10., 5.);
-    // Histograms for analysis inside User Hooks.
-    pTtrial = new Hist("trial pT spectrum", 100, 0., 400.);
-    pTselect = new Hist("selected pT spectrum (before veto)", 100, 0., 400.);
-    pTaccept = new Hist("accepted pT spectrum (after veto)", 100, 0., 400.);
-    nPartonsB = new Hist("number of partons before veto", 20, -0.5, 19.5);
-    nJets = new Hist("number of jets before veto", 20, -0.5, 19.5);
-    nPartonsA = new Hist("number of partons after veto", 20, -0.5, 19.5);
-    nFSRatISR = new Hist("number of FSR emissions at first ISR emission",
-        20, -0.5, 19.5);
-  }
+  MyUserHooks() : slowJet(-1, 0.7, 10., 5.),
+    pTtrial(&quot;trial pT spectrum&quot;, 100, 0., 400.),
+    pTselect(&quot;selected pT spectrum (before veto)&quot;, 100, 0., 400.),
+    pTaccept(&quot;accepted pT spectrum (after veto)&quot;, 100, 0., 400.),
+    nPartonsB(&quot;number of partons before veto&quot;, 20, -0.5, 19.5),
+    nJets(&quot;number of jets before veto&quot;, 20, -0.5, 19.5),
+    nPartonsA(&quot;number of partons after veto&quot;, 20, -0.5, 19.5),
+    nFSRatISR(&quot;number of FSR emissions at first ISR emission&quot;,
+      20, -0.5, 19.5) {}
 
   // Destructor deletes anti-kT jet finder and prints histograms.
-  ~MyUserHooks() {delete slowJet; cout << *pTtrial << *pTselect << *pTaccept
-       << *nPartonsB << *nJets << *nPartonsA << *nFSRatISR; }
+  ~MyUserHooks() {cout &lt;&lt; pTtrial &lt;&lt; pTselect &lt;&lt; pTaccept
+       &lt;&lt; nPartonsB &lt;&lt; nJets &lt;&lt; nPartonsA &lt;&lt; nFSRatISR;}
 
   // Allow process cross section to be modified...
   virtual bool canModifySigma() {return true;}
@@ -52,18 +50,18 @@ public:
   virtual double multiplySigmaBy(const SigmaProcess* sigmaProcessPtr,
     const PhaseSpace* phaseSpacePtr, bool inEvent) {
 
-    // All events should be 2 -> 2, but kill them if not.
-    if (sigmaProcessPtr->nFinal() != 2) return 0.;
+    // All events should be 2 -&gt; 2, but kill them if not.
+    if (sigmaProcessPtr-&gt;nFinal() != 2) return 0.;
 
-    // Extract the pT for 2 -> 2 processes in the event generation chain
+    // Extract the pT for 2 -&gt; 2 processes in the event generation chain
     // (inEvent = false for initialization).
     if (inEvent) {
-      pTHat = phaseSpacePtr->pTHat();
+      pTHat = phaseSpacePtr-&gt;pTHat();
       // Fill histogram of pT spectrum.
-      pTtrial->fill( pTHat );
+      pTtrial.fill( pTHat );
     }
 
-    // Here we do not modify 2 -> 2 cross sections.
+    // Here we do not modify 2 -&gt; 2 cross sections.
     return 1.;
   }
 
@@ -74,29 +72,29 @@ public:
   virtual double scaleVetoPT() {return 5.;}
 
   // Access the event in the interleaved evolution.
-  virtual bool doVetoPT(int iPos, const Event& event) {
+  virtual bool doVetoPT(int iPos, const Event&amp; event) {
 
-    // iPos <= 3 for interleaved evolution; skip others.
-    if (iPos > 3) return false;
+    // iPos &lt;= 3 for interleaved evolution; skip others.
+    if (iPos &gt; 3) return false;
 
     // Fill histogram of pT spectrum at this stage.
-    pTselect->fill(pTHat);
+    pTselect.fill(pTHat);
 
     // Extract a copy of the partons in the hardest system.
     subEvent(event);
-    nPartonsB->fill( workEvent.size() );
+    nPartonsB.fill( workEvent.size() );
 
     // Find number of jets with given conditions.
-    slowJet->analyze(event);
-    int nJet = slowJet->sizeJet();
-    nJets->fill( nJet );
+    slowJet.analyze(event);
+    int nJet = slowJet.sizeJet();
+    nJets.fill( nJet );
 
     // Veto events which do not have exactly three jets.
     if (nJet != 3) return true;
 
     // Statistics of survivors.
-    nPartonsA->fill( workEvent.size() );
-    pTaccept->fill(pTHat);
+    nPartonsA.fill( workEvent.size() );
+    pTaccept.fill(pTHat);
 
     // Do not veto events that got this far.
     return false;
@@ -107,10 +105,10 @@ public:
   virtual bool canVetoStep() {return true;}
 
   // Access the event in the interleaved evolution after first step.
-  virtual bool doVetoStep( int iPos, int nISR, int nFSR, const Event& ) {
+  virtual bool doVetoStep( int iPos, int nISR, int nFSR, const Event&amp; ) {
 
     // Only want to study what happens at first ISR emission
-    if (iPos == 2 && nISR == 1) nFSRatISR->fill( nFSR );
+    if (iPos == 2 &amp;&amp; nISR == 1) nFSRatISR.fill( nFSR );
 
     // Not intending to veto any events here.
     return false;
@@ -119,14 +117,14 @@ public:
 private:
 
   // The anti-kT (or kT, C/A) jet finder.
-  SlowJet* slowJet;
+  SlowJet slowJet;
 
   // Save the pThat scale.
   double pTHat;
 
   // The list of histograms.
-  Hist *pTtrial, *pTselect, *pTaccept, *nPartonsB, *nJets, *nPartonsA,
-       *nFSRatISR;
+  Hist pTtrial, pTselect, pTaccept, nPartonsB, nJets, nPartonsA,
+       nFSRatISR;
 
 };
 
@@ -138,21 +136,21 @@ int main() {
   Pythia pythia;
 
   //  Process selection. No need to study hadron level.
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhaseSpace:pTHatMin = 50.");
-  pythia.readString("HadronLevel:all = off");
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 50.&quot;);
+  pythia.readString(&quot;HadronLevel:all = off&quot;);
 
   // Set up to do a user veto and send it in.
-  auto myUserHooks = make_shared<MyUserHooks>();
+  auto myUserHooks = make_shared&lt;MyUserHooks&gt;();
   pythia.setUserHooksPtr( myUserHooks);
 
   // Tevatron initialization.
-  pythia.readString("Beams:idB = -2212");
-  pythia.readString("Beams:eCM = 1960.");
+  pythia.readString(&quot;Beams:idB = -2212&quot;);
+  pythia.readString(&quot;Beams:eCM = 1960.&quot;);
   pythia.init();
 
   // Begin event loop.
-  for (int iEvent = 0; iEvent < 1000; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; 1000; ++iEvent) {
 
     // Generate events.
     pythia.next();

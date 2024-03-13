@@ -1,5 +1,5 @@
 // PartonVertex.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -26,8 +26,9 @@ class PartonVertex : public PhysicsBase {
 public:
 
   // Constructor.
-  PartonVertex() : doVertex(), modeVertex(), rProton(), pTmin(),
-    widthEmission(), bScale(), bNow(), xMax(), yMax(), mux() {}
+  PartonVertex() : doVertex(), modeVertex(), epsPhi(), epsRat(), rProton(),
+    rProton2(), pTmin(), widthEmission(), bNow(), bHalf(), xMax(), yMax(),
+    zWtMax() {}
 
   // Destructor.
   virtual ~PartonVertex() {}
@@ -35,8 +36,9 @@ public:
   // Initialize a few parameters from Settings.
   virtual void init();
 
-  // Select vertex for a Beam Remnant particle.
-  virtual void vertexBeam( int iNow, int iBeam, Event& event);
+  // Select vertex for a beam particle.
+  virtual void vertexBeam( int iBeam, vector<int>& iRemn, vector<int>& iInit,
+    Event& event);
 
   // Select vertex for an MPI.
   virtual void vertexMPI( int iBeg, int nAdd, double bNowIn, Event& event);
@@ -47,15 +49,18 @@ public:
   // Select vertex for an ISR branching.
   virtual void vertexISR( int iNow, Event& event);
 
+  // Propagate parton vertex information to hadrons.
+  virtual void vertexHadrons( int nBefFrag, Event& event);
+
 private:
 
   // Data related to currently implemented models.
   bool   doVertex;
   int    modeVertex;
-  double rProton, pTmin, widthEmission, bScale;
+  double epsPhi, epsRat, rProton, rProton2, pTmin, widthEmission;
 
   // Current values.
-  double bNow, xMax, yMax, mux;
+  double bNow, bHalf, xMax, yMax, zWtMax;
 
 };
 

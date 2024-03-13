@@ -1,5 +1,5 @@
 // Ropewalk.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -68,9 +68,9 @@ bool OverlappingRopeDipole::hadronized() {
 // end and d2 the anti-colored.
 
 RopeDipole::RopeDipole(RopeDipoleEnd d1In, RopeDipoleEnd d2In, int iSubIn,
-  Info* infoPtrIn)
+  Logger* loggerPtrIn)
   : d1(d1In), d2(d2In), iSub(iSubIn), hasRotFrom(false), hasRotTo(false),
-  isHadronized(false), infoPtr(infoPtrIn) {
+  isHadronized(false), loggerPtr(loggerPtrIn) {
 
   // Test if d1 is colored end and d2 anti-colored.
   if (d1In.getParticlePtr()->col() == d2In.getParticlePtr()->acol()
@@ -103,12 +103,14 @@ void RopeDipole::propagateInit(double deltat) {
   // Dipole end momenta.
   Vec4 pcm = d1.getParticlePtr()->p();
   Vec4 pam = d2.getParticlePtr()->p();
-  double mTc = sqrt(pcm.pT2() + pcm.m2Calc());
-  double mTa = sqrt(pam.pT2() + pam.m2Calc());
-  if (mTc == 0 || mTa == 0)
-    infoPtr->errorMsg("Error in RopeDipole::propagateInit: Tried to"
-      "propagate a RopeDipoleEnd with mT = 0");
-
+  double mT2c = pcm.pT2() + pcm.m2Calc();
+  double mT2a = pam.pT2() + pam.m2Calc();
+  if (mT2c <= 0 || mT2a <= 0) {
+    loggerPtr->ERROR_MSG("Tried to propagate a RopeDipoleEnd with mT <= 0");
+    return;
+  }
+  double mTc = sqrt(mT2c);
+  double mTa = sqrt(mT2a);
   // New vertices in the lab frame.
   Vec4 newv1 = Vec4( deltat * pcm.px() / mTc, deltat * pcm.py() / mTc, 0, 0);
   Vec4 newv2 = Vec4( deltat * pam.px() / mTa, deltat * pam.py() / mTa, 0, 0);
@@ -166,8 +168,7 @@ void RopeDipole::excitationsToString(double m0, Event& event) {
   // acol  (d1)  col ------ acol  (d2)  col.
   int oldcol = d1.getParticlePtr()->col();
   if (oldcol != d2.getParticlePtr()->acol()) {
-    infoPtr->errorMsg("Error in Ropewalk::RopeDipole::excitationsToString: "
-      "color indices do not match.");
+    loggerPtr->ERROR_MSG("color indices do not match");
     return;
   }
   vector<int> daughters;
@@ -428,8 +429,8 @@ struct Exc {
 
 // The constructor.
 Exc(double yIn, double m0In, int iIn, int jIn, int kIn, RopeDipole* dip1In,
-  RopeDipole* dip2In) : y(yIn), m0(m0In), i(iIn), j(jIn), k(kIn), pp1(NULL),
-  pp2(NULL), dip1(dip1In), dip2(dip2In) { }
+  RopeDipole* dip2In) : y(yIn), m0(m0In), i(iIn), j(jIn), k(kIn), pp1(nullptr),
+  pp2(nullptr), dip1(dip1In), dip2(dip2In) { }
 
 // Set pointers to the two excitation particles.
 void setParticlePtrs(Particle* p1, Particle* p2) {
@@ -524,13 +525,11 @@ bool Ropewalk::init() {
   if ( flag("Ropewalk:doShoving") ) {
     // Check consistency.
     if (deltat > tShove) {
-      infoPtr->errorMsg("Error in Ropewalk::init: "
-                        "deltat cannot be larger than tShove");
+      loggerPtr->ERROR_MSG("deltat cannot be larger than tShove");
       return false;
     }
     if ( !flag("PartonVertex:setVertex") ) {
-      infoPtr->errorMsg("Error in Ropewalk::init: "
-                        "Shoving enabled, but no vertex information.");
+      loggerPtr->ERROR_MSG("Shoving enabled, but no vertex information");
       return false;
     }
     stringrepPtr = make_shared<RopewalkShover>(*this);
@@ -545,8 +544,7 @@ bool Ropewalk::init() {
     if (!flag("PartonVertex:setVertex") &&
         (!flag("Ropewalk:setFixedKappa") &&
          !flag("Ropewalk:doBuffon")) ) {
-      infoPtr->errorMsg("Error in Ropewalk::init: "
-                        "failed initialization of flavour ropes");
+      loggerPtr->ERROR_MSG("failed initialization of flavour ropes");
       return false;
     }
     fragmodPtr = make_shared<FlavourRope>(*this);
@@ -677,15 +675,11 @@ pair<int, int> Ropewalk::select(int m, int n, Rndm* rndm) {
       double p2 = multiplicity(p, q - 1);
       double p3 = multiplicity(p - 1, q + 1);
 
-      // Normalization.
-      double sum = p1 + p2 + p3;
-      p1 /= sum, p2 /= sum, p3 /= sum;
-
       // Select a state.
-      double pick = rndm->flat();
-      if      (pick < p1)      ++p;
-      else if (pick < p1 + p2) --q;
-      else                     --p, ++q;
+      double iPick = rndm->pick({ p1, p2, p3 });
+      if      (iPick == 0) ++p;
+      else if (iPick == 2) --q;
+      else                 --p, ++q;
     }
 
     // As above, but for nn.
@@ -694,12 +688,10 @@ pair<int, int> Ropewalk::select(int m, int n, Rndm* rndm) {
       double p1 = multiplicity(p, q + 1);
       double p2 = multiplicity(p -1, q);
       double p3 = multiplicity(p + 1, q - 1);
-      double sum = p1 + p2 + p3;
-      p1 /= sum, p2 /= sum, p3 /= sum;
-      double pick = rndm->flat();
-      if      (pick < p1)      ++q;
-      else if (pick < p1 + p2) --p;
-      else                     --q, ++p;
+      double iPick = rndm->pick({ p1, p2, p3 });
+      if      (iPick == 0) ++q;
+      else if (iPick == 1) --p;
+      else                 --q, ++p;
     }
   }
 
@@ -870,13 +862,13 @@ bool Ropewalk::extractDipoles(Event& event, ColConfig& colConfig) {
           // Get the parton placement in Event Record.
           pair<int,int> dipoleER = make_pair( stringPartons[iPar + 1],
             stringPartons[iPar] );
-          RopeDipole test(previous, next, iSub, infoPtr);
+          RopeDipole test(previous, next, iSub, loggerPtr);
           if ( limitMom && test.dipoleMomentum().pT() < pTcut)
             dipoles.insert( pair< pair<int, int>, RopeDipole>(dipoleER,
-              RopeDipole( previous, next, iSub, infoPtr)) );
+              RopeDipole( previous, next, iSub, loggerPtr)) );
           else if (!limitMom)
             dipoles.insert( pair< pair<int, int>, RopeDipole>(dipoleER,
-              RopeDipole( previous, next, iSub, infoPtr)));
+              RopeDipole( previous, next, iSub, loggerPtr)));
         }
         previous = next;
         stringStart = false;
@@ -929,8 +921,8 @@ bool RopeFragPars::init() {
   // Insert the h = 1 case immediately.
   sigmaEff = sigmaIn, aEff = aIn, adiqEff = adiqIn, bEff = bIn,
     rhoEff = rhoIn, xEff = xIn, yEff = yIn, xiEff = xiIn, kappaEff = kappaIn;
-  if (!insertEffectiveParameters(1.0)) { infoPtr->errorMsg(
-    "Error in RopeFragPars::init: failed to insert defaults.");
+  if (!insertEffectiveParameters(1.0)) {
+    loggerPtr->ERROR_MSG("failed to insert defaults");
     return false;
   }
 
@@ -952,13 +944,11 @@ map<string,double> RopeFragPars::getEffectiveParameters(double h) {
 
   // Otherwise calculate them.
   if (!calculateEffectiveParameters(h))
-    infoPtr->errorMsg("Error in RopeFragPars::getEffectiveParameters:"
-      " calculating effective parameters.");
+    loggerPtr->ERROR_MSG("calculating effective parameters");
 
   // And insert them.
   if (!insertEffectiveParameters(h))
-    infoPtr->errorMsg("Error in RopeFragPars::getEffectiveParameters:"
-      " inserting effective parameters.");
+    loggerPtr->ERROR_MSG("inserting effective parameters");
 
   // And recurse.
   return getEffectiveParameters(h);
@@ -1124,8 +1114,7 @@ double RopeFragPars::integrateFragFun(double a, double b, double mT2) {
     thisIter = nextIter;
     thisComb = nextComb;
   }
-  infoPtr->errorMsg("RopeFragPars::integrateFragFun:"
-    "No convergence of frag fun integral.");
+  loggerPtr->ERROR_MSG("No convergence of frag fun integral");
   return 0.0;
 
 }
@@ -1190,8 +1179,7 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
   // If effective string tension is set manually, use that.
   if (fixedKappa) return fp.getEffectiveParameters(h);
   if (!ePtr) {
-    infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
-      " Event pointer not set in FlavourRope");
+    loggerPtr->ERROR_MSG("Event pointer not set in FlavourRope");
     return fp.getEffectiveParameters(1.0);
   }
     if(find(hadronized.begin(),hadronized.end(),*iParton.begin()) ==
@@ -1204,8 +1192,7 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
     // Test consistency
     if(ePtr->at(*(iParton.begin())).id() != endId &&
         ePtr->at(*(iParton.end() - 1)).id() != endId) {
-      infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
-        " Quark end inconsistency.");
+      loggerPtr->ERROR_MSG("Quark end inconsistency");
       return fp.getEffectiveParameters(1.0);
     }
 
@@ -1234,8 +1221,8 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
           }
           else{
             if(ePtr->at(*(dipItr - 1)).id() != 21) {
-              infoPtr->errorMsg("Error in FlavourRope::fetchParameters"
-                "Buffon: Connecting partons should always be gluons.");
+              loggerPtr->ERROR_MSG(
+                "Connecting partons should always be gluons");
               return fp.getEffectiveParameters(1.0);
             }
 
@@ -1256,8 +1243,8 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
         return fp.getEffectiveParameters(1.0);
       // Sanity check
       if(dipFrac < 0 || dipFrac > 1) {
-        infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
-                " Dipole exceed with fraction less than 0 or greater than 1.");
+        loggerPtr->ERROR_MSG(
+          "Dipole exceed with fraction less than 0 or greater than 1");
         return fp.getEffectiveParameters(1.0);
       }
       // We now figure out at what rapidity value,
@@ -1269,8 +1256,8 @@ map<string, double> FlavourRope::fetchParametersBuffon(double m2Had,
       else{
         // Sanity check
         if(dipItr == iParton.begin()) {
-          infoPtr->errorMsg("Error in FlavourRope::fetchParametersBuffon:"
-            " We are somehow before the first dipole on a string.");
+          loggerPtr->ERROR_MSG(
+            "We are somehow before the first dipole on a string");
           return fp.getEffectiveParameters(1.0);
         }
         double dy = ePtr->at(*dipItr).y() - ePtr->at(*(dipItr - 1)).y();
@@ -1327,8 +1314,7 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   // If effective string tension is set manually, use that.
   if (fixedKappa) return fp.getEffectiveParameters(h);
   if (!ePtr) {
-    infoPtr->errorMsg("Error in FlavourRope::fetchParameters:"
-      " Event pointer not set in FlavourRope");
+    loggerPtr->ERROR_MSG("Event pointer not set in FlavourRope");
     return fp.getEffectiveParameters(1.0);
   }
   Vec4 mom;
@@ -1338,8 +1324,7 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   if( ePtr->at(iParton[0]).id() == endId) dirPos = true;
   else if( ePtr->at(iParton[iParton.size() - 1]).id() == endId) dirPos = false;
   else {
-    infoPtr->errorMsg("Error in FlavourRope::fetchParameters:"
-    " Could not get string direction");
+    loggerPtr->ERROR_MSG("Could not get string direction");
     return fp.getEffectiveParameters(1.0);
   }
 
@@ -1358,18 +1343,18 @@ map<string, double> FlavourRope::fetchParameters(double m2Had,
   // We figure out where we are on the dipole.
   // Set some values.
   double m2Here = mom.m2Calc();
-  // The dipFrac signifies a fraction.
-  double dipFrac = 0;
-  // We are in the first dipole.
-  if (eventIndex == -1 || eventIndex == 0) {
-    eventIndex = 1;
-    dipFrac = sqrt(m2Had / m2Here);
-  }
-  else {
-    mom -= ePtr->at(iParton[eventIndex]).p();
-    double m2Small = mom.m2Calc();
+  // Catch event indices less than first dipole.
+  eventIndex = max(eventIndex, 1);
+  // Dipfrac is the fraction moved in on a dipole.
+  double dipFrac = 0.;
+  // Trace one step back if possible.
+  if (eventIndex > 1) {
+    mom-=ePtr->at(iParton[eventIndex]).p();
+    // Starting point can never be less than 0.
+    double m2Small = max(mom.m2Calc(), 0.);
     dipFrac = (sqrt(m2Had) - sqrt(m2Small)) / (sqrt(m2Here) - sqrt(m2Small));
   }
+  else dipFrac = sqrt(m2Had / m2Here);
   double enh = rwPtr->getKappaHere( iParton[eventIndex - 1],
     iParton[eventIndex], dipFrac);
   return fp.getEffectiveParameters(enh);

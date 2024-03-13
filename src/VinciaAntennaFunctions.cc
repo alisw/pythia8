@@ -1,5 +1,5 @@
 // VinciaAntennaFunctions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -10,6 +10,8 @@
 #include "Pythia8/VinciaAntennaFunctions.h"
 
 namespace Pythia8 {
+
+using namespace VinciaConstants;
 
 //==========================================================================
 
@@ -200,7 +202,7 @@ bool AntennaFunction::init() {
   // Verbosity level.
   verbose = settingsPtr->mode("Vincia:verbose");
   // Charge factor
-  // (Use same charge factor for QGEmit and GQEmit)
+  // (Use same charge factor for AntQGEmit and AntGQEmit)
   if (vinciaName() == "Vincia:GQEmitFF")
     chargeFacSav = settingsPtr->parm("Vincia:QGEmitFF:chargeFactor");
   else
@@ -235,12 +237,14 @@ bool AntennaFunction::init() {
     }
   }
 
-  // Collinear partitioning (for global antennae).
-  alphaSav = settingsPtr->parm("Vincia:octetPartitioning");
-
   // Sector shower on/off and sectorDamp parameter.
   sectorShower  = settingsPtr->flag("Vincia:sectorShower");
   sectorDampSav = settingsPtr->parm("Vincia:sectorDamp");
+
+  // Collinear partitioning (for global antennae).
+  // Note: forced to 1 for sector antennae.
+  if (!sectorShower) alphaSav = settingsPtr->parm("Vincia:octetPartitioning");
+  else alphaSav = 1.0;
 
   // Return.
   isInit = true;
@@ -274,12 +278,9 @@ int AntennaFunction::initHel(vector<int>* helBef, vector<int>* helNew) {
   if (hj != 1 && hj != -1 && hj != 9) physHel = false;
   if (hk != 1 && hk != -1 && hk != 9) physHel = false;
   if (!physHel) {
-    if (verbose >= normal){
-      stringstream ss;
-      ss << hA << " " << hB << " -> " << hi << " " << hj << " " << hk;
-      infoPtr->errorMsg("Warning in "+__METHOD_NAME__+
-        ": unphysical helicity configuration.",ss.str());
-    }
+    loggerPtr->WARNING_MSG("unphysical helicity configuration",
+      to_string(hA) + " " + to_string(hB) + " -> "
+      + to_string(hi) + " " + to_string(hj) + " " + to_string(hk));
     return 0;
   }
 
@@ -325,11 +326,9 @@ bool AntennaFunction::check() {
       double ratio = ant/eik;
       if (abs(ratio - 1.) >= 0.001) {
         isOK = false;
-        if (verbose >= quiet) {
-          infoPtr->errorMsg("Warning in "+__METHOD_NAME__+": Failed eikonal.",
-            "("+num2str(iTest,1) + ")");
-        }
-      } else if (verbose >= verylouddebug) printOut(__METHOD_NAME__,
+        loggerPtr->WARNING_MSG("Failed eikonal",
+          "("+num2str(iTest,1) + ")");
+      } else if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
         vinciaName() + " OK (eikonal " + num2str(iTest, 1) + ")");
     }
   }
@@ -430,19 +429,19 @@ bool AntennaFunction::check() {
         // Require better than 5% agreement unless dominated by nonsingular.
         if (abs(ratio-1.) >= 0.05 && abs(ant1 - AP1) > 10.) {
           isOK = false;
-          if (verbose >= normal){
+          if (verbose >= Logger::NORMAL) {
             printOut(__METHOD_NAME__, "WARNING:" + vinciaName() +
              " FAILED (collinear ij " + num2str(iTest,1) + " " +
              helString+" )");
           }
-          if (verbose >= quiteloud) {
+          if (verbose >= Logger::REPORT) {
             cout << setprecision(6);
             printOut(__METHOD_NAME__, "    ant  = " + num2str(ant1, 9) +
               " y1 = " + num2str(y1, 9) +" y2 = " + num2str(y2, 9));
             printOut(__METHOD_NAME__, "    P(z) = "+num2str(AP1, 9) +
               "  zi = " + num2str(zA(invariants1), 9));
           }
-        } else if (verbose >= verylouddebug) {
+        } else if (verbose >= VinciaConstants::DEBUG) {
           printOut(__METHOD_NAME__, vinciaName() + " OK (collinear ij " +
             num2str(iTest, 1) + " " + helString + " )");
         }
@@ -453,19 +452,19 @@ bool AntennaFunction::check() {
         double ratio = ant2/AP2;
         if (abs(ratio - 1.) >= 0.05 && abs(ant2 - AP2) > 10.) {
           isOK = false;
-          if (verbose >= quiet) {
+          if (verbose >= Logger::NORMAL) {
             printOut(__METHOD_NAME__, "WARNING:" + vinciaName() +
               " FAILED (collinear jk " + num2str(iTest, 1) + " " +
               helString + " )");
           }
-          if (verbose >= quiteloud) {
+          if (verbose >= Logger::REPORT) {
             cout << setprecision(6);
             printOut(__METHOD_NAME__, "    ant  = " + num2str(ant2, 9) +
               " y1 = "+num2str(y2, 9) + " y2 = " + num2str(y1, 9));
             printOut(__METHOD_NAME__, "    P(z) = " + num2str(AP2, 9) +
               "  zk = " + num2str(zB(invariants1), 9));
           }
-        } else if (verbose >= verylouddebug) {
+        } else if (verbose >= VinciaConstants::DEBUG) {
           printOut(__METHOD_NAME__, vinciaName() + " OK (collinear jk "
             + num2str(iTest, 1) + " " + helString+" )");
         }
@@ -497,7 +496,7 @@ bool AntennaFunction::check() {
       // Check positivity (strict).
       if (ant < 0.) {
         isPositive = false;
-        if (verbose >= quiteloud){
+        if (verbose >= Logger::REPORT) {
           printOut(__METHOD_NAME__, "ERROR:" + vinciaName() + " ant("
             + num2str(y1, 9) + "," + num2str(y2, 9) + " ; " + helString
             + ") = " + num2str(ant) + " < 0");
@@ -511,17 +510,20 @@ bool AntennaFunction::check() {
     isOK = isOK && isPositive;
 
     // Verbose output.
-    if (!isPositive && verbose >= quiet)
-      printOut(__METHOD_NAME__, "ERROR" + vinciaName() +
+    if (!isPositive && verbose >= Logger::NORMAL)
+      printOut(__METHOD_NAME__, "ERROR:" + vinciaName() +
         " (ant < 0 encountered " + helString + " )");
-    else if (isPositive && !isZero && verbose >= verylouddebug)
+    else if (isPositive && !isZero && verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, vinciaName() + " OK (is positive "
         + helString + " )");
     if (!isZero) {
-      if (hasDeadZone && verbose >= quiet)
-        printOut(__METHOD_NAME__, "WARNING" + vinciaName()
+      if (hasDeadZone) {
+        if ( (!sectorShower && verbose >= Logger::NORMAL)
+          || (sectorShower && verbose >= VinciaConstants::DEBUG) )
+        printOut(__METHOD_NAME__, "WARNING:" + vinciaName()
           + " (dead zone encountered " + helString+" )");
-      else if (!hasDeadZone && verbose >= verylouddebug)
+      }
+      else if (verbose >= VinciaConstants::DEBUG)
         printOut(__METHOD_NAME__, vinciaName() + " OK (no dead zones "
           + helString + " )");
     }
@@ -539,10 +541,11 @@ bool AntennaFunction::check() {
 
 void AntennaFunction::initPtr(Info* infoPtrIn, DGLAP* dglapPtrIn) {
 
-  infoPtr      = infoPtrIn;
+  infoPtr         = infoPtrIn;
   particleDataPtr = infoPtr->particleDataPtr;
   settingsPtr     = infoPtr->settingsPtr;
   rndmPtr         = infoPtr->rndmPtr;
+  loggerPtr       = infoPtr->loggerPtr;
   dglapPtr        = dglapPtrIn;
   isInitPtr       = true;
   isInit          = false;
@@ -589,13 +592,13 @@ string AntennaFunction::id2str(int id) const {
 
 //==========================================================================
 
-// Class QQEmitFF, final-final antenna function.
+// Class AntQQEmitFF, final-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QQEmitFF::antFun(vector<double> invariants, vector<double> masses,
+double AntQQEmitFF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Make sure we have enough invariants.
@@ -691,7 +694,7 @@ double QQEmitFF::antFun(vector<double> invariants, vector<double> masses,
 // Function to give Altarelli-Parisi limits of this antenna.
 // Defined as PI/sij + PK/sjk, i.e. equivalent to antennae.
 
-double QQEmitFF::AltarelliParisi(vector<double> invariants,
+double AntQQEmitFF::AltarelliParisi(vector<double> invariants,
   vector<double>, vector<int> helBef, vector<int> helNew) {
 
   int h0Now = helNew[0];
@@ -709,13 +712,13 @@ double QQEmitFF::AltarelliParisi(vector<double> invariants,
 
 //==========================================================================
 
-// Class QGEmitFF, final-final antenna function.
+// Class AntQGEmitFF, final-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QGEmitFF::antFun(vector<double> invariants, vector<double> masses,
+double AntQGEmitFF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Make sure we have enough invariants.
@@ -793,8 +796,10 @@ double QGEmitFF::antFun(vector<double> invariants, vector<double> masses,
   }
 
   // Subleading colour correction.
-  if (modeSLC >= 2)  hSum *= CF/chargeFacSav * (1 - yij)/(2 - yij - yjk)
-                       + CA/chargeFacSav * (1 - yjk)/(2 - yij - yjk);
+  // Note: has to be applied to sector antennae after symmetrisation!
+  if (!sectorShower && modeSLC >= 2)
+    hSum *= CF/chargeFacSav * (1 - yij)/(2 - yij - yjk)
+      + CA/chargeFacSav * (1 - yjk)/(2 - yij - yjk);
 
   // Return helicity sum, averaged over initial helicities.
   return hSum/nAvg/sIK;
@@ -805,7 +810,7 @@ double QGEmitFF::antFun(vector<double> invariants, vector<double> masses,
 
 // Function to give Altarelli-Parisi limits of this antenna.
 
-double QGEmitFF::AltarelliParisi(vector<double> invariants,
+double AntQGEmitFF::AltarelliParisi(vector<double> invariants,
   vector<double>, vector<int> helBef, vector<int> helNew) {
 
   int h0Now = helNew[0];
@@ -826,20 +831,20 @@ double QGEmitFF::AltarelliParisi(vector<double> invariants,
 
 //==========================================================================
 
-// Class GQEmitFF, final-final antenna function.
+// Class AntGQEmitFF, final-final antenna function.
 
 //--------------------------------------------------------------------------
 
-// The antenna function [GeV^-2] (derived from QGEmit by swapping).
+// The antenna function [GeV^-2] (derived from AntQGEmit by swapping).
 
-double GQEmitFF::antFun(vector<double> invariants,
+double AntGQEmitFF::antFun(vector<double> invariants,
   vector<double> mNew, vector<int> helBef, vector<int> helNew) {
 
   swap(invariants[1], invariants[2]);
   swap(mNew[0], mNew[2]);
   swap(helBef[0], helBef[1]);
   swap(helNew[0], helNew[2]);
-  return QGEmitFF::antFun(invariants, mNew, helBef, helNew);
+  return AntQGEmitFF::antFun(invariants, mNew, helBef, helNew);
 
 }
 
@@ -847,7 +852,7 @@ double GQEmitFF::antFun(vector<double> invariants,
 
 // Function to give Altarelli-Parisi limits of this antenna.
 
-double GQEmitFF::AltarelliParisi(vector<double> invariants,
+double AntGQEmitFF::AltarelliParisi(vector<double> invariants,
   vector<double>, vector<int> helBef, vector<int> helNew) {
 
   int h0Now = helNew[0];
@@ -868,13 +873,13 @@ double GQEmitFF::AltarelliParisi(vector<double> invariants,
 
 //==========================================================================
 
-// Class GGEmitFF, final-final antenna function.
+// Class AntGGEmitFF, final-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GGEmitFF::antFun(vector<double> invariants, vector<double>,
+double AntGGEmitFF::antFun(vector<double> invariants, vector<double>,
   vector<int> helBef, vector<int> helNew) {
 
   // Make sure we have enough invariants.
@@ -948,7 +953,7 @@ double GGEmitFF::antFun(vector<double> invariants, vector<double>,
 
 // Function to give Altarelli-Parisi limits of this antenna.
 
-double GGEmitFF::AltarelliParisi(vector<double> invariants,
+double AntGGEmitFF::AltarelliParisi(vector<double> invariants,
   vector<double>, vector<int> helBef, vector<int> helNew) {
 
   int h0Now = helNew[0];
@@ -969,13 +974,13 @@ double GGEmitFF::AltarelliParisi(vector<double> invariants,
 
 //==========================================================================
 
-// Class GXSplitFF, final-final antenna function.
+// Class AntGXSplitFF, final-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GXSplitFF::antFun(vector<double> invariants, vector<double> masses,
+double AntGXSplitFF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Make sure we have enough invariants.
@@ -1053,7 +1058,7 @@ double GXSplitFF::antFun(vector<double> invariants, vector<double> masses,
 
 // Function to give Altarelli-Parisi limits of this antenna.
 
-double GXSplitFF::AltarelliParisi(vector<double> invariants,
+double AntGXSplitFF::AltarelliParisi(vector<double> invariants,
   vector<double>, vector<int> helBef, vector<int> helNew) {
 
   int h0Now = helNew[0];
@@ -1070,55 +1075,69 @@ double GXSplitFF::AltarelliParisi(vector<double> invariants,
 
 //==========================================================================
 
-// Class QGEmitFFsec, sector final-final antenna function, explicit
-// symmetrisation of QGEmitFF.
+// Class AntQGEmitFFsec, sector final-final antenna function, explicit
+// symmetrisation of AntQGEmitFF.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QGEmitFFsec::antFun(vector<double> invariants,
+double AntQGEmitFFsec::antFun(vector<double> invariants,
   vector<double> mNew, vector<int> helBef, vector<int> helNew) {
 
   // Check if helicity vectors empty.
-  double ant = QGEmitFF::antFun(invariants, mNew, helBef, helNew);
+  double ant = AntQGEmitFF::antFun(invariants, mNew, helBef, helNew);
   if (helBef.size() < 2) {helBef.push_back(9); helBef.push_back(9);}
   if (helNew.size() < 3) {
     helNew.push_back(9); helNew.push_back(9); helNew.push_back(9);}
 
+  // Save invariants.
+  double sIK = invariants[0];
+  double sij = invariants[1];
+  double sjk = invariants[2];
+  double sik = sIK - sij - sjk;
+  double yij = sij/sIK;
+  double yjk = sjk/sIK;
+
   // Check if j has same helicity as parent gluon.
   int hG = helBef[1];
   int hjNow = helNew[1];
-  if ( hG == hjNow ) {
-    // Define j<->k symmetrisation term.
-    vector<double> invariantsSym = invariants;
-    double s02 = invariants[0] - invariants[1] - invariants[2];
+  if ( hG == hjNow || hjNow == 9) {
+    // Define j<->k symmetrisation term with sector damp parameter;
+    sik += sectorDampSav * sjk;
+    vector<double> invariantsSym = {sIK, sik, sjk};
+    // Swap helicities.
     vector<int> helSym = helNew;
-    invariantsSym[1] = s02 + sectorDampSav * invariants[2];
     helSym[1] = helNew[2];
     helSym[2] = helNew[1];
-    ant += QGEmitFF::antFun(invariantsSym, mNew, helBef, helSym);
+    ant += AntQGEmitFF::antFun(invariantsSym, mNew, helBef, helSym);
   }
+
+  // Subleading colour correction has to be applied after symmetrisation.
+  if (modeSLC >= 2)
+    ant *= CF/chargeFacSav * (1 - yij)/(2 - yij - yjk)
+      + CA/chargeFacSav * (1 - yjk)/(2 - yij - yjk);
+
   return ant;
 }
 
 //==========================================================================
 
-// Class GQEmitFFsec, sector final-final antenna function, explicit
-// symmetrisation of GQEmitFF.
+// Class AntGQEmitFFsec, sector final-final antenna function, explicit
+// symmetrisation of AntGQEmitFF.
 
 //--------------------------------------------------------------------------
 
-// The antenna function [GeV^-2] (derived from QGEmitFFsec by swapping).
+// The antenna function [GeV^-2] (derived from AntQGEmitFFsec by swapping).
 
-double GQEmitFFsec::antFun(vector<double> invariants,
+double AntGQEmitFFsec::antFun(vector<double> invariants,
   vector<double> mNew, vector<int> helBef, vector<int> helNew) {
 
   swap(invariants[1], invariants[2]);
   swap(mNew[0], mNew[2]);
   swap(helBef[0], helBef[1]);
   swap(helNew[0], helNew[2]);
-  return QGEmitFFsec::antFun(invariants, mNew, helBef, helNew);
+  return AntQGEmitFFsec::antFun(invariants, mNew, helBef, helNew);
 
 }
 
@@ -1126,7 +1145,7 @@ double GQEmitFFsec::antFun(vector<double> invariants,
 
 // Function to give Altarelli-Parisi limits of this antenna.
 
-double GQEmitFFsec::AltarelliParisi(vector<double> invariants,
+double AntGQEmitFFsec::AltarelliParisi(vector<double> invariants,
   vector<double>, vector<int> helBef, vector<int> helNew) {
 
   int h0Now = helNew[0];
@@ -1148,17 +1167,17 @@ double GQEmitFFsec::AltarelliParisi(vector<double> invariants,
 //==========================================================================
 
 // Class GGEmitFFsec, sector final-final antenna function, explicit
-// symmetrisation of GGEmitFF.
+// symmetrisation of AntGGEmitFF.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GGEmitFFsec::antFun(vector<double> invariants, vector<double> mNew,
+double AntGGEmitFFsec::antFun(vector<double> invariants, vector<double> mNew,
   vector<int> helBef, vector<int> helNew) {
 
   // Check if helicity vectors empty
-  double ant = GGEmitFF::antFun(invariants, mNew, helBef, helNew);
+  double ant = AntGGEmitFF::antFun(invariants, mNew, helBef, helNew);
   if (helBef.size() < 2) {helBef.push_back(9); helBef.push_back(9);}
   if (helNew.size() < 3) {
     helNew.push_back(9); helNew.push_back(9); helNew.push_back(9);}
@@ -1173,7 +1192,7 @@ double GGEmitFFsec::antFun(vector<double> invariants, vector<double> mNew,
     helSym[0] = helNew[1];
     helSym[1] = helNew[0];
     invariantsSym[2] = s02 + sectorDampSav * invariants[1];
-    ant += GGEmitFF::antFun(invariantsSym, mNew, helBef, helSym);
+    ant += AntGGEmitFF::antFun(invariantsSym, mNew, helBef, helSym);
   }
 
   // Check if j has same helicity as parent gluon 1.
@@ -1185,7 +1204,7 @@ double GGEmitFFsec::antFun(vector<double> invariants, vector<double> mNew,
     helSym[1] = helNew[2];
     helSym[2] = helNew[1];
     invariantsSym[1] = s02 + sectorDampSav * invariants[2];
-    ant += GGEmitFF::antFun(invariantsSym, mNew, helBef, helSym);
+    ant += AntGGEmitFF::antFun(invariantsSym, mNew, helBef, helSym);
   }
   return ant;
 
@@ -1193,16 +1212,16 @@ double GGEmitFFsec::antFun(vector<double> invariants, vector<double> mNew,
 
 //==========================================================================
 
-// Class GXSplitFFsec, sector final-final antenna function, explicit
-// symmetrisation of GXSplitFF.
+// Class AntGXSplitFFsec, sector final-final antenna function, explicit
+// symmetrisation of AntGXSplitFF.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2] (just 2*global).
 
-double GXSplitFFsec::antFun(vector<double> invariants, vector<double> mNew,
+double AntGXSplitFFsec::antFun(vector<double> invariants, vector<double> mNew,
   vector<int> helBef, vector<int> helNew) {
-  return 2*GXSplitFF::antFun(invariants,mNew,helBef,helNew);}
+  return 2*AntGXSplitFF::antFun(invariants,mNew,helBef,helNew);}
 
 //==========================================================================
 
@@ -1232,12 +1251,13 @@ bool AntennaFunctionIX::init() {
     else chargeFacSav = CF;
   }
 
-  // Collinear partitioning (for global antennae).
-  alphaSav = settingsPtr->parm("Vincia:octetPartitioning");
-
   // Sector shower on/off and sectorDamp parameter.
   sectorShower  = settingsPtr->flag("Vincia:sectorShower");
   sectorDampSav = settingsPtr->parm("Vincia:sectorDamp");
+
+  // Collinear partitioning (for global antennae).
+  if (!sectorShower) alphaSav = settingsPtr->parm("Vincia:octetPartitioning");
+  else alphaSav = 1.;
 
   // Return OK.
   isInit = true;
@@ -1291,86 +1311,20 @@ bool AntennaFunctionIX::check() {
         double ratio = ant/eik;
         if (abs(ratio - 1.0) >= 0.001) {
           isOK = false;
-          if (verbose >= quiet)
-            printOut(vinciaName() + ":check","WARNING: FAILED "
+          if (verbose >= Logger::NORMAL)
+            printOut(__METHOD_NAME__,"WARNING:" + vinciaName() + " FAILED "
               "(eikonal " + num2str(iTest, 1) + " and sAB = " +
               num2str((int)sqrt(sAB[isAB])) + "^2)");
-        } else if (verbose >= verylouddebug) {
-          printOut(vinciaName() + ":check", "OK (eikonal " + num2str(iTest, 1)
-            + " and sAB = " + num2str((int)sqrt(sAB[isAB])) + "^2)");
+        } else if (verbose >= VinciaConstants::DEBUG) {
+          printOut(__METHOD_NAME__,vinciaName() + " OK (eikonal "
+            + num2str(iTest, 1) + " and sAB = "
+            + num2str((int)sqrt(sAB[isAB])) + "^2)");
         }
       }
     }
   }
 
-  // Check for collinearity (no helicity APs so far).
-  // Test invariants, for a few points along collinear axis.
-  for (int iTest = 0; iTest <= 2; ++iTest) {
-    // Test two sAB values.
-    for (int isAB = 0; isAB <= 1; ++isAB) {
-      // Test invariants.
-      double y1  = 1.0e-5;                 // saj/sab
-      double y2  = 0.2 + iTest*0.3;        // sjb/sab
-      double sab = sAB[isAB]/(1.0-y1-y2);  // 1 = sAB/sab + yaj + yjb
-      double s1  = y1*sab;
-      double s2  = y2*sab;
-      vector<double> invariants1 = {sAB[isAB], s1, s2};
-      vector<double> invariants2 = {sAB[isAB], s2, s1};
-
-      // Compute AP kernels.
-      double AP1 = AltarelliParisi(invariants1);
-      double AP2 = AltarelliParisi(invariants2);
-
-      // Compute antennae (without subleading colour corrections).
-      int modeSLCsave = modeSLC;
-      modeSLC = 1;
-      double ant1 = antFun(invariants1);
-      double ant2 = antFun(invariants2);
-      modeSLC = modeSLCsave;
-
-      // Check if only a singularity on one side exists (-> z = -1).
-      double zs1 = zA(invariants1);
-      double zs2 = zB(invariants1);
-      if (zs1 != -1.0) {
-        double ratio = ant1/AP1;
-        if (abs(ratio - 1.0) >= 0.01) {
-          isOK = false;
-          if (verbose >= quiet)
-            printOut(vinciaName() + ":check","WARNING: FAILED "
-              "(collinear aj " + num2str(iTest, 1) + " and sAB = " +
-              num2str((int)sqrt(sAB[isAB])) + "^2)");
-          if (verbose >= 3)
-            cout << setprecision(6) << "    ant  = " << num2str(ant1, 9)
-                 << " y1 = " << num2str(y1,9) << " y2 = " << num2str(y2, 9)
-                 << " " << endl << "    P(z) = " << num2str(AP1, 9) << "  z = "
-                 << num2str(zs1, 9) << endl;
-        } else if (verbose >= 6)
-          printOut(vinciaName() + ":check", "OK (collinear aj " +
-            num2str(iTest, 1) + " and sAB = " +
-            num2str((int)sqrt(sAB[isAB])) + "^2)");
-      }
-      if (zs2 != -1.0) {
-        double ratio = ant2/AP2;
-        if (abs(ratio - 1.0) >= 0.01) {
-          isOK = false;
-          if (verbose >= 1)
-            printOut(vinciaName() + ":check","WARNING: FAILED "
-              "(collinear jb " + num2str(iTest, 1) + " and sAB = " +
-              num2str((int)sqrt(sAB[isAB])) + "^2)");
-          if (verbose >= 3)
-            cout << setprecision(6) << "    ant  = " << num2str(ant1, 9)
-                 << " y1 = " << num2str(y1, 9) << " y2 = " << num2str(y2, 9)
-                 << " " << endl << "    P(z) = " << num2str(AP2,9) << "  z = "
-                 << num2str(zs2, 9) << endl;
-        } else if (verbose >= 6)
-          printOut(vinciaName() + ":check", "OK (collinear jb" +
-            num2str(iTest, 1) + " and sAB = " +
-            num2str((int)sqrt(sAB[isAB])) + "^2)");
-      }
-    }
-  }
-
-  // Test all helicity configurations for posivity and dead zones.
+  // Test all helicity configurations for collinearity and posivity.
   string helString = " 9 9 -> 9 9 9";
   for (int iHel = -1; iHel < 32; ++iHel) {
     bool isPositive  = true;
@@ -1414,10 +1368,85 @@ bool AntennaFunctionIX::check() {
       if (hA == hj) continue;
     }
 
+    // Test invariants, for a few points along collinear axis.
+    for (int iTest = 0; iTest <= 2; ++iTest) {
+      // Test two sAB values.
+      for (int isAB = 0; isAB <= 1; ++isAB) {
+        // Test invariants.
+        double y1  = 1.0e-5;                 // saj/sab
+        double y2  = 0.2 + iTest*0.3;        // sjb/sab
+        double sab = sAB[isAB]/(1.0-y1-y2);  // 1 = sAB/sab + yaj + yjb
+        double s1  = y1*sab;
+        double s2  = y2*sab;
+        vector<double> invariants1 = {sAB[isAB], s1, s2};
+        vector<double> invariants2 = {sAB[isAB], s2, s1};
+
+        // Compute AP kernels.
+        double AP1 = AltarelliParisi(invariants1,mDum,helBef,helNew);
+        double AP2 = AltarelliParisi(invariants2,mDum,helBef,helNew);
+
+        // Compute antennae (without subleading colour corrections).
+        int modeSLCsave = modeSLC;
+        modeSLC = 1;
+        double ant1 = antFun(invariants1,mDum,helBef,helNew);
+        double ant2 = antFun(invariants2,mDum,helBef,helNew);
+        modeSLC = modeSLCsave;
+
+        // Check if only a singularity on one side exists (-> z = -1).
+        double zs1 = zA(invariants1);
+        double zs2 = zB(invariants1);
+        if (zs1 != -1.0) {
+          double ratio = ant1/AP1;
+          // Require better than 5% agreement unless dominated by non-singular.
+          if (fabs(ratio - 1.0) >= 0.05 && fabs(ant1 - AP1) > 10.) {
+            isOK = false;
+            if (verbose >= Logger::NORMAL)
+              printOut(__METHOD_NAME__,"WARNING: " + vinciaName() + " FAILED "
+                + "(collinear aj " + num2str(iTest, 1) + " and sAB = " +
+                num2str((int)sqrt(sAB[isAB])) + "^2)");
+            if (verbose >= Logger::REPORT) {
+              cout << setprecision(6);
+              printOut(__METHOD_NAME__, "    (" + helString + ")");
+              printOut(__METHOD_NAME__, "    ant  = " + num2str(ant1, 9)
+                + " y1 = " + num2str(y1,9) + " y2 = " + num2str(y2, 9));
+              printOut(__METHOD_NAME__, "    P(z) = " + num2str(AP1, 9)
+                + "  z = " + num2str(zs1, 9));
+            }
+          } else if (verbose >= VinciaConstants::DEBUG)
+            printOut(__METHOD_NAME__, vinciaName() + " OK (collinear aj "
+              + num2str(iTest, 1) + " and sAB = "
+              + num2str((int)sqrt(sAB[isAB])) + "^2)");
+        }
+        if (zs2 != -1.0) {
+          double ratio = ant2/AP2;
+          // Require better than 5% agreement unless dominated by non-singular.
+          if (fabs(ratio - 1.0) >= 0.05 && abs(ant2 - AP2) > 10.) {
+            isOK = false;
+            if (verbose >= Logger::NORMAL)
+              printOut(__METHOD_NAME__,"WARNING: " + vinciaName() + " FAILED "
+                + "(collinear jb " + num2str(iTest, 1) + " and sAB = " +
+                num2str((int)sqrt(sAB[isAB])) + "^2)");
+            if (verbose >= Logger::REPORT) {
+              cout << setprecision(6);
+              printOut(__METHOD_NAME__, "    (" + helString + ")");
+              printOut(__METHOD_NAME__, "    ant  = " + num2str(ant2, 9)
+                + " y1 = " + num2str(y1,9) + " y2 = " + num2str(y2, 9));
+              printOut(__METHOD_NAME__, "    P(z) = " + num2str(AP2, 9)
+                + "  z = " + num2str(zs1, 9));
+            }
+          } else if (verbose >= VinciaConstants::DEBUG)
+            printOut(__METHOD_NAME__, vinciaName() + " OK (collinear jb "
+              + num2str(iTest, 1) + " and sAB = "
+              + num2str((int)sqrt(sAB[isAB])) + "^2)");
+        }
+      }
+    }
+
     // Check for positivity and dead zones.
     for (int iTest = 0; iTest <= nPointsCheck; ++iTest) {
       // sAB^0.5 between 1 and 1000 GeV.
       double sABnow = pow2(1.0+rndmPtr->flat()*999.0);
+
       // Generate a random point in phase-space triangle.
       double yaj = rndmPtr->flat(); // saj/sab
       double yjb = rndmPtr->flat(); // sjb/sab
@@ -1441,10 +1470,11 @@ bool AntennaFunctionIX::check() {
       // Check positivity (strict).
       if (ant <= 0.0) {
         isPositive = false;
-        if (verbose >= 3)
-          printOut(vinciaName() + ":check", "ERROR ant(" +
-            num2str((int)sqrt(saj)) + "^2," + num2str((int)sqrt(sjb)) + "^2," +
-            num2str((int)sqrt(sABnow)) + "^2 ; " + helString + ") < 0");
+        if (verbose >= Logger::REPORT)
+          printOut(__METHOD_NAME__, "ERROR: " + vinciaName() + " ant("
+            + num2str((int)sqrt(saj)) + "^2," + num2str((int)sqrt(sjb)) + "^2,"
+            + num2str((int)sqrt(sABnow)) + "^2 ; " + helString + ") = "
+            + num2str(ant,7) + " < 0");
       } else if (ant > 0.0) isZero = false;
 
       // Check for dead zones away from phase-space boundary
@@ -1454,15 +1484,22 @@ bool AntennaFunctionIX::check() {
     isOK = isOK && isPositive;
 
     // Verbose output
-    if (!isPositive && verbose >= 1) printOut(vinciaName() + ":check",
-       "ERROR (ant < 0 encountered " + helString + " )");
-    else if (isPositive && !isZero && verbose >= 6)
-      printOut(vinciaName() + ":check", "OK (is positive " + helString + " )");
+    if (!isPositive && verbose >= Logger::NORMAL)
+      printOut(__METHOD_NAME__, "ERROR: " + vinciaName()
+        + " (ant < 0 encountered " + helString + " )");
+    else if (isPositive && !isZero && verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, vinciaName() + " OK (is positive "
+        + helString + " )");
     if (!isZero) {
-      if (hasDeadZone && verbose >= 1) printOut(vinciaName() + ":check",
-          "WARNING (dead zone encountered " + helString + " )");
-      else if (!hasDeadZone && verbose >= 6) printOut(vinciaName() + ":check",
-         "OK (no dead zones " + helString+" )");
+      if (hasDeadZone) {
+        if ( (!sectorShower && verbose >= Logger::NORMAL)
+          || (sectorShower && verbose >= Logger::REPORT) )
+        printOut(__METHOD_NAME__, "WARNING:" + vinciaName()
+          + " (dead zone encountered " + helString+" )");
+      }
+      else if (verbose >= VinciaConstants::DEBUG)
+        printOut(__METHOD_NAME__, vinciaName() + " OK (no dead zones "
+          + helString+" )");
     }
   } // End loop over helicities.
   return isOK;
@@ -1471,13 +1508,13 @@ bool AntennaFunctionIX::check() {
 
 //==========================================================================
 
-// Class QQEmitII, initial-initial antenna function.
+// Class AntQQEmitII, initial-initial antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QQEmitII::antFun(vector<double> invariants, vector<double> masses,
+double AntQQEmitII::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants.
@@ -1570,36 +1607,49 @@ double QQEmitII::antFun(vector<double> invariants, vector<double> masses,
 
 // AP splitting kernel for collinear limit checks, P(z)/Q2.
 
-double QQEmitII::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntQQEmitII::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAB = invariants[0];
   double saj = invariants[1];
   double sjb = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjb <= 0.0) || (sAB <= 0.0)) return 0.0;
 
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
+
+  double AP(-1.);
   // Using smaller invariant for collinear limit.
-  double z  = ( saj < sjb ? zA(invariants) : zB(invariants) );
-  double Q2 = min(saj,sjb);
-  double AP = 1.0/z * (1.0 + pow2(z))/(1.0 - z);
-  // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-  AP *= 1.0;
-  // ant with quark reproduces full AP.
-  AP *= 1.0;
-  return AP/Q2;
+  if (saj < sjb) {
+    double z = zA(invariants);
+    if (hNew2 == hBef1)
+      AP = dglapPtr->Pq2qg(zA(invariants),hNew0,hBef0,hNew1)/z/saj;
+  }
+  else if (saj > sjb) {
+    double z = zB(invariants);
+    if (hNew0 == hBef0)
+      AP = dglapPtr->Pq2qg(z,hNew2,hBef1,hNew1)/z/sjb;
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
-// Class GQEmitII, initial-initial antenna function.
+// Class AntGQEmitII, initial-initial antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GQEmitII::antFun(vector<double> invariants, vector<double> masses,
+double AntGQEmitII::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -1692,10 +1742,9 @@ double GQEmitII::antFun(vector<double> invariants, vector<double> masses,
 
 // AP splitting kernel for collinear limit checks, P(z)/Q2.
 
-double GQEmitII::AltarelliParisi(vector<double> invariants,
-  vector<double>, vector<int>, vector<int>) {
+double AntGQEmitII::AltarelliParisi(vector<double> invariants,
+  vector<double>, vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAB = invariants[0];
   double saj = invariants[1];
   double sjb = invariants[2];
@@ -1703,40 +1752,40 @@ double GQEmitII::AltarelliParisi(vector<double> invariants,
   // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjb <= 0.0) || (sAB <= 0.0)) return 0.0;
 
-  // Using smaller invariant for collinear limit
-  double z  = ( saj < sjb ? zA(invariants) : zB(invariants));
-  double Q2 = min(saj,sjb);
-  double AP = 0.0;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
-  // Collinear to initial gluon.
+  double AP(-1.);
+  // Collinear to initial-state gluon.
   if (saj < sjb) {
-    AP = 1.0/z*(pow(z, 4.0) + 1.0 + pow(1 - z, 4.0))/z/(1.0 - z);
-    // AP uses alpha/2pi * CA, ant uses alpha/4pi * CA, with CA = 3.
-    AP *= 2.0;
-    // gluon appears in 2 ants, hence ant reproduces half of AP.
-    AP *= 0.5;
-
-  // Collinear to initial quark.
-  } else {
-    AP = 1.0/z * (1.0+pow2(z))/(1.0-z);
-    // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-    AP *= 1.0;
-    // ant with quark reproduces full AP.
-    AP *= 1.0;
+    double z = zA(invariants);
+    if (hNew2 == hBef1)
+      AP = dglapPtr->Pg2gg(z,hNew0,hBef0,hNew1)/z/saj;
   }
-  return AP/Q2;
+  // Collinear to initial-state quark.
+  else if (saj > sjb) {
+    double z = zB(invariants);
+    if (hNew0 == hBef0)
+      AP = dglapPtr->Pq2qg(z,hNew2,hBef1,hNew1)/z/sjb;
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
-// Class GGEmitII, initial-initial antenna function.
+// Class AntGGEmitII, initial-initial antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GGEmitII::antFun(vector<double> invariants, vector<double>,
+double AntGGEmitII::antFun(vector<double> invariants, vector<double>,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -1818,10 +1867,9 @@ double GGEmitII::antFun(vector<double> invariants, vector<double>,
 
 // AP splitting kernel, P(z)/Q2.
 
-double GGEmitII::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntGGEmitII::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAB = invariants[0];
   double saj = invariants[1];
   double sjb = invariants[2];
@@ -1829,27 +1877,38 @@ double GGEmitII::AltarelliParisi(vector<double> invariants, vector<double>,
   // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjb <= 0.0) || (sAB <= 0.0)) return 0.0;
 
-  // Using smaller invariant for collinear limit.
-  double z  = ( saj < sjb ? zA(invariants) : zB(invariants) );
-  double Q2 = min(saj,sjb);
-  double AP = 1.0/z*(pow(z, 4.0) + 1.0+pow(1 - z, 4.0))/z/(1.0 - z);
-  // AP uses alpha/2pi * CA, ant uses alpha/4pi * CA, with CA = 3.
-  AP *= 2.0;
-  // gluon appears in 2 ants, hence ant reproduces half of AP.
-  AP *= 0.5;
-  return AP/Q2;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
+
+  double AP(-1.);
+  if (saj < sjb) {
+    double z = zA(invariants);
+    if (hNew2 == hBef1)
+      AP = dglapPtr->Pg2gg(z,hNew0,hBef0,hNew1)/z/saj;
+  }
+  else if (saj > sjb) {
+    double z = zB(invariants);
+    if (hNew0 == hBef0)
+      AP = dglapPtr->Pg2gg(z,hNew2,hBef1,hNew1)/z/sjb;
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
-// Class QXSplitII, initial-initial antenna function.
+// Class AntQXConvII, initial-initial antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QXSplitII::antFun(vector<double> invariants, vector<double> masses,
+double AntQXConvII::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -1924,10 +1983,9 @@ double QXSplitII::antFun(vector<double> invariants, vector<double> masses,
 
 // AP splitting kernel, P(z)/Q2.
 
-double QXSplitII::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntQXConvII::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAB = invariants[0];
   double saj = invariants[1];
   double sjb = invariants[2];
@@ -1935,27 +1993,33 @@ double QXSplitII::AltarelliParisi(vector<double> invariants, vector<double>,
   // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjb <= 0.0) || (sAB <= 0.0)) return 0.0;
 
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
+
+  double AP(-1.);
   // There is only the saj collinear limit.
-  double z  = zA(invariants);
-  double Q2 = saj;
-  double AP = 1.0/z * (pow2(z)+pow2(1 - z));
-  // AP uses alpha/2pi * TR/2, ant uses alpha/4pi * TR, with TR = 1.
-  AP *= 1.0;
-  // Ant with quark reproduces full AP.
-  AP *= 1.0;
-  return AP/Q2;
+  if (hNew2 == hBef1) {
+    double z  = zA(invariants);
+    AP = dglapPtr->Pg2qq(z,hNew0,hBef0,hNew1)/z/saj;
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
-// Class GXConvII, initial-initial antenna function.
+// Class AntGXConvII, initial-initial antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GXConvII::antFun(vector<double> invariants, vector<double> masses,
+double AntGXConvII::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -1972,12 +2036,15 @@ double GXConvII::antFun(vector<double> invariants, vector<double> masses,
   if (nAvg <= 0) return 0.;
 
   // Shorthands.
-  double sab   = sAB + saj + sjb - 2*pow2(mj);
+  //  double sab   = sAB + saj + sjb - 2*pow2(mj);
+  double sab   = sAB + saj + sjb - pow2(mj);
   double yaj   = saj/sab;
   double yAB   = sAB/sab;
   double mu2j  = (mj != 0.) ? pow2(mj)/sab : 0.;
-  double convA = 1.0/(2.*sAB*(yaj - 2.*mu2j)*yAB);
-  double facMj = (mj != 0.) ? mu2j/(2.*sAB*pow2(yaj - 2.*mu2j)) : 0.;
+  //  double convA = 1.0/(2.*sAB*(yaj - 2.*mu2j)*yAB);
+  //  double facMj = (mj != 0.) ? mu2j/(2.*sAB*pow2(yaj - 2.*mu2j)) : 0.;
+  double convA = 1.0/(2.*sAB*(yaj - mu2j)*yAB);
+  double facMj = (mj != 0.) ? mu2j/(2.*sAB*pow2(yaj - mu2j)) : 0.;
 
   // Do helicity sum.
   double hSum = 0.0;
@@ -1990,7 +2057,7 @@ double GXConvII::antFun(vector<double> invariants, vector<double> masses,
     if (LH[hA] && LH[hB] && LH[hi] && LH[hj] && LH[hk]) hSum += term;
 
     // ++ > --+ && -- > ++- antennae.
-    term = pow2(1 - yAB)*convA - facMj*yAB*(1. - yAB);
+    term = pow2(1. - yAB)*convA - facMj*yAB*(1. - yAB);
     if (RH[hA] && RH[hB] && LH[hi] && LH[hj] && RH[hk]) hSum += term;
     if (LH[hA] && LH[hB] && RH[hi] && RH[hj] && LH[hk]) hSum += term;
 
@@ -2029,10 +2096,9 @@ double GXConvII::antFun(vector<double> invariants, vector<double> masses,
 
 // AP splitting kernel, P(z)/Q2.
 
-double GXConvII::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntGXConvII::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAB = invariants[0];
   double saj = invariants[1];
   double sjb = invariants[2];
@@ -2040,22 +2106,30 @@ double GXConvII::AltarelliParisi(vector<double> invariants, vector<double>,
   // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjb <= 0.0) || (sAB <= 0.0)) return 0.0;
 
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
+
+  double AP(-1.);
   // There is only the saj collinear limit.
-  double z  = zA(invariants);
-  double Q2 = saj;
-  double AP = 1.0/z * (1.0+pow2(1.0-z))/z;
-  // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-  AP *= 1.0;
-  // gluon appears in 2 ants, hence ant reproduces half of AP.
-  AP *= 0.5;
-  return AP/Q2;
+  if (hNew2 == hBef1) {
+    double z  = zA(invariants);
+    AP = dglapPtr->Pq2gq(z,hNew0,hBef0,hNew1)/z/saj;
+    // Gluon appears in two antennae.
+    AP *= 0.5;
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
 // Class AntennaFunctionIF, base class for IF antenna functions which
-// implements QQEmitIF.
+// implements AntQQEmitIF.
 
 //--------------------------------------------------------------------------
 
@@ -2093,12 +2167,13 @@ bool AntennaFunctionIF::init() {
   // IF antennae.
   else kineMapSav = settingsPtr->mode("Vincia:kineMapIF");
 
-  // Collinear partitioning (for global antennae).
-  alphaSav = settingsPtr->parm("Vincia:octetPartitioning");
-
   // Sector shower on/off and sectorDamp parameter.
   sectorShower  = settingsPtr->flag("Vincia:sectorShower");
   sectorDampSav = settingsPtr->parm("Vincia:sectorDamp");
+
+  // Collinear partitioning (for global antennae).
+  if (!sectorShower) alphaSav = settingsPtr->parm("Vincia:octetPartitioning");
+  else alphaSav = 1.;
 
   // Return OK.
   isInit = true;
@@ -2151,78 +2226,17 @@ bool AntennaFunctionIF::check() {
           double ratio = ant/eik;
           if (abs(ratio - 1.0) >= 0.001) {
             isOK = false;
-            if (verbose >= 1) printOut(vinciaName() + ":check",
+            if (verbose >= Logger::NORMAL) printOut(vinciaName() + ":check",
                 "WARNING: FAILED (eikonal " + num2str(iTest, 1) +
                 " and sAK = " + num2str((int)sqrt(sAK[isAK])) + "^2)");
-          } else if (verbose >= 6) printOut(vinciaName() + ":check",
-              "OK (eikonal " + num2str(iTest, 1) + " and sAK = " +
-              num2str((int)sqrt(sAK[isAK])) + "^2)");
+          } else if (verbose >= VinciaConstants::DEBUG) printOut(vinciaName()
+            + ":check", "OK (eikonal " + num2str(iTest, 1) + " and sAK = " +
+            num2str((int)sqrt(sAK[isAK])) + "^2)");
         }
       }
     }
 
-    // Check for collinearity (no helicity APs so far).
-    // Test invariants, for a few points along collinear axis.
-    for (int iTest = 0; iTest <= 2; ++iTest) {
-      // Test two sAK values.
-      for (int isAK = 0; isAK <= 1; ++isAK) {
-        // Test invariants.
-        double y1  = 1.0e-5;          // saj/sAK
-        double y2  = 0.2 + iTest*0.3; // sjk/sAK
-        double s1  = y1*sAK[isAK];
-        double s2  = y2*sAK[isAK];
-        vector<double> invariants1 = {sAK[isAK], s1, s2};
-        vector<double> invariants2 = invariants1;
-        invariants2[1] = invariants1[2];
-        invariants2[2] = invariants1[1];
-        // Compute AP kernels.
-        double AP1 = AltarelliParisi(invariants1);
-        double AP2 = AltarelliParisi(invariants2);
-        // Compute antennae (without subleading colour corrections).
-        int modeSLCsave = modeSLC;
-        modeSLC = 1;
-        double ant1 = antFun(invariants1);
-        double ant2 = antFun(invariants2);
-        modeSLC = modeSLCsave;
-        // Check if only a singularity on one side exists (-> z = -1).
-        double zs1 = zA(invariants1);
-        double zs2 = zB(invariants1);
-        if (zs1 != -1.0) {
-          double ratio = ant1/AP1;
-          if (abs(ratio - 1.0) >= 0.01) {
-            isOK = false;
-            if (verbose >= 1)
-              printOut(vinciaName() + ":check","WARNING: FAILED "
-                "(collinear aj " + num2str(iTest, 1) + " and sAK = " +
-                num2str((int)sqrt(sAK[isAK])) + "^2)");
-            if (verbose >= 3) cout << setprecision(6) << "    ant  = "
-                   << num2str(ant1, 9) << " y1 = " << num2str(y1, 9)
-                   << " y2 = " << num2str(y2, 9) << " " <<endl
-                   << "    P(z) = " << num2str(AP1, 9)
-                   << "  z = " << num2str(zs1, 9) << endl;
-          } else if (verbose >= 6) printOut(vinciaName() + ":check",
-              "OK (collinear aj " + num2str(iTest, 1)
-               + " and sAK = " + num2str((int)sqrt(sAK[isAK])) + "^2)");
-        }
-        if (zs2 != -1.0) {
-          double ratio = ant2/AP2;
-          if (abs(ratio - 1.0) >= 0.01) {
-            isOK = false;
-            if (verbose >= 1) printOut(vinciaName() + ":check",
-                "WARNING: FAILED (collinear jk " + num2str(iTest, 1) +
-                " and sAK = " + num2str((int)sqrt(sAK[isAK]))+"^2)");
-            if (verbose >= 3) cout << setprecision(6) << "    ant  = "
-                  << num2str(ant1, 9) << " y1 = " << num2str(y1, 9) << " y2 = "
-                  << num2str(y2, 9) << " " << endl << "    P(z) = "
-                  << num2str(AP2,9) << "  z = " << num2str(zs2, 9) << endl;
-          } else if (verbose >= 6) printOut(vinciaName() + ":check",
-              "OK (collinear jk " + num2str(iTest, 1) +
-              " and sAK = " + num2str((int)sqrt(sAK[isAK])) + "^2)");
-        }
-      }
-    }
-
-    // Test all helicity configurations for posivity and dead zones.
+    // Test all helicity configurations for collinearity and posivity.
     string helString = " 9 9 -> 9 9 9";
     for (int iHel = -1; iHel < 32; ++iHel) {
       bool isPositive  = true;
@@ -2240,9 +2254,128 @@ bool AntennaFunctionIF::check() {
       vector<int> helBef = {hA, hB};
       vector<int> helNew = {hi, hj, hk};
 
-      // Gluon emission: do not allow external helicity flips.
-      if (id1() == 21 || id1() == 22)
-        if (hA != hi || hB != hk) continue;
+      // Gluon emission.
+      if (id1() == 21) {
+        // Massless: quark helicities must be conserved.
+        if (idA() != 21 && hi != hA) continue;
+        if (idB() != 21 && hk != hB) continue;
+        // For gluons, sector terms can give helicity flips
+        if (idA() == 21 && (hi != hA && hj != -hA)) continue;
+        if (sectorShower && idB() == 21 && (hk != hB && hj != hB)) continue;
+        if (!sectorShower && idB() == 21 && hk != hB) continue;
+        // Do not allow helicity flips on both sides simultaneously
+        if (hi != hA && hk != hB) continue;
+      }
+      // Gluon conversion.
+      else if (idA() == 21) {
+        // Helicity of recoiler must be conserved.
+        if (hk != hB) continue;
+        // Massless: quark helicity must be conserved.
+        if (hi != hj) continue;
+      }
+      // Gluon splitting in the final state.
+      else if (idB() == 21 && id2() == -id1()) {
+        // Helicity of recoiler must be conserved.
+        if (hi != hA) continue;
+        // Massless: quark helicity must be conserved.
+        if (hj != -hk) continue;
+      }
+      // Gluon splitting in the initial state.
+      else {
+        // Helicity of recoiler must be conserved.
+        if (hk != hB) continue;
+        // Massless: quark helicity must be conserved.
+        if (hA == hj) continue;
+      }
+
+
+      // Check collinear singularities against massless AP kernels.
+      for (int iTest = 0; iTest <= 2; ++iTest) {
+        // Test two sAK values.
+        for (int isAK = 0; isAK <= 1; ++isAK) {
+          // Test invariants for a few points along collinear axis.
+          double y1  = 1.0e-5;          // saj/sAK
+          double y2  = 0.2 + iTest*0.3; // sjk/sAK
+          double s1  = y1*sAK[isAK];
+          double s2  = y2*sAK[isAK];
+          vector<double> invariants1 = {sAK[isAK], s1, s2};
+          vector<double> invariants2 = invariants1;
+          invariants2[1] = invariants1[2];
+          invariants2[2] = invariants1[1];
+
+          // Compute AP kernels.
+          double AP1 = AltarelliParisi(invariants1,mDum,helBef,helNew);
+          double AP2 = AltarelliParisi(invariants2,mDum,helBef,helNew);
+
+          // Are there any limits to check?
+          if (AP1 < 0. && AP2 < 0.) continue;
+
+          // Compute antennae (without subleading colour corrections).
+          int modeSLCsave = modeSLC;
+          modeSLC = 1;
+          double ant1 = antFun(invariants1,mDum,helBef,helNew);
+          double ant2 = antFun(invariants2,mDum,helBef,helNew);
+          // For global antennae, add "swapped" term to represent neighbour.
+          if (!sectorShower && idB() == 21) {
+            invariants2[1] = (1.+y1-y2)*sAK[isAK];
+            invariants2[2] = y1*sAK[isAK];
+            vector<int> helComp = {hi, hk, hj};
+            ant2 += antFun(invariants2,mDum,helBef,helComp);
+          }
+          // Restore subleading-colour level.
+          modeSLC = modeSLCsave;
+
+          // Check if only a singularity on one side exists (-> z = -1).
+          double zs1 = zA(invariants1);
+          double zs2 = zB(invariants1);
+          if (zs1 != -1.0) {
+            double ratio = ant1/AP1;
+            // Require better than 5% agreement unless dominated
+            // by non-singular.
+            if (fabs(ratio - 1.0) >= 0.05 && fabs(ant1 - AP1) > 10.) {
+              isOK = false;
+              if (verbose >= Logger::NORMAL)
+                printOut(__METHOD_NAME__, "WARNING: " + vinciaName()
+                  + " FAILED (collinear aj " + num2str(iTest, 1)
+                  + " and sAK = " + num2str((int)sqrt(sAK[isAK])) + "^2)");
+              if (verbose >= Logger::REPORT) {
+                cout << setprecision(6);
+                printOut(__METHOD_NAME__, "    (" + helString + ")");
+                printOut(__METHOD_NAME__, "    ant  = " + num2str(ant1, 9)
+                  + " y1 = " + num2str(y1, 9) + " y2 = " + num2str(y2, 9));
+                printOut(__METHOD_NAME__, "    P(z) = " + num2str(AP1, 9)
+                  + "  z = " + num2str(zs1, 9));
+              }
+            } else if (verbose >= VinciaConstants::DEBUG)
+                printOut(__METHOD_NAME__, vinciaName() + " OK (collinear aj "
+                  + num2str(iTest, 1) + " and sAK = "
+                  + num2str((int)sqrt(sAK[isAK])) + "^2)");
+          }
+          if (zs2 != -1.0) {
+            double ratio = ant2/AP2;
+            // Require better than 5% agreement unless dominated
+            // by non-singular.
+            if (fabs(ratio - 1.0) >= 0.05 && fabs(ant2 - AP2) > 10.) {
+              isOK = false;
+              if (verbose >= Logger::NORMAL)
+                printOut(__METHOD_NAME__, "WARNING: " + vinciaName()
+                  + " FAILED (collinear jk " + num2str(iTest, 1)
+                  + " and sAK = " + num2str((int)sqrt(sAK[isAK])) + "^2)");
+              if (verbose >= Logger::REPORT) {
+                cout << setprecision(6);
+                printOut(__METHOD_NAME__, "    (" + helString + ")");
+                printOut(__METHOD_NAME__, "    ant  = " + num2str(ant2, 9)
+                  + " y1 = " + num2str(y1, 9) + " y2 = " + num2str(y2, 9));
+                printOut(__METHOD_NAME__, "    P(z) = " + num2str(AP2, 9)
+                  + "  z = " + num2str(zs1, 9));
+              }
+            } else if (verbose >= VinciaConstants::DEBUG)
+                printOut(__METHOD_NAME__, vinciaName() + " OK (collinear jk "
+                  + num2str(iTest, 1) + " and sAK = "
+                  + num2str((int)sqrt(sAK[isAK])) + "^2)");
+          }
+        }
+      }
 
       // Check for positivity and dead zones.
       for (int iTest = 0; iTest <= nPointsCheck; ++iTest) {
@@ -2263,14 +2396,16 @@ bool AntennaFunctionIF::check() {
         if (pT2 > sAKnow) continue;
         // Compute antenna.
         double ant = antFun(invariants, mDum, helBef, helNew);
+
         // Check positivity (strict).
         if (ant < 0.0) {
-          cout << "ant = "<<ant * sAKnow << endl;
           isPositive = false;
-          if (verbose >= 3) printOut(vinciaName() + ":check",
-              "ERROR ant(" + num2str((int)sqrt(saj))
-              + "^2," + num2str((int)sqrt(sjk)) + "^2,"
-              + num2str((int)sqrt(sAKnow)) + "^2 ; " + helString + ") < 0");
+          if (verbose >= Logger::REPORT)
+            printOut(__METHOD_NAME__, "ERROR: " + vinciaName() + " ant("
+              + num2str(sAKnow) + ","
+              + num2str(saj/(sAKnow+sjk)) + ","
+              + num2str(sjk/(sAKnow+sjk)) + " ; " + helString + ") = "
+              + num2str(sAKnow*ant,16) + " < 0");
         } else if (ant > 0.0) isZero = false;
 
         // Check for dead zones away from phase-space boundary.
@@ -2288,15 +2423,22 @@ bool AntennaFunctionIF::check() {
       isOK = isOK && isPositive;
 
       // Verbose output.
-      if (!isPositive && verbose >= 1)  printOut(vinciaName() + ":check",
-          "ERROR (ant < 0 encountered " + helString + " )");
-      else if (isPositive && !isZero && verbose >= 6) printOut(vinciaName() +
-          ":check", "OK (is positive " + helString + " )");
+      if (!isPositive && verbose >= Logger::NORMAL)
+        printOut(__METHOD_NAME__, "ERROR: " + vinciaName()
+          + " (ant < 0 encountered " + helString + " )");
+      else if (isPositive && !isZero && verbose >= VinciaConstants::DEBUG)
+        printOut(__METHOD_NAME__, vinciaName() + " OK (is positive "
+          + helString + " )");
       if (!isZero) {
-        if (hasDeadZone && verbose >= 1) printOut(vinciaName() + ":check",
-          "WARNING (dead zone encountered " + helString + " )");
-        else if (!hasDeadZone && verbose >= 6) printOut(vinciaName()
-          + ":check", "OK (no dead zones " + helString+" )");
+        if (hasDeadZone) {
+          if ( (!sectorShower && verbose >= Logger::NORMAL)
+            || (sectorShower && verbose >= Logger::REPORT) )
+            printOut(__METHOD_NAME__, "WARNING:" + vinciaName()
+              + " (dead zone encountered " + helString+" )");
+        }
+        else if (verbose >= VinciaConstants::DEBUG)
+          printOut(__METHOD_NAME__, vinciaName() + " OK (no dead zones "
+            + helString+" )");
       }
     } // End loop over helicities.
   } // End loop over initi-final state.
@@ -2334,7 +2476,7 @@ bool AntennaFunctionIF::checkRes() {
     // Check ratio.
     double ratio= antNow/antSoft;
     if (abs(ratio - 1.) >= 0.001) {
-      if (verbose >= quiet) {
+      if (verbose >= Logger::NORMAL) {
         stringstream ss;
         ss << "WARNING:" + vinciaName() << " FAILED soft eikonal: ratio to "
            << "soft = " << ratio;
@@ -2342,7 +2484,7 @@ bool AntennaFunctionIF::checkRes() {
       }
       return false;
     }
-    else if (verbose >= verylouddebug)
+    else if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, vinciaName() + " OK (soft eikonal)");
   }
 
@@ -2357,15 +2499,14 @@ bool AntennaFunctionIF::checkRes() {
     // Get dimensionful invariants.
     vector<double> invariants;
     if (!getTestInvariants(invariants, masses, yaj, yjk)) {
-      if (verbose>=normal) infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Failed to get test invariants!");
+      loggerPtr->ERROR_MSG("failed to get test invariants");
       return false;
     }
 
     // Are we still in the available phase space?
     double gramdet = gramDet(invariants, masses);
     if (gramdet<0.) {
-      if (verbose >= verylouddebug) printOut(__METHOD_NAME__,
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
         vinciaName() + " not in phase space. Continue.");
       break;
     }
@@ -2380,16 +2521,17 @@ bool AntennaFunctionIF::checkRes() {
       double ratio = antNow/AP;
       // Require better than 1% agreement unless dominated by nonsingular.
       if (abs(ratio - 1.) >= 0.01 && abs(antNow - AP) > 10.) {
-        if (verbose >= 1) printOut(__METHOD_NAME__, "WARNING:" + vinciaName() +
+        if (verbose >= Logger::NORMAL)
+          printOut(__METHOD_NAME__, "WARNING:" + vinciaName() +
             "Failed (collinear ij " + num2str(iTest, 1)+" )");
-        if (verbose >= 3) cout << setprecision(6) << "    ant  = "
+        if (verbose >= Logger::REPORT) cout << setprecision(6) << "    ant  = "
               << num2str(antNow, 9) << " yaj = " << num2str(yaj, 9)
               << " yjk = " << num2str(yjk, 9) << " " << endl << "    P(z) = "
               << num2str(AP, 9) << endl;
         return false;
       }
-      else if (verbose >= verylouddebug) printOut(__METHOD_NAME__, vinciaName()
-        + " OK (collinear ij " + num2str(iTest, 1) + " )");
+      else if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        vinciaName() + " OK (collinear ij " + num2str(iTest, 1) + " )");
     }
   }
   return true;
@@ -2425,7 +2567,7 @@ bool AntennaFunctionIF::getTestInvariants(vector<double> &invariants,
 // invariants where appropriate.
 
 double AntennaFunctionIF::antFunCollLimit(vector<double> invariants,
-  vector<double> masses){
+  vector<double> masses) {
 
   double ant = antFun(invariants,masses);
   if (idB() == 21) {
@@ -2439,13 +2581,13 @@ double AntennaFunctionIF::antFunCollLimit(vector<double> invariants,
 
 //==========================================================================
 
-// Class QQEmitIF, initial-final antenna function.
+// Class AntQQEmitIF, initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QQEmitIF::antFun(vector<double> invariants, vector<double> masses,
+double AntQQEmitIF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -2538,49 +2680,52 @@ double QQEmitIF::antFun(vector<double> invariants, vector<double> masses,
 
 // The AP kernel, P(z)/Q2.
 
-double QQEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntQQEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
-  if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // Using smaller invariant for collinear limit.
-  double z  = ( saj < sjk ? zA(invariants) : zB(invariants) );
-  double Q2 = min(saj,sjk);
-  double AP = 0.0;
+  // Sanity check. Require positive invariants.
+  if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return -1.;
 
-  // Collinear to initial quark.
+  // Store helicities
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
+
+  double AP(-1.);
+  // Collinear to initial-state quark.
   if (saj < sjk) {
-    AP = 1.0/z * (1.0 + pow2(z))/(1.0 - z);
-    // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-    AP *= 1.0;
-    // Ant with quark reproduces full AP.
-    AP *= 1.0;
-
-  // Collinear to final quark.
-  } else {
-    AP = (1.0 + pow2(z))/(1.0 - z);
-    // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-    AP *= 1.0;
-    // ant with quark reproduces full AP.
-    AP *= 1.0;
+    if (hNew2 == hBef1) {
+      double z = zA(invariants);
+      AP = dglapPtr->Pq2qg(z,hNew0,hBef0,hNew1)/z/saj;
+    }
   }
-  return AP/Q2;
+  // Collinear to final-state quark.
+  else if (saj > sjk) {
+    if (hNew0 == hBef0) {
+      double z = zB(invariants);
+      AP = dglapPtr->Pq2qg(z,hBef1,hNew2,hNew1)/sjk;
+    }
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
-// Class QGEmitIF, initial-final antenna function.
+// Class AntQGEmitIF, initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QGEmitIF::antFun(vector<double> invariants, vector<double> masses,
+double AntQGEmitIF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -2601,7 +2746,8 @@ double QGEmitIF::antFun(vector<double> invariants, vector<double> masses,
   double yaj   = saj/s;
   double yjk   = sjk/s;
   double eikJ  = 1./(sAK*yaj*yjk);
-  double colK  = (1. - alphaSav) * (1. - 2.*yaj) / (sAK * yjk);
+  double colK  = (alphaSav == 1.) ? 0.
+    : (1. - alphaSav) * (1. - 2.*yaj) / (sAK * yjk);
   double facMa = (mi != 0.) ? pow2(mi)/s/sAK/pow2(yaj) : 0.;
 
   // Do helicity sum.
@@ -2650,7 +2796,9 @@ double QGEmitIF::antFun(vector<double> invariants, vector<double> masses,
   }
 
   // Subleading colour correction.
-  if (modeSLC >= 2)  hSum *= CF/chargeFacSav * (1 - yaj)/(2 - yaj - yjk)
+  // Note: has to be applied to sector antennae after symmetrisation!
+  if (!sectorShower && modeSLC >= 2)
+    hSum *= CF/chargeFacSav * (1 - yaj)/(2 - yaj - yjk)
       + CA/chargeFacSav * (1 - yjk)/(2 - yaj - yjk);
 
   // Return helicity sum, averaged over initial helicities.
@@ -2662,49 +2810,51 @@ double QGEmitIF::antFun(vector<double> invariants, vector<double> masses,
 
 // The AP kernel, P(z)/Q2.
 
-double QGEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntQGEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // Using smaller invariant for collinear limit.
-  double z  = ( saj < sjk ? zA(invariants) : zB(invariants) );
-  double Q2 = min(saj, sjk);
-  double AP = 0.0;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
-  // Collinear to initial quark.
+  double AP(-1.);
+  // Collinear to initial-state quark.
   if (saj < sjk) {
-    AP = 1.0/z * (1.0 + pow2(z))/(1.0 - z);
-    // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-    AP *= 1.0;
-    // ant with quark reproduces full AP.
-    AP *= 1.0;
-
-  // Collinear to final gluon.
-  } else {
-    AP = (2.0*z/(1.0 - z)+z*(1.0 - z));
-    // AP uses alpha/2pi * CA, ant uses alpha/4pi * CA, with CA = 3.
-    AP *= 2.0;
-    // gluon appears in 2 ants, hence ant reproduces half of AP.
-    AP *= 0.5;
+    if (hNew2 == hBef1) {
+      double z = zA(invariants);
+      AP = dglapPtr->Pq2qg(z,hNew0,hBef0,hNew1)/z/saj;
+    }
   }
-  return AP/Q2;
+  // Collinear to final-state gluon.
+  else if (saj > sjk) {
+    if (hNew0 == hBef0) {
+      double z = zB(invariants);
+      AP = dglapPtr->Pg2gg(z,hBef1,hNew2,hNew1)/sjk;
+    }
+  }
 
+  return AP;
 }
 
 //==========================================================================
 
-// Class GQEmitIF, initial-final antenna function.
+// Class AntGQEmitIF, initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GQEmitIF::antFun(vector<double> invariants, vector<double> masses,
+double AntGQEmitIF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -2795,49 +2945,52 @@ double GQEmitIF::antFun(vector<double> invariants, vector<double> masses,
 
 // The AP kernel, P(z)/Q2.
 
-double GQEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntGQEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // Using smaller invariant for collinear limit.
-  double z  = ( saj < sjk ? zA(invariants) : zB(invariants) );
-  double Q2 = min(saj,sjk);
-  double AP = 0.0;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
-  // Collinear to initial gluon.
+  double AP(-1.);
+  // Collinear to initial-state gluon.
   if (saj < sjk) {
-    AP = 1.0/z*(pow(z, 4.0) + 1.0 + pow(1 - z, 4.0))/z/(1.0 - z);
-    // AP uses alpha/2pi * CA, ant uses alpha/4pi * CA, with CA = 3.
-    AP *= 2.0;
-    // gluon appears in 2 ants, hence ant reproduces half of AP.
-    AP *= 0.5;
-
-  // Collinear to final quark.
-  } else {
-    AP = (1.0 + pow2(z))/(1.0 - z);
-    // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-    AP *= 1.0;
-    // ant with quark reproduces full AP.
-    AP *= 1.0;
+    if (hNew2 == hBef1) {
+      double z = zA(invariants);
+      AP = dglapPtr->Pg2gg(z,hNew0,hBef0,hNew1)/z/saj;
+    }
   }
-  return AP/Q2;
+  // Collinear to final-state quark.
+  else if (saj > sjk) {
+    if (hNew0 == hBef0) {
+      double z = zB(invariants);
+      AP = dglapPtr->Pq2qg(z,hBef1,hNew2,hNew1)/sjk;
+    }
+  }
+
+  return AP;
 
 }
 
 //==========================================================================
 
-// Class GGEmitIF, initial-final antenna function.
+// Class AntGGEmitIF, initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GGEmitIF::antFun(vector<double> invariants, vector<double>,
+double AntGGEmitIF::antFun(vector<double> invariants, vector<double>,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -2908,49 +3061,49 @@ double GGEmitIF::antFun(vector<double> invariants, vector<double>,
 
 // The AP kernel, P(z)/Q2.
 
-double GGEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntGGEmitIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // Using smaller invariant for collinear limit.
-  double z  = ( saj < sjk ? zA(invariants) : zB(invariants) );
-  double Q2 = min(saj,sjk);
-  double AP = 0.0;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
-  // Collinear to initial gluon.
+  double AP(-1.);
+  // Collinear to initial-state gluon.
   if (saj < sjk) {
-    AP = 1.0/z*(pow(z, 4.0) + 1.0 + pow(1 - z,4.0))/z/(1.0 - z);
-    // AP uses alpha/2pi * CA, ant uses alpha/4pi * CA, with CA = 3.
-    AP *= 2.0;
-    // gluon appears in 2 ants, hence ant reproduces half of AP.
-    AP *= 0.5;
-
-  // Collinear to final gluon.
-  } else {
-    AP = (2.0*z/(1.0 - z) + z*(1.0 - z));
-    // AP uses alpha/2pi * CA, ant uses alpha/4pi * CA, with CA = 3.
-    AP *= 2.0;
-    // gluon appears in 2 ants, hence ant reproduces half of AP.
-    AP *= 0.5;
+    if (hNew2 == hBef1) {
+      double z = zA(invariants);
+      AP = dglapPtr->Pg2gg(z,hNew0,hBef0,hNew1)/z/saj;
+    }
   }
-  return AP/Q2;
+  // Collinear to final-state gluon.
+  else if (saj > sjk) {
+    if (hNew0 == hBef0)
+      AP += dglapPtr->Pg2gg(zB(invariants),hBef1,hNew2,hNew1)/sjk;
+  }
 
+  return AP;
 }
 
 //==========================================================================
 
-// Class QXSplitIF, initial-final antenna function.
+// Class AntQXConvIF, initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QXSplitIF::antFun(vector<double> invariants, vector<double> masses,
+double AntQXConvIF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -3025,36 +3178,42 @@ double QXSplitIF::antFun(vector<double> invariants, vector<double> masses,
 
 // The AP kernel, P(z)/Q2.
 
-double QXSplitIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntQXConvIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // There is only the saj collinear limit.
-  double z  = zA(invariants);
-  double Q2 = saj;
-  double AP = 1.0/z * (pow2(z) + pow2(1 - z));
-  // AP uses alpha/2pi * TR/2, ant uses alpha/4pi * TR, with TR = 1.
-  AP *= 1.0;
-  // Ant with quark reproduces full AP.
-  AP *= 1.0;
-  return AP/Q2;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
+  double AP(-1.);
+  // There is only the saj collinear limit.
+  if (hNew2 == hBef1) {
+    double z = zA(invariants);
+    AP = dglapPtr->Pg2qq(z,hNew0,hBef0,hNew1)/z/saj;
+  }
+
+  return AP;
 }
 
 //==========================================================================
 
-// Class GXConvIF, initial-final antenna function.
+// Class AntGXConvIF, initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GXConvIF::antFun(vector<double> invariants, vector<double> masses,
+double AntGXConvIF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities.
@@ -3130,37 +3289,45 @@ double GXConvIF::antFun(vector<double> invariants, vector<double> masses,
 
 // The AP kernel, P(z)/Q2.
 
-double GXConvIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntGXConvIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // There is only the saj collinear limit.
-  double z  = zA(invariants);
-  double Q2 = saj;
-  double AP = 1.0/z * (1.0 + pow2(1.0 - z))/z;
-  // AP uses alpha/2pi * CF, ant uses alpha/4pi * 2CF, with CF = 4/3.
-  AP *= 1.0;
-  // gluon appears in 2 ants, hence ant reproduces half of AP.
-  AP *= 0.5;
-  return AP/Q2;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
+  double AP(-1.);
+  // There is only the saj collinear limit.
+  if (hNew2 == hBef1) {
+    double z = zA(invariants);
+    AP = dglapPtr->Pq2gq(z,hNew0,hBef0,hNew1)/z/saj;
+    // Gluon appears in two antennae.
+    AP *= 0.5;
+  }
+
+  return AP;
 }
 
 //==========================================================================
 
-// Class XGSplitIF, initial-final antenna function. Gluon splitting in
+// Class AntXGSplitIF, initial-final antenna function. Gluon splitting in
 // the final state.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double XGSplitIF::antFun(vector<double> invariants, vector<double> masses,
+double AntXGSplitIF::antFun(vector<double> invariants, vector<double> masses,
   vector<int> helBef, vector<int> helNew) {
 
   // Invariants and helicities
@@ -3236,110 +3403,142 @@ double XGSplitIF::antFun(vector<double> invariants, vector<double> masses,
 
 // The AP kernel, P(z)/Q2.
 
-double XGSplitIF::AltarelliParisi(vector<double> invariants, vector<double>,
-  vector<int>, vector<int>) {
+double AntXGSplitIF::AltarelliParisi(vector<double> invariants, vector<double>,
+  vector<int> helBef, vector<int> helNew) {
 
-  // Sanity check. Require positive invariants.
   double sAK = invariants[0];
   double saj = invariants[1];
   double sjk = invariants[2];
+
+  // Sanity check. Require positive invariants.
   if ((saj <= 0.0) || (sjk <= 0.0) || (sAK <= 0.0)) return 0.0;
 
-  // There is only the sjk collinear limit
-  double z  = zB(invariants);
-  double Q2 = sjk;
-  double AP = (pow2(z)+pow2(1 - z));
-  // AP uses alpha/2pi * TR/2, ant uses alpha/4pi * TR, with TR = 1.
-  AP *= 1.0;
-  // Gluon appears in 2 ants, hence ant reproduces half of AP.
-  AP *= 0.5;
-  return AP/Q2;
+  // Store helicities.
+  int hBef0 = helBef[0];
+  int hBef1 = helBef[1];
+  int hNew0 = helNew[0];
+  int hNew1 = helNew[1];
+  int hNew2 = helNew[2];
 
+  double AP(-1.);
+  // There is only the sjk collinear limit
+  if (hNew0 == hBef0)
+    AP = dglapPtr->Pg2qq(zB(invariants),hBef1,hNew2,hNew1)/sjk;
+
+  return AP;
 }
 
 //==========================================================================
 
-// Class QGEmitIFsec, derived class for sector initial-final antenna
+// Class AntQGEmitIFsec, derived class for sector initial-final antenna
 // functions.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double QGEmitIFsec::antFun(vector<double> invariants,
+double AntQGEmitIFsec::antFun(vector<double> invariants,
   vector<double> mNew, vector<int> helBef, vector<int> helNew) {
 
   // Check if helicity vectors empty.
-  double ant = QGEmitIF::antFun(invariants, mNew, helBef, helNew);
+  double ant = AntQGEmitIF::antFun(invariants, mNew, helBef, helNew);
   if (helBef.size() < 2) {helBef.push_back(9); helBef.push_back(9);}
   if (helNew.size() < 3) {
     helNew.push_back(9); helNew.push_back(9); helNew.push_back(9);}
+
+  // Save invariants.
+  double sAK = invariants[0];
+  double saj = invariants[1];
+  double sjk = invariants[2];
+  double sak = sAK - saj + sjk;
+  double yaj = saj/(sAK + sjk);
+  double yjk = sjk/(sAK + sjk);
+  double yak = sak/(sAK + sjk);
 
   // Check if j has same helicity as parent final-state gluon.
   int hG = helBef[1];
   int hjNow = helNew[1];
   if (hG == hjNow) {
-    // Invariants are sAK, saj, sjk.
-    // Define j<->k symmetrisation term, sak = sAK - saj + sjk.
-    vector<double> invariantsSym = invariants;
-    double s02 = invariants[0] - invariants[1] + invariants[2];
+    // Define j<->k symmetrisation term with sector damp parameter.
+    sak += sectorDampSav * sjk;
+    vector<double> invariantsSym = {sAK, sak, sjk};
+    // Save swapped helicities.
     vector<int> helSym = helNew;
-    invariantsSym[1] = s02 + sectorDampSav * invariants[2];
     helSym[1] = helNew[2];
     helSym[2] = helNew[1];
-    ant += QGEmitIF::antFun(invariantsSym, mNew, helBef, helSym);
+    ant += AntQGEmitIF::antFun(invariantsSym, mNew, helBef, helSym);
+
+    // Ensure positivity over all of phase space.
+    ant += 1./sAK * (yak + yjk);
   }
+
+  // Subleading colour correction has to be applied after symmetrisation!
+  if (modeSLC >= 2)
+    ant *= CF/chargeFacSav * (1 - yaj)/(2 - yaj - yjk)
+      + CA/chargeFacSav * (1 - yjk)/(2 - yaj - yjk);
+
   return ant;
 
 }
 
 //==========================================================================
 
-// Class GGEmitIFsec, sector initial-final antenna function.
+// Class AntGGEmitIFsec, sector initial-final antenna function.
 
 //--------------------------------------------------------------------------
 
 // The antenna function [GeV^-2].
 
-double GGEmitIFsec::antFun(vector<double> invariants,
+double AntGGEmitIFsec::antFun(vector<double> invariants,
   vector<double> mNew, vector<int> helBef, vector<int> helNew) {
 
   // Check if helicity vectors empty.
-  double ant = GGEmitIF::antFun(invariants, mNew, helBef, helNew);
+  double ant = AntGGEmitIF::antFun(invariants, mNew, helBef, helNew);
   if (helBef.size() < 2) {helBef.push_back(9); helBef.push_back(9);}
   if (helNew.size() < 3) {
     helNew.push_back(9); helNew.push_back(9); helNew.push_back(9);}
+
+  // Save invariants.
+  double sAK = invariants[0];
+  double saj = invariants[1];
+  double sjk = invariants[2];
+  double sak = sAK - saj + sjk;
+  double yjk = sjk/(sAK + sjk);
+  double yak = sak/(sAK + sjk);
 
   // Check if j has same helicity as parent final-state gluon.
   int hG = helBef[1];
   int hjNow = helNew[1];
   if ( hG == hjNow ) {
-    // Invariants are sAK, saj, sjk
-    // Define j<->k symmetrisation term: sak = sAK - saj + sjk.
-    vector<double> invariantsSym = invariants;
-    double s02 = invariants[0] - invariants[1] + invariants[2];
+    // Define j<->k symmetrisation term with sector damp parameter.
+    sak += sectorDampSav * sjk;
+    vector<double> invariantsSym = {sAK, sak, sjk};
+    // Save swapped helicities.
     vector<int> helSym = helNew;
-    invariantsSym[1] = s02 + sectorDampSav * invariants[2];
     helSym[1] = helNew[2];
     helSym[2] = helNew[1];
-    ant += GGEmitIF::antFun(invariantsSym, mNew, helBef, helSym);
+    ant += AntGGEmitIF::antFun(invariantsSym, mNew, helBef, helSym);
+
+    // Ensure positivity over all of phase space.
+    ant += 1./sAK * (yak + yjk);
   }
+
   return ant;
 
 }
 
 //==========================================================================
 
-// Class XGSplitIFsec, sector initial-final antenna function. Gluon
+// Class AntXGSplitIFsec, sector initial-final antenna function. Gluon
 // splitting in the final state.
 
 //--------------------------------------------------------------------------
 
 // The antenna function, just 2*global [GeV^-2].
 
-double XGSplitIFsec::antFun(vector<double> invariants, vector<double> mNew,
-    vector<int> helBef, vector<int> helNew) {
-  return 2*XGSplitIF::antFun(invariants,mNew,helBef,helNew);}
+double AntXGSplitIFsec::antFun(vector<double> invariants, vector<double> mNew,
+  vector<int> helBef, vector<int> helNew) {
+  return 2*AntXGSplitIF::antFun(invariants,mNew,helBef,helNew);}
 
 //==========================================================================
 
@@ -3373,7 +3572,7 @@ void AntennaSetFSR::init() {
   }
   verbose = settingsPtr->mode("Vincia:verbose");
   if (isInit) {
-    if (verbose >= debug)
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "Already initialized antenna set.");
     return;
   }
@@ -3381,22 +3580,31 @@ void AntennaSetFSR::init() {
   // Create antenna objects (in map, so indices don't have to be consecutive).
   antFunPtrs.clear();
   bool sectorShower = settingsPtr->flag("Vincia:sectorShower");
-  antFunPtrs[iQQemitFF] = sectorShower ? new QQEmitFFsec() : new QQEmitFF();
-  antFunPtrs[iQGemitFF] = sectorShower ? new QGEmitFFsec() : new QGEmitFF();
-  antFunPtrs[iGQemitFF] = sectorShower ? (AntennaFunction*)new GQEmitFFsec() :
-    new GQEmitFF();
-  antFunPtrs[iGGemitFF] = sectorShower ? new GGEmitFFsec() : new GGEmitFF();
-  antFunPtrs[iGXsplitFF]= sectorShower ? new GXSplitFFsec() : new GXSplitFF();
-  // Add RF antenna functions (no sector versions defined yet)
-  antFunPtrs[iQQemitRF] = new QQEmitRF();
-  antFunPtrs[iQGemitRF] = new QGEmitRF();
-  antFunPtrs[iXGsplitRF]= new XGSplitRF();
-  if (verbose >= quiteloud)
+  antFunPtrs[QQEmitFF] = sectorShower ? new AntQQEmitFFsec() :
+    new AntQQEmitFF();
+  antFunPtrs[QGEmitFF] = sectorShower ? new AntQGEmitFFsec() :
+    new AntQGEmitFF();
+  antFunPtrs[GQEmitFF] = sectorShower ?
+    static_cast<AntennaFunction*>(new AntGQEmitFFsec()) :
+    static_cast<AntennaFunction*>(new AntGQEmitFF());
+  antFunPtrs[GGEmitFF] = sectorShower ? new AntGGEmitFFsec() :
+    new AntGGEmitFF();
+  antFunPtrs[GXSplitFF]= sectorShower ? new AntGXSplitFFsec() :
+    new AntGXSplitFF();
+  // Add RF antenna functions.
+  antFunPtrs[QQEmitRF] = new AntQQEmitRF();
+  antFunPtrs[QGEmitRF] = sectorShower ?
+    static_cast<AntennaFunction*>(new AntQGEmitRFsec()) :
+    static_cast<AntennaFunction*>(new AntQGEmitRF());
+  antFunPtrs[XGSplitRF] = sectorShower?
+    static_cast<AntennaFunction*>(new AntXGSplitRFsec()) :
+    static_cast<AntennaFunction*>(new AntXGSplitRF());
+  if (verbose >= Logger::REPORT)
     printOut(__METHOD_NAME__, "Defined new antFunPtrs");
 
   // Loop through antFunPtrs and initialize.
-  for (map<int,AntennaFunction*>::iterator antFunPtrIt = antFunPtrs.begin();
-       antFunPtrIt != antFunPtrs.end(); ++antFunPtrIt) {
+  for (auto antFunPtrIt = antFunPtrs.begin(); antFunPtrIt != antFunPtrs.end();
+       ++antFunPtrIt) {
 
     // Initialize antenna pointers, antenna.
     AntennaFunction* antFunPtr = antFunPtrIt->second;
@@ -3409,10 +3617,11 @@ void AntennaSetFSR::init() {
 
     // Everything OK?
     if (pass) {
-      if (verbose > normal) printOut(__METHOD_NAME__, "Added to antenna list: "
-        + antFunPtr->humanName());
-    } else if (verbose >= quiet) infoPtr->errorMsg("Warning in "+
-      __METHOD_NAME__+": one or more consistency checks failed.");
+      if (verbose >= Logger::REPORT) printOut(__METHOD_NAME__,
+        "Added to antenna list: " + antFunPtr->vinciaName());
+    }
+    else
+      loggerPtr->WARNING_MSG("one or more consistency checks failed");
   }
   isInit = true;
 
@@ -3420,16 +3629,13 @@ void AntennaSetFSR::init() {
 
 //--------------------------------------------------------------------------
 
-// Method to return all iAntPhys values that are defined in antFunPtr.
+// Method to return a list of all AntFunTypes in this set.
 
-vector<int> AntennaSetFSR::getIant() {
-
-  vector<int> iAnt;
-  map<int,AntennaFunction*>::iterator it;
-  for (it = antFunPtrs.begin(); it != antFunPtrs.end(); ++it)
-    iAnt.push_back(it->first);
-  return iAnt;
-
+vector<enum AntFunType> AntennaSetFSR::getAntFunTypes () {
+  vector<enum AntFunType> antFunTypes;
+  for (auto it=antFunPtrs.begin(); it!=antFunPtrs.end(); ++it)
+    antFunTypes.push_back(it->first);
+  return antFunTypes;
 }
 
 //==========================================================================
@@ -3446,6 +3652,7 @@ void AntennaSetISR::initPtr(Info* infoPtrIn, DGLAP* dglapPtrIn) {
   particleDataPtr = infoPtr->particleDataPtr;
   settingsPtr     = infoPtr->settingsPtr;
   rndmPtr         = infoPtr->rndmPtr;
+  loggerPtr       = infoPtr->loggerPtr;
   dglapPtr        = dglapPtrIn;
   isInitPtr       = true;
 
@@ -3464,29 +3671,32 @@ void AntennaSetISR::init() {
   }
   verbose = settingsPtr->mode("Vincia:verbose");
   if (isInit) {
-    if (verbose >= debug)
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "Already initialized antenna set.");
     return;
   }
 
   // Create antenna objects.
   bool sectorShower = settingsPtr->flag("Vincia:sectorShower");
-  antFunPtrs[iQQemitII]  = new QQEmitII();
-  antFunPtrs[iGQemitII]  = new GQEmitII();
-  antFunPtrs[iGGemitII]  = new GGEmitII();
-  antFunPtrs[iQXsplitII] = new QXSplitII();
-  antFunPtrs[iGXconvII]  = new GXConvII();
-  antFunPtrs[iQQemitIF]  = new QQEmitIF();
-  antFunPtrs[iQGemitIF]  = sectorShower ? new QGEmitIFsec() : new QGEmitIF();
-  antFunPtrs[iGQemitIF]  = new GQEmitIF();
-  antFunPtrs[iGGemitIF]  = sectorShower ? new GGEmitIFsec() : new GGEmitIF();
-  antFunPtrs[iQXsplitIF] = new QXSplitIF();
-  antFunPtrs[iGXconvIF]  = new GXConvIF();
-  antFunPtrs[iXGsplitIF] = sectorShower ? new XGSplitIFsec() : new XGSplitIF();
+  antFunPtrs[QQEmitII]  = new AntQQEmitII();
+  antFunPtrs[GQEmitII]  = new AntGQEmitII();
+  antFunPtrs[GGEmitII]  = new AntGGEmitII();
+  antFunPtrs[QXConvII] = new AntQXConvII();
+  antFunPtrs[GXConvII]  = new AntGXConvII();
+  antFunPtrs[QQEmitIF]  = new AntQQEmitIF();
+  antFunPtrs[QGEmitIF]  = sectorShower ? new AntQGEmitIFsec() :
+    new AntQGEmitIF();
+  antFunPtrs[GQEmitIF]  = new AntGQEmitIF();
+  antFunPtrs[GGEmitIF]  = sectorShower ? new AntGGEmitIFsec() :
+    new AntGGEmitIF();
+  antFunPtrs[QXConvIF] = new AntQXConvIF();
+  antFunPtrs[GXConvIF]  = new AntGXConvIF();
+  antFunPtrs[XGSplitIF] = sectorShower ? new AntXGSplitIFsec() :
+    new AntXGSplitIF();
 
   // Loop through antFunPtrs and initialize.
-  for (map<int,AntennaFunctionIX*>::iterator antFunPtrIt = antFunPtrs.begin();
-       antFunPtrIt != antFunPtrs.end(); ++antFunPtrIt) {
+  for (auto antFunPtrIt = antFunPtrs.begin(); antFunPtrIt != antFunPtrs.end();
+       ++antFunPtrIt) {
 
     // Initialize antenna pointers, antenna.
     AntennaFunction* antFunPtr = antFunPtrIt->second;
@@ -3497,13 +3707,12 @@ void AntennaSetISR::init() {
     if (settingsPtr->flag("Vincia:checkAntennae"))
       pass = pass && antFunPtr->check();
 
-    // Debug info.
+    // VinciaConstants::DEBUG info.
     if (pass) {
-      if (verbose > normal) printOut(__METHOD_NAME__, "Added to antenna list: "
-        + antFunPtr->vinciaName());
-    } else if (verbose >= quiet)
-      infoPtr->errorMsg("Warning in "+__METHOD_NAME__
-        +": one or more consistency checks failed.");
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "Added to antenna list: " + antFunPtr->vinciaName());
+    } else
+      loggerPtr->WARNING_MSG("one or more consistency checks failed");
   }
   isInit = true;
 
@@ -3511,16 +3720,13 @@ void AntennaSetISR::init() {
 
 //--------------------------------------------------------------------------
 
-// Method to return all iAntPhys values that are defined in antFunPtr.
+// Method to return a list of all AntFunTypes in this set.
 
-vector<int> AntennaSetISR::getIant() {
-
-  vector<int> iAnt;
-  map<int,AntennaFunctionIX*>::iterator it;
-  for (it = antFunPtrs.begin(); it != antFunPtrs.end(); ++it)
-    iAnt.push_back(it->first);
-  return iAnt;
-
+vector<enum AntFunType> AntennaSetISR::getAntFunTypes () {
+  vector<enum AntFunType> antFunTypes;
+  for (auto it=antFunPtrs.begin(); it!=antFunPtrs.end(); ++it)
+    antFunTypes.push_back(it->first);
+  return antFunTypes;
 }
 
 //==========================================================================
@@ -3532,16 +3738,19 @@ vector<int> AntennaSetISR::getIant() {
 
 // Initialize pointers.
 
-void MECs::initPtr(Info* infoPtrIn, VinciaMG5MEs* mg5mesPtrIn,
-  VinciaCommon* vinComPtrIn) {
+void MECs::initPtr(Info* infoPtrIn, ExternalMEsPtr mg5mesPtrIn,
+  VinciaCommon* vinComPtrIn, Resolution* resPtrIn) {
 
-  infoPtr            = infoPtrIn;
-  settingsPtr        = infoPtr->settingsPtr;
-  rndmPtr            = infoPtr->rndmPtr;
-  partonSystemsPtr   = infoPtr->partonSystemsPtr;
-  mg5mesPtr          = mg5mesPtrIn;
-  vinComPtr          = vinComPtrIn;
-  isInitPtr          = true;
+  infoPtr          = infoPtrIn;
+  particleDataPtr  = infoPtr->particleDataPtr;
+  partonSystemsPtr = infoPtr->partonSystemsPtr;
+  rndmPtr          = infoPtr->rndmPtr;
+  settingsPtr      = infoPtr->settingsPtr;
+  loggerPtr        = infoPtr->loggerPtr;
+  mg5mesPtr        = mg5mesPtrIn;
+  vinComPtr        = vinComPtrIn;
+  resolutionPtr    = resPtrIn;
+  isInitPtr        = true;
 
 }
 
@@ -3551,32 +3760,65 @@ void MECs::initPtr(Info* infoPtrIn, VinciaMG5MEs* mg5mesPtrIn,
 
 void MECs::init() {
 
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+
   // MEC settings.
   verbose            = settingsPtr->mode("Vincia:verbose");
+  modeMECs           = settingsPtr->mode("Vincia:modeMECs");
   maxMECs2to1        = settingsPtr->mode("Vincia:maxMECs2to1");
   maxMECs2to2        = settingsPtr->mode("Vincia:maxMECs2to2");
   maxMECs2toN        = settingsPtr->mode("Vincia:maxMECs2toN");
   maxMECsResDec      = settingsPtr->mode("Vincia:maxMECsResDec");
   maxMECsMPI         = settingsPtr->mode("Vincia:maxMECsMPI");
-  matchingFullColour = settingsPtr->flag("Vincia:matchingFullColour");
   nFlavZeroMass      = settingsPtr->mode("Vincia:nFlavZeroMass");
-  if (maxMECs2to2 == 0) maxMECsMPI = 0;
   sizeOutBornSav.clear();
 
-  // Initialise MG5 interface
-  if (mg5mesPtr->init()) {
-    mg5mesPtr->setColourDepth(matchingFullColour);
-  } else {
-    if (verbose >= 3) printOut("Vincia::MECs",
-      "Could not initialise VinciaMG5MEs interface.");
-    maxMECs2to1   = -1;
-    maxMECs2to2   = -1;
-    maxMECs2toN   = -1;
-    maxMECsResDec = -1;
-    maxMECsMPI    = -1;
-  }
-  isInit = true;
+  // Some settings hardcoded for now.
+  matchingFullColour = false;
+  matchingScaleIsAbs = false;
+  matchingScale      = 0.05;
+  q2Match            = pow2(matchingScale);
+  matchingRegOrder   = 2;
+  matchingRegShape   = 1;
+  matchingIRcutoff   = 2.;
 
+  // Sanity checks.
+  // MECs currently not supported.
+  if (modeMECs > 0) {
+    loggerPtr->ERROR_MSG("matrix-element corretions not yet supported");
+    isInit = false;
+    return;
+  }
+
+  // Initialise MG5 interface
+  if (mg5mesPtr != nullptr && mg5mesPtr->initVincia(infoPtr)) {
+    //TODO fix colour depth in MG5 interface.
+    mg5mesPtr->setColourMode(1);
+  } else {
+    if (verbose >= Logger::REPORT) printOut(__METHOD_NAME__,
+      "Could not initialise VinciaMG5MEs interface");
+    // Check if we wanted to do matching.
+    if (modeMECs > 0) {
+      // Abort. We should not try to do anything.
+      isInit = false;
+      return;
+    }
+    // Set everything explicitly to negative values, but continue.
+    else {
+      maxMECs2to1   = -1;
+      maxMECs2to2   = -1;
+      maxMECs2toN   = -1;
+      maxMECsResDec = -1;
+      maxMECsMPI    = -1;
+    }
+  }
+  // Pass MG5 and random number pointer to helicity sampler.
+  helSampler.initPtrs(mg5mesPtr, rndmPtr);
+
+  isInit = true;
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
 }
 
 //--------------------------------------------------------------------------
@@ -3585,12 +3827,14 @@ void MECs::init() {
 
 bool MECs::prepare(const int iSys, Event& event) {
 
+  // If we switched off MECs completely, return here.
+  if (modeMECs < 0) return false;
+
   // Initialise for no MECs, then check if MECs should be applied.
   int nAll    = partonSystemsPtr->sizeAll(iSys);
   int nOut    = partonSystemsPtr->sizeOut(iSys);
   bool isHard = (iSys == 0 && nAll - nOut == 2);
   bool isMPI  = (iSys >= 1 && nAll - nOut == 2);
-  sizeOutBornSav[iSys] = nOut;
 
   // Check if MECs are switched on for this type of Born system.
   if (isHard) {
@@ -3603,22 +3847,43 @@ bool MECs::prepare(const int iSys, Event& event) {
     if (maxMECsResDec < 0) return false;
   }
 
-  // Make vectors of ID codes.
-  vector<int> idIn, idOut;
-  if (partonSystemsPtr->hasInAB(iSys)) {
-    idIn.push_back(event[partonSystemsPtr->getInA(iSys)].id());
-    idIn.push_back(event[partonSystemsPtr->getInB(iSys)].id());
-  } else if (partonSystemsPtr->hasInRes(iSys))
-    idIn.push_back(event[partonSystemsPtr->getInRes(iSys)].id());
-  for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i)
-    idOut.push_back(event[partonSystemsPtr->getOut(iSys, i)].id());
+  // Save Born multiplicity and number of QCD particles in Born.
+  sizeOutBornSav[iSys] = nOut;
+  sysToBornMultQCD[iSys] = 0;
+  int sizeSys = partonSystemsPtr->sizeAll(iSys);
+  for (int iPtcl(0); iPtcl<sizeSys; ++iPtcl) {
+    int iNow = partonSystemsPtr->getAll(iSys, iPtcl);
+    if (event[iNow].isQuark() || event[iNow].isGluon())
+      sysToBornMultQCD[iSys]++;
+  }
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "Saved Born with " << nOut << " outgoing particles"
+       << " and " << sysToBornMultQCD[iSys] << " QCD particles.";
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  // When using relative matching scale, save hard scale.
+  if (!matchingScaleIsAbs) {
+    if (!saveHardScale(iSys, event)) {
+      loggerPtr->ERROR_MSG("failed to save hard scale for system "
+        +to_string(iSys));
+      return false;
+    }
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Saved hard scale " << sqrt(sysToHardScale[iSys])
+         << " GeV for system " << iSys << ".";
+      printOut(__METHOD_NAME__, ss.str());
+    }
+  }
+
+  // Save that we do not yet have calculated any matrix elements.
+  hasME2now[iSys]  = false;
+  hasME2post[iSys] = false;
 
   // Check whether MG5MEs interface has the process.
-#ifdef MG5MES
-  set<int> sChan;
-  return mg5mesPtr->getProcess(idIn, idOut, sChan) != nullptr;
-#endif
-  return false;
+  return meAvailable(iSys, event);
 
 }
 
@@ -3626,7 +3891,10 @@ bool MECs::prepare(const int iSys, Event& event) {
 
 // Function to assign helicities to particles (using MEs).
 
-bool MECs::polarise(const int iSys, Event& event) {
+bool MECs::polarise(const int iSys, Event& event, bool force) {
+
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
 
   // First check if we should be doing anything at all.
   if (partonSystemsPtr->hasInAB(iSys)) {
@@ -3643,114 +3911,84 @@ bool MECs::polarise(const int iSys, Event& event) {
   // Resonance-Decay systems
   } else {if (maxMECsResDec <= -1) return false;}
 
-  // If state does not already have one or more assigned helicities,
-  // check if we can polarise it.
-  bool checkIncoming = true;
-  if (!isPolarised(iSys, event, checkIncoming)) {
+  // Check if all particles in state already have assigned helicities.
+  // Else see if we can assign helicities.
+  if (!isPolarised(iSys, event) || force) {
 
-    // Extract particles to use for ME evaluations (incoming first)/
-    vector<Particle> parts = makeParticleList(iSys, event);
-    if (parts.size() <= 2) return false;
-    int nIn = partonSystemsPtr->hasInRes(iSys) ? 1 : 2;
+    // Extract particles to use for ME evaluations (incoming first)
+    vector<Particle> state = vinComPtr->makeParticleList(iSys, event);
 
-    // Verbose output.
-    if (verbose >= 4) cout << " MECs::polarise(): system " << iSys << " nIn = "
-                           << nIn << endl;
-    // Check if MG5MEs interface can do this.
-    if (!mg5mesPtr->selectHelicities(parts, nIn)) return false;
+    // Check if we can polarise this state.
+    if (!polarise(state, force)) return false;
 
     // Update particles in event record: incoming.
-    if (nIn == 1) event[partonSystemsPtr->getInRes(iSys)].pol(parts[0].pol());
+    int nIn = 2;
+    if (partonSystemsPtr->hasInAB(iSys)) {
+      event[partonSystemsPtr->getInA(iSys)].pol(state[0].pol());
+      event[partonSystemsPtr->getInB(iSys)].pol(state[1].pol());
+    }
     else {
-      event[partonSystemsPtr->getInA(iSys)].pol(parts[0].pol());
-      event[partonSystemsPtr->getInB(iSys)].pol(parts[1].pol());
+      nIn = 1;
+      event[partonSystemsPtr->getInRes(iSys)].pol(state[0].pol());
     }
 
     // Update particles in event record: outgoing.
     for (int iOut = 0; iOut < partonSystemsPtr->sizeOut(iSys); ++iOut) {
       int iEvent = partonSystemsPtr->getOut(iSys,iOut);
-      int iParts = iOut + nIn;
-      event[iEvent].pol(parts[iParts].pol());
+      int iState = iOut + nIn;
+      event[iEvent].pol(state[iState].pol());
     }
   }
 
   // Verbose output (showing polarisations).
-  if (verbose >= 9) event.list(true);
+  if (verbose >= VinciaConstants::DEBUG) {
+    event.list(true);
+    printOut(__METHOD_NAME__, "end", DASHLEN);
+  }
 
-  // All is well: return true if any particles remain with assigned helicities.
-  return isPolarised(iSys,event,true);
+  // All is well.
+  return true;
 
 }
 
 //--------------------------------------------------------------------------
 
-// Make list of particles as vector<Particle>.
+bool MECs::polarise(vector<Particle>& state, bool force) {
 
-vector<Particle> MECs::makeParticleList(const int iSys, const Event& event,
-  const vector<Particle> pNew, const vector<int> iOld) {
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
-  // Put incoming ones (initial-state partons or decaying resonance) first.
-  vector<Particle> state;
-  if (partonSystemsPtr->hasInAB(iSys)) {
-    int iA = partonSystemsPtr->getInA(iSys);
-    int iB = partonSystemsPtr->getInB(iSys);
-    for (int j = 0; j < (int)iOld.size(); ++j) {
-      // Exclude any partons in old state that should be replaced.
-      if (iOld[j] == iA) iA = -1;
-      if (iOld[j] == iB) iB = -1;
-    }
-    if (iA >= 0) state.push_back(event[iA]);
-    if (iB >= 0) state.push_back(event[iB]);
-  } else if (partonSystemsPtr->hasInRes(iSys)) {
-    int iRes = partonSystemsPtr->getInRes(iSys);
-    for (int j = 0; j < (int)iOld.size(); ++j) {
-      // Exclude any partons in old state that should be replaced.
-      if (iOld[j] == iRes) iRes = -1;
-    }
-    if (iRes >= 0) state.push_back(event[iRes]);
-  }
-  // Add any post-branching incoming particles.
-  for (int j = 0; j < (int)pNew.size(); ++j) {
-    if (!pNew[j].isFinal()) state.push_back(pNew[j]);
+  if (state.size() <= 2) return false;
+
+  int nIn = 0;
+  for (int i=0; i<(int)state.size(); ++i) {
+    if (state[i].status() < 0) ++nIn;
+    if (nIn == 2) break;
   }
 
-  // Sanity check; must have at least 1 incoming particle.
-  if (state.size() == 0) {
-    if (verbose >= 5) cout << "Vincia::MECs::makeParticleList(): problem: "
-        "could not identify incoming or decaying particle." << endl;
-    if (verbose >= 9) event.list();
-    return state;
-  }
-
-  // Then put outgoing ones.
-  for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i) {
-    int i1 = partonSystemsPtr->getOut(iSys, i);
-    // Do not add any that are marked as branched.
-    for (int j = 0; j < (int)iOld.size(); ++j) {if (iOld[j] == i1) i1 = -1;}
-    if (i1 >= 0) state.push_back(event[i1]);
-  }
-  // Add any post-branching outgoing partons.
-  for (int j=0; j<(int)pNew.size(); ++j)
-    if (pNew[j].isFinal()) state.push_back(pNew[j]);
-
-  // Return the state.
-  return state;
+  // Check if helicity sampler can do this.
+  return helSampler.selectHelicities(state, force);
 
 }
 
 //--------------------------------------------------------------------------
 
-// Check if state already has helicities.
+// Check if all partons in state have helicities.
+// Optionally check if *any* particle has helicity (checkAll = false).
 
-bool MECs::isPolarised(int iSys, Event& event, bool checkIncoming) {
+bool MECs::isPolarised(int iSys, Event& event, bool checkAll) {
 
   for (int i = 0; i < partonSystemsPtr->sizeAll(iSys); ++i) {
     int ip = partonSystemsPtr->getAll(iSys,i);
     if (ip == 0) continue;
-    if (event[ip].isFinal() || checkIncoming)
-        if (event[ip].pol() != 9) return true;
+    if (event[ip].pol() != 9) {
+      if (!checkAll) return true;
+      else continue;
+    }
+    int spinType = particleDataPtr->spinType(event[ip].idAbs());
+    if (spinType != 1) return false;
   }
-  return false;
+  return true;
 
 }
 
@@ -3760,21 +3998,32 @@ bool MECs::isPolarised(int iSys, Event& event, bool checkIncoming) {
 
 bool MECs::doMEC(int iSys, int nBranch) {
 
+  // If we switched off MECs completely, return here.
+  if (modeMECs < 0) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "MECs switched off.");
+    return false;
+  }
+
   // MECs in resonance decays.
   bool isResDec = partonSystemsPtr->hasInRes(iSys);
-  if (isResDec) {if (nBranch <= maxMECsResDec) return true;
-
+  if (isResDec) {
+    if (nBranch <= maxMECsResDec) return true;
+  }
   // MECs in Scattering Processes.
-  } else {
+  else {
     // Hard processes.
     if (iSys == 0) {
-      if (sizeOutBorn(iSys) == 1 && nBranch <= maxMECs2to1) return true;
-      if (sizeOutBorn(iSys) == 2 && nBranch <= maxMECs2to2) return true;
-      if (sizeOutBorn(iSys) >= 3 && nBranch <= maxMECs2toN) return true;
-
+      if (sizeOutBornSav[iSys] == 1 && nBranch <= maxMECs2to1) return true;
+      if (sizeOutBornSav[iSys] == 2 && nBranch <= maxMECs2to2) return true;
+      if (sizeOutBornSav[iSys] >= 3 && nBranch <= maxMECs2toN) return true;
+    }
     // MPI.
-    } else if (iSys == 1) {if (nBranch <= maxMECsMPI) return true;}
+    else if (iSys == 1) if (nBranch <= maxMECsMPI) return true;
   }
+
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "No MECs at this order.");
 
   // If nobody said yes by now, return the sad news.
   return false;
@@ -3783,15 +4032,234 @@ bool MECs::doMEC(int iSys, int nBranch) {
 
 //--------------------------------------------------------------------------
 
+// Check whether we have a matrix element for a given configuration.
+
+bool MECs::meAvailable(int iSys, const Event& event) {
+  // Make vectors of ID codes.
+  vector<int> idIn, idOut;
+  if (partonSystemsPtr->hasInAB(iSys)) {
+    idIn.push_back(event[partonSystemsPtr->getInA(iSys)].id());
+    idIn.push_back(event[partonSystemsPtr->getInB(iSys)].id());
+  }
+  else if (partonSystemsPtr->hasInRes(iSys))
+    idIn.push_back(event[partonSystemsPtr->getInRes(iSys)].id());
+  for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i)
+    idOut.push_back(event[partonSystemsPtr->getOut(iSys, i)].id());
+  bool avail = mg5mesPtr->isAvailable(idIn, idOut);
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "Matrix element for ";
+    for (auto& i : idIn) ss << i << " ";
+    ss << "-> ";
+    for (auto& i : idOut) ss << i << " ";
+    ss << (avail ? "is available." : "not available.");
+    printOut(__METHOD_NAME__, ss.str());
+  }
+  return avail;
+}
+
+bool MECs::meAvailable(const vector<Particle>& state) {
+  // Make vectors of ID codes.
+  vector<int> idIn, idOut;
+  for (const auto& p : state) {
+    if (!p.isFinal()) idIn.push_back(p.id());
+    else idOut.push_back(p.id());
+  }
+  return mg5mesPtr->isAvailable(idIn, idOut);
+}
+
+//--------------------------------------------------------------------------
+
 // Get squared matrix element.
 
-double MECs::getME2(const vector<Particle> state, int nIn) {
-  return mg5mesPtr->ME2(state, nIn);}
+double MECs::getME2(const vector<Particle>& state, int ) {
+  return mg5mesPtr->calcME2(state);}
 
 double MECs::getME2(const int iSys, const Event& event) {
-  vector<Particle> state = makeParticleList(iSys, event);
+  vector<Particle> state = vinComPtr->makeParticleList(iSys, event);
+  return mg5mesPtr->calcME2(state);}
+
+//--------------------------------------------------------------------------
+
+// Get matrix element correction factor.
+
+double MECs::getMECSector(int iSys, const vector<Particle>& stateNow,
+  const vector<Particle>& statePost, VinciaClustering& clus) {
+
+  // VinciaConstants::DEBUG output.
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__,"Computing MEC factor for:");
+    vinComPtr->list(statePost, "Post Branching", false);
+    vinComPtr->list(stateNow, "Current");
+  }
+
+  // Check whether we have matrix elements for the two states.
+  if (!meAvailable(stateNow)) {
+    loggerPtr->WARNING_MSG(
+      "matrix element for current configuration not available");
+    return 1.;
+  }
+  if (!meAvailable(statePost)) {
+    loggerPtr->WARNING_MSG(
+      "matrix element for post-branching configuration not available");
+    hasME2post[iSys] = false;
+    return 1.;
+  }
+
+  // Check whether we are below IR cutoff.
+  double qNow = sqrt(resolutionPtr->q2evol(clus));
+  if (qNow < matchingIRcutoff) {
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Evolution scale pT = " << qNow
+         << " below IR cutoff (" << matchingIRcutoff << ").";
+      printOut(__METHOD_NAME__,ss.str());
+    }
+    hasME2post[iSys] = false;
+    return 1.;
+  }
+
+  // If regularising this order, get matching weight.
+  double wMatch = 1.;
+  if (doRegMatch(iSys, statePost)) {
+    wMatch = getMatchReg(iSys, clus);
+    // Sanity checks.
+    if (wMatch < 0.) {
+      loggerPtr->ERROR_MSG("negative matching weight",
+        "("+num2str(wMatch,6)+")");
+      return 1.;
+    }
+    if (wMatch > 1.) {
+      loggerPtr->ERROR_MSG("matching weight above unity",
+        "("+num2str(wMatch,6)+")");
+      return 1.;
+    }
+
+    // Check whether we want to calculate a MEC.
+    if (wMatch == 0.) {
+      if (verbose >= VinciaConstants::DEBUG)
+        printOut(__METHOD_NAME__, "below matching scale; no MEC calculated");
+      hasME2post[iSys] = false;
+      return 1.;
+    }
+    else if (verbose >= VinciaConstants::DEBUG) {
+      string reg = " (cutoff)";
+      if (matchingRegShape == 1) reg = " (sigmoid regulator)";
+      else if (matchingRegShape == 2) reg = " (linear regulator)";
+      else if (matchingRegShape == 3) reg = " (logarithmic regulator)";
+      stringstream ss;
+      ss << "matching weight: " << wMatch << reg;
+      printOut(__METHOD_NAME__, ss.str());
+    }
+  }
+  else if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "not regularising this order");
+
+  // Get number of incoming particles.
   bool isResDec = partonSystemsPtr->hasInRes(iSys);
-  return (isResDec) ? mg5mesPtr->ME2(state, 1 ): mg5mesPtr->ME2(state, 2);
+  int nIn = isResDec ? 1 : 2;
+
+  // Get matrix element for post-branching state.
+  me2post[iSys] = getME2(statePost, nIn);
+  // Sanity check.
+  if (me2post[iSys] <= 0.) {
+    loggerPtr->ERROR_MSG("negative post-branching matrix element squared");
+    hasME2post[iSys] = false;
+    return 1.;
+  }
+  else if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "calculated new post-branching ME2 in system "
+       << iSys << " (ME2 = " << num2str(me2post[iSys],9) << ")";
+    printOut(__METHOD_NAME__, ss.str());
+  }
+  hasME2post[iSys] = true;
+
+  // Get matrix element for current state
+  // (only if state has changed since last matching).
+  if (!hasME2now[iSys]) {
+    me2now[iSys] = getME2(stateNow, nIn);
+    // Sanity check.
+    if (me2now[iSys] <= 0.) {
+      loggerPtr->ERROR_MSG("negative matrix element squared");
+      return 1.;
+    }
+    else if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "calculated new ME2 for current state in system "
+         << iSys << " (ME2 = " << num2str(me2now[iSys],9) << ")";
+      printOut(__METHOD_NAME__, ss.str());
+    }
+    hasME2now[iSys] = true;
+  }
+  else if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "using saved ME2 for current state in system "
+       << iSys << " (ME2 = " << num2str(me2now[iSys],9) << ")";
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  // Calculate antenna function.
+  double ant = getAntApprox(clus);
+  // Sanity check.
+  if (ant <= 0.) {
+    loggerPtr->ERROR_MSG("negative antenna function");
+    return 1.;
+  }
+  else if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "antenna function in system "
+       << iSys << " (ant = " << num2str(ant,6) << ")";
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+
+  // Calculate colour weight. Just 1, when not matching at full colour.
+  double wCol = getColWeight(statePost);
+  // Sanity check.
+  if (wCol < 0.) {
+    loggerPtr->ERROR_MSG("negative colour weight");
+    return 1.;
+  }
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "colour weight: " << wCol
+       << (matchingFullColour == 1 ? " (Vincia Colour)" : " (LC)");
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+
+  // Calculate shower-subtracted matrix element correction.
+  // Note: just a simple ratio for the sector shower.
+  double appr = ant * me2now[iSys];
+  double mec = (wCol * me2post[iSys]) - appr;
+
+  // Calculate correction factor including matching weight.
+  double pMEC = 1. + wMatch * mec / appr;
+
+  return pMEC;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Upon branching, save last post-branching ME2.
+
+void MECs::hasBranched(int iSys) {
+  // VinciaConstants::DEBUG print out.
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "saving last post-branching ME2 as current one (ME2 = "
+       << num2str(me2post[iSys],9) << ")";
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  // The last post-branching ME2 is now the current ME2.
+  if (hasME2post[iSys]) {
+    me2now[iSys] = me2post[iSys];
+    hasME2now[iSys] = true;
+  }
+  else hasME2now[iSys] = false;
 }
 
 //--------------------------------------------------------------------------
@@ -3803,43 +4271,36 @@ void MECs::header() {
   // Front matter.
   bool doPolarise = (maxMECs2to1 >= 0) || (maxMECs2to2 >= 0)
     || (maxMECs2toN >= 0) || (maxMECsResDec >= 0);
-  bool doMecs = (maxMECs2to1 >= 1) || (maxMECs2to2 >= 1)
-    || (maxMECs2toN >= 1) || (maxMECsResDec >= 1);
   cout << " |\n | MECs (-1:off, 0:selectHelicities, >=1:nMECs): ";
   if (doPolarise) {
-    cout <<"\n |                 maxMECs2to1               = "
+    cout << endl;
+    cout << " |                 modeMECs              = "
+         << num2str(modeMECs, 9) << "\n"
+         << " |                 maxMECs2to1           = "
          << num2str(maxMECs2to1, 9) << "\n"
-         << " |                 maxMECs2to2               = "
+         << " |                 maxMECs2to2           = "
          << num2str(maxMECs2to2, 9) << "\n"
-         <<" |                 maxMECs2toN               = "
+         << " |                 maxMECs2toN           = "
          << num2str(maxMECs2toN, 9) << "\n"
-         <<" |                 maxMECsResDec             = "
+         << " |                 maxMECsResDec         = "
          << num2str(maxMECsResDec, 9) <<"\n";
 
     // Setings.
-    if (doMecs) {
-      cout << " |                 matchingFullColour   = "
+    if (modeMECs > 0) {
+      cout << " |                 matchingFullColour    = "
            << bool2str(matchingFullColour, 9) << "\n";
-      int matchingRegOrder      = settingsPtr->mode("Vincia:matchingRegOrder");
-      int matchingRegShape      = settingsPtr->mode("Vincia:matchingRegShape");
-      double matchingScale      = settingsPtr->parm("Vincia:matchingRegScale");
-      bool matchingScaleIsAbs   =
-        settingsPtr->flag("Vincia:matchingRegScaleIsAbsolute");
-      double matchingScaleRatio =
-        settingsPtr->parm("Vincia:matchingRegScaleRatio");
-      double matchingIRcutoff   = settingsPtr->parm("Vincia:matchingIRcutoff");
-      cout << " |                 regOrder             = "
+      cout << " |                 regOrder              = "
            << num2str(matchingRegOrder, 9) << endl;
       if (matchingScaleIsAbs)
-        cout << " |                 regScale             = "
+        cout << " |                 matchingScale (GeV)   = "
              << num2str(matchingScale, 9) << endl;
       else
-        cout << " |                 regScaleRatio        = "
-             << num2str(matchingScaleRatio, 9) << endl;
-      if (verbose >= 2)
-        cout << " |                 regShape             = "
+        cout << " |                 matchingScale (Ratio) = "
+             << num2str(matchingScale, 9) << endl;
+      if (verbose >= Logger::REPORT)
+        cout << " |                 regShape              = "
              << num2str(matchingRegShape, 9) << endl;
-      cout << " |                 IR cutoff            = "
+      cout << " |                 IR cutoff             = "
            << num2str(matchingIRcutoff, 9) << endl;
     }
 
@@ -3850,6 +4311,170 @@ void MECs::header() {
   }
   else cout << bool2str(false, 9) << "\n";
 
+}
+
+//--------------------------------------------------------------------------
+
+// Private functions.
+
+//--------------------------------------------------------------------------
+
+// Save hard scale in current process.
+
+bool MECs::saveHardScale(int iSys, Event& /*event*/) {
+
+  // Currently only sHat.
+  //TODO: better/different choices? pTHat for 2 -> 2?
+  double qHard = partonSystemsPtr->getSHat(iSys);
+
+  // Sanity check.
+  if (qHard <= 0.) return false;
+  sysToHardScale[iSys] = qHard;
+
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+bool MECs::doRegMatch(int iSys, const vector<Particle>& state) {
+  // Not regularising corrections at all.
+  if (matchingRegOrder == 0) return false;
+
+  // Get number of QCD particles.
+  int nQCDnow = 0;
+  for (const auto& p : state)
+    if (p.isQuark() || p.isGluon()) ++nQCDnow;
+
+  if (nQCDnow - sysToBornMultQCD[iSys] >= matchingRegOrder) return true;
+  return false;
+}
+
+//--------------------------------------------------------------------------
+
+// Matching regulator.
+
+double MECs::getMatchReg(int iSys, const VinciaClustering& clus) {
+
+  // Get current scale.
+  double q2Now = clus.q2evol;
+  if (!matchingScaleIsAbs) q2Now /= sysToHardScale[iSys];
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "MEC requested at scale qNow = "
+       << sqrt(q2Now) << (matchingScaleIsAbs ? " GeV" : " (relative)");
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  // Sharp cutoff.
+  if (matchingRegShape == 0) {
+    if (q2Now < q2Match) return 0.;
+    else return 1.;
+  }
+  // Sigmoidal interpolation.
+  else if (matchingRegShape == 1) {
+    if (q2Now < q2Match/2.) return 0.;
+    else if (q2Now > 2.*q2Match) return 1.;
+    else return 1./(1. + exp(16.*(1. - q2Now/q2Match)));
+  }
+  // Linear interpolation.
+  else if (matchingRegShape == 2) {
+    if (q2Now < q2Match/2.) return 0.;
+    else if(q2Now > 2.*q2Match) return 1.;
+    else return 2./3.*q2Now/q2Match - 1./3.;
+  }
+  // Logarithmic interpolation.
+  else if (matchingRegShape == 3) {
+    if (q2Now < q2Match/2.) return 0.;
+    else if(q2Now > 2.*q2Match) return 1.;
+    else return ( log(q2Now/q2Match)/log(2.) + 1.) / 2.;
+  }
+  // ...implement other shapes here.
+
+  // No supported regulator shape requested.
+  loggerPtr->ERROR_MSG("unsupported matching regulator shape");
+  return 0.;
+}
+
+//--------------------------------------------------------------------------
+
+// Antenna function including colour factor.
+
+double MECs::getAntApprox(const VinciaClustering& clus) {
+
+  double ant = -1.;
+
+  // Sanity check: are invariants, masses, and helicities set?
+  if (clus.invariants.size() < 3) {
+    loggerPtr->ERROR_MSG("post-branching invariants not set in clustering");
+    return ant;
+  }
+  if (clus.mDau.size() < 3) {
+    loggerPtr->ERROR_MSG("post-branching masses not set in clustering");
+    return ant;
+  }
+  if (clus.helDau.size() < 3) {
+    loggerPtr->ERROR_MSG("post-branching helicities not set in clustering");
+    return ant;
+  }
+
+  // FSR antenna.
+  if (clus.isFSR) {
+    AntennaFunction* antFunPtr = getAntFunPtrFSR(clus.antFunType);
+    if (antFunPtr == nullptr) {
+      loggerPtr->ERROR_MSG("unknown FSR antenna function with index "
+        + num2str(clus.antFunType,2));
+      return ant;
+    }
+    ant = antFunPtr->antFun(clus.invariants, clus.mDau,
+      clus.helMot, clus.helDau);
+    ant *= antFunPtr->chargeFac();
+  }
+  // ISR antenna.
+  else {
+    AntennaFunction* antFunPtr = getAntFunPtrISR(clus.antFunType);
+    if (antFunPtr == nullptr) {
+      loggerPtr->ERROR_MSG("unknown ISR antenna function with index "
+        + num2str(clus.antFunType,2));
+      return ant;
+    }
+    ant = antFunPtr->antFun(clus.invariants, clus.mDau,
+      clus.helMot, clus.helDau);
+    ant *= antFunPtr->chargeFac();
+  }
+
+  return ant;
+}
+
+//--------------------------------------------------------------------------
+
+// Colour weight to match at full colour.
+
+double MECs::getColWeight(const vector<Particle>& state) {
+
+  // If only leading colour requested return here.
+  if (!matchingFullColour) return 1.;
+
+  // Get FC colour summed ME2.
+  // Second argument tells MG5 to sum over all colour configurations.
+  double me2FC = getME2(state, true);
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+  }
+
+  // Get LC colour summed ME2.
+  // Temporarily set colourdepth to 0 in MG5 interface.
+  mg5mesPtr->setColourMode(0);
+  double me2LC = getME2(state, true);
+  mg5mesPtr->setColourMode(1);
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "ME2(LC) = " << me2LC
+       << ", ME2(FC) = " << me2FC
+       << ", ME2(FC)/ME2(LC) = " << me2FC/me2LC;
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  return me2FC/me2LC;
 }
 
 //==========================================================================

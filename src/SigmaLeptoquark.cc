@@ -1,5 +1,5 @@
 // SigmaLeptoquark.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -111,7 +111,7 @@ void Sigma2qg2LeptoQuarkl::initProc() {
   kCoup    = parm("LeptoQuark:kCoup");
 
   // Read out quark and lepton the LQ couples to.
-  ParticleDataEntry* LQPtr = particleDataPtr->particleDataEntryPtr(42);
+  ParticleDataEntryPtr LQPtr = particleDataPtr->particleDataEntryPtr(42);
   idQuark  = LQPtr->channel(0).product(0);
   idLepton = LQPtr->channel(0).product(1);
 
@@ -251,7 +251,7 @@ void Sigma2qqbar2LQLQbar::initProc() {
   kCoup    = parm("LeptoQuark:kCoup");
 
   // Read out quark and lepton the LQ couples to.
-  ParticleDataEntry* LQPtr = particleDataPtr->particleDataEntryPtr(42);
+  ParticleDataEntryPtr LQPtr = particleDataPtr->particleDataEntryPtr(42);
   idQuark  = LQPtr->channel(0).product(0);
 
    // Secondary open width fraction.

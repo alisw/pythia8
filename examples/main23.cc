@@ -1,10 +1,10 @@
 // main23.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Keywords: external derived class; parton distribution;
-// random number generator; beam momentum; vertex spread;
+//           random number generator; beam momentum; vertex spread
 
 // Examples how to write external derived classes
 // that can be handed to Pythia for internal generation.
@@ -181,12 +181,6 @@ void Scaling::xfUpdate(int, double x, double ) {
   xc    = 0.04 * sea;
   xb    = 0.02 * sea;
 
-  // Subdivision of valence and sea.
-  xuVal = uv;
-  xuSea = xubar;
-  xdVal = dv;
-  xdSea = xdbar;
-
   // idSav = 9 to indicate that all flavours reset.
   idSav = 9;
 
@@ -252,11 +246,8 @@ int main() {
 
     // A class to do random numbers externally. Hand pointer to Pythia.
     // You can provide four 32-bit unsigned integers to set random sequence.
-    RndmEngine* rndm;
-    if (iRNG == 1) {
-      rndm = new MixMaxRndm( 0, 0, 0, 123);
-      pythia.setRndmEnginePtr(rndm);
-    }
+    if (iRNG == 1)
+      pythia.setRndmEnginePtr(make_shared<MixMaxRndm>( 0, 0, 0, 123));
 
     // Two classes to do the two PDFs externally. Hand pointers to Pythia.
     PDFPtr pdfAPtr = make_shared<Scaling>(2212);
@@ -323,9 +314,6 @@ int main() {
     pythia.stat();
     cout << eCM << pXsum << pYsum << pZsum << pZind
          << vtxX << vtxY << vtxZ << vtxT << vtxZT;
-
-    // Remove created classes.
-    if (iRNG == 1) delete rndm;
 
     // Check time; end of loop over random number generators. Done.
     clock_t stop = clock();

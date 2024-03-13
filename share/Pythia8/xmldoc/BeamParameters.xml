@@ -77,7 +77,7 @@ class instance.
 </option> 
 </modepick> 
  
-<parm name="Beams:eCM" default="14000." min="10."> 
+<parm name="Beams:eCM" default="14000." min="0."> 
 Collision CM energy, to be set if <code>Beams:frameType</code> = 1. 
 </parm> 
  
@@ -187,7 +187,21 @@ of particles three and four to 100 GeV and 50 GeV, respectively, provided
 that these particles have status 1. 
 </flag> 
  
-<h3>Variable collision energy</h3> 
+<flag name="Beams:setDipoleShowerStartingScalesFromLHEF" default="off"> 
+If enabled, the parton shower starting scales for emissions of 
+individual radiator-recoiler pairs in the final-state showers will be 
+set by auxiliary informaton provided in an input Les Houches 
+event. This settings relies on the use of LHEF 3.0, and the existence 
+of the <ei>&lt;scales&gt;</ei> tag for each event. It is assumed that 
+the <ei>&lt;scales&gt;</ei> tag contains multiple attributes with 
+names <code>scalup_r_s</code>, where <code>r</code> gives the position 
+of the radiating particle, and <code>s</code> determines the position 
+of the recoiling particle, and where <code>r, s</code> may range from 
+zero to the sum of initial and final-state particles. 
+</flag> 
+ 
+ 
+<h3>Variable collision energy and particle type</h3> 
  
 There are two different machineries that can provide an event-by-event 
 spread of collision energies. The one in this section is intended 
@@ -211,12 +225,16 @@ initialization. The MPI framework is what is needed to simulate
 hadronic nondiffractive events (<code>SoftQCD:nonDiffractive</code>). 
 Pretty much the same strategy is already used for diffraction, to handle 
 MPIs inside the variable-mass diffractive systems. Thus all the 
-<aloc href="QCDProcesses">Soft QCD processes</aloc> can be used 
-within this framework. It is not possible to generate other processes 
-with this framework, however, and the program will abort if you try. 
+<aloc href="QCDSoftProcesses">Soft QCD processes</aloc> can be used 
+within this framework. Below the minimal energy for a perturbative 
+description (see below) instead the simplified 
+<aloc href="QCDLowEnergyProcesses">Low-energy QCD processes</aloc> 
+can be used. It is not possible to generate other processes 
+with the variable-energy framework, however, and the program will abort 
+if you try. 
  
 <p/> 
-The initalization of involves setting up optimal coefficients for 
+The initialization involves setting up optimal coefficients for 
 the kinematics selection in the subsequent MPI generation, and 
 finding the associated maximum of the differentialcross section. 
 At a fixed energy this typically takes less than a second, and so 
@@ -263,28 +281,29 @@ The current parameter is this <ei>e_width.</ei>
 </parm> 
  
 <p/> 
-To input the variable energy, the normal argument-less 
-<code>Pythia::next()</code> method has three siblings that take 
-relevent arguments as required by the <code>Beams:frameType</code>. 
+When variable energy is enabled, the <code>setKinematics</code> methods 
+can be used to change the beam energies. The method used must match the frame 
+type as specified by <code>Beams:frameType</code>. 
  
-<method name="bool Pythia::next(double eCM)"> 
-events created by the collision of two particles coming in along the 
-<ei>+-z</ei> axis in their common rest frame, with the CM energy as 
-argument, to be used for <code>Beams:frameType = 1</code>. 
-</method> 
+There is also a limited support for changing beam particles using the 
+<code>setBeamIDs</code> method. Using this method, <code>idA</code> can 
+be changed to any hadron, while <code>idB</code> must be a proton or a 
+neutron when using this feature. This is useful for example in 
+hadronic cascades in a medium. It is here assumed that only 
+the <code>SoftQCD</code> (and <code>LowEnergyQCD</code> if relevant) 
+hadron-nucleon processes are being used. 
  
-<method name="bool Pythia::next(double eA, double eB)"> 
-events created by the collision of two particles coming in along the 
-<ei>+-z</ei> axis, with the respective energies as arguments, to be 
-used for <code>Beams:frameType = 2</code>. 
-</method> 
+In order to change <code>idA</code> with any of the <code>next</code> 
+methods above, the beam configuration requires 
+additional setup. To limit the risks of inadvertent use, you need to 
+initialize with <code>Beams:allowIDAswitch = on</code>. The 
+functionality of <code>MultipartonInteractions:setAntiSame = true</code> 
+is used automatically to limit the number of cases to handle. 
  
-<method name="bool Pythia::next(double pxA, double pyA, double pzA, 
-double pxB, double pyB, double pzB)"> 
-events created by two incoming particles with arbitrary three-momenta, 
-to be used for <code>Beams:frameType = 3</code>. 
-</method> 
- 
+<flag name="Beams:allowIDAswitch" default="off"> 
+Switch to initialize for a range of possible projectile hadrons, to 
+hit a target of protons and neutrons. 
+</flag> 
  
 <h3>Beam momentum spread</h3> 
  
@@ -442,4 +461,4 @@ The time <ei>t</ei> of the interaction vertex is centered at this value.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

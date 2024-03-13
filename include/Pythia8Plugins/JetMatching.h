@@ -1,5 +1,5 @@
 // JetMatching.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -87,8 +87,8 @@ class JetMatching : virtual public UserHooks {
 public:
 
   // Constructor and destructor
- JetMatching() : cellJet(NULL), slowJet(NULL), slowJetHard(NULL),
-    hjSlowJet(NULL) {}
+ JetMatching() : cellJet(nullptr), slowJet(nullptr), slowJetHard(nullptr),
+    hjSlowJet(nullptr) {}
  ~JetMatching() {
     if (cellJet) delete cellJet;
     if (slowJet) delete slowJet;
@@ -276,7 +276,7 @@ class JetMatchingMadgraph : virtual public JetMatching {
 public:
 
   // Constructor and destructor
-  JetMatchingMadgraph() : slowJetDJR(NULL) { }
+  JetMatchingMadgraph() : slowJetDJR(nullptr) { }
   ~JetMatchingMadgraph() { if (slowJetDJR) delete slowJetDJR; }
 
   // Initialisation
@@ -1139,21 +1139,21 @@ inline bool JetMatchingMadgraph::initAfterBeams() {
   jetAlgorithm = 2;
   slowJetPower = 1;
   slowJet = new SlowJet(slowJetPower, coneRadius, eTjetMin,
-    etaJetMaxAlgo, 2, 2, NULL, false);
+    etaJetMaxAlgo, 2, 2, nullptr, false);
 
   // For FxFx, also initialise jet algorithm to define matrix element jets.
   // Currently, this only supports the kT-algorithm in SlowJet.
   // Use the QCD distance measure by default.
   slowJetHard = new SlowJet(slowJetPower, coneRadius, qCutME,
-    etaJetMaxAlgo, 2, 2, NULL, false);
+    etaJetMaxAlgo, 2, 2, nullptr, false);
 
   // To access the DJR's
   slowJetDJR = new SlowJet(slowJetPower, coneRadius, qCutME,
-    etaJetMaxAlgo, 2, 2, NULL, false);
+    etaJetMaxAlgo, 2, 2, nullptr, false);
 
   // A special version of SlowJet to handle heavy and other partons
   hjSlowJet = new HJSlowJet(slowJetPower, coneRadius, 0.0,
-    100.0, 1, 2, NULL, false, true);
+    100.0, 1, 2, nullptr, false, true);
 
   // Setup local event records
   eventProcessOrig.init("(eventProcessOrig)", particleDataPtr);
@@ -1372,74 +1372,15 @@ inline void JetMatchingMadgraph::sortIncomingProcess(const Event &event) {
   clearDJR();
   clear_nMEpartons();
 
-  // For FxFx, pre-cluster partons in the event into jets.
-  if (doFxFx) {
+  // Note: Compared to older versions (cf. arXiv:2108.07826):
+  // No more preclustering for FxFx.
 
-    // Get final state partons
-    eventProcess.clear();
-    workEventJet.clear();
-    for( int i=0; i < workEvent.size(); ++i) {
-      // Original AG+Py6 algorithm explicitly excludes tops,
-      // leptons and photons.
-      int id = workEvent[i].idAbs();
-      if ((id >= ID_LEPMIN && id <= ID_LEPMAX) || id == ID_TOP
-        || id == ID_PHOTON || id == 23 || id == 24 || id == 25) {
-        eventProcess.append(workEvent[i]);
-      } else {
-        workEventJet.append(workEvent[i]);
-      }
-    }
+  // Note: Compared to older versions (cf. arXiv:2108.07826):
+  // Set the same eventProcess for both MLM and FxFx. This was done separately
+  // for FxFx before. Add the type 2 selection also for FxFx
 
-    // Initialize SlowJetHard jet algorithm with current working event
-    if (!slowJetHard->setup(workEventJet) ) {
-      errorMsg("Warning in JetMatchingMadgraph:sortIncomingProcess"
-        ": the SlowJet algorithm failed on setup");
-      return;
-    }
-
-    // Get matrix element cut scale.
-    double localQcutSq = qCutMESq;
-    // Cluster in steps to find all hadronic jets at the scale qCutME
-    while ( slowJetHard->sizeAll() - slowJetHard->sizeJet() > 0 ) {
-      // Done if next step is above qCut
-      if( slowJetHard->dNext() > localQcutSq ) break;
-      // Done if we're at or below the number of partons in the Born state.
-      if( slowJetHard->sizeAll()-slowJetHard->sizeJet() <= npNLO()) break;
-      slowJetHard->doStep();
-    }
-
-    // Construct a master copy of the event containing only the
-    // hardest nPartonsNow hadronic clusters. While constructing the event,
-    // the parton type (ID_GLUON) and status (98,99) are arbitrary.
-    int nJets = slowJetHard->sizeJet();
-    int nClus = slowJetHard->sizeAll();
-    int nNow = 0;
-    for (int i = nJets; i < nClus; ++i) {
-      vector<int> parts;
-      if (i < nClus-nJets) parts = slowJetHard->clusConstituents(i);
-      else parts = slowJetHard->constituents(nClus-nJets-i);
-      int flavour = ID_GLUON;
-      for(int j=0; j < int(parts.size()); ++j)
-        if (workEventJet[parts[j]].id() == ID_BOT)
-          flavour = ID_BOT;
-      eventProcess.append( flavour, 98,
-        workEventJet[parts.back()].mother1(),
-        workEventJet[parts.back()].mother2(),
-        workEventJet[parts.back()].daughter1(),
-        workEventJet[parts.back()].daughter2(),
-        0, 0, slowJetHard->p(i).px(), slowJetHard->p(i).py(),
-        slowJetHard->p(i).pz(), slowJetHard->p(i).e() );
-      nNow++;
-    }
-
-    // Done. Clean-up
-    workEventJet.clear();
-
-  // For MLM matching, simply take hard process state from workEvent,
-  // without any preclustering.
-  } else {
-    eventProcess = workEvent;
-  }
+  // For jet matching, simply take hard process state from workEvent.
+  eventProcess = workEvent;
 
   // Sort original process final state into light/heavy jets and 'other'.
   // Criteria:
@@ -1465,10 +1406,19 @@ inline void JetMatchingMadgraph::sortIncomingProcess(const Event &event) {
     if (eventProcess[i].isGluon()
       || (eventProcess[i].idAbs() <= nQmatch) ) {
       orig_idx = 0;
-      // Crucial point: MG puts the scale of a non-QCD particle to eCM. For
-      // such particles, we should keep the default "2"
-      idx = ( eventProcess[i].scale() < 1.999 * sqrt(infoPtr->eA()
-        * infoPtr->eB()) ) ? 0 : 2;
+      if (doFxFx) {
+        // Crucial point FxFx: MG5 puts the scale of a not-to-be-matched
+        // quark 1 MeV lower than scalup. For such particles, we should
+        // keep the default "2"
+        idx = ( trunc(1000.*eventProcess[i].scale())
+             == trunc(1000.*infoPtr->scalup()) ) ? 0 : 2;
+
+      } else {
+        // Crucial point: MG puts the scale of a non-QCD particle to eCM. For
+        // such particles, we should keep the default "2"
+        idx = ( eventProcess[i].scale() < 1.999 * sqrt(infoPtr->eA()
+          * infoPtr->eB()) ) ? 0 : 2;
+      }
     }
 
     // Heavy jets:  all quarks with id greater than nQmatch
@@ -1671,7 +1621,24 @@ inline int JetMatchingMadgraph::matchPartonsToJetsLight() {
   // Count of the number of hadronic jets in SlowJet accounting
   int nCLjets = nClus - nJets;
   // Get number of partons. Different for MLM and FxFx schemes.
-  int nRequested = (doFxFx) ? npNLO() : nParton;
+  // Note: Difference compared to old versions of FxFx (cf. arXiv:2108.07826):
+  // For FxFx, change nRequested subtracting the typeIdx[2] partons
+  // Exclude the highest multiplicity sample in the case of real emissions,
+  // exclude all typeIdx[2] particles (npNLO=multiplicity,
+  // nJetMax=njmax(shower_card), typeIdx[2]="Weak" jets)
+  int nRequested = ( doFxFx
+                   && !(npNLO()==nJetMax
+                   && npNLO()==((int)typeIdx[2].size()-1) ))
+                 ? npNLO()-typeIdx[2].size()
+                 : nParton;
+
+  // Note: Difference compared to old versions of FxFx (cf. arXiv:2108.07826):
+  // For FxFx veto the real emissions that have only typeIdx=2 partons
+  // Exclude the highest multiplicity sample
+  if ( doFxFx && npNLO()<nJetMax && typeIdx[2].size()>0
+    && npNLO()==((int)typeIdx[2].size()-1)) {
+    return MORE_JETS;
+  }
 
   // Veto event if too few hadronic jets
   if ( nCLjets < nRequested ) return LESS_JETS;
@@ -1684,7 +1651,10 @@ inline int JetMatchingMadgraph::matchPartonsToJetsLight() {
     // For FxFx, in the non-highest multipicity, all jets need to matched to
     // partons. For nCLjets > nRequested, this is not possible. Hence, we can
     // veto here already.
-    if ( doFxFx && nRequested < nJetMax && nCLjets > nRequested )
+    // Note: Difference wrt. old versions of FxFx (cf. arXiv:2108.07826):
+    // Change the nRequested to npNLO() in the first condition. This way we
+    // correctly select the non-highest multipicity regardless the nRequested
+    if ( doFxFx && npNLO() < nJetMax && nCLjets > nRequested )
       return MORE_JETS;
 
     // Now continue in inclusive mode.
@@ -1814,10 +1784,14 @@ inline int JetMatchingMadgraph::matchPartonsToJetsLight() {
 
   // Jet matching veto for FxFx
   if (doFxFx) {
-    if ( nRequested <  nJetMax && nMatched != nRequested )
-      return UNMATCHED_PARTON;
-    if ( nRequested == nJetMax && nMatched <  nRequested )
-      return UNMATCHED_PARTON;
+      // Note: Difference wrt. old versions of FxFx (cf. arXiv:2108.07826):
+      // Change the nRequested to npNLO() in the first condition (cf. above).
+      // This way we correctly select the non-highest multipicity regardless
+      // the nRequested
+      if ( npNLO() <  nJetMax && nMatched != nRequested )
+        return UNMATCHED_PARTON;
+      if ( npNLO() == nJetMax && nMatched <  nRequested )
+        return UNMATCHED_PARTON;
   }
 
   // Do jet matching for MLM.

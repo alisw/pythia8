@@ -31,6 +31,7 @@ compiling RIVET. This is setup through the PYTHIA <code>configure</code>
 script e.g. 
 <pre> 
   ./configure --with-hepmc=/path/to/HepMC 
+ 
 </pre> 
 The PYTHIA library itself does not need to be recompiled. 
  
@@ -42,6 +43,7 @@ the main program can be built and used as follows
 <pre> 
   make main42 
   ./main42 main42.cmnd main42.hepmc 
+ 
 </pre> 
 The first argument is the input file which provides the options for event 
 generation, while the second is the output file where the HepMC events 
@@ -51,6 +53,7 @@ should be written.
 This HepMC file may now be read and processed by RIVET 
 <pre> 
   rivet --analysis=ANALYSIS_NAME main42.hepmc 
+ 
 </pre> 
 where <code>ANALYSIS_NAME</code> is a 
 <a href="http://projects.hepforge.org/rivet/analyses">built-in RIVET 
@@ -69,6 +72,7 @@ pipe. This is done with the <code>mkfifo</code> command
   mkfifo my_fifo 
   ./main42.exe main42.cmnd my_fifo & 
   rivet --analysis=ANALYSIS_NAME my_fifo 
+ 
 </pre> 
 Note that <code>main42</code> is run in the background. 
  
@@ -114,18 +118,25 @@ be modified as follows:
     rivet.done(); 
  
   } 
+ 
 </pre> 
-To compile the program, information about where Rivet and YODA are installed 
-is needed. Hence the compile flag 
-<code>-I/path/to/rivet/installation/include</code> is needed, as well as the 
-link flag <code>-L/path/to/rivet/installation/lib -lRivet 
--lYODA</code>. (Further information about how to compile and link Rivet can be 
-found using the <code>rivet-config</code> script distributed with Rivet.) 
+To compile the program, information about where Rivet and its 
+dependencies are installed is needed. This information is available 
+via the <code>rivet-config</code> script via the following. 
+<pre> 
+  rivet-config --includedir --libdir --cppflags --libs 
+ 
+</pre> 
  
 <p/> 
 The example program <code>main111.cc</code> includes optional analysis with 
-<code>Pythia8::Pythia8Rivet</code>. To use it, compile the program with the 
-flags above and add <code>-DUSE_PYTHIA8_RIVET</code>. 
+<code>Pythia8::Pythia8Rivet</code>. To use it configure Pythia with 
+the option <code>--with-rivet</code>. This will automatically use the 
+<code>rivet-config</code> script to determine all the necessary 
+paths. If one wishes to pass a specific config script, use the option 
+<code>--with-rivet-config=CONFIG</code> where <code>CONFIG</code> is 
+the Rivet configuration script. Note, a RIVET configuration script 
+must be available to compile the Rivet examples. 
  
 <p/> 
 The most common user case (run PYTHIA with a run card, using one or 
@@ -136,13 +147,15 @@ point. The lines:
     Main:runRivet = on 
     Main:analyses = ATLAS_2010_S8817804,ALICE_2010_S8625980,CMS_2011_S8957746 
     Main:writeHepMC = on 
+ 
 </pre> 
 provides the switch to run RIVET, and gives the user the possibility 
 to add any number of (installed) RIVET analyses to the run, as a comma 
 separated list. The last line is the switch needed to write a HepMC 
 file.  The example is run with: 
 <pre> 
-    ./main93 -c main93.cmnd 
+  ./main93 -c main93.cmnd 
+ 
 </pre> 
 and a .yoda file (the RIVET output) is then written. 
  
@@ -152,4 +165,4 @@ They are all displayed by running <code>./main93 -h</code>.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

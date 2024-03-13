@@ -1,5 +1,5 @@
 // SigmaCompositeness.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -55,7 +55,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, Lambda, coupFcol, widthIn, sigBW;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* qStarPtr;
+  ParticleDataEntryPtr qStarPtr;
 
 };
 
@@ -101,7 +101,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, Lambda, coupChg, widthIn, sigBW;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* qStarPtr;
+  ParticleDataEntryPtr qStarPtr;
 
 };
 

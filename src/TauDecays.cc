@@ -1,5 +1,5 @@
 // TauDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2024 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -42,6 +42,8 @@ void TauDecays::init() {
   hmeTwoFermions2W2TwoFermions
     .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
   hmeTwoFermions2GammaZ2TwoFermions
+    .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
+  hmeTwoGammas2TwoFermions
     .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
   hmeW2TwoFermions
     .initPointers(particleDataPtr, coupSMPtr, settingsPtr);
@@ -121,10 +123,17 @@ bool TauDecays::decay(int idxOut1, Event& event) {
   int idxOut2 = event[idxOut2Top].iBotCopyId();
   out2        = HelicityParticle(event[idxOut2]);
 
-  // Set the mediator of the hard process.
-  int idxMediator    = event[idxOut1Top].mother1();
-  mediator           = HelicityParticle(event[idxMediator]);
-  mediator.direction = -1;
+  // Set the mediator of the hard process (also handle no mediator).
+  int idxMediator = event[idxOut1Top].mother1();
+  if (event[idxOut1Top].mother2() > event[idxOut1Top].mother1() &&
+      event[idxOut1Top].mother1() == event[idxOut2Top].mother1() &&
+      event[idxOut1Top].mother2() == event[idxOut2Top].mother2())
+    idxMediator = idxOut1Top;
+  mediator = HelicityParticle(event[idxMediator]);
+  if (idxMediator == idxOut1Top) {
+    if (out1.id() == -out2.id()) mediator.id(23);
+    else mediator.id(out1.id() < 0 ? 24 : -24);
+  }
   if (mediator.m() < out1.m() + out2.m()) {
     Vec4 p = out1.p() + out2.p();
     mediator.p(p);
@@ -136,8 +145,8 @@ bool TauDecays::decay(int idxOut1, Event& event) {
   int idxIn1         = event[idxMediatorTop].mother1();
   int idxIn2         = event[idxMediatorTop].mother2();
   in1                = HelicityParticle(event[idxIn1]);
-  in1.direction      = -1;
   in2                = HelicityParticle(event[idxIn2]);
+  in1.direction      = -1;
   in2.direction      = -1;
 
   // Set the particles vector.
@@ -163,6 +172,12 @@ bool TauDecays::decay(int idxOut1, Event& event) {
     // Check partner can decay.
     else if (!out2.canDecay()) correlated = false;
     else if (!out2.mayDecay()) correlated = false;
+    // Check partner not EW showered, set decay matrix otherwise.
+    else if (!out2.isFinal() && (out2.daughter1() < out1.index()
+        || (out2.statusAbs() > 40 && out2.statusAbs() < 60))) {
+      correlated = false;
+      out2.D = out2.rho;
+    }
   }
 
   // Set the production mechanism.
@@ -183,9 +198,11 @@ bool TauDecays::decay(int idxOut1, Event& event) {
     }
   }
 
-  // Catch unknown production mechanims.
+  // Unknown production mechanisms, treat as vector boson decay.
   if (!known) {
-    particles[1] = mediator;
+    particles.erase(particles.begin());
+    particles[0] = HelicityParticle(mediator.id(), 0, 0, 0, 0, 0, 0, 0,
+      mediator.p(), mediator.m(), 0, particleDataPtr);
     if (abs(mediator.id()) == 22)
       hardME = hmeGamma2TwoFermions.initChannel(particles);
     else if (abs(mediator.id()) == 23 || abs(mediator.id()) == 32)
@@ -194,14 +211,14 @@ bool TauDecays::decay(int idxOut1, Event& event) {
       hardME = hmeW2TwoFermions.initChannel(particles);
     else if (correlated) {
       Vec4 p = out1.p() + out2.p();
-      particles[1] = HelicityParticle(22, -22, idxIn1, idxIn2, idxOut1,
+      particles[0] = HelicityParticle(22, -22, idxIn1, idxIn2, idxOut1,
         idxOut2, 0, 0, p, p.mCalc(), 0, particleDataPtr);
       hardME = hmeGamma2TwoFermions.initChannel(particles);
-      infoPtr->errorMsg("Warning in TauDecays::decay: unknown correlated "
-                        "tau production, assuming from unpolarized photon");
+      loggerPtr->WARNING_MSG(
+        "unknown correlated tau production, assuming from unpolarized photon");
     } else {
-      infoPtr->errorMsg("Warning in TauDecays::decay: unknown uncorrelated "
-                        "tau production, assuming unpolarized");
+      loggerPtr->WARNING_MSG(
+        "unknown uncorrelated tau production, assuming unpolarized");
     }
   }
 
@@ -210,12 +227,13 @@ bool TauDecays::decay(int idxOut1, Event& event) {
 
   // Pick the first tau to decay.
   HelicityParticle* tau;
-  int idx = 2;
-  if (correlated) idx = (rndmPtr->flat() < 0.5) ? 2 : 3;
-  tau = &particles[idx];
+  int idx1 = particles.size() == 3 ? 1 : 2;
+  int idx2 = idx1 + 1;
+  if (correlated && rndmPtr->flat() < 0.5) swap(idx1, idx2);
+  tau = &particles[idx1];
 
   // Calculate the density matrix (if needed) and select channel.
-  if (hardME) hardME->calculateRho(idx, particles);
+  if (hardME) hardME->calculateRho(idx1, particles);
   vector<HelicityParticle> children = createChildren(*tau);
   if (children.size() == 0) return false;
 
@@ -228,11 +246,9 @@ bool TauDecays::decay(int idxOut1, Event& event) {
     double decayWeightMax = decayME->decayWeightMax(children);
     accepted = (rndmPtr->flat() < decayWeight / decayWeightMax);
     if (decayWeight > decayWeightMax)
-      infoPtr->errorMsg("Warning in TauDecays::decay: maximum "
-        "decay weight exceeded in tau decay");
+      loggerPtr->WARNING_MSG("maximum decay weight exceeded in tau decay");
     if (tries > NTRYDECAY) {
-      infoPtr->errorMsg("Warning in TauDecays::decay: maximum "
-        "number of decay attempts exceeded");
+      loggerPtr->WARNING_MSG("maximum number of decay attempts exceeded");
       break;
     }
     ++tries;
@@ -241,15 +257,14 @@ bool TauDecays::decay(int idxOut1, Event& event) {
 
   // If a correlated second tau exists, decay that tau as well.
   if (correlated) {
-    idx = (idx == 2) ? 3 : 2;
     // Calculate the first tau decay matrix.
     decayME->calculateD(children);
     // Update the decay matrix for the tau.
     tau->D = children[0].D;
     // Switch the taus.
-    tau = &particles[idx];
+    tau = &particles[idx2];
     // Calculate second tau's density matrix.
-    hardME->calculateRho(idx, particles);
+    if (hardME) hardME->calculateRho(idx2, particles);
 
     // Decay the second tau.
     children.clear();
@@ -263,11 +278,10 @@ bool TauDecays::decay(int idxOut1, Event& event) {
       double decayWeightMax = decayME->decayWeightMax(children);
       accepted = (rndmPtr->flat() < decayWeight / decayWeightMax);
       if (decayWeight > decayWeightMax)
-        infoPtr->errorMsg("Warning in TauDecays::decay: maximum "
-          "decay weight exceeded in correlated tau decay");
+        loggerPtr->WARNING_MSG(
+          "maximum decay weight exceeded in correlated tau decay");
       if (tries > NTRYDECAY) {
-        infoPtr->errorMsg("Warning in TauDecays::decay: maximum "
-          "number of decay attempts exceeded");
+        loggerPtr->WARNING_MSG("maximum number of decay attempts exceeded");
         break;
       }
       ++tries;
@@ -287,34 +301,36 @@ bool TauDecays::decay(int idxOut1, Event& event) {
 
 bool TauDecays::internalMechanism(Event&) {
 
-  // Flag if process is known.
-  bool known = true;
-
   // Produced from a photon, Z, or Z'.
   if (abs(mediator.id()) == 22 || abs(mediator.id()) == 23 ||
       abs(mediator.id()) == 32) {
+    // Produced from photons: t-channel.
+    if (in1.id() == 22 && in2.id() == 22) {
+      hardME = hmeTwoGammas2TwoFermions.initChannel(particles);
     // Produced from fermions: s-channel.
-    if (abs(in1.id()) <= 18 && abs(in2.id()) <= 18 && in1.daughter2() == 0 &&
-        in2.daughter2() == 0 && in1.daughter1() == in2.daughter1()) {
+    } else if (abs(in1.id()) <= 18 && abs(in2.id()) <= 18 &&
+               in1.daughter1() == in2.daughter1() &&
+               in1.daughter2() == in2.daughter2()) {
       particles.push_back(mediator);
       hardME = hmeTwoFermions2GammaZ2TwoFermions.initChannel(particles);
     // Unknown photon production.
-    } else known = false;
+    } else return false;
 
   // Produced from a W or W'.
   } else if (abs(mediator.id()) == 24 || abs(mediator.id()) == 34) {
     // Produced from fermions: s-channel.
     if (abs(in1.id()) <= 18 && abs(in2.id()) <= 18 && in1.daughter2() == 0 &&
-        in2.daughter2() == 0 && in1.daughter1() == in2.daughter1()) {
+      in2.daughter2() == 0 && in1.daughter1() == in2.daughter1()) {
       particles.push_back(mediator);
       hardME = hmeTwoFermions2W2TwoFermions.initChannel(particles);
-    // Unknown W production.
-    } else known = false;
+      // Unknown W production.
+    } else return false;
 
   // Produced from a Higgs.
   } else if (abs(mediator.id()) == 25 || abs(mediator.id()) == 35 ||
              abs(mediator.id()) == 36 || abs(mediator.id()) == 37) {
-    particles[1] = mediator;
+    particles.erase(particles.begin());
+    particles[0] = mediator;
     hardME = hmeHiggs2TwoFermions.initChannel(particles);
 
   // Produced from a D or B hadron decay with a single tau.
@@ -348,56 +364,44 @@ bool TauDecays::internalMechanism(Event&) {
     hardME = hmeTwoFermions2W2TwoFermions.initChannel(particles);
 
   // Unknown production.
-  } else known = false;
-  return known;
+  } else return false;
+  return true;
 
 }
 
 //--------------------------------------------------------------------------
 
 // Determine the tau polarization and tau decay correlation using the provided
-// SPINUP digits.
+// SPINUP digits interpreted as helicity states.
 
 bool TauDecays::externalMechanism(Event &event) {
 
-  // Flag if process is known.
-  bool known = true;
-
-  // Uncorrelated, take directly from SPINUP if valid.
+  // Uncorrelated, take directly from tau SPINUP if valid.
   if (tauExt == 0) correlated = false;
   if (!correlated) {
-    double spinup = particles[2].pol();
-    if (abs(spinup) > 1.001) spinup = event[particles[2].iTopCopyId()].pol();
-    if (abs(spinup) > 1.001) known = false;
-    else {
-      particles[2].rho[0][0] = (1 - spinup) / 2;
-      particles[2].rho[1][1] = (1 + spinup) / 2;
-    }
+    if (particles[2].pol() == 9)
+      particles[2].pol(event[particles[2].iTopCopyId()].pol());
+    if (particles[2].pol() == 9) return false;
 
-  // Correlated, try mother.
+  // Correlated, take from mother SPINUP if valid.
   } else if (tauExt == 1) {
-    double spinup = mediator.pol();
-    if (abs(spinup) > 1.001) spinup = event[mediator.iTopCopyId()].pol();
-    if (abs(spinup) > 1.001) spinup = 0;
-    if (mediator.rho.size() > 1) {
-      mediator.rho[0][0] = (1 - spinup) / mediator.spinStates();
-      mediator.rho[1][1] = (1 + spinup) / mediator.spinStates();
-    }
+    if (mediator.pol() == 9) mediator.pol(event[mediator.iTopCopyId()].pol());
+    if (mediator.pol() == 9) return false;
     particles[1] = mediator;
     if (abs(mediator.id()) == 22)
       hardME = hmeGamma2TwoFermions.initChannel(particles);
     else if (abs(mediator.id()) == 23 || abs(mediator.id()) == 32)
       hardME = hmeZ2TwoFermions.initChannel(particles);
     else if (abs(mediator.id()) == 24 || abs(mediator.id()) == 34)
-      hardME = hmeZ2TwoFermions.initChannel(particles);
+      hardME = hmeW2TwoFermions.initChannel(particles);
     else if (abs(mediator.id()) == 25 || abs(mediator.id()) == 35 ||
              abs(mediator.id()) == 36 || abs(mediator.id()) == 37)
       hardME = hmeHiggs2TwoFermions.initChannel(particles);
-    else known = false;
+    else return false;
 
-    // Unknown mechanism.
-  } else known = false;
-  return known;
+  // Unknown mechanism.
+  } else return false;
+  return true;
 
 }
 

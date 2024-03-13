@@ -1,9 +1,9 @@
 // main13.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: basic usage; LHE file; command file;
+// Keywords: basic usage; LHE file; command file
 
 // This is a simple test program.
 // It illustrates how two Les Houches Event Files can be combined in PYTHIA,
@@ -38,17 +38,15 @@ int main() {
     pythia.init();
 
     // Begin infinite event loop - to be exited at end of file.
-    for (int iEvent = 0; ; ++iEvent) {
+    while (iAbort < nAbort) {
 
       // Generate next event.
       if (!pythia.next()) {
 
         // Leave event loop if at end of file.
         if (pythia.info.atEndOfFile()) break;
-
-        // First few failures write off as "acceptable" errors, then quit.
-        if (++iAbort < nAbort) continue;
-        break;
+        ++iAbort;
+        continue;
       }
 
       // Sum up final charged multiplicity and fill in histogram.

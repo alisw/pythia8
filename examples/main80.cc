@@ -1,11 +1,13 @@
 // main80.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Stefan Prestel <stefan.prestel@thep.lu.se>.
+// Authors: Stefan Prestel
 
-// Keywords: merging; leading order;
+// Contact: Christian Preuss <preuss@uni-wuppertal.de>
+
+// Keywords: merging; leading order
 
 // It illustrates how to do CKKW-L merging,
 // see the Matrix Element Merging page in the online manual.
@@ -54,9 +56,9 @@ int main() {
       // Get CKKWL weight of current event. Histogram and accumulate it.
       double evtweight = pythia.info.weight();
       double weight    = pythia.info.mergingWeight();
+      weight      *= evtweight;
       weightNow.fill( weight);
 
-      weight      *= evtweight;
       sigmaSample += weight;
 
       // Do nothing for vanishing weight (event record might not be filled)

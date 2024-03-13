@@ -1,0 +1,402 @@
+<html><head><title>main280</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main280</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main280.cc is a part of PYTHIA 8.
+// Copyright (C) 2024 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Author: Christian T Preuss &lt;preuss@uni-wuppertal.de&gt;
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#merging">Merging</a>
+//            <a href="../ExampleKeywords.html#leading+order">Leading&nbsp;order</a>
+//            <a href="../ExampleKeywords.html#ckkw-l">CKKW&#8209;L</a>
+//            <a href="../ExampleKeywords.html#hepmc">Hepmc</a>
+//            <a href="../ExampleKeywords.html#vincia">Vincia</a>
+
+// This is a test program to run Pythia merging and  write HepMC2 files,
+// written for Vincia sector merging, see the Sector Merging page in
+// the online manual.
+// It also redirects Pythia output to a log file, so that
+// the terminal output is significantly reduced.
+// An example command is
+//     ./main280 main280.cmnd vbf_h_ output.hepmc
+// where main280.cmnd supplies the commands and vbf_h_ specifies the event
+// file path that will be auto-completed to the respective jet multiplicity
+// (e.g. vbf_h_1.lhe for the 1-jet sample). The last argument specifies the
+// output filename in the HepMC2 format.
+
+// Standard packages.
+#include &lt;chrono&gt;
+#include &lt;ctime&gt;
+#include &lt;fstream&gt;
+
+// PYTHIA
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8/Vincia.h&quot;
+
+// HepMC
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
+
+// Conversion factor mb --&gt; pb.
+#define MB_TO_PB 1.e9
+
+using namespace Pythia8;
+typedef std::chrono::system_clock Clock;
+typedef std::chrono::high_resolution_clock HighResClock;
+
+// Little helper function for execution time as nicely formatted string.
+string getTimeAsString(double seconds) {
+  stringstream ss;
+  if (seconds &gt;= 3600.*24.) {
+    int days = seconds / (3600*24);
+    ss &lt;&lt; days &lt;&lt; &quot;d &quot;;
+    seconds -= days*(3600.*24.);
+  }
+  if (seconds &gt;= 3600.) {
+    int hours = seconds / 3600;
+    ss &lt;&lt; hours &lt;&lt; &quot;h &quot;;
+    seconds -= hours*3600.;
+  }
+  if (seconds &gt;= 60.) {
+    int mins = seconds / 60;
+    ss &lt;&lt; mins &lt;&lt; &quot;m &quot;;
+    seconds -= mins*60.;
+  }
+  ss &lt;&lt; int(seconds) &lt;&lt; &quot;s&quot;;
+  return ss.str();
+}
+
+// Main Program
+int main(int argc, char* argv[]) {
+
+  // Check number of command-line arguments.
+  if (argc != 4) {
+    cerr &lt;&lt; &quot; Unexpected number of command-line arguments. \n&quot;
+         &lt;&lt; &quot; Please specify:\n&quot;
+         &lt;&lt; &quot;   1) command file\n&quot;
+         &lt;&lt; &quot;   2) event file path\n&quot;
+         &lt;&lt; &quot;   3) output file\n&quot;
+         &lt;&lt; &quot; \n E.g. run \n&quot;
+         &lt;&lt; &quot;   ./main280 main280.cmnd w+_production_lhc_ output.hepmc\n&quot;
+         &lt;&lt; &quot; \n Program stopped! &quot; &lt;&lt; endl;
+    return 1;
+  }
+
+  // Check whether input file exists.
+  string cmndFile = argv[1];
+  ifstream is(cmndFile);
+  if (!is) {
+    cerr &lt;&lt; &quot; File &quot; &lt;&lt; cmndFile &lt;&lt; &quot; was not found. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
+    return 1;
+  }
+
+  string evtPath = argv[2];
+  string hepMCFile = argv[3];
+
+  //------------------------------------------------------------------------
+  // PYTHIA
+  //------------------------------------------------------------------------
+
+  Pythia pythia;
+
+  // Add mode to generate only sample for specific jet number.
+  pythia.settings.addMode(&quot;Merging:nJetReq&quot;, -1, true, false, -1, 100);
+
+  // Add flag to decide whether to check all event files exist.
+  pythia.settings.addFlag(&quot;Merging:checkFilesExist&quot;, false);
+
+  // Read user settings from file.
+  pythia.readFile(cmndFile);
+
+  //------------------------------------------------------------------------
+
+  // Settings.
+  int  nEvent          = pythia.settings.mode(&quot;Main:numberOfEvents&quot;);
+  int  nCount          = pythia.settings.mode(&quot;Next:numberCount&quot;);
+  int  nErr            = pythia.settings.mode(&quot;Main:timesAllowErrors&quot;);
+  int  nMerge          = pythia.settings.mode(&quot;Merging:nJetMax&quot;);
+  int  nReq            = pythia.settings.mode(&quot;Merging:nJetReq&quot;);
+  bool vinciaOn        = (pythia.settings.mode(&quot;PartonShowers:model&quot;) == 2);
+  bool checkFilesExist = pythia.settings.flag(&quot;Merging:checkFilesExist&quot;);
+  bool fsrOn           = pythia.settings.flag(&quot;PartonLevel:FSR&quot;);
+  bool isrOn           = pythia.settings.flag(&quot;PartonLevel:ISR&quot;);
+  bool mpiOn           = pythia.settings.flag(&quot;PartonLevel:MPI&quot;);
+  bool hadLvlOn        = pythia.settings.flag(&quot;HadronLevel:all&quot;);
+
+  //------------------------------------------------------------------------
+  // HepMC
+  //------------------------------------------------------------------------
+
+  Pythia8::Pythia8ToHepMC toHepMC(hepMCFile);
+  toHepMC.set_print_inconsistency(false);
+  toHepMC.set_store_pdf(false);
+  toHepMC.set_store_proc(false);
+  toHepMC.set_store_xsec(false);
+
+  //------------------------------------------------------------------------
+
+  // Quickly check whether all event files exist.
+  if (checkFilesExist) {
+    bool allFilesExist = true;
+    vector&lt;string&gt; missingFiles;
+    for (int i(0); i&lt;=nMerge; ++i) {
+      string evtFile = evtPath+std::to_string(i)+&quot;.lhe&quot;;
+      ifstream isNow(evtFile);
+      if (!isNow) {
+        allFilesExist = false;
+        missingFiles.push_back(evtFile);
+      }
+    }
+    if (!allFilesExist) {
+      cerr &lt;&lt; &quot; Error: the following event files are missing:&quot; &lt;&lt; endl;
+      for (auto&amp; f : missingFiles) cerr &lt;&lt; &quot;  &quot; &lt;&lt; f &lt;&lt; endl;
+      cerr &lt;&lt; &quot; Please check the event file path you specified.&quot; &lt;&lt; endl;
+      return EXIT_FAILURE;
+    }
+  }
+
+  //------------------------------------------------------------------------
+
+  // Redirect cout to log file.
+
+  auto now = Clock::now();
+  std::time_t now_c = Clock::to_time_t(now);
+  struct tm *parts = std::localtime(&amp;now_c);
+  string year  = std::to_string(1900 + parts-&gt;tm_year);
+  string month = std::to_string(1 + parts-&gt;tm_mon);
+  string day   = std::to_string(parts-&gt;tm_mday);
+  string hour  = std::to_string(parts-&gt;tm_hour);
+  string min   = std::to_string(parts-&gt;tm_min);
+  string sec   = std::to_string(parts-&gt;tm_sec);
+  string fname = &quot;main280-&quot;+year+&quot;_&quot;+month+&quot;_&quot;+day+&quot;-&quot;
+    +hour+&quot;_&quot;+min+&quot;_&quot;+sec+&quot;.log&quot;;
+
+  std::ofstream outstream(fname);
+  std::streambuf* filebuf = outstream.rdbuf();
+  std::streambuf* coutbuf = cout.rdbuf();
+  cout.rdbuf(filebuf);
+
+  //------------------------------------------------------------------------
+
+  // Cross section estimation run.
+  pythia.settings.flag(&quot;Merging:doXSectionEstimate&quot;, true);
+
+  // Estimates.
+  map&lt;int, double&gt; xSecEst;
+  map&lt;int, int&gt; nSelected;
+  map&lt;int, int&gt; nAccepted;
+  map&lt;int, int&gt; lhaStrategy;
+
+  // Switch hadron-level and shower off.
+  pythia.settings.flag(&quot;PartonLevel:FSR&quot;, false);
+  pythia.settings.flag(&quot;PartonLevel:ISR&quot;, false);
+  pythia.settings.flag(&quot;HadronLevel:all&quot;, false);
+  pythia.settings.flag(&quot;PartonLevel:MPI&quot;, false);
+  pythia.settings.mode(&quot;Next:numberCount&quot;, nEvent);
+
+  // Loop over all samples to merge.
+  std::clog &lt;&lt; &quot;\n *--------  Merging Info  -----------------------------*\n&quot;
+            &lt;&lt; &quot; |                                                     |\n&quot;
+            &lt;&lt; &quot; | Starting cross section estimation for up to &quot;
+            &lt;&lt; setw(1) &lt;&lt; nMerge &lt;&lt; &quot; jets  |\n&quot;
+            &lt;&lt; &quot; |                                                     |\n&quot;
+            &lt;&lt; &quot; *-----------------------------------------------------*\n\n&quot;;
+  int nDotCntr = nEvent / 40;
+  if (nDotCntr == 0) nDotCntr = 1;
+  for (int iMerge(nMerge); iMerge &gt;= 0; --iMerge) {
+
+    if (nReq &gt;= 0 &amp;&amp; iMerge != nReq) continue;
+
+    // Read input for this subrun and initialise.
+    string lheFileNow = evtPath+std::to_string(iMerge)+&quot;.lhe&quot;;
+    pythia.settings.mode(&quot;Beams:frameType&quot;, 4);
+    pythia.settings.word(&quot;Beams:LHEF&quot;, lheFileNow);
+    if(!pythia.init()) {
+      cerr &lt;&lt; &quot; Pythia failed initialisation in xSec estimation run &quot;
+           &lt;&lt; iMerge &lt;&lt; &quot;.&quot; &lt;&lt; endl;
+      cerr &lt;&lt; &quot;\n Check the log file &quot; &lt;&lt; fname &lt;&lt; &quot; for details&quot; &lt;&lt; endl;
+      return EXIT_FAILURE;
+    }
+
+    // Event loop.
+    std::clog &lt;&lt; &quot; Estimating cross section for &quot;
+         &lt;&lt; iMerge &lt;&lt; &quot;-jet sample&quot;;
+    for(int iEvt(0); iEvt&lt;nEvent; ++iEvt){
+      if (iEvt % nDotCntr == 0) {
+        std::clog &lt;&lt; &quot;.&quot;;
+      }
+      // Generate next event.
+      if (!pythia.next()) {
+        if (pythia.info.atEndOfFile()) break;
+        else continue;
+      }
+    }
+    std::clog &lt;&lt; endl;
+
+    pythia.stat();
+
+    // Save estimates.
+    xSecEst[iMerge] = pythia.info.sigmaGen();
+    nSelected[iMerge] = pythia.info.nSelected();
+    nAccepted[iMerge] = pythia.info.nAccepted();
+    lhaStrategy[iMerge] =  pythia.info.lhaStrategy();
+  }
+
+  // Restore settings.
+  pythia.settings.flag(&quot;Merging:doXSectionEstimate&quot;, false);
+  pythia.settings.flag(&quot;PartonLevel:FSR&quot;, fsrOn);
+  pythia.settings.flag(&quot;PartonLevel:ISR&quot;, isrOn);
+  pythia.settings.flag(&quot;HadronLevel:all&quot;, hadLvlOn);
+  pythia.settings.flag(&quot;PartonLevel:MPI&quot;, mpiOn);
+  pythia.settings.mode(&quot;Next:numberCount&quot;, nCount);
+
+  //------------------------------------------------------------------------
+
+  // Merged total cross section.
+  double  sigmaTot = 0.;
+  double  errorTot = 0.;
+  map&lt;int, double&gt; sigmaSample;
+  map&lt;int, double&gt; errorSample;
+
+  // Loop over all samples to merge.
+  for (int iMerge(nMerge); iMerge &gt;= 0; --iMerge) {
+
+    if (nReq &gt;= 0 &amp;&amp; iMerge != nReq) continue;
+
+    // Initialise cross sections.
+    sigmaSample[iMerge] = 0.;
+    errorSample[iMerge] = 0.;
+
+    // Get normalisation for HepMC output.
+    double normhepmc = (abs(lhaStrategy[iMerge]) == 4) ?
+      1./(MB_TO_PB * nSelected[iMerge])
+      : xSecEst[iMerge]/nAccepted[iMerge];
+
+    // Read input file for this subrun and initialise.
+    string lheFileNow = evtPath+std::to_string(iMerge)+&quot;.lhe&quot;;
+    pythia.settings.mode(&quot;Beams:frameType&quot;, 4);
+    pythia.settings.word(&quot;Beams:LHEF&quot;, lheFileNow);
+    if(!pythia.init()) {
+      cerr &lt;&lt; &quot; Pythia failed initialisation in run &quot; &lt;&lt; iMerge &lt;&lt; &quot;.\n&quot;
+           &lt;&lt; &quot;\n Check the log file &quot; &lt;&lt; fname &lt;&lt; &quot; for details.\n&quot;;
+      return EXIT_FAILURE;
+    }
+
+    // Debugging.
+    ShowerModelPtr showerPtr = pythia.getShowerModelPtr();
+    shared_ptr&lt;Vincia&gt; vinciaPtr = dynamic_pointer_cast&lt;Vincia&gt;(showerPtr);
+    if(vinciaOn &amp;&amp; vinciaPtr==nullptr){
+      cerr &lt;&lt; &quot;Couldn&apos;t fetch Vincia pointer in run &quot;
+           &lt;&lt; nMerge-iMerge+1 &lt;&lt; &quot;.\n&quot;;
+      return EXIT_FAILURE;
+    }
+
+    // Event loop.
+    int iErr = 0;
+    bool breakMerging = false;
+    std::clog &lt;&lt; &quot;\n *--------  Merging Info  -----------------------------*\n&quot;
+              &lt;&lt; &quot; |                                                     |\n&quot;
+              &lt;&lt; &quot; | Starting event loop for &quot;;
+    if (iMerge &gt; 0) std::clog &lt;&lt; setw(1) &lt;&lt; iMerge &lt;&lt; &quot;-jet sample&quot;;
+    else std::clog &lt;&lt; &quot;Born sample &quot;;
+    std::clog &lt;&lt; &quot;                |\n&quot;
+              &lt;&lt; &quot; |                                                     |\n&quot;
+              &lt;&lt; &quot; *-----------------------------------------------------*\n&quot;;
+    auto evtGenStart = HighResClock::now();
+    for(int iEvt(0); iEvt&lt;nEvent; ++iEvt){
+      if (iEvt != 0 &amp;&amp; iEvt % nCount == 0) {
+        auto stopNow = HighResClock::now();
+        double timeElapsed
+          = std::chrono::duration_cast&lt;std::chrono::seconds&gt;
+          (stopNow - evtGenStart).count();
+        double timeLeft = timeElapsed * double(nEvent-iEvt) / double(iEvt);
+        std::clog &lt;&lt; endl &lt;&lt; &quot; &quot; &lt;&lt; iEvt
+                  &lt;&lt; &quot; events generated  (&quot;
+                  &lt;&lt; getTimeAsString(timeElapsed) &lt;&lt; &quot; elapsed / &quot;
+                  &lt;&lt; getTimeAsString(timeLeft) &lt;&lt; &quot; left)&quot; &lt;&lt; endl;
+      }
+
+      // Generate next event.
+      // Break out of event loop if at end of LHE file
+      // or if too many errors appeared.
+      if (!pythia.next()) {
+        ++iErr;
+        if (pythia.info.atEndOfFile()) break;
+        if (iErr &gt;= nErr) break;
+        else continue;
+      }
+
+      // Get CKKW-L weight of current event.
+      double evtweight = pythia.info.weight();
+      double weight    = pythia.info.mergingWeight();
+      evtweight *= weight;
+
+      // Skip zero-weight events.
+      if (evtweight == 0.) continue;
+
+      // Add event weight to total cross section.
+      sigmaTot += evtweight*normhepmc;
+      errorTot += pow2(evtweight*normhepmc);
+      sigmaSample[iMerge] += evtweight*normhepmc;
+      errorSample[iMerge] += pow2(evtweight*normhepmc);
+
+      // Write HepMC event and set cross section.
+      toHepMC.writeNextEvent(pythia);
+    }
+
+    // Statistics (printed to terminal).
+    cout.rdbuf(coutbuf);
+    pythia.stat();
+    cout.rdbuf(filebuf);
+
+    if (breakMerging) break;
+  }
+  errorTot = sqrt(errorTot);
+
+  // Restore cout.
+  cout.rdbuf(coutbuf);
+
+  // Print cross section information.
+  cout &lt;&lt; &quot;\n *--------  XSec Summary  -----------------------------*\n&quot;
+       &lt;&lt; &quot; |                                                     |\n&quot;
+       &lt;&lt; &quot; | Exclusive cross sections:                           |\n&quot;;
+  for (auto it=sigmaSample.begin(); it!=sigmaSample.end(); ++it) {
+    if (it-&gt;first==0) cout &lt;&lt; &quot; |      Born:  &quot;;
+    else cout &lt;&lt; &quot; |     &quot; &lt;&lt; it-&gt;first &lt;&lt; &quot;-jet:  &quot;;
+    cout &lt;&lt; setw(8) &lt;&lt; scientific
+         &lt;&lt; setprecision(6) &lt;&lt; it-&gt;second &lt;&lt; &quot; +- &quot;
+         &lt;&lt; setw(8) &lt;&lt; errorSample.at(it-&gt;first) &lt;&lt; &quot; mb         |\n&quot;;
+  }
+  cout &lt;&lt; &quot; |                                                     |\n&quot;
+       &lt;&lt; &quot; |- - - - - - - - - - - - - - - - - - - - - - - - - - -|\n&quot;
+       &lt;&lt; &quot; |                                                     |\n&quot;
+       &lt;&lt; &quot; | Inclusive cross sections:                           |\n&quot;;
+  for (auto it=xSecEst.begin(); it!=xSecEst.end(); ++it) {
+    if (it-&gt;first==0) cout &lt;&lt; &quot; |      Born:  &quot;;
+    else cout &lt;&lt; &quot; |     &quot; &lt;&lt; it-&gt;first &lt;&lt; &quot;-jet:  &quot;;
+    cout &lt;&lt; setw(8) &lt;&lt; scientific
+         &lt;&lt; setprecision(6) &lt;&lt; it-&gt;second
+         &lt;&lt; &quot; mb                         |\n&quot;;
+  }
+  cout &lt;&lt; &quot; |                                                     |\n&quot;
+       &lt;&lt; &quot; | CKKW-L merged inclusive cross section:              |\n&quot;
+       &lt;&lt; &quot; |             &quot; &lt;&lt; setw(8) &lt;&lt; scientific &lt;&lt; setprecision(6)
+       &lt;&lt; sigmaTot &lt;&lt; &quot; +- &quot; &lt;&lt; setw(8) &lt;&lt; errorTot &lt;&lt; &quot; mb         |\n&quot;
+       &lt;&lt; &quot; |                                                     |\n&quot;
+       &lt;&lt; &quot; *-----------------------------------------------------*\n\n&quot;
+       &lt;&lt; &quot;\n Detailed PYTHIA output has been written to the log file &quot;
+       &lt;&lt; fname &lt;&lt; &quot;\n&quot;;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

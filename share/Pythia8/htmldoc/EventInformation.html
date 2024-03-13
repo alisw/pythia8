@@ -20,9 +20,11 @@
   <li><a href="#section9">Photons from lepton beams</a></li>
   <li><a href="#section10">Event activity</a></li>
   <li><a href="#section11">Multiparton interactions</a></li>
-  <li><a href="#section12">Loop counters</a></li>
-  <li><a href="#section13">Parton shower history</a></li>
-  <li><a href="#section14">Les Houches Event File information</a></li>
+  <li><a href="#section12">Cross sections</a></li>
+  <li><a href="#section13">Loop counters</a></li>
+  <li><a href="#section14">Parton shower history</a></li>
+  <li><a href="#section15">Les Houches Event File information</a></li>
+  <li><a href="#section16">Heavy Ion Information</a></li>
 </ol>
 
  
@@ -646,6 +648,12 @@ provide the new Pomeron-hadron ones.
    
  
 <a name="section12"></a> 
+<h3>Cross sections</h3> 
+ 
+Dedicated documentation describes the details of 
+<a href="CrossSectionsAndWeights.html" target="page">cross sections and weights</a>. 
+ 
+<a name="section13"></a> 
 <h3>Loop counters</h3> 
  
 Mainly for internal/debug purposes, a number of loop counters from 
@@ -783,7 +791,7 @@ normally the default value is what you want.
    
    
  
-<a name="section13"></a> 
+<a name="section14"></a> 
 <h3>Parton shower history</h3> 
  
 The following methods are mainly intended for internal use, 
@@ -814,7 +822,7 @@ set/get value of <i>z</i> in latest ISR branching.
 set/get value of <i>pT^2</i> in latest ISR branching. 
    
  
-<a name="section14"></a> 
+<a name="section15"></a> 
 <h3>Les Houches Event File information</h3> 
  
 Since the <code>Info</code> class is one of the main interfaces between 
@@ -830,7 +838,159 @@ For the documentation of the necessary <code>Info</code> class
 retrieval functions, please consult the 
 <a href="LHEF.html" target="page">Les Houches Event Files </a> section. 
  
+<a name="section16"></a> 
+<h3>Heavy Ion Information</h3> 
+ 
+When generating collisions involving <a href="HeavyIons.html" target="page">heavy 
+ions</a>, the <code>Info</code> object will contain a non-null 
+pointer <code>Info::hiInfo</code> to a special <code>HIInfo</code> 
+object. The information stored there is typically related to the 
+Glauber modelling of the nucleons in a nuclei. 
+ 
+<a name="anchor102"></a>
+<p/><strong> double HIInfo::b() &nbsp;</strong> <br/>
+the impact parameter in femtometers. 
+   
+ 
+<a name="anchor103"></a>
+<p/><strong> double HIInfo::phi() &nbsp;</strong> <br/>
+the impact parameter angle. 
+   
+ 
+<a name="anchor104"></a>
+<p/><strong> double HIInfo::sigmaTot() &nbsp;</strong> <br/>
+the total cross section from the Glauber calculation in millibarns. 
+   
+ 
+<a name="anchor105"></a>
+<p/><strong> double HIInfo::sigmaTotErr() &nbsp;</strong> <br/>
+the error in the total cross section. 
+   
+ 
+<a name="anchor106"></a>
+<p/><strong> double HIInfo::sigmaND() &nbsp;</strong> <br/>
+the inelastic non-diffractive  cross section from the Glauber calculation 
+in millibarns. 
+   
+ 
+<a name="anchor107"></a>
+<p/><strong> double HIInfo::sigmaNDErr() &nbsp;</strong> <br/>
+the error in the inelastic non-diffractive cross section. 
+   
+ 
+<a name="anchor108"></a>
+<p/><strong> long HIInfo::nAttempts() &nbsp;</strong> <br/>
+the number of attempted impact parameter points. 
+   
+ 
+<a name="anchor109"></a>
+<p/><strong> long HIInfo::nAccepted() &nbsp;</strong> <br/>
+the number of accepted impact parameter points (resulting in actual events). 
+   
+ 
+<a name="anchor110"></a>
+<p/><strong> int HIInfo::nCollTot() &nbsp;</strong> <br/>
+the number of separate sub-collisions in the current event. 
+   
+ 
+<a name="anchor111"></a>
+<p/><strong> int HIInfo::nCollND() &nbsp;</strong> <br/>
+the number of separate fully non-diffractive sub-collisions in the 
+current event. 
+   
+ 
+<a name="anchor112"></a>
+<p/><strong> int HIInfo::nCollNDTot() &nbsp;</strong> <br/>
+the total number of non-diffractive NN-collisions in the current 
+event. 
+   
+ 
+<a name="anchor113"></a>
+<p/><strong> int HIInfo::nCollSDP() &nbsp;</strong> <br/>
+the number of separate single diffractive projectile nucleon excitation 
+sub-collisions in the current event. 
+   
+ 
+<a name="anchor114"></a>
+<p/><strong> int HIInfo::nCollSDT() &nbsp;</strong> <br/>
+the number of separate single diffractive target nucleon excitation 
+sub-collisions in the current event. 
+   
+ 
+<a name="anchor115"></a>
+<p/><strong> int HIInfo::nCollDD() &nbsp;</strong> <br/>
+the number of separate double diffractive excitation sub-collisions in 
+the current event. 
+   
+ 
+<a name="anchor116"></a>
+<p/><strong> int HIInfo::nCollCD() &nbsp;</strong> <br/>
+the number of separate central diffractive excitation sub-collisions in 
+the current event. 
+   
+ 
+<a name="anchor117"></a>
+<p/><strong> int HIInfo::nCollEL() &nbsp;</strong> <br/>
+the number of separate elastic sub-collisions in 
+the current event. 
+   
+ 
+<a name="anchor118"></a>
+<p/><strong> int HIInfo::nPartProj() &nbsp;</strong> <br/>
+number of interacting projectile nucleons in the current event. 
+   
+ 
+<a name="anchor119"></a>
+<p/><strong> int HIInfo::nAbsProj() &nbsp;</strong> <br/>
+number of absorptively wounded projectile nucleons in the current event. 
+   
+ 
+<a name="anchor120"></a>
+<p/><strong> int HIInfo::nDiffProj() &nbsp;</strong> <br/>
+number of diffrectively wounded projectile nucleons in the current event. 
+   
+ 
+<a name="anchor121"></a>
+<p/><strong> int HIInfo::nELProj() &nbsp;</strong> <br/>
+number of elastically scattered projectile nucleons in the current event. 
+   
+ 
+<a name="anchor122"></a>
+<p/><strong> int HIInfo::nPartTarg() &nbsp;</strong> <br/>
+number of interacting target nucleons in the current event. 
+   
+ 
+<a name="anchor123"></a>
+<p/><strong> int HIInfo::nAbsTarg() &nbsp;</strong> <br/>
+number of absorptively wounded target nucleons in the current event. 
+   
+ 
+<a name="anchor124"></a>
+<p/><strong> int HIInfo::nDiffTarg() &nbsp;</strong> <br/>
+number of diffrectively wounded target nucleons in the current event. 
+   
+ 
+<a name="anchor125"></a>
+<p/><strong> int HIInfo::nELTarg() &nbsp;</strong> <br/>
+number of elastically scattered target nucleons in the current event. 
+   
+ 
+<a name="anchor126"></a>
+<p/><strong> int HIInfo::nFail() &nbsp;</strong> <br/>
+number of failed nucleon excitations in the current event. 
+   
+ 
+<a name="anchor127"></a>
+<p/><strong> double HIInfo::weight() &nbsp;</strong> <br/>
+the weight of the current event. 
+   
+ 
+<a name="anchor128"></a>
+<p/><strong> double HIInfo::weightSum() &nbsp;</strong> <br/>
+the sum of weights of the events generated so far. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

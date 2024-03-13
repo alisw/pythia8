@@ -1,5 +1,5 @@
 // RHadrons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -191,8 +191,7 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
 
   // Max two R-hadrons. Randomize order of processing.
   if (nRHad > 2) {
-     infoPtr->errorMsg("Error in RHadrons::produce: "
-       "cannot handle more than two R-hadrons");
+     loggerPtr->ERROR_MSG("cannot handle more than two R-hadrons");
      return false;
   }
   if (nRHad > 1 && rndmPtr->flat() > 0.5) swap( iBefRHad[0], iBefRHad[1]);
@@ -202,8 +201,7 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
   iSys = colConfig.findSinglet( iBef);
   systemPtr = &colConfig[iSys];
   if (systemPtr->hasJunction && !splitOffJunction( colConfig, event)) {
-    infoPtr->errorMsg("Error in RHadrons::produce: "
-      "cannot handle system with junction");
+    loggerPtr->ERROR_MSG("cannot handle system with junction");
     return false;
   }
   if (nRHad == 2) {
@@ -211,8 +209,7 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
     iSys = colConfig.findSinglet( iBef);
     systemPtr = &colConfig[iSys];
     if (systemPtr->hasJunction && !splitOffJunction( colConfig, event)) {
-      infoPtr->errorMsg("Error in RHadrons::produce: "
-        "cannot handle system with junction");
+      loggerPtr->ERROR_MSG("cannot handle system with junction");
       return false;
     }
   }
@@ -222,8 +219,7 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
   iSys = colConfig.findSinglet( iBef);
   systemPtr = &colConfig[iSys];
   if (systemPtr->isClosed && !openClosedLoop( colConfig, event)) {
-    infoPtr->errorMsg("Error in RHadrons::produce: "
-      "cannot open up closed gluon/gluino loop");
+    loggerPtr->ERROR_MSG("cannot open up closed gluon/gluino loop");
     return false;
   }
   if (nRHad == 2) {
@@ -231,8 +227,7 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
     iSys = colConfig.findSinglet( iBef);
     systemPtr = &colConfig[iSys];
     if (systemPtr->isClosed && !openClosedLoop( colConfig, event)) {
-      infoPtr->errorMsg("Error in RHadrons::produce: "
-        "cannot open up closed gluon/gluino loop");
+      loggerPtr->ERROR_MSG("cannot open up closed gluon/gluino loop");
       return false;
     }
   }
@@ -245,8 +240,7 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
       iSys = iSys1;
       systemPtr = &colConfig[iSys];
       if ( !splitSystem( colConfig, event) ) {
-        infoPtr->errorMsg("Error in RHadrons::produce: "
-          "failed to handle two sparticles in same system");
+        loggerPtr->ERROR_MSG("failed to handle two sparticles in same system");
         return false;
       }
     }
@@ -257,21 +251,18 @@ bool RHadrons::produce( ColConfig& colConfig, Event& event) {
     iBef = iBefRHad[iRHad];
     iSys = colConfig.findSinglet( iBef);
     if (iSys < 0) {
-      infoPtr->errorMsg("Error in RHadrons::produce: "
-        "sparticle not in any colour singlet");
+      loggerPtr->ERROR_MSG("sparticle not in any colour singlet");
       return false;
     }
     systemPtr = &colConfig[iSys];
 
     // For now don't handle systems involving junctions or loops.
     if (systemPtr->hasJunction) {
-      infoPtr->errorMsg("Error in RHadrons::produce: "
-        "cannot handle system with junction");
+      loggerPtr->ERROR_MSG("cannot handle system with junction");
       return false;
     }
     if (systemPtr->isClosed) {
-      infoPtr->errorMsg("Error in RHadrons::produce: "
-        "cannot handle closed colour loop");
+      loggerPtr->ERROR_MSG("cannot handle closed colour loop");
       return false;
     }
 
@@ -314,8 +305,7 @@ bool RHadrons::decay( Event& event) {
     // to original mass, but error if negative-mass spectators.
     double fracR = mRBef / mRHad;
     if (fracR >= 1.) {
-      infoPtr->errorMsg("Error in RHadrons::decay: "
-          "too low R-hadron mass for decay");
+      loggerPtr->ERROR_MSG("too low R-hadron mass for decay");
       return false;
     }
 
@@ -785,8 +775,7 @@ bool RHadrons::produceSquark( ColConfig& colConfig, Event& event) {
   int    idNewQ = flavSelPtr->pick(flavOld).id;
   int    idRHad = toIdWithSquark( idOldH, idNewQ);
   if (idRHad == 0) {
-     infoPtr->errorMsg("Error in RHadrons::produceSquark: "
-       "cannot form R-hadron code");
+     loggerPtr->ERROR_MSG("cannot form R-hadron code");
      return false;
   }
 
@@ -820,8 +809,8 @@ bool RHadrons::produceSquark( ColConfig& colConfig, Event& event) {
   if ( sRem > sMin && sSys > pow2(mNewH + mOldL + MSAFETY) ) {
     Vec4 pNewH, pNewL;
     if ( !newKin( pOldH, pOldL, mNewH, mOldL, pNewH, pNewL) ) {
-      infoPtr->errorMsg("Error in RHadrons::produceSquark: "
-       "failed to construct kinematics with reduced system");
+      loggerPtr->ERROR_MSG(
+        "failed to construct kinematics with reduced system");
       return false;
     }
 
@@ -853,8 +842,7 @@ bool RHadrons::produceSquark( ColConfig& colConfig, Event& event) {
     while (++iTry < NTRYMAX && idNewL == 0)
       idNewL = flavSelPtr->combine( flav1, flav2);
     if (idNewL == 0) {
-       infoPtr->errorMsg("Error in RHadrons::produceSquark: "
-         "cannot form light hadron code");
+       loggerPtr->ERROR_MSG("cannot form light hadron code");
        return false;
     }
     double mNewL = particleDataPtr->mSel( idNewL);
@@ -863,8 +851,8 @@ bool RHadrons::produceSquark( ColConfig& colConfig, Event& event) {
     if ( sSys > pow2(mRHad + mNewL + MSAFETY) ) {
       Vec4 pRHad, pNewL;
       if ( !newKin( pOldH, pOldL, mRHad, mNewL, pRHad, pNewL) ) {
-        infoPtr->errorMsg("Error in RHadrons::produceSquark: "
-         "failed to construct kinematics for two-hadron decay");
+        loggerPtr->ERROR_MSG(
+          "failed to construct kinematics for two-hadron decay");
         return false;
       }
 
@@ -883,8 +871,7 @@ bool RHadrons::produceSquark( ColConfig& colConfig, Event& event) {
   if (nBody == 0) {
     idRHad = toIdWithSquark( idOldH, idOldL);
     if (idRHad == 0) {
-       infoPtr->errorMsg("Error in RHadrons::produceSquark: "
-         "cannot form R-hadron code");
+       loggerPtr->ERROR_MSG("cannot form R-hadron code");
        return false;
     }
 
@@ -1019,8 +1006,7 @@ bool RHadrons::produceGluino( ColConfig& colConfig, Event& event) {
     } else {
       idRHad      = toIdWithGluino( idSave, idNewQ);
       if (idRHad == 0) {
-         infoPtr->errorMsg("Error in RHadrons::produceGluino: "
-           "cannot form R-hadron code");
+         loggerPtr->ERROR_MSG("cannot form R-hadron code");
          return false;
       }
       statusRHad  = 104;
@@ -1055,8 +1041,8 @@ bool RHadrons::produceGluino( ColConfig& colConfig, Event& event) {
     if ( sRem > sMin && sSys > pow2(mNewH + mOldL + MSAFETY) ) {
       Vec4 pNewH, pNewL;
       if ( !newKin( pOldH, pOldL, mNewH, mOldL, pNewH, pNewL) ) {
-        infoPtr->errorMsg("Error in RHadrons::produceGluino: "
-         "failed to construct kinematics with reduced system");
+        loggerPtr->ERROR_MSG(
+          "failed to construct kinematics with reduced system");
         return false;
       }
 
@@ -1111,8 +1097,7 @@ bool RHadrons::produceGluino( ColConfig& colConfig, Event& event) {
       while (++iTry < NTRYMAX && idNewL == 0)
         idNewL = flavSelPtr->combine( flav1, flav2);
       if (idNewL == 0) {
-         infoPtr->errorMsg("Error in RHadrons::produceGluino: "
-           "cannot form light hadron code");
+         loggerPtr->ERROR_MSG("cannot form light hadron code");
          return false;
       }
       double mNewL = particleDataPtr->mSel( idNewL);
@@ -1121,8 +1106,8 @@ bool RHadrons::produceGluino( ColConfig& colConfig, Event& event) {
       if ( sSys > pow2(mRHad + mNewL + MSAFETY) ) {
         Vec4 pRHad, pNewL;
         if ( !newKin( pOldH, pOldL, mRHad, mNewL, pRHad, pNewL) ) {
-          infoPtr->errorMsg("Error in RHadrons::produceGluino: "
-           "failed to construct kinematics for two-hadron decay");
+          loggerPtr->ERROR_MSG(
+            "failed to construct kinematics for two-hadron decay");
           return false;
         }
 
@@ -1145,8 +1130,7 @@ bool RHadrons::produceGluino( ColConfig& colConfig, Event& event) {
       if (iSide == 1) idSave = idOldL;
       else            idRHad = toIdWithGluino( idSave, idOldL);
       if (idRHad == 0) {
-         infoPtr->errorMsg("Error in RHadrons::produceGluino: "
-           "cannot form R-hadron code");
+         loggerPtr->ERROR_MSG("cannot form R-hadron code");
          return false;
       }
 
@@ -1172,8 +1156,7 @@ bool RHadrons::produceGluino( ColConfig& colConfig, Event& event) {
 
   // History bookkeeping: insert R-hadron; delete old string system.
   if (iGlui == 0) {
-     infoPtr->errorMsg("Error in RHadrons::produceGluino: "
-           "could not handle gluinoball kinematics");
+     loggerPtr->ERROR_MSG("could not handle gluinoball kinematics");
      return false;
   }
   iRHadron[iRHad] = iGlui;

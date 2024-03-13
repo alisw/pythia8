@@ -1,5 +1,5 @@
 // SusyWidthFunctions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand
+// Copyright (C) 2024 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -23,10 +23,10 @@ namespace Pythia8 {
 
 void WidthFunction::setPointers(Info* infoPtrIn) {
 
-  infoPtr = infoPtrIn;
   particleDataPtr = infoPtrIn->particleDataPtr;
-  coupSUSYPtr = infoPtrIn->coupSUSYPtr;
-  coupSMPtr  =  infoPtr->coupSMPtr;
+  loggerPtr       = infoPtrIn->loggerPtr;
+  coupSUSYPtr     = infoPtrIn->coupSUSYPtr;
+  coupSMPtr       = infoPtrIn->coupSMPtr;
 }
 
 //==========================================================================
@@ -92,9 +92,8 @@ void StauWidths::setChannel(int idResIn, int idIn) {
     fnSwitch = 3;
   }
   else {
-    stringstream mess;
-    mess <<  " unknown decay channel idIn = " << idIn;
-    infoPtr->errorMsg("Warning in StauWidths::setChannel:", mess.str() );
+    loggerPtr->WARNING_MSG("unknown decay channel",
+      "idIn = " + to_string(idIn));
   }
 
   return;
@@ -139,9 +138,8 @@ double StauWidths::f(double x){
   }
 
   else {
-    stringstream mess;
-    mess <<  " unknown decay channel fnSwitch = " << fnSwitch;
-    infoPtr->errorMsg("Warning in StauWidths::function:", mess.str() );
+    loggerPtr->WARNING_MSG("unknown decay channel",
+      "fnSwitch = " + to_string(fnSwitch));
   }
 
   return value;

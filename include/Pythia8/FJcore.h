@@ -1,4 +1,4 @@
-// fjcore -- extracted from FastJet v3.2.1 (http://fastjet.fr)
+// fjcore -- extracted from FastJet v3.4.0 (http://fastjet.fr)
 //
 // fjcore constitutes a digest of the main FastJet functionality.
 // The files fjcore.hh and fjcore.cc are meant to provide easy access to these 
@@ -51,10 +51,13 @@
 //   EPJC72(2012)1896 [arXiv:1111.6097] (FastJet User Manual)
 //   and, optionally, Phys.Lett.B641 (2006) 57 [arXiv:hep-ph/0512210]
 //
-// Copyright (c) 2005-2016, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
+//FJSTARTHEADER
+// $Id$
+//
+// Copyright (c) 2005-2021, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
 //
 //----------------------------------------------------------------------
-// This file is part of FastJet.
+// This file is part of FastJet (fjcore).
 //
 //  FastJet is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -62,9 +65,11 @@
 //  (at your option) any later version.
 //
 //  The algorithms that underlie FastJet have required considerable
-//  development and are described in hep-ph/0512210. If you use
+//  development. They are described in the original FastJet paper,
+//  hep-ph/0512210 and in the manual, arXiv:1111.6097. If you use
 //  FastJet as part of work towards a scientific publication, please
-//  include a citation to the FastJet paper.
+//  quote the version you use and include a citation to the manual and
+//  optionally also to hep-ph/0512210.
 //
 //  FastJet is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -74,19 +79,23 @@
 //  You should have received a copy of the GNU General Public License
 //  along with FastJet. If not, see <http://www.gnu.org/licenses/>.
 //----------------------------------------------------------------------
-//
+//FJENDHEADER
 #ifndef __FJCORE_HH__
 #define __FJCORE_HH__
 #define __FJCORE__   // remove all the non-core code (a safekeeper)
 #define __FJCORE_DROP_CGAL    // disable CGAL support
 #ifndef _INCLUDE_FJCORE_CONFIG_AUTO_H
 #define _INCLUDE_FJCORE_CONFIG_AUTO_H 1
-#ifndef FJCORE_HAVE_DEMANGLING_SUPPORT 
+#ifndef FJCORE_HAVE_AUTO_PTR_INTERFACE 
+#endif
+#ifndef FJCORE_HAVE_CXX14_DEPRECATED 
 #endif
 #ifndef FJCORE_HAVE_DLFCN_H 
 # define FJCORE_HAVE_DLFCN_H  1 
 #endif
 #ifndef FJCORE_HAVE_EXECINFO_H 
+#endif
+#ifndef FJCORE_HAVE_EXPLICIT_FOR_OPERATORS 
 #endif
 #ifndef FJCORE_HAVE_GNUCXX_DEPRECATED 
 #endif
@@ -98,6 +107,8 @@
 #endif
 #ifndef FJCORE_HAVE_MEMORY_H 
 # define FJCORE_HAVE_MEMORY_H  1 
+#endif
+#ifndef FJCORE_HAVE_OVERRIDE 
 #endif
 #ifndef FJCORE_HAVE_STDINT_H 
 # define FJCORE_HAVE_STDINT_H  1 
@@ -133,7 +144,7 @@
 # define FJCORE_PACKAGE_NAME  "FastJet" 
 #endif
 #ifndef FJCORE_PACKAGE_STRING 
-# define FJCORE_PACKAGE_STRING  "FastJet 3.2.1" 
+# define FJCORE_PACKAGE_STRING  "FastJet 3.4.0" 
 #endif
 #ifndef FJCORE_PACKAGE_TARNAME 
 # define FJCORE_PACKAGE_TARNAME  "fastjet" 
@@ -142,25 +153,25 @@
 # define FJCORE_PACKAGE_URL  "" 
 #endif
 #ifndef FJCORE_PACKAGE_VERSION 
-# define FJCORE_PACKAGE_VERSION  "3.2.1" 
+# define FJCORE_PACKAGE_VERSION  "3.4.0" 
 #endif
 #ifndef FJCORE_STDC_HEADERS 
 # define FJCORE_STDC_HEADERS  1 
 #endif
 #ifndef FJCORE_VERSION 
-# define FJCORE_VERSION  "3.2.1" 
+# define FJCORE_VERSION  "3.4.0" 
 #endif
 #ifndef FJCORE_VERSION_MAJOR 
 # define FJCORE_VERSION_MAJOR  3 
 #endif
 #ifndef FJCORE_VERSION_MINOR 
-# define FJCORE_VERSION_MINOR  2 
+# define FJCORE_VERSION_MINOR  4 
 #endif
 #ifndef FJCORE_VERSION_NUMBER 
-# define FJCORE_VERSION_NUMBER  30201 
+# define FJCORE_VERSION_NUMBER  30400 
 #endif
 #ifndef FJCORE_VERSION_PATCHLEVEL 
-# define FJCORE_VERSION_PATCHLEVEL  1 
+# define FJCORE_VERSION_PATCHLEVEL  0 
 #endif
 #endif
 #ifndef __FJCORE_CONFIG_H__
@@ -168,17 +179,105 @@
 #endif // __FJCORE_CONFIG_H__
 #ifndef __FJCORE_FASTJET_BASE_HH__
 #define __FJCORE_FASTJET_BASE_HH__
-// TS : enclose the fjcore namespace inside the Pythia8 one
-//#define FJCORE_BEGIN_NAMESPACE namespace fjcore {
-//#define FJCORE_END_NAMESPACE   }
-#define FJCORE_BEGIN_NAMESPACE namespace Pythia8 { namespace fjcore {
-#define FJCORE_END_NAMESPACE   }}
+#define FJCORE_BEGIN_NAMESPACE namespace fjcore {
+#define FJCORE_END_NAMESPACE   }
 #ifdef FJCORE_HAVE_OVERRIDE
 # define FJCORE_OVERRIDE  override
 #else
 # define FJCORE_OVERRIDE  
 #endif
 #endif // __FJCORE_FASTJET_BASE_HH__
+#ifndef __FJCORE_THREAD_SAFETY_HELPERS_HH__
+#define __FJCORE_THREAD_SAFETY_HELPERS_HH__
+#include <limits>
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+#include <atomic>
+FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
+namespace thread_safety_helpers{
+  template<typename T>
+  class AtomicCounter{
+  public:
+    AtomicCounter() : _count{0}{}
+    AtomicCounter(const T &count) : _count{count}{}
+    AtomicCounter(const AtomicCounter &other) : _count{other._count.load()}{}
+    operator T() const{ return _count.load();}
+    T get() const{ return _count.load();}
+    void set(const T new_value){
+      _count.store(new_value);
+    }
+    T step(){
+      T count = _count;
+      while (_count < std::numeric_limits<T>::max()
+             && !(_count.compare_exchange_strong(count, count+1)));
+      return count;
+    }
+    inline T operator++(){
+      return step()+1;
+    }
+    inline T operator++(int){
+      return step();
+    }
+  private:
+    std::atomic<T> _count;  ///< the actual count
+  };
+  class FirstTimeTrue{
+  public:
+    FirstTimeTrue(): _first_time{true}{}
+    FirstTimeTrue(const FirstTimeTrue &other) : _first_time{other._first_time.load()}{}
+    bool operator()(){
+      bool expected = true;
+      return _first_time.compare_exchange_strong(expected, false,
+                                                 std::memory_order_seq_cst,
+                                                 std::memory_order_relaxed);
+    }
+  private:
+    std::atomic<bool> _first_time;
+  };
+} // namespace thread_safety_helpers
+FJCORE_END_NAMESPACE
+#else  // FJ wo thread-safety features
+FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
+namespace thread_safety_helpers{
+  template<typename T>
+  class AtomicCounter{
+  public:
+    AtomicCounter() : _count(0){}
+    AtomicCounter(const T &count) : _count(count){}
+    AtomicCounter(const AtomicCounter &other) : _count(other._count){}
+    operator T() const{ return _count;}
+    T get() const{ return _count;}
+    void set(const T new_value){
+      _count = new_value;
+    }
+    T step(){
+      unsigned int count = _count;
+      if (_count < std::numeric_limits<T>::max()){ _count++; }
+      return count;
+    }
+    inline T operator++(){
+      return step()+1;
+    }
+    inline T operator++(int){
+      return step();
+    }
+  private:
+    T _count;  ///< the actual value
+  };
+  class FirstTimeTrue{
+  public:
+    FirstTimeTrue(): _first_time(true){}
+    bool operator()(){
+      if (!_first_time) {return false;}
+      _first_time = false;
+      return true;
+    }
+  private:
+    bool _first_time;
+  };
+} // namespace thread_safety_helpers
+FJCORE_END_NAMESPACE
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
+#endif // __FJCORE_THREAD_SAFETY_HELPERS_HH__
 #ifndef __FJCORE_NUMCONSTS__
 #define __FJCORE_NUMCONSTS__
 FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
@@ -245,40 +344,146 @@ FJCORE_END_NAMESPACE
 #endif  // __IS_BASE_OF_HH__
 #ifndef __FJCORE_FJCORE_DEPRECATED_HH__
 #define __FJCORE_FJCORE_DEPRECATED_HH__
-#if defined(FJCORE_HAVE_CXX14_DEPRECATED)
-# define FJCORE_DEPRECATED               [[deprecated]]
-# define FJCORE_DEPRECATED_MSG(message)  [[deprecated(message)]]
+#ifndef SWIG
+#if defined(FJCORE_HAVE_CXX14_DEPRECATED) && (!defined(__FJCORE__))
+# define FJCORE_DEPRECATED(func)              [[deprecated]] func
+# define FJCORE_DEPRECATED_MSG(message,func)  [[deprecated(message)]] func
 #elif defined(FJCORE_HAVE_GNUCXX_DEPRECATED)
-# define FJCORE_DEPRECATED               __attribute__((__deprecated__))
-# define FJCORE_DEPRECATED_MSG(message)  __attribute__((__deprecated__))
+# define FJCORE_DEPRECATED(func)              func __attribute__((__deprecated__))
+# define FJCORE_DEPRECATED_MSG(message,func)  func __attribute__((__deprecated__))
 #else
-# define FJCORE_DEPRECATED               
-# define FJCORE_DEPRECATED_MSG(message) 
+# define FJCORE_DEPRECATED(func)              func
+# define FJCORE_DEPRECATED_MSG(message,func)  func
 #endif
+#else  // SIWG
+# define FJCORE_DEPRECATED(func)              func
+# define FJCORE_DEPRECATED_MSG(message,func)  func
+#endif // SWIG
 #endif // __FJCORE_FJCORE_DEPRECATED_HH__
-#ifndef __FJCORE_SHARED_PTR_HH__
+ #ifndef __FJCORE_SHARED_PTR_HH__
 #define __FJCORE_SHARED_PTR_HH__
 #include <cstdlib>  // for NULL!!!
-#ifdef __FJCORE_USETR1SHAREDPTR
-#include <tr1/memory>
-#endif // __FJCORE_USETR1SHAREDPTR
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+#include <atomic>
+#endif // FJCORE_HAVE_THREAD_SAFETY
 FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
-#ifdef __FJCORE_USETR1SHAREDPTR
+#ifdef FJCORE_HAVE_THREAD_SAFETY
 template<class T>
-class SharedPtr : public std::tr1::shared_ptr<T> {
+class SharedPtr{
 public:
-  SharedPtr() : std::tr1::shared_ptr<T>() {}
-  SharedPtr(T * t) : std::tr1::shared_ptr<T>(t) {}
-  SharedPtr(const SharedPtr<T> & t) : std::tr1::shared_ptr<T>(t) {}
-  #ifdef FJCORE_HAVE_EXPLICIT_FOR_OPERATORS
-  explicit
-  #endif
-  inline operator bool() const {return (this->get()!=NULL);}
-  T* operator ()() const{
-    return this->get(); // automatically returns NULL when out-of-scope
+  class __SharedCountingPtr;
+  SharedPtr() : _ptr(NULL){}
+  template<class Y> explicit SharedPtr(Y* ptr){
+    _ptr = new __SharedCountingPtr(ptr);
   }
+  SharedPtr(SharedPtr const & share) : _ptr(share._get_container()){
+    if (_ptr!=NULL) (*_ptr)++;
+  }
+  ~SharedPtr(){
+    if (_ptr==NULL) return;
+    _decrease_count();
+  }
+  void reset(){
+    SharedPtr().swap(*this);
+  }
+  template<class Y> void reset(Y * ptr){
+    SharedPtr(ptr).swap(*this);
+  }
+  template<class Y> void reset(SharedPtr<Y> const & share){
+    if (_ptr!=NULL){
+      if (_ptr == share._get_container()) return;
+      _decrease_count();
+    }
+    _ptr = share._get_container();  // Note: automatically set it to NULL if share is empty
+    if (_ptr!=NULL) (*_ptr)++;
+  }
+  SharedPtr& operator=(SharedPtr const & share){
+    reset(share);
+    return *this;
+  }
+  template<class Y> SharedPtr& operator=(SharedPtr<Y> const & share){
+    reset(share);
+    return *this;
+  }
+  inline T& operator*() const{
+    return *(_ptr->get());
+  }
+  inline T* operator->() const{
+    if (_ptr==NULL) return NULL;
+    return _ptr->get();
+  }  
+  inline T* get() const{
+    if (_ptr==NULL) return NULL;
+    return _ptr->get();
+  }
+  T* operator ()() const{
+    if (_ptr==NULL) return NULL;
+    return _ptr->get(); // automatically returns NULL when out-of-scope
+  }
+  inline bool unique() const{
+    return (use_count()==1);
+  }
+  inline long use_count() const{
+    if (_ptr==NULL) return 0;
+    return _ptr->use_count(); // automatically returns NULL when out-of-scope
+  }
+  inline operator bool() const{
+    return (get()!=NULL);
+  }
+  inline void swap(SharedPtr & share){
+    __SharedCountingPtr* share_container = share._ptr;
+    share._ptr = _ptr;
+    _ptr = share_container;
+  }
+  void set_count(const long & count){
+    if (_ptr==NULL) return;
+    _ptr->set_count(count);
+  }
+  class __SharedCountingPtr : public std::atomic<long>{
+  public:
+    __SharedCountingPtr() : std::atomic<long>(0), _ptr(NULL){} 
+    template<class Y> explicit __SharedCountingPtr(Y* ptr)
+      : std::atomic<long>(1), _ptr(ptr){}
+    ~__SharedCountingPtr(){ 
+      if (_ptr!=NULL){ delete _ptr;}
+    }
+    inline T* get() const {return _ptr;}
+    inline long use_count() const {return (long)(*this);}
+    inline void set_count(const long & count){ store(count);}
+  private:
+    T *_ptr;               ///< the pointer we're counting the references to
+  };
+private:
+  inline __SharedCountingPtr* _get_container() const{
+    return _ptr;
+  }
+  void _decrease_count(){
+    if (((*_ptr)--) == 1)
+      delete _ptr;
+  }
+  __SharedCountingPtr *_ptr;
 };
-#else // __FJCORE_USETR1SHAREDPTR
+template<class T,class U>
+inline bool operator==(SharedPtr<T> const & t, SharedPtr<U> const & u){
+  return t.get() == u.get();
+}
+template<class T,class U>
+inline bool operator!=(SharedPtr<T> const & t, SharedPtr<U> const & u){
+  return t.get() != u.get();
+}
+template<class T,class U>
+inline bool operator<(SharedPtr<T> const & t, SharedPtr<U> const & u){
+  return t.get() < u.get();
+}
+template<class T>
+inline void swap(SharedPtr<T> & a, SharedPtr<T> & b){
+  return a.swap(b);
+}
+template<class T>
+inline T* get_pointer(SharedPtr<T> const & t){
+  return t.get();
+}
+#else  // FJCORE_HAVE_THREAD_SAFETY
 template<class T>
 class SharedPtr{
 public:
@@ -316,8 +521,8 @@ public:
     reset(share);
     return *this;
   }
-  FJCORE_DEPRECATED_MSG("Use SharedPtr<T>::get() instead")
-  T* operator ()() const{
+  FJCORE_DEPRECATED_MSG("Use SharedPtr<T>::get() instead",
+  T* operator ()() const){
     if (_ptr==NULL) return NULL;
     return _ptr->get(); // automatically returns NULL when out-of-scope
   }
@@ -371,7 +576,7 @@ public:
       _count = count;
     }
   private:
-    T *_ptr;              ///< the pointer we're counting the references to
+    T *_ptr;      ///< the pointer we're counting the references to
     long _count;  ///< the number of references
   };
 private:
@@ -405,7 +610,7 @@ template<class T>
 inline T* get_pointer(SharedPtr<T> const & t){
   return t.get();
 }
-#endif // __FJCORE_USETR1SHAREDPTR
+#endif // FJCORE_HAVE_THREAD_SAFETY
 FJCORE_END_NAMESPACE      // defined in fastjet/internal/base.hh
 #endif   // __FJCORE_SHARED_PTR_HH__
 #ifndef __FJCORE_LIMITEDWARNING_HH__
@@ -413,11 +618,19 @@ FJCORE_END_NAMESPACE      // defined in fastjet/internal/base.hh
 #include <iostream>
 #include <string>
 #include <list>
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+#include <atomic>
+#include <mutex>
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 FJCORE_BEGIN_NAMESPACE
 class LimitedWarning {
 public:
-  LimitedWarning() : _max_warn(_max_warn_default), _n_warn_so_far(0), _this_warning_summary(0) {}
-  LimitedWarning(int max_warn_in) : _max_warn(max_warn_in), _n_warn_so_far(0), _this_warning_summary(0) {}
+  LimitedWarning() : _max_warn(_max_warn_default),_this_warning_summary(0) {}
+  LimitedWarning(int max_warn_in) : _max_warn(max_warn_in), _this_warning_summary(0) {}  
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  LimitedWarning(const LimitedWarning &other)
+    : _max_warn(other._max_warn), _this_warning_summary{other._this_warning_summary.load()} {}  
+#endif
   void warn(const char * warning) {warn(warning, _default_ostr);}
   void warn(const std::string & warning) {warn(warning.c_str(), _default_ostr);}
   void warn(const char * warning, std::ostream * ostr);
@@ -425,45 +638,78 @@ public:
   static void set_default_stream(std::ostream * ostr) {
     _default_ostr = ostr;
   }
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  static void set_default_stream_and_mutex(std::ostream * ostr,
+                                           std::mutex * warnings_mutex) {
+    _default_ostr  = ostr;
+    _stream_mutex = warnings_mutex;
+  }
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
   static void set_default_max_warn(int max_warn) {
     _max_warn_default = max_warn;
   }
   int max_warn() const {return _max_warn;}
-  int n_warn_so_far() const {return _n_warn_so_far;}
+  int n_warn_so_far() const;
   static std::string summary();
 private:
-  int _max_warn, _n_warn_so_far;
+  const int _max_warn;
+  typedef std::pair<std::string, thread_safety_helpers::AtomicCounter<unsigned int> > Summary;
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  static std::atomic<int> _max_warn_default;
+  static std::atomic<std::ostream *> _default_ostr;
+  static std::atomic<std::mutex *> _stream_mutex;
+  static std::mutex _global_warnings_summary_mutex;
+  std::atomic<Summary*> _this_warning_summary;
+#else
   static int _max_warn_default;
   static std::ostream * _default_ostr;
-  typedef std::pair<std::string, unsigned int> Summary;
+  Summary* _this_warning_summary;
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
   static std::list< Summary > _global_warnings_summary;
-  Summary * _this_warning_summary;
 };
 FJCORE_END_NAMESPACE
 #endif // __FJCORE_LIMITEDWARNING_HH__
-#ifndef __FJCORE_ERROR_HH__
+ #ifndef __FJCORE_ERROR_HH__
 #define __FJCORE_ERROR_HH__
 #include<iostream>
 #include<string>
 #if (!defined(FJCORE_HAVE_EXECINFO_H)) || defined(__FJCORE__)
 #endif
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+#include <atomic>
+#include <mutex>
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 FJCORE_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
-class Error {
+class Error{
 public:
   Error() {}
   Error(const std::string & message);
   virtual ~Error() {}
   std::string message() const {return _message;}
+  std::string description() const {return message();}
   static void set_print_errors(bool print_errors) {_print_errors = print_errors;}
   static void set_print_backtrace(bool enabled);
   static void set_default_stream(std::ostream * ostr) {
     _default_ostr = ostr;
   }
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  static void set_default_stream_and_mutex(std::ostream * ostr, std::mutex * stream_mutex) {
+    _default_ostr = ostr;
+    _stream_mutex = stream_mutex;
+  }
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 private:
   std::string _message;                ///< error message
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  static std::atomic<bool> _print_errors;           ///< do we print anything?
+  static std::atomic<bool> _print_backtrace;        ///< do we print the backtrace?
+  static std::atomic<std::ostream *> _default_ostr; ///< the output stream (cerr if not set)
+  static std::atomic<std::mutex *> _stream_mutex; ///< the mutex for the output stream (nullptr if not set)
+#else
   static bool _print_errors;           ///< do we print anything?
   static bool _print_backtrace;        ///< do we print the backtrace?
   static std::ostream * _default_ostr; ///< the output stream (cerr if not set)
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 #if (!defined(FJCORE_HAVE_EXECINFO_H)) || defined(__FJCORE__)
   static LimitedWarning _execinfo_undefined;
 #endif
@@ -524,9 +770,15 @@ class PseudoJet {
  public:
   PseudoJet() : _px(0), _py(0), _pz(0), _E(0) {_finish_init(); _reset_indices();}
   PseudoJet(const double px, const double py, const double pz, const double E);
+  #ifndef SWIG
   template <class L> PseudoJet(const L & some_four_vector);
+  #endif
   PseudoJet(bool /* dummy */) {}
-  virtual ~PseudoJet(){};
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  PseudoJet(const PseudoJet &other){ (*this)=other; }
+  PseudoJet& operator=(const PseudoJet& other);
+#endif
+  virtual ~PseudoJet(){}
   inline double E()   const {return _E;}
   inline double e()   const {return _E;} // like CLHEP
   inline double px()  const {return _px;}
@@ -562,6 +814,10 @@ class PseudoJet {
   inline double modp() const {return sqrt(_kt2+_pz*_pz);}
   inline double Et() const {return (_kt2==0) ? 0.0 : _E/sqrt(1.0+_pz*_pz/_kt2);}
   inline double Et2() const {return (_kt2==0) ? 0.0 : _E*_E/(1.0+_pz*_pz/_kt2);}
+  inline double cos_theta() const {
+    return std::min(1.0, std::max(-1.0, _pz/sqrt(modp2())));
+  }
+  inline double theta() const { return acos(cos_theta()); }
   double operator () (int i) const ; 
   inline double operator [] (int i) const { return (*this)(i); }; // this too
   double kt_distance(const PseudoJet & other) const;
@@ -577,14 +833,15 @@ class PseudoJet {
   enum { X=0, Y=1, Z=2, T=3, NUM_COORDINATES=4, SIZE=NUM_COORDINATES };
   PseudoJet & boost(const PseudoJet & prest);
   PseudoJet & unboost(const PseudoJet & prest);
-  void operator*=(double);
-  void operator/=(double);
-  void operator+=(const PseudoJet &);
-  void operator-=(const PseudoJet &);
+  PseudoJet & operator*=(double);
+  PseudoJet & operator/=(double);
+  PseudoJet & operator+=(const PseudoJet &);
+  PseudoJet & operator-=(const PseudoJet &);
   inline void reset(double px, double py, double pz, double E);
   inline void reset(const PseudoJet & psjet) {
     (*this) = psjet;
   }
+#ifndef SWIG
   template <class L> inline void reset(const L & some_four_vector) {
     const PseudoJet * pj = fjcore::cast_if_derived<const PseudoJet>(&some_four_vector);
     if (pj){
@@ -594,6 +851,7 @@ class PseudoJet {
 	    some_four_vector[2], some_four_vector[3]);
     }
   }
+#endif // SWIG
   inline void reset_PtYPhiM(double pt_in, double y_in, double phi_in, double m_in=0.0) {
     reset_momentum_PtYPhiM(pt_in, y_in, phi_in, m_in);
     _reset_indices();
@@ -652,7 +910,7 @@ class PseudoJet {
     return validated_cs();
   }
   const ClusterSequence * validated_cs() const;
-  void set_structure_shared_ptr(const SharedPtr<PseudoJetStructureBase> &structure);
+  void set_structure_shared_ptr(const SharedPtr<PseudoJetStructureBase> &structure_in);
   bool has_structure() const;
   const PseudoJetStructureBase* structure_ptr() const;
   PseudoJetStructureBase* structure_non_const_ptr();
@@ -694,11 +952,23 @@ class PseudoJet {
   mutable double _phi, _rap;
   double _kt2; 
   int    _cluster_hist_index, _user_index;
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  enum {
+    Init_Done=1,
+    Init_NotDone=0,
+    Init_InProgress=-1
+  };
+  mutable std::atomic<int> _init_status;
+#endif
   void _finish_init();
   void _reset_indices();
-  inline void _ensure_valid_rap_phi() const {
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  void _ensure_valid_rap_phi() const;
+#else
+  inline void _ensure_valid_rap_phi() const{
     if (_phi == pseudojet_invalid_phi) _set_rap_phi();
   }
+#endif
   void _set_rap_phi() const;
   friend PseudoJet operator*(double, const PseudoJet &);
 };
@@ -715,6 +985,13 @@ inline bool operator!=(const PseudoJet & a, const double val)  {return !(a==val)
 inline bool operator!=( const double val, const PseudoJet & a) {return !(a==val);}
 inline double dot_product(const PseudoJet & a, const PseudoJet & b) {
   return a.E()*b.E() - a.px()*b.px() - a.py()*b.py() - a.pz()*b.pz();
+}
+inline double cos_theta(const PseudoJet & a, const PseudoJet & b) {
+  double dot_3d = a.px()*b.px() + a.py()*b.py() + a.pz()*b.pz();
+  return std::min(1.0, std::max(-1.0, dot_3d/sqrt(a.modp2()*b.modp2())));
+}
+inline double theta(const PseudoJet & a, const PseudoJet & b) {
+  return acos(cos_theta(a,b));
 }
 bool have_same_momentum(const PseudoJet &, const PseudoJet &);
 PseudoJet PtYPhiM(double pt, double y, double phi, double m = 0.0);
@@ -749,9 +1026,11 @@ public:
 private:
   const std::vector<double> * _ref_values;
 };
+#ifndef SWIG
 template <class L> inline  PseudoJet::PseudoJet(const L & some_four_vector) {
   reset(some_four_vector);
 }
+#endif
 inline void PseudoJet::_reset_indices() { 
   set_cluster_hist_index(-1);
   set_user_index(-1);
@@ -1093,12 +1372,12 @@ public:
                 RecombinationScheme recomb_scheme_in,
                 Strategy strategy_in,
                 int nparameters_in);
-  FJCORE_DEPRECATED_MSG("This argument ordering is deprecated. Use JetDefinition(alg, R, strategy, scheme[, n_parameters]) instead")
+  FJCORE_DEPRECATED_MSG("This argument ordering is deprecated. Use JetDefinition(alg, R, strategy, scheme[, n_parameters]) instead",
   JetDefinition(JetAlgorithm jet_algorithm_in, 
                 double R_in, 
                 Strategy strategy_in,
                 RecombinationScheme recomb_scheme_in = E_scheme,
-                int nparameters_in = 1){
+                int nparameters_in = 1)){
     (*this) = JetDefinition(jet_algorithm_in,R_in,recomb_scheme_in,strategy_in,nparameters_in);
   }
   template <class L> 
@@ -1429,13 +1708,14 @@ class ClusterSequence {
   inline void plugin_associate_extras(Extras * extras_in) {
     _extras.reset(extras_in);
   }
-// TS : fully disable use of auto_ptr (already deprecated).
-//#ifdef FJCORE_HAVE_AUTO_PTR_INTERFACE
-//  FJCORE_DEPRECATED_MSG("Please use ClusterSequence::plugin_associate_extras(Extras * extras_in)) instead")
-//  inline void plugin_associate_extras(std::auto_ptr<Extras> extras_in){
-//    _extras.reset(extras_in.release());
-//  }
-//#endif
+#ifndef SWIG
+#ifdef FJCORE_HAVE_AUTO_PTR_INTERFACE
+  FJCORE_DEPRECATED_MSG("Please use ClusterSequence::plugin_associate_extras(Extras * extras_in)) instead",
+  inline void plugin_associate_extras(std::auto_ptr<Extras> extras_in)){
+    _extras.reset(extras_in.release());
+  }
+#endif
+#endif //SWIG
   inline bool plugin_activated() const {return _plugin_activated;}
   const Extras * extras() const {return _extras.get();}
   template<class GBJ> void plugin_simple_N2_cluster () {
@@ -1475,7 +1755,11 @@ public:
   static void set_fastjet_banner_stream(std::ostream * ostr) {_fastjet_banner_ostr = ostr;}
   static std::ostream * fastjet_banner_stream() {return _fastjet_banner_ostr;}
 private:
+#ifdef FJCORE_HAVE_LIMITED_THREAD_SAFETY
+  static std::atomic<std::ostream*> _fastjet_banner_ostr;
+#else
   static std::ostream * _fastjet_banner_ostr;
+#endif // FJCORE_HAVE_LIMITED_THREAD_SAFETY
 protected:
   JetDefinition _jet_def;
   template<class L> void _transfer_input_jets(
@@ -1519,7 +1803,11 @@ protected:
   JetAlgorithm  _jet_algorithm;
   SharedPtr<PseudoJetStructureBase> _structure_shared_ptr; //< will actually be of type ClusterSequenceStructure
   int _structure_use_count_after_construction; //< info of use when CS handles its own memory
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  mutable std::atomic<bool> _deletes_self_when_unused;
+#else
   mutable bool _deletes_self_when_unused;
+#endif
  private:
   bool _plugin_activated;
   SharedPtr<Extras> _extras; // things the plugin might want to add
@@ -1549,7 +1837,7 @@ protected:
   void _add_ktdistance_to_map(const int ii, 
 			      DistMap & DijMap,
   			      const DynamicNearestNeighbours * DNN);
-  static bool _first_time;
+  static thread_safety_helpers::FirstTimeTrue _first_time;
   static LimitedWarning _exclusive_warnings;
   static LimitedWarning _changed_strategy_warning;
   struct BriefJet {

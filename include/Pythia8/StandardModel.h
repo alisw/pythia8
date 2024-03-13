@@ -1,10 +1,10 @@
 // StandardModel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file gives access to some Standard Model parameters.
-// AlphaStrong: fix or first- or second-order running alpha_strong.
+// AlphaStrong: fix or first-, second- or third-order running alpha_strong.
 
 #ifndef Pythia8_StandardModel_H
 #define Pythia8_StandardModel_H
@@ -18,7 +18,7 @@ namespace Pythia8 {
 //==========================================================================
 
 // The AlphaStrong class calculates the alpha_strong value at an arbitrary
-// scale, given the value at m_Z, to zeroth, first or second order.
+// scale, given the value at m_Z, to first, second or third order.
 
 class AlphaStrong {
 
@@ -210,6 +210,64 @@ protected:
 
   // An AlphaEM instance for general use (but not MPI, ISR, FSR).
   AlphaEM     alphaEMlocal;
+
+};
+
+// Backwards compatability for MG5ME plugin interface with Pythia.
+typedef CoupSM Couplings;
+
+//==========================================================================
+
+// The AlphaSUN class calculates the running coupling alpha in an SU(N) model,
+// as a function of the scale, to first, second or third order.
+// Formally part of beyond-the-Standard-Model scenarios, e.g. Hidden Valleys,
+// but put here since it is closely related to alpha_strong.
+
+class AlphaSUN {
+
+public:
+
+  // Constructors.
+  AlphaSUN() : nC(0), nF(0), order(0), LambdaSave(0.), Lambda2Save(0.),
+    scale2Min(0.), b0(0.), b1(0.), b2(0.) {}
+
+  // Destructor.
+  virtual ~AlphaSUN() {}
+
+  // Initialization for given value at M_Z and given order.
+  virtual void initAlpha(int nCin, int nFin, int orderIn = 1,
+    double alphaIn = 0.12, double scaleIn = 91.188) {
+     initColFac( nCin, nFin, orderIn);
+     findLambda(alphaIn, scaleIn); }
+
+  // Initialization for given value of Lambda and given order.
+  virtual void initLambda(int nCin, int nFin, int orderIn = 1,
+    double LambdaIn = 0.2) { initColFac( nCin, nFin, orderIn);
+    LambdaSave = LambdaIn; Lambda2Save = pow2(LambdaSave);
+    scale2Min = (order == 1) ? pow2(SAFETYMARGIN1) * Lambda2Save
+      : pow2(SAFETYMARGIN2) * Lambda2Save; }
+
+  // alpha(Q^2), whole or split, and Lambda values.
+  double alpha(double scale2in);
+  double alpha1Ord(double scale2in);
+  double alpha2OrdCorr(double scale2in);
+  double Lambda() const { return LambdaSave; }
+
+private:
+
+  // Constants: could only be changed in the code itself.
+  static const int    NITER;
+  static const double SAFETYMARGIN1, SAFETYMARGIN2;
+
+  // Method to initialize required constants in the SU(N) group.
+  void initColFac(int nCin, int nFin, int orderIn);
+
+  // Method to convert an alpha at a scale into a Lambda.
+  void findLambda(double alphaIn, double scaleIn);
+
+  // Number of colours and flavours, and running of alpha.
+  int    nC, nF, order;
+  double LambdaSave, Lambda2Save, scale2Min, b0, b1, b2;
 
 };
 

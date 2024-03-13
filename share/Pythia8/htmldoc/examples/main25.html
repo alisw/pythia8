@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main25.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,7 +18,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // Here the very few events are generated with MadGraph, and illustrate
 // more complicated colour topologies.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 int main() {
@@ -28,18 +28,18 @@ int main() {
 
   // Stick with default values, so do not bother with a separate file
   // for changes. However, do one change, to show readString in action.
-  pythia.readString("PartonLevel:ISR = off");
-  pythia.readString("PartonLevel:FSR = off");
-  pythia.readString("PartonLevel:MPI = off");
-  pythia.readString("HadronLevel:Hadronize = on");
+  pythia.readString(&quot;PartonLevel:ISR = off&quot;);
+  pythia.readString(&quot;PartonLevel:FSR = off&quot;);
+  pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+  pythia.readString(&quot;HadronLevel:Hadronize = on&quot;);
 
   // Initialize Les Houches Event File run.
-  pythia.readString("Beams:frameType = 4");
-  pythia.readString("Beams:LHEF = main25.lhe");
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = main25.lhe&quot;);
   pythia.init();
 
   // Book histogram.
-  Hist nCharged("charged particle multiplicity",100,-0.5,399.5);
+  Hist nCharged(&quot;charged particle multiplicity&quot;,100,-0.5,399.5);
 
   // Allow for possibility of a few faulty events.
   int nAbort = 10;
@@ -47,7 +47,7 @@ int main() {
 
   // Begin event loop; generate until none left in input file.
   for (int iEvent = 0; ; ++iEvent) {
-    cout << endl << "Begin event # " << iEvent << endl;
+    cout &lt;&lt; endl &lt;&lt; &quot;Begin event # &quot; &lt;&lt; iEvent &lt;&lt; endl;
 
     // Generate events, and check whether generation failed.
     if (!pythia.next()) {
@@ -55,15 +55,15 @@ int main() {
       // If failure because reached end of file then exit event loop.
       if (pythia.info.atEndOfFile()) break;
 
-      // First few failures write off as "acceptable" errors, then quit.
-      if (++iAbort < nAbort) continue;
+      // First few failures write off as &quot;acceptable&quot; errors, then quit.
+      if (++iAbort &lt; nAbort) continue;
       break;
     }
 
     // Sum up final charged multiplicity and fill in histogram.
     int nChg = 0;
-    for (int i = 0; i < pythia.event.size(); ++i)
-    if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
       ++nChg;
     nCharged.fill(nChg);
 
@@ -72,7 +72,7 @@ int main() {
 
   // Give statistics. Print histogram.
   pythia.stat();
-  cout << nCharged;
+  cout &lt;&lt; nCharged;
 
   // Done.
   return 0;

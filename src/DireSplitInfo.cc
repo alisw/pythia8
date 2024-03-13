@@ -1,5 +1,5 @@
 // DireSplitInfo.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -209,6 +209,8 @@ DireSingleColChain::DireSingleColChain(int iPos, const Event& state,
   int iStart      = iPos;
   int iSys        = partonSysPtr->getSystemOf(iPos,true);
   int sizeSystem  = partonSysPtr->sizeAll(iSys);
+  int iA          = partonSysPtr->getInA(iSys);
+  int iB          = partonSysPtr->getInB(iSys);
   if (!state[iPos].isFinal() || colSign < 0) type *= -1;
   addToChain(iPos, state);
 
@@ -222,8 +224,8 @@ DireSingleColChain::DireSingleColChain(int iPos, const Event& state,
       int j = partonSysPtr->getAll(iSys, i);
       if ( j == iPos || state[j].colType() == 0) continue;
       if (!state[j].isFinal()
-        && state[j].mother1() != 1
-        && state[j].mother1() != 2) continue;
+        && state[j].mother1() != 1 && j != iA
+        && state[j].mother1() != 2 && j != iB) continue;
       int jcol = state[j].col();
       int jacl = state[j].acol();
       if ( type < 0) swap(jcol,jacl);
@@ -379,7 +381,7 @@ string DireSingleColChain::listPos() const {
 void DireSingleColChain::print() const {
   int i    = 0;
   int length = size();
-  int max  = length;
+  int max = length % 2 == 0 ? length : length - 1;
 
   // first line: positions
   for (i=0; i<length; i++) {
@@ -388,7 +390,6 @@ void DireSingleColChain::print() const {
   cout << endl;
   // second line: color-anticolor connections (horizontal)
   i   = 0;
-  max = (length%2 == 0 ? length : length-1);
   while (i < max) {
     if (i == 0) cout << "  ";
     if (i < max-1) cout << (i%2 == 0 ? " _____________" : "      ");

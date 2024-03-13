@@ -1,12 +1,12 @@
 // Streams.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Internal classes to implement gzstream. See header file for user classes.
 // Adapted for Sherpa by Frank Siegert from:
 // gzstream, C++ iostream classes wrapping the zlib compression library.
-// Copyright (C) 2001  Deepak Bandyopadhyay, Lutz Kettner
+// Copyright (C) 2024  Deepak Bandyopadhyay, Lutz Kettner
 // (http://www.cs.unc.edu/Research/compgeom/gzstream).
 // Further adapted to PYTHIA by Stefan Prestel.
 

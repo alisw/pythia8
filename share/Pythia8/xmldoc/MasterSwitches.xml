@@ -126,7 +126,7 @@ hadron level.
 Master switch for addition of beam remnants; on/off = true/false. 
 Only intended for very special applications, and cannot be used to 
 generate complete events. Specifically, unlike the other switches above, 
-the program will complain and possibly crash unlike you also set 
+the program will complain and possibly crash unless you also set 
 <code>HadronLevel:all = off</code> and <code>Check:event = off</code>. 
 </flag> 
  
@@ -158,22 +158,26 @@ hadron-level steps.
  
 <p/> 
 For <code>HadronLevel:all = on</code> some parts of the event generation 
-on this level may be switched off individually: 
+on this level may be switched on or off individually: 
  
 <flag name="HadronLevel:Hadronize" default="on"> 
 Master switch for hadronization; on/off = true/false. 
 Further options are found <aloc href="Fragmentation">here</aloc>. 
 </flag> 
  
-<flag name="HadronLevel:HadronScatter" default="off"> 
-Master switch for hadron rescattering, following the hadronization; 
-on/off = true/false. 
-Further options are found <aloc href="HadronScattering">here</aloc>. 
-</flag> 
- 
 <flag name="HadronLevel:Decay" default="on"> 
 Master switch for decays; on/off = true/false. 
 Further options are found <aloc href="ParticleDecays">here</aloc>. 
+</flag> 
+ 
+<flag name="HadronLevel:Rescatter" default="off"> 
+Master switch for hadronic rescattering, following the hadronization; 
+on/off = true/false. 
+<note>Note</note>: If this is on, <code>Fragmentation:setVertices</code> and 
+<code>HadronVertex:rapidDecays</code> are automatically treated as being on, 
+since they provide spacetime information required by rescattering. 
+Consider also turning on <code>PartonVertex:setVertex</code>. Further options 
+are found <aloc href="HadronicRescattering">here</aloc>. 
 </flag> 
  
 <flag name="HadronLevel:BoseEinstein" default="off"> 
@@ -188,31 +192,6 @@ event; on/off = true/false. Further options are found
 <aloc href="DeuteronProduction">here</aloc>. 
 </flag> 
  
-<h3>Printing</h3> 
- 
-<flag name="Print:quiet" default="off"> 
-Can be set on to avoid the printing during program execution, to the 
-largest extent possible. This flag acts by setting the relevant values 
-for <code>Init:showProcesses</code>, 
-<code>Init:showMultipartonInteractions</code>, 
-<code>Init:showChangedSettings</code>, 
-<code>Init:showAllSettings</code>, 
-<code>Init:showChangedParticleData</code>, 
-<code>Init:showChangedResonanceData</code>, 
-<code>Init:showAllParticleData</code>, 
-<code>Init:showOneParticleData</code>, 
-<code>Next:numberCount</code>, 
-<code>Next:numberShowLHA</code>, 
-<code>Next:numberShowInfo</code>, 
-<code>Next:numberShowProcess</code>, and 
-<code>Next:numberShowEvent</code>. 
-The change is to off or 0 for <code>Print:quiet = off</code>, 
-and restores to the respective default value for <code>= on</code>. 
-Those changes take effect immediately, so individual settings can be 
-changed afterwards. 
-</flag> 
- 
- 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

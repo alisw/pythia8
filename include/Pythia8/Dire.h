@@ -1,5 +1,5 @@
 // Dire.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -71,34 +71,31 @@ class Dire : public ShowerModel {
   // Flexible-use call at the beginning of each event in pythia.next().
   // Currently not used, but should be used for clearing some internal
   // bookkeeping that is otherewise reset in shower prepare functions.
-  void beginEvent() {
+  void onBeginEvent() override {
     return;
   }
 
   // Flexible-use call at the end of each event in pythia.next().
   // Currently only to accumulate shower weights.
-  void endEvent(PhysicsBase::Status status) {
+  void onEndEvent(PhysicsBase::Status status) override {
     // No finalize in case of failure.
     if (status == INCOMPLETE) return;
-    // Cross section conversion factor to undo annoying conversions done in
-    // info.weight() calls.
-    double CONVERTMB2PB = 1.;
-    if (abs(infoPtr->lhaStrategy()) == 4) CONVERTMB2PB = 1e9;
     // Update the event weight by the Dire shower weight when relevant.
     // Retrieve the shower weight.
     weightsPtr->calcWeight(0.);
     weightsPtr->reset();
     double pswt = weightsPtr->getShowerWeight();
     // Multiply the shower weight to the event weight.
-    double wt = infoPtr->weight()/CONVERTMB2PB;
-    infoPtr->updateWeight(wt * pswt);
+    double wt = infoPtr->weight();
+    infoPtr->weightContainerPtr->setWeightNominal(wt * pswt);
   }
 
   void createPointers();
 
   // Initialization function called before beams are set up.
   // Currently only to register objects as PhysicsBase (=initialize ptrs).
-  bool init(MergingPtr, MergingHooksPtr, PartonVertexPtr, WeightContainer*) {
+  bool init(MergingPtr, MergingHooksPtr, PartonVertexPtr, WeightContainer*)
+    override {
     subObjects.clear();
     if (mergingHooksPtr) {
       registerSubObject(*mergingHooksPtr);
@@ -114,18 +111,18 @@ class Dire : public ShowerModel {
 
   // Initialization function called after beams are set up, used as main
   // initialization.
-  bool initAfterBeams();
+  bool initAfterBeams() override;
 
   void initTune();
   void initShowersAndWeights();
   void setup(BeamParticle* beamA, BeamParticle* beamB);
   void printBanner();
 
-  TimeShowerPtr  getTimeShower() const   { return timesPtr; }
-  TimeShowerPtr  getTimeDecShower() const { return timesDecPtr; }
-  SpaceShowerPtr getSpaceShower() const   { return spacePtr; }
-  MergingHooksPtr getMergingHooks() const { return mergingHooksPtr; }
-  MergingPtr getMerging() const           { return mergingPtr; }
+  TimeShowerPtr  getTimeShower() const override    { return timesPtr; }
+  TimeShowerPtr  getTimeDecShower() const override { return timesDecPtr; }
+  SpaceShowerPtr getSpaceShower() const override   { return spacePtr; }
+  MergingHooksPtr getMergingHooks() const override { return mergingHooksPtr; }
+  MergingPtr getMerging() const override           { return mergingPtr; }
 
   MergingHooksPtr pythiaMergingHooksPtr;
   PartonVertexPtr partonVertexPtr;
@@ -155,4 +152,4 @@ class Dire : public ShowerModel {
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_Dire_H
+#endif // Pythia8_Dire_H

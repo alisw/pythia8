@@ -1,11 +1,11 @@
 // main33.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Philip Ilten <philten@cern.ch>.
+// Authors: Philip Ilten <philten@cern.ch>
 
-// Keywords: merging; matching; powheg;
+// Keywords: merging; matching; powheg
 
 // An example where the HVQ POWHEGBOX matrix element binary is
 // interfaced directly with PYTHIA. For this example to run correctly
@@ -23,43 +23,21 @@
 // have been built.
 
 #include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/PowhegProcs.h"
 
 using namespace Pythia8;
 
 int main() {
 
-  Pythia pythia;
-
-  // The constructor PowhegProcs(process name, pythia, run directory,
-  // PDF filename, use Pythia random) where run directory by default
-  // is ./powhegrun, the PDF filename is empty, and using Pythia
-  // random is true. If using native PDFs rather than LHAPDF, the PDF
-  // filename is the full name of the PDF file to copy to the run
-  // directory.
-  PowhegProcs procs(&pythia, "hvq");
-
-  // The PowhegProcs class automatically sets the Pythia user hooks to
-  // an instance of PowhegHooks. However, this can be modified to a
-  // user chosen set of hooks (or null).
-  // pythia->setUserHooksPtr(userHooksPtr);
-
-  // Pythia and the POWHEG user hooks must still be configured, here
+  // PYTHIA and the POWHEG user hooks must still be configured, here
   // this is done via main33.cmnd. These settings are sensible
   // defaults, but Powheg:nFinal is dependent upon the POWHEG matrix
   // element being used and so must be changed as appropriate.
-  pythia.readFile("main33.cmnd");
+  Pythia pythia;
+  pythia.readString(
+    "Init:plugins = {libpythia8powheghvq.so::LHAupPowheg::main33.cmnd,"
+    "libpythia8powhegHooks.so::PowhegHooks::main33.cmnd}");
 
-  // The commands readFile and readString are used to configure the
-  // POWHEG matrix element. If a setting is repeated a warning is
-  // issued and the most recent setting is used.
-  procs.readFile("main33.pwhg");
-
-  // This init call must be made before PYTHIA is initialized. It
-  // copies the POWHEG input and PDF file to the POWHEG run directory.
-  procs.init();
-
-  // Initialize Pythia, based on the specified settings.
+  // Initialize PYTHIA, based on the specified settings.
   pythia.init();
 
   // Run PYTHIA. The random numbers are taken from the associated

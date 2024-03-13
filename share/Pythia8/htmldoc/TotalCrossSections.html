@@ -15,6 +15,7 @@
   <li><a href="#section4">Modify the ABMST cross sections</a></li>
   <li><a href="#section5">Modify the RPP cross sections</a></li>
   <li><a href="#section6">Coulomb corrections to elastic scattering</a></li>
+  <li><a href="#section7">Low-energy and combined cross sections</a></li>
 </ol>
 
  
@@ -232,7 +233,7 @@ These basic shapes can be further modified by the other settings below.
  
 <a name="anchor11"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaDiffractive:PomFlux &nbsp;</strong> 
- (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 7</code>)<br/>
+ (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 8</code>)<br/>
 Parametrization of the Pomeron flux <i>f_Pom/p( x_Pom, t)</i>. 
 <br/><code>option </code><strong> 1</strong> :  Schuler and Sj&ouml;strand [<a href="Bibliography.html#refSch94" target="page">Sch94</a>]: based on a 
 critical Pomeron, giving a mass spectrum roughly like <i>dm^2/m^2</i>; 
@@ -269,31 +270,47 @@ Pomeron intercept has been fitted to H1 data.
 <br/><code>option </code><strong> 7</strong> :  The H1 Fit B parametrisation of the Pomeron flux 
 [<a href="Bibliography.html#refH1P06" target="page">H1P06</a>,<a href="Bibliography.html#refH1P06a" target="page">H1P06a</a>]. 
    
+<br/><code>option </code><strong> 8</strong> :  The same functional form as with the H1 Fit A and B above, 
+<i> f_Pom(x_Pom) = exp(B0 t) / x_Pom^(2 \alpha(t) - 1)</i>, 
+but with user-supplied values for parameters <i>alpha'</i>, 
+<i>epsilon</i> and <i>B0</i> described below. 
+   
    
  
 <p/> 
-In options 3, 4, 6, and 7 above, the Pomeron Regge trajectory is 
+In options 3, 4, 6, 7 and 8 above, the Pomeron Regge trajectory is 
 parametrized as 
 <br/><i> 
 alpha(t) = 1 + epsilon + alpha' t 
 </i><br/> 
 The <i>epsilon</i> and <i>alpha'</i> parameters can be set 
 separately in options 3 and 4, and additionally <i>alpha'</i> 
-is set in option 1, while values are fixed in options 6 and 7: 
+is set in option 1, while values are fixed in options 6 and 7 
+as these are linked to specific Pomeron PDF fits. The option 8 
+applies the same form as 6 and 7 but provides user a freedom to 
+change the values of above parameters along with the slope 
+parameter <i>B0</i> to modify the shape of Pomeron flux. 
  
 <a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:PomFluxEpsilon &nbsp;</strong> 
  (<code>default = <strong>0.085</strong></code>; <code>minimum = 0.02</code>; <code>maximum = 0.15</code>)<br/>
-The Pomeron trajectory intercept <i>epsilon</i> above for the 3 and 4 
+The Pomeron trajectory intercept <i>epsilon</i> above for the 3, 4 and 8 
 flux options. For technical reasons <i>epsilon &gt; 0</i> is necessary 
 in the current implementation. 
    
  
 <a name="anchor13"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:PomFluxAlphaPrime &nbsp;</strong> 
- (<code>default = <strong>0.25</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 0.4</code>)<br/>
-The Pomeron trajectory slope <i>alpha'</i> above for the 1, 3 and 4 
+ (<code>default = <strong>0.25</strong></code>; <code>minimum = 0.05</code>; <code>maximum = 0.4</code>)<br/>
+The Pomeron trajectory slope <i>alpha'</i> above for the 1, 3, 4 and 8 
 flux options. 
+   
+ 
+<a name="anchor14"></a>
+<p/><code>parm&nbsp; </code><strong> SigmaDiffractive:PomFluxB0 &nbsp;</strong> 
+ (<code>default = <strong>5.5</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 500.</code>)<br/>
+The <i>B0</i> parameter for the H1-like Pomeron flux parametrization 
+applied with option 8 above. 
    
  
 <p/> 
@@ -304,7 +321,7 @@ it would not be meaningful to go all the way down to the <i>pi pi</i>
 kinematical limit, since exclusive states are not modelled. Therefore 
 the following parameters have been introduced to address such issues. 
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:OwnbMinDD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 5.</code>)<br/>
 In the options with a simple <i>exp(b * t)</i> falloff for the <i>t</i> 
@@ -315,7 +332,7 @@ This leaves only the pomeron propagator part, which often vanishes in
 the limit of vanishing rapidity gap.) 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> SigmaDiffractive:OwndampenGap &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Switch on damping of small rapidity gaps in single, double and central 
@@ -338,14 +355,14 @@ fixed, switching on this option will increase the rate of diffractive
 events with large rapidity gaps, so do consistent changes. 
    
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:Ownygap &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>; <code>minimum = 0.1</code>)<br/>
 Assume a damping of small rapidity gaps, as described above, to set in 
 around the value <i>y_gap</i> given by this parameter. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:Ownypow &nbsp;</strong> 
  (<code>default = <strong>5.</strong></code>; <code>minimum = 0.5</code>)<br/>
 Assume a damping of small rapidity gaps, as described above, to set in 
@@ -353,7 +370,7 @@ over a rapidity region of width <i>1/p</i>, with <i>p</i> given by
 this parameter. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:OwnmMinCD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>)<br/>
 The smallest allowed central diffractive mass, with a sharp cut at 
@@ -375,14 +392,14 @@ distribution of the diffractive system, relative to the default setup.
 The parametrized cross sections explicitly depend on them, so that 
 integrated diffractive cross section are changed acordingly. 
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:mMin &nbsp;</strong> 
  (<code>default = <strong>0.28</strong></code>; <code>minimum = 0.0</code>)<br/>
 Lowest mass of a single or double diffractive system is set to be 
 <i>mHadron + mMin</i>. 
    
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:lowMEnhance &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>)<br/>
 Normalization factor for the contribution of low-mass resonances 
@@ -390,7 +407,7 @@ to the diffractive cross section (<i>cRes</i> in eq. (22) of
 [<a href="Bibliography.html#refSch94" target="page">Sch94</a>]). 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:mResMax &nbsp;</strong> 
  (<code>default = <strong>1.062</strong></code>; <code>minimum = 0.0</code>)<br/>
 The contribution of low-mass resonances is dampened at around the 
@@ -412,14 +429,14 @@ been included in previous tunes to data, a special flag is available to
 reproduce the old behaviour (with due complications when one does not want 
 to do this). 
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:mMinCD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>)<br/>
 The smallest allowed central diffractive mass, with a sharp cut at 
 this value. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaTotal:sigmaAXB2TeV &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 0.</code>)<br/>
 The CD cross section for <i>p p</i> and <i>pbar p</i> collisions, 
@@ -428,7 +445,7 @@ dependence is then parametrized, and behaves roughly like
 <i>ln^1.5(s)</i>. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> SigmaTotal:zeroAXB &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 several existing <a href="Tunes.html" target="page">tunes</a> do not include CD. 
@@ -447,7 +464,7 @@ the default parametrizations. The settings here allows one way to
 introduce a dampening, which is used in some of the existing 
 <a href="Tunes.html" target="page">tunes</a>. 
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> SigmaDiffractive:dampen &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow a user to dampen diffractive cross sections; on/off = true/false. 
@@ -466,25 +483,25 @@ This reduces to <i>sigma_old(s)</i> at low energies and to
 <i>sigma_max</i> at high ones. Note that the asymptotic value 
 is approached quite slowly, however. 
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:maxXB &nbsp;</strong> 
  (<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>sigma_max</i> for <i>A + B &rarr; X + B</i> in mb. 
    
  
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:maxAX &nbsp;</strong> 
  (<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>sigma_max</i> for <i>A + B &rarr; A + X</i> in mb. 
    
  
-<a name="anchor28"></a>
+<a name="anchor29"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:maxXX &nbsp;</strong> 
  (<code>default = <strong>65.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>sigma_max</i> for <i>A + B &rarr; X_1 + X_2</i> in mb. 
    
  
-<a name="anchor29"></a>
+<a name="anchor30"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:maxAXB &nbsp;</strong> 
  (<code>default = <strong>3.</strong></code>; <code>minimum = 0.</code>)<br/>
 The above <i>sigma_max</i> for <i>A + B &rarr; A + X + B</i> in mb. 
@@ -495,7 +512,7 @@ As above, a reduced diffractive cross section automatically translates
 into an increased nondiffractive one, such that the total (and elastic) 
 cross section remains fixed. 
  
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:SaSepsilon &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = -0.2</code>; <code>maximum = 0.2</code>)<br/>
 The SaS ansatz starts out from a <i>dM^2/M^2</i> shape of diffractive 
@@ -515,51 +532,51 @@ diffractive event rates and shapes, while the total and elastic cross
 sections remain unaffected. These parameters are described in the 
 following. 
  
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:MBRepsilon &nbsp;</strong> 
  (<code>default = <strong>0.104</strong></code>; <code>minimum = 0.02</code>; <code>maximum = 0.15</code>)<br/>
-<a name="anchor32"></a>
+<a name="anchor33"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRalpha &nbsp;</strong> 
  (<code>default = <strong>0.25</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 0.4</code>)<br/>
 the parameters of the Pomeron trajectory. 
    
  
-<a name="anchor33"></a>
+<a name="anchor34"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:MBRbeta0 &nbsp;</strong> 
  (<code>default = <strong>6.566</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)<br/>
-<a name="anchor34"></a>
+<a name="anchor35"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRsigma0 &nbsp;</strong> 
  (<code>default = <strong>2.82</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
 the Pomeron-proton coupling, and the total Pomeron-proton cross section. 
    
  
-<a name="anchor35"></a>
+<a name="anchor36"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:MBRm2Min &nbsp;</strong> 
  (<code>default = <strong>1.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 3.0</code>)<br/>
 the lowest value of the mass squared of the dissociated system, including 
 central diffraction. 
    
  
-<a name="anchor36"></a>
+<a name="anchor37"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminSDflux &nbsp;</strong> 
  (<code>default = <strong>2.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
-<a name="anchor37"></a>
+<a name="anchor38"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminDDflux &nbsp;</strong> 
  (<code>default = <strong>2.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
-<a name="anchor38"></a>
+<a name="anchor39"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminCDflux &nbsp;</strong> 
  (<code>default = <strong>2.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
 the minimum width of the rapidity gap used in the calculation of 
 <i>Ngap(s)</i> (flux renormalization). 
    
  
-<a name="anchor39"></a>
+<a name="anchor40"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminSD &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
-<a name="anchor40"></a>
+<a name="anchor41"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminDD &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
-<a name="anchor41"></a>
+<a name="anchor42"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminCD &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 5.0</code>)<br/>
 the minimum width of the rapidity gap used in the calculation of cross 
@@ -569,13 +586,13 @@ is damped smoothly, such that it is suppressed by a factor of a half
 at around this scale. 
    
  
-<a name="anchor42"></a>
+<a name="anchor43"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminSigSD &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.001</code>; <code>maximum = 5.0</code>)<br/>
-<a name="anchor43"></a>
+<a name="anchor44"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminSigDD &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.001</code>; <code>maximum = 5.0</code>)<br/>
-<a name="anchor44"></a>
+<a name="anchor45"></a>
 <code>parm&nbsp; </code><strong> SigmaDiffractive:MBRdyminSigCD &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.001</code>; <code>maximum = 5.0</code>)<br/>
 the parameter <i>sigma_S</i>, used for the cross section suppression at 
@@ -593,7 +610,7 @@ diffraction, notably to enforce a rapidity gap. The ABMST model does
 not address double and central diffraction, so we have extended it on 
 our own, as described below. 
  
-<a name="anchor45"></a>
+<a name="anchor46"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaDiffractive:ABMSTmodeSD &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Setup of single diffraction in the ABMST scenario. 
@@ -622,21 +639,21 @@ the behaviour; you have to switch them off and use option 0 above to recover
 the pure ABMST model. 
    
  
-<a name="anchor46"></a>
+<a name="anchor47"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTmultSD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.01</code>)<br/>
 possibility to rescale the double diffractive cross section by a factor 
 <i>k</i> as described above. 
    
  
-<a name="anchor47"></a>
+<a name="anchor48"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTpowSD &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.25</code>)<br/>
 possibility to rescale the double diffractive cross section by a factor 
 <i>(s / m_p^2)^q</i>, as described above, with <i>q</i> set here. 
    
  
-<a name="anchor48"></a>
+<a name="anchor49"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaDiffractive:ABMSTmodeDD &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 Setup of double diffraction in the ABMST scenario. Note that ABMST does 
@@ -669,21 +686,21 @@ and <code>SigmaDiffractive:ABMSTuseBMin</code> flags below very much affect
 the behaviour. 
    
  
-<a name="anchor49"></a>
+<a name="anchor50"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTmultDD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.01</code>)<br/>
 possibility to rescale the double diffractive cross section by a factor 
 <i>k</i> as described above. 
    
  
-<a name="anchor50"></a>
+<a name="anchor51"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTpowDD &nbsp;</strong> 
  (<code>default = <strong>0.1</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.25</code>)<br/>
 possibility to rescale the double diffractive cross section by a factor 
 <i>(s / m_p^2)^q</i>, as described above, with <i>q</i> set here. 
    
  
-<a name="anchor51"></a>
+<a name="anchor52"></a>
 <p/><code>mode&nbsp; </code><strong> SigmaDiffractive:ABMSTmodeCD &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 Setup of central diffraction in the ABMST scenario. Note that ABMST does 
@@ -711,28 +728,28 @@ and <code>SigmaDiffractive:ABMSTuseBMin</code> flags below very much affect
 the behaviour. 
    
  
-<a name="anchor52"></a>
+<a name="anchor53"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTmultCD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.01</code>)<br/>
 possibility to rescale the central diffractive cross section by a factor 
 <i>k</i> as described above. 
    
  
-<a name="anchor53"></a>
+<a name="anchor54"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTpowCD &nbsp;</strong> 
  (<code>default = <strong>0.1</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 0.25</code>)<br/>
 possibility to rescale the central diffractive cross section by a factor 
 <i>(s / m_p^2)^q</i>, as described above, with <i>q</i> set here. 
    
  
-<a name="anchor54"></a>
+<a name="anchor55"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTmMinCD &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.5</code>)<br/>
 The smallest allowed central diffractive mass, with a sharp cut at 
 this value. 
    
  
-<a name="anchor55"></a>
+<a name="anchor56"></a>
 <p/><code>flag&nbsp; </code><strong> SigmaDiffractive:ABMSTdampenGap &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Switch on damping of small rapidity gaps in single, double and central 
@@ -760,14 +777,14 @@ and <i>xi_1</i> and <i>xi_2</i> for CD. The two parameters of the
 damping are described below. 
    
  
-<a name="anchor56"></a>
+<a name="anchor57"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTygap &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>; <code>minimum = 0.1</code>)<br/>
 Assume a damping of small rapidity gaps in the ABMST model, as described 
 above, to set in around the value <i>y_gap</i> given by this parameter. 
    
  
-<a name="anchor57"></a>
+<a name="anchor58"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTypow &nbsp;</strong> 
  (<code>default = <strong>5.</strong></code>; <code>minimum = 0.5</code>)<br/>
 Assume a damping of small rapidity gaps in the ABMST model, as described 
@@ -775,7 +792,7 @@ above, to set in over a rapidity region of width <i>1/p</i>, with
 <i>p</i> given by this parameter. 
    
  
-<a name="anchor58"></a>
+<a name="anchor59"></a>
 <p/><code>flag&nbsp; </code><strong> SigmaDiffractive:ABMSTuseBMin &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 The slope <i>b</i> of an approximate <i>exp(b * t)</i> fall-off 
@@ -799,21 +816,21 @@ Only positive <i>b_min</i> values are acted on, so the SD/DD/CD
 components can be switched off individually even when this flag is on. 
    
  
-<a name="anchor59"></a>
+<a name="anchor60"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTbMinSD &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>)<br/>
 Assume a minimal fall-off <i>exp(b_min * t)</i> in the ABMST model 
 for single diffraction, as described above. 
    
  
-<a name="anchor60"></a>
+<a name="anchor61"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTbMinDD &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>)<br/>
 Assume a minimal fall-off <i>exp(b_min * t)</i> in the extension of 
 the ABMST model to double diffraction, as described above. 
    
  
-<a name="anchor61"></a>
+<a name="anchor62"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaDiffractive:ABMSTbMinCD &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>)<br/>
 Assume a minimal fall-off <i>exp(b_min * (t_1 + t_2))</i> in the extension 
@@ -840,13 +857,13 @@ interference [<a href="Bibliography.html#refBer87" target="page">Ber87</a>], whi
 different expression for the (poorly known) difference in phases 
 between the hadronic and the electromagnetic amplitudes. 
  
-<a name="anchor62"></a>
+<a name="anchor63"></a>
 <p/><code>flag&nbsp; </code><strong> SigmaElastic:Coulomb &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Include Coulomb corrections to the elastic and total cross sections. 
    
  
-<a name="anchor63"></a>
+<a name="anchor64"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaElastic:tAbsMin &nbsp;</strong> 
  (<code>default = <strong>5e-5</strong></code>; <code>minimum = 1e-10</code>; <code>maximum = 1e-3</code>)<br/>
 since the Coulomb contribution is infinite a lower limit on <i>|t|</i> 
@@ -859,7 +876,7 @@ are not switched on or not relevant (e.g. for neutral particles), i.e.
 then <i>t = 0</i> sets the limit. 
    
  
-<a name="anchor64"></a>
+<a name="anchor65"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaElastic:lambda &nbsp;</strong> 
  (<code>default = <strong>0.71</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.</code>)<br/>
 the main parameter of the electric form factor 
@@ -867,7 +884,7 @@ the main parameter of the electric form factor
 as used in the own, SaS/DL and MBR models. 
    
  
-<a name="anchor65"></a>
+<a name="anchor66"></a>
 <p/><code>parm&nbsp; </code><strong> SigmaElastic:phaseConst &nbsp;</strong> 
  (<code>default = <strong>0.577</strong></code>)<br/>
 The Coulomb term is taken to contain a phase factor 
@@ -878,7 +895,74 @@ is used in the own, SaS/DL and MBR models, where the hadronic cross
 section is modelled as a simple <i>exp(B t)</i>. 
    
  
+<a name="section7"></a> 
+<h3>Low-energy and combined cross sections</h3> 
+ 
+The above descriptions are mainly aimed for high-energy applications. 
+The SaS/DL and especially the ABMST ones still are intended to be used 
+down to reasonably low energies, say around or a bit below 10 GeV CM 
+energy, also for diffraction. 
+ 
+<p/> 
+In hadronic rescattering typical energy scales are much lower, and 
+extend all the way down to the kinematical threshold. For the studies 
+in [<a href="Bibliography.html#refSjo20" target="page">Sjo20</a>] it was therefore necessary to implement separate 
+low-energy cross sections. This was done using data and/or models from 
+various sources. The Additive Quark Model was applied to extend the 
+expressions to unconstrained cross sections. These cross sections are 
+encoded in the <code>SigmaLowEnergy</code> class, which exists 
+separately from the other options on this page. 
+ 
+<p/> 
+There are other applications where it is necessary to have access to 
+cross sections at all energy scales. One example is a high-energy 
+particle cascading in a medium, giving rise to more and more particles 
+of lower and lower energy. A special <code>SigmaCombined</code> class 
+has therefore been created, that contains one <code>SigmaLowEnergy</code> 
+object and one <code>SigmaSaSDL</code> object. The latter class has been 
+extended to cover a wide range of incoming particles; see [<a href="Bibliography.html#refSjo21" target="page">Sjo21</a>] 
+for details. For now, the medium is assumed to consist of a mix of 
+protons and neutrons, thereby somewhat limiting the list of 
+required hadron combinations. Output from the 
+<code>Pythia::getSigmaTotal</code> and <code>Pythia::getSigmaPartial</code> 
+methods provides user-access to these cross sections, see 
+<a href="ProgramFlow.html" target="page">Program Flow</a>. This output can be based 
+purely on the assumed low-energy or high-energy behaviour, but the default 
+is a mix of the two. This is done by a linear transition specified by 
+the following two parameters. 
+ 
+<a name="anchor67"></a>
+<p/><code>parm&nbsp; </code><strong> SigmaCombined:eMinHigh &nbsp;</strong> 
+ (<code>default = <strong>6.</strong></code>; <code>minimum = 5.</code>; <code>maximum = 20.</code>)<br/>
+Energy below which the low-energy cross sections are used exclusively. 
+The number actually applies for collisions of hadrons with up to the 
+proton mass; to allow for heavier hadrons with masses <i>m_A</i> and 
+<i>m_B</i> the threshold is at 
+<i>eMinHigh + max(0., m_A - m_p) + max(0., m_B - m_p)</i>. 
+   
+ 
+<a name="anchor68"></a>
+<p/><code>parm&nbsp; </code><strong> SigmaCombined:deltaEHigh &nbsp;</strong> 
+ (<code>default = <strong>8.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 20.</code>)<br/>
+If the energy is above <i>eMinHigh + deltaEHigh</i> the high-energy 
+cross sections are used exclusively, while in between the two cross 
+sections are mixed, with a fraction <code>(e - eMinHigh) / deltaEHigh</code> 
+taken by the high-energy expressions. This applies for <i>pp</i> 
+collisions; otherwise there is an offset for <i>eMinHigh</i> as 
+already explained. 
+   
+ 
+<p/> 
+It is worth noting that the transition is far from perfect, and 
+typically worse for some partial cross sections than for the total ones. 
+In some cases the disagreement can be less than it seems, with 
+<i>pp/pbarp</i> as the prime example. The low-energy description 
+includes an explicit nucleon excitation term, which is absent in the 
+high-energy formulae. There, instead, the enhanced low-mass spectrum 
+in diffraction fills a similar function, but with a different 
+classification. 
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

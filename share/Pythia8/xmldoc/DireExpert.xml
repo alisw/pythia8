@@ -128,6 +128,9 @@ that subsequent ME corrections still recover the correct distribution.
 <flag name="Dire:suppressLargeMECs" default="off"> 
 </flag> 
  
+<word name = "Dire:MEplugin" default = ""> 
+  name of the plugin library to use for matrix element corrections. 
+</word> 
  
 <h3>Other experimental merging settings</h3> 
  
@@ -238,80 +241,80 @@ If enabled, then the user may reconfigure timelike splitting kernels.
 Please find below all changeable coefficients. 
 </p> 
  
-<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->1&21" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->1&21" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->1&21" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->1&21" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->1&21" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->1&21" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->1&21" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->1&21" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->1&21" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->1&21" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->1&21" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->1&21" default="{0.,0.,0.,0.}"> 
 </pvec> 
 <parm name="DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_1->1&21" default="-2.0"> 
 </parm> 
  
-<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->21&1" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->21&1" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->21&1" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->21&1" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->21&1" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->21&1" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->21&1" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->21&1" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->21&1" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->21&1" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->21&1" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->21&1" default="{0.,0.,0.,0.}"> 
 </pvec> 
 <parm name="DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_1->21&1" default="-2.0"> 
 </parm> 
  
-<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21a" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21a" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21a" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21a" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21a" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21a" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21a" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21a" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21a" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21a" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21a" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21a" default="{0.,0.,0.,0.}"> 
 </pvec> 
 <parm name="DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->21&21a" default="-2.0"> 
 </parm> 
  
-<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21b" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21b" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21b" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21b" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21b" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21b" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21b" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21b" default="{0.,0.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21b" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21b" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21b" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21b" default="{0.,0.,0.,0.}"> 
 </pvec> 
 <parm name="DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->21&21b" default="-2.0"> 
 </parm> 
  
-<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1a" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1a" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1a" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1a" default="{0.,0.,0.,0.}"> 
 </pvec> 
 <parm name="DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->1&1a" default="0.0"> 
 </parm> 
  
-<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1b" default="0.,1.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1b" default="{0.,1.,0.,0.}"> 
 </pvec> 
-<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1b" default="0.,0.,0.,0."> 
+<pvec name="DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1b" default="{0.,0.,0.,0.}"> 
 </pvec> 
 <parm name="DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->1&1b" default="0.0"> 
 </parm> 
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Stefan Prestel --> 
+<!-- Copyright (C) 2024 Stefan Prestel --> 

@@ -1,9 +1,9 @@
 // main73.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: basic usage; hadronization;
+// Keywords: basic usage; hadronization
 
 // Example how to compare "parton-level" and "hadron-level" properties.
 

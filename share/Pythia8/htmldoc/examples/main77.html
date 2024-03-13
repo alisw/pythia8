@@ -4,12 +4,13 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main77.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authorss: Boris Blok <blok@physics.technion.ac.il>
-//          Paolo Gunnellini <Paolo.Gunnellini@cern.ch>
+// Authors:
+//            <a href="mailto:blok@physics.technion.ac.il">Boris Blok</a>
+//            <a href="mailto:Paolo.Gunnellini@cern.ch">Paolo Gunnellini</a>
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#mpi">MPI</a>
@@ -17,14 +18,14 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 
 // The program calculates the 4 jet DPS cross section as a function of
 // standard observables according to the model described in
-// "Dynamical approach to MPI four-jet production in Pythia",
+// &quot;Dynamical approach to MPI four-jet production in Pythia&quot;,
 // B. Blok , P. Gunnellini
 // Eur.Phys.J. C75 (2015) no.6, 282  [arXiv:1503.08246 [hep-ph]]
 
 // The model is simulated by a dynamical reweighting of Pythia events.
 // The notations and observables calculated are as in Fig. 4 of the article.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -86,34 +87,34 @@ int main(){
   Pythia pythia;
 
   // Process selection.
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhaseSpace:pTHatMin = 15.");
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 15.&quot;);
 
   // pThat reweighting.
-  pythia.readString("PhaseSpace:bias2Selection = on");
-  pythia.readString("PhaseSpace:bias2SelectionPow = 4.");
-  pythia.readString("PhaseSpace:bias2SelectionRef = 15.");
+  pythia.readString(&quot;PhaseSpace:bias2Selection = on&quot;);
+  pythia.readString(&quot;PhaseSpace:bias2SelectionPow = 4.&quot;);
+  pythia.readString(&quot;PhaseSpace:bias2SelectionRef = 15.&quot;);
 
   // No event record printout.
-  pythia.readString("Next:numberShowInfo = 0");
-  pythia.readString("Next:numberShowProcess = 0");
-  pythia.readString("Next:numberShowEvent = 0");
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
 
   // Tune from our paper https://arxiv.org/pdf/1503.08246.pdf
-  pythia.readString("Tune:pp=5");
-  pythia.readString("Tune:ee=3");
-  pythia.readString("MultipartonInteractions:bProfile=1");
-  pythia.readString("MultipartonInteractions:pT0Ref=2.659");
-  pythia.readString("ColourReconnection:range=3.540");
+  pythia.readString(&quot;Tune:pp=5&quot;);
+  pythia.readString(&quot;Tune:ee=3&quot;);
+  pythia.readString(&quot;MultipartonInteractions:bProfile=1&quot;);
+  pythia.readString(&quot;MultipartonInteractions:pT0Ref=2.659&quot;);
+  pythia.readString(&quot;ColourReconnection:range=3.540&quot;);
 
   // LHC initialization.
-  pythia.readString("Beams:eCM = 7000.");
+  pythia.readString(&quot;Beams:eCM = 7000.&quot;);
   pythia.init();
 
   //Histograms
-  Hist _hist_DeltaS_norm("DeltaS between the two jet systems", 14, 0., 3.1415);
-  Hist _hist_DeltaPtRelSoft_norm("Normalized pT balance between the two jet"
-    " systems", 10, 0., 1.);
+  Hist _hist_DeltaS_norm(&quot;DeltaS between the two jet systems&quot;, 14, 0., 3.1415);
+  Hist _hist_DeltaPtRelSoft_norm(&quot;Normalized pT balance between the two jet&quot;
+    &quot; systems&quot;, 10, 0., 1.);
 
   // Set up SlowJet jet finder in native mode.
   SlowJet slowJet( power, R, pTMin, etaMax, select, massSet, 0, false);
@@ -122,7 +123,7 @@ int main(){
   double sumWeights = 0.;
 
   // Generate events.
-  for(int iEvent=0;iEvent<nEvent;++iEvent){
+  for(int iEvent=0;iEvent&lt;nEvent;++iEvent){
     if (!(pythia.next())){
         continue;//skip event in case of problem.
       }
@@ -137,8 +138,8 @@ int main(){
     bool hasMPI=false;
 
     // Identify incoming state of second MPI, if present.
-    for (int i=7;i<pythia.event.size();++i){
-      if(fabs(pythia.event[i].status())==31){
+    for (int i=7;i&lt;pythia.event.size();++i){
+      if(pythia.event[i].statusAbs()==31){
         x3=pythia.event[i].e()/pythia.event[1].e();
         x4=pythia.event[i+1].e()/pythia.event[2].e();
         hasMPI=true;
@@ -149,7 +150,7 @@ int main(){
     // Find reweighting factor; check if the MPI scale is higher than 15 GeV.
     double scale1=pythia.info.pTMPI(0);
     double scale2=(hasMPI)? pythia.info.pTMPI(1):1.;
-    double ReweightFactor= (scale2>15 && x3>0 && x4>0)
+    double ReweightFactor= (scale2&gt;15 &amp;&amp; x3&gt;0 &amp;&amp; x4&gt;0)
       ? Reweighting(x1,x2,x3,x4,scale1,scale2) : 1.;
     double weightFirst = pythia.info.weight();
     double weight=weightFirst*ReweightFactor;
@@ -157,24 +158,24 @@ int main(){
     // Analyze jet content of event.
     slowJet.analyze( pythia.event );
     int nSlow = slowJet.sizeJet();
-    vector <Vec4> myJets;
-    for (int i = 0; i < nSlow; ++i) {
-      if(slowJet.pT(i)>=50 && abs(slowJet.y(i))<4.7) num_jets+=1;
-      if(slowJet.pT(i)>=20 && abs(slowJet.y(i))<4.7){
+    vector &lt;Vec4&gt; myJets;
+    for (int i = 0; i &lt; nSlow; ++i) {
+      if(slowJet.pT(i)&gt;=50 &amp;&amp; abs(slowJet.y(i))&lt;4.7) num_jets+=1;
+      if(slowJet.pT(i)&gt;=20 &amp;&amp; abs(slowJet.y(i))&lt;4.7){
         num_Softjets+=1;
         myJets.push_back(slowJet.p(i));
       }
     }
 
     // Events with at least two hard and exactly four soft jets.
-    if (num_jets >= 2 && num_Softjets == 4) {
+    if (num_jets &gt;= 2 &amp;&amp; num_Softjets == 4) {
       sumWeights+=weight;
       double SptSoft = (myJets.at(2)+myJets.at(3)).pT()
         / (myJets.at(2).pT()+myJets.at(3).pT());
       _hist_DeltaPtRelSoft_norm.fill(SptSoft, weight);
       double DeltaS = abs( (myJets.at(0)+myJets.at(1)).phi()
         - (myJets.at(2)+myJets.at(3)).phi() );
-      if (DeltaS > M_PI) DeltaS = 2. * M_PI - DeltaS;
+      if (DeltaS &gt; M_PI) DeltaS = 2. * M_PI - DeltaS;
       _hist_DeltaS_norm.fill(DeltaS,weight);
     }
   }
@@ -185,18 +186,18 @@ int main(){
   double binWidthDeltaS      = M_PI/14;
   _hist_DeltaPtRelSoft_norm /= (sumWeights*binWidthDeltaPtRel);
   _hist_DeltaS_norm         /= (sumWeights*binWidthDeltaS);
-  cout << _hist_DeltaPtRelSoft_norm << _hist_DeltaS_norm;
+  cout &lt;&lt; _hist_DeltaPtRelSoft_norm &lt;&lt; _hist_DeltaS_norm;
 
   // Histogram in format to allow Python plotting.
-  HistPlot hpl("main77plot");
-  hpl.plotFrame("out77plot1", _hist_DeltaS_norm, "$\\Delta$ S (rad)",
-                "1/$\\sigma$ d$\\sigma$/d$\\Delta$S",
-                "1/$\\sigma$ d$\\sigma$/d$\\Delta$S",
-                "h", "proton-proton collisions, $\\sqrt{s}$ = 7 TeV", true);
-  hpl.plotFrame("out77plot2", _hist_DeltaPtRelSoft_norm, "$\\Delta$ p_T",
-                "1/$\\sigma$ d$\\sigma$/d$\\Delta$p_T",
-                "1/$\\sigma$ d$\\sigma$/d$\\Delta$p_T",
-                "h", "proton-proton collisions, $\\sqrt{s}$ = 7 TeV", true);
+  HistPlot hpl(&quot;main77plot&quot;);
+  hpl.plotFrame(&quot;out77plot1&quot;, _hist_DeltaS_norm, &quot;$\\Delta$ S (rad)&quot;,
+                &quot;1/$\\sigma$ d$\\sigma$/d$\\Delta$S&quot;,
+                &quot;1/$\\sigma$ d$\\sigma$/d$\\Delta$S&quot;,
+                &quot;h&quot;, &quot;proton-proton collisions, $\\sqrt{s}$ = 7 TeV&quot;, true);
+  hpl.plotFrame(&quot;out77plot2&quot;, _hist_DeltaPtRelSoft_norm, &quot;$\\Delta$ p_T&quot;,
+                &quot;1/$\\sigma$ d$\\sigma$/d$\\Delta$p_T&quot;,
+                &quot;1/$\\sigma$ d$\\sigma$/d$\\Delta$p_T&quot;,
+                &quot;h&quot;, &quot;proton-proton collisions, $\\sqrt{s}$ = 7 TeV&quot;, true);
   hpl.plot();
 
   // Done.

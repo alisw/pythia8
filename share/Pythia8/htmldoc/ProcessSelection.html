@@ -8,7 +8,7 @@
  
 <h2>Hard Process Selection</h2> 
 <ol id="toc">
-  <li><a href="#section0"><aloc href="QCDProcesses">QCD Processes</aloc></a></li>
+  <li><a href="#section0">QCD Processes</a></li>
   <li><a href="#section1"><aloc href="ElectroweakProcesses">Electroweak Processes</aloc></a></li>
   <li><a href="#section2"><aloc href="OniaProcesses">Onia Processes</aloc></a></li>
   <li><a href="#section3"><aloc href="TopProcesses">Top Processes</aloc></a></li>
@@ -69,13 +69,26 @@ to that particular process class, but not the ones that have a
 broader usage. 
  
 <a name="section0"></a> 
-<h3><a href="QCDProcesses.html" target="page">QCD Processes</a></h3> 
+<h3>QCD Processes</h3> 
  
-QCD processes fall in two main categories: soft and hard. The soft ones 
-contain elastic, diffractive and "minimum-bias" events, together 
-covering the total cross section. Hard processes are the normal 
-<i>2 &rarr; 2</i> ones, including charm and bottom production. 
-<br/>Reserved code range: 101 - 199. 
+QCD processes fall in two main categories: soft and hard. 
+<br/><a href="QCDSoftProcesses.html" target="page">Soft processses</a> 
+contain elastic, <a href="Diffraction.html" target="page">diffractive</a> and 
+"minimum-bias" events, together covering the total cross section. 
+<br/>Reserved code range: 101 - 110. 
+<br/><a href="QCDHardProcesses.html" target="page">Hard processes</a> are the normal 
+<i>2 &rarr; 2</i> ones, including charm and bottom production 
+(plus an incomplete implementation of <i>2 &rarr; 3</i> processes). 
+They are contained as a subset of the soft processes via the 
+<a href="MultipartonInteractions.html" target="page">MultiParton Interactions</a> 
+(MPI) mechanism. 
+<br/>Reserved code range: 111 - 150. 
+<br/>The <a href="QCDLowEnergyProcesses.html" target="page">Low-energy processes</a>, 
+primarily used for collision energies below 10 GeV, closely mirror 
+the soft processes, but without any MPIs to offer an admixture of 
+hard processes. Other kinds, such resonant and annihilation processes, 
+instead are needed at low energies. 
+<br/>Reserved code range: 151 - 160. 
  
 <a name="section1"></a> 
 <h3><a href="ElectroweakProcesses.html" target="page">Electroweak Processes</a></h3> 
@@ -184,4 +197,4 @@ a few basic processes.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

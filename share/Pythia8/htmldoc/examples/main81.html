@@ -4,12 +4,14 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main81.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:stefan.prestel@thep.lu.se">Stefan Prestel</a>
+//            Stefan Prestel
+
+// Contact: Christian Preuss &lt;preuss@uni-wuppertal.de&gt;
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#merging">Merging</a>
@@ -22,22 +24,22 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // provides the input LHE events, and histout81.dat is the output
 // file. This example requires FastJet.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
 // Functions for histogramming
-#include "fastjet/PseudoJet.hh"
-#include "fastjet/ClusterSequence.hh"
-#include "fastjet/CDFMidPointPlugin.hh"
-#include "fastjet/CDFJetCluPlugin.hh"
+#include &quot;fastjet/PseudoJet.hh&quot;
+#include &quot;fastjet/ClusterSequence.hh&quot;
+#include &quot;fastjet/CDFMidPointPlugin.hh&quot;
+#include &quot;fastjet/CDFJetCluPlugin.hh&quot;
 
 //==========================================================================
 
 // Find the Durham kT separation of the clustering from
-// nJetMin --> nJetMin-1 jets in the input event
+// nJetMin --&gt; nJetMin-1 jets in the input event
 
-double pTfirstJet( const Event& event, int nJetMin, double Rparam) {
+double pTfirstJet( const Event&amp; event, int nJetMin, double Rparam) {
 
   double yPartonMax = 4.;
 
@@ -54,18 +56,18 @@ double pTfirstJet( const Event& event, int nJetMin, double Rparam) {
     jetDef = new fastjet::JetDefinition(fastjet::ee_kt_algorithm,
                                       recombScheme, strategy);
   // Fastjet input
-  std::vector <fastjet::PseudoJet> fjInputs;
+  std::vector &lt;fastjet::PseudoJet&gt; fjInputs;
   // Reset Fastjet input
   fjInputs.resize(0);
 
   // Loop over event record to decide what to pass to FastJet
-  for (int i = 0; i < event.size(); ++i) {
-    // (Final state && coloured+photons) only!
+  for (int i = 0; i &lt; event.size(); ++i) {
+    // (Final state &amp;&amp; coloured+photons) only!
     if ( !event[i].isFinal()
       || event[i].isLepton()
       || event[i].id() == 23
       || abs(event[i].id()) == 24
-      || abs(event[i].y()) > yPartonMax)
+      || abs(event[i].y()) &gt; yPartonMax)
       continue;
 
     // Store as input to Fastjet
@@ -98,12 +100,12 @@ int main( int argc, char* argv[] ){
 
   // Check that correct number of command-line arguments
   if (argc != 4) {
-    cerr << " Unexpected number of command-line arguments ("<<argc<<"). \n"
-         << " You are expected to provide the arguments" << endl
-         << " 1. Input file for settings" << endl
-         << " 2. Full name of the input LHE file (with path)" << endl
-         << " 3. Path for output histogram files" << endl
-         << " Program stopped. " << endl;
+    cerr &lt;&lt; &quot; Unexpected number of command-line arguments (&quot;&lt;&lt;argc&lt;&lt;&quot;). \n&quot;
+         &lt;&lt; &quot; You are expected to provide the arguments&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 1. Input file for settings&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 2. Full name of the input LHE file (with path)&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 3. Path for output histogram files&quot; &lt;&lt; endl
+         &lt;&lt; &quot; Program stopped. &quot; &lt;&lt; endl;
     return 1;
   }
 
@@ -117,29 +119,31 @@ int main( int argc, char* argv[] ){
   string iPath = string(argv[2]);
   string oPath = string(argv[3]);
   // Number of events
-  int nEvent = pythia.mode("Main:numberOfEvents");
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
 
   // For ISR regularisation off
-  pythia.settings.forceParm("SpaceShower:pT0Ref",0.);
+  pythia.settings.forceParm(&quot;SpaceShower:pT0Ref&quot;,0.);
 
   // Declare histograms
-  Hist histPTFirst("pT of first jet",100,0.,100.);
-  Hist histPTSecond("pT of second jet",100,0.,100.);
-  Hist histPTThird("pT of third jet",100,0.,100.);
+  Hist histPTFirst(&quot;pT of first jet&quot;,100,0.,100.);
+  Hist histPTSecond(&quot;pT of second jet&quot;,100,0.,100.);
+  Hist histPTThird(&quot;pT of third jet&quot;,100,0.,100.);
 
   // Read in ME configurations
-  pythia.readString("Beams:frameType = 4");
-  pythia.readString("Beams:LHEF = " + iPath);
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = &quot; + iPath);
   pythia.init();
 
   // Start generation loop
-  for( int iEvent=0; iEvent<nEvent; ++iEvent ){
+  for( int iEvent=0; iEvent&lt;nEvent; ++iEvent ){
 
     // Generate next event
     if( ! pythia.next()) continue;
 
     // Get CKKWL weight of current event
-    double weight = pythia.info.mergingWeight();
+    double evtweight = pythia.info.weight();
+    double weight    = pythia.info.mergingWeight();
+    weight      *= evtweight;
 
     // Fill bins with CKKWL weight
     // Functions use fastjet to get first / second jet
@@ -150,7 +154,7 @@ int main( int argc, char* argv[] ){
     histPTSecond.fill( pTsecnd, weight);
     histPTThird.fill( pTthird, weight);
 
-    if(iEvent%1000 == 0) cout << iEvent << endl;
+    if(iEvent%1000 == 0) cout &lt;&lt; iEvent &lt;&lt; endl;
 
   } // end loop over events to generate
 
@@ -170,25 +174,25 @@ int main( int argc, char* argv[] ){
   string jetsInLHEF = iPath.substr(iPath.size()-5, iPath.size());
   jetsInLHEF = jetsInLHEF.substr(0, jetsInLHEF.size()-4);
 
-  // Write histograms to dat file. Use "jetsInLHEF" to label the files
+  // Write histograms to dat file. Use &quot;jetsInLHEF&quot; to label the files
   // Once all the samples up to the maximal desired jet multiplicity from the
   // matrix element are run, add all histograms to produce a
   // matrix-element-merged prediction
 
   ofstream write;
   stringstream suffix;
-  suffix << jetsInLHEF << "_wv.dat";
+  suffix &lt;&lt; jetsInLHEF &lt;&lt; &quot;_wv.dat&quot;;
 
   // Write histograms to file
-  write.open( (char*)(oPath + "PTjet1_" + suffix.str()).c_str());
+  write.open( (char*)(oPath + &quot;PTjet1_&quot; + suffix.str()).c_str());
   histPTFirst.table(write);
   write.close();
 
-  write.open( (char*)(oPath + "PTjet2_" + suffix.str()).c_str());
+  write.open( (char*)(oPath + &quot;PTjet2_&quot; + suffix.str()).c_str());
   histPTSecond.table(write);
   write.close();
 
-  write.open( (char*)(oPath + "PTjet3_" + suffix.str()).c_str());
+  write.open( (char*)(oPath + &quot;PTjet3_&quot; + suffix.str()).c_str());
   histPTThird.table(write);
   write.close();
 

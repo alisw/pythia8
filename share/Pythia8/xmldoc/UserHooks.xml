@@ -39,8 +39,7 @@ at the process level.
 specifically for matching in resonance decays. 
 <br/>(viii) Ones that allow colour reconnection, notably in connection 
 with resonance decays. 
-<br/>(ix) Ones that allow an enhanced rate of rare shower splittings. 
-<br/>(x) Ones that give you access to to hadronization parameters 
+<br/>(ix) Ones that give you access to to hadronization parameters 
 in each step in the hadronization process, and allows for a veto 
 of individual hadrons. 
  
@@ -240,9 +239,9 @@ particles in slots 5 through 4 + N, and thereafter recursively the
 resonance decay chains, if any. Use the method 
 <code>omitResonanceDecays(...)</code> if you want to skip these 
 decay chains. There are exceptions to this structure, 
-for <aloc href="QCDProcesses">soft QCD processes</aloc> (where 
+for <aloc href="QCDSoftProcesses">soft QCD processes</aloc> (where 
 the partonic process may not yet have been selected at this stage), 
-and when <aloc href="SecondHardProcess">a second hard process</aloc> has 
+and when a <aloc href="SecondHardProcess">second hard process</aloc> has 
 been requested (where two hard processes are bookkept). In general 
 it is useful to begin the development work by listing a few 
 <code>process</code> records, to clarify what the structure is for 
@@ -755,8 +754,8 @@ In the base class this method returns false. If you redefine it
 to return true then the method <code>biasSelectionBy(...)</code> will 
 allow you to modify the phase space sampling, with a compensating 
 event weight, such that the cross section is unchanged. You cannot 
-combine this kind of reweighting with the selection of 
-<aloc href="SecondHardProcess">a second hard process</aloc>. 
+combine this kind of reweighting with the selection of a 
+<aloc href="SecondHardProcess">second hard process</aloc>. 
 </method> 
  
 <method name="virtual double UserHooks::biasSelectionBy( 
@@ -931,160 +930,7 @@ a singlet on its own.
 </argument> 
 </method> 
  
-<h3>(ix) Enhanced rate of rare shower splittings</h3> 
- 
-PYTHIA also offers possibilities to enhance the frequency of rare 
-splittings.  This is not a trivial task, since a simple "upweighting" of 
-splittings would produce a mismatch between emission and no-emission 
-probabilities, leading to a violation of the principle that the parton 
-shower should not change the inclusive (input) cross section. 
-Nevertheless, a general algorithm that allows for increased emission 
-probabilities, while keeping no-emission factors intact, was presented 
-in <ref>Lon13a</ref>. 
- 
-<p/>In <ref>Lon13a</ref> two types of enhancements are proposed: those 
-of "regular" shower emissions, and those of trial shower emissions, the 
-latter as part of the mandatory Sudakov reweighting in ME+PS merging 
-schemes. Both of these possibilities are accessible through 
-<code>UserHooks</code>, but cannot be used at the same time. 
- 
-<p/>The price to pay for these enhancements is that events come with a 
-compensatory weight. The advantages of obtaining higher statistics 
-for rare branchings thus is mitigated, and the usefulness has to be 
-evaluated case by case. 
- 
-<p/>Currently enhancements of ISR and FSR branchings have been 
-included. These enhancements are currently not phase-space dependent, 
-i.e. emissions will be enhanced uniformly in phase space. 
-It should also be noted that the threshold 
-region for gluon branchings to a pair of heavy quarks, specifically 
-<ei>g &rarr; c + cbar</ei> and <ei>g &rarr; b + bbar</ei>, are not 
-enhanced in this algorithm. Technically it is because this case is 
-handled separately in the code, but there also remain some physics issues 
-to understand. 
- 
-<p/>To increase statistics of rare emissions in the showers, e.g. QED 
-or weak radiation, Pythia supplies the following functions implementing 
-the strategy of section 4 in <ref>Lon13a</ref>. 
- 
-<method name="virtual bool UserHooks::canEnhanceEmission()"> 
-In the base class this method returns false. If you redefine it to 
-return true then the method <code>enhanceFactor(...)</code> will be 
-used to rescale an initial-state splitting probability. Both 
-<code>enhanceFactor(...)</code> and <code>vetoProbability(...)</code> 
-will have to be derived to allow for a branching enhancement. 
-</method> 
- 
-<method name="virtual double UserHooks::enhanceFactor( string name)"> 
-This function should return the enhancement factor for the splitting 
-probability with identifier <code>name</code>. It should return 1. 
-by default, i.e. for all input strings it does not propose to handle. 
-<argument name="name"> the name of the splitting that can enhanced. 
-Currently, the following input names are recognized by the PYTHIA 
-showers, and can thus be used to enhance the respective 
-splittings. 
-<p/> 
-ISR QCD branchings: 
-<br/><code>isr:G2GG</code> for <ei>g &rarr; g + g</ei>, 
-<br/><code>isr:G2QQ</code> for <ei>g &rarr; q + qbar</ei> 
-with <ei>q</ei> a light quark, 
-<br/><code>isr:G2QQ:cc</code> for <ei>g &rarr; c + cbar</ei> 
-<br/><code>isr:G2QQ:bb</code> for <ei>g &rarr; b + bbar</ei> 
-<br/><code>isr:Q2QG</code> for <ei>q &rarr; q + g</ei>, 
-<br/><code>isr:Q2GQ</code> for <ei>q &rarr; g + q</ei>; 
-<p/> 
-ISR QED branchings: 
-<br/><code>isr:Q2QA</code> for <ei>q &rarr; q + photon</ei>, 
-<br/><code>isr:Q2AQ</code> for <ei>q &rarr; photon + q</ei>; 
-<p/> 
-ISR weak shower branchings: 
-<br/><code>isr:Q2QW</code> for <ei>q &rarr; q + W</ei> or 
-<ei>q &rarr; q + Z</ei>; 
-<p/> 
-FSR QCD branchings: 
-<br/><code>fsr:G2GG</code> for <ei>g &rarr; g + g</ei>, 
-<br/><code>fsr:G2QQ</code> for <ei>g &rarr; q + qbar</ei> 
-with <ei>q</ei> a light quark, 
-<br/><code>fsr:G2QQ:cc</code> for <ei>g &rarr; c + cbar</ei> 
-<br/><code>fsr:G2QQ:bb</code> for <ei>g &rarr; b + bbar</ei> 
-<br/><code>fsr:Q2QG</code> for <ei>q &rarr; q + g</ei>; 
-<p/> 
-FSR QED branchings: 
-<br/><code>fsr:Q2QA</code> for <ei>q &rarr; q + photon</ei>, 
-<br/><code>fsr:A2QQ</code> for <ei>photon &rarr; q + qbar</ei>, 
-<br/><code>fsr:A2LL</code> for <ei>photon &rarr; lepton + antilepton</ei>, 
-<p/> 
-FSR weak shower branchings: 
-<br/><code>fsr:Q2QW</code> for <ei>q &rarr; q + W</ei> or 
-<ei>q &rarr; q + Z</ei>; 
-<p/> 
-FSR hidden valley branchings: 
-<br/><code>fsr:Q2QHV</code> for all hidden valley branchings. 
-<br/> 
-<br/>Charge-conjugated branchings are included whenever relevant. 
-Note that the order of the daughters matters: in the backwards 
-evolution machinery the step is from the first daughter to the mother 
-by the emission of the second daughter. 
- 
-<p/> 
-Let's consider some examples. 
-The evolution step changing the partonic state from 
-<ei>q qbar &rarr; e+ e-</ei> to <ei>g qbar &rarr; e+ e- qbar</ei> 
-through an initial state splitting can be enhanced 
-by allowing a non-unity return value for the splitting with 
-<code>name</code> equalling <code>isr:G2QQ</code>. Another evolution 
-step changing <ei>g qbar &rarr; e+ e- qbar</ei> to 
-<ei>g qbar &rarr; e+ e- qbar gluon</ei> through FSR (ISR) can be 
-enhanced by allowing a non-unity return value for the splitting with 
-<code>name</code> equalling <code>fsr:Q2QG</code> 
-(<code>isr:Q2QG</code>). Yet another ISR branching converting 
-<ei>g qbar &rarr; e+ e- qbar</ei> to <ei>q qbar &rarr; e+ e- qbar q</ei> can 
-be enhanced by non-unity return value for the splitting with 
-<code>name</code> equalling <code>isr:Q2GQ</code> 
-(note the ordering in the branching name). 
-</argument> 
-</method> 
- 
-<method name="virtual double UserHooks::vetoProbability( string name)"> 
-This function should return the probability of an emission that has 
-been enhanced with the help of <code>enhanceFactor(...)</code>, for the 
-same <code>name</code> arguments as above. An optimal choice depends on 
-your personal needs. Using 0.5 as a baseline is perfectly acceptable. 
-It should return 0. by default, i.e. for all input strings it does not 
-propose to handle. 
-</method> 
- 
-<method name="double getEnhancedEventWeight()"> 
-If you use enhanced emissions, it is paramount to attribute a corrective 
-weight to each event containing enhanced emissions. This function returns 
-this weight. In the presence of enhancements, all histograms and output 
-events must account for this weight. 
-</method> 
- 
-<p/>In the context of merging, it can be beneficial to allow for enhanced 
-trial emissions. As discussed in section 3 of <ref>Lon13a</ref>, this 
-means that the Sudakov factors that are commonly generated by event 
-vetoes based on trial emissions (see e.g. <ref>Lon11</ref>) are 
-instead given by small but non-vanishing event weights. This can have 
-advantages, since all events of an input sample will be retained. 
-Pythia allows users to enhance trial emissions by using the following 
-functions. 
- 
-<method name="virtual bool UserHooks::canEnhanceTrial()"> 
-In the base class this method returns false. If you redefine it to 
-return true then the method <code>enhanceFactor(...)</code> (see above) 
-will be used to rescale an initial-state trial splitting probability. 
-</method> 
- 
-<p/>Trial emission enhancements also necessitate corrective weights. 
-These are handled internally, so that users only have to ensure that 
-<code>Info::mergingWeight()</code> or 
-<code>Info::mergingWeightNLO()</code> are correctly taken into account. 
- 
-<p/>A simple example of enhanced regular emissions is provided in 
-<code>main63.cc</code>. 
- 
-<h3>(x) Modified hadronization</h3> 
+<h3>(ix) Modified hadronization</h3> 
  
 The methods in this group are intended to allow for modifications of 
 the string hadronization model, involving changes to hadronization 
@@ -1172,6 +1018,25 @@ containing additional information about the string break.
 </argument> 
 </method> 
  
+<method name="canVetoAfterHadronization()"> 
+In the base class this method returns false. If you redefine it to return 
+true, the method <code>doVetoAfterHadronization()</code> will be called 
+immediately after hadronization has been performed, but before any 
+post-hadronization effects such as decays, hadronic rescattering or 
+Bose-Einstein effects. 
+</method> 
+ 
+<method name="virtual bool doVetoAfterHadronization(const Event& event)"> 
+can optionally be called, as described above. You can study, but not 
+modify, the <code>event</code> record of the hadronized state. 
+Based on that you can decide whether to veto the event, true, or let 
+it continue to evolve, false. If you veto, then this event is not 
+counted among the accepted ones, and does not contribute to the estimated 
+cross section. The <code>Pytha::next()</code> method will begin a 
+completely new event, so the vetoed event will not appear in the 
+output of <code>Pythia::next()</code>. 
+</method> 
+ 
 <method name="virtual bool canSetImpactParameter()"> 
 In the base class this method returns false. If you redefine it to 
 return true, it will enable the method <code>doSetImpactParameter()</code> . 
@@ -1186,8 +1051,8 @@ collisions. Note that it does not modify the
 <aloc href="MultipartonInteractions"> 
   <code>MultipartonInteractions:bProfile</code></aloc> used in the MPI 
   machinery, and that currently it will only affect the 
-  <aloc href="QCDProcesses"> 
-  <code>SoftQCD</code></aloc> processes. 
+  <code><aloc href="QCDSoftProcesses">SoftQCD</aloc></code> 
+ processes. 
 </method> 
  
  
@@ -1217,4 +1082,4 @@ occurs.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

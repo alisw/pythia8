@@ -1,5 +1,5 @@
 // DireHistory.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -940,6 +940,9 @@ private:
   // Info object to have access to all information read from LHE file
   Info* infoPtr;
 
+  // Logger object.
+  Logger* loggerPtr;
+
   // Class for calculation weak shower ME.
   SimpleWeakShowerMEs weakShowerMEs;
 
@@ -988,4 +991,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireHistory_H
+#endif // Pythia8_DireHistory_H

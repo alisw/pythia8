@@ -96,6 +96,32 @@ Print particle and decay data for the particle with this particular
 identity code. Default means that no particle is printed. 
 </modeopen> 
  
+<wvec name="Init:plugins" default="{}"> 
+Vector of user provided plugins to load; full details can be found in 
+<aloc href="Plugins">Plugins</aloc>. Each entry should at a minimum 
+take the form <code>LibraryName::ClassName</code>. Here, 
+<code>LibraryName</code> is the name of the library, which can include 
+an absolute or relative path. If no path is provided, then the 
+standard search paths for libraries are searched. The argument 
+<code>ClassName</code> specifies the class of the object to load from 
+the plugin library. Three additional optional arguments, separated by 
+<code>::</code> can also be provided, 
+<code>LibraryName::ClassName::Key::CommandFile::SubRun</code>. For all 
+classes except PDFs, <code>Key</code> can be either <code>set</code>, 
+which sets the corresponding pointer, or <code>add</code>, which (when 
+available) adds to a list of Pythia pointers. For PDF plugins, 
+<code>Key</code> specifies the beam type to set. The optional argument 
+<code>CommandFile</code> specifies a command file that will be read in 
+using the <code>Pythia::readFile</code> method, prior to the 
+construction of the plugin object. If <code>SubRun</code> is provided, 
+then the settings for only that subrun are read. Warning: none of the 
+arguments provided per entry should contain the character 
+<code>::</code>, as this is used as a delimeter for the arguments of 
+the entry. Additionally, the character <code>,</code> should not be 
+used either, as this separates the entries of the vector. All 
+arguments are case sensitive. 
+</wvec> 
+ 
 <h3>Event-generation settings</h3> 
  
 <modeopen name="Next:numberCount" default="1000" min="0"> 
@@ -284,4 +310,4 @@ and then use that value in the main program as desired.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

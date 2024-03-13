@@ -1,5 +1,5 @@
 // VinciaFSR.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,6 +9,11 @@
 #include "Pythia8/VinciaFSR.h"
 
 namespace Pythia8 {
+
+using namespace VinciaConstants;
+
+// Max loop counter (for interleaved resonance decays).
+const int VinciaFSR::NLOOPMAX = 10000;
 
 //==========================================================================
 
@@ -59,14 +64,13 @@ void Brancher::reset(int iSysIn, Event& event, vector<int> iIn) {
     if (nMassive == 2 && iIn.size() == 2)
       kallenFacSav = sAntSav/sqrt(pow2(sAntSav) - 4*pow2(mSav[0]*mSav[1]));
   }
-  // Call method to initialise variables in derived classes.
-  init();
 
 }
 
 //--------------------------------------------------------------------------
 
 // Compute pT scale of trial branching.
+
 double Brancher::getpTscale() {
 
   if (invariantsSav.size() == 3) {
@@ -81,6 +85,7 @@ double Brancher::getpTscale() {
 //--------------------------------------------------------------------------
 
 // Return Xj.
+
 double Brancher::getXj() {
 
   if (invariantsSav.size() == 3) {
@@ -96,30 +101,50 @@ double Brancher::getXj() {
 
 // Simple print utility, showing the contents of the Brancher.
 
-void Brancher::list(string header) const {
+void Brancher::list(string header, bool withLegend) const {
 
   // Check if we are asked to output a header.
-  if (header != "none")
-    cout << " --------  " << std::left << setw(30) << header
-         << "  ----------------"
-         << "--------------------------------------------- \n"
-         << "  sys type     mothers         colTypes              ID codes "
-         << "            hels             m    qNewSav \n"
-         << fixed << std::right << setprecision(3);
+  if (header != "none") {
+    cout << " --------  " << std::left << setw(34) << header
+         << "  ---------------------------------------------------- \n";
+    if (withLegend) {
+      cout << "  sys type           mothers                   ID codes    "
+           << "colTypes     hels          m    qNewSav \n";
+    }
+  }
+  cout << fixed << std::right << setprecision(3);
   cout << setw(5) << system() << " ";
+  // Mothers in iSav list. Baseline 2->3 but also allow for 3->4.
+  // (Set up for right-justified printing.)
+  int jP0 = -1;
+  int jP1 = 0;
+  int jP2 = 1;
+  if ( iSav.size() == 3 ) {
+    jP0 = 0;
+    jP1 = 1;
+    jP2 = 2;
+  }
   string type = "FF";
-  if (iSav.size() == 3) type = "FFF";
-  else if (iSav.size() >= 4) type="FS";
-  cout << setw(4) << type << " "
-       << setw(5) << i0() << " " << setw(5) << i1() << " "
-       << setw(5) << (i2() > 0 ? num2str(i2(), 5) : " ") << "   "
-       << setw(3) << colType0() << " " << setw(3) << colType1() << " "
-       << setw(3) << (i2() > 0 ? num2str(colType2(), 3) : " ") << " "
-       << setw(9) << id0() << setw(9) << id1()
-       << setw(9) << (i2() > 0 ? num2str(id2(), 9) : " ") << "   "
-       << setw(2) << h0() << " " << setw(2) <<  h1() << " "
-       << setw(2) << (i2() > 0 ? num2str(h2(), 2) : " ") << " "
-       << num2str(mAnt(), 10);
+  // Resonance-Final antennae R and F mothers + list of recoilers.
+  if ( posR() >= 0 ) {
+    type  = "RF";
+    jP0 = -1;
+    jP1 = posR();
+    jP2 = posF();
+  }
+  else if ( iSav.size() == 3 ) type = "FFF";
+  else if ( iSav.size() >= 4 ) type = "?";
+  cout << setw(4) << type;
+  cout << " " << setw(5) << (jP0 >= 0 ? num2str(iSav[jP0],5) : " ")
+       << " " << setw(5) << iSav[jP1] << " " << setw(5) << iSav[jP2];
+  cout << setw(9) << (jP0 >= 0 ? num2str(idSav[jP0],9) : " ")
+       << setw(9) << idSav[jP1] << setw(9) << idSav[jP2];
+  cout << " " << setw(3) << (jP0 >= 0 ? num2str(colTypeSav[jP0],3) : " ")
+       << " " << setw(3) << colTypeSav[jP1]
+       << " " << setw(3) << colTypeSav[jP2];
+  cout << " " << setw(2) << (jP0 >= 0 ? num2str(hSav[jP0],2) : " ")
+       << " " << setw(2) << hSav[jP1] << " " << setw(2) << hSav[jP2];
+  cout << " " << num2str(mAnt(), 10);
   if (hasTrial()) {
     if (q2NewSav > 0.) cout << " " << num2str(sqrt(q2NewSav), 10);
     else cout << " " << num2str(0.0, 10);
@@ -151,17 +176,17 @@ vector<double> Brancher::setmPostVec() {
 void Brancher::setStatPost() {
   statPostSav.resize(iSav.size() + 1, 51);}
 
-void Brancher::setMaps(int){
+void Brancher::setMaps(int) {
   mothers2daughters.clear(); daughters2mothers.clear();}
 
 //--------------------------------------------------------------------------
 
 // Return index of new particle (slightly arbitrary choice for splittings).
 
-int Brancher::iNew(){
+int Brancher::iNew() {
 
   if (i0() > 0) {
-    if(mothers2daughters.find(i0()) != mothers2daughters.end())
+    if (mothers2daughters.find(i0()) != mothers2daughters.end())
       return mothers2daughters[i0()].second;
     else return 0;
   }
@@ -178,14 +203,16 @@ int Brancher::iNew(){
 
 // Method to initialise members specific to BrancherEmitFF.
 
-void BrancherEmitFF::init() {
+void BrancherEmitFF::initBrancher(ZetaGeneratorSet* zetaGenSet) {
 
-  branchType = 1;
-  if (colType0() == 2 && colType1() == 2) iAntSav = iGGemitFF;
-  else if (colType1() == 2) iAntSav = iQGemitFF;
-  else if (colType0() == 2) iAntSav = iGQemitFF;
-  else iAntSav = iQQemitFF;
+  branchType = BranchType::Emit;
+  if (colType0() == 2 && colType1() == 2) antFunTypeSav = GGEmitFF;
+  else if (colType1() == 2) antFunTypeSav = QGEmitFF;
+  else if (colType0() == 2) antFunTypeSav = GQEmitFF;
+  else antFunTypeSav = QQEmitFF;
 
+  trialGenPtr = make_shared<TrialGeneratorFF>(sectorShower, branchType,
+    zetaGenSet);
 }
 
 //--------------------------------------------------------------------------
@@ -193,50 +220,36 @@ void BrancherEmitFF::init() {
 // Generate a new Q2 value, soft-eikonal 2/yij/yjk implementation.
 
 double BrancherEmitFF::genQ2(int evTypeIn, double q2BegIn, Rndm* rndmPtr,
-  const EvolutionWindow* evWindowIn, double colFacIn,
+  Logger* loggerPtr, const EvolutionWindow* evWindowIn, double colFacIn,
   vector<double> headroomIn, vector<double> enhanceIn,
-  int) {
+  int verboseIn) {
+
+  // Set current phase space limits and active sectors.
+  double q2MinNow = pow2(evWindowIn->qMin);
+  trialGenPtr->reset(q2MinNow,sAntSav,mSav,antFunTypeSav);
 
   // Initialise output value and save input parameters.
-  q2NewSav       = 0.;
-  evTypeSav      = evTypeIn;
-  evWindowSav    = evWindowIn;
-  colFacSav      = colFacIn;
-  q2BegSav       = q2BegIn;
-  headroomSav    = (headroomIn.size() >=1) ?  headroomIn[0] : 1.0 ;
-  enhanceSav     = (enhanceIn.size() >=1) ?  enhanceIn[0] : 1.0 ;
-  // Set flag that this call will produce a saved trial.
-  hasTrialSav    = true;
-  // Overall normalisation factor (independent of evType).
-  double normFac = colFacSav * kallenFac() * headroomSav * enhanceSav;
-  // pT evolution.
-  if (evTypeSav == 1) {
-    // Constant trial alphaS.
-    if (evWindowSav->runMode <= 0) {
-      double coeff  = normFac * evWindowSav->alphaSmax / 4. / M_PI;
-      double lnR    = log(rndmPtr->flat());
-      double xT1    = q2BegSav / sAnt();
-      double ln2xT2 = pow2(log(xT1)) - lnR / coeff;
-      double xT2    = exp(-sqrt(ln2xT2));
-      q2NewSav      = xT2 * sAnt();
+  evTypeSav       = evTypeIn;
+  evWindowSav     = evWindowIn;
+  colFacSav       = colFacIn;
+  q2BegSav        = q2BegIn;
+  headroomSav     = (headroomIn.size() >=1) ?  headroomIn[0] : 1.0 ;
+  enhanceSav      = (enhanceIn.size() >=1) ?  enhanceIn[0] : 1.0 ;
+  double wtNow    = headroomSav * enhanceSav;
 
-    // Running trial alphaS
-    } else {
-      double q2Min  = pow2(evWindowSav->qMin);
-      double d      = sqrt(1 - 4 * q2Min/sAnt());
-      double deltaY = log( (1.+d)/(1.-d) );
-      double coeff  = normFac * deltaY / 2. / M_PI;
-      double b0     = evWindowSav->b0;
-      double powR   = pow(rndmPtr->flat(),b0/coeff);
-      double facLam = evWindowSav->lambda2 / evWindowSav->kMu2;
-      q2NewSav = facLam * pow(q2BegSav/facLam,powR);
-    }
-  }
+  // Generate Q2 and save winning sector.
+  q2NewSav = trialGenPtr->genQ2(q2BegSav,rndmPtr,evWindowIn,
+    colFacSav,wtNow,loggerPtr,verboseIn);
+  iSectorWinner   = trialGenPtr->getSector();
+
+  // Sanity checks.
   if (q2NewSav > q2BegIn) {
-    string errorMsg = "Error in "+__METHOD_NAME__
-      +": Generated q2New > q2BegIn."+" Returning 0.";
-    cout<<errorMsg<<endl;
+    loggerPtr->ERROR_MSG("generated q2New > q2BegIn; returning 0");
     q2NewSav = 0.;
+  }
+  if (q2NewSav > 0.) {
+    // Set flag that this call produces a saved trial.
+    hasTrialSav = true;
   }
   return q2NewSav;
 
@@ -247,7 +260,7 @@ double BrancherEmitFF::genQ2(int evTypeIn, double q2BegIn, Rndm* rndmPtr,
 // Generate invariants.
 
 bool BrancherEmitFF::genInvariants(vector<double>& invariants,
-  Rndm* rndmPtr, int){
+  Rndm* rndmPtr, int verboseIn, Logger* loggerPtr) {
 
   // Clear output vector, check if we have a sensible q2New scale.
   invariants.clear();
@@ -255,54 +268,21 @@ bool BrancherEmitFF::genInvariants(vector<double>& invariants,
 
   // pT evolution.
   if (evTypeSav == 1) {
-    double xT  = q2NewSav / sAnt();
-    if (xT > 0.25) return false;
-    // Rapidity boundaries for constant trial alphaS.
-    double yMinTrial, yMaxTrial;
-    if (evWindowSav->runMode <= 0) {
-      yMinTrial = log(xT)/2.;
-      yMaxTrial = -yMinTrial;
-
-    // Rapidity boundaries for running trial alphaS
-    } else {
-      double q2MinNow = pow2(evWindowSav->qMin);
-      double xTMinNow = q2MinNow/sAnt();
-      double dTrial = sqrt(1. - 4*xTMinNow);
-      yMaxTrial = 0.5 * log( (1.+dTrial)/(1.-dTrial ) );
-      yMinTrial = -yMaxTrial;
-    }
-    double yTrial    = yMinTrial + rndmPtr->flat()*(yMaxTrial - yMinTrial);
-    double dPhys     = sqrt(1. - 4*xT);
-    double yMaxPhys  = 0.5 * log((1. + dPhys)/(1. - dPhys));
-    double yMinPhys  = -yMaxPhys;
-    if (yTrial < yMinPhys || yTrial > yMaxPhys) return false;
-    double r = exp(yTrial);
-    double rootXT = sqrt(xT);
-    double yij = rootXT / r;
-    double yjk = rootXT * r;
-    double yik = 1.0  - yij - yjk;
-    if (yij < 0. || yjk < 0. || yik < 0.) {
-      cout << " Problem in genInvariants yij = " << yij << " yjk = "
-           << yjk << endl;
+    //TODO: better overestimate for constant trial alphaS?
+    if (!trialGenPtr->genInvariants(sAntSav,setmPostVec(),
+        invariantsSav,rndmPtr, loggerPtr, verboseIn)) {
+      if (verboseIn >= VinciaConstants::DEBUG) {
+        printOut(__METHOD_NAME__,"Trial failed.");
+      }
       return false;
     }
-    double sij = sAnt() * yij;
-    double sjk = sAnt() * yjk;
-    double sik = sAnt() * yik;
-
-    // Element 0 is the antenna sAnt.
-    invariants.push_back(sAnt());
-    invariants.push_back(sij);
-    invariants.push_back(sjk);
-    invariants.push_back(sik);
-
-    // Save the generated invariants (for future query and use by pAccept).
-    invariantsSav = invariants;
-    setmPostVec();
-
     // Veto if the point outside the available phase space.
-    double det = gramDet(sij,sjk,sik,mPostSav[0],mPostSav[1],mPostSav[2]);
-    if (det > 0.) return true;
+    double det = gramDet(invariantsSav[1],invariantsSav[2],invariantsSav[3],
+      mPostSav[0],mPostSav[1],mPostSav[2]);
+    if (det > 0.) {
+      invariants = invariantsSav;
+      return true;
+    }
     else return false;
   }
   else return false;
@@ -313,27 +293,22 @@ bool BrancherEmitFF::genInvariants(vector<double>& invariants,
 
 // Compute antPhys / antTrial for gluon emissions, given antPhys.
 
-double BrancherEmitFF::pAccept(const double antPhys, int) {
+double BrancherEmitFF::pAccept(const double antPhys, Logger* loggerPtr,
+  int verboseIn) {
 
-  // Evaluate trial function taking headroom factor into account.
-  if (invariantsSav.size() <= 2) return 0.;
-  double antTrial = headroomSav
-    *2.*invariantsSav[0]/invariantsSav[1]/invariantsSav[2];
   // pT evolution.
   if (evTypeSav == 1) {
-    // Constant trial alphaS.
-    if (evWindowSav->runMode <= 0)
-      antTrial *= colFacSav * evWindowSav->alphaSmax;
-    // Running trial alphaS: pars = colFac, b0, facLam = Lambda^2/kMuR^2.
-    else {
-      double b0         = evWindowSav->b0;
-      double facLam     = evWindowSav->lambda2/evWindowSav->kMu2;
-      double lnx        = log(q2NewSav/facLam);
-      double alphaTrial = 1./b0/lnx;
-      antTrial *= colFacSav * alphaTrial;
-    }
+    double antTrial = trialGenPtr->aTrial(invariantsSav,mPostSav,
+      verboseIn);
+    antTrial *= headroomSav;
+    if (antTrial==0.) loggerPtr->ERROR_MSG("trial antenna is zero");
+    if (std::isnan(antTrial))
+      loggerPtr->ERROR_MSG("trial antenna not a number");
+
+    return antPhys/antTrial;
   }
-  return antPhys/antTrial;
+
+  return 0.;
 
 }
 
@@ -359,11 +334,11 @@ void BrancherEmitFF::setMaps(int sizeOld) {
   mothers2daughters.clear();
   daughters2mothers.clear();
 
-  //For updating the children of existing parents.
+  // For updating the children of existing parents.
   mothers2daughters[i0()] = make_pair(sizeOld, sizeOld + 1);
   mothers2daughters[i1()] = make_pair(sizeOld + 1, sizeOld + 2);
 
-  //For adding mothers of new children.
+  // For adding mothers of new children.
   daughters2mothers[sizeOld]   = make_pair(i0(), 0);
   daughters2mothers[sizeOld+1] = make_pair(i0(), i1());
   daughters2mothers[sizeOld+2] = make_pair(i1(), 0);
@@ -375,7 +350,8 @@ void BrancherEmitFF::setMaps(int sizeOld) {
 // Generic getter method. Assumes setter methods called earlier.
 
 bool BrancherEmitFF::getNewParticles(Event& event, vector<Vec4> momIn,
-  vector<int> hIn, vector<Particle> &pNew, Rndm* rndmPtr, Colour* colourPtr) {
+  vector<int> hIn, vector<Particle> &pNew, Rndm* rndmPtr, VinciaColour*
+  colourPtr) {
 
   // Initialize.
   unsigned int nPost = iSav.size() + 1;
@@ -447,17 +423,30 @@ bool BrancherEmitFF::getNewParticles(Event& event, vector<Vec4> momIn,
 
 // Method to initialise data members specific to BrancherSplitFF.
 
-void BrancherSplitFF::init() {
-  branchType = 2; iAntSav = iGXsplitFF; swapped = false;}
+void BrancherSplitFF::initBrancher(ZetaGeneratorSet* zetaGenSet,
+  bool col2acolIn) {
+
+  branchType    = BranchType::SplitF;
+  antFunTypeSav = GXSplitFF;
+  isXGsav       = !col2acolIn;
+  swapped       = false;
+
+  trialGenPtr   = make_shared<TrialGeneratorFF>(sectorShower, branchType,
+    zetaGenSet);
+}
 
 //--------------------------------------------------------------------------
 
 // Generate a new Q2 value .
 
 double BrancherSplitFF::genQ2(int evTypeIn, double q2BegIn,
-  Rndm* rndmPtr, const EvolutionWindow* evWindowIn,
-  double, vector<double> headroomFlav,
+  Rndm* rndmPtr, Logger* loggerPtr, const EvolutionWindow* evWindowIn,
+  double colFac, vector<double> headroomFlav,
   vector<double> enhanceFlav, int verboseIn) {
+
+  // Set current phase space limits and active sectors.
+  double q2MinNow = pow2(evWindowIn->qMin);
+  trialGenPtr->reset(q2MinNow, sAntSav, mSav, antFunTypeSav);
 
   // Initialise output value and save input parameters.
   q2NewSav    = 0.;
@@ -470,11 +459,8 @@ double BrancherSplitFF::genQ2(int evTypeIn, double q2BegIn,
   vector<double> wtFlav;
   unsigned int nFlav = headroomFlav.size();
   if (nFlav != enhanceFlav.size()) {
-    if (verboseIn >=normal) {
-      string errorMsg = "Error in "+__METHOD_NAME__
-        +": inconsistent size of headroom and enhancement vectors.";
-      cout<<errorMsg<<endl;
-    }
+      loggerPtr->ERROR_MSG(
+        "inconsistent size of headroom and enhancement vectors");
     return 0.;
   }
 
@@ -490,28 +476,12 @@ double BrancherSplitFF::genQ2(int evTypeIn, double q2BegIn,
     }
   }
 
-  // Set flag that this call will produce a saved trial.
-  hasTrialSav = true;
-  // Overall normalisation factor common to all trial integrals.
-  double normFac = kallenFac() * wtSum;
   // pT evolution.
   if (evTypeSav == 1) {
-    double deltaZeta = 1.0;
-    double coeff     = normFac * deltaZeta / 8. / M_PI;
-    double xT1       = q2BegSav / sAnt();
-    // Constant trial alphaS.
-    if (evWindowSav->runMode <= 0) {
-      double aStrial = evWindowSav->alphaSmax;
-      double xT2     = xT1 * pow(rndmPtr->flat(), 1./aStrial/coeff);
-      q2NewSav       = xT2 * sAnt();
-
-    // Running trial alphaS.
-    } else {
-      double b0     = evWindowSav->b0;
-      double facLam = evWindowSav->lambda2/evWindowSav->kMu2;
-      double powR   = pow(rndmPtr->flat(),b0/coeff);
-      q2NewSav      = facLam * pow(q2BegSav/facLam,powR);
-    }
+    // Generate Q2 and save winning sector.
+    q2NewSav = trialGenPtr->genQ2(q2BegSav, rndmPtr, evWindowIn,
+      colFac, wtSum, loggerPtr, verboseIn);
+    iSectorWinner = trialGenPtr->getSector();
   }
 
   // Select flavour.
@@ -529,11 +499,20 @@ double BrancherSplitFF::genQ2(int evTypeIn, double q2BegIn,
     }
   }
   if (q2NewSav > q2BegIn) {
-    string errorMsg = "Error in "+__METHOD_NAME__
-      +": Generated q2New > q2Beg."+" Returning 0.";
-    cout<<errorMsg<<endl;
+    loggerPtr->ERROR_MSG("generated q2New > q2Beg; returning 0");
     q2NewSav = 0.;
   }
+
+  // Sanity checks.
+  if (q2NewSav > q2BegIn) {
+    loggerPtr->ERROR_MSG("generated q2New > q2BegIn; returning 0");
+    q2NewSav = 0.;
+  }
+  if (q2NewSav > 0.) {
+    // Set flag that this call produces a saved trial.
+    hasTrialSav = true;
+  }
+
   return q2NewSav;
 
 }
@@ -544,49 +523,30 @@ double BrancherSplitFF::genQ2(int evTypeIn, double q2BegIn,
 // for gluon splitting. Return false if no physical kinematics possible.
 
 bool BrancherSplitFF::genInvariants(vector<double>& invariants,
-  Rndm* rndmPtr, int) {
+  Rndm* rndmPtr, int verboseIn, Logger* loggerPtr) {
 
   // Clear output vector, and check if we have a sensible q2New scale.
   invariants.clear();
   if (q2NewSav <= 0.) return false;
 
   // pT evolution.
-  double m2j = pow2(mFlavSav);
   if (evTypeSav == 1) {
-    // Zeta is uniform in [0,1].
-    double zetaTrial = rndmPtr->flat();
-    double m2qq      = q2NewSav / zetaTrial;
-    double sij       = m2qq - 2*m2j;
-    if (sij < 0.) return false;
+    if (!trialGenPtr->genInvariants(sAntSav,setmPostVec(),invariants,rndmPtr,
+        loggerPtr, verboseIn)) {
+      if (verboseIn >= VinciaConstants::DEBUG) {
+        printOut(__METHOD_NAME__,"Trial Failed.");
+      }
+      return false;
+    }
 
     // Here i=q, j=qbar is always the case, but change def for sjk,
-    // sik depending on who is colour connected to the recoiler. G
-    // anticolour side (XG antenna): pT = pT(qbar) = pTj; zeta = yjk +
-    // mu2q.
-    double sjk, sik;
-    if (isXGsav) {
-      sjk = sAnt()*zetaTrial - m2j;
-      sik = sAnt() - m2qq - sjk;
-
-    // G colour side (GX antenna): pT = pT(q) = pTi; zeta = yik + mu2q.
-    } else {
-      sik = sAnt()*zetaTrial - m2j;
-      sjk = sAnt() - m2qq - sik;
-    }
-    if (sjk < 0.) return false;
-
-    // Element 0 is the antenna sAnt.
-    invariants.push_back(sAnt());
-    invariants.push_back(sij);
-    invariants.push_back(sjk);
-    invariants.push_back(sik);
-
-    // Save the generated invariants (for future query and use by pAccept).
+    // sik depending on who is colour connected to the recoiler.
+    if (!isXGsav) std::swap(invariants[1],invariants[2]);
     invariantsSav = invariants;
-    setmPostVec();
 
     // Veto if point outside the available phase space.
-    double det = gramDet(sij,sjk,sik,mPostSav[0],mPostSav[1],mPostSav[2]);
+    double det = gramDet(invariantsSav[0],invariantsSav[1],invariantsSav[2],
+      mPostSav[0],mPostSav[1],mPostSav[2]);
     if (det > 0.) return true;
     else return false;
   }
@@ -600,25 +560,22 @@ bool BrancherSplitFF::genInvariants(vector<double>& invariants,
 // Note, antPhys should be normalised to include charge and coupling
 // factors.
 
-double BrancherSplitFF::pAccept(const double antPhys, int) {
+double BrancherSplitFF::pAccept(const double antPhys, Logger* loggerPtr,
+  int verboseIn) {
 
-  // Evaluate trial function with headroom factor.
-  if (invariantsSav.size() <= 2) return 0.;
-  double antTrial = headroomSav/(2.*(invariantsSav[1] + 2*pow2(mFlavSav)));
-
-  // pT evolution (note evType =1 for pTj, evType -1 for pTi).
+  // pT evolution.
   if (evTypeSav == 1) {
-    double alphaTrial = evWindowSav->alphaSmax;
-    if (evWindowSav->runMode >= 1) {
-      double b0         = evWindowSav->b0;
-      double facLam     = evWindowSav->lambda2/evWindowSav->kMu2;
-      double lnx        = log(q2NewSav/facLam);
-      alphaTrial        = 1./b0/lnx;
-    }
-    antTrial *= alphaTrial;
-  }
-  return antPhys/antTrial;
+    double antTrial = trialGenPtr->aTrial(invariantsSav,mPostSav,
+      verboseIn);
+    antTrial *= headroomSav;
+    if (antTrial==0.) loggerPtr->ERROR_MSG("trial antenna is zero");
+    if (std::isnan(antTrial))
+      loggerPtr->ERROR_MSG("trial antenna not a number");
 
+    return antPhys/antTrial;
+  }
+
+  return 0.;
 }
 
 //--------------------------------------------------------------------------
@@ -680,7 +637,7 @@ void BrancherSplitFF::setMaps(int sizeOld) {
 // Generic getter method. Assumes setter methods called earlier.
 
 bool BrancherSplitFF::getNewParticles(Event& event, vector<Vec4> momIn,
-  vector<int> hIn, vector<Particle> &pNew, Rndm*, Colour*) {
+  vector<int> hIn, vector<Particle> &pNew, Rndm*, VinciaColour*) {
 
   // Initialize.
   unsigned int nPost = iSav.size() + 1;
@@ -724,6 +681,138 @@ bool BrancherSplitFF::getNewParticles(Event& event, vector<Vec4> momIn,
 
 //==========================================================================
 
+// BrancherRF base class for storing information on antennae between a
+// coloured resonance and final state parton.
+
+//--------------------------------------------------------------------------
+
+// Return index of new particle (slightly arbitrary choice for splittings).
+
+int BrancherRF::iNew() {
+  if (posFinal > 0 && iSav[posFinal] > 0
+      && mothers2daughters.find(iSav[posFinal]) != mothers2daughters.end())
+    return mothers2daughters[iSav[posFinal]].second;
+  return 0;
+}
+
+//--------------------------------------------------------------------------
+
+// Method to make mothers2daughters and daughters2mothers pairs.
+
+void BrancherRF::setMaps(int sizeOld) {
+  mothers2daughters.clear();
+  daughters2mothers.clear();
+  posNewtoOld.clear();
+
+  // For updating the children of existing parents.  Save children of
+  // F (treat like 1->2 splitting).
+  mothers2daughters[iSav[posFinal]] = make_pair(sizeOld, sizeOld + 1);
+  daughters2mothers[sizeOld] = make_pair(iSav[posFinal], 0);
+  daughters2mothers[sizeOld+1] = make_pair(iSav[posFinal], 0);
+
+  //Save recoilers and insert the new emission at position 1.
+  int iInsert = sizeOld + 2;
+  unsigned int posNewEmit = 1;
+  for (unsigned int pos = 0; pos < iSav.size(); pos++) {
+    if (pos >= posNewEmit) posNewtoOld[pos + 1] = pos;
+    else posNewtoOld[pos] = pos;
+    if (pos == posRes || pos == posFinal) continue;
+    else {
+      mothers2daughters[iSav[pos]] = make_pair(iInsert, iInsert);
+      daughters2mothers[iInsert] = make_pair(iSav[pos], iSav[pos]);
+      iInsert++;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Protected helper methods for internal class use.
+
+double BrancherRF::getsAK(double mA, double mK, double mAK) {
+  return mA*mA +mK*mK - mAK*mAK;}
+
+double BrancherRF::calcQ2Max(double mA, double mAK, double mK) {
+  double aM2 = (mA-mAK)*(mA-mAK) - mK*mK;
+  double bM2 = mAK*(mA-mAK) + mK*mK;
+  double cM = mA-mAK;
+  return aM2*aM2*mA/(2.0*cM*bM2);
+}
+
+//--------------------------------------------------------------------------
+
+// Veto point if outside available phase space.
+
+bool BrancherRF::vetoPhSpPoint(const vector<double>& invariants,
+  int verboseIn) {
+  if (invariants.size()!=4) {
+    return false;
+  }
+  double saj = invariants[1];
+  double sjk = invariants[2];
+  double sak = invariants[3];
+
+  // Make copies of masses (just for compactness of notation).
+  double mAK = mRecoilers;
+  double ma  = mPostSav[0];
+  double mj  = mPostSav[1];
+  double mk  = mPostSav[2];
+
+  // Common sense: saj, sjk > 0. Not an error for splitters - mass
+  // effects can make negative and push outside generated phase space.
+  if (saj<0. || sjk<0.) {
+    if (verboseIn >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Negative invariants. saj = " << saj << " sjk = " << sjk;
+      printOut(__METHOD_NAME__, ss.str());
+    }
+    return true;
+  }
+
+  // On-shell X condition.
+  double invDiff = ma*ma + mj*mj + mk*mk - saj - sak + sjk - mAK*mAK;
+  if (invDiff > MILLI) {
+    if (verboseIn >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Failed on-shell AK condition.");
+    return true;
+  }
+
+  // On-shell j,k conditions.
+  double Ek = sak/(2.0*ma);
+  if (Ek*Ek < mk*mk) {
+    if (verboseIn >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Failed on-shell k condition.");
+    return true;
+  }
+  double Ej = saj/(2.0*ma);
+  if (Ej*Ej < mj*mj) {
+    if (verboseIn >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Failed on-shell j condition.");
+    return true;
+  }
+
+  // When |cosTheta| < 1.
+  double cosTheta = costheta(Ej,Ek,mj,mk,sjk);
+  if (abs(cosTheta) > 1.0) {
+    if (verboseIn >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Failed cos theta condition.");
+    return true;
+  }
+
+  // This condition may be sufficient to remove above conditions.
+  // TODO use gramdet here
+  double det = saj*sjk*sak - saj*saj*mk*mk - sjk*sjk*ma*ma - sak*sak*mj*mj
+    + 4.0*ma*ma*mj*mj*mk*mk;
+  if (det <= 0.) {
+    if (verboseIn >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Gram det < 0 : Outside phase space");
+  }
+  return false;
+
+}
+
+//==========================================================================
+
 // BrancherEmitRF class for storing information on antennae between a
 // coloured resonance and final state parton, and generating a new
 // emission.
@@ -732,18 +821,30 @@ bool BrancherSplitFF::getNewParticles(Event& event, vector<Vec4> momIn,
 
 // Method to initialise data members specific to BrancherEmitRF.
 
-void BrancherEmitRF::init(Event& event, vector<int> allIn,
-  unsigned int posResIn, unsigned int posFIn, double Q2cut) {
+void BrancherEmitRF::initBrancher(Event& event, vector<int> allIn,
+  unsigned int posResIn, unsigned int posFIn, double q2cut,
+  ZetaGeneratorSet* zetaGenSet) {
 
   // Get Pythia indices of res and final.
   posRes      = posResIn;
   posFinal    = posFIn;
   int iRes    = allIn.at(posRes);
   int iFinal  = allIn.at(posFinal);
+  // Is colour flow from R to F, or from F to R?
   colFlowRtoF = event[iRes].col() == event[iFinal].col() && event[iRes].col()
     != 0;
 
-  // Extract the momenta of the rest.
+  // Check if R and F swapped (explicit way to force reverse colour flow
+  // e.g., for second antenna in gluino -> gluon neutralino.)
+  if (event[iRes].status() > 0 ) {
+    posRes      = posFIn;
+    posFinal    = posResIn;
+    iRes        = allIn.at(posRes);
+    iFinal      = allIn.at(posFinal);
+    colFlowRtoF = false;
+  }
+
+  // Extract the momenta of the (set of) recoiler(s).
   Vec4 recoilVec(0., 0., 0., 0.);
   for (vector<int>::iterator pos = allIn.begin(); pos != allIn.end(); ++pos) {
     if ((*pos == iRes) || (*pos == iFinal)) continue;
@@ -754,49 +855,46 @@ void BrancherEmitRF::init(Event& event, vector<int> allIn,
   // always recieves the recoil e.g. W in t->bWX it is p_t -p_X.
   Vec4 resVec = recoilVec + event[iFinal].p();
 
-  //Calculate the masses.
+  // Calculate the masses.
   mRes = resVec.mCalc();
   mFinal = event[iFinal].mCalc();
   mRecoilers = recoilVec.mCalc();
   sAK = getsAK(mRes, mFinal, mRecoilers);
 
-  // Calculate common prefactor to trial integral.
-  kallenFacSav = (2.0*sAK/(4.0*M_PI));
-  kallenFacSav /= sqrt(KallenFunction(mRes*mRes, mFinal*mFinal,
-      mRecoilers*mRecoilers));
+  vector<double> massesPre;
+  massesPre.push_back(mRes);
+  massesPre.push_back(mFinal);
+  massesPre.push_back(mRecoilers);
 
-  // Calculate zeta limits.
-  zetaMin= zetaMinCalc(mRes, mFinal, mRecoilers, Q2cut);
-  zetaMax = zetaMaxCalc(mRes, mFinal, mRecoilers);
-  // Phase space is closed.
-  if (zetaMax < zetaMin) zetaIntSave = 0.;
-  // Calculate zeta integral (full phase space).
-  else zetaIntSave = zetaIntegral(zetaMin, zetaMax);
-
-  // Calculate Q2max.
-  Q2MaxSav = calcQ2Max(mRes, mRecoilers, mFinal);
-  branchType = 5;
+  // Calculate q2max.
+  q2MaxSav = calcQ2Max(mRes, mRecoilers, mFinal);
+  branchType = BranchType::Emit;
   // TODO: swapped should be redundant since save posRes, posFinal.
   // R = Q.
   if (abs(colTypeSav[posRes]) == 1) {
     // F = Q.
     if (abs(colTypeSav[posFinal]) == 1) {
-      iAntSav = iQQemitRF;
+      antFunTypeSav = QQEmitRF;
       swapped = false;
     // F = g.
     } else if (colTypeSav[posFinal] == 2) {
-      iAntSav = iQGemitRF;
+      antFunTypeSav = QGEmitRF;
       swapped = posRes != 0;
     // Some other final state - don't know what to do with this yet!
     } else {
-      iAntSav = -1;
+      antFunTypeSav = NoFun;
       swapped = false;
     }
   // Some other resonance. Don't know what to do with this yet!
   } else {
-    iAntSav = -1;
+    antFunTypeSav = NoFun;
     swapped = false;
   }
+
+  // Set up and initialise trial generator.
+  trialGenPtr = make_shared<TrialGeneratorRF>(sectorShower, branchType,
+      zetaGenSet);
+  trialGenPtr->reset(q2cut,sAK, massesPre, antFunTypeSav);
 
 }
 
@@ -826,45 +924,12 @@ void BrancherEmitRF::setStatPost() {
   statPostSav[posFinal+1] = 51;
 }
 
-int BrancherEmitRF::iNew() {
-  if (posFinal > 0 && iSav[posFinal] > 0
-      && mothers2daughters.find(iSav[posFinal]) != mothers2daughters.end())
-    return mothers2daughters[iSav[posFinal]].second;
-  return 0;
-}
-
-void BrancherEmitRF::setMaps(int sizeOld) {
-  mothers2daughters.clear();
-  daughters2mothers.clear();
-  posNewtoOld.clear();
-
-  // For updating the children of existing parents.  Save children of
-  // F (treat like 1->2 splitting).
-  mothers2daughters[iSav[posFinal]] = make_pair(sizeOld, sizeOld + 1);
-  daughters2mothers[sizeOld] = make_pair(iSav[posFinal], 0);
-  daughters2mothers[sizeOld+1] = make_pair(iSav[posFinal], 0);
-
-  //Save recoilers and insert the new emission at position 1.
-  int iInsert = sizeOld + 2;
-  unsigned int posNewEmit = 1;
-  for (unsigned int pos = 0; pos < iSav.size(); pos++) {
-    if (pos >= posNewEmit) posNewtoOld[pos + 1] = pos;
-    else posNewtoOld[pos] = pos;
-    if (pos == posRes || pos == posFinal) continue;
-    else {
-      mothers2daughters[iSav[pos]] = make_pair(iInsert, iInsert);
-      daughters2mothers[iInsert] = make_pair(iSav[pos], iSav[pos]);
-      iInsert++;
-    }
-  }
-}
-
 //--------------------------------------------------------------------------
 
 // Generic method, assumes setter methods called earlier.
 
 bool BrancherEmitRF::getNewParticles(Event& event, vector<Vec4> momIn,
-  vector<int> hIn, vector<Particle> &pNew, Rndm* rndmPtr, Colour*) {
+  vector<int> hIn, vector<Particle> &pNew, Rndm* rndmPtr, VinciaColour*) {
 
   // Initialize.
   unsigned int nPost = iSav.size() + 1;
@@ -875,7 +940,7 @@ bool BrancherEmitRF::getNewParticles(Event& event, vector<Vec4> momIn,
   setMaps(event.size());
 
   // Check everything set.
-  if(momIn.size() != nPost || hIn.size() != nPost ||
+  if (momIn.size() != nPost || hIn.size() != nPost ||
      idPostSav.size() != nPost || statPostSav.size() != nPost) return false;
 
   // Generate new colour tag.
@@ -918,7 +983,7 @@ bool BrancherEmitRF::getNewParticles(Event& event, vector<Vec4> momIn,
     newPart.setEvtPtr(&event);
     newPart.scale(scaleNew);
     newPart.daughters(0,0);
-    if (abs(newPart.m() - newPart.mCalc()) > 0.001) return false;
+    if (abs(newPart.m() - newPart.mCalc()) > MILLI) return false;
     pNew.push_back(newPart);
   }
   colTagSav=newTag;
@@ -930,74 +995,32 @@ bool BrancherEmitRF::getNewParticles(Event& event, vector<Vec4> momIn,
 
 // Generate a new Q2 scale.
 
-double BrancherEmitRF::genQ2(int evTypeIn, double Q2MaxNow, Rndm* rndmPtr,
-  const EvolutionWindow* evWindowPtrIn, double colFac,
+double BrancherEmitRF::genQ2(int, double q2MaxNow, Rndm* rndmPtr,
+  Logger* loggerPtr, const EvolutionWindow* evWindowPtrIn, double colFac,
   vector<double> headroomIn, vector<double> enhanceIn,
   int verboseIn) {
 
   // Save headroom and enhancement factors.
   headroomSav = (headroomIn.size() >= 1) ?  headroomIn[0] : 1.0;
   enhanceSav  = (enhanceIn.size() >= 1) ?  enhanceIn[0] : 1.0;
-  if (zetaIntSave <= 0.) {
-    hasTrialSav = true;
+
+  double wtNow = headroomSav * enhanceSav;
+
+  q2NewSav = trialGenPtr->genQ2(q2MaxNow,rndmPtr,evWindowPtrIn,
+    colFac,wtNow,loggerPtr,verboseIn);
+
+  iSectorWinner = trialGenPtr->getSector();
+
+  // Sanity checks.
+  if (q2NewSav > q2MaxNow) {
+    loggerPtr->ERROR_MSG("generated q2New > q2BegIn; returning 0");
     q2NewSav = 0.;
-    return q2NewSav;
+  }
+  if (q2NewSav > 0.) {
+    // Set flag that this call produces a saved trial.
+    hasTrialSav = true;
   }
 
-  // pT evolution.
-  if (evTypeIn == 1) {
-
-    // Get multiplicative factors.
-    double prefactor = kallenFacSav;
-    prefactor *= colFac;
-    prefactor *= headroomSav * enhanceSav;
-
-    // Save info for later (to be used in pAccept).
-    evTypeSav   = evTypeIn;
-    q2BegSav    = Q2MaxNow;
-    evWindowSav = evWindowPtrIn;
-    colFacSav   = colFac;
-
-    // Fixed alphaS.
-    double logR = log(rndmPtr->flat());
-    if (evWindowPtrIn->runMode <= 0){
-      // Use max possible value for alphaS.
-      prefactor *= evWindowPtrIn->alphaSmax;
-      // Inverse of Q2 integral for fixed alphaS.
-      q2NewSav = Q2MaxNow*exp(logR/(prefactor*zetaIntSave));
-    // Running alphaS.
-    } else{
-      prefactor /= evWindowPtrIn->b0;
-      double muRScaleMod = evWindowPtrIn->kMu2/evWindowPtrIn->lambda2;
-      double logQ2Ratio = exp(logR/(prefactor*zetaIntSave));
-      double logQ2maxFactor = log(Q2MaxNow*muRScaleMod);
-      q2NewSav = exp(logQ2maxFactor*logQ2Ratio)/muRScaleMod;
-    }
-    if (q2NewSav > Q2MaxNow) {
-      if (verboseIn >= superdebug)
-        cout << "evolution mode = " << evWindowPtrIn->runMode << endl
-             << "prefactor = " << prefactor << " zetaIntSave = " << zetaIntSave
-             << " logR =  " << logR << endl
-             << " kmu2 = " << evWindowPtrIn->kMu2
-             << " lambda2 = " << evWindowPtrIn->lambda2 << endl;
-      string errorMsg = "Error in "+__METHOD_NAME__
-        +": Generated q2New > q2Max"+" Returning -1.";
-      cout<<errorMsg<<endl;
-      q2NewSav = -1.;
-    }
-  } else {
-    if (verboseIn >= normal) {
-      stringstream ss;
-      ss << "evTypeIn = " << evTypeIn;
-      string errorMsg = "Error in "+__METHOD_NAME__
-        +": Unsupported Evolution Type."+" "+ss.str();
-      cout<<errorMsg<<endl;
-    }
-    return 0.;
-  }
-
-  // Set flag that this call produces a saved trial.
-  hasTrialSav = true;
   return q2NewSav;
 
 }
@@ -1008,36 +1031,28 @@ double BrancherEmitRF::genQ2(int evTypeIn, double Q2MaxNow, Rndm* rndmPtr,
 // false if no physical kinematics possible.
 
 bool BrancherEmitRF::genInvariants(vector<double>& invariants,Rndm* rndmPtr,
-  int verboseIn) {
+  int verboseIn, Logger* loggerPtr) {
 
   // Initialise and check we have a generated q2.
   invariants.clear();
-  invariantsSav.clear();
-  setmPostVec();
+
   if (q2NewSav <= 0.) return false;
 
-  // Calculate invariants from zeta, q2.
-  double zetaNext = getZetaNext(rndmPtr);
-  double sjk = sAK*(zetaNext - 1.0);
-  double saj = q2NewSav*(1.0 + sAK/sjk);
-  double sak = sAK + sjk - saj;
-  if (verboseIn >= louddebug) {
-    stringstream ss;
-    ss << "Phase space point: Q2next = " << q2NewSav << " zeta = " << zetaNext;
-    printOut(__METHOD_NAME__, ss.str());
-    ss.str("Scaled invariants: yaj = ");
-    ss << saj/(sjk+sAK) << " yjk = " << sjk/(sjk+sAK);
-    printOut(__METHOD_NAME__, ss.str());
+  if (!trialGenPtr->genInvariants(sAK,setmPostVec(),invariantsSav,rndmPtr,
+      loggerPtr, verboseIn)) {
+    if (verboseIn >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__,"Trial failed.");
+    }
+    return false;
   }
 
-  //Save regardless.
-  invariantsSav.push_back(sAK);
-  invariantsSav.push_back(saj);
-  invariantsSav.push_back(sjk);
-  invariantsSav.push_back(sak);
-
   // Veto if the point is outside the available phase space.
-  if (vetoPhSpPoint(saj, sjk, sak, verboseIn)) return false;
+  if (vetoPhSpPoint(invariantsSav, verboseIn)) {
+    if (verboseIn >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__,"Outside phase space.");
+    }
+    return false;
+  }
   else {invariants = invariantsSav; return true;}
 
 }
@@ -1046,164 +1061,16 @@ bool BrancherEmitRF::genInvariants(vector<double>& invariants,Rndm* rndmPtr,
 
 // Compute antPhys/antTrial, given antPhys.
 
-double BrancherEmitRF::pAccept(const double antPhys, int verboseIn) {
-
-  // Check q2.
-  if (q2NewSav <= 0.) {
-    if (verboseIn >= normal) {
-      string errorMsg = "Error in "+__METHOD_NAME__+": q2NewSav not set."+
-        " Returning 0.";
-      cout<<errorMsg<<endl;
-    }
-    return 0.;
-  }
-
-  // Reduced trial antenna.
-  double antTrial = 2.0/q2NewSav;
-
-  // Multiply by headroom factor.
-  antTrial *= headroomSav;
-
-  // Multiply by col factor.
-  antTrial *= colFacSav;
-
-  //Multiply by alphaS, default is fixed alphaS.
-  double alphaSTrial = evWindowSav->alphaSmax;
-  if (evWindowSav->runMode >= 1) {
-    double mu2 = q2NewSav;
-    mu2 *= (evWindowSav->kMu2/evWindowSav->lambda2);
-    alphaSTrial = 1.0/log(mu2)/evWindowSav->b0;
-  }
-  antTrial *= alphaSTrial;
-  return antPhys/antTrial;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Protected helper methods for internal class use.
-
-double BrancherEmitRF::KallenFunction(double x, double y, double z) {
-  return x*x + y*y + z*z - 2.*(x*y + x*z + y*z);}
-
-double BrancherEmitRF::zetaIntSingleLim(double zetaLim) {
-  double x = zetaLim-1;  return x + log(x);}
-
-double BrancherEmitRF::zetaIntegral(double zLow, double zHigh) {
-  return zetaIntSingleLim(zHigh) - zetaIntSingleLim(zLow);}
-
-double BrancherEmitRF::getsAK(double mA, double mK, double mAK) {
-  return mA*mA +mK*mK - mAK*mAK;}
-
-double BrancherEmitRF::zetaMinCalc(double mA, double mK, double mAK,
-  double Q2cut) {
-  return 1.0/(1.0 - Q2cut/(mA*mA -(mAK + mK)*(mAK + mK)));}
-
-double BrancherEmitRF::zetaMaxCalc(double mA, double mK, double mAK) {
-  return 1.0 + ((mA-mAK)*(mA-mAK) - mK*mK)/getsAK(mA, mK, mAK);}
-
-double BrancherEmitRF::getZetaNext(Rndm* rndmPtr) {
-  // Returns the solution for zeta to R =
-  // I(zeta,zetamin)/I(zetamax,zetamin).
-  double R = rndmPtr->flat();
-  // I(zetamax,zetamin).
-  double intZrange  = zetaIntegral(zetaMin, zetaMax);
-  double intZMin    = zetaIntSingleLim(zetaMin);
-  // exp(I(zeta)).
-  double expIntZeta = exp(intZrange*R + intZMin);
-  double lambWFact  = LambertW(expIntZeta);
-  // Now invert to get zeta.
-  return 1. + lambWFact;
-}
-
-double BrancherEmitRF::calcQ2Max(double mA, double mAK, double mK){
-  double aM2 = (mA-mAK)*(mA-mAK) - mK*mK;
-  double bM2 = mAK*(mA-mAK) + mK*mK;
-  double cM = mA-mAK;
-  return aM2*aM2*mA/(2.0*cM*bM2);
-}
-
-//--------------------------------------------------------------------------
-
-// Veto point if outside available phase space.
-
-bool BrancherEmitRF::vetoPhSpPoint(double saj, double sjk, double sak,
+double BrancherEmitRF::pAccept(const double antPhys, Logger* loggerPtr,
   int verboseIn) {
 
-  // Make copies of masses (just for compactness of notation).
-  double mAK = mRecoilers;
-  double ma  = mPostSav[0];
-  double mj  = mPostSav[1];
-  double mk  = mPostSav[2];
+  double antTrial = trialGenPtr->aTrial(invariantsSav,mPostSav,
+    verboseIn);
+  antTrial *= headroomSav;
+  if (antTrial==0.) loggerPtr->ERROR_MSG("trial antenna is zero");
+  if (std::isnan(antTrial)) loggerPtr->ERROR_MSG("trial antenna not a number");
 
-  // Common sense: saj, sjk > 0. Not an error for splitters - mass
-  // effects can make negative and push outside generated phase space.
-  if (saj<0. || sjk<0.) {
-    if (verboseIn >= louddebug) {
-      stringstream ss;
-      ss << "Negative invariants. saj = " << saj << " sjk = " << sjk;
-      printOut(__METHOD_NAME__, ss.str());
-    }
-    return true;
-  }
-
-  // On-shell X condition.
-  double invDiff = ma*ma + mj*mj + mk*mk - saj - sak + sjk - mAK*mAK;
-  if (invDiff > 0.001) {
-    if (verboseIn >= louddebug)
-      printOut(__METHOD_NAME__, "Failed on-shell AK condition.");
-    return true;
-  }
-
-  // On-shell j,k conditions.
-  double Ek = sak/(2.0*ma);
-  if (Ek*Ek < mk*mk) {
-    if (verboseIn >= louddebug)
-      printOut(__METHOD_NAME__, "Failed on-shell k condition.");
-    return true;
-  }
-  double Ej = saj/(2.0*ma);
-  if(Ej*Ej < mj*mj) {
-    if (verboseIn >= louddebug)
-      printOut(__METHOD_NAME__, "Failed on-shell j condition.");
-    return true;
-  }
-
-  // When |cosTheta| < 1.
-  double cosTheta = getCosTheta(Ej,Ek,mj,mk,sjk);
-  if (abs(cosTheta) > 1.0) {
-    if (verboseIn >= louddebug)
-      printOut(__METHOD_NAME__, "Failed cos theta condition.");
-    return true;
-  }
-
-  // This condition may be sufficient to remove above conditions.
-  double det = saj*sjk*sak - saj*saj*mk*mk - sjk*sjk*ma*ma - sak*sak*mj*mj
-    + 4.0*ma*ma*mj*mj*mk*mk;
-  if (det <= 0.) {
-    if (verboseIn >= louddebug)
-      printOut(__METHOD_NAME__, "Gram det < 0 : Outside phase space");
-  }
-  return false;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Calculate maximum gluon energy in the centre of mass frame of res
-// given cos theta.
-
-double BrancherEmitRF::getEjMax(double cosTheta, double mA, double mAK,
-  double mK) {
-
-  double cos2Theta(cosTheta*cosTheta), sin2Theta(1. - cos2Theta),
-    mA2(mA*mA), mK2(mK*mK), mAK2(mAK*mAK),
-    tmp0(sqrt(sin2Theta*KallenFunction(mA2, mK2, mAK2) + 4.0*mAK2*mA2)),
-    tmp1(mK/mA*tmp0), tmp2(cos2Theta*mK2 + mAK2), tmp3(mA2 - sin2Theta*mK2),
-    tmp4((tmp2 + tmp1)/tmp3);
-  double Emax = mA*(1 - tmp4)/2.0;
-  double EabsoluteMax = mA/2.0 - (mK+mAK)*(mK+mAK)/(2.0*mA);
-  return min(Emax,EabsoluteMax);
+  return antPhys/antTrial;
 
 }
 
@@ -1215,8 +1082,9 @@ double BrancherEmitRF::getEjMax(double cosTheta, double mA, double mAK,
 
 //--------------------------------------------------------------------------
 
-void BrancherSplitRF::init(Event& event, vector<int> allIn,
-  unsigned int posResIn, unsigned int posFIn, double Q2cut) {
+void BrancherSplitRF::initBrancher(Event& event, vector<int> allIn,
+  unsigned int posResIn, unsigned int posFIn, double q2cut,
+  ZetaGeneratorSet* zetaGenSet) {
 
   // Get Pythia indices of res and final.
   posRes     = posResIn;
@@ -1241,24 +1109,21 @@ void BrancherSplitRF::init(Event& event, vector<int> allIn,
   mRecoilers = recoilVec.mCalc();
   sAK = getsAK(mRes, mFinal, mRecoilers);
 
-  //Calculate common prefactor to trial integral.
-  kallenFacSav = (0.5*sAK/(4.0*M_PI));
-  kallenFacSav /= sqrt(KallenFunction(mRes*mRes, mFinal*mFinal,
-      mRecoilers*mRecoilers));
-
-  // Calculate zeta limits.
-  zetaMin = zetaMinCalc(mRes, mFinal, mRecoilers,Q2cut);
-  zetaMax = 1.0;
-
-  // Calculate zeta integral (full phase space), for splitters is just flat.
-  zetaIntSave= zetaMax-zetaMin;
+  vector<double> massesPre;
+  massesPre.push_back(mRes);
+  massesPre.push_back(mFinal);
+  massesPre.push_back(mRecoilers);
 
   // Calculate Q2max.
-  Q2MaxSav = calcQ2Max(mRes, mRecoilers,mFinal);
-  branchType = 6;
+  q2MaxSav = calcQ2Max(mRes, mRecoilers,mFinal);
+  branchType = BranchType::SplitF;
   swapped = false;
-  iAntSav = iXGsplitRF;
+  antFunTypeSav = XGSplitRF;
 
+  // Set up and initialise trial generator.
+  trialGenPtr = make_shared<TrialGeneratorRF>(sectorShower,
+    branchType, zetaGenSet);
+  trialGenPtr->reset(q2cut,sAK, massesPre, antFunTypeSav);
 }
 
 //--------------------------------------------------------------------------
@@ -1274,7 +1139,7 @@ vector<double> BrancherSplitRF::setmPostVec() {
   return mPostSav;
 }
 
-void BrancherSplitRF::setidPost(){
+void BrancherSplitRF::setidPost() {
   idPostSav.clear();
   idPostSav = idSav;
   // Modify the splitting gluon to antiquark, insert quark in second position.
@@ -1298,7 +1163,7 @@ void BrancherSplitRF::setStatPost() {
 // Generic method, assumes setter methods called earlier.
 
 bool BrancherSplitRF::getNewParticles(Event& event, vector<Vec4> momIn,
-  vector<int> hIn, vector<Particle>& pNew, Rndm*, Colour*){
+  vector<int> hIn, vector<Particle>& pNew, Rndm*, VinciaColour*) {
 
   // Initialize.
   unsigned int nPost = iSav.size() + 1;
@@ -1353,26 +1218,17 @@ bool BrancherSplitRF::getNewParticles(Event& event, vector<Vec4> momIn,
 
 // Generate a new Q2 scale.
 
-double BrancherSplitRF::genQ2(int evTypeIn, double Q2MaxNow, Rndm* rndmPtr,
-  const EvolutionWindow* evWindowPtrIn, double colFac,
+double BrancherSplitRF::genQ2(int, double q2MaxNow, Rndm* rndmPtr,
+  Logger* loggerPtr, const EvolutionWindow* evWindowPtrIn, double colFac,
   vector<double> headroomIn, vector<double> enhanceIn, int verboseIn) {
-
-  if (zetaIntSave <= 0.) {
-    hasTrialSav = true;
-    q2NewSav = 0.;
-    return q2NewSav;
-  }
 
   // Total splitting weight summed over flavours
   double wtSum = 0.0;
   vector<double> wtFlav;
   unsigned int nFlav = headroomIn.size();
   if (nFlav != enhanceIn.size()) {
-    if (verboseIn >= normal) {
-      string errorMsg = "Error in "+__METHOD_NAME__
-        +": Headroom and enhancement vectors have different sizes.";
-      cout<<errorMsg<<endl;
-    }
+    loggerPtr->ERROR_MSG(
+      "headroom and enhancement vectors have different sizes");
     return 0.;
   }
   for (unsigned int iFlav = 0; iFlav < nFlav; ++iFlav) {
@@ -1381,163 +1237,44 @@ double BrancherSplitRF::genQ2(int evTypeIn, double Q2MaxNow, Rndm* rndmPtr,
     wtSum += wt;
   }
 
-  // pT evolution.
-  if (evTypeIn == 1) {
+  q2NewSav = trialGenPtr->genQ2(q2MaxNow,rndmPtr,evWindowPtrIn,
+    colFac,wtSum,loggerPtr,verboseIn);
 
-    // Get multiplicative factors (sAK/(2*4pi*lambda^1/2)).
-    double prefactor = kallenFacSav;
-    prefactor  *= colFac;
-    prefactor  *= wtSum;
-    evTypeSav   = evTypeIn;
-    q2BegSav    = Q2MaxNow;
-    evWindowSav = evWindowPtrIn;
-    colFacSav   = colFac;
-    double logR = log(rndmPtr->flat());
+  // Sanity check.
+  if (q2NewSav > q2MaxNow) {
+    loggerPtr->ERROR_MSG("generated q2New > q2BegIn; returning 0");
+    q2NewSav = 0.;
+  }
 
-    // Fixed alphaS.
-    if (evWindowPtrIn->runMode <= 0) {
-      // Use max possible value for alphaS.
-      prefactor*= evWindowPtrIn->alphaSmax;
-      // Inverse of Q2 integral for fixed alphaS.
-      q2NewSav = Q2MaxNow*exp(logR/(prefactor*zetaIntSave));
-    // Running alphaS.
-    } else {
-      prefactor /= evWindowPtrIn->b0;
-      double muRScaleMod = evWindowPtrIn->kMu2/evWindowPtrIn->lambda2;
-      double logQ2Ratio = exp(logR/(prefactor*zetaIntSave));
-      double logQ2maxFactor = log(Q2MaxNow*muRScaleMod);
-      q2NewSav = exp(logQ2maxFactor*logQ2Ratio)/muRScaleMod;
+  if (q2NewSav > 0.) {
+
+    // Select flavour.
+    double ranFlav = rndmPtr->flat() * wtSum;
+    for (int iFlav = nFlav - 1; iFlav >= 0; --iFlav) {
+      ranFlav -= wtFlav[iFlav];
+      if (ranFlav < 0) {
+        idFlavSav   = iFlav+1;
+        mFlavSav    = evWindowPtrIn->mass.at(idFlavSav);
+        enhanceSav  = enhanceIn[iFlav];
+        headroomSav = headroomIn[iFlav];
+        break;
+      }
     }
-  } else {
-    if (verboseIn >= normal) {
+
+    // Debugging.
+    if (verboseIn >= VinciaConstants::DEBUG) {
       stringstream ss;
-      ss << "evTypeIn = " << evTypeIn;
-      string errorMsg = "Error in "+__METHOD_NAME__
-        +": Unsupported Evolution Type."+" "+ss.str();
-      cout<<errorMsg<<endl;
+      ss << "Selected splitting flavour: " << idFlavSav;
+      printOut(__METHOD_NAME__, ss.str());
     }
-    return 0.;
-  }
-
-  // Select flavour.
-  double ranFlav = rndmPtr->flat() * wtSum;
-  for (int iFlav = nFlav - 1; iFlav >= 0; --iFlav) {
-    ranFlav -= wtFlav[iFlav];
-    if (ranFlav < 0) {
-      idFlavSav   = iFlav+1;
-      mFlavSav    = evWindowSav->mass.at(idFlavSav);
-      enhanceSav  = enhanceIn[iFlav];
-      headroomSav = headroomIn[iFlav];
-      break;
+    if (q2NewSav > q2MaxNow) {
+      loggerPtr->ERROR_MSG("generated impossible q2");
+      q2NewSav = -1.;
     }
-  }
+    hasTrialSav = true;
 
-  // Debugging.
-  if (verboseIn >= superdebug) {
-    stringstream ss;
-    ss << "Selected splitting flavour: " << idFlavSav;
-    printOut(__METHOD_NAME__, ss.str());
   }
-  if (q2NewSav > Q2MaxNow) {
-    string errorMsg = "Error in "+__METHOD_NAME__
-      +": Generated qq2New > q2Max"+" Returning -1.";
-    cout<<errorMsg<<endl;
-    q2NewSav = -1.;
-  }
-  hasTrialSav = true;
   return q2NewSav;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Generate complementary invariant(s) for saved trial scale. Return
-// false if no physical kinematics possible.
-
-bool BrancherSplitRF::genInvariants(vector<double>& invariants,Rndm* rndmPtr,
-  int verboseIn) {
-
-  //Initialize and check we have a generated q2.
-  invariants.clear();
-  invariantsSav.clear();
-  if (q2NewSav <= 0.) return false;
-  setmPostVec();
-
-  // Get zeta.
-  double zetaNext = getZetaNext(rndmPtr);
-  if (zetaNext < 0.) cout << zetaMin<< "  " << zetaMax << endl;
-  double m2q  = mFlavSav*mFlavSav;
-  double sak  = zetaNext*sAK;
-  double tmp1 = q2NewSav - (1.-zetaNext)*sAK + m2q;
-  double tmp2 = sqrt(1.0 +4.0*sAK*q2NewSav/(tmp1*tmp1));
-  double sjk  = tmp1*(1-tmp2)/2.0 -2.0*m2q ;
-  double saj  = (1.0-zetaNext)*sAK + 2.0*m2q +sjk;
-  if (verboseIn >= louddebug) {
-    stringstream ss;
-    ss << "Phase space point: Q2next = " << q2NewSav <<" zeta = " << zetaNext;
-    printOut(__METHOD_NAME__, ss.str());
-    ss.str("Scaled invariants: yaj = ");
-    ss << saj/(sjk+sAK) << " yjk = " << sjk/(sjk+sAK);
-    printOut(__METHOD_NAME__, ss.str());
-  }
-
-  //Save regardless.
-  invariantsSav.push_back(sAK);
-  invariantsSav.push_back(saj);
-  invariantsSav.push_back(sjk);
-  invariantsSav.push_back(sak);
-
-  // Veto if the point is outside the available phase space.
-  if (vetoPhSpPoint(saj, sjk, sak, verboseIn)) return false;
-  else {invariants = invariantsSav; return true;}
-
-}
-
-//--------------------------------------------------------------------------
-
-// Compute antPhys/antTrial, given antPhys. Note, antPhys should be
-// normalised to include charge and coupling factors.
-
-double BrancherSplitRF::pAccept(const double antPhys, int verboseIn) {
-
-  if (q2NewSav <= 0.) {
-    if (verboseIn >= normal) {
-      string errorMsg = "Error in "+__METHOD_NAME__+": q2NewSav not set";
-      cout<<errorMsg<<endl;
-    }
-    return 0.;
-  } else if (invariantsSav.size() != 4) {
-    if (verboseIn >= normal) {
-      string errorMsg = "Error in "+__METHOD_NAME__+": invariants not set";
-      cout<<errorMsg<<endl;
-    }
-    return 0.;
-  }
-  double saj = invariantsSav[1];
-  double sjk = invariantsSav[2];
-  double sak = invariantsSav[3];
-  double m2q = mFlavSav*mFlavSav;
-  double antTrial = 0.5/(sjk + 2.0*m2q);
-  double norm = 1.0 + (sjk + 2.0*m2q)/(sAK+sjk+2.0*m2q)*(sak+m2q)/(saj-m2q);
-  antTrial*=norm;
-
-  // Multiply by headroom factor.
-  antTrial *= headroomSav;
-
-  // Multiply by col factor.
-  antTrial *= colFacSav;
-
-  // Multiply by alphaS, default is fixed alphaS.
-  double alphaSTrial = evWindowSav->alphaSmax;
-
-  // Running alphaS.
-  if (evWindowSav->runMode >= 1) {
-    double mu2 = q2NewSav;
-    mu2 *= (evWindowSav->kMu2/evWindowSav->lambda2);
-    alphaSTrial = 1.0/log(mu2)/evWindowSav->b0;
-  }
-  antTrial *= alphaSTrial;
-  return antPhys/antTrial;
 
 }
 
@@ -1550,34 +1287,36 @@ double BrancherSplitRF::pAccept(const double antPhys, int verboseIn) {
 // Initialize alphaStrong and related pTmin parameters (TimeShower).
 
 void VinciaFSR::init( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
-
   // Check if already initialized.
-  if (isInit && settingsPtr->word("Merging:Process").compare("void") == 0)
+  if (isInit)
     return;
   verbose = settingsPtr->mode("Vincia:verbose");
-  if (verbose >= veryloud) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+    "begin --------------");
   allowforceQuit = false;
   forceQuit = false;
   nBranchQuit = -1;
 
-  // Event counters and debugging. Set nAccepted to -1, so prepare
-  // works properly.
-  nAccepted       = -1;
-  nSelected       = -1;
-  nVetoUserHooks  = 0;
-  nFailHadLevel   = 0;
-  nCallPythiaNext = 0;
-
   // Showers on/off.
-  doFF    = settingsPtr->flag("Vincia:doFF");
-  doRF    = settingsPtr->flag("Vincia:doRF");
-  doII    = settingsPtr->flag("Vincia:doII");
-  doIF    = settingsPtr->flag("Vincia:doIF");
-  doQED   = settingsPtr->flag("Vincia:doQED");
+  bool doFSR = settingsPtr->flag("PartonLevel:FSR");
+  bool doISR = settingsPtr->flag("PartonLevel:ISR");
+  doFF       = doFSR && settingsPtr->flag("Vincia:doFF");
+  doRF       = doFSR && settingsPtr->flag("Vincia:doRF");
+  doII       = doISR && settingsPtr->flag("Vincia:doII");
+  doIF       = doISR && settingsPtr->flag("Vincia:doIF");
+  ewMode     = settingsPtr->mode("Vincia:EWmode");
+  ewModeMPI  = min(settingsPtr->mode("Vincia:EWmodeMPI"),ewMode);
+  doQED      = ewMode >= 1;
+  doWeak     = ewMode >= 3;
 
   // TODO: everything is evolved in PT in this version of VINCIA.
   evTypeEmit     = 1;
   evTypeSplit    = 1;
+
+  // Parameters of interleaved resonance decays.
+  doInterleaveResDec = settingsPtr->flag("Vincia:interleaveResDec");
+  resDecScaleChoice  = settingsPtr->mode("Vincia:resDecScalechoice");
+  doFSRinResonances  = settingsPtr->flag("PartonLevel:FSRinResonances");
 
   // Store input pointers for future use.
   beamAPtr     = beamAPtrIn;
@@ -1588,8 +1327,14 @@ void VinciaFSR::init( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
   eCMBeamsSav = sqrt(m2BeamsSav);
 
   // Possibility to allow user veto of emission step.
-  hasUserHooks    = (userHooksPtr != 0);
-  canVetoEmission = (hasUserHooks && userHooksPtr->canVetoFSREmission());
+  hasUserHooks       = (userHooksPtr != 0);
+  canVetoEmission    = (hasUserHooks && userHooksPtr->canVetoFSREmission());
+  // canVetoISREmission is part of the overlap veto to avoid filling the same
+  // phase space with EW and QCD radiation starting from different hard
+  // processes. If there is no weak shower, there is also no overlap and thus
+  // no veto needed.
+  canVetoISREmission = (hasUserHooks && doWeak &&
+    userHooksPtr->canVetoISREmission());
 
   // Number of active quark flavours
   nGluonToQuark = settingsPtr->mode("Vincia:nGluonToQuark");
@@ -1600,9 +1345,21 @@ void VinciaFSR::init( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
 
   // Global flag for helicity dependence.
   helicityShower = settingsPtr->flag("Vincia:helicityShower");
+  if (doWeak && !helicityShower) {
+    loggerPtr->WARNING_MSG(
+      "switching on helicityShower (required for ewMode = 3)");
+    settingsPtr->flag("Vincia:helicityShower", true);
+    helicityShower = true;
+    isrPtr->helicityShower = true;
+  }
 
   // Global flag for sector showers on/off.
   sectorShower = settingsPtr->flag("Vincia:sectorShower");
+
+  // Merging flags.
+  doMerging        = settingsPtr->flag("Merging:doMerging");
+  isTrialShower    = false;
+  isTrialShowerRes = false;
 
   // Perturbative cutoff. Since emissions and splittings can have
   // different evolution measures, in principle allow for different
@@ -1649,75 +1406,117 @@ void VinciaFSR::init( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
   enhanceCutoff   = settingsPtr->parm("Vincia:enhanceCutoff");
 
   // Resize pAccept to the maximum number of elements.
-  pAccept.resize(max(weightsPtr->nWeights(), 1));
-
-  // Statistics.
-  nTrialsSum      = 0;
-  int nAntPhysMax = 20;
-  nTrials.resize(nAntPhysMax + 1);
-  nTrialsAccepted.resize(nAntPhysMax + 1);
-  nFailedVeto.resize(nAntPhysMax + 1);
-  nFailedHull.resize(nAntPhysMax + 1);
-  nFailedKine.resize(nAntPhysMax + 1);
-  nFailedMass.resize(nAntPhysMax + 1);
-  nFailedCutoff.resize(nAntPhysMax + 1);
-  nClosePSforHQ.resize(nAntPhysMax + 1);
-  nSectorReject.resize(nAntPhysMax + 1);
+  pAccept.resize(max(weightsPtr->getWeightsSize(), 1));
 
   // Initialize parameters for shower starting scale.
   pTmaxMatch     = settingsPtr->mode("Vincia:pTmaxMatch");
   pTmaxFudge     = settingsPtr->parm("Vincia:pTmaxFudge");
   pT2maxFudge    = pow2(pTmaxFudge);
   pT2maxFudgeMPI = pow2(settingsPtr->parm("Vincia:pTmaxFudgeMPI"));
+  pTdampMatch    = settingsPtr->mode("Vincia:pTdampMatch");
+  pTdampFudge    = settingsPtr->parm("Vincia:pTdampFudge");
+  doPTlimit.clear();
+  doPTdamp.clear();
+  pT2damp.clear();
 
   // Initialize the FSR antenna functions.
-  if (verbose >= veryloud)
-    printOut(__METHOD_NAME__, "initializing antennaSet");
+  if (verbose >= Logger::REPORT)
+    printOut(__METHOD_NAME__, "initializing antenna set");
   antSetPtr->init();
   kMapResEmit  = settingsPtr->mode("Vincia:kineMapRFemit");
   kMapResSplit = settingsPtr->mode("Vincia:kineMapRFsplit");
 
-  // Initialise the QED shower module if not done already.
-  if (!qedShowerPtr->isInit()) {
-    if (verbose >= debug)
-      printOut(__METHOD_NAME__, "initializing QED shower module");
-    qedShowerPtr->init(beamAPtrIn, beamBPtrIn);
-  }
-
-  // Diagnostics.
-  setDiagnostics(dynamic_pointer_cast<VinciaDiagnostics>(userHooksPtr));
-
+  // All OK.
   isInit=true;
-  if (verbose >= veryloud) printOut(__METHOD_NAME__, "end --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "end",
+    DASHLEN);
 
+  if (verbose >= Logger::NORMAL)  header();
 }
 
 //--------------------------------------------------------------------------
 
 // Possible limitation of first emission (TimeShower).
 
-bool VinciaFSR::limitPTmax(Event& event, double, double) {
+bool VinciaFSR::limitPTmax(Event& event, double q2Fac, double) {
 
-  // Check if limiting pT of first emission.
-  if (pTmaxMatch == 1) return true;
-  else if (pTmaxMatch == 2) return false;
+  // Initialise for wimpy showers.
+  bool doPTlimitAll = true;
 
-  // Always restrict SoftQCD processes.
-  else if (infoPtr->isNonDiffractive() || infoPtr->isDiffractiveA() ||
-           infoPtr->isDiffractiveB() || infoPtr->isDiffractiveC())
-    return true;
-
-  // Look if jets or photons in final state of hard system (iSys = 0).
-  else {
-    const int iSysHard = 0;
-    for (int i = 0; i < partonSystemsPtr->sizeOut(iSysHard); ++i) {
-      int idAbs = event[partonSystemsPtr->getOut(iSysHard,i)].idAbs();
-      if (idAbs <= 5 || idAbs == 21 || idAbs == 22) return true;
-      else if (idAbs == 6 && nGluonToQuark == 6) return true;
+  // Check if limiting pT of first emission in each system.
+  doPTlimit.clear();
+  doPTdamp.clear();
+  pT2damp.clear();
+  for (int iSys = 0; iSys < partonSystemsPtr->sizeSys(); ++iSys) {
+    // Initialise for wimpy showers as default, then check if should modify.
+    doPTlimit.push_back(true);
+    doPTdamp.push_back(false);
+    bool isHard = partonSystemsPtr->hasInAB(iSys) &&
+      event[partonSystemsPtr->getInA(iSys)].status() == -21;
+    bool hasHeavyCol = false;
+    // Force wimpy showers.
+    if (pTmaxMatch == 1 || !isHard) doPTlimit[iSys] = true;
+    // Also always restrict all systems for processes of SoftQCD type.
+    else if (infoPtr->isNonDiffractive() || infoPtr->isDiffractiveA() ||
+      infoPtr->isDiffractiveB() || infoPtr->isDiffractiveC())
+      doPTlimit[iSys] = true;
+    // Force power showers for hard system(s); MPI still wimpy.
+    else if (pTmaxMatch == 2) {
+      doPTlimit[iSys] = false;
+      for (int iP = 0; iP < partonSystemsPtr->sizeOut(iSys); ++iP) {
+        int i = partonSystemsPtr->getOut(iSys, iP);
+        if (event[i].idAbs() > max(5, nGluonToQuark) &&
+          event[i].colType() != 0) hasHeavyCol = true;
+      }
     }
-    // If no QCD/QED partons detected, allow to go to phase-space maximum
-    return false;
+    // Check if there are jets, photons, or heavy quarks in final state.
+    else {
+      // Look if jets, photons, and heavy coloured particles in final states
+      // of each system. (Top is counted as heavy unless g->ttbar is allowed.)
+      bool hasJet = false;
+      for (int iP = 0; iP < partonSystemsPtr->sizeOut(iSys); ++iP) {
+        int i     = partonSystemsPtr->getOut(iSys, iP);
+        int idAbs = event[i].idAbs();
+        if (idAbs <= max(5, nGluonToQuark) || idAbs == 21 || idAbs == 22)
+          hasJet = true;
+        else if (event[i].colType() != 0) hasHeavyCol = true;
+      }
+      // If no QCD/QED partons detected, allow to go to phase-space maximum.
+      if (!hasJet) doPTlimit[iSys] = false;
+      else doPTlimit[iSys] = true;
+    }
+
+    // For power showers, check if dampening should be applied.
+    if (!doPTlimit[iSys] && pTdampMatch >= 1) {
+      // Use the input factorisation-scale argument, or compute as geometric
+      // mean of the system's incoming A and B "scale" values.
+      double q2Scale = (pTdampMatch == 1 || pTdampMatch == 3) ? q2Fac :
+        event[partonSystemsPtr->getInA(iSys)].scale() *
+        event[partonSystemsPtr->getInB(iSys)].scale();
+      if ( pTdampMatch == 1 || pTdampMatch == 2 || hasHeavyCol ) {
+        doPTdamp[iSys] = true;
+        pT2damp[iSys] = pow2(pTdampFudge) * q2Scale;
+      }
+    }
+
+    // General pTlimitHard is AND of the individual ones.
+    doPTlimitAll = doPTlimitAll && doPTlimit[iSys];
+
+  // Verbose output
+  if (verbose >= VinciaConstants::DEBUG) {
+    string limitString = "iSys = " + to_string(iSys) + " doPTlimit = "
+      + bool2str(doPTlimit[iSys]);
+    if ( !doPTlimit[iSys] )
+      limitString += " doPTdamp = " + bool2str(doPTdamp[iSys]);
+    if ( doPTdamp[iSys] )
+      limitString += " pTdamp[iSys] = " + to_string( sqrt(pT2damp[iSys]) );
+    printOut(__METHOD_NAME__, limitString );
   }
+
+  } // End loop over systems.
+
+  // Return true/false.
+  return doPTlimitAll;
 
 }
 
@@ -1730,42 +1529,29 @@ int VinciaFSR::shower(int iBeg, int iEnd, Event& event, double pTmax,
   int nBranchMax) {
 
   // Verbose output.
-  if (verbose >= debug) printOut("VinciaFSR::shower", "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin" ,
+    DASHLEN);
 
   // Add new system, automatically with two empty beam slots.
   int iSys = partonSystemsPtr->addSys();
 
   // Verbose output.
-  if (verbose >= 8) printOut("VinciaFSR::shower",
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
       "preparing to shower. System no. " + num2str(iSys));
 
   // Loop over allowed range to find all final-state particles.
   Vec4 pSum;
-  for (int i = iBeg; i <= iEnd; ++i)
+  for (int i = iBeg; i <= iEnd; ++i) {
     if (event[i].isFinal()) {
       partonSystemsPtr->addOut( iSys, i);
       pSum += event[i].p();
     }
+  }
   partonSystemsPtr->setSHat( iSys, pSum.m2Calc() );
 
-  // Now need to clear all systems of antennae. Should be fine
-  // because shower() is only called in two cases: (1) showering off
-  // hadronic resonances as they decay (e.g. upsilon) (2) by user, in
-  // which case there should not be pre-existing systems.
-  resEmitters.clear();
-  resSplitters.clear();
-  emitters.clear();
-  splitters.clear();
-  lookupBrancherRF.clear();
-  lookupSplitterRF.clear();
-  lookupBrancherFF.clear();
-  lookupSplitter.clear();
-  qedShowerPtr->iSystems.clear();
-  qedShowerPtr->emitSystems.clear();
-  qedShowerPtr->splitSystems.clear();
-  qedShowerPtr->convSystems.clear();
-
   // Let prepare routine do the setup.
+  // (isPrepared = false forces clearing of any previous information.)
+  isPrepared = false;
   prepare(iSys, event, false);
 
   // Begin evolution down in pT from hard pT scale.
@@ -1773,6 +1559,7 @@ int VinciaFSR::shower(int iBeg, int iEnd, Event& event, double pTmax,
   do {
     // Do a final-state emission (if allowed).
     double pTtimes = pTnext(event, pTmax, 0.);
+    infoPtr->setPTnow( pTtimes);
     if (pTtimes > 0.) {
       if (branch(event)) ++nBranchNow;
       pTmax = pTtimes;
@@ -1793,9 +1580,12 @@ int VinciaFSR::shower(int iBeg, int iEnd, Event& event, double pTmax,
 
 int VinciaFSR::showerQED(int iBeg, int iEnd, Event& event, double pTmax) {
 
-  // Verbose output
-  if(verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
-
+  // Check if we are supposed to do anything.
+  if (!doQED || infoPtr->getAbortPartonLevel()) return 0;
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    event.list();
+  }
   // Construct a little QED system out of the given particles.
   partonSystemsPtr->addSys();
   int iSys = partonSystemsPtr->sizeSys()-1;
@@ -1807,15 +1597,19 @@ int VinciaFSR::showerQED(int iBeg, int iEnd, Event& event, double pTmax) {
   } else {
     for (int i=iBeg; i<iEnd; ++i) partonSystemsPtr->addOut(iSys,i);
   }
-  qedShowerPtr->prepare( iSys, event, true);
+  qedShowerSoftPtr->clear();
+  qedShowerSoftPtr->prepare( iSys, event, true);
   double q2      = pow2(pTmax);
-  double q2min   = qedShowerPtr->q2min();
+  double q2min   = qedShowerSoftPtr->q2min();
   int nBranchNow = 0;
-  while(true) {
-    q2 = qedShowerPtr->generateTrialScale(event, q2);
+  while (q2 > q2min) {
+    q2 = qedShowerSoftPtr->q2Next(event, q2, q2min);
     if (q2 < q2min) break;
-    if (qedShowerPtr->checkVeto(event)) {
-      qedShowerPtr->update(event, iSys);
+    if (qedShowerSoftPtr->acceptTrial(event)) {
+      // After branching accepted, update event, partonSystems, and antennae.
+      qedShowerSoftPtr->updateEvent(event);
+      qedShowerSoftPtr->updatePartonSystems(event);
+      qedShowerSoftPtr->update(event, iSys);
       ++nBranchNow;
     }
   }
@@ -1829,29 +1623,298 @@ int VinciaFSR::showerQED(int iBeg, int iEnd, Event& event, double pTmax) {
 // (TimeShower).
 
 int VinciaFSR::showerQEDafterRemnants(Event& event) {
-
   // Check if we are supposed to do anything.
   if (!doQED || infoPtr->getAbortPartonLevel()) return 0;
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    event.list();
+  }
 
   // Prepare for showering below hadronisation scale. Include partons
   // from all current systems (pass iSys = -1).
-  qedShowerPtr->prepare( -1, event, true);
-  // Retrieve actual iSys.
-  int iSys       = partonSystemsPtr->sizeSys()-1;
-  double q2      = qedShowerPtr->q2minColoured();
-  double q2min   = max(qedShowerPtr->q2min(),1.e-13);
+  qedShowerSoftPtr->clear();
+  qedShowerSoftPtr->prepare( -1, event, true);
+
+  // Retrieve iSys for remnant system.
+  int iSysRem    = partonSystemsPtr->sizeSys()-1;
+  double q2      = qedShowerSoftPtr->q2minColoured();
+  double q2min   = max(qedShowerSoftPtr->q2min(),PICO);
+
   int nBranchNow = 0;
-  while(true) {
-    q2 = qedShowerPtr->generateTrialScale(event, q2);
-    if (q2 < q2min) break;
-    if (qedShowerPtr->checkVeto(event)) {
-      qedShowerPtr->update(event, iSys);
-      ++nBranchNow;
+  if (partonSystemsPtr->sizeOut(iSysRem) >= 2) {
+
+    double nLoop = 0;
+    while (q2 > q2min) {
+      if (++nLoop >= 1000) {
+        loggerPtr->WARNING_MSG("stuck in infinite loop");
+        break;
+      }
+      q2 = qedShowerSoftPtr->q2Next(event, q2, q2min);
+      if (q2 <= q2min) break;
+      if (qedShowerSoftPtr->acceptTrial(event)) {
+        // After branching accepted, update event, partonSystems, and antennae.
+        qedShowerSoftPtr->updateEvent(event);
+        qedShowerSoftPtr->updatePartonSystems(event);
+        qedShowerSoftPtr->update(event, iSysRem);
+        ++nBranchNow;
+      }
+    }
+    // Move post-remnant-shower partons back into their respective systems.
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss; ss<<" showered remnant iSysRem = "<<iSysRem;
+      printOut(__METHOD_NAME__,ss.str());
+      event.list();
+      partonSystemsPtr->list();
+    }
+    for (int iSys = 0; iSys < iSysRem; ++iSys) {
+      int sizeOut = partonSystemsPtr->sizeOut(iSys);
+      for (int iOut = sizeOut - 1; iOut >= 0; --iOut) {
+        int i = partonSystemsPtr->getOut(iSys, iOut);
+        // If this parton is still present, keep it and skip to next.
+        if (event[i].isFinal()) continue;
+        int iBot = event[i].iBotCopyId();
+        // Replaced disappeared particle by iBot if latter is final.
+        // Else overwrite with the one at the back, and then pop back.
+        // (Example of latter: photon that has branched to fermion pair.)
+        if (event[iBot].isFinal()) {
+          partonSystemsPtr->replace(iSys,i,iBot);
+        } else {
+          int sizeOutNow = partonSystemsPtr->sizeOut(iSys);
+          int iCopy = partonSystemsPtr->getOut(iSys,sizeOutNow-1);
+          partonSystemsPtr->setOut(iSys,iOut,iCopy);
+          partonSystemsPtr->popBackOut(iSys);
+        }
+      }
+    }
+    // Finally only keep partons in iSysRem that are not in any other system.
+    int sizeOut = partonSystemsPtr->sizeOut(iSysRem);
+    for (int iOut = sizeOut - 1; iOut >= 0; --iOut) {
+      int i = partonSystemsPtr->getOut(iSysRem, iOut);
+      int iSysNow = partonSystemsPtr->getSystemOf(i);
+      if (iSysNow != iSysRem) {
+        int sizeOutNow = partonSystemsPtr->sizeOut(iSysRem);
+        int iCopy = partonSystemsPtr->getOut(iSysRem,sizeOutNow-1);
+        partonSystemsPtr->setOut(iSysRem,iOut,iCopy);
+        partonSystemsPtr->popBackOut(iSysRem);
+      }
+    }
+    // If QED shower did not do anything, the updated post-remnant system
+    // will only have remnant partons in it. Remove it if no partons left.
+    if (partonSystemsPtr->sizeOut(iSysRem) == 0) partonSystemsPtr->popBack();
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__,"updated parton systems");
+      partonSystemsPtr->list();
     }
   }
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
+
+  // Force decays of any left-over resonances from the weak shower.
+  if (doWeak) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Checking for leftover resonances");
+    ewShowerPtr->clear();
+    ewShowerPtr->prepare(0, event, true);
+    if (ewShowerPtr->nResDec() > 0) {
+      q2 = 1e6;
+      while (q2 > 0.) {
+        q2 = ewShowerPtr->q2Next(event, q2, 0.);
+        if (q2 <= 0.) break;
+        q2WinSav  = q2;
+        winnerEW  = ewShowerPtr;
+        winnerQCD = nullptr;
+        // branch() automatically adds resonance shower.
+        if (branch(event)) ++nBranchNow;
+      }
+    }
+  }
+
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "end",
+    DASHLEN);
   return nBranchNow;
+}
+
+//--------------------------------------------------------------------------
+
+// Prepare process-level event for showering + interleaved resonance decays.
+// Usage: prepareProcess( process, event, iPos).
+// iPos provides mapping from process to event entries (before showering).
+
+void VinciaFSR::prepareProcess( Event& process, Event& event,
+  vector<int>& iBefShower) {
+
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
+  // Signal that prepare() should treat this as a new event.
+  isPrepared = false;
+  isrPtr->isPrepared = false;
+  iPosBefSav = iBefShower;
+
+  // Initialise recursion-depth counter (for nested sequential decays),
+  // and vector of resonance-decay pT scales.
+  nRecurseResDec = 0;
+  pTresDecSav.clear();
+  idResDecSav.clear();
+
+  // Find resonances in process-level event record.
+  vector<int> resMothers;
+  for (int iHard=0; iHard<process.size(); ++iHard) {
+    double pTresDec = 0.;
+    int    idResDec = 0;
+    int iHardMot = process[iHard].mother1();
+    if (process[iHard].status() == -22) {
+      resMothers.push_back(iHard);
+      // Compute pT scales for resonances with decays included in the hard
+      // process. (Sequential decays irrelevant until mothers have decayed.)
+      if (doInterleaveResDec && !process[iHardMot].isResonance()) {
+        // Set interleaving scale: width or offshellness
+        pTresDec = calcPTresDec(process[iHard]);
+        idResDec = process[iHard].id();
+      }
+    }
+    pTresDecSav.push_back(pTresDec);
+    idResDecSav.push_back(idResDec);
+  }
+
+  // EW and Helicity Showers require helicity selection.
+  if ( doWeak || helicityShower) {
+
+    // Define hard-scattering state (with and then without prompt res decays).
+    vector<Particle> state;
+    vector<int> iProcess;
+    bool needsPol = false;
+    // Save Incoming legs first.
+    int iFirst = 0;
+    for (int iHard = 0; iHard < process.size(); ++iHard) {
+      int statusAbs = process[iHard].statusAbs();
+      if (statusAbs >= 10 && statusAbs <= 20) {
+        // Skip "system" and beam particles.
+        iFirst = iHard + 1;
+        continue;
+      }
+      // Add incoming partons to state (final states added below, depending
+      // on interleaved resonance-decay settings).
+      if (statusAbs == 21) {
+        state.push_back(process[iHard]);
+        iProcess.push_back(iHard);
+      }
+      // Check if there are any unpolarised partons in this state.
+      // Check if any partons in this state need helicities.
+      int id     = process[iHard].id();
+      int nSpins = particleDataPtr->spinType(abs(id));
+      if (nSpins != 0 && process[iHard].pol() == 9) needsPol = true;
+    }
+    // If no helicities need to be selected, we are done.
+    if (!needsPol) return;
+
+    // Special case: no status-21 incoming partons (user defined):
+    // Start from first non-trivial single entry.
+    if (state.size() == 0) {
+      if (iFirst < process.size()) {
+        state.push_back(process[iFirst]);
+        iProcess.push_back(iFirst);
+      } else {
+        loggerPtr->WARNING_MSG("failed to identify hard process "
+          "for helicity selection");
+        if (verbose >= VinciaConstants::DEBUG) process.list();
+        return;
+      }
+    }
+
+    // If doing interleaved resonance decays, first try with
+    // prompt decays included, then allow to try without.
+    int sizeIn = state.size();
+    for (bool interleave : { doInterleaveResDec, false }) {
+      // Reset state to incoming only, then add final ones.
+      state.resize(sizeIn);
+      iProcess.resize(sizeIn);
+      // Loop over 2->N Born process.
+      int iBeg = state[0].daughter1();
+      int iEnd = state[0].daughter2();
+      if (iEnd == 0) iEnd = iBeg;
+      double scale = process.scale();
+      for (int iHard=iBeg; iHard <= iEnd; ++iHard) {
+        // If doing interleaving, resonances with decay scales > scale/2
+        // are treated as prompt (no showering). Include daughters instead.
+        if (interleave && process[iHard].status() == -22 &&
+          pTresDecSav[iHard] > scale/2) {
+          for (int iDa = process[iHard].daughter1();
+               iDa <= process[iHard].daughter2(); ++iDa) {
+            state.push_back(process[iDa]);
+            iProcess.push_back(iDa);
+            // Force outgoing partons in state to have code 23.
+            state.back().status(23);
+          }
+        }
+        // Stable final-state particle, or resonance treated as stable.
+        else if (process[iHard].isFinal() || process[iHard].status() == -22) {
+          state.push_back(process[iHard]);
+          iProcess.push_back(iHard);
+          // Force outgoing partons in state to have code 23.
+          state.back().status(23);
+        }
+      }
+
+      // Check if we have the relevant Hard-Process Matrix Element.
+      if (mecsPtr->meAvailable(state)) {
+        if (mecsPtr->polarise(state,true)) {
+          // If we pass sanity check,
+          if (state.size() == iProcess.size()) {
+            needsPol = false;
+            break;
+          }
+          // Else print warning that something unexpected happened.
+          else
+            loggerPtr->ERROR_MSG(
+              "inconsistent state size after helicity selection");
+        }
+      }
+    }
+
+    // If state now contains polarisations, copy to process and event.
+    if (!needsPol && state.size() > 0) {
+      for (int i=0; i<(int)state.size(); ++i) {
+        // Consistency checks.
+        int iHard = iProcess[i];
+        if (state[i].id() != process[iHard].id()) {
+          loggerPtr->ERROR_MSG(
+            "state does not match process after helicity selection");
+          if (verbose >= VinciaConstants::DEBUG) process.list();
+          return;
+        }
+        // Copy pol() to process.
+        process[iHard].pol(state[i].pol());
+        // Copy pol() to main event record.
+        if (iHard < (int)iBefShower.size()
+          && iBefShower[iHard] != 0) {
+          int iEvent = iBefShower[iHard];
+          if (state[i].id() != event[iEvent].id()) {
+            loggerPtr->ERROR_MSG(
+              "state does not match event after helicity selection");
+            if (verbose >= VinciaConstants::DEBUG) process.list();
+            return;
+          }
+          event[iEvent].pol(state[i].pol());
+        }
+      }
+    } else {
+      loggerPtr->WARNING_MSG("failed to assign helicities for hard process");
+      if (verbose >= VinciaConstants::DEBUG) process.list();
+      return;
+    }
+
+    // Verbose output. Print new process-level and event-level event records
+    // with helicity assignments.
+    if (verbose >= VinciaConstants::DEBUG) {
+      process.list(true);
+      event.list(true);
+    }
+  }
+
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "end",
+    DASHLEN);
+
+  // Finished.
+  return;
 
 }
 
@@ -1859,96 +1922,138 @@ int VinciaFSR::showerQEDafterRemnants(Event& event) {
 
 // Prepare system for evolution (TimeShower).
 
-void VinciaFSR::prepare( int iSys, Event& event, bool){
+void VinciaFSR::prepare(int iSys, Event& event, bool) {
 
-  // Set isPrepared to false every time prepare is called.
-  // Only reset back to true if method executes successfully.
-  isPrepared = false;
   if (!isInit) return;
 
   // Check if we are supposed to do anything
   if (!(doFF || doRF)) return;
   if (infoPtr->getAbortPartonLevel()) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Received abort from PartonLevel().","Aborting.");
+    loggerPtr->ERROR_MSG("Received abort from PartonLevel; aborting");
     return;
   }
 
   // Last chance to print header if not done already.
-  if (!headerIsPrinted && verbose >= normal) header();
-  if (verbose >= debug) {
-    printOut(__METHOD_NAME__, "begin --------------");
-    if (verbose >= louddebug) {
-      stringstream ss;
-      ss << "Preparing system " << iSys;
-      printOut(__METHOD_NAME__, ss.str());
+  if (!headerIsPrinted && verbose >= Logger::NORMAL) header();
+
+  // Resetting for each new event (or non-interleaved decay of a resonance
+  // or hadron) to be showered.
+  bool hasInRes = partonSystemsPtr->hasInRes(iSys);
+  bool hasInAB  = partonSystemsPtr->hasInAB(iSys);
+  // Print event and antenna list before cleanup.
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin (iSys " + num2str(iSys) + ", isPrepared "
+      + bool2str(isPrepared) + ", hasInAB " + bool2str(hasInAB) + ", hasInRes "
+      + bool2str(hasInRes) + ")", DASHLEN);
+    event.list();
+    partonSystemsPtr->list();
+  }
+
+  if (!isPrepared || (!doInterleaveResDec && hasInRes) ||
+    (!hasInAB && !hasInRes)) {
+
+    // Do the following only once per new event to shower.
+    if (!isPrepared) {
+      forceQuit = false;
+
+      // Reset counters in new events.
+      vinComPtr->resetCounters();
+      clearContainers();
+      nRecurseResDec = 0;
+      nBranch.clear();
+      nBranchFSR.clear();
+
+      // Set hard-system handler to EW or QED showers.
+      ewHandlerHard = (doWeak) ? ewShowerPtr : qedShowerHardPtr;
     }
-    if (verbose >= superdebug) {
-      event.list();
-      partonSystemsPtr->list();
+
+    // Do this for each new stage of showering (main, non-interleaved
+    // resonance decays, hadron decays).
+    emittersRF.clear();
+    splittersRF.clear();
+    emittersFF.clear();
+    splittersFF.clear();
+    lookupEmitterRF.clear();
+    lookupSplitterRF.clear();
+    lookupEmitterFF.clear();
+    lookupSplitterFF.clear();
+
+    if (doWeak) ewShowerPtr->clear();
+    qedShowerHardPtr->clear();
+    qedShowerSoftPtr->clear();
+
+  } else {
+
+    // Verbose output.
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__, "QCD antenna list before cleanup:", DASHLEN);
+      list();
     }
-  }
 
-  // Statistics (zero info on qBranch scales).
-  if (iSys < 4)
-    for (int j = 0; j < 11; ++j) {
-      qBranch[iSys][j] = 0.0;
-      pTphys[iSys][j] = 0.0;
+    // Make sure any existing branchers in this system are cleared out.
+    int nSys = partonSystemsPtr->sizeSys();
+    for (int i=emittersFF.size()-1; i >= 0; --i) {
+      if (emittersFF[i]->system() == iSys || emittersFF[i]->system() >= nSys)
+        emittersFF.erase(emittersFF.begin()+i);
+    }
+    for (int i=emittersRF.size()-1; i >= 0; --i)
+      if (emittersRF[i]->system() == iSys || emittersRF[i]->system() >= nSys)
+        emittersRF.erase(emittersRF.begin()+i);
+    for (int i=splittersFF.size()-1; i >= 0; --i)
+      if (splittersFF[i]->system() == iSys || splittersFF[i]->system() >= nSys)
+        splittersFF.erase(splittersFF.begin()+i);
+    for (int i=splittersRF.size()-1; i >= 0; --i)
+      if (splittersRF[i]->system() == iSys || splittersRF[i]->system() >= nSys)
+        splittersRF.erase(splittersRF.begin()+i);
+
+    // Reconstruct lookup tables for existing branchers.
+    lookupEmitterFF.clear();
+    for (unsigned int i=0; i < emittersFF.size(); ++i) {
+      // Colour, Anticolour.
+      lookupEmitterFF[make_pair(emittersFF[i]->i0(),true)] = i;
+      lookupEmitterFF[make_pair(emittersFF[i]->i1(),false)] = i;
+    }
+    lookupSplitterFF.clear();
+    for (unsigned int i=0; i < splittersFF.size(); ++i) {
+      // Gluon(Colour side) + Recoiler.
+      if (!splittersFF[i]->isXG()) {
+        lookupSplitterFF[make_pair(splittersFF[i]->i0(),true)] = i;
+        lookupSplitterFF[make_pair(splittersFF[i]->i1(),false)] = i;
+      }
+      // Gluon(Anticolour side) + Recoiler.
+      else {
+        lookupSplitterFF[make_pair(-splittersFF[i]->i0(),true)] = i;
+        lookupSplitterFF[make_pair(-splittersFF[i]->i1(),false)] = i;
+      }
+    }
+    lookupEmitterRF.clear();
+    for (unsigned int i=0; i < emittersRF.size(); ++i) {
+      bool i0isRes = (emittersRF[i]->posR() == 0);
+      // Resonance always first. (Negative for reversed colour flow.)
+      lookupEmitterRF[make_pair(emittersRF[i]->i0(),i0isRes)] = i;
+      lookupEmitterRF[make_pair(emittersRF[i]->i1(),!i0isRes)] = i;
+    }
+    lookupSplitterRF.clear();
+    for (unsigned int i=0; i < splittersRF.size(); ++i) {
+      bool i0isRes = (splittersRF[i]->posR() == 0);
+      // Resonance always first. (Negative for reversed colour flow.)
+      lookupSplitterRF[make_pair(splittersRF[i]->i0(),i0isRes)] = i;
+      lookupSplitterRF[make_pair(splittersRF[i]->i1(),!i0isRes)] = i;
     }
 
-  // Counter for accepted events.
-  nAccepted = max(nAccepted, infoPtr->nAccepted());
+    // Verbose output.
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__, "QCD antenna list after cleanup:", DASHLEN);
+      list();
+    }
 
-  // First time prepare is called for an event.
-  bool firstCallInEvent  = false;
-  // getCounter(3), number of times a Pythia::next() call has been begun.
-  int nCallPythiaNextNow = infoPtr->getCounter(3);
-  if (nCallPythiaNextNow > nCallPythiaNext) {
-    nCallPythiaNext  = nCallPythiaNextNow;
-    nVetoUserHooks   = 0;
-    nFailHadLevel    = 0;
-    firstCallInEvent = true;
-  }
-  // Last event got accepted.
-  long nSelectedNow = infoPtr->nSelected();
-  if (nSelectedNow > nSelected) {
-    nSelected        = nSelectedNow;
-    nVetoUserHooks   = 0;
-    nFailHadLevel    = 0;
-    firstCallInEvent = true;
-  }
-  // getCounter(10), number of times the selection of a new hard
-  // process has been begun. = 1 if no user hooks veto, > 1 if user
-  // hooks veto.
-  int nVetoUserHooksNow = (infoPtr->getCounter(10)-1);
-  if (nVetoUserHooksNow > nVetoUserHooks) {
-    nVetoUserHooks   = nVetoUserHooksNow;
-    firstCallInEvent = true;
-  }
-  // getCounter(14), number of times loop over parton- and
-  // hadron-level processing has begun for a hard process. = 1 if
-  // everything after user hooks veto is succesful, > 1 eg if hadron
-  // level fails.
-  int nFailHadLevelNow = (infoPtr->getCounter(14) - 1);
-  if (nFailHadLevelNow > nFailHadLevel) {
-    nFailHadLevel    = nFailHadLevelNow;
-    firstCallInEvent = true;
-  }
-
-  // Resetting for first time in new event.
-  if (firstCallInEvent) {
-    forceQuit = false;
-
-    // Reset counters, weights in new events, and clear system information.
-    vinComPtr->resetCounters();
-    weightsPtr->resetWeights(infoPtr->nAccepted());
-    clearContainers();
   }
 
   // Allow to quit after a certain number of emissions per event (just
   // for testing).
-  if (forceQuit){
-    if (verbose >= debug) printOut(__METHOD_NAME__, "User forced quit early.");
+  if (forceQuit) {
+    if (verbose >= Logger::REPORT) printOut(__METHOD_NAME__,
+      "User forced quit early");
     return;
   }
 
@@ -1956,38 +2061,21 @@ void VinciaFSR::prepare( int iSys, Event& event, bool){
   int sizeSystem = partonSystemsPtr->sizeAll(iSys);
   if (sizeSystem <= 1) return;
 
-  // Reset antenna list for first interaction and for resonance
-  // decays. We don't have a starting scale for this system yet.
-  Q2hat[iSys] = 0.0;
+  // We don't have a starting scale for this system yet.
+  q2Hat[iSys] = 0.0;
   // After prepare we always have zero branchings.
   nBranch[iSys] = 0;
   nBranchFSR[iSys] = 0;
-  if (doDiagnostics) diagnosticsPtr->setnBranchSys(iSys,nBranch[iSys]);
 
-  // Initialize polarisation flag (only consider final-state partons).
-  bool checkIncoming = false;
-  if (helicityShower)
-    polarisedSys[iSys] = mecsPtr->isPolarised(iSys, event, checkIncoming);
-  else polarisedSys[iSys] = false;
   stateChangeSys[iSys] = true;
   stateChangeLast      = true;
   iSysWin = iSys;
   iNewSav = 0;
 
-  // Note that we have not yet binned the first branching scale.
-  if (iSys == 0) firstQBranchBinned = false;
-
-  // We are not creating new copies of the particles. Colour and
-  // polarization information may be changed or added, respectively,
-  // and masses may be set to zero for partons VINCIA wants to treat
-  // as massless.
-  bool makeNewCopies = false;
-
   // Note, for 2->2 systems, ISR::prepare() is called before
   // FRS::prepare() (if doISR) so ISR may already have done
   // everything.
   if ((doIF || doII) && isrPtr->prepared(iSys)) {
-    makeNewCopies = false;
 
     // Ensure consistency between ISR + FSR lists.
     isHardSys[iSys]      = isrPtr->isHardSys[iSys];
@@ -1998,68 +2086,118 @@ void VinciaFSR::prepare( int iSys, Event& event, bool){
   // If ISR::prepare() not called for this system, prepare it now.
   } else {
 
-    // Since ISR::prepare() not called, this will normally be a resonance
-    // decay system, but still no harm in checking explicitly.
-    if (partonSystemsPtr->hasInAB(iSys)) {
-      isHardSys[iSys]      = ( iSys == 0 );
-      isResonanceSys[iSys] = false;
-    } else {
-      isHardSys[iSys]      = false;
-      isResonanceSys[iSys] = partonSystemsPtr->hasInRes(iSys);
-      int iAncestor        = event[partonSystemsPtr->getOut(iSys,0)].mother1();
-      // Make sure iAncestor is recorded as iInA in the parton system
-      // (not standard usage in PYTHIA but useful in VINCIA).
-      partonSystemsPtr->setInA(iSys, iAncestor);
-    }
+    // Assume system 0 is the hard system (if not just a single particle).
+    // Allows for case of forced final-state showers off a user-supplied
+    // final state without beams or decaying resonance, see shower().
+    isHardSys[iSys] = ( iSys == 0 && partonSystemsPtr->sizeOut(iSys) >= 2);
+    isResonanceSys[iSys] = partonSystemsPtr->hasInRes(iSys);
 
     // Make light quarks (and initial-state partons) explicitly massless.
-    if (!vinComPtr->mapToMassless(iSys, event, partonSystemsPtr,
-        makeNewCopies)) return;
+    if (!vinComPtr->mapToMassless(iSys, event, false)) return;
     // Then see if we know how to compute matrix elements for this conf.
     doMECsSys[iSys] = mecsPtr->prepare(iSys, event);
-    // Then see if and whether we can assign helicities.
-    if (doMECsSys[iSys] && helicityShower)
-      polarisedSys[iSys] = mecsPtr->polarise(iSys, event);
     // Decide if we should be doing ME corrections for next order.
     if (doMECsSys[iSys]) doMECsSys[iSys] = mecsPtr->doMEC(iSys, 1);
-    // Then see if we should colourise this conf.
-    colourPtr->colourise(iSys, event);
+    // Initialize polarisation flag.
+    polarisedSys[iSys]   = mecsPtr->isPolarised(iSys, event);
+    // Colourise hard process and MPI systems first time they are encountered.
+    bool doColourise = !isPrepared;
+    if (!isHardSys[iSys] && !isResonanceSys[iSys]) doColourise = true;
+    if (doColourise) colourPtr->colourise(iSys, event);
+
   }
 
-  // Find antennae.
-  if (verbose >= superdebug) printOut(__METHOD_NAME__, "Finding antennae....");
-  if(!getAntennae(iSys, event)) return;
+  // Set up QCD antennae.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+    "Finding branchers...");
+  if (doFF || doRF) {
+    // In merging, allow to only generate emissions inside resonance systems.
+    if (isTrialShowerRes && !isResonanceSys[iSys]) {
+      // Just clear what we've got.
+      emittersRF.clear();
+      splittersRF.clear();
+      emittersFF.clear();
+      splittersFF.clear();
+      lookupEmitterRF.clear();
+      lookupSplitterRF.clear();
+      lookupEmitterFF.clear();
+      lookupSplitterFF.clear();
+    } else {
+      // Set up QCD antennae.
+      if (!setupQCDantennae(iSys,event)) return;
+      // Save Born state, used later to reject sectors that involve clustering
+      // away the "hard" (Born) partons. (For trial showers, this step is done
+      // already, in VinciaMerging::getWeightCKKWL().)
+      if (!isTrialShower) saveBornState(iSys, event);
+    }
+  }
 
-  // Set starting scale for this system.
+  // Set up QED/EW systems. (Note: trial showers are pure QCD.)
+  if (doQED && !isTrialShower) {
+    bool isHard = isHardSys[iSys] || isResonanceSys[iSys];
+    if (isHard) {
+      // Check if doing full EW or "just" QED.
+      if (doWeak && polarisedSys[iSys] &&
+        ewShowerPtr->prepare(iSys,event,false) ) {
+        ewHandlerHard = ewShowerPtr;
+      } else {
+        qedShowerHardPtr->clear(iSys);
+        qedShowerHardPtr->prepare(iSys, event, false);
+        ewHandlerHard = qedShowerHardPtr;
+      }
+      if (verbose >= VinciaConstants::DEBUG) {
+        string msg = "ewHandlerHard = ";
+        if (ewHandlerHard == ewShowerPtr) msg += "EW";
+        else msg += "QED";
+        printOut(__METHOD_NAME__, msg);
+      }
+    } else {
+      // MPI and non-resonance (eg hadron-) decay systems always use QED.
+      qedShowerSoftPtr->prepare(iSys, event, false);
+    }
+  }
+
+  // Set starting scale for this system
   setStartScale(iSys, event);
 
   // Let others know we got to the end.
   isPrepared = true;
-  if (verbose >= debug) {
-    if (verbose >= superdebug) list();
-    printOut(__METHOD_NAME__, "end --------------");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "QCD antenna list after prepare:", DASHLEN);
+    list();
+    printOut(__METHOD_NAME__, "end", DASHLEN);
   }
 
 }
 
 //--------------------------------------------------------------------------
 
-// Update antenna list after each ISR emission (TimeShower).
+// Update FF, RF, and QED/EW antenna lists after each ISR emission.
 
 void VinciaFSR::update( int iSys, Event& event, bool) {
 
   // Do nothing if not prepared for FSR.
   if (!isPrepared) return;
-  if (verbose >= debug) {
-    printOut(__METHOD_NAME__, "begin --------------");
-    if (verbose >= louddebug) event.list();
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    if (verbose >= VinciaConstants::DEBUG) event.list();
   }
 
-  // Update QED system.
-  qedShowerPtr->update(event, iSys);
+  // Update any EW branchers in system.
+  if (doQED) {
+    if (isHardSys[iSys] || isResonanceSys[iSys])
+      ewHandlerHard->update(event, iSys);
+    else
+      qedShowerSoftPtr->update(event, iSys);
+  }
+
+  // Return now if not doing QCD final-final branchings.
+  if (!(doFF || doRF)) return;
+
+  // Sanity check
   if (isResonanceSys[iSys]) {
-    if (verbose >=normal) infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Update called unexpectedly in resonance shower.","Exiting.");
+    loggerPtr->ERROR_MSG(
+      "update called unexpectedly in resonance shower; exiting");
     return;
   }
 
@@ -2085,58 +2223,58 @@ void VinciaFSR::update( int iSys, Event& event, bool) {
 
   // Update any final-state antennae with partons changed by ISR
   // branching.
-  for (int i = 0; i < (int)emitters.size(); i++) {
-    Brancher* brancherPtr = &emitters[i];
+  for (int i = 0; i < (int)emittersFF.size(); i++) {
+    BrancherPtr brancherPtr = emittersFF[i];
     // Update any antennae with legs that were modified by the ISR
     // branching, i.e. whose current legs have been marked with status
     // < 0.
-    int i0Old = brancherPtr->i0();
-    int i1Old = brancherPtr->i1();
-    int i0New = i0Old;
-    int i1New = i1Old;
+    int iOld0 = brancherPtr->i0();
+    int iOld1 = brancherPtr->i1();
+    int iNew0 = iOld0;
+    int iNew1 = iOld1;
 
-    if (event[i0Old].status() < 0 || event[i1Old].status() < 0) {
+    if (event[iOld0].status() < 0 || event[iOld1].status() < 0) {
       // Get new positions from indexOfCol, indexOfAcol (could also
       // use daughter information from old i0, i1).
-      i0New = indexOfCol[event[i0Old].col()];
-      i1New = indexOfAcol[event[i1Old].acol()];
-      // Update emitter.
-      brancherPtr->reset(brancherPtr->system(), event, i0New, i1New);
+      iNew0 = indexOfCol[event[iOld0].col()];
+      iNew1 = indexOfAcol[event[iOld1].acol()];
+      // Update emitter (and update pointer if location changed).
+      emittersFF[i] = make_shared<BrancherEmitFF>(brancherPtr->system(), event,
+        sectorShower, iNew0, iNew1, &zetaGenSetFF);
 
       // Update lookup map and erase old keys.
-      pair<int,bool> key = make_pair(i0Old, true);
-      if (lookupBrancherFF.find(key)!=lookupBrancherFF.end())
-        lookupBrancherFF.erase(key);
-      key = make_pair(i1Old, false);
-      if (lookupBrancherFF.find(key)!=lookupBrancherFF.end())
-        lookupBrancherFF.erase(key);
+      pair<int,bool> key = make_pair(iOld0, true);
+      if (lookupEmitterFF.find(key)!=lookupEmitterFF.end())
+        lookupEmitterFF.erase(key);
+      key = make_pair(iOld1, false);
+      if (lookupEmitterFF.find(key)!=lookupEmitterFF.end())
+        lookupEmitterFF.erase(key);
       // Add new keys.
-      key = make_pair(i0New,true);
-      lookupBrancherFF[key] = i;
-      key = make_pair(i1New,false);
-      lookupBrancherFF[key] = i;
+      key = make_pair(iNew0,true);
+      lookupEmitterFF[key] = i;
+      key = make_pair(iNew1,false);
+      lookupEmitterFF[key] = i;
 
       // Update splitters.
-      if (event[i0Old].isGluon()) {
-        if (event[i0New].isGluon())
-          updateSplitter(event,i0Old,i1Old,i0New,i1New,true);
-        else removeSplitter(i0Old);
+      if (event[iOld0].isGluon()) {
+        if (event[iNew0].isGluon())
+          updateSplitterFF(event,iOld0,iOld1,iNew0,iNew1,true);
+        else removeSplitterFF(iOld0);
       }
-      if (event[i1Old].isGluon()) {
-        if (event[i1New].isGluon())
-          updateSplitter(event,i1Old,i0Old,i1New,i0New,false);
-        else removeSplitter(i1Old);
+      if (event[iOld1].isGluon()) {
+        if (event[iNew1].isGluon())
+          updateSplitterFF(event,iOld1,iOld0,iNew1,iNew0,false);
+        else removeSplitterFF(iOld1);
       }
     }
 
     // Remove the antennae out of the list. This way we can check
     // later if ISR added a new FF antenna i0/i1 is colour/anticolour.
-    pair<int,int> pairNow = make_pair(i0New,i1New);
+    pair<int,int> pairNow = make_pair(iNew0,iNew1);
     vector< pair<int,int> >::iterator iter;
     iter = find (antFF.begin(), antFF.end(), pairNow);
     if (iter != antFF.end()) antFF.erase(iter);
   }
-
 
   // Is there a FF connection left?
   for (int i = 0; i < (int)antFF.size(); i++) {
@@ -2144,37 +2282,40 @@ void VinciaFSR::update( int iSys, Event& event, bool) {
     int i1 = antFF[i].second; // i1/iNew[2] is anticolour.
     // Don't include II or IF antennae.
     if (!event[i0].isFinal() || !event[i1].isFinal()) continue;
-    if (verbose >= superdebug) {
+    if (verbose >= VinciaConstants::DEBUG) {
       stringstream ss;
       ss << "Creating antenna between " << i0 << " , " << i1
          << " col = " << event[i0].col();
       printOut(__METHOD_NAME__, ss.str());
     }
     // Store new trial QCD gluon emission antenna.
-    saveEmitter(iSys, event, i0, i1);
+    saveEmitterFF(iSys, event, i0, i1);
     // Store new trial QCD gluon splitting antenna(e).
-    if (event[i0].isGluon()) saveSplitter(iSys, event, i0, i1, true);
-    if (event[i1].isGluon()) saveSplitter(iSys, event, i1, i0, false);
+    if (event[i0].isGluon()) saveSplitterFF(iSys, event, i0, i1, true);
+    if (event[i1].isGluon()) saveSplitterFF(iSys, event, i1, i0, false);
   }
 
+  // Decide if we should be doing ME corrections for next order.
+  if (doMECsSys[iSysWin])
+    doMECsSys[iSysWin] = mecsPtr->doMEC(iSysWin, nBranch[iSysWin]+1);
+
   // Sanity check.
-  if (emitters.size() + splitters.size() <= 0) {
-    if (verbose >= quiteloud)
-      printOut(__METHOD_NAME__, "WARNING: Did not find any QCD antennae.");
+  if (emittersFF.size() + splittersFF.size() <= 0) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "WARNING: Did not find any QCD antennae");
     return;
   }
-  if (!check(event)) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": failed update antennae.");
+  if (!check(iSysWin, event)) {
+    loggerPtr->ERROR_MSG("failed to update antennae");
     list();
-    if (verbose >= superdebug) printLookup();
+    if (verbose >= VinciaConstants::DEBUG) printLookup();
     infoPtr->setAbortPartonLevel(true);
     return;
   }
-  if (verbose >=debug) {
-    if (verbose >= louddebug) list();
-    if (verbose >= superdebug) printLookup();
-    printOut(__METHOD_NAME__, "end --------------");
+  if (verbose >=VinciaConstants::DEBUG) {
+    list();
+    printLookup();
+    printOut(__METHOD_NAME__, "end", DASHLEN);
   }
 
 }
@@ -2189,95 +2330,135 @@ double VinciaFSR::pTnext(Event& event, double pTevolBegAll,
   // Check if we are supposed to do anything.
   if (infoPtr->getAbortPartonLevel() || !isPrepared) return 0.;
   if (forceQuit) {
-    if (verbose >= debug) printOut(__METHOD_NAME__, "User forced quit early.");
+    if (verbose >= Logger::REPORT) printOut(__METHOD_NAME__,
+      "User forced quit early");
     return 0.;
   }
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) {
+    cout<<endl;
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+  }
+
+  // Profiling.
+  if (verbose >= Logger::REPORT) diagnosticsPtr->start(__METHOD_NAME__);
 
   // Denote VINCIA scales by "q", PYTHIA ones by "pTevol".
   double q2Begin  = pow2(pTevolBegAll);
   double q2EndAll = pow2(pTevolEndAll);
 
-  // Initialize.
+  // End scale is set wrong for merging in resonances.
+  if (isTrialShowerRes) {
+    double q2EndMerge = pow2(mergingHooksPtr->getShowerStoppingScale());
+    q2EndAll = max(q2EndAll, q2EndMerge);
+  }
+
+  // Initialise.
   q2WinSav  = 0.;
-  winnerQED = false;
-  winnerPtr = 0;
+  winnerEW  = nullptr;
+  winnerQCD = nullptr;
 
   // Generate next gluon-emission trial scale (above qEndAll).
-  if (doFF && emitters.size() > 0) {
-    if ( !q2NextEmit(q2Begin, q2EndAll) ) return 0.;
+  if (doFF && emittersFF.size() > 0) {
+    if ( !q2NextEmitQCD(q2Begin, q2EndAll) ) return 0.;
   }
 
   // Generate next gluon-splitting trial scale and compare to current qWin.
-  if (doFF && splitters.size() > 0) {
-    if ( !q2NextSplit(q2Begin, q2EndAll) ) return 0.;
+  if (doFF && splittersFF.size() > 0) {
+    if ( !q2NextSplitQCD(q2Begin, q2EndAll) ) return 0.;
   }
 
   // Generate next resonance gluon-emission trial and compare to current qWin.
-  if (doRF && resEmitters.size() > 0) {
-    if ( !q2NextResEmit(q2Begin, q2EndAll) ) return 0.;
+  if (doRF && emittersRF.size() > 0) {
+    // For now, issue a warning that merging in RF systems is not validated.
+    if (isTrialShower) loggerPtr->WARNING_MSG(
+      "merging in coloured-resonance systems not validated");
+    if ( !q2NextEmitResQCD(q2Begin, q2EndAll) ) return 0.;
   }
 
   // Generate nex resonance gluon-splitting trial and compare to current qWin.
-  if (doRF && resSplitters.size() > 0) {
-    if ( !q2NextResSplit(q2Begin, q2EndAll) ) return 0.;
+  if (doRF && splittersRF.size() > 0) {
+    // For now, issue a warning that merging in RF systems is not validated.
+    if (isTrialShower) loggerPtr->WARNING_MSG(
+      "merging in coloured-resonance systems not validated");
+    if ( !q2NextSplitResQCD(q2Begin, q2EndAll) ) return 0.;
   }
 
-  // Generate next QED trial scale and compare to current qWin.
-  if (doQED) {
-    double q2QED = qedShowerPtr->generateTrialScale(event, q2Begin);
-    if (q2QED >q2Begin) {
-      stringstream ss;
-      ss << "q2Begin = "<<q2Begin<<" q2QED = " << q2QED;
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Genereated q2QED > q2Begin.",ss.str());
+  // Generate next EW trial scale and compare to current qWin.
+  // (Trial showers are pure QCD.)
+  if (doQED && !isTrialShower) {
+    double q2EW = 0.;
+    // EW emissions in the hard system.
+    if (ewHandlerHard->nBranchers() >= 1) {
+      q2EW     = ewHandlerHard->q2Next(event, q2Begin, q2EndAll);
+      winnerEW = ewHandlerHard;
+    }
+    // QED emissions in MPI systems (only if we are not in a resonance decay)
+    if (nRecurseResDec == 0 && qedShowerSoftPtr->nBranchers() >= 1) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "Generating QED off MPI");
+      double q2EWmpi = qedShowerSoftPtr->q2Next(event, q2Begin, q2EndAll);
+      if (q2EWmpi > q2EW) {
+        q2EW = q2EWmpi;
+        winnerEW = qedShowerSoftPtr;
+      }
+    }
+    if (q2EW > q2Begin+NANO) {
+      loggerPtr->ERROR_MSG("genereated q2EW > q2Begin");
+      infoPtr->setAbortPartonLevel(true);
       return 0.;
     }
     // Check for winning condition.
-    if (q2QED > q2WinSav && q2QED > q2EndAll) {
-      q2WinSav  = q2QED;
-      winnerQED = true;
-      winnerPtr = NULL;
+    // Note: EW resonance decays can go all the way to zero.
+    if (q2EW > q2WinSav && q2EW > 0.) {
+      q2WinSav  = q2EW;
+      // Mark QCD as the loser.
+      winnerQCD = nullptr;
+    }
+    else {
+      // Mark EW as the loser.
+      winnerEW  = nullptr;
     }
   }
 
   // If non-zero branching scale found: continue.
-  if (q2WinSav > q2EndAll) {
-    if (verbose >= debug) {
+  if (winnerQCD != nullptr && q2WinSav > q2EndAll) {
+    if (verbose >= VinciaConstants::DEBUG) {
       stringstream ss;
-      if (winnerPtr != 0)
-        ss << " QCD Winner at scale qWinNow = "
-           <<  sqrt(q2WinSav)
-           << " col = " << event[winnerPtr->i0()].col()
-           << " in System " << winnerPtr->system()
-           << " qbegin = "<< pTevolBegAll;
-      else
-        ss << "=== QED Winner at scale qWinNow = "
-           << sqrt(q2WinSav);
-      printOut(__METHOD_NAME__, ss.str());
-    }
-    if (verbose >= superdebug) list();
-
-  // No more branchings. Finalize.
-  } else {
-    q2WinSav = 0.0;
-    if (verbose>=superdebug) event.list();
-
-    // TODO: add back.
-    // Need to make sure this is only done once per event.
-    // FSR is done; set the weights.
-    // weightsPtr->doWeighting();
-
-    // If we have not yet binned a branching scale, bin 0 as the first
-    // branching scale.
-    if (verbose >= normal && !firstQBranchBinned) {
-      if (vinciaHistos.find("1stBranchingQE/eCM") != vinciaHistos.end())
-        vinciaHistos["1stBranchingQE/eCM"].fill(0);
-      firstQBranchBinned = true;
+      ss << " QCD Winner at scale qWinNow = "
+         <<  sqrt(q2WinSav)
+         << " col = " << event[winnerQCD->i0()].col()
+         << " in System " << winnerQCD->system()
+         << " qbegin = "<< pTevolBegAll;
     }
   }
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
-  return sqrt(q2WinSav);
+  else if (winnerEW != nullptr && q2WinSav > 0.) {
+   if (verbose >= VinciaConstants::DEBUG) {
+     stringstream ss;
+     ss << "=== EW Winner at scale qWinNow = "
+        << sqrt(q2WinSav);
+     if (winnerEW->lastIsResonanceDecay()) ss<<" (resonance decay)"<<endl;
+     printOut(__METHOD_NAME__, ss.str());
+     list();
+   }
+  }
+  // Else no more branchings. Finalize.
+  else {
+    q2WinSav  = 0.0;
+    winnerQCD = nullptr;
+    winnerEW  = nullptr;
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__,
+        "=== No FSR trial branchings above cutoff");
+      event.list();
+    }
+  }
+
+  // Profiling.
+  if (verbose >= Logger::REPORT) diagnosticsPtr->stop(__METHOD_NAME__);
+
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "end",
+    DASHLEN);
+  return (q2WinSav > 0) ? sqrt(q2WinSav) : 0.0;
 
 }
 
@@ -2285,180 +2466,507 @@ double VinciaFSR::pTnext(Event& event, double pTevolBegAll,
 
 // Branch event, including accept/reject veto (TimeShower).
 
-bool VinciaFSR::branch(Event& event, bool ){
+bool VinciaFSR::branch(Event& event, bool ) {
 
   // Verbose output.
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
-  // Hand off QED branchings to QED brancher.
-  if (winnerQED) return branchQED(event);
+  // Diagnostics.
+  if (verbose >= Logger::REPORT) diagnosticsPtr->start(__METHOD_NAME__);
 
-  // Now handle QCD branchings.
-  iSysWin                 = winnerPtr->system();
-  stateChangeLast         = false;
-  stateChangeSys[iSysWin] = false;
-  iNewSav = 0;
+  // Initialise info on this branching.
+  hasWeaklyRadiated = false;
 
-  // Mark this trial as used so we do not risk reusing it.
-  winnerPtr->needsNewTrial();
-  // Find out which branching type we are doing.
-  iAntWin   = winnerPtr->iAntPhys();
+  // EW branchings
+  if (winnerEW != nullptr) {
 
-  // Count up global number of attempted trials.
-  ++nTrialsSum;
-  nTrials[iAntWin]++;
-
-  // Decide whether to accept the trial. Store new particles in pNew
-  // if keeping.
-  if (!acceptTrial(event)) {
-    if (verbose >= debug)
-      printOut(__METHOD_NAME__, "Trial rejected (failed acceptTrial)");
-    return false;
+    // Do the EW branching, including a resonance shower if branching
+    // is a resonance decay. The idea is that after the branching, the
+    // overall event has the same number of parton systems as before,
+    // which have all been evolved down to the current evolution scale.
+    if (!branchEW(event)) {
+      if (verbose >= Logger::REPORT)
+        diagnosticsPtr->stop(__METHOD_NAME__,"veto(branchEW)");
+      return false;
+    }
+    else hasWeaklyRadiated = true;
   }
 
-  // Update event record, add new daughters. Make a copy of the event
-  // to update (may want to veto)! Make a copy of junction info.
-  Event newevent = event;
-  resJunctionInfo junctionInfoCopy;
-  if (hasResJunction[iSysWin]) junctionInfoCopy=junctionInfo[iSysWin];
-  if (!updateEvent(newevent,junctionInfoCopy)) {
-    if (verbose >= loud)
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Failed to update event.");
-    return false;
-  }
+  // QCD Branchings.
+  else {
 
-  // Possibility to allow user veto of emission step.
-  if (canVetoEmission) {
-    if (userHooksPtr->doVetoFSREmission(event.size(), newevent,
-        iSysWin,isResonanceSys[iSysWin])) {
-      if (verbose >= debug) printOut(__METHOD_NAME__, "Trial rejected "
-          "(failed UserHooks::doVetoFSREmission)");
+    // Do the QCD branching.
+    if (!branchQCD(event)) {
+      if (verbose >= Logger::REPORT)
+        diagnosticsPtr->stop(__METHOD_NAME__,"veto(branchQCD)");
       return false;
     }
   }
-  if (doDiagnostics) diagnosticsPtr->checkEvent(iSysWin,newevent,event.size());
 
-  // Everything accepted -> overwrite original event.
-  event = newevent;
-  if (hasResJunction[iSysWin]) junctionInfo[iSysWin] = junctionInfoCopy;
+  // Ensure any damped power showers are only applied to hardest emission.
+  if (iSysWin < (int)doPTdamp.size()) doPTdamp[iSysWin] = false;
 
-  // Update partonSystems.
-  updatePartonSystems();
-
-  // Check momentum conservation.
-  if (!vinComPtr->checkCoM(iSysWin,event,partonSystemsPtr)) {
-    infoPtr->setAbortPartonLevel(true);
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Failed momentum conservation test.");
-    return false;
-  }
-
-  // Update antennae.
-  if(!updateAntennae(event)) {
-    if (verbose >= loud)
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Failed to update antennae");
-    infoPtr->setAbortPartonLevel(true);
-    return false;
-  }
-
-  // If diagnostic histograms are on, write in the branching scale.
-  if (verbose >= normal && !firstQBranchBinned) {
-    if (vinciaHistos.find("1stBranchingQE/eCM") != vinciaHistos.end())
-      vinciaHistos["1stBranchingQE/eCM"].fill(sqrt(q2WinSav)/event[0].e());
-    firstQBranchBinned = true;
-  }
-
-  // Count the number of branchings in the system.
-  nBranch[iSysWin]++;
-  nBranchFSR[iSysWin]++;
-
-  // Do user-defined diagnostics.
-  if(doDiagnostics) diagnosticsPtr->setnBranchSys(iSysWin,nBranch[iSysWin]);
-
-  // Check the event after each branching.
-  if (!vinComPtr->showerChecks(event, false)) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": Failed shower checks.");
-    infoPtr->setAbortPartonLevel(true);
-    return false;
-  }
-
-  // Statistics for first 10 branchings in first 4 systems
-  if (iSysWin < 4 && nBranchFSR[iSysWin] < 11 && nBranchFSR[iSysWin]>0) {
-    qBranch[iSysWin][nBranchFSR[iSysWin]]=sqrt(q2WinSav);
-    if(iNewSav>0){
-      pTphys[iSysWin][nBranchFSR[iSysWin]]=event[iNewSav].pT();
-    }
-  }
-
-  // Force stop by user (debugging only).
-  if (allowforceQuit) {
-    if (nBranchFSR[iSysWin] >= nBranchQuit && nBranchQuit > 0) {
-      forceQuit = true;
-      if (verbose >= debug) {
-        stringstream ss;
-        ss << "User forced quit after " << nBranchQuit << " emissions.";
-        printOut(__METHOD_NAME__, ss.str());
-      }
-    }
-  }
-
-  // Done
-  nTrialsAccepted[iAntWin]++;
+  // Save info variables.
   stateChangeSys[iSysWin] = true;
   stateChangeLast         = true;
   pTLastAcceptedSav       = sqrt(q2WinSav);
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
+
+  // Diagnostics.
+  if (verbose >= Logger::REPORT)
+    diagnosticsPtr->stop(__METHOD_NAME__,"accept");
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "end",
+    DASHLEN);
   return true;
 
 }
 
 //--------------------------------------------------------------------------
 
-// Utility to print antenna list; for debug mainly (TimeShower).
+// Handle a resonance decay, including showering of resonance system (with
+// preserved resonance mass) down to the scale pTmerge, at which the
+// produced partons are merged back into the system that produced the
+// resonance (iSysMot).
+// Assumes decay channel and kinematics already selected and present in
+// process or event record.
+// Note: this method can be called recursively for nested resonance decays.
+
+bool VinciaFSR::resonanceShower(Event& process, Event& event,
+  vector<int>& iPosBefShow, double pTmerge) {
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin" ,
+    DASHLEN);
+
+  // Keep track of how many times resonanceShower has called itself.
+  ++nRecurseResDec;
+
+  int iMother = 0;
+  // Is this a decay already in the event record? (E.g., produced by EW
+  // shower.) If so, we can ignore the process event record and just need
+  // to do the (interleaved) resonance shower off the decay products.
+  if (process.size() <= 1) {
+    iMother = iPosBefShow[0];
+  }
+
+  // Else assume this is a resonance decay from the hard process.
+  // Update and copy down decay products (including junctions).
+  // Then do interleaved resonance shower.
+  else if (iPosBefShow.size() >= 2) {
+
+    // Save which resonance is currently being handled (since iHardResDecSav
+    // may be overwritten when called recursively).
+    int iHardMother = iHardResDecSav;
+    // Do not try this resonance again (to avoid risk of infinite loop).
+    // If we fail, PartonLevel will have a (non-interleaved) chance at
+    // end of evolution.
+    pTresDecSav[iHardMother] = 0.;
+
+    // Mother in hard process and in event recrd. iPosBefShow indicates
+    // position in complete event before shower evolution started,
+    // so may have moved.
+    Particle hardMother = process[iHardMother];
+    int iBefMother      = iPosBefShow[iHardMother];
+    iMother             = event[iBefMother].iBotCopyId();
+    Particle aftMother  = event[iMother];
+    // If this particle has already been decayed (eg by EW shower), then no
+    // need to do anything further.
+    if (aftMother.status() < 0) {
+      --nRecurseResDec;
+      return false;
+    }
+
+    // Prepare to move daughters from process to event record
+    int sizeOld = event.size();
+
+    // Mother can have been moved by showering (in any of previous steps),
+    // so prepare to update colour and momentum information for system.
+    int colBef  = hardMother.col();
+    int acolBef = hardMother.acol();
+    int colAft  = aftMother.col();
+    int acolAft = aftMother.acol();
+    // Construct boost matrix to go from process to event frame.
+    RotBstMatrix M;
+    M.bst( hardMother.p(), aftMother.p());
+
+    // Check if this decay contains one (or more) junction structure(s) that
+    // should be copied from process to event as part of this decay.
+    vector<int> nMatchJun;
+    // Check for junctions that were already copied (e.g., by setupHardSys)
+    for (int iJun = 0; iJun < process.sizeJunction(); ++iJun) {
+      nMatchJun.push_back(0);
+      for (int kJun = 0; kJun < event.sizeJunction(); ++kJun) {
+        if (process.kindJunction(iJun) != event.kindJunction(kJun)) continue;
+        int nMatch = 0;
+        for (int jLeg = 0; jLeg <= 2; ++jLeg) {
+          if (process.colJunction(iJun,jLeg) == event.colJunction(kJun,jLeg))
+            ++nMatch;
+          // Mark this junction as already copied (force to be skipped).
+          if (nMatch == 3) nMatchJun[iJun] = -999;
+        }
+      }
+    }
+
+    // TODO "colourise": allow to assign subleading colour indices to any new
+    // colour lines produced in the decay.
+
+    // Move daughters from process to event and apply boosts + colour updates.
+    int iHardDau1 = hardMother.daughter1();
+    int iHardDau2 = hardMother.daughter2();
+    for (int iHardDau = iHardDau1; iHardDau <= iHardDau2; ++iHardDau) {
+
+      // Copy daughter from process to event.
+      int iNow = event.append( process[iHardDau] );
+
+      // Update iPos map from process to event
+      iPosBefShow[iHardDau] = iNow;
+
+      // Now set properties of this daughter in event.
+      Particle& now = event.back();
+      now.mother1(iMother);
+      // Currently outgoing ones should not count as decayed.
+      if (now.status() == -22) {
+        now.statusPos();
+        now.daughters(0, 0);
+      }
+
+      // Check if this decay contains a junction in hard event.
+      for (int iJun = 0; iJun < process.sizeJunction(); ++iJun) {
+        // Only consider junctions that can appear in decays.
+        int kindJunction = process.kindJunction(iJun);
+        if (kindJunction >= 5) continue;
+        for (int iLeg = 0; iLeg <= 2; ++iLeg) {
+          // Check if colour of hard mother matches an incoming junction leg.
+          if (kindJunction >= 3 && iLeg == 0) {
+            // Only check mother once (not once for every daughter).
+            if (iHardDau != iHardDau1) continue;
+            int colLeg = process.colJunction(iJun,iLeg);
+            if ( (kindJunction == 3 && hardMother.acol() == colLeg)
+              || (kindJunction == 4 && hardMother.col() == colLeg ) )
+              nMatchJun[iJun] += 1;
+          }
+          // Check if daughter colour matches an outgoing junction leg.
+          else {
+            int colLeg = process.colJunction(iJun,iLeg);
+            int colDau = (kindJunction == 1 || kindJunction == 3) ?
+              process[iHardDau].col() : process[iHardDau].acol();
+            if ( colLeg == colDau ) nMatchJun[iJun] += 1;
+          }
+        }
+        // If we have 3 matches, copy down junction from process to event.
+        if ( nMatchJun[iJun] == 3 ) {
+          // Check for changed colors and update as necessary.
+          Junction junCopy = process.getJunction(iJun);
+          for (int iLeg = 0; iLeg <= 2; ++iLeg) {
+            int colLeg = junCopy.col(iLeg);
+            if (colLeg == colBef) junCopy.col(iLeg, colAft);
+            if (colLeg == acolBef) junCopy.col(iLeg, acolAft);
+          }
+          event.appendJunction(junCopy);
+          // Mark junction as copied (to avoid later recopying)
+          nMatchJun[iJun] = -999;
+        }
+      }
+
+      // Update colour and momentum information.
+      if (now.col() == colBef) now.col( colAft);
+      if (now.acol() == acolBef) now.acol( acolAft);
+      // Sextet mothers have additional (negative) tag
+      if (now.col() == -acolBef) now.col( -acolAft);
+      if (now.acol() == -colBef) now.acol( -colAft);
+      now.rotbst( M);
+
+      // Update vertex information.
+      if (now.hasVertex()) now.vProd( event[iMother].vDec() );
+
+      // Finally, check if daughter is itself a resonance.
+      // If so, add interleaving scale.
+      if (process[iHardDau].isResonance() && process[iHardDau].status() < 0) {
+        pTresDecSav[iHardDau]   = calcPTresDec(process[iHardDau]);
+        idResDecSav[iHardDau]   = process[iHardDau].id();
+      }
+    } // End loop over resonance daughters.
+
+    // If everything worked, mark mother decayed and set daughters.
+    event[iMother].statusNeg();
+    event[iMother].daughters(sizeOld, event.size() - 1);
+
+    // Update table of pre-shower process->event indices in case of changes.
+    iPosBefSav = iPosBefShow;
+
+  }
+
+  int iSysMot          = partonSystemsPtr->getSystemOf(iMother);
+  // If this is a recursive call, upstream system is the one which was added
+  // most recently.
+  if (nRecurseResDec >= 2) iSysMot = partonSystemsPtr->sizeSys()-1;
+  Particle& mother     = event[iMother];
+  vector<int> children = mother.daughterList();
+
+  // Sanity check.
+  if (iSysMot <= -1) {
+    loggerPtr->ERROR_MSG(
+      "failed to identify upstream system for resonance decay");
+    if (verbose >= Logger::REPORT) {
+      if (verbose >= VinciaConstants::DEBUG) event.list();
+      partonSystemsPtr->list();
+      cout<<" iMother = "<<iMother<<endl;
+    }
+    return false;
+  }
+
+  // Add new system for this resonance decay + shower, + any nested resonance
+  // decays that may be done (recursively) while handling this system.
+  // (Partons will be moved from this system to upstream one at end.)
+  int iSysRes = partonSystemsPtr->addSys();
+  // Insert resonance into system, then add daughters.
+  partonSystemsPtr->setInRes( iSysRes, iMother);
+  partonSystemsPtr->setSHat(  iSysRes, pow2(mother.m()) );
+  partonSystemsPtr->setPTHat( iSysRes, 0.5 * mother.m() );
+  for (unsigned int i = 0; i < children.size(); ++i) {
+    int iDau = children[i];
+    if (event[iDau].isFinal()) partonSystemsPtr->addOut(iSysRes,iDau);
+  }
+
+  // Check if we should assign polarisations to this system.
+  if (helicityShower) {
+    // Force reselect daughter polarisations if mother changed helicity.
+    int iPolMotTop = event[mother.iTopCopyId()].pol();
+    int iPolMotNow = mother.pol();
+    bool forcePolarise = (iPolMotTop != iPolMotNow);
+    vector<Particle> stateRes;
+    stateRes.push_back(mother);
+    // Check if daughters have helicities.
+    for (int iOut=0; iOut<partonSystemsPtr->sizeOut(iSysRes); ++iOut) {
+      stateRes.push_back(event[partonSystemsPtr->getOut(iSysRes, iOut)]);
+      // Force all outgoing particles to have code 23.
+      stateRes.back().status(23);
+      // Check if this daughter needs to be polarised.
+      int id     = stateRes.back().id();
+      int nSpins = particleDataPtr->spinType(abs(id));
+      if (nSpins == 1) stateRes.back().pol(0);
+      if (stateRes.back().pol() == 9) forcePolarise = true;
+    }
+    if (forcePolarise) {
+      // First, step up one system and see if we can polarise iSysMot+iSysRes.
+      vector<Particle> stateMot;
+      if (partonSystemsPtr->hasInRes(iSysMot))
+        stateMot.push_back(event[partonSystemsPtr->getInRes(iSysMot)]);
+      else {
+        stateMot.push_back(event[partonSystemsPtr->getInA(iSysMot)]);
+        stateMot.push_back(event[partonSystemsPtr->getInB(iSysMot)]);
+      }
+      for (int iOut=0; iOut<partonSystemsPtr->sizeOut(iSysMot); ++iOut) {
+        int i = partonSystemsPtr->getOut(iSysMot, iOut);
+        // Add all outgoing partons from mother system except resonance.
+        if (i != iMother) {
+          stateMot.push_back(event[partonSystemsPtr->getOut(iSysMot, iOut)]);
+          stateMot.back().status(23);
+        }
+      }
+      // Add resonance daughters to stateMot.
+      int iResBeg = stateMot.size();
+      stateMot.insert(stateMot.end(), ++stateRes.begin(), stateRes.end());
+      // First try if MG interface can select helicities using stateMot.
+      if (mecsPtr->meAvailable(stateMot) && mecsPtr->polarise(stateMot)) {
+        // Copy daughter polarisations into event record.
+        for (int j=0; j<partonSystemsPtr->sizeOut(iSysRes); ++j) {
+          int iEvent = partonSystemsPtr->getOut(iSysRes, j);
+          // Consistency check.
+          if (iResBeg+j >= (int)stateMot.size() ||
+            stateMot[iResBeg+j].id() != event[iEvent].id()) {
+            loggerPtr->ERROR_MSG(
+              "daughter mismatch after helicity selection (stateMot)");
+            break;
+          } else event[iEvent].pol(stateMot[iResBeg + j].pol());
+        }
+      }
+      // Else see if MG or EW shower can select helicities using stateRes.
+      // Note: require mother (stateRes[0]) to have a helicity.
+      else if ( stateRes[0].pol() == 9 ) { }
+      else if ( (mecsPtr->meAvailable(stateRes) && mecsPtr->polarise(stateRes))
+        || (ewShowerPtr != nullptr && ewShowerPtr->polarise(stateRes)) ) {
+        // Copy daughter polarisations into event record.
+        for (int j=0; j<partonSystemsPtr->sizeOut(iSysRes); ++j) {
+          int iEvent = partonSystemsPtr->getOut(iSysRes, j);
+          // Consistency check.
+          if (j+1 >= (int)stateRes.size() ||
+            stateRes[1+j].id() != event[iEvent].id()) {
+            loggerPtr->ERROR_MSG(
+              "daughter mismatch after helicity selection (stateRes)");
+            break;
+          } else event[iEvent].pol(stateRes[1 + j].pol());
+        }
+      } else
+        loggerPtr->WARNING_MSG("failed to assign daughter helicities");
+    }
+  }
+
+  double pTmax = 0.5 * mother.m();
+  // Userhooks and Trial showers accounted for here in PartonLevel.
+  // TODO: discuss whether to include that here and how.
+  // For now, just do pure showers.
+  prepare(iSysRes, event, false);
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "pTmax = "<<pTmax<<" pTmerge = "<<pTmerge;
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  // Begin evolution down in pT, allowing for nested resonance decays.
+  if (pTmax > pTmerge) {
+    int nLoop = 0;
+    do {
+
+      // Interleave (intra-system) FSR and resonance decays.
+      double pTtimes  = (doFSRinResonances) ? pTnext( event, pTmax, pTmerge)
+        : -1.;
+      double pTresDec = pTnextResDec();
+      infoPtr->setPTnow( max(pTtimes, pTresDec) );
+
+      // Do a final-state emission.
+      if ( pTtimes > 0. && pTtimes > max( pTresDec, pTmerge) ) {
+        branch(event);
+        pTmax = pTtimes;
+      }
+
+      // Do a resonance decay from hard (process) event, nested (recursively)
+      // inside the current one.
+      else if (pTresDec > 0. && pTresDec > pTmerge) {
+        resonanceShower(process, event, iPosBefShow, pTresDec);
+        pTmax = pTresDec;
+      }
+
+      // Do nothing.
+      else pTmax = -1.;
+
+      // Check loop counter to avoid infinite loop.
+      if (++nLoop >= NLOOPMAX) {
+        loggerPtr->ERROR_MSG("infinite loop");
+        break;
+      }
+
+    } while (pTmax > pTmerge && !infoPtr->getAbortPartonLevel());
+  }
+
+  // Check for abort condition.
+  if (infoPtr->getAbortPartonLevel()) {
+    nRecurseResDec--;
+    return false;
+  }
+
+  // Udate upstream parton system. Replace outgoing resonance by its first
+  // daughter. Then add remaining partons.
+  for ( int iP = 0; iP < partonSystemsPtr->sizeOut(iSysRes); ++iP) {
+    int iNew = partonSystemsPtr->getOut( iSysRes, iP);
+    if (iP == 0)
+      partonSystemsPtr->replace( iSysMot, iMother, iNew);
+    else
+      partonSystemsPtr->addOut( iSysMot, iNew);
+  }
+
+  // Now delete the new system, otherwise beam remnant handling breaks.
+  partonSystemsPtr->popBack();
+
+  // Also clear added QED systems.
+  if (doQED) ewHandlerHard->clear(iSysRes);
+
+  // Reset antenna list for continued evolution in upstream system.
+  prepare(iSysMot, event, false);
+
+  // Done.
+  nRecurseResDec--;
+  iSysWin = iSysMot;
+
+  return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Utility to print antenna list; for DEBUG mainly (TimeShower).
 
 void VinciaFSR::list() const {
-  // Loop over antenna list and print it.
-  if (resEmitters.size() + resSplitters.size() +
-      emitters.size() + splitters.size() == 0) {
-    cout << " --------  The list of FF antennae is empty -------------------"
-      "------------------------------------------\n";
-    return;
-  }
-  cout << endl << endl;
-  for (unsigned int i = 0; i < resEmitters.size(); ++i) {
-    if (i == 0) resEmitters[i].list("Gluon Resonance Emission Antennae");
-    else resEmitters[i].list();
-  }
-  for (unsigned int i = 0; i < resSplitters.size(); ++i) {
-    if (i == 0) resSplitters[i].list("Gluon Resonance Splitting Antennae");
-    else resSplitters[i].list();
-  }
-  for (int i = 0; i < (int)emitters.size(); ++i) {
-    if (i == 0) emitters[i].list("Gluon Emission Antennae");
-    else emitters[i].list();
-  }
-  for (int i = 0; i < (int)splitters.size(); ++i) {
-    if (i == 0) splitters[i].list("Gluon Splitting Antennae");
-    else splitters[i].list();
-  }
-  cout << " --------  End VINCIA FF Antenna Listing ------------------------"
-    "----------------------------------\n";
 
+  bool withLegend = true;
+  bool withTitle  = true;
+  if (emittersRF.size() + emittersFF.size() + splittersRF.size()
+    + splittersFF.size() == 0) {
+    cout << " --------  No FF or RF QCD antennae  ------------------------"
+      "--------------------------------------\n";
+  } else {
+    // Loop over antenna lists and print them.
+    for (unsigned int i = 0; i < emittersRF.size(); ++i) {
+      if (i == 0) {
+        emittersRF[i]->list("FF & RF Gluon Emission Antennae",withLegend);
+        withTitle  = false;
+        withLegend = false;
+      }
+      else emittersRF[i]->list();
+    }
+    for (int i = 0; i < (int)emittersFF.size(); ++i) {
+      if (i == 0 && withTitle) {
+        emittersFF[i]->list("FF & RF Gluon Emission Antennae",withLegend);
+        withLegend = false;
+        withTitle  = false;
+      }
+      else emittersFF[i]->list();
+    }
+    withTitle = true;
+    for (unsigned int i = 0; i < splittersRF.size(); ++i) {
+      if (i == 0) {
+        splittersRF[i]->list("FF & RF Gluon Splitting Antennae", withLegend);
+        withLegend = false;
+        withTitle  = false;
+      }
+      else splittersRF[i]->list();
+    }
+    for (int i = 0; i < (int)splittersFF.size(); ++i) {
+      if (i == 0 && withTitle) {
+        splittersFF[i]->list("FF & RF Gluon Splitting Antennae", withLegend);
+        withLegend = false;
+      }
+      else splittersFF[i]->list();
+    }
+  }
+
+  // Are there interleaved resonance decays?
+  bool headerPrinted = false;
+  for (unsigned int iRD=0; iRD<pTresDecSav.size(); ++iRD) {
+    if (pTresDecSav[iRD] <= 0.) continue;
+    if (!headerPrinted) {
+      cout << " --------  Interleaved Resonance Decays  ----------------"
+        "------------------------------------------\n";
+      headerPrinted = true;
+    }
+    cout<<"        RD        process["<<iRD<<"]" << setw(18) << " "
+        << num2str(idResDecSav[iRD],9) << setw(11) << " "
+        << particleDataPtr->colType(abs(idResDecSav[iRD])) << setw(22) << " "
+        << num2str(pTresDecSav[iRD],9) << endl;
+  }
+  if (!headerPrinted) {
+    cout << " --------  No Interleaved Resonance Decays  ----------------"
+      "---------------------------------------\n";
+  }
+  else {
+    cout << " --------  End of List of FSR Branchers ----------------------"
+      "-------------------------------------\n";
+  }
 }
 
 //--------------------------------------------------------------------------
 
 // Initialise pointers to Vincia objects.
 
-void VinciaFSR::initVinciaPtrs(Colour* colourPtrIn,
-  shared_ptr<VinciaISR> isrPtrIn, QEDShower* qedPtrIn,MECs* mecsPtrIn,
+void VinciaFSR::initVinciaPtrs(VinciaColour* colourPtrIn,
+  shared_ptr<VinciaISR> isrPtrIn, MECs* mecsPtrIn,
   Resolution* resolutionPtrIn, VinciaCommon* vinComPtrIn,
   VinciaWeights* vinWeightsPtrIn) {
   colourPtr     = colourPtrIn;
   isrPtr        = isrPtrIn;
-  qedShowerPtr  = qedPtrIn;
   mecsPtr       = mecsPtrIn;
   resolutionPtr = resolutionPtrIn;
   vinComPtr     = vinComPtrIn;
@@ -2473,6 +2981,10 @@ void VinciaFSR::header() {
 
   // Must be initialised before printing header.
   if (!isInit) return;
+
+  // Avoid printing header on multiple threads.
+  if (settingsPtr->mode("Parallelism:index") > 0)
+    headerIsPrinted = true;
 
   // Avoid printing header several times.
   if (headerIsPrinted) return;
@@ -2561,11 +3073,11 @@ void VinciaFSR::header() {
        << " |                 cutoffScaleIF             = "
        << num2str(settingsPtr->parm("Vincia:cutoffScaleIF"),9)<<"\n";
 
-  // Information about QED shower, so far main switches only.
-  cout << " |\n"
-       << " | QED Shower:     doQED                     = "
-       << bool2str(doQED,9)<<endl;
-  if (doQED) {
+  // Information about EW/QED showers.
+  cout << " |\n";
+  cout << " |   QED/EW:       EWmode                    = "
+       <<num2str(settingsPtr->mode("Vincia:EWmode"),9)<<"\n";
+  if (settingsPtr->mode("Vincia:EWmode") >= 1) {
     cout << " |                 nGammaToQuark             = "
          <<num2str(settingsPtr->mode("Vincia:nGammaToQuark"),9)<<"\n"
          << " |                 nGammaToLepton            = "
@@ -2574,65 +3086,74 @@ void VinciaFSR::header() {
          <<bool2str(settingsPtr->flag("Vincia:convertGammaToQuark"),9)<<"\n"
          << " |                 convertQuarkToGamma       = "
          <<bool2str(settingsPtr->flag("Vincia:convertQuarkToGamma"),9)<<"\n";
+    cout << " |                 EWmodeMPI                 = "
+         <<num2str(settingsPtr->mode("Vincia:EWmodeMPI"),9)<<"\n";
+    // Further information about EW.
+    if (ewMode >=3) {
+      cout << " |                 doBosonicInterference     = "
+           <<bool2str(settingsPtr->flag("Vincia:doBosonicInterference"),9)
+           <<"\n";
+    }
   }
 
   // Print header information about antenna functions.
-  if (verbose >= 2) {
+  if (verbose >= Logger::NORMAL) {
     cout<<" |\n"
         <<" | AntennaFunctions:         "
         <<"                      chargeFactor   kineMap"<<endl;
-    vector<int> iAnt = antSetPtr->getIant();
     int modeSLC      = settingsPtr->mode("Vincia:modeSLC");
 
     // FF and RF antennae.
-    for (int i=0;i<(int)iAnt.size();++i) {
-      int iAntPhys = iAnt[i];
-      AntennaFunction* antPtr = antSetPtr->getAnt(iAntPhys);
-      if (antPtr == nullptr) continue;
+    vector<enum AntFunType> antFunTypes = antSetPtr->getAntFunTypes();
+    for (size_t i=0; i<antFunTypes.size(); ++i) {
+      AntennaFunction* antFunPtr =
+        antSetPtr->getAntFunPtr(antFunTypes[i]);
+      if (antFunPtr == nullptr) continue;
       // Print antenna name.
       cout.setf(ios::left);
       cout << setprecision(2);
-      string antName = antPtr->vinciaName()+" ["+antPtr->humanName()+"]";
+      string antName = antFunPtr->vinciaName()+" ["+antFunPtr->humanName()+"]";
       cout << " |                 " << left << setw(32) << antName << "    ";
       // Print colour/charge factor.
-      double chargeFac = antPtr->chargeFac();
+      double chargeFac = antFunPtr->chargeFac();
       cout<<fixed<<setw(6)<<chargeFac;
       // Put asterisk next to QG colour factor if using -1/NC2 correction.
       if (modeSLC == 2) {
-        if (antPtr->vinciaName() == "Vincia:QGEmitFF" ||
-            antPtr->vinciaName() == "Vincia:GQEmitFF" ||
-            antPtr->vinciaName() == "Vincia:QGEmitRF" ||
-            antPtr->vinciaName() == "Vincia:GQEmitRF") cout << "*";
+        if (antFunPtr->vinciaName() == "Vincia:QGEmitFF" ||
+            antFunPtr->vinciaName() == "Vincia:GQEmitFF" ||
+            antFunPtr->vinciaName() == "Vincia:QGEmitRF" ||
+            antFunPtr->vinciaName() == "Vincia:GQEmitRF") cout << "*";
         else cout << " ";
       } else cout << " ";
-      int kineMap = antPtr->kineMap();
+      int kineMap = antFunPtr->kineMap();
       cout << "    " << right << setw(5) << kineMap << left << "\n";
     }
 
     // II and IF antennae.
     AntennaSetISR* antSetISRPtr = isrPtr->antSetPtr;
     if (antSetISRPtr != nullptr) {
-      vector<int> iAntISR = antSetISRPtr->getIant();
-      for (int i = 0; i < (int)iAntISR.size(); ++i) {
-        int iAntPhys = iAntISR[i];
-        AntennaFunctionIX* antPtr = antSetISRPtr->getAnt(iAntPhys);
-        if (antPtr == nullptr) continue;
+      vector<enum AntFunType> antFunTypesISR = antSetISRPtr->getAntFunTypes();
+      for (size_t i = 0; i < antFunTypesISR.size(); ++i) {
+        enum AntFunType antFunTypePhys = antFunTypesISR[i];
+        AntennaFunctionIX* antFunPtr =
+          antSetISRPtr->getAntFunPtr(antFunTypePhys);
+        if (antFunPtr == nullptr) continue;
         // Print antenna name.
         cout.setf(ios::left);
         cout << setprecision(2) << " |                 " << left << setw(32)
-             << antPtr->vinciaName() + " [" + antPtr->humanName() + "]"
+             << antFunPtr->vinciaName() + " [" + antFunPtr->humanName() + "]"
              << "    ";
         // Print colour/charge factor.
-        double chargeFac = antPtr->chargeFac();
+        double chargeFac = antFunPtr->chargeFac();
         cout << fixed << setw(6) << chargeFac;
         if (modeSLC == 2) {
-          if (antPtr->vinciaName() == "Vincia:QGEmitII" ||
-              antPtr->vinciaName() == "Vincia:GQEmitII" ||
-              antPtr->vinciaName() == "Vincia:QGEmitIF" ||
-              antPtr->vinciaName() == "Vincia:GQEmitIF") cout<<"*";
+          if (antFunPtr->vinciaName() == "Vincia:QGEmitII" ||
+              antFunPtr->vinciaName() == "Vincia:GQEmitII" ||
+              antFunPtr->vinciaName() == "Vincia:QGEmitIF" ||
+              antFunPtr->vinciaName() == "Vincia:GQEmitIF") cout<<"*";
           else cout << " ";
         } else cout << " ";
-        int kineMap = antPtr->kineMap();
+        int kineMap = antFunPtr->kineMap();
         cout << "    " << right << setw(5) << kineMap << left << "\n";
       }
       if (modeSLC == 2)
@@ -2644,14 +3165,39 @@ void VinciaFSR::header() {
   mecsPtr->header();
 
   // Print references.
+  // TODO: Init output should be restructured into a vector<string> where each
+  // piece of Vincia adds lines, and a separate vector<string> for
+  // references.
   cout << " |\n";
   cout << " |-------------------------------------------"
-       << "------------------------------------------\n |\n";
+       << "---------------------------------------------*\n |\n";
   cout << " | References :"<<endl;
-  cout << " |    VINCIA     : Fischer, Prestel, Ritzmann, Skands, "
-       << "EPJC76(2016)589, arXiv:1605.06142" << endl;
-  cout << " |    PYTHIA 8   : Sjostrand et al., CPC191(2015)159, "
-       << "arXiv:1410.3012" << endl;
+  // Vincia QCD shower.
+  cout << " |    VINCIA Shower   : Brooks, Preuss, Skands, "
+       << "JHEP07(2020)032, arXiv:2003.00702" << endl;
+  // Vincia QED multipole shower.
+  if (ewMode == 2) {
+    cout << " |    VINCIA QED      : Skands, Verheyen, "
+         << "PLB811(2020)135878 arXiv:2002.04939" << endl;
+  }
+  // Vincia Weak shower.
+  else if (ewMode == 3) {
+    cout << " |    VINCIA EW       : Brooks, Skands, Verheyen, "
+         << "SciPost Phys. 12 (2022) 3, 101 arXiv:2108.10786" << endl;
+  }
+  // Vincia Merging.
+  if (doMerging) {
+    cout << " |    VINCIA Merging  : Brooks, Preuss, "
+         << "CPC264(2021)107985 arXiv:2008.09468" << endl;
+  }
+  // Vincia Powheg Hook
+#ifdef Pythia8_PowhegHooksVincia_H
+  cout << " |    VINCIA Powheg Hook : Hoche et al., "
+         << "arXiv:2106.10987" << endl;
+#endif
+  // Pythia 8 main reference.
+  cout << " |    PYTHIA 8        : Bierlich et al.,"
+       << " SciPost Phys. Codebases 8-r8.3 (2022) arXiv:2203.11601" << endl;
   cout << " |\n *-------  End VINCIA Initialization  "
        << "----------------------------------------------------*\n\n";
   cout.setf(ios::right);
@@ -2660,223 +3206,234 @@ void VinciaFSR::header() {
 
 //--------------------------------------------------------------------------
 
-// Print final statistics information.
-
-void VinciaFSR::printInfo(bool pluginCall) {
-
-  // Weight info.
-  if (!isInit) return;
-  int nTotWeightsInt         = weightsPtr->nTotWeights;
-  int nNonunityInitialWeight = weightsPtr->nNonunityInitialWeight;
-  int nNegativeInitialWeight = weightsPtr->nNegativeInitialWeight;
-  int nNonunityWeight        = weightsPtr->nNonunityWeight;
-  int nNegativeWeight        = weightsPtr->nNegativeWeight;
-  double nTotWeights         = max(1.0,((double)(nTotWeightsInt)));
-  vector<double> weightSum   = weightsPtr->weightSum;
-  vector<double> weightMax   = weightsPtr->weightsMax;
-  vector<double> weightMin   = weightsPtr->weightsMin;
-
-  cout << "\n";
-  if (pluginCall)
-    cout << " *--------  VINCIA FSR and ISR Statistics  ----------------"
-         <<"--------------------------------------------------------*\n";
-  else
-    cout << " *--------  VINCIA FSR Statistics  ------------------------"
-         <<"--------------------------------------------------------*\n";
-  cout << " |                                                           "
-       <<"                                                      |\n";
-  cout << " |                                                           "
-       <<"             " << setw(40) << " " << " |\n";
-  cout << " | Total Number of (accepted) events                           = "
-       << num2str(nTotWeightsInt, 9) << setw(40) << " " << " |\n";
-  cout << " | Number of events with nonunity initial weight               = "
-       << ((nNonunityInitialWeight <= 0) ?
-         "     none                                " :
-         num2str(nNonunityInitialWeight, 9)
-         + " <-- (INITIALLY) WEIGHTED EVENTS")
-       << setw(8) << " " << " |\n";
-  cout << " | Number of events with negative initial weight               = "
-       << ((nNegativeInitialWeight <= 0) ? "     none"
-         : num2str(nNegativeWeight, 9))
-       << setw(40) << " " << " |\n";
-  cout << " | Number of events with nonunity reweight                     = "
-       << ((nNonunityWeight <= 0) ? "     none                      "
-         : num2str(nNonunityWeight, 9)+" <-- REWEIGHTED EVENTS" )
-       << setw(18) << " " << " |\n";
-  cout << " | Number of events with negative reweight                     = "
-       << ((nNegativeWeight <= 0) ? "     none"
-         : num2str(min(nNegativeWeight,nNonunityWeight), 9))
-       << setw(40) << " " << " |\n";
-  cout << " |                                                            "
-       << "            " << setw(40) << " " << " |\n";
-  cout << " |                      weight(i)          Avg Wt   Avg Dev"
-       << "  rms(dev)      kUnwt          Expected effUnw          |\n";
-  cout << " | This run               i =     IsUnw       <w>     <w-1>   "
-       << "             1/<w>        Max Wt  <w>/MaxWt   Min Wt |\n";
-  cout << " |"<<setw(4)<<" "<<"User settings            0 ";
-  cout << ((abs(1.0-weightSum[0]/nTotWeights) < TINY) ?
-           "   yes " : "    no " );
-  cout << num2str(weightSum[0]/nTotWeights,9) << " ";
-  cout << num2str(weightSum[0]/nTotWeights-1.0,9) << " ";
-  cout << setw(9) << "-" << "  ";
-  cout << ((weightSum[0] != 0.0) ?
-           num2str(nTotWeights/weightSum[0], 9) : num2str(0.0, 9));
-  cout << num2str(weightMax[0],14)<<" ";
-  cout << ((weightMax[0] != 0.0) ? num2str(weightSum[0]/nTotWeights/
-            weightMax[0],9) : num2str(0.0,9)) << " ";
-  cout << num2str(weightMin[0],9) << " ";
-  cout << "|\n";
-  if (pluginCall) {
-    cout << " | - - - -  FSR only Statistics  - - - - - - - - - - - - "
-         << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - |\n";
-    cout << " |                                                       "
-         << "                 " << setw(40) << " " << " |\n";
-  }
-  if (verbose >= 2 && nTrialsSum > 0) {
-    cout << " |                                               ----------"
-         << "----------- P(Reject) --------------------"
-         << setw(15) << "|" << endl;
-    cout << " | Trial Veto Rates:   nTrials     nAcc   eff    Zeta  kinMap"
-         << "    Veto  Sector      IR    mMin    HQPS"
-         << setw(15) << "|" << endl;
-    for (int iAntPhys = 0; iAntPhys < (int)nTrials.size(); ++iAntPhys) {
-      double nTot = nTrials[iAntPhys];
-      if (nTot <= 0) continue;
-      cout << " | " << setw(17);
-      if (iAntPhys == iQQemitFF) cout << "QQemitFF";
-      else if (iAntPhys == iQGemitFF)  cout << "QGemitFF";
-      else if (iAntPhys == iGQemitFF)  cout << "GQemitFF";
-      else if (iAntPhys == iGGemitFF)  cout << "GGemitFF";
-      else if (iAntPhys == iGXsplitFF) cout << "GXsplitFF";
-      else if (iAntPhys == iQQemitRF)  cout << "QQemitRF";
-      else if (iAntPhys == iQGemitRF)  cout << "QGemitRF";
-      else if (iAntPhys == iXGsplitRF) cout << "XGsplitRF";
-      cout << fixed<<setprecision(2)
-           << " "<< num2str(int(nTot+0.5), 9)
-           << " "<< num2str(int(nTrialsAccepted[iAntPhys]+0.5), 8)
-           << "  " << nTrialsAccepted[iAntPhys]/nTot
-           << "    " << nFailedHull[iAntPhys]*1.0/max(1., nTot);
-      nTot -= nFailedHull[iAntPhys];
-      cout << "    " << nFailedKine[iAntPhys]*1.0/max(1., nTot);
-      nTot -= nFailedKine[iAntPhys];
-      cout << "    " << nFailedVeto[iAntPhys]*1.0/max(1., nTot);
-      nTot -= nFailedVeto[iAntPhys];
-      cout << "    " << nSectorReject[iAntPhys]*1.0/max(1., nTot);
-      nTot -= nSectorReject[iAntPhys];
-      cout << "    " << nFailedCutoff[iAntPhys]*1.0/max(1., nTot);
-      nTot -= nFailedCutoff[iAntPhys];
-      cout << "    " << nFailedMass[iAntPhys]*1.0/max(1., nTot);
-      nTot -= nFailedMass[iAntPhys];
-      cout << "    " << nClosePSforHQ[iAntPhys]*1.0/max(1., nTot);
-      cout << setw(16) << "|\n";
-    }
-    cout << " |" << setw(113) << " " << "|\n";
-  }
-  if (!pluginCall)
-    cout << " *--------  End VINCIA FSR Statistics --------------------"
-         << "---------------------------------------------------------*\n\n";
-
-}
-
-//--------------------------------------------------------------------------
-
-// Print internal and diagnostic histrograms.
-
-void VinciaFSR::printHistos() {
-  for (map<string,Hist>::iterator iH = vinciaHistos.begin();
-       iH != vinciaHistos.end(); ++iH) {
-    string Hname=iH->first;
-    if (vinciaHistos[Hname].getEntries() >= 1)
-      cout << Hname << vinciaHistos[Hname] << endl;
-  }
-}
-
-//--------------------------------------------------------------------------
-
-// Write internal and diagnostic histrograms to file.
-
-void VinciaFSR::writeHistos(string fileName, string suffix) {
-  for (map<string,Hist>::const_iterator iH = vinciaHistos.begin();
-       iH != vinciaHistos.end(); ++iH) {
-    string Hname=iH->first;
-    if (vinciaHistos[Hname].getEntries() >= 1) {
-      string file = sanitizeFileName(
-        fileName + "-Hist-" + Hname + "." + suffix);
-      cout << "Writing " << file << endl;
-      iH->second.table(file);
-    }
-  }
-}
-
-//--------------------------------------------------------------------------
-
-// Get number of branchings in a system (return -1 if no such
-// system). If iSys < 0, sum over all.
-
-int VinciaFSR::getNbranch(int iSys) {
-  int n = 0;
-  if (iSys < 0)
-    for (int i = 0; i < (int)nBranchFSR.size(); ++i) n += nBranchFSR[i];
-  else if (iSys < (int)nBranchFSR.size()) n = nBranchFSR[iSys];
-  else n = -1;
-  return n;
-}
-
-//--------------------------------------------------------------------------
-
 // Check event.
 
-bool VinciaFSR::check(Event &event) {
+bool VinciaFSR::check(int iSys, Event &event) {
   stringstream ss;
-  for (int i = 0; i < (int)emitters.size(); ++i) {
-    if (!event[emitters[i].i0()].isFinal()) {
-      if (verbose > normal){
-        ss << "Emitter " << i
-           << " i0 = " << emitters[i].i0() << " not final.";
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed to update emitter (not final).", ss.str());
+  // All FF emitters must be final-state particles.
+  for (int i = 0; i < (int)emittersFF.size(); ++i) {
+    // If specific iSys requested, only check that system.
+    if (iSys >= 0 && emittersFF[i]->system() != iSys) continue;
+    if (!event[emittersFF[i]->i0()].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
       }
+      loggerPtr->ERROR_MSG("failed to update emitterFF (not final)",
+        "(EmitterFF " + to_string(i)
+        + ", i0 = " + to_string(emittersFF[i]->i0()) + ")");
       return false;
-    } else if (!event[emitters[i].i1()].isFinal()) {
-      if (verbose > normal) {
-        ss << "Emitter " << i
-           << " i1 = " << emitters[i].i1() << " not final.";
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed to update emitter (not final).", ss.str());
+    } else if (!event[emittersFF[i]->i1()].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
       }
-      return false;
-    }
-  }
-  for (int i = 0; i < (int)splitters.size(); ++i) {
-    if(!event[splitters[i].i0()].isFinal()){
-      if (verbose > normal) {
-        ss << "Splitter " << i
-           << " i0 = " << splitters[i].i0() << " not final.";
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed to update splitter (not final).", ss.str());
-      }
-      return false;
-    } else if (!event[splitters[i].i1()].isFinal()) {
-      if (verbose > normal) {
-        ss << "Splitter " << i
-           << " i1 = " << splitters[i].i1() << " not final.";
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed to update splitter (not final).", ss.str());
-      }
+      loggerPtr->ERROR_MSG("failed to update emitterFF (not final)",
+        "(EmitterFF " + to_string(i)
+        + ", i1 = " + to_string(emittersFF[i]->i1()) + ")");
       return false;
     }
   }
-  if (verbose > superdebug)
-    printOut(__METHOD_NAME__, "Passed all checks on antennae.");
+  // All FF splitters must be final-state particles.
+  for (int i = 0; i < (int)splittersFF.size(); ++i) {
+    if (iSys >= 0 && splittersFF[i]->system() != iSys) continue;
+    if (!event[splittersFF[i]->i0()].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
+      }
+      loggerPtr->ERROR_MSG("failed to update splitterFF (not final)",
+        "(SplitterFF " + to_string(i)
+        + " i0 = " + to_string(splittersFF[i]->i0()) + ")");
+      return false;
+    } else if (!event[splittersFF[i]->i1()].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
+      }
+      loggerPtr->ERROR_MSG("failed to update splitterFF (not final)",
+        "(SplitterFF " + to_string(i)
+        + ", i1 = " + to_string(splittersFF[i]->i1()) + ")");
+      return false;
+    }
+  }
+  // All RF emitters must be initial-final systems
+  for (int i = 0; i < (int)emittersRF.size(); ++i) {
+    if (iSys >= 0 && emittersRF[i]->system() != iSys) continue;
+    int iRes = emittersRF[i]->i0();
+    int iFin = emittersRF[i]->i1();
+    if (emittersRF[i]->posR() == 1) {
+      iRes = emittersRF[i]->i1();
+      iFin = emittersRF[i]->i0();
+    }
+    if (!event[abs(iFin)].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
+      }
+      loggerPtr->ERROR_MSG("failed to update emitterRF (not final)",
+        "(EmitterRF " + to_string(i) + ", iF = " + to_string(iFin) + ")");
+      return false;
+    } else if (event[abs(iRes)].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
+      }
+      loggerPtr->ERROR_MSG("failed to update emitterRF (not final)",
+        "(EmitterRF " + to_string(i) + ", iR = " + to_string(iRes) + ")");
+      return false;
+    }
+  }
+  // All RF splitters must be initial-final systems
+  for (int i = 0; i < (int)splittersRF.size(); ++i) {
+    if (iSys >= 0 && splittersRF[i]->system() != iSys) continue;
+    int iRes = splittersRF[i]->i0();
+    int iFin = splittersRF[i]->i1();
+    if (splittersRF[i]->posR() == 1) {
+      iRes = splittersRF[i]->i1();
+      iFin = splittersRF[i]->i0();
+    }
+    if (!event[abs(iFin)].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
+      }
+      loggerPtr->ERROR_MSG("failed to update splitterRF (not final)",
+        "(SplitterRF " + to_string(i) + ", iF = " + to_string(iFin) + ")");
+      return false;
+    } else if (event[abs(iRes)].isFinal()) {
+      if (verbose >= Logger::REPORT) {
+        event.list();
+        list();
+      }
+      loggerPtr->ERROR_MSG("failed to update splitterRF (not final)",
+        "(SplitterRF " + to_string(i) + ", iR = " + to_string(iRes) + ")");
+      return false;
+    }
+  }
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "Passed all checks on antennae");
   return true;
 
 }
 
 //--------------------------------------------------------------------------
 
+// Save flavour content of Born state.
+
+void VinciaFSR::saveBornState(int iSys, Event& born) {
+  // Initialise.
+  resolveBorn[iSys] = false;
+  map<int, int> nFlavours;
+  for (int i(-6); i<=6; ++i) {
+    if (i == 0) nFlavours[21] = 0;
+    nFlavours[i] = 0;
+  }
+
+  // We want to resolve the Born only when we have a non-QCD coupling in Born.
+  int nNonQCD = 0;
+  int nIn     = 0;
+  for (int i(0); i<partonSystemsPtr->sizeAll(iSys); ++i) {
+    Particle* partonPtr = &born[partonSystemsPtr->getAll(iSys, i)];
+    if (!partonPtr->isFinal()) ++nIn;
+    if (partonPtr->isGluon()) nFlavours[partonPtr->id()]++;
+    else if (partonPtr->isQuark()) {
+      int idNow = partonPtr->isFinal() ? partonPtr->id() : -partonPtr->id();
+      nFlavours[idNow]++;
+    }
+    else ++nNonQCD;
+  }
+
+  // If there are non-QCD partons in the system, resolve Born.
+  // (Also do this if there are no incoming partons, when using
+  // forceTimeShower to shower off specific user-defined configuration.)
+  if (nNonQCD > 0 || nIn == 0) {
+    resolveBorn[iSys] = true;
+    nFlavsBorn[iSys] = nFlavours;
+  }
+
+  // Print information.
+  if (verbose >= VinciaConstants::DEBUG) {
+    if (resolveBorn[iSys]) {
+      printOut(__METHOD_NAME__, "System " + num2str(iSys,2)
+        + " with resolved Born configuration:");
+      auto it = nFlavsBorn[iSys].begin();
+      for ( ; it != nFlavsBorn[iSys].end(); ++it) {
+        if (it->second != 0)
+          cout << "      " << num2str(it->first,3) << ": "
+               << num2str(it->second,2) << endl;
+      }
+    } else
+      printOut(__METHOD_NAME__,"System " + num2str(iSys,2)
+        + " without resolving the Born configuration");
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Save flavour content of Born state for trial shower (in merging).
+
+void VinciaFSR::saveBornForTrialShower(Event& born) {
+  // Initialise.
+  map<int, int> nFlavours;
+  for (int i(-6); i<=6; ++i) {
+    if (i == 0) nFlavours[21] = 0;
+    nFlavours[i] = 0;
+  }
+
+  // Index of system we do the trial shower for.
+  int iSysTrial = 0;
+
+  // Only resolve Born for resonance systems.
+  if (isTrialShowerRes) {
+    // We have to find the resonance system.
+    // NOTE: by convention (!) this will be the only hadronically decaying one.
+    for (int iPtcl(2); iPtcl<born.size(); ++iPtcl) {
+      if (!born[iPtcl].isResonance()) continue;
+      // Otherwise always increase counter.
+      ++iSysTrial;
+      // Get indices of daughters.
+      int iDaughter1 = born[iPtcl].daughter1();
+      int iDaughter2 = born[iPtcl].daughter2();
+      // Skip if not quarks or gluons.
+      bool dtr1isQorG = iDaughter1 > 0 ?
+        (born[iDaughter1].isQuark() || born[iDaughter1].isGluon()) : false;
+      bool dtr2isQorG = iDaughter2 > 0 ?
+        (born[iDaughter2].isQuark() || born[iDaughter2].isGluon()) : false;
+      if (!dtr1isQorG && !dtr2isQorG) continue;
+      // Otherwise this is our system and we save the Born info.
+      resolveBorn[iSysTrial] = true;
+      if (born[iDaughter1].isGluon()) nFlavours[21]++;
+      else nFlavours[born[iDaughter1].id()]++;
+      if (born[iDaughter2].isGluon()) nFlavours[21]++;
+      else nFlavours[born[iDaughter2].id()]++;
+      break;
+    }
+  } else resolveBorn[iSysTrial] = false;
+  nFlavsBorn[iSysTrial] = nFlavours;
+
+  // Print information.
+  if (verbose >= VinciaConstants::DEBUG) {
+    if (resolveBorn[iSysTrial]) {
+      printOut(__METHOD_NAME__, "System " + num2str(iSysTrial,2)
+        + " with resolved Born configuration:");
+      auto it = nFlavsBorn[iSysTrial].begin();
+      for ( ; it != nFlavsBorn[iSysTrial].end(); ++it) {
+        if (it->second != 0)
+          cout << "      " << num2str(it->first,3) << ": "
+               << num2str(it->second,2) << endl;
+      }
+    } else
+      printOut(__METHOD_NAME__,"System " + num2str(iSysTrial,2)
+        + " without resolving the Born configuration");
+  }
+}
+
+//--------------------------------------------------------------------------
+
 // Initialize evolution windows.
 
-void VinciaFSR::initEvolutionWindows(void){
+void VinciaFSR::initEvolutionWindows(void) {
 
   evWindowsEmit.clear();
   evWindowsSplit.clear();
@@ -2889,10 +3446,10 @@ void VinciaFSR::initEvolutionWindows(void){
   window.mass[5]   = (nFlavZeroMass >= 5) ? 0.0 : particleDataPtr->m0(5);
   window.mass[6]   = (nFlavZeroMass >= 6) ? 0.0 : particleDataPtr->m0(6);
 
-  for(int iWindow = 0; iWindow < 4; iWindow++) {
+  for (int iWindow = 0; iWindow < 4; ++iWindow) {
     //Get minimum boundaries of window.
-    double qMinNowEmit=getQ2Window(iWindow, q2CutoffEmit);
-    double qMinNowSplit=getQ2Window(iWindow ,q2CutoffSplit);
+    double qMinNowEmit = getQ2Window(iWindow, q2CutoffEmit);
+    double qMinNowSplit = getQ2Window(iWindow, q2CutoffSplit);
 
     // Lowest window, use constant trial alphaS for scales below charm mass.
     if (iWindow == 0) {
@@ -2937,7 +3494,7 @@ void VinciaFSR::initEvolutionWindows(void){
 
 // Return window Q2.
 
-double VinciaFSR::getQ2Window(int iWindow, double q2cutoff){
+double VinciaFSR::getQ2Window(int iWindow, double q2cutoff) {
   double qMinNow = 0.;
   switch (iWindow) {
   case 0:
@@ -2975,14 +3532,14 @@ double VinciaFSR::getLambda(int nFin, AlphaStrong* aSptr) {
 
 // Method to return renormalisation-scale prefactor.
 
-double VinciaFSR::getkMu2(bool isEmit){
+double VinciaFSR::getkMu2(bool isEmit) {
   double kMu2 = 1.;
   if (isEmit) {
     kMu2 = aSkMu2Emit;
     bool muSoftCorr = false;
     if (useCMW && muSoftCorr) {
       // TODO: generalize.
-      double xj =  winnerPtr->getXj();
+      double xj =  winnerQCD->getXj();
       double muSoftInvPow = 4;
       double a  = 1./muSoftInvPow;
       kMu2      = pow(xj,a) * kMu2 + (1.-pow(xj,a));
@@ -2997,7 +3554,7 @@ double VinciaFSR::getkMu2(bool isEmit){
 // evolution scale.
 
 double VinciaFSR::getMu2(bool isEmit) {
-  double mu2 = winnerPtr->q2Trial();
+  double mu2 = winnerQCD->q2Trial();
   double kMu2 = getkMu2(isEmit);
   mu2 = max(mu2min, mu2freeze + mu2*kMu2);
   return mu2;
@@ -3010,7 +3567,7 @@ double VinciaFSR::getMu2(bool isEmit) {
 void VinciaFSR::clearContainers() {
   headroomSav.clear();
   enhanceSav.clear();
-  Q2hat.clear();
+  q2Hat.clear();
   isHardSys.clear();
   isResonanceSys.clear();
   doMECsSys.clear();
@@ -3018,6 +3575,8 @@ void VinciaFSR::clearContainers() {
   stateChangeSys.clear();
   nBranch.clear();
   nBranchFSR.clear();
+  nFlavsBorn.clear();
+  resolveBorn.clear();
   mSystem.clear();
   nG.clear();
   nQ.clear();
@@ -3027,28 +3586,14 @@ void VinciaFSR::clearContainers() {
 
 //--------------------------------------------------------------------------
 
-// Method to set up antennae, called in prepare.
+// Method to set up QCD antennae, called in prepare.
 
-bool VinciaFSR::getAntennae(int iSys, Event& event){
+bool VinciaFSR::setupQCDantennae(int iSys, Event& event) {
 
   // Sanity check.
   if (partonSystemsPtr == nullptr) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": partonSystems pointer is NULL!");
+    loggerPtr->ERROR_MSG("PartonSystems pointer is null");
     return false;
-  }
-  // Reset antenna list for first interaction and for resonance decays
-  // (don't do this if this is a new system due to MPI).
-  if (iSys == 0 || partonSystemsPtr->hasInRes(iSys) ||
-      !partonSystemsPtr->hasInAB(iSys)) {
-    resEmitters.clear();
-    resSplitters.clear();
-    emitters.clear();
-    splitters.clear();
-    lookupBrancherRF.clear();
-    lookupSplitterRF.clear();
-    lookupBrancherFF.clear();
-    lookupSplitter.clear();
   }
   // Check that iSys is a valid value.
   if (iSys > partonSystemsPtr->sizeSys()) return false;
@@ -3064,7 +3609,7 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
   int acolPartner = -1;
   if (partonSystemsPtr->hasInRes(iSys)) {
     iMother = partonSystemsPtr->getInRes(iSys);
-    //Check that mother no longer is in system.
+    // Check that mother no longer is in system.
     if (event[iMother].status() > 0) return false;
     resCol = event[iMother].col();
     resACol = event[iMother].acol();
@@ -3077,8 +3622,8 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
   // List of all decay products.
   vector<int> daughters;
 
-  //Loop over members of current system and get colour information.
-  Vec4 pSum;
+  // Loop over members of current system and get colour information.
+  Vec4 pSum(0., 0., 0., 0.);
   for (int iPart = 0; iPart < partonSystemsPtr->sizeOut(iSys); iPart++) {
 
     // Sum total FS momentum.
@@ -3104,34 +3649,8 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
   }
   double mSys = m(pSum);
 
-  // Check momentum conservation.
-  Vec4 total(0., 0., 0., 0.);
-  if (!isResonanceSys[iSys]) {
-    if (partonSystemsPtr->getInA(iSys) > 0)
-      total += event[partonSystemsPtr->getInA(iSys)].p();
-    if (partonSystemsPtr->getInB(iSys) > 0)
-      total += event[partonSystemsPtr->getInB(iSys)].p();
-  } else total += event[partonSystemsPtr->getInRes(iSys)].p();
-  total -= pSum;
-  total /= mSys;
-  if (abs(total.e()) > SMALL || abs(total.px()) > SMALL ||
-      abs(total.py()) > SMALL || abs(total.pz()) > SMALL) {
-    event.list();
-    cout << "total = " << setprecision(10) << total.e() << " "
-         << total.px() << " " << total.py() << " " <<total.pz() << endl;
-    stringstream ss;
-    ss << "iSys = " << iSys;
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Failed momentum conservation test.", ss.str());
-    infoPtr->setAbortPartonLevel(true);
-    return false;
-  }
-
   // Store total invariant mass of the final state.
   mSystem[iSys] = mSys;
-
-  // Prepare QED shower (above colour resolution scale).
-  if (doQED) qedShowerPtr->prepare(iSys, event, false);
 
   // Find any resonance antennae.
   if (colPartner > 0) {
@@ -3144,9 +3663,9 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
     resSysAll.insert(resSysAll.begin(), colPartner);
     resSysAll.insert(resSysAll.begin(), iMother);
     unsigned int posRes(0), posPartner(1);
-    saveResEmitter(iSys, event, resSysAll, posRes, posPartner, true);
+    saveEmitterRF(iSys, event, resSysAll, posRes, posPartner, true);
     if (event[colPartner].isGluon())
-      saveResSplitter(iSys, event, resSysAll, posRes, posPartner, true);
+      saveSplitterRF(iSys, event, resSysAll, posRes, posPartner, true);
   }
   if (acolPartner > 0) {
     // Get a copy of daughters.
@@ -3158,9 +3677,9 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
     resSysAll.insert(resSysAll.begin(), acolPartner);
     resSysAll.insert(resSysAll.begin(), iMother);
     unsigned int posRes(0), posPartner(1);
-    saveResEmitter(iSys, event, resSysAll, posRes, posPartner, false);
+    saveEmitterRF(iSys, event, resSysAll, posRes, posPartner, false);
     if (event[acolPartner].isGluon())
-      saveResSplitter(iSys, event, resSysAll, posRes, posPartner, false);
+      saveSplitterRF(iSys, event, resSysAll, posRes, posPartner, false);
   }
 
   // Find any f-f that are colour connected, but not directly to a
@@ -3175,14 +3694,13 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
     if (!event[i0].isFinal() || !event[i1].isFinal()) continue;
 
     // Add to list of QCD gluon emission trial antennae.
-    saveEmitter(iSys, event, i0, i1);
+    saveEmitterFF(iSys, event, i0, i1);
 
     // Add gluon-splitting antennae. Default, same 2->3 antenna
     // structure as for gluon emissions.
-    if (event[i0].isGluon()) saveSplitter(iSys, event, i0, i1, true);
-    if (event[i1].isGluon()) saveSplitter(iSys, event, i1, i0, false);
+    if (event[i0].isGluon()) saveSplitterFF(iSys, event, i0, i1, true);
+    if (event[i1].isGluon()) saveSplitterFF(iSys, event, i1, i0, false);
   }
-
 
   // Deal with any resonance junctions, n.b. assumes that these are
   // colour junctions not anticolour.
@@ -3212,16 +3730,16 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
               junctionInfo[iSys].iEndQuark=newPart;
               junctionInfo[iSys].iEndColTag=colNow;
             } else {
-              infoPtr->errorMsg("Error in "+__METHOD_NAME__
-                +": Resonance involved in junction that cannot be traced.");
+              loggerPtr->ERROR_MSG(
+                "resonance involved in junction that cannot be traced");
               hasResJunction[iSys] = false;
               break;
             }
           }
           if (event[junctionInfo[iSys].iEndQuark].col() == 0 ||
-              !event[junctionInfo[iSys].iEndQuark].isFinal()) {
-            infoPtr->errorMsg("Error in "+__METHOD_NAME__
-              +": Failed to find end quark in resonance junction.");
+            !event[junctionInfo[iSys].iEndQuark].isFinal()) {
+            loggerPtr->ERROR_MSG(
+              "failed to find end quark in resonance junction");
             hasResJunction[iSys] = false;
             break;
           }
@@ -3231,27 +3749,25 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
   }
 
   // Count up number of gluons, quarks, and photons.
-  nG[iSys]   = 0;
-  nQ[iSys]   = 0;
-  nGam[iSys] = 0;
-  nLep[iSys] = 0;
+  nG[iSys]       = 0;
+  nQ[iSys]       = 0;
+  nGam[iSys]     = 0;
+  nLep[iSys]     = 0;
   for (int i = 0; i < partonSystemsPtr->sizeAll(iSys); ++i) {
     Particle* partonPtr = &event[partonSystemsPtr->getAll(iSys, i)];
-    if (partonPtr->id()==21) nG[iSys]++;
-    else if (abs(partonPtr->id()) < 7) nQ[iSys]++;
+    if (partonPtr->isGluon()) nG[iSys]++;
+    else if (partonPtr->isQuark()) nQ[iSys]++;
     else if (abs(partonPtr->id()) == 22) nGam[iSys]++;
     else if (partonPtr->isLepton()) nLep[iSys]++;
   }
 
   // Sanity checks.
-  if (verbose >= debug) {
-    if (resEmitters.size() + resSplitters.size() +
-        emitters.size() + splitters.size() <= 0)
-      printOut(__METHOD_NAME__, "did not find any QCD antennae.");
-    else if (verbose >= louddebug) {
-      list();
-      if (verbose >= superdebug) printLookup();
-    }
+  if (verbose >= VinciaConstants::DEBUG) {
+    if (emittersRF.size() + splittersRF.size() +
+      emittersFF.size() + splittersFF.size() <= 0)
+      printOut(__METHOD_NAME__, "did not find any QCD branchers");
+    list();
+    printLookup();
   }
   return true;
 
@@ -3261,28 +3777,26 @@ bool VinciaFSR::getAntennae(int iSys, Event& event){
 
 // Set starting scale of shower (power vs wimpy) for system iSys.
 
-void VinciaFSR::setStartScale(int iSys, Event& event){
-
-  // Set nIn: 1->n or 2->n.
-  int nIn = 0;
-  if (isResonanceSys[iSys]) nIn = 1;
-  else if (partonSystemsPtr->hasInAB(iSys)) nIn = 2;
+void VinciaFSR::setStartScale(int iSys, Event& event) {
 
   // Set FSR starting scale of this system (can be different from qFac).
   // Resonance decay systems always start at Q2 = m2..
   if (isResonanceSys[iSys]) {
-    Q2hat[iSys] = pow2(mSystem[iSys]);
+    if (verbose >= DEBUG)
+      printOut(__METHOD_NAME__, "Setting FSR starting scale for resonance-"
+        "decay system "+ num2str(iSys));
+    q2Hat[iSys] = pow2(mSystem[iSys]);
     return;
 
   // Hard system: start at phase-space maximum or factorisation scale.
   } else if (isHardSys[iSys]) {
-    if (verbose >= superdebug)
-      printOut(__METHOD_NAME__, "Setting FSR starting scale for hard system");
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Setting FSR starting scale for hard-scattering system");
     // pTmaxMatch = 1 : always start at QF (modulo kFudge).
-    if (pTmaxMatch == 1) Q2hat[iSys] = pT2maxFudge * infoPtr->Q2Fac();
+    if (pTmaxMatch == 1) q2Hat[iSys] = pT2maxFudge * infoPtr->Q2Fac();
     // pTmaxMatch = 2 : always start at eCM.
-    else if (pTmaxMatch == 2) Q2hat[iSys] = m2BeamsSav;
-    // Else check if this event has final-state jets or photons.
+    else if (pTmaxMatch == 2) q2Hat[iSys] = m2BeamsSav;
+    // pTmaxMatch = 0 : check if this event has final-state jets or photons.
     else {
       bool hasRad = false;
       for (int i = 0; i < partonSystemsPtr->sizeOut(iSys); ++i) {
@@ -3292,21 +3806,24 @@ void VinciaFSR::setStartScale(int iSys, Event& event){
         if (hasRad) break;
       }
       // If no QCD/QED partons detected, allow to go to phase-space maximum.
-      if (hasRad) Q2hat[iSys] = pT2maxFudge * infoPtr->Q2Fac();
-      else Q2hat[iSys] = m2BeamsSav;
+      if (hasRad) q2Hat[iSys] = pT2maxFudge * infoPtr->Q2Fac();
+      else q2Hat[iSys] = m2BeamsSav;
     }
-  } else if (nIn == 2) {
-    if (verbose >= superdebug)
+  } else if (partonSystemsPtr->hasInAB(iSys)) {
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "Setting FSR starting scale of MPI system");
     // Set starting scale for MPI systems: min of incoming parton
     // scales. Find positions of incoming colliding partons.
     int in1 = partonSystemsPtr->getInA(iSys);
     int in2 = partonSystemsPtr->getInB(iSys);
-    Q2hat[iSys] = pT2maxFudgeMPI
+    q2Hat[iSys] = pT2maxFudgeMPI
       * pow2(min(event[in1].scale(),event[in2].scale()));
   } else {
     // Assume hadron -> partons decay. Starting scale = mSystem.
-    Q2hat[iSys] = pow2(mSystem[iSys]);
+    if (verbose >= DEBUG)
+      printOut(__METHOD_NAME__, "Setting FSR starting scale for hadron-decay "
+        "system " + num2str(iSys));
+    q2Hat[iSys] = pow2(mSystem[iSys]);
   }
 
 }
@@ -3316,47 +3833,47 @@ void VinciaFSR::setStartScale(int iSys, Event& event){
 // Auxiliary methods to generate trial scales for various shower
 // components.
 
-bool VinciaFSR::q2NextResEmit(const double q2Begin, const double q2End) {
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "begin --------------");
+bool VinciaFSR::q2NextEmitResQCD(const double q2Begin, const double q2End) {
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
   double q2EndNow = max(q2End, q2CutoffEmit);
-  bool gen = q2NextBranch<BrancherEmitRF>(resEmitters, evWindowsEmit,
+  bool gen = q2NextQCD<BrancherEmitRF>(emittersRF, evWindowsEmit,
     evTypeEmit, q2Begin, q2EndNow, true);
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "end --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
   return gen;
 }
 
-bool VinciaFSR::q2NextResSplit(const double q2Begin, const double q2End) {
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "begin --------------");
+bool VinciaFSR::q2NextSplitResQCD(const double q2Begin, const double q2End) {
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
   double q2EndNow = max(q2End, q2CutoffSplit);
-  bool gen = q2NextBranch<BrancherSplitRF>(resSplitters, evWindowsSplit,
+  bool gen = q2NextQCD<BrancherSplitRF>(splittersRF, evWindowsSplit,
     evTypeSplit, q2Begin, q2EndNow, false);
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__,"end --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
   return gen;
 }
 
-bool VinciaFSR::q2NextEmit(const double q2Begin, const double q2End) {
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "begin --------------");
+bool VinciaFSR::q2NextEmitQCD(const double q2Begin, const double q2End) {
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
   double q2EndNow = max(q2End, q2CutoffEmit);
-  bool gen = q2NextBranch<BrancherEmitFF>(emitters, evWindowsEmit, evTypeEmit,
+  bool gen = q2NextQCD<BrancherEmitFF>(emittersFF, evWindowsEmit, evTypeEmit,
     q2Begin, q2EndNow, true);
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__,"end --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
   return gen;
 }
 
-bool VinciaFSR::q2NextSplit(const double q2Begin, const double q2End) {
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__,"begin --------------");
+bool VinciaFSR::q2NextSplitQCD(const double q2Begin, const double q2End) {
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
   double q2EndNow = max(q2End, q2CutoffSplit);
-  bool gen = q2NextBranch<BrancherSplitFF>(splitters, evWindowsSplit,
+  bool gen = q2NextQCD<BrancherSplitFF>(splittersFF, evWindowsSplit,
     evTypeSplit, q2Begin, q2EndNow, false);
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__,"end --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
   return gen;
 }
 
@@ -3364,164 +3881,398 @@ bool VinciaFSR::q2NextSplit(const double q2Begin, const double q2End) {
 
 // Return the Q2 for the next branching.
 
-template <class Brancher> bool VinciaFSR::q2NextBranch(
-  vector<Brancher>& brancherVec, const map<double, EvolutionWindow> &evWindows,
-  const int evType, const double q2Begin, const double q2End, bool isEmit) {
-
+template <class T> bool VinciaFSR::q2NextQCD(
+  vector<shared_ptr<T> >& brancherVec, const map<double,
+  EvolutionWindow> &evWindows, const int evType, const double q2Begin,
+  const double q2End, bool isEmit) {
 
   // Sanity check
-  if (verbose  >= superdebug) {
+  if (verbose  >= VinciaConstants::DEBUG) {
     stringstream ss;
-    ss << "qBegin = " << sqrt(q2Begin);
+    ss << "qBegin = " << num2str(sqrt(q2Begin))
+       << " GeV, with "<<brancherVec.size()<<" branchers.";
     printOut(__METHOD_NAME__, ss.str());
   }
   if (q2Begin <= q2End) {
-    if (verbose >= louddebug)
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "q2Begin below cutoff. Nothing to do.");
     return true;
   } else if (!isEmit && nGluonToQuark == 0) return true;
 
   // Loop over resonance antennae.
-  unsigned int numAnt = brancherVec.size();
-  if (verbose >= superdebug) {
-    stringstream ss;
-    ss << "Looping over " << numAnt << " antennae.";
-    printOut(__METHOD_NAME__, ss.str());
-  }
   unsigned int iAnt = 0;
-  for (typename vector<Brancher>::iterator ibrancher = brancherVec.begin();
-       ibrancher!=brancherVec.end(); ++ibrancher) {
+  for (auto& brancher : brancherVec) {
     iAnt++;
-    if (verbose >= superdebug) {
+    if (verbose >= VinciaConstants::DEBUG) {
       stringstream ss;
-      ss << "Antenna " << iAnt <<" / " << numAnt;
+      ss << "Brancher " << iAnt <<" / " << brancherVec.size();
       printOut(__METHOD_NAME__,ss.str());
     }
 
-    //Check if there is any phase space left for current antenna.
-    double Q2MaxNow = min(q2Begin, ibrancher->getQ2Max(evType));
-    if (Q2MaxNow < q2End) {
-      if (verbose >= louddebug) printOut(__METHOD_NAME__,
-          "No phase space left for current antenna, continuing.");
+    // Skip antennae outside system if doing resonance shower.
+    // (Current resonance system is always the last one.)
+    if (nRecurseResDec >= 1 &&
+      brancher->system() != partonSystemsPtr->sizeSys() -1) continue;
+
+    // Check if there is any phase space left for current antenna.
+    double q2MaxNow = min(q2Begin, brancher->getQ2Max(evType));
+    if (q2MaxNow < q2End) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+          "No phase space left for current brancher, continuing.");
       continue;
     }
 
     // Check if a saved trial exists for this brancher.
     double q2Next = 0.;
-    if (ibrancher->hasTrial()) {
-      q2Next = ibrancher->q2Trial();
-      if (verbose >= louddebug) {
+    if (brancher->hasTrial()) {
+      q2Next = brancher->q2Trial();
+      if (verbose >= VinciaConstants::DEBUG) {
         stringstream ss;
         ss << "Retrieving saved trial Q=" << sqrt(q2Next);
         printOut(__METHOD_NAME__, ss.str());
       }
     // Else generate new trial scale.
     } else {
-      if (verbose >= superdebug)
+      if (verbose >= VinciaConstants::DEBUG)
         printOut(__METHOD_NAME__, "Generating new trial");
 
       // Fetch system and colour factor for current brancher.
-      int iSys   = ibrancher->system();
-      double colFac = getAnt(ibrancher->iAntPhys())->chargeFac();
-      if (verbose >= louddebug) {
+      int iSys   = brancher->system();
+      double colFac = getAntFunPtr(brancher->antFunTypePhys())->chargeFac();
+      if (verbose >= VinciaConstants::DEBUG) {
         stringstream ss;
-        ss << "Starting shower for current brancher at Q=" << sqrt(Q2MaxNow);
+        ss << "Starting shower for current brancher at Q=" << sqrt(q2MaxNow);
         printOut(__METHOD_NAME__, ss.str());
       }
 
       // Impose evolution windows (for alphaS running); fetch the
       // current window.
       map<double, EvolutionWindow>::const_iterator
-        it = evWindows.lower_bound(sqrt(Q2MaxNow));
+        it = evWindows.lower_bound(sqrt(q2MaxNow));
       // Cast as a reverse iterator to go downwards in q2.
       map<double, EvolutionWindow>::const_reverse_iterator itWindowNow(it);
 
       // Go through regions.
-      if (verbose >= superdebug)
-        printOut(__METHOD_NAME__, "Looping over Q2 windows...");
+      if (verbose >= VinciaConstants::DEBUG)
+        printOut(__METHOD_NAME__, "Looping over q2 windows...");
       while(itWindowNow != evWindows.rend()) {
 
         // Bottom of current window.
-        double Q2MinWindow = pow2(itWindowNow->first);
+        double q2MinWindow = pow2(itWindowNow->first);
         const EvolutionWindow* windowPtr = &(itWindowNow->second);
 
         // Set headroom and enhancement factors.
-        vector<double> headroomVec = getHeadroom(iSys, isEmit, Q2MaxNow);
-        // For sector showers, use more headroom.
-        if (sectorShower && isEmit) {
-          if (ibrancher->colType0() == 2) headroomVec[0] *= 5;
-          if (ibrancher->colType1() == 2) headroomVec[0] *= 5;
-        }
-        vector<double> enhanceVec = getEnhance(iSys, isEmit, Q2MaxNow);
-        double Q2NextWindow = ibrancher->genQ2(evType, Q2MaxNow, rndmPtr,
-          windowPtr, colFac, headroomVec, enhanceVec, verbose);
-        if (Q2NextWindow < 0.) {
+        vector<double> headroomVec = getHeadroom(iSys, isEmit, q2MaxNow);
+        vector<double> enhanceVec = getEnhance(iSys, isEmit, q2MaxNow);
+        double q2NextWindow = brancher->genQ2(evType, q2MaxNow, rndmPtr,
+          loggerPtr, windowPtr, colFac, headroomVec, enhanceVec, verbose);
+        if (q2NextWindow < 0.) {
           infoPtr->setAbortPartonLevel(true);
           return false;
         }
-        if (verbose >= superdebug) {
+        if (verbose >= VinciaConstants::DEBUG) {
           stringstream ss;
-          ss << "Generated QNextWindow = " << sqrt(Q2NextWindow)
+          ss << "Generated QNextWindow = " << sqrt(q2NextWindow)
              << " (QMinWindow = " << itWindowNow->first << " )";
           printOut(__METHOD_NAME__, ss.str());
         }
 
-        // Check if Q2next is in the current window.
-        if (Q2NextWindow > Q2MinWindow || Q2NextWindow <= 0.) {
-          q2Next=Q2NextWindow;
+        // Check if q2next is in the current window.
+        if (q2NextWindow > q2MinWindow || q2NextWindow <= 0.) {
+          q2Next=q2NextWindow;
           break;
         } else {
-          if (verbose >= superdebug) printOut(__METHOD_NAME__,
+          if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
               "QNext below window threshold. Continuing to next window.");
         }
         // Else go straight to next window.
-        Q2MaxNow = Q2MinWindow;
+        q2MaxNow = q2MinWindow;
         // Increment reverse iterator (go down in scale).
         itWindowNow++;
       } // End loop over evolution windows.
-      if (verbose >= superdebug && itWindowNow == evWindows.rend())
+      if (verbose >= VinciaConstants::DEBUG && itWindowNow == evWindows.rend())
         printOut(__METHOD_NAME__, "Out of windows. Continuing to "
-          "next antenna.");
+          "next brancher.");
     } // End generate new trial for this antenna.
 
     // Check for winning condition.
     if (q2Next > q2WinSav && q2Next > q2End) {
       q2WinSav = q2Next;
-      winnerPtr = &(*ibrancher);
+      winnerQCD = brancher;
     }
   } // End loop over QCD antennae.
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss<<"qWin = "<< sqrt(q2WinSav);
+    printOut(__METHOD_NAME__,ss.str());
+  }
   return true;
 
 }
 
 //--------------------------------------------------------------------------
 
-// Perform a QED branching.
+// Perform QCD branching.
 
-bool VinciaFSR::branchQED(Event& event) {
+bool VinciaFSR::branchQCD(Event& event) {
 
-  // QED trial accept.
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
-  int sizeOld = event.size();
-  bool updated = false;
-  if (qedShowerPtr->checkVeto(event)) {
-    if (verbose >= debug)
-      printOut(__METHOD_NAME__, "QED trial accepted. About to update.");
-    qedShowerPtr->update(event, qedShowerPtr->sysWin());
+  // Check if we are supposed to do anything.
+  if (!(doFF || doRF)) return false;
 
-    // Check momentum conservation.
-    if (!vinComPtr->checkCoM(qedShowerPtr->sysWin(),event,partonSystemsPtr)) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Failed (E,p) conservation check.");
-      infoPtr->setAbortPartonLevel(true);
+  // Verbose output
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+
+  // Profiling.
+  if (verbose >= Logger::REPORT) diagnosticsPtr->start(__METHOD_NAME__);
+
+  iSysWin                 = winnerQCD->system();
+  stateChangeLast         = false;
+  stateChangeSys[iSysWin] = false;
+  iNewSav = 0;
+
+  // Mark this trial as used so we do not risk reusing it.
+  winnerQCD->needsNewTrial();
+
+  // If this is a resonance shower, branching must be in the parton system
+  // that was added last.
+  if (nRecurseResDec >= 1 && iSysWin != partonSystemsPtr->sizeSys()-1 ) {
+    loggerPtr->WARNING_MSG(
+      "vetoing trial branching outside resonance shower system");
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(not in res system)");
+    return false;
+  }
+
+  // Find out which branching type we are doing
+  antFunTypeWin   = winnerQCD->antFunTypePhys();
+
+  // Decide whether to accept the trial.
+  // Store new particles in pNew if keeping.
+  if (!acceptTrial(event)) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Trial rejected (failed acceptTrial)");
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(acceptTrial)");
+    return false;
+  }
+
+  // Update event record, add new daughters.
+  // Make a backup copy of the event (may want to veto!)
+  // Make a copy of junction info.
+  Event oldEvent = event;
+  ResJunctionInfo junctionInfoCopy;
+  const int sizeOld = event.size();
+  if (hasResJunction[iSysWin]) junctionInfoCopy=junctionInfo[iSysWin];
+  if (!updateEvent(event,junctionInfoCopy)) {
+    if (verbose >= Logger::REPORT) {
+      loggerPtr->ERROR_MSG("failed to update event");
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(updateEvent)");
+    }
+    // restore backup event
+    event = oldEvent;
+    return false;
+  }
+
+  // Allow veto by Userhooks.
+  // Possibility to allow user veto of emission step.
+  if (canVetoEmission) {
+    if (userHooksPtr->doVetoFSREmission(sizeOld, event,
+        iSysWin, isResonanceSys[iSysWin])) {
+      if (verbose >= Logger::REPORT) printOut(__METHOD_NAME__,
+        "Trial rejected (failed UserHooks::doVetoFSREmission)");
+      // restore backup event
+      event = oldEvent;
       return false;
     }
+  }
 
-    // Update QCD branchers after QED emissions.
-    updated = updateAfterQED(event, sizeOld);
+  // Everything accepted. Update junctionInfo and partonSystems.
+  if (hasResJunction[iSysWin]) junctionInfo[iSysWin] = junctionInfoCopy;
+  updatePartonSystems();
 
-    // Check PartonSystems in debug mode.
-    if (verbose > quiteloud) {
+  // Update antennae.
+  if (!updateAntennae(event)) {
+    if (verbose >= Logger::REPORT)
+      loggerPtr->ERROR_MSG("failed to update branchers");
+    //Something went wrong.
+    infoPtr->setAbortPartonLevel(true);
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(updateAntennae)");
+    return false;
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Count the number of branchings in the system.
+  nBranch[iSysWin]++;
+  nBranchFSR[iSysWin]++;
+
+  // Check the event after each branching.
+  if (verbose >= Logger::REPORT && !vinComPtr->showerChecks(event, false)) {
+    loggerPtr->ERROR_MSG("failed shower checks");
+    infoPtr->setAbortPartonLevel(true);
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(showerChecks)");
+    return false;
+  }
+
+  // Book-keeping for MECs.
+  if (doMECsSys[iSysWin]) {
+    // Communicate to MECs class that we succesfully branched.
+    mecsPtr->hasBranched(iSysWin);
+    // Decide if we should be doing ME corrections for next order.
+    doMECsSys[iSysWin] = mecsPtr->doMEC(iSysWin, nBranch[iSysWin]+1);
+  }
+
+  // Merging: is this branching a candidate for a merging veto or not?
+  if (doMerging && !isTrialShower) {
+    // We only want to veto the event based on the first branching.
+    // In principle, later emissions could be vetoed as well, but the
+    // current treatment assumes that if the first emission is below the
+    // merging scale, all subsequent ones are too.
+    // This could explicitly be checked by setting nBranchMaxMergingVeto
+    // to a large number.
+    int nBranchMaxMergingVeto = 1;
+
+    // Merging veto should ignore branchings after the first.
+    if (nBranch[iSysWin] > nBranchMaxMergingVeto)
+      mergingHooksPtr->doIgnoreStep(true);
+  }
+
+  // Force stop by user? (Debugging only)
+  if (allowforceQuit) {
+    if (nBranchFSR[iSysWin] >= nBranchQuit && nBranchQuit >0) {
+      forceQuit=true;
+      if (verbose >= Logger::REPORT) {
+        stringstream ss;
+        ss<<"User forced quit after "<<nBranchQuit<<" emissions.";
+        printOut(__METHOD_NAME__,ss.str());
+      }
+    }
+  }
+
+  // Profiling.
+  if (verbose >= Logger::REPORT)
+    diagnosticsPtr->stop(__METHOD_NAME__,"accept");
+
+  // Verbose output
+  if (verbose >=VinciaConstants::DEBUG) printOut(__METHOD_NAME__,"end",
+    DASHLEN);
+
+  // Done/
+  return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Perform a QED or EW branching.
+
+bool VinciaFSR::branchEW(Event& event) {
+
+  // EW veto step.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+  iSysWin = winnerEW->sysWin();
+  int sizeOld  = event.size();
+  double pTnow = sqrt(q2WinSav);
+
+  if (winnerEW->acceptTrial(event)) {
+
+    // Are we doing damped power showers for this system? If so, do
+    // additional accept/reject based on dampening factor as this
+    // is not known to the QED/EW module.
+    if (!doMECsSys[iSysWin] && iSysWin < (int)doPTdamp.size()
+      && doPTdamp[iSysWin]) {
+      double pMEC = pT2damp[iSysWin] / ( q2WinSav + pT2damp[iSysWin]);
+      if ( rndmPtr->flat() > pMEC ) {
+        if (verbose >= VinciaConstants::DEBUG ) printOut(__METHOD_NAME__,
+          "Trial rejected (power-shower dampening)");
+        return false;
+      }
+    }
+
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "EW trial accepted. About to update.");
+
+    // Make a backup of the event to update (user may want to veto!).
+    Event oldEvent = event;
+
+    // Update event after branching accepted.
+    winnerEW->updateEvent(event);
+
+    bool isInitial = winnerEW->lastIsInitial();
+    iSysWin = winnerEW->sysWin();
+
+    if (canVetoISREmission && isInitial) {
+      if (userHooksPtr->doVetoISREmission(sizeOld, event, iSysWin)) {
+        if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+          "Trial rejected (failed UserHooks::doVetoISREmission)");
+        event = oldEvent;
+        return false;
+      }
+    }
+    else if (canVetoEmission && !isInitial) {
+      bool isResonanceDecay = winnerEW->lastIsResonanceDecay();
+      if (userHooksPtr->doVetoFSREmission(sizeOld, event,
+          iSysWin, isResonanceDecay)) {
+        if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+          "Trial rejected (failed UserHooks::doVetoFSREmission)");
+        event = oldEvent;
+        return false;
+      }
+    }
+
+    // Everything accepted.
+    // If this was a resonance decay, do resonance shower.
+    if (winnerEW->lastIsResonanceDecay()) {
+      // Was this a 1->2 or 2->3 resonance decay?
+      // 2->3 resonance decays are modeled in two steps, first IK -> I'K',
+      // where the decaying resonance in general acquires a higher virtuality,
+      // followed by I' -> i j. This is marked by I' being assigned status 57.
+      bool is2to3 = (abs(event[sizeOld].status()) == 57);
+      if ( is2to3 ) {
+        // Update upstream parton system to step to I'K'.
+        for (int iOut = 0; iOut < partonSystemsPtr->sizeOut(iSysWin); ++iOut) {
+          int iOld = partonSystemsPtr->getOut(iSysWin,iOut);
+          if (event[iOld].isFinal()) continue;
+          int iNew = event[iOld].iBotCopyId();
+          if (iNew != iOld) partonSystemsPtr->replace(iSysWin,iOld,iNew);
+        }
+      }
+      int iMother = (is2to3) ? sizeOld : event[sizeOld].mother1();
+      vector<int> iPosRes = { iMother };
+      // Now prepare to do resonance shower.
+      Event dummy;
+      // Do not do EW shower in current system during resonance shower.
+      winnerEW->clear(iSysWin);
+      // Do resonance shower (includes updates post-shower).
+      if (!resonanceShower(dummy, event, iPosRes, pTnow)) {
+        loggerPtr->ERROR_MSG("resonanceShower returned false; aborting");
+        event = oldEvent;
+        infoPtr->setAbortPartonLevel(true);
+        return false;
+      }
+    }
+    // Else just do updates.
+    else {
+      // Update parton systems.
+      winnerEW->updatePartonSystems(event);
+      // Update EW radiators.
+      winnerEW->update(event, iSysWin);
+      // Update QCD radiators.
+      if (!updateAfterEW(event, sizeOld)) {
+        loggerPtr->ERROR_MSG("failed to update QCD branchers; aborting");
+        event = oldEvent;
+        infoPtr->setAbortPartonLevel(true);
+        return false;
+      }
+    }
+
+    // Check PartonSystems in Logger::REPORT mode.
+    if (verbose >= Logger::REPORT) {
       if (partonSystemsPtr->hasInAB(iSysWin)) {
         int inA = partonSystemsPtr->getInA(iSysWin);
         int inB = partonSystemsPtr->getInB(iSysWin);
@@ -3529,15 +4280,14 @@ bool VinciaFSR::branchQED(Event& event) {
           stringstream ss;
           ss << "iSysWin = "<<iSysWin << " non-positive. inA = "<< inA
              << " inB = " << inB;
-          infoPtr->errorMsg("Error in "+__METHOD_NAME__
-            +": Non-positive incoming parton.", ss.str());
+          loggerPtr->ERROR_MSG("non-positive incoming parton", ss.str());
           infoPtr->setAbortPartonLevel(true);
           return false;
         } else if (event[inA].mother1() > 2 || event[inB].mother1() > 2) {
           stringstream ss;
           ss << "iSysWin = "<<iSysWin;
-          infoPtr->errorMsg("Error in "+__METHOD_NAME__
-            +": Failed to update incoming particles after QED branching.",
+          loggerPtr->ERROR_MSG(
+            "failed to update incoming particles after QED branching",
             ss.str());
           infoPtr->setAbortPartonLevel(true);
           return false;
@@ -3545,16 +4295,154 @@ bool VinciaFSR::branchQED(Event& event) {
       }
     }
 
-  // Else QED trial failed.
-  } else {
-    if (verbose >= debug) printOut(__METHOD_NAME__, "QED trial failed.");
+    // Merging in Vincia so far only considers matrix elements with higher
+    // numbers of QCD branchings. QED/EW branchings should therefore never
+    // result in the event being vetoed.
+    if (doMerging && !isTrialShower) mergingHooksPtr->doIgnoreStep(true);
+
+  }
+  // Else EW trial failed.
+  else {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "EW trial failed");
     return false;
   }
 
-  // Update saved scale of last branching.
-  pTLastAcceptedSav = sqrt(qedShowerPtr->q2Trial);
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
-  return updated;
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "end",
+    DASHLEN);
+  return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Update systems of QCD antennae after a QED or EW branching.
+
+bool VinciaFSR::updateAfterEW(Event& event, int sizeOld) {
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
+  iSysWin = winnerEW->sysWin();
+
+  // Create colour-anticolour map for post-branching partons.
+  map<int,int> iOfCol, iOfAcol;
+  // Also check for coloured partons that were created in the
+  // splitting, i.e. with status 51, used to create new emission
+  // antennae below.
+  vector<int>  status51coloured;
+  vector<pair<int,int> > colouredrecoilers;
+  for (int i = sizeOld; i < event.size(); ++i) {
+    int col  = event[i].col();
+    int acol = event[i].acol();
+    if (col != 0) iOfCol[col] = i;
+    if (acol != 0) iOfAcol[acol] = i;
+    // Check which were "created" (as opposed to recoiling) - to see
+    // if we need to create splitter.
+    if (event[i].colType() != 0 && event[i].status() == 51)
+      status51coloured.push_back(i);
+    else if (event[i].colType() != 0 &&
+             (event[i].status() == 52 || event[i].status() == 43 ||
+              event[i].status() == 44)) {
+      int moth = event[i].mother1();
+      if (moth > 0) colouredrecoilers.push_back(make_pair(moth, i ));
+    }
+  }
+
+  if (status51coloured.size() == 2) {
+    int i1    = status51coloured[0];
+    int i2    = status51coloured[1];
+    if (event[i1].colType() < 0) {
+      i1 = status51coloured[1];
+      i2 = status51coloured[0];
+    }
+    // If this was a splitting to coloured partons, create new
+    // emission antenna. Create a QCD emission antenna between the two
+    // status-51 partons.
+    if (winnerEW->lastIsSplitting() && event[i1].col() != 0 &&
+      event[i1].col() == event[i2].acol()) {
+      saveEmitterFF(iSysWin,event,i1,i2);
+      // In principle even allow for h->gg type.
+      if (event[i2].col() != 0 && event[i2].col() == event[i1].acol())
+        saveEmitterFF(iSysWin,event,i2,i1);
+    }
+    // Need to update existing QCD antennae.
+    else {
+      int moth1 = event[i1].mother1();
+      colouredrecoilers.push_back(make_pair(moth1, i1));
+      int moth2 = event[i2].mother1();
+      colouredrecoilers.push_back(make_pair(moth2, i2));
+      if (event[moth1].col() == event[moth2].acol())
+        updateEmitterFF(event,moth1,moth2,i1,i2);
+    }
+  } else if (status51coloured.size() == 1) {
+    int i1    = status51coloured[0];
+    int moth1 = event[i1].mother1();
+    // Check for "special" entries for intermediate resonance decays.
+    if (event[moth1].statusAbs() == 57) moth1 = event[moth1].mother1();
+    colouredrecoilers.push_back(make_pair(moth1, i1));
+  } else if (status51coloured.size() > 2) {
+    loggerPtr->ERROR_MSG("too many status 51 particles");
+    infoPtr->setAbortPartonLevel(true);
+    return false;
+  }
+
+  // Reset any emission antennae involving quarks that have recoiled.
+  for (vector<pair<int,int> >::iterator it = colouredrecoilers.begin();
+      it!= colouredrecoilers.end(); ++it) {
+    int recOld = it->first;
+    int recNew = it->second;
+    updateEmittersFF(event,recOld,recNew);
+    updateSplittersFF(event,recOld,recNew);
+  }
+
+  // Update resonance antennae.
+  if (isResonanceSys[iSysWin]) {
+    if (!updateEmittersRF(iSysWin, event,
+        partonSystemsPtr->getInRes(iSysWin))) {
+      if (verbose >= Logger::NORMAL)
+        loggerPtr->ERROR_MSG("failed updateEmittersRF");
+      return false;
+    }
+  }
+
+  // Check all FF branchers are final-state.
+  if (!check(iSysWin, event)) {
+    loggerPtr->ERROR_MSG("failed to update branchers");
+    list();
+    if (verbose >= VinciaConstants::DEBUG) printLookup();
+    infoPtr->setAbortPartonLevel(true);
+    return false;
+  }
+
+  // Update list of resonance decays if needed.
+  for (size_t iHard=0; iHard<pTresDecSav.size(); ++iHard) {
+    if (pTresDecSav[iHard] <= 0.) continue;
+    int iBef = iPosBefSav[iHard];
+    int iAft = event[iBef].iBotCopyId();
+    if (!event[iAft].isFinal()) pTresDecSav[iHard] = 0.;
+  }
+
+  // Now check if end quark has changed.
+  if (hasResJunction[iSysWin]) {
+    int iEndQuark = junctionInfo[iSysWin].iEndQuark;
+    if (!event[iEndQuark].isFinal()) {
+      int d1 = event[iEndQuark].daughter1();
+      int d2 = event[iEndQuark].daughter2();
+      if (event[d1].isQuark() && event[d1].col() > 0)
+        junctionInfo[iSysWin].iEndQuark = d1;
+      else if (event[d2].isQuark() && event[d2].col() > 0)
+        junctionInfo[iSysWin].iEndQuark = d2;
+      else {
+        loggerPtr->ERROR_MSG("failed to update junction information");
+        return false;
+      }
+    }
+  }
+
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
+
+  return true;
 
 }
 
@@ -3565,13 +4453,11 @@ bool VinciaFSR::branchQED(Event& event) {
 bool VinciaFSR::rejectEarly(AntennaFunction* &antFunPtr, bool doMEC) {
 
   bool reject = true;
-  if (winnerPtr->getBranchType() < 0) {
-    if (verbose >= veryloud)
-      printOut(__METHOD_NAME__, "WARNING: could not identify branching type.");
+  if (winnerQCD->getBranchType() == BranchType::Void) {
+    if (verbose >= Logger::REPORT)
+      printOut(__METHOD_NAME__, "Warning: could not identify branching type");
     return reject;
   }
-
-  if (doDiagnostics) diagnosticsPtr->setBranchType(winnerPtr->getBranchType());
 
   // If enhancement was applied to the trial function but branching is
   // below enhancement cutoff, we do an early accept/reject here with
@@ -3579,62 +4465,64 @@ bool VinciaFSR::rejectEarly(AntennaFunction* &antFunPtr, bool doMEC) {
   // probability.
 
   // Trials only enhanced for enhanceFac > 1.
-  if (winnerPtr->enhanceFac() > 1.0 &&
-      winnerPtr->q2Trial() <= pow2(enhanceCutoff)) {
-    if (rndmPtr->flat() > 1./winnerPtr->enhanceFac()) {
-      if (verbose >= debug) printOut(__METHOD_NAME__,
+  if (winnerQCD->enhanceFac() > 1.0 &&
+      winnerQCD->q2Trial() <= pow2(enhanceCutoff)) {
+    if (rndmPtr->flat() > 1./winnerQCD->enhanceFac()) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
           "Trial rejected (enhance applied below enhanceCutoff)");
       return reject;
     }
     // If passed, save that enhancement factor has now been canceled.
-    winnerPtr->resetEnhanceFac(1.0);
+    winnerQCD->resetEnhanceFac(1.0);
   }
 
   // Generate post-branching invariants. Can check some vetos already
   // at this level, without full kinematics.
   vector<double> invariants;
-  if (!winnerPtr->genInvariants(invariants, rndmPtr, verbose)) {
-    if (verbose >= debug)
+  if (!winnerQCD->genInvariants(invariants, rndmPtr, verbose, loggerPtr)) {
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "Trial rejected (failed genInvariants)");
-    if (doDiagnostics) diagnosticsPtr->checkInvariants(
-        iSysWin,winnerPtr->iAntPhys(), winnerPtr->getInvariants(),false);
-    ++nFailedHull[iAntWin];
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(genInvariants)");
     return reject;
-  } else {
-    if (doDiagnostics) diagnosticsPtr->checkInvariants(iSysWin,
-        winnerPtr->iAntPhys(), invariants, true);
   }
 
   // Impose g->QQ mass thresholds for flavours treated as massless.
-  if (iAntWin == iGXsplitFF && winnerPtr->idNew() <= nFlavZeroMass) {
+  if (antFunTypeWin == GXSplitFF && winnerQCD->idNew() <= nFlavZeroMass) {
     // m2(qq) > 4m2q => s(qq) > 2m2q, but allow for larger factor.
     // Factor 4 roughly matches n(g->bb) for massive b quarks.
     double facM = 4;
-    if (invariants[1] < facM*pow2(particleDataPtr->m0(winnerPtr->idNew()))) {
-      ++nFailedMass[iAntWin];
+    if (invariants[1] < facM*pow2(particleDataPtr->m0(winnerQCD->idNew()))) {
+      if (verbose >= Logger::REPORT)
+        diagnosticsPtr->stop(__METHOD_NAME__,"veto(mQQ)");
       return reject;
     }
   }
 
   // Compute physical antenna function (summed over possible helicities).
-  double antPhys = getAntPhys(antFunPtr);
+  double antPhys = getAntFunPhys(antFunPtr);
   // Get accept probability.
-  pAccept[0]=pAcceptCalc(antPhys);
-  // Do user diagnostics.
-  if (doDiagnostics) diagnosticsPtr->checkpAccept(iSysWin, pAccept[0]);
+  pAccept[0] = pAcceptCalc(antPhys);
 
   // If doing ME corrections, don't allow to reject yet.
   if (!doMEC) {
     // Check if rejecting the trial.
     double R = rndmPtr->flat();
-    if (R > pAccept[0]) {
+    bool doVeto = ( R > pAccept[0]) ? true : false;
+
+    if (doVeto) {
       // TODO: Note, here we want to put a call to something which computes
       // uncertainty variations for pure-shower branchings. We also
-      // may want to take into account if there was a enhancement
+      // may want to take into account if there was an enhancement
       // applied to this branching.
-      if (verbose >= debug)
+      if (verbose >= VinciaConstants::DEBUG)
         printOut(__METHOD_NAME__, "Trial rejected (failed R<pAccept)");
-      ++nFailedVeto[iAntWin];
+      if (verbose >= Logger::REPORT)
+        diagnosticsPtr->stop(__METHOD_NAME__,"veto(pAccept)");
+      // Reweighting to account for enhancement factor (reject).
+      double enhanceFac = winnerQCD->enhanceFac();
+      if ( enhanceFac != 1.0)
+        weightsPtr->scaleWeightEnhanceReject(pAccept[0],enhanceFac);
       return reject;
     }
 
@@ -3651,18 +4539,17 @@ bool VinciaFSR::rejectEarly(AntennaFunction* &antFunPtr, bool doMEC) {
 //--------------------------------------------------------------------------
 
 // Compute physica antenna function.
-double VinciaFSR::getAntPhys(AntennaFunction* &antFunPtr) {
+double VinciaFSR::getAntFunPhys(AntennaFunction* &antFunPtr) {
 
   // Set antenna function pointer and check if this antenna is "on".
-  antFunPtr= getAnt(iAntWin);
+  antFunPtr = getAntFunPtr(antFunTypeWin);
   if (antFunPtr->chargeFac() <= 0.) {
-    if (verbose >= veryloud)
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "Trial rejected (chargeFac <= 0)");
     return 0.;
   }
-  bool isEmit = (iAntWin == iQQemitFF || iAntWin == iQGemitFF ||
-                 iAntWin == iGQemitFF || iAntWin == iGGemitFF ||
-                 iAntWin == iQQemitRF || iAntWin == iQGemitRF);
+
+  bool isSplit = (antFunTypeWin == GXSplitFF || antFunTypeWin == XGSplitRF);
 
   // AlphaS, impose default choice. Can differ slighly from trial even
   // when running inside trial integral, due to flavor
@@ -3671,34 +4558,31 @@ double VinciaFSR::getAntPhys(AntennaFunction* &antFunPtr) {
   // the trial integral is controlled by the value of the trial scale.
   double alphaSNow = alphaSmax;
   if (alphaSorder >= 1) {
-    double mu2 = getMu2(isEmit);
-    AlphaStrong * alphaSptr = aSemitPtr;
-    if(!isEmit) alphaSptr = aSsplitPtr;
+    double mu2 = getMu2(!isSplit);
+    AlphaStrong* alphaSptr = (isSplit) ? aSsplitPtr : aSemitPtr;
     alphaSNow = min(alphaSmax, alphaSptr->alphaS(mu2));
   }
 
   // Compute physical antenna function (summed over final state
   // helicities). Note, physical antenna function can have swapped
   // labels (eg GQ -> GGQ).
-  vector<double> mPost = winnerPtr->getmPostVec();
-  vector<double> invariants = winnerPtr->getInvariants();
-  unsigned int nPre = winnerPtr->iVec().size();
+  vector<double> mPost = winnerQCD->getmPostVec();
+  vector<double> invariants = winnerQCD->getInvariants();
+  unsigned int nPre = winnerQCD->iVec().size();
   vector<int> hPre = ( helicityShower && polarisedSys[iSysWin] ) ?
-    winnerPtr->hVec() : vector<int>(nPre, 9);
+    winnerQCD->hVec() : vector<int>(nPre, 9);
   vector<int> hPost(nPre+1,9);
   double antPhys = antFunPtr->antFun(invariants, mPost, hPre, hPost);
   if (antPhys < 0.) {
-    if (verbose > normal) infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Negative Antenna Function.", num2str(iAntWin));
+    loggerPtr->ERROR_MSG("negative antenna function", num2str(antFunTypeWin));
     return 0.;
   }
+
   antPhys *= antFunPtr->chargeFac();
 
-  // Check antenna function before multiplying by alphaS.
-  if (doDiagnostics) diagnosticsPtr->checkAnt(iSysWin, antPhys);
   antPhys*=alphaSNow;
-  return antPhys;
 
+  return antPhys;
 }
 
 //--------------------------------------------------------------------------
@@ -3706,8 +4590,8 @@ double VinciaFSR::getAntPhys(AntennaFunction* &antFunPtr) {
 // Calculate acceptance probability.
 
 double VinciaFSR::pAcceptCalc(double antPhys) {
-  double prob = winnerPtr->pAccept(antPhys,verbose);
-  if (verbose >= louddebug)
+  double prob = winnerQCD->pAccept(antPhys,loggerPtr,verbose);
+  if (verbose >= VinciaConstants::DEBUG)
     printOut(__METHOD_NAME__,"Shower pAccept = " + num2str(prob));
   return prob;
 }
@@ -3721,22 +4605,21 @@ bool VinciaFSR::genFullKinematics(int kineMap, Event event,
 
   // Generate branching kinematics, starting from antenna parents.
   vector<Vec4> pPre;
-  vector<int> iPre          = winnerPtr->iVec();
+  vector<int> iPre          = winnerQCD->iVec();
   int nPre                  = iPre.size();
-  int nPost                 = winnerPtr->iVec().size() + 1;
-  vector<double> invariants = winnerPtr->getInvariants();
-  vector<double> mPost      = winnerPtr->getmPostVec();
-  int branchType            = winnerPtr->getBranchType();
+  int nPost                 = winnerQCD->iVec().size() + 1;
+  vector<double> invariants = winnerQCD->getInvariants();
+  vector<double> mPost      = winnerQCD->getmPostVec();
+  bool isRF                 = winnerQCD->posR() >= 0;
   double phi                = 2 * M_PI * rndmPtr->flat();
   for (int i = 0; i < nPre; ++i) pPre.push_back(event[iPre[i]].p());
 
   // Special case for resonance decay.
-  if (branchType == 5 || branchType == 6) {
-    if (!vinComPtr->map2toNRFmassive(pPost, pPre, winnerPtr->posR(),
-          winnerPtr->posF(), invariants,phi,mPost)) {
-      if (verbose >= debug)
+  if (isRF) {
+    if (!vinComPtr->map2toNRF(pPost, pPre, winnerQCD->posR(),
+          winnerQCD->posF(), invariants,phi,mPost)) {
+      if (verbose >= VinciaConstants::DEBUG)
         printOut(__METHOD_NAME__, "Trial rejected (failed map2toNRF)");
-      ++nFailedKine[iAntWin];
       return false;
     }
   } else {
@@ -3744,20 +4627,17 @@ bool VinciaFSR::genFullKinematics(int kineMap, Event event,
     if (nPre == 2 && nPost == 3) {
       if (!vinComPtr->map2to3FF(pPost, pPre, kineMap, invariants, phi,
           mPost)) {
-        if (verbose >=  debug)
+        if (verbose >=  VinciaConstants::DEBUG)
           printOut(__METHOD_NAME__, "Trial rejected (failed map2to3)");
-        ++nFailedKine[iAntWin];
         return false;
       }
     // 2->4 kinematics
     } else if (nPre == 2 && nPost == 4) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": 2->4 kinematics map not implemented yet.");
+      loggerPtr->ERROR_MSG("2->4 kinematics map not implemented yet");
       return false;
     // 3->4 kinematics
     } else if (nPre == 3 && nPost == 4) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": 3->4 kinematics map not implemented yet.");
+      loggerPtr->ERROR_MSG("3->4 kinematics map not implemented yet");
       return false;
     }
   }
@@ -3770,135 +4650,162 @@ bool VinciaFSR::genFullKinematics(int kineMap, Event event,
 // Check if a trial is accepted.
 
 bool VinciaFSR::acceptTrial(Event& event) {
-  bool accept = false;
+
+  // Diagnostics.
+  if (verbose >= Logger::REPORT) diagnosticsPtr->start(__METHOD_NAME__);
+
   bool doMEC  = doMECsSys[iSysWin];
   AntennaFunction* antFunPtr;
 
   // Check to see if we veto early before generating full kinematics,
   // i.e. just based on invariants.
-  if (rejectEarly(antFunPtr,doMEC)) return accept;
-  if (!getNewParticles(event,antFunPtr,pNew)) return accept;
+  if (rejectEarly(antFunPtr,doMEC)) {
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(rejectEarly)");
+    return false;
+  }
+  if (!getNewParticles(event,antFunPtr,pNew)) {
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(getNewParticles)");
+    return false;
+  }
 
-  // Check sector veto.
+  // For sector shower veto branching here if outside of sector.
+  vector<Particle> stateNew;
+  VinciaClustering minClus;
   if (sectorShower) {
-    vector<Particle> stateNew;
-    stateNew = mecsPtr->makeParticleList(iSysWin,event,pNew,winnerPtr->iVec());
-    double q2sector = resolutionPtr->q2sector2to3(&pNew[0],&pNew[2],&pNew[1]);
-    vector<int> iSctDum;
-    if (q2sector > resolutionPtr->findSector(iSctDum, stateNew)) {
-      ++nSectorReject[iAntWin];
-      return accept;
+    // If we have a resonance, its momentum is not stored in pNew, so we
+    // create a new vector with all post-branching particles, including the
+    // resonance, although being unchanged.
+    vector<Particle> ptclsPost;
+    vector<int> iOld;
+    // Check if we have a resonance.
+    int iPosRes = winnerQCD->posR();
+    if (iPosRes != -1) {
+      ptclsPost.push_back(event[winnerQCD->iVec(iPosRes)]);
+      iOld.push_back(winnerQCD->iVec(iPosRes));
+      for (auto& i : winnerQCD->mothers2daughters)
+        iOld.push_back(i.first);
     }
+    else iOld = winnerQCD->iVec();
+    for (auto& p : pNew) ptclsPost.push_back(p);
+
+    // Get tentative post-branching state.
+    stateNew = vinComPtr->makeParticleList(iSysWin, event, ptclsPost, iOld);
+
+    // Save clustering and compute sector resolution for it.
+    VinciaClustering thisClus;
+    thisClus.setDaughters(ptclsPost,0,1,2);
+    thisClus.setMothers(winnerQCD->id0(),winnerQCD->id1());
+    thisClus.setAntenna(true,antFunTypeWin);
+    thisClus.initInvariantAndMassVecs();
+    double q2sectorThis = resolutionPtr->q2sector(thisClus);
+    // Sanity check.
+    if (q2sectorThis < 0.) {
+      loggerPtr->ERROR_MSG("negative sector resolution");
+      return false;
+    }
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Branching has sector resolution " << q2sectorThis;
+      printOut(__METHOD_NAME__, ss.str());
+    }
+
+    // Check sector veto.
+    minClus = resolutionPtr->findSector(stateNew, nFlavsBorn[iSysWin]);
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Minimal clustering has sector resolution " << minClus.q2res;
+      printOut(__METHOD_NAME__, ss.str());
+    }
+    bool isVetoed = resolutionPtr->sectorVeto(minClus, thisClus);
+    // Failed sector veto.
+    if (isVetoed) {
+      if (verbose >= VinciaConstants::DEBUG)
+        printOut(__METHOD_NAME__, "Branching rejected (outside of sector)");
+      if (verbose >= Logger::REPORT)
+        diagnosticsPtr->stop(__METHOD_NAME__,"veto(sector)");
+      return false;
+    }
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Branching inside of sector");
   }
 
   // Check if phase space is closed for getting rid of heavy quarks.
   vector<Particle> stateOld;
   if (!isrPtr->checkHeavyQuarkPhaseSpace(stateOld,iSysWin)) {
-    stateOld = mecsPtr->makeParticleList(iSysWin, event);
-    if (verbose >= debug) printOut(__METHOD_NAME__, "Trial rejected (failed "
+    stateOld = vinComPtr->makeParticleList(iSysWin, event);
+    if (verbose >= Logger::REPORT) {
+      printOut(__METHOD_NAME__, "Trial rejected (failed "
         "checkHeavyQuarkPhaseSpace)");
-    // Mark this trial as "used", will need to generate a new one.
-    ++nClosePSforHQ[iAntWin];
-    return accept;
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(HQPS)");
+    }
+    return false;
   }
 
-  // TODO: matrix element corrections. If we want to compute a MEC,
-  // we make a temporary new event record, and a temporary new
-  // PartonSystem, with the tentative new state.
-  double pMEC = 1.0;
-  if (doMEC) pAccept[0] *= pMEC;
+  // Matrix element corrections or damping factors.
+  // Note: currently only implemented for the sector shower.
+  double pMEC = 1.;
+  if (doMEC) {
+    // VinciaConstants::DEBUG output.
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Trying matrix element correction for system "
+         << iSysWin << " (" << nBranch[iSysWin]+1 << ". branching).";
+      printOut(__METHOD_NAME__, ss.str());
+    }
 
-  // Count number of shower-type partons (for diagnostics and headroom
-  // factors).
-  int nQbef(0), nGbef(0), nBbef(0);
-  for (int i = 0; i < partonSystemsPtr->sizeOut(iSysWin); ++i) {
-    if (event[partonSystemsPtr->getOut(iSysWin,i)].id() == 21) ++nGbef;
-    else if (event[partonSystemsPtr->getOut(iSysWin,i)].idAbs() <= 4) ++nQbef;
-    else if (event[partonSystemsPtr->getOut(iSysWin,i)].idAbs() == 5) ++nBbef;
+    pMEC = getMEC(iSysWin, event, stateNew, minClus);
+  } else if ( iSysWin < (int)doPTdamp.size() && doPTdamp[iSysWin] ) {
+    // Else optionally apply pT dampening factor.
+    pMEC = pT2damp[iSysWin] / (winnerQCD->q2Trial() + pT2damp[iSysWin]);
   }
-
-  // Fill diagnostics histograms.
-  if (verbose >= quiteloud || (verbose >= normal && doMEC)) {
-    string state;
-    if (nQbef >= 1) state += num2str(nQbef,1) + "q";
-    if (nBbef >= 1) state += num2str(nBbef,1) + "b";
-    if (nGbef >= 1) state += num2str(nBbef,1) + "g";
-    if (pNew[1].colType() == 2) state += "Emit";
-    else if (pNew[1].colType() == -1) state += "SplitA";
-    else if (pNew[1].colType() == 1) state += "SplitB";
-    string HPacc = "Log10(ME/AntTrial):" + state;
-    if (vinciaHistos.find(HPacc) != vinciaHistos.end())
-      vinciaHistos[HPacc].fill(log10(max(TINY,pAccept[0])));
-    string HqTrial = "Ln(q2trial/sSystem):" + state;
-    if (vinciaHistos.find(HqTrial) != vinciaHistos.end())
-      vinciaHistos[HqTrial].fill(
-        log(max(TINY, q2WinSav/pow2(mSystem[iSysWin]))));
-  }
+  pAccept[0] *= pMEC;
 
   // Print MC violations.
-  if (doMEC && verbose >= verylouddebug) {
+  if (doMEC && verbose >= VinciaConstants::DEBUG) {
     stringstream ss;
     ss << " MEC pAccept = " << pAccept[0];
     printOut(__METHOD_NAME__, ss.str());
   }
-  if (verbose >= loud ) {
-    bool violation  = (pAccept[0] > 1.0 + TINY);
+  if (verbose >= Logger::REPORT) {
+    bool violation  = (pAccept[0] > 1.0 + NANO);
     bool negPaccept = (pAccept[0] < 0.0);
-    if (violation) infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": pAccept > 1");
-    if (negPaccept) infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": pAccept < 0");
+    if (violation) loggerPtr->ERROR_MSG("pAccept > 1");
+    if (negPaccept) loggerPtr->ERROR_MSG("pAccept < 0");
     //Print more info for bad cases.
-    if ((violation || negPaccept) && verbose > debug) winnerPtr->list();
+    if ((violation || negPaccept) && verbose >= VinciaConstants::DEBUG)
+      winnerQCD->list();
   }
 
-  // TODO: MC reweighting and uncertainty bands.
-
   // Enhance factors < 1 (radiation inhibition) treated by modifying pAccept.
-  const double enhanceFac = winnerPtr->enhanceFac();
+  const double enhanceFac = winnerQCD->enhanceFac();
   if (rndmPtr->flat() > min(1.0,enhanceFac)*pAccept[0]) {
-    if (verbose >= debug) printOut(__METHOD_NAME__ , "Trial rejected at veto "
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__ ,
+      "Trial rejected at veto "
         "step. wPhys/wTrial = " + num2str(pAccept[0])
         + " * enhanceFac = "+num2str(enhanceFac));
 
     // Reweighting to account for enhancement factor (reject).
     if (enhanceFac != 1.0)
       weightsPtr->scaleWeightEnhanceReject(pAccept[0],enhanceFac);
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(pAccept)");
+    return false;
 
-    // Count up number of vetoed branchings
-    ++nFailedVeto[iAntWin];
   } else {
-    if (verbose >= louddebug) printOut(__METHOD_NAME__, "Trial accepted.");
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Trial accepted");
 
     // Reweighting to account for enhancement factor (accept).
     if (enhanceFac != 1.0) weightsPtr->scaleWeightEnhanceAccept(enhanceFac);
-
-    // Fill diagnostics histos.
-    if (verbose >= 3 || (verbose >= 2 && doMEC)) {
-      string state;
-      if (nQbef >= 1) state += num2str(nQbef,1) + "q";
-      if (nBbef >= 1) state += num2str(nBbef,1) + "b";
-      if (nGbef >= 1) state += num2str(nBbef,1) + "g";
-      if (pNew[1].colType() == 2) state += "Emit";
-      else if (pNew[1].colType() == -1) state += "SplitA";
-      else if (pNew[1].colType() == 1) state += "SplitB";
-      string HqPhys = "Ln(q2/sSystem):" + state;
-      if (vinciaHistos.find(HqPhys) != vinciaHistos.end())
-        vinciaHistos[HqPhys].fill(
-          log(max(TINY, q2WinSav/pow2(mSystem[iSysWin]))));
-      string HalphaS = "alphaS:" + state;
-      string HalphaSratio = "alphaSratio:" + state;
-      if (doMEC) {
-        string HPacc = "Log10(ME/AntPhys):" + state;
-        if (vinciaHistos.find(HPacc) != vinciaHistos.end()) {
-          vinciaHistos[HPacc].fill(log10(max(TINY,pMEC)));
-        }
-      }
-    }
-    accept = true;
   }
-  return accept;
 
+  // Diagnostics
+  if (verbose >= Logger::REPORT)
+    diagnosticsPtr->stop(__METHOD_NAME__,"accept");
+
+  return true;
 }
 
 //--------------------------------------------------------------------------
@@ -3910,34 +4817,31 @@ bool VinciaFSR::getNewParticles(Event& event, AntennaFunction* antFunPtr,
 
   // Generate full kinematics.
   if (antFunPtr == nullptr) {
-    if (verbose >= normal)
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": antFunPtr is NULL pointer.");
+    if (verbose >= Logger::NORMAL)
+      loggerPtr->ERROR_MSG("antFunPtr is null");
     return false;
   }
   newParts.clear();
   vector<Vec4> pPost;
   int maptype = antFunPtr->kineMap();
   if (!genFullKinematics(maptype, event, pPost)) {
-    if (verbose >= debug)
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "Failed to generate kinematics");
+    if (verbose >= Logger::REPORT)
+      diagnosticsPtr->stop(__METHOD_NAME__,"veto(kinematics)");
     return false;
   }
 
   // Generate new helicities.
   vector<int> hPost = genHelicities(antFunPtr);
   if (pPost.size() != hPost.size()) {
-    if (verbose >= normal) {
-      stringstream ss;
-      ss << " pPost.size() = "
-         << pPost.size() <<"  hPost.size() = " << hPost.size();
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Wrong size containers.", ss.str());
-    }
+    loggerPtr->ERROR_MSG("wrong size containers",
+      "(pPost.size() = " + to_string(pPost.size())
+      + ", hPost.size() = " + to_string(hPost.size())+")");
     return false;
-  } else if (!winnerPtr->getNewParticles(event, pPost, hPost, newParts,
+  } else if (!winnerQCD->getNewParticles(event, pPost, hPost, newParts,
       rndmPtr, colourPtr)) {
-    if (verbose >= debug)
+    if (verbose >= Logger::REPORT)
       printOut(__METHOD_NAME__, "Failed to generate new particles");
     return false;
   } else return true;
@@ -3950,26 +4854,27 @@ bool VinciaFSR::getNewParticles(Event& event, AntennaFunction* antFunPtr,
 
 vector<int> VinciaFSR::genHelicities(AntennaFunction* antFunPtr) {
 
-  vector<int> hPre = winnerPtr->hVec();
+  vector<int> hPre = winnerQCD->hVec();
   vector<int> hPost = hPre;
   hPost.insert(hPost.begin() + 1, 9);
   if (hPost.size() >=3) {
     if (helicityShower && polarisedSys[iSysWin]) {
-      vector<double> mPost = winnerPtr->getmPostVec();
-      vector<double> invariants = winnerPtr->getInvariants();
+      vector<double> mPost = winnerQCD->getmPostVec();
+      vector<double> invariants = winnerQCD->getInvariants();
       double helSum = antFunPtr->antFun(invariants, mPost, hPre, hPost);
       double randHel = rndmPtr->flat() * helSum;
       double aHel = 0.0;
       // Select helicity, n.b. positions hard-coded. hPost may be
       // larger than 3 in case of resonance decays but meaning of
       // first 3 positions is same (rest are unchanged).
-      for(int iHel = 0; iHel < 8; ++iHel) {
+      for (int iHel = 0; iHel < 8; ++iHel) {
         hPost[0] = ( (iHel%2)   )*2 -1;
         hPost[1] = ( (iHel/2)%2 )*2 -1;
         hPost[2] = ( (iHel/4)%2 )*2 -1;
         aHel = antFunPtr->antFun(invariants, mPost, hPre, hPost);
         randHel -= aHel;
-        if (verbose >= verylouddebug) printOut(__METHOD_NAME__, "antPhys(" +
+        if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+          "antPhys(" +
             num2str(int(hPre[0])) + " " + num2str(int(hPre[1])) + "  -> " +
             num2str(hPost[0]) + " " + num2str(hPost[1]) + " " +
             num2str(hPost[2]) + ") = " + num2str(aHel) + ", m(IK,ij,jk) = " +
@@ -3978,13 +4883,11 @@ vector<int> VinciaFSR::genHelicities(AntennaFunction* antFunPtr) {
             num2str(sqrt(invariants[2])) + "; sum = "+num2str(helSum));
         if (randHel < 0.) break;
       }
-      if (doDiagnostics)
-        diagnosticsPtr->checkAntHel(iSysWin, aHel, hPre, hPost);
     }
-    if (verbose >= louddebug)
+    if (verbose >= VinciaConstants::DEBUG)
       printOut(__METHOD_NAME__, "selected"+num2str((int)(hPre[0]))
         + " " + num2str(int(hPre[1])) + "  -> " + num2str(hPost[0]) + " "
-        + num2str(hPost[1]) + " " + num2str(hPost[2]) + "\n");
+        + num2str(hPost[1]) + " " + num2str(hPost[2]));
   }
   return hPost;
 
@@ -3992,14 +4895,60 @@ vector<int> VinciaFSR::genHelicities(AntennaFunction* antFunPtr) {
 
 //--------------------------------------------------------------------------
 
-// Update the event.
+// Get matrix element correction factor.
 
-bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
+double VinciaFSR::getMEC(int iSys, const Event& event,
+  const vector<Particle>& statePost, VinciaClustering& thisClus) {
 
+  double mec = 1.;
+
+  // Check if post-branching state is set.
+  if (statePost.size() == 0) {
+    loggerPtr->ERROR_MSG("post-branching state not set in system "
+      + num2str(iSysWin,2));
+    return mec;
+  }
+
+  // Matrix elemnt corrections for the global shower not implemented.
+  if (!sectorShower) {
+    loggerPtr->WARNING_MSG(
+      "matrix element corrections not implemented for global shower");
+    return mec;
+  }
+
+  // Matrix element corrections for the sector shower.
+  // Get current state as list of particles.
+  vector<Particle> stateNow
+    = vinComPtr->makeParticleList(iSysWin, event);
+  mec = mecsPtr->getMECSector(iSys, stateNow, statePost, thisClus);
+  // Sanity check.
+  if (mec < 0.) {
+    loggerPtr->ERROR_MSG("negative matrix element correction factor",
+      "("+num2str(mec,6)+")", true);
+    return 1.;
+  }
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "Found matrix element correction factor " << mec;
+    printOut(__METHOD_NAME__, ss.str());
+  }
+  return mec;
+}
+
+//--------------------------------------------------------------------------
+
+// Update the event after a QCD FF or RF branching.
+
+bool VinciaFSR::updateEvent(Event& event, ResJunctionInfo& junctionInfoIn) {
+
+  // Append the particles in pNew to event record.
   for (unsigned int i = 0; i < pNew.size(); ++i) event.append(pNew[i]);
+
+  // Set daughter information for each mother and mark mother as decayed.
   map<int, pair<int,int> >::iterator it;
-  for (it = winnerPtr->mothers2daughters.begin();
-       it != winnerPtr->mothers2daughters.end(); ++it) {
+  for (it = winnerQCD->mothers2daughters.begin();
+       it != winnerQCD->mothers2daughters.end(); ++it) {
     int mother    = it->first;
     int daughter1 = (it->second).first;
     int daughter2 = (it->second).second;
@@ -4009,40 +4958,60 @@ bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
     } else return false;
   }
 
-  // Add mothers to new daughters.
-  for(it = winnerPtr->daughters2mothers.begin();
-      it != winnerPtr->daughters2mothers.end(); ++it) {
+  // Set mother information for each daughter.
+  for (it = winnerQCD->daughters2mothers.begin();
+      it != winnerQCD->daughters2mothers.end(); ++it) {
     int daughter = it->first;
     int mother1  = (it->second).first;
     int mother2  = (it->second).second;
-    if (daughter<event.size() && daughter > 0)
-      event[daughter].mothers(mother1, mother2);
-    else return false;
+
+    // Ensure mother1 is always the one whose colour (or anticolour) flowed
+    // onto the emitted parton. (This determines which mother is used to
+    // define collinear vertex structure eg in HepMC output.)
+    if (daughter<event.size() && daughter > 0) {
+      if (mother2 == 0) event[daughter].mothers(mother1, 0);
+      else if (mother1 == 0) event[daughter].mothers(mother2, 0);
+      else if (event[daughter].col() == event[mother1].col() ||
+        event[daughter].acol() == event[mother1].acol())
+        event[daughter].mothers(mother1, mother2);
+      else event[daughter].mothers(mother2, mother1);
+    } else return false;
+
+    // Shower may occur at a displaced vertex.
+    if ( !event[daughter].hasVertex() &&
+      event[ event[daughter].mother1() ].hasVertex() ) {
+      event[daughter].vProd( event[event[daughter].mother1()].vProd() );
+    }
+    // Copy invariant lifetimes of recoilers.
+    if ( mother2 == mother1 && event[mother1].id() == event[daughter].id() )
+      event[daughter].tau( event[mother1].tau() );
+
   }
 
   // Tell Pythia if we used a colour tag.
-  if (winnerPtr->colTag() != 0) {
+  if (winnerQCD->colTag() != 0) {
     int lastTag = event.nextColTag();
-    int colMax  = winnerPtr->colTag();
+    int colMax  = winnerQCD->colTag();
     while (colMax > lastTag) lastTag = event.nextColTag();
   }
-  iNewSav = winnerPtr->iNew();
+  iNewSav = winnerQCD->iNew();
 
   // Deal with any resonance junctions.
   if (hasResJunction[iSysWin]) {
     vector<int>* colours = &junctionInfoIn.colours;
     if (!event[junctionInfoIn.iEndQuark].isQuark()) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Can't update junction. iEndQuark is not a quark!");
+      loggerPtr->ERROR_MSG("Failed to update junction;"
+        " iEndQuark is not a quark");
       hasResJunction[iSysWin]=false;
       return false;
     }
 
     // Check if resonance splitting.
-    int branchType = winnerPtr->getBranchType();
-    if (branchType == 2 || branchType == 6) {
-      int splitter = winnerPtr->i0();
-      if(branchType == 6) splitter = winnerPtr->iVec().at(winnerPtr->posF());
+    bool isRF = winnerQCD->posR() >= 0;
+    BranchType branchType = winnerQCD->getBranchType();
+    if (branchType == BranchType::SplitF) {
+      int splitter = winnerQCD->i0();
+      if (isRF) splitter = winnerQCD->iVec().at(winnerQCD->posF());
       // First update list of colours.
       int colLeft = event[splitter].col();
       // Find position col index.
@@ -4058,7 +5027,7 @@ bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
         if (event[d1].isQuark() && event[d1].col() > 0) {
           junctionInfoIn.iEndQuark  = d1;
           junctionInfoIn.iEndColTag = event[d1].col();
-        } else if(event[d2].isQuark() && event[d2].col() > 0) {
+        } else if (event[d2].isQuark() && event[d2].col() > 0) {
           junctionInfoIn.iEndQuark  = d2;
           junctionInfoIn.iEndColTag = event[d2].col();
         }
@@ -4066,26 +5035,25 @@ bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
         event.endColJunction(junctionInfoIn.iJunction, junctionInfoIn.iEndCol,
           junctionInfoIn.iEndColTag);
       }
-    } else if (branchType == 1 || branchType == 5){
-      //First update list of colours.
-      int iNew = winnerPtr->iNew();
+    } else if (branchType == BranchType::Emit) {
+      // First update list of colours.
+      int iNew = winnerQCD->iNew();
 
       // Find radiator (parton whose colours changed).
       int iRad = event[iNew].mother1();
-      if(branchType == 1) {
+      if (!isRF) {
         // Need to test both mothers.
         int m2 = event[iNew].mother2();
         if (m2 !=0) {
           // Get daughter that isn't iNew.
           int m2after=event[m2].daughter1();
           if (m2after==iNew) m2after = event[m2].daughter2();
-          //Check, did this mother change colours or was it the
-          // recoiler?
+          // Did this mother change colours or was it the recoiler?
           int colBef    = event[m2].col();
           int acolBef   = event[m2].acol();
           int colAfter  = event[m2after].col();
           int acolAfter = event[m2after].acol();
-          if(colBef != colAfter || acolBef != acolAfter) iRad = m2;
+          if (colBef != colAfter || acolBef != acolAfter) iRad = m2;
         }
       }
 
@@ -4095,8 +5063,8 @@ bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
       if (event[iNew].col() == colLeft) colNew = event[iNew].acol();
       else colNew = event[iNew].col();
       if (colNew == 0) {
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Couldn't find colour for updating junction info.");
+        loggerPtr->ERROR_MSG("Failed to find colour for "
+          "updating junction info");
         return false;
       }
 
@@ -4117,18 +5085,17 @@ bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
           junctionInfoIn.iEndQuark  = d2;
           junctionInfoIn.iEndColTag = event[d2].col();
         } else {
-          infoPtr->errorMsg("Error in "+__METHOD_NAME__
-            +": Couldn't update junction.");
+          loggerPtr->ERROR_MSG("failed to update junction");
           return false;
         }
-        //Update junction.
+        // Update junction.
         event.endColJunction(junctionInfoIn.iJunction,
           junctionInfoIn.iEndCol, junctionInfoIn.iEndColTag);
       }
     }
   }
-  if (verbose >= louddebug) {
-    printOut(__METHOD_NAME__, "Succesfully updated event after emission.");
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "Succesfully updated event after emission");
     event.list();
   }
   return true;
@@ -4142,7 +5109,7 @@ bool VinciaFSR::updateEvent(Event& event, resJunctionInfo& junctionInfoIn) {
 void VinciaFSR::updatePartonSystems() {
 
   // List parton systems.
-  if (verbose >= verylouddebug) {
+  if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__, "Parton systems before update: ");
     partonSystemsPtr->list();
   }
@@ -4150,8 +5117,8 @@ void VinciaFSR::updatePartonSystems() {
   // Loop over mothers.
   vector<int> newpartons;
   for (map<int, pair<int,int> >::iterator it =
-         winnerPtr->mothers2daughters.begin();
-       it != winnerPtr->mothers2daughters.end(); ++it) {
+         winnerQCD->mothers2daughters.begin();
+       it != winnerQCD->mothers2daughters.end(); ++it) {
     int mother    = it->first;
     int daughter1 = (it->second).first;
     int daughter2 = (it->second).second;
@@ -4190,7 +5157,7 @@ void VinciaFSR::updatePartonSystems() {
       }
     }
   }
-  if (verbose >= verylouddebug) {
+  if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__, "Parton systems after update: ");
     partonSystemsPtr->list();
   }
@@ -4201,11 +5168,13 @@ void VinciaFSR::updatePartonSystems() {
 
 // Create a new emission brancher.
 
-void VinciaFSR::saveEmitter(int iSysIn, Event& event, int i0, int i1) {
+void VinciaFSR::saveEmitterFF(int iSysIn, Event& event, int i0, int i1) {
+  if (i0 <= 0 || i1 <= 0 || i0 > event.size() || i1 > event.size()) return;
   if (event[i0].col() == event[i1].acol()) {
-    emitters.push_back(BrancherEmitFF(iSysIn,event,i0,i1));
-    lookupBrancherFF[make_pair(i0,true)]=(emitters.size()-1);
-    lookupBrancherFF[make_pair(i1,false)]=(emitters.size()-1);
+    emittersFF.push_back(make_shared<BrancherEmitFF>(iSysIn, event,
+        sectorShower, i0, i1, &zetaGenSetFF));
+    lookupEmitterFF[make_pair(i0,true)]=(emittersFF.size()-1);
+    lookupEmitterFF[make_pair(i1,false)]=(emittersFF.size()-1);
   }
 }
 
@@ -4213,7 +5182,7 @@ void VinciaFSR::saveEmitter(int iSysIn, Event& event, int i0, int i1) {
 
 // Create a new resonance emission brancher.
 
-void VinciaFSR::saveResEmitter(int iSysIn, Event& event, vector<int> allIn,
+void VinciaFSR::saveEmitterRF(int iSysIn, Event& event, vector<int> allIn,
   unsigned int posResIn, unsigned int posFIn, bool colMode) {
 
   int iRes = allIn[posResIn];
@@ -4234,7 +5203,7 @@ void VinciaFSR::saveResEmitter(int iSysIn, Event& event, vector<int> allIn,
       else iRec = event[d1].iBotCopy();
     } else {
       // d2 was original recoiler.
-      if(event[d1].acol() > 0 && event[iRes].acol() == event[d1].acol() )
+      if (event[d1].acol() > 0 && event[iRes].acol() == event[d1].acol() )
         iRec = event[d2].iBotCopy();
       // d1 was original recoiler.
       else iRec = event[d1].iBotCopy();
@@ -4247,14 +5216,12 @@ void VinciaFSR::saveResEmitter(int iSysIn, Event& event, vector<int> allIn,
   }
 
   // Discriminate between colour and anticolour res antennae to avoid
-  // degeneracy in lookupBrancherRF0 if res is colour octet.
+  // degeneracy in lookupEmitterRF0 if res is colour octet.
   if (!colMode) iRes *= -1;
-
-  // TODO: how to set zeta cut?
-  BrancherEmitRF temp(iSysIn,event,allIn,posResIn,posFIn,q2CutoffEmit);
-  resEmitters.push_back(temp);
-  lookupBrancherRF[make_pair(iRes,true)]=(resEmitters.size() - 1);
-  lookupBrancherRF[make_pair(allIn[posFIn],false)]=(resEmitters.size() - 1);
+  emittersRF.push_back(make_shared<BrancherEmitRF>(iSysIn,event,sectorShower,
+      allIn,posResIn,posFIn, q2CutoffEmit,&zetaGenSetRF));
+  lookupEmitterRF[make_pair(iRes,true)]=(emittersRF.size() - 1);
+  lookupEmitterRF[make_pair(allIn[posFIn],false)]=(emittersRF.size() - 1);
 
 }
 
@@ -4262,8 +5229,8 @@ void VinciaFSR::saveResEmitter(int iSysIn, Event& event, vector<int> allIn,
 
 // Create a new resonance splitter.
 
-void VinciaFSR::saveResSplitter(int iSysIn, Event& event, vector<int> allIn,
-  unsigned int posResIn, unsigned int posFIn,bool colMode) {
+void VinciaFSR::saveSplitterRF(int iSysIn, Event& event, vector<int> allIn,
+  unsigned int posResIn, unsigned int posFIn, bool colMode) {
 
   int iRes = allIn[posResIn];
   if (kMapResSplit == 2 && allIn.size() > 3) {
@@ -4275,15 +5242,17 @@ void VinciaFSR::saveResSplitter(int iSysIn, Event& event, vector<int> allIn,
     int d2   = event[iRes].daughter2();
 
     // Find original colour connected.
+    // colMode = true if the resonance parent is coloured.
+    //         = false if the resonance parent is anticoloured.
     if (colMode) {
       // d2 was original recoiler.
-      if(event[d1].col() > 0 && event[iRes].col() == event[d1].col())
+      if (event[d1].col() > 0 && event[iRes].col() == event[d1].col())
         iRec = event[d2].iBotCopy();
       // d1 was original recoiler.
       else iRec = event[d1].iBotCopy();
     } else {
       // d2 was original recoiler.
-      if(event[d1].acol() > 0 && event[iRes].acol() == event[d1].acol())
+      if (event[d1].acol() > 0 && event[iRes].acol() == event[d1].acol())
         iRec = event[d2].iBotCopy();
       // d1 was original recoiler.
       else iRec = event[d1].iBotCopy();
@@ -4296,12 +5265,12 @@ void VinciaFSR::saveResSplitter(int iSysIn, Event& event, vector<int> allIn,
   }
 
   // Discriminate between colour and anticolour res antennae to avoid
-  // degeneracy in lookupBrancherRF0 if res is colour octet.
+  // degeneracy in lookupEmitterRF0 if res is colour octet.
   if (!colMode) iRes*=-1;
-  BrancherSplitRF temp(iSysIn,event,allIn,posResIn,posFIn,q2CutoffSplit);
-  resSplitters.push_back(temp);
-  lookupSplitterRF[make_pair(iRes,true)]=(resSplitters.size() -1);
-  lookupSplitterRF[make_pair(allIn[posFIn],false)]=(resSplitters.size() -1);
+  splittersRF.push_back(make_shared<BrancherSplitRF>(iSysIn,event,sectorShower,
+      allIn,posResIn,posFIn, q2CutoffSplit,&zetaGenSetRF));
+  lookupSplitterRF[make_pair(iRes,true)]=(splittersRF.size() -1);
+  lookupSplitterRF[make_pair(allIn[posFIn],false)]=(splittersRF.size() -1);
 
 }
 
@@ -4309,74 +5278,108 @@ void VinciaFSR::saveResSplitter(int iSysIn, Event& event, vector<int> allIn,
 
 // Create a new splitter brancher.
 
-void VinciaFSR::saveSplitter(int iSysIn, Event& event, int i0, int i1,
+void VinciaFSR::saveSplitterFF(int iSysIn, Event& event, int i0, int i1,
   bool col2acol) {
-  BrancherSplitFF temp(iSysIn, event, i0, i1, col2acol);
-  splitters.push_back(temp);
+  if (i0 > event.size() || i1 > event.size() ) return;
+  splittersFF.push_back(make_shared<BrancherSplitFF>(iSysIn, event,
+      sectorShower, i0, i1, col2acol, &zetaGenSetFF));
   if (event[i0].isGluon()) {
     // Colour to anti-colour.
     if (col2acol) {
-      lookupSplitter[make_pair(i0,true)]=(splitters.size()-1);
-      lookupSplitter[make_pair(i1,false)]=(splitters.size()-1);
+      lookupSplitterFF[make_pair(i0,true)]=(splittersFF.size()-1);
+      lookupSplitterFF[make_pair(i1,false)]=(splittersFF.size()-1);
     // Anti-colour to colour.
     } else {
-      lookupSplitter[make_pair(-i0,true)]=(splitters.size()-1);
-      lookupSplitter[make_pair(-i1,false)]=(splitters.size()-1);
+      lookupSplitterFF[make_pair(-i0,true)]=(splittersFF.size()-1);
+      lookupSplitterFF[make_pair(-i1,false)]=(splittersFF.size()-1);
     }
   }
 }
 
 //--------------------------------------------------------------------------
 
-// Update the branchers.
+// Update all FF emitters replacing recoiling parton iOld -> iNew.
 
-template <class Brancher> void VinciaFSR::updateBranchers(
-  vector<Brancher>& brancherVec, map<pair<int, bool>,
-  unsigned int>& lookupBrancher, Event& event, int iOld, int iNew) {
+void VinciaFSR::updateEmittersFF(Event& event, int iOld, int iNew) {
 
   pair<int,bool> key = make_pair(iOld, true);
-  if (lookupBrancher.find(key) != lookupBrancher.end()) {
-    unsigned int pos = lookupBrancher[key];
-    int iRec         = brancherVec[pos].i1();
-    int iSysNow      = brancherVec[pos].system();
-    brancherVec[pos].reset(iSysNow, event, abs(iNew), iRec);
-    lookupBrancher.erase(key);
-    lookupBrancher[make_pair(iNew,true)] = pos;
+  if (lookupEmitterFF.find(key) != lookupEmitterFF.end()) {
+    unsigned int pos = lookupEmitterFF[key];
+    int iRec         = emittersFF[pos]->i1();
+    int iSysNow      = emittersFF[pos]->system();
+    emittersFF[pos]  = make_shared<BrancherEmitFF>(iSysNow, event,
+      sectorShower, abs(iNew), iRec, &zetaGenSetFF);
+    lookupEmitterFF.erase(key);
+    lookupEmitterFF[make_pair(iNew,true)] = pos;
   }
   key = make_pair(iOld, false);
-  if (lookupBrancher.find(key) != lookupBrancher.end()) {
-    unsigned int pos = lookupBrancher[key];
-    int iEmit        = brancherVec[pos].i0();
-    int iSysNow      = brancherVec[pos].system();
-    brancherVec[pos].reset(iSysNow, event, iEmit, abs(iNew));
-    lookupBrancher.erase(key);
-    lookupBrancher[make_pair(iNew,false)]=pos;
+  if (lookupEmitterFF.find(key) != lookupEmitterFF.end()) {
+    unsigned int pos = lookupEmitterFF[key];
+    int iEmit        = emittersFF[pos]->i0();
+    int iSysNow      = emittersFF[pos]->system();
+    emittersFF[pos]  = make_shared<BrancherEmitFF>(iSysNow, event,
+      sectorShower, iEmit, abs(iNew), &zetaGenSetFF);
+    lookupEmitterFF.erase(key);
+    lookupEmitterFF[make_pair(iNew,false)]=pos;
   }
 
 }
 
 //--------------------------------------------------------------------------
 
-// Update a single brancher.
+// Update all FF splitters replacing recoling parton iOld -> iNew.
 
-template <class Brancher> void VinciaFSR::updateBrancher(
-  vector<Brancher>& brancherVec, map<pair<int, bool>,
-  unsigned int>& lookupBrancher, Event& event, int iOld1, int iOld2,
+void VinciaFSR::updateSplittersFF(Event& event, int iOld, int iNew) {
+
+  // Loop over colour and anticolour side of gluon splittings.
+  for (int sign = -1; sign <= 1; sign += 2) {
+    pair<int,bool> key = make_pair(sign*iOld, true);
+    if (lookupSplitterFF.find(key) != lookupSplitterFF.end()) {
+      unsigned int pos = lookupSplitterFF[key];
+      int iRec         = splittersFF[pos]->i1();
+      int iSysNow      = splittersFF[pos]->system();
+      bool col2acol    = !splittersFF[pos]->isXG();
+      splittersFF[pos] = make_shared<BrancherSplitFF>(iSysNow, event,
+        sectorShower, abs(iNew), iRec, col2acol, &zetaGenSetFF);
+      lookupSplitterFF.erase(key);
+      lookupSplitterFF[make_pair(sign*iNew,true)] = pos;
+    }
+    key = make_pair(sign*iOld, false);
+    if (lookupSplitterFF.find(key) != lookupSplitterFF.end()) {
+      unsigned int pos = lookupSplitterFF[key];
+      int iEmit        = splittersFF[pos]->i0();
+      int iSysNow      = splittersFF[pos]->system();
+      bool col2acol    = !splittersFF[pos]->isXG();
+      splittersFF[pos] = make_shared<BrancherSplitFF>(iSysNow, event,
+        sectorShower, iEmit, abs(iNew), col2acol, &zetaGenSetFF);
+      lookupSplitterFF.erase(key);
+      lookupSplitterFF[make_pair(sign*iNew,false)]=pos;
+    }
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+// Update emission brancher due to an emission.
+
+void VinciaFSR::updateEmitterFF(Event& event,int iOld1, int iOld2,
   int iNew1, int iNew2) {
 
   pair<int,bool> key1 = make_pair(iOld1,true);
   pair<int,bool> key2 = make_pair(iOld2,false);
-  if (lookupBrancher.find(key1) != lookupBrancher.end()) {
-    unsigned int pos = lookupBrancher[key1];
-    if (lookupBrancher.find(key2) != lookupBrancher.end()) {
-      unsigned int pos2=lookupBrancher[key2];
+  if (lookupEmitterFF.find(key1) != lookupEmitterFF.end()) {
+    unsigned int pos = lookupEmitterFF[key1];
+    if (lookupEmitterFF.find(key2) != lookupEmitterFF.end()) {
+      unsigned int pos2=lookupEmitterFF[key2];
       if (pos == pos2) {
-        lookupBrancher.erase(key1);
-        lookupBrancher.erase(key2);
-        int iSysNow = brancherVec[pos].system();
-        brancherVec[pos].reset(iSysNow, event, abs(iNew1), abs(iNew2));
-        lookupBrancher[make_pair(iNew1,true)]=pos;
-        lookupBrancher[make_pair(iNew2,false)]=pos;
+        lookupEmitterFF.erase(key1);
+        lookupEmitterFF.erase(key2);
+        int iSysNow = emittersFF[pos]->system();
+        emittersFF[pos] = make_shared<BrancherEmitFF>(iSysNow, event,
+          sectorShower, abs(iNew1), abs(iNew2), &zetaGenSetFF);
+        lookupEmitterFF[make_pair(iNew1,true)]=pos;
+        lookupEmitterFF[make_pair(iNew2,false)]=pos;
       }
     }
   }
@@ -4385,79 +5388,68 @@ template <class Brancher> void VinciaFSR::updateBrancher(
 
 //--------------------------------------------------------------------------
 
-// Update emission branchers due to a recoiled parton.
-
-void VinciaFSR::updateEmitters(Event& event, int iOld, int iNew){
-  updateBranchers<BrancherEmitFF>(emitters,lookupBrancherFF,event,iOld,iNew);
-}
-
-//--------------------------------------------------------------------------
-
-// Update emission brancher due to an emission.
-
-void VinciaFSR::updateEmitter(Event& event,int iOld1, int iOld2,
-  int iNew1, int iNew2) {
-  updateBrancher<BrancherEmitFF>(emitters, lookupBrancherFF, event,
-    iOld1, iOld2, iNew1, iNew2);
-}
-
-//--------------------------------------------------------------------------
-
-// Update splitter branchers due to a recoiled parton.
-
-void VinciaFSR::updateSplitters(Event& event, int iOld, int iNew) {
-  updateBranchers<BrancherSplitFF>(splitters, lookupSplitter, event,
-    iOld, iNew);
-  updateBranchers<BrancherSplitFF>(splitters, lookupSplitter, event,
-    -iOld, -iNew);
-}
-
-//--------------------------------------------------------------------------
-
 // Update splitter brancher due to an emission.
 
-void VinciaFSR::updateSplitter(Event& event,int iOld1, int iOld2, int iNew1,
+void VinciaFSR::updateSplitterFF(Event& event,int iOld1, int iOld2, int iNew1,
   int iNew2, bool col2acol) {
-  if (col2acol) updateBrancher<BrancherSplitFF>(splitters, lookupSplitter,
-      event, iOld1, iOld2, iNew1, iNew2);
-  else updateBrancher<BrancherSplitFF>(splitters, lookupSplitter, event,
-      -iOld1, -iOld2, -iNew1, -iNew2);
+
+  int sign=1;
+  if (!col2acol) sign=-1;
+
+  pair<int,bool> key1 = make_pair(sign*abs(iOld1),true);
+  pair<int,bool> key2 = make_pair(sign*abs(iOld2),false);
+  if (lookupSplitterFF.find(key1) != lookupSplitterFF.end()) {
+    unsigned int pos = lookupSplitterFF[key1];
+    if (lookupSplitterFF.find(key2) != lookupSplitterFF.end()) {
+      unsigned int pos2=lookupSplitterFF[key2];
+      if (pos == pos2) {
+        lookupSplitterFF.erase(key1);
+        lookupSplitterFF.erase(key2);
+        int iSysNow = splittersFF[pos]->system();
+        splittersFF[pos] = make_shared<BrancherSplitFF>(iSysNow, event,
+          sectorShower, abs(iNew1), abs(iNew2), col2acol, &zetaGenSetFF);
+        lookupSplitterFF[make_pair(sign*abs(iNew1),true)]=pos;
+        lookupSplitterFF[make_pair(sign*abs(iNew2),false)]=pos;
+      }
+    }
+  }
+
 }
 
 //--------------------------------------------------------------------------
 
 // Remove a splitter due to a gluon that has branched.
 
-void VinciaFSR::removeSplitter(int iRemove) {
+void VinciaFSR::removeSplitterFF(int iRemove) {
 
   for (int isign = 0; isign < 2; isign++) {
     int sign = 1 - 2*isign;
     pair<int,bool> key = make_pair(sign*iRemove, true);
 
     // Update map.
-    if (lookupSplitter.find(key) != lookupSplitter.end()) {
-      unsigned int pos = lookupSplitter[key];
-      lookupSplitter.erase(key);
-      int iRec = splitters[pos].i1();
+    if (lookupSplitterFF.find(key) != lookupSplitterFF.end()) {
+      unsigned int pos = lookupSplitterFF[key];
+      lookupSplitterFF.erase(key);
+      int iRec = splittersFF[pos]->i1();
       pair<int,bool> recoilkey = make_pair(sign*iRec, false);
-      if (lookupSplitter.find(recoilkey) != lookupSplitter.end())
-        lookupSplitter.erase(recoilkey);
-      if (pos < splitters.size()) {
-        splitters.erase(splitters.begin()+pos);
+      if (lookupSplitterFF.find(recoilkey) != lookupSplitterFF.end())
+        lookupSplitterFF.erase(recoilkey);
+      if (pos < splittersFF.size()) {
+        splittersFF.erase(splittersFF.begin()+pos);
 
         // Update map with modified positions.
-        for(; pos < splitters.size(); pos++) {
+        for (; pos < splittersFF.size(); pos++) {
           //Get brancher at current pos.
-          BrancherSplitFF splitter = splitters.at(pos);
+          BrancherSplitFF &splitter = *splittersFF.at(pos);
           // Find indices.
           int i0(splitter.i0()), i1(splitter.i1());
           // Update lookup map to new pos.
-          if (!splitter.isXG()){
-            lookupSplitter[make_pair(i0,true)]=pos;
-            lookupSplitter[make_pair(i1,false)]=pos;
+          if (!splitter.isXG()) {
+            lookupSplitterFF[make_pair(i0,true)]=pos;
+            lookupSplitterFF[make_pair(i1,false)]=pos;
           } else{
-            lookupSplitter[make_pair(-i0,true)]=pos;
-            lookupSplitter[make_pair(-i1,false)]=pos;
+            lookupSplitterFF[make_pair(-i0,true)]=pos;
+            lookupSplitterFF[make_pair(-i1,false)]=pos;
           }
         } // End loop over splitters.
       }
@@ -4470,15 +5462,21 @@ void VinciaFSR::removeSplitter(int iRemove) {
 
 // Update resonance emitter due to changed downstream decay products.
 
-bool VinciaFSR::updateResBranchers(int iSysRes, Event& event, int iRes) {
+bool VinciaFSR::updateEmittersRF(int iSysRes, Event& event, int iRes) {
 
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__, "begin",
+    DASHLEN);
 
-  // Look up decay products using partonSystems, assumed to be updated
-  // already. Colour information of resonance.
+  // Colour information of resonance. Return if colour singlet.
   int resCol      = event[iRes].col();
   int resACol     = event[iRes].acol();
+  if (resCol == 0 && resACol == 0) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "end (resonance is colour singlet)", DASHLEN);
+    return true;
+  }
+
+  // Look up decay products using partonSystems, assumed to be updated already.
   int colPartner  = -1;
   int acolPartner = -1;
   vector<int> daughters;
@@ -4488,7 +5486,7 @@ bool VinciaFSR::updateResBranchers(int iSysRes, Event& event, int iRes) {
   for (int iDecPart = 0; iDecPart < sizeOut; iDecPart++) {
     int iOut = partonSystemsPtr->getOut(iSysRes,iDecPart);
 
-    // Check if colouredm partner of the resonance.
+    // Check if coloured partner of the resonance.
     if (event[iOut].col() != 0 && event[iOut].col() == resCol)
       colPartner = iOut;
     if (event[iOut].acol() != 0 && event[iOut].acol() == resACol)
@@ -4496,7 +5494,7 @@ bool VinciaFSR::updateResBranchers(int iSysRes, Event& event, int iRes) {
     if (iOut != colPartner && iOut != acolPartner)
       daughters.push_back(iOut);
   }
-  if (verbose >= verylouddebug) {
+  if (verbose >= VinciaConstants::DEBUG) {
     stringstream ss;
     ss << "col partner = " << colPartner << " acol partner = " << acolPartner;
     printOut(__METHOD_NAME__,ss.str());
@@ -4511,7 +5509,7 @@ bool VinciaFSR::updateResBranchers(int iSysRes, Event& event, int iRes) {
     resSysAll.insert(resSysAll.begin(),colPartner);
     resSysAll.insert(resSysAll.begin(),iRes);
     unsigned int posRes(0), posPartner(1);
-    updateResBranchers(iSysRes,event,resSysAll,posRes,posPartner,true);
+    updateEmittersRF(iSysRes,event,resSysAll,posRes,posPartner,true);
   }
   if (acolPartner > 0) {
     // Get a copy of daughters.
@@ -4522,10 +5520,10 @@ bool VinciaFSR::updateResBranchers(int iSysRes, Event& event, int iRes) {
     resSysAll.insert(resSysAll.begin(),acolPartner);
     resSysAll.insert(resSysAll.begin(),iRes);
     unsigned int posRes(0), posPartner(1);
-    updateResBranchers(iSysRes,event,resSysAll,posRes,posPartner,false);
+    updateEmittersRF(iSysRes,event,resSysAll,posRes,posPartner,false);
   }
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "end --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
 
   return true;
 
@@ -4535,12 +5533,12 @@ bool VinciaFSR::updateResBranchers(int iSysRes, Event& event, int iRes) {
 
 // Update resonance emitter due to changed downstream decay products.
 
-void VinciaFSR::updateResBranchers(int iSysRes, Event& event,
+void VinciaFSR::updateEmittersRF(int iSysRes, Event& event,
   vector<int> resSysAll, unsigned int posRes, unsigned int posPartner,
   bool isCol) {
 
   if (posRes >= resSysAll.size() || posPartner >= resSysAll.size()) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": Invalid positions.");
+    loggerPtr->ERROR_MSG("invalid positions");
     infoPtr->setAbortPartonLevel(true);
     return;
   }
@@ -4590,25 +5588,25 @@ void VinciaFSR::updateResBranchers(int iSysRes, Event& event,
   // First update emission brancher -> always need to update because
   // downstream recoilers will have changed.
   pair<int,bool> branchkey = make_pair(iRes, true);
-  if (lookupBrancherRF.find(branchkey) != lookupBrancherRF.end()) {
-    unsigned int pos =lookupBrancherRF[branchkey];
-    int iRec = (resEmitters[pos].iVec())[resEmitters[pos].posF()];
+  if (lookupEmitterRF.find(branchkey) != lookupEmitterRF.end()) {
+    unsigned int pos =lookupEmitterRF[branchkey];
+    int iRec = (emittersRF[pos]->iVec())[emittersRF[pos]->posF()];
     pair<int,bool> recoilkey=make_pair(iRec,false);
     // Delete map to recoiler.
-    if (lookupBrancherRF.find(recoilkey) != lookupBrancherRF.end())
-      lookupBrancherRF.erase(recoilkey);
+    if (lookupEmitterRF.find(recoilkey) != lookupEmitterRF.end())
+      lookupEmitterRF.erase(recoilkey);
     // Reset brancher.
-    resEmitters[pos].resetResBrancher(iSysRes, event, resSysAllEmit, posREmit,
-      posFEmit,q2CutoffEmit);
+    emittersRF[pos]->resetRF(iSysRes, event, resSysAllEmit, posREmit,
+      posFEmit, q2CutoffEmit, &zetaGenSetRF);
     // Add new map.
     recoilkey = make_pair(iPartner,false);
-    lookupBrancherRF[recoilkey] = pos;
+    lookupEmitterRF[recoilkey] = pos;
   }
 
   // Splitters - treatement depends on latest emission.
-  if (lookupSplitterRF.find(branchkey) != lookupSplitterRF.end()){
+  if (lookupSplitterRF.find(branchkey) != lookupSplitterRF.end()) {
     unsigned int pos = lookupSplitterRF[branchkey];
-    int iSplit = (resSplitters[pos].iVec())[resSplitters[pos].posF()];
+    int iSplit = (splittersRF[pos]->iVec())[splittersRF[pos]->posF()];
     pair<int,bool> splitkey=make_pair(iSplit,false);
 
     // Delete map to recoiler.
@@ -4618,27 +5616,28 @@ void VinciaFSR::updateResBranchers(int iSysRes, Event& event,
     //Do we need to remove this splitter, is the splitter still a gluon?
     if (!event[iPartner].isGluon()) {
       lookupSplitterRF.erase(branchkey);
-      resSplitters.erase(resSplitters.begin()+pos);
+      splittersRF.erase(splittersRF.begin()+pos);
       // Update any other splitters' positions in lookup map.
-      for (unsigned int ipos = pos; ipos < resSplitters.size(); ipos++) {
-        BrancherSplitRF splitter = resSplitters.at(ipos);
-        int itmpSplit = (resSplitters[ipos].iVec())[resSplitters[ipos].posF()];
+      for (unsigned int ipos = pos; ipos < splittersRF.size(); ipos++) {
+        int itmpSplit = (splittersRF[ipos]->iVec())[splittersRF[ipos]->posF()];
         // Update lookup map to new pos.
         lookupSplitterRF[make_pair(iRes,true)] = ipos;
         lookupSplitterRF[make_pair(itmpSplit,false)] = ipos;
       }
     // Otherwise just update.
     } else {
-      resSplitters[pos].resetResBrancher(iSysRes, event, resSysAllSplit,
-        posRSplit, posFSplit, q2CutoffSplit);
+      splittersRF[pos]->resetRF(iSysRes, event, resSysAllSplit,
+        posRSplit, posFSplit, q2CutoffSplit, &zetaGenSetRF);
       // Add new map.
       splitkey = make_pair(iPartner,false);
       lookupSplitterRF[splitkey]=pos;
     }
   // Else if last branch type was res branch add new res splitter.
-  } else if (winnerPtr!= nullptr) {
-    if (winnerPtr->getBranchType()==5 && event[iPartner].isGluon())
-      saveResSplitter(iSysRes,event,resSysAllSplit,posRSplit,posFSplit,isCol);
+  } else if (winnerQCD!= nullptr) {
+    bool isRFsplit = winnerQCD->getBranchType() == BranchType::SplitF
+      && winnerQCD->posR() >= 0;
+    if (isRFsplit && event[iPartner].isGluon())
+      saveSplitterRF(iSysRes,event,resSysAllSplit,posRSplit,posFSplit,isCol);
   }
 
 }
@@ -4649,31 +5648,36 @@ void VinciaFSR::updateResBranchers(int iSysRes, Event& event,
 
 bool VinciaFSR::updateAntennae(Event& event) {
 
-  if (verbose >= debug) {
-    printOut(__METHOD_NAME__, "begin --------------");
-    if (verbose >= superdebug) printLookup();
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    if (verbose >= VinciaConstants::DEBUG) printLookup();
   }
-  if (winnerPtr == nullptr) {
-    if (verbose >= normal) infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": winnerPtr is NULL");
+  if (winnerQCD == nullptr) {
+    loggerPtr->ERROR_MSG("winnerQCD is null pointer");
     return false;
   }
 
-  // Update QED system(s), then QCD.
-  if (doQED) qedShowerPtr->update(event, iSysWin);
+  // Update EW system(s), then QCD.
+  if (doQED) {
+    if (isHardSys[iSysWin] || isResonanceSys[iSysWin])
+      ewHandlerHard->update(event, iSysWin);
+    else
+      qedShowerSoftPtr->update(event, iSysWin);
+  }
 
   // Was this g->ffbar?
-  int branchType = winnerPtr->getBranchType();
-  if (branchType == 2) {
+  bool isRF = winnerQCD->posR() >= 0;
+  BranchType branchType = winnerQCD->getBranchType();
+  if (branchType == BranchType::SplitF && !isRF) {
     // Remove old splitters where g = i0 and update splitters where g is rec.
-    int splitOld = winnerPtr->i0();
-    int recOld = winnerPtr->i1();
-    removeSplitter(splitOld);
+    int splitOld = winnerQCD->i0();
+    int recOld = winnerQCD->i1();
+    removeSplitterFF(splitOld);
 
     // Get daughters.
     int iColSplit = event[splitOld].daughter1();
     int iaColSplit = event[splitOld].daughter2();
-    if(event[iColSplit].col() == 0 && event[iaColSplit].acol() == 0 &&
+    if (event[iColSplit].col() == 0 && event[iaColSplit].acol() == 0 &&
        event[iColSplit].acol() != 0 && event[iaColSplit].col() != 0) {
       iColSplit = event[splitOld].daughter2();
       iaColSplit = event[splitOld].daughter1();
@@ -4683,33 +5687,33 @@ bool VinciaFSR::updateAntennae(Event& event) {
     int iColPartner = 0;
     int iaColPartner = 0;
     pair<int,bool> testkey = make_pair(splitOld,true);
-    if (lookupBrancherFF.find(testkey) != lookupBrancherFF.end()) {
-      int iTest = emitters[lookupBrancherFF[testkey]].i1();
-      if(event[iTest].acol() == event[splitOld].col()) iaColPartner = iTest;
+    if (lookupEmitterFF.find(testkey) != lookupEmitterFF.end()) {
+      int iTest = emittersFF[lookupEmitterFF[testkey]]->i1();
+      if (event[iTest].acol() == event[splitOld].col()) iaColPartner = iTest;
     }
     testkey = make_pair(splitOld,false);
-    if (lookupBrancherFF.find(testkey) != lookupBrancherFF.end()) {
-      int iTest = emitters[lookupBrancherFF[testkey]].i0();
+    if (lookupEmitterFF.find(testkey) != lookupEmitterFF.end()) {
+      int iTest = emittersFF[lookupEmitterFF[testkey]]->i0();
       if (event[iTest].col() == event[splitOld].acol()) iColPartner = iTest;
     }
 
     //Update splitters where g is (anti-)colour-connected recoiler/emitter.
-    updateSplitter(event,iaColPartner,splitOld,iaColPartner,iColSplit,false);
-    updateSplitter(event,iColPartner,splitOld,iColPartner,iaColSplit,true);
-    updateEmitter(event,iColPartner,splitOld,iColPartner,iaColSplit);
-    updateEmitter(event,splitOld,iaColPartner,iColSplit,iaColPartner);
+    updateSplitterFF(event,iaColPartner,splitOld,iaColPartner,iColSplit,false);
+    updateSplitterFF(event,iColPartner,splitOld,iColPartner,iaColSplit,true);
+    updateEmitterFF(event,iColPartner,splitOld,iColPartner,iaColSplit);
+    updateEmitterFF(event,splitOld,iaColPartner,iColSplit,iaColPartner);
 
     // Update recoiler.
     int recNew = event[recOld].daughter1();
-    updateSplitters(event,recOld,recNew);
-    updateEmitters(event,recOld,recNew);
+    updateSplittersFF(event,recOld,recNew);
+    updateEmittersFF(event,recOld,recNew);
   }
 
   // Emission.
-  else if (branchType == 1) {
+  else if (branchType == BranchType::Emit && !isRF) {
     // Update old splitters.
-    int iOld1 = winnerPtr->i0();
-    int iOld2 = winnerPtr->i1();
+    int iOld1 = winnerQCD->i0();
+    int iOld2 = winnerQCD->i1();
     int iNew1 = event[iOld1].daughter1();
     int iNew2 = event[iOld1].daughter2();
     int iNew3 = event[iOld2].daughter1();
@@ -4724,69 +5728,69 @@ bool VinciaFSR::updateAntennae(Event& event) {
     // Update emitters, determine antenna to preserve.
     // ab->12.
     if (event[iOld1].col() == event[iNew1].col()) {
-      updateEmitter(event,iOld1,iOld2,iNew1,iNew2);
-      if(event[iNew2].col() == event[iNew3].acol())
-        saveEmitter(iSysWin,event,iNew2,iNew3);
+      updateEmitterFF(event,iOld1,iOld2,iNew1,iNew2);
+      if (event[iNew2].col() == event[iNew3].acol())
+        saveEmitterFF(iSysWin,event,iNew2,iNew3);
     // ab->23.
     } else {
-      updateEmitter(event,iOld1,iOld2,iNew2,iNew3);
-      if(event[iNew1].col()==event[iNew2].acol())
-        saveEmitter(iSysWin,event,iNew1,iNew2);
+      updateEmitterFF(event,iOld1,iOld2,iNew2,iNew3);
+      if (event[iNew1].col()==event[iNew2].acol())
+        saveEmitterFF(iSysWin,event,iNew1,iNew2);
     }
     if (event[iNew1].isGluon())
-      updateSplitter(event,iOld1,iOld2,iNew1,iNew2,true);
+      updateSplitterFF(event,iOld1,iOld2,iNew1,iNew2,true);
     if (event[iNew3].isGluon())
-      updateSplitter(event,iOld2,iOld1,iNew3,iNew2,false);
+      updateSplitterFF(event,iOld2,iOld1,iNew3,iNew2,false);
 
     // New splitters.
     if (event[iNew2].isGluon()) {
-      saveSplitter(iSysWin,event,iNew2,iNew3,true);
-      saveSplitter(iSysWin,event,iNew2,iNew1,false);
+      saveSplitterFF(iSysWin,event,iNew2,iNew3,true);
+      saveSplitterFF(iSysWin,event,iNew2,iNew1,false);
     }
 
     // Update other connected-connected antenna, excluding antenna
     // which branched.
-    updateEmitters(event,iOld1,iNew1);
-    updateEmitters(event,iOld2,iNew3);
-    updateSplitters(event,iOld1,iNew1);
-    updateSplitters(event,iOld2,iNew3);
+    updateEmittersFF(event,iOld1,iNew1);
+    updateEmittersFF(event,iOld2,iNew3);
+    updateSplittersFF(event,iOld1,iNew1);
+    updateSplittersFF(event,iOld2,iNew3);
 
   // Resonance emission.
-  } else if (branchType == 5 || branchType == 6) {
+  } else if (isRF) {
     // Update emitters and splitters.
     for (map<int, pair<int, int> >::iterator it =
-         winnerPtr->mothers2daughters.begin();
-         it!= winnerPtr->mothers2daughters.end(); ++it){
+         winnerQCD->mothers2daughters.begin();
+         it!= winnerQCD->mothers2daughters.end(); ++it) {
       int mother    = it->first;
       int daughter1 = (it->second).first;
       int daughter2 = (it->second).second;
       // Recoiler -> just update.
       if (daughter1 == daughter2) {
-        updateEmitters(event,mother,daughter1);
-        updateSplitters(event,mother,daughter1);
+        updateEmittersFF(event,mother,daughter1);
+        updateSplittersFF(event,mother,daughter1);
       // Resonance emitter.
       } else {
         // Convention of res emission: daughter1 is new emission but
         // check anyway.
-        if (branchType == 5 && event[daughter1].isGluon()) {
+        if (branchType == BranchType::Emit && event[daughter1].isGluon()) {
           if (event[daughter1].col()==event[daughter2].acol())
-            saveEmitter(iSysWin,event,daughter1,daughter2);
-          else if(event[daughter1].acol()==event[daughter2].col())
-            saveEmitter(iSysWin,event,daughter2,daughter1);
+            saveEmitterFF(iSysWin,event,daughter1,daughter2);
+          else if (event[daughter1].acol()==event[daughter2].col())
+            saveEmitterFF(iSysWin,event,daughter2,daughter1);
           // TODO: check colour condition here.
           bool col2acol = false;
           if (event[daughter1].col() == event[daughter2].acol())
             col2acol = true;
-          saveSplitter(iSysWin,event,daughter1,daughter2,col2acol);
-          updateEmitters(event,mother,daughter2);
-          updateSplitters(event,mother,daughter2);
+          saveSplitterFF(iSysWin,event,daughter1,daughter2,col2acol);
+          updateEmittersFF(event,mother,daughter2);
+          updateSplittersFF(event,mother,daughter2);
         // Resonant splitter.
-        } else if (branchType == 6 && event[mother].isGluon()
+        } else if (branchType == BranchType::SplitF && event[mother].isGluon()
           && !event[daughter1].isGluon() && !event[daughter2].isGluon()) {
-          removeSplitter(mother);
+          removeSplitterFF(mother);
           int iColSplit  = daughter1;
           int iaColSplit = daughter2;
-          if(event[mother].col() != event[daughter1].col()) {
+          if (event[mother].col() != event[daughter1].col()) {
             iColSplit  = daughter2;
             iaColSplit = daughter1;
           }
@@ -4794,174 +5798,54 @@ bool VinciaFSR::updateAntennae(Event& event) {
           // Find colour connected partner.
           int iColPartner(0), iaColPartner(0);
           pair<int,bool> testkey = make_pair(mother,true);
-          if (lookupBrancherFF.find(testkey) != lookupBrancherFF.end()) {
-            int iTest = emitters[lookupBrancherFF[testkey]].i1();
+          if (lookupEmitterFF.find(testkey) != lookupEmitterFF.end()) {
+            int iTest = emittersFF[lookupEmitterFF[testkey]]->i1();
             if (event[iTest].acol() == event[mother].col())
               iaColPartner=iTest;
           }
           testkey = make_pair(mother,false);
-          if (lookupBrancherFF.find(testkey) != lookupBrancherFF.end()) {
-            int iTest = emitters[lookupBrancherFF[testkey]].i0();
+          if (lookupEmitterFF.find(testkey) != lookupEmitterFF.end()) {
+            int iTest = emittersFF[lookupEmitterFF[testkey]]->i0();
             if (event[iTest].col() == event[mother].acol())
               iColPartner=iTest;
           }
 
           // Update splitters where mother was a
           // (anti)colour-connected recoiler/emitter.
-          updateSplitter(event, iaColPartner, mother, iaColPartner, iColSplit,
-            false);
-          updateSplitter(event, iColPartner, mother, iColPartner, iaColSplit,
-            true);
-          updateEmitter(event, iColPartner, mother, iColPartner, iaColSplit);
-          updateEmitter(event, mother, iaColPartner, iColSplit, iaColPartner);
+          updateSplitterFF(event, iaColPartner, mother, iaColPartner,
+            iColSplit, false);
+          updateSplitterFF(event, iColPartner, mother, iColPartner,
+            iaColSplit, true);
+          updateEmitterFF(event, iColPartner, mother, iColPartner,
+            iaColSplit);
+          updateEmitterFF(event, mother, iaColPartner, iColSplit,
+            iaColPartner);
 
         }
       } // End found branching in mothers2daughters.
     } // End for loop over mothers2daughters.
   } // End resonance brancher case.
 
-  // If system containing resonance has branched, must always update
+  // If system containing a resonance has branched, must always update
   // (because must update downstream recoilers regardless of if last
   // branch was res emission).
   if (isResonanceSys[iSysWin]) {
-    if (!updateResBranchers(iSysWin, event,
-        partonSystemsPtr->getInRes(iSysWin))){
-      if (verbose >= normal)
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed updateResEmitters.");
+    if (!updateEmittersRF(iSysWin, event,
+        partonSystemsPtr->getInRes(iSysWin))) {
+      loggerPtr->ERROR_MSG("failed updateEmittersRF");
       return false;
     }
   }
-  if (verbose >= debug) {
-    if (verbose >= louddebug) list();
-    if (verbose >= superdebug) {
-      printLookup();
-      if (!check(event)) {
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed update antennae.");
-        return false;
-      }
-    }
-    printOut(__METHOD_NAME__, "end --------------");
-  }
-  return true;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Update systems of QCD antennae after a QED branching.
-
-bool VinciaFSR::updateAfterQED(Event& event, int sizeOld) {
-
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "begin --------------");
-  bool updated = false;
-  iSysWin = qedShowerPtr->sysWin();
-
-  // Create colour-anticolour map for post-branching partons.
-  map<int,int> iOfCol, iOfAcol;
-  // Also check for coloured partons that were created in the
-  // splitting, i.e. with status 51, used to create new emission
-  // antennae below.
-  vector<int>  status51coloured;
-  vector<pair<int,int> > colouredrecoilers;
-  for (int i = sizeOld; i < event.size(); ++i) {
-    int col  = event[i].col();
-    int acol = event[i].acol();
-    if (col != 0) iOfCol[col] = i;
-    if (acol != 0) iOfAcol[acol] = i;
-    // Check which were "created" (as opposed to recoiling) - to see
-    // if we need to create splitter.
-    if (event[i].colType() != 0 && event[i].status() == 51)
-      status51coloured.push_back(i);
-    else if (event[i].colType() != 0 &&
-             (event[i].status() == 52 || event[i].status() == 43 ||
-              event[i].status() == 44)) {
-      int moth = event[i].mother1();
-      if (moth > 0) colouredrecoilers.push_back(make_pair(moth, i ));
-    }
-  }
-
-  if (status51coloured.size() == 2) {
-    int i1    = status51coloured[0];
-    int i2    = status51coloured[1];
-    int iCol  = event[i1].colType() > 0 ? i1 : i2;
-    int iAcol = event[i1].colType() > 0 ? i2 : i1;
-    // If this was a splitting to coloured partons, create new
-    // emission antenna. Create a QCD emission antenna between the two
-    // status-51 partons.
-    if (qedShowerPtr->isTrialSplit) saveEmitter(iSysWin,event,iCol,iAcol);
-    // Need to update existing QCD antennae.
-    else {
-      int moth1 = event[i1].mother1();
-      colouredrecoilers.push_back(make_pair(moth1, i1));
-      int moth2 = event[i2].mother1();
-      colouredrecoilers.push_back(make_pair(moth2, i2));
-      if(event[moth1].col() == event[moth2].acol())
-        updateEmitter(event,moth1,moth2,i1,i2);
-    }
-  } else if (status51coloured.size() == 1) {
-    int i1    = status51coloured[0];
-    int moth1 = event[i1].mother1();
-    colouredrecoilers.push_back(make_pair(moth1, i1));
-  } else if (status51coloured.size() > 2){
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Too many status 51 particles");
-    infoPtr->setAbortPartonLevel(true);
-    return false;
-  }
-
-  // Reset any emission antennae involving quarks that have recoiled.
-  for(vector<pair<int,int> >::iterator it = colouredrecoilers.begin();
-      it!= colouredrecoilers.end(); ++it) {
-    int recOld = it->first;
-    int recNew = it->second;
-    updateEmitters(event,recOld,recNew);
-    updateSplitters(event,recOld,recNew);
-  }
-
-  // Update resonance antennae.
-  if (isResonanceSys[iSysWin]){
-    if (!updateResBranchers(iSysWin, event,
-        partonSystemsPtr->getInRes(iSysWin))) {
-      if (verbose >= normal)
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Failed updateResEmitters.");
-      return updated;
-    }
-  }
-
-  // Check the event.
-  if (!check(event)) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__
-      +": Failed update antennae.");
+  if (verbose >= VinciaConstants::DEBUG) {
     list();
-    if (verbose >= superdebug) printLookup();
-    infoPtr->setAbortPartonLevel(true);
+    printLookup();
+  }
+  if (!check(iSysWin, event)) {
+    loggerPtr->ERROR_MSG("failed to update branchers");
     return false;
   }
-
-  // Now check if end quark has changed.
-  if (hasResJunction[iSysWin]) {
-    int iEndQuark = junctionInfo[iSysWin].iEndQuark;
-    if (!event[iEndQuark].isFinal()) {
-      int d1 = event[iEndQuark].daughter1();
-      int d2 = event[iEndQuark].daughter2();
-      if (event[d1].isQuark() && event[d1].col() > 0)
-        junctionInfo[iSysWin].iEndQuark = d1;
-      else if(event[d2].isQuark() && event[d2].col() > 0)
-        junctionInfo[iSysWin].iEndQuark = d2;
-      else {
-        infoPtr->errorMsg("Error in "+__METHOD_NAME__
-          +": Couldn't update junction information");
-        return false;
-      }
-    }
-  }
-  if (verbose >= verylouddebug)
-    printOut(__METHOD_NAME__, "end --------------");
-
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
   return true;
 
 }
@@ -4970,10 +5854,10 @@ bool VinciaFSR::updateAfterQED(Event& event, int sizeOld) {
 
 // Print a brancher lookup.
 
-void VinciaFSR::printLookup(map< pair<int, bool>, unsigned int>
-  lookupBrancher, string name) {
-  for (map< pair<int, bool>, unsigned int >::iterator ilook =
-         lookupBrancher.begin(); ilook != lookupBrancher.end(); ++ilook)
+void VinciaFSR::printLookup(unordered_map< pair<int, bool>, unsigned int>&
+  lookupEmitter, string name) {
+  for (unordered_map< pair<int, bool>, unsigned int>::iterator ilook =
+         lookupEmitter.begin(); ilook != lookupEmitter.end(); ++ilook)
     cout << "  lookup" << name << "[" << (ilook->first).first
          << "," << (ilook->first).second << "] = " << ilook->second << endl;
 }
@@ -4986,10 +5870,10 @@ void VinciaFSR::printLookup() {
   cout << endl << "  --------" << "  Brancher lookup maps"
        << "  -------------------------------------------------------------"
        << endl;
-  printLookup(lookupBrancherRF,"BrancherRF");
+  printLookup(lookupEmitterRF,"EmitterRF");
   printLookup(lookupSplitterRF,"SplitterRF");
-  printLookup(lookupBrancherFF,"BrancherFF");
-  printLookup(lookupSplitter,"SplitterFF");
+  printLookup(lookupEmitterFF,"EmitterFF");
+  printLookup(lookupSplitterFF,"SplitterFF");
   cout << "  --------" << "       End lookup     "
        <<"  -------------------------------------------------------------"
        << endl << endl;
@@ -5030,8 +5914,6 @@ vector<double> VinciaFSR::getHeadroom(int iSys, bool isEmit, double) {
     } else {
       for (int iFlav = 1; iFlav <= nGluonToQuark; ++iFlav) {
         double headroomFac = 1.0;
-        // For sector showers, trial probability should be twice as large.
-        if (sectorShower) headroomFac *= 2;
         // Heavy flavours get 50% larger trial (since mass correction > 0).
         if (iFlav > nFlavZeroMass) headroomFac *= 1.5;
         // MECs also get increased headroom.
@@ -5059,10 +5941,10 @@ vector<double> VinciaFSR::getEnhance(int iSys, bool isEmit, double q2In) {
 
   bool doEnhance = false;
   if (q2In > pow2(enhanceCutoff)) {
-    if (isHardSys[iSys] && enhanceInHard) doEnhance = true;
-    else if (isResonanceSys[iSys] && enhanceInResDec) doEnhance = true;
+    if (isResonanceSys[iSys] && enhanceInResDec) doEnhance = true;
+    else if (isHardSys[iSys] && enhanceInHard) doEnhance = true;
     else if (!isHardSys[iSys] && !isResonanceSys[iSys] &&
-             partonSystemsPtr->hasInAB(iSys) && enhanceInMPI) doEnhance = true;
+      partonSystemsPtr->hasInAB(iSys) && enhanceInMPI) doEnhance = true;
   }
 
   // Check if we have encountered this enhancement criterion before.

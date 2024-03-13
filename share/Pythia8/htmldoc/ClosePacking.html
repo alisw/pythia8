@@ -1,0 +1,181 @@
+<html>
+<head>
+<title>Close-packing</title>
+<link rel="stylesheet" type="text/css" href="pythia.css"/>
+<link rel="shortcut icon" href="pythia32.gif"/>
+</head>
+<body>
+ 
+<h2>Close-packing</h2> 
+ 
+If strings are closely packed, e.g. as a consequence of MPIs, it is 
+likely that they receive an increased string tension, which translates 
+into a broader <i>pT</i> spectrum, see further 
+[<a href="Bibliography.html#refFis16" target="page">Fis16</a>].  It also means an enhanced rate (or rather reduced 
+suppression) of strange quark production relative to up/down quark 
+production.  Close-packing effects are scaled by the effective number 
+of near strings, which is <i>pT</i> suppressed and given by 
+<br/><i> 
+    &kappa;<sub>eff</sub> = (1 + (k<sub>p</sub>p + k<sub>q</sub>q) 
+    /(1+p<sup>2</sup><sub>T had</sub>/p<sup>2</sup><sub>T0</sub>)) 
+    <sup>2r</sup>&kappa;<sub>0</sub>. 
+</i><br/> 
+ 
+This scales the probability <code>StringFlav:probStoUD</code> by 
+<br/><i> 
+    P'(s:u/d) = P(s:u/d)<sup>(&kappa;<sub>0</sub>/&kappa;<sub>eff</sub>)</sup> 
+</i><br/> 
+ 
+<code>StringFlav:probSQtoQQ</code> and <code>StringFlav:probQQ1toQQ0</code> 
+also scale in this way. The width of the <i>pT</i> spectrum, given by 
+<i>&sigma;^2</i> is scaled by 
+<br/><i> 
+    &sigma;'<sup>2</sup> = &sigma;<sup>2</sup> 
+    &kappa;<sub>eff</sub>/&kappa;<sub>0</sub>. 
+</i><br/> 
+ 
+<b>Note:</b> for the purpose of close-packing, string overlaps are 
+determined according to rapidity measured along the z axis. This 
+should be quite appropriate for multi-string 
+systems produced by MPI in pp collisions but would not make much sense 
+to apply to processes such as ee&rarr;WW&rarr;hadrons, for which the z 
+axis does not play any special role; such studies would be 
+interesting but would require a generalisation of the current 
+implementation. 
+ 
+<a name="anchor1"></a>
+<p/><code>flag&nbsp; </code><strong> ClosePacking:doClosePacking &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+If switched on then the two following parameters modify either 
+<code>StringPT:sigma</code> or <code>StringPT:temperature</code>, 
+respectively. Normally only one of the options below would be used, 
+but technically both are allowed and then combine multiplicatively. 
+   
+ 
+<a name="anchor2"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:tension &nbsp;</strong> 
+ (<code>default = <strong>0.08</strong></code>; <code>minimum = 0.0</code>)<br/>
+<i>k<sub>p</sub></i> parameter above. 
+   
+ 
+<a name="anchor3"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:tensionRatio &nbsp;</strong> 
+ (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
+<i>k<sub>q</sub>/k<sub>p</sub></i> ratio. 
+   
+ 
+<a name="anchor4"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:PT0 &nbsp;</strong> 
+ (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.0</code>)<br/>
+<i>p<sub>T0</sub></i> parameter above. 
+   
+ 
+<a name="anchor5"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:facPT &nbsp;</strong> 
+ (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>)<br/>
+Allows scaling of close-packing effect on <i>pT</i> by introducing 
+<br/><i> 
+    R<sub>pT</sub> = facPT<sup>2</sup> 
+    (&kappa;<sub>eff</sub>/&kappa;<sub>0</sub> - 1) + 1, 
+</i><br/> 
+such that 
+<br/><i> 
+    &sigma;'<sup>2</sup> = &sigma;<sup>2</sup> * R<sub>pT</sub>. 
+</i><br/> 
+   
+ 
+<a name="anchor6"></a>
+<p/><code>flag&nbsp; </code><strong> ClosePacking:qqKappa &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Controls whether to increase the diquark probability 
+<code>StringFlav:probQQtoQ</code> which takes the form <i>P(qq:q) = 
+&alpha; * P(ud0) / P(u)</i>, where <i>&alpha;</i> is dependent on 
+<code>StringFlav:probStoUD</code>, <code>StringFlav:probSQtoQQ</code> 
+and <code>StringFlav:probQQ1toQQ0</code> (see further 
+[<a href="Bibliography.html#refBie14" target="page">Bie14</a>]). This scales the diquark probability due to the 
+diquark constituent mass relative to u/d quarks.  This scaling doesn't 
+necessarily translate to the popcorn mechanism for diquark creation. 
+   
+ 
+<a name="anchor7"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:facQQ &nbsp;</strong> 
+ (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>)<br/>
+Allows scaling of close-packing effect on 
+<code>StringFlav:probQQtoQ</code> by introducing 
+<br/><i> 
+    R<sub>QQ</sub> = facQQ<sup>2</sup> 
+    (&kappa;<sub>eff</sub>/&kappa;<sub>0</sub> - 1) + 1, 
+</i><br/> 
+where <code>StringFlav:probQQtoQ</code> is scaled by 
+<br/><i> 
+    P'(qq:q)=&alpha;'(P(qq:q)/&alpha;)<sup>1/R<sub>QQ</sub></sup>, 
+</i><br/> 
+and <i>&alpha;'</i> is <i>&alpha;</i> recalculated given 
+<i>&kappa;<sub>eff</sub></i>. 
+   
+ 
+Parameters <code>ClosePacking:expNSP</code> and 
+<code>ClosePacking:expMPI</code> are typically used for the thermal 
+model of string breaks. Normally only one of the options below would 
+be used, but technically both are allowed and then combine 
+multiplicatively. 
+ 
+<a name="anchor8"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:expNSP &nbsp;</strong> 
+ (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
+<i>r</i> parameter above to allow non-linear scaling of 
+<i>&kappa;<sub>eff</sub></i>. Default value is based on Gaussian string 
+breaks. For the thermal model, the default value is 0.13. 
+   
+ 
+<a name="anchor9"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:expMPI &nbsp;</strong> 
+ (<code>default = <strong>0.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 1.0</code>)<br/>
+Allows scaling of width/temperature by number of MPI rather than number of 
+near strings. The width/temparture will get the prefactor 
+<i>N(MPI)<sup>expMPI</sup></i>. 
+   
+ 
+<a name="section0"></a> 
+<h3>Popcorn destructive interference</h3> 
+ 
+The popcorn mechanism creates diquarks via a step-wise procedure of 
+two successive colour fluctuations on a string. By allowing the first 
+of these colour fluctuaions to break strings given the correct colour 
+configuration, the probability of forming a diquark is reduced in 
+densely packed string systems. To modify 
+<code>StringFlav:probQQtoQ</code>, the survival probability of a 
+diquark is considered, with <i>f<sub>q</sub></i> 
+and <i>f<sub>p</sub></i> being the probability of the colour fluctuation 
+to connect with an antiparallel or parallel nearby string 
+respectively. Connections with antiparallel strings is expected to be 
+dominant due to the favoured colour orientation. These probabilities 
+are <i>pT</i> suppressed the same way as 
+<i>&kappa;<sub>eff</sub></i> is for close-packing, using parameter 
+<code>ClosePacking:PT0</code>. 
+ 
+As colour indices used in colour reconnections are currently not 
+stored in the event, an equal distribution of colours is assumed 
+instead. Considering the survival probability of the first fluctuation 
+for a given colour configuration, the probability 
+<code>StringFlav:probQQtoQ</code> is modified by 
+ 
+<br/><i> 
+    P'(qq:q) = ((1-f<sub>q</sub>)<sup>n<sub>q</sub>/9</sup> 
+    (1-f<sub>p</sub>)<sup>n<sub>p</sub>/9</sup>) P(qq:q). 
+</i><br/> 
+ 
+<a name="anchor10"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:qqFacQ &nbsp;</strong> 
+ (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
+<i>f<sub>q</sub></i> parameter above. 
+   
+ 
+<a name="anchor11"></a>
+<p/><code>parm&nbsp; </code><strong> ClosePacking:qqFacP &nbsp;</strong> 
+ (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
+<i>f<sub>p</sub></i> parameter above. 
+   
+ 
+</body>
+</html>

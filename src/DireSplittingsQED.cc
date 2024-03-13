@@ -1,5 +1,5 @@
 // DireSplittingsQED.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -53,6 +53,7 @@ void DireSplittingQED::init() {
   pT2min  = pow2(settingsPtr->parm("TimeShower:pTmin"));
   pT2minL = pow2(settingsPtr->parm("TimeShower:pTminChgL"));
   pT2minQ = pow2(settingsPtr->parm("TimeShower:pTminChgQ"));
+  pT2minA = min(pT2minL, pT2minQ);
 
 }
 
@@ -81,6 +82,8 @@ bool DireSplittingQED::aboveCutoff( double t, const Particle& radBef,
     if (particleDataPtr->isLepton(radBef.id()) && t < pT2minL )
       return false;
     if (particleDataPtr->isQuark(radBef.id())  && t < pT2minQ )
+      return false;
+    if (radBef.id() == 22 && t < pT2minA )
       return false;
     if ((iSys == 0 || partonSystemsPtr->hasInAB(iSys)) && t < pT2min)
       return false;
@@ -179,7 +182,7 @@ double Dire_fsr_qed_Q2QA::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTminChgQ"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -401,7 +404,7 @@ double Dire_fsr_qed_Q2AQ::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTminChgQ"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -623,7 +626,7 @@ double Dire_fsr_qed_L2LA::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTminChgL"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -850,7 +853,7 @@ double Dire_fsr_qed_L2AL::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTminChgL"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -1072,7 +1075,7 @@ double Dire_isr_qed_Q2QA::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(gaugeFactor(splitInfo.radBef()->id,
                                                      splitInfo.recBef()->id));
   double kappa2 = pow2(settingsPtr->parm("SpaceShower:pTminChgQ"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
 
   return wt;
 }
@@ -1453,7 +1456,7 @@ double Dire_isr_qed_L2LA::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(gaugeFactor(splitInfo.radBef()->id,
                                                      splitInfo.recBef()->id));
   double kappa2 = pow2(settingsPtr->parm("SpaceShower:pTminChgL"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -1800,7 +1803,7 @@ double Dire_fsr_qed_Q2QA_notPartial::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa4 = pow4(settingsPtr->parm("TimeShower:pTminChgQ"))/pow2(m2dip);
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa4);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa4);
   return wt;
 }
 
@@ -1975,7 +1978,7 @@ double Dire_fsr_qed_L2LA_notPartial::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa4 = pow4(settingsPtr->parm("TimeShower:pTminChgL"))/pow2(m2dip);
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa4);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa4);
   return wt;
 }
 

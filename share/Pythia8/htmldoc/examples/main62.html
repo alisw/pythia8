@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main62.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,7 +18,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // for undecayed resonances from Les Houches input using the polarization
 // information of the boson defined in its rest frame.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 //==========================================================================
@@ -30,7 +30,7 @@ using namespace Pythia8;
 // Now the angular distribution will be corrected for each W,
 // based on the polarization value stored in the LHEF.
 // For W- this is (1 -+ cos(theta))^2 for +-1, sin^2(theta) for 0,
-// and isotropic for 9. For W+ it is flipped (i.e. theta->pi-theta).
+// and isotropic for 9. For W+ it is flipped (i.e. theta-&gt;pi-theta).
 // The Pythia decay products (i.e. the branching ratios) are retained.
 
 class MyUserHooks : public UserHooks {
@@ -41,39 +41,39 @@ public:
   MyUserHooks(const Info* infoPtrIn, bool inputOption = true)
     : infoPtr(infoPtrIn), helicityDefinedByMother(inputOption) {
     // Book a histogram to test the angular distribution in the UserHook.
-    cosRaw = new Hist("cos(the*) raw", 100, -1., 1.);
+    cosRaw = new Hist(&quot;cos(the*) raw&quot;, 100, -1., 1.);
   }
 
   // Destructor prints histogram and deletes it.
-  ~MyUserHooks() { cout << *cosRaw; delete cosRaw; }
+  ~MyUserHooks() { cout &lt;&lt; *cosRaw; delete cosRaw; }
 
   // Allow a veto for the process level, to gain access to decays.
   bool canVetoProcessLevel() {return true;}
 
   // Access the event after resonance decays.
-  bool doVetoProcessLevel(Event& process) {
+  bool doVetoProcessLevel(Event&amp; process) {
 
     // Identify decayed W+- bosons for study.
-    // Assume isotropic decay if polarization is unphysically big (|pol|>2)
-    for (int i = 0; i < process.size(); ++i) {
-      if (process[i].idAbs() == 24 && process[i].status() == -22
-          && abs(process[i].pol()) < 2.) {
+    // Assume isotropic decay if polarization is unphysically big (|pol|&gt;2)
+    for (int i = 0; i &lt; process.size(); ++i) {
+      if (process[i].idAbs() == 24 &amp;&amp; process[i].status() == -22
+          &amp;&amp; abs(process[i].pol()) &lt; 2.) {
 
         // Pick decay angles according to desired distribution
         // based on polarization and particle/antiparticle.
         double cosThe = selectAngle( process[i].pol(), process[i].id() );
         // Accumulate the raw angular distribution.
-        cosRaw->fill( cosThe );
+        cosRaw-&gt;fill( cosThe );
         double sinThe = sqrt(1.0 - pow2(cosThe));
-        double phi    = 2.0 * M_PI * rndmPtr->flat();
+        double phi    = 2.0 * M_PI * rndmPtr-&gt;flat();
 
         // Identify W+- daughters, properly ordered.
         int idV = process[i].id();
         int i1  = process[i].daughter1();
         int i2  = process[i].daughter2();
         // The current distributions are for the particle with the
-        // same charge sign as the mother, i.e. W- -> e-.
-        if (process[i1].id() * idV > 0) swap( i1, i2);
+        // same charge sign as the mother, i.e. W- -&gt; e-.
+        if (process[i1].id() * idV &gt; 0) swap( i1, i2);
 
         // Set up decay in rest frame of W+-.
         double mV = process[i].m();
@@ -95,7 +95,7 @@ public:
         // Helicity is defined in the process CMS frame.
         // This is the convention for MadGraph.
         } else {
-          pM = Vec4( 0., 0., 0., infoPtr->mHat());
+          pM = Vec4( 0., 0., 0., infoPtr-&gt;mHat());
         }
 
         // Angular reference axis defined as opposite the mother
@@ -112,7 +112,7 @@ public:
         process[i1].p( p1 );
         process[i2].p( p2 );
       }
-      // End of loop over W's. Do not veto any events.
+      // End of loop over W&apos;s. Do not veto any events.
     }
     return false;
   }
@@ -121,20 +121,20 @@ public:
   double selectAngle( double inputSpin, double inputId ) {
 
     // Set up initial angles.
-    double rdNow = rndmPtr->flat();
+    double rdNow = rndmPtr-&gt;flat();
     double cosThe;
     // Small number to distinguish -1, 1, and 0 with round-off.
     double eps = 1e-10;
 
-    // W+ distribution is "opposite" of W-.
-    if (inputId > 0) inputSpin *= -1;
+    // W+ distribution is &quot;opposite&quot; of W-.
+    if (inputId &gt; 0) inputSpin *= -1;
 
     // Different decay angular distributions.
     // 3/8 * (1 - cos(theta))^2  ++
-    if (inputSpin > eps) {
+    if (inputSpin &gt; eps) {
       cosThe = max( 1.0 - 2.0 * pow(rdNow, 1./3.), -1.0);
     // 3/8 * (1 + cos(theta))^2  --
-    } else if (inputSpin < -eps) {
+    } else if (inputSpin &lt; -eps) {
       cosThe = min( 2.0 * pow(rdNow, 1./3.) - 1.0,  1.0);
     // 3/4 * sin(theta)^2        00
     // Solution of cubic equation that yields the correct result.
@@ -162,42 +162,42 @@ int main() {
 
   // Generator. Shorthand for the event.
   Pythia pythia;
-  Event& event = pythia.event;
+  Event&amp; event = pythia.event;
 
   // Set up to do a user veto and send it in. Initialize.
   //  Use this line for CMS definition of helicity.
-  //  MyUserHooks* myUserHooks = new MyUserHooks(&pythia.info,false);
+  //  MyUserHooks* myUserHooks = new MyUserHooks(&amp;pythia.info,false);
   // Default constructor uses mother frame for helicity.
-  shared_ptr<MyUserHooks> myUserHooks = make_shared<MyUserHooks>(&pythia.info);
+  shared_ptr&lt;MyUserHooks&gt; myUserHooks = make_shared&lt;MyUserHooks&gt;(&amp;pythia.info);
   pythia.setUserHooksPtr( (UserHooksPtr)myUserHooks);
-  pythia.readFile("main62.cmnd");
+  pythia.readFile(&quot;main62.cmnd&quot;);
   pythia.init();
 
   // Histograms.
-  Hist polarization("W polarization", 99, -9.9, 9.9);
-  Hist cosPlus( "cos(theta) W- -> f",    100, -1.0, 1.0);
-  Hist cosMinus("cos(theta) W+ -> fbar", 100, -1.0, 1.0);
-  Hist energy("daughter energy in W rest frame", 100, 0.0, 100.0);
+  Hist polarization(&quot;W polarization&quot;, 99, -9.9, 9.9);
+  Hist cosPlus( &quot;cos(theta) W- -&gt; f&quot;,    100, -1.0, 1.0);
+  Hist cosMinus(&quot;cos(theta) W+ -&gt; fbar&quot;, 100, -1.0, 1.0);
+  Hist energy(&quot;daughter energy in W rest frame&quot;, 100, 0.0, 100.0);
 
   // Extract settings to be used in the main program.
-  int nEvent = pythia.mode("Main:numberOfEvents");
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
 
   // Begin event loop.
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
 
     // Generate events.
     pythia.next();
 
     // Loop through event, looking for a W and its daughters.
-    for (int i = 0; i < event.size(); ++i) {
+    for (int i = 0; i &lt; event.size(); ++i) {
       // Select W boson when it decays to two partons,
       // not when it is a recoil in FSR.
       if (event[i].idAbs() == 24
-          && event[i].daughter1() != event[i].daughter2() ) {
+          &amp;&amp; event[i].daughter1() != event[i].daughter2() ) {
         int i1 = event[i].daughter1();
         // Angular distribution is defined with respect to the decay product
         // with the same sign charge as the W boson.
-        if (event[i1].id() * event[i].id() > 0 ) i1 = event[i].daughter2();
+        if (event[i1].id() * event[i].id() &gt; 0 ) i1 = event[i].daughter2();
 
         // Reconstruct W+- decay angle by boosting daughter and mother to W
         // rest frame. W direction in mother rest frame opposite to mother now.
@@ -212,7 +212,7 @@ int main() {
 
         // Histogram information.
         polarization.fill( event[i].pol() );
-        if ( event[i].id() > 0 ) cosPlus.fill( costhe );
+        if ( event[i].id() &gt; 0 ) cosPlus.fill( costhe );
         else                    cosMinus.fill( costhe );
         energy.fill( p1.e() );
       }
@@ -223,7 +223,7 @@ int main() {
 
   // Statistics. Histograms.
   pythia.stat();
-  cout << polarization << cosPlus << cosMinus << energy;
+  cout &lt;&lt; polarization &lt;&lt; cosPlus &lt;&lt; cosMinus &lt;&lt; energy;
 
   // Done.
   return 0;

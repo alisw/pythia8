@@ -51,6 +51,10 @@ returns a (<code>const</code>) reference to the <ei>i</ei>'th particle
 in the event record, which can be used to get (or set) all the 
 <aloc href="ParticleProperties">properties</aloc> of this particle. 
 </methodmore> 
+<methodmore name="const vector&lt;Particle&gt;* particles()"> 
+alternatively, this method directly returns the (<code>const</code>) vector 
+of particles stored in the event. 
+</methodmore> 
  
 <method name="Particle& Event::front()"> 
 </method> 
@@ -396,6 +400,46 @@ common interest and so not described here.
 A listing of current junctions can be obtained with the 
 <code>listJunctions()</code> method. 
  
+<h3>The HVcols Class</h3> 
+ 
+In <aloc href="HiddenValleyProcesses">Hidden Valley</aloc> 
+<b>SU(N)</b> scenarios, HV colour and anticolour tags need to be 
+bookkept. So as not to have to expand the information on all particles 
+by two more integers, a separate bookkeeping is set up only for 
+HV-coloured particles. It is based on the <code>HVcols</code> class, 
+which only stores three integers: the index of a HV-coloured particle 
+in the full event record, and the related HV colour and anticolour 
+tags. A vector of such objects contains the list of all HV-coloured 
+particles in the full event, and would thus normally be empty. 
+This information can be accessed for each particle by the pointer 
+back to the full event, as described on the 
+<aloc href="ParticleProperties">Particle Properties</aloc> page. 
+In addition some public methods exist for the event, notably 
+ 
+<method name="bool Event::hasHVcols()"> 
+tell whether the event has any HV-coloured particles or not. 
+</method> 
+ 
+<method name="void Event::listHVcols()"> 
+list the indices of particles that have HV colour, along with their 
+respective HV colour and HV anticolour tags. 
+</method> 
+ 
+<p/> 
+There are also some further methods mainly for internal use 
+ 
+<method name="int Event::maxHVcols()"> 
+the maximum HV-colour tag used in the current event. 
+</method> 
+ 
+<method name="void Event::saveVcolsSize()"> 
+</method> 
+<methodmore name="void Event::restoreHVcolsSize()"> 
+save the current number of HV-coloured particles, such that the 
+vector of HV-coloured particles can be restored to this size, in 
+case recent additions need to be undone. 
+</methodmore> 
+ 
 <h3>Subsystems</h3> 
  
 Separate from the event record as such, but closely tied to it is the 
@@ -409,4 +453,4 @@ It is intended to be accessed only by experts, such as implementors of
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

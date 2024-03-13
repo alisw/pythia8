@@ -13,16 +13,17 @@
   <li><a href="#section2">The electroweak couplings</a></li>
   <li><a href="#section3">The quark weak-mixing matrix</a></li>
   <li><a href="#section4">The CoupSM class</a></li>
+  <li><a href="#section5">Running coupling in an <b>SU(N)</b> group</a></li>
 </ol>
 
  
 <a name="section0"></a> 
 <h3>The strong coupling</h3> 
  
-The <code>AlphaStrong</code> class is used to provide a first- or 
-second-order running <i>alpha_strong</i> (or, trivially, a 
-zeroth-order fixed one). Formulae are the standard ones found in 
-[<a href="Bibliography.html#refYao06" target="page">Yao06</a>]. The second-order expression used, eq. (9.5), 
+The <code>AlphaStrong</code> class is used to provide a first-, second- 
+or third-order running <i>alpha_strong</i> (or, trivially, a 
+zeroth-order fixed one). Formulae are the standard ones found in the 
+2006 RPP [<a href="Bibliography.html#refYao06" target="page">Yao06</a>]. The higher-order expression used, eq. (9.5), 
 may be somewhat different in other approaches (with differences 
 formally of higher order), so do not necessarily expect perfect 
 agreement, especially not at small <i>Q^2</i> scales. The starting 
@@ -30,7 +31,7 @@ agreement, especially not at small <i>Q^2</i> scales. The starting
 The <i>Lambda</i> values are matched at the <i>c</i>, <i>b</i> 
 and <i>t</i> flavour thresholds, 
 such that <i>alpha_strong</i> is continuous. 
-For second-order matching an approximate iterative method is used. 
+For second- or third-order matching an approximate iterative method is used. 
  
 <p/> 
 For backwards compatibility, 
@@ -55,7 +56,7 @@ The default behaviour is everywhere first-order running.
 The <i>alpha_strong</i> calculation is initialized by 
 <code>init( value, order, nfmax)</code>, where <code>value</code> 
 is the <i>alpha_strong</i> value at <i>M_Z</i>, <code>order</code> 
-is the order of the running, 0, 1 or 2, and <code>nfmax</code> 
+is the order of the running, 0, 1, 2 or 3, and <code>nfmax</code> 
 is the highest number of flavours to include in the running. Thereafter 
 the value can be calculated by <code>alphaS(scale2)</code>, where 
 <code>scale2</code> is the <i>Q^2</i> scale in GeV^2. 
@@ -70,13 +71,13 @@ since this is where the flavour-dependent <i>Lambda_i</i> values are
 calculated and stored. If in doubt, better call it once again. 
  
 <p/> 
-For applications inside shower programs, a second-order <code>alpha_s</code> 
-value can be obtained as the product of the two functions 
+For applications inside shower programs, a second- or third-order 
+<code>alpha_s</code> value can be obtained as the product of the two functions 
 <code>alphaS1Ord(scale2)</code> and <code>alphaS2OrdCorr(scale2)</code>, 
 where the first gives a simple first-order running (but with the 
-second-order <i>Lambda</i>) and the second the correction factor, 
-below unity, for the second-order terms. This allows a compact handling 
-of evolution equations. 
+second- or third-order <i>Lambda</i>) and the second the correction factor, 
+below unity, for the second- or third-order terms. This allows a compact 
+handling of evolution equations. 
  
 <p/> 
 Resummation arguments [<a href="Bibliography.html#refCat91" target="page">Cat91</a>] show that a set of 
@@ -369,7 +370,7 @@ common quadratic combinations of the above couplings:
    
 <a name="anchor41"></a>
 <strong> double CoupSM::V2CKMgen(int genU, int genD) &nbsp;</strong> <br/>
-the CKM mixing element,or the square of it, for 
+the CKM mixing element, or the square of it, for 
 up-type generation index <code>genU</code> 
 (<i>1 = u, 2 = c, 3 = t, 4 = t'</i>) and 
 down-type generation index <code>genD</code> 
@@ -406,7 +407,69 @@ excluding the top quark and fourth generation from the list of
 possibilities. Unambiguous choice for the lepton-neutrino sector. 
    
  
+<a name="section5"></a> 
+<h3>Running coupling in an <b>SU(N)</b> group</h3> 
+ 
+Included in the code is also a class for the running of the coupling 
+in an arbitrary <b>SU(N)</b> gauge group. This is not part of the 
+Standard Model, but is closely related to the running of 
+<i>alpha_strong</i>, so is therefore documented and encoded in its 
+proximity. Currently it is used in the Hidden Valley scenario. 
+ 
+<a name="anchor46"></a>
+<p/><code>class&nbsp; </code><strong> AlphaSUN &nbsp;</strong> <br/>
+Running couplings in an <b>SU(N)</b> gauge group, to first, second or 
+third order. See definitions in [<a href="Bibliography.html#refRit97" target="page">Rit97</a>], [<a href="Bibliography.html#refYao06" target="page">Yao06</a>] and 
+[<a href="Bibliography.html#refPro07" target="page">Pro07</a>]. There are assumed to be no flavour thresholds, i.e. 
+the number of flavours is a fixed number over the considered range of 
+scales. 
+   
+ 
+<a name="anchor47"></a>
+<p/><strong> AlphaSUN::AlphaSUN() &nbsp;</strong> <br/>
+the constructor does nothing. You need to use one of the following two 
+methods to initialize the generation. 
+   
+ 
+<a name="anchor48"></a>
+<p/><strong> void AlphaSUN::initAlpha( int nC, int nF, int order = 1, double alpha = 0.12, double scale = 91.188) &nbsp;</strong> <br/>
+Set up the required framework for running, given the number of colours, 
+number of flavours, order of running (1, 2 or 3) and the coupling 
+strength at a reference scale (by default the <i>Z^0</i> mass). 
+   
+ 
+<a name="anchor49"></a>
+<p/><strong> void AlphaSUN::initLambda( int nC, int nF, int order = 1, double Lambda = 0.2) &nbsp;</strong> <br/>
+Set up the required framework for running, given the number of colours, 
+number of flavours, order of running (1, 2 or 3) and the <i>Lambda</i> 
+parameter to the given order. 
+   
+ 
+<a name="anchor50"></a>
+<p/><strong> double AlphaSUN::alpha(double scale2) &nbsp;</strong> <br/>
+return the coupling value at the input scale-squared. 
+   
+ 
+<a name="anchor51"></a>
+<p/><strong> double AlphaSUN::alpha1Ord(double scale2) &nbsp;</strong> <br/>
+   
+<a name="anchor52"></a>
+<strong> double AlphaSUN::alpha2OrdCorr(double scale2) &nbsp;</strong> <br/>
+the first method gives a simple first-order running coupling value 
+(but with the second- or third-order Lambda) and the second method 
+gives the correction factor, below unity, for the second- or 
+third-order terms. This allows a compact handling of shower evolution 
+equations. 
+   
+ 
+<a name="anchor53"></a>
+<p/><strong> double AlphaSUN::Lambda() &nbsp;</strong> <br/>
+return the <i>Lambda</i> determined by a <code>initAlpha</code> 
+call. If instead <code>initLambda</code> has been used, the input 
+value there will be echoed. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

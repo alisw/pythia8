@@ -12,8 +12,9 @@ rules, as we will outline further below. Of course, this still
 leaves the field open exactly how to define what to mean by 
 <ei>pT</ei>, how to handle recoil effects, how the colour flow is 
 affected, and so on, so there is certainly room for alternative 
-showers. A first example of a shower implemented within the PYTHIA 
-context is <a href="https://vincia.hepforge.org">VINCIA</a>. 
+showers. Two examples of alternative shower implementations are 
+provided with PYTHIA, by the <aloc href="Vincia">VINCIA</aloc> 
+and <aloc href="DireShowers">Dire</aloc> shower options. 
  
 <p/> 
 For the moment we assume you want to keep the MPI part of the story 
@@ -54,8 +55,9 @@ time shower used for decays, time shower, space shower, merging
 machinery, and merging hooks. The first is only required to handle 
 decays, say of <ei>Z^0</ei> or <ei>Upsilon</ei>, with no dependence on 
 beam remnants or ISR. The second and third, have to handle the 
-interleaved evolution of MPI, ISR and FSR. The
-<aloc href="SimpleShowers">simple</aloc>, <aloc href="Vincia">VINCIA</aloc>, 
+interleaved evolution of MPI, ISR and FSR. 
+The <aloc href="SimpleShowers">simple</aloc>, 
+<aloc href="Vincia">VINCIA</aloc>, 
 and <aloc href="DireShowers">Dire</aloc> showers each implement a 
 derived <code>ShowerModel</code> class which provides access to 
 pointers of all these objects. 
@@ -250,7 +252,7 @@ not the default value.
  
 <method name="virtual int TimeShower::showerQEDafterRemnants( Event& event)"> 
  Optional method to add QED showers after beam remnants have been added 
- but before hadronisation. 
+ but before hadronization. 
  It is called from the very end of <code>PartonLevel::next()</code>, 
  after the main perturbative evolution has finished and all beam 
  remnants have been added. 
@@ -780,4 +782,4 @@ possible allowed recoilers in the input event.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

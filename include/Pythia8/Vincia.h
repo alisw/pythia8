@@ -1,5 +1,5 @@
 // Vincia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,16 +16,21 @@
 #include "Pythia8/Event.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/PartonSystems.h"
+#include "Pythia8/PhaseSpace.h"
 #include "Pythia8/StandardModel.h"
 #include "Pythia8/ShowerModel.h"
+#include "Pythia8/ExternalMEs.h"
 
 // Include Vincia headers.
 #include "Pythia8/VinciaAntennaFunctions.h"
 #include "Pythia8/VinciaCommon.h"
+#include "Pythia8/VinciaDiagnostics.h"
+#include "Pythia8/VinciaEW.h"
 #include "Pythia8/VinciaFSR.h"
 #include "Pythia8/VinciaISR.h"
+#include "Pythia8/VinciaMerging.h"
+#include "Pythia8/VinciaMergingHooks.h"
 #include "Pythia8/VinciaQED.h"
-#include "Pythia8/VinciaMG5MEs.h"
 
 // Define namespace inside which Vincia lives.
 namespace Pythia8 {
@@ -39,11 +44,11 @@ class Vincia : public ShowerModel {
 
 public:
 
-  // Constructor
+  // Constructor.
   Vincia() = default;
 
-  // Empty virtual destructor
-  virtual ~Vincia() = default;
+  // Empty virtual destructor.
+  virtual ~Vincia() override = default;
 
   // Initialize.
   bool init(MergingPtr mrgPtrIn, MergingHooksPtr mrgHooksPtrIn,
@@ -52,8 +57,13 @@ public:
 
   // Function called from Pythia after the beam particles have been set up,
   // so that showers may be initialized after the beams are initialized.
-  // Currently only dummy dunction.
-  bool initAfterBeams() override { return true; }
+  bool initAfterBeams() override {
+    // Initialise QED showers with beams initialised.
+    qedShowerHardPtr->init(beamAPtr, beamBPtr);
+    qedShowerSoftPtr->init(beamAPtr, beamBPtr);
+    ewShowerPtr->init(beamAPtr, beamBPtr);
+    return true;
+  }
 
   // Methods to get
   TimeShowerPtr  getTimeShower() const override { return timesPtr; }
@@ -62,44 +72,35 @@ public:
   MergingHooksPtr getMergingHooks() const override { return mergingHooksPtr; }
   MergingPtr getMerging() const override { return mergingPtr; }
 
+  // End-of-run statistics.
+  void onStat() override {
+    if (verbose >= Logger::REPORT) diagnosticsPtr->print(); }
+
   // Automatically set verbose level in all members.
   void setVerbose(int verboseIn);
 
-  // Utilities for printing info and internal histograms.
-  void printInfo() {
-    timesPtr->printInfo(true);
-    spacePtr->printInfo(true);
-  }
-  void printHistos() {
-    timesPtr->printHistos();
-  }
-  void writeHistos(string fileName = "vincia", string lastName = "dat") {
-    timesPtr->writeHistos(fileName, lastName);
-  }
-  const Hist& getDiagnosticHistogram(string name) {
-    return timesPtr->getDiagnosticHistogram(name);
-  }
-
   // Public Vincia objects.
-  VinciaCommon          vinCom;
-  Resolution            resolution;
-  QEDShower             qedShower;
-  Colour                colour;
-  ResScaleHook          resScaleHook;
-  VinciaWeights         vinWeights;
-  MECs                  mecs;
+  VinciaCommon          vinCom{};
+  Resolution            resolution{};
+  VinciaModulePtr       ewShowerPtr{};
+  VinciaModulePtr       qedShowerHardPtr{};
+  VinciaModulePtr       qedShowerSoftPtr{};
+  VinciaColour          colour{};
+  VinciaWeights         vinWeights{};
+  MECs                  mecs{};
 
   // Auxiliary objects.
-  VinciaMG5MEs          mg5mes;
-  Rambo                 rambo;
+  ExternalMEsPtr        mg5mes{};
+  Rambo                 rambo{};
 
   // Vectors of antenna functions.
-  DGLAP         dglap;
-  AntennaSetFSR antennaSetFSR;
-  AntennaSetISR antennaSetISR;
+  DGLAP         dglap{};
+  AntennaSetFSR antennaSetFSR{};
+  AntennaSetISR antennaSetISR{};
 
   // Pointers to Pythia classes.
-  SusyLesHouches* slhaPtr;
+  SusyLesHouches*    slhaPtr{};
+  WeightContainer*   weightContainerPtr{};
 
  protected:
 
@@ -107,14 +108,24 @@ public:
   bool initTune(int iTune);
 
   // Members for the FSR and ISR showers.
-  shared_ptr<VinciaFSR> timesPtr;
-  shared_ptr<VinciaFSR> timesDecPtr;
-  shared_ptr<VinciaISR> spacePtr;
+  shared_ptr<VinciaFSR> timesPtr{};
+  shared_ptr<VinciaFSR> timesDecPtr{};
+  shared_ptr<VinciaISR> spacePtr{};
+
+  // Merging pointers.
+  shared_ptr<VinciaMergingHooks> mergingHooksPtr{};
+  shared_ptr<VinciaMerging> mergingPtr{};
+
+  // Pointer for diagnostics and profiling.
+  shared_ptr<VinciaDiagnostics> diagnosticsPtr{};
 
  private:
 
   // Verbosity level.
-  int verbose;
+  int verbose{0};
+
+  // Merging flag.
+  bool doMerging{false};
 
 };
 
@@ -122,4 +133,4 @@ public:
 
 } // end Pythia8 namespace
 
-#endif // end Pythia8_Vincia_H
+#endif // Pythia8_Vincia_H

@@ -1,14 +1,6 @@
-#include <Pythia8/Basics.h>
-#include <Pythia8/BeamParticle.h>
-#include <Pythia8/Info.h>
-#include <Pythia8/LHEF3.h>
-#include <Pythia8/ParticleData.h>
-#include <Pythia8/PartonSystems.h>
+#include <Pythia8/Logger.h>
 #include <Pythia8/Settings.h>
-#include <Pythia8/SigmaTotal.h>
-#include <Pythia8/StandardModel.h>
-#include <Pythia8/SusyCouplings.h>
-#include <Pythia8/Weights.h>
+#include <cwchar>
 #include <functional>
 #include <ios>
 #include <istream>
@@ -26,11 +18,12 @@
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -194,7 +187,6 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 
 		cl.def( pybind11::init( [](){ return new Pythia8::Settings(); } ) );
 		cl.def( pybind11::init( [](Pythia8::Settings const &o){ return new Pythia8::Settings(o); } ) );
-		cl.def("initPtrs", (void (Pythia8::Settings::*)(class Pythia8::Info *)) &Pythia8::Settings::initPtrs, "C++: Pythia8::Settings::initPtrs(class Pythia8::Info *) --> void", pybind11::arg("infoPtrIn"));
 		cl.def("init", [](Pythia8::Settings &o) -> bool { return o.init(); }, "");
 		cl.def("init", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.init(a0); }, "", pybind11::arg("startFile"));
 		cl.def("init", (bool (Pythia8::Settings::*)(std::string, bool)) &Pythia8::Settings::init, "C++: Pythia8::Settings::init(std::string, bool) --> bool", pybind11::arg("startFile"), pybind11::arg("append"));
@@ -204,6 +196,8 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def("reInit", (bool (Pythia8::Settings::*)(std::string)) &Pythia8::Settings::reInit, "C++: Pythia8::Settings::reInit(std::string) --> bool", pybind11::arg("startFile"));
 		cl.def("readString", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.readString(a0); }, "", pybind11::arg("line"));
 		cl.def("readString", (bool (Pythia8::Settings::*)(std::string, bool)) &Pythia8::Settings::readString, "C++: Pythia8::Settings::readString(std::string, bool) --> bool", pybind11::arg("line"), pybind11::arg("warn"));
+		cl.def("registerPluginLibrary", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.registerPluginLibrary(a0); }, "", pybind11::arg("libName"));
+		cl.def("registerPluginLibrary", (bool (Pythia8::Settings::*)(std::string, std::string)) &Pythia8::Settings::registerPluginLibrary, "C++: Pythia8::Settings::registerPluginLibrary(std::string, std::string) --> bool", pybind11::arg("libName"), pybind11::arg("startFile"));
 		cl.def("writeFile", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.writeFile(a0); }, "", pybind11::arg("toFile"));
 		cl.def("writeFile", (bool (Pythia8::Settings::*)(std::string, bool)) &Pythia8::Settings::writeFile, "C++: Pythia8::Settings::writeFile(std::string, bool) --> bool", pybind11::arg("toFile"), pybind11::arg("writeAll"));
 		cl.def("writeFile", [](Pythia8::Settings &o) -> bool { return o.writeFile(); }, "");
@@ -264,16 +258,16 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def("flag", (void (Pythia8::Settings::*)(std::string, bool, bool)) &Pythia8::Settings::flag, "C++: Pythia8::Settings::flag(std::string, bool, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
 		cl.def("mode", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, int const & a1) -> bool { return o.mode(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
 		cl.def("mode", (bool (Pythia8::Settings::*)(std::string, int, bool)) &Pythia8::Settings::mode, "C++: Pythia8::Settings::mode(std::string, int, bool) --> bool", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
-		cl.def("parm", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, double const & a1) -> void { return o.parm(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
-		cl.def("parm", (void (Pythia8::Settings::*)(std::string, double, bool)) &Pythia8::Settings::parm, "C++: Pythia8::Settings::parm(std::string, double, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
+		cl.def("parm", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, double const & a1) -> bool { return o.parm(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
+		cl.def("parm", (bool (Pythia8::Settings::*)(std::string, double, bool)) &Pythia8::Settings::parm, "C++: Pythia8::Settings::parm(std::string, double, bool) --> bool", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
 		cl.def("word", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::basic_string<char> const & a1) -> void { return o.word(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
 		cl.def("word", (void (Pythia8::Settings::*)(std::string, std::string, bool)) &Pythia8::Settings::word, "C++: Pythia8::Settings::word(std::string, std::string, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
 		cl.def("fvec", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::vector<bool, class std::allocator<bool> > const & a1) -> void { return o.fvec(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
 		cl.def("fvec", (void (Pythia8::Settings::*)(std::string, class std::vector<bool, class std::allocator<bool> >, bool)) &Pythia8::Settings::fvec, "C++: Pythia8::Settings::fvec(std::string, class std::vector<bool, class std::allocator<bool> >, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
-		cl.def("mvec", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::vector<int, class std::allocator<int> > const & a1) -> void { return o.mvec(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
-		cl.def("mvec", (void (Pythia8::Settings::*)(std::string, class std::vector<int, class std::allocator<int> >, bool)) &Pythia8::Settings::mvec, "C++: Pythia8::Settings::mvec(std::string, class std::vector<int, class std::allocator<int> >, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
-		cl.def("pvec", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::vector<double, class std::allocator<double> > const & a1) -> void { return o.pvec(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
-		cl.def("pvec", (void (Pythia8::Settings::*)(std::string, class std::vector<double, class std::allocator<double> >, bool)) &Pythia8::Settings::pvec, "C++: Pythia8::Settings::pvec(std::string, class std::vector<double, class std::allocator<double> >, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
+		cl.def("mvec", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::vector<int, class std::allocator<int> > const & a1) -> bool { return o.mvec(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
+		cl.def("mvec", (bool (Pythia8::Settings::*)(std::string, class std::vector<int, class std::allocator<int> >, bool)) &Pythia8::Settings::mvec, "C++: Pythia8::Settings::mvec(std::string, class std::vector<int, class std::allocator<int> >, bool) --> bool", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
+		cl.def("pvec", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::vector<double, class std::allocator<double> > const & a1) -> bool { return o.pvec(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
+		cl.def("pvec", (bool (Pythia8::Settings::*)(std::string, class std::vector<double, class std::allocator<double> >, bool)) &Pythia8::Settings::pvec, "C++: Pythia8::Settings::pvec(std::string, class std::vector<double, class std::allocator<double> >, bool) --> bool", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
 		cl.def("wvec", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, class std::vector<class std::basic_string<char>, class std::allocator<class std::basic_string<char> > > const & a1) -> void { return o.wvec(a0, a1); }, "", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
 		cl.def("wvec", (void (Pythia8::Settings::*)(std::string, class std::vector<std::string, class std::allocator<std::string > >, bool)) &Pythia8::Settings::wvec, "C++: Pythia8::Settings::wvec(std::string, class std::vector<std::string, class std::allocator<std::string > >, bool) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"), pybind11::arg("force"));
 		cl.def("forceMode", (void (Pythia8::Settings::*)(std::string, int)) &Pythia8::Settings::forceMode, "C++: Pythia8::Settings::forceMode(std::string, int) --> void", pybind11::arg("keyIn"), pybind11::arg("nowIn"));
@@ -291,6 +285,6 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def("getIsInit", (bool (Pythia8::Settings::*)()) &Pythia8::Settings::getIsInit, "C++: Pythia8::Settings::getIsInit() --> bool");
 		cl.def("readingFailed", (bool (Pythia8::Settings::*)()) &Pythia8::Settings::readingFailed, "C++: Pythia8::Settings::readingFailed() --> bool");
 		cl.def("unfinishedInput", (bool (Pythia8::Settings::*)()) &Pythia8::Settings::unfinishedInput, "C++: Pythia8::Settings::unfinishedInput() --> bool");
-		cl.def("onlySoftQCD", (bool (Pythia8::Settings::*)()) &Pythia8::Settings::onlySoftQCD, "C++: Pythia8::Settings::onlySoftQCD() --> bool");
+		cl.def("hasHardProc", (bool (Pythia8::Settings::*)()) &Pythia8::Settings::hasHardProc, "C++: Pythia8::Settings::hasHardProc() --> bool");
 	}
 }

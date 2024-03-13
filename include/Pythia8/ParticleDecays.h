@@ -1,5 +1,5 @@
 // ParticleDecays.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -45,6 +45,9 @@ public:
   virtual bool chainDecay(vector<int>& , vector<int>& , vector<double>& ,
     vector<Vec4>& , int , const Event& ) {return false;}
 
+  // A virtual method, to return the particles the handler should decay.
+  virtual vector<int> handledParticles() {return {};}
+
 };
 
 //==========================================================================
@@ -71,6 +74,9 @@ public:
 
   // Perform a decay of a single particle.
   bool decay(int iDec, Event& event);
+
+  // Perform decays on all particles in the event.
+  bool decayAll(Event& event, double minWidth = 0.);
 
   // Did decay result in new partons to hadronize?
   bool moreToDo() const {return hasPartons && keepPartons;}

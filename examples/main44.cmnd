@@ -17,7 +17,7 @@ UncertaintyBands:List = {
     alphafsrShi fsr:muRfac=0.5,
     alphaisrShi isr:muRfac=0.5,
     alphaSfsrlo fsr:muRfac=2.0,
-    alphaSisrlo isr:muRfac=2.0,
+    alphaSisrlo isr:muRfac=2.0
 }
 
 ! Subruns for generation.

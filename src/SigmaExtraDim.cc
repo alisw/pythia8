@@ -1,5 +1,5 @@
 // SigmaExtraDim.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -25,7 +25,7 @@ complex ampLedS(double x, double n, double L, double M) {
   double exp1 = n - 2;
   double exp2 = n + 2;
   double rC = sqrt(pow(M_PI,n)) * pow(L,exp1)
-            / (GammaReal(n/2.) * pow(M,exp2));
+            / (gammaReal(n/2.) * pow(M,exp2));
 
   // Base functions, F1 and F2.
   complex I(0., 1.);
@@ -1165,14 +1165,14 @@ void Sigma2gg2LEDUnparticleg::initProc() {
   double tmpAdU = 0;
   if (eDgraviton) {
     tmpAdU  = 2 * M_PI * sqrt( pow(M_PI, double(eDnGrav)) )
-            / GammaReal(0.5 * eDnGrav);
+            / gammaReal(0.5 * eDnGrav);
     if (eDspin == 0) {  // Scalar graviton
       tmpAdU *= sqrt( pow(2., double(eDnGrav)) );
       eDcf   *= eDcf;
     }
   } else {
     tmpAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
   }
 
   // Cross section related constants
@@ -1186,8 +1186,7 @@ void Sigma2gg2LEDUnparticleg::initProc() {
     eDconstantTerm *= pow2(eDlambda) / tmpLS;
   } else {
     eDconstantTerm = 0;
-    infoPtr->errorMsg("Error in Sigma2gg2LEDUnparticleg::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   }
 
 }
@@ -1329,7 +1328,7 @@ void Sigma2qg2LEDUnparticleq::initProc() {
   double tmpAdU = 0;
   if (eDgraviton) {
     tmpAdU  = 2 * M_PI * sqrt( pow(M_PI, double(eDnGrav)) )
-            / GammaReal(0.5 * eDnGrav);
+            / gammaReal(0.5 * eDnGrav);
     // Scalar graviton
     if (eDspin == 0) {
       tmpAdU *= 2. * sqrt( pow(2., double(eDnGrav)) );
@@ -1339,7 +1338,7 @@ void Sigma2qg2LEDUnparticleq::initProc() {
     }
   } else {
     tmpAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
   }
 
   // Cross section related constants
@@ -1355,8 +1354,7 @@ void Sigma2qg2LEDUnparticleq::initProc() {
     eDconstantTerm *= pow2(eDlambda);
   } else {
     eDconstantTerm = 0;
-    infoPtr->errorMsg("Error in Sigma2qg2LEDUnparticleq::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   }
 
 
@@ -1510,7 +1508,7 @@ void Sigma2qqbar2LEDUnparticleg::initProc() {
   double tmpAdU = 0;
   if (eDgraviton) {
     tmpAdU  = 2 * M_PI * sqrt( pow(M_PI, double(eDnGrav)) )
-            / GammaReal(0.5 * eDnGrav);
+            / gammaReal(0.5 * eDnGrav);
     // Scalar graviton
     if (eDspin == 0) {
       tmpAdU *= 2. * sqrt( pow(2., double(eDnGrav)) );
@@ -1520,7 +1518,7 @@ void Sigma2qqbar2LEDUnparticleg::initProc() {
     }
   } else {
     tmpAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
   }
 
   // Cross section related constants
@@ -1536,8 +1534,7 @@ void Sigma2qqbar2LEDUnparticleg::initProc() {
     eDconstantTerm *= pow2(eDlambda);
   } else {
     eDconstantTerm = 0;
-    infoPtr->errorMsg("Error in Sigma2qqbar2LEDUnparticleg::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   }
 
 }
@@ -1711,11 +1708,11 @@ void Sigma2ffbar2LEDUnparticleZ::initProc() {
 
   // The A(dU) or S'(n) value
   double tmpAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-    * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+    * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
 
   if (eDgraviton) {
     tmpAdU  = 2 * M_PI * sqrt( pow(M_PI, double(eDnGrav)) )
-            / GammaReal(0.5 * eDnGrav);
+            / gammaReal(0.5 * eDnGrav);
   }
 
   // Standard 2 to 2 cross section related constants
@@ -1963,11 +1960,11 @@ void Sigma2ffbar2LEDUnparticlegamma::initProc() {
 
   // The A(dU) or S'(n) value
   double tmpAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-    * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+    * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
 
   if (eDgraviton) {
     tmpAdU  = 2 * M_PI * sqrt( pow(M_PI, double(eDnGrav)) )
-            / GammaReal(0.5 * eDnGrav);
+            / gammaReal(0.5 * eDnGrav);
   }
 
   // Standard 2 to 2 cross section related constants
@@ -2178,7 +2175,7 @@ void Sigma2ffbar2LEDgammagamma::initProc() {
     if (eDnegInt == 1) eDlambda2chi *= -1.;
   } else {
     double tmPAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
     double tmPdUpi = eDdU * M_PI;
     eDlambda2chi = pow2(eDlambda) * tmPAdU / (2 * sin(tmPdUpi));
   }
@@ -2187,12 +2184,10 @@ void Sigma2ffbar2LEDgammagamma::initProc() {
   // Note: SM contribution still generated.
   if ( !(eDspin==0 || eDspin==2) ) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2ffbar2LEDgammagamma::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   } else if ( !eDgraviton && (eDdU >= 2)) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2ffbar2LEDgammagamma::initProc: "
-                      "This process requires dU < 2 (turn process off)!");
+    loggerPtr->ERROR_MSG("This process requires dU < 2 (turn process off)!");
   }
 
 }
@@ -2313,7 +2308,7 @@ void Sigma2gg2LEDgammagamma::initProc() {
 
   } else {
     double tmPAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
     double tmPdUpi = eDdU * M_PI;
     eDlambda2chi = pow2(eDlambda) * tmPAdU / (2 * sin(tmPdUpi));
   }
@@ -2321,12 +2316,10 @@ void Sigma2gg2LEDgammagamma::initProc() {
   // Model parameter check (if not applicable, sigma = 0).
   if ( !(eDspin==0 || eDspin==2) ) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2gg2LEDgammagamma::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   } else if ( !eDgraviton && (eDdU >= 2)) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2gg2LEDgammagamma::initProc: "
-                      "This process requires dU < 2 (turn process off)!");
+    loggerPtr->ERROR_MSG("This process requires dU < 2 (turn process off)!");
   }
 
 }
@@ -2440,7 +2433,7 @@ void Sigma2ffbar2LEDllbar::initProc() {
     if (eDnegInt == 1) eDlambda2chi *= -1.;
   } else {
     double tmPAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
     double tmPdUpi = eDdU * M_PI;
     eDlambda2chi = pow2(eDlambda) * tmPAdU / (2 * sin(tmPdUpi));
   }
@@ -2449,12 +2442,10 @@ void Sigma2ffbar2LEDllbar::initProc() {
   // Note: SM contribution still generated.
   if ( !(eDspin==1 || eDspin==2) ) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2ffbar2LEDllbar::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   } else if ( !eDgraviton && (eDdU >= 2)) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2ffbar2LEDllbar::initProc: "
-                      "This process requires dU < 2 (turn process off)!");
+    loggerPtr->ERROR_MSG("This process requires dU < 2 (turn process off)!");
   }
 
 }
@@ -2673,7 +2664,7 @@ void Sigma2gg2LEDllbar::initProc() {
 
   } else {
     double tmPAdU = 16 * pow2(M_PI) * sqrt(M_PI) / pow(2. * M_PI, 2. * eDdU)
-      * GammaReal(eDdU + 0.5) / (GammaReal(eDdU - 1.) * GammaReal(2. * eDdU));
+      * gammaReal(eDdU + 0.5) / (gammaReal(eDdU - 1.) * gammaReal(2. * eDdU));
     double tmPdUpi = eDdU * M_PI;
     eDlambda2chi = pow2(eDlambda) * tmPAdU / (2 * sin(tmPdUpi));
   }
@@ -2681,12 +2672,10 @@ void Sigma2gg2LEDllbar::initProc() {
   // Model parameter check (if not applicable, sigma = 0).
   if ( !(eDspin==2) ) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2gg2LEDllbar::initProc: "
-                      "Incorrect spin value (turn process off)!");
+    loggerPtr->ERROR_MSG("Incorrect spin value (turn process off)!");
   } else if ( !eDgraviton && (eDdU >= 2)) {
     eDlambda2chi = 0;
-    infoPtr->errorMsg("Error in Sigma2gg2LEDllbar::initProc: "
-                      "This process requires dU < 2 (turn process off)!");
+    loggerPtr->ERROR_MSG("This process requires dU < 2 (turn process off)!");
   }
 
 }

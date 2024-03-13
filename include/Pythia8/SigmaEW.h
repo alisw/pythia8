@@ -1,5 +1,5 @@
 // SigmaEW.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -338,7 +338,7 @@ private:
          gamSum, intSum, resSum, gamProp, intProp, resProp;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -381,7 +381,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, thetaWRat, sigma0Pos, sigma0Neg;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -467,7 +467,7 @@ private:
   vector<double> gamT, gamL, intT, intL, intA, resT, resL, resA, sigTLA;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -511,7 +511,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, thetaWRat, sigma0;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -701,7 +701,7 @@ private:
          c3LL, c3LR, c3RL, c3RR, c4LL, c4LR, c4RL, c4RR, flavWt;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -828,7 +828,7 @@ protected:
 private:
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 

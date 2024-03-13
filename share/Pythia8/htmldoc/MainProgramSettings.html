@@ -130,10 +130,38 @@ Print particle and decay data for the particle with this particular
 identity code. Default means that no particle is printed. 
    
  
+<a name="anchor9"></a>
+<p/><code>wvec&nbsp; </code><strong> Init:plugins &nbsp;</strong> 
+ (<code>default = <strong>{}</strong></code>)<br/>
+Vector of user provided plugins to load; full details can be found in 
+<a href="Plugins.html" target="page">Plugins</a>. Each entry should at a minimum 
+take the form <code>LibraryName::ClassName</code>. Here, 
+<code>LibraryName</code> is the name of the library, which can include 
+an absolute or relative path. If no path is provided, then the 
+standard search paths for libraries are searched. The argument 
+<code>ClassName</code> specifies the class of the object to load from 
+the plugin library. Three additional optional arguments, separated by 
+<code>::</code> can also be provided, 
+<code>LibraryName::ClassName::Key::CommandFile::SubRun</code>. For all 
+classes except PDFs, <code>Key</code> can be either <code>set</code>, 
+which sets the corresponding pointer, or <code>add</code>, which (when 
+available) adds to a list of Pythia pointers. For PDF plugins, 
+<code>Key</code> specifies the beam type to set. The optional argument 
+<code>CommandFile</code> specifies a command file that will be read in 
+using the <code>Pythia::readFile</code> method, prior to the 
+construction of the plugin object. If <code>SubRun</code> is provided, 
+then the settings for only that subrun are read. Warning: none of the 
+arguments provided per entry should contain the character 
+<code>::</code>, as this is used as a delimeter for the arguments of 
+the entry. Additionally, the character <code>,</code> should not be 
+used either, as this separates the entries of the vector. All 
+arguments are case sensitive. 
+   
+ 
 <a name="section2"></a> 
 <h3>Event-generation settings</h3> 
  
-<a name="anchor9"></a>
+<a name="anchor10"></a>
 <p/><code>mode&nbsp; </code><strong> Next:numberCount &nbsp;</strong> 
  (<code>default = <strong>1000</strong></code>; <code>minimum = 0</code>)<br/>
 Print a line telling how many events have been generated so far, once 
@@ -145,35 +173,35 @@ information, reports on CPU usage and estimates when the run will end.
 It is used in the <code>main111.cc</code> example. 
    
  
-<a name="anchor10"></a>
+<a name="anchor11"></a>
 <p/><code>mode&nbsp; </code><strong> Next:numberShowLHA &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to list the Les Houches input information for, 
 where relevant. 
    
  
-<a name="anchor11"></a>
+<a name="anchor12"></a>
 <p/><code>mode&nbsp; </code><strong> Next:numberShowInfo &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to list the <code>Info</code> information for, 
 where relevant. 
    
  
-<a name="anchor12"></a>
+<a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> Next:numberShowProcess &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to list the <code>process</code> record for, 
 where relevant. 
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
 <p/><code>mode&nbsp; </code><strong> Next:numberShowEvent &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to list the <code>event</code> record for, 
 where relevant. 
    
  
-<a name="anchor14"></a>
+<a name="anchor15"></a>
 <p/><code>flag&nbsp; </code><strong> Next:showScaleAndVertex &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 In addition to the normal information in the listing of the 
@@ -182,7 +210,7 @@ per particle provides information on the production scale,
 particle polarization and production vertex. 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> Next:showMothersAndDaughters &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 In addition to the normal information in the listing of the 
@@ -193,28 +221,28 @@ list all the mothers and daughters of each particle.
 <a name="section3"></a> 
 <h3>Statistics</h3> 
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> Stat:showProcessLevel &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Print the available statistics on number of generated events and 
 cross sections, where relevant. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> Stat:showPartonLevel &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Print the available statistics on number and types of multiparton 
 interactions, where relevant. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> Stat:showErrors &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Print the available statistics on number and types of 
 aborts, errors and warnings. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> Stat:reset &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Reset the statistics of the above three kinds. The default is that 
@@ -232,34 +260,34 @@ The settings in this section <i>must</i> be under the control of the
 user, i.e. there are no internal equivalents. The first one is especially 
 important and would be a standard feature of any separate command file. 
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>mode&nbsp; </code><strong> Main:numberOfEvents &nbsp;</strong> 
  (<code>default = <strong>1000</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to be generated. 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>mode&nbsp; </code><strong> Main:numberOfTriedEvents &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to be tried during generation. Any number smaller 
 than one means that the setting will be ignored. 
    
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>mode&nbsp; </code><strong> Main:numberOfSelectedEvents &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to be selected during generation. Any number smaller than 
 one means that the setting will be ignored. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>mode&nbsp; </code><strong> Main:numberOfAcceptedEvents &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)<br/>
 The number of events to be accepted during generation. Any number smaller than 
 one means that the setting will be ignored. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>mode&nbsp; </code><strong> Main:timesAllowErrors &nbsp;</strong> 
  (<code>default = <strong>10</strong></code>)<br/>
 Allow this many times that <code>pythia.next()</code> returns false, 
@@ -290,14 +318,14 @@ several tasks in the same run. In that case you will need repeated
 instances of the first setting below in your command file, and could 
 additionally use the second and third as well. 
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><code>mode&nbsp; </code><strong> Main:subrun &nbsp;</strong> 
  (<code>default = <strong>-999</strong></code>; <code>minimum = 0</code>)<br/>
 The number of the current subrun, a non-negative integer, put as 
 first line in a section of lines to be read for this particular subrun. 
    
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><code>flag&nbsp; </code><strong> Main:LHEFskipInit &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If you read several Les Houches Event Files that you want to see 
@@ -306,7 +334,7 @@ considered as one single combined event sample you can set this flag
 (re-)initialization step. 
    
  
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><code>mode&nbsp; </code><strong> Main:numberOfSubruns &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
 The number of subruns you intend to use in your current run. 
@@ -323,62 +351,62 @@ For currently unforeseen purposes, a few dummy settings are made
 available here. The user can set the desired value in a "cards file" 
 and then use that value in the main program as desired. 
  
-<a name="anchor28"></a>
+<a name="anchor29"></a>
 <p/><code>flag&nbsp; </code><strong> Main:spareFlag1 &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
    
  
-<a name="anchor29"></a>
+<a name="anchor30"></a>
 <p/><code>flag&nbsp; </code><strong> Main:spareFlag2 &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
    
  
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> Main:spareFlag3 &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
    
  
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><code>mode&nbsp; </code><strong> Main:spareMode1 &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
    
  
-<a name="anchor32"></a>
+<a name="anchor33"></a>
 <p/><code>mode&nbsp; </code><strong> Main:spareMode2 &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
    
  
-<a name="anchor33"></a>
+<a name="anchor34"></a>
 <p/><code>mode&nbsp; </code><strong> Main:spareMode3 &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>)<br/>
    
  
-<a name="anchor34"></a>
+<a name="anchor35"></a>
 <p/><code>parm&nbsp; </code><strong> Main:spareParm1 &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
    
  
-<a name="anchor35"></a>
+<a name="anchor36"></a>
 <p/><code>parm&nbsp; </code><strong> Main:spareParm2 &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
    
  
-<a name="anchor36"></a>
+<a name="anchor37"></a>
 <p/><code>parm&nbsp; </code><strong> Main:spareParm3 &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>)<br/>
    
  
-<a name="anchor37"></a>
+<a name="anchor38"></a>
 <p/><code>word&nbsp; </code><strong> Main:spareWord1 &nbsp;</strong> 
  (<code>default = <strong>void</strong></code>)<br/>
    
  
-<a name="anchor38"></a>
+<a name="anchor39"></a>
 <p/><code>word&nbsp; </code><strong> Main:spareWord2 &nbsp;</strong> 
  (<code>default = <strong>void</strong></code>)<br/>
    
  
-<a name="anchor39"></a>
+<a name="anchor40"></a>
 <p/><code>word&nbsp; </code><strong> Main:spareWord3 &nbsp;</strong> 
  (<code>default = <strong>void</strong></code>)<br/>
    
@@ -386,4 +414,4 @@ and then use that value in the main program as desired.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

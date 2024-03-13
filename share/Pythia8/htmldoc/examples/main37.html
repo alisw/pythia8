@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main37.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,7 +16,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // It illustrates how Les Houches Event File version 3.0 input can be used
 // to mix events according to several different event weights.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 int main() {
@@ -25,20 +25,20 @@ int main() {
   Pythia pythia;
 
   // Initialize Les Houches Event File run.
-  pythia.readString("Beams:frameType = 4");
-  pythia.readString("Beams:LHEF = wbj_lhef3.lhe");
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = wbj_lhef3.lhe&quot;);
   pythia.init();
 
   // Get number of event weights.
-  int ninitrwgt = pythia.info.initrwgt ? pythia.info.initrwgt->size() : 0;
+  int ninitrwgt = pythia.info.initrwgt ? pythia.info.initrwgt-&gt;size() : 0;
 
   // Initialise as many histograms as there are event weights.
-  vector<Hist> pTw;
-  for (int iHist = 0; iHist < ninitrwgt; ++iHist)
-    pTw.push_back( Hist("pT W",50,0.,200.) );
+  vector&lt;Hist&gt; pTw;
+  for (int iHist = 0; iHist &lt; ninitrwgt; ++iHist)
+    pTw.push_back( Hist(&quot;pT W&quot;,50,0.,200.) );
 
   // Begin event loop; generate until none left in input file.
-  for (int iEvent = 0; iEvent < 10; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; 10; ++iEvent) {
 
     // Generate events, and check whether generation failed.
     if (!pythia.next()) {
@@ -49,17 +49,17 @@ int main() {
 
     // Find the final copy of the W and its pT.
     int iW = 0;
-    for (int i = pythia.event.size() - 1; i > 0; --i)
+    for (int i = pythia.event.size() - 1; i &gt; 0; --i)
       if (pythia.event[i].idAbs() == 24) { iW = i; break;}
     double pT = pythia.event[iW].pT();
 
     // Loop over the event weights in the detailed format and histogram.
     int iwgt = 0;
-    const map<string,double>* weights = pythia.info.weights_detailed;
+    const map&lt;string,double&gt;* weights = pythia.info.weights_detailed;
     if (weights) {
-      for ( map<string,double>::const_iterator it = weights->begin();
-            it != weights->end(); ++it ) {
-        pTw[iwgt].fill( max(pT,0.5), it->second );
+      for ( map&lt;string,double&gt;::const_iterator it = weights-&gt;begin();
+            it != weights-&gt;end(); ++it ) {
+        pTw[iwgt].fill( max(pT,0.5), it-&gt;second );
         ++iwgt;
       }
     }
@@ -73,12 +73,12 @@ int main() {
   // Print histograms.
   ofstream write;
   stringstream suffix;
-  for (int iHist = 0; iHist < ninitrwgt; ++iHist) {
-    suffix << iHist << ".dat";
+  for (int iHist = 0; iHist &lt; ninitrwgt; ++iHist) {
+    suffix &lt;&lt; iHist &lt;&lt; &quot;.dat&quot;;
     // Write histograms to file.
-    write.open( (char*)("PTW_" + suffix.str()).c_str());
+    write.open( (char*)(&quot;PTW_&quot; + suffix.str()).c_str());
     pTw[iHist].table(write);
-    suffix.str("");
+    suffix.str(&quot;&quot;);
     write.close();
   }
 

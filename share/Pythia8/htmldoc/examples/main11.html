@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main11.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,55 +16,53 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // It illustrates how Les Houches Event File input can be used in Pythia8.
 // It uses the ttsample.lhe(.gz) input file, the latter only with 100 events.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 int main() {
 
   // You can always read an plain LHE file,
-  // but if you ran "./configure --with-gzip" before "make"
+  // but if you ran &quot;./configure --with-gzip&quot; before &quot;make&quot;
   // then you can also read a gzipped LHE file.
-#ifdef GZIPSUPPORT
+#ifdef GZIP
   bool useGzip = true;
 #else
   bool useGzip = false;
 #endif
-  cout << " useGzip = " << useGzip << endl;
+  cout &lt;&lt; &quot; useGzip = &quot; &lt;&lt; useGzip &lt;&lt; endl;
 
   // Generator. We here stick with default values, but changes
   // could be inserted with readString or readFile.
   Pythia pythia;
 
   // Initialize Les Houches Event File run. List initialization information.
-  pythia.readString("Beams:frameType = 4");
-  if (useGzip) pythia.readString("Beams:LHEF = ttbar.lhe.gz");
-  else         pythia.readString("Beams:LHEF = ttbar.lhe");
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  if (useGzip) pythia.readString(&quot;Beams:LHEF = ttbar.lhe.gz&quot;);
+  else         pythia.readString(&quot;Beams:LHEF = ttbar.lhe&quot;);
   pythia.init();
 
   // Book histogram.
-  Hist nCharged("charged particle multiplicity",100,-0.5,399.5);
+  Hist nCharged(&quot;charged particle multiplicity&quot;,100,-0.5,399.5);
 
   // Allow for possibility of a few faulty events.
   int nAbort = 10;
   int iAbort = 0;
 
   // Begin event loop; generate until none left in input file.
-  for (int iEvent = 0; ; ++iEvent) {
+  while (iAbort &lt; nAbort) {
 
     // Generate events, and check whether generation failed.
     if (!pythia.next()) {
 
       // If failure because reached end of file then exit event loop.
       if (pythia.info.atEndOfFile()) break;
-
-      // First few failures write off as "acceptable" errors, then quit.
-      if (++iAbort < nAbort) continue;
-      break;
+      ++iAbort;
+      continue;
     }
 
     // Sum up final charged multiplicity and fill in histogram.
     int nChg = 0;
-    for (int i = 0; i < pythia.event.size(); ++i)
-    if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
       ++nChg;
     nCharged.fill(nChg);
 
@@ -73,7 +71,7 @@ int main() {
 
   // Give statistics. Print histogram.
   pythia.stat();
-  cout << nCharged;
+  cout &lt;&lt; nCharged;
 
   // Done.
   return 0;

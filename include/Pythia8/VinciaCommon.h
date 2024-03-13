@@ -1,5 +1,5 @@
 // VinciaCommon.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,72 +20,36 @@
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/StandardModel.h"
 
-//==========================================================================
-
 // Global Vincia constants, defined to live in a Vincia-specific
-// namespace to avoid clashes.
-namespace Vincia {
+// namespace to avoid potential clashes with anything else defined in Pythia8.
+namespace VinciaConstants {
 
-// Global numerical precision target (should be kept within a
+// Global numerical precision targets (should be kept within a
 // reasonable margin of machine precision).  Large values may result
 // in strange results due to non-zero terms being artificially forced
 // to zero.
-const double TINY     = 1.0e-9;
-const double TINYMASS = 1.0e-6;
-const double SMALL    = 1.0e-3;
+const double UNITY = 1.0;
+const double DECI  = 1.0e-1;
+const double CENTI = 1.0e-2;
+const double MILLI = 1.0e-3;
+const double MICRO = 1.0e-6;
+const double NANO  = 1.0e-9;
+const double PICO  = 1.0e-12;
 
-// Color factors in Vincia normalization.
+// Colour factors in Vincia normalization.
 const double CA = 3.0;
 const double CF = 8.0/3.0;
 const double TR = 1.0;
 const double NC = 3.0;
 
-// Indices of FF antenna functions.
-const int iQQemitFF  = 0;
-const int iQGemitFF  = 1;
-const int iGQemitFF  = 2;
-const int iGGemitFF  = 3;
-const int iGXsplitFF = 4;
-
-// Indices of RF antenna functions.
-const int iQQemitRF  = 5;
-const int iQGemitRF  = 6;
-const int iXGsplitRF = 7;
-
-// Indices of II antenna functions.
-const int iQQemitII  = 0;
-const int iGQemitII  = 1;
-const int iGGemitII  = 2;
-const int iQXsplitII = 3;
-const int iGXconvII  = 4;
-
-// Indices of IF antenna functions.
-const int iQQemitIF  = 5;
-const int iQGemitIF  = 6;
-const int iGQemitIF  = 7;
-const int iGGemitIF  = 8;
-const int iQXsplitIF = 9;
-const int iGXconvIF  = 10;
-const int iXGsplitIF = 11;
-
 // Mathematical constants (Euler–Mascheroni constant).
 const double gammaE = 0.577215664901532860606512090082402431042;
 
-// Verbosity levels.
-// Suppressed verbosity.
-const int silent        = 0;
-const int quiet         = 1;
-// Normal verbosity for warnings.
-const int normal        = 2;
-// Extra verbosity for warnings.
-const int quiteloud     = 3;
-const int loud          = 4;
-const int veryloud      = 5;
-// Debug verbosity levels.
-const int debug         = 6;
-const int louddebug     = 7;
-const int verylouddebug = 8;
-const int superdebug    = 9;
+// Verbosity levels. Vincia has one more level (debug) beyond report.
+const int DEBUG   = 4;
+
+// Padding length for dashes in standardised Vincia verbose output.
+const int DASHLEN = 80;
 
 }
 
@@ -93,8 +57,18 @@ const int superdebug    = 9;
 
 namespace Pythia8 {
 
-// Include namespace with global Vincia constants.
-using namespace Vincia;
+// Forward declaration.
+class VinciaCommon;
+
+//==========================================================================
+
+// Enumerator for antenna function types, with "void" member NoFun.
+enum AntFunType { NoFun,
+                  QQEmitFF, QGEmitFF, GQEmitFF, GGEmitFF, GXSplitFF,
+                  QQEmitRF, QGEmitRF, XGSplitRF,
+                  QQEmitII, GQEmitII, GGEmitII, QXConvII, GXConvII,
+                  QQEmitIF, QGEmitIF, GQEmitIF, GGEmitIF, QXConvIF,
+                  GXConvIF, XGSplitIF };
 
 //==========================================================================
 
@@ -167,12 +141,14 @@ typedef unsigned int uint;
 #endif
 #endif // end VINCIA_FUNCTION
 
-inline std::string methodName(const std::string& prettyFunction) {
+inline std::string methodName(const std::string& prettyFunction, bool
+  withPythia=false) {
   size_t colons = prettyFunction.find("::");
-  size_t begin = prettyFunction.substr(0,colons).rfind(" ") + 1;
+  // Include Pythia8:: or not.
+  size_t begin = colons + 2;
+  if (withPythia) begin = prettyFunction.substr(0,colons).rfind(" ") + 1;
   size_t end = prettyFunction.rfind("(") - begin;
   return prettyFunction.substr(begin,end) + "()";
-
 }
 
 #define __METHOD_NAME__ methodName(VINCIA_FUNCTION)
@@ -180,54 +156,10 @@ inline std::string methodName(const std::string& prettyFunction) {
 
 //==========================================================================
 
-// Functors are required to use zbrent for the rescaling variable
-// needed in the massive Rambo version.
-
-// Pure virtual function overloading operator().
-class TFunctor {
-
-public:
-  virtual double operator()(double) = 0;
-  virtual ~TFunctor() {}
-
-};
-
-// Functor for xi-solution in Rambo.
-class TXiFunctor : public TFunctor {
-
-public:
-
-  // Constructor takes a vector with the masses and one with the energies.
-  TXiFunctor(vector<double> mIn, vector<double> energiesIn);
-  double operator() (double);
-
-private:
-  vector<double> m;
-  vector<double> energies;
-
-};
-
-// Derive a class which can wrap function pointers.
-class TPtrFunctor : public TFunctor {
-
-public:
-  TPtrFunctor(double (*fPtrIn)(double) ){ fPtr = fPtrIn; };
-  double operator() (double arg) { return fPtr(arg); };
-
-private:
-
-  // Pointer to a function taking one double and returning one double.
-  double (*fPtr)(double);
-
-};
-
-//==========================================================================
-
 // Global functions accessible in the Vincia namespace.
 
 // Utilities for printing out VINCIA Messages.
-void printErr(string,string);
-void printOut(string,string);
+void printOut(string,string,int nPad=0,char padChar='-');
 
 // String utilities.
 string num2str(int,int width=4) ;
@@ -271,90 +203,14 @@ inline bool fileExists(const std::string& name) {
 
 }
 
-// A few useful auxiliary functions like extra invariants and dot products.
-double m          (const Vec4&);
-double m2         (const Vec4&);
-double m2         (const Vec4&, const Vec4&, const Vec4&);
-double m2         (const Vec4&, const Vec4&, const Vec4&, const Vec4&);
-double m2         (const Particle&, const Particle&, const Particle&);
-double dot4       (const Particle&, const Particle&);
-double getCosTheta(double E1, double E2, double m1, double m2, double s12);
-
-// Gram determinant, invariants used in the argument = 2*pi*pj.
-double gramDet(double s01tilde, double s12tilde, double s02tilde,
-  double m0, double m1, double m2);
-double gramDet(Vec4 p0, Vec4 p1, Vec4 p2);
-
-// Math support functions.
-double Li2      (const double,const double kmax = 100.0,
-                 const double xerr = Vincia::TINY);
-double factorial(const int);
-int    binomial (const int,int);
-double LambertW (const double x);
-
-// Zero-finder zbrent with Functor (used by massive Rambo). Note,
-// does not work if the reference to TFunctor is declared const.
-double zbrent(TFunctor&, double, double, double, double);
-
-//==========================================================================
-
-// Rambo flat phase-space generator.
-
-// This is an implementation of the Rambo phase-space generator as
-// presented in A New Monte Carlo Treatment Of Multiparticle Phase
-// Space At High-Energies, R. Kleiss, W.J. Stirling, S.D. Ellis, CPC40
-// (1986) 359.
-
-class Rambo {
-
- public:
-
-  // Deafult constructor.
-  Rambo() { rndmPtr=nullptr; isInitPtr=false;}
-
-  // Initializing constructor.
-  Rambo(Rndm* rndmPtrIn) { initPtr(rndmPtrIn); }
-
-  // Destructor.
-  virtual ~Rambo() {}
-
-  // Initialize pointers.
-  void initPtr(Rndm* rndmPtrIn) {rndmPtr = rndmPtrIn; isInitPtr = true;}
-
-  // Rambo phase space generator. Generates nOut uniformly distributed
-  // massless 4-vectors with sqrt(s) = eCM. Output in pOut.
-  double genPoint(double eCM,int nOut,vector<Vec4>& pOut);
-
-  // Massive generalisation, weights NOT 1 anymore - literal implementation
-  // of original RAMBO paper by Ellis, Kleiss and Stirling. Number of particles
-  // determined from size of mIn vector.
-  double genPoint(double eCM,vector<double> mIn,vector<Vec4>& pOut);
-
- private:
-
-  // Is initialized.
-  bool isInitPtr;
-
-  // Pointer to the random number generator.
-  Rndm*  rndmPtr;
-
-};
-
 //==========================================================================
 
 // A class to store and process colour information, e.g. colour maps,
 // reconnections, etc.
 
-class Colour {
+class VinciaColour {
 
 public:
-
-  // Constructor.
-
-  Colour() {isInitPtr=false; isInit=false;}
-
-  // Destructor.
-  ~Colour() {}
 
   // Initialize pointers (must be done before init).
   void initPtr(Info* infoPtrIn) {
@@ -398,10 +254,10 @@ public:
 private:
 
   // Internal parameters.
-  int inheritMode;
+  int inheritMode{};
 
   // Is initialized.
-  bool isInitPtr, isInit;
+  bool isInitPtr{false}, isInit{false};
 
   // Pointers to PYTHIA 8 objects.
   Info*          infoPtr;
@@ -411,7 +267,111 @@ private:
   Rndm*          rndmPtr;
 
   // Verbose level.
-  int verbose;
+  int verbose{};
+
+};
+
+//==========================================================================
+
+// Simple struct to store information about a 3 -> 2 clustering.
+
+struct VinciaClustering {
+
+  // Set information about daughters from current event and daughters indices.
+  void setDaughters(const Event& state, int dau1In, int dau2In, int dau3In);
+  void setDaughters(const vector<Particle>& state, int dau1In, int dau2In,
+    int dau3In);
+
+  // Set mother particle ids.
+  void setMothers(int idMot1In, int idMot2In) {
+    idMot1 = idMot1In;
+    idMot2 = idMot2In;
+  }
+
+  // Set antenna information.
+  void setAntenna(bool isFSRin, enum AntFunType antFunTypeIn) {
+    isFSR = isFSRin;
+    antFunType = antFunTypeIn;
+  }
+
+  // Initialise vectors of invariants and masses.
+  bool initInvariantAndMassVecs();
+
+  // Set invariants and masses.
+  void setInvariantsAndMasses(const Event& state);
+  void setInvariantsAndMasses(const vector<Particle>& state);
+
+  // Swap 1 <-> 3, including information about parents.
+  void swap13() {
+    swap(dau1,dau3);
+    swap(idMot1,idMot2);
+    swap(saj,sjb);
+    if (mDau.size() == 3)
+      swap(mDau[0],mDau[2]);
+    if (mMot.size() == 2)
+      swap(mMot[0],mMot[1]);
+    if (invariants.size() == 3) {
+      swap(invariants[1],invariants[2]);
+    }
+  }
+
+  // Methods to get antenna type.
+  bool isFF() const {
+    if (!isFSR) return false;
+    else if (antFunType >= QQEmitFF && antFunType < QQEmitRF) return true;
+    else return false;
+  }
+  bool isRF() const {
+    if (!isFSR) return false;
+    else if (antFunType >= QQEmitRF && antFunType < QQEmitII) return true;
+    else return false;
+  }
+  bool isII() const {
+    if (isFSR) return false;
+    else if (antFunType >= QQEmitII && antFunType < QQEmitIF) return true;
+    return false;
+  }
+  bool isIF() const {
+    if (isFSR) return false;
+    else if (antFunType >= QQEmitIF) return true;
+    else return false;
+  }
+  string getAntName() const;
+
+  // Methods to get branching type (currently only 2 -> 3).
+  bool is2to3() const { return true; }
+
+  // Branching daughter information (indices in event record).
+  int dau1{}, dau2{}, dau3{};
+
+  // Antenna information.
+  bool isFSR{true};
+  AntFunType antFunType{NoFun};
+
+  // Mother ids.
+  int idMot1{}, idMot2{};
+
+  // Helicities.
+  vector<int> helDau = {9, 9, 9};
+  vector<int> helMot = {9, 9};
+
+  // Masses.
+  vector<double> mDau;
+  vector<double> mMot;
+
+  // Invariants.
+  double saj{}, sjb{}, sab{};
+  // Vector of invariants (stored as sAB, saj, sjb, sab).
+  vector<double> invariants;
+
+  // Value of sector resolution variable that this clustering produces.
+  double q2res{};
+
+  // Value of evolution variable that this clustering produces.
+  double q2evol{};
+
+  // Kinematic map (only used for FF).
+  int kMapType{};
 
 };
 
@@ -423,57 +383,100 @@ class Resolution {
 
 public:
 
-  // Constructor.
-  Resolution() = default;
-
-  // Destructor.
-  virtual ~Resolution() {};
-
   // Initialize pointers (must be done before init).
-  void initPtr(Settings* settingsPtrIn) {
+  void initPtr(Settings* settingsPtrIn, Info* infoPtrIn,
+    VinciaCommon* vinComPtrIn) {
     settingsPtr = settingsPtrIn;
+    infoPtr     = infoPtrIn;
+    loggerPtr   = infoPtrIn->loggerPtr;
+    vinComPtr   = vinComPtrIn;
     isInitPtr   = true;
   }
 
   // Initialize.
   bool init();
 
-  // Sector resolution functions.
-  double q2sector2to3(const Particle* a, const Particle* b, const Particle* j,
-    bool = false);
+  // Method to calculate (and set) evolution variable.
+  double q2evol(VinciaClustering& clus);
 
-  // Sector resolution function for 3->4 branchings (currently only
-  // used for gluon splitting, with m2qq as the measure).
-  double q2sector3to4(const Particle*, const Particle*,
-    const Particle* j1, const Particle* j2);
+  // Method to calculate dimensionless evolution variable.
+  // Note: calls q2evol(), so will set dimensionful evolution
+  // variable in the VinciaClustering object.
+  double xTevol(VinciaClustering& clus);
 
-  // Sector resolution function for 2->4 branchings (double emission).
-  // Assume j1 and j2 are colour connected, with a and b hard
-  // recoilers.
-  double q2sector2to4(const Particle* a, const Particle* b,
-    const Particle* j1, const Particle* j2);
+  // Top-level function to calculate (and set) sector resolution.
+  double q2sector(VinciaClustering& clus);
 
-  // Sector resolution function for 3->5 branchings (emission +
-  // splitting).
-  double q2sector3to5(Particle* a, Particle* b,
-    Particle* j1, Particle* j2, Particle* j3);
+  // Find sector with minimal resolution.
+  // Optionally resolve Born: avoid clusterings that would not lead
+  // to a specified (Born) configuration.
+  VinciaClustering findSector(vector<Particle>& state,
+    map<int,int> flavsBorn);
+  // Find sector with minimal resolution.
+  // Optionally avoid sectors that cluster beyond a minimal number
+  // of quark pairs or gluons.
+  VinciaClustering findSector(vector<Particle>& state,
+    int nqpMin = 0, int ngMin = 0);
 
-  // Sector accept function. Optionally prevent g->qq clusterings if
-  // that would reduce the number of fermion lines below some minimum
-  // (cheap way to indicate that Z->qq/ll always has at least one
-  // fermion pair).
-  double findSector(vector<int>& iSec, vector<Particle> state, int nFmin = 1);
+  // Find sector with minimal q2sector in list of clusterings.
+  VinciaClustering getMinSector(vector<VinciaClustering>& clusterings);
+
+  // Sector veto to check whether given value of resolution is minimal,
+  // given we want to preserve a certain Born configuration.
+  // Returns true = vetoed, and false = not vetoed.
+  bool sectorVeto(double q2In, vector<Particle>& state,
+    map<int,int> nFlavsBorn) {
+    VinciaClustering clusMin = findSector(state, nFlavsBorn);
+    if (q2In > clusMin.q2res) return true;
+    else return false;
+  }
+  bool sectorVeto(const VinciaClustering& clusMin,
+    const VinciaClustering& clus);
 
   // Set verbosity level.
   void setVerbose(int verboseIn) {verbose = verboseIn;}
 
 private:
 
+  // Member functions.
+
+  // Sector resolution for 2 -> 3 branchings.
+  double q2sector2to3FF(VinciaClustering& clus);
+  double q2sector2to3RF(VinciaClustering& clus);
+  double q2sector2to3IF(VinciaClustering& clus);
+  double q2sector2to3II(VinciaClustering& clus);
+
+  // Sector resolution function for 3->4 branchings (currently only
+  // used for gluon splitting, with m2qq as the measure).
+  //TODO: currently disabled.
+  //   double q2sector3to4(const Particle*, const Particle*,
+  //     const Particle* j1, const Particle* j2) {return -1.;}
+
+  // Sector resolution function for 2->4 branchings (double emission).
+  // Assume j1 and j2 are colour connected, with a and b hard
+  // recoilers.
+  //TODO: currently disabled.
+  //   double q2sector2to4(const Particle* a, const Particle* b,
+  //     const Particle* j1, const Particle* j2) {return -1.;}
+
+  // Sector resolution function for 3->5 branchings (emission +
+  // splitting).
+  //TODO: currently disabled.
+  //   double q2sector3to5(Particle* a, Particle* b,
+  //     Particle* j1, Particle* j2, Particle* j3) {return -1;}
+
+  // Members.
+
   // Initialized.
   bool isInitPtr{false}, isInit{false};
 
   // Pointer to PYTHIA 8 settings database.
   Settings* settingsPtr{};
+  Info* infoPtr{};
+  Logger* loggerPtr{};
+
+  // Pointer to VinciaCommon.
+  VinciaCommon* vinComPtr{};
 
   // Number of flavours to be treated as massless.
   int nFlavZeroMassSav{};
@@ -492,19 +495,15 @@ class VinciaCommon {
 
 public:
 
-  // Constructor.
-  VinciaCommon() {isInitPtr = false; isInit = false;}
-
-  // Destructor.
-  virtual ~VinciaCommon() {}
-
   // Initialize pointers.
   bool initPtr(Info* infoPtrIn) {
-    infoPtr      = infoPtrIn;
-    particleDataPtr = infoPtr->particleDataPtr;
-    settingsPtr     = infoPtr->settingsPtr;
-    rndmPtr         = infoPtr->rndmPtr;
-    isInitPtr       = true;
+    infoPtr          = infoPtrIn;
+    particleDataPtr  = infoPtr->particleDataPtr;
+    settingsPtr      = infoPtr->settingsPtr;
+    loggerPtr        = infoPtr->loggerPtr;
+    rndmPtr          = infoPtr->rndmPtr;
+    partonSystemsPtr = infoPtr->partonSystemsPtr;
+    isInitPtr        = true;
     return true;
   }
 
@@ -518,9 +517,6 @@ public:
   // Function to check the event after each branching. Added by NF to
   // see if certain Pythia warnings/error are caused by the shower.
   bool showerChecks(Event& event, bool ISR);
-
-  // More lightweight function to check conservation of momentum.
-  bool checkCoM(int iSys, Event& event,PartonSystems* partonSystemsPtr);
 
   // Function to reset counters (print once every event for now).
   void resetCounters() {
@@ -545,18 +541,49 @@ public:
   }
 
   // Get the shower starting scale.
-  double getShowerStartingScale(int iSys, PartonSystems* partonSystemsPtr,
-    const Event& event, double sbbSav);
+  double getShowerStartingScale(int iSys, const Event& event,
+    double sbbSav);
+
+  // Method to find all possible clusterings for a given system,
+  // given we want to resolve a certain Born configuration, i.e.,
+  // not cluster more gluons or quark flavours as we had in the Born.
+  vector<VinciaClustering> findClusterings(const vector<Particle>& state,
+    map<int, int> nFlavsBorn);
+  // Method to find all possible clusterings while retaining a certain
+  // minimal number of quark pairs and gluons.
+  vector<VinciaClustering> findClusterings(const vector<Particle>& state,
+    int nqpMin = 0, int ngMin = 0);
+
+  // Check if clustering is sensible, i.e., corresponds to an existing antenna.
+  bool isValidClustering(const VinciaClustering& clus,
+    const Event& event, int verboseIn);
+
+  // Perform a clustering.
+  bool clus3to2(const VinciaClustering& clus, const Event& event,
+    vector<Particle>& pClustered);
+  bool clus3to2(const VinciaClustering& clus, const vector<Particle>& state,
+    vector<Particle>& pClustered);
+  // Helper functions to perform clustering.
+  bool getCols3to2(const Particle* a, const Particle* j, const Particle* b,
+    const VinciaClustering& clus, pair<int,int>& colsA, pair<int,int>& colsB);
+  bool getMomenta3to2(vector<Vec4>& momNow, vector<Vec4>& momClus,
+    const VinciaClustering& clus, int iOffset = 0);
 
   // 3->2 clustering maps.
-  bool map3to2FFmassive(vector<Vec4>& pClu, vector<Vec4> pIn,
-    int kMapType, int a=0, int r=1, int b=2, double mI=0.0, double mK=0.0);
-  bool map3to2FFmassless(vector<Vec4>& pClu, vector<Vec4> pIn,
-    int kMapType, int a=0, int r=1, int b=2);
-  bool map3to2IFmassive(vector<Vec4>& pClu, vector<Vec4>& pIn,
-    double saj, double sjk, double sak);
-  bool map3to2IImassive(vector<Vec4>& pClu, vector<Vec4>& pIn,
-    vector<Vec4>& pRec, double saj, double sjb, double sab, bool doBoost);
+  bool map3to2FF(vector<Vec4>& pClu, const vector<Vec4> pIn,
+    int kMapType, int a=0, int r=1, int b=2, double mI=0.0, double mK=0.0) {
+    if (mI == 0. && mK == 0.)
+      return map3to2FFmassless(pClu, pIn, kMapType, a, r, b);
+    else
+      return map3to2FFmassive(pClu, pIn, kMapType, mI, mK, a, r, b);
+  }
+  bool map3to2RF(vector<Vec4>& pClu, const vector<Vec4>& pIn, int a=0,
+    int r=1, int b=2, double mK = 0.);
+  bool map3to2IF(vector<Vec4>& pClu, const vector<Vec4>& pIn,
+    int a = 0, int r = 1, int b = 2,
+    double mj = 0., double mk = 0., double mK = 0.);
+  bool map3to2II(vector<Vec4>& pClu, const vector<Vec4>& pIn, bool doBoost,
+    int a = 0, int r = 2, int b = 1, double mj = 0.);
 
   // 2->3 kinematics maps for FF branchings. Original implementations;
   // massless by Skands, massive by Ritzmann.
@@ -569,51 +596,43 @@ public:
       return map2to3FFmassive(pNew, pOld, kMapType, invariants, phi, masses);
     }
   }
-  bool map2to3FFmassive(vector<Vec4>& pNew, const vector<Vec4>& pOld,
-    int kMapType, const vector<double>& invariants, double phi,
-    vector<double> masses);
-  bool map2to3FFmassless(vector<Vec4>& pNew, const vector<Vec4>& pOld,
-    int kMapType, const vector<double>& invariants, double phi);
 
   // 2->3 kinematics maps for II branchings. Original implementations:
   // massless by Fischer, massive by Verheyen.
   bool map2to3II(vector<Vec4>& pNew, vector<Vec4>& pRec,
     vector<Vec4>& pOld, double sAB, double saj, double sjb, double sab,
-    double phi, double m2j = 0.0);
-  bool map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
-    vector<Vec4>& pOld, double sAB, double saj, double sjb, double sab,
-    double phi);
+    double phi, double m2j = 0.0) {
+    if (m2j == 0.0)
+      return map2to3IImassless(pNew, pRec, pOld, sAB, saj, sjb, sab, phi);
+    else
+      return map2to3IImassive(pNew, pRec, pOld, sAB, saj, sjb, sab, phi, m2j);
+  }
 
   // 2->3 kinematics maps for IF branchings. General massive case
   // implemented by Verheyen.
-  bool map2to3IFlocal(vector<Vec4>& pNew, vector<Vec4>& pOld,
+  bool map2to3IFlocal(vector<Vec4>& pNew, const vector<Vec4>& pOld,
     double sOldAK, double saj, double sjk, double sak, double phi,
     double m2oldK, double m2j, double m2k);
   bool map2to3IFglobal(vector<Vec4>& pNew, vector<Vec4>& pRec,
-    vector<Vec4>& pOld, Vec4 &pB,
+    const vector<Vec4>& pOld, const Vec4 &pB,
     double sAK, double saj, double sjk, double sak, double phi,
     double mK2, double mj2, double mk2);
 
   // Resonance decay kinematic maps.
-  bool map2to3RFmassive(vector<Vec4>& pThree, vector<Vec4> pTwo,
-    vector<double> invariants,double phi,
-    vector<double> masses);
-  bool map2toNRFmassive(vector<Vec4>& pAfter, vector<Vec4> pBefore,
+  bool map2toNRF(vector<Vec4>& pAfter, const vector<Vec4> pBefore,
     unsigned int posR, unsigned int posF,
-    vector<double> invariants,double phi,
-    vector<double> masses);
+    const vector<double> invariants, double phi,
+    const vector<double> masses);
 
-  // 2->3 kinematics map for RF branchings. Original implementation by Brooks.
-  bool map2to3RFmassive(vector<Vec4>& pNew, vector<Vec4>& pRec,
-    vector<Vec4> pOld, double saj, double sjk, double phi,
-    double m2oldA, double m2j, double m2oldK);
+  // 1->2 decay map for (already offshell) resonance decay
+  bool map1to2RF(vector<Vec4>& pNew, const Vec4 pRes, double m1,
+    double m2, double theta, double phi);
 
   // Check if 2-particle system is on-shell and rescale if not.
   bool onShellCM(Vec4& p1, Vec4& p2, double m1, double m2, double tol = 1e-6);
 
   // Force initial-state and light-flavour partons to be massless.
-  bool mapToMassless(int iSys, Event& event, PartonSystems* partonSystemsPtr,
-                     bool makeNewCopies);
+  bool mapToMassless(int iSys, Event& event, bool makeNewCopies);
 
   // Map a massless antenna to equivalent massive one. Boolean
   // returns true if a modification was made.
@@ -621,41 +640,103 @@ public:
     return (!onShellCM(p1,p2,m1,m2,1e-9));
   }
 
+  // Make list of particles as vector<Particle>.
+  //   First 1 or 2 entries : incoming particle(s).
+  //   Subseqent entries    : outgoing particles.
+  // The two last arguments are optional and allow to specify a list
+  // of indices to be ignored, and a set of particles to be added, e.g.
+  // in the context of setting up a trial state after a branching.
+  // The newly added particles are then at the end of the respective
+  // lists, i.e. a newly added incoming particle is the last incoming
+  // one and newly added outgoing ones are the last among the outgoing
+  // ones.
+  vector<Particle> makeParticleList(const int iSys, const Event& event,
+    const vector<Particle> &pNew = vector<Particle>(),
+    const vector<int> &iOld = vector<int>());
+
+  // Method to find all antennae that can produce a branching.
+  //   IN: indices of clustering in event, where i2 is the emission.
+  //  OUT: vector of VinciaClusterings.
+  // Also swap daughters to match antenna function convention if needed
+  // (e.g. for GXSplitFF, when dau2 and dau3 form the quark pair).
+  vector<VinciaClustering> findAntennae(Event& state, int i1, int i2, int i3);
+
+  // Check whether two particles are colour connected.
+  bool colourConnected(const Particle& ptcl1, const Particle& ptcl2);
+
+  // Print a list of Particles.
+  void list(const vector<Particle>& state, string title = "",
+    bool footer = true);
+
+  // Print a list of VinciaClusterings.
+  void list(const vector<VinciaClustering>& clusterings, string title = "",
+    bool footer = true);
+
   // Get/set verbose parameter.
   int getVerbose() {return verbose; };
   void setVerbose(int verboseIn) { verbose = verboseIn;};
 
   // Public data members: strong coupling in MSbar and CMW schemes,
   // user and default choices,
-  AlphaStrong alphaStrong, alphaStrongCMW, alphaStrongDef, alphaStrongDefCMW;
+  AlphaStrong alphaStrong{}, alphaStrongCMW{}, alphaStrongDef{},
+    alphaStrongDefCMW{};
 
   // Couplings for use in merging.
-  AlphaStrong alphaS;
-  AlphaEM     alphaEM;
-  double mu2freeze, mu2min, alphaSmax;
+  AlphaStrong alphaS{};
+  AlphaEM     alphaEM{};
+  double mu2freeze{}, mu2min{}, alphaSmax{};
 
   // Quark masses.
-  double ms, mc, mb, mt;
-  int nFlavZeroMass;
+  double ms{}, mc{}, mb{}, mt{};
+  int nFlavZeroMass{};
 
   // Checks.
-  double epTolErr, epTolWarn, mTolErr, mTolWarn;
+  double epTolErr{}, epTolWarn{}, mTolErr{}, mTolWarn{};
 
 private:
 
+  // Functions.
+
+  // Special cases of 3 -> 2 maps.
+  bool map3to2FFmassive(vector<Vec4>& pClu, const vector<Vec4> pIn,
+    int kMapType, double mI, double mK, int a=0, int r=1, int b=2);
+  bool map3to2FFmassless(vector<Vec4>& pClu, const vector<Vec4> pIn,
+    int kMapType, int a=0, int r=1, int b=2);
+
+  // Special cases of 2 -> 3 maps.
+  bool map2to3FFmassive(vector<Vec4>& pNew, const vector<Vec4>& pOld,
+    int kMapType, const vector<double>& invariants, double phi,
+    vector<double> masses);
+  bool map2to3FFmassless(vector<Vec4>& pNew, const vector<Vec4>& pOld,
+    int kMapType, const vector<double>& invariants, double phi);
+  bool map2to3IImassive(vector<Vec4>& pNew, vector<Vec4>& pRec,
+    vector<Vec4>& pOld, double sAB, double saj, double sjb, double sab,
+    double phi, double m2j = 0.0);
+  bool map2to3IImassless(vector<Vec4>& pNew, vector<Vec4>& pRec,
+    vector<Vec4>& pOld, double sAB, double saj, double sjb, double sab,
+    double phi);
+  bool map2to3RF(vector<Vec4>& pThree, const vector<Vec4> pTwo,
+    const vector<double> invariants, double phi,
+    const vector<double> masses);
+
+  // Members.
+
   // Pointers.
-  Info*          infoPtr;
-  Settings*      settingsPtr;
-  ParticleData*  particleDataPtr;
-  Rndm*          rndmPtr;
+  Info*          infoPtr{};
+  Settings*      settingsPtr{};
+  ParticleData*  particleDataPtr{};
+  Rndm*          rndmPtr{};
+  Logger*        loggerPtr{};
+  PartonSystems* partonSystemsPtr{};
 
   // Counter for output control.
-  int nUnkownPDG, nIncorrectCol, nNAN, nVertex, nChargeCons, nMotDau;
+  int nUnkownPDG{}, nIncorrectCol{}, nNAN{}, nVertex{}, nChargeCons{},
+    nMotDau{};
   vector<int> nUnmatchedMass, nEPcons;
 
   // Internal flags and settings.
-  bool isInitPtr, isInit;
-  int verbose;
+  bool isInitPtr{false}, isInit{false};
+  int verbose{};
 
 };
 

@@ -1,6 +1,7 @@
 <chapter name="Automated Variations of Shower Parameters"> 
  
-<h2>Automated Variations of Shower Parameters for Uncertainty Bands</h2> 
+<h2>Automated Variations of Shower Parameters for Uncertainty Bands 
+and Enhancement of Rare Splittings</h2> 
  
 While a number of different central "tunes" of the Pythia parameters 
 are provided, it is often desired  to study how event properties change when 
@@ -116,14 +117,6 @@ specific stages of the event generation:
 <option value="1">   only for the process (including ISR and FSR); </option> 
 <option value="2">   only for resonance decay and showering; </option> 
 </modepick> 
- 
-<p/> 
-<b>UserHooks Warning:</b> the calculation of uncertainty variations 
-will only be consistent in the absence of any external modifications 
-to the shower branching probabilities via the 
-<aloc href="UserHooks">UserHooks</aloc> framework. It is therefore 
-strongly advised to avoid combining the automated uncertainty 
-calculations with any such UserHooks modifications. 
  
 <p/> 
 <b>Merging Warning:</b> in multi-jet merging approaches, trial showers 
@@ -316,6 +309,159 @@ higher ID codes controlled by <code>X2XG</code> keywords. Thus a change to
 values instead of the corresponding <code>Q2QG</code> ones. 
 </mode> 
  
+<h3>Enhanced rate of rare shower splittings</h3> 
+ 
+PYTHIA also offers possibilities to enhance the frequency of rare 
+splittings.  This is not a trivial task, since a simple "upweighting" of 
+splittings would produce a mismatch between emission and no-emission 
+probabilities, leading to a violation of the principle that the parton 
+shower should not change the inclusive (input) cross section. 
+Nevertheless, a general algorithm that allows for increased emission 
+probabilities, while keeping no-emission factors intact, was presented 
+in <ref>Lon13a</ref>. 
+ 
+<p/>In <ref>Lon13a</ref> two types of enhancements are proposed: those 
+of "regular" shower emissions, and those of trial shower emissions, the 
+latter as part of the mandatory Sudakov reweighting in ME+PS merging 
+schemes. Both of these possibilities are accessible through the same 
+machinery as for the parton shower variations, but cannot be used at the 
+same time. 
+ 
+<p/>The price to pay for these enhancements is that events come with a 
+compensatory weight. The advantages of obtaining higher statistics 
+for rare branchings thus is mitigated, and the usefulness has to be 
+evaluated case by case. 
+ 
+<p/>Currently enhancements of ISR and FSR branchings have been 
+included. These enhancements are currently not phase-space dependent, 
+i.e. emissions will be enhanced uniformly in phase space. 
+ 
+<p/>To increase statistics of rare emissions in the showers, e.g. QED 
+or weak radiation, Pythia supplies the following settings implementing 
+the strategy of section 4 in <ref>Lon13a</ref>. 
+ 
+<p/> 
+Since the computation of enhanced splittings also takes additional 
+CPU time (albeit much less than would be required for independent runs 
+with the equivalent variations), such enhancements 
+are switched off by default. 
+<flag name="Enhancements:doEnhance" default="off"> 
+Master switch to perform enhanced splittings. If activated, the enhancement 
+factors in <code>EnhancedSplittings:List</code> will be used to rescale 
+the splitting probabilities. 
+</flag> 
+ 
+<p/> 
+This parameter can be used to reduce fluctuations in weighted events 
+similar to the case of parton shower variations discussed above.  A 
+larger factor reduces fluctuations at the cost of a longer generation 
+time. The default parameters chosen are a compromise between time and 
+fluctuations. Note, this oversampling is multiplicative to that for 
+variations, so some care should be taken when applying both 
+enhancements and variations. 
+<parm name="Enhancements:overSampleFSR" default="3.0" min="1.0" 
+max="10.0"> 
+The QCD FSR Sudakov is artificially increased by this factor. The increase 
+is compensated for in the veto algorithm for enhancements. 
+</parm> 
+ 
+<p/> 
+The list of desired enhancements should be passed to Pythia in the form of 
+a single <aloc href="SettingsScheme">"vector of strings"</aloc>, defined as 
+follows: 
+<wvec name="EnhancedSplittings:List" 
+default="{isr:Q2QA=50.,isr:Q2AQ=50.,fsr:Q2QA=50.0}"> 
+Currently, the following input names are recognized by the PYTHIA 
+showers, and can thus be used to enhance the respective 
+splittings. Specific heavy-flavour branchings for <ei>g &rarr; c + 
+cbar</ei> and <ei>g &rarr; b + bbar</ei> are available for the 
+timelike shower (FSR QCD branching) but not for the spacelike shower 
+(ISR QCD branchings). In principle these specific ISR QCD branchings 
+should not be needed, as already most of the heavy-flavour initial 
+state processes can already be explicitly enabled. 
+<p/> 
+ISR QCD branchings: 
+<br/><code>isr:G2GG</code> for <ei>g &rarr; g + g</ei>, 
+<br/><code>isr:G2QQ</code> for <ei>g &rarr; q + qbar</ei>, 
+with <ei>q</ei> a light quark, 
+<br/><code>isr:Q2QG</code> for <ei>q &rarr; q + g</ei>, 
+<br/><code>isr:Q2GQ</code> for <ei>q &rarr; g + q</ei>; 
+<p/> 
+ISR QED branchings: 
+<br/><code>isr:Q2QA</code> for <ei>q &rarr; q + photon</ei>, 
+<br/><code>isr:Q2AQ</code> for <ei>q &rarr; photon + q</ei>; 
+<p/> 
+ISR weak shower branchings: 
+<br/><code>isr:Q2QW</code> for <ei>q &rarr; q + W</ei> or 
+<ei>q &rarr; q + Z</ei>; 
+<p/> 
+FSR QCD branchings: 
+<br/><code>fsr:G2GG</code> for <ei>g &rarr; g + g</ei>, 
+<br/><code>fsr:G2QQ</code> for <ei>g &rarr; q + qbar</ei> 
+with <ei>q</ei> a light quark, 
+<br/><code>fsr:G2CC</code> for <ei>g &rarr; c + cbar</ei>, 
+<br/><code>fsr:G2BB</code> for <ei>g &rarr; b + bbar</ei>, 
+<br/><code>fsr:Q2QG</code> for <ei>q &rarr; q + g</ei>; 
+<p/> 
+FSR QED branchings: 
+<br/><code>fsr:Q2QA</code> for <ei>q &rarr; q + photon</ei>, 
+<br/><code>fsr:A2QQ</code> for <ei>photon &rarr; q + qbar</ei>, 
+<br/><code>fsr:A2LL</code> for <ei>photon &rarr; lepton + antilepton</ei>, 
+<p/> 
+FSR weak shower branchings: 
+<br/><code>fsr:Q2QW</code> for <ei>q &rarr; q + W</ei> or 
+<ei>q &rarr; q + Z</ei>; 
+<p/> 
+FSR hidden valley branchings: 
+<br/><code>fsr:Q2QHV</code> for all hidden valley branchings. 
+<br/> 
+<br/>Charge-conjugated branchings are included whenever relevant. 
+Note that the order of the daughters matters: in the backwards 
+evolution machinery the step is from the first daughter to the mother 
+by the emission of the second daughter. 
+</wvec> 
+ 
+<p/> 
+Let's consider some examples. 
+The evolution step changing the partonic state from 
+<ei>q qbar &rarr; e+ e-</ei> to <ei>g qbar &rarr; e+ e- qbar</ei> 
+through an initial state splitting can be enhanced 
+by allowing a non-unity enhancement value for the splitting 
+<code>isr:G2QQ</code>. Another evolution 
+step changing <ei>g qbar &rarr; e+ e- qbar</ei> to 
+<ei>g qbar &rarr; e+ e- qbar gluon</ei> through FSR (ISR) can be 
+enhanced by allowing a non-unity enhancement value for the splitting 
+<code>fsr:Q2QG</code> (<code>isr:Q2QG</code>). Yet another ISR branching 
+converting 
+<ei>g qbar &rarr; e+ e- qbar</ei> to <ei>q qbar &rarr; e+ e- qbar q</ei> can 
+be enhanced by non-unity enhancement value for the splitting 
+<code>isr:Q2GQ</code> 
+(note the ordering in the branching name). 
+ 
+<p/>In the context of merging, it can be beneficial to allow for enhanced 
+trial emissions. As discussed in section 3 of <ref>Lon13a</ref>, this 
+means that the Sudakov factors that are commonly generated by event 
+vetoes based on trial emissions (see e.g. <ref>Lon11</ref>) are 
+instead given by small but non-vanishing event weights. This can have 
+advantages, since all events of an input sample will be retained. 
+Pythia allows users to enhance trial emissions by using the following 
+setting. 
+<flag name="Enhancements:doEnhanceTrial" default="off"> 
+Master switch to perform enhanced trial splittings, which are used in 
+CKKWL-type merging trial showers. 
+</flag> 
+ 
+<p/> 
+If you use enhanced emissions or enhanced trial emissions, it is paramount to 
+attribute a corrective weight to each event containing enhanced emissions. 
+For enhanced emissions, the weight is included in the usual shower weight, 
+for enhanced trial emissions, it is included in the merging weight. See the 
+<aloc href="CrossSectionsAndWeights">Cross Sections and Weights</aloc> 
+page for more details. 
+ 
+<p/>A simple example of enhanced regular emissions is provided in 
+<code>main63.cc</code>. 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,9 +1,9 @@
 // main52.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: parton distribution; LHAPDF; minimum bias; tuning;
+// Keywords: parton distribution; LHAPDF; minimum bias; tuning
 
 // Studies of hadron-level and parton-level minimum-bias quantities,
 // comparing the internal default PDF with an external one from LHAPDF.
@@ -13,6 +13,7 @@
 #include <ctime>
 
 #include "Pythia8/Pythia.h"
+#include "Pythia8/Plugins.h"
 
 using namespace Pythia8;
 
@@ -58,7 +59,7 @@ int main() {
 
   // PDF path.
   string pdfPath;
-  
+
   // Loop over one default run and one with new PDF.
   for (int iRun = 0; iRun < 2; ++iRun) {
 
@@ -69,7 +70,7 @@ int main() {
     Pythia pythia;
     Event& event = pythia.event;
     pdfPath = pythia.settings.word("xmlPath") + "../pdfdata";
-    
+
     // Generate minimum-bias events, with or without double diffraction.
     pythia.readString("SoftQCD:nonDiffractive = on");
     //pythia.readString("SoftQCD:doubleDiffractive = on");
@@ -185,12 +186,15 @@ int main() {
   // Second part of study, as simple extra check:
   // Begin fill shape of effective PDF at typical MPI Q2 = 10 scale:
   // F_effective(x) = (9/4) x*g(x) + Sum_i (x*q_i(x) + x*qbar_i(x)).
-  Info info;
+  Logger logger;
   double Q2 = 10.;
   // Current default is NNPDF2.3 QCD+QED LO alpha_s(M_Z) = 0.130.
   PDFPtr oldPDF = make_shared<LHAGrid1>(
-    2212, "NNPDF23_lo_as_0130_qed_0000.dat", pdfPath, &info);
-  PDFPtr newPDF = make_shared<LHAPDF>(2212, pdfSet, &info);
+    2212, "NNPDF23_lo_as_0130_qed_0000.dat", pdfPath, &logger);
+  PDFPtr newPDF = make_plugin<PDF>(
+    "libpythia8lhapdf" + pdfSet.substr(6, 1) + ".so", pdfSet.substr(0, 7));
+  if (newPDF == nullptr) return -1;
+  else newPDF->init(2212, pdfSet.substr(8), 0, &logger);
 
   // Histograms.
   Hist effFlinOld("F_effective( x, Q2 = 10) old", 100 , 0., 1.);

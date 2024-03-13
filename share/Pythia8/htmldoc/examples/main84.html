@@ -4,12 +4,14 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main84.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:stefan.prestel@thep.lu.se">Stefan Prestel</a>
+//            Stefan Prestel
+
+// Contact: Christian Preuss &lt;preuss@uni-wuppertal.de&gt;
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#merging">Merging</a>
@@ -25,24 +27,24 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // provides the input LHE events, and histout84.dat is the output
 // histogram file. This example requires FastJet and HepMC.
 
-#include <time.h>
-#include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/HepMC3.h"
+#include &lt;time.h&gt;
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
 
 using namespace Pythia8;
 
 // Functions for histogramming
-#include "fastjet/PseudoJet.hh"
-#include "fastjet/ClusterSequence.hh"
-#include "fastjet/CDFMidPointPlugin.hh"
-#include "fastjet/CDFJetCluPlugin.hh"
+#include &quot;fastjet/PseudoJet.hh&quot;
+#include &quot;fastjet/ClusterSequence.hh&quot;
+#include &quot;fastjet/CDFMidPointPlugin.hh&quot;
+#include &quot;fastjet/CDFJetCluPlugin.hh&quot;
 
 //==========================================================================
 
 // Find the Durham kT separation of the clustering from
-// nJetMin --> nJetMin-1 jets in te input event
+// nJetMin --&gt; nJetMin-1 jets in te input event
 
-double pTfirstJet( const Event& event, int nJetMin, double Rparam) {
+double pTfirstJet( const Event&amp; event, int nJetMin, double Rparam) {
 
   double yPartonMax = 4.;
 
@@ -59,18 +61,18 @@ double pTfirstJet( const Event& event, int nJetMin, double Rparam) {
     jetDef = new fastjet::JetDefinition(fastjet::ee_kt_algorithm,
                                       recombScheme, strategy);
   // Fastjet input
-  std::vector <fastjet::PseudoJet> fjInputs;
+  std::vector &lt;fastjet::PseudoJet&gt; fjInputs;
   // Reset Fastjet input
   fjInputs.resize(0);
 
   // Loop over event record to decide what to pass to FastJet
-  for (int i = 0; i < event.size(); ++i) {
-    // (Final state && coloured+photons) only!
+  for (int i = 0; i &lt; event.size(); ++i) {
+    // (Final state &amp;&amp; coloured+photons) only!
     if ( !event[i].isFinal()
       || event[i].isLepton()
       || event[i].id() == 23
       || abs(event[i].id()) == 24
-      || abs(event[i].y()) > yPartonMax)
+      || abs(event[i].y()) &gt; yPartonMax)
       continue;
 
     // Store as input to Fastjet
@@ -101,18 +103,18 @@ int main( int argc, char* argv[] ){
 
   // Check that correct number of command-line arguments
   if (argc != 6) {
-    cerr << " Unexpected number of command-line arguments. \n You are"
-         << " expected to provide the arguments" << endl
-         << " 1. Input file for settings" << endl
-         << " 2. Name of output HepMC file" << endl
-         << " 3. Maximal number of additional jets"
-         << " (not used internally in Pythia, only used to construct the full"
-         << " name of lhe files with additional jets, and to label output"
-         << " histograms)" << endl
-         << " 4. Full name of the input LHE file (with path"
-         << " , without any _0.lhe suffix)" << endl
-         << " 5. Path for output histogram files" << endl
-         << " Program stopped. " << endl;
+    cerr &lt;&lt; &quot; Unexpected number of command-line arguments. \n You are&quot;
+         &lt;&lt; &quot; expected to provide the arguments&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 1. Input file for settings&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 2. Name of output HepMC file&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 3. Maximal number of additional jets&quot;
+         &lt;&lt; &quot; (not used internally in Pythia, only used to construct the full&quot;
+         &lt;&lt; &quot; name of lhe files with additional jets, and to label output&quot;
+         &lt;&lt; &quot; histograms)&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 4. Full name of the input LHE file (with path&quot;
+         &lt;&lt; &quot; , without any _0.lhe suffix)&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 5. Path for output histogram files&quot; &lt;&lt; endl
+         &lt;&lt; &quot; Program stopped. &quot; &lt;&lt; endl;
     return 1;
   }
 
@@ -120,7 +122,10 @@ int main( int argc, char* argv[] ){
 
   // First argument: Get input from an input file
   pythia.readFile(argv[1]);
-  int nEvent = pythia.mode("Main:numberOfEvents");
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+
+  // Deactivate AUX_ weight output
+  pythia.readString(&quot;Weights:suppressAUX = on&quot;);
 
   // Interface for conversion from Pythia8::Event to HepMC event.
   // Will fill cross section and event weight directly in this program,
@@ -143,15 +148,15 @@ int main( int argc, char* argv[] ){
   // To write correctly normalized events to hepmc file, first get
   // a reasonable accurate of the cross section
   int njetCounterEstimate = njet;
-  vector<double> xsecEstimate;
+  vector&lt;double&gt; xsecEstimate;
 
-  vector<double> nTrialEstimate;
-  vector<double> nAcceptEstimate;
+  vector&lt;double&gt; nTrialEstimate;
+  vector&lt;double&gt; nAcceptEstimate;
 
-  pythia.readString("Random:setSeed = on");
-  pythia.readString("Random:seed = 42390964");
+  pythia.readString(&quot;Random:setSeed = on&quot;);
+  pythia.readString(&quot;Random:seed = 42390964&quot;);
 
-  while(njetCounterEstimate >= 0) {
+  while(njetCounterEstimate &gt;= 0) {
 
     // Number of runs
     int nRun = 1;
@@ -162,26 +167,26 @@ int main( int argc, char* argv[] ){
 
     // Run pythia nRun times with the same lhe file to get nRun times
     // higher statistics in the histograms
-    for(int n = 1; n <= nRun ; ++n ) {
+    for(int n = 1; n &lt;= nRun ; ++n ) {
 
       // Get process and events from LHE file, initialize only the
       // first time
-      if(n > 1) pythia.readString("Main:LHEFskipInit = on");
+      if(n &gt; 1) pythia.readString(&quot;Main:LHEFskipInit = on&quot;);
 
       // From njet, choose LHE file
       stringstream in;
-      in   << "_" << njetCounterEstimate << ".lhe";
+      in   &lt;&lt; &quot;_&quot; &lt;&lt; njetCounterEstimate &lt;&lt; &quot;.lhe&quot;;
 
       string LHEfile = iPath + in.str();
 
-      pythia.readString("HadronLevel:all = off");
+      pythia.readString(&quot;HadronLevel:all = off&quot;);
 
       // Read in ME configurations
-      pythia.readString("Beams:frameType = 4");
-      pythia.readString("Beams:LHEF = " + LHEfile);
+      pythia.readString(&quot;Beams:frameType = 4&quot;);
+      pythia.readString(&quot;Beams:LHEF = &quot; + LHEfile);
       pythia.init();
 
-      for( int iEvent=0; iEvent<nEvent; ++iEvent ){
+      for( int iEvent=0; iEvent&lt;nEvent; ++iEvent ){
         countEvents++;
 
         nTrial += 1.;
@@ -202,53 +207,55 @@ int main( int argc, char* argv[] ){
     } // end outer loop to rerun pythia with the same lhe file
 
     // Restart with ME of a reduced the number of jets
-    if( njetCounterEstimate > 0 )
+    if( njetCounterEstimate &gt; 0 )
       njetCounterEstimate--;
     else
       break;
 
   } // end loop over different jet multiplicities
 
-  cout << endl << "Finished estimating cross section"
-    << endl;
+  cout &lt;&lt; endl &lt;&lt; &quot;Finished estimating cross section&quot;
+    &lt;&lt; endl;
 
-  for(int i=0; i < int(xsecEstimate.size()); ++i)
-    cout << "  Cross section estimate for " << njet-i << " jets :"
-      << scientific << setprecision(8) << xsecEstimate[i]
-      << endl;
-  for(int i=0; i < int(nTrialEstimate.size()); ++i)
-    cout << "  Trial events for " << njet-i << " jets :"
-      << scientific << setprecision(3) << nTrialEstimate[i]
-      << "  Accepted events for " << njet-i << " jets :"
-      << scientific << setprecision(3) << nAcceptEstimate[i]
-      << endl;
-  cout << endl;
+  for(int i=0; i &lt; int(xsecEstimate.size()); ++i)
+    cout &lt;&lt; &quot;  Cross section estimate for &quot; &lt;&lt; njet-i &lt;&lt; &quot; jets :&quot;
+      &lt;&lt; scientific &lt;&lt; setprecision(8) &lt;&lt; xsecEstimate[i]
+      &lt;&lt; endl;
+  for(int i=0; i &lt; int(nTrialEstimate.size()); ++i)
+    cout &lt;&lt; &quot;  Trial events for &quot; &lt;&lt; njet-i &lt;&lt; &quot; jets :&quot;
+      &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; nTrialEstimate[i]
+      &lt;&lt; &quot;  Accepted events for &quot; &lt;&lt; njet-i &lt;&lt; &quot; jets :&quot;
+      &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; nAcceptEstimate[i]
+      &lt;&lt; endl;
+  cout &lt;&lt; endl;
 
   // Now start merging procedure
   int njetCounter = njet;
 
-  Hist histPTFirstSum("pT of first jet",100,0.,100.);
-  Hist histPTSecondSum("pT of second jet",100,0.,100.);
+  Hist histPTFirstSum(&quot;pT of first jet&quot;,100,0.,100.);
+  Hist histPTSecondSum(&quot;pT of second jet&quot;,100,0.,100.);
 
-  pythia.readString("Random:setSeed = on");
-  pythia.readString("Random:seed = 42390964");
+  pythia.readString(&quot;Random:setSeed = on&quot;);
+  pythia.readString(&quot;Random:seed = 42390964&quot;);
 
   // Sum of event weights
   double sigma = 0.0;
   double sigma2 = 0.0;
 
-  while(njetCounter >= 0) {
+  bool wroteRunInfo = false;
 
-    cout << "   Path to lhe files: " << iPath << "_*" << endl;
-    cout << "   Output written to: " << oPath << "'name'.dat" << endl;
+  while(njetCounter &gt;= 0) {
+
+    cout &lt;&lt; &quot;   Path to lhe files: &quot; &lt;&lt; iPath &lt;&lt; &quot;_*&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;   Output written to: &quot; &lt;&lt; oPath &lt;&lt; &quot;&apos;name&apos;.dat&quot; &lt;&lt; endl;
 
     // Set up histograms of pT of the first jet
-    Hist histPTFirst("pT of first jet",100,0.,200.);
-    Hist histPTSecond("pT of second jet",100,0.,200.);
-    Hist histPTThird("pT of third jet",100,0.,200.);
-    Hist histPTFourth("pT of fourth jet",50,0.,100.);
-    Hist histPTFifth("pT of fifth jet",30,0.,50.);
-    Hist histPTSixth("pT of sixth jet",30,0.,50.);
+    Hist histPTFirst(&quot;pT of first jet&quot;,100,0.,200.);
+    Hist histPTSecond(&quot;pT of second jet&quot;,100,0.,200.);
+    Hist histPTThird(&quot;pT of third jet&quot;,100,0.,200.);
+    Hist histPTFourth(&quot;pT of fourth jet&quot;,50,0.,100.);
+    Hist histPTFifth(&quot;pT of fifth jet&quot;,30,0.,50.);
+    Hist histPTSixth(&quot;pT of sixth jet&quot;,30,0.,50.);
 
     // Number of runs
     int nRun = 1;
@@ -259,34 +266,34 @@ int main( int argc, char* argv[] ){
 
     // Run pythia nRun times with the same lhe file to get nRun times
     // higher statistics in the histograms
-    for(int n = 1; n <= nRun ; ++n ) {
+    for(int n = 1; n &lt;= nRun ; ++n ) {
 
       // Get process and events from LHE file, initialize only the
       // first time
-      if(n > 1) pythia.readString("Main:LHEFskipInit = on");
+      if(n &gt; 1) pythia.readString(&quot;Main:LHEFskipInit = on&quot;);
 
       // From njet, choose LHE file
       stringstream in;
-      in   << "_" << njetCounter << ".lhe";
+      in   &lt;&lt; &quot;_&quot; &lt;&lt; njetCounter &lt;&lt; &quot;.lhe&quot;;
 
       string LHEfile = iPath + in.str();
 
-      cout << endl << endl
-        << "\t LHE FILE FOR + " << njetCounter
-        << " JET SAMPLE READ FROM " << LHEfile
-        << endl << endl;
+      cout &lt;&lt; endl &lt;&lt; endl
+        &lt;&lt; &quot;\t LHE FILE FOR + &quot; &lt;&lt; njetCounter
+        &lt;&lt; &quot; JET SAMPLE READ FROM &quot; &lt;&lt; LHEfile
+        &lt;&lt; endl &lt;&lt; endl;
 
-      cout << "Normalise with xsection " << xsecEstimate[njet-njetCounter]
-        << endl << endl;
+      cout &lt;&lt; &quot;Normalise with xsection &quot; &lt;&lt; xsecEstimate[njet-njetCounter]
+        &lt;&lt; endl &lt;&lt; endl;
 
-      pythia.readString("HadronLevel:all = on");
+      pythia.readString(&quot;HadronLevel:all = on&quot;);
 
       // Read in ME configurations
-      pythia.readString("Beams:frameType = 4");
-      pythia.readString("Beams:LHEF = " + LHEfile);
+      pythia.readString(&quot;Beams:frameType = 4&quot;);
+      pythia.readString(&quot;Beams:LHEF = &quot; + LHEfile);
       pythia.init();
 
-      for( int iEvent=0; iEvent<nEvent; ++iEvent ){
+      for( int iEvent=0; iEvent&lt;nEvent; ++iEvent ){
 
         nTriedEvents++;
         if(iEvent == 0) pythia.stat();
@@ -294,10 +301,12 @@ int main( int argc, char* argv[] ){
         // Generate next event
         if( pythia.next()) {
 
-          double weight = pythia.info.mergingWeight();
+          double evtweight = pythia.info.weight();
+          double weight    = pythia.info.mergingWeight();
+          weight      *= evtweight;
           nAccepEvents++;
 
-          // Jet pT's
+          // Jet pT&apos;s
           double D = 0.4;
           double pTfirst = pTfirstJet(pythia.event,1, D);
           double pTsecnd = pTfirstJet(pythia.event,2, D);
@@ -312,7 +321,19 @@ int main( int argc, char* argv[] ){
           histPTFifth.fill( pTfifth, weight);
           histPTSixth.fill( pTsixth, weight);
 
-          if(weight > 0.){
+          if(weight &gt; 0.){
+            // Create a GenRunInfo object with the necessary weight
+            // names and write them to the HepMC3 file only once.
+            if (!wroteRunInfo) {
+              shared_ptr&lt;HepMC3::GenRunInfo&gt; genRunInfo;
+              genRunInfo = make_shared&lt;HepMC3::GenRunInfo&gt;();
+              vector&lt;string&gt; weight_names = pythia.info.weightNameVector();
+              genRunInfo-&gt;set_weight_names(weight_names);
+              ascii_io.set_run_info(genRunInfo);
+              ascii_io.write_run_info();
+              wroteRunInfo = true;
+            }
+
             // Construct new empty HepMC event and fill it.
             // Units will be as chosen for HepMC build, but can be changed
             // by arguments, e.g. GenEvt( HepMC::Units::GEV, HepMC::Units::MM)
@@ -325,21 +346,22 @@ int main( int argc, char* argv[] ){
 
             sigma += weight*normhepmc;
             sigma2 += pow(weight*normhepmc,2);
-            // Set event weight
-            hepmcevt.weights().push_back(weight*normhepmc);
 
             // Fill summed histograms
             histPTFirstSum.fill( pTfirst, weight*normhepmc);
             histPTSecondSum.fill( pTsecnd, weight*normhepmc);
 
             // Fill HepMC event, with PDF info.
-            toHepMC.fill_next_event( pythia, &hepmcevt );
+            toHepMC.fill_next_event( pythia, &amp;hepmcevt );
 
             // Report cross section to hepmc.
-            shared_ptr<HepMC3::GenCrossSection> xsec;
-            xsec = make_shared<HepMC3::GenCrossSection>();
-            xsec->set_cross_section( sigma*1e9, pythia.info.sigmaErr()*1e9 );
+            shared_ptr&lt;HepMC3::GenCrossSection&gt; xsec;
+            xsec = make_shared&lt;HepMC3::GenCrossSection&gt;();
+            // First add object to event, then set cross section. This
+            // order ensures that the lengths of the cross section and
+            // the weight vector agree.
             hepmcevt.set_cross_section( xsec );
+            xsec-&gt;set_cross_section( sigma*1e9, pythia.info.sigmaErr()*1e9 );
             // Write the HepMC event to file.
             ascii_io.write_event(hepmcevt);
           }
@@ -347,7 +369,7 @@ int main( int argc, char* argv[] ){
         } // if( pythia.next() )
 
         if(nTriedEvents%10000 == 0)
-          cout << nTriedEvents << endl;
+          cout &lt;&lt; nTriedEvents &lt;&lt; endl;
 
       } // end loop over events to generate
 
@@ -372,30 +394,30 @@ int main( int argc, char* argv[] ){
     // Write histograms for this particular multiplicity to file
     ofstream write;
     stringstream suffix;
-    suffix << njet << "_" << njetCounter;
-    suffix << "_wv.dat";
+    suffix &lt;&lt; njet &lt;&lt; &quot;_&quot; &lt;&lt; njetCounter;
+    suffix &lt;&lt; &quot;_wv.dat&quot;;
 
-    write.open( (char*)(oPath + "PTjet1_" + suffix.str()).c_str());
+    write.open( (char*)(oPath + &quot;PTjet1_&quot; + suffix.str()).c_str());
     histPTFirst.table(write);
     write.close();
 
-    write.open( (char*)(oPath + "PTjet2_" + suffix.str()).c_str());
+    write.open( (char*)(oPath + &quot;PTjet2_&quot; + suffix.str()).c_str());
     histPTSecond.table(write);
     write.close();
 
-    write.open( (char*)(oPath + "PTjet3_" + suffix.str()).c_str());
+    write.open( (char*)(oPath + &quot;PTjet3_&quot; + suffix.str()).c_str());
     histPTThird.table(write);
     write.close();
 
-    write.open( (char*)(oPath + "PTjet4_" + suffix.str()).c_str());
+    write.open( (char*)(oPath + &quot;PTjet4_&quot; + suffix.str()).c_str());
     histPTFourth.table(write);
     write.close();
 
-    write.open( (char*)(oPath + "PTjet5_" + suffix.str()).c_str());
+    write.open( (char*)(oPath + &quot;PTjet5_&quot; + suffix.str()).c_str());
     histPTFifth.table(write);
     write.close();
 
-    write.open( (char*)(oPath + "PTjet6_" + suffix.str()).c_str());
+    write.open( (char*)(oPath + &quot;PTjet6_&quot; + suffix.str()).c_str());
     histPTSixth.table(write);
     write.close();
 
@@ -407,7 +429,7 @@ int main( int argc, char* argv[] ){
     histPTSixth.null();
 
     // Restart with ME of a reduced the number of jets
-    if( njetCounter > 0 )
+    if( njetCounter &gt; 0 )
       njetCounter--;
     else
       break;
@@ -419,32 +441,32 @@ int main( int argc, char* argv[] ){
   // Write summed histograms to file.
   ofstream writeSum;
   stringstream suffixSum;
-  suffixSum << njet << "_wv.dat";
+  suffixSum &lt;&lt; njet &lt;&lt; &quot;_wv.dat&quot;;
 
-  writeSum.open( (char*)(oPath + "PTjet1Sum_" + suffixSum.str()).c_str());
+  writeSum.open( (char*)(oPath + &quot;PTjet1Sum_&quot; + suffixSum.str()).c_str());
   histPTFirstSum.table(writeSum);
   writeSum.close();
 
-  writeSum.open( (char*)(oPath + "PTjet2Sum_" + suffixSum.str()).c_str());
+  writeSum.open( (char*)(oPath + &quot;PTjet2Sum_&quot; + suffixSum.str()).c_str());
   histPTSecondSum.table(writeSum);
   writeSum.close();
 
-  for(int i=0; i < int(xsecEstimate.size()); ++i)
-    cout << "  Cross section estimate for " << njet-i << " jets :"
-      << scientific << setprecision(8) << xsecEstimate[i]
-      << endl;
-  for(int i=0; i < int(nTrialEstimate.size()); ++i)
-    cout << "  Trial events for " << njet-i << " jets :"
-      << scientific << setprecision(3) << nTrialEstimate[i]
-      << "  Accepted events for " << njet-i << " jets :"
-      << scientific << setprecision(3) << nAcceptEstimate[i]
-      << endl;
-  cout << endl;
+  for(int i=0; i &lt; int(xsecEstimate.size()); ++i)
+    cout &lt;&lt; &quot;  Cross section estimate for &quot; &lt;&lt; njet-i &lt;&lt; &quot; jets :&quot;
+      &lt;&lt; scientific &lt;&lt; setprecision(8) &lt;&lt; xsecEstimate[i]
+      &lt;&lt; endl;
+  for(int i=0; i &lt; int(nTrialEstimate.size()); ++i)
+    cout &lt;&lt; &quot;  Trial events for &quot; &lt;&lt; njet-i &lt;&lt; &quot; jets :&quot;
+      &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; nTrialEstimate[i]
+      &lt;&lt; &quot;  Accepted events for &quot; &lt;&lt; njet-i &lt;&lt; &quot; jets :&quot;
+      &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; nAcceptEstimate[i]
+      &lt;&lt; endl;
+  cout &lt;&lt; endl;
 
-  cout << "Histogrammed cross section for "
-     << iPath << " with " << njet << " additional jets is "
-     << scientific << setprecision(8) << sigma
-     << " error " << sqrt(sigma2) << endl;
+  cout &lt;&lt; &quot;Histogrammed cross section for &quot;
+     &lt;&lt; iPath &lt;&lt; &quot; with &quot; &lt;&lt; njet &lt;&lt; &quot; additional jets is &quot;
+     &lt;&lt; scientific &lt;&lt; setprecision(8) &lt;&lt; sigma
+     &lt;&lt; &quot; error &quot; &lt;&lt; sqrt(sigma2) &lt;&lt; endl;
 
   return 0;
 }

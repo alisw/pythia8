@@ -233,7 +233,7 @@ we include the possibility of the <ei>Z'^0</ei> (and hence the
 <ei>gamma</ei> and <ei>Z^0</ei>) coupling to a fourth generation of fermions. 
 This provides redundancy with and extensions beyond those processes 
 implemented as 
-<aloc href="Fourth-Generation Processes">fourth-generation processes</aloc>. 
+<aloc href="FourthGenerationProcesses">fourth-generation processes</aloc>. 
 By default, the decay channels for the fourth-generation and not included. 
 They are enabled using: 
 <flag name="Zprime:coup2gen4" default="off"> 
@@ -391,4 +391,4 @@ Code 3041.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

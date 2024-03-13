@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main55.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,12 +13,12 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 //            <a href="../ExampleKeywords.html#photon+beam">Photon&nbsp;beam</a>
 
 // Example how to set up the simulation of isotropic QED gamma + gamma
-// production at 750 GeV by modifying gamma + gamma -> H -> gamma + gamma.
+// production at 750 GeV by modifying gamma + gamma -&gt; H -&gt; gamma + gamma.
 // Contains a semirealistic analysis of associated jet production.
 // Exemplifies how an lhagrid1 PDF file can be used for hard processes.
 // Cross section not to be taken seriously, but event properties realistic.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 
 int main() {
@@ -28,51 +28,51 @@ int main() {
 
   // Generator and collision energy.
   Pythia pythia;
-  pythia.readString("Beams:eCM = 13000.");
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
 
-  // Pick gamma + gamma -> H -> gamma + gamma production.
-  pythia.readString("HiggsSM:gmgm2H = on");
-  pythia.readString("25:onMode = off");
-  pythia.readString("25:onIfMatch = 22 22");
+  // Pick gamma + gamma -&gt; H -&gt; gamma + gamma production.
+  pythia.readString(&quot;HiggsSM:gmgm2H = on&quot;);
+  pythia.readString(&quot;25:onMode = off&quot;);
+  pythia.readString(&quot;25:onIfMatch = 22 22&quot;);
 
   // Force H to have 750 GeV mass and yet be narrow.
-  pythia.readString("25:m0 = 750.");
-  pythia.readString("25:mWidth = 1.");
-  pythia.readString("25:doForceWidth = on");
+  pythia.readString(&quot;25:m0 = 750.&quot;);
+  pythia.readString(&quot;25:mWidth = 1.&quot;);
+  pythia.readString(&quot;25:doForceWidth = on&quot;);
 
   // Use NLO CT14qed central member for hard process, default LO for rest.
-  pythia.readString("PDF:useHard = on");
-  pythia.readString("PDF:pHardSet = LHAGrid1:CT14qed_proton_0000.dat");
+  pythia.readString(&quot;PDF:useHard = on&quot;);
+  pythia.readString(&quot;PDF:pHardSet = LHAGrid1:CT14qed_proton_0000.dat&quot;);
 
-  // Do not allow gamma -> fermion pair by showering.
+  // Do not allow gamma -&gt; fermion pair by showering.
   // (To simplify removal of photons for jet finding in the rest of the event.)
-  pythia.readString("TimeShower:QEDshowerByGamma = off");
+  pythia.readString(&quot;TimeShower:QEDshowerByGamma = off&quot;);
 
   // No event printout.
-  pythia.readString("Next:numberShowEvent = 0");
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
 
   // Initialize. Shorthand for event.
   pythia.init();
-  Event& event = pythia.event;
+  Event&amp; event = pythia.event;
 
-  // Set up anti-kT jet finder with R = 0.5, pT > 30., |eta| < 5.
+  // Set up anti-kT jet finder with R = 0.5, pT &gt; 30., |eta| &lt; 5.
   SlowJet slowJet( -1, 0.5, 30., 5.);
 
   // Histogram.
-  Hist massH( "mass of Higgs", 100, 500., 1000.);
-  Hist pTH(  "pT of Higgs", 100, 0., 500.);
-  Hist pTj1( "pT of jet 1", 100, 0., 500.);
-  Hist pTj2( "pT of jet 2", 100, 0., 500.);
-  Hist yj1(   "y of jet 1", 100, -5., 5.);
-  Hist yj2(   "y of jet 2", 100, -5., 5.);
+  Hist massH( &quot;mass of Higgs&quot;, 100, 500., 1000.);
+  Hist pTH(  &quot;pT of Higgs&quot;, 100, 0., 500.);
+  Hist pTj1( &quot;pT of jet 1&quot;, 100, 0., 500.);
+  Hist pTj2( &quot;pT of jet 2&quot;, 100, 0., 500.);
+  Hist yj1(   &quot;y of jet 1&quot;, 100, -5., 5.);
+  Hist yj2(   &quot;y of jet 2&quot;, 100, -5., 5.);
 
   // Begin event loop. Generate event. Skip if error.
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
     if (!pythia.next()) continue;
 
     // Find location of (final copy of) Higgs. Histogram Higgs mass and pT.
     int iH = 0;
-    for (int i = 1; i < event.size(); ++i) if (event[i].id() == 25) iH = i;
+    for (int i = 1; i &lt; event.size(); ++i) if (event[i].id() == 25) iH = i;
     massH.fill( event[iH].m() );
     pTH.fill( event[iH].pT() );
 
@@ -82,11 +82,11 @@ int main() {
     slowJet.analyze( pythia.event );
 
     // Histogram pT and rapidity of two hardest jets, if they exist.
-    if (slowJet.sizeJet() > 0) {
+    if (slowJet.sizeJet() &gt; 0) {
       pTj1.fill( slowJet.pT(0) );
       yj1.fill( slowJet.y(0) );
     }
-    if (slowJet.sizeJet() > 1) {
+    if (slowJet.sizeJet() &gt; 1) {
       pTj2.fill( slowJet.pT(1) );
       yj2.fill( slowJet.y(1) );
     }
@@ -94,7 +94,7 @@ int main() {
   // End of event loop. Statistics. Histograms.
   }
   pythia.stat();
-  cout << massH << pTH << pTj1 << pTj2 << yj1 << yj2;
+  cout &lt;&lt; massH &lt;&lt; pTH &lt;&lt; pTj1 &lt;&lt; pTj2 &lt;&lt; yj1 &lt;&lt; yj2;
 
   // Done.
   return 0;

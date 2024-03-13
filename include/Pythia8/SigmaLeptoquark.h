@@ -1,5 +1,5 @@
 // SigmaLeptoquark.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -51,7 +51,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, kCoup, widthIn, sigBW;
 
   // Pointer to properties of the particle species, to access decay channel.
-  ParticleDataEntry* LQPtr;
+  ParticleDataEntryPtr LQPtr;
 
 };
 

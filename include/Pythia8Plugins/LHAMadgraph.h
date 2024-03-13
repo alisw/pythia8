@@ -1,5 +1,5 @@
 // LHAMadgraph.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -496,7 +496,7 @@ bool LHAupMadgraph::reader(bool init) {
   if (!pythia) return false;
   if (lhef) delete lhef;
   bool setScales(pythia->settings.flag("Beams:setProductionScalesFromLHEF"));
-  lhef = new LHAupLHEF(infoPtr, lhegz.c_str(), NULL, false, setScales);
+  lhef = new LHAupLHEF(infoPtr, lhegz.c_str(), nullptr, false, setScales);
   if (!lhef->setInit()) {
     errorMsg("Error from LHAupMadgraph::reader: failed to "
              "initialize the LHEF reader"); return false;}

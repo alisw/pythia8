@@ -1,0 +1,94 @@
+<html><head><title>main103</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main103</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main103.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2024 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:mrenna@fnal.gov">Steve Mrenna</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#user+hook">User&nbsp;hook</a>
+
+// This is a simple test program.
+// It illustrates how to filter resonance decay products to obtain a certain
+// final state.
+// Usage:  (this executable) (command-file)
+// If no command-file is provided, a default is use.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/ResonanceDecayFilterHook.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Generator. Shorthand for the event.
+  Pythia pythia;
+
+  auto myUserHooks = make_shared&lt;ResonanceDecayFilterHook&gt;(pythia.settings);
+  pythia.setUserHooksPtr( myUserHooks);
+
+  // Read in commands from external file.
+  if (argc == 1) {
+    cout &lt;&lt; &quot;Using default command-file main103.cmnd&quot; &lt;&lt; endl;
+    pythia.readFile(&quot;main103.cmnd&quot;);
+  } else {
+    // Check that the provided input name corresponds to an existing file.
+    ifstream is(argv[1]);
+    if (!is.good()) {
+      cerr &lt;&lt; &quot; Usage:  executable command-file. \n&quot;;
+      cerr &lt;&lt; &quot; Command-line file &quot; &lt;&lt; argv[1] &lt;&lt; &quot; was not found. \n&quot;
+           &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
+      return 1;
+    }
+    pythia.readFile(argv[1]);
+  }
+
+  // Extract settings to be used in the main program.
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+
+  // Initialize.
+  pythia.init();
+
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if too many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+  // End of event loop.
+  }
+
+  // Final statistics and histograms.
+  pythia.stat();
+  double filterEfficiency = (double) pythia.info.getCounter(4)
+    / (double) myUserHooks-&gt;returnCounter();
+
+  ParticleDataEntryPtr particlePtr =
+    pythia.particleData.particleDataEntryPtr(24);
+  double br_lepton(0.0);
+  br_lepton += particlePtr-&gt;channel(6).bRatio();
+  br_lepton += particlePtr-&gt;channel(7).bRatio();
+  br_lepton += particlePtr-&gt;channel(8).bRatio();
+
+  double exactFilter = 2.0*br_lepton*(1.0-br_lepton);
+  cout &lt;&lt; &quot;ResonanceDecayFilterHook efficiency = &quot; &lt;&lt; filterEfficiency &lt;&lt; &quot;\n&quot;;
+  cout &lt;&lt; &quot;on-shell theoretical efficiency     = &quot; &lt;&lt; exactFilter &lt;&lt; &quot;\n&quot;;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

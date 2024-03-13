@@ -11,7 +11,7 @@
   <li><a href="#section0">Cross Sections and Weight Sums</a></li>
   <li><a href="#section1">Event Weight</a></li>
   <li><a href="#section2">CKKW-L and NLO Merging Weights</a></li>
-  <li><a href="#section3">User Hooks Weights</a></li>
+  <li><a href="#section3">User Hooks Weight</a></li>
   <li><a href="#section4">Shower Uncertainty-Variation Weights</a></li>
   <li><a href="#section5">The Weight Container</a></li>
 </ol>
@@ -121,6 +121,8 @@ also Les Houches strategies where no unweighting is done, so events
 come with a weight. Specifically, for strategies <i>+4</i> and 
 <i>-4</i>, the event weight is in units of pb. (Internally in mb, 
 but converted at output.) 
+<br/>(iv) If enhanced parton shower emissions are activated, the corrective 
+weight to each event containing enhanced emissions is included here. 
    
  
 <a name="section2"></a> 
@@ -164,7 +166,7 @@ merging.
    
  
 <a name="section3"></a> 
-<h3>User Hooks Weights</h3> 
+<h3>User Hooks Weight</h3> 
  
 <a name="anchor14"></a>
 <p/><strong> virtual double UserHooks::biasedSelectionWeight() &nbsp;</strong> <br/>
@@ -174,14 +176,6 @@ used to modify the phase-space sampling, a weight that must be stored
 in the <code>selBias</code> member variable, such that this routine 
 can return <code>1/selBias</code>. The weight is also returned by the 
 <code>Info::weight()</code> method, which may be more convenient to use. 
-   
- 
-<a name="anchor15"></a>
-<p/><strong> virtual double UserHooks::getEnhancedEventWeight() &nbsp;</strong> <br/>
-If you use enhanced emissions, it is paramount to attribute a corrective 
-weight to each event containing enhanced emissions. This function returns 
-this weight. In the presence of enhancements, all histograms and output 
-events must account for this weight. 
    
  
 <a name="section4"></a> 
@@ -197,15 +191,15 @@ documentation.
 <p/> 
 The following methods give access to the groups of uncertainty weights: 
  
-<a name="anchor16"></a>
+<a name="anchor15"></a>
 <p/><strong>  int    Info::nVariationGroups()  &nbsp;</strong> <br/>
   returns the number of groups 
    
-<a name="anchor17"></a>
+<a name="anchor16"></a>
 <p/><strong>  string Info::getGroupName(int iG)  &nbsp;</strong> <br/>
   returns the name of the iG-th group 
    
-<a name="anchor18"></a>
+<a name="anchor17"></a>
 <p/><strong>  double Info::getGroupWeight(int iG)  &nbsp;</strong> <br/>
   returns the weight of the iG-th group 
    
@@ -214,15 +208,15 @@ The following methods give access to the groups of uncertainty weights:
 Correspondingly, the individual parameter-variation weights can also 
 be accessed: 
  
-<a name="anchor19"></a>
+<a name="anchor18"></a>
 <p/><strong> int Info::nWeights() &nbsp;</strong> <br/>
   returns number of individual parameter-variation weights 
    
-<a name="anchor20"></a>
+<a name="anchor19"></a>
 <p/><strong> string Info::weightLabel(int i) &nbsp;</strong> <br/>
 returns label of i-th individual parameter-variation weight 
    
-<a name="anchor21"></a>
+<a name="anchor20"></a>
 <p/><strong> double Info::weight(int i) &nbsp;</strong> <br/>
   returns value of i-th indivudal parameter-variation weight 
    
@@ -245,29 +239,27 @@ is currently used when producing <code>HepMC2</code> and
 <code>HepMC3</code> output. In these two cases, all weights 
 that appear in the event generation will automatically be 
 transferred to the output files. This means that the HepMC file will 
-automatically contain weights from various sources, e.g. weights from
-<a href="LHEF.html" target="page">LHE files</a>,
-<a href="Variations.html" target="page">automated shower variations</a>, etc. Note that
-for LHEF files, only the <i>detailed format</i> is currently
-supported in the weight container, and that the names of weights
-appearing in HepMC will use the convention discussed in
-[<a href="Bibliography.html#refBut14" target="page">But14</a>], page 162.  The sample main programs
-<code>main44.cc</code> and <code>main45.cc</code>
+automatically contain weights from various sources, e.g. weights from 
+<a href="LHEF.html" target="page">LHE files</a>, 
+<a href="Variations.html" target="page">automated shower variations</a>, etc. Note that 
+for LHEF files, only the <i>detailed format</i> is currently 
+supported in the weight container, and that the names of weights 
+appearing in HepMC will use the convention discussed in 
+[<a href="Bibliography.html#refBut14" target="page">But14</a>], page 162.  The sample main programs 
+<code>main44.cc</code> and <code>main45.cc</code> 
 illustrate this behaviour. 
  
 <p/> 
 In this context, the following program methods are relevant: 
  
-<a name="anchor22"></a>
+<a name="anchor21"></a>
 <p/><strong> int Info::numberOfWeights() &nbsp;</strong> <br/>
 The total length of the set of all weights, similar to 
 <code>Info::nWeights</code> above (which returns the length of the set 
-of shower variation weights). Note that shower variations are treated 
-as "atomic", meaning that individual variations are stored. Weight 
-groups are currently not supported. 
+of shower variation weights). 
    
  
-<a name="anchor23"></a>
+<a name="anchor22"></a>
 <p/><strong> string Info::weightNameByIndex(int i) &nbsp;</strong> <br/>
 Returns the name of the i'th weight.  For example, if "i" indexes a 
 shower variation, this would e.g. return <code>fsr:muRfac=0.5</code> 
@@ -278,7 +270,7 @@ in [<a href="Bibliography.html#refBut14" target="page">But14</a>], page 162. The
 the content of the "&lt;weight&gt;" tags in the LHE file header. 
    
  
-<a name="anchor24"></a>
+<a name="anchor23"></a>
 <p/><strong> double Info::weightValueByIndex(int i) &nbsp;</strong> <br/>
 Returns the value of the i'th weight. The normalization of all weights 
 is synchronized. For unweighted event generation (as would be the case 
@@ -289,19 +281,39 @@ include the cross section prefactor. <code>main44.cc</code> gives an
 example for both these cases. 
    
  
-<a name="anchor25"></a>
+<a name="anchor24"></a>
 <p/><strong> vector &lt;string&gt; Info::weightNameVector() const &nbsp;</strong> <br/>
 Returns a vector of all weight names. The ordering of entries in synchronized 
 with the order of <code> Info::weightValueVector()</code>. 
    
  
-<a name="anchor26"></a>
+<a name="anchor25"></a>
 <p/><strong> vector &lt;double&gt; Info::weightValueVector() const &nbsp;</strong> <br/>
 Returns a vector of all weight values. The ordering of entries in synchronized 
 with the order of <code> Info::weightNameVector()</code>. 
    
  
+<p/> 
+Custom weights such as shower variations weights, shower variation group 
+weights, and weights directly included from LHEF input receive an 
+<code>AUX_</code> prefix in the weight name as reported by the methods 
+<code>Info::weightNameByIndex</code> and <code>Info::weightNameVector</code> 
+to mark them as auxiliary output. This allows the user to further process or 
+combine the weights in a meaningful way. Since the number of these weights 
+depends on the LHEF input, different numbers of weights might occur in the 
+output when processing multiple LHEF input files. To avoid this, the following 
+flag allows to suppress the output of <code>AUX_</code> weights. 
+ 
+<a name="anchor26"></a>
+<p/><code>flag&nbsp; </code><strong> Weights:suppressAUX &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+If on, the output of weights with <code>AUX</code> prefix will be 
+suppressed in the five above mentioned methods. The nominal weight and 
+combined weight variations from LHEF, parton shower and merging 
+remain. 
+   
+ 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

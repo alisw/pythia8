@@ -1,10 +1,10 @@
 // Merging.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file is written by Stefan Prestel.
-// Merging: Wpapper class to interface matrix element merging schemes with
+// Merging: Wrapper class to interface matrix element merging schemes with
 //          Pythia
 
 #ifndef Pythia8_Merging_H
@@ -35,8 +35,8 @@ class Merging : public PhysicsBase {
 public:
 
   // Constructor.
-  Merging() :  PhysicsBase(), trialPartonLevelPtr(), mergingHooksPtr(),
-    tmsNowMin() {}
+  Merging() : PhysicsBase(), lhaPtr(nullptr), trialPartonLevelPtr(),
+    mergingHooksPtr(), tmsNowMin() {}
 
   // Destructor.
   virtual ~Merging(){}
@@ -57,11 +57,24 @@ public:
   // Function to steer different merging prescriptions.
   virtual int mergeProcess( Event& process);
 
-protected:
+  // Runtime interface functions for communication with aMCatNLO
+  // Function to retrieve shower scale information (to be used to set
+  // scales in aMCatNLO-LHEF-production.
+  virtual void getStoppingInfo(double scales[100][100],
+    double masses[100][100]);
 
-  //----------------------------------------------------------------------//
-  // The members
-  //----------------------------------------------------------------------//
+  // Function to retrieve if any of the shower scales would not have been
+  // possible to produce by Pythia.
+  virtual void getDeadzones(bool dzone[100][100]);
+
+  // Function to generate Sudakov factors for MCatNLO-Delta.
+  virtual double generateSingleSudakov (double pTbegAll, double pTendAll,
+    double m2dip, int idA, int type, double s = -1., double x = -1.);
+
+  LHEF3FromPythia8Ptr lhaPtr;
+  void setLHAPtr(LHEF3FromPythia8Ptr lhaUpIn) { lhaPtr = lhaUpIn; }
+
+protected:
 
   // Make Pythia class friend
   friend class Pythia;
@@ -72,12 +85,12 @@ protected:
   // Pointer to trial MergingHooks object
   MergingHooksPtr mergingHooksPtr;
 
-  // Pointer to standard model couplings.
-  //CoupSM* coupSMPtr;
-
   // Minimal value found for the merging scale in events.
   double tmsNowMin;
   static const double TMSMISMATCH;
+
+  // Minimum allowed weight value to prevent division by zero.
+  static const double MINWGT;
 
   // Function to perform CKKW-L merging on the event.
   int mergeProcessCKKWL( Event& process);
@@ -93,6 +106,31 @@ protected:
 
   // Function to apply the merging scale cut on an input event.
   bool cutOnProcess( Event& process);
+
+  // Clear all information stored in the runtime interface to aMCatNLO.
+  void clearInfos() {
+    stoppingScalesSave.clear();
+    mDipSave.clear();
+    radSave.clear();
+    emtSave.clear();
+    recSave.clear();
+    isInDeadzone.clear();
+  }
+
+  // Store all information required for the runtime interface to aMCatNLO.
+  int clusterAndStore(Event& process);
+
+  // Helper function to be able to extract all shower scales by checking
+  // all dipoles. Relevant only to runtime aMC@NLO interface.
+  void getDipoles( int iRad, int colTag, int colSign,
+    const Event& event, vector<pair<int,int> >& dipEnds);
+
+  // Saved information about shower stopping scales, dipole masses,
+  // dipole ends, and whether or not a clustering is in the shower
+  // deadzone. Relevant only to runtime aMC@NLO interface.
+  vector<double> stoppingScalesSave, mDipSave;
+  vector<int> radSave, emtSave, recSave;
+  vector<bool> isInDeadzone;
 
 };
 

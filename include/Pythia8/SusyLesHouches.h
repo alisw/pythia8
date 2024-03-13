@@ -1,5 +1,5 @@
 // SusyLesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -28,7 +28,7 @@ namespace Pythia8 {
   public:
 
     //Constructor.
-    LHblock<T>() : idnow(0), qDRbar(), i(), val() {} ;
+    LHblock() : idnow(0), qDRbar(), i(), val() {} ;
 
     //Does block exist?
     bool exists() { return int(entry.size()) == 0 ? false : true ; };
@@ -65,17 +65,13 @@ namespace Pythia8 {
       ? true : false;};
 
     // Indexing with (). Output only.
-    T operator()() {
-      if (exists(0)) {return entry[0];} else {T dummy(0); return dummy;};
-    };
-    T operator()(int iIn) {
-      if (exists(iIn)) {return entry[iIn];} else {T dummy(0); return dummy;};
-    };
+    T operator()() {return exists(0) ? entry[0] : T();}
+    T operator()(int iIn) {return exists(iIn) ? entry[iIn] : T();}
 
-    // Size of map
+    // Size of map.
     int size() {return int(entry.size());};
 
-    // First and next key code
+    // First and next key code.
     int first() { idnow = entry.begin()->first; return idnow; };
     int next() {
       typename map<int,T>::iterator itnow;
@@ -84,7 +80,7 @@ namespace Pythia8 {
       return idnow = itnow->first;
     };
 
-    // Simple print utility
+    // Simple print utility.
     void list() {
       bool finished=false;
       int ibegin=first();
@@ -129,10 +125,11 @@ namespace Pythia8 {
 
   // class LHmatrixBlock: the generic SLHA matrix
   // Explicit sizing required, e.g.LHmatrixBlock<4> nmix;
+  // Note, indexing from 1 is intentional, zeroth column/row not used.
   template <int size> class LHmatrixBlock {
   public:
     //Constructor. Set uninitialized and explicitly zero.
-    LHmatrixBlock<size>() : entry(), qDRbar(), val() {
+    LHmatrixBlock() : entry(), qDRbar(), val() {
       initialized=false;
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
@@ -143,14 +140,14 @@ namespace Pythia8 {
 
     // Copy constructor.
     LHmatrixBlock(const LHmatrixBlock& m) : val(m.val) {
-      for (i=0;i<size;i++) for (j=0;j<=size;j++) entry[i][j] = m(i,j);
+      for (i=1;i<=size;i++) for (j=1;j<=size;j++) entry[i][j] = m(i,j);
       qDRbar = m.qDRbar;
       initialized = m.initialized; }
 
     // Assignment.
     LHmatrixBlock& operator=(const LHmatrixBlock& m) {
       if (this != &m) {
-        for (i=0;i<size;i++) for (j=0;j<=size;j++) entry[i][j] = m(i,j);
+        for (i=1;i<=size;i++) for (j=1;j<=size;j++) entry[i][j] = m(i,j);
         qDRbar = m.qDRbar;
         initialized = m.initialized;
       }
@@ -211,7 +208,7 @@ namespace Pythia8 {
   template <int size> class LHtensor3Block {
   public:
     //Constructor. Set uninitialized and explicitly zero.
-    LHtensor3Block<size>() : entry(), qDRbar(), val() {
+    LHtensor3Block() : entry(), qDRbar(), val() {
       initialized=false;
       for (i=1;i<=size;i++) {
         for (j=1;j<=size;j++) {
@@ -224,7 +221,7 @@ namespace Pythia8 {
 
     // Copy constructor.
     LHtensor3Block(const LHtensor3Block& m) : val(m.val) {
-      for (i=0;i<size;i++) for (j=0;j<=size;j++) for (k=0;k<=size;k++)
+      for (i=0;i<=size;i++) for (j=0;j<=size;j++) for (k=0;k<=size;k++)
         entry[i][j][k] = m(i,j,k);
       qDRbar = m.qDRbar;
       initialized = m.initialized; };
@@ -232,7 +229,7 @@ namespace Pythia8 {
     // Assignment.
     LHtensor3Block& operator=(const LHtensor3Block& m) {
       if (this != &m) {
-        for (i=0;i<size;i++) for (j=0;j<=size;j++) for (k=0;k<=size;k++)
+        for (i=0;i<=size;i++) for (j=0;j<=size;j++) for (k=0;k<=size;k++)
           entry[i][j][k] = m(i,j,k);
         qDRbar = m.qDRbar;
         initialized = m.initialized;
@@ -397,14 +394,14 @@ class SusyLesHouches {
 
 public:
 
-  //Constructor, with and without filename.
+  // Constructor, with and without filename.
   SusyLesHouches(int verboseIn=1) : verboseSav(verboseIn),
     headerPrinted(false), footerPrinted(false), filePrinted(false),
     slhaRead(false), lhefRead(false), lhefSlha(false), useDecay(true) {};
   SusyLesHouches(string filename, int verboseIn=1) : verboseSav(verboseIn),
     headerPrinted(false), footerPrinted(false), filePrinted(false),
-    slhaRead(true), lhefRead(false), lhefSlha(false), useDecay(true)
-    {readFile(filename);};
+    slhaRead(true), lhefRead(false), lhefSlha(false), useDecay(true) {
+    readFile(filename);};
 
   //***************************** SLHA FILE I/O *****************************//
   // Read and write SLHA files
@@ -412,7 +409,6 @@ public:
     bool useDecayIn=true);
   int readFile(istream& ,int verboseIn=1,
     bool useDecayIn=true);
-  //int writeFile(string filename): write SLHA file on filename
 
   //Output utilities
   void listHeader();   // print Header
@@ -884,7 +880,6 @@ template <class T> bool SusyLesHouches::getEntry(string blockName, int indx,
 
 //==========================================================================
 
-
 } // end of namespace Pythia8
 
-#endif // end Pythia8_SLHA_H
+#endif // Pythia8_SLHA_H

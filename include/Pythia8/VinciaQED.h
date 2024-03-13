@@ -1,5 +1,5 @@
 // VinciaQED.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -8,13 +8,6 @@
 
 #ifndef Pythia8_VinciaQED_H
 #define Pythia8_VinciaQED_H
-
-// Standard library.
-#include <iostream>
-#include <vector>
-#include <stdlib.h>
-#include <cfloat>
-#include <cmath>
 
 // PYTHIA 8 headers.
 #include "Pythia8/BeamParticle.h"
@@ -30,93 +23,6 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// Class for the "Hungarian" pairing algorithm. Adapted for Vincia
-// from an implementation by M. Buehren and C. Ma, see notices below.
-
-// This is a C++ wrapper with slight modification of a hungarian algorithm
-// implementation by Markus Buehren. The original implementation is a few
-// mex-functions for use in MATLAB, found here:
-// http://www.mathworks.com/matlabcentral/fileexchange/
-//    6543-functions-for-the-rectangular-assignment-problem
-//
-// Both this code and the orignal code are published under the BSD license.
-// by Cong Ma, 2016.
-//
-// Copyright (c) 2014, Markus Buehren
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-// * Redistributions in binary form must reproduce the above copyright
-// notice, this list of conditions and the following disclaimer in
-// the documentation and/or other materials provided with the distribution
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
-class HungarianAlgorithm {
-
-public:
-
-  // Constructor.
-  HungarianAlgorithm() {;}
-  // Destructor.
-  ~HungarianAlgorithm() {;}
-
-  // Function wrapper for solving assignment problem.
-  double solve(std::vector <std::vector<double> >& distMatrix,
-    std::vector<int>& assignment);
-
- private:
-
-  // Solve optimal solution for assignment problem using Munkres algorithm,
-  // also known as the Hungarian algorithm.
-  void optimal(int *assignment, double *cost, double *distMatrix,
-    int nOfRows, int nOfColumns);
-  // Build the assignment vector.
-  void vect(int *assignment, bool *starMatrix, int nOfRows,
-    int nOfColumns);
-  // Calculate the assignment cost.
-  void calcCost(int *assignment, double *cost, double *distMatrix,
-    int nOfRows);
-  // Factorized step 2a of the algorithm.
-  void step2a(int *assignment, double *distMatrix, bool *starMatrix,
-    bool *newStarMatrix, bool *primeMatrix, bool *coveredColumns,
-    bool *coveredRows, int nOfRows, int nOfColumns, int minDim);
-  // Factorized step 2b of the algorithm.
-  void step2b(int *assignment, double *distMatrix, bool *starMatrix,
-    bool *newStarMatrix, bool *primeMatrix, bool *coveredColumns,
-    bool *coveredRows, int nOfRows, int nOfColumns, int minDim);
-  // Factorized step 3 of the algorithm.
-  void step3(int *assignment, double *distMatrix, bool *starMatrix,
-    bool *newStarMatrix, bool *primeMatrix, bool *coveredColumns,
-    bool *coveredRows, int nOfRows, int nOfColumns, int minDim);
-  // Factorized step 4 of the algorithm.
-  void step4(int *assignment, double *distMatrix, bool *starMatrix,
-    bool *newStarMatrix, bool *primeMatrix, bool *coveredColumns,
-    bool *coveredRows, int nOfRows, int nOfColumns, int minDim,
-    int row, int col);
-  // Factorized step 5 of the algorithm.
-  void step5(int *assignment, double *distMatrix, bool *starMatrix,
-    bool *newStarMatrix, bool *primeMatrix, bool *coveredColumns,
-    bool *coveredRows, int nOfRows, int nOfColumns, int minDim);
-};
-
-//==========================================================================
-
 // Class for QED emissions.
 
 class QEDemitElemental {
@@ -127,7 +33,12 @@ public:
   friend class QEDemitSystem;
 
   // Constuctor.
-  QEDemitElemental() {;}
+  QEDemitElemental() : rndmPtr(nullptr), partonSystemsPtr(nullptr), q2Sav(0.),
+    zetaSav(0.), phiSav(0.), sxjSav(0.), syjSav(0.), alpha(0.), c(0.),
+    hasTrial(false), x(0), y(0), idx(0), idy(0), mx2(0.), my2(0.),
+    ex(0.), ey(0.), m2Ant(0.), sAnt(0.), QQ(0.), isII(false), isIF(false),
+    isFF(false), isRF(false), isIA(true), isDip(false), shh(0.),
+    isInitPtr(false), isInit(false), verbose(1) {;}
 
   // Initialize the pointers.
   void initPtr(Rndm* rndmPtrIn, PartonSystems* partonSystemsPtrIn);
@@ -144,15 +55,13 @@ public:
 private:
 
   // Random pointer.
-  Rndm* rndmPtr;
+  Rndm* rndmPtr{};
 
   // Parton system pointer.
-  PartonSystems* partonSystemsPtr;
+  PartonSystems* partonSystemsPtr{};
 
   // Trial variables.
-  double q2Sav, zetaSav, phiSav;
-  double sxjSav, syjSav;
-  double alpha, c;
+  double q2Sav, zetaSav, phiSav, sxjSav, syjSav, alpha, c;
   bool hasTrial;
 
   // Particle indices.
@@ -186,47 +95,118 @@ private:
 
 //==========================================================================
 
+// Base class for QED systems.
+
+class QEDsystem {
+
+ public:
+
+  // Constructor.
+  QEDsystem() : infoPtr(nullptr), partonSystemsPtr(nullptr),
+    particleDataPtr(nullptr), rndmPtr(nullptr), settingsPtr(nullptr),
+    loggerPtr(nullptr), vinComPtr(nullptr), isInitPtr(false), iSys(-1),
+    verbose(0), jNew(0), shat(0.) {;}
+
+  // Destructor.
+  virtual ~QEDsystem() = default;
+
+  // Initialize pointers.
+  void initPtr(Info* infoPtrIn, ParticleData* particleDataPtrIn,
+    PartonSystems* partonSystemsPtrIn, Rndm* rndmPtrIn,
+    Settings* settingsPtrIn, VinciaCommon* vinComPtrIn);
+
+  // Initialise settings for current run.
+  virtual void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    int verboseIn) = 0;
+  virtual void setVerbose(int verboseIn) { verbose = verboseIn; }
+  // Prepare a parton system for evolution.
+  virtual void prepare(int iSysIn, Event &event, double q2CutIn,
+    bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) = 0;
+  // Build parton system.
+  virtual void buildSystem(Event &event) = 0;
+  // Generate a trial scale.
+  virtual double q2Next(Event &event, double q2Start) = 0 ;
+  // Generate kinematics and check for veto of branching.
+  virtual bool acceptTrial(Event &event) = 0;
+  // Update the envent.
+  virtual void updateEvent(Event &event) = 0;
+  // Update the parton systems.
+  virtual void updatePartonSystems();
+  // Print information about the system.
+  virtual void print() = 0;
+
+  // Methods to tell which type of brancher this is.
+  virtual bool isSplitting() {return false;};
+  virtual bool isInitial() {return false;};
+
+ protected:
+
+  // Pointers.
+  Info* infoPtr{};
+  PartonSystems* partonSystemsPtr{};
+  ParticleData* particleDataPtr{};
+  Rndm* rndmPtr{};
+  Settings* settingsPtr{};
+  Logger* loggerPtr{};
+  VinciaCommon* vinComPtr{};
+  bool isInitPtr;
+
+  // Event system.
+  int iSys;
+  vector<Vec4> pNew;
+
+  // Verbose setting.
+  int verbose;
+
+  // Information for partonSystems.
+  int jNew;
+  map<int,int> iReplace;
+  double shat;
+
+};
+
+//==========================================================================
+
 // Class for a QED emission system.
 
-class QEDemitSystem {
+class QEDemitSystem : public QEDsystem {
 
 public:
 
-  QEDemitSystem() :
-    iSys(-1), shh(-1.), cMat(0.), eleTrial(nullptr), trialIsVec(false),
-    beamAPtr(nullptr), beamBPtr(nullptr), infoPtr(nullptr),
-    partonSystemsPtr(nullptr), particleDataPtr(nullptr), rndmPtr(nullptr),
-    settingsPtr(nullptr), vinComPtr(nullptr), mode(-1), verbose(-1),
-    useFullWkernel(false), q2Cut(-1.), isBelowHad(false),
-    emitBelowHad(false), isInitPtr(false), isInit(false), TINYPDF(-1.) {;}
+  QEDemitSystem() : shh(-1.), cMat(0.), trialIsVec(false), beamAPtr(nullptr),
+    beamBPtr(nullptr), qedMode(-1), qedModeMPI(-1), useFullWkernel(false),
+    isBelowHad(false), emitBelowHad(false), q2Cut(-1.), isInit(false),
+    TINYPDF(-1.), kMapTypeFinal(0) {;}
 
-  // Initialize pointers.
-  void initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn);
-  // Initialize settings for current run.
-  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn);
-  // Prepare a QCD system.
+  // Initialise settings for current run.
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn)
+    override;
+  // Prepare a parton system for photon emission evolution
   void prepare(int iSysIn, Event &event, double q2CutIn, bool isBelowHadIn,
-    vector<double> evolutionWindowsIn, AlphaEM alIn);
+    vector<double> evolutionWindowsIn, AlphaEM alIn) override;
+  // Set up antenna pairing for incoherent mode.
+  void buildSystem(Event &event) override;
+  // Generate a trial scale.
+  double q2Next(Event &event, double q2Start) override;
+  // Generate kinematics and check veto.
+  bool acceptTrial(Event &event) override;
+  // Update the envent
+  void updateEvent(Event &event) override;
+  // Branching type.
+  bool isInitial() override {return eleTrial->isII || eleTrial->isIF;}
+  // Print the QED emit internal system.
+  void print() override;
 
   // Trial antenna function.
   double aTrial(QEDemitElemental* ele, double sxj, double syj, double sxy);
   // Physical antenna function.
   double aPhys (QEDemitElemental* ele, double sxj, double syj, double sxy);
   // Ratio between PDFs.
-  double PDFratio(bool isA, double eOld, double eNew, int id, double Qt2);
-  // Set up antenna pairing for incoherent mode.
-  void buildSystem(Event &event);
-  // Generate a trial scale.
-  double generateTrialScale(Event &event, double q2Start);
-  // Check the veto.
-  bool checkVeto(Event &event);
-  // Print the QED emit internal system.
-  void print();
+  double pdfRatio(bool isA, double eOld, double eNew, int id, double Qt2);
 
-private:
+  private:
 
   // Event system.
-  int iSys;
   double shh;
 
   // Internal storage.
@@ -242,31 +222,31 @@ private:
   vector<double> evolutionWindows;
 
   // Trial pointer.
-  QEDemitElemental* eleTrial;
+  QEDemitElemental* eleTrial{};
   bool trialIsVec;
 
   // Pointers.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-  Info*          infoPtr;
-  PartonSystems* partonSystemsPtr;
-  ParticleData*  particleDataPtr;
-  Rndm*          rndmPtr;
-  Settings*      settingsPtr;
-  VinciaCommon*  vinComPtr;
+  BeamParticle* beamAPtr{};
+  BeamParticle* beamBPtr{};
 
   // Settings.
-  int mode, verbose;
-  bool useFullWkernel;
+  int qedMode, qedModeMPI;
+  bool useFullWkernel, isBelowHad, emitBelowHad;
   double q2Cut;
-  bool isBelowHad;
-  bool emitBelowHad;
 
   // Initialization.
-  bool isInitPtr, isInit;
+  bool isInit;
 
   // PDF check.
   double TINYPDF;
+
+  // Recoil strategy.
+  int kMapTypeFinal;
+
+  // Global recoil momenta.
+  Vec4 pRecSum;
+  vector<Vec4> pRec;
+  vector<int>  iRec;
 
 };
 
@@ -281,15 +261,15 @@ public:
   // Friends for internal private members.
   friend class QEDsplitSystem;
 
-  // Default constructor.
-  QEDsplitElemental() = default;
-
   // Constructor.
   QEDsplitElemental(Event &event, int iPhotIn, int iSpecIn):
     iPhot(iPhotIn), iSpec(iSpecIn), ariWeight(0) {
-    m2Ant = m2(event[iPhotIn], event[iSpecIn]);
-    sAnt = 2.*event[iPhotIn].p()*event[iSpecIn].p();
-    m2Spec = event[iSpecIn].m2();}
+    m2Ant = max(VinciaConstants::PICO,
+      m2(event[iPhotIn], event[iSpecIn]));
+    sAnt = max(VinciaConstants::PICO,
+      2.*event[iPhotIn].p()*event[iSpecIn].p());
+    m2Spec = max(0., event[iSpecIn].m2());
+  }
 
   // Kallen function.
   double getKallen() {return m2Ant/(m2Ant - m2Spec);}
@@ -297,49 +277,46 @@ public:
 private:
 
   // Internal members.
-  int iPhot{}, iSpec{};
-  double m2Spec{}, m2Ant{}, sAnt{};
-  double ariWeight{};
+  int iPhot, iSpec;
+  double m2Spec, m2Ant, sAnt;
+  double ariWeight;
 };
 
 //==========================================================================
 
 // Class for a QED splitting system.
 
-class QEDsplitSystem {
+class QEDsplitSystem : public QEDsystem {
 
 public:
 
   // Constructor.
   QEDsplitSystem() :
-    iSys(-1), totIdWeight(-1.), maxIdWeight(-1.), hasTrial(false),
-    q2Trial(-1.), zTrial(-1.), phiTrial(-1.), idTrial(0), eleTrial(nullptr),
-    nQuark(-1), nLepton(-1), verbose(-1), q2Max(-1.), q2Cut(-1.),
-    isBelowHad(false), beamAPtr(nullptr), beamBPtr(nullptr), infoPtr(nullptr),
-    partonSystemsPtr(nullptr), particleDataPtr(nullptr), rndmPtr(nullptr),
-    settingsPtr(nullptr), vinComPtr(nullptr), isInitPtr(false), isInit(false)
-  {;}
+    totIdWeight(-1.), hasTrial(false),
+    q2Trial(-1.), zTrial(-1.), phiTrial(-1.), idTrial(0), nQuark(-1),
+    nLepton(-1), q2Max(-1.), q2Cut(-1.), isBelowHad(false),
+    beamAPtr(nullptr), beamBPtr(nullptr), isInit(false), kMapTypeFinal(0) {;}
 
-  // Initialize pointers.
-  void initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn);
   // Initialize.
-  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn);
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn)
+    override;
   // Prepare list of final-state photons - with recoilers - for splittings.
   void prepare(int iSysIn, Event &event, double q2CutIn, bool isBelowHadIn,
-    vector<double> evolutionWindowsIn, AlphaEM alIn);
+    vector<double> evolutionWindowsIn, AlphaEM alIn) override;
   // Build the splitting system.
-  void buildSystem(Event &event);
+  void buildSystem(Event &event) override;
   // Generate a scale for the system.
-  double generateTrialScale(Event &event, double q2Start);
-  // Check the veto.
-  bool checkVeto(Event &event);
+  double q2Next(Event &event, double q2Start) override;
+  // Generate kinematics and check veto.
+  bool acceptTrial(Event &event) override;
+  // Update Event.
+  void updateEvent(Event &event) override;
+  // Branching type: isSplitting() = true.
+  bool isSplitting() override { return true;}
   // Print the system.
-  void print();
+  void print() override;
 
 private:
-
-  // Event system.
-  int iSys;
 
   // AlphaEM.
   AlphaEM al;
@@ -350,7 +327,7 @@ private:
   // Weights for splitting IDs.
   vector<int> ids;
   vector<double> idWeights;
-  double totIdWeight, maxIdWeight;
+  double totIdWeight;
 
   // Antennae.
   vector<QEDsplitElemental> eleVec;
@@ -358,25 +335,22 @@ private:
   // Trial variables.
   bool hasTrial;
   double q2Trial, zTrial, phiTrial, idTrial;
-  QEDsplitElemental* eleTrial;
+  QEDsplitElemental* eleTrial{};
 
   // Settings.
-  int nQuark, nLepton, verbose;
+  int nQuark, nLepton;
   double q2Max, q2Cut;
   bool isBelowHad;
 
   // Pointers.
   BeamParticle*  beamAPtr;
   BeamParticle*  beamBPtr;
-  Info*          infoPtr;
-  PartonSystems* partonSystemsPtr;
-  ParticleData*  particleDataPtr;
-  Rndm*          rndmPtr;
-  Settings*      settingsPtr;
-  VinciaCommon*  vinComPtr;
 
   // Initialization.
-  bool isInitPtr, isInit;
+  bool isInit;
+
+  // Recoil strategy.
+  int kMapTypeFinal;
 
 };
 
@@ -384,35 +358,36 @@ private:
 
 // Class for a QED conversion system.
 
-class QEDconvSystem {
+class QEDconvSystem : public QEDsystem {
 
 public:
 
   // Constructor.
-  QEDconvSystem() : totIdWeight(-1.), maxIdWeight(-1.), iSys(-1), shh(-1.),
-      s(-1.), iA(-1), iB(-1), isAPhot(false), isBPhot(false), hasTrial(false),
-      iPhotTrial(-1), iSpecTrial(-1), q2Trial(-1.), zTrial(-1.), phiTrial(-1.),
-      idTrial(-1), nQuark(-1), verbose(-1), q2Cut(-1.),
-      isBelowHad(false), beamAPtr(nullptr), beamBPtr(nullptr),
-      infoPtr(nullptr), partonSystemsPtr(nullptr), particleDataPtr(nullptr),
-      rndmPtr(nullptr), settingsPtr(nullptr), vinComPtr(nullptr),
-      isInitPtr(false), isInit(false), TINYPDF(-1.) {;}
+  QEDconvSystem() : totIdWeight(-1.), maxIdWeight(-1.), shh(-1.), s(-1.),
+    iA(-1), iB(-1), isAPhot(false), isBPhot(false), hasTrial(false),
+    iPhotTrial(-1), iSpecTrial(-1), q2Trial(-1.), zTrial(-1.), phiTrial(-1.),
+    idTrial(-1), nQuark(-1), q2Cut(-1.),
+    isBelowHad(false), beamAPtr(nullptr), beamBPtr(nullptr),isInit(false),
+    TINYPDF(-1.) {;}
 
-  // Initialize the pointers.
-  void initPtr(Info* infoPtrIn, VinciaCommon* vinCluPtrIn);
-  // Initialize the system.
-  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn);
+  // Initialize.
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn)
+    override;
   // Prepare for backwards-evolution of photons.
   void prepare(int iSysIn, Event &event, double q2CutIn, bool isBelowHadIn,
-    vector<double> evolutionWindowsIn, AlphaEM alIn);
+    vector<double> evolutionWindowsIn, AlphaEM alIn) override;
   // Build the system.
-  void buildSystem(Event &event);
+  void buildSystem(Event &event) override;
   // Generate a trial scale.
-  double generateTrialScale(Event &event, double q2Start);
-  // Check the veto.
-  bool checkVeto(Event &event);
+  double q2Next(Event &event, double q2Start) override;
+  // Generate kinematics and check veto.
+  bool acceptTrial(Event &event) override;
+  // Update.
+  void updateEvent(Event &event) override;
+  // Branching type: isInitial() = true.
+  bool isInitial() override {return true;};
   // Print.
-  void print();
+  void print() override;
 
 private:
 
@@ -429,7 +404,6 @@ private:
   vector<int> ids;
   vector<double> idWeights;
   double totIdWeight, maxIdWeight;
-  int iSys;
   double shh;
 
   // Antenna parameters.
@@ -443,23 +417,109 @@ private:
   double q2Trial, zTrial, phiTrial, idTrial;
 
   // Settings.
-  int nQuark, verbose;
+  int nQuark;
   double q2Cut;
   bool isBelowHad;
 
   // Pointers.
   BeamParticle*  beamAPtr;
   BeamParticle*  beamBPtr;
-  Info*          infoPtr;
-  PartonSystems* partonSystemsPtr;
-  ParticleData*  particleDataPtr;
-  Rndm*          rndmPtr;
-  Settings*      settingsPtr;
-  VinciaCommon*  vinComPtr;
 
   // Initialization.
-  bool isInitPtr, isInit;
+  bool isInit;
+
+  // PDF check.
   double TINYPDF;
+
+  // Global recoil momenta
+  vector<Vec4> pRec;
+  vector<int>  iRec;
+
+};
+
+//==========================================================================
+
+// Base class for Vincia's QED and EW shower modules.
+
+class VinciaModule {
+
+public:
+
+  // Default constructor.
+  VinciaModule(): verbose(-1), isInitPtr(false), isInitSav(false) {;};
+
+  // Default destructor.
+  virtual ~VinciaModule() = default;
+
+  // Initialise pointers (called at construction time).
+  virtual void initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) = 0;
+
+  //Some early initialisation (needed for EW shower).
+  virtual void load() {;}
+
+  // Initialise settings for current run (called as part of Pythia::init()).
+  virtual void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0)
+    = 0;
+  bool isInit() {return isInitSav;}
+
+  // Select helicities for a system of particles.
+  virtual bool polarise(vector<Particle>&) {return false;}
+
+  // Prepare to shower a system.
+  virtual bool prepare(int iSysIn, Event &event, bool isBelowHadIn) = 0;
+
+  // Update shower system each time something has changed in event.
+  virtual void update(Event &event, int iSys) = 0;
+
+  // Set verbosity level.
+  virtual void setVerbose(int verboseIn) {verbose = verboseIn;}
+
+  // Clear everything (optionally for specific system).
+  virtual void clear(int iSys = -1) = 0;
+
+  // Generate a trial scale.
+  virtual double q2Next(Event &event, double q2Start, double q2End) = 0;
+
+  // Which system does the winner belong to?
+  virtual int sysWin() = 0;
+
+  // Get information about the latest branching.
+  virtual bool lastIsSplitting() = 0;
+  virtual bool lastIsInitial() = 0;
+  virtual bool lastIsResonanceDecay() {return false;}
+
+  // Generate kinematics and check veto.
+  virtual bool acceptTrial(Event &event) = 0;
+
+  // Update event after branching accepted.
+  virtual void updateEvent(Event &event) = 0;
+
+  // Update partonSystems after branching accepted.
+  virtual void updatePartonSystems(Event &event) = 0;
+
+  // End scales.
+  virtual double q2minColoured() = 0;
+  virtual double q2min() = 0;
+
+  // Get number of branchers / systems.
+  virtual unsigned int nBranchers() = 0;
+  virtual unsigned int nResDec() = 0;
+
+  // Members.
+  BeamParticle* beamAPtr{};
+  BeamParticle* beamBPtr{};
+  Info* infoPtr{};
+  ParticleData* particleDataPtr{};
+  Logger* loggerPtr{};
+  PartonSystems* partonSystemsPtr{};
+  Rndm* rndmPtr{};
+  Settings* settingsPtr{};
+  VinciaCommon* vinComPtr{};
+
+ protected:
+
+  int verbose;
+  bool isInitPtr, isInitSav;
 
 };
 
@@ -467,7 +527,7 @@ private:
 
 // Class for performing QED showers.
 
-class QEDShower {
+class VinciaQED : public VinciaModule {
 
 public:
 
@@ -475,65 +535,89 @@ public:
   friend class VinciaFSR;
 
   // Constructor.
-  QEDShower() : isInitSav(false) {;}
+  VinciaQED() {;}
 
   // Initialise pointers (called at construction time).
-  void initPtr(Info* infoPtrIn, VinciaCommon* vinCluPtrIn);
-  // Initialise settings for current run (called as part of Pythia::init())
-  void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0);
+  void initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) override;
+  // Initialise settings for current run (called as part of Pythia::init()).
+  void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0)
+    override;
   // Prepare to shower a system.
-  void prepare(int iSysIn, Event &event, bool isBelowHadIn);
+  bool prepare(int iSysIn, Event& event, bool isBelowHadIn) override;
   // Update QED shower system(s) each time something has changed in event.
-  void update(Event &event, int iSys);
-  // Set verbosity level.
-  void setVerbose(int verboseIn) {verbose = verboseIn;}
+  void update(Event& event, int iSys) override;
+  // Set or change verbosity level, and propagate to QED systems.
+  virtual void setVerbose(int verboseIn) override {
+    verbose = verboseIn;
+    emptyQEDemitSystem.setVerbose(verboseIn);
+    emptyQEDsplitSystem.setVerbose(verboseIn);
+    emptyQEDconvSystem.setVerbose(verboseIn);
+  }
+  // Clear everything, or specific system.
+  void clear(int iSys = -1) override {
+    if (iSys < 0) {emitSystems.clear(); splitSystems.clear();
+      convSystems.clear();}
+    else {emitSystems.erase(iSys); splitSystems.erase(iSys);
+      convSystems.erase(iSys);}
+    qedTrialSysPtr = nullptr;}
+
   // Generate a trial scale.
-  double generateTrialScale(Event &event, double q2Start);
-  // Check the veto.
-  bool checkVeto(Event &event);
-  // Check if initialized.
-  bool isInit() {return isInitSav;}
+  double q2Next(Event& event, double q2Start, double) override;
   // Return the system window.
-  int  sysWin() {return iSysTrial;}
+  int  sysWin() override {return iSysTrial;}
+  // Information about last branching.
+  bool lastIsSplitting() override {
+    if (qedTrialSysPtr != nullptr) return  qedTrialSysPtr->isSplitting();
+    else return false;}
+  bool lastIsInitial() override {
+    if (qedTrialSysPtr != nullptr) return qedTrialSysPtr->isInitial();
+    else return false;}
+  // Generate kinematics and check veto.
+  bool acceptTrial(Event &event) override;
+  // Update event after branching accepted.
+  void updateEvent(Event &event) override;
+  // Update partonSystems after branching accepted.
+  void updatePartonSystems(Event &event) override;
   // Return scales.
-  double q2minColoured() {return q2minColouredSav;}
-  double q2min() {return q2minSav;}
+  double q2minColoured() override {return q2minColouredSav;}
+  double q2min() override {return q2minSav;}
+
+  // Getter for number of systems.
+  unsigned int nBranchers() override {
+    int sizeNow = emitSystems.size();
+    sizeNow = max(sizeNow, (int)splitSystems.size());
+    sizeNow = max(sizeNow, (int)convSystems.size());
+    return sizeNow;}
+
+  // This module does not implement resonance decays.
+  unsigned int nResDec() override { return 0; }
 
 private:
 
+  // Get Q2 for QED system.
+  template <class T>
+  void q2NextSystem(map<int, T>& QEDsystemList, Event& event, double q2Start);
+
   // Systems.
-  vector<int> iSystems;
-  vector<QEDemitSystem> emitSystems;
-  vector<QEDsplitSystem> splitSystems;
-  vector<QEDconvSystem> convSystems;
+  QEDemitSystem emptyQEDemitSystem;
+  QEDsplitSystem emptyQEDsplitSystem;
+  QEDconvSystem emptyQEDconvSystem;
+  map< int, QEDemitSystem> emitSystems;
+  map< int, QEDsplitSystem> splitSystems;
+  map< int, QEDconvSystem> convSystems;
 
   // Settings.
-  int  verbose;
-  bool doQED;
-  bool doEmission;
+  bool doQED, doEmission;
   int  nGammaToLepton, nGammaToQuark;
   bool doConvertGamma, doConvertQuark;
 
   // Scales.
   double q2minSav, q2minColouredSav;
 
-  // Trial information.
-  int    iSysTrial;
-  int    iSysIndexTrial;
+  // Trial information
+  int iSysTrial;
   double q2Trial;
-  bool   isTrialEmit;
-  bool   isTrialSplit;
-  bool   isTrialConv;
-
-  // Pointers.
-  Info*          infoPtr;
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
-  ParticleData*  particleDataPtr;
-  PartonSystems* partonSystemsPtr;
-  Rndm*          rndmPtr;
-  Settings*      settingsPtr;
-  VinciaCommon*  vinComPtr;
+  QEDsystem* qedTrialSysPtr{};
 
   // AlphaEM.
   AlphaEM al;
@@ -541,13 +625,10 @@ private:
   // Evolution windows
   vector<double> evolutionWindows;
 
-  // Initialize.
-  bool isInitPtr, isInitSav;
-
 };
 
 //==========================================================================
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_VinciaQED_H
+#endif // Pythia8_VinciaQED_H

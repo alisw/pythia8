@@ -1,5 +1,5 @@
 // Info.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -12,6 +12,7 @@
 
 #include "Pythia8/Basics.h"
 #include "Pythia8/LHEF3.h"
+#include "Pythia8/Logger.h"
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/SharedPointers.h"
 #include "Pythia8/Weights.h"
@@ -22,11 +23,14 @@ namespace Pythia8 {
 class Settings;
 class ParticleData;
 class Rndm;
+class BeamSetup;
 class CoupSM;
 class CoupSUSY;
 class BeamParticle;
 class PartonSystems;
 class SigmaTotal;
+class SigmaCombined;
+class HadronWidths;
 
 // Forward declaration of HIInfo class.
 class HIInfo;
@@ -44,7 +48,7 @@ public:
 
   // Constructors.
   Info() = default;
-  Info(bool) : Info() {weightCKKWLSave = 1.;}
+  Info(bool) : Info() {}
 
   // Destructor for clean-up.
   ~Info() {
@@ -60,20 +64,16 @@ public:
 
   // Set pointers to other class objects.
   void setPtrs(Settings* settingsPtrIn, ParticleData* particleDataPtrIn,
-    Rndm* rndmPtrIn, CoupSM* coupSMPtrIn, CoupSUSY* coupSUSYPtrIn,
-    BeamParticle* beamAPtrIn,    BeamParticle* beamBPtrIn,
-    BeamParticle* beamPomAPtrIn, BeamParticle*  beamPomBPtrIn,
-    BeamParticle* beamGamAPtrIn, BeamParticle*  beamGamBPtrIn,
-    BeamParticle* beamVMDAPtrIn, BeamParticle*  beamVMDBPtrIn,
+    Logger* loggerPtrIn, Rndm* rndmPtrIn, BeamSetup* beamSetupIn,
+    CoupSM* coupSMPtrIn, CoupSUSY* coupSUSYPtrIn,
     PartonSystems* partonSystemsPtrIn, SigmaTotal* sigmaTotPtrIn,
+    SigmaCombined* sigmaCmbPtrIn, HadronWidths* hadronWidthsPtrIn,
     WeightContainer* weightContainerPtrIn) {
     settingsPtr = settingsPtrIn; particleDataPtr = particleDataPtrIn;
-    rndmPtr = rndmPtrIn; coupSMPtr = coupSMPtrIn; coupSUSYPtr = coupSUSYPtrIn;
-    beamAPtr    = beamAPtrIn;    beamBPtr    = beamBPtrIn;
-    beamPomAPtr = beamPomAPtrIn; beamPomBPtr = beamPomBPtrIn;
-    beamGamAPtr = beamGamAPtrIn; beamGamBPtr = beamGamBPtrIn;
-    beamVMDAPtr = beamVMDAPtrIn; beamVMDBPtr = beamVMDBPtrIn;
+    loggerPtr = loggerPtrIn; rndmPtr = rndmPtrIn; beamSetupPtr = beamSetupIn;
+    coupSMPtr = coupSMPtrIn; coupSUSYPtr = coupSUSYPtrIn;
     partonSystemsPtr = partonSystemsPtrIn; sigmaTotPtr = sigmaTotPtrIn;
+    sigmaCmbPtr = sigmaCmbPtrIn; hadronWidthsPtr = hadronWidthsPtrIn;
     weightContainerPtr = weightContainerPtrIn; }
 
   // Pointer to the settings database.
@@ -82,29 +82,28 @@ public:
   // Pointer to the particle data table.
   ParticleData*  particleDataPtr{};
 
+  // Pointer to the logger.
+  Logger*        loggerPtr{};
+
   // Pointer to the random number generator.
   Rndm*          rndmPtr{};
+
+  // Pointers to beam configuration.
+  BeamSetup*     beamSetupPtr{};
 
   // Pointers to Standard Model and Beyond SM couplings.
   CoupSM*        coupSMPtr{};
   CoupSUSY*      coupSUSYPtr{};
 
-  // Pointers to the two incoming beams and to Pomeron, photon or VMD
-  // beam-inside-beam cases.
-  BeamParticle*  beamAPtr{};
-  BeamParticle*  beamBPtr{};
-  BeamParticle*  beamPomAPtr{};
-  BeamParticle*  beamPomBPtr{};
-  BeamParticle*  beamGamAPtr{};
-  BeamParticle*  beamGamBPtr{};
-  BeamParticle*  beamVMDAPtr{};
-  BeamParticle*  beamVMDBPtr{};
-
   // Pointer to information on subcollision parton locations.
   PartonSystems* partonSystemsPtr{};
 
-  // Pointer to the total/elastic/diffractive cross sections.
+  // Pointers to the total/elastic/diffractive cross sections.
   SigmaTotal*    sigmaTotPtr{};
+  SigmaCombined* sigmaCmbPtr{};
+
+  // Pointer to the hadron widths data table.
+  HadronWidths*  hadronWidthsPtr;
 
   // Pointer to the UserHooks object set for the run.
   UserHooksPtr   userHooksPtr{};
@@ -224,32 +223,16 @@ public:
   double weightSum()          const;
   double lhaStrategy()        const {return lhaStrategySave;}
 
-  // Further access to uncertainty weights: number and labels
-  int nWeights() const { return weightSave.size(); }
-  string weightLabel(int iWeight) const {
-    if (iWeight >= 0 && iWeight < (int)weightLabelSave.size())
-      return weightLabelSave[iWeight];
-    else return "";}
-
-  void   initUncertainties(vector<string>*, bool = false);
-  int    nVariationGroups() const { return externalVariationsSize; }
-  string getGroupName(int iGN) const {
-    string tmpString("Null");
-    if( iGN < 0 || iGN >= externalVariationsSize ) return tmpString;
-    return externalGroupNames[iGN];
-  }
-  double getGroupWeight(int iGW) const {
-    double tempWeight(1.0);
-    double normalization = weightSave[0];
-    if( iGW < 0 || iGW >= externalVariationsSize ) return tempWeight;
-    for( vector<int>::const_iterator cit = externalMap[iGW].begin();
-      cit < externalMap[iGW].end(); ++cit )
-      tempWeight *= weightSave[*cit] / normalization;
-    return tempWeight * weight(0);
-  }
-  string getInitialName(int iG) const { return initialNameSave[iG]; }
-  // Variations that must be known by TimeShower and Spaceshower
-  map<int,double> varPDFplus, varPDFminus, varPDFmember;
+  // Further access to uncertainty weights: number and labels.
+  int    nWeights() const {
+    return weightContainerPtr->weightsShowerPtr->getWeightsSize() +
+      weightContainerPtr->weightsFragmentation.getWeightsSize() - 1;}
+  string weightLabel(int iWgt) const;
+  int    nWeightGroups() const {return weightContainerPtr->
+      weightsShowerPtr->nWeightGroups() + weightContainerPtr->
+      weightsFragmentation.nWeightGroups();}
+  string getGroupName(int iGN) const;
+  double getGroupWeight(int iGW) const;
 
   // Number of times other steps have been carried out.
   int    nISR()               const {return nISRSave;}
@@ -286,13 +269,54 @@ public:
 
   // Cross section estimate, optionally process by process.
   vector<int> codesHard();
-  string nameProc(int i = 0)  const {return (i == 0) ? "sum"
-    : ( (procNameM.at(i) == "") ? "unknown process" : procNameM.at(i) );}
-  long   nTried(int i = 0)    const {return (i == 0) ? nTry : nTryM.at(i);}
-  long   nSelected(int i = 0) const {return (i == 0) ? nSel : nSelM.at(i);}
-  long   nAccepted(int i = 0) const {return (i == 0) ? nAcc : nAccM.at(i);}
-  double sigmaGen(int i = 0)  const {return (i == 0) ? sigGen : sigGenM.at(i);}
-  double sigmaErr(int i = 0)  const {return (i == 0) ? sigErr : sigErrM.at(i);}
+
+  // Name of the specified process.
+  string nameProc(int i = 0)  const {
+    if (i == 0) return "sum";
+    auto itr = procNameM.find(i);
+    if (itr != procNameM.end()) return itr->second;
+    loggerPtr->ERROR_MSG("process code not found", to_string(i));
+    return "unknown process";}
+
+  // The number of phase-space points tried.
+  long   nTried(int i = 0) const {
+    if (i == 0) return nTry;
+    auto itr = nTryM.find(i);
+    if (itr != nTryM.end()) return itr->second;
+    loggerPtr->ERROR_MSG("process code not found", to_string(i));
+    return 0;}
+
+  // The number of selected hard processes.
+  long   nSelected(int i = 0) const {
+    if (i == 0) return nSel;
+    auto itr = nSelM.find(i);
+    if (itr != nSelM.end()) return itr->second;
+    loggerPtr->ERROR_MSG("process code not found", to_string(i));
+    return 0;}
+
+  // The number of accepted events.
+  long   nAccepted(int i = 0) const {
+    if (i == 0) return nAcc;
+    auto itr = nAccM.find(i);
+    if (itr != nAccM.end()) return itr->second;
+    loggerPtr->ERROR_MSG("process code not found", to_string(i));
+    return 0;}
+
+  // The estimated cross-section in units of mb.
+  double sigmaGen(int i = 0)  const {
+    if (i == 0) return sigGen;
+    auto itr = sigGenM.find(i);
+    if (itr != sigGenM.end()) return itr->second;
+    loggerPtr->ERROR_MSG("process code not found", to_string(i));
+    return 0;}
+
+  // The uncertainty on the estimated cross-section in units of mb.
+  double sigmaErr(int i = 0)  const {
+    if (i == 0) return sigErr;
+    auto itr = sigErrM.find(i);
+    if (itr != sigErrM.end()) return itr->second;
+    //loggerPtr->ERROR_MSG("process code not found", to_string(code));
+    return 0;}
 
   // Counters for number of loops in various places.
   int    getCounter( int i)   const {return counters[i];}
@@ -300,19 +324,6 @@ public:
   // Set or increase the value stored in a counter.
   void   setCounter( int i, int value = 0) {counters[i]  = value;}
   void   addCounter( int i, int value = 1) {counters[i] += value;}
-
-  // Reset to empty map of error messages.
-  void   errorReset() {messages.clear();}
-
-  // Print a message the first few times. Insert in database.
-  void   errorMsg(string messageIn, string extraIn = " ",
-    bool showAlways = false);
-
-  // Provide total number of errors/aborts/warnings experienced to date.
-  int    errorTotalNumber() const;
-
-  // Print statistics on errors/aborts/warnings.
-  void   errorStatistics() const;
 
   // Set initialization warning flag when too low pTmin in ISR/FSR/MPI.
   void   setTooLowPTmin(bool lowPTminIn) {lowPTmin = lowPTminIn;}
@@ -330,23 +341,13 @@ public:
   void   pT2NowISR( double pT2NowIn) {pT2NowISRSave = pT2NowIn;}
   double pT2NowISR() {return pT2NowISRSave;}
 
-  // Update a particular event weight, first entry by default.
-  void updateWeight( double weightIn, int i = 0) { weightSave[i] = weightIn;}
-
-  // Return CKKW-L weight.
-  double getWeightCKKWL() const { return weightCKKWLSave;}
-  // Set CKKW-L weight.
-  void setWeightCKKWL( double weightIn) { weightCKKWLSave = weightIn;}
   // Return merging weight.
-  double mergingWeight() const { return weightCKKWLSave;}
+  double mergingWeight(int i=0) const {
+    return weightContainerPtr->weightsMerging.getWeightsValue(i);}
 
   // Return the complete NLO weight.
-  double mergingWeightNLO() const {
-    return (weightCKKWLSave - weightFIRSTSave); }
-  // Return the O(\alpha_s)-term of the CKKW-L weight.
-  double getWeightFIRST() const { return weightFIRSTSave;}
-  // Set the O(\alpha_s)-term of the CKKW-L weight.
-  void setWeightFIRST( double weightIn) { weightFIRSTSave = weightIn;}
+  double mergingWeightNLO(int i=0) const {
+    return weightContainerPtr->weightsMerging.getWeightsValue(i); }
 
   // Return an LHEF header
   string header(const string &key) const {
@@ -381,7 +382,7 @@ public:
   map<string,LHAweight > *init_weights{};
 
   // Store current-event Les Houches event tags.
-  bool hasOwnEventAttributes;
+  bool hasOwnEventAttributes{};
   map<string, string > *eventAttributes{};
 
   // The weights associated with this event, as given by the LHAwgt tags
@@ -428,7 +429,7 @@ public:
 
   // Externally set event tag auxiliary information.
   void setEventAttribute(string key, string value, bool doOverwrite = true) {
-    if (eventAttributes == NULL) {
+    if (eventAttributes == nullptr) {
       eventAttributes = new map<string,string>();
       hasOwnEventAttributes = true;
     }
@@ -503,10 +504,11 @@ public:
   void setWeak2to2lines(vector<int> weak2to2linesIn)
     {weak2to2lines = weak2to2linesIn;}
 
-  // From here on what used to be the private part of the class.
+  // Check if onia is included in showers (used for MPI process setup).
+  void setOniumShower(bool oniumShowerIn) {oniumShower = oniumShowerIn;}
+  bool getOniumShower() const {return oniumShower;}
 
-  // Number of times the same error message is repeated, unless overridden.
-  static const int TIMESTOPRINT;
+  // From here on what used to be the private part of the class.
 
   // Allow conversion from mb to pb.
   static const double CONVERTMB2PB;
@@ -548,14 +550,7 @@ public:
          xPomB{}, tPomA{}, tPomB{};
   string nameSave{}, nameSubSave[4];
   vector<int>    codeMPISave, iAMPISave, iBMPISave;
-  vector<double> pTMPISave, eMPISave, weightSave;
-  vector<string> weightLabelSave;
-  vector<string>          externalVariations;
-  vector<vector<string> > externalVarNames;
-  vector<string>          externalGroupNames;
-  vector<string>          initialNameSave;
-  vector<vector<int> >    externalMap;
-  int                     externalVariationsSize{};
+  vector<double> pTMPISave, eMPISave;
 
   // Variables related to photon kinematics.
   bool   isVMDstateAEvent{}, isVMDstateBEvent{};
@@ -567,35 +562,14 @@ public:
   // Vector of various loop counters.
   int    counters[50];
 
-  // Map for all error messages.
-  map<string, int> messages;
-
   // Map for LHEF headers.
   map<string, string> headers;
 
   // Strings for complete header block and event comments.
   string headerBlock{}, eventComments{};
 
-  // Map for plugin libraries.
-  map<string, void*> plugins;
-
-  // Load a plugin library.
-  void* loadPlugin(string nameIn) {
-      void *lib;
-      map<string, void*>::iterator plugin = plugins.find(nameIn);
-      if (plugin == plugins.end()) {
-        lib = dlopen(nameIn.c_str(), RTLD_LAZY);
-        const char* cerror = dlerror();
-        string serror(cerror == nullptr ? "" : cerror);
-        dlerror();
-        if (serror.size()) {
-          errorMsg("Error in Info::loadPlugin: " + serror); return nullptr;}
-        plugins[nameIn] = lib;
-      } else lib = plugin->second;
-      return lib;
-  };
-
   // Set info on the two incoming beams: only from Pythia class.
+  void setBeamIDs( int idAin, int idBin) { idASave = idAin; idBSave = idBin;}
   void setBeamA( int idAin, double pzAin, double eAin, double mAin) {
     idASave = idAin; pzASave = pzAin; eASave = eAin; mASave = mAin;}
   void setBeamB( int idBin, double pzBin, double eBin, double mBin) {
@@ -628,9 +602,9 @@ public:
     codeSave = nFinalSave = nTotal = nMPISave = nISRSave = nFSRinProcSave
       = nFSRinResSave = 0;
     bMPISave = enhanceMPISave = enhanceMPIavgSave = bMPIoldSave
-      = enhanceMPIoldSave = enhanceMPIoldavgSave = weightCKKWLSave = 1.;
+      = enhanceMPIoldSave = enhanceMPIoldavgSave = 1.;
     pTmaxMPISave = pTmaxISRSave = pTmaxFSRSave = pTnowSave = zNowISRSave
-      = pT2NowISRSave = weightFIRSTSave = 0.;
+      = pT2NowISRSave = 0.;
     nameSave = " ";
     for (int i = 0; i < 4; ++i) {
       hasSubSave[i] = false;
@@ -644,7 +618,8 @@ public:
     }
     codeMPISave.resize(0); iAMPISave.resize(0); iBMPISave.resize(0);
     pTMPISave.resize(0); eMPISave.resize(0); setHardDiff();
-    for (int i = 0; i < nWeights(); ++i) weightSave[i]=1.;}
+    weightContainerPtr->clear();
+  }
 
   // Reset info arrays only for parton and hadron level.
   int sizeMPIarrays() const { return codeMPISave.size(); }
@@ -730,40 +705,21 @@ public:
   // Set info whether reading of Les Houches Accord file at end.
   void setEndOfFile( bool atEOFin) {atEOF = atEOFin;}
 
-  // Set number and labels of weights (for uncertainty evaluations).
-  void setNWeights(int mWeights) {
-    mWeights = max(1,mWeights);
-    int lWeights = weightSave.size();
-    weightSave.resize(mWeights);
-    weightLabelSave.resize(mWeights);
-    for (int i=lWeights; i<mWeights; ++i) weightLabelSave[i]="";
-  }
-  void setWeightLabel(int iWeight, string labelIn) {
-    if (iWeight >= 0 && iWeight < (int)weightLabelSave.size())
-      weightLabelSave[iWeight] = labelIn;
-  }
-
-  // Set event weight, either for LHEF3 or for uncertainty bands.
+  // Set event weight, either for LHEF3 or for uncertainty bands. If weight
+  // has units (lhaStrategy 4 or -4), input in mb
   void setWeight( double weightIn, int lhaStrategyIn) {
-    for (int i = 0; i < nWeights(); ++i) weightSave[i] = weightIn;
-    if (nWeights() == 0) weightSave.push_back(weightIn);
+    for (int i = 0; i < nWeights(); ++i)
+      weightContainerPtr->weightsShowerPtr->setValueByIndex(i,1.);
+    // Nominal weight in weightContainer saved in pb for lhaStrategy +-4
     weightContainerPtr->setWeightNominal(
         abs(lhaStrategyIn) == 4 ? CONVERTMB2PB*weightIn : weightIn);
     lhaStrategySave = lhaStrategyIn;}
-
-
-  // Apply weight modification (used for automated uncertainty variations).
-  void reWeight( int iWeight, double rwIn) {
-    if (iWeight >= 0 || iWeight < nWeights()) weightSave[iWeight] *= rwIn;}
-
-  // Save merging weight (i.e. CKKW-L-type weight, summed O(\alpha_s) weight).
-  double weightCKKWLSave{}, weightFIRSTSave{};
-
+  //
   // Set info on resolved processes.
   void setIsResolved(bool isResIn) {isRes = isResIn;}
 
   // Set info on hard diffraction.
-  void setHardDiff( bool hasUnresBeamsIn = false, bool hasPomPsysIn = false,
+  void setHardDiff(bool hasUnresBeamsIn = false, bool hasPomPsysIn = false,
     bool isHardDiffAIn = false, bool isHardDiffBIn = false,
     double xPomAIn = 0., double xPomBIn = 0., double tPomAIn = 0.,
     double tPomBIn = 0.) { hasUnresBeams = hasUnresBeamsIn;
@@ -772,15 +728,19 @@ public:
     xPomA = xPomAIn; xPomB = xPomBIn;
     tPomA = tPomAIn; tPomB = tPomBIn;}
 
+  // Move process information to an another diffractive system.
+  void reassignDiffSystem(int iDSold, int iDSnew);
+
   // Set information in hard diffractive events.
   void setHasUnresolvedBeams(bool hasUnresBeamsIn)
     {hasUnresBeams = hasUnresBeamsIn;}
   void setHasPomPsystem(bool hasPomPsysIn) {hasPomPsys = hasPomPsysIn;}
 
-  // Variables for weak shower setup.
+  // Variables for weak and onia shower setup.
   vector<int> weakModes, weak2to2lines;
   vector<Vec4> weakMomenta;
   vector<pair<int, int> > weakDipoles;
+  bool oniumShower{false};
 
   int numberOfWeights() const {
     return weightContainerPtr->numberOfWeights(); }

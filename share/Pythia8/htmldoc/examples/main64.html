@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main64.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -15,7 +15,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // This is a simple test program. It shows how PYTHIA 8 can write
 // a Les Houches Event File v. 3.0 based on its process-level events.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -25,19 +25,19 @@ int main() {
 
   // Set up for external input of LHEF 3.0 events.
   Pythia pythia;
-  pythia.readString("Beams:frameType = 4");
-  pythia.readString("Beams:LHEF = wbj_lhef3.lhe");
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = wbj_lhef3.lhe&quot;);
   pythia.init();
 
   // Create and open file for LHEF 3.0 output.
-  LHEF3FromPythia8 myLHEF3(&pythia.event, &pythia.info);
-  myLHEF3.openLHEF("weakbosons.lhe");
+  LHEF3FromPythia8 myLHEF3(&amp;pythia.event, &amp;pythia.info);
+  myLHEF3.openLHEF(&quot;weakbosons.lhe&quot;);
 
   // Write out initialization info on the file.
   myLHEF3.setInit();
 
   // Event generation loop.
-  for (int iEvent = 0; iEvent < 10; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; 10; ++iEvent) {
 
     // Generate next event.
     if (!pythia.next()) {

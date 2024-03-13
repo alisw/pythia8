@@ -1,5 +1,5 @@
 // DireWeightContainer.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,6 +9,7 @@
 #include "Pythia8/DireWeightContainer.h"
 #include "Pythia8/DireSpace.h"
 #include "Pythia8/DireTimes.h"
+#include "Pythia8/Plugins.h"
 
 namespace Pythia8 {
 
@@ -20,40 +21,25 @@ const double DireWeightContainer::LARGEWT = 2e0;
 
 void DireWeightContainer::setup() {
 
-cout << __LINE__ << " " << settingsPtr << endl;
   // Clear everything.
   init();
   enhanceFactors.clear();
 
-  // Initialize MG5 interface.
-  card=settingsPtr->word("Dire:MG5card");
-#ifdef MG5MES
-  // Redirect output so that Dire can print MG5 initialization.
-  std::streambuf *old = cout.rdbuf();
-  stringstream ss;
-  cout.rdbuf (ss.rdbuf());
-  // Read Pythia settings from file (to define tune).
-#ifdef OPENMP
-#pragma omp critical
-{
-  if (PY8MEs_accessorPtr) delete PY8MEs_accessorPtr;
-  PY8MEs_accessorPtr = new PY8MEs_namespace::PY8MEs(card);
-}
-#else
-  if (PY8MEs_accessorPtr) delete PY8MEs_accessorPtr;
-  PY8MEs_accessorPtr = new PY8MEs_namespace::PY8MEs(card);
-#endif
-  PY8MEs_accessorPtr->seProcessesIncludeSymmetryFactors(false);
-  PY8MEs_accessorPtr->seProcessesIncludeHelicityAveragingFactors(false);
-  PY8MEs_accessorPtr->seProcessesIncludeColorAveragingFactors(false);
-  PY8MEs_accessorPtr->setProcessesExternalMassesMode(1);
-  // Restore print-out.
-  cout.rdbuf (old);
-#endif
+  // Initialize MG5 MEs interface.
+  card            = settingsPtr->word("Dire:MG5card");
+  string mePlugin = settingsPtr->word("Dire:MEplugin");
+  if (mePlugin.size() > 0) {
+    if (!hasMEs) {
+      matrixElements = make_plugin<ExternalMEs>(
+        "libpythia8mg5" + mePlugin + ".so", "ExternalMEsMadgraph",
+        nullptr, settingsPtr, infoPtr->loggerPtr);
+    }
+    hasMEs = matrixElements != nullptr ?
+      matrixElements->initDire(infoPtr, card) : false;
+  }
 
   // Initialize additional user-defined enhancements of splitting kernel
   // overestimates.
-  //int sizeNames = 48;
   int sizeNames = 100;
   const char* names[] = {
     // QCD FSR
@@ -508,31 +494,18 @@ double DireWeightContainer::getTrialEnhancement( double pT2key ) {
 //--------------------------------------------------------------------------
 
 bool DireWeightContainer::hasME(const Event& event) {
-#ifdef MG5MES
-  return isAvailableME(*PY8MEs_accessorPtr,event);
-#else
-  if (false) cout << event.size();
+  if (hasMEs) return matrixElements->isAvailable(event, 0);
   return false;
-#endif
-
 }
 
 bool DireWeightContainer::hasME(vector <int> in_pdgs, vector<int> out_pdgs) {
-#ifdef MG5MES
-  return isAvailableME(*PY8MEs_accessorPtr, in_pdgs, out_pdgs);
-#else
-  if (false) cout << in_pdgs.size()*out_pdgs.size();
+  if (hasMEs) return matrixElements->isAvailable(in_pdgs, out_pdgs);
   return false;
-#endif
 }
 
 double DireWeightContainer::getME(const Event& event) {
-#ifdef MG5MES
-  return calcME(*PY8MEs_accessorPtr,event);
-#else
-  if (false) cout << event.size();
+  if (hasMEs) return matrixElements->calcME2(event, 0);
   return 0.0;
-#endif
 }
 
 //==========================================================================

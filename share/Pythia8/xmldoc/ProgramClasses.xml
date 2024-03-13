@@ -192,7 +192,7 @@ Cambridge/Aachen algorithms.</td>
 <td><aloc href="FourVectors">Four-Vectors</aloc></td> 
 <td>four-vectors</td> 
 </tr> 
- 
+<!-- 
 <tr> 
 <td><code></code></td> 
 <td><aloc href=""></aloc></td> 
@@ -204,7 +204,7 @@ Cambridge/Aachen algorithms.</td>
 <td><aloc href=""></aloc></td> 
 <td></td> 
 </tr> 
- 
+--> 
 </table> 
  
 <p/> 
@@ -214,4 +214,4 @@ which compensates for the brevity of the current page.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // BeamRemnants.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -41,8 +41,8 @@ public:
     doReconnect(), primordialKTsoft(), primordialKThard(),
     primordialKTremnant(), halfScaleForKT(), halfMassForKT(),
     reducedKTatHighY(), remnantMode(), reconnectMode(), isDIS(), doMPI(),
-    nSys(), oldSize(), iDS(0), eCM(), sCM(), colourReconnectionPtr(),
-    partonVertexPtr(), doPartonVertex() { }
+    beamA2gamma(), beamB2gamma(), nSys(), oldSize(), iDS(0), eCM(), sCM(),
+    colourReconnectionPtr(), partonVertexPtr(), doPartonVertex() { }
 
   // Initialization.
   bool init( PartonVertexPtr partonVertexPtrIn,
@@ -73,7 +73,7 @@ private:
   int    remnantMode, reconnectMode;
 
   // Information set for events.
-  bool   isDIS, doMPI;
+  bool   isDIS, doMPI, beamA2gamma, beamB2gamma;
   int    nSys, oldSize, iDS;
   double eCM, sCM;
 
@@ -105,7 +105,7 @@ private:
   // Special beam remnant kinematics when only one remnant system added.
   // This is the case e.g for Deeply Inelastic Scattering and photon
   // collisions with other side ended up to beam photon by ISR.
-  bool setOneRemnKinematics( Event& event, int beamOffset);
+  bool setOneRemnKinematics( Event& event);
 
   // Update colours of outgoing particles in the event.
   void updateColEvent( Event& event, vector<pair <int,int> > colChanges);

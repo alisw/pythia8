@@ -1,11 +1,11 @@
 // main41.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Mikhail Kirsanov <Mikhail.Kirsanov@cern.ch>.
+// Authors: Mikhail Kirsanov <Mikhail.Kirsanov@cern.ch>
 
-// Keywords: basic usage; hepmc;
+// Keywords: basic usage; hepmc
 
 // This program illustrates how HepMC can be interfaced to Pythia8.
 // It studies the charged multiplicity distribution at the LHC.
@@ -15,17 +15,19 @@
 // Therefore large event samples may be impractical.
 
 #include "Pythia8/Pythia.h"
+#ifndef HEPMC2
 #include "Pythia8Plugins/HepMC3.h"
+#else
+#include "Pythia8Plugins/HepMC2.h"
+#endif
 
 using namespace Pythia8;
 
 int main() {
 
-  // Interface for conversion from Pythia8::Event to HepMC event.
-  HepMC3::Pythia8ToHepMC3 topHepMC;
-
-  // Specify file where HepMC events will be stored.
-  HepMC3::WriterAscii ascii_io("hepmcout41.dat");
+  // Interface for conversion from Pythia8::Event to HepMC
+  // event. Specify file where HepMC events will be stored.
+  Pythia8::Pythia8ToHepMC topHepMC("hepmcout41.dat");
 
   // Generator. Process selection. LHC initialization. Histogram.
   Pythia pythia;
@@ -46,14 +48,9 @@ int main() {
         ++nCharged;
     mult.fill( nCharged );
 
-    // Construct new empty HepMC event and fill it.
-    // Default units are ( HepMC3::Units::GEV, HepMC3::Units::MM)
-    // but can be changed in the GenEvent constructor.
-    HepMC3::GenEvent hepmcevt;
-    topHepMC.fill_next_event( pythia, &hepmcevt );
+    // Construct new empty HepMC event, fill it and write it out.
+    topHepMC.writeNextEvent( pythia );
 
-    // Write the HepMC event to file.
-    ascii_io.write_event(hepmcevt);
 
   // End of event loop. Statistics. Histogram.
   }

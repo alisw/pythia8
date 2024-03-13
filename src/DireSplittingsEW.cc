@@ -1,5 +1,5 @@
 // DireSplitingsEW.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -111,7 +111,7 @@ double Dire_fsr_ew_Q2QZ::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * gaugeFactor();
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTmin"))/m2dip;
-  wt  = preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -307,7 +307,7 @@ double Dire_fsr_ew_Q2ZQ::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * gaugeFactor();
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTmin"))/m2dip;
-  wt  = preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -1313,7 +1313,7 @@ double Dire_fsr_ew_W2WA::overestimateInt(double zMinAbs, double,
   double preFac = symmetryFactor() * abs(charge);
   // Q -> QG, soft part (currently also used for collinear part).
   double kappa2 = pow2(settingsPtr->parm("TimeShower:pTminChgL"))/m2dip;
-  wt  = enhance * preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = enhance * preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 
@@ -1469,7 +1469,7 @@ double Dire_isr_ew_Q2QZ::overestimateInt(double zMinAbs, double,
   double wt     = 0.;
   double preFac = symmetryFactor() * gaugeFactor();
   double kappa2 = pow2(settingsPtr->parm("SpaceShower:pTmin"))/m2dip;
-  wt  = preFac * 2. * 0.5 * log( 1. + pow2(1.-zMinAbs)/kappa2);
+  wt  = preFac * 2. * 0.5 * log1p(pow2(1.-zMinAbs)/kappa2);
   return wt;
 }
 

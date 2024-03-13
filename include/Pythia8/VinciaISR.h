@@ -1,18 +1,20 @@
 // VinciaISR.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains header information for the VinciaISR class for
 // QCD initial-state antenna showers (II and IF), and auxiliary classes.
 
-#ifndef Pythia_VinciaISR_H
-#define Pythia_VinciaISR_H
+#ifndef Pythia8_VinciaISR_H
+#define Pythia8_VinciaISR_H
 
 #include "Pythia8/SpaceShower.h"
 #include "Pythia8/VinciaAntennaFunctions.h"
 #include "Pythia8/VinciaCommon.h"
+#include "Pythia8/VinciaDiagnostics.h"
 #include "Pythia8/VinciaQED.h"
+#include "Pythia8/VinciaEW.h"
 #include "Pythia8/VinciaWeights.h"
 
 namespace Pythia8 {
@@ -102,9 +104,10 @@ public:
  protected:
 
   // Pointers.
-  Info*     infoPtr;
-  Rndm*     rndmPtr;
-  Settings* settingsPtr;
+  Info*     infoPtr{};
+  Rndm*     rndmPtr{};
+  Settings* settingsPtr{};
+  Logger*   loggerPtr{};
 
   // Use m or pT evolution for collinear singularities.
   bool useMevolSav;
@@ -119,6 +122,9 @@ public:
   // Masses.
   double mbSav;
   double mcSav;
+
+  // Doing a sector shower?
+  bool sectorShower;
 
   // Saved trial PDF ratio and trial tolerance.
   double trialPDFratioSav;
@@ -212,6 +218,7 @@ public:
 
   // Trial antenna function.
   virtual double aTrial(double saj, double sjb, double sAB) override {
+    // Note: arguments reversed intentionally!
     return TrialIIGCollA::aTrial(sjb, saj, sAB);}
 
   // Inverse transforms to obtain saj and sjb from Qt2 and zeta.
@@ -223,7 +230,9 @@ public:
   // Trial PDF ratio.
   virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
     int iSys, int idA, int idB, double eA, double eB,
-    double Qt2A, double Qt2B) override {return TrialIIGCollA::trialPDFratio(
+    double Qt2A, double Qt2B) override {
+    // Note: arguments reversed intentionally!
+    return TrialIIGCollA::trialPDFratio(
       beamBPtr, beamAPtr, iSys, idB, idA, eB, eA, Qt2B, Qt2A);}
 
 };
@@ -307,10 +316,12 @@ public:
 
   // Trial antenna function.
   virtual double aTrial(double saj, double sjb, double sAB) override {
+    // Note: arguments reversed intentionally!
     return TrialIISplitA::aTrial(sjb, saj, sAB);}
 
   // Evolution scale.
   virtual double getQ2(double saj, double sjb, double sAB) override {
+    // Note: arguments reversed intentionally!
     return TrialIISplitA::getQ2(sjb, saj, sAB);}
 
   // Generate new Q value, with first-order running alphaS.
@@ -346,7 +357,9 @@ public:
   // Trial PDF ratio.
   virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
     int iSys, int idA, int idB, double eA, double eB, double Qt2A, double Qt2B)
-    override {return TrialIISplitA::trialPDFratio(beamBPtr, beamAPtr, iSys,
+    override {
+    // Note: arguments reversed intentionally!
+    return TrialIISplitA::trialPDFratio(beamBPtr, beamAPtr, iSys,
       idB, idA, eB, eA, Qt2B, Qt2A);}
 
 };
@@ -421,10 +434,12 @@ public:
 
   // Trial antenna function.
   virtual double aTrial(double saj, double sjb, double sAB) override {
+    // Note: arguments reversed intentionally!
     return TrialIIConvA::aTrial(sjb, saj, sAB);}
 
   // Evolution scale.
   virtual double getQ2(double saj, double sjb, double sAB) override {
+    // Note: arguments reversed intentionally!
     return TrialIIConvA::getQ2(sjb, saj, sAB);}
 
   // Generate a new Q value, with first-order running alphaS
@@ -450,7 +465,9 @@ public:
   // Trial PDF ratio
   virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
     int iSys, int idA, int idB, double eA, double eB,
-    double Qt2A, double Qt2B) override {return TrialIIConvA::trialPDFratio(
+    double Qt2A, double Qt2B) override {
+    // Note: arguments reversed intentionally!
+    return TrialIIConvA::trialPDFratio(
       beamBPtr, beamAPtr, iSys, idB, idA, eB, eA, Qt2B, Qt2A);}
 
 };
@@ -542,7 +559,7 @@ public:
 
 class TrialIFGCollA : public TrialGeneratorISR {
 
-public:
+ public:
 
   // Name of trial generator.
   virtual string name() override {return "TrialIFGCollA";}
@@ -594,6 +611,61 @@ public:
 
 };
 
+//==========================================================================
+
+// K gluon collinear trial function for initial-final sector shower.
+
+class TrialIFGCollK : public TrialGeneratorISR {
+
+ public:
+
+  // Name of trial generator.
+  virtual string name() override {return "TrialIFGCollK";}
+
+  // Trial antenna function.
+  virtual double aTrial(double saj, double sjk, double sAK) override;
+
+  // Evolution scale.
+  virtual double getQ2(double saj, double sjk, double sAK) override {
+    return (saj*sjk/(sAK+sjk));
+  }
+  virtual double getQ2max(double sAK, double eA, double eAused) override {
+    double eAmax = ( (sqrt(shhSav)/2.0) - (eAused-eA) );
+    return (sAK*(eAmax-eA)/eA);}
+
+  // Generate a new Q value, with first-order running alphaS.
+  virtual double genQ2run(double q2old, double sAK, double zMin, double zMax,
+    double colFac, double PDFratio, double b0, double kR, double Lambda,
+    double eA, double eK, double headroomFac=1.0, double enhanceFac=1.0)
+    override;
+
+  // Generate a new Q value, with constant trial alphaS.
+  virtual double genQ2(double q2old, double sAK, double zMin, double zMax,
+    double colFac, double alphaSvalue, double PDFratio,
+    double eA, double eK, double headroomFac=1.0, double enhanceFac=1.0)
+    override;
+
+  // Generate a new zeta value in [zMin,zMax].
+  virtual double genZ(double zMin, double zMax) override;
+
+  // The zeta integral.
+  virtual double getIz(double zMin, double zMax) override;
+
+  // The zeta boundaries, for a given value of the evolution scale.
+  virtual double getZmin(double Qt2, double sAK, double eA, double eAused)
+    override;
+  virtual double getZmax(double Qt2, double sAK, double eA, double eAused)
+    override;
+
+  // Inverse transforms to obtain saj and sjk from Qt2 and zeta.
+  virtual double getS1j(double Qt2, double zeta, double sAK) override;
+  virtual double getSj2(double Qt2, double zeta, double sAK) override;
+
+  // Trial PDF ratio.
+  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
+    int iSys, int idA, int idK, double eA, double eK,
+    double Qt2A, double Qt2B) override;
+};
 
 //==========================================================================
 
@@ -835,13 +907,15 @@ public:
   int col() const {return colSav;}
   int geti1() {return i1sav;}
   int geti2() {return i2sav;}
+  int getId1() {return id1sav;}
+  int getId2() {return id2sav;}
   int getSystem() {return system;}
 
   // Function to reset all trial generators for this branch elemental.
   void clearTrialGenerators();
 
   // Add a trial generator to this BranchElemental.
-  void addTrialGenerator(int iAntPhysIn, bool swapIn,
+  void addTrialGenerator(enum AntFunType antFunTypeIn, bool swapIn,
     TrialGeneratorISR* trialGenPtrIn);
 
   // Add to and get rescue levels.
@@ -854,9 +928,10 @@ public:
   int nTrialGenerators() const {return trialGenPtrsSav.size();}
 
   // Save a generated trial branching.
-  void saveTrial(int iTrial, double qOld, double qTrial, double zMin,
-    double zMax, double colFac,double alphaEff, double pdfRatio, int trialFlav,
-    double extraMpdf, double headroom = 1.0, double enhanceFac = 1.0);
+  void saveTrial(int iTrial, double qOld, double qTrial, double zMin=0.,
+    double zMax=0., double colFac=0.,double alphaEff=0., double pdfRatio=0.,
+    int trialFlav=0, double extraMpdf=0., double headroom = 1.0,
+    double enhanceFac = 1.0);
 
   // Add the physical pdf ratio.
   void addPDF(int iTrial,double pdfRatio) {physPDFratioSav[iTrial] = pdfRatio;}
@@ -879,9 +954,9 @@ public:
     return isSwappedSav[iTrial];}
 
   // Get physical antenna function index of winner.
-  int getPhysIndex(int iTrial = -1) const {
+  enum AntFunType antFunTypePhys(int iTrial = -1) const {
     if (iTrial <= -1) iTrial = getTrialIndex();
-    return iAntPhysSav[iTrial];}
+    return antFunTypePhysSav[iTrial];}
 
   // Get scale for a specific saved trial.
   double getTrialScale(int iTrial) const {
@@ -943,7 +1018,7 @@ public:
 
   // Data storage members.
   int i1sav{}, i2sav{}, id1sav{}, id2sav{}, colType1sav{}, colType2sav{},
-    h1sav{}, h2sav{};
+  h1sav{}, h2sav{};
   double e1sav{}, e2sav{};
   bool isVal1sav{}, isVal2sav{}, isIIsav{}, is1Asav{};
   Particle new1{}, new2{}, new3{};
@@ -961,7 +1036,8 @@ public:
   vector<double> extraMassPDFfactorSav{};
   vector<double> scaleSav{}, scaleOldSav{}, headroomSav{}, enhanceFacSav{};
   vector<bool> hasSavedTrial{}, isSwappedSav{};
-  vector<int> iAntPhysSav{}, nShouldRescue{}, trialFlavSav{};
+  vector<enum AntFunType> antFunTypePhysSav{};
+  vector<int> nShouldRescue{}, trialFlavSav{};
   // Note: isSwapped = true for II means physical antenna function is
   // coded for side A but trial generator is for side B.  For IF, is1A
   // = true for 1 being on side A, false for 1 being on side B.
@@ -975,7 +1051,7 @@ public:
 
 //==========================================================================
 
-// The VinciaISR class
+// The VinciaISR class.
 // Main shower class for initial-state (II and IF) antenna showers
 // Inherits from SpaceShower in Pythia 8 so can be used as alternative to
 // SpaceShower.
@@ -985,6 +1061,7 @@ class VinciaISR : public SpaceShower {
 
   // Allow VinciaFSR to access private information.
   friend class VinciaFSR;
+  friend class VinciaHistory;
 
 public:
 
@@ -996,6 +1073,9 @@ public:
 
   // Initialize shower. Possibility to force re-initialization by hand.
   void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) override;
+
+  // Force reset at beginning of each event.
+  void onBeginEvent() override { isPrepared = false; }
 
   // Possible limitation of first emission.
   bool limitPTmax(Event& event, double Q2Fac = 0., double Q2Ren = 0.) override;
@@ -1042,9 +1122,30 @@ public:
   double enhancePTmax() const override {return pTmaxFudge;}
 
   // Initialise pointers to Vincia objects.
-  void initVinciaPtrs(Colour* colourPtrIn, shared_ptr<VinciaFSR> fsrPtrIn,
-    QEDShower* qedPtrIn,MECs* mecsPtrIn,Resolution* resolutionPtrIn,
-    VinciaCommon* vinComPtrIn,VinciaWeights* vinWeightsPtrIn);
+  void initVinciaPtrs(VinciaColour* colourPtrIn,
+    shared_ptr<VinciaFSR> fsrPtrIn, MECs* mecsPtrIn,
+    Resolution* resolutionPtrIn, VinciaCommon* vinComPtrIn,
+    VinciaWeights* vinWeightsPtrIn);
+
+  // Set pointer to object to use for diagnostics and profiling.
+  void setDiagnosticsPtr(shared_ptr<VinciaDiagnostics> diagnosticsPtrIn) {
+    diagnosticsPtr = diagnosticsPtrIn;
+  }
+
+  // Set EW shower module.
+  void setEWShowerPtr(VinciaModulePtr ewShowerPtrIn) {
+    ewShowerPtr = ewShowerPtrIn;
+  }
+
+  // Set QED shower module for hard process and resonance decays.
+  void setQEDShowerHardPtr(VinciaModulePtr qedShowerPtrIn) {
+    qedShowerHardPtr = qedShowerPtrIn;
+  }
+
+  // Set QED shower module for MPI and hadronisation.
+  void setQEDShowerSoftPtr(VinciaModulePtr qedShowerPtrIn) {
+    qedShowerSoftPtr = qedShowerPtrIn;
+  }
 
   // Clear all containers.
   void clearContainers();
@@ -1058,10 +1159,8 @@ public:
     else return false;}
 
   // Wrapper function to return a specific antenna inside antenna set
-  AntennaFunctionIX* getAnt(int iAnt) {return antSetPtr->getAnt(iAnt);}
-
-  // Print final statistics information.
-  void printInfo(bool pluginCall = false);
+  AntennaFunctionIX* getAntFunPtr(enum AntFunType antFunType) {
+    return antSetPtr->getAntFunPtr(antFunType);}
 
   // Evolution windows, phase space region boundaries.
   int getRegion(double q) {
@@ -1090,7 +1189,7 @@ public:
     else return alphaSptr->Lambda6();}
 
   // Add trial functions to a BranchElemental.
-  void resetTrialGenerators(BranchElementalISR* trial);
+  void resetTrialGenerators(shared_ptr<BranchElementalISR> trial);
 
   // Method to check if a gluon splitting in the initial state (to get
   // rid of heavy quarks) is still possible after the current
@@ -1120,16 +1219,15 @@ public:
     else n = -1;
     return n;}
 
-  // Get scale of branchings; use (0,1) for first branching in 1st system.
-  // Could be extended so (i,0) would return starting scale for system i.
-  double getQbranch(int iSys, int iBranch) {
-    if (iSys < 4 && iSys >= 0 && iBranch <= 10 && iBranch >= 1)
-      return qBranch[iSys][iBranch];
-    else return 0.;}
-  double getPTphys(int iSys, int iBranch) {
-    if (iSys < 4 && iSys >= 0 && iBranch <= 10 && iBranch >= 1)
-      return pTphys[iSys][iBranch];
-    else return 0.;}
+  // Communicate information about trial showers for merging.
+  void setIsTrialShower(bool isTrialIn){ isTrialShower = isTrialIn; }
+  void setIsTrialShowerRes(bool isTrialIn){ isTrialShowerRes = isTrialIn; }
+
+  // Save the flavour content of system in Born state
+  // (needed for sector shower).
+  void saveBornState(Event& born, int iSys);
+  // Save the flavour content of Born for trial shower.
+  void saveBornForTrialShower(Event& born);
 
   // Set verbosity level.
   void setVerbose(int verboseIn) {verbose = verboseIn;}
@@ -1146,28 +1244,30 @@ private:
   void setStartScale(int iSys, Event& event);
 
   // Function to return headroom factor.
-  double getHeadroomFac(int iSys, int iAntPhys, double qMinNow);
+  double getHeadroomFac(int iSys, enum AntFunType antFunTypePhysIn,
+    double qMinNow);
 
   // Generate trial branching kinematics and check physical phase space
-  bool generateKinematics(Event& event, BranchElementalISR* trialPtr,
-    vector<Vec4>& pRec) {
+  bool generateKinematics(Event& event,
+    shared_ptr<BranchElementalISR> trialPtr, vector<Vec4>& pRec) {
     return ( trialPtr->isII()
       ? generateKinematicsII(event, trialPtr, pRec)
       : generateKinematicsIF(event, trialPtr, pRec) ); }
 
   // Generate kinematics (II) and set flavours and masses.
-  bool generateKinematicsII(Event& event, BranchElementalISR* trialPtr,
-    vector<Vec4>& pRec);
+  bool generateKinematicsII(Event& event,
+    shared_ptr<BranchElementalISR> trialPtr, vector<Vec4>& pRec);
 
   // Generate kinematics (IF) and set flavours and masses.
-  bool generateKinematicsIF(Event& event, BranchElementalISR* trialPtr,
-    vector<Vec4>& pRec);
+  bool generateKinematicsIF(Event& event,
+    shared_ptr<BranchElementalISR> trialPtr, vector<Vec4>& pRec);
 
   // Main trial accept function.
-  bool acceptTrial(const Event& event, BranchElementalISR* winnerPtr);
+  bool acceptTrial(const Event& event,
+    shared_ptr<BranchElementalISR> winnerPtr);
 
   // Method to assign colour flow.
-  bool assignColourFlow(Event& event, BranchElementalISR* trialPtr);
+  bool assignColourFlow(Event& event, shared_ptr<BranchElementalISR> trialPtr);
 
   // Initialised.
   bool isInit;
@@ -1182,7 +1282,7 @@ private:
   double TINYPDF;
 
   // Main Vincia ISR on/off switches.
-  bool doII, doIF;
+  bool doII, doIF, doQED;
 
   // Map of which systems ISR::prepare() has treated.
   map<int, bool> hasPrepared;
@@ -1190,13 +1290,13 @@ private:
   // Shower parameters.
   bool helicityShower, sectorShower, convGluonToQuarkI, convQuarkToGluonI;
   bool kineMapIFretry;
-  int nGluonToQuarkI, nGluonToQuarkF;
+  int nGluonToQuark;
   double cutoffScaleII, cutoffScaleIF;
   int nFlavZeroMass;
 
-  // Factorization scale and shower starting settings.
-  int    pTmaxMatch;
-  double pTmaxFudge, pT2maxFudge, pT2maxFudgeMPI;
+  // Shower starting-scale settings.
+  int    pTmaxMatch{}, pTdampMatch{};
+  double pTmaxFudge{}, pT2maxFudge{}, pT2maxFudgeMPI{}, pTdampFudge{};
 
   // AlphaS parameters.
   bool useCMW;
@@ -1222,19 +1322,29 @@ private:
   TrialIFSplitK  trialIFSplitK;
   TrialIFConvA   trialIFConvA;
 
-  // Enhanceing switches and parameters.
+  // Trial generators for the sector shower.
+  TrialIFGCollK  trialIFGCollK;
+
+  // Enhancing switches and parameters.
   bool enhanceInHard, enhanceInResDec, enhanceInMPI;
   double enhanceAll, enhanceBottom, enhanceCharm, enhanceCutoff;
 
   // Pointer to VINCIA objects.
-  AntennaSetISR*        antSetPtr;
-  MECs*                 mecsPtr;
-  Colour*               colourPtr;
-  Resolution*           resolutionPtr;
-  QEDShower*            qedShowerPtr;
-  shared_ptr<VinciaFSR> fsrPtr;
-  VinciaCommon*         vinComPtr;
-  VinciaWeights*        weightsPtr;
+  AntennaSetISR*        antSetPtr{};
+  MECs*                 mecsPtr{};
+  VinciaColour*         colourPtr{};
+  Resolution*           resolutionPtr{};
+  shared_ptr<VinciaFSR> fsrPtr{};
+  VinciaCommon*         vinComPtr{};
+  VinciaWeights*        weightsPtr{};
+
+  // Diagnostics and Profiling.
+  shared_ptr<VinciaDiagnostics> diagnosticsPtr;
+
+  // Electroweak shower pointers.
+  VinciaModulePtr       ewShowerPtr;
+  VinciaModulePtr       qedShowerHardPtr;
+  VinciaModulePtr       qedShowerSoftPtr;
 
   // Total and MEC accept probability.
   vector<double> Paccept;
@@ -1245,22 +1355,26 @@ private:
   vector<double> regMinScalesNow;
 
   // Vector of dipoles (with trial branchings, 4 at most).
-  vector<BranchElementalISR > branchElementals;
+  vector<shared_ptr<BranchElementalISR> > branchElementals;
 
   // Current winner.
-  BranchElementalISR* winnerPtr;
+  shared_ptr<BranchElementalISR> winnerPtr{};
   int indxWin;
   int iSysWin;
+  vector<Particle> stateNew;
+  VinciaClustering minClus;
 
   // Flags to tell a few basic properties of each parton system.
-  map<int, bool> isHardSys, isResonanceSys, polarisedSys, doMECsSys;
+  map<int, bool> isHardSys{}, isResonanceSys{}, polarisedSys{}, doMECsSys{};
 
   // Saved particle state and number in event record.
-  map<int, vector< Particle > > partsSav;
-  map<int, vector< int      > > indexSav;
+  map<int, vector< Particle > > partsSav{};
+  map<int, vector< int      > > indexSav{};
 
   // Save initial ISR starting scale system by system.
-  map<int, double> Q2hat;
+  map<int, double> q2Hat{};
+  vector<bool> doPTlimit{}, doPTdamp{};
+  map<int, double> pT2damp{};
 
   // Count the number of branchings in the system.
   map<int, int> nBranch, nBranchISR;
@@ -1273,25 +1387,21 @@ private:
   // Count numbers of quarks and gluons.
   map<int, int> nG, nQQ;
 
-  // Statistics.
-  long nTrialsSum;
-  vector<long> nTrials, nTrialsAccepted, nFailedVeto, nFailedHull, nFailedKine;
-  vector<long> nFailedMass, nFailedCutoff, nClosePSforHQ, nSectorReject;
-  vector<double> rFailedVetoPDF;
-  int nForceSplit;
+  // Partons present in the Born (needed in sector shower).
+  map<int, bool> savedBorn;
+  map<int, bool> resolveBorn;
+  map<int, map<int, int>> nFlavsBorn;
+
+  // Flags used in merging
+  bool doMerging, isTrialShower, isTrialShowerRes;
 
   // Rescue mechanism.
   bool doRescue;
   int nRescue;
   double rescueMin;
 
-  // Verbose setting, P>1 warning settings, and version number.
+  // Verbose setting.
   int verbose;
-  double qBranch[4][11], pTphys[4][11];
-
-  // Counter for numbers of events.
-  long nAccepted, nSelected;
-  int nVetoUserHooks, nFailHadLevel, nCallPythiaNext;
 
 };
 
@@ -1299,4 +1409,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_VinciaISR_H
+#endif // Pythia8_VinciaISR_H

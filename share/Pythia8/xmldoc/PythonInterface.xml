@@ -46,7 +46,7 @@ will return all the available classes and methods in the interface.
 <li>particle data: <code>ParticleData</code>, 
 <code>ParticleDataEntry</code>, <code>DecayChannel</code></li> 
  
-<li>settings and information: <code>Info</code>, 
+<li>settings and information: <code>Info</code>, <code>HIInfo</code>, 
 <code>Settings</code>, <code>Flag</code>, <code>Mode</code>, 
 <code>Parm</code>, <code>Word</code>, <code>FVec</code>, 
 <code>MVec</code>, <code>PVec</code>, <code>WVec</code></li> 
@@ -65,6 +65,22 @@ functions: <code>m</code>, <code>m2</code>, <code>dot3</code>,
 <code>costheta</code>, <code>phi</code>, <code>cosphi</code>, 
 <code>RRapPhi</code>, <code>REtaPhi</code></li> 
 </ul> 
+ 
+There are some idiosyncrasies when working with standard template 
+library classes. One of the notable examples are maps with keys as 
+strings. In many cases, it is useful to be able to access the settings 
+maps from the <code>Settings</code> class of a <code>Pythia</code> 
+instance. Rather than calling something like 
+<code>getFlagMap()</code>, <code>getFlagMap("")</code> must be called 
+so the interface knows how to map the keys. A full working example is 
+given below. 
+<pre> 
+import pythia8 
+pythia = pythia8.Pythia("", False) 
+settings = pythia.settings 
+flags = settings.getFlagMap("") 
+for key, val in settings.getFlagMap("").items(): print(key) 
+</pre> 
  
 The following points highlight some of the features of the interface. 
 <ul> 
@@ -198,4 +214,4 @@ interface is as follows.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

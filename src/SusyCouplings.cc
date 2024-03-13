@@ -1,5 +1,5 @@
 // SusyCouplings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -28,11 +28,11 @@ namespace Pythia8 {
 void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
 
   // Save pointers.
-  infoPtr      = infoPtrIn;
   slhaPtr         = slhaPtrIn;
-  settingsPtr     = infoPtr->settingsPtr;
-  particleDataPtr = infoPtr->particleDataPtr;
-  coupSMPtr       = infoPtr->coupSMPtr;
+  settingsPtr     = infoPtrIn->settingsPtr;
+  particleDataPtr = infoPtrIn->particleDataPtr;
+  loggerPtr       = infoPtrIn->loggerPtr;
+  coupSMPtr       = infoPtrIn->coupSMPtr;
 
   // Allow verbose printout for debug purposes.
   bool DBSUSY = settingsPtr->mode("SLHA:verbose") > 2 ? true : false;
@@ -76,7 +76,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
       //if (DBSUSY) cout << " tan2W = " << tan2W << endl;
       sin2W   = pow2(gp)/(pow2(g)+pow2(gp));
     } else {
-      infoPtr->errorMsg("Warning in CoupSUSY::initSUSY: Block GAUGE"
+      loggerPtr->WARNING_MSG("Block GAUGE"
         " not found or incomplete; using sin(thetaW) at mZ");
     }
   }
@@ -91,7 +91,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
     tanb = slhaPtr->hmix(2);
   else{
     tanb = slhaPtr->minpar(3);
-    infoPtr->errorMsg("Warning in CoupSUSY::initSUSY: Block HMIX"
+    loggerPtr->WARNING_MSG("Block HMIX"
       " not found or incomplete; using MINPAR tan(beta)");
   }
   cosb = sqrt( 1.0 / (1.0 + tanb*tanb) );
@@ -120,11 +120,9 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
   // If RPV, assume alpha = asin(RVHMIX(1,2)) (ignore Higgs-Sneutrino mixing)
   else if (slhaPtr->modsel(4) == 1) {
     alphaHiggs = asin(slhaPtr->rvhmix(1,2));
-    infoPtr->errorMsg("Info from CoupSUSY::initSUSY:","Extracting angle"
-      " alpha from RVHMIX", true);
+    loggerPtr->INFO_MSG("Extracting angle alpha from RVHMIX", "", true);
   } else {
-    infoPtr->errorMsg("Info from CoupSUSY::initSUSY:","Block ALPHA"
-      " not found; using alpha = beta.", true);
+    loggerPtr->INFO_MSG("Block ALPHA not found; using alpha = beta", "", true);
     // Define approximate alpha by simple SM limit
     alphaHiggs = atan(tanb);
   }
@@ -135,11 +133,11 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
   } else if (slhaPtr->rvamix.exists()){
     mAHiggs = particleDataPtr->m0(36);
     muHiggs = 0.0;
-    infoPtr->errorMsg("Warning from CoupSUSY::initSUSY: Block HMIX"
-      " not found or incomplete","; setting mu = 0.");
+    loggerPtr->WARNING_MSG("Block HMIX not found or incomplete;"
+      " setting mu = 0.");
   } else{
-    infoPtr->errorMsg("Warning from CoupSUSY::initSUSY: Block HMIX"
-      " not found or incomplete","; setting mu = mA = 0.");
+    loggerPtr->WARNING_MSG("Block HMIX not found or incomplete;"
+      " setting mu = mA = 0.");
     muHiggs = 0.0;
     mAHiggs = 0.0;
   }
@@ -315,7 +313,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
           break;
         }
     if (hasCrossTerms)
-      infoPtr->errorMsg("Warning from CoupSUSY::initSUSY: "
+      loggerPtr->WARNING_MSG(
         "slepton-Higgs mixing not supported internally in PYTHIA");
   }
 
@@ -333,7 +331,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
           break;
         }
     if (hasCrossTerms)
-      infoPtr->errorMsg("Warning from CoupSUSY::initSUSY: "
+      loggerPtr->WARNING_MSG(
         "sneutrino-Higgs mixing not supported internally in PYTHIA");
   }
 
@@ -530,7 +528,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
           break;
         }
     if (hasCrossTerms)
-      infoPtr->errorMsg("Warning from CoupSUSY::initSUSY: "
+      loggerPtr->WARNING_MSG(
         "Neutrino-Neutralino mixing not supported internally in PYTHIA");
   }
 
@@ -788,7 +786,7 @@ void CoupSUSY::initSUSY (SusyLesHouches* slhaPtrIn, Info* infoPtrIn) {
           break;
         }
     if (hasCrossTerms)
-      infoPtr->errorMsg("Warning from CoupSUSY::initSUSY: "
+      loggerPtr->WARNING_MSG(
         "Lepton-Chargino mixing not supported internally in PYTHIA");
   }
 

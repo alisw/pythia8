@@ -63,7 +63,8 @@ or as four individual components:
   append( id, status, col, acol, p, m) 
   append( id, status, col, acol, px, py, pz, e, m) 
   append( id, status, mother1, mother2, daughter1, daughter2, col, acol, p, m) 
-  append( id, status, mother1, mother2, daughter1, daughter2, col, acol, px, py, pz, e, m) 
+  append( id, status, mother1, mother2, daughter1, daughter2, col, acol, 
+          px, py, pz, e, m) 
 </pre> 
 The methods return the index at which the entry has been stored, 
 but normally you would not use this feature. 
@@ -263,4 +264,4 @@ events.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

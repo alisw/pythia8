@@ -72,16 +72,28 @@ Coulomb corrections</a>, but by default this is off.
    
  
 <a name="anchor4"></a>
-<p/><code>flag&nbsp; </code><strong> SoftQCD:singleDiffractive &nbsp;</strong> 
+<p/><code>flag&nbsp; </code><strong> SoftQCD:singleDiffractiveXB &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
-Single diffractive scattering <i>A B &rarr; X B</i> and 
-<i>A B &rarr; A X</i>. See pages on 
-<a href="TotalCrossSections.html" target="page">Total Cross Sections</a> 
-and <a href="Diffraction.html" target="page"> Diffraction</a> for details. 
-Codes 103 and 104. 
+Single diffractive scattering <i>A B &rarr; X B</i>. 
+See pages on <a href="TotalCrossSections.html" target="page">Total Cross Sections</a> 
+and <a href="Diffraction.html" target="page">Diffraction</a> for details. Code 103. 
    
  
 <a name="anchor5"></a>
+<p/><code>flag&nbsp; </code><strong> SoftQCD:singleDiffractiveAX &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Single diffractive scattering <i>A B &rarr; A X</i>. 
+See pages on <a href="TotalCrossSections.html" target="page">Total Cross Sections</a> 
+and <a href="Diffraction.html" target="page">Diffraction</a> for details. Code 104. 
+   
+ 
+<a name="anchor6"></a>
+<p/><code>flag&nbsp; </code><strong> SoftQCD:singleDiffractive &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Both of the above single diffractive processes. Codes 103 and 104. 
+   
+ 
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:doubleDiffractive &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Double diffractive scattering <i>A B &rarr; X_1 X_2</i>. 
@@ -89,7 +101,7 @@ See pages on <a href="TotalCrossSections.html" target="page">Total Cross Section
 and <a href="Diffraction.html" target="page">Diffraction</a> for details. Code 105. 
    
  
-<a name="anchor6"></a>
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:centralDiffractive &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Central diffractive scattering <i>A B &rarr; A X B</i> 
@@ -103,15 +115,27 @@ of a tune (even the default one) to get central diffraction.
 Code 106. 
    
  
-<a name="anchor7"></a>
+<a name="anchor9"></a>
 <p/><code>flag&nbsp; </code><strong> SoftQCD:inelastic &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 All of the above processes, except for elastic. Codes 101, 
 103, 104, 105 and 106. 
    
  
+<p/> 
+<br/><b>Note</b>: The repertoire of 
+<a href="QCDLowEnergyProcesses.html" target="page">Low-energy QCD processes</a> 
+largely overlaps with the one here, but in a simplified form 
+without any perturbative activity at all. It is thus mainly suited 
+for low energies, where also some special processes occur, such as 
+annihilation or scattering through a resonance. The 
+<a href="BeamParameters.html" target="page">variable-energy beams</a> 
+framework allow a smooth transition between the two, assuming you have 
+enabled matching sets of processes for the two scenarios. A normal 
+choice would be to enable all the processes, but one could e.g. decide 
+to use the nonDiffractive subprocess only. 
  
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

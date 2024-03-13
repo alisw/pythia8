@@ -5,6 +5,7 @@
 <link rel="shortcut icon" href="pythia32.gif"/>
 </head>
 <body>
+ 
 <h2>Settings Scheme</h2> 
 <ol id="toc">
   <li><a href="#section0">Concepts</a></li>
@@ -49,7 +50,7 @@ and are stored as <code>int</code>.</li>
 code and XML tags.</li> 
 <li>Words are simple character strings and are stored as 
 <code>string</code>. No double quotation marks &quot; or braces { } 
-may appear inside a word, and commas , will take a spcial role next 
+may appear inside a word, and commas , will take a special role next 
 so should also be avoided. Normally the input string is expected not to 
 contain any blanks or equal signs, but if it does it must be enclosed 
 in braces { }.</li> 
@@ -74,18 +75,20 @@ in the C++ code and XML tags. When the vector is input as a string
 it should be given as a comma-separated list, either containing 
 no blanks or else enclosed in braces { }.</li> 
 </ol> 
-Note the special role played by the braces { } to enclose words or lists 
-that are allowed to contain blanks and equal signs, and of commas , to 
-separate the fields of the list, in analogy with how C++ arrays can be 
-initialized. You should not be using these three characters for any other 
-purposes. Input of a vector can be split across several lines, until a 
-close brace } is found that matches the open brace {. If no such is found 
-the program will abort, so beware. The double quotation mark &quot; is 
-avoided since it is already used for other purposes. Also note that all 
-shorthands have been chosen four letters long. 
-<p/> 
-In general, each variable stored in <code>Settings</code> is associated 
-with four kinds of information: 
+Note the special role played by the braces <code>{ }</code> to enclose 
+words or lists that are allowed to contain blanks and equal signs, and 
+of commas <code>,</code> to separate the fields of the list, in 
+analogy with how C++ arrays can be initialized. You should not be 
+using these three characters for any other purposes. Input of a vector 
+can be split across several lines, until a close brace <code>}</code> 
+is found that matches the open brace <code>{</code>. If no such 
+closing brace is found the program will abort, so beware. The double 
+quotation mark <code>&quot;</code> is avoided since it is already used 
+for other purposes. Also note that all shorthands have been chosen 
+four letters long. Finally, it is possible to append to vector 
+settings with the notation <code>+= { }</code>, similar to the 
+<code>+=</code> notation used in Python to append lists. 
+ 
 <ul> 
 <li>The variable name, of the form <code>class:name</code> 
 (or <code>file:name</code>, usually these agree), e.g. 
@@ -244,11 +247,23 @@ The file can be read by the
 <pre> 
     pythia.readFile(fileName); 
 </pre> 
-method (or an <code>istream</code> instead of a <code>fileName</code>). 
-The file can freely mix commands to the <code>Settings</code> and 
-<code>ParticleData</code> classes, and so is preferable. Lines with 
-settings are handled by calls to the 
-<code>pythia.settings.readString(string)</code> method. 
+method (or an <code>istream</code> instead of a 
+<code>fileName</code>). The file can freely mix commands to the 
+<code>Settings</code> and <code>ParticleData</code> classes, and so is 
+preferable. Lines with settings are handled by calls to the 
+<code>pythia.settings.readString(string)</code> method. It is possible 
+to recursively include settings files by the special command 
+<code>include = fileName</code>, either in a file or by reading a 
+string. An attempt will be made to read <code>fileName</code>, which 
+can be either an absolute or relative path. If such a file does not 
+exist as an absolute or relative path, then an attempt is made to read 
+the file as a relative path from the colon separated list of 
+directories optionally specified by setting the 
+<code>PYTHIA8CMND</code> environment variable, e.g. <code>export 
+PYTHIA8CMND = PATH1:PATH2:...</code>. Finally, if the file is not 
+found along these paths the file is searched for relative to the 
+directory <code>share/Pythia8/settings</code>, which itself is defined 
+relative to the XML path, i.e. <code>xmldoc/../settings</code>. 
  
 <p/> 
 A file can make use of two extra features that are not available with the 
@@ -719,11 +734,13 @@ open brace { but no matching closing brace } has been found
    
  
 <a name="anchor80"></a>
-<p/><strong> bool Settings::onlySoftQCD() &nbsp;</strong> <br/>
-return true if the only processes switched on for generation belong 
-to the <code>SoftQCD</code> category, else false. Since the method 
-contains a hardcoding of what other process types exist, in order to 
-detect if any is on, it could be broken by the addition of new internal 
+<p/><strong> bool Settings::hasHardProc() &nbsp;</strong> <br/>
+return true if any hard processes are switched on, i.e. any process 
+not belonging to the <code>SoftQCD</code> or <code>LowEnergyQCD</code> 
+categories, else false. This method does not check whether Les Houches 
+input is used, so that may have to be done separately. Since the method 
+contains a hardcoding of what hard process types exist, in order to 
+detect if any are on, it could be broken by the addition of new internal 
 processes. It is therefore mainly useful for warning purposes, not for 
 hard decisions. 
    
@@ -731,4 +748,4 @@ hard decisions.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

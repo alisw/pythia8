@@ -1,0 +1,85 @@
+<chapter name="Hadronization Variations"> 
+ 
+<h2>Hadronization Variations</h2> 
+The hadronization variation framework allows a user to calculate 
+reweighting factors taking a given event from one set of hadronization 
+parameters to another, by changing the probability with which this 
+specific event would occur given the altered parameter set. This 
+feature is still experimental and is under active development, so use 
+at your own risk. The method for reweighting the Lund string 
+fragmentation function is documented in <ref>Bie23</ref>, and the 
+flavor reweighting method is currently being written up. 
+ 
+Users familiar with 
+<aloc href="Variations">Parton Shower Variations</aloc> will recognize 
+much of the logic from there. It is currently possible to vary a 
+number of parameters relating to kinematics and flavour selection, 
+listed in the following. Currently this is a proof-of-concept feature, 
+and it is expected that the selection of parameters will be extended 
+going forward. 
+ 
+Be particularly aware that the code will not warn you, in case you have 
+no statistical coverage for the values you are attempting to reweight to. 
+Use with caution. 
+ 
+<wvec name="VariationFrag:List" default="{}"> 
+Vector of uncertainty-variation strings defining groups of parameter 
+variations for string fragmentation. The groups are separated by commas, 
+and the elements of the group are separated by spaces, where the first 
+element is the group name, and the following elements are the varied 
+parameters of the form <code>parameter=value</code>. 
+</wvec> 
+ 
+<p/> 
+For completeness, we note that an example command-file specification 
+could look as follows: 
+<pre> 
+    VariationFrag:List = { 
+        kinVars frag:ptsigma=0.3 frag:alund=0.6, 
+        flavVars frag:rho=0.2 frag:x=0.9 frag:y=0.04 
+    } 
+</pre> 
+ 
+<h3>List of Recognised Keywords for Hadronization Variations</h3> 
+ 
+The following keywords adjust the Lund string fragmentation function: 
+<ul> 
+<li><code>frag:aLund</code> : value for <code>StringZ:aLund</code>, 
+the <ei>a</ei> parameter of the Lund symmetric fragmentation 
+function.</li> 
+<li><code>frag:bLund</code> : value for <code>StringZ:bLund</code>, 
+the <ei>b</ei> parameter of the Lund symmetric fragmentation 
+function.</li> 
+<li><code>frag:rFactC</code> : value for <code>StringZ:rFactC</code>, 
+<ei>r_c</ei>, i.e. the Bowler parameter for <ei>c</ei> quarks.</li> 
+<li><code>frag:rFactB</code> : value for <code>StringZ:rFactB</code>, 
+<ei>r_c</ei>, i.e. the Bowler parameter for <ei>b</ei> quarks.</li> 
+<li><code>frag:ptSigma</code> : value for <code>StringPT:sigma</code>, 
+the width sigma in the fragmentation process.</li> 
+</ul> 
+ 
+<p/> 
+Flavour parameters can be adjusted with the following keywords: 
+<ul> 
+<li><code>frag:xi</code> : value for 
+<code>StringFlav:ProbQQtoQ</code>, the suppression of diquark 
+production relative to quark production, i.e. of baryon relative to 
+meson production.</li> 
+<li><code>frag:rho</code> : value for 
+<code>StringFlav:ProbStoUD</code>, the suppression of <ei>s</ei> quark 
+production relative to ordinary <ei>u</ei> or <ei>d</ei> one.</li> 
+<li><code>frag:x</code> : value for 
+<code>StringFlav:StringFlav:ProbSQtoQQ</code>, the suppression of 
+strange diquark production relative to light 
+diquark production, over and above the one already given by 
+<code>StringFlav:ProbStoU</code>.</li> 
+<li><code>frag:y</code> : value for 
+<code>StringFlav:StringFlav:ProbQQ1toQQ0</code>, the suppression of 
+spin 1 diquark production relative to spin 0 one, apart from the 
+factor of 3 enhancement of spin 1 from counting the number of 
+states.</li> 
+</ul> 
+ 
+</chapter> 
+ 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

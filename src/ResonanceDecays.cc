@@ -1,5 +1,5 @@
 // ResonanceDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -68,10 +68,9 @@ bool ResonanceDecays::next( Event& process, int iDecNow) {
 
       // Prepare decay selection.
       if (!decayer.particleDataEntry().preparePick(id0, m0, idIn)) {
-        ostringstream osWarn;
-        osWarn << "for id = " << id0;
-        infoPtr->errorMsg("Error in ResonanceDecays::next:"
-          " no open decay channel", osWarn.str());
+        ostringstream extra;
+        extra << "for id = " << id0;
+        loggerPtr->ERROR_MSG("no open decay channel", extra.str());
         return false;
       }
 
@@ -101,10 +100,8 @@ bool ResonanceDecays::next( Event& process, int iDecNow) {
 
       // Failed to find acceptable decays.
       if (!foundChannel) {
-        ostringstream osWarn;
-        osWarn << "for id = " << id0;
-        infoPtr->errorMsg("Error in ResonanceDecays::next:"
-          " failed to find workable decay channel", osWarn.str());
+        loggerPtr->ERROR_MSG("failed to find workable decay channel",
+          "for id = " + to_string(id0));
         return false;
       }
 
@@ -340,6 +337,7 @@ bool ResonanceDecays::pickMasses() {
   double psMax    = sqrtpos( pow2(1. - mr1 - mr2) - 4. * mr1 * mr2 );
   double wtMax   = 1.;
   if      (psMode == 1) wtMax = psMax;
+  else if (psMode == 2) wtMax = pow2(psMax);
   else if (psMode == 3) wtMax = pow3(psMax);
   else if (psMode == 5) wtMax = psMax
     * (pow2(1. - mr1 - mr2) + 8. * mr1 * mr2);
@@ -377,6 +375,7 @@ bool ResonanceDecays::pickMasses() {
       ps   = sqrtpos( pow2(1. - mr1 - mr2) - 4. * mr1 * mr2 );
       wt   = 1.;
       if      (psMode == 1) wt = ps;
+      else if (psMode == 2) wt = pow2(ps);
       else if (psMode == 3) wt = pow3(ps);
       else if (psMode == 5) wt = ps
         * (pow2(1. - mr1 - mr2) + 8. * mr1 * mr2);
@@ -430,8 +429,7 @@ bool ResonanceDecays::pickColours(int iDec, Event& process) {
       iAtriplet.push_back(i);
       iAtriplet.push_back(i);
     } else {
-      infoPtr->errorMsg("Error in ResonanceDecays::pickColours:"
-        " unknown colour type encountered");
+      loggerPtr->ERROR_MSG("unknown colour type encountered");
       return false;
     }
   }
@@ -520,8 +518,7 @@ bool ResonanceDecays::pickColours(int iDec, Event& process) {
 
   // If colours and anticolours do not match now then unphysical.
   if (nCol != nAcol) {
-    infoPtr->errorMsg("Error in ResonanceDecays::pickColours:"
-      " inconsistent colour tags");
+    loggerPtr->ERROR_MSG("inconsistent colour tags");
     return false;
   }
 
@@ -588,8 +585,7 @@ bool ResonanceDecays::pickColours(int iDec, Event& process) {
   // Error checks that amount of leftover colours and anticolours match.
   if ( (iTriplet.size() != iAtriplet.size())
     || (col0 != 0 && acol0 == 0) || (col0 == 0 && acol0 != 0) ) {
-    infoPtr->errorMsg("Error in ResonanceDecays::pickColours:"
-      " inconsistent colour tags");
+    loggerPtr->ERROR_MSG("inconsistent colour tags");
     return false;
   }
 
@@ -671,8 +667,7 @@ bool ResonanceDecays::pickColours(int iDec, Event& process) {
 
   // Must now have at least two dipoles (no 1 -> 8 or 8 -> 1).
   if (iDipCol.size() < 2) {
-    infoPtr->errorMsg("Error in ResonanceDecays::pickColours:"
-      " inconsistent colour tags");
+    loggerPtr->ERROR_MSG("inconsistent colour tags");
     return false;
   }
 

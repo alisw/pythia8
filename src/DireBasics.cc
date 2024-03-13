@@ -1,5 +1,5 @@
 // DireBasics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -157,8 +157,8 @@ double dilog(double x) {
 double lABC(double a, double b, double c) { return pow2(a-b-c) - 4.*b*c;}
 double bABC(double a, double b, double c) {
   double ret = 0.;
-  if      ((a-b-c) > 0.) ret = sqrt(lABC(a,b,c));
-  else if ((a-b-c) < 0.) ret =-sqrt(lABC(a,b,c));
+  if      ((a-b-c) > 0.) ret = sqrtnan(lABC(a,b,c));
+  else if ((a-b-c) < 0.) ret =-sqrtnan(lABC(a,b,c));
   else                   ret = 0.;
   return ret; }
 double gABC(double a, double b, double c) { return 0.5*(a-b-c+bABC(a,b,c));}

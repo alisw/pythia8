@@ -1,5 +1,5 @@
 // SusyLesHouches.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -1423,7 +1423,8 @@ int SusyLesHouches::checkSpectrum() {
           for (int j=6; j<=6; j++)
             rvlmix.set(i+1,j+2,selmix(i,j));
         }
-      } if (staumix.exists()) {
+      }
+      if (staumix.exists()) {
         message(1,"checkSpectrum",
                 "MODSEL 4 != 0 but STAUMIX given instead of RVLMIX",0);
         rvlmix.set(2,3,1.0);
@@ -1886,9 +1887,7 @@ int SusyLesHouches::checkSpectrum() {
   }
 
   //Give status
-  if (ifail >= 2)
-    message(0,"checkSpectrum","one or more serious problems were found");
-  else if (ifail == -1)
+  if (ifail == -1)
     message(0,"checkSpectrum","one or more inconsistencies in SUSY setup");
 
   //Print Footer

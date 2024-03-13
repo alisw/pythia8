@@ -1,5 +1,5 @@
 // ResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -101,7 +101,7 @@ protected:
          alpEM, alpS, colQ, preFac;
 
   // Pointer to properties of the particle species.
-  ParticleDataEntry* particlePtr;
+  weak_ptr<ParticleDataEntry> particlePtr;
 
   // Pointer to various information on the generation.
   Info*         infoPtr;
@@ -111,6 +111,9 @@ protected:
 
   // Pointer to the particle data table.
   ParticleData* particleDataPtr;
+
+  // Pointer to the logger.
+  Logger*       loggerPtr;
 
   // Pointers to Standard Model and SUSY couplings.
   CoupSM*       coupSMPtr;

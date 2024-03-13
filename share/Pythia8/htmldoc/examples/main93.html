@@ -4,12 +4,12 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main93.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:christian.bierlich@thep.lu.se">Christian Bierlich</a>
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#analysis">Analysis</a>
@@ -27,15 +27,15 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // full list. See ROOT Usage for information about ROOT output, RIVET Usage
 // for information about RIVET and HepMC Interface for information about HepMC.
 
-#include "Pythia8/Pythia.h"
-#include "Pythia8/HeavyIons.h"
-
-#include "Pythia8Plugins/HepMC2.h"
-#include "Pythia8Plugins/Pythia8Rivet.h"
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8/HeavyIons.h&quot;
+#include &quot;Pythia8Plugins/Pythia8Rivet.h&quot;
+#include &quot;main93.h&quot;
+#include &lt;chrono&gt;
 #ifdef PY8ROOT
-#include "TTree.h"
-#include "TFile.h"
-#include "main93.h"
+#include &quot;TSystem.h&quot;
+#include &quot;TTree.h&quot;
+#include &quot;TFile.h&quot;
 #endif
 
 using namespace Pythia8;
@@ -45,23 +45,23 @@ class InputParser {
 
 public:
 
-  InputParser (int &argc, char **argv) {
-    for (int i = 1; i < argc; ++i) arglist.push_back(string(argv[i]));
+  InputParser (int &amp;argc, char **argv) {
+    for (int i = 1; i &lt; argc; ++i) arglist.push_back(string(argv[i]));
   }
 
-  const string& getOption(const string &opt) const {
-    vector<string>::const_iterator itr = find(arglist.begin(),
+  const string&amp; getOption(const string &amp;opt) const {
+    vector&lt;string&gt;::const_iterator itr = find(arglist.begin(),
       arglist.end(), opt);
-    if (itr != arglist.end() && ++itr != arglist.end()) return *itr;
-    return "";
+    if (itr != arglist.end() &amp;&amp; ++itr != arglist.end()) return *itr;
+    return &quot;&quot;;
   }
 
-  bool hasOption(const string &opt) const {
+  bool hasOption(const string &amp;opt) const {
     return find(arglist.begin(), arglist.end(), opt) != arglist.end();
   }
 
 private:
-  vector<string> arglist;
+  vector&lt;string&gt; arglist;
 };
 
 
@@ -71,86 +71,101 @@ int main(int argc, char* argv[]) {
   InputParser ip(argc, argv);
 
   // Print help text and exit.
-  if(ip.hasOption("-h") || ip.hasOption("--help")) {
-    cout << "Usage: Run Pythia with cmnd file input, and get Rivet, HepMC or\n"
-      "standard Pythia output.\n" << endl;
-    cout << "Examples:\n\n\t ./main93 [options] \n\n\t or\n\n\t ./main93 -c "
-      "main93.cmnd -n 1000 -o myoutput\n" << endl;
-    cout << "Options:\n"
-      "\t -h, --help\n\t\t Show this help message and exit.\n"
-      "\t -c CMND-FILE\n\t\t Use this user-written command file.\n"
-      "\t -c2 CMND-FILE2\n\t\t Use a second cmnd file, loaded after "
-       "the first.\n"
-      "\t \t Useful for eg. tuning studies.\n"
-      "\t -s SEED \n\t\t Specify seed for the random number generator.\n"
-      "\t -o OUT \n\t\t Specify output prefix. Rivet histograms becomes "
-      "OUTRivet.yoda.\n"
-      "\t -n NEVENTS\n\t\t Number of events.\n"
-      "\t -l \n\t\t Silence the splash screen.\n"
-        << endl;
-     cout << "Additional options in cmnd file:\n"
-       "A few extra commands can be added to the cmnd file, compared "
-       "to normal.\n"
-       "\t Main:runRivet = on \n\t\tRun Rivet analyses (requires a\n"
-       "\t\tworking installation of Rivet, linked to main93).\n"
-       "\t Main:analyses = ANALYSIS1,ANALYSIS2,...\n "
-       "\t\tA comma separated list of desired Rivet analyses to be run.\n"
-       "\t\tAnalyses can be post-fixed with Rivet analysis parameters:\n"
-        "\t\tANALYSIS:parm->value.\n"
-       "\t Main:rivetRunName = STRING \n\t\tAdd an optional run name to\n"
-       "\t\tthe Rivet analysis.\n"
-       "\t Main:rivetIgnoreBeams = on\n\t\t Ignore beams in Rivet. \n"
-       "\t Main:writeHepMC = on \n\t\tWrite HepMC output (requires\n"
-       "\t\ta working installation of HepMC, linked to main93.)\n"
-       "\t Main:writeRoot = on \n\t\tWrite a root tree defined in the\n"
-       "\t\tmain93.h header file. Requires a working installation of Root, \n"
-       "\t\tproperly linked to Pythia.\n"
-       "\t Main:outputLog = on\n\t\tRedirect output to a logfile called\n"
-       "\t\tpythia.log. Can be prefixed with -o on command line.\n"
-         << endl;
+  if(ip.hasOption(&quot;-h&quot;) || ip.hasOption(&quot;--help&quot;)) {
+    cout &lt;&lt; &quot;Usage: Run Pythia with cmnd file input, and get Rivet, HepMC or\n&quot;
+      &quot;standard Pythia output.\n&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;Examples:\n\n\t ./main93 [options] \n\n\t or\n\n\t ./main93 -c &quot;
+      &quot;main93.cmnd -n 1000 -o myoutput\n&quot; &lt;&lt; endl;
+    cout &lt;&lt; &quot;Options:\n&quot;
+      &quot;\t -h, --help\n\t\t Show this help message and exit.\n&quot;
+      &quot;\t -c CMND-FILE\n\t\t Use this user-written command file.\n&quot;
+      &quot;\t -c2 CMND-FILE2\n\t\t Use a second cmnd file, loaded after &quot;
+       &quot;the first.\n&quot;
+      &quot;\t \t Useful for eg. tuning studies.\n&quot;
+      &quot;\t -s SEED \n\t\t Specify seed for the random number generator.\n&quot;
+      &quot;\t -o OUT \n\t\t Specify output prefix. Rivet histograms becomes &quot;
+      &quot;OUT.yoda.\n&quot;
+      &quot;\t -n NEVENTS\n\t\t Number of events.\n&quot;
+      &quot;\t -l \n\t\t Silence the splash screen.\n&quot;
+      &quot;\t -t \n\t\t Time event generation.\n&quot;
+      &quot;\t -v \n\t\t Print the Pythia version number and exit.\n&quot;
+        &lt;&lt; endl;
+     cout &lt;&lt; &quot;Additional options in cmnd file:\n&quot;
+       &quot;A few extra commands can be added to the cmnd file, compared &quot;
+       &quot;to normal.\n&quot;
+       &quot;\t Main:runRivet = on \n\t\tRun Rivet analyses (requires a\n&quot;
+       &quot;\t\tworking installation of Rivet, linked to main93).\n&quot;
+       &quot;\t Main:analyses = ANALYSIS1,ANALYSIS2,...\n &quot;
+       &quot;\t\tA comma separated list of desired Rivet analyses to be run.\n&quot;
+       &quot;\t\tAnalyses can be post-fixed with Rivet analysis parameters:\n&quot;
+        &quot;\t\tANALYSIS:parm-&gt;value:parm2-&gt;value2 etc.\n&quot;
+       &quot;\t Main:rivetRunName = STRING \n\t\tAdd an optional run name to &quot;
+       &quot;the Rivet analysis.\n&quot;
+       &quot;\t Main:rivetIgnoreBeams = on\n\t\tIgnore beams in Rivet. \n&quot;
+       &quot;\t Main:rivetDumpPeriod = NUMBER\n\t\tDump Rivet histograms &quot;
+       &quot;to file evert NUMBER of events.\n&quot;
+       &quot;\t Main:rivetDumpFile = STRING\n\t\t Specify alternative &quot;
+       &quot;name for Rivet dump file. Default = OUT.\n&quot;
+       &quot;\t Main:writeHepMC = on \n\t\tWrite HepMC output (requires &quot;
+       &quot;a linked installation of HepMC).\n&quot;
+       &quot;\t Main:writeRoot = on \n\t\tWrite a root tree defined in the &quot;
+       &quot;main93.h header file.\n\t\tRequires a working installation of Root, &quot;
+       &quot;linked to Pythia.\n&quot;
+       &quot;\t Main:outputLog = on\n\t\tRedirect output to a logfile. Default is &quot;
+       &quot;OUT prefix, ie. pythia.log.\n&quot;
+         &lt;&lt; endl;
     return 0;
   }
 
-  string cmndfile = "";
+  // Print version number and exit.
+  if(ip.hasOption(&quot;-v&quot;) || ip.hasOption(&quot;--version&quot;)) {
+    cout &lt;&lt; &quot;PYTHIA version: &quot; &lt;&lt; PYTHIA_VERSION &lt;&lt; endl;
+    return 0;
+  }
+
+  string cmndfile = &quot;&quot;;
   // Input command file.
-  if(ip.hasOption("-c")) {
-    cmndfile = ip.getOption("-c");
-    if(cmndfile.find(".cmnd") == string::npos &&
-        cmndfile.find(".dat") == string::npos) {
-      cout << "Please provide a valid .cmnd file as "
-      "argument to the -c option." << endl;
+  if(ip.hasOption(&quot;-c&quot;)) {
+    cmndfile = ip.getOption(&quot;-c&quot;);
+    if(cmndfile.find(&quot;.cmnd&quot;) == string::npos &amp;&amp;
+        cmndfile.find(&quot;.dat&quot;) == string::npos) {
+      cout &lt;&lt; &quot;Please provide a valid .cmnd file as &quot;
+      &quot;argument to the -c option.&quot; &lt;&lt; endl;
       return 1;
     }
   }
   else {
-    cout << "You must provide a command file to produce output.\n"
-            "Use option -h to show all command line options." << endl;
+    cout &lt;&lt; &quot;You must provide a command file to produce output.\n&quot;
+            &quot;Use option -h to show all command line options.&quot; &lt;&lt; endl;
     return 1;
   }
 
-  string cmndfile2 = "";
+  string cmndfile2 = &quot;&quot;;
   // Optional secondary input command file.
-  if(ip.hasOption("-c2")) {
-    cmndfile2 = ip.getOption("-c2");
-    if(cmndfile2.find(".cmnd") == string::npos &&
-        cmndfile2.find(".dat") == string::npos) {
-      cout << "Please provide a valid .cmnd file as argument "
-      "to the -c2 option." << endl;
+  if(ip.hasOption(&quot;-c2&quot;)) {
+    cmndfile2 = ip.getOption(&quot;-c2&quot;);
+    if(cmndfile2.find(&quot;.cmnd&quot;) == string::npos &amp;&amp;
+        cmndfile2.find(&quot;.dat&quot;) == string::npos) {
+      cout &lt;&lt; &quot;Please provide a valid .cmnd file as argument &quot;
+      &quot;to the -c2 option.&quot; &lt;&lt; endl;
       return 1;
     }
   }
 
-  string seed = "-1";
+  string seed = &quot;-1&quot;;
   // Optional seed from command line.
-  if(ip.hasOption("-s")) seed = ip.getOption("-s");
+  if(ip.hasOption(&quot;-s&quot;)) seed = ip.getOption(&quot;-s&quot;);
 
-  string out = "";
+  string out = &quot;&quot;;
   // Set individual output prefix.
-  if(ip.hasOption("-o")) out = ip.getOption("-o");
+  if(ip.hasOption(&quot;-o&quot;)) out = ip.getOption(&quot;-o&quot;);
+
+  bool takeTime = false;
+  if (ip.hasOption(&quot;-t&quot;)) takeTime = true;
 
   int nev = -1;
   // Command line number of event, overrides the one set in input .cmnd file.
-  if(ip.hasOption("-n")) nev = stoi(ip.getOption("-n"));
+  if(ip.hasOption(&quot;-n&quot;)) nev = stoi(ip.getOption(&quot;-n&quot;));
 
   // Catch the splash screen in a buffer.
   stringstream splashBuf;
@@ -161,69 +176,85 @@ int main(int argc, char* argv[]) {
   // Direct cout back.
   cout.rdbuf(sBuf);
 
+  // UserHooks wrapper
+  auto userHooksWrapper = make_shared&lt;UserHooksWrapper&gt;();
+  userHooksWrapper-&gt;additionalSettings(&amp;pythia.settings);
+  pythia.setUserHooksPtr(userHooksWrapper);
   // Some extra parameters.
-  pythia.settings.addFlag("Main:writeHepMC",false);
-  pythia.settings.addFlag("Main:writeRoot",false);
-  pythia.settings.addFlag("Main:runRivet",false);
-  pythia.settings.addFlag("Main:rivetIgnoreBeams",false);
-  pythia.settings.addFlag("Main:outputLog",false);
-  pythia.settings.addWVec("Main:analyses",vector<string>());
-  pythia.settings.addWVec("Main:preload",vector<string>());
-  pythia.settings.addWord("Main:rivetRunName","");
+  pythia.settings.addFlag(&quot;Main:writeHepMC&quot;,false);
+  pythia.settings.addFlag(&quot;Main:writeRoot&quot;,false);
+  pythia.settings.addFlag(&quot;Main:runRivet&quot;,false);
+  pythia.settings.addFlag(&quot;Main:rivetIgnoreBeams&quot;,false);
+  pythia.settings.addMode(&quot;Main:rivetDumpPeriod&quot;,-1, true, false, -1, 0);
+  pythia.settings.addWord(&quot;Main:rivetDumpFile&quot;, &quot;&quot;);
+  pythia.settings.addFlag(&quot;Main:outputLog&quot;,false);
+  pythia.settings.addWVec(&quot;Main:analyses&quot;,vector&lt;string&gt;());
+  pythia.settings.addWVec(&quot;Main:preload&quot;,vector&lt;string&gt;());
+  pythia.settings.addWord(&quot;Main:rivetRunName&quot;,&quot;&quot;);
   // Read input from external file.
   pythia.readFile(cmndfile);
 
-  if(cmndfile2 != "") pythia.readFile(cmndfile2);
+  if(cmndfile2 != &quot;&quot;) pythia.readFile(cmndfile2);
 
   // Set seed after reading input
-  if(seed != "-1") {
-    pythia.readString("Random:setSeed = on");
-    pythia.readString("Random:seed = "+seed);
+  if(seed != &quot;-1&quot;) {
+    pythia.readString(&quot;Random:setSeed = on&quot;);
+    pythia.readString(&quot;Random:seed = &quot;+seed);
   }
 
   // Read the extra parameters.
-  int nEvent = pythia.mode("Main:numberOfEvents");;
-  if(nev > -1) nEvent = nev;
-  const bool hepmc = pythia.flag("Main:writeHepMC");
-  const bool root = pythia.flag("Main:writeRoot");
-  const bool runRivet = pythia.flag("Main:runRivet");
-  const bool ignoreBeams = pythia.flag("Main:rivetIgnoreBeams");
-  const bool doLog = pythia.flag("Main:outputLog");
-  const string rivetrName = pythia.settings.word("Main:rivetRunName");
-  const vector<string> rAnalyses = pythia.settings.wvec("Main:analyses");
-  const vector<string> rPreload = pythia.settings.wvec("Main:preload");
-  int nError = pythia.mode("Main:timesAllowErrors");
-  bool countErrors = (nError > 0 ? true : false);
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);;
+  if(nev &gt; -1) nEvent = nev;
+  const bool hepmc = pythia.flag(&quot;Main:writeHepMC&quot;);
+  const bool root = pythia.flag(&quot;Main:writeRoot&quot;);
+  const bool runRivet = pythia.flag(&quot;Main:runRivet&quot;);
+  const bool ignoreBeams = pythia.flag(&quot;Main:rivetIgnoreBeams&quot;);
+  const bool doLog = pythia.flag(&quot;Main:outputLog&quot;);
+  const string rivetrName = pythia.settings.word(&quot;Main:rivetRunName&quot;);
+  const vector&lt;string&gt; rAnalyses = pythia.settings.wvec(&quot;Main:analyses&quot;);
+  const vector&lt;string&gt; rPreload = pythia.settings.wvec(&quot;Main:preload&quot;);
+  const int rivetDump = pythia.settings.mode(&quot;Main:rivetDumpPeriod&quot;);
+  const string rivetDumpName = pythia.settings.word(&quot;Main:rivetDumpFile&quot;);
+  int nError = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+  const bool countErrors = (nError &gt; 0 ? true : false);
   // HepMC conversion object.
-  HepMC::Pythia8ToHepMC ToHepMC;
-  HepMC::IO_GenEvent* hepmcIO;
+  Pythia8ToHepMC ToHepMC;
   if (hepmc)
-    hepmcIO = new HepMC::IO_GenEvent((out == "" ? "pythia.hepmc"
-      : out + ".hepmc"),ios::out);
+    ToHepMC.setNewFile((out == &quot;&quot; ? &quot;pythia.hepmc&quot; : out + &quot;.hepmc&quot;));
   // Rivet initialization.
-  Pythia8Rivet rivet(pythia,(out == "" ? "Rivet.yoda" : out + ".yoda"));
+  Pythia8Rivet rivet(pythia,(out == &quot;&quot; ? &quot;Rivet.yoda&quot; : out + &quot;.yoda&quot;));
   rivet.ignoreBeams(ignoreBeams);
-  for(int i = 0, N = rAnalyses.size(); i < N; ++i){
+  rivet.dump(rivetDump, rivetDumpName);
+  for(int i = 0, N = rAnalyses.size(); i &lt; N; ++i){
     string analysis = rAnalyses[i];
-    size_t pos = analysis.find(":");
+    size_t pos = analysis.find(&quot;:&quot;);
     // Simple case, no analysis parameters.
     if(pos == string::npos)
       rivet.addAnalysis(analysis);
     else {
       string an = analysis.substr(0,pos);
       analysis.erase(0, pos + 1);
-      pos = analysis.find(":");
-      string par = analysis.substr(0,pos);
-      size_t pos2 = par.find("->");
-      if (pos2 == string::npos){
-         cout << "Error in main93: malformed parameter " << par << endl;
+      vector&lt;string&gt; pKeys;
+      vector&lt;string&gt; pVals;
+      while (analysis.find(&quot;-&gt;&quot;) != string::npos) {
+        pos = analysis.find(&quot;:&quot;);
+        string par = analysis.substr(0,pos);
+        size_t pos2 = par.find(&quot;-&gt;&quot;);
+        if (pos2 == string::npos){
+           cout &lt;&lt; &quot;Error in main93: malformed parameter &quot; &lt;&lt; par &lt;&lt; endl;
+        }
+        string pKey = par.substr(0,pos2);
+        string pVal = par.substr(pos2+2,par.length());
+        pKeys.push_back(pKey);
+        pVals.push_back(pVal);
+        analysis.erase(0,par.length()+1);
       }
-      string pKey = par.substr(0,pos2);
-      string pVal = par.substr(pos2+2,par.length());
-      rivet.addAnalysis(an+":"+pKey+"="+pVal);
+      for (int j = 0, N = pKeys.size(); j &lt; N; ++j)
+        an += &quot;:&quot;+pKeys[j]+&quot;=&quot;+pVals[j];
+      rivet.addAnalysis(an);
     }
   }
-  for(int i = 0, N = rPreload.size(); i < N; ++i)
+  for(int i = 0, N = rPreload.size(); i &lt; N; ++i)
     rivet.addPreload(rPreload[i]);
   rivet.addRunName(rivetrName);
   // Root initialization
@@ -235,15 +266,16 @@ int main(int argc, char* argv[]) {
   if (root) {
    // First test if root is available on system.
    #ifndef PY8ROOT
-        cout << "Option Main::writeRoot = on requires a working,\n"
-                "linked Root installation." << endl;
+        cout &lt;&lt; &quot;Option Main::writeRoot = on requires a working,\n&quot;
+                &quot;linked Root installation.&quot; &lt;&lt; endl;
         return 1;
    #else
-   string op = (out == "" ? "pythia.root" : out + ".root");
-   file = TFile::Open(op.c_str(),"recreate" );
+   gSystem-&gt;Load(&quot;main93.so&quot;);
+   string op = (out == &quot;&quot; ? &quot;pythia.root&quot; : out + &quot;.root&quot;);
+   file = TFile::Open(op.c_str(),&quot;recreate&quot; );
    re = new RootEvent();
-   tree = new TTree("t","Pythia8 event tree");
-   tree->Branch("events",&re);
+   tree = new TTree(&quot;t&quot;,&quot;Pythia8 event tree&quot;);
+   tree-&gt;Branch(&quot;events&quot;,&amp;re);
    #endif
   }
 
@@ -252,85 +284,81 @@ int main(int argc, char* argv[]) {
   std::streambuf* oldCout;
   if(doLog) {
     oldCout = cout.rdbuf(logBuf.rdbuf());
-    logBuf.open((out == "" ? "pythia.log" : out + ".log"));
+    logBuf.open((out == &quot;&quot; ? &quot;pythia.log&quot; : out + &quot;.log&quot;));
   }
   // Option to trash the splash screen.
   ostream cnull(NULL);
-  if(ip.hasOption("-l")) cnull << splashBuf.str();
-  else cout << splashBuf.str();
+  if(ip.hasOption(&quot;-l&quot;)) cnull &lt;&lt; splashBuf.str();
+  else cout &lt;&lt; splashBuf.str();
   // Initialise Pythia.
   pythia.init();
   // Make a sanity check of initialized Rivet analyses
-  if (!runRivet && rAnalyses.size() > 0 )
-    cout << "Warning in main93: Rivet analyses initialized, but runRivet "
-         << "set to off." << endl;
+  if (!runRivet &amp;&amp; rAnalyses.size() &gt; 0 )
+    cout &lt;&lt; &quot;Warning in main93: Rivet analyses initialized, but runRivet &quot;
+         &lt;&lt; &quot;set to off.&quot; &lt;&lt; endl;
   // Loop over events.
-  for ( int iEvent = 0; iEvent < nEvent; ++iEvent ) {
+  auto startAllEvents = std::chrono::high_resolution_clock::now();
+  for ( int iEvent = 0; iEvent &lt; nEvent; ++iEvent ) {
+    auto startThisEvent = std::chrono::high_resolution_clock::now();
     if ( !pythia.next() ) {
-      if (countErrors && --nError < 0) {
+      if (countErrors &amp;&amp; --nError &lt; 0) {
         pythia.stat();
-        cout << " \n *-------  PYTHIA STOPPED!  -----------------------*"
-             << endl;
-        cout << " | Event generation failed due to too many errors. |" << endl;
-        cout << " *-------------------------------------------------*" << endl;
+        cout &lt;&lt; &quot; \n *-------  PYTHIA STOPPED!  -----------------------*&quot;
+             &lt;&lt; endl;
+        cout &lt;&lt; &quot; | Event generation failed due to too many errors. |&quot; &lt;&lt; endl;
+        cout &lt;&lt; &quot; *-------------------------------------------------*&quot; &lt;&lt; endl;
         return 1;
       }
       continue;
     }
-    if (runRivet) rivet();
+    auto stopThisEvent = std::chrono::high_resolution_clock::now();
+    auto eventTime = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;
+      (stopThisEvent - startThisEvent);
+    double tt = eventTime.count();
+    if (runRivet) {
+      if (takeTime) rivet.addAttribute(&quot;EventTime&quot;, tt);
+      rivet();
+    }
     if (hepmc) {
-      HepMC::GenEvent* hepmcevt = new HepMC::GenEvent();
-      const Info* pInfo = &pythia.info;
-      if ( pInfo && pInfo->hiInfo ) {
-      HepMC::HeavyIon ion;
-      ion.set_Ncoll_hard(pInfo->hiInfo->nCollNDTot());
-      ion.set_Ncoll(pInfo->hiInfo->nAbsProj() +
-                    pInfo->hiInfo->nDiffProj() +
-                    pInfo->hiInfo->nAbsTarg() +
-                    pInfo->hiInfo->nDiffTarg() -
-                    pInfo->hiInfo->nCollND() -
-                    pInfo->hiInfo->nCollDD());
-      ion.set_Npart_proj(pInfo->hiInfo->nAbsProj() +
-                         pInfo->hiInfo->nDiffProj());
-      ion.set_Npart_targ(pInfo->hiInfo->nAbsTarg() +
-                         pInfo->hiInfo->nDiffTarg());
-      ion.set_impact_parameter(pInfo->hiInfo->b());
-      hepmcevt->set_heavy_ion(ion);
+      ToHepMC.writeNextEvent(pythia);
     }
 
-
-      ToHepMC.fill_next_event( pythia, hepmcevt);
-      (*hepmcIO) << hepmcevt;
-      delete hepmcevt;
-    }
     #ifdef PY8ROOT
     if (root) {
       // If we want to write a root file, the event must be skimmed here.
-      vector<RootTrack> rts;
-      for(int i = 0; i < pythia.event.size(); ++i) {
+      vector&lt;RootTrack&gt; rts;
+      for(int i = 0; i &lt; pythia.event.size(); ++i) {
         RootTrack t;
-        Particle& p = pythia.event[i];
+        Particle&amp; p = pythia.event[i];
         // Any particle cuts and further track definitions should
         // be implemented in the RootTrack class by the user.
         if (t.init(p)) rts.push_back(t);
       }
-      bool fillTree = re->init(&pythia.info);
-      re->tracks = rts;
-      if(fillTree) tree->Fill();
+      bool fillTree = re-&gt;init(&amp;pythia.info);
+      re-&gt;tracks = rts;
+      if(fillTree) tree-&gt;Fill();
     }
     #endif
     }
-  if(hepmc) delete hepmcIO;
-
   pythia.stat();
   #ifdef PY8ROOT
   if (root) {
-   tree->Print();
-   tree->Write();
+   tree-&gt;Print();
+   tree-&gt;Write();
    delete file;
    delete re;
   }
   #endif
+  auto stopAllEvents = std::chrono::high_resolution_clock::now();
+  auto durationAll = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;
+    (stopAllEvents - startAllEvents);
+  if (takeTime) {
+    cout &lt;&lt; &quot; \n *-------  Generation time  -----------------------*\n&quot;;
+    cout &lt;&lt; &quot; | Event generation, analysis and writing to files  |\n&quot;;
+    cout &lt;&lt; &quot; | took: &quot; &lt;&lt; double(durationAll.count()) &lt;&lt; &quot; ms or &quot; &lt;&lt;
+      double(durationAll.count())/double(nEvent) &lt;&lt; &quot; ms per event     |\n&quot;;
+    cout &lt;&lt; &quot; *-------------------------------------------------*\n&quot;;
+  }
   // Put cout back in its place.
   if (doLog) cout.rdbuf(oldCout);
   return 0;

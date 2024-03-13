@@ -1,5 +1,5 @@
 // DireBasics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -154,13 +154,13 @@ public:
       fa(f->f(a,xx)-constant), fb(f->f(b,xx)-constant), fc(fb),
       p(0.), q(0.), r(0.), s(0.),
       tol1(tol), xm(0.);
-    double EPS = std::numeric_limits<double>::epsilon();
+    double EPS = numeric_limits<double>::epsilon();
 
     // No root.
     if ( (fa>0. && fb>0.) || (fa<0. && fb<0.) ) {
      cout << "no root " << constant << " " << f->f(a,xx) << " " << f->f(b,xx)
      << endl;
-     return std::numeric_limits<double>::quiet_NaN();
+     return numeric_limits<double>::quiet_NaN();
     }
 
     for ( int i=0; i < N; ++i ) {
@@ -224,7 +224,7 @@ public:
     }
 
     // Failed. Return NaN
-    return std::numeric_limits<double>::quiet_NaN();
+    return numeric_limits<double>::quiet_NaN();
 
   }
 
@@ -432,4 +432,4 @@ class DireInfo {
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireBasics_H
+#endif // Pythia8_DireBasics_H

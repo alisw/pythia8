@@ -1,9 +1,9 @@
 // main72.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: basic usage; fastjet; slowjet; jet finding;
+// Keywords: basic usage; fastjet; slowjet; jet finding
 
 // This is a simple test program.
 // It compares SlowJet, FJcore and FastJet, showing that they

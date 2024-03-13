@@ -1,5 +1,5 @@
 // DireTimes.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -215,11 +215,11 @@ public:
 
   DireTimes( MergingHooksPtr mergingHooksPtrIn, PartonVertexPtr ) {
     mergingHooksPtr   = mergingHooksPtrIn;
-    beamOffset = 0;
-    userHooksPtr      = 0;
-    splittingsPtr     = 0;
+    beamOffset        = 0;
+    userHooksPtr      = nullptr;
+    splittingsPtr     = nullptr;
     weights           = 0;
-    direInfoPtr       = 0;
+    direInfoPtr       = nullptr;
     printBanner       = true;
     isInitSave        = false;
     usePDFalphas      = false;
@@ -232,8 +232,8 @@ public:
   virtual ~DireTimes() {}
 
   // Initialize alphaStrong and related pTmin parameters.
-  virtual void init( BeamParticle* beamAPtrIn = 0,
-    BeamParticle* beamBPtrIn = 0);
+  virtual void init( BeamParticle* beamAPtrIn = nullptr,
+    BeamParticle* beamBPtrIn = nullptr);
 
   bool initSplits() {
     if (splittingsPtr) splits = splittingsPtr->getSplittings();
@@ -244,7 +244,7 @@ public:
   // (Separated from rest of init since not virtual.)
   void reinitPtr(Info* infoPtrIn, MergingHooksPtr mergingHooksPtrIn,
     DireSplittingLibrary* splittingsPtrIn, DireInfo* direInfoPtrIn) {
-       infoPtr       = infoPtrIn;
+       infoPtr          = infoPtrIn;
        settingsPtr      = infoPtr->settingsPtr;
        particleDataPtr  = infoPtr->particleDataPtr;
        rndmPtr          = infoPtr->rndmPtr;
@@ -310,9 +310,9 @@ public:
   // Setup branching kinematics.
   virtual bool branch( Event& event, bool = false);
   bool branch_FF( Event& event, bool = false,
-    DireSplitInfo* split = NULL);
+    DireSplitInfo* split = nullptr);
   bool branch_FI( Event& event, bool = false,
-    DireSplitInfo* split = NULL);
+    DireSplitInfo* split = nullptr);
 
   pair < Vec4, Vec4 > decayWithOnshellRec( double zCS, double yCS, double phi,
     double m2Rec, double m2RadAft, double m2EmtAft,
@@ -605,21 +605,21 @@ private:
 
   // Wrapper around PDF calls.
   double getXPDF( int id, double x, double t, int iSys = 0,
-    BeamParticle* beam = NULL, bool finalRec = true, double z = 0.,
+    BeamParticle* beam = nullptr, bool finalRec = true, double z = 0.,
     double m2dip = 0.) {
     // Return one if no PDF should be used.
     if (!hasPDF(id)) return 1.0;
     // Else get PDF from beam particle.
     BeamParticle* b = beam;
-    if (b == NULL) {
-      if (beamAPtr != NULL || beamBPtr != NULL) {
-        b = (beamAPtr != NULL && particleDataPtr->isHadron(beamAPtr->id()))
+    if (b == nullptr) {
+      if (beamAPtr != nullptr || beamBPtr != nullptr) {
+        b = (beamAPtr != nullptr && particleDataPtr->isHadron(beamAPtr->id()))
             ? beamAPtr
-          : (beamBPtr != NULL && particleDataPtr->isHadron(beamBPtr->id()))
-            ? beamBPtr : NULL;
+          : (beamBPtr != nullptr && particleDataPtr->isHadron(beamBPtr->id()))
+            ? beamBPtr : nullptr;
       }
-      if (b == NULL && beamAPtr != 0) beam = beamAPtr;
-      if (b == NULL && beamBPtr != 0) beam = beamBPtr;
+      if (b == nullptr && beamAPtr != 0) b = beamAPtr;
+      if (b == nullptr && beamBPtr != 0) b = beamBPtr;
     }
 
     double scale2 = t;
@@ -727,12 +727,12 @@ private:
 
   // Get particle masses.
   double getMass(int id, int strategy, double mass = 0.) {
-    BeamParticle* beam = NULL;
-    if (beamAPtr != NULL || beamBPtr != NULL) {
-      beam = (beamAPtr != NULL && particleDataPtr->isHadron(beamAPtr->id()))
+    BeamParticle* beam = nullptr;
+    if (beamAPtr != nullptr || beamBPtr != nullptr) {
+      beam = (beamAPtr != nullptr && particleDataPtr->isHadron(beamAPtr->id()))
            ? beamAPtr
-           : (beamBPtr != NULL && particleDataPtr->isHadron(beamBPtr->id()))
-              ? beamBPtr : NULL;
+           : (beamBPtr != nullptr && particleDataPtr->isHadron(beamBPtr->id()))
+              ? beamBPtr : nullptr;
     }
     bool usePDFmass = usePDFmasses
       && (toLower(settingsPtr->word("PDF:pSet")).find("lhapdf")
@@ -741,9 +741,9 @@ private:
     // Parton masses.
     if ( particleDataPtr->colType(id) != 0) {
       if (strategy == 1) mRet = particleDataPtr->m0(id);
-      if (strategy == 2 &&  usePDFmass && beam != NULL)
+      if (strategy == 2 &&  usePDFmass && beam != nullptr)
         mRet = beam->mQuarkPDF(id);
-      if (strategy == 2 && (!usePDFmass || beam == NULL))
+      if (strategy == 2 && (!usePDFmass || beam == nullptr))
         mRet = particleDataPtr->m0(id);
       if (strategy == 3) mRet = mass;
       if (mRet < TINYMASS) mRet = 0.;
@@ -820,4 +820,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireTimes_H
+#endif // Pythia8_DireTimes_H

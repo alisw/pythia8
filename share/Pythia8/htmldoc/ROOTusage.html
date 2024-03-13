@@ -61,56 +61,18 @@ all other histogramming needs. Specifically, you need to edit the
 <code>examples/Makefile</code> file to add the other programs to 
 link as <code>main91.cc</code> currently does. 
  
-<h4>Storing PYTHIA events in ROOT trees</h4> 
- 
-Instead of only generating histograms, it is possible to store entire 
-PYTHIA events in ROOT trees. The <code>examples/main92</code> code 
-provides an example of this and is comprised of the following files: 
-<ul> 
-  <li><code>main92.cc</code> is the main example program showing how 
-  PYTHIA events can be stored in ROOT trees;</li> 
-  <li><code>main92LinkDef.h</code> is used by Makefile to generate the 
-  dictionary for all PYTHIA classes involved in the IO, as needed for 
-  the example; and</li> 
-  <li><code>main92.h</code> is a small include declaring the 
-  <code>Pythia8</code> namespace as default.</li> 
-</ul> 
- 
-<br/> 
-The example may be compiled and run with as usual. Afterwards, the new 
-<code>pytree.root</code> file will contain the PYTHIA events. Note 
-that files can become quite large when many events are generated. To 
-open these files within the ROOT interpreter the PYTHIA class 
-dictionary must be loaded, <code>.L main92.so</code>. In compiled 
-code, the PYTHIA class dictionary <code>main92.so</code> must be 
-linked against, to either read or write PYTHIA events to a ROOT file. 
- 
-<h4>Error notice</h4> 
- 
-It appears that ROOTCINT cannot handle the <code>dlfcn.h</code> header 
-in the current ROOT version. If you run into this problem with your 
-ROOT installation, you could try to insert the following lines in 
-your <code>PythiaStdlib.h</code> file: 
-<pre> 
-   // Stdlib header file for dynamic library loading. 
-   #ifndef __CINT__ 
-   #define dlsym __ 
-   #include &lt;dlfcn.h&gt; 
-   #undef dlsym 
-   #endif 
-</pre> 
- 
 <br/><hr/> 
 <a name="section1"></a> 
 <h3>Storing partial PYTHIA events in ROOT trees</h3> 
  
-Instead of storing full PYTHIA events in ROOT trees, a common user case 
-is to store only track information relevant to a particular analysis. 
-The resulting ROOT trees will then be what is often referred to as 
-"n-tuples". 
-The advantage of this over the above method is a significant reduction 
-of disk space used, as well as the possibility to construct trees 
-resembling those familiar from the experiments' central MC production. 
+A common use case is to store partial track information including some 
+overall event information to ROOT trees, relevant for a specific 
+analysis. The resulting ROOT trees will then be what is often referred 
+to as "n-tuples". 
+The advantage of this over for example storing full events, is a 
+significant reduction of disk space used, as well as the possibility 
+to construct trees resembling those familiar from the experiments' 
+central MC production. 
  
 The <code>examples/main93</code> example provides this - among other - 
 functionality. As for the above example, it is split up in several 
@@ -183,11 +145,6 @@ is not more difficult than the PYTHIA installation, and some
 guidelines are provided below. 
  
 <h4>Installation</h4> 
- 
-To be run as a plugin, PYTHIA must be compiled as a shared library. 
-This is achieved by running the PYTHIA <code>configure</code> script 
-with the <code>--enable-shared</code> option before <code>make</code> 
-is run.<br/><br/> 
  
 Define an environment variable for the path to your 
 PYTHIA installation directory 
@@ -325,17 +282,17 @@ generation.
  
 <h4>Advanced usage</h4> 
  
-To access the full PYTHIA functionality from the CINT interpreter, 
+To access the full PYTHIA functionality from the CLING interpreter, 
 a ROOT dictionary must be created. Currently that option has not been 
-implemented as a standard option for PYTHIA 8.2, but it should be in 
+implemented as a standard option for PYTHIA 8.3, but it should be in 
 the same spirit as what can be found in the 8.1 <code>rootexamples</code> 
 directory. Also note that one dictionary is found in the 
-<code>examples/main92LinkDef.h</code> file. 
+<code>examples/main93LinkDef.h</code> file. 
  
 This may then be loaded in ROOT giving full access to the full PYTHIA 8 
 functionality, e.g. in an interactive session 
 <pre> 
-    gSystem->Load("path_to_PYTHIA8_installation/rootexamples/pythiaDict"); 
+    gSystem->Load("path_to_PYTHIA8_installation/examples/pythiaDict"); 
     Pythia8::Pythia *p = new Pythia8::Pythia(); 
     p->readString("SoftQCD:nonDiffractive = on"); 
 </pre> 
@@ -343,4 +300,4 @@ functionality, e.g. in an interactive session
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,9 +1,9 @@
 // main71.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: fastjet; jet finding;
+// Keywords: fastjet; jet finding
 
 // Simple example of fastjet analysis. Roughly follows analysis of:
 // T. Aaltonen et al. [CDF Collaboration],
@@ -141,7 +141,7 @@ int main() {
           pythia.event[i].idAbs() == 16)     continue;
 
       // Only |eta| < 3.6
-      if (fabs(pythia.event[i].eta()) > 3.6) continue;
+      if (abs(pythia.event[i].eta()) > 3.6) continue;
 
       // Missing ET
       missingETvec += pythia.event[i].p();
@@ -193,7 +193,7 @@ int main() {
 
     for (unsigned int i = 0; i < sortedJets.size(); i++) {
       // Only count jets that have |eta| < 2.0
-      if (fabs(sortedJets[i].rap()) > 2.0) continue;
+      if (abs(sortedJets[i].rap()) > 2.0) continue;
       // Check distance between W decay electron and jets
       if (fjElec.squared_distance(sortedJets[i]) < 0.52 * 0.52)
         { vetoEvent = true; break; }
@@ -243,10 +243,14 @@ int main() {
     if (i != 0) {
       cout << scientific << setprecision(3)
            << ", Pythia ratio to " << i - 1 << "-jet = "
-           << ((double) nEventAccept25[i] / (double) nEventAccept25[i - 1]);
+           << nEventAccept25[i - 1]
+        ? ((double) nEventAccept25[i] / (double) nEventAccept25[i - 1])
+        : numeric_limits<double>::quiet_NaN();
       cout << scientific << setprecision(3)
            << ", Experimental ratio to " << i - 1 << "-jet = "
-           << expCrossSec[i] / expCrossSec[i - 1];
+           << expCrossSec[i - 1]
+        ? expCrossSec[i] / expCrossSec[i - 1]
+        : numeric_limits<double>::quiet_NaN();
     }
     cout << endl;
   }

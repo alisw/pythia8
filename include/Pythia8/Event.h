@@ -1,5 +1,5 @@
 // Event.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -82,7 +82,7 @@ public:
 
   // Member functions to set the Event and ParticleDataEntry pointers.
   void setEvtPtr(Event* evtPtrIn) { evtPtr = evtPtrIn; setPDEPtr();}
-  void setPDEPtr(ParticleDataEntry* pdePtrIn = 0);
+  void setPDEPtr(ParticleDataEntryPtr pdePtrIn = nullptr);
 
   // Member functions for input.
   void id(int idIn) {idSave = idIn; setPDEPtr();}
@@ -207,6 +207,13 @@ public:
   bool isFinalPartonLevel() const;
   bool undoDecay();
 
+  // Get and set Hidden Valley colours, referring back to the event.
+  int  colHV() const;
+  int  acolHV() const;
+  void colHV(int colHVin);
+  void acolHV(int acolHVin);
+  void colsHV(int colHVin, int acolHVin);
+
   // Further output, based on a pointer to a ParticleDataEntry object.
   string name()      const {
     return (pdePtr != 0) ? pdePtr->name(idSave) : " ";}
@@ -259,6 +266,8 @@ public:
     return (pdePtr != 0) ? pdePtr->isParton() : false;}
   bool   isHadron()  const {
     return (pdePtr != 0) ? pdePtr->isHadron() : false;}
+  bool   isExotic()  const {
+    return (pdePtr != 0) ? pdePtr->isExotic() : false;}
   ParticleDataEntry& particleDataEntry() const {return *pdePtr;}
 
   // Member functions that perform operations.
@@ -305,7 +314,7 @@ protected:
   // Should no be saved in a persistent copy of the event record.
   // The //! below is ROOT notation that this member should not be saved.
   // Event::restorePtrs() can be called to restore the missing information.
-  ParticleDataEntry* pdePtr;  //!
+  ParticleDataEntryPtr pdePtr;  //!
 
   // Pointer to the whole event record to which the particle belongs (if any).
   // As above it should not be saved.
@@ -313,10 +322,12 @@ protected:
 
 };
 
-// Invariant mass of a pair and its square.
+// Particles invariant mass, mass squared, and momentum dot product.
 // (Not part of class proper, but tightly linked.)
-double m(const Particle&, const Particle&);
-double m2(const Particle&, const Particle&);
+double m(const Particle& pp1, const Particle& pp2);
+double m2(const Particle& pp1, const Particle& pp2);
+double m2(const Particle& pp1, const Particle& pp2, const Particle& pp3);
+double dot4(const Particle& pp1, const Particle& pp2);
 
 //==========================================================================
 
@@ -374,6 +385,69 @@ private:
 
 //==========================================================================
 
+// The HVcols class stores Hidden Valley colours for HV-coloured particles.
+
+class HVcols {
+
+public:
+
+  // Default constructor and constructor with standard input.
+  HVcols() : iHV(0), colHV(0), acolHV(0) { }
+  HVcols( int iHVin, int colHVin, int acolHVin) : iHV(iHVin),
+    colHV(colHVin), acolHV(acolHVin) {}
+
+  // Index of HV-particle and its HV-colour and HV-anticolour.
+  int iHV, colHV, acolHV;
+
+};
+
+//==========================================================================
+
+// The StringBreaks class stores information about how a single string has
+// been broken up into quark/antiquark and diquark/anti-diquark pairs.
+
+class StringBreaks {
+
+public:
+
+  // Set and get string end indices.
+  void setEnds(int iPosIn, int iNegIn) {iPos = iPosIn; iNeg = iNegIn;}
+  int posEnd() {return iPos;}
+  int negEnd() {return iNeg;}
+
+  // Clear the breaks.
+  void clear() {breaks.clear();}
+
+  // Add a string break by particle ID.
+  void add(int id) {breaks[abs(id)] += 1;}
+
+  // Returns the number of breaks for a given particle ID, or the the sum of
+  // all, light quark, or diquark breaks.
+  const map<int, int>& nId() {return breaks;}
+  int nId(int id) const {
+    auto itr = breaks.find(abs(id));
+    return itr == breaks.end() ? 0 : itr->second;}
+  int nAll() const {int nSum = 0; for (auto &id : breaks) nSum += id.second;
+    return nSum;}
+  int nQuark() const {return nId(1) + nId(2) + nId(3) + nId(4);}
+  int nDiquark() const {int nSum = 0;
+    for (const auto &id : breaks)
+      if (id.first > 1000 && id.first < 10000 && (id.first/10)%10 == 0)
+        nSum += id.second;
+    return nSum;}
+
+private:
+
+  // Index of string end partons and sums of all, quark, and diquark breaks.
+  int iPos{0}, iNeg{0};
+
+  // Number of breaks mapped by particle ID.
+  map<int, int> breaks{};
+
+};
+
+//==========================================================================
+
 // The Event class holds all info on the generated event.
 
 class Event {
@@ -382,8 +456,8 @@ public:
 
   // Constructors.
   Event(int capacity = 100) : startColTag(100), maxColTag(100),
-    savedSize(0), savedJunctionSize(0), savedPartonLevelSize(0),
-    scaleSave(0.), scaleSecondSave(0.),
+    savedSize(0), savedJunctionSize(0), savedHVcolsSize(0),
+    savedPartonLevelSize(0), scaleSave(0.), scaleSecondSave(0.),
     headerList("----------------------------------------"),
     particleDataPtr(0) { entry.reserve(capacity); }
   Event& operator=(const Event& oldEvent);
@@ -398,10 +472,10 @@ public:
   // Clear event record.
   void clear() {entry.resize(0); maxColTag = startColTag;
     savedPartonLevelSize = 0; scaleSave = 0.; scaleSecondSave = 0.;
-    clearJunctions();}
+    clearJunctions(); clearHV(); clearStringBreaks();}
   void free() {vector<Particle>().swap(entry); maxColTag = startColTag;
     savedPartonLevelSize = 0; scaleSave = 0.; scaleSecondSave = 0.;
-    clearJunctions();}
+    clearJunctions(); clearHV(); clearStringBreaks();}
 
   // Clear event record, and set first particle empty.
   void reset() {clear(); append(90, -11, 0, 0, 0., 0., 0., 0., 0.);}
@@ -414,6 +488,9 @@ public:
   Particle& front()   {return entry.front();}
   Particle& at(int i) {return entry.at(i);}
   Particle& back()    {return entry.back();}
+  const Particle& front()   const {return entry.front();}
+  const Particle& at(int i) const {return entry.at(i);}
+  const Particle& back()    const {return entry.back();}
 
   // Implement iterators for the particle array.
   vector<Pythia8::Particle>::iterator begin() { return entry.begin(); }
@@ -485,11 +562,11 @@ public:
     else {int newSize = max( 0, size() - nRemove);
     entry.resize(newSize);} }
 
-  // Remove entries from iFirst to iLast, including endpoints, anf fix history.
+  // Remove entries from iFirst to iLast, including endpoints, and fix history.
   // (To the extent possible; history pointers in removed range are zeroed.)
   void remove(int iFirst, int iLast, bool shiftHistory = true);
 
-  // Restore all ParticleDataEntry* pointers in the Particle vector.
+  // Restore all ParticleDataEntryPtr pointers in the Particle vector.
   // Useful when a persistent copy of the event record is read back in.
   void restorePtrs() { for (int i = 0; i < size(); ++i) setEvtPtr(i); }
 
@@ -582,12 +659,35 @@ public:
   // List any junctions in the event; for debug mainly.
   void listJunctions() const;
 
+  // Tell whether event has Hidden Valley colours stored.
+  bool hasHVcols() const {return (hvCols.size() > 0);}
+
+  // List any Hidden Valley colours. Find largest HV colour.
+  void listHVcols() const;
+  int  maxHVcols()  const;
+
+  // Save or restore the size of the HV-coloured list (throwing at the end).
+  void saveHVcolsSize() {savedHVcolsSize = hvCols.size();}
+  void restoreHVcolsSize() {hvCols.resize(savedHVcolsSize);}
+
   // Save event record size at Parton Level, i.e. before hadronization.
   void savePartonLevelSize() {savedPartonLevelSize = entry.size();}
+
+  // Add information about string breaks for a single string.
+  void addStringBreaks(StringBreaks& sbIn) {stringBreaks.push_back(sbIn);}
+
+  // Clear string breaks information.
+  void clearStringBreaks() {stringBreaks.clear();}
+
+  // Get information about all string breaks in the event.
+  const vector<StringBreaks> &getStringBreaks() const {return stringBreaks;}
 
   // Operator overloading allows to append one event to an existing one.
   // Warning: particles should be OK, but some other information unreliable.
   Event& operator+=(const Event& addEvent);
+
+  // Direct access to the particles via constant pointer.
+  const vector<Particle>* particles() const {return &entry;}
 
 private:
 
@@ -608,11 +708,28 @@ private:
   // The explicit use of Pythia8:: qualifier patches a limitation in ROOT.
   vector<Pythia8::Junction> junction;
 
+  // The list of Hidden-Valley-coloured partons.
+  // The explicit use of Pythia8:: qualifier patches a limitation in ROOT.
+  vector<Pythia8::HVcols> hvCols;
+
+  // The list of string break information for each string in the event.
+  vector<Pythia8::StringBreaks> stringBreaks;
+
+  // Find index in Hidden Valley list for a particle in the event record.
+  bool findIndexHV(int iIn) { if (iIn > 0 && iIn == iEventHV) return true;
+    for (int i = 0; i < int(hvCols.size()); ++i) if (hvCols[i].iHV == iIn)
+      {iEventHV = iIn; iIndexHV = i; return true; }
+    return false; }
+  int iEventHV, iIndexHV;
+
+  // Clear the list of Hidden Valley colours. Reset indices.
+  void clearHV() {hvCols.resize(0); iEventHV = -1; iIndexHV = -1;}
+
   // The maximum colour tag of the event so far.
   int maxColTag;
 
   // Saved entry and junction list sizes, for simple restoration.
-  int savedSize, savedJunctionSize, savedPartonLevelSize;
+  int savedSize, savedJunctionSize, savedHVcolsSize, savedPartonLevelSize;
 
   // The scale of the event; linear quantity in GeV.
   double scaleSave, scaleSecondSave;
@@ -630,4 +747,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_Event_H
+#endif // Pythia8_Event_H

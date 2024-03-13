@@ -1,5 +1,5 @@
 // Visualisation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -239,7 +239,7 @@ void printEvent(Event& evt, string fileName = "event") {
   outfile.close();
 
   cout << "\n\nPrinted one event to output file " << fileName + ".dot\n";
-  if (system(NULL)) {
+  if (system(nullptr)) {
     if (system("which dot > /dev/null 2>&1") == 0) {
       cout << "Producing .ps figure by using the 'dot' command." << endl;
       string command =  "dot -Tps " + fileName + ".dot -o " + fileName+".ps";

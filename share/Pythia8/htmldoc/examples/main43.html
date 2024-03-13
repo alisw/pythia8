@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main43.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -21,16 +21,20 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // Pythia8.  It is similar to main42, except that it allows for
 // several subruns, e.g. from related LHEF. Input and output files are
 // specified on the command line, e.g. like
-//     ./main43 main43.cmnd hepmcout43.dat > out
+//     ./main43 main43.cmnd hepmcout43.dat &gt; out
 // The main program contains no analysis; this is intended to happen
-// later. It therefore "never" has to be recompiled to handle
+// later. It therefore &quot;never&quot; has to be recompiled to handle
 // different tasks.
 
 // WARNING: typically one needs 25 MB/100 events at the LHC.
 // Therefore large event samples may be impractical.
 
-#include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/HepMC3.h"
+#include &quot;Pythia8/Pythia.h&quot;
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
 
 using namespace Pythia8;
 
@@ -38,30 +42,28 @@ int main(int argc, char* argv[]) {
 
   // Check that correct number of command-line arguments
   if (argc != 3) {
-    cerr << " Unexpected number of command-line arguments. \n You are"
-         << " expected to provide one input and one output file name. \n"
-         << " Program stopped! " << endl;
+    cerr &lt;&lt; &quot; Unexpected number of command-line arguments. \n You are&quot;
+         &lt;&lt; &quot; expected to provide one input and one output file name. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
     return 1;
   }
 
   // Check that the provided input name corresponds to an existing file.
   ifstream is(argv[1]);
   if (!is) {
-    cerr << " Command-line file " << argv[1] << " was not found. \n"
-         << " Program stopped! " << endl;
+    cerr &lt;&lt; &quot; Command-line file &quot; &lt;&lt; argv[1] &lt;&lt; &quot; was not found. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
     return 1;
   }
 
   // Confirm that external files will be used for input and output.
-  cout << "\n >>> PYTHIA settings will be read from file " << argv[1]
-       << " <<< \n >>> HepMC events will be written to file "
-       << argv[2] << " <<< \n" << endl;
+  cout &lt;&lt; &quot;\n &gt;&gt;&gt; PYTHIA settings will be read from file &quot; &lt;&lt; argv[1]
+       &lt;&lt; &quot; &lt;&lt;&lt; \n &gt;&gt;&gt; HepMC events will be written to file &quot;
+       &lt;&lt; argv[2] &lt;&lt; &quot; &lt;&lt;&lt; \n&quot; &lt;&lt; endl;
 
   // Interface for conversion from Pythia8::Event to HepMC event.
-  HepMC3::Pythia8ToHepMC3 toHepMC;
-
   // Specify file where HepMC events will be stored.
-  HepMC3::WriterAscii ascii_io(argv[2]);
+  Pythia8ToHepMC toHepMC(argv[2]);
 
   // Generator.
   Pythia pythia;
@@ -70,12 +72,12 @@ int main(int argc, char* argv[]) {
   pythia.readFile( argv[1]);
 
   // Extract data to be used in main program. Set counters.
-  int nSubrun = pythia.mode("Main:numberOfSubruns");
-  int nAbort  = pythia.mode("Main:timesAllowErrors");
+  int nSubrun = pythia.mode(&quot;Main:numberOfSubruns&quot;);
+  int nAbort  = pythia.mode(&quot;Main:timesAllowErrors&quot;);
   int iAbort  = 0;
 
   // Begin loop over subruns.
-  for (int iSubrun = 1; iSubrun <= nSubrun; ++iSubrun) {
+  for (int iSubrun = 1; iSubrun &lt;= nSubrun; ++iSubrun) {
 
     // Read in subrun-specific data from external file.
     pythia.readFile( argv[1], iSubrun);
@@ -84,10 +86,10 @@ int main(int argc, char* argv[]) {
     pythia.init();
 
     // Print name of Les Houches Event File.
-    string lheFile = pythia.settings.word("Beams:LHEF");
-    cout << "\n >>> Now begin subrun " << iSubrun
-         << " with events from file " << lheFile << " <<< \n"
-         << endl;
+    string lheFile = pythia.settings.word(&quot;Beams:LHEF&quot;);
+    cout &lt;&lt; &quot;\n &gt;&gt;&gt; Now begin subrun &quot; &lt;&lt; iSubrun
+         &lt;&lt; &quot; with events from file &quot; &lt;&lt; lheFile &lt;&lt; &quot; &lt;&lt;&lt; \n&quot;
+         &lt;&lt; endl;
 
     // Begin infinite event loop - to be exited at end of file.
     for (int iEvent = 0; ; ++iEvent) {
@@ -98,20 +100,14 @@ int main(int argc, char* argv[]) {
         // Leave event loop if at end of file.
         if (pythia.info.atEndOfFile()) break;
 
-        // First few failures write off as "acceptable" errors, then quit.
-        if (++iAbort < nAbort) continue;
-        cout << " Event generation aborted prematurely, owing to error!\n";
+        // First few failures write off as &quot;acceptable&quot; errors, then quit.
+        if (++iAbort &lt; nAbort) continue;
+        cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
         break;
       }
 
-      // Construct new empty HepMC event and fill it.
-      // Default units are ( HepMC3::Units::GEV, HepMC3::Units::MM)
-      // but can be changed in the GenEvent constructor.
-      HepMC3::GenEvent hepmcevt;
-      toHepMC.fill_next_event( pythia, &hepmcevt );
-
-      // Write the HepMC event to file.
-      ascii_io.write_event(hepmcevt);
+      // Construct new empty HepMC event, fill it and write it out.
+      toHepMC.writeNextEvent( pythia );
 
     // End of event loop.
     }

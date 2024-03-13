@@ -175,6 +175,10 @@ that subsequent ME corrections still recover the correct distribution.
  (<code>default = <strong>off</strong></code>)<br/>
    
  
+<a name="anchor16"></a>
+<p/><code>word&nbsp; </code><strong> Dire:MEplugin &nbsp;</strong> <br/>
+  name of the plugin library to use for matrix element corrections. 
+   
  
 <a name="section3"></a> 
 <h3>Other experimental merging settings</h3> 
@@ -184,7 +188,7 @@ The following settings are currently under investigation and not used
 in the code. 
 </p> 
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doMerging &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This switch should be considered experimental. If on, this simply ensures 
@@ -192,28 +196,28 @@ that the merging machinery can be accessed. The type of merging can then
 be further specified with the switches below. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doMOPS &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag switches on the handling of unordered configurations necessary in 
 the MOPS merging method. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doMEM &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag switches on the possibility to classify input configurations 
 according to the HYTRESS hypothesis testing scheme. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> MEM:WidthH &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 This parameter allows to set the Higgs-boson width parameter used to calculate 
 Higgs hypothesis likelihoods in the HYTREES scheme. 
    
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doGenerateSubtractions &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag allows to retrieve differential real-emission parton-shower 
@@ -221,14 +225,14 @@ counter-terms necessary for MC@NLO matching directly from a shower
 call. 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doGenerateMergingWeights &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag allows to switch on/off the generation of CKKW-L-type 
 reweighting factors by the merging machinery. 
    
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doSingleLegSudakovs &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag allows to retrieve no-emission probabilities from the parton 
@@ -236,21 +240,21 @@ showers on a leg-by-leg basis. The default definition of no-emission
 probabilities is instead based on the evolution of a state as as a whole. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>flag&nbsp; </code><strong> Dire:doExitAfterMerging &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, this switch will allow to terminate the event processing once 
 the calls to the merging machinery have been executed. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> DireTimes:DecaysAsShower &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, then shower-generated particles that are classified as resonances 
 can also decayed directly within the final-state parton-shower evolution. 
    
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> DireSpace:DecaysAsShower &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, then shower-generated particles that are classified as resonances 
@@ -264,28 +268,28 @@ can also decayed directly within the initial-state parton-shower evolution.
 The expert user may also want to change the color factors used by QCD 
 showering. This can be done using the settings 
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><code>parm&nbsp; </code><strong> DireColorQCD:TR &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 Changes TR used by Dire. Any negative value means that consistent defaults 
 are used. 
    
  
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><code>parm&nbsp; </code><strong> DireColorQCD:CA &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 Changes CA used by Dire. Any negative value means that consistent defaults 
 are used. 
    
  
-<a name="anchor28"></a>
+<a name="anchor29"></a>
 <p/><code>parm&nbsp; </code><strong> DireColorQCD:NC &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 Changes NC used by Dire. Any negative value means that consistent defaults 
 are used. 
    
  
-<a name="anchor29"></a>
+<a name="anchor30"></a>
 <p/><code>parm&nbsp; </code><strong> DireColorQCD:CF &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>)<br/>
 Changes CF used by Dire. Any negative value means that consistent defaults 
@@ -301,7 +305,7 @@ timelike splitting probabilities to a large extent by changing the
 coefficients of mock-up series expansions and by exponential factors. 
 A publication discussing these options is in preparation. 
  
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> DireTimes:useBackboneGluons &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This flag ensures that the recoil in radiation off gluons that trace back 
@@ -310,7 +314,7 @@ is relevant for theoretical quark-gluon discrimination studies.
    
  
  
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><code>flag&nbsp; </code><strong> DireTimes:doGeneralizedKernel &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If enabled, then the user may reconfigure timelike splitting kernels. 
@@ -320,144 +324,144 @@ If enabled, then the user may reconfigure timelike splitting kernels.
 Please find below all changeable coefficients. 
 </p> 
  
-<a name="anchor32"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
-   
 <a name="anchor33"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor34"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor35"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor36"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor37"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor38"></a>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
+   
+<a name="anchor39"></a>
 <p/><code>parm&nbsp; </code><strong> DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_1->1&21 &nbsp;</strong> 
  (<code>default = <strong>-2.0</strong></code>)<br/>
    
  
-<a name="anchor39"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
-   
 <a name="anchor40"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor41"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor42"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor43"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor44"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor45"></a>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
+   
+<a name="anchor46"></a>
 <p/><code>parm&nbsp; </code><strong> DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_1->21&1 &nbsp;</strong> 
  (<code>default = <strong>-2.0</strong></code>)<br/>
    
  
-<a name="anchor46"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
-   
 <a name="anchor47"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor48"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor49"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor50"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor51"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor52"></a>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
+   
+<a name="anchor53"></a>
 <p/><code>parm&nbsp; </code><strong> DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->21&21a &nbsp;</strong> 
  (<code>default = <strong>-2.0</strong></code>)<br/>
    
  
-<a name="anchor53"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
-   
 <a name="anchor54"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor55"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:softExps:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor56"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor57"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:kappaExps:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor58"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor59"></a>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
+   
+<a name="anchor60"></a>
 <p/><code>parm&nbsp; </code><strong> DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->21&21b &nbsp;</strong> 
  (<code>default = <strong>-2.0</strong></code>)<br/>
    
  
-<a name="anchor60"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1a &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
-   
 <a name="anchor61"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1a &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1a &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor62"></a>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1a &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
+   
+<a name="anchor63"></a>
 <p/><code>parm&nbsp; </code><strong> DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->1&1a &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>)<br/>
    
  
-<a name="anchor63"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1b &nbsp;</strong> 
- (<code>default = <strong>0.,1.,0.,0.</strong></code>)<br/>
-   
 <a name="anchor64"></a>
-<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1b &nbsp;</strong> 
- (<code>default = <strong>0.,0.,0.,0.</strong></code>)<br/>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collCoeffs:Dire_fsr_qcd_21->1&1b &nbsp;</strong> 
+ (<code>default = <strong>{0.,1.,0.,0.}</strong></code>)<br/>
    
 <a name="anchor65"></a>
+<p/><code>pvec&nbsp; </code><strong> DireGeneralizedKernel:collExps:Dire_fsr_qcd_21->1&1b &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.}</strong></code>)<br/>
+   
+<a name="anchor66"></a>
 <p/><code>parm&nbsp; </code><strong> DireGeneralizedKernel:finCoeffs:Dire_fsr_qcd_21->1&1b &nbsp;</strong> 
  (<code>default = <strong>0.0</strong></code>)<br/>
    
@@ -465,4 +469,4 @@ Please find below all changeable coefficients.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Stefan Prestel --> 
+<!-- Copyright (C) 2024 Stefan Prestel --> 

@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main16.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,9 +19,9 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // and (b) how to provide the .cmnd filename on the command line
 
 // Once you have linked the main program you can run it with a command line
-// ./main16.exe main16.cmnd > out16
+// ./main16.exe main16.cmnd &gt; out16
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -40,7 +40,7 @@ public:
   void init();
 
   // Analysis of each new event.
-  void analyze(Event& event);
+  void analyze(Event&amp; event);
 
   // Show final results.
   void finish();
@@ -63,10 +63,10 @@ void MyAnalysis::init() {
   nEvt = 0;
 
   // Book histograms.
-  brH.book("Higgs branching ratios by flavour", 30, -0.5, 29.5);
-  yH.book("Higgs rapidity", 100, -10., 10.);
-  etaChg.book("charged pseudorapidity", 100, -10., 10.);
-  mult.book( "charged multiplicity", 100, -0.5, 799.5);
+  brH.book(&quot;Higgs branching ratios by flavour&quot;, 30, -0.5, 29.5);
+  yH.book(&quot;Higgs rapidity&quot;, 100, -10., 10.);
+  etaChg.book(&quot;charged pseudorapidity&quot;, 100, -10., 10.);
+  mult.book( &quot;charged multiplicity&quot;, 100, -0.5, 799.5);
 
 }
 
@@ -74,14 +74,14 @@ void MyAnalysis::init() {
 
 // The event analysis code.
 
-void MyAnalysis::analyze(Event& event) {
+void MyAnalysis::analyze(Event&amp; event) {
 
   // Increase counter.
   ++nEvt;
 
   // Find latest copy of Higgs and plot its rapidity.
   int iH = 0;
-  for (int i = 0; i < event.size(); ++i)
+  for (int i = 0; i &lt; event.size(); ++i)
     if (event[i].id() == 25) iH = i;
   yH.fill( event[iH].y() );
 
@@ -89,14 +89,14 @@ void MyAnalysis::analyze(Event& event) {
   int idDau1 = event[ event[iH].daughter1() ].idAbs();
   int idDau2 = event[ event[iH].daughter2() ].idAbs();
   int iChan  = 29;
-  if (idDau2 == idDau1 && idDau1 < 25) iChan = idDau1;
-  if (min( idDau1, idDau2) == 22 && max( idDau1, idDau2) == 23) iChan = 26;
+  if (idDau2 == idDau1 &amp;&amp; idDau1 &lt; 25) iChan = idDau1;
+  if (min( idDau1, idDau2) == 22 &amp;&amp; max( idDau1, idDau2) == 23) iChan = 26;
   brH.fill( iChan);
 
   // Plot pseudorapidity distribution. Sum up charged multiplicity.
   int nChg = 0;
-  for (int i = 0; i < event.size(); ++i)
-  if (event[i].isFinal() && event[i].isCharged()) {
+  for (int i = 0; i &lt; event.size(); ++i)
+  if (event[i].isFinal() &amp;&amp; event[i].isCharged()) {
     etaChg.fill( event[i].eta() );
     ++nChg;
   }
@@ -116,7 +116,7 @@ void MyAnalysis::finish() {
   etaChg *= binFactor;
 
   // Print histograms.
-  cout << brH << yH << etaChg << mult;
+  cout &lt;&lt; brH &lt;&lt; yH &lt;&lt; etaChg &lt;&lt; mult;
 
 }
 
@@ -129,22 +129,22 @@ int main(int argc, char* argv[]) {
 
   // Check that correct number of command-line arguments
   if (argc != 2) {
-    cerr << " Unexpected number of command-line arguments. \n"
-         << " You are expected to provide a file name and nothing else. \n"
-         << " Program stopped! " << endl;
+    cerr &lt;&lt; &quot; Unexpected number of command-line arguments. \n&quot;
+         &lt;&lt; &quot; You are expected to provide a file name and nothing else. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
     return 1;
   }
 
   // Check that the provided file name corresponds to an existing file.
   ifstream is(argv[1]);
   if (!is) {
-    cerr << " Command-line file " << argv[1] << " was not found. \n"
-         << " Program stopped! " << endl;
+    cerr &lt;&lt; &quot; Command-line file &quot; &lt;&lt; argv[1] &lt;&lt; &quot; was not found. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
     return 1;
   }
 
   // Confirm that external file will be used for settings..
-  cout << " PYTHIA settings will be read from file " << argv[1] << endl;
+  cout &lt;&lt; &quot; PYTHIA settings will be read from file &quot; &lt;&lt; argv[1] &lt;&lt; endl;
 
   // Declare generator. Read in commands from external file.
   Pythia pythia;
@@ -158,18 +158,18 @@ int main(int argc, char* argv[]) {
   myAnalysis.init();
 
   // Read in number of event and maximal number of aborts.
-  int nEvent = pythia.mode("Main:numberOfEvents");
-  int nAbort = pythia.mode("Main:timesAllowErrors");
-  bool hasPL = pythia.flag("PartonLevel:all");
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+  bool hasPL = pythia.flag(&quot;PartonLevel:all&quot;);
 
   // Begin event loop.
   int iAbort = 0;
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
 
     // Generate events. Quit if too many failures.
     if (!pythia.next()) {
-      if (++iAbort < nAbort) continue;
-      cout << " Event generation aborted prematurely, owing to error!\n";
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
       break;
     }
 

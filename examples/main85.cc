@@ -1,11 +1,13 @@
 // main85.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Stefan Prestel <stefan.prestel@thep.lu.se>.
+// Authors: Stefan Prestel
 
-// Keywords: merging; leading order; CKKW-L; hepmc;
+// Contact: Christian Preuss <preuss@uni-wuppertal.de>
+
+// Keywords: merging; leading order; CKKW-L; hepmc
 
 // It illustrates how to do CKKW-L merging, see the Matrix Element
 // Merging page in the online manual. An example command is
@@ -15,7 +17,11 @@
 // example requires HepMC 3.
 
 #include "Pythia8/Pythia.h"
+#ifndef HEPMC2
 #include "Pythia8Plugins/HepMC3.h"
+#else
+#include "Pythia8Plugins/HepMC2.h"
+#endif
 #include <unistd.h>
 
 using namespace Pythia8;
@@ -42,10 +48,11 @@ int main( int argc, char* argv[] ){
 
   // Input parameters:
   pythia.readFile(argv[1]);
+  // Deactivate AUX_ weight output
+  pythia.readString("Weights:suppressAUX = on");
   // Interface for conversion from Pythia8::Event to HepMC one.
-  HepMC3::Pythia8ToHepMC3 toHepMC;
   // Specify file where HepMC events will be stored.
-  HepMC3::WriterAscii ascii_io(argv[3]);
+  Pythia8ToHepMC toHepMC(argv[3]);
   // Switch off warnings for parton-level events.
   toHepMC.set_print_inconsistency(false);
   toHepMC.set_free_parton_warnings(false);
@@ -96,7 +103,7 @@ int main( int argc, char* argv[] ){
     // From njetcounter, choose LHE file
     stringstream in;
     in   << "_" << njetcounterLO << ".lhe";
-#ifdef GZIPSUPPORT
+#ifdef GZIP
     if(access( (iPathTree+in.str()+".gz").c_str(), F_OK) != -1) in << ".gz";
 #endif
     string LHEfile = iPathTree + in.str();
@@ -160,7 +167,7 @@ int main( int argc, char* argv[] ){
     // From njetcounter, choose LHE file
     stringstream in;
     in   << "_" << njetcounterLO << ".lhe";
-#ifdef GZIPSUPPORT
+#ifdef GZIP
     if(access( (iPathTree+in.str()+".gz").c_str(), F_OK) != -1) in << ".gz";
 #endif
     string LHEfile = iPathTree + in.str();
@@ -193,8 +200,9 @@ int main( int argc, char* argv[] ){
 
       // Do not print zero-weight events.
       if ( weight == 0. ) continue;
-      // Construct new empty HepMC event.
-      HepMC3::GenEvent hepmcevt;
+
+      toHepMC.setWeightNames(pythia.info.weightNameVector());
+
       // Get correct cross section from previous estimate.
       double normhepmc = xsecLO[iNow] / nAcceptLO[iNow];
 
@@ -202,21 +210,17 @@ int main( int argc, char* argv[] ){
       if( abs(strategyLO[iNow]) == 4)
         normhepmc = 1. / (1e9*nSelectedLO[iNow]);
 
-      // Set event weight
-      hepmcevt.weights().push_back(weight*normhepmc);
       // Fill HepMC event
-      toHepMC.fill_next_event( pythia, &hepmcevt );
+      toHepMC.fillNextEvent( pythia );
+
       // Add the weight of the current event to the cross section.
       sigmaTotal += weight*normhepmc;
       sigmaTemp  += weight*normhepmc;
       errorTotal += pow2(weight*normhepmc);
       // Report cross section to hepmc.
-      shared_ptr<HepMC3::GenCrossSection> xsec;
-      xsec = make_shared<HepMC3::GenCrossSection>();
-      xsec->set_cross_section( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 );
-      hepmcevt.set_cross_section( xsec );
+      toHepMC.setXSec( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 );
       // Write the HepMC event to file.
-      ascii_io.write_event(hepmcevt);
+      toHepMC.writeEvent();
 
     } // end loop over events to generate
 

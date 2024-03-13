@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-python">
 # main10.py is a part of the PYTHIA event generator.
-# Copyright (C) 2020 Torbjorn Sjostrand.
+# Copyright (C) 2024 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -21,10 +21,10 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 #      export PYTHONPATH=$(PREFIX_LIB):$PYTHONPATH
 # or the following which sets the path from within Python.
 import sys
-cfg = open("Makefile.inc")
-lib = "../lib"
+cfg = open(&quot;Makefile.inc&quot;)
+lib = &quot;../lib&quot;
 for line in cfg:
-    if line.startswith("PREFIX_LIB="): lib = line[11:-1]; break
+    if line.startswith(&quot;PREFIX_LIB=&quot;): lib = line[11:-1]; break
 sys.path.insert(0, lib)
 import pythia8
 
@@ -33,13 +33,13 @@ import pythia8
 # Put histograms here to make them global, so they can be used both
 # in MyUserHooks and in the main program.
 
-pTtrial   = pythia8.Hist("trial pT spectrum", 100, 0., 400.)
-pTselect  = pythia8.Hist("selected pT spectrum (before veto)", 100, 0., 400.)
-pTaccept  = pythia8.Hist("accepted pT spectrum (after veto)", 100, 0., 400.)
-nPartonsB = pythia8.Hist("number of partons before veto", 20, -0.5, 19.5)
-nJets     = pythia8.Hist("number of jets before veto", 20, -0.5, 19.5)
-nPartonsA = pythia8.Hist("number of partons after veto", 20, -0.5, 19.5)
-nFSRatISR = pythia8.Hist("number of FSR emissions at first ISR emission",
+pTtrial   = pythia8.Hist(&quot;trial pT spectrum&quot;, 100, 0., 400.)
+pTselect  = pythia8.Hist(&quot;selected pT spectrum (before veto)&quot;, 100, 0., 400.)
+pTaccept  = pythia8.Hist(&quot;accepted pT spectrum (after veto)&quot;, 100, 0., 400.)
+nPartonsB = pythia8.Hist(&quot;number of partons before veto&quot;, 20, -0.5, 19.5)
+nJets     = pythia8.Hist(&quot;number of jets before veto&quot;, 20, -0.5, 19.5)
+nPartonsA = pythia8.Hist(&quot;number of partons after veto&quot;, 20, -0.5, 19.5)
+nFSRatISR = pythia8.Hist(&quot;number of FSR emissions at first ISR emission&quot;,
                          20, -0.5, 19.5)
 
 #==========================================================================
@@ -60,17 +60,17 @@ class MyUserHooks(pythia8.UserHooks):
     # ...which gives access to the event at the trial level, before selection.
     def multiplySigmaBy(self, sigmaProcessPtr, phaseSpacePtr, inEvent):
 
-        # All events should be 2 -> 2, but kill them if not.
+        # All events should be 2 -&gt; 2, but kill them if not.
         if sigmaProcessPtr.nFinal() != 2: return 0.
 
-        # Extract the pT for 2 -> 2 processes in the event generation chain
+        # Extract the pT for 2 -&gt; 2 processes in the event generation chain
         # (inEvent = false for initialization).
         if inEvent:
             self.pTHat = phaseSpacePtr.pTHat()
             # Fill histogram of pT spectrum.
             pTtrial.fill(self.pTHat)
 
-        # Here we do not modify 2 -> 2 cross sections.
+        # Here we do not modify 2 -&gt; 2 cross sections.
         return 1.
 
     # Allow a veto for the interleaved evolution in pT.
@@ -82,8 +82,8 @@ class MyUserHooks(pythia8.UserHooks):
     # Access the event in the interleaved evolution.
     def doVetoPT(self, iPos, event):
 
-        # iPos <= 3 for interleaved evolution; skip others.
-        if iPos > 3: return False
+        # iPos &lt;= 3 for interleaved evolution; skip others.
+        if iPos &gt; 3: return False
 
         # Fill histogram of pT spectrum at this stage.
         pTselect.fill(self.pTHat)
@@ -125,17 +125,17 @@ class MyUserHooks(pythia8.UserHooks):
 pythia = pythia8.Pythia()
 
 #  Process selection. No need to study hadron level.
-pythia.readString("HardQCD:all = on")
-pythia.readString("PhaseSpace:pTHatMin = 50.")
-pythia.readString("HadronLevel:all = off")
+pythia.readString(&quot;HardQCD:all = on&quot;)
+pythia.readString(&quot;PhaseSpace:pTHatMin = 50.&quot;)
+pythia.readString(&quot;HadronLevel:all = off&quot;)
 
 # Set up to do a user veto and send it in.
 myUserHooks = MyUserHooks()
 pythia.setUserHooksPtr(myUserHooks)
 
 # Tevatron initialization.
-pythia.readString("Beams:idB = -2212")
-pythia.readString("Beams:eCM = 1960.")
+pythia.readString(&quot;Beams:idB = -2212&quot;)
+pythia.readString(&quot;Beams:eCM = 1960.&quot;)
 pythia.init()
 
 # Generate events.

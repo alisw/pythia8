@@ -1,5 +1,5 @@
 // Basics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,20 +22,12 @@ namespace Pythia8 {
 
 //--------------------------------------------------------------------------
 
-// Constants: could be changed here if desired, but normally should not.
-// These are of technical nature, as described for each.
-
-// The default seed, i.e. the Marsaglia-Zaman random number sequence.
-const int Rndm::DEFAULTSEED     = 19780503;
-
-//--------------------------------------------------------------------------
-
 // Method to pass in pointer for external random number generation.
 
-bool Rndm::rndmEnginePtr( RndmEngine* rndmEngPtrIn) {
+bool Rndm::rndmEnginePtr( RndmEnginePtr rndmEngPtrIn) {
 
   // Save pointer.
-  if (rndmEngPtrIn == 0) return false;
+  if (rndmEngPtrIn == nullptr) return false;
   rndmEngPtr      = rndmEngPtrIn;
   useExternalRndm = true;
 
@@ -77,24 +69,118 @@ void Rndm::init(int seedIn) {
       if ( (l*m) % 64 >= 32) s += t;
       t *= 0.5;
     }
-    u[ii] = s;
+    stateSave.u[ii] = s;
   }
 
   // Initialize other variables.
   double twom24 = 1.;
   for (int i24 = 0; i24 < 24; ++i24) twom24 *= 0.5;
-  c   = 362436. * twom24;
-  cd  = 7654321. * twom24;
-  cm  = 16777213. * twom24;
-  i97 = 96;
-  j97 = 32;
+  stateSave.c   = 362436. * twom24;
+  stateSave.cd  = 7654321. * twom24;
+  stateSave.cm  = 16777213. * twom24;
+  stateSave.i97 = 96;
+  stateSave.j97 = 32;
 
   // Finished.
-  initRndm  = true;
-  seedSave  = seed;
-  sequence  = 0;
+  initRndm = true;
+  stateSave.seed = seed;
+  stateSave.sequence = 0;
 
 }
+
+//--------------------------------------------------------------------------
+
+// Generate random numbers according to exp(-x).
+// Must be defined before possible RNG debugging methods.
+
+double Rndm::exp() { return -log(flat()) ;}
+
+//--------------------------------------------------------------------------
+
+// Pick one option among vector of (positive) probabilities.
+// Must be defined before possible RNG debugging methods.
+
+int Rndm::pick(const vector<double>& prob) {
+
+  double work = 0.;
+  for (int i = 0; i < int(prob.size()); ++i) work += prob[i];
+  work *= flat();
+  int index = -1;
+  do work -= prob[++index];
+  while (work > 0. && index < int(prob.size()));
+  return index;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Use standard random number generation, rather than debug versions.
+
+#include "Pythia8/RngDebug.h"
+
+//--------------------------------------------------------------------------
+
+// Define debug random number calls.
+
+#ifdef RNGDEBUG
+// Flags to control debugging behaviour.
+bool        Rndm::debugNow       = true;
+bool        Rndm::debugLocation  = true;
+bool        Rndm::debugIndex     = false;
+int         Rndm::debugPrecision = 4;
+int         Rndm::debugCall      = 0;
+set<string> Rndm::debugStarts    = {};
+set<string> Rndm::debugEnds      = {};
+set<string> Rndm::debugContains  = {};
+set<string> Rndm::debugMatches   = {};
+// Debug random number calls.
+double rngDebug(double val, string loc, string call, string file, int line) {
+  ++Rndm::debugCall;
+  if (!Rndm::debugNow) return val;
+  bool print = Rndm::debugStarts.size() + Rndm::debugEnds.size() +
+    Rndm::debugContains.size() + Rndm::debugMatches.size() == 0;
+  for (auto &exp : Rndm::debugStarts)
+    print = print || loc.rfind(exp, 0) == 0;
+  for (auto &exp : Rndm::debugEnds)
+    print = print || (loc.length() >= exp.length()
+      && loc.compare(loc.length() - exp.length(), exp.length(), exp) == 0);
+  for (auto &exp : Rndm::debugContains)
+    print = print || loc.find(exp) != string::npos;
+  for (auto &exp : Rndm::debugMatches) print = print || loc == exp;
+  if (!print) return val;
+  cout << setw(80) << left << loc + ":" + call
+       << setprecision(Rndm::debugPrecision) << scientific
+       << setw(Rndm::debugPrecision + 8) << right << val;
+  if (Rndm::debugIndex) cout << setw(12) << right << Rndm::debugCall;
+  if (Rndm::debugLocation) cout << " " << file << ":" << line;
+  cout << "\n";
+  return val;
+}
+double Rndm::flatDebug(string loc, string file, int line) {
+  return rngDebug(flat(), loc, "flat", file, line);}
+double Rndm::xexpDebug(string loc, string file, int line) {
+  return rngDebug(xexp(), loc, "xexp", file, line);}
+double Rndm::gaussDebug(string loc, string file, int line) {
+  return rngDebug(gauss(), loc, "gauss", file, line);}
+pair<double, double> Rndm::gauss2Debug(string loc, string file, int line) {
+  pair<double, double> val = gauss2();
+  rngDebug(val.first, loc, "gauss2:first", file, line);
+  rngDebug(val.second, loc, "gauss2:second", file, line);
+  return val;}
+double Rndm::gammaDebug(string loc, string file, int line,
+  double k0, double r0) {
+  return rngDebug(gamma(k0, r0), loc, "gamma", file, line);}
+pair<Vec4, Vec4> Rndm::phaseSpace2Debug(string loc, string file, int line,
+  double eCM, double m1, double m2) {
+  pair<Vec4, Vec4> val = phaseSpace2(eCM, m1, m2);
+  for (int i = 0; i < 4; ++i) {
+    rngDebug(val.first[i], loc, "phaseSpace2:first:" + to_string(i),
+      file, line);
+    rngDebug(val.second[i], loc, "phaseSpace2:second:" + to_string(i),
+      file, line);
+  }
+  return val;}
+#endif
 
 //--------------------------------------------------------------------------
 
@@ -109,21 +195,51 @@ double Rndm::flat() {
   if (!initRndm) init(DEFAULTSEED);
 
   // Find next random number and update saved state.
-  ++sequence;
+  ++stateSave.sequence;
   double uni;
   do {
-    uni = u[i97] - u[j97];
+    uni = stateSave.u[stateSave.i97] - stateSave.u[stateSave.j97];
     if (uni < 0.) uni += 1.;
-    u[i97] = uni;
-    if (--i97 < 0) i97 = 96;
-    if (--j97 < 0) j97 = 96;
-    c -= cd;
-    if (c < 0.) c += cm;
-    uni -= c;
+    stateSave.u[stateSave.i97] = uni;
+    if (--stateSave.i97 < 0) stateSave.i97 = 96;
+    if (--stateSave.j97 < 0) stateSave.j97 = 96;
+    stateSave.c -= stateSave.cd;
+    if (stateSave.c < 0.) stateSave.c += stateSave.cm;
+    uni -= stateSave.c;
     if(uni < 0.) uni += 1.;
    } while (uni <= 0. || uni >= 1.);
   return uni;
 
+}
+
+//--------------------------------------------------------------------------
+
+// Generate a random number according to a Gamma-distribution.
+
+double Rndm::gamma(double k0, double r0) {
+  int k = int(k0);
+
+  double x = 0.0;
+  for ( int i = 0; i < k; ++i ) x += -log(flat());
+
+  double del = k0 - k;
+  if ( del == 0.0 ) return x*r0;
+
+  while ( true ) {
+    double U = flat();
+    double V = flat();
+    double W = flat();
+
+    double xi = 0.0;
+    if ( U <= M_E / (M_E + del) ) {
+      xi = pow(V, 1.0/del);
+      if ( W <= std::exp(-xi) ) return r0*(x + xi);
+    } else {
+      xi = 1.0 - log(V);
+      if ( W <= pow(xi, del - 1.0) ) return r0*(x + xi);
+    }
+  }
+  return 0.0;
 }
 
 //--------------------------------------------------------------------------
@@ -151,22 +267,6 @@ pair<Vec4, Vec4> Rndm::phaseSpace2(double eCM, double m1, double m2) {
 
 //--------------------------------------------------------------------------
 
-// Pick one option among  vector of (positive) probabilities.
-
-int Rndm::pick(const vector<double>& prob) {
-
-  double work = 0.;
-  for (int i = 0; i < int(prob.size()); ++i) work += prob[i];
-  work *= flat();
-  int index = -1;
-  do work -= prob[++index];
-  while (work > 0. && index < int(prob.size()));
-  return index;
-
-}
-
-//--------------------------------------------------------------------------
-
 // Save current state of the random number generator to a binary file.
 
 bool Rndm::dumpState(string fileName) {
@@ -181,18 +281,18 @@ bool Rndm::dumpState(string fileName) {
   }
 
   // Write the state of the generator on the file.
-  ofs.write((char *) &seedSave, sizeof(int));
-  ofs.write((char *) &sequence, sizeof(long));
-  ofs.write((char *) &i97,      sizeof(int));
-  ofs.write((char *) &j97,      sizeof(int));
-  ofs.write((char *) &c,        sizeof(double));
-  ofs.write((char *) &cd,       sizeof(double));
-  ofs.write((char *) &cm,       sizeof(double));
-  ofs.write((char *) &u,        sizeof(double) * 97);
+  ofs.write((char *) &stateSave.seed,     sizeof(int));
+  ofs.write((char *) &stateSave.sequence, sizeof(long));
+  ofs.write((char *) &stateSave.i97,      sizeof(int));
+  ofs.write((char *) &stateSave.j97,      sizeof(int));
+  ofs.write((char *) &stateSave.c,        sizeof(double));
+  ofs.write((char *) &stateSave.cd,       sizeof(double));
+  ofs.write((char *) &stateSave.cm,       sizeof(double));
+  ofs.write((char *) &stateSave.u,        sizeof(double) * 97);
 
   // Write confirmation on cout.
-  cout << " PYTHIA Rndm::dumpState: seed = " << seedSave
-       << ", sequence no = " << sequence << endl;
+  cout << " PYTHIA Rndm::dumpState: seed = " << stateSave.seed
+       << ", sequence no = " << stateSave.sequence << endl;
   return true;
 
 }
@@ -213,20 +313,38 @@ bool Rndm::readState(string fileName) {
   }
 
   // Read the state of the generator from the file.
-  ifs.read((char *) &seedSave, sizeof(int));
-  ifs.read((char *) &sequence, sizeof(long));
-  ifs.read((char *) &i97,      sizeof(int));
-  ifs.read((char *) &j97,      sizeof(int));
-  ifs.read((char *) &c,        sizeof(double));
-  ifs.read((char *) &cd,       sizeof(double));
-  ifs.read((char *) &cm,       sizeof(double));
-  ifs.read((char *) &u,        sizeof(double) *97);
+  ifs.read((char *) &stateSave.seed,     sizeof(int));
+  ifs.read((char *) &stateSave.sequence, sizeof(long));
+  ifs.read((char *) &stateSave.i97,      sizeof(int));
+  ifs.read((char *) &stateSave.j97,      sizeof(int));
+  ifs.read((char *) &stateSave.c,        sizeof(double));
+  ifs.read((char *) &stateSave.cd,       sizeof(double));
+  ifs.read((char *) &stateSave.cm,       sizeof(double));
+  ifs.read((char *) &stateSave.u,        sizeof(double) *97);
 
   // Write confirmation on cout.
-  cout << " PYTHIA Rndm::readState: seed " << seedSave
-       << ", sequence no = " << sequence << endl;
+  cout << " PYTHIA Rndm::readState: seed " << stateSave.seed
+       << ", sequence no = " << stateSave.sequence << endl;
   return true;
 
+}
+
+//==========================================================================
+
+// RndmState class.
+// This class describes the configuration of a Rndm object.
+
+//--------------------------------------------------------------------------
+
+// Test whether two random states would generate the same random sequence.
+bool RndmState::operator==(const RndmState& other) const {
+  if (i97 != other.i97 || j97 != other.j97 || sequence != other.sequence
+   || c != other.c || cd != other.cd || cm != other.cm)
+    return false;
+  for (int i = 0; i < 97; ++i)
+    if (u[i] != other.u[i])
+      return false;
+  return true;
 }
 
 //==========================================================================
@@ -453,23 +571,33 @@ ostream& operator<<(ostream& os, const Vec4& v) {
 
 //--------------------------------------------------------------------------
 
-// The invariant mass of two four-vectors.
+// The invariant mass of one or more four-vectors.
+
+double m(const Vec4& v1) {
+  double s = m2(v1); return (s >= 0) ? sqrt(s) : -sqrt(-s);}
 
 double m(const Vec4& v1, const Vec4& v2) {
-  double m2 = pow2(v1.tt + v2.tt) - pow2(v1.xx + v2.xx)
-     - pow2(v1.yy + v2.yy) - pow2(v1.zz + v2.zz);
-  return (m2 > 0.) ? sqrt(m2) : 0.;
-}
+  double s = m2(v1, v2); return (s > 0.) ? sqrt(s) : 0.;}
 
 //--------------------------------------------------------------------------
 
-// The squared invariant mass of two four-vectors.
+// The squared invariant mass of one or more four-vectors.
+
+double m2(const Vec4& v1) {
+  return pow2(v1.tt) - pow2(v1.xx) - pow2(v1.yy) - pow2(v1.zz);}
 
 double m2(const Vec4& v1, const Vec4& v2) {
-  double m2 = pow2(v1.tt + v2.tt) - pow2(v1.xx + v2.xx)
-     - pow2(v1.yy + v2.yy) - pow2(v1.zz + v2.zz);
-  return m2;
-}
+  return pow2(v1.tt + v2.tt) - pow2(v1.xx + v2.xx)
+     - pow2(v1.yy + v2.yy) - pow2(v1.zz + v2.zz);}
+
+double m2(const Vec4& v1, const Vec4& v2, const Vec4& v3) {
+  return pow2(v1.tt + v2.tt + v3.tt) - pow2(v1.xx + v2.xx + v3.xx)
+    - pow2(v1.yy + v2.yy + v3.yy) - pow2(v1.zz + v2.zz + v3.zz);}
+
+double m2(const Vec4& v1, const Vec4& v2, const Vec4& v3, const Vec4& v4) {
+  return pow2(v1.tt + v2.tt + v3.tt + v4.tt)
+    - pow2(v1.xx + v2.xx + v3.xx + v4.xx) - pow2(v1.yy + v2.yy + v3.yy + v4.yy)
+    - pow2(v1.zz + v2.zz + v3.zz + v4.zz);}
 
 //--------------------------------------------------------------------------
 
@@ -531,6 +659,13 @@ double costheta(const Vec4& v1, const Vec4& v2) {
   cthe = max(-1., min(1., cthe));
   return cthe;
 }
+
+//--------------------------------------------------------------------------
+
+// Cosine of the opening angle between two particles.
+
+double costheta(double e1, double e2, double m1, double m2, double s12) {
+  return (2.0*e1*e2 - s12)/(2.0*sqrt(e1*e1 - m1*m1)*sqrt(e2*e2 - m2*m2));}
 
 //--------------------------------------------------------------------------
 
@@ -651,7 +786,7 @@ pair<Vec4,Vec4> getTwoPerpendicular(const Vec4& v1, const Vec4& v2) {
 
   // One perpendicular vector from three-dimensional cross-product.
   Vec4 nPerp( cross3(v1,v2) );
-  double TINY = std::numeric_limits<double>::epsilon();
+  double TINY = numeric_limits<double>::epsilon();
   if ( abs(nPerp.pAbs()) < TINY) {
     Vec4 aux;
     if (v1.px() != 0.)      aux.p(v1.yy,v1.px(),v1.pz(),v1.e());
@@ -806,14 +941,80 @@ void RotBstMatrix::toCMframe(const Vec4& p1, const Vec4& p2) {
 //--------------------------------------------------------------------------
 
 // Rotation and boost that transforms from rest frame of p1 and p2
-// with p1 along +z axis to actual frame of p1 and p2. (Inverse of above.)
+// with p1 by default along +z axis to actual frame of p1 and p2. (Inverse of
+// above.) The option flip handles the case when p1 is along the -z axis in
+// the rest frame. This is accomplished by performing the rotation for
+// p2 and negating the rotational part.
 
-void RotBstMatrix::fromCMframe(const Vec4& p1, const Vec4& p2) {
+void RotBstMatrix::fromCMframe(const Vec4& p1, const Vec4& p2, bool flip) {
   Vec4 pSum = p1 + p2;
-  Vec4 dir  = p1;
+  Vec4 dir  = (flip) ? p2 : p1;
   dir.bstback(pSum);
   double theta = dir.theta();
   double phi   = dir.phi();
+  rot(0., -phi);
+  rot(theta, phi);
+  if (flip)
+    for (int i = 1; i <= 3; ++i)
+      for (int j = 1; j <= 3; ++j) M[i][j] *= -1;
+  bst(pSum);
+}
+
+//--------------------------------------------------------------------------
+
+// Boost and rotation that transforms from p1 and p2 to the frame where
+// they have  opposite same-magnitude velocities with p1 along +z axis.
+
+void RotBstMatrix::toSameVframe(const Vec4& p1, const Vec4& p2) {
+
+  // Boost and rotate (p1, p2) = (dir, inv) to CM frame along +-z axis.
+  Vec4 pSum = p1 + p2;
+  Vec4 dir  = p1;
+  Vec4 inv  = p2;
+  dir.bstback(pSum);
+  inv.bstback(pSum);
+  double theta = dir.theta();
+  double phi   = dir.phi();
+  bstback(pSum);
+  rot(0., -phi);
+  rot(-theta, phi);
+
+  // Final boost to frame with equal velocities oppositely directed.
+  double sDir = p1.m2Calc();
+  double sInv = p2.m2Calc();
+  if ( abs(sDir - sInv) > 1e-6 * (sDir + sInv) ) {
+    double beta = (dir.e() * inv.e() - dir.pAbs2() - sqrt(sDir * sInv))
+      * (dir.e() + inv.e()) / (dir.pAbs() * (sDir - sInv));
+    bst( 0., 0., beta);
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Rotation and boost that transforms from equal-velocity frame of p1 and p2
+// with p1 along +z axis to actual frame of p1 and p2. (Inverse of above.)
+
+void RotBstMatrix::fromSameVframe(const Vec4& p1, const Vec4& p2) {
+
+  // Boost and rotation to CM frame along +-z axis.
+  Vec4 pSum = p1 + p2;
+  Vec4 dir  = p1;
+  Vec4 inv  = p2;
+  dir.bstback(pSum);
+  inv.bstback(pSum);
+  double theta = dir.theta();
+  double phi   = dir.phi();
+
+  // Initial boost from equal-velocity to equal-momentum frame.
+  double sDir = p1.m2Calc();
+  double sInv = p2.m2Calc();
+  if ( abs(sDir - sInv) > 1e-6 * (sDir + sInv) ) {
+    double beta = (dir.e() * inv.e() - dir.pAbs2() - sqrt(sDir * sInv))
+      * (dir.e() + inv.e()) / (dir.pAbs() * (sDir - sInv));
+    bst( 0., 0., -beta);
+  }
+
+  // Rotation and boost back to lab frame.
   rot(0., -phi);
   rot(theta, phi);
   bst(pSum);
@@ -921,10 +1122,29 @@ const char NUMBER[] = {'0', '1', '2', '3', '4', '5',
 
 //--------------------------------------------------------------------------
 
+// Create a histogram that is the plot of the given function.
+
+Hist Hist::plotFunc(function<double(double)> f, string titleIn,
+    int nBinIn, double xMinIn, double xMaxIn, bool logXIn) {
+    Hist result(titleIn, nBinIn, xMinIn, xMaxIn, logXIn);
+    if (!logXIn) {
+      double dx = (xMaxIn - xMinIn) / nBinIn;
+      for (double x = xMinIn + 0.5 * dx; x < xMaxIn; x += dx)
+        result.fill(x, f(x));
+    } else {
+      double rx = pow( xMaxIn / xMinIn, 1. / nBinIn);
+      for (double x = xMinIn * sqrt(rx); x < xMaxIn; x *= rx)
+        result.fill(x, f(x));
+    }
+    return result;
+  }
+
+//--------------------------------------------------------------------------
+
 // Book a histogram.
 
 void Hist::book(string titleIn, int nBinIn, double xMinIn,
-  double xMaxIn, bool logXIn) {
+  double xMaxIn, bool logXIn, bool doStatsIn) {
 
   titleSave = titleIn;
   nBin  = nBinIn;
@@ -934,9 +1154,10 @@ void Hist::book(string titleIn, int nBinIn, double xMinIn,
     cout << " Warning: number of bins for histogram " << titleIn
          << " reduced to " << nBin << endl;
   }
-  linX  = !logXIn;
-  xMin  = xMinIn;
-  xMax  = xMaxIn;
+  linX    = !logXIn;
+  doStats = doStatsIn;
+  xMin    = xMinIn;
+  xMax    = xMaxIn;
   if (!linX && xMin < TINY) {
     xMin = TINY;
     cout << " Warning: lower x border of histogram " << titleIn
@@ -947,8 +1168,9 @@ void Hist::book(string titleIn, int nBinIn, double xMinIn,
     cout << " Warning: upper x border of histogram " << titleIn
          << " increased to " << xMax << endl;
   }
-  dx    = (linX) ? (xMax - xMin) / nBin : log10(xMax / xMin) / nBin;
+  dx = (linX) ? (xMax - xMin) / nBin : log10(xMax / xMin) / nBin;
   res.resize(nBin);
+  res2.resize(nBin);
   null();
 
 }
@@ -963,8 +1185,11 @@ void Hist::null() {
   under  = 0.;
   inside = 0.;
   over   = 0.;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] = 0.;
-
+  for (int m = 0; m < nMoments; ++m) sumxNw[m] = 0.;
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix] = 0.;
+    res2[ix] = 0.;
+  }
 }
 
 //--------------------------------------------------------------------------
@@ -973,6 +1198,8 @@ void Hist::null() {
 
 void Hist::fill(double x, double w) {
 
+  if (!isfinite(x) || !isfinite(w)) {nNonFinite += 1; return;}
+
   ++nFill;
   if (x < xMin) {under += w; return;}
   if (x > xMax) {over  += w; return;}
@@ -980,8 +1207,21 @@ void Hist::fill(double x, double w) {
            : int( floor( log10(x / xMin) / dx) );
   if      (iBin < 0)     under += w;
   else if (iBin >= nBin) over  += w;
-  else                 {inside += w; res[iBin] += w; }
-
+  else {
+    res[iBin]  += w;
+    res2[iBin] += w * w;
+    inside     += w;
+    sumxNw[0]  += w;
+    sumxNw[1]  += x * w;
+    // If requested, also compute unbinned higher moments.
+    if (doStats) {
+      double xm(x);
+      for (int m = 2; m < nMoments; ++m) {
+        xm *= x;
+        sumxNw[m] += w * xm;
+      }
+    }
+  }
 }
 
 //--------------------------------------------------------------------------
@@ -991,7 +1231,10 @@ void Hist::fill(double x, double w) {
 ostream& operator<<(ostream& os, const Hist& h) {
 
   // Do not print empty histograms.
-  if (h.nFill <= 0) return os;
+  if (h.nFill <= 0) {
+    os << "     Histogram not shown since it is empty \n \n";
+    return os;
+  }
 
   // Write time and title.
   time_t t = time(0);
@@ -1057,8 +1300,10 @@ ostream& operator<<(ostream& os, const Hist& h) {
         if (iRow == row[iCol])                  os << NUMBER[frac[iCol]];
         else if (iRow * (row[iCol] - iRow) > 0) os << NUMBER[10];
         else                                    os << " ";
-      } os << "\n";
-    } os << "\n";
+      }
+      os << "\n";
+    }
+    os << "\n";
 
     // Print sign and value of bin contents
     double maxim = log10(max(yMax, -yMin));
@@ -1101,29 +1346,131 @@ ostream& operator<<(ostream& os, const Hist& h) {
        << setprecision(4) << setw(12) << yMin << " and highest value"
        << setw(12) << yMax << " are too close \n \n";
 
-  // Calculate and print statistics.
-  double cSum   = 0.;
-  double cxSum  = 0.;
-  double cxxSum = 0.;
-  for (int ix = 0; ix < h.nBin ; ++ix) {
-    double cta = abs(h.res[ix]);
-    double x = (h.linX) ? h.xMin + (ix + 0.5) * h.dx
-             : h.xMin * pow( 10., (ix + 0.5) * h.dx);
-    cSum   = cSum   + cta;
-    cxSum  = cxSum  + cta * x;
-    cxxSum = cxxSum + cta * x * x;
+  // Mean determines overall output format for moments.
+  double xMean = h.getXMean(false);
+  bool doExp   = false;
+  int  prec    = 3;
+  if ( abs(xMean) >= 10000. || abs(xMean) <= 1. ) doExp = true;
+  else if ( abs(xMean) >= 1000. ) prec = 1;
+  else if ( abs(xMean) >= 100. ) prec = 2;
+
+  // Fixed or Scientific for ranges.
+  bool doExpRange = ( abs(h.xMin) >= 1e5 || abs(h.xMax) >= 1e5 ||
+    (abs(h.xMin) != 0.0 && abs(h.xMin) <= 1e-2) ||
+    (abs(h.xMin) != 0.0 && abs(h.xMin) <= 1e-2) );
+  int rangePrec = 3;
+  if (!doExpRange && max(abs(h.xMin),abs(h.xMax)) <= 1e-1) rangePrec = 5;
+  else if (!doExpRange && max(abs(h.xMin),abs(h.xMax)) <= 1.) rangePrec = 4;
+
+  // Fixed or Scientific for contents.
+  bool contExp = ( abs(h.inside + h.under + h.over) >= 1e5 ||
+    (abs(h.inside) <= 1e-2) );
+  int contPrec   = 3;
+  if (!contExp && abs(h.inside) <= 1e-1) contPrec = 5;
+  else if (!contExp && abs(h.inside) <= 1.) contPrec = 4;
+
+  // doStats and nEff determine if uncertainties should be printed.
+  double nEff  = h.getNEffective();
+  bool   doErr = (h.doStats && nEff > 0.);
+  string pad   = "   ";
+
+  // Fixed or Scientific for nEffective.
+  bool neffExp = ( abs(nEff) >= 1e5 || (abs(nEff) <= 1e-2) );
+  int nEffPrec = 3;
+  if (!neffExp && abs(nEff) <= 1e-1) nEffPrec = 5;
+  else if (!neffExp && abs(nEff) <= 1.) nEffPrec = 4;
+
+  // ------------------------------------------------------------------------
+  // First line.
+
+  // Number of entries.
+  os << fixed;
+  os << pad << "Entries  =" << setw(10) << h.nFill;
+
+  // xMin.
+  if (doExpRange) os << scientific << setprecision(3);
+  else os << fixed << setprecision(rangePrec);
+  os << pad << "xMin =" << setw(10) << h.xMin;
+
+  // Underflow
+  if (contExp) os << scientific << setprecision(3);
+  else os << fixed << setprecision(contPrec);
+  os << pad << "Underflow =" << setw(10) << h.under;
+
+  // Mean.
+  if (doExp) os << scientific << setprecision(3);
+  else os << fixed << setprecision(prec);
+  os << pad << "Mean   =" << setw(10) << xMean;
+  if (doErr) {
+    double xMeanErr = h.getXMeanErr(false);
+    if (doExp|| xMeanErr > 10 * abs(xMean)) os << setprecision(1);
+    os << " +-" << setw(7) << xMeanErr;
   }
-  double xmean = cxSum / max(cSum, Hist::TINY);
-  double rms = sqrtpos( cxxSum / max(cSum, Hist::TINY) - xmean*xmean );
-  os << scientific << setprecision(4)
-     << "   Entries  =" << setw(12) << h.nFill
-     << "    Mean =" << setw(12) << xmean
-     << "    Underflow =" << setw(12) << h.under
-     << "    Low edge  =" << setw(12) << h.xMin << "\n"
-     << "   All chan =" << setw(12) << h.inside
-     << "    Rms  =" << setw(12) << rms
-     << "    Overflow  =" << setw(12) << h.over
-     << "    High edge =" << setw(12) << h.xMax << endl;
+
+  // RMS.
+  double xRMS      = h.getXRMS(false);
+  if (doExp) os << scientific << setprecision(3);
+  else os << fixed << setprecision(prec);
+  if (!doErr) os << pad << "RMS  =" << setw(10) << xRMS;
+  else {
+    os << pad << "RMS  =" << setw(10) << xRMS;
+    double xRMSErr = h.getXRMSErr(false);
+    if (doExp || xRMSErr > 10 * abs(xRMS)) os << setprecision(1);
+    os << " +-" << setw(7) << xRMSErr;
+  }
+
+  // End of line.
+  os << endl;
+
+  // ------------------------------------------------------------------------
+  // Second line.
+
+  // Sum of Weights (inside histogram range).
+  if (contExp) os << scientific << setprecision(3);
+  else os << fixed << setprecision(contPrec);
+  os << pad << "SumW(in) =" << setw(10) << h.inside;
+
+
+  // xMax.
+  if (doExpRange) os << scientific << setprecision(3);
+  else os << fixed << setprecision(rangePrec);
+  os << pad << "xMax =" << setw(10) << h.xMax;
+
+  // Overflow
+  if (contExp) os << scientific << setprecision(3);
+  else os << fixed << setprecision(contPrec);
+  os << pad << "Overflow  =" << setw(10) << h.over;
+
+  // Median (excluding underflow and overflow bins).
+  double xMedian    = h.getXMedian(false);
+  if (doExp) os << scientific << setprecision(3);
+  else os << fixed << setprecision(prec);
+  os << pad << "Median =" << setw(10) << xMedian;
+  if (doErr) {
+    double xMedianErr = h.getXMedianErr(false);
+    if (doExp || xMedianErr > 10 * abs(xMedian)) os << setprecision(1);
+    os << " +-" << setw(7) << xMedianErr;
+  }
+
+  // nEff: Statistical power = effective number of unweighted entries.
+  // If nEff ~ h.inside, use same precision as for SumW.
+  string var = (h.doStats ? "nEffective =   " : "nEff =");
+  if (nEff <= 0.) {
+    os << pad << var << setw(10) << "N/A";
+  } else if (h.doStats) {
+    os << pad << var;
+    if (neffExp) os << scientific << setprecision(3);
+    else os << fixed << setprecision(nEffPrec);
+    os << setw(10) << nEff;
+  } else {
+    os << pad << var;
+    if (neffExp) os << scientific << setprecision(3);
+    else os << fixed << setprecision(nEffPrec);
+    os << setw(10) << nEff;
+  }
+
+  // Return to standard PYTHIA format.
+  os << scientific << setprecision(3) << endl;
   return os;
 }
 
@@ -1131,21 +1478,31 @@ ostream& operator<<(ostream& os, const Hist& h) {
 
 // Print histogram contents as a table (e.g. for Gnuplot).
 
-void Hist::table(ostream& os, bool printOverUnder, bool xMidBin) const {
+void Hist::table(ostream& os, bool printOverUnder, bool xMidBin,
+  bool printError) const {
 
   // Print histogram vector bin by bin, with mean x as first column.
   os << scientific << setprecision(4);
   double xBeg = (xMidBin) ? xMin + 0.5 * dx : xMin;
   if (!linX && xMidBin) xBeg = xMin * pow( 10., 0.5 * dx);
-  if (printOverUnder)
+  if (printOverUnder) {
     os << setw(12) << (linX ? xBeg - dx : xBeg * pow(10., -dx))
-       << setw(12) << under << "\n";
-  for (int ix = 0; ix < nBin; ++ix)
+       << setw(12) << under;
+    if (printError) os << setw(12) << 0.0 << "\n";
+    else os << "\n";
+  }
+  for (int ix = 0; ix < nBin; ++ix) {
     os << setw(12) << (linX ? xBeg + ix * dx : xBeg * pow(10., ix * dx))
-       << setw(12) << res[ix] << "\n";
-  if (printOverUnder)
+       << setw(12) << res[ix];
+      if (printError) os << setw(12) << sqrtpos(res2[ix]) << "\n";
+      else os << "\n";
+  }
+  if (printOverUnder) {
     os << setw(12) << (linX ? xBeg + nBin * dx : xBeg * pow(10., nBin * dx))
-       << setw(12) << over << "\n";
+       << setw(12) << over;
+    if (printError) os << setw(12) << 0.0 << "\n";
+    else os << "\n";
+  }
 
 }
 
@@ -1156,12 +1513,12 @@ void Hist::table(ostream& os, bool printOverUnder, bool xMidBin) const {
 void Hist::rivetTable(ostream& os, bool printError) const {
 
   // Print histogram vector bin by bin, with x range in first two columns
-  // and +- error in last two (assuming that contents is number of events).
+  // and +- error in last two.
   os << scientific << setprecision(4);
   double xBeg = xMin;
   double xEnd = (linX) ? xMin + dx : xMin * pow(10., dx);
   for (int ix = 0; ix < nBin; ++ix) {
-    double err = (printError) ? sqrtpos(res[ix]) : 0.0;
+    double err = (printError) ? sqrtpos(res2[ix]) : 0.0;
     os << setw(12) << (linX ? xBeg + ix * dx : xBeg * pow(10., ix * dx))
        << setw(12) << (linX ? xEnd + ix * dx : xEnd * pow(10., ix * dx))
        << setw(12) << res[ix] << setw(12) << err << setw(12) << err << "\n";
@@ -1173,7 +1530,7 @@ void Hist::rivetTable(ostream& os, bool printError) const {
 
 // Print histogram contents as a table, as appropriate for Pyplot.
 
-void Hist::pyplotTable(ostream& os, bool isHist) const {
+void Hist::pyplotTable(ostream& os, bool isHist, bool printError) const {
 
   // Set precision.
   os << scientific << setprecision(4);
@@ -1185,16 +1542,36 @@ void Hist::pyplotTable(ostream& os, bool isHist) const {
     xNow  = (linX) ? xBeg + ix * dx : xBeg * pow(10., ix * dx);
     xEdge = (linX) ? xMin + ix * dx : xMin * pow(10., ix * dx);
     os << setw(12) << xNow << setw(12) << res[ix];
-    if (isHist) os << setw(12) << xEdge << "\n";
-    else os << "\n";
+    if (isHist) os << setw(12) << xEdge;
+    if (printError) os << setw(12) << sqrtpos(res2[ix]);
+    os << "\n";
   }
 
   // And also an extra no-weights line to give final upper bin edge.
   if (isHist) {
     double xEnd = (linX) ? xMax - 0.5 * dx : xMax * pow( 10., -0.5 * dx);
-    os << setw(12) << xEnd << setw(12) << 0. << setw(12) << xMax << "\n";
+    os << setw(12) << xEnd << setw(12) << 0. << setw(12) << xMax;
+    if (printError) os << setw(12) << 0.;
+    os << "\n";
   }
 
+}
+
+//--------------------------------------------------------------------------
+
+// Fill histogram contents from a table, e.g. written by table() above.
+
+void Hist::fillTable(istream& is) {
+
+  // Read in one line at a time.
+  string line;
+  double xVal, yVal;
+  while ( getline(is, line) ) {
+    // Read contents of the line and fill in histogram.
+    istringstream splitLine(line);
+    splitLine >> xVal >> yVal;
+    fill( xVal, yVal);
+  }
 }
 
 //--------------------------------------------------------------------------
@@ -1237,6 +1614,225 @@ void table(const Hist& h1, const Hist& h2, string fileName,
 
 //--------------------------------------------------------------------------
 
+// Compute mean value in X, by default unbinned.
+
+double Hist::getXMean(bool unbinned) const {
+  if (unbinned) return sumxNw[1] / max(sumxNw[0], Hist::TINY);
+  else {
+    double wtSum(0.);
+    double wtxSum(0.);
+    for (int ix=0; ix < nBin ; ++ix) {
+      double wta  = abs(res[ix]);
+      double x = (linX) ? xMin + (ix + 0.5) * dx
+        : xMin * pow( 10., (ix + 0.5) * dx);
+      wtSum   = wtSum   + wta;
+      wtxSum  = wtxSum  + wta * x;
+    }
+    return wtxSum / max(wtSum, Hist::TINY);
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Compute median in X (with linear interpolation inside median bin).
+// Note: absolute values of weights are used.
+
+double Hist::getXMedian(bool includeOverUnder) const {
+  double wtSumNow = 0.;
+  double wtSumTot = 0.;
+  for (int ix = 0; ix < nBin ; ++ix) {
+    wtSumTot += abs(res[ix]);
+  }
+  // Include underflow and overflow bins in median definition?
+  if (includeOverUnder) {
+    wtSumTot += abs(over) + abs(under);
+    wtSumNow = abs(under);
+    // If excess bins contain more than half, return low or high edge.
+    if (abs(under) > 0.5 * wtSumTot) return xMin;
+    else if (abs(over) > 0.5 * wtSumTot) return xMax;
+  }
+  for (int ix = 0; ix < nBin ; ++ix) {
+    double wtSumOld = wtSumNow;
+    wtSumNow += abs(res[ix]);
+    if (wtSumNow > 0.5 * wtSumTot) {
+      double frac = (0.5*wtSumTot - wtSumOld)/(wtSumNow - wtSumOld);
+      return (linX) ? xMin + (ix + frac) * dx
+                    : xMin * pow( 10., (ix + frac) * dx);
+    }
+  }
+  // Should not arrive here. Safe return in any case.
+  return 0.;
+}
+
+//--------------------------------------------------------------------------
+
+// Compute statistical error on median in X ( + bin granularity estimate).
+// Note: absolute values of weights are used.
+
+double Hist::getXMedianErr(bool includeOverUnder) const {
+
+  // If no statistics, cannot compute error.
+  if (getNEffective() <= 0.) return 0.;
+
+  double xMedian = getXMedian(includeOverUnder);
+  if (xMedian <= xMin || xMedian >= xMax) return 0.;
+  double wtSumTot = max( abs(sumxNw[0]), Hist::TINY );
+
+  // Include underflow and overflow bins in median definition?
+  if (includeOverUnder) wtSumTot += abs(over) + abs(under);
+  // Laplace's formula for variance of median: 1/(4 nEff f(xmedian)^2).
+  int iBin = int( (linX) ? (xMedian - xMin)/dx : log10( xMedian / xMin )/dx);
+  double fMedian  = (linX) ? abs(res[iBin]) / dx / wtSumTot :
+    abs(res[iBin]) / pow( 10. , dx ) / wtSumTot;
+  double statFac    = sqrtpos( 1. / max(getNEffective(), Hist::TINY) );
+  double xMedianErr = statFac / 2. / max( fMedian, Hist::TINY );
+
+  // Add uncertainty estimate from bin granularity from binned vs unbinned <x>.
+  double xBinErr = getXMean(true) - getXMean(false);
+  return sqrtpos( xMedianErr * xMedianErr + xBinErr * xBinErr );
+
+}
+
+//--------------------------------------------------------------------------
+
+// Get RMN = n'th root of n'th moment about the mean.
+// Lowest ones:
+//  n = 2: RMS = sigma = width of (peaked) distribution.
+//  n = 3: cube root of third moment about the mean < ( x - <x> )^3 >.
+//         Sensitive to one-sided tails, as is characteristic of many
+//         particle-physics distributions. Related to skewness.
+//  n = 4: fourth root of fourth moment about the mean < ( x - <x> )^4 >.
+//         Sensitive to double-sided long tails (eg BW vs Gauss) and
+//         4th-power asymptotics for single-sided ones. Related to kurtosis.
+//  ...
+
+double Hist::getXRMN(int n, bool unbinned) const {
+  // Compute from unbinned stored sums, or from binned histogram distributions.
+  if (unbinned && n >= 1 && n <= 6) {
+    // 1st central moment is always zero (Mean - Mean).
+    if (n == 1) return 0.;
+    // Unbinned RMN implemented for N = 2, 3, 4, 5, 6.
+    // One-pass algorithm, may suffer from loss of numerical accuracy
+    // if there are catastrophic cancellations among terms.
+    double sumw = max(sumxNw[0], Hist::TINY);
+    double mean = sumxNw[1] / sumw;
+    if (n == 2) return sqrtpos( sumxNw[2]/sumw - mean * mean );
+    else if (n == 3) {
+      return cbrt( (sumxNw[3] - 3. * mean * sumxNw[2]) / sumw
+      + 2 * mean * mean * mean );
+    } else if (n == 4) {
+      double m4d = (sumxNw[4] - 4. * mean * sumxNw[3]
+        + 6. * mean * mean * sumxNw[2]) / sumw - 3. * pow4(mean);
+      return pow( max(0., m4d), 0.25);
+    } else if (n == 5) {
+      double m5d = (sumxNw[5] - 5. * mean * sumxNw[4]
+        + 10. * mean * mean * sumxNw[3] - 10 * mean * mean * mean * sumxNw[2] )
+        / sumw + 4. * pow(mean, 5);
+      if (m5d < 0.) return pow( abs(m5d) , 0.2);
+      else return pow(m5d, 0.2);
+    } else if (n == 6) {
+      double m6d = (sumxNw[6] - 6. * mean * sumxNw[5]
+        + 15. * mean * mean * sumxNw[4] - 20 * mean * mean * mean * sumxNw[3]
+        + 15 * pow4(mean) * sumxNw[2] ) / sumw - 5. * pow5(mean);
+      return pow( max(0., m6d), 1./6.);
+    }
+    // No further unbinned moments defined.
+    else return 0.;
+  } else {
+    // Binned: two-pass algorithm should be numerically more safe, but
+    // may be limited by bin granularity. First pass = compute binned mean.
+    // Note: absolute values of weights are used.
+    double mean = getXMean(false);
+    // Second pass. Compute n'th moment about the mean (for any n).
+    double mnd  = 0.;
+    double sumw = 0.;
+    for (int ix=0; ix < nBin ; ++ix) {
+      double wta  = abs(res[ix]);
+      sumw += wta;
+      double x = (linX) ? xMin + (ix + 0.5) * dx
+        : xMin * pow( 10., (ix + 0.5) * dx);
+      if ( n == 2) mnd += wta * (x - mean) * (x - mean);
+      else mnd += wta * pow(x - mean, n);
+    }
+    mnd  /= max(sumw, Hist::TINY);
+    if ( n == 2 ) return sqrtpos( mnd );
+    else if ( n == 3 ) return cbrt( mnd );
+    else if ( n == 4 ) return sqrt( sqrtpos( mnd) );
+    // General moments, for any n. Odd ones can be negative.
+    else if ( mnd < 0 && ( n % 2 ) == 1 ) return -pow( abs(mnd), 1./n );
+    else return pow( max(mnd, 0.), 1./n );
+  }
+  // No further moments defined.
+  return 0.;
+}
+
+//--------------------------------------------------------------------------
+
+// Error on mean value.
+
+double Hist::getXMeanErr(bool unbinned) const {
+
+  // If no statistics, cannot compute error.
+  if (getNEffective() <= 0.) return 0.;
+
+  // Get RMS and multiply by statistical power.
+  double sigma = getXRMN(2, unbinned);
+  double xMeanErr2 = pow2(sigma) / max( getNEffective(), Hist::TINY );
+
+  // If binned, add estimated bin granularity error <x>_binned - <x>_unbinned.
+  if (!unbinned) {
+    double xBinErr = getXMean(true) - getXMean(false);
+    xMeanErr2 += xBinErr * xBinErr;
+  }
+
+  return sqrtpos( xMeanErr2 );
+}
+
+//--------------------------------------------------------------------------
+
+// Error on n'th root of n'th moment about the mean.
+// Computed using sigma2( <x^n> ) = < (x^n - <x>^n)^2 > / nEff
+// Calculation always uses binned values, but if flag unbinned == false,
+// a granularity uncertainty measure is added.
+// Note: absolute values of weights are used.
+
+double Hist::getXRMNErr(int n, bool unbinned) const {
+
+  // Check if error can be computed.
+  double nEffective = getNEffective();
+  double xRMN      = getXRMN(n, false);
+  if (nEffective <= 0. || xRMN == 0.) return 0.;
+
+  // First pass: compute binned mean.
+  double mean = getXMean(false);
+
+  // Second pass: compute < (x^n - <x>^n)^2 >
+  double msdn = 0.;
+  double sumw = 0.;
+  for (int ix=0; ix < nBin ; ++ix) {
+    double wta = abs(res[ix]);
+    double x = (linX) ? xMin + (ix + 0.5) * dx
+      : xMin * pow( 10., (ix + 0.5) * dx);
+    sumw += wta;
+    msdn += wta * pow2( pow(x, n) - pow(mean, n) );
+  }
+  msdn /= max(sumw, Hist::TINY);
+  // Uncertainty on n'th root = 1/n * relative uncertainty.
+  double xRMNErr2 = msdn / (n * n) / max(nEffective, Hist::TINY)
+    / pow( abs(xRMN), 2*n - 2 );
+
+  // If the moment itself was computed from binned distribution,
+  // add granularity uncertainty.
+  if (!unbinned) {
+    double xBinErr = getXRMN(n, true) - xRMN;
+    xRMNErr2 += xBinErr * xBinErr;
+  }
+
+  return sqrtpos(xRMNErr2);
+}
+
+//--------------------------------------------------------------------------
+
 // Get content of specific bin.
 // Special values are bin 0 for underflow and bin nBin+1 for overflow.
 // All other bins outside proper histogram range return 0.
@@ -1247,6 +1843,40 @@ double Hist::getBinContent(int iBin) const {
   else if (iBin == 0)           return under;
   else if (iBin == nBin + 1)    return over;
   else                          return 0.;
+
+}
+
+// Return the lower edge of the bin.
+
+double Hist::getBinEdge(int iBin) const {
+
+  if (iBin > 0 && iBin <= nBin + 1)
+    return linX ? xMin + (iBin - 1) * dx : xMin * pow(10., (iBin - 1) * dx);
+  else return numeric_limits<double>::quiet_NaN();
+
+}
+
+// Return the width of the bin.
+
+double Hist::getBinWidth(int iBin) const {
+
+  if (iBin > 0 && iBin <= nBin)
+    return linX ? dx : xMin * (pow(10., dx) - 1) * pow(10., (iBin - 1) * dx);
+  else return numeric_limits<double>::infinity();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Return bin contents and edges.
+
+vector<double> Hist::getBinContents() const {return res;}
+
+vector<double> Hist::getBinEdges() const {
+
+  vector<double> edges(nBin + 1);
+  for (int ix = 0; ix <= nBin; ++ix) edges[ix] = getBinEdge(ix + 1);
+  return edges;
 
 }
 
@@ -1264,6 +1894,28 @@ bool Hist::sameSize(const Hist& h) const {
 
 //--------------------------------------------------------------------------
 
+// Take an arbitrary function of bin contents.
+
+void Hist::takeFunc(function<double(double)> func) {
+
+  // Result for sumxNw will use the new binned values.
+  for (int m = 0; m < nMoments; ++m) sumxNw[m] = 0;
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix] = func(res[ix]);
+    double x = (linX) ? xMin + (ix + 0.5) * dx
+      : xMin * pow( 10., (ix + 0.5) * dx);
+    sumxNw[0] += res[ix];
+    sumxNw[1] += x * res[ix];
+    for (int m = 2; m < nMoments; ++m) sumxNw[m] += res[ix] * pow(x, m);
+  }
+  under  = func(under);
+  inside = func(inside);
+  over   = func(over);
+
+}
+
+//--------------------------------------------------------------------------
+
 // Take 10-logarithm or natural logarithm of contents bin by bin.
 
 void Hist::takeLog(bool tenLog) {
@@ -1274,22 +1926,9 @@ void Hist::takeLog(bool tenLog) {
     if (res[ix] > Hist::TINY && res[ix] < yMin ) yMin = res[ix];
   yMin *= 0.8;
 
-  // Take 10-logarithm bin by bin, but ensure positivity.
-  if (tenLog) {
-    for (int ix = 0; ix < nBin; ++ix)
-      res[ix] = log10( max( yMin, res[ix]) );
-    under  =  log10( max( yMin, under) );
-    inside =  log10( max( yMin, inside) );
-    over   =  log10( max( yMin, over) );
-
-  // Take natural logarithm bin by bin, but ensure positivity.
-  } else {
-    for (int ix = 0; ix < nBin; ++ix)
-      res[ix] = log( max( yMin, res[ix]) );
-    under  =  log( max( yMin, under) );
-    inside =  log( max( yMin, inside) );
-    over   =  log( max( yMin, over) );
-  }
+  // Take base 10 or natural logarithm bin by bin, but ensure positivity.
+  takeFunc([yMin, tenLog](double x) {
+      return tenLog ? log10( max( yMin, x) ) : log( max( yMin, x) );});
 
 }
 
@@ -1297,26 +1936,36 @@ void Hist::takeLog(bool tenLog) {
 
 // Take square root of contents bin by bin; set 0 for negative content.
 
-void Hist::takeSqrt() {
+void Hist::takeSqrt() {takeFunc(sqrtpos);}
 
-  for (int ix = 0; ix < nBin; ++ix) res[ix] = sqrtpos(res[ix]);
-  under  = sqrtpos(under);
-  inside = sqrtpos(inside);
-  over   = sqrtpos(over);
+//--------------------------------------------------------------------------
 
+// Normalize bin contents to given sum, by default including overflow bins.
+
+void Hist::normalize(double f, bool overflow) {
+  *this *= f / (overflow ? (under + inside + over) : inside);
 }
 
 //--------------------------------------------------------------------------
 
-// Find smallest nonzero absolute value of bin contents.
+// Normalize bin contents to given area, by default including overflow bins.
 
-double Hist::smallestAbsValue() const {
+void Hist::normalizeIntegral(double f, bool overflow) {
+  normalizeSpectrum((overflow ? (under + inside + over) : inside) / f);
+}
 
-  double smallest = 1e20; double yAbs;
-  for (int ix = 0; ix < nBin; ++ix) { yAbs = abs(res[ix]);
-    if (yAbs > 1e-20 && yAbs < smallest) smallest = yAbs; }
-  return smallest;
+//--------------------------------------------------------------------------
 
+// Scale each bin content by 1 / (wtSum * bin width).
+
+void Hist::normalizeSpectrum(double wtSum) {
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix] /= wtSum * getBinWidth(ix + 1);
+    res2[ix] /= pow2( wtSum * getBinWidth(ix + 1) );
+  }
+  inside /= wtSum;
+  over /= wtSum;
+  under /= wtSum;
 }
 
 //--------------------------------------------------------------------------
@@ -1328,8 +1977,13 @@ Hist& Hist::operator+=(const Hist& h) {
   nFill  += h.nFill;
   under  += h.under;
   inside += h.inside;
-  over += h.over;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] += h.res[ix];
+  over   += h.over;
+  doStats = doStats && h.doStats;
+  for (int m = 0; m < nMoments; ++m) sumxNw[m] += h.sumxNw[m];
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix]  += h.res[ix];
+    res2[ix] += h.res2[ix];
+  }
   return *this;
 }
 
@@ -1342,61 +1996,145 @@ Hist& Hist::operator-=(const Hist& h) {
   nFill  += h.nFill;
   under  -= h.under;
   inside -= h.inside;
-  over -= h.over;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] -= h.res[ix];
+  over   -= h.over;
+  doStats = doStats && h.doStats;
+  for (int m = 0; m < nMoments; ++m) sumxNw[m]  -= h.sumxNw[m];
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix]  -= h.res[ix];
+    res2[ix] += h.res2[ix];
+  }
   return *this;
 }
 
 //--------------------------------------------------------------------------
 
 // Multiply existing histogram by another one.
+// (Assumes Gaussian uncertainty propagation.)
 
 Hist& Hist::operator*=(const Hist& h) {
   if (!sameSize(h)) return *this;
-  nFill   += h.nFill;
+  nFill  += h.nFill;
   under  *= h.under;
   inside *= h.inside;
-  over *= h.over;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] *= h.res[ix];
+  over   *= h.over;
+  doStats = false;
+  // Result for sumxNw has to use binned values.
+  for (int m = 0; m < nMoments; ++m) sumxNw[m] = 0.;
+  for (int ix = 0; ix < nBin; ++ix) {
+    res2[ix] = (abs(res[ix]) < Hist::TINY || abs(h.res[ix]) < Hist::TINY) ? 0 :
+      pow2(res[ix]*h.res[ix])*(
+        res2[ix]/pow2(res[ix]) + h.res2[ix]/pow2(h.res[ix]));
+    res[ix] *= h.res[ix];
+    double x = (linX) ? xMin + (ix + 0.5) * dx
+      : xMin * pow( 10., (ix + 0.5) * dx);
+    sumxNw[0] += res[ix];
+    sumxNw[1] += x * res[ix];
+    for (int m = 2; m < nMoments; ++m) sumxNw[m] += res[ix] * pow(x, m);
+  }
   return *this;
 }
 
 //--------------------------------------------------------------------------
 
 // Divide existing histogram by another one.
+// (Assumes Gaussian uncertainty propagation.)
 
 Hist& Hist::operator/=(const Hist& h) {
   if (!sameSize(h)) return *this;
-  nFill += h.nFill;
-  under  = (abs(h.under) < Hist::TINY) ? 0. : under/h.under;
-  inside = (abs(h.inside) < Hist::TINY) ? 0. : inside/h.inside;
-  over  = (abs(h.over) < Hist::TINY) ? 0. : over/h.over;
-  for (int ix = 0; ix < nBin; ++ix)
-    res[ix] = (abs(h.res[ix]) < Hist::TINY) ? 0. : res[ix]/h.res[ix];
+  nFill  += h.nFill;
+  under   = (abs(h.under) < Hist::TINY) ? 0. : under/h.under;
+  inside  = (abs(h.inside) < Hist::TINY) ? 0. : inside/h.inside;
+  over    = (abs(h.over) < Hist::TINY) ? 0. : over/h.over;
+  doStats = false;
+  // Result for sumxNw has to use binned values.
+  for (int m = 0; m < nMoments; ++m) sumxNw[m] = 0.;
+  for (int ix = 0; ix < nBin; ++ix) {
+    res2[ix] = (abs(res[ix]) < Hist::TINY || abs(h.res[ix]) < Hist::TINY) ? 0 :
+      pow2(res[ix]/h.res[ix])*(
+        res2[ix]/pow2(res[ix]) + h.res2[ix]/pow2(h.res[ix]));
+    res[ix]  = (abs(h.res[ix]) < Hist::TINY) ? 0. : res[ix]/h.res[ix];
+    double x = (linX) ? xMin + (ix + 0.5) * dx
+      : xMin * pow( 10., (ix + 0.5) * dx);
+    sumxNw[0] += res[ix];
+    sumxNw[1] += x * res[ix];
+    for (int m = 2; m < nMoments; ++m) sumxNw[m] += res[ix] * pow(x, m);
+  }
   return *this;
 }
 
 //--------------------------------------------------------------------------
 
 // Add constant offset to histogram.
+// Squared weights treated as filling each bin with weight = f,
+// For linear x, moments treated as filling with continuous f/dx.
+// for logx, moments treated as filling with f at (log) centre of each bin.
 
 Hist& Hist::operator+=(double f) {
   under  += f;
   inside += nBin * f;
   over   += f;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] += f;
+  sumxNw[0] += nBin * f;
+  if (linX) {
+    // Moments (for linX): analytical integral_xMin^xMax f/dx * x^m dx.
+    double xMinM(xMin);
+    double xMaxM(xMax);
+    for (int m = 1; m < nMoments; ++m) {
+      xMinM *= xMin;
+      xMaxM *= xMax;
+      sumxNw[m] += f * (xMaxM - xMinM) / (m + 1) / dx;
+    }
+  }
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix]  += f;
+    res2[ix] += f * f;
+    if (!linX) {
+      // Moments (for logX): numerical sum of f * x^m.
+      double x = xMin * pow( 10., (ix + 0.5) * dx);
+      double xm(1.);
+      for (int m = 1; m < nMoments; ++m) {
+        xm *= x;
+        sumxNw[m] += f * xm;
+      }
+    }
+  }
   return *this;
 }
 
 //--------------------------------------------------------------------------
 
 // Subtract constant offset from histogram.
+// Squared weights treated as filling each bin with weight = -f.
+// Moments treated as filling with continuous -f/dx.
 
 Hist& Hist::operator-=(double f) {
   under  -= f;
   inside -= nBin * f;
   over   -= f;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] -= f;
+  sumxNw[0] -= nBin * f;
+  if (linX) {
+    // Moments (for linX): analytical integral_xMin^xMax f/dx * x^m dx.
+    double xMinM(xMin);
+    double xMaxM(xMax);
+    for (int m = 1; m < nMoments; ++m) {
+      xMinM *= xMin;
+      xMaxM *= xMax;
+      sumxNw[m] -= f * (xMaxM - xMinM) / (m + 1) / dx;
+    }
+  }
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix]  -= f;
+    res2[ix] -= f * f;
+    if (!linX) {
+      // Moments (for logX): numerical sum of f * x^m.
+      double x = xMin * pow( 10., (ix + 0.5) * dx);
+      sumxNw[1] -= f * x;
+      double xm(x);
+      for (int m = 2; m < nMoments; ++m) {
+        xm *= x;
+        sumxNw[m] -= f * xm;
+      }
+    }
+  }
   return *this;
 }
 
@@ -1408,7 +2146,11 @@ Hist& Hist::operator*=(double f) {
   under  *= f;
   inside *= f;
   over   *= f;
-  for (int ix = 0; ix < nBin; ++ix) res[ix] *= f;
+  for (int m = 0; m < nMoments; ++m) sumxNw[m] *= f;
+  for (int ix = 0; ix < nBin; ++ix) {
+    res[ix]  *= f;
+    res2[ix] *= f * f;
+  }
   return *this;
 }
 
@@ -1421,13 +2163,21 @@ Hist& Hist::operator/=(double f) {
     under  /= f;
     inside /= f;
     over   /= f;
-    for (int ix = 0; ix < nBin; ++ix) res[ix] /= f;
+    for (int m = 0; m < nMoments; ++m) sumxNw[m] /= f;
+    for (int ix = 0; ix < nBin; ++ix) {
+      res[ix] /= f;
+      res2[ix] /= f * f;
+    }
   // Set empty contents when division by zero.
   } else {
     under  = 0.;
     inside = 0.;
     over   = 0.;
-    for (int ix = 0; ix < nBin; ++ix) res[ix] = 0.;
+    for (int m = 0; m < nMoments; ++m) sumxNw[m] = 0.;
+    for (int ix = 0; ix < nBin; ++ix) {
+      res[ix]  = 0.;
+      res2[ix] = 0.;
+    }
   }
   return *this;
 }
@@ -1464,11 +2214,16 @@ Hist operator+(double f, const Hist& h1) {
   Hist h = h1; return h += f;}
 
 Hist operator-(double f, const Hist& h1) {
-  Hist h   = h1;
-  h.under  = f - h1.under;
-  h.inside = h1.nBin * f - h1.inside;
-  h.over   = f - h1.over;
-  for (int ix = 0; ix < h1.nBin; ++ix) h.res[ix] = f - h1.res[ix];
+  Hist h    = h1;
+  h.under   = f - h1.under;
+  h.inside  = h1.nBin * f - h1.inside;
+  h.over    = f - h1.over;
+  h.doStats = h1.doStats;
+  for (int m = 0; m < Hist::nMoments; ++m) h.sumxNw[m]  = f - h1.sumxNw[m];
+  for (int ix = 0; ix < h1.nBin; ++ix) {
+    h.res[ix]  = f - h1.res[ix];
+    h.res2[ix] = h1.res2[ix];
+  }
   return h;}
 
 Hist operator*(double f, const Hist& h1) {
@@ -1476,11 +2231,16 @@ Hist operator*(double f, const Hist& h1) {
 
 Hist operator/(double f, const Hist& h1) {
   Hist h = h1;
-  h.under  = (abs(h1.under)  < Hist::TINY) ? 0. :  f/h1.under;
-  h.inside = (abs(h1.inside) < Hist::TINY) ? 0. :  f/h1.inside;
-  h.over   = (abs(h1.over)   < Hist::TINY) ? 0. :  f/h1.over;
-  for (int ix = 0; ix < h1.nBin; ++ix)
-    h.res[ix] = (abs(h1.res[ix]) < Hist::TINY) ? 0. : f/h1.res[ix];
+  h.under   = (abs(h1.under)  < Hist::TINY) ? 0. :  f/h1.under;
+  h.inside  = (abs(h1.inside) < Hist::TINY) ? 0. :  f/h1.inside;
+  h.over    = (abs(h1.over)   < Hist::TINY) ? 0. :  f/h1.over;
+  h.doStats = h1.doStats;
+  for (int m = 0; m < Hist::nMoments; ++m)
+    h.sumxNw[m] = (abs(h1.sumxNw[m]) < Hist::TINY) ? 0. :  f/h1.sumxNw[m];
+  for (int ix = 0; ix < h1.nBin; ++ix) {
+    h.res[ix]  = (abs(h1.res[ix]) < Hist::TINY) ? 0. : f/h1.res[ix];
+    h.res2[ix] = pow2(f) * h1.res2[ix];
+  }
   return h;
 }
 
@@ -1493,10 +2253,10 @@ Hist operator/(double f, const Hist& h1) {
 
 //  Generate the Python code for plotting a frame.
 
-void HistPlot::plot( bool logY) {
+void HistPlot::plot( bool logY, bool logX, bool userBorders) {
 
   // Start new file or add to existing one.
-  if (frameName != "") {
+  if (frameName != "" && frameName != framePrevious) {
     if (nPDF > 0) toPython << "pp.close()" << endl;
     ++nPDF;
     fileName = frameName;
@@ -1507,18 +2267,29 @@ void HistPlot::plot( bool logY) {
     ++nFrame;
   }
   toPython << "tmp" << nFrame << " = plt.figure(" << nFrame << ")" << endl;
+  toPython << "tmp" << nFrame << ".set_size_inches(" << fixed
+    << setprecision(2) << xSize << "," << ySize << ")" << endl;
 
   // Loop through the vector of histograms.
-  double yAbsMin = 1e20;
+  double xMinTot = 1e10, xMaxTot = -1e10, yMinTot = 1e10, yMaxTot = -1e10,
+         yAbsMin = 1e10;
   for (int iHist = 0; iHist < int(histos.size()); ++iHist) {
 
-    // Histogram information for plotting.
+    // Histogram information for plotting, especially x and y borders.
     string legendNow = (legends[iHist] != "void") ? legends[iHist]
       : histos[iHist].getTitle();
     stringstream nBin;
     nBin << histos[iHist].getBinNumber();
-    double yAbsNow = histos[iHist].smallestAbsValue();
-    if (yAbsNow < yAbsMin) yAbsMin = yAbsNow;
+    double xMinNow = histos[iHist].getXMin();
+    if (iHist == 0 || xMinNow < xMinTot) xMinTot = xMinNow;
+    double xMaxNow = histos[iHist].getXMax();
+    if (iHist == 0 || xMaxNow > xMaxTot) xMaxTot = xMaxNow;
+    double yMinNow = histos[iHist].getYMin();
+    if (iHist == 0 || yMinNow < yMinTot) yMinTot = yMinNow;
+    double yMaxNow = histos[iHist].getYMax();
+    if (iHist == 0 || yMaxNow > yMaxTot) yMaxTot = yMaxNow;
+    double yAbsNow = histos[iHist].getYAbsMin();
+    if (iHist == 0 || yAbsNow < yAbsMin) yAbsMin = yAbsNow;
 
     // Split plotting style and potential colour information.
     string styleNow = (styles[iHist] == "") ? "h" : styles[iHist];
@@ -1534,31 +2305,125 @@ void HistPlot::plot( bool logY) {
     // Write histogram itself to a data file as two columns of (x,y) values.
     stringstream encode;
     encode << fileName << "-" << nTable + iHist << ".dat";
-    histos[iHist].pyplotTable( encode.str(), (style1 == "h") );
+    histos[iHist].pyplotTable( encode.str(), (style1 == "h" || style1 == "e"),
+      (style1 == "e"));
 
     // Write code to plot histogram.
     toPython << "plot = open('" << encode.str() << "')" << endl
              << "plot = [line.split() for line in plot]" << endl
              << "valx = [float(x[0]) for x in plot]" << endl
              << "valy = [float(x[1]) for x in plot]" << endl;
-    if (style1 == "h") toPython  << "vale = [float(x[2]) for x in plot]"
-             << endl << "plt.hist( valx, vale, weights = valy,"
-             << " histtype='step',";
+    if (style1 == "h" || style1 == "e")
+      toPython  << "vale = [float(x[2]) for x in plot]"
+                << endl << "plt.hist( valx, vale, weights = valy,"
+                << " histtype='step',";
     else toPython << "plt.plot( valx, valy, '" << style1 << "',";
     if (style2 != "") toPython << " color='" << style2 << "',";
-    toPython << " label=r'" << legendNow << "')" << endl;
+    toPython << " label=r\"" << legendNow << "\")" << endl;
+    if (style1 == "e") {
+      toPython << "erry = [float(x[3]) for x in plot]" << endl
+               << "plt.errorbar( valx, valy, yerr=erry,"
+               << " fmt='.', markersize=0, "
+               << " color=plt.gca().patches[-1].get_edgecolor())" << endl;
+    }
   }
 
-  // Write title, axes and create plot.
-  if (!histos[0].getLinX()) toPython << "plt.xscale('log')" << endl;
-  if (logY) toPython << "plt.yscale('symlog', linthreshy=" << scientific
-           << setprecision(2) << yAbsMin << ")" << endl;
-  else toPython << "plt.ticklabel_format(axis='y', style='sci', "
-           << "scilimits=(-2,3))" << endl;
+  // Loop through the vector of already existing files, if any.
+  if (histos.size() == 0) yAbsMin = 0.;
+  for (int iFile = 0; iFile < int(files.size()); ++iFile) {
+    string legendNow = (fileLegends[iFile] != "void") ? fileLegends[iFile]
+      : files[iFile];
+
+    // Split plotting style and potential colour information.
+    string styleNow = (fileStyles[iFile] == "") ? "o" : fileStyles[iFile];
+    string style1 = styleNow;
+    string style2 = "";
+    if (styleNow.find(",") != string::npos) {
+      int iComma = styleNow.find(",");
+      style1 = (iComma > 0) ? styleNow.substr( 0, iComma) : "o";
+      if (iComma + 1 < int(styleNow.length()))
+        style2 = styleNow.substr( iComma + 1);
+    }
+
+    // Find out whether and what kind of error bars should be plotted.
+    int nxErr = 0;
+    if (filexyerr[iFile].find("x") != string::npos) nxErr = 1;
+    if (filexyerr[iFile].find("X") != string::npos) nxErr = 2;
+    int nyErr = 0;
+    if (filexyerr[iFile].find("y") != string::npos) nyErr = 1;
+    if (filexyerr[iFile].find("Y") != string::npos) nyErr = 2;
+
+    // Write code to plot existing file. Trivial but tedious error bars.
+    toPython << "plot = open('" << files[iFile] << "')" << endl
+             << "plot = [line.split() for line in plot]" << endl
+             << "valx = [float(x[0]) for x in plot]" << endl
+             << "valy = [float(x[1]) for x in plot]" << endl;
+    if (style1 == "h") toPython
+      << "vale = [float(x[2]) for x in plot]" << endl
+      << "plt.hist( valx, vale, weights = valy,"  << " histtype='step',";
+    else if (nxErr == 0 && nyErr == 0)
+      toPython << "plt.plot( valx, valy, '" << style1 << "',";
+    else {
+      if (nxErr == 1) toPython
+        << "errx = [float(x[2]) for x in plot]" << endl;
+      else if (nxErr == 2) toPython
+        << "errxlow = [float(x[2]) for x in plot]" << endl
+        << "errxupp = [float(x[3]) for x in plot]" << endl
+        << "errx = [errxlow, errxupp]" << endl;
+      if (nyErr == 1) toPython
+        << "erry = [float(x[" << nxErr + 2 << "]) for x in plot]" << endl;
+      else if (nyErr == 2) toPython
+        << "errylow = [float(x[" << nxErr + 2 << "]) for x in plot]" << endl
+        << "erryupp = [float(x[" << nxErr + 3 << "]) for x in plot]" << endl
+        << "erry = [errylow, erryupp]" << endl;
+      toPython << "plt.errorbar( valx, valy,";
+      if (nxErr > 0) toPython << " xerr=errx,";
+      if (nyErr > 0) toPython << " yerr=erry,";
+      toPython << " fmt='" << style1 << "',";
+    }
+    if (style2 != "") toPython << " color='" << style2 << "',";
+    toPython << " label=r\"" << legendNow << "\", zorder=-1)" << endl;
+  }
+
+  // Set borders and write axes.
+  toPython << "plt.xlim( " << scientific << setprecision(3)
+           << (userBorders ? xMinUser : xMinTot) << ", "
+           << (userBorders ? xMaxUser : xMaxTot) << ")" << endl;
+  if ((histos.size() > 0 && !histos[0].getLinX()) || logX)
+    toPython << "plt.xscale('log')" << endl;
+  if (logY) {
+    if (userBorders) toPython << "plt.ylim( " << scientific << setprecision(3)
+      << yMinUser << ", " << yMaxUser << ")" << endl;
+    if (useLegacy)
+      toPython << "plt.yscale('symlog', linthreshy=";
+    else
+      toPython << "plt.yscale('symlog', linthresh=";
+    toPython << scientific << setprecision(2)
+             << (userBorders ? 0.5 * yMinUser : yAbsMin)
+             << ")" << endl;
+  } else {
+    if (userBorders) {
+      yMinTot = yMinUser;
+      yMaxTot = yMaxUser;
+    } else if (yMinTot < -1e-20 || yMinTot > 0.5 * yMaxTot) {
+      double yMargin = 0.05 * (yMaxTot - yMinTot);
+      yMinTot -= yMargin;
+      yMaxTot += yMargin;
+    } else {
+      yMinTot  = 0.;
+      yMaxTot *= 1.05;
+    }
+    toPython << "plt.ylim( " << scientific << setprecision(3) << yMinTot
+             << ", " << yMaxTot << ")" << endl;
+    toPython << "plt.ticklabel_format(axis='y', style='sci', "
+             << "scilimits=(-2,3))" << endl;
+  }
+
+  // Write title and labels, and create plot.
   toPython << "plt.legend(frameon=False,loc='best')" << endl
-           << "plt.title(r'" << title << "')" << endl
-           << "plt.xlabel(r'" << xLabel << "')" << endl
-           << "plt.ylabel(r\'" << yLabel << "')" << endl
+           << "plt.title(r\"" << title << "\")" << endl
+           << "plt.xlabel(r\"" << xLabel << "\")" << endl
+           << "plt.ylabel(r\"" << yLabel << "\")" << endl
            << "pp.savefig(tmp" << nFrame << ",bbox_inches='tight')"
            << endl << "plt.clf()" << endl;
 

@@ -136,7 +136,7 @@ it is because you <i>want</i> to study secondary vertices.
 How to interface those decays to a detector simulation program then 
 is another story, to be solved separately. Do note that a special 
 treatment is needed for coloured long-lived resonances, that form 
-<aloc href="Rhadrons">R-hadrons</aloc>, and where charge and flavour 
+<aloc href="RHadrons">R-hadrons</aloc>, and where charge and flavour 
 may change between the production and decay vertices. 
  
 <h3>Special properties and methods for resonances</h3> 
@@ -374,6 +374,69 @@ but the one in the denominator to all channels of the particle. These
 ever-changing numbers are not directly visible to the user, but are only 
 stored in a work area. 
  
+<h3> Filter for Resonance Decays </h3> 
+ 
+The <code>UserHooks</code> code <code>ResonanceDecayFilterHooks</code> 
+available in <code>include/Pythia8Plugins</code> provides a convenient 
+way to select a specific final state from resonance decays. For 
+example, this could be applied to provide events from top pair 
+production that include leptons + jets. The example 
+<code>main103</code> demonstrates how to use this user hook. Further 
+documentation on the available settings can by found in the 
+<code>ResonanceDecayFilterHooks.h</code> header file. 
+Note, by default, particle types are treated individually. 
+Different flags below allow for similar treatment for similar types. 
+ 
+<flag name="ResonanceDecayFilter:filter" default="off"> 
+By default, the filter is not activate. 
+Activate filter if true/on. 
+</flag> 
+<flag name="ResonanceDecayFilter:exclusive" default="off"> 
+If true/on, demand exactly the particles requested by the filter. 
+</flag> 
+<flag name="ResonanceDecayFilter:eMuAsEquivalent" default="off"> 
+If true/on, treat the particle id for electron and muon as the same. 
+</flag> 
+<flag name="ResonanceDecayFilter:eMuTauAsEquivalent" default="off"> 
+As above, but include tau leptons if true/on. 
+</flag> 
+<flag name="ResonanceDecayFilter:allNuAsEquivalent" default="off"> 
+If true/on, treat the particle id for different neutrinos as the same. 
+</flag> 
+<flag name="ResonanceDecayFilter:udscAsEquivalent" default="off"> 
+If true/on, treat the particle id for all up, down, strange, and charm 
+quarks as the same. 
+</flag> 
+<flag name="ResonanceDecayFilter:udscbAsEquivalent" default="off"> 
+As above, but include bottom quarks. 
+</flag> 
+<flag name="ResonanceDecayFilter:wzAsEquivalent" default="off"> 
+If true/on, treat the particle id for W and Z bosons as the same. 
+</flag> 
+<mvec name="ResonanceDecayFilter:mothers" default="{0}"> 
+By default, all resonance decay products are considered. 
+If provided, only the set of provided mothers will be filtered. 
+</mvec> 
+<mvec name="ResonanceDecayFilter:daughters" default="{0}"> 
+A list of particle ids for resonance decay products that 
+will pass the filter.   If empty, all particles will pass the 
+filter. Caution:: an infinite loop arises if any daughter never 
+appears in resonance decays. 
+</mvec> 
+ 
+<h3> Ability to modify Resonance Decays in LHE files</h3> 
+ 
+The <code>UserHooks</code> code <code>SetLHEDecayProductHook</code> in 
+<code>include/PythiaPlugins</code> provides a way to modify the decay 
+products of resonances from imported LHE events.  The current use case 
+changes an LHE file with two resonances decaying to leptons into a 
+process where one resonance decays leptonically, the other 
+hadronically. 
+ 
+<flag name="SetLHEDecayProduct:filter" default="off"> 
+Add documentation. 
+</flag> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

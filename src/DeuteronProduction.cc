@@ -1,5 +1,5 @@
 // DeuteronProduction.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2024 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -52,11 +52,10 @@ bool DeuteronProduction::init() {
   kSteps  = mode("DeuteronProduction:kSteps");
 
   // Check the configuration vectors.
-  string pre("Error in DeuteronProduction::init: ");
   if (parms.size() != ids.size() || parms.size() != models.size()) {
     ostringstream vals;
     vals << " " << ids.size() << ", " << models.size() << ", " << parms.size();
-    infoPtr->errorMsg(pre + "channels, models, and parms are size",
+    loggerPtr->ERROR_MSG("size mismatch; ids, models, and parms are size: ",
       vals.str());
     valid = false;
   }
@@ -66,29 +65,25 @@ bool DeuteronProduction::init() {
 
     // Check final and initial state sizes.
     if (ids[chn].size() < 3) {
-      infoPtr->errorMsg(pre + "ids must have 3 or more IDs");
+      loggerPtr->ERROR_MSG("channels must have 3 or more IDs");
       valid = false;
     } else if (ids[chn][2] != 0) {
-      infoPtr->errorMsg(pre + "ids initial state must be size 2");
+      loggerPtr->ERROR_MSG("channels' initial state must be size 2");
       valid = false;
     }
 
     // Check the necessary coefficients are provided.
-    if (models[chn] == 0 && parms[chn].size() != 2) {
-      infoPtr->errorMsg(pre + "model 0 channels must have",
-        "2 coefficients");
+    if (models[chn] == 0 && parms[chn].size() != 2) {loggerPtr->
+        ERROR_MSG("model 0 channels must have 2 coefficients");
       valid = false;
-    } else if (models[chn] == 1 && parms[chn].size() != 15) {
-      infoPtr->errorMsg(pre + "model 1 channels must have",
-        "15 coefficients");
+    } else if (models[chn] == 1 && parms[chn].size() != 15) {loggerPtr->
+        ERROR_MSG("model 1 channels must have 15 coefficients");
       valid = false;
-    } else if (models[chn] == 2 && parms[chn].size() != 5) {
-      infoPtr->errorMsg(pre + "model 2 channels must have",
-        "2 coefficients");
+    } else if (models[chn] == 2 && parms[chn].size() != 5) {loggerPtr->
+        ERROR_MSG("model 2 channels must have 2 coefficients");
       valid = false;
-    } else if (models[chn] == 3 && parms[chn].size()%5 != 0) {
-      infoPtr->errorMsg(pre + "model 3 channels must have",
-        "a multiple of 5 coefficients");
+    } else if (models[chn] == 3 && parms[chn].size()%5 != 0) {loggerPtr->
+        ERROR_MSG("model 3 channels must have a multiple of 5 coefficients");
       valid = false;
     }
   }
@@ -207,8 +202,7 @@ void DeuteronProduction::bind(Event& event, vector<int>& prts) {
         sigmas[chn] = sigma(k, chn);
       else {sigmas[chn] = 0; continue;}
       if (sigmas[chn] > norm)
-        infoPtr->errorMsg("Warning in DeuteronProduction::bind:",
-          "maximum weight exceeded");
+        loggerPtr->WARNING_MSG("maximum weight exceeded");
       if (rndmPtr->flat() >= sigmas[chn]/norm) sigmas[chn] = 0;
       sum += sigmas[chn];
     }
@@ -322,8 +316,7 @@ bool DeuteronProduction::decay(Event& event, int idx0, int idx1, int chn) {
     }
   }
   if (mDiff < mSafety) {
-    infoPtr->errorMsg("Warning in DeuteronProduction::decay:",
-                      "no valid decay found");
+    loggerPtr->WARNING_MSG("no valid decay found");
     return false;
   }
 

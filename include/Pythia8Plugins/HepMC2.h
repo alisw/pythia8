@@ -1,5 +1,5 @@
 // HepMC2.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -7,9 +7,15 @@
 // Exception classes provided by James Monk, with minor changes.
 // Header file and function definitions for the Pythia8ToHepMC class,
 // which converts a PYTHIA event record to the standard HepMC format.
+//
+// Common wrapper for HepMC2/3 added by Leif Lönnblad.
 
 #ifndef Pythia8_HepMC2_H
 #define Pythia8_HepMC2_H
+
+#ifdef Pythia8_HepMC3_H
+#error Cannot include HepMC2.h if HepMC3.h has already been included.
+#endif
 
 #include <exception>
 #include <sstream>
@@ -19,6 +25,7 @@
 #include "HepMC/GenEvent.h"
 #include "HepMC/Units.h"
 #include "Pythia8/Pythia.h"
+#include "Pythia8/HIInfo.h"
 
 namespace HepMC {
 
@@ -75,16 +82,28 @@ public:
   // Constructor and destructor.
   Pythia8ToHepMC() : m_internal_event_number(0), m_print_inconsistency(true),
     m_free_parton_exception(true), m_convert_gluon_to_0(false),
-    m_store_pdf(true), m_store_proc(true), m_store_xsec(true) {;}
+    m_store_pdf(true), m_store_proc(true), m_store_xsec(true),
+    m_store_weights(true) {;}
   virtual ~Pythia8ToHepMC() {;}
 
   // The recommended method to convert Pythia events into HepMC ones.
+  bool fill_next_event( Pythia8::Pythia& pythia, GenEvent& evt,
+    int ievnum = -1, bool append = false, GenParticle* rootParticle = 0,
+    int iBarcode = -1 ) {return fill_next_event( pythia.event, &evt, ievnum,
+    &pythia.info, &pythia.settings, append, rootParticle, iBarcode);}
   bool fill_next_event( Pythia8::Pythia& pythia, GenEvent* evt,
     int ievnum = -1, bool append = false, GenParticle* rootParticle = 0,
     int iBarcode = -1 ) {return fill_next_event( pythia.event, evt, ievnum,
     &pythia.info, &pythia.settings, append, rootParticle, iBarcode);}
 
   // Alternative method to convert Pythia events into HepMC ones.
+  bool fill_next_event( Pythia8::Event& pyev, GenEvent& evt,
+    int ievnum = -1, const Pythia8::Info* pyinfo = 0,
+    Pythia8::Settings* pyset = 0, bool append = false,
+    GenParticle* rootParticle = 0, int iBarcode = -1) {
+    return fill_next_event(pyev, &evt, ievnum, pyinfo, pyset,
+    append, rootParticle, iBarcode); }
+
   bool fill_next_event( Pythia8::Event& pyev, GenEvent* evt,
     int ievnum = -1, const Pythia8::Info* pyinfo = 0,
     Pythia8::Settings* pyset = 0, bool append = false,
@@ -93,18 +112,22 @@ public:
   // Read out values for some switches.
   bool print_inconsistency()   const {return m_print_inconsistency;}
   bool free_parton_exception() const {return m_free_parton_exception;}
+  bool free_parton_warnings()  const {return m_free_parton_exception;}
   bool convert_gluon_to_0()    const {return m_convert_gluon_to_0;}
   bool store_pdf()             const {return m_store_pdf;}
   bool store_proc()            const {return m_store_proc;}
   bool store_xsec()            const {return m_store_xsec;}
+  bool store_weights()         const {return m_store_weights;}
 
   // Set values for some switches.
   void set_print_inconsistency(bool b = true)   {m_print_inconsistency = b;}
   void set_free_parton_exception(bool b = true) {m_free_parton_exception = b;}
+  void set_free_parton_warnings(bool b = true)  {m_free_parton_exception = b;}
   void set_convert_gluon_to_0(bool b = false)   {m_convert_gluon_to_0 = b;}
   void set_store_pdf(bool b = true)             {m_store_pdf = b;}
   void set_store_proc(bool b = true)            {m_store_proc = b;}
   void set_store_xsec(bool b = true)            {m_store_xsec = b;}
+  void set_store_weights(bool b = true)         {m_store_weights = b;}
 
 private:
 
@@ -118,7 +141,7 @@ private:
   // Data members.
   int  m_internal_event_number;
   bool m_print_inconsistency, m_free_parton_exception, m_convert_gluon_to_0,
-       m_store_pdf, m_store_proc, m_store_xsec;
+  m_store_pdf, m_store_proc, m_store_xsec, m_store_weights;
 
 };
 
@@ -172,6 +195,24 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
     GenVertex* prod_vtx0 = new GenVertex();
     prod_vtx0->add_particle_in( rootParticle );
     evt->add_vertex( prod_vtx0 );
+  }
+
+  // 1a. If there is a HIInfo object fill info from that.
+  if ( pyinfo && pyinfo->hiInfo ) {
+    HepMC::HeavyIon ion;
+    ion.set_Ncoll_hard(pyinfo->hiInfo->nCollNDTot());
+    ion.set_Ncoll(pyinfo->hiInfo->nAbsProj() +
+                  pyinfo->hiInfo->nDiffProj() +
+                  pyinfo->hiInfo->nAbsTarg() +
+                  pyinfo->hiInfo->nDiffTarg() -
+                  pyinfo->hiInfo->nCollND() -
+                  pyinfo->hiInfo->nCollDD());
+    ion.set_Npart_proj(pyinfo->hiInfo->nAbsProj() +
+                       pyinfo->hiInfo->nDiffProj());
+    ion.set_Npart_targ(pyinfo->hiInfo->nAbsTarg() +
+                       pyinfo->hiInfo->nDiffTarg());
+    ion.set_impact_parameter(pyinfo->hiInfo->b());
+    evt->set_heavy_ion(ion);
   }
 
   // 2. Create a particle instance for each entry and fill a map, and
@@ -245,14 +286,19 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
                        : hepevt_particles[mother];
       if ( !ppp->end_vertex() ) {
         prod_vtx->add_particle_in( ppp );
-
-      // Problem scenario: the mother already has a decay vertex which
-      // differs from the daughter's production vertex. This means there is
-      // internal inconsistency in the HEPEVT event record. Print an error.
-      // Note: we could provide a fix by joining the two vertices with a
-      // dummy particle if the problem arises often.
       } else if (ppp->end_vertex() != prod_vtx ) {
-       if ( m_print_inconsistency ) std::cout
+        // Problem scenario: the mother already has a decay vertex which
+        // differs from the daughter's production vertex.
+        // Can happen with Vincia showers since antenna emissions have two
+        // parents. In that case, let vertex structure be defined by first
+        // parent, ignoring second parent.
+        if ( (pyev[i].statusAbs() == 43 || pyev[i].statusAbs() == 51
+            || pyev[i].statusAbs() == 53) && mother >= 1) break;
+        // Otherwise this means there is internal inconsistency in the
+        // HEPEVT event record. Print an error.
+        // Note: we could provide a fix by joining the two vertices with a
+        // dummy particle if the problem arises often.
+        if ( m_print_inconsistency ) std::cout
           << " Pythia8ToHepMC::fill_next_event: inconsistent mother/daugher "
           << "information in Pythia8 event " << std::endl
           << "i = " << i << " mother = " << mother
@@ -324,6 +370,15 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
     xsec.set_cross_section( pyinfo->sigmaGen() * 1e9,
       pyinfo->sigmaErr() * 1e9);
     evt->set_cross_section(xsec);
+    // If multiweights with possibly different xsec, overwrite central value
+    std::vector<double> xsecVec = pyinfo->weightContainerPtr->getTotalXsec();
+    if (xsecVec.size() > 0) {
+      xsec.set_cross_section(xsecVec[0]*1e9);
+      evt->set_cross_section(xsec);
+    }
+  }
+
+  if (m_store_weights && pyinfo != 0) {
     for (int iweight = 0; iweight < pyinfo->numberOfWeights();
       ++iweight) {
       std::string name  = pyinfo->weightNameByIndex(iweight);
@@ -340,5 +395,133 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
 //==========================================================================
 
 } // end namespace HepMC
+
+namespace Pythia8 {
+
+//==========================================================================
+// This a wrapper around HepMC::Pythia8ToHepMC in the Pythia8
+// namespace that simplify the most common use cases. It stores the
+// current GenEvent and output stream internally to avoid cluttering
+// of user code. This class is also defined in HepMC3.h with the same
+// signatures, and the user can therefore switch between HepMC version
+// 2 and 3, by simply changing the include file.
+class Pythia8ToHepMC : public HepMC::Pythia8ToHepMC {
+
+public:
+
+  // We can either have standard ascii output or none at all.
+  enum OutputType { none, ascii2 };
+
+  // Typedef for the version 2 specific classes used.
+  typedef HepMC::GenEvent GenEvent;
+  typedef shared_ptr<GenEvent> EventPtr;
+  typedef HepMC::IO_GenEvent Writer;
+  typedef shared_ptr<Writer> WriterPtr;
+
+  // The empty constructor does not creat an aoutput stream.
+  Pythia8ToHepMC() {}
+
+  // Construct an object with an internal output stream.
+  Pythia8ToHepMC(string filename, OutputType ft = ascii2) {
+    setNewFile(filename, ft);
+  }
+
+  // Open a new external output stream.
+  bool setNewFile(string filename, OutputType ft = ascii2) {
+    switch ( ft ) {
+    case ascii2:
+      writerPtr = make_shared<HepMC::IO_GenEvent>(filename);
+      break;
+    case none:
+      writerPtr = nullptr;
+      break;
+    }
+    return writerPtr != nullptr;
+  }
+
+  // Create a new GenEvent object and fill it with information from
+  // the given Pythia object.
+  bool fillNextEvent(Pythia & pythia) {
+    geneve = make_shared<GenEvent>();
+    return fill_next_event(pythia, *geneve);
+  }
+
+  // Write out the current GenEvent to the internal stream.
+  void writeEvent() {
+    writerPtr->write_event(&*geneve);
+  }
+
+  // Create a new GenEvent object and fill it with information from
+  // the given Pythia object and write it out directly to the
+  // internal stream.
+  bool writeNextEvent(Pythia & pythia) {
+    if ( !fillNextEvent(pythia) ) return false;
+    writeEvent();
+    return true;
+  }
+
+  // Get a reference to the current GenEvent.
+  GenEvent & event() {
+    return *geneve;
+  }
+
+  // Get a pointer to the current GenEvent.
+  EventPtr getEventPtr() {
+    return geneve;
+  }
+
+  // Get a reference to the internal stream.
+  Writer & output() {
+    return *writerPtr;
+  }
+
+  // Get a pointer to the internal stream.
+  WriterPtr outputPtr() {
+    return writerPtr;
+  }
+
+  // Set cross section information in the current GenEvent.
+  void setXSec(double xsec, double xsecerr) {
+    HepMC::GenCrossSection xs;
+    xs.set_cross_section(xsec, xsecerr);
+    geneve->set_cross_section(xs);
+  }
+
+  // Update all weights in the current GenEvent.
+  void setWeights(const vector<double> & wv) {
+    if ( wv.size() != weightNames.size() )
+      geneve->weights() = wv;
+    else
+      for ( int i= 0, N = wv.size(); i < N; ++i )
+        geneve->weights()[weightNames[i]] = wv[i];
+  }
+
+  // Set all weight names in the current run.
+  void setWeightNames(const vector<string> &wnv) {
+    weightNames = wnv;
+  }
+
+  // Update the PDF information in the current GenEvent
+  void setPdfInfo(int id1, int id2, double x1, double x2,
+                  double scale, double xf1, double xf2,
+                  int pdf1 = 0, int pdf2 = 0) {
+    HepMC::PdfInfo pdf(id1, id2, x1, x2, scale, xf1, xf2, pdf1, pdf2);
+    geneve->set_pdf_info(pdf);
+  }
+
+private:
+
+  // The current GenEvent.
+  EventPtr geneve = nullptr;
+
+  // The output stream.
+  WriterPtr writerPtr = nullptr;
+
+  // The weight names in the current run.
+  vector<string> weightNames;
+
+};
+
+}
 
 #endif  // end Pythia8_HepMC2_H

@@ -155,7 +155,10 @@ the combinations <ei>E+-p_z</ei>.</methodmore>
 <method name="double Vec4::rap()"> 
 </method> 
 <methodmore name="double Vec4::eta()"> 
-true rapidity <ei>y</ei> and pseudorapidity <ei>eta</ei>. 
+true rapidity <ei>y</ei> and pseudorapidity <ei>eta</ei>. In case of 
+massless or inconsistent input, such as <ei>e &leq; |p_z|</ei> (within 
+machine precision), a value of +-20 is set, where the sign reflects 
+that of <ei>p_z</ei>. 
 </methodmore> 
  
 <h3>Friend methods for output</h3> 
@@ -171,13 +174,13 @@ four-vector, as provided by <code>mCalc()</code> above, and it all
 ended with a newline. 
 </method> 
  
-<method name="friend bool isnan(const Vec4& v)">
+<method name="friend bool isnan(const Vec4& v)"> 
 </method> 
 <methodmore name="friend double isinf(const Vec4& v)"> 
 returns true if any of the four elements is not a number or infinite. 
 </methodmore> 
-<methodmore name="friend bool isnan(const Vec4& v)">
-returns true if all four elements are finite.
+<methodmore name="friend bool isnan(const Vec4& v)"> 
+returns true if all four elements are finite. 
 </methodmore> 
  
 <method name="friend double m(const Vec4& v1, const Vec4& v2)"> 
@@ -438,11 +441,26 @@ boost and rotate to the rest frame of <ei>p_1</ei> and <ei>p_2</ei>,
 with <ei>p_1</ei> along the <ei>+z</ei> axis. 
 </method> 
  
-<method name="void RotBstMatrix::fromCMframe(const Vec4& p1, const Vec4& p2)"> 
+<method name="void RotBstMatrix::fromCMframe(const Vec4& p1, const Vec4& p2, 
+bool flip = false)"> 
 rotate and boost from the rest frame of <ei>p_1</ei> and <ei>p_2</ei>, 
 with <ei>p_1</ei> along the <ei>+z</ei> axis, to the actual frame of 
-<ei>p_1</ei> and <ei>p_2</ei>, i.e. the inverse of the above. 
+<ei>p_1</ei> and <ei>p_2</ei>, i.e. the inverse of the above. The 
+option <code>flip</code> handles the case when <ei>p_1</ei> is along 
+the <ei>-z</ei> axis in the rest frame. This is accomplished by 
+performing the rotation for <ei>p_2</ei> and negating the rotational 
+part. 
 </method> 
+ 
+<method 
+name="void RotBstMatrix::toSameVframe(const Vec4& p1, const Vec4& p2)"> 
+</method> 
+<methodmore name="void RotBstMatrix::fromSameVframe(const Vec4& p1, 
+const Vec4& p2)"> 
+similar to <code>toCMframe</code> and <code>fromCMframe</code> above, 
+but to/from a frame with equal-size and opposite velocities instead of 
+ditto three-momenta. 
+</methodmore> 
  
 <method name="void RotBstMatrix::rotbst(const RotBstMatrix& Min);"> 
 combine the current matrix with another one. 
@@ -505,10 +523,14 @@ rotation to the rest frame of <ei>p_1</ei> and <ei>p_2</ei>, with
 <ei>p_1</ei> along the <ei>+z</ei> axis. 
 </method> 
  
-<method name="RotBstMatrix fromCMframe(const Vec4& p1, const Vec4& p2)"> 
+<method name="RotBstMatrix fromCMframe(const Vec4& p1, const Vec4& p2, 
+bool flip = false)"> 
 Return a <code>RotBstMatrix</code> corresponding to a boost and 
 rotation from the rest frame of <ei>p_1</ei> and <ei>p_2</ei>, with 
-<ei>p_1</ei> along the <ei>+z</ei> axis. 
+<ei>p_1</ei> along the <ei>+z</ei> axis. The option <code>flip</code> 
+handles the case when <ei>p_1</ei> is along the <ei>-z</ei> axis in 
+the rest frame. This is accomplished by performing the rotation for 
+<ei>p_2</ei> and negating the rotational part. 
 </method> 
  
 <method name="RotBstMatrix toCMframe(const Vec4& ptot, const Vec4& pz, 
@@ -530,4 +552,4 @@ when in the rest frame.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

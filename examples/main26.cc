@@ -1,13 +1,13 @@
 // main26.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Stefan Ask <unavailable>
+// Authors: Stefan Ask
 
 // Contact: Nishita Desai <nishita.desai@tifr.res.in>
 
-// Keywords: extra dimensions; BSM;
+// Keywords: extra dimensions; BSM
 
 // This is a test program for the extra dimensions processes.
 
@@ -194,7 +194,7 @@ int main() {
       double tmp_et = pythia.event[tmp_monojet].eT();
       double tmp_et_cut = 1000;
       if ( tmp_et >=  tmp_et_cut && abs(tmp_eta) < 3 ) {
-        hEtjet.fill( fabs(tmp_et) );
+        hEtjet.fill( abs(tmp_et) );
       }
     }
 

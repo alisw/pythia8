@@ -1,5 +1,5 @@
 // DireHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -105,4 +105,4 @@ protected:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireHooks_H
+#endif // Pythia8_DireHooks_H

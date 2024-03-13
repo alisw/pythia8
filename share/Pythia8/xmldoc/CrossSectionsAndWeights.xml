@@ -94,6 +94,8 @@ also Les Houches strategies where no unweighting is done, so events
 come with a weight. Specifically, for strategies <ei>+4</ei> and 
 <ei>-4</ei>, the event weight is in units of pb. (Internally in mb, 
 but converted at output.) 
+<br/>(iv) If enhanced parton shower emissions are activated, the corrective 
+weight to each event containing enhanced emissions is included here. 
 </method> 
  
 <h3>CKKW-L and NLO Merging Weights</h3> 
@@ -131,7 +133,7 @@ printed by <code>Info::sigmaGen()</code> includes the effect of CKKW-L
 merging. 
 </flag> 
  
-<h3>User Hooks Weights</h3> 
+<h3>User Hooks Weight</h3> 
  
 <method name="virtual double UserHooks::biasedSelectionWeight()"> 
 Returns the weight you should assign to the event, to use e.g. when 
@@ -140,13 +142,6 @@ used to modify the phase-space sampling, a weight that must be stored
 in the <code>selBias</code> member variable, such that this routine 
 can return <code>1/selBias</code>. The weight is also returned by the 
 <code>Info::weight()</code> method, which may be more convenient to use. 
-</method> 
- 
-<method name="virtual double UserHooks::getEnhancedEventWeight()"> 
-If you use enhanced emissions, it is paramount to attribute a corrective 
-weight to each event containing enhanced emissions. This function returns 
-this weight. In the presence of enhancements, all histograms and output 
-events must account for this weight. 
 </method> 
  
 <h3>Shower Uncertainty-Variation Weights</h3> 
@@ -202,14 +197,14 @@ is currently used when producing <code>HepMC2</code> and
 <code>HepMC3</code> output. In these two cases, all weights 
 that appear in the event generation will automatically be 
 transferred to the output files. This means that the HepMC file will 
-automatically contain weights from various sources, e.g. weights from
-<aloc href="LHEF">LHE files</aloc>,
-<aloc href="Variations">automated shower variations</aloc>, etc. Note that
-for LHEF files, only the <ei>detailed format</ei> is currently
-supported in the weight container, and that the names of weights
-appearing in HepMC will use the convention discussed in
-<ref>But14</ref>, page 162.  The sample main programs
-<code>main44.cc</code> and <code>main45.cc</code>
+automatically contain weights from various sources, e.g. weights from 
+<aloc href="LHEF">LHE files</aloc>, 
+<aloc href="Variations">automated shower variations</aloc>, etc. Note that 
+for LHEF files, only the <ei>detailed format</ei> is currently 
+supported in the weight container, and that the names of weights 
+appearing in HepMC will use the convention discussed in 
+<ref>But14</ref>, page 162.  The sample main programs 
+<code>main44.cc</code> and <code>main45.cc</code> 
 illustrate this behaviour. 
  
 <p/> 
@@ -218,9 +213,7 @@ In this context, the following program methods are relevant:
 <method name="int Info::numberOfWeights()"> 
 The total length of the set of all weights, similar to 
 <code>Info::nWeights</code> above (which returns the length of the set 
-of shower variation weights). Note that shower variations are treated 
-as "atomic", meaning that individual variations are stored. Weight 
-groups are currently not supported. 
+of shower variation weights). 
 </method> 
  
 <method name="string Info::weightNameByIndex(int i)"> 
@@ -253,6 +246,24 @@ Returns a vector of all weight values. The ordering of entries in synchronized
 with the order of <code> Info::weightNameVector()</code>. 
 </method> 
  
+<p/> 
+Custom weights such as shower variations weights, shower variation group 
+weights, and weights directly included from LHEF input receive an 
+<code>AUX_</code> prefix in the weight name as reported by the methods 
+<code>Info::weightNameByIndex</code> and <code>Info::weightNameVector</code> 
+to mark them as auxiliary output. This allows the user to further process or 
+combine the weights in a meaningful way. Since the number of these weights 
+depends on the LHEF input, different numbers of weights might occur in the 
+output when processing multiple LHEF input files. To avoid this, the following 
+flag allows to suppress the output of <code>AUX_</code> weights. 
+ 
+<flag name="Weights:suppressAUX" default="off"> 
+If on, the output of weights with <code>AUX</code> prefix will be 
+suppressed in the five above mentioned methods. The nominal weight and 
+combined weight variations from LHEF, parton shower and merging 
+remain. 
+</flag> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

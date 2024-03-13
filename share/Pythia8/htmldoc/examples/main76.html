@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main76.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,7 +20,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // It illustrates how to run SUSY processes in Pythia8.
 // All input is specified in the main76.cmnd file.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -28,33 +28,33 @@ int main() {
 
   // Generator. Shorthand for the event.
   Pythia pythia;
-  Event& event = pythia.event;
+  Event&amp; event = pythia.event;
 
   // Read in commands from external file.
-  pythia.readFile("main76.cmnd");
+  pythia.readFile(&quot;main76.cmnd&quot;);
 
   // Extract settings to be used in the main program.
-  int nEvent   = pythia.mode("Main:numberOfEvents");
-  int nAbort   = pythia.mode("Main:timesAllowErrors");
+  int nEvent   = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort   = pythia.mode(&quot;Main:timesAllowErrors&quot;);
 
   // Initialize. Set lifetime of long-lived particle.
   pythia.init();
   int iLLP = 56; // Change to 57 for X+ and 59 for X++
-  cout << "Lifetime [mm] = " << scientific << pythia.particleData.tau0(iLLP)
-       << endl;
+  cout &lt;&lt; &quot;Lifetime [mm] = &quot; &lt;&lt; scientific &lt;&lt; pythia.particleData.tau0(iLLP)
+       &lt;&lt; endl;
 
   // Histograms.
-  Hist life("Decay lifetime [mm]",100,0.,100.);
+  Hist life(&quot;Decay lifetime [mm]&quot;,100,0.,100.);
 
   // Begin event loop.
   int iAbort = 0;
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
 
     // Generate events. Quit if failure.
     if (!pythia.next()) {
       event.list();
-      if (++iAbort < nAbort) continue;
-      cout << " Event generation aborted prematurely, owing to error!\n";
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
       break;
     }
 
@@ -65,7 +65,7 @@ int main() {
 
   // Final statistics and histogram output.
   pythia.stat();
-  cout << life << endl;
+  cout &lt;&lt; life &lt;&lt; endl;
 
   return 0;
 }

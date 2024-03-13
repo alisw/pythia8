@@ -4,12 +4,12 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main61.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:christine.rasmussen@thep.lu.se">Christine O. Rasmussen</a>
+//            Christine O Rasmussen
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#diffraction">Diffraction</a>
@@ -19,7 +19,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // within the hard diffraction framework for an inclusive event sample.
 // Tests the impact of successive requirements.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -27,32 +27,32 @@ int main() {
 
   // Create Pythia instance. Shorthand for event and info.
   Pythia pythia;
-  Event& event = pythia.event;
-  const Info& info = pythia.info;
+  Event&amp; event = pythia.event;
+  const Info&amp; info = pythia.info;
 
-  // Set it up to generate Z's at 8 TeV.
-  pythia.readString("Beams:eCM = 8000.");
-  pythia.readString("WeakSingleBoson:ffbar2gmZ = on");
-  pythia.readString("23:mMin = 70.");
-  pythia.readString("23:mMax = 110.");
+  // Set it up to generate Z&apos;s at 8 TeV.
+  pythia.readString(&quot;Beams:eCM = 8000.&quot;);
+  pythia.readString(&quot;WeakSingleBoson:ffbar2gmZ = on&quot;);
+  pythia.readString(&quot;23:mMin = 70.&quot;);
+  pythia.readString(&quot;23:mMax = 110.&quot;);
 
   // Setup of diffractive framework.
-  pythia.readString("Diffraction:doHard = on");
-  pythia.readString("Diffraction:sampleType = 1");
-  pythia.readString("SigmaDiffractive:PomFlux = 5");
-  pythia.readString("PDF:PomSet = 6");
+  pythia.readString(&quot;Diffraction:doHard = on&quot;);
+  pythia.readString(&quot;Diffraction:sampleType = 1&quot;);
+  pythia.readString(&quot;SigmaDiffractive:PomFlux = 5&quot;);
+  pythia.readString(&quot;PDF:PomSet = 6&quot;);
 
   // Simplify printout.
-  pythia.readString("Init:showChangedSettings = off");
-  pythia.readString("Init:showChangedParticleData = off");
-  pythia.readString("Init:showMultipartonInteractions = off");
-  pythia.readString("Next:numberShowInfo = 0");
-  pythia.readString("Next:numberShowProcess = 0");
-  pythia.readString("Next:numberShowEvent = 0");
-  pythia.readString("Next:showScaleAndVertex = off");
+  pythia.readString(&quot;Init:showChangedSettings = off&quot;);
+  pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  pythia.readString(&quot;Init:showMultipartonInteractions = off&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+  pythia.readString(&quot;Next:showScaleAndVertex = off&quot;);
 
   // Switch off hadronization, since not used here.
-  pythia.readString("HadronLevel:all = off");
+  pythia.readString(&quot;HadronLevel:all = off&quot;);
 
   // Initialize.
   pythia.init();
@@ -65,24 +65,24 @@ int main() {
   int nReducedDiffB = 0;
 
   // Histograms.
-  Hist y0("dN/dy inclusive",               100, -5.,   5.);
-  Hist y1("dN/dy after PDF selection",     100, -5.,   5.);
-  Hist y2("dN/dy after MPI selection",     100, -5.,   5.);
-  Hist pT0("dN/dpTZ inclusive",            100,  0., 100.);
-  Hist pT1("dN/dpTZ after PDF selection",  100,  0., 100.);
-  Hist pT2("dN/dpTZ after MPI selection",  100,  0., 100.);
-  Hist xP1("dN/dxPom after PDF selection", 100,  0.,   1.);
-  Hist xP2("dN/dxPom after MPI selection", 100,  0.,   1.);
-  Hist tP1("dN/dt after PDF selection",    100, -2.,   0.);
-  Hist tP2("dN/dt after MPI selection",    100, -2.,   0.);
+  Hist y0(&quot;dN/dy inclusive&quot;,               100, -5.,   5.);
+  Hist y1(&quot;dN/dy after PDF selection&quot;,     100, -5.,   5.);
+  Hist y2(&quot;dN/dy after MPI selection&quot;,     100, -5.,   5.);
+  Hist pT0(&quot;dN/dpTZ inclusive&quot;,            100,  0., 100.);
+  Hist pT1(&quot;dN/dpTZ after PDF selection&quot;,  100,  0., 100.);
+  Hist pT2(&quot;dN/dpTZ after MPI selection&quot;,  100,  0., 100.);
+  Hist xP1(&quot;dN/dxPom after PDF selection&quot;, 100,  0.,   1.);
+  Hist xP2(&quot;dN/dxPom after MPI selection&quot;, 100,  0.,   1.);
+  Hist tP1(&quot;dN/dt after PDF selection&quot;,    100, -2.,   0.);
+  Hist tP2(&quot;dN/dt after MPI selection&quot;,    100, -2.,   0.);
 
   // Begin event loop. Generate event; skip if generation failed.
-  for (int iEvent = 0; iEvent < maxEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; maxEvent; ++iEvent) {
     if (!pythia.next()) continue;
 
     // Locate the Z0 and find its y and pT.
     int iZ = 0;
-    for (int i = 0; i < event.size(); ++i) if (event[i].id() == 23) iZ = i;
+    for (int i = 0; i &lt; event.size(); ++i) if (event[i].id() == 23) iZ = i;
     double yZ  = event[iZ].y();
     double pTZ = event[iZ].pT();
     y0.fill( yZ );
@@ -125,19 +125,19 @@ int main() {
   pythia.stat();
 
   // Statistics on diffraction.
-  cout << "Side A is MPI-unchecked diffractive : " << nDiffA << endl;
-  cout << "Side A is MPI-checked diffractive   : " << nReducedDiffA << endl;
-  cout << "Side B is MPI-unchecked diffractive : " << nDiffB << endl;
-  cout << "Side B is MPI-checked diffractive   : " << nReducedDiffB << endl;
-  cout << "Total MPI-unchecked diffractive events : " << fixed
-       << setprecision(2) << (nDiffA + nDiffB) / double(maxEvent) * 100.
-       << "%" << endl;
-  cout << "Total MPI-checked diffractive events : "
-       << (nReducedDiffA + nReducedDiffB) / double(maxEvent) * 100.
-       << "%" << endl;
+  cout &lt;&lt; &quot;Side A is MPI-unchecked diffractive : &quot; &lt;&lt; nDiffA &lt;&lt; endl;
+  cout &lt;&lt; &quot;Side A is MPI-checked diffractive   : &quot; &lt;&lt; nReducedDiffA &lt;&lt; endl;
+  cout &lt;&lt; &quot;Side B is MPI-unchecked diffractive : &quot; &lt;&lt; nDiffB &lt;&lt; endl;
+  cout &lt;&lt; &quot;Side B is MPI-checked diffractive   : &quot; &lt;&lt; nReducedDiffB &lt;&lt; endl;
+  cout &lt;&lt; &quot;Total MPI-unchecked diffractive events : &quot; &lt;&lt; fixed
+       &lt;&lt; setprecision(2) &lt;&lt; (nDiffA + nDiffB) / double(maxEvent) * 100.
+       &lt;&lt; &quot;%&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;Total MPI-checked diffractive events : &quot;
+       &lt;&lt; (nReducedDiffA + nReducedDiffB) / double(maxEvent) * 100.
+       &lt;&lt; &quot;%&quot; &lt;&lt; endl;
 
   // Histograms.
-  cout << y0 << y1 << y2 << pT0 << pT1 << pT2 << xP1 << xP2 << tP1 << tP2;
+  cout &lt;&lt; y0 &lt;&lt; y1 &lt;&lt; y2 &lt;&lt; pT0 &lt;&lt; pT1 &lt;&lt; pT2 &lt;&lt; xP1 &lt;&lt; xP2 &lt;&lt; tP1 &lt;&lt; tP2;
 
   return 0;
 }

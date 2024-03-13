@@ -1,52 +1,53 @@
 // VinciaDiagnostics.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-//File Created 13/11/18 by H Brooks
+// Header file for the VinciaDiagnostics class.
 
-#ifndef VINCIA_DIAG_H
-#define VINCIA_DIAG_H
+#ifndef Pythia8_VinciaDiagnostics_H
+#define Pythia8_VinciaDiagnostics_H
 
 #include "Pythia8/UserHooks.h"
 
-//completely abstract class for user-defined diagnostics
-//to be used like UserHooks - but for diagnostic purposes only
-//all functions void and arguments are passed by value or
-//by const reference (like const Event &)
-
 namespace Pythia8 {
+
+//==========================================================================
+
+// Vincia diagnostics.
 
 class VinciaDiagnostics : public UserHooks {
 
  public:
 
-  //Default constructor
-  VinciaDiagnostics(){};
+  // Initialise.
+  void init() {};
 
-  //Default destructor
-  ~VinciaDiagnostics(){};
+  // Define and increment a counter (default is increment by 1).
+  void increment(string methodName, string variableName, double inc = 1);
 
-  virtual void init() = 0;
+  // Called when "name" starts.
+  void start(string name);
 
-  virtual void setBranchType(int branchType) = 0;
+  // Called when "name" stops.
+  void stop(string name, string counter = "", double inc = 1);
 
-  virtual void setnBranchSys(int iSys, int nBranch) = 0;
+  // Print diagnostics.
+  void print();
 
-  virtual void checkInvariants(int iSys,int iant, vector<double> invariants,
-    bool inPHSP) = 0;
+ private:
 
-  virtual void checkAnt(int iSys, double ant) = 0;
-
-  virtual void checkAntHel(int iSys, double ant, vector<int> helsIn,
-    vector<int> helsOut) = 0;
-
-  virtual void checkpAccept(int iSys, double pAccept) = 0;
-
-  virtual void checkEvent(int iSys,const Event &event,int sizeOld) = 0;
+  map<string, bool> isRunning;
+  map<string, clock_t> startTime;
+  map<string, double> nStarts, nRestarts;
+  map<string, double> runTime;
+  map<string, Hist> hRunTime;
+  map<string, map<string, double> > counters;
 
 };
 
-} // End namespace Pythia8
+//==========================================================================
 
-#endif
+} // end namespace Pythia8
+
+#endif // Pythia8_VinciaDiagnostics_H

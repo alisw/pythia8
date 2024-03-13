@@ -1,11 +1,12 @@
 // Info.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the Info class.
 
 #include "Pythia8/Info.h"
+#include "Pythia8/Settings.h"
 #include <limits>
 
 namespace Pythia8 {
@@ -20,9 +21,6 @@ namespace Pythia8 {
 
 // Constants: could be changed here if desired, but normally should not.
 // These are of technical nature, as described for each.
-
-// Number of times the same error message will be repeated at most.
-const int Info::TIMESTOPRINT = 1;
 
 // LHA convention with cross section in pb may require conversion from mb.
 const double Info::CONVERTMB2PB = 1e9;
@@ -161,93 +159,50 @@ void Info::list() const {
 
 // Event weights and accumulated weight.
 
-double Info::weight(int iWeight) const {
-  double wt = (iWeight <= 0 || iWeight >= int(weightSave.size()))
-    ? weightSave[0] : weightSave[iWeight];
-  return (abs(lhaStrategySave) == 4) ? CONVERTMB2PB * wt : wt;
+double Info::weight(int iWgt) const {
+  double wt = weightContainerPtr->weightNominal;
+  int nShower = weightContainerPtr->weightsShowerPtr->getWeightsSize();
+  int nFrag   = weightContainerPtr->weightsFragmentation.getWeightsSize();
+  if (iWgt < 0 || iWgt >= nShower + nFrag) return wt;
+  if (iWgt < nShower) return wt * weightContainerPtr->
+    weightsShowerPtr->getWeightsValue(iWgt);
+  else return wt * weightContainerPtr->
+    weightsFragmentation.getWeightsValue(iWgt - nShower + 1);
+}
+
+string Info::weightLabel(int iWgt) const {
+  int nShower = weightContainerPtr->weightsShowerPtr->getWeightsSize();
+  int nFrag   = weightContainerPtr->weightsFragmentation.getWeightsSize();
+  if (iWgt < 0 || iWgt >= nShower + nFrag) return "Null";
+  if (iWgt < nShower) return weightContainerPtr->
+    weightsShowerPtr->getWeightsName(iWgt);
+  else return weightContainerPtr->
+    weightsFragmentation.getWeightsName(iWgt - nShower + 1);
 }
 
 double Info::weightSum() const {
   return (abs(lhaStrategySave) == 4) ? CONVERTMB2PB * wtAccSum : wtAccSum;
 }
-//--------------------------------------------------------------------------
 
-// Uncertainty variations initialization
+string Info::getGroupName(int iGN) const {
+  int nShower = weightContainerPtr->weightsShowerPtr->nWeightGroups();
+  int nFrag   = weightContainerPtr->weightsFragmentation.nWeightGroups();
+  if (iGN < 0 || iGN >= nShower + nFrag) return "Null";
+  if (iGN < nShower) return weightContainerPtr->
+    weightsShowerPtr->getGroupName(iGN);
+  else return weightContainerPtr->
+    weightsFragmentation.getGroupName(iGN - nShower);
+}
 
-void Info::initUncertainties(vector<string>* variationListIn, bool isISR) {
-  size_t vNames = weightLabelSave.size();
-  externalVariations.clear();
-  externalVarNames.clear();
-  externalGroupNames.clear();
-  externalMap.clear();
-  initialNameSave.clear();
-  externalVariations.push_back("Baseline");
-  initialNameSave.push_back("Baseline");
-  for(vector<string>::const_iterator v=variationListIn->begin();
-      v != variationListIn->end(); ++v) {
-    string line = *v;
-    // Remove initial blank spaces
-    while (line.find(" ") == 0) line.erase( 0, 1);
-    size_t pos=0;
-    // Search for pdf:family keyword for SpaceShower
-    if( isISR && ((pos = line.find("isr:pdf:family")) != string::npos) ) {
-      size_t posEnd = line.find(" ",pos);
-      if( posEnd == string::npos ) posEnd = line.size();
-      for(size_t i=0; i < vNames; ++i) {
-        string local = weightLabelSave[i];
-        if( local.find("isr:pdf:member") != string::npos ) {
-          size_t iEqual = local.find("=")+1;
-          string nMember = local.substr(iEqual,local.size());
-          nMember.append(" ");
-          string tmpLine = line;
-          tmpLine.replace(pos,posEnd-pos,local);
-          size_t iBlank = line.find_first_of(" ");
-          tmpLine.replace(iBlank,1,nMember);
-          externalVariations.push_back(tmpLine);
-          initialNameSave.push_back(line.substr(0,line.find_first_of(" ")));
-        }
-      }
-    } else {
-      externalVariations.push_back(line);
-      initialNameSave.push_back(line.substr(0,line.find_first_of(" ")));
-    }
-  }
-  externalVariationsSize = externalVariations.size();
-  size_t nNames = externalVariationsSize;
-  externalVarNames.resize(nNames);
-  externalVarNames[0].push_back("Baseline");
-  externalGroupNames.resize(nNames);
-  externalGroupNames[0]="Baseline";
-  for(size_t iWeight = 0; iWeight < nNames; ++iWeight) {
-    string uVarString = toLower(externalVariations[iWeight]);
-    size_t firstBlank  = uVarString.find_first_of(" ");
-    size_t endLine = uVarString.size();
-    if( firstBlank > endLine) continue;
-    externalGroupNames[iWeight] = uVarString.substr(0,firstBlank);
-    uVarString  = uVarString.substr(firstBlank+1,endLine);
-    size_t pos = 0;
-    while ((pos = uVarString.find(" ")) != string::npos) {
-      string token = uVarString.substr(0, pos);
-      externalVarNames[iWeight].push_back(token);
-      uVarString.erase(0, pos + 1);
-    }
-    if (uVarString == "" || uVarString == " ") continue;
-    externalVarNames[iWeight].push_back(uVarString);
-  }
-  externalMap.resize(nNames);
-  for(size_t iWeight = 0; iWeight < vNames; ++iWeight) {
-    for(size_t iV = 0; iV < nNames; ++iV) {
-      for(size_t iW = 0; iW < externalVarNames[iV].size(); ++iW) {
-        if( externalVarNames[iV][iW] == weightLabelSave[iWeight] ) {
-          externalMap[iV].push_back(iWeight);
-        } else if ( isISR && externalVarNames[iV][iW].find("isr:pdf:family")
-        != string::npos && weightLabelSave[iWeight].find("isr:pdf:member")
-        != string::npos ) {
-          externalMap[iV].push_back(iWeight);
-        }
-      }
-    }
-  }
+double Info::getGroupWeight(int iGW) const {
+  double wt = weightContainerPtr->weightNominal;
+  int nShower = weightContainerPtr->weightsShowerPtr->nWeightGroups();
+  int nFrag   = weightContainerPtr->weightsFragmentation.nWeightGroups();
+  if (iGW < 0 || iGW >= nShower + nFrag) return wt;
+  if (iGW < nShower) return wt * weightContainerPtr->
+    weightsShowerPtr->getGroupWeight(iGW);
+  else return wt * weightContainerPtr->
+    weightsFragmentation.getGroupWeight(iGW - nShower);
 }
 
 //--------------------------------------------------------------------------
@@ -260,75 +215,6 @@ vector<int> Info::codesHard() {
     nTryEntry != nTryM.end(); ++nTryEntry)
       codesNow.push_back( nTryEntry->first );
   return codesNow;
-}
-
-//--------------------------------------------------------------------------
-
-// Print a message the first few times. Insert in database.
-
-void Info::errorMsg(string messageIn, string extraIn, bool showAlways) {
-
-  // Recover number of times message occured. Also inserts new string.
-  int times = messages[messageIn];
-  ++messages[messageIn];
-
-  // Print message the first few times.
-  if (times < TIMESTOPRINT || showAlways) cout << " PYTHIA "
-    << messageIn << " " << extraIn << endl;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Provide total number of errors/aborts/warnings experienced to date.
-
-int Info::errorTotalNumber() const {
-
-  int nTot = 0;
-  for (pair<string, int> messageEntry : messages)
-    nTot += messageEntry.second;
-  return nTot;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Print statistics on errors/aborts/warnings.
-
-void Info::errorStatistics() const {
-
-  // Header.
-  cout << "\n *-------  PYTHIA Error and Warning Messages Statistics  "
-       << "----------------------------------------------------------* \n"
-       << " |                                                       "
-       << "                                                          | \n"
-       << " |  times   message                                      "
-       << "                                                          | \n"
-       << " |                                                       "
-       << "                                                          | \n";
-
-  // Loop over all messages
-  map<string, int>::const_iterator messageEntry = messages.begin();
-  if (messageEntry == messages.end())
-    cout << " |      0   no errors or warnings to report              "
-         << "                                                          | \n";
-  while (messageEntry != messages.end()) {
-    // Message printout.
-    string temp = messageEntry->first;
-    int len = temp.length();
-    temp.insert( len, max(0, 102 - len), ' ');
-    cout << " | " << setw(6) << messageEntry->second << "   "
-         << temp << " | \n";
-    ++messageEntry;
-  }
-
-  // Done.
-  cout << " |                                                       "
-       << "                                                          | \n"
-       << " *-------  End PYTHIA Error and Warning Messages Statistics"
-       << "  ------------------------------------------------------* "
-       << endl;
-
 }
 
 //--------------------------------------------------------------------------
@@ -368,6 +254,9 @@ void Info::setLHEF3InitInfo( int LHEFversionIn, LHAinitrwgt *initrwgtIn,
   weightgroups    = weightgroupsIn;
   init_weights    = init_weightsIn;
   headerBlock     = headerBlockIn;
+  weightContainerPtr->weightsLHEF.
+    identifyVariationsFromLHAinit( init_weightsIn );
+  weightContainerPtr->weightsMerging.setLHEFvariationMapping();
 }
 
 //--------------------------------------------------------------------------
@@ -407,7 +296,7 @@ void Info::setLHEF3EventInfo( map<string, string> *eventAttributesIn,
    weights_detailed_vector = weights_detailed_vecIn;
    eventComments      = eventCommentsIn;
    eventWeightLHEF    = eventWeightLHEFIn;
-   weightContainerPtr->weightsLHEF.init(weights_detailed_vecIn,
+   weightContainerPtr->weightsLHEF.bookVectors(weights_detailed_vecIn,
      weights_detailed_name_vecIn);
 }
 
@@ -478,7 +367,7 @@ unsigned int Info::getWeightsDetailedSize() const {
 double Info::getWeightsDetailedValue(string n) const {
   if (weights_detailed->empty()
     || weights_detailed->find(n) == weights_detailed->end())
-    return std::numeric_limits<double>::quiet_NaN();
+    return numeric_limits<double>::quiet_NaN();
   return (*weights_detailed)[n];
 }
 
@@ -509,7 +398,7 @@ unsigned int Info::getWeightsCompressedSize() const {
 
 double Info::getWeightsCompressedValue(unsigned int n) const {
   if (weights_compressed->empty() || weights_compressed->size() < n+1)
-    return std::numeric_limits<double>::quiet_NaN();
+    return numeric_limits<double>::quiet_NaN();
   return (*weights_compressed)[n];
 }
 
@@ -540,8 +429,8 @@ string Info::getScalesValue(bool doRemoveWhitespace) const {
 }
 
 double Info::getScalesAttribute(string key) const {
-  if (!scales) return std::numeric_limits<double>::quiet_NaN();
-  double res = std::numeric_limits<double>::quiet_NaN();
+  if (!scales) return numeric_limits<double>::quiet_NaN();
+  double res = numeric_limits<double>::quiet_NaN();
   if ( key == "muf") {
     res = scales->muf;
   } else if ( key == "mur") {
@@ -555,6 +444,40 @@ double Info::getScalesAttribute(string key) const {
     res = scales->attributes[key];
   }
   return res;
+}
+
+//--------------------------------------------------------------------------
+
+// Move process information to an another diffractive system.
+
+void Info::reassignDiffSystem( int iDSold, int iDSnew) {
+  id1Save[iDSnew]       = id1Save[iDSold];       id1Save[iDSold]       = 0;
+  id2Save[iDSnew]       = id2Save[iDSold];       id2Save[iDSold]       = 0;
+  x1Save[iDSnew]        = x1Save[iDSold];        x1Save[iDSold]        = 0.;
+  x2Save[iDSnew]        = x2Save[iDSold];        x2Save[iDSold]        = 0.;
+  id1pdfSave[iDSnew]    = id1pdfSave[iDSold];    id1pdfSave[iDSold]    = 0;
+  id2pdfSave[iDSnew]    = id2pdfSave[iDSold];    id2pdfSave[iDSold]    = 0;
+  x1pdfSave[iDSnew]     = x1pdfSave[iDSold];     x1pdfSave[iDSold]     = 0.;
+  x2pdfSave[iDSnew]     = x2pdfSave[iDSold];     x2pdfSave[iDSold]     = 0.;
+  pdf1Save[iDSnew]      = pdf1Save[iDSold];      pdf1Save[iDSold]      = 0.;
+  pdf2Save[iDSnew]      = pdf2Save[iDSold];      pdf2Save[iDSold]      = 0.;
+  Q2RenSave[iDSnew]     = Q2RenSave[iDSold];     Q2RenSave[iDSold]     = 0.;
+  Q2FacSave[iDSnew]     = Q2FacSave[iDSold];     Q2FacSave[iDSold]     = 0.;
+  alphaEMSave[iDSnew]   = alphaEMSave[iDSold];   alphaEMSave[iDSold]   = 0.;
+  alphaSSave[iDSnew]    = alphaSSave[iDSold];    alphaSSave[iDSold]    = 0.;
+  scalupSave[iDSnew]    = scalupSave[iDSold];    scalupSave[iDSold]    = 0.;
+  sH[iDSnew]            = sH[iDSold];            sH[iDSold]            = 0.;
+  tH[iDSnew]            = tH[iDSold];            tH[iDSold]            = 0.;
+  uH[iDSnew]            = uH[iDSold];            uH[iDSold]            = 0.;
+  pTH[iDSnew]           = pTH[iDSold];           pTH[iDSold]           = 0.;
+  m3H[iDSnew]           = m3H[iDSold];           m3H[iDSold]           = 0.;
+  m4H[iDSnew]           = m4H[iDSold];           m4H[iDSold]           = 0.;
+  thetaH[iDSnew]        = thetaH[iDSold];        thetaH[iDSold]        = 0.;
+  phiH[iDSnew]          = phiH[iDSold];          phiH[iDSold]          = 0.;
+  hasSubSave[iDSnew]    = hasSubSave[iDSold];    hasSubSave[iDSold]    = false;
+  nameSubSave[iDSnew]   = nameSubSave[iDSold];   nameSubSave[iDSold]   = "";
+  codeSubSave[iDSnew]   = codeSubSave[iDSold];   codeSubSave[iDSold]   = 0;
+  nFinalSubSave[iDSnew] = nFinalSubSave[iDSold]; nFinalSubSave[iDSold] = 0;
 }
 
 //==========================================================================

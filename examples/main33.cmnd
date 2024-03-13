@@ -15,3 +15,9 @@ Beams:frameType = 5   ! initialize PYTHIA to use LHAup process (mandatory)
 
 ! This parameter must be changed for the correponding POWHEG process.
 POWHEG:nFinal = 2     ! number of outgoing particles at Born level
+
+! Parameters which control the POWHEG generation.
+POWHEG:dir = powhegrun            ! Folder where the POWHEG run files created.
+POWHEG:cmnds = {}                 ! Optional set of commands to pass to POWHEG.
+POWHEG:cmndFiles = {main33.pwhg}  ! Optional command files to pass to POWHEG.
+POWHEG:pythiaRandom               ! Use the Pythia random generator in POWHEG.

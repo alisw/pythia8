@@ -1,9 +1,9 @@
 // main121.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: analysis; tuning; uncertainty bands;
+// Keywords: analysis; tuning; uncertainty bands
 
 // Illustrate how to set up automatic uncertainty band calculations.
 
@@ -20,7 +20,7 @@ int main() {
   pythia.init();
 
   // Define multiple histograms, one for each variation.
-  int nWeights = pythia.info.nVariationGroups();
+  int nWeights = pythia.info.nWeights();
   vector<double> sumOfWeights;
   vector<Hist> pTtop, nCh;
   vector<string> names;
@@ -76,12 +76,14 @@ int main() {
   stringstream gnuplotCommand;
   gnuplotCommand << "gnuplot -e \"plot";
   for (int iWeight=0; iWeight < nWeights; ++iWeight) {
-    cout << "Normalize histogram for weight " << names[iWeight] << " to "
-         << scientific << setprecision(8) << sumOfWeights[iWeight] << endl;
-    pTtop[iWeight] *= pythia.info.sigmaGen() / sumOfWeights[iWeight]
-                    / 2.; // ... and divide by bin width.
-    nCh[iWeight]   *= pythia.info.sigmaGen() / sumOfWeights[iWeight]
-                    / 4.; // ... and divide by bin width.
+    if (sumOfWeights[iWeight] != 0) {
+      cout << "Normalize histogram for weight " << names[iWeight] << " to "
+           << scientific << setprecision(8) << sumOfWeights[iWeight] << endl;
+      pTtop[iWeight] *= pythia.info.sigmaGen() / sumOfWeights[iWeight]
+        / 2.; // ... and divide by bin width.
+      nCh[iWeight]   *= pythia.info.sigmaGen() / sumOfWeights[iWeight]
+        / 4.; // ... and divide by bin width.
+    }
     // Print data tables.
     ofstream write;
     write.open( ("pTtop-" + names[iWeight] + ".dat").c_str());

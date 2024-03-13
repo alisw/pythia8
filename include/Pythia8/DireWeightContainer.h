@@ -1,5 +1,5 @@
 // DireWeightContainer.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -13,7 +13,7 @@
 #include "Pythia8/PythiaStdlib.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/DireBasics.h"
-#include "Pythia8/DireMG5MEs.h"
+#include "Pythia8/ExternalMEs.h"
 
 namespace Pythia8 {
 
@@ -84,22 +84,14 @@ class DireWeightContainer {
 public:
 
   // Constructor.
-  DireWeightContainer() : card(""), PY8MEs_accessorPtr(nullptr),
-    settingsPtr(nullptr), beamA(nullptr), beamB(nullptr), direInfoPtr(nullptr)
+  DireWeightContainer() : card(""), hasMEs(false), settingsPtr(nullptr),
+    beamA(nullptr), beamB(nullptr), infoPtr(nullptr), direInfoPtr(nullptr)
     { init(); }
 
-  DireWeightContainer(Settings* settingsPtrIn) : card(""),
-    PY8MEs_accessorPtr(nullptr),
+  DireWeightContainer(Settings* settingsPtrIn) : card(""), hasMEs(false),
     settingsPtr(settingsPtrIn), beamA(nullptr), beamB(nullptr),
-    direInfoPtr(nullptr)
+    infoPtr(nullptr), direInfoPtr(nullptr)
     { init(); }
-
-  // Destructor.
-  virtual ~DireWeightContainer() {
-#ifdef MG5MES
-    if (PY8MEs_accessorPtr) delete PY8MEs_accessorPtr;
-#endif
-  }
 
   // Initialize weights.
   void init() {
@@ -110,10 +102,11 @@ public:
   void setup();
 
   void initPtrs(BeamParticle* beamAIn, BeamParticle* beamBIn,
-    Settings* settingsPtrIn, DireInfo* direInfoPtrIn) {
+    Settings* settingsPtrIn, Info* infoPtrIn, DireInfo* direInfoPtrIn) {
     beamA    = beamAIn;
     beamB    = beamBIn;
     settingsPtr = settingsPtrIn;
+    infoPtr = infoPtrIn;
     direInfoPtr = direInfoPtrIn;
     return;
   }
@@ -199,13 +192,11 @@ public:
     trialEnhancements.insert(make_pair(key(pT2key), value));
   }
 
-  // PY8MEs accessor
+  // MG5 matrix element access.
   string card;
-#ifdef MG5MES
-  PY8MEs_namespace::PY8MEs* PY8MEs_accessorPtr;
-#else
-  int* PY8MEs_accessorPtr;
-#endif
+  ExternalMEsPtr matrixElements{};
+  bool hasMEs;
+
   bool hasME(vector <int> in_pdgs = vector<int>(),
     vector<int> out_pdgs = vector<int>() );
   bool hasME(const Event& event);
@@ -230,6 +221,7 @@ private:
 
   BeamParticle* beamA;
   BeamParticle* beamB;
+  Info* infoPtr;
   DireInfo* direInfoPtr;
 
 };
@@ -238,4 +230,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireWeightContainer_H
+#endif // Pythia8_DireWeightContainer_H

@@ -10,7 +10,7 @@
 <ol id="toc">
   <li><a href="#section0">Types of photon processes</a></li>
   <li><a href="#section1">Resolved photon</a></li>
-  <li><a href="#section2">Photons from lepton beams</a></li>
+  <li><a href="#section2">Photons from lepton or hadron beams</a></li>
 </ol>
 
  
@@ -278,16 +278,17 @@ the invariant mass of <i>gamma-gamma</i> system is small.
 </p> 
  
 <a name="section2"></a> 
-<h3>Photons from lepton beams</h3> 
+<h3>Photons from lepton or hadron beams</h3> 
  
 <p> 
-Interaction of photons from leptons including photon-photon interactions in 
-lepton-lepton collisions and photon-hadron lepton-hadron collisions can be 
-set up as described in 
-<a href="PDFSelection.html" target="page">PDF selection</a>. Since the current 
-framework can handle only (quasi-)real photons, a upper limit for the 
-photon virtuality needs to be set. This can be done with the parameter 
-<code>Photon:Q2max</code>. The upper limit for virtuality will set also 
+Interaction of photons from leptons, including photon-photon interactions in 
+lepton-lepton collisions and photon-hadron ones in lepton-hadron collisions, 
+can be set up as described in 
+<a href="PDFSelection.html" target="page">PDF selection</a>. It is also possible to 
+consider photons from proton beams. Since the current 
+framework can handle only (quasi-)real photons, an upper limit needs to be set 
+for the photon virtuality. This can be done with the parameter 
+<code>Photon:Q2max</code>. The upper virtuality limit will also set 
 the upper limit for the <i>k_T</i> of the photon, which in turn will 
 be the same as the <i>k_T</i> of the scattered lepton. Also some other 
 cuts can be imposed. 
@@ -295,17 +296,16 @@ cuts can be imposed.
 <a name="anchor8"></a>
 <p/><code>parm&nbsp; </code><strong> Photon:Q2max &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>maximum = 2.0</code>)<br/>
-Upper limit for (quasi-)real photon virtuality in <i>GeV^2</i>. Too low 
+Upper limit for (quasi-)real photon virtuality in <i>GeV^2</i>. Too low a 
 value might cause problems, e.g. if the lower <i>Q^2</i> limit derived from 
-kinematics becomes larger than upper limit. 
+kinematics becomes larger than the upper limit. 
    
  
 <a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> Photon:Wmin &nbsp;</strong> 
  (<code>default = <strong>10.0</strong></code>; <code>minimum = 5.0</code>)<br/>
-Lower limit for invariant mass of <i>gamma-gamma</i> system in <i>GeV</i>. 
-In lepton-hadron collisions <i>W</i> corresponds to invariant mass of 
-photon-hadron system. 
+Lower limit for invariant mass of <i>gamma-gamma</i> or 
+<i>photon-hadron</i> system in <i>GeV</i>. 
    
  
 <a name="anchor10"></a>
@@ -314,50 +314,51 @@ photon-hadron system.
 Upper limit for invariant mass of <i>gamma-gamma</i> 
 (<i>gamma-hadron</i>) system in <i>GeV</i>. 
 A value below <code>Photon:Wmin</code> means that the invariant mass of 
-the original <i>l+l-</i> (<i>lepton-hadron</i>) system is used as an 
-upper limit. 
+the original system (<i>lepton+lepton</i>, <i>lepton+hadron</i> or 
+<i>hadron+hadron</i>) is used as an upper limit. 
    
  
 <a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> Photon:thetaAMax &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>; <code>maximum = 3.141593</code>)<br/>
-Upper limit for scattering angle of lepton A in <i>rad</i>. A negative 
-value means that no cut is applied. Since <i>k_T</i> depends on virtuality 
-of the emitted photon, the <code>Photon:Q2max</code> cut is usually more 
-restrictive unless a very small angle is used. This cut is only applied 
-when the colliding beams are defined in their CM frame 
-(<code>Beams:frameType=1</code>). Furthermore, in case of <i>2 &rarr; 1</i> 
-processes with direct photons the scattered lepton kinematics is modified 
-later in the event generation, so accurate rejection can be obtained only 
-based on the final lepton momenta in the event record. 
+Upper limit for scattering angle of scattered beam particle on side A 
+in <i>rad</i>. A negative value means that no cut is applied. Since 
+<i>k_T</i> depends on the virtuality of the emitted photon, the 
+<code>Photon:Q2max</code> cut is usually more restrictive unless a 
+very small angle is used. This cut is only applied when the colliding 
+beams are defined in their CM frame 
+(<code>Beams:frameType=1</code>). Furthermore, in case of <i>2 &rarr; 
+1</i> processes with unresolved photons, the scattered beam particle 
+kinematics is modified later in the event generation, to keep the mass 
+of the intermediate particle intact, so an accurate rejection can be 
+obtained only based on the final momenta of the scattered beam 
+particles in the event record. 
    
  
 <a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> Photon:thetaBMax &nbsp;</strong> 
  (<code>default = <strong>-1.0</strong></code>; <code>maximum = 3.141593</code>)<br/>
-As above but for lepton B. 
+As above but for side B. 
    
  
 <a name="anchor13"></a>
 <p/><code>flag&nbsp; </code><strong> Photon:sampleQ2 &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
-Determines whether the sampling for the photon virtuality is done. This can 
-be used only with <code>PDF:lepton2gammaSet = 2</code> option where 
-<i>Q^2</i>-integrated photon is provided by the user with 
-<code>Pythia::setPhotonFluxPtr(PDF*, PDF*)</code> method. In this case the 
-virtuality and the transverse momentum of the photon (and recoiling particle) 
-is set to zero which strictly speaking is kinematically not possible. The 
-error here is, however, very small for the cases where the virtualities 
-are negligible (e.g. photons from heavy ions).   
+Determines whether the sampling for the photon virtuality is done. This has 
+to be used when and <i>Q^2</i>-integrated photon flux is used. In this case 
+the virtuality and the transverse momentum of the photon (and the recoiling 
+particle) is set to zero, which strictly speaking is kinematically impossible. 
+The error here is very small for the cases where the virtualities 
+are negligible, however (e.g. photons from heavy ions).   
 </p> 
  
-<h4>MPIs with lepton beams</h4> 
+<h4>MPIs with photons</h4> 
  
 <p> 
-The invariant mass of <i>gamma-gamma</i> or <i>gamma-hadron</i> system 
-from lepton beams will vary. Therefore, to generate MPIs and non-diffractive 
-events in <i>gamma-gamma</i> and <i>gamma-hadron</i> 
-collisions from lepton beams, the MPI framework is initialized with five 
+The invariant mass of a <i>gamma-gamma</i> or <i>gamma-hadron</i> system 
+from lepton or hadron beams will vary. Therefore, to generate MPIs and 
+non-diffractive events in <i>gamma-gamma</i> and <i>gamma-hadron</i> 
+collisions, the MPI framework is initialized with several 
 values of <i>W</i> from <code>Photon:Wmin</code> to 
 <code>Photon:Wmax</code>. The parameter values are then interpolated 
 for the sampled <i>W</i>. 
@@ -366,4 +367,4 @@ for the sampled <i>W</i>.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

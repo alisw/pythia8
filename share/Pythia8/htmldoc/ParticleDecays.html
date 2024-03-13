@@ -164,66 +164,76 @@ hadronic current of the <i>tau</i> decay modelled using form factors
 fit to data. The <i>tau</i> decay framework is largely based on the 
 corresponding Herwig++ implementation [<a href="Bibliography.html#refGre07" target="page">Gre07</a>], with some 
 input from Tauola [<a href="Bibliography.html#refJad90" target="page">Jad90</a>]. A short summary can be found in 
-[<a href="Bibliography.html#refIlt12" target="page">Ilt12</a>], while the complete writeup is in [<a href="Bibliography.html#refIlt14" target="page">Ilt14</a>]. 
+[<a href="Bibliography.html#refIlt12" target="page">Ilt12</a>], while the complete writeup is in 
+[<a href="Bibliography.html#refIlt14" target="page">Ilt14</a>]. 
  
 <p/> 
  
 The decays of <i>tau</i> leptons are categorized 
 as <code>correlated</code>, where a <i>tau</i> pair is produced from 
 a single process, or <code>uncorrelated</code>, where only 
-one <i>tau</i> is produced. Currently internally 
+one <i>tau</i> is produced. Currently, internally 
 supported <i>tau</i> production mechanisms include correlated decays 
 from <i>gamma</i>, <i>Z^0</i>, <i>Z'^0</i>, <i>gamma^*/Z^0/Z'^0</i>, 
-and Higgs bosons (CP-even, odd, or mixed) and uncorrelated decays 
+Higgs bosons (CP-even, odd, or mixed), and <i>t</i>-channel 
+<i>gamma gamma &rarr; tau^+ tau^-</i>; and uncorrelated decays 
 from <i>W^+-</i>, <i>W'^+-</i>, <i>B/D</i> hadrons, and charged 
 Higgs bosons. For all mechanisms except <i>B/D</i> hadrons, both the 
 full process, e.g. <i>q qbar &rarr; Z^0 &rarr; tau^+ tau^-</i>, as 
-well as just the decay of the boson with a given initial polarization, 
+well as just the decay of the boson with a given initial helicity state, 
 e.g. 
 <i>Z^0 &rarr; tau^+ tau^-</i>, can be handled. The axial and vector 
 couplings of the <i>Z'^0</i> and <i>W'^0</i> are set from the 
-relevant parameters in <a href="NewGaugeBosonProcesses.html" target="page">New Gauge 
-Boson Processes</a>. Note that the CP of the various Higgs bosons 
-can be set with the 
-options <code>HiggsX:parity</code>, <code>HiggsX:etaParity</code>, 
-and <code>HiggsX:phiParity</code> as described 
-in <a href="HiggsProcesses.html" target="page">Higgs Processes</a> 
+relevant parameters in 
+<a href="NewGaugeBosonProcesses.html" target="page">New Gauge Boson Processes</a>. 
+Note that the CP of the various Higgs bosons 
+can be set with the options <code>HiggsX:parity</code>, 
+<code>HiggsX:etaParity</code>, and <code>HiggsX:phiParity</code> as 
+described in <a href="HiggsProcesses.html" target="page">Higgs Processes</a> 
 where <code>X</code> is either <code>H1</code>, <code>H2</code>, 
-or <code>A3</code>. 
+or <code>A3</code>. Any <i>tau</i> produced from a helicity shower can also 
+be handled. 
  
 <p/> 
 The <i>tau</i> polarization and <i>tau</i> decay correlation 
 mechanism can be determined either using <code>internal</code> matrix 
 elements or <code>external</code> SPINUP information provided in the 
-event, e.g. via Les Houches Event Files (LHEF). For internal 
-determination any <i>tau</i> pair or single <i>tau</i> from the 
-processes of the previous list can be handeled. For external 
-determination of a single uncorrelated <i>tau</i>, its polarization 
-is set to its SPINUP information. When the SPINUP for the <i>tau</i> 
-is not valid, e.g. when FSR is applied, the SPINUP for the first copy 
-of that <i>tau</i> is used instead unless also invalid. For the 
-external determination of a correlated <i>tau</i> pair the following 
-options are available. 
+event, e.g. via Les Houches Event Files (LHEF). The SPINUP digit is 
+interpreted as the particle helicity state in the lab frame: 
+<i>-1</i> and <i>1</i> are longitudinal and <i>0</i> is 
+transverse. Other values are not valid. For internal determination any 
+<i>tau</i> pair or single <i>tau</i> from the processes of the 
+previous list can be handeled. For external determination of a single 
+uncorrelated <i>tau</i>, its helicity state is set to its SPINUP 
+information. When the SPINUP for the <i>tau</i> is not valid, 
+e.g. when FSR is applied, the SPINUP for the first copy of that 
+<i>tau</i> is used instead unless also invalid. While Pythia does 
+not internally produce events with polarized beams, beam polarization 
+for externally provided events is accounted for in <i>tau</i> decays 
+when the beam SPINUP digits are set accordingly. For the external 
+determination of a correlated <i>tau</i> pair the following options 
+are available. 
  
 <a name="anchor13"></a>
 <p/><code>mode&nbsp; </code><strong> TauDecays:externalMode &nbsp;</strong> 
- (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
-Choice of the external polarization and correlation mechanism for 
-correlated <i>tau</i> pairs. 
-<br/><code>option </code><strong> 0</strong> : all correlated pairs are treated as single 
-uncorrelated <i>tau</i> leptons. Their polarization is still set via 
+ (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+Choice of the external polarization and correlation mechanism for correlated 
+<i>tau</i> pairs. 
+<br/><code>option </code><strong> 0</strong> : all correlated <i>tau</i> pairs are treated as 
+uncorrelated <i>tau</i> leptons with their helicity state set via 
 SPINUP.   
-<br/><code>option </code><strong> 1</strong> : the mother of the <i>tau</i> pair is found. If the 
-mother is from the list of available internal correlated processes, a 
-correlated decay is performed. If the SPINUP for the mother is valid, 
-this is used to set the mother polarization, otherwise the mother is 
-assumed to be unpolarized.   
+<br/><code>option </code><strong> 1</strong> : the mother of each <i>tau</i> pair is 
+found and its helicity state set via SPINUP. If the mother is from the 
+list of available internal correlated processes, a correlated decay is 
+performed.   
 <br/><code>option </code><strong> 2</strong> : nothing is done.   
-<br/><b>Note</b>: option <code>1</code> has limited functionality as 
-SPINUP is intended primarily for particles with 2 spin states. For 
-massive vector bosons SPINUP is interpreted here as the transverse 
-polarization and so the diagonal for the vector boson helicity density 
-matrix is set as <i>[(1 - SPINUP)/3, 1/3, (1 + SPINUP)/3]</i>. 
+<br/><b>Note 1</b>: here, SPINUP is always interpreted as a helicity state 
+and must be <i>-1</i>, <i>0</i>, or <i>1</i>. Any other values 
+are invalid and default behavior for the decay will be used instead, 
+including using internal determination methods if configured 
+accordingly. 
+<br/><b>Note 2</b>: to enable correlated <i>tau</i> decays from 
+helicity showers, mode <code>1</code> must be set. 
    
  
 <p/> 
@@ -237,21 +247,6 @@ correlated <i>tau</i> pair, the pair is assumed to be produced from
 an unpolarized photon and a warning is issued. Finally, if 
 the <i>tau</i> is uncorrelated, an unpolarized and uncorrelated 
 decay is performed and a warning is issued. 
- 
-<p/> 
-Both the internal and external determination have advantages and 
-disadvantages. For example, if an LHEF <i>Z^0 &rarr; tau^+ tau^-</i> 
-event is passed with SPINUP provided for both <i>tau</i>s but 
-without SPINUP for the <i>Z^0</i> then 
-with <code>TauDecays:externalTau</code> set to <code>0</code> the 
-decays of the <i>tau</i>s will be uncorrelated. Using <code>1</code> 
-instead will result in correlations, assuming an 
-unpolarized <i>Z^0</i>. If using internal determination, then the 
-correlation and polarization will be fully calculated using the 
-correct production mechanism for the <i>Z^0</i>. Consequently, a 
-variety of options on how to determine polarization and correlation 
-are available, with a sensible default in place which should catch most 
-everything. 
  
 <a name="anchor14"></a>
 <p/><code>mode&nbsp; </code><strong> TauDecays:mode &nbsp;</strong> 
@@ -289,17 +284,29 @@ then the default behaviour described above is applied.
 <a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> TauDecays:tauPolarization &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = -1.</code>; <code>maximum = 1.</code>)<br/>
-Polarization of the <i>tau</i> when mode <code>2</code> or <code>3</code> of 
-<code>TauDecays:mode</code> is selected. 
+Polarization of the <i>tau</i> when mode <code>2</code> or 
+<code>3</code> of <code>TauDecays:mode</code> is selected. Note, this 
+does not specific a helicity state, but 
+rather a polarization probability. 
    
  
 <a name="anchor16"></a>
 <p/><code>mode&nbsp; </code><strong> TauDecays:tauMother &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>)<br/>
-Mother of the <i>tau</i> for forced polarization when mode <code>2</code> of 
-<code>TauDecays:mode</code> is selected. You should give the 
-positive identity code; to the extent an antiparticle exists it will 
-automatically obtain the inverse polarization. 
+Mother of the <i>tau</i> for forced polarization when mode 
+<code>2</code> of <code>TauDecays:mode</code> is selected. You should 
+give the positive identity code; to the extent an antiparticle exists 
+it will automatically obtain the inverse polarization. 
+   
+ 
+<a name="anchor17"></a>
+<p/><code>parm&nbsp; </code><strong> TauDecays:mMinForZ &nbsp;</strong> 
+ (<code>default = <strong>-1</strong></code>)<br/>
+Calculating the helicity matrix element for <i>f fbar &rarr; 
+gamma^*/Z^0 &rarr; tau^+ tau-</i> production may be speeded up 
+significantly by assuming massless fermions. If this value is 
+positive, the massless fermion approximation is used when the 
+mediator mass for the process is above this value. 
    
  
 <a name="section3"></a> 
@@ -315,7 +322,7 @@ which PYTHIA does have an existing machinery that can be applied,
 including first-order matrix-element corrections for the first (hardest) 
 photon emission. 
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:allowPhotonRadiation &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow or not photon radiations in decays to a lepton pair, see above. 
@@ -327,7 +334,7 @@ QED-radiation program, as is the norm in many collaborations.
 <a name="section4"></a> 
 <h3>Other variables</h3> 
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:mSafety &nbsp;</strong> 
  (<code>default = <strong>0.0005</strong></code>; <code>minimum = 0.</code>; <code>maximum = 0.01</code>)<br/>
 Minimum mass difference required between the decaying mother mass 
@@ -335,7 +342,7 @@ and the sum of the daughter masses, kept as a safety margin to avoid
 numerical problems in the decay generation. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:sigmaSoft &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.</code>)<br/>
 In semileptonic decays to more than one hadron, such as 
@@ -366,14 +373,14 @@ new try is made, including a new multiplicity. These constraints
 imply that the actual average multiplicity does not quite agree with 
 the formula above. 
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multIncrease &nbsp;</strong> 
  (<code>default = <strong>4.</strong></code>; <code>minimum = 2.</code>; <code>maximum = 6.</code>)<br/>
 The above <i>multIncrease</i> parameter, except for 
 <code>meMode = 23</code>. 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multIncreaseWeak &nbsp;</strong> 
  (<code>default = <strong>2.5</strong></code>; <code>minimum = 1.</code>; <code>maximum = 4.</code>)<br/>
 The above <i>multIncrease</i> parameter, specifically for 
@@ -382,19 +389,19 @@ virtual W mass should contribute to the production of new particles,
 rather than the full meson mass. 
    
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multRefMass &nbsp;</strong> 
  (<code>default = <strong>0.7</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)<br/>
 The above <i>multRefMass</i> parameter. 
    
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multGoffset &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 The above <i>multGoffset</i> parameter. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:colRearrange &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
 When a decay is given as a list of four partons to be turned into 
@@ -405,7 +412,7 @@ the probability that this original assignment is not respected, and
 default corresponds to no memory of this original colour topology. 
    
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:FSRinDecays &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 When a particle decays to <i>q qbar</i>, <i>g g</i>, <i>g g g</i> 
@@ -438,6 +445,9 @@ parton pair, but at least two particles in total)</li>
 <li>  2 : polarization in <i>V &rarr; PS + PS</i> (<i>V</i> = vector, 
 <i>PS</i> = pseudoscalar), when <i>V</i> is produced by 
 <i>PS &rarr; PS + V</i> or <i>PS &rarr; gamma + V</i></li> 
+<li>  3 - 7 : two-body decay of a hadron with mass-dependent width. The 
+angular momentum of the outgoing two-body system is given by 
+<code>code</code> - 3. </li> 
 <li> 11 : Dalitz decay into one particle, in addition to the 
 lepton pair (also allowed to specify a quark-antiquark pair that 
 should collapse to a single hadron)</li> 
@@ -500,4 +510,4 @@ multiplicity than the simple string assumed for 82, see the
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

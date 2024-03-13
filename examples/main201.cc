@@ -1,17 +1,17 @@
 // main201.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors: Peter Skands <peter.skands@monash.edu>
+
+// Keywords: Vincia; Dire; OpenMP
 
 // This is a simple test program to compare Pythia and Vincia on
 // inclusive jet rates at the LHC, for a sample with pThat > 100 GeV.
 // Also illustrates simple use of OpenMP (if enabled) to run two instances
 // of Pythia in parallel, here initialised for Pythia and Vincia shower
 // models respectively.
-
-// Authors: Peter Skands <peter.skands@monash.edu>
-
-// Keywords: Vincia; Dire; OpenMP;
 
 #include "Pythia8/Pythia.h"
 using namespace Pythia8;
@@ -45,7 +45,7 @@ int main() {
 #ifdef OPENMP
   #pragma omp parallel for
 #endif
-  for (int iRun=1; iRun<=2; ++iRun) {
+  for (int iRun = 1; iRun <= 2; ++iRun) {
     Pythia pythia;
     // Settings common to both runs
     pythia.readString("Beams:eCM = 7000.");
@@ -89,7 +89,6 @@ int main() {
     SlowJet slowJet( -1, radius, pTjetMin, etaMax, nSel, 1);
 
     // Begin event loop.
-    double sumWeights = 0.;
     for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
 
       // Generate event.
@@ -102,7 +101,6 @@ int main() {
 
       // Check for weights
       double weight = pythia.info.weight();
-      sumWeights += weight;
 
       // Analyze Slowet jet properties. List first few.
       slowJet. analyze( pythia.event );

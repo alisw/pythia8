@@ -1,9 +1,9 @@
 // main22.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: resonance decay; external resonance;
+// Keywords: resonance decay; external resonance
 
 // Simple illustration how to provide (a) your own resonance-width class,
 // and (b) your own cross-section class, with instances handed in to Pythia.
@@ -115,7 +115,7 @@ private:
   double mRes, GammaRes, m2Res, GamMRat, normTheta2qqbar, sigma;
 
   // Pointer to properties of Theta, to access decay width.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -242,13 +242,13 @@ int main() {
   // above channels. Hand in pointer to Pythia.
   // Note: Pythia will automatically delete this pointer,
   // along with all other resonances.
-  ResonanceWidths* resonanceTheta = new ResonanceTheta(663);
-  pythia.setResonancePtr(resonanceTheta);
+  ResonanceWidthsPtr resonanceTheta = make_shared<ResonanceTheta>(663);
+  pythia.addResonancePtr(resonanceTheta);
 
   // Create instance of a class to generate the q qbar -> Theta process
   // from an external matrix element. Hand in pointer to Pythia.
-  SigmaProcess* sigma1Theta = new Sigma1qqbar2Theta();
-  pythia.setSigmaPtr(sigma1Theta);
+  SigmaProcessPtr sigma1Theta = make_shared<Sigma1qqbar2Theta>();
+  pythia.addSigmaPtr(sigma1Theta);
 
   // Optionally only compare cross sections.
   //pythia.readString("PartonLevel:all = off");
@@ -280,6 +280,5 @@ int main() {
   cout << mTheta;
 
   // Done.
-  delete sigma1Theta;
   return 0;
 }

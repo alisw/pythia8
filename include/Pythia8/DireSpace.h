@@ -1,5 +1,5 @@
 // DireSpace.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -186,21 +186,21 @@ public:
 
   // Constructor.
   DireSpace() {
-    beamOffset       = 0;
-    pTdampFudge      = 0.;
-    mergingHooksPtr  = 0;
-    splittingsPtr    = 0;
-    weights          = 0;
-    direInfoPtr         = 0;
-    beamAPtr = beamBPtr = 0;
-    printBanner  = true;
-    nWeightsSave = 0;
-    isInitSave   = false;
-    nMPI         = 0;
-    usePDFalphas = false;
-    usePDF       = true;
-    useSystems   = true;
-    suppressLargeMECs = false;
+    beamOffset          = 0;
+    pTdampFudge         = 0.;
+    mergingHooksPtr     = nullptr;
+    splittingsPtr       = nullptr;
+    weights             = 0;
+    direInfoPtr         = nullptr;
+    beamAPtr = beamBPtr = nullptr;
+    printBanner         = true;
+    nWeightsSave        = 0;
+    isInitSave          = false;
+    nMPI                = 0;
+    usePDFalphas        = false;
+    usePDF              = true;
+    useSystems          = true;
+    suppressLargeMECs   = false;
   }
 
   DireSpace( MergingHooksPtr mergingHooksPtrIn, PartonVertexPtr ) :
@@ -219,9 +219,9 @@ public:
       mergingHooksPtr   = mergingHooksPtrIn;
       beamOffset        = 0;
       pTdampFudge       = 0.;
-      splittingsPtr     = 0;
+      splittingsPtr     = nullptr;
       weights           = 0;
-      direInfoPtr       = 0;
+      direInfoPtr       = nullptr;
       printBanner       = true;
       nWeightsSave      = 0;
       isInitSave        = false;
@@ -245,7 +245,7 @@ public:
   // (Separated from rest of init since not virtual.)
   void reinitPtr(Info* infoPtrIn,  MergingHooksPtr mergingHooksPtrIn,
     DireSplittingLibrary* splittingsPtrIn, DireInfo* direInfoPtrIn) {
-       infoPtr       = infoPtrIn;
+       infoPtr          = infoPtrIn;
        settingsPtr      = infoPtr->settingsPtr;
        particleDataPtr  = infoPtr->particleDataPtr;
        rndmPtr          = infoPtr->rndmPtr;
@@ -306,9 +306,9 @@ public:
   virtual bool branch( Event& event);
 
   bool branch_II( Event& event, bool = false,
-    DireSplitInfo* split = NULL);
+    DireSplitInfo* split = nullptr);
   bool branch_IF( Event& event, bool = false,
-    DireSplitInfo* split = NULL);
+    DireSplitInfo* split = nullptr);
 
   // Setup clustering kinematics.
   virtual Event clustered( const Event& state, int iRad, int iEmt, int iRecAft,
@@ -473,7 +473,6 @@ public:
       x *= state[inB].pNeg() / state[0].m();
     return dipEnd[iDip].m2Dip/x;
   }
-
 
   bool dryrun;
 
@@ -658,21 +657,21 @@ private:
 
   // Wrapper around PDF calls.
   double getXPDF( int id, double x, double t, int iSys = 0,
-    BeamParticle* beam = NULL, bool finalRec = false, double z = 0.,
+    BeamParticle* beam = nullptr, bool finalRec = false, double z = 0.,
     double m2dip = 0.) {
     // Return one if no PDF should be used.
     if (!hasPDF(id)) return 1.0;
     // Else get PDF from beam particle.
     BeamParticle* b = beam;
-    if (b == NULL) {
-      if (beamAPtr != NULL || beamBPtr != NULL) {
-        b = (beamAPtr != NULL && particleDataPtr->isHadron(beamAPtr->id()))
+    if (b == nullptr) {
+      if (beamAPtr != nullptr || beamBPtr != nullptr) {
+        b = (beamAPtr != nullptr && particleDataPtr->isHadron(beamAPtr->id()))
             ? beamAPtr
-          : (beamBPtr != NULL && particleDataPtr->isHadron(beamBPtr->id()))
-            ? beamBPtr : NULL;
+          : (beamBPtr != nullptr && particleDataPtr->isHadron(beamBPtr->id()))
+            ? beamBPtr : nullptr;
       }
-      if (b == NULL && beamAPtr != 0) beam = beamAPtr;
-      if (b == NULL && beamBPtr != 0) beam = beamBPtr;
+      if (b == nullptr && beamAPtr != nullptr) b = beamAPtr;
+      if (b == nullptr && beamBPtr != nullptr) b = beamBPtr;
     }
 
     double scale2 = t;
@@ -833,4 +832,4 @@ private:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireSpace_H
+#endif // Pythia8_DireSpace_H

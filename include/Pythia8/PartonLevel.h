@@ -1,5 +1,5 @@
 // PartonLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -56,6 +56,16 @@ public:
     StringIntPtr stringInteractionPtrIn,
     bool useAsTrial);
 
+  // Special setup to allow switching between beam PDFs for MPI handling.
+  // Not needed when MPI for incoming pomeron, since same for all beams.
+  void initSwitchID( const vector<int>& idAList) {
+    multiMB.initSwitchID(  idAList);
+    multiSDA.initSwitchID( idAList);}
+
+  // Switch to new beam particle identities; for similar hadrons only.
+  void setBeamID(int iPDFA = 0) {multiMB.setBeamID(iPDFA);
+    multiSDA.setBeamID(iPDFA);}
+
   // Generate the next parton-level process.
   bool next( Event& process, Event& event);
 
@@ -69,6 +79,7 @@ public:
   // Tell whether failure was due to vetoing.
   bool hasVetoed() const {return doVeto;}
   bool hasVetoedDiff() const {return doDiffVeto;}
+  bool hasVetoedMerging() const {return doMergingVeto;}
 
   // Accumulate, print and reset statistics.
   void accumulate() {if (isResolved && !isDiff) multiPtr->accumulate();}
@@ -84,18 +95,17 @@ public:
   int typeLastInShower() { return typeLastBranch; }
 
   // Check of any trial emissions could have been enhanced.
-  bool canEnhanceTrial() {
-    if (userHooksPtr) return userHooksPtr->canEnhanceTrial();
-    return false;
-  }
+  bool canEnhanceTrial() { return doEnhanceTrial; }
   // Get enhanced trial emission evolution variable.
   double getEnhancedTrialPT() {
-    if (canEnhanceTrial()) return userHooksPtr->getEnhancedTrialPT();
+    if (canEnhanceTrial()) return infoPtr->weightContainerPtr->
+      weightsSimpleShower.getEnhancedTrialPT();
     return 0.;
   }
   // Get enhanced trial emission weight.
   double getEnhancedTrialWeight() {
-    if (canEnhanceTrial()) return userHooksPtr->getEnhancedTrialWeight();
+    if (canEnhanceTrial()) return infoPtr->weightContainerPtr->
+      weightsSimpleShower.getEnhancedTrialWeight();
     return 1.;
   }
 
@@ -132,8 +142,8 @@ private:
   // Initialization data, mainly read from Settings.
   bool   doNonDiff{}, doDiffraction{}, doMPI{}, doMPIMB{}, doMPISDA{},
          doMPISDB{}, doMPICD{}, doMPIinit{}, doISR{}, doFSRduringProcess{},
-         doFSRafterProcess{}, doFSRinResonances{}, doRemnants{},
-         doSecondHard{}, hasOneLeptonBeam{}, hasTwoLeptonBeams{},
+         doFSRafterProcess{}, doFSRinResonances{}, doInterleaveResDec{},
+         doRemnants{}, doSecondHard{}, hasOneLeptonBeam{}, hasTwoLeptonBeams{},
          hasPointLeptons{}, canVetoPT{}, canVetoStep{}, canVetoMPIStep{},
          canVetoEarly{}, canSetScale{}, allowRH{}, earlyResDec{},
          vetoWeakJets{}, canReconResSys{}, doReconnect{}, doHardDiff{},
@@ -162,7 +172,8 @@ private:
   // Variables for photon inside electron.
   bool   hasGammaA{}, hasGammaB{}, beamHasGamma{}, beamAisGamma{},
          beamBisGamma{}, beamAhasGamma{}, beamBhasGamma{}, beamAhasResGamma{},
-         beamBhasResGamma{}, beamHasResGamma{}, isGammaHadronDir{};
+         beamBhasResGamma{}, beamHasResGamma{}, isGammaHadronDir{},
+         sampleQ2gamma{};
   int    gammaMode{}, gammaModeEvent{}, gammaOffset{};
   double eCMsaveGamma{};
 
@@ -224,6 +235,9 @@ private:
   void leaveResolvedLeptonGamma( Event& process, Event& event,
     bool physical = true);
 
+  // Set the photon collision mode for the current event.
+  void saveGammaModeEvent( int gammaModeA, int gammaModeB);
+
   // Photon beam inside lepton beam: set up the parton level generation.
   void cleanEventFromGamma( Event& event);
 
@@ -231,12 +245,13 @@ private:
   MergingHooksPtr mergingHooksPtr{};
   // Parameters to specify trial shower usage.
   bool doTrial{};
+  bool doEnhanceTrial{};
   int nTrialEmissions{};
   // Parameters to store to veto trial showers.
   double pTLastBranch{};
   int typeLastBranch{};
   // Parameters to specify merging usage.
-  bool canRemoveEvent{}, canRemoveEmission{};
+  bool canRemoveEvent{}, canRemoveEmission{}, doMergingVeto{};
 
 };
 

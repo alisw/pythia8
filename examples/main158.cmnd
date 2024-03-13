@@ -1,0 +1,106 @@
+
+# ----------------------------------------------------------------------------
+#
+# This file contains definitions of exotic hadrons, used in main158.
+#
+# The included exotic hadrons are:
+#  chi_1c(3872)0 (arXiv:hep-ex/0308029)
+#  T_0cs(2900)0 and T_1cs(2900)0 (arXiv:2009.00026 [hep-ex])
+#  T_csbar(2900)0 and T_csbar(2900)++ (arXiv:2212.02716 [hep-ex])
+#  P_c(4312)+, P_c(4440)+ and P_c(4457)+ (arXiv:1908.05309 [hep-ph])
+#
+# By setting varWidth = 1, the particles defined this way can be produced in
+# hadronic rescattering. This production mechanism for chi_1c and the P_c+
+# pentaquarks was studied in arXiv:2108.03479 [hep-ph]. The production rate
+# for these particles is very small, and the T(2900) tetraquarks have been
+# included for illustrative purposes.
+#
+# The PDG numbering scheme dictates that pentaquark id codes should be on the
+# form 9xyzwaj, where xyzw is the quark content in descending order, a is the
+# antiquark, and j = 2J+1 is the spin type. Tetraquark ids are not explicitly
+# defined, but may be on the form 90xyzwj without overlapping with ids of
+# other particles. However, there are still ambiguities e.g. between the
+# T(2900) states, and therefore, here j is used to distinguish them.
+#
+# ----------------------------------------------------------------------------
+
+# chi_1c(3872)0 tetraquark definition. The format is:
+# name antiName spinType chargeType colType m0 mWidth mMin mMax tau0 varWidth
+9044111:new = chi_1c(3872)0 chi_1c(3872)bar0 2 0 0 3.8720 0.0012 3.82 3.92 0. 1
+
+# Define decay channels. These can be used for resonance production. Format:
+# onMode bRatio meMode products...
+9044111:addChannel = 1  0.3700  3 421     -423  ! D0 Dbar*0
+9044111:addChannel = 1  0.0430  3 223      443  ! omega J/psi
+9044111:addChannel = 1  0.0380  3 113      443  ! rho0 J/psi
+9044111:addChannel = 1  0.0340  3 111    20443  ! pi0 chi_1c
+
+# Resonance production is only possible in hadron-hadron collisions.
+# These decay channels will not be used for resonance production, but are
+# relevant for the particle composition after decays.
+9044111:addChannel = 1  0.0080  3  22      443  ! gamma J/psi
+9044111:addChannel = 1  0.0450  3  22   100443  ! gamma psi(2S)
+9044111:addChannel = 1  0.4900  0 421 -421 111  ! D0 Dbar0 pi0
+
+# ----------------------------------------------------------------------------
+
+# T(2900) tetraquark definitions.
+
+9043211:new = T_0cs(2900)0 Tbar_0cs(2900)bar0 2 0 0 2.866 0.057 2.581 3.151 0. 1
+9043211:addChannel = 1  1.0000  3  -411 321  ! Dbar- K+
+
+9043212:new = T_1cs(2900)0 Tbar_1cs(2900)bar0 4 0 0 2.904 0.110 2.354 3.454 0. 1
+9043212:addChannel = 1  1.0000  3  -411 321  ! Dbar- K+
+
+9043213:new = T_csbar(2900)0 T_csbar(2900)bar0 2 0 0 2.892 0.119 2.297 3.487 0. 1
+9043213:addChannel = 1  1.0000  3   431 -211 ! D_s pi-
+
+9043214:new = T_csbar(2900)++ T_csbar(2900)bar-- 2 6 0 2.921 0.137 2.207 3.557 0. 1
+9043214:addChannel = 1  1.0000  3   431  211 ! D_s pi+
+
+# ----------------------------------------------------------------------------
+
+# P_c+ pentaquark definitions. These are based on the model from
+# arXiv:1908.05309 [hep-ph] with form factors (f2, f3).
+
+# Here, the branching ratios are given as partial widths. Pythia will rescale
+# them automatically so that they sum to one.
+
+9422141:new = P_c(4312)+ P_c(4312)- 2 3 0 4.312 0.0098 4.263 4.361 0. 1
+9422141:addChannel = 1  0.3000 3 4122  -421  ! Lambda_c Dbar0
+9422141:addChannel = 1 11.0000 3 4122  -423  ! Lambda_c D*bar0
+9422141:addChannel = 1  0.8500 3 2112   211  ! n0 pi+
+9422141:addChannel = 1  0.0004 3 2112   213  ! n0 rho+
+9422141:addChannel = 1  0.8500 3 2212   111  ! p+ pi0
+9422141:addChannel = 1  0.0004 3 2212   113  ! p+ rho0
+9422141:addChannel = 1  0.0030 3 2212   223  ! p+ omega
+9422141:addChannel = 1  0.0004 3 2212   441  ! p+ eta_c
+9422141:addChannel = 1  0.1000 3 2212   443  ! p+ J/psi
+
+9422142:new = P_c(4440)+ P_c(4440)- 2 3 0 4.440 0.0206 4.337 4.543 0. 1
+9422142:addChannel = 1  2.7000 3 4122  -421  ! Lambda_c Dbar0
+9422142:addChannel = 1 12.0000 3 4122  -423  ! Lambda_c D*bar0
+9422142:addChannel = 1  3.4000 3 4212  -421  ! Sigma_c+ Dbar0
+9422142:addChannel = 1  0.9000 3 4214  -421  ! Sigma_c*+ Dbar0
+9422142:addChannel = 1  0.1000 3 2112   211  ! n0 pi+
+9422142:addChannel = 1  0.2000 3 2112   213  ! n0 rho+
+9422142:addChannel = 1  0.1000 3 2212   111  ! p+ pi0
+9422142:addChannel = 1  0.2000 3 2212   113  ! p+ rho0
+9422142:addChannel = 1  1.5000 3 2212   223  ! p+ omega
+9422142:addChannel = 1  0.0700 3 2212   441  ! p+ eta_c
+9422142:addChannel = 1  0.6000 3 2212   443  ! p+ J/psi
+9422142:addChannel = 1  0.1000 3 2212 10441  ! p+ chi_0c
+
+9422143:new = P_c(4457)+ P_c(4457)- 4 3 0 4.457 0.0064 4.425 4.489 0. 1
+9422143:addChannel = 1  1.2000 3 4122  -421  ! Lambda_c Dbar0
+9422143:addChannel = 1  6.9000 3 4122  -423  ! Lambda_c D*bar0
+9422143:addChannel = 1  0.9000 3 4212  -421  ! Sigma_c+ Dbar0
+9422143:addChannel = 1  7.2000 3 4214  -421  ! Sigma_c*+ Dbar0
+9422143:addChannel = 1  0.3000 3 2112   211  ! n0 pi+
+9422143:addChannel = 1  0.0500 3 2112   213  ! n0 rho+
+9422143:addChannel = 1  0.3000 3 2212   111  ! p+ pi0
+9422143:addChannel = 1  0.0500 3 2212   113  ! p+ rho0
+9422143:addChannel = 1  0.4000 3 2212   223  ! p+ omega
+9422143:addChannel = 1  0.0030 3 2212   441  ! p+ eta_c
+9422143:addChannel = 1  0.6000 3 2212   443  ! p+ J/psi
+9422143:addChannel = 1  0.0030 3 2212 10441  ! p+ chi_0c

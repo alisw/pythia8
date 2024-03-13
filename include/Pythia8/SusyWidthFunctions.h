@@ -1,5 +1,5 @@
 // SusyResonanceWidths.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand
+// Copyright (C) 2024 Torbjorn Sjostrand
 // Main author of this file: N. Desai
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -23,7 +23,7 @@ class WidthFunction {
 public:
 
   // Constructor and destructor.
-  WidthFunction() : infoPtr(), particleDataPtr(), coupSMPtr(), coupSUSYPtr(),
+  WidthFunction() : particleDataPtr(), loggerPtr(), coupSMPtr(), coupSUSYPtr(),
     idRes(), idInt(), id1(), id2(), id3(), id4(), mRes(),
     mInt(), gammaInt(), m1(), m2(), m3(), m4() { };
   virtual ~WidthFunction() { };
@@ -37,8 +37,8 @@ public:
 
 protected:
 
-  Info*         infoPtr;
   ParticleData* particleDataPtr;
+  Logger*       loggerPtr;
   CoupSM*       coupSMPtr;
   CoupSUSY*     coupSUSYPtr;
   int idRes, idInt, id1, id2, id3, id4;
@@ -76,6 +76,6 @@ protected:
 
 //==========================================================================
 
-}  // end namespace Pythia8
+} // end namespace Pythia8
 
-#endif // end Pythia8_SusyResonanceWidths_H
+#endif // Pythia8_SusyResonanceWidths_H

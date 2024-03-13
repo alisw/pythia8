@@ -1,5 +1,5 @@
 // JunctionSplitting.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -42,7 +42,7 @@ const double JunctionSplitting::MINANGLE       = 1e-7;
 void JunctionSplitting::init() {
 
   // Initialize
-  colTrace.init(infoPtr);
+  colTrace.init(loggerPtr);
   stringLength.init(infoPtr, *settingsPtr);
 
   // Initialize auxiliary fragmentation classes.
@@ -54,7 +54,7 @@ void JunctionSplitting::init() {
   stringFrag.init(&flavSel, &pTSel, &zSel);
 
   // For junction processing.
-  eNormJunction     = parm("StringFragmentation:eNormJunction");
+  pNormJunction     = parm("StringFragmentation:pNormJunction");
   allowDoubleJunRem = flag("ColourReconnection:allowDoubleJunRem");
 }
 
@@ -71,8 +71,7 @@ bool JunctionSplitting::checkColours( Event& event) {
       && abs(event[i].pz()) >= 0.  && abs(event[i].e()) >= 0.
        && abs(event[i].m()) >= 0.);
     else {
-       infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
-        "not-a-number energy/momentum/mass");
+       loggerPtr->WARNING_MSG("not-a-number energy/momentum/mass");
        return false;
     }
 
@@ -80,8 +79,7 @@ bool JunctionSplitting::checkColours( Event& event) {
   for (int i  = 0; i < event.size(); ++i) {
     if (event[i].isFinal() && event[i].col() != 0 &&
         event[i].col() == event[i].acol()) {
-      infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
-      "Made a gluon colour singlet; redoing colours");
+      loggerPtr->WARNING_MSG("made a gluon colour singlet; redoing colours");
       return false;
     }
   }
@@ -94,23 +92,23 @@ bool JunctionSplitting::checkColours( Event& event) {
 
   // Try to split up the junction chains by splitting gluons
   if (!splitJunGluons(event, iPartonJun, iPartonAntiJun) ) {
-    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
-      "Not possible to split junctions; making new colours");
+    loggerPtr->WARNING_MSG(
+      "not possible to split junctions; making new colours");
     return false;
   }
 
   // Remove junctions if more than 2 are connected.
   if (!splitJunChains(event) ) {
-    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
-      "Not possible to split junctions; making new colours");
+    loggerPtr->WARNING_MSG(
+      "not possible to split junctions; making new colours");
     return false;
   }
 
   // Split up junction pairs.
   getPartonLists(event, iPartonJun, iPartonAntiJun);
   if (!splitJunPairs(event, iPartonJun, iPartonAntiJun) ) {
-    infoPtr->errorMsg("Warning in JunctionSplitting::CheckColours: "
-      "Not possible to split junctions; making new colours");
+    loggerPtr->WARNING_MSG(
+      "not possible to split junctions; making new colours");
     return false;
   }
 
@@ -204,13 +202,12 @@ bool JunctionSplitting::splitJunGluons(Event& event,
           }
         // If no antijunction found, something went wrong earlier.
         if (iAntiJun == -1) {
-           infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunChain:"
-                             "Something went wrong in finding antijunction");
+           loggerPtr->WARNING_MSG(
+            "something went wrong in finding anti-junction");
            return false;
         }
 
         // Update the antijunction list.
-        erasing = false;
         for (int j = 0; j < int(iPartonAntiJun[iAntiJun].size()); ++j) {
           if ( iPartonAntiJun[iAntiJun][j] / 10 == identAntiJun / 10)
             iAntiLeg++;
@@ -325,8 +322,8 @@ bool JunctionSplitting::splitJunGluons(Event& event,
           }
         // If no antijunction found, something went wrong earlier.
         if (iAntiJun == -1) {
-           infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunChain:"
-                             "Something went wrong in finding antijunction");
+           loggerPtr->WARNING_MSG(
+            "something went wrong in finding anti-junction");
            return false;
         }
 
@@ -404,7 +401,7 @@ bool JunctionSplitting::splitJunChains(Event& event) {
       event.appendJunction(1, col1, col2, col3);
     }
 
-    // Find junctions if we have more colours than anti colours
+    // Find junctions if we have more anti colours than colours
     while (acols.size() > cols.size()) {
       int i1 = int(rndmPtr->flat() *acols.size());
       int acol1 = acols[i1];
@@ -445,8 +442,8 @@ bool JunctionSplitting::splitJunChains(Event& event) {
         if (event[iPar].isFinal() && event[iPar].col() == cols[0])
           iCol = iPar;
       if (iCol == -1) {
-        infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunChain:"
-          "Splitting multiple directly connected junctions failed");
+        loggerPtr->WARNING_MSG(
+          "splitting multiple directly connected junctions failed");
         return false;
       }
       int iNew = event.copy(iCol, 76);
@@ -525,8 +522,8 @@ bool JunctionSplitting::splitJunPairs(Event& event,
             break;
           }
         if (iAcol == -1) {
-          infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunChain:"
-            "Anti colour not found when combining two junctions to a string");
+          loggerPtr->WARNING_MSG(
+            "anti-colour not found when combining two junctions to a string");
           return false;
         }
 
@@ -565,8 +562,7 @@ bool JunctionSplitting::splitJunPairs(Event& event,
             break;
         }
         if (iJunList == -1 || iAntiList == -1) {
-          infoPtr->errorMsg("Error in JunctionSplitting::SplitJunChain:"
-            " failed to find junctions in the parton list");
+          loggerPtr->ERROR_MSG("failed to find junctions in the parton list");
           return false;
         }
 
@@ -613,207 +609,161 @@ bool JunctionSplitting::splitJunPairs(Event& event,
           || theta(pJunLeg0,pAntiLeg1)  < MINANGLE
           || theta(pJunLeg1,pAntiLeg0)  < MINANGLE
           || theta(pJunLeg1,pAntiLeg1)  < MINANGLE) {
-          infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunPairs: "
-            "parallel junction state not allowed.");
+          loggerPtr->WARNING_MSG("parallel junction state not allowed");
           return false;
         }
 
-      // Starting frame hopefully intermediate to two junction directions.
-      Vec4 pStart = pJunLeg0 / pJunLeg0.e() + pJunLeg1 / pJunLeg1.e()
-        + pAntiLeg0 / pAntiLeg0.e() + pAntiLeg1 / pAntiLeg1.e();
+        // For third side add both legs beyond other junction, weighted.
+        double wt2 = 1. - exp( -pAntiLeg0.pAbs() / pNormJunction);
+        double wt3 = 1. - exp( -pAntiLeg1.pAbs() / pNormJunction);
+        Vec4 pCombined = wt2 * pAntiLeg0 + wt3 * pAntiLeg1;
+        Vec4 vJun = stringFrag.junctionRestFrame(pJunLeg0, pJunLeg1,
+                           pCombined);
+        vJun /= sqrt( 1 - vJun.pAbs2() );
+        Vec4 pInJRF[3] = { pJunLeg0, pJunLeg1, pCombined};
+        for (int l = 0; l < 3; ++l) pInJRF[l].bstback(vJun);
 
-      // Loop over iteration to junction/antijunction rest frames (JRF/ARF).
-      RotBstMatrix MtoJRF, MtoARF;
-      Vec4 pInJRF[3], pInARF[3];
-      for (int iJunLocal = 0; iJunLocal < 2; ++iJunLocal) {
-        int offset = (iJunLocal == 0) ? 0 : 2;
+        // For third side add both legs beyond other junction, weighted.
+        wt2 = 1. - exp( -pJunLeg0.pAbs() / pNormJunction);
+        wt3 = 1. - exp( -pJunLeg1.pAbs() / pNormJunction);
+        pCombined = wt2 * pJunLeg0 + wt3 * pJunLeg1;
+        Vec4 vAnti = stringFrag.junctionRestFrame(pAntiLeg0, pAntiLeg1,
+                      pCombined);
+        vAnti /= sqrt( 1 - vAnti.pAbs2() );
+        Vec4 pInARF[3] = { pAntiLeg0, pAntiLeg1, pCombined};
+        for (int l = 0; l < 3; ++l) pInARF[l].bstback(vAnti);
 
-        // Iterate from system rest frame towards the junction rest frame.
-        RotBstMatrix MtoRF, Mstep;
-        MtoRF.bstback(pStart);
-        Vec4 pInRF[4];
-        int iter = 0;
-        do {
-          ++iter;
+        // Calculate Lambda-measure length of three possible topologies.
+        double vJvA = vJun * vAnti;
+        double vJvAe2y = vJvA + sqrt(vJvA*vJvA - 1.);
+        double lambdaJA = stringLength.getJuncLength(
+          pInJRF[0], pInJRF[1], pInARF[0], pInARF[1]);
 
-          // Find rest-frame momenta on the three sides of the junction.
-          // Only consider first parton on each leg, for simplicity.
-          pInRF[0 + offset] = pJunLeg0;
-          pInRF[1 + offset] = pJunLeg1;
-          pInRF[2 - offset] = pAntiLeg0;
-          pInRF[3 - offset] = pAntiLeg1;
-          for (int l = 0; l < 4; ++l) pInRF[l].rotbst(MtoRF);
+        double lambda00 = stringLength.getStringLength(pJunLeg0, pAntiLeg0)
+          + stringLength.getStringLength(pJunLeg1, pAntiLeg1);
 
-          // For third side add both legs beyond other junction, weighted.
-          double wt2 = 1. - exp( -pInRF[2].e() / eNormJunction);
-          double wt3 = 1. - exp( -pInRF[3].e() / eNormJunction);
-          pInRF[2] = wt2 * pInRF[2] + wt3 * pInRF[3];
+        double lambda01 = stringLength.getStringLength(pJunLeg0, pAntiLeg1)
+          + stringLength.getStringLength(pJunLeg1, pAntiLeg0);
 
-          // Find new junction rest frame from the set of momenta.
-          Mstep = stringFrag.junctionRestFrame( pInRF[0], pInRF[1], pInRF[2]);
-          MtoRF.rotbst( Mstep );
-        } while (iter < 3 || (Mstep.deviation() > CONVJNREST
-          && iter < NTRYJNREST) );
+        // Case when either topology without junctions is the shorter one.
+        if (lambdaJA > min( lambda00, lambda01) && allowDoubleJunRem) {
 
-        // Store final boost and rest-frame (weighted) momenta.
-        if (iJunLocal == 0) {
-          MtoJRF = MtoRF;
-          for (int l = 0; l < 3; ++l) pInJRF[l] = pInRF[l];
-        } else {
-          MtoARF = MtoRF;
-          for (int l = 0; l < 3; ++l) pInARF[l] = pInRF[l];
+          // Find indices of particles.
+          int iCol1 = iJunLeg0[1];
+          int iCol2 = iJunLeg1[1];
+          int iAcol1 = iAntiLeg0[1];
+          int iAcol2 = iAntiLeg1[1];
+          if (lambda00 > lambda01)
+            swap(iAcol1, iAcol2);
+
+          // Change the colour index and mark junctions to be removed.
+          int iNew1 = event.copy(iAcol1, 66);
+          event[iNew1].acol(event[iCol1].col());
+          int iNew2 = event.copy(iAcol2, 66);
+          event[iNew2].acol(event[iCol2].col());
+          junRem.push_back(junChains[i][0]);
+          junRem.push_back(junChains[i][1]);
+          continue;
         }
-      }
 
-      // Opposite operations: boost from JRF/ARF to original system.
-      RotBstMatrix MfromJRF = MtoJRF;
-      MfromJRF.invert();
-      RotBstMatrix MfromARF = MtoARF;
-      MfromARF.invert();
+        // Case where junction and antijunction to be separated.
+        // Shuffle (p+/p-)  momentum of order <mThad> between systems,
+        // times 2/3 for 120 degree in JRF, times 1/2 for two legs,
+        // but not more than half of what nearest parton carries.
 
-      // Velocity vectors of junctions and momentum of legs in lab frame.
-      Vec4 vJun(0., 0., 0., 1.);
-      vJun.rotbst(MfromJRF);
-      Vec4 vAnti(0., 0., 0., 1.);
-      vAnti.rotbst(MfromARF);
-      Vec4 pLabJ[3], pLabA[3];
-      for (int l = 0; l < 3; ++l) {
-        pLabJ[l] = pInJRF[l];
-        pLabJ[l].rotbst(MfromJRF);
-        pLabA[l] = pInARF[l];
-        pLabA[l].rotbst(MfromARF);
-      }
+        // Only allow to take momentum from non-heavy resonances
+        // (i.e. id 1-5 and 21 and diquarks). If none is available
+        // return false.
+        int idJ0Abs = event[ iJunLeg0[1] ].idAbs();
+        bool acceptJ0 = idJ0Abs < 6 || idJ0Abs == 21 ||
+          (idJ0Abs > 1000 && idJ0Abs < 6000 && (idJ0Abs / 10) % 10 == 0);
+        int idJ1Abs = event[ iJunLeg1[1] ].idAbs();
+        bool acceptJ1 = idJ1Abs < 6 || idJ1Abs == 21 ||
+          (idJ1Abs > 1000 && idJ1Abs < 6000 && (idJ1Abs / 10) % 10 == 0);
+        int idA0Abs = event[ iAntiLeg0[1] ].idAbs();
+        bool acceptA0 = idA0Abs < 6 || idA0Abs == 21 ||
+          (idA0Abs > 1000 && idA0Abs < 6000 && (idA0Abs / 10) % 10 == 0);
+        int idA1Abs = event[ iAntiLeg1[1] ].idAbs();
+        bool acceptA1 = idA1Abs < 6 || idA1Abs == 21 ||
+          (idA1Abs > 1000 && idA1Abs < 6000 && (idA1Abs / 10) % 10 == 0);
 
-      // Calculate Lambda-measure length of three possible topologies.
-      double vJvA = vJun * vAnti;
-      double vJvAe2y = vJvA + sqrt(vJvA*vJvA - 1.);
-      double lambdaJA = stringLength.getJuncLength(pInJRF[0], pInJRF[1],
-        pInARF[0], pInARF[1]);
+        if ( !(acceptJ0 || acceptJ1)) {
+          loggerPtr->WARNING_MSG(
+            "no light quarks available in junction split");
+          return false;
+        }
 
-      double lambda00 = stringLength.getStringLength(pLabJ[0], pLabA[0]) +
-        stringLength.getStringLength(pLabJ[1], pLabA[1]);
+        if ( !(acceptA0 || acceptA1)) {
+          loggerPtr->WARNING_MSG(
+            "no light quarks available in junction split");
+          return false;
+        }
 
-      double lambda01 = stringLength.getStringLength(pLabJ[0], pLabA[1]) +
-        stringLength.getStringLength(pLabJ[1], pLabA[0]);
+        double eShift = MTHAD / (3. * sqrt(vJvAe2y));
+        double fracJ0 = 0, fracJ1 = 0, fracA0 = 0, fracA1 = 0;
+        if (acceptJ0)
+          fracJ0 = min(0.5, eShift / pInJRF[0].e());
+        if (acceptJ1)
+          fracJ1 = min(0.5, eShift / pInJRF[1].e());
+        Vec4 pFromJun = fracJ0 * pJunLeg0 + fracJ1 * pJunLeg1;
+        if (acceptA0)
+          fracA0 = min(0.5, eShift / pInARF[0].e());
+        if (acceptA1)
+          fracA1 = min(0.5, eShift / pInARF[1].e());
+        Vec4 pFromAnti = fracA0 * pAntiLeg0 + fracA1 * pAntiLeg1;
 
-      // Case when either topology without junctions is the shorter one.
-      if (lambdaJA > min( lambda00, lambda01) && allowDoubleJunRem) {
+        // Pick a new quark at random; for simplicity no diquarks.
+        int idQ = flavSel.pickLightQ();
 
-        // Find indices of particles.
-        int iCol1 = iJunLeg0[1];
-        int iCol2 = iJunLeg1[1];
-        int iAcol1 = iAntiLeg0[1];
-        int iAcol2 = iAntiLeg1[1];
-        if (lambda00 > lambda01)
-          swap(iAcol1, iAcol2);
+        int junMother1  = min(iJunLeg0[1], iJunLeg1[1]);
+        int junMother2  = max(iJunLeg0[1], iJunLeg1[1]);
+        int antiMother1 = min(iAntiLeg0[1], iAntiLeg1[1]);
+        int antiMother2 = max(iAntiLeg0[1], iAntiLeg1[1]);
 
-        // Change the colour index and mark junctions to be removed.
-        int iNew1 = event.copy(iAcol1, 66);
-        event[iNew1].acol(event[iCol1].col());
-        int iNew2 = event.copy(iAcol2, 66);
-        event[iNew2].acol(event[iCol2].col());
-        junRem.push_back(junChains[i][0]);
-        junRem.push_back(junChains[i][1]);
-        continue;
-      }
+        // Copy junction partons with scaled-down momenta and update legs.
+        int iJunNew1 = event.copy(iJunLeg0[1], 76);
+        event[iJunNew1].rescale5(1. - fracJ0);
+        iJunLeg0[1] = iJunNew1;
+        event[iJunNew1].mothers(junMother2, junMother1);
 
-      // Case where junction and antijunction to be separated.
-      // Shuffle (p+/p-)  momentum of order <mThad> between systems,
-      // times 2/3 for 120 degree in JRF, times 1/2 for two legs,
-      // but not more than half of what nearest parton carries.
+        int iJunNew2 = event.copy(iJunLeg1[1], 76);
+        event[iJunNew2].rescale5(1. - fracJ1);
+        iJunLeg1[1] = iJunNew2;
+        event[iJunNew2].mothers(junMother2, junMother1);
 
-      // Only allow to take momentum from non-heavy resonances
-      // (i.e. id 1-5 and 21 and diquarks). If none is available return false.
-      int idJ0Abs = event[ iJunLeg0[1] ].idAbs();
-      bool acceptJ0 = idJ0Abs < 6 || idJ0Abs == 21 ||
-        (idJ0Abs > 1000 && idJ0Abs < 6000 && (idJ0Abs / 10) % 10 == 0);
-      int idJ1Abs = event[ iJunLeg1[1] ].idAbs();
-      bool acceptJ1 = idJ1Abs < 6 || idJ1Abs == 21 ||
-        (idJ1Abs > 1000 && idJ1Abs < 6000 && (idJ1Abs / 10) % 10 == 0);
-      int idA0Abs = event[ iAntiLeg0[1] ].idAbs();
-      bool acceptA0 = idA0Abs < 6 || idA0Abs == 21 ||
-        (idA0Abs > 1000 && idA0Abs < 6000 && (idA0Abs / 10) % 10 == 0);
-      int idA1Abs = event[ iAntiLeg1[1] ].idAbs();
-      bool acceptA1 = idA1Abs < 6 || idA1Abs == 21 ||
-        (idA1Abs > 1000 && idA1Abs < 6000 && (idA1Abs / 10) % 10 == 0);
+        // Update antijunction anticolour and store antiquark with junction
+        // momentum.
+        int acolQ = event.nextColTag();
+        event.endColJunction(iAnti, iAntiLeg, acolQ);
+        event.colJunction(iAnti, iAntiLeg, acolQ);
+        int iNewA = event.append( -idQ, 76, junMother2, junMother1, 0, 0,
+          0, acolQ, pFromJun, pFromJun.mCalc() );
 
-      if ( !(acceptJ0 || acceptJ1)) {
-         infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunPairs: "
-          "No light quarks available in junction split.");
-         return false;
-      }
+        // Copy antijunction partons with scaled-down momenta and update legs.
+        int iAntiNew1 = event.copy(iAntiLeg0[1], 76);
+        event[iAntiNew1].rescale5(1. - fracA0);
+        iAntiLeg0[1] = iAntiNew1;
+        event[iAntiNew1].mothers(antiMother2, antiMother1);
 
-      if ( !(acceptA0 || acceptA1)) {
-         infoPtr->errorMsg("Warning in JunctionSplitting::SplitJunPairs: "
-          "No light quarks available in junction split.");
-         return false;
-      }
+        int iAntiNew2 = event.copy(iAntiLeg1[1], 76);
+        event[iAntiNew2].rescale5(1. - fracA1);
+        iAntiLeg1[1] = iAntiNew2;
+        event[iAntiNew2].mothers(antiMother2, antiMother1);
 
-      double eShift = MTHAD / (3. * sqrt(vJvAe2y));
-      double fracJ0 = 0, fracJ1 = 0, fracA0 = 0, fracA1 = 0;
-      if (acceptJ0)
-        fracJ0 = min(0.5, eShift / pInJRF[0].e());
-      if (acceptJ1)
-        fracJ1 = min(0.5, eShift / pInJRF[1].e());
-      Vec4 pFromJun = fracJ0 * pJunLeg0 + fracJ1 * pJunLeg1;
-      if (acceptA0)
-        fracA0 = min(0.5, eShift / pInARF[0].e());
-      if (acceptA1)
-        fracA1 = min(0.5, eShift / pInARF[1].e());
-      Vec4 pFromAnti = fracA0 * pAntiLeg0 + fracA1 * pAntiLeg1;
+        // Update junction colour and store quark with antijunction momentum.
+        int colQ = event.nextColTag();
+        event.endColJunction(iJun, iLeg, colQ);
+        event.colJunction(iJun, iLeg, colQ);
+        int iNewJ = event.append( idQ, 76, antiMother2, antiMother1, 0, 0,
+          colQ, 0, pFromAnti, pFromAnti.mCalc() );
 
-      // Pick a new quark at random; for simplicity no diquarks.
-      int idQ = flavSel.pickLightQ();
+        // Set daughters.
+        event[event[iJunNew1].mother1()].daughters( iJunNew1, iNewA);
+        event[event[iJunNew1].mother2()].daughters( iJunNew1, iNewA);
+        event[event[iAntiNew1].mother1()].daughters( iAntiNew1, iNewJ);
+        event[event[iAntiNew1].mother2()].daughters( iAntiNew1, iNewJ);
 
-      int junMother1  = min(iJunLeg0[1], iJunLeg1[1]);
-      int junMother2  = max(iJunLeg0[1], iJunLeg1[1]);
-      int antiMother1 = min(iAntiLeg0[1], iAntiLeg1[1]);
-      int antiMother2 = max(iAntiLeg0[1], iAntiLeg1[1]);
-
-      // Copy junction partons with scaled-down momenta and update legs.
-      int iJunNew1 = event.copy(iJunLeg0[1], 76);
-      event[iJunNew1].rescale5(1. - fracJ0);
-      iJunLeg0[1] = iJunNew1;
-      event[iJunNew1].mothers(junMother2, junMother1);
-
-      int iJunNew2 = event.copy(iJunLeg1[1], 76);
-      event[iJunNew2].rescale5(1. - fracJ1);
-      iJunLeg1[1] = iJunNew2;
-      event[iJunNew2].mothers(junMother2, junMother1);
-
-      // Update antijunction anticolour and store antiquark with junction
-      // momentum.
-      int acolQ = event.nextColTag();
-      event.endColJunction(iAnti, iAntiLeg, acolQ);
-      event.colJunction(iAnti, iAntiLeg, acolQ);
-      int iNewA = event.append( -idQ, 76, junMother2, junMother1, 0, 0,
-        0, acolQ, pFromJun, pFromJun.mCalc() );
-
-      // Copy antijunction partons with scaled-down momenta and update legs.
-      int iAntiNew1 = event.copy(iAntiLeg0[1], 76);
-      event[iAntiNew1].rescale5(1. - fracA0);
-      iAntiLeg0[1] = iAntiNew1;
-      event[iAntiNew1].mothers(antiMother2, antiMother1);
-
-      int iAntiNew2 = event.copy(iAntiLeg1[1], 76);
-      event[iAntiNew2].rescale5(1. - fracA1);
-      iAntiLeg1[1] = iAntiNew2;
-      event[iAntiNew2].mothers(antiMother2, antiMother1);
-
-      // Update junction colour and store quark with antijunction momentum.
-      int colQ = event.nextColTag();
-      event.endColJunction(iJun, iLeg, colQ);
-      event.colJunction(iJun, iLeg, colQ);
-      int iNewJ = event.append( idQ, 76, antiMother2, antiMother1, 0, 0,
-        colQ, 0, pFromAnti, pFromAnti.mCalc() );
-
-      // Set daughters.
-      event[event[iJunNew1].mother1()].daughters( iJunNew1, iNewA);
-      event[event[iJunNew1].mother2()].daughters( iJunNew1, iNewA);
-      event[event[iAntiNew1].mother1()].daughters( iAntiNew1, iNewJ);
-      event[event[iAntiNew1].mother2()].daughters( iAntiNew1, iNewJ);
-
-      // Done with splitting junction from antijunction.
+        // Done with splitting junction from antijunction.
       }
     }
   }
@@ -913,8 +863,8 @@ bool JunctionSplitting::setAcol(Event& event, int col, int acol) {
       }
 
   // If no acol was found something went wrong.
-  infoPtr->errorMsg("Warning in JunctionSplitting::setAcol:"
-     "Anti colour not found when combing two junctions to a string");
+  loggerPtr->WARNING_MSG(
+     "anti-colour not found when combing two junctions to a string");
   return false;
 }
 

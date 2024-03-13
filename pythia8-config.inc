@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # pythia8-config is a part of the PYTHIA event generator.
-# Copyright (C) 2018 Torbjorn Sjostrand.
+# Copyright (C) 2024 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
-# Author: Philip Ilten, October 2014 - November 2017.
+# Author: Philip Ilten, October 2014 - Februrary 2024.
 #
 # Configuration tool for the PYTHIA event generator library. Eaxmple usage is:
 #     ./pythia8-config --cxxflags --ldflags --hepmc2
@@ -15,6 +15,7 @@
 # VARIABLES: Global variables not defined via command line arguments.
 #     CFG_FILE: The Makefile configuration file.
 #     USAGE:    Text printed when the --help option is passed.
+#     OPTIONS:  List of valid options that can be passed by the user.
 ################################################################################
 CFG_FILE=examples/Makefile.inc
 read -d "" USAGE << "BLOCKTEXT"
@@ -37,7 +38,8 @@ Available options.
 --includedir   : PYTHIA header directory (equivalent to --prefix-include).
 --datadir      : PYTHIA share directory (equivalent to --prefix-share).
 --xmldoc       : PYTHIA xmldoc directory.
---cxxflags     : Returns the PYTHIA -I flag string needed for compilation.
+--cxxflags     : Returns the compiler flags and PYTHIA -I flag string needed
+                 for compilation.
 --cflags       : Equivalent to --cxxflags.
 --ldflags      : Returns the PYTHIA -L/-l flag string needed for compilation.
 --libs         : Equivalent to --ldflags.
@@ -57,12 +59,40 @@ Available options.
              Note: this option automatically invokes DIR/bin/root-config to set 
              the ROOT lib/ and include/ paths. To set your ROOT paths manually
              instead, use --with-root-lib=DIR and --with-root-include=DIR.
-  yoda     : Lightweight histogramming package for use with RIVET.
   gzip     : Enable reading of GZIPPED files using the libz library.
   python   : Interface to use PYTHIA in Python.
   mg5mes   : MadGraph matrix element plugins for parton showers.
-  openmp   : Multi-threading support via OpenMP.  
+  openmp   : Multi-threading support via OpenMP.
+  mpich    : Multi-threading support via MPICH.
+  hdf5     : Support the use of HDF5.
+  highfive : HighFive headers, also needed for reading HDF5 Les Houches.
 BLOCKTEXT
+OPTIONS="-h --h -help --help --config --prefix --bindir --libdir --includedir"
+OPTIONS+=" --datadir --xmldoc --cxxflags --cflags --ldflags --libs"
+for PKG in "evtgen" "fastjet3" "hepmc2" "hepmc3" "lhapdf5" "lhapdf6" "powheg"\
+    "rivet" "root" "gzip" "python" "mg5mes" "openmp" "mpich" "hdf5"\
+    "highfive"; do
+    OPTIONS+=" --$PKG --with-$PKG"; done
+
+################################################################################
+# FUNCTION: Print formatted information to screen.
+#     bold/error/warn <message>
+# Errors are reported as white-on-red and warnings as black on yellow.
+################################################################################
+function bold() {
+    if [ -z "$TERM" ] || ! type "tput" &> /dev/null; then echo -e $@
+    else echo -e $(tput bold)$@$(tput sgr0); fi
+}
+
+function warn() {
+    if [ -z "$TERM" ] || ! type "tput" &> /dev/null; then echo -e $@
+    else echo -e $(tput setaf 0)$(tput setab 3)WARNING: $@$(tput sgr0); fi
+}
+
+function error() {
+    if [ -z "$TERM" ] || ! type "tput" &> /dev/null; then echo -e $@
+    else echo -e $(tput setaf 7)$(tput setab 1)ERROR: $@$(tput sgr0); fi
+}
 
 ################################################################################
 # MAIN: The main execution of the script.
@@ -96,7 +126,10 @@ if [ "$CFG_FILE" = "$PREFIX/Makefile.inc" ]; then
 
 # Parse the arguments.
 for VAR in "$@"; do
-    if [[ $VAR != --* ]]; then continue; fi
+    if ! [[ $OPTIONS =~ (^| )${VAR%%=*}($| ) ]]; then
+	warn "Ignoring invalid option \"${VAR%=*}\".";
+	continue;
+    fi
     VAR=$(echo ${VAR#--} | awk '{print toupper($0)}'); VAR=${VAR//"-"/"_"}
 
     # Handle the equivalent arguments.
@@ -116,7 +149,7 @@ for VAR in "$@"; do
     # All "--prefix" arguments.
     elif [[ $VAR = PREFIX* ]]; then eval OUT=\"$OUT \$$VAR\"
     # Flag arguments.
-    elif [ "$VAR" = "CXXFLAGS" ]; then OUT="$OUT -I$PREFIX_INCLUDE"
+    elif [ "$VAR" = "CXXFLAGS" ]; then OUT="$OUT $CXX_COMMON -I$PREFIX_INCLUDE"
     elif [ "$VAR" = "LDFLAGS" ]; then 
 	OUT="$OUT -L$PREFIX_LIB -Wl,-rpath,$PREFIX_LIB -lpythia8 $GZIP_LIB"
     # Package arguments.

@@ -1,5 +1,5 @@
 // ColourTracing.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -24,9 +24,9 @@ class ColourTracing {
 public:
 
   // Constructor.
-  ColourTracing() : infoPtr() {}
+  ColourTracing() : loggerPtr() {}
 
-  void init( Info* infoPtrIn) {infoPtr = infoPtrIn;}
+  void init(Logger* loggerPtrIn) {loggerPtr = loggerPtrIn;}
 
   // Setup the colour lists.
   bool setupColList(Event& event);
@@ -48,8 +48,8 @@ private:
 
    vector<int> iColEnd, iAcolEnd, iColAndAcol;
 
-  // Pointer to various information on the generation.
-  Info* infoPtr;
+  // Pointer to logger.
+  Logger* loggerPtr;
 
 };
 

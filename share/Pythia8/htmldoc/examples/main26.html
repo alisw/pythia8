@@ -4,14 +4,14 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main26.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:unavailable">Stefan Ask</a>
+//            Stefan Ask
 
-// Contact: Nishita Desai <nishita.desai@tifr.res.in>
+// Contact: Nishita Desai &lt;nishita.desai@tifr.res.in&gt;
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#extra+dimensions">Extra&nbsp;dimensions</a>
@@ -21,7 +21,7 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 
 // Documentation: S. Ask et al., arXiv:0809.4750 and arXiv:0912.4233
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 
 using namespace Pythia8;
 
@@ -49,112 +49,112 @@ int main() {
   Pythia pythia;
 
   // PYTHIA paramters:
-  pythia.readString("PhaseSpace:showViolation = off");
+  pythia.readString(&quot;PhaseSpace:showViolation = off&quot;);
 
   // Test case parameters
   if (nTest == 1) {
-    pythia.readString("ExtraDimensionsLED:monojet = on");
-    pythia.readString("ExtraDimensionsLED:n = 4");
-    pythia.readString("ExtraDimensionsLED:MD = 4000.");
-    pythia.readString("ExtraDimensionsLED:CutOffmode = 3");
-    pythia.readString("ExtraDimensionsLED:t = 2");
-    pythia.readString("5000039:m0 = 2500.");
-    pythia.readString("5000039:mWidth = 1500.");
-    pythia.readString("5000039:mMin = 1.");
-    pythia.readString("5000039:mMax = 13990.");
-    pythia.readString("PhaseSpace:pTHatMin = 700.");
+    pythia.readString(&quot;ExtraDimensionsLED:monojet = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:n = 4&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:MD = 4000.&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:CutOffmode = 3&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:t = 2&quot;);
+    pythia.readString(&quot;5000039:m0 = 2500.&quot;);
+    pythia.readString(&quot;5000039:mWidth = 1500.&quot;);
+    pythia.readString(&quot;5000039:mMin = 1.&quot;);
+    pythia.readString(&quot;5000039:mMax = 13990.&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 700.&quot;);
   } else if (nTest == 2){
-    pythia.readString("ExtraDimensionsUnpart:gg2Ug = off");
-    pythia.readString("ExtraDimensionsUnpart:qg2Uq = on");
-    pythia.readString("ExtraDimensionsUnpart:qqbar2Ug = on");
-    pythia.readString("ExtraDimensionsUnpart:spinU = 1");
-    pythia.readString("ExtraDimensionsUnpart:dU = 1.2");
-    pythia.readString("ExtraDimensionsUnpart:LambdaU = 1000");
-    pythia.readString("ExtraDimensionsUnpart:lambda = 1.0");
-    pythia.readString("ExtraDimensionsUnpart:CutOffmode = 0");
-    pythia.readString("5000039:m0 = 300.");
-    pythia.readString("5000039:mWidth = 500.");
-    pythia.readString("5000039:mMin = 1.");
-    pythia.readString("5000039:mMax = 13990.");
-    pythia.readString("PhaseSpace:pTHatMin = 700.");
+    pythia.readString(&quot;ExtraDimensionsUnpart:gg2Ug = off&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:qg2Uq = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:qqbar2Ug = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:spinU = 1&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:dU = 1.2&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:LambdaU = 1000&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:lambda = 1.0&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:CutOffmode = 0&quot;);
+    pythia.readString(&quot;5000039:m0 = 300.&quot;);
+    pythia.readString(&quot;5000039:mWidth = 500.&quot;);
+    pythia.readString(&quot;5000039:mMin = 1.&quot;);
+    pythia.readString(&quot;5000039:mMax = 13990.&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 700.&quot;);
   } else if (nTest == 3){
-    pythia.readString("ExtraDimensionsLED:ffbar2GZ = on");
-    pythia.readString("ExtraDimensionsLED:n = 6");
-    pythia.readString("ExtraDimensionsLED:MD = 2000.");
-    pythia.readString("ExtraDimensionsLED:CutOffmode = 1");
-    pythia.readString("5000039:m0 = 3000.");
-    pythia.readString("5000039:mWidth = 1500.");
-    pythia.readString("5000039:mMin = 1.");
-    pythia.readString("5000039:mMax = 13990.");
-    pythia.readString("PhaseSpace:pTHatMin = 50.");
+    pythia.readString(&quot;ExtraDimensionsLED:ffbar2GZ = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:n = 6&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:MD = 2000.&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:CutOffmode = 1&quot;);
+    pythia.readString(&quot;5000039:m0 = 3000.&quot;);
+    pythia.readString(&quot;5000039:mWidth = 1500.&quot;);
+    pythia.readString(&quot;5000039:mMin = 1.&quot;);
+    pythia.readString(&quot;5000039:mMax = 13990.&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 50.&quot;);
   } else if (nTest == 4){
-    pythia.readString("ExtraDimensionsUnpart:ffbar2UZ = on");
-    pythia.readString("ExtraDimensionsUnpart:spinU = 1");
-    pythia.readString("ExtraDimensionsUnpart:dU = 2.0");
-    pythia.readString("ExtraDimensionsUnpart:LambdaU = 1000");
-    pythia.readString("ExtraDimensionsUnpart:lambda = 1.000");
-    pythia.readString("ExtraDimensionsUnpart:CutOffmode = 0");
-    pythia.readString("5000039:m0 = 500.");
-    pythia.readString("5000039:mWidth = 1000.");
-    pythia.readString("5000039:mMin = 1.");
-    pythia.readString("5000039:mMax = 13990.");
-    pythia.readString("PhaseSpace:pTHatMin = 50.");
+    pythia.readString(&quot;ExtraDimensionsUnpart:ffbar2UZ = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:spinU = 1&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:dU = 2.0&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:LambdaU = 1000&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:lambda = 1.000&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:CutOffmode = 0&quot;);
+    pythia.readString(&quot;5000039:m0 = 500.&quot;);
+    pythia.readString(&quot;5000039:mWidth = 1000.&quot;);
+    pythia.readString(&quot;5000039:mMin = 1.&quot;);
+    pythia.readString(&quot;5000039:mMax = 13990.&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 50.&quot;);
   } else if (nTest == 5){
-    pythia.readString("ExtraDimensionsLED:ffbar2gammagamma = on");
-    pythia.readString("ExtraDimensionsLED:gg2gammagamma = on");
-    pythia.readString("ExtraDimensionsLED:LambdaT = 3300.");
-    pythia.readString("PhaseSpace:mHatMin = 800.");
+    pythia.readString(&quot;ExtraDimensionsLED:ffbar2gammagamma = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:gg2gammagamma = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsLED:LambdaT = 3300.&quot;);
+    pythia.readString(&quot;PhaseSpace:mHatMin = 800.&quot;);
   } else if (nTest == 6){
-    pythia.readString("ExtraDimensionsUnpart:ffbar2llbar = on");
-    pythia.readString("ExtraDimensionsUnpart:gg2llbar = off");
-    pythia.readString("ExtraDimensionsUnpart:spinU = 1");
-    pythia.readString("ExtraDimensionsUnpart:dU = 1.3");
-    pythia.readString("ExtraDimensionsUnpart:LambdaU = 1000");
-    pythia.readString("ExtraDimensionsUnpart:lambda = 1.0");
-    pythia.readString("ExtraDimensionsUnpart:gXX = 0");
-    pythia.readString("ExtraDimensionsUnpart:gXY = 0");
-    pythia.readString("PhaseSpace:mHatMin = 300.");
+    pythia.readString(&quot;ExtraDimensionsUnpart:ffbar2llbar = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:gg2llbar = off&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:spinU = 1&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:dU = 1.3&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:LambdaU = 1000&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:lambda = 1.0&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:gXX = 0&quot;);
+    pythia.readString(&quot;ExtraDimensionsUnpart:gXY = 0&quot;);
+    pythia.readString(&quot;PhaseSpace:mHatMin = 300.&quot;);
   } else if (nTest == 7){
-    pythia.readString("ExtraDimensionsTEV:ffbar2mu+mu- = on");
-    pythia.readString("ExtraDimensionsTEV:gmZmode = 3");
-    pythia.readString("ExtraDimensionsTEV:nMax = 100");
-    pythia.readString("ExtraDimensionsTEV:mStar = 4000");
-    pythia.readString("PhaseSpace:mHatMin = 1000");
-    pythia.readString("PhaseSpace:mHatMax = 6000");
-    pythia.readString("5000023:isResonance = false");
+    pythia.readString(&quot;ExtraDimensionsTEV:ffbar2mu+mu- = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsTEV:gmZmode = 3&quot;);
+    pythia.readString(&quot;ExtraDimensionsTEV:nMax = 100&quot;);
+    pythia.readString(&quot;ExtraDimensionsTEV:mStar = 4000&quot;);
+    pythia.readString(&quot;PhaseSpace:mHatMin = 1000&quot;);
+    pythia.readString(&quot;PhaseSpace:mHatMax = 6000&quot;);
+    pythia.readString(&quot;5000023:isResonance = false&quot;);
   } else if (nTest == 8){
-    pythia.readString("ExtraDimensionsG*:all = on");
+    pythia.readString(&quot;ExtraDimensionsG*:all = on&quot;);
   } else if (nTest == 9){
-    pythia.readString("ExtraDimensionsG*:qqbar2KKgluon* = on");
-    pythia.readString("ExtraDimensionsG*:KKintMode = 2");
-    pythia.readString("ExtraDimensionsG*:KKgqR = -0.2");
-    pythia.readString("ExtraDimensionsG*:KKgqL = -0.2");
-    pythia.readString("ExtraDimensionsG*:KKgbR = -0.2");
-    pythia.readString("ExtraDimensionsG*:KKgbL = 1.0");
-    pythia.readString("ExtraDimensionsG*:KKgtR = 5.0");
-    pythia.readString("ExtraDimensionsG*:KKgtL = 1.0");
-    pythia.readString("5100021:m0 = 2000");
+    pythia.readString(&quot;ExtraDimensionsG*:qqbar2KKgluon* = on&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKintMode = 2&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKgqR = -0.2&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKgqL = -0.2&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKgbR = -0.2&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKgbL = 1.0&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKgtR = 5.0&quot;);
+    pythia.readString(&quot;ExtraDimensionsG*:KKgtL = 1.0&quot;);
+    pythia.readString(&quot;5100021:m0 = 2000&quot;);
   }
 
   // Switch off sophisticated tau treatment: not yet matched to SUSY.
-  pythia.readString("TauDecays:mode = 0");
+  pythia.readString(&quot;TauDecays:mode = 0&quot;);
 
   // Initialization for LHC.
-  pythia.readString("Beams:eCM = 14000.");
+  pythia.readString(&quot;Beams:eCM = 14000.&quot;);
   pythia.init();
 
   // Validation histograms
-  Hist hEtjet("dN/dETjet: monojet check", 100, 0., 7000.);
-  Hist hMass("dN/m: graviton mass spectrum", 100, 0., 7000.);
+  Hist hEtjet(&quot;dN/dETjet: monojet check&quot;, 100, 0., 7000.);
+  Hist hMass(&quot;dN/m: graviton mass spectrum&quot;, 100, 0., 7000.);
 
   // Begin event loop.
   int iAbort = 0;
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
 
     // Generate events. Quit if many failures.
     if (!pythia.next()) {
-      if (++iAbort < nAbort) continue;
-      std::cout << " Event generation aborted prematurely, owing to error!\n";
+      if (++iAbort &lt; nAbort) continue;
+      std::cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
       break;
     }
 
@@ -162,7 +162,7 @@ int main() {
     int tmp_monojet = -1;
 
     // Particle loop
-    for (int iPart = 0; iPart < pythia.event.size(); ++iPart) {
+    for (int iPart = 0; iPart &lt; pythia.event.size(); ++iPart) {
 
       // From hard process (inital = 21, interm.=22, final=23 state)
       if (pythia.event[iPart].statusAbs()  == 22) {
@@ -183,10 +183,10 @@ int main() {
 
         // Find mono-jets
         if (nTest == 1 || nTest == 2) {
-          if ( pythia.event[iPart].idAbs() <= 6
+          if ( pythia.event[iPart].idAbs() &lt;= 6
             || pythia.event[iPart].idAbs() == 21 ){
-            if (tmp_monojet >= 0) {
-              std::cout << "More than one (hard process) mono-jet ! \n";
+            if (tmp_monojet &gt;= 0) {
+              std::cout &lt;&lt; &quot;More than one (hard process) mono-jet ! \n&quot;;
             } else {
               tmp_monojet  = iPart;
             }
@@ -197,12 +197,12 @@ int main() {
     }
 
     // Validation mono-jet wrt G.Giudice et al. paper [hep-ph/9811291v2]
-    if (tmp_monojet >= 0) {
+    if (tmp_monojet &gt;= 0) {
       double tmp_eta = pythia.event[tmp_monojet].eta();
       double tmp_et = pythia.event[tmp_monojet].eT();
       double tmp_et_cut = 1000;
-      if ( tmp_et >=  tmp_et_cut && abs(tmp_eta) < 3 ) {
-        hEtjet.fill( fabs(tmp_et) );
+      if ( tmp_et &gt;=  tmp_et_cut &amp;&amp; abs(tmp_eta) &lt; 3 ) {
+        hEtjet.fill( abs(tmp_et) );
       }
     }
 
@@ -210,7 +210,7 @@ int main() {
 
   // Final statistics.
   pythia.stat();
-  cout << hMass << hEtjet;
+  cout &lt;&lt; hMass &lt;&lt; hEtjet;
 
   return 0;
 }

@@ -1,5 +1,5 @@
 // SigmaHiggs.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // Part of code written by Marc Montull, CERN summer student 2007.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -52,7 +52,7 @@ private:
 
   // An H0, H1, H2 or A3 resonance object provides coupling
   // and propagator expressions.
-  ParticleDataEntry* HResPtr;
+  ParticleDataEntryPtr HResPtr;
   double mRes, GammaRes, m2Res, GamMRat, sigBW, widthOut;
   int    higgsType, codeSave, idRes;
   string nameSave;
@@ -95,7 +95,7 @@ private:
 
   // A H0, H1, H2 or A3 resonance object provides coupling
   // and propagator expressions.
-  ParticleDataEntry* HResPtr;
+  ParticleDataEntryPtr HResPtr;
   double mRes, GammaRes, m2Res, GamMRat, sigma;
   int    higgsType, codeSave, idRes;
   string nameSave;
@@ -138,7 +138,7 @@ private:
 
   // A H0, H1, H2 or A3 resonance object provides coupling
   // and propagator expressions.
-  ParticleDataEntry* HResPtr;
+  ParticleDataEntryPtr HResPtr;
   double mRes, GammaRes, m2Res, GamMRat, sigma;
   int    higgsType, codeSave, idRes;
   string nameSave;
@@ -647,7 +647,7 @@ public:
 private:
 
   // A H0 resonance object provides coupling and propagator expressions.
-  ParticleDataEntry* HResPtr;
+  ParticleDataEntryPtr HResPtr;
   double mRes, GammaRes, m2Res, GamMRat, m2W, thetaWRat, tan2Beta, sigBW,
          widthOutPos, widthOutNeg;
 

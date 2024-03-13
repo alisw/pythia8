@@ -1,9 +1,9 @@
 // main12.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: basic usage; LHE file;
+// Keywords: basic usage; LHE file
 
 // This is a simple test program.
 // It illustrates how Les Houches Event File input can be used in PYTHIA.
@@ -59,7 +59,7 @@ int main() {
   int iFile      = 1;
 
   // Begin event loop
-  for (int iEvent = 0; ; ++iEvent) {
+  while (iAbort < nAbort) {
 
     // Generate until none left in input file.
     if (!pythia.next()) {
@@ -74,10 +74,8 @@ int main() {
           continue;
         } else break;
       }
-
-      // First few failures write off as "acceptable" errors, then quit.
-      if (++iAbort < nAbort) continue;
-      break;
+      ++iAbort;
+      continue;
     }
 
     // List first few Les Houches and other events.

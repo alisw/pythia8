@@ -240,11 +240,8 @@ constructor takes the quark code (4 or 5)  as argument,
 to allow the proper amount of differentiation. 
  
 <p/> 
-A <b>destructor</b> is only needed if you plan to delete the process 
-before the natural end of the run, and require some special behaviour 
-at that point. If you call such a destructor you will leave a pointer 
-dangling inside the <code>Pythia</code> object you gave it in to, 
-if that still exists. 
+A <b>destructor</b> is only needed if you require some special 
+behaviour. 
  
 <method name="void SigmaProcess::initProc()"> 
 is called once during initialization, and can then be used to set up 
@@ -547,7 +544,7 @@ or <code>Sigma3Process</code>, which in their turn inherit from
 <code>SigmaProcess</code>. You then create an instance of this class 
 and hand it in to a <code>pythia</code> object with 
 <pre> 
-      SigmaProcess* mySigma = new MySigma(); 
+      SigmaProcessPtr mySigma = make_shared&lt;MySigma()&gt;; 
       pythia.setSigmaPtr( mySigma); 
 </pre> 
 If an external phase-space generator should be used for this process 
@@ -555,12 +552,15 @@ If an external phase-space generator should be used for this process
 this should be specified as a second argument in the call to 
 <code>setSigmaPtr()</code>, as in: 
 <pre> 
-      pythia.setSigmaPtr( new mySigma(), new myPhaseSpaceGenerator() ); 
+      pythia.setSigmaPtr(make_shared&lt;MySigma()&gt;, 
+                         make_shared&lt;MyPhaseSpaceGenerator()&gt;); 
 </pre> 
-If you have several processes you can repeat the procedure any number 
-of times. When <code>pythia.init()</code> is called these processes 
-are initialized along with any internal processes you may have switched on, 
-and treated in exactly the same manner. The  <code>pythia.next()</code> 
+If you have several processes you can use successive 
+<code>addSigmaPtr</code> calls with the same arguments as 
+<code>setSigmaPtr</code>. When <code>pythia.init()</code> is called 
+these processes are initialized along with any internal processes you 
+may have switched on, and treated in exactly the same manner. The 
+<code>pythia.next()</code> 
 will therefore generate a mix of the different kinds of processes without 
 distinction. See also the <aloc href="ProgramFlow">Program Flow</aloc> 
 description. 
@@ -682,4 +682,4 @@ evaluate the cross-section expressions.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

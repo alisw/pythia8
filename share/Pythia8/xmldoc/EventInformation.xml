@@ -517,6 +517,11 @@ In such cases the old hadron-hadron values can be found here, while
 provide the new Pomeron-hadron ones. 
 </methodmore> 
  
+<h3>Cross sections</h3> 
+ 
+Dedicated documentation describes the details of 
+<aloc href="CrossSectionsAndWeights">cross sections and weights</aloc>. 
+ 
 <h3>Loop counters</h3> 
  
 Mainly for internal/debug purposes, a number of loop counters from 
@@ -690,6 +695,130 @@ For the documentation of the necessary <code>Info</code> class
 retrieval functions, please consult the 
 <aloc href="LHEF">Les Houches Event Files </aloc> section. 
  
+<h3>Heavy Ion Information</h3> 
+ 
+When generating collisions involving <aloc href="HeavyIons">heavy 
+ions</aloc>, the <code>Info</code> object will contain a non-null 
+pointer <code>Info::hiInfo</code> to a special <code>HIInfo</code> 
+object. The information stored there is typically related to the 
+Glauber modelling of the nucleons in a nuclei. 
+ 
+<method name="double HIInfo::b()"> 
+the impact parameter in femtometers. 
+</method> 
+ 
+<method name="double HIInfo::phi()"> 
+the impact parameter angle. 
+</method> 
+ 
+<method name="double HIInfo::sigmaTot()"> 
+the total cross section from the Glauber calculation in millibarns. 
+</method> 
+ 
+<method name="double HIInfo::sigmaTotErr()"> 
+the error in the total cross section. 
+</method> 
+ 
+<method name="double HIInfo::sigmaND()"> 
+the inelastic non-diffractive  cross section from the Glauber calculation 
+in millibarns. 
+</method> 
+ 
+<method name="double HIInfo::sigmaNDErr()"> 
+the error in the inelastic non-diffractive cross section. 
+</method> 
+ 
+<method name="long HIInfo::nAttempts()"> 
+the number of attempted impact parameter points. 
+</method> 
+ 
+<method name="long HIInfo::nAccepted()"> 
+the number of accepted impact parameter points (resulting in actual events). 
+</method> 
+ 
+<method name="int HIInfo::nCollTot()"> 
+the number of separate sub-collisions in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nCollND()"> 
+the number of separate fully non-diffractive sub-collisions in the 
+current event. 
+</method> 
+ 
+<method name="int HIInfo::nCollNDTot()"> 
+the total number of non-diffractive NN-collisions in the current 
+event. 
+</method> 
+ 
+<method name="int HIInfo::nCollSDP()"> 
+the number of separate single diffractive projectile nucleon excitation 
+sub-collisions in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nCollSDT()"> 
+the number of separate single diffractive target nucleon excitation 
+sub-collisions in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nCollDD()"> 
+the number of separate double diffractive excitation sub-collisions in 
+the current event. 
+</method> 
+ 
+<method name="int HIInfo::nCollCD()"> 
+the number of separate central diffractive excitation sub-collisions in 
+the current event. 
+</method> 
+ 
+<method name="int HIInfo::nCollEL()"> 
+the number of separate elastic sub-collisions in 
+the current event. 
+</method> 
+ 
+<method name="int HIInfo::nPartProj()"> 
+number of interacting projectile nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nAbsProj()"> 
+number of absorptively wounded projectile nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nDiffProj()"> 
+number of diffrectively wounded projectile nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nELProj()"> 
+number of elastically scattered projectile nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nPartTarg()"> 
+number of interacting target nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nAbsTarg()"> 
+number of absorptively wounded target nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nDiffTarg()"> 
+number of diffrectively wounded target nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nELTarg()"> 
+number of elastically scattered target nucleons in the current event. 
+</method> 
+ 
+<method name="int HIInfo::nFail()"> 
+number of failed nucleon excitations in the current event. 
+</method> 
+ 
+<method name="double HIInfo::weight()"> 
+the weight of the current event. 
+</method> 
+ 
+<method name="double HIInfo::weightSum()"> 
+the sum of weights of the events generated so far. 
+</method> 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

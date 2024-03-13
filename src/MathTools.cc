@@ -1,5 +1,5 @@
 // MathTools.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,10 +19,10 @@ double GammaCoef[9] = {
       771.32342877765313,   -176.61502916214059,    12.507343278686905,
     -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7};
 
-double GammaReal(double x) {
+double gammaReal(double x) {
 
   // Reflection formula (recursive!) for x < 0.5.
-  if (x < 0.5) return M_PI / (sin(M_PI * x) * GammaReal(1 - x));
+  if (x < 0.5) return M_PI / (sin(M_PI * x) * gammaReal(1 - x));
 
   // Iterate through terms.
   double z = x - 1.;
@@ -152,7 +152,7 @@ double besselK1(double x){
   return result;
 }
 
-//--------------------------------------------------------------------------
+//==========================================================================
 
 // Integrate f over the specified range.
 // Note that f must be a function of one variable. In order to integrate one
@@ -163,11 +163,14 @@ double besselK1(double x){
 bool integrateGauss(double& resultOut, function<double(double)> f,
   double xLo, double xHi, double tol) {
 
-  // Initialize.
-  double result = 0.0;
-
   // Boundary check: return zero if xLo >= xHi.
-  if (xLo >= xHi) return true;
+  if (xLo >= xHi) {
+    resultOut = 0.0;
+    return true;
+  }
+
+  // Initialize temporary result.
+  double result = 0.0;
 
   // 8-point unweighted.
   static double x8[4]={  0.96028985649753623, 0.79666647741362674,
@@ -222,21 +225,20 @@ bool integrateGauss(double& resultOut, function<double(double)> f,
 
     // Precision in this bin not OK, subdivide.
     } else {
-      if (1.0 + c*abs(zDel) == 1.0) {
-        // Cannot subdivide further at double precision. Fail.
-        result = 0.0 ;
+      // Cannot subdivide further at double precision. Fail.
+      if (1.0 + c*abs(zDel) == 1.0)
         return false;
-      }
       zHi = zMid;
       nextbin = true;
     }
   }
 
+  // Write result and return success.
   resultOut = result;
   return true;
 }
 
-//--------------------------------------------------------------------------
+//==========================================================================
 
 // Solve f(x) = target for x in the specified range. Note that f must
 // be a function of one variable. In order to solve an equation with a
@@ -317,6 +319,616 @@ bool brent(double& solutionOut, function<double(double)> f,  double target,
 
   // Maximum number of iterations exceeded.
   return false;
+}
+
+//==========================================================================
+
+// Gram determinant, invariants used in the argument = 2*pi*pj.
+
+double gramDet( double s01tilde, double s12tilde, double s02tilde,
+  double m0, double m1, double m2) {
+  return ((s01tilde*s12tilde*s02tilde - pow2(s01tilde)*pow2(m2)
+           - pow2(s02tilde)*pow2(m1) - pow2(s12tilde)*pow2(m0))/4
+          + pow2(m0)*pow2(m1)*pow2(m2));
+}
+
+double gramDet(Vec4 p0, Vec4 p1, Vec4 p2) {
+  return gramDet(2*p0*p1, 2*p1*p2, 2*p0*p2, p0.mCalc(), p1.mCalc(),
+    p2.mCalc());
+}
+
+//==========================================================================
+
+// Dilogarithm.
+
+double Li2(const double x, const double kmax, const double xerr) {
+  if (x < 0.0) return 0.5*Li2(x*x) - Li2(-x);
+  if (x <= 0.5) {
+    double sum(x), term(x);
+    for (int k = 2; k < kmax; k++) {
+      double rk = (k-1.0)/k;
+      term *= x*rk*rk;
+      sum += term;
+      if (abs(term/sum) < xerr) return sum;
+    }
+    cout << "Maximum number of iterations exceeded in Li2" << endl;
+    return sum;
+  }
+  if (x < 1.0)  return M_PI*M_PI/6.0 - Li2(1.0 - x) - log(x)*log(1.0 - x);
+  if (x == 1.0) return M_PI*M_PI/6.0;
+  if (x <= 1.01) {
+    const double eps(x - 1.0), lne(log(eps)),
+      c0(M_PI*M_PI/6.0),         c1(  1.0 - lne),
+      c2(-(1.0 - 2.0*lne)/4.0),  c3( (1.0 - 3.0*lne)/9.0),
+      c4(-(1.0 - 4.0*lne)/16.0), c5( (1.0 - 5.0*lne)/25.0),
+      c6(-(1.0 - 6.0*lne)/36.0), c7( (1.0 - 7.0*lne)/49.0),
+      c8(-(1.0 - 8.0*lne)/64.0);
+    return c0 + eps*(c1 + eps*(c2 + eps*(c3 + eps*(c4 + eps*(c5 + eps*(
+                     c6 + eps*(c7 + eps*c8)))))));
+  }
+  double logx = log(x);
+  if (x<=2.0) return M_PI*M_PI/6.0 + Li2(1.0 - 1.0/x) -
+                logx*(log(1.0 - 1.0/x) + 0.5*logx);
+  return M_PI*M_PI/3.0 - Li2(1.0/x) - 0.5*logx*logx;
+}
+
+
+//==========================================================================
+
+// Standard factorial.
+
+double factorial(const int n) {
+  double fac = 1;
+  for (int i = 2; i <= n; i++) fac *= i;
+  return fac;
+}
+
+//==========================================================================
+
+// Binomial coefficient.
+
+int binomial(const int n, const int m) {
+  if (m < 0 || m > n) return 0;
+  else if (m == n || m == 0) return 1;
+  else if (m == 1 || m == n - 1) return n;
+  else return factorial(n)/factorial(m)/factorial(n - m) + 0.01;
+}
+
+//==========================================================================
+
+// Lambert W function using the rational fit from Darko Veberic's
+// paper, arXiv:1209.0735v2.  Should give 5 digits of precision for
+// positive arguments x not too large (fit region was 0.3, 2e, but
+// still has 5-digit accuracy at zero).  Precision quickly drops for
+// negative values, but he has extra functions that can be implemented
+// if those are needed, and for very large values the asymptotic
+// log(x), log(log(x)) form could be used if precise solutions for
+// large values are needed. For now just write a warning if we are
+// ever asked for a value far outside region of validity.
+
+double lambertW(const double x) {
+  if (x == 0.) return 0.;
+  if (x < -0.2) {
+    cout << "Warning in lambertW"
+         << ": Accuracy less than three decimal places for x < -0.2";
+  } else if (x > 10.) {
+    cout << "Warning in lambertW"
+         <<": Accuracy less than three decimal places for x > 10.";
+  }
+  return x*(1. + x*(2.445053 + x*(1.343664 + x*(0.14844 + 0.000804*x))))
+    /(1. + x*(3.444708 + x*(3.292489 + x*(0.916460 + x*(0.053068)))));
+}
+
+//==========================================================================
+
+// The Kallen function.
+
+double kallenFunction(const double x, const double y, const double z) {
+  return x*x + y*y + z*z - 2.*(x*y + x*z + y*z);
+}
+
+//==========================================================================
+
+// Generate linearly spaced points.
+
+vector<double> linSpace(int nPts, double xMin, double xMax) {
+  double dx = (xMax - xMin) / (nPts - 1);
+  vector<double> result(nPts);
+  for (size_t i = 0; i < result.size(); ++i)
+    result[i] = xMin + i * dx;
+  return result;
+}
+
+//==========================================================================
+
+// Generate logarithmically spaced points.
+
+vector<double> logSpace(int nPts, double xMin, double xMax) {
+  double rx = pow(xMax / xMin, 1. / (nPts - 1));
+  vector<double> result(nPts);
+  for (size_t i = 0; i < result.size(); ++i)
+    result[i] = xMin * pow(rx, i);
+  return result;
+}
+
+//==========================================================================
+
+// LinearInterpolator class.
+// Used to interpolate between values in linearly spaced data.
+
+//--------------------------------------------------------------------------
+
+// Operator to get interpolated value at the specified point.
+
+double LinearInterpolator::at(double xIn) const {
+
+  if (ysSave.size() == 0)
+    return numeric_limits<double>::quiet_NaN();
+  if (ysSave.size() == 1)
+    return ysSave[0];
+  if (xIn < leftSave || xIn > rightSave)
+    return 0.;
+
+  // Select interpolation bin.
+  double t = (xIn - leftSave) / (rightSave - leftSave);
+  int lastIdx = ysSave.size() - 1;
+  int j = (int)floor(t * lastIdx);
+
+  // Return zero outside of interpolation range.
+  if (j < 0 || j >= lastIdx) return 0.;
+  // Select position in bin and return linear interpolation.
+  else {
+    double s = (xIn - (leftSave + j * dx())) / dx();
+    return (1 - s) * ysSave[j] + s * ysSave[j + 1];
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Plot the data points of this LinearInterpolator in a histogram.
+
+Hist LinearInterpolator::plot(string title) const {
+  return plot(title, leftSave, rightSave);
+}
+
+Hist LinearInterpolator::plot(string title, double xMin, double xMax) const {
+
+  int nBins = ceil((xMax - xMin) / (rightSave - leftSave) * ysSave.size());
+
+  Hist result(title, nBins, xMin, xMax, false);
+  double dxNow = (xMax - xMin) / nBins;
+
+  for (int i = 0; i < nBins; ++i) {
+    double x = xMin + dxNow * (0.5 + i);
+    result.fill(x, at(x));
+  }
+
+  return result;
+}
+
+//--------------------------------------------------------------------------
+
+// Sample a random number distributed as given by this LinearInterpolator.
+
+double LinearInterpolator::sample(Rndm& rndm) const {
+
+  for (double y : ysSave)
+    if (y < 0)
+      return numeric_limits<double>::quiet_NaN();
+
+  double dxNow = dx();
+  double integral = 0.5 * dxNow * (ysSave.front() + ysSave.back());
+  for (size_t i = 1; i < ysSave.size() - 1; ++i)
+    integral += dxNow * ysSave[i];
+  double threshold = integral * rndm.flat();
+
+  for (size_t i = 0; i < ysSave.size() - 1; ++i) {
+    double intBin = 0.5 * dxNow * (ysSave[i] + ysSave[i + 1]);
+    if (threshold > intBin)
+      threshold -= intBin;
+    else {
+      double At = threshold / intBin;
+      double yi = ysSave[i];
+      double dy = ysSave[i + 1] - ysSave[i];
+
+      double t;
+      // For very small dy, assume flat area.
+      if (abs(dy) < 1e-6)
+        t = At;
+      // Otherwise use standard abc formula
+      else
+        t = (-yi + sqrt(pow2(yi) + 2 * At * dy * intBin / dxNow)) / dy;
+
+      return leftSave + dxNow * (i + t);
+    }
+  }
+
+  return ysSave.back();
+}
+
+//==========================================================================
+
+// LinearInterpolator class.
+// Used to interpolate between values in linearly spaced data.
+
+//--------------------------------------------------------------------------
+
+// Operator to get interpolated value at the specified point.
+
+double LogInterpolator::at(double xIn) const {
+
+  if (ysSave.size() == 0)
+    return numeric_limits<double>::quiet_NaN();
+  if (ysSave.size() == 1)
+    return ysSave[0];
+  if (xIn < leftSave || xIn > rightSave)
+    return 0.;
+
+  // Select interpolation bin.
+  double t = log(xIn / leftSave) / log(rxSave);
+  int j = floor(t);
+  double s = t - j;
+
+  return pow(ysSave[j], 1 - s) * pow(ysSave[j + 1], s);
+}
+
+//--------------------------------------------------------------------------
+
+// Plot the data points of this LogInterpolator in a histogram.
+
+Hist LogInterpolator::plot(string title, int nBins,
+  double xMin, double xMax) const {
+
+  double drNow = pow(xMax / xMin, 1. / nBins);
+  Hist result(title, nBins, xMin / sqrt(drNow), xMax * sqrt(drNow), true);
+
+  for (int i = 0; i < nBins; ++i) {
+    double x = xMin * pow(drNow, 0.5 + i);
+    result.fill(x, at(x));
+  }
+
+  return result;
+}
+
+//==========================================================================
+
+// Class for the "Hungarian" pairing algorithm.
+
+//--------------------------------------------------------------------------
+
+// A single function wrapper for solving assignment problem.
+
+double HungarianAlgorithm::solve(vector <vector<double> >& distMatrix,
+  vector<int>& assignment) {
+
+  int nRows = distMatrix.size();
+  int nCols = distMatrix[0].size();
+  vector<double> distMatrixIn(nRows * nCols);
+  vector<int> solution(nRows);
+  double cost = 0.0;
+
+  // Fill in the distMatrixIn. Mind the index is "i + nRows * j".
+  // Here the cost matrix of size MxN is defined as a double precision
+  // array of N*M elements. In the solving functions matrices are seen
+  // to be saved MATLAB-internally in row-order. (i.e. the matrix [1
+  // 2; 3 4] will be stored as a vector [1 3 2 4], NOT [1 2 3 4]).
+  for (int row = 0; row < nRows; row++)
+    for (int col = 0; col < nCols; col++)
+      distMatrixIn[row + nRows * col] = distMatrix[row][col];
+
+  // Call solving function.
+  optimal(solution, cost, distMatrixIn, nRows, nCols);
+  assignment.clear();
+  for (int r = 0; r < nRows; r++) assignment.push_back(solution[r]);
+  return cost;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Solve optimal solution for assignment.
+
+void HungarianAlgorithm::optimal(vector<int> &assignment, double& cost,
+  vector<double>& distMatrixIn, int nOfRows, int nOfColumns) {
+
+  // Initialization.
+  int nOfElements(nOfRows * nOfColumns), minDim(0);
+  vector<double> distMatrix(nOfElements);
+  vector<bool> coveredColumns(nOfColumns), coveredRows(nOfRows),
+    starMatrix(nOfElements), newStarMatrix(nOfElements),
+    primeMatrix(nOfElements);
+  cost = 0;
+  for (int row = 0; row<nOfRows; row++) assignment[row] = -1;
+
+  // Generate working copy of distance matrix. Check if all matrix
+  // elements are positive.
+  for (int row = 0; row < nOfElements; row++) {
+    double value(distMatrixIn[row]);
+    if (value < 0) std::cerr << "HungarianAlgorithm::assigmentoptimal(): All"
+                             << " matrix elements have to be non-negative.\n";
+    distMatrix[row] = value;
+  }
+
+  // Preliminary steps.
+  if (nOfRows <= nOfColumns) {
+    minDim = nOfRows;
+    for (int row = 0; row < nOfRows; row++) {
+      // Find the smallest element in the row.
+      int idx(row);
+      double minValue(distMatrix[idx]);
+      idx += nOfRows;
+      while (idx < nOfElements) {
+        double value(distMatrix[idx]);
+        if (value < minValue) minValue = value;
+        idx += nOfRows;
+      }
+
+      // Subtract the smallest element from each element of the row.
+      idx = row;
+      while (idx < nOfElements) {
+        distMatrix[idx] -= minValue;
+        idx += nOfRows;
+      }
+    }
+
+    // Steps 1 and 2a.
+    for (int row = 0; row < nOfRows; row++)
+      for (int col = 0; col < nOfColumns; col++)
+        if (abs(distMatrix[row + nOfRows*col]) <
+          numeric_limits<double>::epsilon())
+          if (!coveredColumns[col]) {
+            starMatrix[row + nOfRows*col] = true;
+            coveredColumns[col] = true;
+            break;
+          }
+  } else {
+    minDim = nOfColumns;
+    for (int col = 0; col < nOfColumns; col++) {
+      // Find the smallest element in the column.
+      int idx(nOfRows*col);
+      int columnEnd(idx + nOfRows);
+      double minValue = distMatrix[idx++];
+      while (idx < columnEnd) {
+        double value(distMatrix[idx++]);
+        if (value < minValue) minValue = value;
+      }
+
+      // Subtract the smallest element from each element of the column.
+      idx = nOfRows*col;
+      while (idx < columnEnd) distMatrix[idx++] -= minValue;
+    }
+
+    // Steps 1 and 2a.
+    for (int col = 0; col < nOfColumns; col++)
+      for (int row = 0; row < nOfRows; row++)
+        if (abs(distMatrix[row + nOfRows*col]) <
+          numeric_limits<double>::epsilon())
+          if (!coveredRows[row]) {
+            starMatrix[row + nOfRows*col] = true;
+            coveredColumns[col] = true;
+            coveredRows[row] = true;
+            break;
+          }
+    for (int row = 0; row < nOfRows; row++) coveredRows[row] = false;
+  }
+
+  // Move to step 2b.
+  step2b(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
+    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
+
+  // Compute cost and remove invalid assignments.
+  calcCost(assignment, cost, distMatrixIn, nOfRows);
+  return;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Build the assignment vector.
+
+void HungarianAlgorithm::vect(vector<int>& assignment,
+  vector<bool>& starMatrix, int nOfRows, int nOfColumns) {
+  for (int row = 0; row < nOfRows; row++)
+    for (int col = 0; col < nOfColumns; col++)
+      if (starMatrix[row + nOfRows*col]) {assignment[row] = col; break;}
+
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate the assignment cost.
+
+void HungarianAlgorithm::calcCost(vector<int>& assignment, double& cost,
+  vector<double>& distMatrix, int nOfRows) {
+  for (int row = 0; row < nOfRows; row++) {
+    int col(assignment[row]);
+    if (col >= 0) cost += distMatrix[row + nOfRows*col];
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+// Factorized step 2a of the algorithm.
+
+void HungarianAlgorithm::step2a(vector<int>& assignment,
+  vector<double>& distMatrix, vector<bool>& starMatrix,
+  vector<bool>& newStarMatrix, vector<bool>& primeMatrix,
+  vector<bool>& coveredColumns, vector<bool>& coveredRows,
+  int nOfRows, int nOfColumns, int minDim) {
+
+  // Cover every column containing a starred zero.
+  for (int col = 0; col < nOfColumns; col++) {
+    int idx(nOfRows*col);
+    int columnEnd(idx + nOfRows);
+    while (idx < columnEnd) {
+      if (starMatrix[idx++]) {coveredColumns[col] = true; break;}
+    }
+  }
+
+  // Move to step 2b (note, original comment changed by Skands).
+  step2b(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
+    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Factorized step 2b of the algorithm.
+
+void HungarianAlgorithm::step2b(
+  vector<int>& assignment, vector<double>& distMatrix,
+  vector<bool>& starMatrix, vector<bool>& newStarMatrix,
+  vector<bool>& primeMatrix, vector<bool>& coveredColumns,
+  vector<bool>& coveredRows, int nOfRows, int nOfColumns, int minDim) {
+
+  // Count covered columns.
+  int nOfCoveredColumns(0);
+  for (int col = 0; col < nOfColumns; col++)
+    if (coveredColumns[col]) nOfCoveredColumns++;
+
+  // Algorithm finished.
+  if (nOfCoveredColumns == minDim)
+    vect(assignment, starMatrix, nOfRows, nOfColumns);
+  // Move to step 3.
+  else step3(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
+    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Factorized step 3 of the algorithm.
+
+void HungarianAlgorithm::step3(
+  vector<int>& assignment, vector<double>& distMatrix,
+  vector<bool>& starMatrix, vector<bool>& newStarMatrix,
+  vector<bool>& primeMatrix, vector<bool>& coveredColumns,
+  vector<bool>& coveredRows, int nOfRows, int nOfColumns, int minDim) {
+
+  bool zerosFound(true);
+  while (zerosFound) {
+    zerosFound = false;
+    for (int col = 0; col < nOfColumns; col++)
+      if (!coveredColumns[col])
+        for (int row = 0; row < nOfRows; row++)
+          if ((!coveredRows[row]) &&
+            (abs(distMatrix[row + nOfRows*col]) <
+              numeric_limits<double>::epsilon())) {
+            // Prime zero.
+            primeMatrix[row + nOfRows*col] = true;
+
+            // Find starred zero in current row.
+            int starCol(0);
+            for (; starCol < nOfColumns; starCol++)
+              if (starMatrix[row + nOfRows*starCol]) break;
+
+            // No starred zero found, move to step 4.
+            if (starCol == nOfColumns) {
+              step4(assignment, distMatrix, starMatrix, newStarMatrix,
+                primeMatrix, coveredColumns, coveredRows, nOfRows,
+                nOfColumns, minDim, row, col);
+              return;
+            } else {
+              coveredRows[row] = true;
+              coveredColumns[starCol] = false;
+              zerosFound = true;
+              break;
+            }
+          }
+  }
+
+  // Move to step 5.
+  step5(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
+    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Factorized step 4 of the algorithm.
+
+void HungarianAlgorithm::step4(
+  vector<int>& assignment, vector<double>& distMatrix,
+  vector<bool>& starMatrix, vector<bool>& newStarMatrix,
+  vector<bool>& primeMatrix, vector<bool>& coveredColumns,
+  vector<bool>& coveredRows, int nOfRows, int nOfColumns, int minDim,
+  int row, int col) {
+
+  // Generate temporary copy of starMatrix.
+  int nOfElements(nOfRows*nOfColumns);
+  for (int n = 0; n < nOfElements; n++) newStarMatrix[n] = starMatrix[n];
+  // Star current zero.
+  newStarMatrix[row + nOfRows*col] = true;
+  // Find starred zero in current column.
+  int starCol(col), starRow(0);
+  for (; starRow < nOfRows; starRow++)
+    if (starMatrix[starRow + nOfRows*starCol]) break;
+  while (starRow < nOfRows) {
+    // Unstar the starred zero.
+    newStarMatrix[starRow + nOfRows*starCol] = false;
+    // Find primed zero in current row.
+    int primeRow(starRow), primeCol(0);
+    for (; primeCol < nOfColumns; primeCol++)
+      if (primeMatrix[primeRow + nOfRows*primeCol]) break;
+      // Star the primed zero.
+    newStarMatrix[primeRow + nOfRows*primeCol] = true;
+    // Find starred zero in current column.
+    starCol = primeCol;
+    for (starRow = 0; starRow < nOfRows; starRow++)
+      if (starMatrix[starRow + nOfRows*starCol]) break;
+  }
+
+  // Use temporary copy as new starMatrix, delete all primes, uncover
+  // all rows.
+  for (int n = 0; n < nOfElements; n++) {
+    primeMatrix[n] = false;
+    starMatrix[n] = newStarMatrix[n];
+  }
+  for (int n = 0; n < nOfRows; n++) coveredRows[n] = false;
+
+  // Move to step 2a.
+  step2a(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
+    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Factorized step 5 of the algorithm.
+
+void HungarianAlgorithm::step5(
+  vector<int>& assignment, vector<double>& distMatrix,
+  vector<bool>& starMatrix, vector<bool>& newStarMatrix,
+  vector<bool>& primeMatrix, vector<bool>& coveredColumns,
+  vector<bool>& coveredRows, int nOfRows, int nOfColumns, int minDim) {
+
+  // Find smallest uncovered element h.
+  double h(numeric_limits<double>::max());
+  for (int row = 0; row < nOfRows; row++)
+    if (!coveredRows[row])
+      for (int col = 0; col < nOfColumns; col++)
+        if (!coveredColumns[col]) {
+          double value(distMatrix[row + nOfRows*col]);
+          if (value < h) h = value;
+        }
+
+  // Add h to each covered row.
+  for (int row = 0; row < nOfRows; row++)
+    if (coveredRows[row])
+      for (int col = 0; col < nOfColumns; col++)
+        distMatrix[row + nOfRows*col] += h;
+
+  // Subtract h from each uncovered column.
+  for (int col = 0; col < nOfColumns; col++)
+    if (!coveredColumns[col])
+      for (int row = 0; row < nOfRows; row++)
+        distMatrix[row + nOfRows*col] -= h;
+
+  // Move to step 3.
+  step3(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
+    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
+
 }
 
 //==========================================================================

@@ -17,9 +17,9 @@ below.
  
 <p/> 
 Since both models deal with string overlaps in transverse space, it is 
-necessary to provide such information, as it is not present in the Pythia MPI 
-model. The information is provided through the 
-<aloc href="VertexInformation">Parton Vertex</aloc> methods. The string 
+necessary to provide such information, as it is not present in the 
+Pythia MPI model. The information is provided through the 
+<aloc href="PartonVertexInformation">Parton Vertex</aloc> methods. The string 
 shoving mechanism is exemplified in the <code>main101</code> example, 
 and the flavour ropes in <code>main102</code>. 
 A simpler version of flavour composition ropes exist <ref>Bie16c</ref>, 
@@ -54,7 +54,7 @@ overall strength parameter of the Rope Hadronization framework, as all effects
 scale with increasing string overlap. Notice that the value for the string 
 radius must be seen compared to the parameters which determines string 
 placement in the transverse plane, as described in 
-<aloc href="VetexInformation">Vertex Information</aloc>. 
+<aloc href="PartonVertexInformation">Parton Vertex Information</aloc>. 
 </parm> 
  
 <parm name="Ropewalk:m0" default="0.2" min="0.01" max="5.0"> 
@@ -79,11 +79,11 @@ f(d_\perp) = \frac{g_A \kappa d_\perp}{R^2}
  
 where <ei>d_\perp</ei> is the distance in transverse space between two string 
 pieces, calculated dynamically using 
-<aloc href="VetexInformation">Vertex Information</aloc>. Model parameters are 
-<ei>g_A</ei>, the amplitude of the shoving force, <ei>R</ei>, the string 
-radius, and <ei>g_E</ei>, a parameter dividing the equilibrium string radius 
-to account for the effect of strings starting out with a vanishing string 
-radius. 
+<aloc href="PartonVertexInformation">Vertex Information</aloc>. Model 
+parameters are <ei>g_A</ei>, the amplitude of the shoving force, 
+<ei>R</ei>, the string radius, and <ei>g_E</ei>, a parameter dividing 
+the equilibrium string radius to account for the effect of strings 
+starting out with a vanishing string radius. 
  
 <p/> 
 The model should be used with some caution. Simply switching it on, one will 
@@ -137,7 +137,7 @@ fact that the strings are created with a vanishing transverse size,
 and only shove each other when their transverse size is large enough 
 for interaction. Furthermore, the physical value of this parameter is 
 largely connected to the values set for 
-<aloc href="VetexInformation">Vertex Information</aloc>. 
+<aloc href="PartonVertexInformation">Parton Vertex Information</aloc>. 
 </parm> 
  
 <flag name="Ropewalk:shoveGluonLoops" default="on"> 
@@ -243,7 +243,7 @@ environments, such as central heavy ion collisions.
  
 <parm name="Ropewalk:presetKappa" default="0." min="0." max="100.0"> 
 The effective string tension is normally calculated dynamically using overlaps 
-of strings, based on <aloc href="VertexInformation">Parton Vertex</aloc> 
+of strings, based on <aloc href="PartonVertexInformation">Parton Vertex</aloc> 
 information. By setting <code>Ropewalk:setFixedKappa</code>, this information 
 is ignored, and a preset value provided in the <code>presetKappa</code> 
 variable is used. 
@@ -256,4 +256,4 @@ parameters, to allow for studies of exotic quark production in the Rope model.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

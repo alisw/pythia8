@@ -11,7 +11,6 @@
   <li><a href="#section0">Process Level</a></li>
   <li><a href="#section1">PartonLevel</a></li>
   <li><a href="#section2">HadronLevel</a></li>
-  <li><a href="#section3">Printing</a></li>
 </ol>
 
  
@@ -161,7 +160,7 @@ hadron level.
 Master switch for addition of beam remnants; on/off = true/false. 
 Only intended for very special applications, and cannot be used to 
 generate complete events. Specifically, unlike the other switches above, 
-the program will complain and possibly crash unlike you also set 
+the program will complain and possibly crash unless you also set 
 <code>HadronLevel:all = off</code> and <code>Check:event = off</code>. 
    
  
@@ -196,7 +195,7 @@ hadron-level steps.
  
 <p/> 
 For <code>HadronLevel:all = on</code> some parts of the event generation 
-on this level may be switched off individually: 
+on this level may be switched on or off individually: 
  
 <a name="anchor12"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:Hadronize &nbsp;</strong> 
@@ -206,18 +205,22 @@ Further options are found <a href="Fragmentation.html" target="page">here</a>.
    
  
 <a name="anchor13"></a>
-<p/><code>flag&nbsp; </code><strong> HadronLevel:HadronScatter &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
-Master switch for hadron rescattering, following the hadronization; 
-on/off = true/false. 
-Further options are found <a href="HadronScattering.html" target="page">here</a>. 
-   
- 
-<a name="anchor14"></a>
 <p/><code>flag&nbsp; </code><strong> HadronLevel:Decay &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Master switch for decays; on/off = true/false. 
 Further options are found <a href="ParticleDecays.html" target="page">here</a>. 
+   
+ 
+<a name="anchor14"></a>
+<p/><code>flag&nbsp; </code><strong> HadronLevel:Rescatter &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Master switch for hadronic rescattering, following the hadronization; 
+on/off = true/false. 
+<br/><b>Note</b>: If this is on, <code>Fragmentation:setVertices</code> and 
+<code>HadronVertex:rapidDecays</code> are automatically treated as being on, 
+since they provide spacetime information required by rescattering. 
+Consider also turning on <code>PartonVertex:setVertex</code>. Further options 
+are found <a href="HadronicRescattering.html" target="page">here</a>. 
    
  
 <a name="anchor15"></a>
@@ -236,35 +239,7 @@ event; on/off = true/false. Further options are found
 <a href="DeuteronProduction.html" target="page">here</a>. 
    
  
-<a name="section3"></a> 
-<h3>Printing</h3> 
- 
-<a name="anchor17"></a>
-<p/><code>flag&nbsp; </code><strong> Print:quiet &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
-Can be set on to avoid the printing during program execution, to the 
-largest extent possible. This flag acts by setting the relevant values 
-for <code>Init:showProcesses</code>, 
-<code>Init:showMultipartonInteractions</code>, 
-<code>Init:showChangedSettings</code>, 
-<code>Init:showAllSettings</code>, 
-<code>Init:showChangedParticleData</code>, 
-<code>Init:showChangedResonanceData</code>, 
-<code>Init:showAllParticleData</code>, 
-<code>Init:showOneParticleData</code>, 
-<code>Next:numberCount</code>, 
-<code>Next:numberShowLHA</code>, 
-<code>Next:numberShowInfo</code>, 
-<code>Next:numberShowProcess</code>, and 
-<code>Next:numberShowEvent</code>. 
-The change is to off or 0 for <code>Print:quiet = off</code>, 
-and restores to the respective default value for <code>= on</code>. 
-Those changes take effect immediately, so individual settings can be 
-changed afterwards. 
-   
- 
- 
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

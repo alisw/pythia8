@@ -1,5 +1,5 @@
 // FragmentationSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -31,7 +31,7 @@ void ColConfig::init(Info* infoPtrIn, StringFlav* flavSelPtrIn) {
   Settings* settingsPtr = infoPtrIn->settingsPtr;
 
   // Save pointers.
-  infoPtr       = infoPtrIn;
+  loggerPtr     = infoPtrIn->loggerPtr;
   flavSelPtr    = flavSelPtrIn;
 
   // Joining of nearby partons along the string.
@@ -73,13 +73,13 @@ bool ColConfig::insert( vector<int>& iPartonIn, Event& event) {
 
   // Check for rare triple- and higher junction systems (like J-Jbar-J)
   if (nJunctionLegs >= 5) {
-    infoPtr->errorMsg("Error in ColConfig::insert: "
+    loggerPtr->ERROR_MSG(
       "junction topology too complicated; too many junction legs");
     return false;
   }
   // Check that junction systems have at least three legs.
   else if (nJunctionLegs > 0 && nJunctionLegs <= 2) {
-    infoPtr->errorMsg("Error in ColConfig::insert: "
+    loggerPtr->ERROR_MSG(
       "junction topology inconsistent; too few junction legs");
     return false;
   }
@@ -87,8 +87,7 @@ bool ColConfig::insert( vector<int>& iPartonIn, Event& event) {
   // Check that momenta do not contain not-a-number.
   if (abs(massExcessIn) >= 0.);
   else {
-    infoPtr->errorMsg("Error in ColConfig::insert: "
-      "not-a-number system mass");
+    loggerPtr->ERROR_MSG("not-a-number system mass");
     return false;
   }
 
@@ -130,7 +129,7 @@ bool ColConfig::insert( vector<int>& iPartonIn, Event& event) {
     // If sufficiently nearby then join into one new parton.
     // Note: error sensitivity to mJoin indicates unstable precedure??
     hasJoined = false;
-    if (mJoinMin < mJoin) {
+    if (mJoinMin < mJoin && nSize > 0) {
       int iJoin1  = iPartonIn[iJoinMin];
       int iJoin2  = iPartonIn[(iJoinMin + 1)%nSize];
       int idNew   = (event[iJoin1].isGluon()) ? event[iJoin2].id()
@@ -204,7 +203,8 @@ bool ColConfig::insert( vector<int>& iPartonIn, Event& event) {
 // Insert a new qqbar colour singlet system in ascending mass order.
 // Simple version for at most two triplet-antitriplet systems.
 
-bool ColConfig::simpleInsert( vector<int>& iPartonIn, Event& event) {
+bool ColConfig::simpleInsert( vector<int>& iPartonIn, Event& event,
+  bool fixOrder) {
 
   // Find momentum and invariant mass of system, minus endpoint masses.
   Vec4 pSumIn   = event[ iPartonIn[0] ].p() + event[ iPartonIn[1] ].p();
@@ -218,8 +218,8 @@ bool ColConfig::simpleInsert( vector<int>& iPartonIn, Event& event) {
     massExcessIn, false, false) );
 
   // If necessary flip so that smallest mass excesses come first.
-  if (singlets.size() == 2 && massExcessIn < singlets[0].massExcess)
-    swap( singlets[0], singlets[1]);
+  if (!fixOrder && singlets.size() == 2 && massExcessIn
+    < singlets[0].massExcess) swap( singlets[0], singlets[1]);
 
   // Done.
   return true;
@@ -235,17 +235,17 @@ bool ColConfig::joinJunction( vector<int>& iPartonIn, Event& event,
   double massExcessIn) {
 
   // Find four-momentum and endpoint quarks and masses on the three legs.
-  Vec4   pLeg[3];
-  double mLeg[3] = { 0., 0., 0.};
-  int    idAbsLeg[3];
+  Vec4   pLeg[3] = {Vec4(), Vec4(), Vec4()};
+  double mLeg[3] = {0., 0., 0.};
+  int    idAbsLeg[3] = {0, 0, 0};
   int leg = -1;
   for (int i = 0; i < int(iPartonIn.size()); ++ i) {
     if (iPartonIn[i] < 0) ++leg;
-    else {
+    else if (leg < 3) {
       pLeg[leg]    += event[ iPartonIn[i] ].p();
       mLeg[leg]     = event[ iPartonIn[i] ].m();
       idAbsLeg[leg] = event[ iPartonIn[i] ].idAbs();
-    }
+    } else loggerPtr->WARNING_MSG("more than three legs found");
   }
 
   // Calculate invariant mass of three pairs, minus endpoint masses.
@@ -276,8 +276,8 @@ bool ColConfig::joinJunction( vector<int>& iPartonIn, Event& event,
 
   // Nothing to do if no two legs have small invariant mass, and
   // system as a whole is above MiniStringFragmentation threshold.
-  if (legA == -1 || (mMin > mJoinJunction && massExcessIn > mStringMin))
-    return false;
+  if (legA == -1 || legB == -1 || (mMin > mJoinJunction
+    && massExcessIn > mStringMin)) return false;
 
   // Construct separate index arrays for the three legs.
   vector<int> iLegA, iLegB, iLegC;
@@ -366,8 +366,7 @@ void ColConfig::collect(int iSub, Event& event, bool skipTrivial) {
   for (int i = 0; i < singlets[iSub].size(); ++i) {
     int iNow = singlets[iSub].iParton[i];
     if (iNow > 0 && event[iNow].e() < 0.)
-    infoPtr->errorMsg("Warning in ColConfig::collect: "
-      "negative-energy parton encountered");
+    loggerPtr->WARNING_MSG("negative-energy parton encountered");
   }
 
   // Partons may already have been collected, e.g. at ministring collapse.
@@ -636,7 +635,7 @@ void StringRegion::project(Vec4 pIn) {
 
 // Set up system from parton list.
 
-void StringSystem::setUp(vector<int>& iSys, Event& event) {
+void StringSystem::setUp(const vector<int>& iSys, const Event& event) {
 
   // Figure out how big the system is. (Closed gluon loops?)
   sizePartons = iSys.size();

@@ -1,5 +1,5 @@
 // SusyResonanceWidths.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand
+// Copyright (C) 2024 Torbjorn Sjostrand
 // Authors: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -56,10 +56,9 @@ bool SUSYResonanceWidths::allowCalc(){
 
   // Else we should do the calculation; set available channels
   bool done = getChannels(idRes);
-  stringstream idStream;
-  idStream << "ID = " << idRes ;
-  if (!done)  infoPtr->errorMsg("Error in SusyResonanceWidths::allowcalc: "
-    "unable to reset decay table.", idStream.str(), true);
+  if (!done)
+    loggerPtr->ERROR_MSG("unable to reset decay table",
+      "ID = " + to_string(idRes), true);
   return done;
 }
 
@@ -80,7 +79,7 @@ bool ResonanceSquark::getChannels(int idPDG){
   if (idPDG < ksusy) return false;
   if(idPDG % ksusy >= 7 || idPDG % ksusy < 1) return false;
 
-  ParticleDataEntry* squarkEntryPtr
+  ParticleDataEntryPtr squarkEntryPtr
     = particleDataPtr->particleDataEntryPtr(idPDG);
 
   // Delete any decay channels read
@@ -456,7 +455,7 @@ bool ResonanceGluino::getChannels(int idPDG){
   idPDG = abs(idPDG);
   if (idPDG != 1000021) return false;
 
-  ParticleDataEntry* gluinoEntryPtr
+  ParticleDataEntryPtr gluinoEntryPtr
     = particleDataPtr->particleDataEntryPtr(idPDG);
 
   // Delete any decay channels read
@@ -611,7 +610,7 @@ bool ResonanceNeut::getChannels(int idPDG){
   int iNeut = coupSUSYPtr->typeNeut(idPDG);
   if (iNeut < 1) return false;
 
-  ParticleDataEntry* neutEntryPtr
+  ParticleDataEntryPtr neutEntryPtr
     = particleDataPtr->particleDataEntryPtr(idPDG);
 
   // Delete any decay channels read
@@ -1017,7 +1016,7 @@ void  ResonanceNeut::calcWidth(bool){
     }
     else if (id1Abs > 2000010 && id1Abs%2 == 0 ) {
       // Check for right-handed neutralinos.
-      widNow = 0;
+      fac = 0;
     }
     else if (id1Abs > 1000000 && id1Abs%100 > 10 && id1Abs%100 < 17
       && id2Abs < 17){
@@ -1078,7 +1077,7 @@ bool ResonanceChar::getChannels(int idPDG){
   int iChar = coupSUSYPtr->typeChar(idPDG);
   if (iChar < 1) return false;
 
-  ParticleDataEntry* charEntryPtr
+  ParticleDataEntryPtr charEntryPtr
     = particleDataPtr->particleDataEntryPtr(idPDG);
 
   // Delete any decay channels read
@@ -1240,7 +1239,7 @@ void  ResonanceChar::calcWidth(bool) {
     }
     else if (id1Abs > 2000010 && id1Abs%2 == 0 ) {
       // Check for right-handed neutralinos.
-      widNow = 0;
+      fac = 0;
     }
     else if (id1Abs > 1000000 && id1Abs%100 > 10 && id1Abs%100 < 17
       && id2Abs < 17){
@@ -1290,7 +1289,7 @@ bool ResonanceSlepton::getChannels(int idPDG){
   if (idPDG < ksusy) return false;
   if(idPDG % ksusy < 7 || idPDG % ksusy > 17) return false;
 
-  ParticleDataEntry* slepEntryPtr
+  ParticleDataEntryPtr slepEntryPtr
     = particleDataPtr->particleDataEntryPtr(idPDG);
 
   // Delete any decay channels read

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2020 Torbjorn Sjostrand.
+# Copyright (C) 2024 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -29,14 +29,16 @@ Configuration options.
 --threads=N : Number of threads to run the examples.
 --skip=SKIP : Examples to skip passed as a string, e.g. "01 02 03".
 --run=MAIN  : Opposite of --skip, only run these mains, e.g. "01 02 03".
+--pre=PRE   : Insert a command before running each main, e.g. a debugger call.
 BLOCKTEXT
-OPTIONS="-h --h -help --threads --skip --run"
+OPTIONS="-h --h -help --threads --skip --run --pre"
 LOGFILE="runmains.log"
 main16="main16.cmnd"
 main42="main42.cmnd hepmcout42.dat"
 main43="main43.cmnd hepmcout43.dat"
 main44="main44.cmnd hepmcout44.dat"
 main45="main44.cmnd hepmcout45.dat"
+main46="main46.cmnd ttbar.hdf5 main46.hepmc"
 main48="/hep/evtgen/share/DECAY_2010.DEC /hep/evtgen/share/evt.pdl "
 main48+=" /hep/evtgen/share/Pythia8/xmldoc/ true"
 main81="main81.cmnd w+_production_lhc_0.lhe histout81.dat"
@@ -49,6 +51,7 @@ main87="main87.cmnd w_production hepmcout87.dat"
 main88="main88.cmnd w_production hepmcout88.dat"
 main89="main89ckkwl.cmnd hepmcout89.dat"
 main93="-c main93.cmnd -n 1000 -o main93.out"
+main280="main280.cmnd w+_production_lhc_ output.hepmc"
 main300="--nevents 50 --setting \"WeakSingleBoson:ffbar2gmZ=on\""
 
 ################################################################################
@@ -80,7 +83,7 @@ function runmains() {
 	if [ "$USE" = false ]; then continue; fi
 	eval ARGS=\$${MAIN}
 	make $MAIN
-	{ time ./$MAIN $ARGS ; } > $MAIN.log 2>&1
+	{ time $PRE ./$MAIN $ARGS ; } > $MAIN.log 2>&1
     done
 }
 

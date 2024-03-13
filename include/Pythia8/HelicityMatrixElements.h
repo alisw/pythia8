@@ -1,5 +1,5 @@
 // HelicityMatrixElements.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Philip Ilten, Torbjorn Sjostrand.
+// Copyright (C) 2024 Philip Ilten, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -158,8 +158,8 @@ public:
 
   HMETwoFermions2GammaZ2TwoFermions() : p0CAZ(), p2CAZ(), p0CVZ(), p2CVZ(),
     p0CAZp(), p2CAZp(), p0CVZp(), p2CVZp(), cos2W(), sin2W(), zG(), zM(),
-    zpG(), zpM(), s(), p0Q(), p2Q(), zaxis(), includeGamma(), includeZ(),
-    includeZp() {}
+    zpG(), zpM(), s(), p0Q(), p2Q(), sMin(), zaxis(), includeGamma(),
+    includeZ(), includeZp() {}
 
   void initConstants();
 
@@ -176,6 +176,10 @@ private:
   complex calculateZME(vector<int>, double, double, double, double,
     double, double);
 
+  // Return Z/Z' element, assuming massless fermions.
+  complex calculateZMEMasslessFermions(vector<int>, double, double, double,
+    double, double, double);
+
   // Return the Z' vector or axial coupling for a fermion.
   double zpCoupling(int id, string type);
 
@@ -188,8 +192,31 @@ private:
   // Fermion line charge.
   double p0Q, p2Q;
 
+  // Minimum s to use massless approximation.
+  double sMin;
+
   // Bool whether the incoming fermions are oriented with the z-axis.
   bool zaxis, includeGamma, includeZ, includeZp;
+
+};
+
+//==========================================================================
+
+// Helicity matrix element for the hard process of two photons ->
+// two fermions.
+
+class HMETwoGammas2TwoFermions : public HelicityMatrixElement {
+
+public:
+
+  void initWaves(vector<HelicityParticle>&);
+
+  complex calculateME(vector<int>);
+
+private:
+
+  double tm, um, m;
+  Vec4 q0, q1;
 
 };
 

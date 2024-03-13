@@ -1,5 +1,5 @@
 // PythiaStdlib.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -28,6 +28,26 @@ string toLower(const string& name, bool trim) {
   // Convert to lowercase letter by letter.
   for (int i = 0; i < int(temp.length()); ++i) temp[i] = tolower(temp[i]);
   return temp;
+
+}
+
+//==========================================================================
+
+// Convert a double to string using reasonable formatting.
+
+string toString(double val) {
+
+  stringstream ssval;
+  if ( val == 0. ) ssval << fixed << setprecision(1);
+  else if ( abs(val) < 0.001 ) ssval << scientific << setprecision(4);
+  else if ( abs(val) < 0.1 ) ssval << fixed << setprecision(7);
+  else if ( abs(val) < 1000. ) ssval << fixed << setprecision(5);
+  else if ( abs(val) < 1000000. ) ssval << fixed << setprecision(3);
+  else ssval << scientific << setprecision(4);
+  ssval << val;
+  string sval = ssval.str();
+  sval.erase(sval.find_last_not_of('0') + 1);
+  return sval;
 
 }
 

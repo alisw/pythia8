@@ -1,0 +1,446 @@
+<chapter name="Plugins"> 
+ 
+<h2>Plugins</h2> 
+ 
+Pythia is designed as a standalone package, with no external 
+dependencies.  However, there are many use cases for interfacing 
+external packages with Pythia. To that end, the 
+<code>include/Pythia8Plugins</code> directory provides a number of 
+header interfaces, which are then demonstrated in 
+<code>examples</code>. However, this method of including external 
+dependencies in Pythia is not always sufficient, and so a plugin 
+system is also available. The system works as follows (more details 
+are given later): 
+<ol> 
+<li>A user creates a standalone plugin library, which implements 
+derived classes from Pythia. This plugin library can be linked against 
+external libraries.</li> 
+<li>At runtime, a <code>Pythia</code> object loads this plugin 
+library.</li> 
+<li>Any new object requested by the user from this plugin library is 
+created and returned as a shared pointer. The shared pointer is the 
+same type as the Pythia base class of the plugin object. For example, 
+consider a plugin library that implements a new <code>MyPDF</code> 
+class which derives from the Pythia <code>PDF</code> class. The plugin 
+system will then return a shared pointer of type <code>PDF</code> 
+which allows access to a <code>MyPDF</code> object.</li> 
+</ol> 
+ 
+<p/> 
+This type of system has a number of advantages over the header interface 
+style of plugins. 
+<ol> 
+<li>The external dependencies only need to be handled once. For 
+example, consider using HepMC to write out event files. With the 
+plugin system, we only need to link the standalone plugin library with 
+HepMC at compile time. Then, any main program we might build after 
+this does not need to be linked against HepMC (headers or libraries), 
+but can still write HepMC output to file.</li> 
+<li>In some cases, we might want to replace core functionality in 
+Pythia with code that requires external dependencies. A good example 
+of this is LHAPDF, which can be used to replace the internal Pythia 
+PDF sets. Here, we can allow LHAPDF sets to be used seamlessly within 
+Pythia without introducing any external dependencies to the core 
+Pythia code.</li> 
+<li>We oftentimes want to use libraries that provide duplicate 
+symbols. This is happens when linking against FORTRAN libraries with 
+standard common blocks, or libraries that were generated using some 
+automated tool. An example of this is the matrix element corrections 
+provided via MG5 for the parton shower. Here, MG5 builds libraries 
+with identical symbol names and so we cannot link against multiple 
+versions of these libraries. The plugin system allows us to not only 
+choose which MG5 matrix element correction library we load at runtime, 
+but also load multiple libraries without causing symbol 
+conflicts.</li> 
+<li>It is now possible to create a Pythia executable, where all 
+interactions by the user are through command files, and no code needs 
+to be compiled.</li> 
+</ol> 
+Within Pythia, the plugin library is already used to provide access to 
+external libraries such as LHAPDF and MG5 matrix element corrections 
+in the parton shower. 
+ 
+<h3>Loading a Plugin</h3> 
+ 
+There are two ways to load plugins within Pythia code. The first is to 
+provide a list of plugins to Pythia via the <code>Init:plugins</code> 
+option (see <aloc href="MainProgramSettings">Main Program Settings</aloc> 
+for the definition of this option). To give an example, consider 
+writing a <code>UserHooks</code> class called <code>MyUserHooks</code> 
+and compiling this in the plugin library <code>libMyPlugins.so</code>. To 
+automatically load this user hook and pass it to your Pythia object, the 
+following command should be given to Pythia. 
+ 
+<p/> 
+<pre> 
+Init:plugins = {libMyPlugins.so::MyUserHooks} 
+</pre> 
+<p/> 
+ 
+Then, when <code>pythia.init()</code> is called, a <code>MyUserHooks</code> 
+object will be automatically created and set as the <code>UserHooks</code> 
+object for the Pythia object via the method 
+<code>pythia.setUserHooksPtr</code>. For most plugin object classes of 
+generic type <code>BaseClass</code>, the relevant pointer will be set via 
+the corresponding <code>pythia.setBaseClassPtr</code> method. For some 
+class types, there is an option to either <code>set</code> the 
+pointer, overwriting any previous pointer, or <code>add</code> the 
+pointer to a list of pointers that will all be used. To specify 
+whether the plugin should be set or added, a third optional keyword 
+can be specified, 
+ 
+<p/> 
+<pre> 
+Init:plugins = {libMyPlugins.so::MyUserHooks::set} 
+</pre> 
+<p/> 
+ 
+where this third keyword can be either <code>set</code> (the default) or 
+<code>add</code>. In this example, if there was a previous 
+<code>UserHooks</code> pointer, it would be replaced by a new 
+<code>MyUserHooks</code> pointer. 
+ 
+<p/> 
+The treatment of this third keyword is different for PDF plugins, 
+where it specifies the beam type (and the PDF pointer is always set, 
+rather than added). For example, 
+ 
+<p/> 
+<pre> 
+Init:plugins = {libMyPlugins.so::MyPDF1::A, libMyPlugins.so::MyPDF2::B} 
+</pre> 
+<p/> 
+ 
+sets <code>MyPDF1</code> for beam A, while 
+<code>MyPDF2</code> is set for beam B. This beam type can be taken from the 
+list of arguments to the 
+<code>Pythia::setPDFPtr</code> method in 
+<aloc href="ProgramFlow">Program Flow</aloc>, with the 
+<code>pdf</code> prefix and <code>Ptr</code> suffix stripped from the 
+argument name, for example <code>pdfPomAPtr</code> becomes 
+<code>PomA</code>. 
+ 
+If there are new settings which are defined in the 
+<code>libMyPlugins.so</code> library, these settings are registered before the 
+<code>MyUserHooks</code> object is created. In this way, it is possible to 
+pass settings to the <code>MyUserHooks</code> object from a command file. 
+This would be done as, 
+ 
+<p/> 
+<pre> 
+Init:plugins = {libMyPlugins.so::MyUserHooks::set::plugin.cmnd} 
+</pre> 
+<p/> 
+ 
+where <code>plugin.cmnd</code> is a standard command file for 
+Pythia. It is also possible to use the subrun feature of the Pythia 
+command files. 
+ 
+<p/> 
+<pre> 
+Init:plugins = {libMyPlugins.so::MyUserHooks::set::plugin.cmnd::2} 
+</pre> 
+<p/> 
+ 
+This command tells Pythia to load the specific commands for subrun two 
+from the <code>plugin.cmnd</code> file. 
+ 
+<p/> 
+The plugin functionality is available for a number of Pythia base classes 
+which can be passed as external pointers to a Pythia object. These include: 
+<ol> 
+<li><code>PDF</code> set via <code>Pythia::setPDFPtr</code></li> 
+<li><code>LHAup</code> set via <code>Pythia::setLHAupPtr</code></li> 
+<li><code>DecayHandler</code> set via <code>Pythia::setDecayPtr</code></li> 
+<li><code>RndmEngine</code> set via <code>Pythia::setRndmEnginePtr</code></li> 
+<li><code>UserHooks</code> set via 
+<code>Pythia::set/addUserHooksPtr</code></li> 
+<li><code>Merging</code> set via <code>Pythia::setMergingPtr</code></li> 
+<li><code>MergingHooks</code> set via 
+<code>Pythia::setMergingHooksPtr</code></li> 
+<li><code>BeamShape</code> set via <code>Pythia::setBeamShapePtr</code></li> 
+<li><code>SigmaProcess</code> set via 
+<code>Pythia::set/addSigmaPtr</code> with a null argument for the 
+<code>PhaseSpace</code> pointer</li> 
+<li><code>PhaseSpace</code> set via the second argument of 
+<code>Pythia::set/addSigmaPtr</code>; the previous plugin must be the 
+<code>SigmaProcess</code> which uses this phase-space generator</li> 
+<li><code>ResonanceWidths</code> set via 
+<code>Pythia::set/addResonancePtr</code></li> 
+<li><code>ShowerModel</code> set via 
+<code>Pythia::setShowerModelPtr</code></li> 
+<li><code>HeavyIons</code> set via <code>Pythia::setHeavyIonsPtr</code></li> 
+<li><code>HIUserHooks</code> set via <code>Pythia::setHIHooks</code></li> 
+</ol> 
+ 
+<p/> 
+The second method for loading a plugin can be used directly in user 
+code, with or without a <code>Pythia</code> instance, using a number of 
+helper functions. The simplest is as follows. 
+ 
+<method name="shared_ptr&lt;BaseClass&gt; make_plugin&lt;BaseClass&gt;( 
+string libName, string className)"> 
+creates a shared pointer of type <code>BaseClass</code> from the plugin 
+library <code>libName</code> and the plugin class <code>className</code>. 
+<argument name="libName, className"> 
+the plugin library name, typically of the form <code>lib*.so</code>, and 
+the plugin class name to load. 
+</argument> 
+</method> 
+ 
+<method name="shared_ptr&lt;BaseClass&gt; make_plugin&lt;BaseClass&gt;( 
+string libName, string className, Pythia* pythiaPtr)"> 
+same as above, but with an optional <code>Pythia</code> pointer that 
+is passed to the constructor of the plugin class. 
+<argument name="pythiaPtr"> 
+pointer to a <code>Pythia</code> instance. This pointer is 
+passed to the constructor of the plugin object, and can be used by 
+that object. 
+</argument> 
+</method> 
+ 
+<method name="shared_ptr&lt;BaseClass&gt; make_plugin&lt;BaseClass&gt;( 
+string libName, string className, Pythia* pythiaPtr, Settings* settingsPtr, 
+Logger* loggerPtr)"> 
+same as above, but with an optional <code>Settings</code> and 
+<code>Logger</code> pointer. 
+<argument name="settingsPtr"> 
+optional pointer to a <code>Settings</code> instance. This pointer is 
+passed to the plugin object constructor. If a valid 
+<code>pythiaPtr</code> is provided, but no <code>settingsPtr</code>, 
+then the <code>settingsPtr</code> is taken from the 
+<code>pythiaPtr</code> object. 
+</argument> 
+<argument name="loggerPtr"> 
+optional pointer to a <code>Logger</code> instance, similar to 
+<code>settingsPtr</code>. 
+</argument> 
+</method> 
+ 
+<p/> 
+Plugin classes are always required to take a <code>Pythia</code>, 
+<code>Settings</code>, and <code>Logger</code> pointer in their 
+constructors. However, none of these pointers is required to be 
+valid. If a plugin class requires one of these pointers to be valid, 
+it is possible to specify this when creating the plugin library (see below). 
+A plugin library may optionally register new settings in a 
+<code>Settings</code> object passed to the plugin library. This allows 
+the settings to pass a wide range of arguments to a plugin object. The 
+idea is as follows. First, the plugin library settings are registered 
+with a <code>Settings</code> object. Then, the new settings from the 
+plugin in this <code>Settings</code> object can be modified by the 
+user. Finally, the plugin object is created, with the 
+<code>Settings</code> object passed to the constructor so that it can 
+access these specialised settings. The following method registers the 
+settings from a plugin library. 
+ 
+<method name="bool Settings::registerPluginLibrary(string libName, 
+string startFile)"> 
+register any settings provided in a plugin library. Typically, this 
+method is not needed by the user. 
+<argument name="libName"> 
+the plugin library name, typically of the form <code>lib*.so</code>. 
+</argument> 
+<argument name="startFile" default="&quot;&quot;"> 
+read in the settings from all the files listed in this file, and 
+assumed to be located in the same subdirectory. 
+</argument> 
+</method> 
+ 
+<p/> 
+The following methods then combine these three steps together into a 
+single method. 
+ 
+<method name="shared_ptr&lt;BaseClass&gt; make_plugin&lt;BaseClass&gt;( 
+string libName, string className, Pythia* pythiaPtr, 
+vector&lt;string&gt;&amp; cmnds)"> 
+register the plugin settings with the <code>Pythia</code> instance and 
+read the commands of <code>cmnds</code> into the 
+<code>pythiaPtr</code>. 
+<argument name="cmnds"> 
+vector of commands to read into Pythia before loading the plugin, 
+but after registering the plugin settings. 
+</argument> 
+</method> 
+ 
+<method name="shared_ptr&lt;BaseClass&gt; make_plugin&lt;BaseClass&gt;( 
+string libName, string className, Pythia* pythiaPtr, 
+string fileName, int subrun = SUBRUNDEFAULT)"> 
+register the plugin settings with the <code>Pythia</code> instance and 
+read the commands of the file <code>fileName</code> with optional 
+<code>subrun</code>. 
+<argument name="fileName"> 
+name of the file to read into the <code>Pythia</code> object. 
+</argument> 
+<argument name="subrun"> 
+optionally specify the commands from the subrun to use. 
+</argument> 
+</method> 
+ 
+<p/> 
+The following demonstrates the simplest construction. 
+ 
+<p/> 
+<pre> 
+PDFPtr pdf = make_plugin&lt;PDF&gt;("libMyPlugins.so", "MyPDF"); 
+</pre> 
+<p/> 
+ 
+To register settings and pass these to the plugin, the following could 
+be done. 
+ 
+<p/> 
+<pre> 
+Settings settings; 
+settings.registerPluginLibrary("libMyPlugins.so"); 
+// Modify the settings here. 
+PDFPtr pdf = make_plugin&lt;PDF&gt;("libMyPlugins.so", "MyPDF", nullptr, 
+  &settings, nullptr); 
+</pre> 
+<p/> 
+ 
+Alternatively, if working with a <code>Pythia</code> object, the 
+multistep functions can be used. 
+ 
+<p/> 
+<pre> 
+Pythia pythia; 
+vector&lt;string&gt; cmnds; 
+ 
+// Fill the command string. 
+PDFPtr pdf1 = make_plugin&lt;PDF&gt;( 
+  "libMyPlugins.so", "MyPDF", &pythia, cmnds); 
+ 
+// Alternatively, read the commands from a file. 
+PDFPtr pdf2 = make_plugin&lt;PDF&gt;( 
+  "libMyPlugins.so", "MyPDF", &pythia, "plugin.cmnd"); 
+</pre> 
+<p/> 
+ 
+Note that in this example, two unique objects from the plugin library 
+are created. 
+ 
+<h3>Plugin Library Paths</h3> 
+ 
+When <code>libName</code> is specified for any of the settings, 
+methods, or functions above, it can be passed as either just the 
+library name (e.g. <code>libMyPlugins.so</code>), the library name 
+with a relative path (e.g. <code>./libMyPlugins.so</code>), or the 
+library name with an absolute path 
+(e.g. <code>/plugins/libMyPlugins.so</code>). When the path is 
+specified (i.e. the latter two options) then that file must exist, as 
+the plugin library. When no path is specified then the same mechanism 
+used for resolving library paths at runtime is used. This means that 
+both the runtime search path specified to the linker at compile time 
+will be searched (i.e. the RPATH mechanism using 
+<code>-Wl,rpath</code>), as well as the path specified via the 
+environment variable <code>LD_LIBRARY_PATH</code>. 
+ 
+<h3>Writing a Plugin Library</h3> 
+ 
+A plugin library consists of two parts: user defined classes 
+inheriting from any Pythia class, and a function which registers 
+settings. Arbitrary classes can be defined by the user, as long as they 
+derive from a Pythia class. Additionally, the constructor for the class 
+must always take the following form: 
+ 
+<p/> 
+<pre> 
+MyClass(Pythia* pythiaPtr, Settings* settingsPtr, Logger* loggerPtr) 
+</pre> 
+<p/> 
+ 
+As discussed above, the validity of these three pointers is not 
+guaranteed, and so the class must accordingly check their validity if 
+needed. After a class is defined, it must then be made externally 
+available so that it can be loaded from the plugin library. It is 
+possible when making the class externally available to specify that 
+certain pointers are required. This is done with the following macro. 
+ 
+<p/> 
+<pre> 
+PYTHIA8_PLUGIN_CLASS(BaseClass, MyClass, RequirePythia, RequireSettings, 
+  RequireLogger) 
+</pre> 
+<p/> 
+ 
+Here, <code>BaseClass</code> is whatever class the user wishes the 
+<code>MyClass></code> to be loaded as using the 
+<code>make_plugin</code> functions. The argument 
+<code>ReqirePythia</code> should be a boolean, and specifies whether 
+the <code>Pythia</code> pointer is required by the plugin 
+class. Similarly, the <code>RequireSettings</code> and 
+<code>RequireLogger</code> arguments must also be booleans specifying 
+whether the <code>Settings</code> and <code>Logger</code> pointers 
+must be valid or not. Note, this macro can only be used once per 
+class, and consequently can only be returned as a single base class. 
+ 
+The settings can be registered by a function that follows the 
+following form: 
+ 
+<p/> 
+<pre> 
+void registerMySettings(Settings* settingsPtr) 
+</pre> 
+<p/> 
+ 
+which is then made externally available by the following macro. 
+ 
+<p/> 
+<pre> 
+PYTHIA8_PLUGIN_SETTINGS(registerMySettings) 
+</pre> 
+<p/> 
+ 
+This macro can only be used once in a plugin library, and so all 
+settings must be registered by a single function. Registering settings 
+in a plugin library is optional. 
+ 
+Users may also provide XML files, similar to the Pythia XML files, to 
+define both setttings and documentation. This is done with the macro, 
+ 
+<p/> 
+<pre> 
+PYTHIA8_PLUGIN_XML("pluginLibraryName/xmldoc/startFile.xml") 
+</pre> 
+<p/> 
+ 
+which takes a string as an argument. The string should provide the 
+relative path to the XML index for the library, similar to 
+<code>Pythia8/xmldoc/Index.xml</code> for Pythia. Here, 
+<code>pluginLibraryName</code> should be the name of the plugin 
+library, and <code>startFile.xml</code> is the index XML file which 
+includes all other XML files needed for the plugin library. When a 
+plugin library is loaded, an attempt will first be made to find the 
+starting XML file on the path specified by the environment variable 
+<code>PYTHIA8CONTRIB</code>, so here the full path would be 
+<code>PYTHIA8CONTRIB/pluginLibraryName/xmldoc/startFile.xml</code>. If 
+this path is not valid, then the path <code>PYTHIA8DATA/../../</code> 
+will be tried, followed by the provided path itself. 
+ 
+Finally, it is required to define the versions of Pythia that the plugin 
+library is compatible with. This is done with the macro: 
+ 
+<p/> 
+<pre> 
+PYTHIA8_PLUGIN_VERSIONS(8310, 8311) 
+</pre> 
+<p/> 
+ 
+where a comma separated list of integer Pythia versions is passed as 
+an argument. This list can be variable length, including length 
+one. In this example, the plugin library is compatible with versions 
+<code>8.309</code> and <code>8.310</code>. When a user loads a plugin 
+library the versions from this list are checked against the current 
+Pythia version to test compatibility. If the current Pythia version is 
+not found in the list then an error is given when loading the 
+library. Additionally, the version of Pythia that the plugin library 
+was compiled against is checked.  If the versions between Pythia and 
+the plugin library do not match a warning is given. This is because in 
+principle the application binary interface between Pythia versions is 
+expected to be stable. It is possible that a plugin library compiled 
+against a different version of Pythia than the version loading the 
+library might still function correctly. However, this behaviour may be 
+changed to an error in the future. 
+ 
+</chapter> 

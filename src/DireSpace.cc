@@ -1,5 +1,5 @@
 // DireSpace.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -204,8 +204,8 @@ void DireSpace::init( BeamParticle* beamAPtrIn,
     pTmin         = pTminAbs;
     ostringstream newPTmin;
     newPTmin << fixed << setprecision(3) << pTmin;
-    infoPtr->errorMsg("Warning in DireSpace::init: pTmin too low",
-                      ", raised to " + newPTmin.str() );
+    loggerPtr->WARNING_MSG("the parameter pTmin is too low,",
+       " raised to " + newPTmin.str() );
     infoPtr->setTooLowPTmin(true);
   }
 
@@ -341,9 +341,7 @@ bool DireSpace::limitPTmax( Event& event, double, double) {
   // Find whether to limit pT. Begin by user-set cases.
   bool dopTlimit = false;
   dopTlimit1 = dopTlimit2 = false;
-  int nHeavyCol = 0;
-  if      (pTmaxMatch == 1) dopTlimit = dopTlimit1 = dopTlimit2 = true;
-  else if (pTmaxMatch == 2) dopTlimit = dopTlimit1 = dopTlimit2 = false;
+  if (pTmaxMatch == 1) dopTlimit = dopTlimit1 = dopTlimit2 = true;
 
   // Always restrict SoftQCD processes.
   else if (infoPtr->isNonDiffractive() || infoPtr->isDiffractiveA()
@@ -359,8 +357,6 @@ bool DireSpace::limitPTmax( Event& event, double, double) {
       else if (n21 == 0) {
         int idAbs = event[i].idAbs();
         if (idAbs <= 5 || idAbs == 21 || idAbs == 22) dopTlimit1 = true;
-        if ( (event[i].col() != 0 || event[i].acol() != 0)
-          && idAbs > 5 && idAbs != 21 ) ++nHeavyCol;
       } else if (n21 == 2) {
         int idAbs = event[i].idAbs();
         if (idAbs <= 5 || idAbs == 21 || idAbs == 22) dopTlimit2 = true;
@@ -571,8 +567,7 @@ void DireSpace::setupQCDdip( int iSys, int side, int colTag, int colSign,
 
   // Check for failure to locate any recoiler
   if ( iPartner == 0 ) {
-    infoPtr->errorMsg("Error in DireSpace::setupQCDdip: "
-                      "failed to locate any recoiling partner");
+    loggerPtr->ERROR_MSG("failed to locate any recoiling partner");
     return;
   }
 
@@ -593,11 +588,9 @@ void DireSpace::setupQCDdip( int iSys, int side, int colTag, int colSign,
 
   // Force maximal pT to LHEF scales tag value.
   double mups = infoPtr->getScalesAttribute("mups");
-  if ( abs(event[iRad].status()) > 20
+  if (!isnan(mups) && abs(event[iRad].status()) > 20
     && abs(event[iRad].status()) < 24
-    && settingsPtr->flag("Beams:setProductionScalesFromLHEF")
-    && !isnan(mups) )
-    pTmax = mups;
+    && settingsPtr->flag("Beams:setProductionScalesFromLHEF")) pTmax = mups;
 
   int colType  = (event[iRad].id() == 21) ? 2 * colSign : colSign;
   dipEnd.push_back( DireSpaceEnd( iSys, side, iRad, iPartner, pTmax, colType,
@@ -786,12 +779,10 @@ void DireSpace::saveSiblings(const Event& state, int iSys) {
     if (iSys > -1 && iSystem != iSys) continue;
 
     vector<int> q, qb, g;
-    int sizeSystem(partonSystemsPtr->sizeAll(iSystem)), nFinal(0);
+    int sizeSystem(partonSystemsPtr->sizeAll(iSystem));
     for ( int i = 0; i < sizeSystem; ++i) {
 
       int iPos = partonSystemsPtr->getAll(iSystem, i);
-      if ( state[iPos].isFinal()) nFinal++;
-
       if (!state[iPos].isFinal()
           && state[iPos].mother1() != 1
           && state[iPos].mother1() != 2) continue;
@@ -2500,7 +2491,7 @@ bool DireSpace::inAllowedPhasespace( int kinType, double z, double pT2,
     double kT2  = zbar*(1.-zbar)*m2r - (1-zbar)*saj - zbar*m2e;
 
     // Disallow kinematically impossible transverse momentum.
-    if (kT2 < 0. || isnan(kT2)) return false;
+    if (isnan(kT2) || kT2 < 0.) return false;
 
   // splitType ==-2 -> Massive 1->3 II
   } else {
@@ -2532,7 +2523,7 @@ bool DireSpace::inAllowedPhasespace( int kinType, double z, double pT2,
     double kT2  = zbar*(1.-zbar)*m2a - (1-zbar)*m2ai - zbar*m2i;
 
     // Disallow kinematically impossible transverse momentum.
-    if (kT2 < 0. || isnan(kT2)) return false;
+    if (isnan(kT2) || kT2 < 0.) return false;
 
     // Check "second" step.
     double m2rec = m2ai;
@@ -2554,7 +2545,7 @@ bool DireSpace::inAllowedPhasespace( int kinType, double z, double pT2,
     kT2         = zbar*(1.-zbar)*sij - (1.-zbar)*m2rad - zbar*m2emt;
 
     // Not possible to construct kinematics if kT2 < 0.0
-    if (kT2 < 0. || isnan(kT2)) return false;
+    if (isnan(kT2) || kT2 < 0.) return false;
 
   }
 
@@ -2592,9 +2583,6 @@ void DireSpace::alphasReweight(double, double talpha, int iSys,
     return;
   }
   talpha = max(talpha, pT2min);
-
-  double scale       = talpha*renormMultFacNow;
-  scale              = max(scale, pT2min);
 
   // Get current alphaS value.
   double asPT2piCorr  = alphasNow(talpha, renormMultFacNow, iSys);
@@ -2662,14 +2650,12 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
   double zMinAbs     = xDaughter;
 
   if (usePDF && xMaxAbs < 0.) {
-    infoPtr->errorMsg("Warning in DireSpace::pT2nextQCD_II: "
-    "xMaxAbs negative");
+    loggerPtr->ERROR_MSG("kinematics failure, xMaxAbs negative");
     return false;
   }
 
   // Variables used inside evolution loop. (Mainly dummy starting values.)
   int    nFlavour       = 3;
-  double Lambda2        = Lambda3flav2;
   int    idMother       = 0;
   int    idSister       = 0;
   double znow           = 0.;
@@ -2761,8 +2747,7 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
     // (Example: if all PDF's = 0 below Q_0, except for c/b companion.)
     if (hasTinyPDFdau) ++loopTinyPDFdau;
     if (hasPDFdau && loopTinyPDFdau > MAXLOOPTINYPDF) {
-      infoPtr->errorMsg("Warning in DireSpace::pT2nextQCD: "
-      "small daughter PDF");
+      loggerPtr->ERROR_MSG("PDF error, small daughter PDF");
       dip.pT2 = 0.0;
       return false;
     }
@@ -2780,19 +2765,11 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
       kernelPDF = 0.;
 
       // Determine overestimated z range; switch at c and b masses.
-      if (tnow > m2b) {
-        nFlavour  = 5;
-        Lambda2   = Lambda5flav2;
-      } else if (tnow > m2c) {
-        nFlavour  = 4;
-        Lambda2   = Lambda4flav2;
-      } else {
-        nFlavour  = 3;
-        Lambda2   = Lambda3flav2;
-      }
+      if (tnow > m2b) nFlavour  = 5;
+      else if (tnow > m2c) nFlavour  = 4;
+      else nFlavour  = 3;
 
       // A change of renormalization scale expressed by a change of Lambda.
-      Lambda2    /= renormMultFac;
       zMinAbs     = (hasPDFdau) ? xDaughter : 0.;
       zMaxAbs     = 1.;
 
@@ -3005,6 +2982,7 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
     // More last resort.
     if (hasPDFdau && idDaughter == 21 && pdfScale2 == pT2min && pdfRatio>50.)
       pdfRatio = 0.;
+    if (isnan(pdfRatio) || isinf(pdfRatio)) pdfRatio = 0.;
 
     fullWeightNow  *= pdfRatio*jacobian;
 
@@ -3101,8 +3079,8 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
         << " and z=" << znow << "\t(PDF ratio=" << pdfRatio << ")" << endl;
       double rescale = fullWeightNow/auxWeightNow * 1.15;
       auxWeightNow *= rescale;
-      infoPtr->errorMsg("Info in DireSpace::pT2nextQCD_II: Found large "
-                        "acceptance weight for " + splittingNowName);
+      loggerPtr->INFO_MSG(
+        "found large acceptance weight for " + splittingNowName);
     }
 
     wt = fullWeightNow/auxWeightNow;
@@ -3204,14 +3182,12 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
   Vec4 pOther(event[iOther].p());
 
   if (usePDF && xMaxAbs < 0.) {
-    infoPtr->errorMsg("Warning in DireSpace::pT2nextQCD_IF: "
-    "xMaxAbs negative");
+    loggerPtr->ERROR_MSG("kinematics error, xMaxAbs negative");
     return false;
   }
 
   // Variables used inside evolution loop. (Mainly dummy starting values.)
   int    nFlavour       = 3;
-  double Lambda2        = Lambda3flav2;
   int    idMother       = 0;
   int    idSister       = 0;
   double znow           = 0.;
@@ -3298,8 +3274,7 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
     // (Example: if all PDF's = 0 below Q_0, except for c/b companion.)
     if (hasTinyPDFdau) ++loopTinyPDFdau;
     if ( hasPDFdau && loopTinyPDFdau > MAXLOOPTINYPDF) {
-      infoPtr->errorMsg("Warning in DireSpace::pT2nextQCD_IF: "
-      "small daughter PDF");
+      loggerPtr->ERROR_MSG("PDF error, small daughter PDF");
       dip.pT2 = 0.0;
       return false;
     }
@@ -3316,19 +3291,11 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
       kernelPDF = 0.;
 
       // Determine overestimated z range; switch at c and b masses.
-      if (tnow > m2b) {
-        nFlavour  = 5;
-        Lambda2   = Lambda5flav2;
-      } else if (tnow > m2c) {
-        nFlavour  = 4;
-        Lambda2   = Lambda4flav2;
-      } else {
-        nFlavour  = 3;
-        Lambda2   = Lambda3flav2;
-      }
+      if (tnow > m2b) nFlavour  = 5;
+      else if (tnow > m2c) nFlavour  = 4;
+      else nFlavour  = 3;
 
       // A change of renormalization scale expressed by a change of Lambda.
-      Lambda2    /= renormMultFac;
       zMinAbs     = (hasPDFdau) ? xDaughter : 0.;
       zMaxAbs     = 1.;
 
@@ -3625,6 +3592,7 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
 
     // More last resort.
     if (idDaughter == 21 && pdfScale2 < 1.01 && pdfRatio > 50.) pdfRatio = 0.;
+    if (isnan(pdfRatio) || isinf(pdfRatio)) pdfRatio = 0.;
 
     fullWeightNow  *= pdfRatio;
     for ( unordered_map<string,double>::iterator it = fullWeightsNow.begin();
@@ -3722,8 +3690,8 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
       double rescale = fullWeightNow/auxWeightNow * 1.15;
       auxWeightNow *= rescale;
       needNewPDF = true;
-      infoPtr->errorMsg("Info in DireSpace::pT2nextQCD_IF: Found large "
-                        "acceptance weight for " + splittingNowName);
+      loggerPtr->INFO_MSG("found large acceptance weight "
+        "for " + splittingNowName);
     }
 
     wt = fullWeightNow/auxWeightNow;
@@ -3817,9 +3785,6 @@ double DireSpace::tNextQCD( DireSpaceEnd*, double overestimateInt,
   } else if (tOld > m2c) {
     b0       = 25./6.;
     Lambda2  = Lambda4flav2;
-  } else {
-    b0       = 27./6.;
-    Lambda2  = Lambda3flav2;
   }
   // A change of renormalization scale expressed by a change of Lambda.
   Lambda2 /= renormMultFac;
@@ -4131,8 +4096,6 @@ bool DireSpace::branch_II( Event& event, bool trial,
     // transferred to sister "1" color.
     if (idMother*idDaughterNow > 0 && idMother > 0) {
       colMother1  = colDaughter;
-      acolMother1 = 0;
-      acolSister1 = 0;
       colSister1  = acolSister;
     }
     // Daughter anticolor transferred to antiquark mother "1", sister color
@@ -4265,9 +4228,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
 
     // Not possible to construct kinematics if kT2 < 0.0
     if (kT2 < 0.) {
-      if (printWarnings)
-        infoPtr->errorMsg("Warning in DireSpace::branch_II: Reject state "
-                          "with kinematically forbidden kT^2.");
+      if (printWarnings) loggerPtr->WARNING_MSG(
+        "rejecting state with kinematically forbidden kT^2");
       physical = false;
     }
 
@@ -4316,9 +4278,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
       nTries++;
       if (nTries > 100
        || (nTries > 1 && split->useForBranching)) {
-        if (printWarnings)
-          infoPtr->errorMsg("Warning in DireSpace::branch_II: Could not "
-                               "set up state after branching, thus reject.");
+        if (printWarnings) loggerPtr->WARNING_MSG(
+            "could not set up state after branching, thus rejecting");
         physical = false; break;
       }
 
@@ -4435,8 +4396,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
       (*beamAPtr)[iSysSelNow].iPos(iAnew);
       (*beamAPtr)[iSysSelNow].x(xAnew);
       if (beamAPtr->xMax(-1) < 0.0) {
-        if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_II: "
-          "used up beam momentum; discard splitting.");
+        if (!trial) loggerPtr->WARNING_MSG(
+          "used up beam A momentum; discarding splitting");
         physical = false;
       }
       // Restore old beams.
@@ -4448,8 +4409,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
       (*beamBPtr)[iSysSelNow].iPos(iBnew);
       (*beamBPtr)[iSysSelNow].x(xBnew);
       if (beamBPtr->xMax(-1) < 0.0) {
-        if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_II: "
-          "used up beam momentum; discard splitting.");
+        if (!trial) loggerPtr->WARNING_MSG(
+          "used up beam B momentum; discarding splitting");
         physical = false;
       }
       // Restore old beams.
@@ -4462,9 +4423,6 @@ bool DireSpace::branch_II( Event& event, bool trial,
                      && partonSystemsPtr->getSystemOf(iRecoiler,true) == 0;
     if (isHardSystem && physical && doMEcorrections
       && pT2 > pT2minMECs && checkSIJ(event,Q2minMECs)) {
-
-#ifdef MG5MES
-
       int iA      = getInA(iSysSelNow);
       int iB      = getInB(iSysSelNow);
       vector<int> iOut(createvector<int>(0)(0));
@@ -4492,13 +4450,6 @@ bool DireSpace::branch_II( Event& event, bool trial,
       for (int iCopy = 2; iCopy < systemSizeOld; ++iCopy)
         partonSystemsPtr->setOut(iSysSelNow, iCopy - 2, iOut[iCopy]);
       partonSystemsPtr->popBackOut(iSysSelNow);
-
-#else
-
-      doMECreject = false;
-
-#endif
-
     }
 
     // Update dipoles and beams. Note: dipEndSel no longer valid after this.
@@ -4531,7 +4482,7 @@ bool DireSpace::branch_II( Event& event, bool trial,
     double kT2  = zbar*(1.-zbar)*m2a - (1-zbar)*m2ai - zbar*m2i;
 
     // Disallow kinematically impossible transverse momentum.
-    if (kT2 < 0. || isnan(kT2)) physical = false;
+    if (isnan(kT2) || kT2 < 0.) physical = false;
 
     // Now construct radiator in lab frame.
     Vec4 pa = (paj_tilde - m2aij/gABC(q2,m2aij,m2k)*pb_tilde)
@@ -4614,18 +4565,16 @@ bool DireSpace::branch_II( Event& event, bool trial,
 
     // Not possible to construct kinematics if kT2 < 0.0
     if (kT2 < 0.) {
-      if (printWarnings)
-        infoPtr->errorMsg("Warning in DireSpace::branch_II: Reject state "
-                          "with kinematically forbidden kT^2.");
+      if (printWarnings) loggerPtr->WARNING_MSG(
+        "rejecting state with kinematically forbidden kT^2");
       physical = false;
     }
 
     // NaN kT2 can happen for a 1->3 splitting in which the g->QQ~ produces
     // massive quarks Q.
     if (physical && (kT2!=kT2 || abs(kT2-kT2) > 1e5) ) {
-      if (printWarnings)
-        infoPtr->errorMsg("Warning in DireSpace::branch_II: Reject state "
-                          "with not-a-number kT^2 for branching " + name);
+      if (printWarnings) loggerPtr->WARNING_MSG(
+        "rejecting state with not-a-number kT^2 for branching " + name);
       physical = false;
     }
 
@@ -4740,8 +4689,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
       (*beamAPtr)[iSysSelNow].iPos(iAnew);
       (*beamAPtr)[iSysSelNow].x(xAnew);
       if (beamAPtr->xMax(-1) < 0.0) {
-        if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_II: "
-          "used up beam momentum; discard splitting.");
+        if (!trial) loggerPtr->WARNING_MSG(
+          "used up beam A momentum; discarding splitting");
         physical = false;
       }
       // Restore old beams.
@@ -4753,8 +4702,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
       (*beamBPtr)[iSysSelNow].iPos(iBnew);
       (*beamBPtr)[iSysSelNow].x(xBnew);
       if (beamBPtr->xMax(-1) < 0.0) {
-        if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_II: "
-          "used up beam momentum; discard splitting.");
+        if (!trial) loggerPtr->WARNING_MSG(
+          "used up beam B momentum; discarding splitting");
         physical = false;
       }
       // Restore old beams.
@@ -4805,9 +4754,8 @@ bool DireSpace::branch_II( Event& event, bool trial,
   // possible if no MPI are present.
   if ( physical && !trial && !doMECreject
     && !validMotherDaughter(event)) {
-    if (printWarnings)
-      infoPtr->errorMsg("Error in DireSpace::branch_II: Mother-daughter "
-                        "relations after branching not valid.");
+    if (printWarnings) loggerPtr->ERROR_MSG(
+      "mother-daughter relations after branching not valid");
     physical = false;
   }
 
@@ -5217,8 +5165,6 @@ bool DireSpace::branch_IF( Event& event, bool trial,
     // transferred to sister "1" color.
     if (idMother*idDaughterNow > 0 && idMother > 0) {
       colMother1  = colDaughter;
-      acolMother1 = 0;
-      acolSister1 = 0;
       colSister1  = acolSister;
     }
     // Daughter anticolor transferred to antiquark mother "1", sister color
@@ -5380,9 +5326,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       double kT2   = zbar*(1.-zbar)*sjk - (1-zbar)*m2e - zbar*m2s;
 
       if (kT2 < 0.) {
-        if (printWarnings)
-          infoPtr->errorMsg("Warning in DireSpace::branch_IF: Reject state "
-                            "with kinematically forbidden kT^2.");
+        if (printWarnings) loggerPtr->WARNING_MSG(
+          "rejecting state with kinematically forbidden kT^2");
         physical = false;
       }
 
@@ -5409,10 +5354,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
         // Give up after too many tries.
         nTries++;
         if (nTries > 100) {
-          if (printWarnings)
-            infoPtr->errorMsg
-              ("Warning in DireSpace::branch_IF: Could not set up"
-                              " state after branching, thus reject.");
+          if (printWarnings) loggerPtr->WARNING_MSG(
+              "could not set up state after branching, thus rejecting");
           physical = false; break;
         }
 
@@ -5508,7 +5451,7 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       double kT2  = zbar*(1.-zbar)*saj - (1-zbar)*m2e - zbar*m2r;
 
       // Disallow kinematically impossible transverse momentum.
-      if (kT2 < 0. || isnan(kT2)) physical = false;
+      if (isnan(kT2) || kT2 < 0.) physical = false;
 
       // Now construct recoiler in lab frame.
       Vec4 pRec( (pk_tilde - q*pk_tilde/q2*q)
@@ -5628,8 +5571,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       (*beamAPtr)[iSysSelNow].iPos(iAnew);
       (*beamAPtr)[iSysSelNow].x(xAnew);
       if (beamAPtr->xMax(-1) < 0.0) {
-        if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_IF: "
-          "used up beam momentum; discard splitting.");
+        if (!trial) loggerPtr->WARNING_MSG(
+          "used up beam A momentum; discarding splitting");
         physical = false;
       }
       // Restore old beams.
@@ -5641,8 +5584,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       (*beamBPtr)[iSysSelNow].iPos(iBnew);
       (*beamBPtr)[iSysSelNow].x(xBnew);
       if (beamBPtr->xMax(-1) < 0.0) {
-        if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_IF: "
-          "used up beam momentum; discard splitting.");
+        if (!trial) loggerPtr->WARNING_MSG(
+          "used up beam B momentum; discarding splitting");
         physical = false;
       }
       // Restore old beams.
@@ -5655,8 +5598,6 @@ bool DireSpace::branch_IF( Event& event, bool trial,
                      && partonSystemsPtr->getSystemOf(iRecoiler,true) == 0;
     if (isHardSystem && physical && doMEcorrections
       && pT2 > pT2minMECs && checkSIJ(event,Q2minMECs)) {
-
-#ifdef MG5MES
 
       int iA      = getInA(iSysSelNow);
       int iB      = getInB(iSysSelNow);
@@ -5706,13 +5647,6 @@ bool DireSpace::branch_IF( Event& event, bool trial,
         partonSystemsPtr->replace(iSysSelNow, iNewRecoiler, iRecoiler);
         partonSystemsPtr->popBackOut(iSysSelNow);
       }
-
-#else
-
-      doMECreject = false;
-
-#endif
-
     }
 
     // Update dipoles and beams. Note: dipEndSel no longer valid after this.
@@ -5774,7 +5708,7 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       double kT2   = zbar*(1.-zbar)*s_i_jk - (1-zbar)*m2i - zbar*m2jk;
 
       // Disallow kinematically impossible transverse momentum.
-      if (kT2 < 0. || isnan(kT2)) physical = false;
+      if (isnan(kT2) || kT2 < 0.) physical = false;
 
       // Now construct radiator in lab frame.
       Vec4 pa( ( pa12_tilde - 0.5*(q2-m2Bef-m2k)/q2par * qpar )
@@ -5838,7 +5772,6 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       // Allow splitting kernel to overwrite phase space variables.
       if (split->useForBranching) { phiFF = psp["phi2"]; }
 
-      double q2tot = q2;
       // Construct FF dipole momentum.
       q.p(pai - pjk);
       q2 = q.m2Calc();
@@ -5860,18 +5793,16 @@ bool DireSpace::branch_IF( Event& event, bool trial,
 
       // Not possible to construct kinematics if kT2 < 0.0
       if (kT2 < 0.) {
-        if (printWarnings)
-          infoPtr->errorMsg("Warning in DireSpace::branch_IF: Reject state "
-                            "with kinematically forbidden kT^2.");
+        if (printWarnings) loggerPtr->WARNING_MSG(
+          "rejecting state with kinematically forbidden kT^2");
         physical = false;
       }
 
       // NaN kT2 can happen for a 1->3 splitting in which the g->QQ~ produces
       // massive quarks Q.
       if (physical && (kT2!=kT2 || abs(kT2-kT2) > 1e5) ) {
-        if (printWarnings)
-          infoPtr->errorMsg("Warning in DireSpace::branch_IF: Reject state "
-                            "with not-a-number kT^2 for branching " + name);
+        if (printWarnings) loggerPtr->WARNING_MSG(
+          "reject state with not-a-number kT^2 for branching " + name);
         physical = false;
       }
 
@@ -5906,35 +5837,6 @@ bool DireSpace::branch_IF( Event& event, bool trial,
         || !validMomentum( newRecoiler1.p(), event[iNewRecoiler1].id(), 1))
         physical = false;
 
-      // Check invariants.
-      if ( false ) {
-        double saix(2.*pa*pi), sakx(2.*pa*pk), sajx(2.*pa*pj), sikx(2.*pi*pk),
-               sjkx(2.*pj*pk), sijx(2.*pi*pj);
-        double pptt = (sajx-sijx)*(sakx-sikx)/(saix+sajx+sakx);
-        double ssaaii = saix;
-        double zzaa = -q2tot/ ( saix + sajx + sakx  );
-        double xxaa = (sakx-sikx) / ( saix + sajx + sakx );
-        if ( physical &&
-             (abs(pptt-pT2) > 1e-5 || abs(ssaaii-sai) > 1e-5 ||
-              abs(zzaa-za) > 1e-5  || abs(xxaa-xa) > 1e-5) ){
-          cout << "Error in branch_IF: Invariant masses after branching do "
-               << "not match chosen values." << endl;
-          cout << "Chosen:    "
-               << " Q2 " << q2tot
-               << " pT2 " << pT2
-               << " sai " << sai
-               << " za " << z
-               << " xa " << xa << endl;
-          cout << "Generated: "
-               << " Q2 " << saix+sajx+sakx-sijx-sikx-sjkx
-               << " pT2 " << pptt
-               << " sai " << ssaaii
-               << " za " << zzaa
-               << " xa " << xxaa << endl;
-          physical = false;
-        }
-      }
-
       // Test that enough beam momentum remains.
       int iOther  = getInB(iSysSelNow);
       if (side == 2) iOther = getInA(iSysSelNow);
@@ -5953,8 +5855,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
         (*beamAPtr)[iSysSelNow].iPos(iAnew);
         (*beamAPtr)[iSysSelNow].x(xAnew);
         if (beamAPtr->xMax(-1) < 0.0) {
-          if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_II: "
-            "used up beam momentum; discard splitting.");
+          if (!trial) loggerPtr->WARNING_MSG(
+            "used up beam A momentum; discarding splitting");
           physical = false;
         }
         // Restore old beams.
@@ -5966,8 +5868,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
         (*beamBPtr)[iSysSelNow].iPos(iBnew);
         (*beamBPtr)[iSysSelNow].x(xBnew);
         if (beamBPtr->xMax(-1) < 0.0) {
-          if (!trial) infoPtr->errorMsg("Warning in DireSpace::branch_II: "
-            "used up beam momentum; discard splitting.");
+          if (!trial) loggerPtr->WARNING_MSG(
+            "used up beam B momentum; discarding splitting");
           physical = false;
         }
         // Restore old beams.
@@ -6038,7 +5940,7 @@ bool DireSpace::branch_IF( Event& event, bool trial,
       double kT2  = zbar*(1.-zbar)*m2ai - (1-zbar)*m2i - zbar*m2a;
 
       // Disallow kinematically impossible transverse momentum.
-      if (kT2 < 0. || isnan(kT2)) physical = false;
+      if (isnan(kT2) || kT2 < 0.) physical = false;
 
       // Now construct recoiler in lab frame.
       Vec4 pjk( (pb_tilde - q*pb_tilde/q2*q)
@@ -6159,18 +6061,16 @@ bool DireSpace::branch_IF( Event& event, bool trial,
 
       // Not possible to construct kinematics if kT2 < 0.0
       if (kT2 < 0.) {
-        if (printWarnings)
-          infoPtr->errorMsg("Warning in DireSpace::branch_IF: Reject state "
-                            "with kinematically forbidden kT^2.");
+        if (printWarnings) loggerPtr->WARNING_MSG(
+          "rejecting state with kinematically forbidden kT^2");
         physical = false;
       }
 
       // NaN kT2 can happen for a 1->3 splitting in which the g->QQ~ produces
       // massive quarks Q.
       if (physical && (kT2!=kT2 || abs(kT2-kT2) > 1e5) ) {
-        if (printWarnings)
-          infoPtr->errorMsg("Warning in DireSpace::branch_IF: Reject state "
-                            "with not-a-number kT^2 for branching " + name);
+        if (printWarnings) loggerPtr->WARNING_MSG(
+          "rejecting state with not-a-number kT^2 for branching " + name);
         physical = false;
       }
 
@@ -6287,9 +6187,8 @@ bool DireSpace::branch_IF( Event& event, bool trial,
   // Check if mother-daughter relations are correctly set. Check only
   // possible if no MPI are present.
   if ( physical && !trial && !doMECreject && !validMotherDaughter(event)) {
-    if (printWarnings)
-      infoPtr->errorMsg("Error in DireSpace::branch_IF: Mother-daughter "
-                        "relations after branching not valid.");
+    if (printWarnings) loggerPtr->ERROR_MSG(
+      "mother-daughter relations after branching not valid");
     physical = false;
   }
 
@@ -6588,7 +6487,6 @@ pair <Event, pair<int,int> > DireSpace::clustered_internal( const Event& state,
   outState.scaleSecond(mu);
   bool radAppended = false;
   bool recAppended = false;
-  int size = int(outState.size());
   // Save position of radiator in new event record
   int radPos(0), recPos(0);
 
@@ -6605,7 +6503,6 @@ pair <Event, pair<int,int> > DireSpace::clustered_internal( const Event& state,
     for(int i=0; i < int(state.size()); ++i)
       if (state[i].mother1() == 1) in1 =i;
     outState.append( state[in1] );
-    size++;
   }
   // Append second incoming particle
   if ( RecBefore.mother1() == 2) {
@@ -6621,7 +6518,6 @@ pair <Event, pair<int,int> > DireSpace::clustered_internal( const Event& state,
       if (state[i].mother1() == 2) in2 =i;
 
     outState.append( state[in2] );
-    size++;
   }
 
   // Append new recoiler if not done already
@@ -7286,7 +7182,7 @@ double DireSpace::getSplittingProb( const Event& state, int iRad,
 
   // Disallow below cut-off.
   if ( pT2cut(state[iEmt].id()) > pT2) return 0.;
-  if ( !splits[name]->aboveCutoff( pT2, state[iRad], state[iRec], 0,
+  if ( !splits[name]->aboveCutoff( pT2, state[iRad], state[iRecAft], 0,
         partonSystemsPtr)) return 0.;
 
   // Upate type if this is a massive splitting.

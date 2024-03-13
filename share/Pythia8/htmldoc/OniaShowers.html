@@ -1,0 +1,532 @@
+<html>
+<head>
+<title>Onia Showers</title>
+<link rel="stylesheet" type="text/css" href="pythia.css"/>
+<link rel="shortcut icon" href="pythia32.gif"/>
+</head>
+<body>
+ 
+<h2>Onia Showers</h2> 
+<ol id="toc">
+  <li><a href="#section0">Radiation off octet onium states</a></li>
+  <li><a href="#section1">Charmonium 1S0 States</a></li>
+  <li><a href="#section2">Charmonium 3S1 States</a></li>
+  <li><a href="#section3">Charmonium 3PJ States</a></li>
+  <li><a href="#section4">Bottomonium 1S0 States</a></li>
+  <li><a href="#section5">Bottomonium 3S1 States</a></li>
+  <li><a href="#section6">Bottomonium 3PJ States</a></li>
+</ol>
+
+ 
+Measurements of onium isolation, see [<a href="Bibliography.html#refLHC17" target="page">LHC17</a>], indicate that onium 
+production cannot be sufficiently described by the hard processes of 
+<a href="OniaProcesses.html" target="page">Onia Processes</a> alone. Instead, the 
+formation of onium states could occur later in the event at lower 
+energy scales, described either through the formalism of fragmentation 
+functions or parton showers. Consequently, the LETO project (named 
+after the mother of the twins Apollo and Artemis) has implemented the 
+production of onia within the simple 
+<a href="OniaProcesses.html" target="page">Timelike Showers</a> framework of PYTHIA. A 
+full description of the LETO implementation can be found in 
+[<a href="Bibliography.html#refCoo23" target="page">Coo23</a>]. Production of any <i>1S0</i>, <i>3S1</i>, and 
+<i>3PJ</i> charmonium and bottomonium states via the colour-singlet 
+and colour-octet mechanisms is available via the LETO parton 
+shower. This includes by default, but is not limited to, production of 
+the <i>1S0</i> <i>eta</i> states, the <i>3S1</i> 
+<i>J/psi</i> and <i>Upsilon</i> and their radially excited states, 
+as well as the <i>3PJ</i> <i>chi</i> states. <br/><b>Warning:</b> 
+matching between onium production from the hard processes and from 
+LETO is not available, and consequently both LETO processes and onium 
+hard processes should not be used at the same time as this will result 
+in double counting. Indeed, it is expected that given a sufficiently 
+complete set of splittings in LETO, hard process production should not 
+be necessary. By default, hard process onium production is included in 
+multi-parton interactions. If the onium shower is enabled, these onium 
+processes are automatically no longer included in the multi-parton 
+interactions. <br/><b>Warning:</b> due to the large number of 
+splittings onium shower introduces, as well as current inefficiencies 
+in the samplings for some of the splittings, the runtime for Pythia 
+can increase significantly when onia showers are turned on; depending 
+on what splittings are enabled as well as the beam configuration, the 
+code can run up to five times slower. 
+ 
+<p/> 
+Only the lowest-order colour-octet production mechanisms for these 
+three spin configurations are provided via splittings into 
+<i>3S1</i> colour-octet states. The gluon initiated splittings of 
+this type are unusual in the context of a parton shower, as they are 
+<i>1 &rarr; 1</i> processes, rather than the typical <i>1 &rarr; 
+2</i> processes. These splittings are treated as delta functions; if 
+a gluon reaches the virtuality of an onium state, then such a 
+colour-octet state may form. The result is to produce colour-octet 
+states nearer to the end of the shower. Note that colour-octet states 
+may also be produced in the splitting <i> Q &rarr; (onium) Q</i> 
+where the colour-octet state is an unphysical <i>3S1</i> state that 
+evolves to a <i>3PJ</i> state [<a href="Bibliography.html#refYua94" target="page">Yua94</a>]. However, this 
+process is sub-leading to the gluon initiated colour-octet 
+process. For colour-singlet production ([<a href="Bibliography.html#refBra93" target="page">Bra93</a>], 
+[<a href="Bibliography.html#refBra93a" target="page">Bra93a</a>], [<a href="Bibliography.html#refBra94" target="page">Bra94</a>], [<a href="Bibliography.html#refBra95" target="page">Bra95</a>], and 
+[<a href="Bibliography.html#refYua94" target="page">Yua94</a>]), both gluon and heavy-flavour quark initiated 
+splittings are available. For the <i>3S1</i> colour-singlet state, 
+the gluon initiated splitting is a <i>1 &rarr; 3</i> process, 
+i.e. <i>g &rarr; (onium) g g</i> as required by the Landau-Yang 
+theorem. 
+ 
+<p/> 
+Whenever possible, the same notation and settings structure as 
+<a href="OniaProcesses.html" target="page">Onia Processes</a> is used. In 
+principle, the same long-distance NRQCD matrix elements (LDMEs) that 
+are used for the hard processes should also be used for the splittings 
+of the LETO parton shower. However, for full flexibility, these LDMEs 
+are specified independently for LETO and the hard processes. However, 
+their default values are matched to those of the hard process LDMEs 
+whenever possible. For consistency, all LDMEs are given in units of 
+<i>GeV^3</i>. For the case of the <i>3PJ</i> states, where the 
+LDME units are typically <i>GeV^5</i>, the LDME provided to LETO should 
+be divided by the squared mass of the heavy-flavour quark, 
+<i>&lt;O[3P0(1)]&gt;/m_Q^2</i>. For the colour-octet states, the 
+same particle ID convention as in <a href="OniaProcesses.html" target="page">Onia 
+Processes</a> is used, with the mass splitting between the 
+colour-octet and physical colour-singlet states set by the 
+<code>Onia:massSplit</code> parameter. Here, only the leading 
+splittings into colour-octet <i>3S1(8)</i> states are included, and 
+so the notation is somewhat simpler than for the hard processes, where 
+both <i>1S0(8)</i> and <i>3PJ(8)</i> processes are included for 
+the physical colour-singlet <i>3S1(1)</i> states. 
+ 
+<a name="section0"></a> 
+<h3>Radiation off octet onium states</h3> 
+ 
+In the current implementation, charmonium and bottomonium production 
+can proceed either through colour-singlet or colour-octet mechanisms, 
+either through <i>2 &rarr; 2</i> hard processes such as <i>g g 
+&rarr; (onium) g</i>, or via splittings like <i>g &rarr; (onium) 
+g</i> in the LETO parton shower. For colour-singlet production, the 
+state does not radiate and the onium therefore is produced in 
+isolation if produced from the hard process, up to normal 
+underlying-event activity. If produced from the parton shower, the 
+onium will be present within a jet, but will not radiate any further 
+after being produced. For colour-octet states the situation is not so 
+clear, but it is sensible to assume that such states can radiate 
+further in the shower, assuming, of course, that the transverse 
+momentum of the onium state is sufficiently high that radiation is of 
+relevance. Consequently, colour-octet states produced either in the 
+hard process or in the parton shower may be allowed to radiate 
+further. 
+ 
+<p/> 
+When an octet onium state radiates, there is a choice of splitting 
+kernel for this process. The first and perhaps most natural choice is 
+to assume the octet onium state radiates like a massive gluon, 
+i.e. <i>q &rarr; q g</i>, while the second choice is to assume that 
+the full radiation is provided by an incoherent sum of radiation off 
+the quark and off the antiquark of the onium state. Thus the splitting 
+kernel for this second option is taken to be the normal <i>Q &rarr; Q 
+g</i> one, multiplied by a factor of two. Obviously this is a 
+simplification of a more complex picture, averaging over factors 
+pulling in different directions. Firstly, radiation off a gluon ought 
+to be enhanced by a factor 9/4 relative to a quark rather than 
+2. Secondly, our use of the <i>q &rarr; q g</i> branching kernel is 
+roughly equivalent to always following the harder gluon in a <i>g 
+&rarr; g g</i> branching.  This could give us a bias towards 
+producing too hard onia. A soft gluon would have little phase space to 
+branch into a heavy-quark pair however, so the bias may not be as big 
+as it would seem at first glance. 
+ 
+<p/> 
+Finally, note that the lower cutoff scale of the shower evolution 
+depends on the onium mass rather than on the quark mass, as it should 
+be. Gluons below the octet-onium scale should only be part of the 
+octet-to-singlet transition. 
+ 
+<a name="anchor1"></a>
+<p/><code>flag&nbsp; </code><strong> OniaShower:all &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of onia production. 
+   
+<a name="anchor2"></a>
+<p/><code>flag&nbsp; </code><strong> OniaShower:all(1S0) &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of <i>1S0</i> onia production, 
+e.g. <i>eta_c</i> and <i>eta_b</i>. 
+   
+<a name="anchor3"></a>
+<p/><code>flag&nbsp; </code><strong> OniaShower:all(3S1) &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of <i>3S1</i> onia production, 
+e.g. <i>J/psi</i> and <i>Upsilon</i>. 
+   
+<a name="anchor4"></a>
+<p/><code>flag&nbsp; </code><strong> OniaShower:all(3PJ) &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of <i>3PJ</i> onia production, 
+e.g. <i>chi_c</i> and <i>chi_b</i>. 
+   
+<a name="anchor5"></a>
+<p/><code>parm&nbsp; </code><strong> OniaShower:ldmeFac &nbsp;</strong> 
+ (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>)<br/>
+Enhance all the onium LDMEs by a common factor. This is useful 
+since onium production in the shower is relatively rare when using 
+the default LDMEs. This allows one to conveniently increase the 
+production rate without need to individually change each LDME. Note 
+that increasing this factor to the point where there are multiple 
+onia produced in the shower will result in unphysical results. 
+   
+<a name="anchor6"></a>
+<p/><code>mode&nbsp; </code><strong> OniaShower:alphaScale &nbsp;</strong> 
+ (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+Choice of scale when evaluating the final <i>alpha_s</i> factor in 
+the onia splitting functions. All other <i>alpha_s</i> factors are 
+evaluated at the evolved <i>p_T^2</i> of the dipole. 
+<br/><code>option </code><strong> 0</strong> : the mass squared of the onia, <i>m_O^2</i>.   
+<br/><code>option </code><strong> 1</strong> : the evolved <i>p_T^2</i> of the dipole.   
+<br/><code>option </code><strong> 2</strong> : the dipole centre-of-mass, <i>s</i>.   
+   
+<a name="anchor7"></a>
+<p/><code>mode&nbsp; </code><strong> OniaShower:octetSplit &nbsp;</strong> 
+ (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+Choice of the splitting used for radiation from colour octet onium states. 
+<br/><code>option </code><strong> 0</strong> : do not allow the octet states to radiate.   
+<br/><code>option </code><strong> 1</strong> : treat the octet state like a massive gluon, 
+<i>g &rarr; g g</i>.   
+<br/><code>option </code><strong> 2</strong> : treat the octet state like a heavy-flavour quark, 
+<i>Q &rarr; Q g</i>. The colour factor for this splitting can be 
+modified by the following <code>octetColFac</code> parameter.   
+   
+<a name="anchor8"></a>
+<p/><code>parm&nbsp; </code><strong> OniaShower:octetColFac &nbsp;</strong> 
+ (<code>default = <strong>2.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 4.</code>)<br/>
+The additional multiplicative colour factor used used in the <i>q 
+&rarr; q g</i> splitting kernel for octet onium states 
+(<code>OniaShower:octetSplit = 2</code>), normalized to the <i>q 
+&rarr; q g</i> splitting kernel. Thus the default corresponds to 
+twice the radiation off a quark. The physically preferred range would 
+be between 1 and 9/4. 
+   
+<a name="anchor9"></a>
+<p/><code>flag&nbsp; </code><strong> CharmoniumShower:all &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of charmonium shower splittings, 
+e.g. <i>eta_c</i>, <i>J/psi</i> and <i>chi_c</i>. 
+   
+<a name="anchor10"></a>
+<p/><code>flag&nbsp; </code><strong> BottomoniumShower:all &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Common switch for the group of bottomonium production, 
+e.g. <i>eta_b</i>, <i>Upsilon</i> and <i>chi_b</i>. 
+   
+ 
+<a name="section1"></a> 
+<h3>Charmonium 1S0 States</h3> 
+ 
+<b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
+<code>pvec</code> values must be provided as a comma-separated list 
+with the right number of elements, without any blanks inside the list. 
+ 
+<a name="anchor11"></a>
+<p/><code>mvec&nbsp; </code><strong> CharmoniumShower:states(1S0) &nbsp;</strong> 
+ (<code>default = <strong>{441}</strong></code>; <code>minimum = 0</code>)<br/>
+The <i>1S0</i> charmonium states that can be produced in the 
+shower. Note that all vectors within this section, either of flags or 
+parameters, must be the same length as this vector. 
+   
+ 
+<a name="anchor12"></a>
+<p/><code>pvec&nbsp; </code><strong> CharmoniumShower:O(1S0)[1S0(1)] &nbsp;</strong> 
+ (<code>default = <strong>{1.16}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-singlet long-distance matrix elements 
+<i>&lt;O[1S0(1)]&gt;</i> for the <i>1S0</i> charmonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor13"></a>
+<p/><code>pvec&nbsp; </code><strong> CharmoniumShower:O(1S0)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{0.0119}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-octet long-distance matrix elements 
+<i>&lt;O[1S0(1)]&gt;</i> for the <i>1S0</i> charmonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor14"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:c2ccbar(1S0)[1S0(1)]c &nbsp;</strong> 
+ (<code>default = <strong>{off}</strong></code>)<br/>
+Colour-singlet production of <i>1S0</i> charmonium states via 
+the splitting <i>c &rarr; ccbar[1S0(1)] c</i>. 
+   
+ 
+<a name="anchor15"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:g2ccbar(1S0)[1S0(1)]g &nbsp;</strong> 
+ (<code>default = <strong>{off}</strong></code>)<br/>
+Colour-singlet production of <i>1S0</i> charmonium states via 
+the splitting <i>g &rarr; ccbar[1S0(1)] g</i>. 
+   
+ 
+<a name="anchor16"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:g2ccbar(1S0)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{off}</strong></code>)<br/>
+Colour-octet production of <i>1S0</i> charmonium states via 
+the splitting <i>g &rarr; ccbar[3S1(8)]</i>. 
+   
+ 
+<a name="section2"></a> 
+<h3>Charmonium 3S1 States</h3> 
+ 
+<a name="anchor17"></a>
+<p/><code>mvec&nbsp; </code><strong> CharmoniumShower:states(3S1) &nbsp;</strong> 
+ (<code>default = <strong>{443,100443}</strong></code>; <code>minimum = 0</code>)<br/>
+The <i>3S1</i> charmonium states that can be produced in the 
+shower. Note that all vectors within this section, either of flags or 
+parameters, must be the same length as this vector. 
+   
+ 
+<a name="anchor18"></a>
+<p/><code>pvec&nbsp; </code><strong> CharmoniumShower:O(3S1)[3S1(1)] &nbsp;</strong> 
+ (<code>default = <strong>{1.16,0.76}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the <i>3S1</i> charmonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor19"></a>
+<p/><code>pvec&nbsp; </code><strong> CharmoniumShower:O(3S1)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{0.0119,0.0050}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-octet long-distance matrix elements 
+<i>&lt;O[3S1(8)]&gt;</i> for the <i>3S1</i> charmonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor20"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:c2ccbar(3S1)[3S1(1)]c &nbsp;</strong> 
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> charmonium states via 
+the splitting <i>c &rarr; ccbar[3S1(1)] c</i>. 
+   
+ 
+<a name="anchor21"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:g2ccbar(3S1)[3S1(1)]gg &nbsp;</strong> 
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> charmonium states via 
+the splitting <i>g &rarr; ccbar[3S1(1)] g g</i>. 
+   
+ 
+<a name="anchor22"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:g2ccbar(3S1)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
+Colour-octet production of <i>3S1</i> charmonium states via 
+the splitting <i>g &rarr; ccbar[3S1(8)]</i>. 
+   
+ 
+<a name="section3"></a> 
+<h3>Charmonium 3PJ States</h3> 
+ 
+<a name="anchor23"></a>
+<p/><code>mvec&nbsp; </code><strong> CharmoniumShower:states(3PJ) &nbsp;</strong> 
+ (<code>default = <strong>{10441,20443,445}</strong></code>; <code>minimum = 0</code>)<br/>
+The <i>3PJ</i> charmonium states that can be produced in the 
+shower. Note that all vectors within this section, either of flags or 
+parameters, must be the same length as this vector. 
+   
+ 
+<a name="anchor24"></a>
+<p/><code>pvec&nbsp; </code><strong> CharmoniumShower:O(3PJ)[3P0(1)] &nbsp;</strong> 
+ (<code>default = <strong>{0.05,0.05,0.05}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3P0(1)]&gt;/m_Q^2</i> for the <i>3PJ</i> charmonium 
+states. The remaining <i>&lt;O[3PJ(1)]&gt;/m_Q^2</i> are calculated 
+from these long-distance matrix elements. Units are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor25"></a>
+<p/><code>pvec&nbsp; </code><strong> CharmoniumShower:O(3PJ)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{0.0031,0.0031,0.0031}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-octet long-distance matrix elements <i>O[3S1(8)]</i> for the 3PJ 
+charmonium states. 
+   
+ 
+<a name="anchor26"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:c2ccbar(3PJ)[3PJ(1)]c &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3PJ</i> charmonium states via 
+the splitting <i>c &rarr; ccbar[3PJ(1)] c</i>. 
+   
+ 
+<a name="anchor27"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:c2ccbar(3PJ)[3S1(8)]c &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-octet production of <i>3PJ</i> charmonium states via 
+the splitting <i>c &rarr; ccbar[3S1(8)] c</i>. 
+   
+ 
+<a name="anchor28"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:g2ccbar(3PJ)[3PJ(1)]g &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3PJ</i> charmonium states via 
+the splitting <i>g &rarr; ccbar[3PJ(1)] g</i>. 
+   
+ 
+<a name="anchor29"></a>
+<p/><code>fvec&nbsp; </code><strong> CharmoniumShower:g2ccbar(3PJ)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-octet production of <i>3PJ</i> charmonium states via 
+the splitting <i>g &rarr; ccbar[3S1(8)]</i>. 
+   
+ 
+<a name="section4"></a> 
+<h3>Bottomonium 1S0 States</h3> 
+ 
+<b>Warning</b>: changed <code>fvec</code>, <code>mvec</code> or 
+<code>pvec</code> values must be provided as a comma-separated list 
+with the right number of elements, without any blanks inside the list. 
+ 
+<a name="anchor30"></a>
+<p/><code>mvec&nbsp; </code><strong> BottomoniumShower:states(1S0) &nbsp;</strong> 
+ (<code>default = <strong>{551}</strong></code>; <code>minimum = 0</code>)<br/>
+The <i>1S0</i> bottomonium states that can be produced in the 
+shower. Note that all vectors within this section, either of flags or 
+parameters, must be the same length as this vector. 
+   
+ 
+<a name="anchor31"></a>
+<p/><code>pvec&nbsp; </code><strong> BottomoniumShower:O(1S0)[1S0(1)] &nbsp;</strong> 
+ (<code>default = <strong>{9.28}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-singlet long-distance matrix elements 
+<i>&lt;O[1S0(1)]&gt;</i> for the <i>1S0</i> bottomonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor32"></a>
+<p/><code>pvec&nbsp; </code><strong> BottomoniumShower:O(1S0)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{0.15}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-octet long-distance matrix elements 
+<i>&lt;O[1S0(1)]&gt;</i> for the <i>1S0</i> bottomonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor33"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:b2bbbar(1S0)[1S0(1)]b &nbsp;</strong> 
+ (<code>default = <strong>{off}</strong></code>)<br/>
+Colour-singlet production of <i>1S0</i> bottomonium states via 
+the splitting <i>b &rarr; bbbar[1S0(1)] c</i>. 
+   
+ 
+<a name="anchor34"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:g2bbbar(1S0)[1S0(1)]g &nbsp;</strong> 
+ (<code>default = <strong>{off}</strong></code>)<br/>
+Colour-singlet production of <i>1S0</i> bottomonium states via 
+the splitting <i>g &rarr; bbbar[1S0(1)] g</i>. 
+   
+ 
+<a name="anchor35"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:g2bbbar(1S0)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{off}</strong></code>)<br/>
+Colour-octet production of <i>1S0</i> bottomonium states via 
+the splitting <i>g &rarr; bbbar[3S1(8)]</i>. 
+   
+ 
+<a name="section5"></a> 
+<h3>Bottomonium 3S1 States</h3> 
+ 
+<a name="anchor36"></a>
+<p/><code>mvec&nbsp; </code><strong> BottomoniumShower:states(3S1) &nbsp;</strong> 
+ (<code>default = <strong>{553,100553,200553}</strong></code>; <code>minimum = 0</code>)<br/>
+The <i>3S1</i> bottomonium states that can be produced in the 
+shower. Note that all vectors within this section, either of flags or 
+parameters, must be the same length as this vector. 
+   
+ 
+<a name="anchor37"></a>
+<p/><code>pvec&nbsp; </code><strong> BottomoniumShower:O(3S1)[3S1(1)] &nbsp;</strong> 
+ (<code>default = <strong>{9.28,4.63,3.54}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-singlet long-distance matrix elements 
+<i>&lt;O[3S1(1)]&gt;</i> for the <i>3S1</i> bottomonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor38"></a>
+<p/><code>pvec&nbsp; </code><strong> BottomoniumShower:O(3S1)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{0.15,0.045,0.075}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The colour-octet long-distance matrix elements 
+<i>&lt;O[3S1(8)]&gt;</i> for the <i>3S1</i> bottomonium states. Units 
+are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor39"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:b2bbbar(3S1)[3S1(1)]b &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> bottomonium states via 
+the splitting <i>b &rarr; bbbar[3S1(1)] c</i>. 
+   
+ 
+<a name="anchor40"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:g2bbbar(3S1)[3S1(1)]gg &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3S1</i> bottomonium states via 
+the splitting <i>g &rarr; bbbar[3S1(1)] g g</i>. 
+   
+ 
+<a name="anchor41"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:g2bbbar(3S1)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-octet production of <i>3S1</i> bottomonium states via 
+the splitting <i>g &rarr; bbbar[3S1(8)]</i>. 
+   
+ 
+<a name="section6"></a> 
+<h3>Bottomonium 3PJ States</h3> 
+ 
+<a name="anchor42"></a>
+<p/><code>mvec&nbsp; </code><strong> BottomoniumShower:states(3PJ) &nbsp;</strong> 
+ (<code>default = <strong>{10551,20553,555}</strong></code>; <code>minimum = 0</code>)<br/>
+The <i>3PJ</i> bottomonium states that can be produced in the 
+shower. Note that all vectors within this section, either of flags or 
+parameters, must be the same length as this vector. 
+   
+ 
+<a name="anchor43"></a>
+<p/><code>pvec&nbsp; </code><strong> BottomoniumShower:O(3PJ)[3P0(1)] &nbsp;</strong> 
+ (<code>default = <strong>{0.085,0.085,0.085}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-singlet long-distance matrix elements 
+<i>&lt;O[3P0(1)]&gt;/m_Q^2</i> for the <i>3PJ</i> bottomonium 
+states. The remaining <i>&lt;O[3PJ(1)]&gt;/m_Q^2</i> are calculated 
+from these long-distance matrix elements. Units are <i>GeV^3</i>. 
+   
+ 
+<a name="anchor44"></a>
+<p/><code>pvec&nbsp; </code><strong> BottomoniumShower:O(3PJ)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{0.04,0.04,0.04}</strong></code>; <code>minimum = 0.0</code>)<br/>
+The color-octet long-distance matrix elements <i>O[3S1(8)]</i> for the 3PJ 
+bottomonium states. 
+   
+ 
+<a name="anchor45"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:b2bbbar(3PJ)[3PJ(1)]b &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3PJ</i> bottomonium states via 
+the splitting <i>b &rarr; bbbar[3PJ(1)] c</i>. 
+   
+ 
+<a name="anchor46"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:b2bbbar(3PJ)[3S1(8)]b &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-octet production of <i>3PJ</i> bottomonium states via 
+the splitting <i>b &rarr; bbbar[3S1(8)] c</i>. 
+   
+ 
+<a name="anchor47"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:g2bbbar(3PJ)[3PJ(1)]g &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-singlet production of <i>3PJ</i> bottomonium states via 
+the splitting <i>g &rarr; bbbar[3PJ(1)] g</i>. 
+   
+ 
+<a name="anchor48"></a>
+<p/><code>fvec&nbsp; </code><strong> BottomoniumShower:g2bbbar(3PJ)[3S1(8)] &nbsp;</strong> 
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
+Colour-octet production of <i>3PJ</i> bottomonium states via 
+the splitting <i>g &rarr; bbbar[3S1(8)]</i>. 
+   
+ 
+</body>
+</html>
+ 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

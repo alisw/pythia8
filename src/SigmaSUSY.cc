@@ -1,5 +1,5 @@
 // SigmaSUSY.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -73,7 +73,7 @@ double Sigma2SUSY::weightDecay( Event& process, int iResBeg, int iResEnd) {
 
       Sigma2qqbar2chi0chi0 localDecay(idmo,iddau,0);
       localDecay.initInfoPtr(*infoPtr);
-      localDecay.init(NULL, NULL);
+      localDecay.init(nullptr, nullptr);
       localDecay.initProc();
       localDecay.alpEM = 1;
       localDecay.id1 = process[iF].id();
@@ -129,8 +129,8 @@ void Sigma2SUSY::setPointers(string processIn){
 
   // If still not initialised, print warning
   if(!coupSUSYPtr->isInit) {
-    infoPtr->errorMsg("Warning from " + processIn + "::setPointers"
-      ,"; Unable to initialise Susy Couplings. ");
+    loggerPtr->warningMsg(processIn + "::setPointers",
+      "Unable to initialise Susy Couplings. ");
 
   }
 
@@ -2315,8 +2315,8 @@ void Sigma1qq2antisquark::initProc(){
   if (!coupSUSYPtr->isInit) coupSUSYPtr->initSUSY(slhaPtr, infoPtr);
 
   // If still not initialised, print warning
-  if(!coupSUSYPtr->isInit) infoPtr->errorMsg("Warning from qq2antisquark"
-     "::setPointers", "; Unable to initialise Susy Couplings.");
+  if(!coupSUSYPtr->isInit)
+    loggerPtr->WARNING_MSG("Unable to initialise Susy Couplings.");
 
 
   //Construct name of the process from lambda'' couplings

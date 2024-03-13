@@ -1,5 +1,5 @@
 // Event.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -27,9 +27,11 @@ const double Particle::TINY = 1e-20;
 
 // Set pointer to the particle data species of the particle.
 
-void Particle::setPDEPtr(ParticleDataEntry* pdePtrIn) {
-  pdePtr = pdePtrIn; if (pdePtrIn != 0 || evtPtr == 0) return;
-  pdePtr = (*evtPtr).particleDataPtr->particleDataEntryPtr( idSave);}
+void Particle::setPDEPtr(ParticleDataEntryPtr pdePtrIn) {
+  if (pdePtrIn || evtPtr == nullptr)
+    pdePtr = pdePtrIn;
+  else if (evtPtr && evtPtr->particleDataPtr)
+    pdePtr = evtPtr->particleDataPtr->particleDataEntryPtr( idSave);}
 
 //--------------------------------------------------------------------------
 
@@ -50,7 +52,8 @@ int Particle::intPol() const {
 // Functions for rapidity and pseudorapidity.
 
 double Particle::y() const {
-  double temp = log( ( pSave.e() + abs(pSave.pz()) ) / max( TINY, mT() ) );
+  double temp = log( ( max(pSave.e(), pSave.pAbs()) + abs(pSave.pz()) )
+    / max( TINY, mT() ) );
   return (pSave.pz() > 0.) ? temp : -temp;
 }
 
@@ -514,6 +517,42 @@ bool Particle::undoDecay() {
 
 //--------------------------------------------------------------------------
 
+// Get and set Hidden Valley colours, referring back to the event.
+
+int Particle::colHV() const {
+  if (evtPtr == nullptr || !(*evtPtr).findIndexHV(index())) return 0;
+  return (*evtPtr).hvCols[(*evtPtr).iIndexHV].colHV;
+}
+
+int Particle::acolHV() const {
+  if (evtPtr == nullptr || !(*evtPtr).findIndexHV(index())) return 0;
+  return (*evtPtr).hvCols[(*evtPtr).iIndexHV].acolHV;
+}
+
+void Particle::colHV(int colHVin) {
+  if (evtPtr == nullptr) return;
+  if ((*evtPtr).findIndexHV(index()))
+    (*evtPtr).hvCols[(*evtPtr).iIndexHV].colHV = colHVin;
+  else (*evtPtr).hvCols.push_back( HVcols(index(), colHVin, 0) );
+}
+
+void Particle::acolHV(int acolHVin) {
+  if (evtPtr == nullptr) return;
+  if ((*evtPtr).findIndexHV(index()))
+    (*evtPtr).hvCols[(*evtPtr).iIndexHV].acolHV = acolHVin;
+  else (*evtPtr).hvCols.push_back( HVcols(index(), 0, acolHVin) );
+}
+
+void Particle::colsHV(int colHVin, int acolHVin) {
+  if (evtPtr == nullptr) return;
+  if ((*evtPtr).findIndexHV(index())) {
+    (*evtPtr).hvCols[(*evtPtr).iIndexHV].colHV = colHVin;
+    (*evtPtr).hvCols[(*evtPtr).iIndexHV].acolHV = acolHVin;
+  } else (*evtPtr).hvCols.push_back( HVcols(index(), colHVin, acolHVin) );
+}
+
+//--------------------------------------------------------------------------
+
 // Particle name, with status but imposed maximum length -> may truncate.
 
 string Particle::nameWithStatus(int maxLen) const {
@@ -558,20 +597,20 @@ void Particle::offsetCol( int addCol) {
 
 //--------------------------------------------------------------------------
 
-// Invariant mass of a pair and its square.
+// Particles invariant mass, mass squared, and momentum dot product.
 // (Not part of class proper, but tightly linked.)
 
 double m(const Particle& pp1, const Particle& pp2) {
-  double m2 = pow2(pp1.e() + pp2.e()) - pow2(pp1.px() + pp2.px())
-     - pow2(pp1.py() + pp2.py()) - pow2(pp1.pz() + pp2.pz());
-  return (m2 > 0. ? sqrt(m2) : 0.);
-}
+  double s = m2(pp1, pp2); return (s > 0. ? sqrt(s) : 0.);}
 
 double m2(const Particle& pp1, const Particle& pp2) {
-  double m2 = pow2(pp1.e() + pp2.e()) - pow2(pp1.px() + pp2.px())
-     - pow2(pp1.py() + pp2.py()) - pow2(pp1.pz() + pp2.pz());
-  return m2;
-}
+  return m2(pp1.p(), pp2.p());}
+
+double m2(const Particle& pp1, const Particle& pp2, const Particle& pp3) {
+  return m2(pp1.p(), pp2.p(), pp3.p());}
+
+double dot4(const Particle& pp1, const Particle& pp2) {
+  return pp1.p()*pp2.p();}
 
 //==========================================================================
 
@@ -609,14 +648,23 @@ Event& Event::operator=( const Event& oldEvent) {
     for (int i = 0; i < oldEvent.sizeJunction(); ++i)
       appendJunction( oldEvent.getJunction(i) );
 
+    // Copy the Hidden Valley colour information.
+    for (int i = 0; i < int(oldEvent.hvCols.size()); ++i)
+      hvCols.push_back( HVcols(oldEvent.hvCols[i].iHV,
+      oldEvent.hvCols[i].colHV, oldEvent.hvCols[i].acolHV) );
+
     // Copy all other values.
-    startColTag         = oldEvent.startColTag;
-    maxColTag           = oldEvent.maxColTag;
-    savedSize           = oldEvent.savedSize;
-    savedJunctionSize   = oldEvent.savedJunctionSize;
-    scaleSave           = oldEvent.scaleSave;
-    scaleSecondSave     = oldEvent.scaleSecondSave;
-    headerList          = oldEvent.headerList;
+    startColTag          = oldEvent.startColTag;
+    iEventHV             = oldEvent.iEventHV;
+    iIndexHV             = oldEvent.iIndexHV;
+    maxColTag            = oldEvent.maxColTag;
+    savedSize            = oldEvent.savedSize;
+    savedJunctionSize    = oldEvent.savedJunctionSize;
+    savedHVcolsSize      = oldEvent.savedHVcolsSize;
+    savedPartonLevelSize = oldEvent.savedPartonLevelSize;
+    scaleSave            = oldEvent.scaleSave;
+    scaleSecondSave      = oldEvent.scaleSecondSave;
+    headerList           = oldEvent.headerList;
 
   // Done.
   }
@@ -835,6 +883,35 @@ void Event::listJunctions() const {
 
 //--------------------------------------------------------------------------
 
+// Print the Hidden Valley colours in an event.
+
+void Event::listHVcols() const {
+
+  cout << "\n -- HV-coloured particles --\n   i      no   colHV  acolHV\n";
+  for (int iv = 0; iv < int(hvCols.size()); ++iv)
+    cout << setw(4) << iv << setw(8) << hvCols[iv].iHV << setw(8)
+         << hvCols[iv].colHV << setw(8) << hvCols[iv].acolHV << "\n";
+  cout << " ---------------------------" << endl;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Find largest Hidden Valley (anti)colour in an event.
+
+int Event::maxHVcols() const {
+
+  int maxHVcoltag = 0;
+  for (int iv = 0; iv < int(hvCols.size()); ++iv) {
+    if (hvCols[iv].colHV > maxHVcoltag) maxHVcoltag = hvCols[iv].colHV;
+    if (hvCols[iv].acolHV > maxHVcoltag) maxHVcoltag = hvCols[iv].acolHV;
+  }
+  return maxHVcoltag;
+
+}
+
+//--------------------------------------------------------------------------
+
 // Operator overloading allows to append one event to an existing one.
 
 Event& Event::operator+=( const Event& addEvent) {
@@ -881,6 +958,15 @@ Event& Event::operator+=( const Event& addEvent) {
 
     // Append junction to summed event.
     appendJunction( tempJ );
+  }
+
+  // Append Hidden Valley colour information.
+  if (addEvent.hasHVcols())
+  for (int i = 1; i < addEvent.size(); ++i) {
+    int colv  = addEvent[i].colHV();
+    int acolv = addEvent[i].acolHV();
+    if (colv > 0 || acolv > 0) hvCols.push_back(
+      HVcols( i + offsetIdx, colv + offsetCol, acolv + offsetCol) );
   }
 
   // Set header that indicates character as sum of events.

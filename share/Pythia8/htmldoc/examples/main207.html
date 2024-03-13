@@ -1,0 +1,144 @@
+<html><head><title>main207</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main207</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main207.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2024 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:peter.skands@monash.edu">Peter Skands</a>
+//            Thanks to: M di Mauro
+//            for the original template for this example
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#vincia">Vincia</a>
+//            <a href="../ExampleKeywords.html#weak+showers">Weak&nbsp;showers</a>
+//            <a href="../ExampleKeywords.html#lhef">LHEF</a>
+//            <a href="../ExampleKeywords.html#dark+matter">Dark&nbsp;matter</a>
+
+// Example showing how to run Vincia&apos;s electroweak shower with LHEF input.
+// This requires the LHEF files to contain helicities for the hard partons.
+// In this example, the LHEF file contains dark-matter particles annihilating
+// to electron-positron pairs.
+
+// Note: emitted weak bosons decay inclusively; it would be up to the user
+// themselves to filter events with decays to specific channels if desired.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;math.h&quot;
+#include &lt;iostream&gt;
+#include &lt;string&gt;
+
+using namespace std;
+using namespace Pythia8;
+
+int main() {
+
+  // Generator.
+  Pythia pythia;
+
+  // Read Pythia settings from command file.
+  pythia.readFile(&quot;main207.cmnd&quot;);
+
+  // Initialization.
+  pythia.init();
+
+  // Allow for possibility of a few faulty events.
+  int nError      = pythia.settings.mode(&quot;Main:timesAllowErrors&quot;);
+
+  double logxMin = -9.;
+  double logxMax = 0.;
+  double nBins = 100;
+  double DeltaBin = (logxMax-logxMin)/nBins;
+
+  // Histogram particle spectra.
+  Hist gamma(&quot;gamma spectrum&quot;, nBins, logxMin, logxMax);
+  Hist electron(&quot;e+- spectrum&quot;, nBins, logxMin, logxMax);
+  Hist proton(&quot;p spectrum&quot;, nBins, logxMin, logxMax);
+  Hist nue(&quot;nu_e spectrum&quot;, nBins, logxMin, logxMax);
+  Hist numu(&quot;nu_mu spectrum&quot;, nBins, logxMin, logxMax);
+  Hist nutau(&quot;nu_tau spectrum&quot;, nBins, logxMin, logxMax);
+  Hist rest(&quot;remaining particle spectrum&quot;, nBins, logxMin, logxMax);
+
+  // Begin event loop.
+  int nEvent = 0;
+  int iError = 0;
+  while (true) {
+
+    // Generate the next event.
+    if (!pythia.next()) {
+
+      // If failure because reached end of file then exit event loop.
+      if (pythia.info.atEndOfFile()) break;
+
+      // Otherwise count event failure and continue/exit as necessary.
+      cout &lt;&lt; &quot;Warning: event &quot; &lt;&lt; nEvent &lt;&lt; &quot; failed&quot; &lt;&lt; endl;
+      if (++iError == nError) {
+        cout &lt;&lt; &quot;Error: too many event failures... exiting&quot; &lt;&lt; endl;
+        break;
+      }
+
+      continue;
+    }
+
+    /*
+     * Process dependent checks and analysis go here ...
+     */
+
+    // Add total number of events attempted.
+    ++nEvent;
+
+    // Get DM mass.
+    double mDM = pythia.event[1].m();
+
+    // Loop over all particles and select final-state ones for histrograms.
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      if ( !pythia.event[i].isFinal() ) continue;
+      int id       = pythia.event[i].id();
+      int idAbs    = pythia.event[i].idAbs();
+      double e     = pythia.event[i].e();
+      if (e &lt;= 0) continue;
+      double logx  = log10(e/mDM);
+      // Select photons.
+      if (idAbs == 22) gamma.fill(logx);
+      // Select electrons (positron equivalent).
+      else if (id == -11)  electron.fill(logx);
+      // Select protons.
+      else if (id == -2212 or idAbs == 2112) proton.fill(logx);
+      // Select various neutrinos.
+      else if (id == 12) nue.fill(logx);
+      else if (id == 14) numu.fill(logx);
+      else if (id == 16) nutau.fill(logx);
+      else rest.fill(logx);
+    }
+  }
+
+
+  //Statistic and histrograms.
+  pythia.stat();
+
+  gamma.operator*=(1./nEvent/DeltaBin);
+  electron.operator*=(1./nEvent/DeltaBin);
+  proton.operator*=(1./nEvent/DeltaBin);
+  nue.operator*=(1./nEvent/DeltaBin);
+  numu.operator*=(1./nEvent/DeltaBin);
+  nutau.operator*=(1./nEvent/DeltaBin);
+
+  // Make tables, including statistical errors (last argument = true).
+  gamma.table(&quot;main207-gamma.dat&quot;, false, true, true);
+  electron.table(&quot;main207-positron.dat&quot;, false, true, true);
+  proton.table(&quot;main207-antiproton.dat&quot;, false, true, true);
+  nue.table(&quot;main207-nue.dat&quot;, false, true, true);
+  numu.table(&quot;main207-numu.dat&quot;, false, true, true);
+  nutau.table(&quot;main207-nutau.dat&quot;, false, true, true);
+  rest.table(&quot;main207-rest.dat&quot;, false, true, true);
+
+  cout &lt;&lt; gamma &lt;&lt; electron &lt;&lt; proton &lt;&lt; nue &lt;&lt; numu &lt;&lt; nutau &lt;&lt; rest;
+
+  //Done
+  return 0;
+}
+</code></pre></body></html>

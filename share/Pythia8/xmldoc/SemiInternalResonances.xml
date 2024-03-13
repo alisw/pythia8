@@ -94,11 +94,7 @@ member variables, a number of quantities that you later may find useful:
 <br/><code>GamMRat</code> : the ratio of width to mass. 
  
 <p/> 
-A <b>destructor</b> is only needed if you plan to delete the resonance 
-before the natural end of the run, and require some special behaviour 
-at that point. If you call such a destructor you will leave a pointer 
-dangling inside the <code>Pythia</code> object you gave it in to, 
-if that still exists. 
+A <b>destructor</b> is only needed if you require some special behaviour. 
  
 <method name="void ResonanceWidths::initConstants()"> 
 is called once during initialization, and can then be used to set up 
@@ -203,7 +199,7 @@ make use of it in a run. Assume you have written a new class
 <code>ResonanceWidths</code>. You then create an instance of 
 this class and hand it in to a <code>pythia</code> object with 
 <pre> 
-      ResonanceWidths* myResonance = new MyResonance(); 
+      ResonanceWidthsPtr myResonance = make_shared&lt;MyResonance()&gt;; 
       pythia.setResonancePtr( myResonance); 
 </pre> 
 If you have several resonances you can repeat the procedure any number 
@@ -229,4 +225,4 @@ to <code>include/ResonanceWidths.h</code> and
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

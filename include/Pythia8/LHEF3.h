@@ -1,5 +1,5 @@
 // LHEF3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -825,14 +825,14 @@ public:
   // filename: the name of the file to read from.
   //
   Reader(string filenameIn)
-    : filename(filenameIn), intstream(NULL), file(NULL), version() {
+    : filename(filenameIn), intstream(nullptr), file(nullptr), version() {
     intstream = new igzstream(filename.c_str());
     file = intstream;
     isGood = init();
   }
 
   Reader(istream* is)
-    : filename(""), intstream(NULL), file(is), version() {
+    : filename(""), intstream(nullptr), file(is), version() {
     isGood = init();
   }
 

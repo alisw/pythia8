@@ -115,13 +115,13 @@ which makes sense, since they are all dominated by the same kind of
 reweighting that cancels the low-<i>pT</i> divergence. 
  
 <p/> 
-An eikonalized description of these processes, excluding double onia 
-production, is included in the multiparton-interactions 
-framework. Here the low-<i>pT</i> damping is automatic, and 
-additionally the framework is more consistent (e.g. with respect to 
-energy-momentum constraints and the impact-parameter description) for 
-events where the onium production is not the hardest subprocess, as 
-would often be the case in the low-<i>pT</i> limit. 
+An eikonalized description of these processes is included in the 
+multiparton-interactions framework. Here the low-<i>pT</i> damping 
+is automatic, and additionally the framework is more consistent 
+(e.g. with respect to energy-momentum constraints and the 
+impact-parameter description) for events where the onium production is 
+not the hardest subprocess, as would often be the case in the 
+low-<i>pT</i> limit. 
  
 <a name="anchor1"></a>
 <p/><code>flag&nbsp; </code><strong> Onia:forceMassSplit &nbsp;</strong> 
@@ -182,7 +182,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor9"></a>
 <p/><code>mvec&nbsp; </code><strong> Charmonium:states(3S1) &nbsp;</strong> 
- (<code>default = <strong>443,100443</strong></code>; <code>minimum = 0</code>)<br/>
+ (<code>default = <strong>{443,100443}</strong></code>; <code>minimum = 0</code>)<br/>
 The <i>3S1</i> charmonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
@@ -191,21 +191,21 @@ vector.
  
 <a name="anchor10"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3S1(1)] &nbsp;</strong> 
- (<code>default = <strong>1.16,0.76</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{1.16,0.76}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-singlet long-distance matrix 
 elements <i>&lt;O[3S1(1)]&gt;</i> for the <i>3S1</i> charmonium states. 
    
  
 <a name="anchor11"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3S1(8)] &nbsp;</strong> 
- (<code>default = <strong>0.0119,0.0050</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.0119,0.0050}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3S1(8)]&gt;</i> for the <i>3S1</i> charmonium states. 
    
  
 <a name="anchor12"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[1S0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.01,0.004</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.01,0.004}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[1S0(8)]&gt;</i> for the <i>3S1</i> 
 charmonium states. 
@@ -213,7 +213,7 @@ charmonium states.
  
 <a name="anchor13"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3P0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.01,0.004</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.01,0.004}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the <i>3S1</i> charmonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
@@ -222,7 +222,7 @@ are calculated from these long-distance matrix elements.
  
 <a name="anchor14"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3S1)[3S1(1)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> charmonium states via 
 <i>g g &rarr; ccbar[3S1(1)] g</i>. 
 Code 401. 
@@ -230,15 +230,15 @@ Code 401.
  
 <a name="anchor15"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3S1)[3S1(1)]gm &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> charmonium states via 
-<i>g g &rarr; ccbar[3S1(1)] g</i> with a hard <i>gamma</i>. 
+<i>g g &rarr; ccbar[3S1(1)] gamma</i>. 
 Code 441. 
    
  
 <a name="anchor16"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3S1)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>g g &rarr; ccbar[3S1(8)] g</i>. 
 Code 402. 
@@ -246,7 +246,7 @@ Code 402.
  
 <a name="anchor17"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qg2ccbar(3S1)[3S1(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>q g &rarr; ccbar[3S1(8)] q</i>. 
 Code 403. 
@@ -254,7 +254,7 @@ Code 403.
  
 <a name="anchor18"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2ccbar(3S1)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>q qbar &rarr; ccbar[3S1(8)] g</i>. 
 Code 404. 
@@ -262,7 +262,7 @@ Code 404.
  
 <a name="anchor19"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3S1)[1S0(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>g g &rarr; ccbar[1S0(8)] g</i>. 
 Code 405. 
@@ -270,7 +270,7 @@ Code 405.
  
 <a name="anchor20"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qg2ccbar(3S1)[1S0(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>q g &rarr; ccbar[1S0(8)] q</i>. 
 Code 406. 
@@ -278,7 +278,7 @@ Code 406.
  
 <a name="anchor21"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2ccbar(3S1)[1S0(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>q qbar &rarr; ccbar[1S0(8)] g</i>. 
 Code 407. 
@@ -286,7 +286,7 @@ Code 407.
  
 <a name="anchor22"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3S1)[3PJ(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>g g &rarr; ccbar[3PJ(8)] g</i>. 
 Code 408. 
@@ -294,7 +294,7 @@ Code 408.
  
 <a name="anchor23"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qg2ccbar(3S1)[3PJ(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
 <i>q g &rarr; ccbar[3PJ(8)] q</i>. 
 Code 409. 
@@ -302,9 +302,9 @@ Code 409.
  
 <a name="anchor24"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2ccbar(3S1)[3PJ(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> charmonium states via 
-<i>q qbar &rarr; ccbar[3SJ(8)] g</i>. 
+<i>q qbar &rarr; ccbar[3PJ(8)] g</i>. 
 Code 410. 
    
  
@@ -317,7 +317,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor25"></a>
 <p/><code>mvec&nbsp; </code><strong> Charmonium:states(3PJ) &nbsp;</strong> 
- (<code>default = <strong>10441,20443,445</strong></code>)<br/>
+ (<code>default = <strong>{10441,20443,445}</strong></code>)<br/>
 The <i>3PJ</i> charmonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
@@ -326,7 +326,7 @@ vector.
  
 <a name="anchor26"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3PJ)[3P0(1)] &nbsp;</strong> 
- (<code>default = <strong>0.05,0.05,0.05</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.05,0.05,0.05}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3P0(1)]&gt;/m_Q^2</i> for the <i>3PJ</i> charmonium 
 states. The remaining <i>&lt;O[3PJ(1)]&gt;/m_Q^2</i> 
@@ -335,14 +335,14 @@ are calculated from these long-distance matrix elements.
  
 <a name="anchor27"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3PJ)[3S1(8)] &nbsp;</strong> 
- (<code>default = <strong>0.0031,0.0031,0.0031</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.0031,0.0031,0.0031}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(8)]&gt;</i> for the <i>3PJ</i> charmonium states. 
    
  
 <a name="anchor28"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3PJ)[3PJ(1)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> charmonium states via 
 <i>g g &rarr; ccbar[3PJ(1)] g</i>. 
 Code 411. 
@@ -350,7 +350,7 @@ Code 411.
  
 <a name="anchor29"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qg2ccbar(3PJ)[3PJ(1)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> charmonium states via 
 <i>q g &rarr; ccbar[3PJ(1)] q</i>. 
 Code 412. 
@@ -358,7 +358,7 @@ Code 412.
  
 <a name="anchor30"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2ccbar(3PJ)[3PJ(1)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> charmonium states via 
 <i>q qbar &rarr; ccbar[3PJ(1)] g</i>. 
 Code 413. 
@@ -366,7 +366,7 @@ Code 413.
  
 <a name="anchor31"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3PJ)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3PJ</i> charmonium states via 
 <i>g g &rarr; ccbar[3S1(8)] g</i>. 
 Code 414. 
@@ -374,7 +374,7 @@ Code 414.
  
 <a name="anchor32"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qg2ccbar(3PJ)[3S1(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3PJ</i> charmonium states via 
 <i>q g &rarr; ccbar[3S1(8)] q</i>. 
 Code 415. 
@@ -382,7 +382,7 @@ Code 415.
  
 <a name="anchor33"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2ccbar(3PJ)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3PJ</i> charmonium states via 
 <i>q qbar &rarr; ccbar[3S1(8)] g</i>. 
 Code 416. 
@@ -397,7 +397,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor34"></a>
 <p/><code>mvec&nbsp; </code><strong> Charmonium:states(3DJ) &nbsp;</strong> 
- (<code>default = <strong>30443</strong></code>)<br/>
+ (<code>default = <strong>{30443}</strong></code>)<br/>
 The <i>3DJ</i> charmonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
@@ -406,7 +406,7 @@ vector.
  
 <a name="anchor35"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3DJ)[3D1(1)] &nbsp;</strong> 
- (<code>default = <strong>0.161</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.161}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3D1(1)]&gt;</i> for the <i>3PJ</i> charmonium 
 states. For a <i>3DJ</i> charmonium state where <i>J</i> is 
@@ -418,7 +418,7 @@ relations.
  
 <a name="anchor36"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3DJ)[3P0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.01</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.01}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the 3DJ charmonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
@@ -427,7 +427,7 @@ are calculated from these long-distance matrix elements.
  
 <a name="anchor37"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3DJ)[3DJ(1)]g &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
+ (<code>default = <strong>{off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> charmonium states via 
 <i>g g &rarr; ccbar[3DJ(1)] g</i>. 
 Code 417. 
@@ -435,7 +435,7 @@ Code 417.
  
 <a name="anchor38"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2ccbar(3DJ)[3PJ(8)]g &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
+ (<code>default = <strong>{off}</strong></code>)<br/>
 Colour-octet production of <i>3DJ</i> charmonium states via 
 <i>g g &rarr; ccbar[3PJ(8)] g</i>. 
 Code 418. 
@@ -443,7 +443,7 @@ Code 418.
  
 <a name="anchor39"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qg2ccbar(3DJ)[3PJ(8)]q &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
+ (<code>default = <strong>{off}</strong></code>)<br/>
 Colour-octet production of <i>3DJ</i> charmonium states via 
 <i>q g &rarr; ccbar[3PJ(8)] q</i>. 
 Code 419. 
@@ -451,7 +451,7 @@ Code 419.
  
 <a name="anchor40"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2ccbar(3DJ)[3PJ(8)]g &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
+ (<code>default = <strong>{off}</strong></code>)<br/>
 Colour-octet production of <i>3DJ</i> charmonium states via 
 <i>q qbar &rarr; ccbar[3PJ(8)] g</i>. 
 Code 420. 
@@ -466,7 +466,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor41"></a>
 <p/><code>mvec&nbsp; </code><strong> Charmonium:states(3S1)1 &nbsp;</strong> 
- (<code>default = <strong>443,443,100443</strong></code>)<br/>
+ (<code>default = <strong>{443,443,100443}</strong></code>)<br/>
 The first <i>3S1</i> charmonium states of the charmonium pairs that 
 can be produced from the following processes. Note that all vectors 
 within this section, either of modes, flags, or parameters, must be 
@@ -475,14 +475,14 @@ the same length as this vector.
  
 <a name="anchor42"></a>
 <p/><code>mvec&nbsp; </code><strong> Charmonium:states(3S1)2 &nbsp;</strong> 
- (<code>default = <strong>443,100443,100443</strong></code>)<br/>
+ (<code>default = <strong>{443,100443,100443}</strong></code>)<br/>
 The second <i>3S1</i> charmonium states of the charmonium pairs that 
 can be produced from the following processes. 
    
  
 <a name="anchor43"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3S1(1)]1 &nbsp;</strong> 
- (<code>default = <strong>1.16,1.16,0.76</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{1.16,1.16,0.76}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(1)]&gt;</i> for the first <i>3S1</i> charmonium 
 states. 
@@ -490,7 +490,7 @@ states.
  
 <a name="anchor44"></a>
 <p/><code>pvec&nbsp; </code><strong> Charmonium:O(3S1)[3S1(1)]2 &nbsp;</strong> 
- (<code>default = <strong>1.16,0.76,0.76</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{1.16,0.76,0.76}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(1)]&gt;</i> for the second <i>3S1</i> charmonium 
 states. 
@@ -498,7 +498,7 @@ states.
  
 <a name="anchor45"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:gg2doubleccbar(3S1)[3S1(1)] &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> charmonium state pairs via 
 <i>g g &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </i>. 
 Code 421. 
@@ -506,7 +506,7 @@ Code 421.
  
 <a name="anchor46"></a>
 <p/><code>fvec&nbsp; </code><strong> Charmonium:qqbar2doubleccbar(3S1)[3S1(1)] &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> charmonium state pairs via 
 <i>q qbar &rarr; ccbar[3S1(1)] ccbar[3S1(1)] </i>. 
 Code 422. 
@@ -521,7 +521,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor47"></a>
 <p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3S1) &nbsp;</strong> 
- (<code>default = <strong>553,100553,200553</strong></code>; <code>minimum = 0</code>)<br/>
+ (<code>default = <strong>{553,100553,200553}</strong></code>; <code>minimum = 0</code>)<br/>
 The <i>3S1</i> bottomonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
@@ -530,21 +530,21 @@ vector.
  
 <a name="anchor48"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3S1(1)] &nbsp;</strong> 
- (<code>default = <strong>9.28,4.63,3.54</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{9.28,4.63,3.54}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-singlet long-distance matrix 
 elements <i>&lt;O[3S1(1)]&gt;</i> for the <i>3S1</i> bottomonium states. 
    
  
 <a name="anchor49"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3S1(8)] &nbsp;</strong> 
- (<code>default = <strong>0.15,0.045,0.075</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.15,0.045,0.075}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3S1(8)]&gt;</i> for the <i>3S1</i> bottomonium states. 
    
  
 <a name="anchor50"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[1S0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.02,0.006,0.01</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.02,0.006,0.01}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[1S0(8)]&gt;</i> for the <i>3S1</i> 
 bottomonium states. 
@@ -552,7 +552,7 @@ bottomonium states.
  
 <a name="anchor51"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3P0(8)] &nbsp;</strong> 
- (<code>default = <strong>0.02,0.006,0.01</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.02,0.006,0.01}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the <i>3S1</i> bottomonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
@@ -561,7 +561,7 @@ are calculated from these long-distance matrix elements.
  
 <a name="anchor52"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3S1)[3S1(1)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[3S1(1)] g</i>. 
 Code 501. 
@@ -569,15 +569,15 @@ Code 501.
  
 <a name="anchor53"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3S1)[3S1(1)]gm &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> bottomonium states via 
-<i>g g &rarr; ccbar[3S1(1)] g</i> with a hard <i>gamma</i>. 
+<i>g g &rarr; ccbar[3S1(1)] gamma</i>. 
 Code 551. 
    
  
 <a name="anchor54"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3S1)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[3S1(8)] g</i>. 
 Code 502. 
@@ -585,7 +585,7 @@ Code 502.
  
 <a name="anchor55"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3S1)[3S1(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q g &rarr; bbbar[3S1(8)] q</i>. 
 Code 503. 
@@ -593,7 +593,7 @@ Code 503.
  
 <a name="anchor56"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3S1)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3S1(8)] g</i>. 
 Code 504. 
@@ -601,7 +601,7 @@ Code 504.
  
 <a name="anchor57"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3S1)[1S0(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[1S0(8)] g</i>. 
 Code 505. 
@@ -609,7 +609,7 @@ Code 505.
  
 <a name="anchor58"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3S1)[1S0(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q g &rarr; bbbar[1S0(8)] q</i>. 
 Code 506. 
@@ -617,7 +617,7 @@ Code 506.
  
 <a name="anchor59"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3S1)[1S0(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[1S0(8)] g</i>. 
 Code 507. 
@@ -625,7 +625,7 @@ Code 507.
  
 <a name="anchor60"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3S1)[3PJ(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>g g &rarr; bbbar[3PJ(8)] g</i>. 
 Code 508. 
@@ -633,7 +633,7 @@ Code 508.
  
 <a name="anchor61"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3S1)[3PJ(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
 <i>q g &rarr; bbbar[3PJ(8)] q</i>. 
 Code 509. 
@@ -641,9 +641,9 @@ Code 509.
  
 <a name="anchor62"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3S1)[3PJ(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3S1</i> bottomonium states via 
-<i>q qbar &rarr; bbbar[3SJ(8)] g</i>. 
+<i>q qbar &rarr; bbbar[3PJ(8)] g</i>. 
 Code 510. 
    
  
@@ -656,7 +656,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor63"></a>
 <p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3PJ) &nbsp;</strong> 
- (<code>default = <strong>10551,20553,555</strong></code>)<br/>
+ (<code>default = <strong>{10551,20553,555}</strong></code>)<br/>
 The <i>3PJ</i> bottomonium states that can be produced from the following 
 processes. Note that all vectors within this section, 
 either of flags or parameters, must be the same length as this 
@@ -665,7 +665,7 @@ vector.
  
 <a name="anchor64"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3PJ)[3P0(1)] &nbsp;</strong> 
- (<code>default = <strong>0.085,0.085,0.085</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.085,0.085,0.085}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3P0(1)]&gt;/m_Q^2</i> for the <i>3PJ</i> bottomonium 
 states. The remaining <i>&lt;O[3PJ(1)]&gt;/m_Q^2</i> 
@@ -674,14 +674,14 @@ are calculated from these long-distance matrix elements.
  
 <a name="anchor65"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3PJ)[3S1(8)] &nbsp;</strong> 
- (<code>default = <strong>0.04,0.04,0.04</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{0.04,0.04,0.04}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(8)]&gt;</i> for the <i>3PJ</i> bottomonium states. 
    
  
 <a name="anchor66"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3PJ)[3PJ(1)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3PJ(1)] g</i>. 
 Code 511. 
@@ -689,7 +689,7 @@ Code 511.
  
 <a name="anchor67"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3PJ)[3PJ(1)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>q g &rarr; bbbar[3PJ(1)] q</i>. 
 Code 512. 
@@ -697,7 +697,7 @@ Code 512.
  
 <a name="anchor68"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3PJ)[3PJ(1)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3PJ(1)] g</i>. 
 Code 513. 
@@ -705,7 +705,7 @@ Code 513.
  
 <a name="anchor69"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3PJ)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3PJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3S1(8)] g</i>. 
 Code 514. 
@@ -713,7 +713,7 @@ Code 514.
  
 <a name="anchor70"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3PJ)[3S1(8)]q &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3PJ</i> bottomonium states via 
 <i>q g &rarr; bbbar[3S1(8)] q</i>. 
 Code 515. 
@@ -721,7 +721,7 @@ Code 515.
  
 <a name="anchor71"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3PJ)[3S1(8)]g &nbsp;</strong> 
- (<code>default = <strong>off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off}</strong></code>)<br/>
 Colour-octet production of <i>3PJ</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3S1(8)] g</i>. 
 Code 516. 
@@ -735,7 +735,8 @@ Code 516.
 with the right number of elements, without any blanks inside the list. 
  
 <a name="anchor72"></a>
-<p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3DJ) &nbsp;</strong> <br/>
+<p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3DJ) &nbsp;</strong> 
+ (<code>default = <strong>{}</strong></code>)<br/>
 The <i>3DJ</i> bottomonium states that can be produced from the following 
 processes. Currently, no <i>3DJ</i> states are included in the 
 default <code>ParticleData</code> and so none are included here. Note 
@@ -745,7 +746,7 @@ must be the same length as this vector.
  
 <a name="anchor73"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3DJ)[3D1(1)] &nbsp;</strong> 
- (; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3D1(1)]&gt;</i> for the <i>3PJ</i> bottomonium 
 states. For a <i>3DJ</i> bottomonium state where <i>J</i> is 
@@ -757,7 +758,7 @@ relations.
  
 <a name="anchor74"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3DJ)[3P0(8)] &nbsp;</strong> 
- (; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The colour-octet long-distance matrix 
 elements <i>&lt;O[3P0(8)]&gt;/m_Q^2</i> for the 3DJ bottomonium 
 states. The remaining <i>&lt;O[3PJ(8)]&gt;/m_Q^2</i> 
@@ -765,28 +766,32 @@ are calculated from these long-distance matrix elements.
    
  
 <a name="anchor75"></a>
-<p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g &nbsp;</strong> <br/>
+<p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3DJ)[3DJ(1)]g &nbsp;</strong> 
+ (<code>default = <strong>{}</strong></code>)<br/>
 Colour-singlet production of <i>3PJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3DJ(1)] g</i>. 
 Code 517. 
    
  
 <a name="anchor76"></a>
-<p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g &nbsp;</strong> <br/>
+<p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2bbbar(3DJ)[3PJ(8)]g &nbsp;</strong> 
+ (<code>default = <strong>{}</strong></code>)<br/>
 Colour-octet production of <i>3DJ</i> bottomonium states via 
 <i>g g &rarr; bbbar[3PJ(8)] g</i>. 
 Code 518. 
    
  
 <a name="anchor77"></a>
-<p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q &nbsp;</strong> <br/>
+<p/><code>fvec&nbsp; </code><strong> Bottomonium:qg2bbbar(3DJ)[3PJ(8)]q &nbsp;</strong> 
+ (<code>default = <strong>{}</strong></code>)<br/>
 Colour-octet production of <i>3DJ</i> bottomonium states via 
 <i>q g &rarr; bbbar[3PJ(8)] q</i>. 
 Code 519. 
    
  
 <a name="anchor78"></a>
-<p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g &nbsp;</strong> <br/>
+<p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2bbbar(3DJ)[3PJ(8)]g &nbsp;</strong> 
+ (<code>default = <strong>{}</strong></code>)<br/>
 Colour-octet production of <i>3DJ</i> bottomonium states via 
 <i>q qbar &rarr; bbbar[3PJ(8)] g</i>. 
 Code 520. 
@@ -801,7 +806,7 @@ with the right number of elements, without any blanks inside the list.
  
 <a name="anchor79"></a>
 <p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3S1)1 &nbsp;</strong> 
- (<code>default = <strong>553,553,553,100553,100553,200553</strong></code>)<br/>
+ (<code>default = <strong>{553,553,553,100553,100553,200553}</strong></code>)<br/>
 The first <i>3S1</i> bottomonium states of the bottomonium pairs 
 that can be produced from the following processes. Note that all 
 vectors within this section, either of modes, flags, or parameters, 
@@ -810,14 +815,14 @@ must be the same length as this vector.
  
 <a name="anchor80"></a>
 <p/><code>mvec&nbsp; </code><strong> Bottomonium:states(3S1)2 &nbsp;</strong> 
- (<code>default = <strong>553,100553,200553,100553,200553,200553</strong></code>)<br/>
+ (<code>default = <strong>{553,100553,200553,100553,200553,200553}</strong></code>)<br/>
 The second <i>3S1</i> bottomonium states of the bottomonium pairs that 
 can be produced from the following processes. 
    
  
 <a name="anchor81"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3S1(1)]1 &nbsp;</strong> 
- (<code>default = <strong>9.28,9.28,9.28,4.63,4.63,3.54</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{9.28,9.28,9.28,4.63,4.63,3.54}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(1)]&gt;</i> for the first <i>3S1</i> bottomonium 
 states. 
@@ -825,7 +830,7 @@ states.
  
 <a name="anchor82"></a>
 <p/><code>pvec&nbsp; </code><strong> Bottomonium:O(3S1)[3S1(1)]2 &nbsp;</strong> 
- (<code>default = <strong>9.28,4.63,3.54,4.63,3.54,3.54</strong></code>; <code>minimum = 0.0</code>)<br/>
+ (<code>default = <strong>{9.28,4.63,3.54,4.63,3.54,3.54}</strong></code>; <code>minimum = 0.0</code>)<br/>
 The color-singlet long-distance matrix elements 
 <i>&lt;O[3S1(1)]&gt;</i> for the second <i>3S1</i> bottomonium 
 states. 
@@ -833,7 +838,7 @@ states.
  
 <a name="anchor83"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:gg2doublebbbar(3S1)[3S1(1)] &nbsp;</strong> 
- (<code>default = <strong>off,off,off,off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off,off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> bottomonium state pairs via 
 <i>g g &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </i>. 
 Code 521. 
@@ -841,7 +846,7 @@ Code 521.
  
 <a name="anchor84"></a>
 <p/><code>fvec&nbsp; </code><strong> Bottomonium:qqbar2doublebbbar(3S1)[3S1(1)] &nbsp;</strong> 
- (<code>default = <strong>off,off,off,off,off,off</strong></code>)<br/>
+ (<code>default = <strong>{off,off,off,off,off,off}</strong></code>)<br/>
 Colour-singlet production of <i>3S1</i> bottomonium state pairs via 
 <i>q qbar &rarr; bbbar[3S1(1)] bbbar[3S1(1)] </i>. 
 Code 522. 
@@ -850,4 +855,4 @@ Code 522.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

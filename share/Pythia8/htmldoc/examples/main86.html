@@ -4,12 +4,14 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main86.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:stefan.prestel@thep.lu.se">Stefan Prestel</a>
+//            Stefan Prestel
+
+// Contact: Christian Preuss &lt;preuss@uni-wuppertal.de&gt;
 
 // Keywords:
 //            <a href="../ExampleKeywords.html#merging">Merging</a>
@@ -24,9 +26,13 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // input LHE events, and hepmcout86.dat is the output file. This
 // example requires HepMC 3.
 
-#include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/HepMC3.h"
-#include <unistd.h>
+#include &quot;Pythia8/Pythia.h&quot;
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
+#include &lt;unistd.h&gt;
 
 using namespace Pythia8;
 
@@ -38,13 +44,13 @@ int main( int argc, char* argv[] ){
 
   // Check that correct number of command-line arguments
   if (argc != 4) {
-    cerr << " Unexpected number of command-line arguments ("<<argc<<"). \n"
-         << " You are expected to provide the arguments" << endl
-         << " 1. Input file for settings" << endl
-         << " 2. Name of the input LHE file (with path), up to the '_tree'"
-         << " identifier" << endl
-         << " 3. Path for output HepMC" << endl
-         << " Program stopped. " << endl;
+    cerr &lt;&lt; &quot; Unexpected number of command-line arguments (&quot;&lt;&lt;argc&lt;&lt;&quot;). \n&quot;
+         &lt;&lt; &quot; You are expected to provide the arguments&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 1. Input file for settings&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 2. Name of the input LHE file (with path), up to the &apos;_tree&apos;&quot;
+         &lt;&lt; &quot; identifier&quot; &lt;&lt; endl
+         &lt;&lt; &quot; 3. Path for output HepMC&quot; &lt;&lt; endl
+         &lt;&lt; &quot; Program stopped. &quot; &lt;&lt; endl;
     return 1;
   }
 
@@ -52,10 +58,11 @@ int main( int argc, char* argv[] ){
 
   // Input parameters:
   pythia.readFile(argv[1]);
+  // Deactivate AUX_ weight output
+  pythia.readString(&quot;Weights:suppressAUX = on&quot;);
   // Interface for conversion from Pythia8::Event to HepMC one.
-  HepMC3::Pythia8ToHepMC3 toHepMC;
   // Specify file where HepMC events will be stored.
-  HepMC3::WriterAscii ascii_io(argv[3]);
+  Pythia8ToHepMC toHepMC(argv[3]);
   // Switch off warnings for parton-level events.
   toHepMC.set_print_inconsistency(false);
   toHepMC.set_free_parton_warnings(false);
@@ -64,59 +71,59 @@ int main( int argc, char* argv[] ){
   toHepMC.set_store_proc(false);
   toHepMC.set_store_xsec(false);
 
-  // Path to input events, with name up to the "_tree" identifier included.
+  // Path to input events, with name up to the &quot;_tree&quot; identifier included.
   string iPath = string(argv[2]);
 
   // Number of events
-  int nEvent = pythia.mode("Main:numberOfEvents");
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
   // Maximal number of additional LO jets.
-  int nMaxLO =  pythia.mode("Merging:nJetMax");
+  int nMaxLO =  pythia.mode(&quot;Merging:nJetMax&quot;);
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
   // Switch off all showering and MPI when extimating the cross section after
   // the merging scale cut.
-  bool fsr = pythia.flag("PartonLevel:FSR");
-  bool isr = pythia.flag("PartonLevel:ISR");
-  bool mpi = pythia.flag("PartonLevel:MPI");
-  bool had = pythia.flag("HadronLevel:all");
-  pythia.settings.flag("PartonLevel:FSR",false);
-  pythia.settings.flag("PartonLevel:ISR",false);
-  pythia.settings.flag("HadronLevel:all",false);
-  pythia.settings.flag("PartonLevel:MPI",false);
+  bool fsr = pythia.flag(&quot;PartonLevel:FSR&quot;);
+  bool isr = pythia.flag(&quot;PartonLevel:ISR&quot;);
+  bool mpi = pythia.flag(&quot;PartonLevel:MPI&quot;);
+  bool had = pythia.flag(&quot;HadronLevel:all&quot;);
+  pythia.settings.flag(&quot;PartonLevel:FSR&quot;,false);
+  pythia.settings.flag(&quot;PartonLevel:ISR&quot;,false);
+  pythia.settings.flag(&quot;HadronLevel:all&quot;,false);
+  pythia.settings.flag(&quot;PartonLevel:MPI&quot;,false);
 
   // Switch on cross section estimation procedure.
-  pythia.settings.flag("Merging:doXSectionEstimate", true);
-  pythia.settings.flag("Merging:doUMEPSTree",true);
+  pythia.settings.flag(&quot;Merging:doXSectionEstimate&quot;, true);
+  pythia.settings.flag(&quot;Merging:doUMEPSTree&quot;,true);
 
   int njetcounterLO = nMaxLO;
-  string iPathTree  = iPath + "_tree";
+  string iPathTree  = iPath + &quot;_tree&quot;;
 
   // Save estimates in vectors.
-  vector<double> xsecLO;
-  vector<double> nAcceptLO;
+  vector&lt;double&gt; xsecLO;
+  vector&lt;double&gt; nAcceptLO;
 
-  cout << endl << endl << endl;
-  cout << "Start estimating umeps tree level cross section" << endl;
+  cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl;
+  cout &lt;&lt; &quot;Start estimating umeps tree level cross section&quot; &lt;&lt; endl;
 
-  while(njetcounterLO >= 0) {
+  while(njetcounterLO &gt;= 0) {
 
     // From njet, choose LHE file
     stringstream in;
-    in   << "_" << njetcounterLO << ".lhe";
-#ifdef GZIPSUPPORT
-    if(access( (iPathTree+in.str()+".gz").c_str(), F_OK) != -1) in << ".gz";
+    in   &lt;&lt; &quot;_&quot; &lt;&lt; njetcounterLO &lt;&lt; &quot;.lhe&quot;;
+#ifdef GZIP
+    if(access( (iPathTree+in.str()+&quot;.gz&quot;).c_str(), F_OK) != -1) in &lt;&lt; &quot;.gz&quot;;
 #endif
     string LHEfile = iPathTree + in.str();
 
-    pythia.settings.mode("Merging:nRequested", njetcounterLO);
-    pythia.settings.mode("Beams:frameType", 4);
-    pythia.settings.word("Beams:LHEF", LHEfile);
+    pythia.settings.mode(&quot;Merging:nRequested&quot;, njetcounterLO);
+    pythia.settings.mode(&quot;Beams:frameType&quot;, 4);
+    pythia.settings.word(&quot;Beams:LHEF&quot;, LHEfile);
     pythia.init();
 
     // Start generation loop
-    for( int iEvent=0; iEvent<nEvent; ++iEvent ){
+    for( int iEvent=0; iEvent&lt;nEvent; ++iEvent ){
       // Generate next event
       if( !pythia.next() ) {
         if( pythia.info.atEndOfFile() ){
@@ -133,7 +140,7 @@ int main( int argc, char* argv[] ){
     nAcceptLO.push_back(pythia.info.nAccepted());
 
     // Restart with ME of a reduced the number of jets
-    if( njetcounterLO > 0 )
+    if( njetcounterLO &gt; 0 )
       njetcounterLO--;
     else
       break;
@@ -142,54 +149,54 @@ int main( int argc, char* argv[] ){
 
 
   // Switch off cross section estimation.
-  pythia.settings.flag("Merging:doXSectionEstimate", false);
+  pythia.settings.flag(&quot;Merging:doXSectionEstimate&quot;, false);
 
   // Switch showering and multiple interaction back on.
-  pythia.settings.flag("PartonLevel:FSR",fsr);
-  pythia.settings.flag("PartonLevel:ISR",isr);
-  pythia.settings.flag("HadronLevel:all",had);
-  pythia.settings.flag("PartonLevel:MPI",mpi);
+  pythia.settings.flag(&quot;PartonLevel:FSR&quot;,fsr);
+  pythia.settings.flag(&quot;PartonLevel:ISR&quot;,isr);
+  pythia.settings.flag(&quot;HadronLevel:all&quot;,had);
+  pythia.settings.flag(&quot;PartonLevel:MPI&quot;,mpi);
 
   // Declare sample cross section for output.
   double sigmaTemp  = 0.;
-  vector<double> sampleXStree;
-  vector<double> sampleXSsubtTree;
+  vector&lt;double&gt; sampleXStree;
+  vector&lt;double&gt; sampleXSsubtTree;
   // Cross section an error.
   double sigmaTotal  = 0.;
   double errorTotal  = 0.;
 
   int sizeLO    = int(xsecLO.size());
   njetcounterLO = nMaxLO;
-  iPathTree     = iPath + "_tree";
+  iPathTree     = iPath + &quot;_tree&quot;;
 
-  while(njetcounterLO >= 0){
+  while(njetcounterLO &gt;= 0){
 
     // From njet, choose LHE file
     stringstream in;
-    in   << "_" << njetcounterLO << ".lhe";
-#ifdef GZIPSUPPORT
-    if(access( (iPathTree+in.str()+".gz").c_str(), F_OK) != -1) in << ".gz";
+    in   &lt;&lt; &quot;_&quot; &lt;&lt; njetcounterLO &lt;&lt; &quot;.lhe&quot;;
+#ifdef GZIP
+    if(access( (iPathTree+in.str()+&quot;.gz&quot;).c_str(), F_OK) != -1) in &lt;&lt; &quot;.gz&quot;;
 #endif
     string LHEfile = iPathTree + in.str();
 
-    pythia.settings.flag("Merging:doUMEPSTree",true);
-    pythia.settings.flag("Merging:doUMEPSSubt",false);
-    pythia.settings.mode("Merging:nRecluster",0);
+    pythia.settings.flag(&quot;Merging:doUMEPSTree&quot;,true);
+    pythia.settings.flag(&quot;Merging:doUMEPSSubt&quot;,false);
+    pythia.settings.mode(&quot;Merging:nRecluster&quot;,0);
 
-    cout << endl << endl << endl
-         << "Start tree level treatment for " << njetcounterLO << " jets"
-         << endl;
+    cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl
+         &lt;&lt; &quot;Start tree level treatment for &quot; &lt;&lt; njetcounterLO &lt;&lt; &quot; jets&quot;
+         &lt;&lt; endl;
 
-    pythia.settings.mode("Merging:nRequested", njetcounterLO);
-    pythia.settings.mode("Beams:frameType", 4);
-    pythia.settings.word("Beams:LHEF", LHEfile);
+    pythia.settings.mode(&quot;Merging:nRequested&quot;, njetcounterLO);
+    pythia.settings.mode(&quot;Beams:frameType&quot;, 4);
+    pythia.settings.word(&quot;Beams:LHEF&quot;, LHEfile);
     pythia.init();
 
     // Remember position in vector of cross section estimates.
     int iNow = sizeLO-1-njetcounterLO;
 
     // Start generation loop
-    for( int iEvent=0; iEvent<nEvent; ++iEvent ){
+    for( int iEvent=0; iEvent&lt;nEvent; ++iEvent ){
 
       // Generate next event
       if( !pythia.next() ) {
@@ -204,25 +211,23 @@ int main( int argc, char* argv[] ){
       // Do not print zero-weight events.
       if ( weight == 0. ) continue;
 
-      // Construct new empty HepMC event.
-      HepMC3::GenEvent hepmcevt;
+      // Copy the weight names to HepMC.
+      toHepMC.setWeightNames(pythia.info.weightNameVector());
+
       // Get correct cross section from previous estimate.
       double normhepmc = xsecLO[iNow] / nAcceptLO[iNow];
-      // Set event weight
-      hepmcevt.weights().push_back(weight*normhepmc);
+
       // Fill HepMC event.
-      toHepMC.fill_next_event( pythia, &hepmcevt );
+      toHepMC.fillNextEvent( pythia );
+
       // Add the weight of the current event to the cross section.
       sigmaTotal += weight*normhepmc;
       sigmaTemp  += weight*normhepmc;
       errorTotal += pow2(weight*normhepmc);
       // Report cross section to hepmc.
-      shared_ptr<HepMC3::GenCrossSection> xsec;
-      xsec = make_shared<HepMC3::GenCrossSection>();
-      xsec->set_cross_section( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 );
-      hepmcevt.set_cross_section( xsec );
+      toHepMC.setXSec( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 );
       // Write the HepMC event to file. Done with it.
-      ascii_io.write_event(hepmcevt);
+      toHepMC.writeEvent();
 
     } // end loop over events to generate
 
@@ -233,47 +238,47 @@ int main( int argc, char* argv[] ){
     sigmaTemp = 0.;
 
     // Restart with ME of a reduced the number of jets
-    if( njetcounterLO > 0 )
+    if( njetcounterLO &gt; 0 )
       njetcounterLO--;
     else
       break;
 
   }
 
-  cout << endl << endl << endl;
-  cout << "Do UMEPS subtraction" << endl;
+  cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl;
+  cout &lt;&lt; &quot;Do UMEPS subtraction&quot; &lt;&lt; endl;
 
   int njetcounterLS   = nMaxLO;
-  string iPathSubt    = iPath + "_tree";
+  string iPathSubt    = iPath + &quot;_tree&quot;;
 
-  while(njetcounterLS >= 1){
+  while(njetcounterLS &gt;= 1){
 
     // From njet, choose LHE file
     stringstream in;
-    in   << "_" << njetcounterLS << ".lhe";
-#ifdef GZIPSUPPORT
-    if(access( (iPathSubt+in.str()+".gz").c_str(), F_OK) != -1) in << ".gz";
+    in   &lt;&lt; &quot;_&quot; &lt;&lt; njetcounterLS &lt;&lt; &quot;.lhe&quot;;
+#ifdef GZIP
+    if(access( (iPathSubt+in.str()+&quot;.gz&quot;).c_str(), F_OK) != -1) in &lt;&lt; &quot;.gz&quot;;
 #endif
     string LHEfile = iPathSubt + in.str();
 
-    pythia.settings.flag("Merging:doUMEPSTree",false);
-    pythia.settings.flag("Merging:doUMEPSSubt",true);
-    pythia.settings.mode("Merging:nRecluster",1);
+    pythia.settings.flag(&quot;Merging:doUMEPSTree&quot;,false);
+    pythia.settings.flag(&quot;Merging:doUMEPSSubt&quot;,true);
+    pythia.settings.mode(&quot;Merging:nRecluster&quot;,1);
 
-    cout << endl << endl << endl
-         << "Start subtractive treatment for " << njetcounterLS << " jets"
-         << endl;
+    cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl
+         &lt;&lt; &quot;Start subtractive treatment for &quot; &lt;&lt; njetcounterLS &lt;&lt; &quot; jets&quot;
+         &lt;&lt; endl;
 
-    pythia.settings.mode("Merging:nRequested", njetcounterLS);
-    pythia.settings.mode("Beams:frameType", 4);
-    pythia.settings.word("Beams:LHEF", LHEfile);
+    pythia.settings.mode(&quot;Merging:nRequested&quot;, njetcounterLS);
+    pythia.settings.mode(&quot;Beams:frameType&quot;, 4);
+    pythia.settings.word(&quot;Beams:LHEF&quot;, LHEfile);
     pythia.init();
 
     // Remember position in vector of cross section estimates.
     int iNow = sizeLO-1-njetcounterLS;
 
     // Start generation loop
-    for( int iEvent=0; iEvent<nEvent; ++iEvent ){
+    for( int iEvent=0; iEvent&lt;nEvent; ++iEvent ){
 
       // Generate next event
       if( !pythia.next() ) {
@@ -288,25 +293,23 @@ int main( int argc, char* argv[] ){
       // Do not print zero-weight events.
       if ( weight == 0. ) continue;
 
-      // Construct new empty HepMC event.
-      HepMC3::GenEvent hepmcevt;
+      // Copy the weight names to HepMC
+      toHepMC.setWeightNames(pythia.info.weightNameVector());
+
       // Get correct cross section from previous estimate.
       double normhepmc = -1*xsecLO[iNow] / nAcceptLO[iNow];
-      // Set event weight
-      hepmcevt.weights().push_back(weight*normhepmc);
+
       // Fill HepMC event.
-      toHepMC.fill_next_event( pythia, &hepmcevt );
+      toHepMC.fillNextEvent( pythia );
+
       // Add the weight of the current event to the cross section.
       sigmaTotal += weight*normhepmc;
       sigmaTemp  += weight*normhepmc;
       errorTotal += pow2(weight*normhepmc);
       // Report cross section to hepmc.
-      shared_ptr<HepMC3::GenCrossSection> xsec;
-      xsec = make_shared<HepMC3::GenCrossSection>();
-      xsec->set_cross_section( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 );
-      hepmcevt.set_cross_section( xsec );
+      toHepMC.setXSec( sigmaTotal*1e9, pythia.info.sigmaErr()*1e9 );
       // Write the HepMC event to file.
-      ascii_io.write_event(hepmcevt);
+      toHepMC.writeEvent();
 
     } // end loop over events to generate
 
@@ -317,45 +320,45 @@ int main( int argc, char* argv[] ){
     sigmaTemp = 0.;
 
     // Restart with ME of a reduced the number of jets
-    if( njetcounterLS > 1 )
+    if( njetcounterLS &gt; 1 )
       njetcounterLS--;
     else
       break;
   }
 
   // Print cross section information.
-  cout << endl << endl;
-  cout << " *---------------------------------------------------*" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " | Sample cross sections after UMEPS merging         |" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " | Leading order cross sections (mb):                |" << endl;
-  for (int i = 0; i < int(sampleXStree.size()); ++i)
-    cout << " |     " << sampleXStree.size()-1-i << "-jet:  "
-         << setw(17) << scientific << setprecision(6)
-         << sampleXStree[i] << "                     |" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " | Leading-order subtractive cross sections (mb):    |" << endl;
-  for (int i = 0; i < int(sampleXSsubtTree.size()); ++i)
-    cout << " |     " << sampleXSsubtTree.size()-1-i+1 << "-jet:  "
-         << setw(17) << scientific << setprecision(6)
-         << sampleXSsubtTree[i] << "                     |" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " |---------------------------------------------------|" << endl;
-  cout << " |---------------------------------------------------|" << endl;
-  cout << " | Inclusive cross sections:                         |" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " | UMEPS merged inclusive cross section:             |" << endl;
-  cout << " |    " << setw(17) << scientific << setprecision(6)
-       << sigmaTotal << "  +-  " << setw(17) << sqrt(errorTotal) << " mb "
-       << "   |" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " | LO inclusive cross section:                       |" << endl;
-  cout << " |    " << setw(17) << scientific << setprecision(6)
-       << xsecLO.back() << " mb                           |" << endl;
-  cout << " |                                                   |" << endl;
-  cout << " *---------------------------------------------------*" << endl;
-  cout << endl << endl;
+  cout &lt;&lt; endl &lt;&lt; endl;
+  cout &lt;&lt; &quot; *---------------------------------------------------*&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; | Sample cross sections after UMEPS merging         |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; | Leading order cross sections (mb):                |&quot; &lt;&lt; endl;
+  for (int i = 0; i &lt; int(sampleXStree.size()); ++i)
+    cout &lt;&lt; &quot; |     &quot; &lt;&lt; sampleXStree.size()-1-i &lt;&lt; &quot;-jet:  &quot;
+         &lt;&lt; setw(17) &lt;&lt; scientific &lt;&lt; setprecision(6)
+         &lt;&lt; sampleXStree[i] &lt;&lt; &quot;                     |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; | Leading-order subtractive cross sections (mb):    |&quot; &lt;&lt; endl;
+  for (int i = 0; i &lt; int(sampleXSsubtTree.size()); ++i)
+    cout &lt;&lt; &quot; |     &quot; &lt;&lt; sampleXSsubtTree.size()-1-i+1 &lt;&lt; &quot;-jet:  &quot;
+         &lt;&lt; setw(17) &lt;&lt; scientific &lt;&lt; setprecision(6)
+         &lt;&lt; sampleXSsubtTree[i] &lt;&lt; &quot;                     |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |---------------------------------------------------|&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |---------------------------------------------------|&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; | Inclusive cross sections:                         |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; | UMEPS merged inclusive cross section:             |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |    &quot; &lt;&lt; setw(17) &lt;&lt; scientific &lt;&lt; setprecision(6)
+       &lt;&lt; sigmaTotal &lt;&lt; &quot;  +-  &quot; &lt;&lt; setw(17) &lt;&lt; sqrt(errorTotal) &lt;&lt; &quot; mb &quot;
+       &lt;&lt; &quot;   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; | LO inclusive cross section:                       |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |    &quot; &lt;&lt; setw(17) &lt;&lt; scientific &lt;&lt; setprecision(6)
+       &lt;&lt; xsecLO.back() &lt;&lt; &quot; mb                           |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; |                                                   |&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot; *---------------------------------------------------*&quot; &lt;&lt; endl;
+  cout &lt;&lt; endl &lt;&lt; endl;
 
   // Done
   return 0;

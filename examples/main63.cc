@@ -1,49 +1,16 @@
 // main63.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: userhooks; biasing;
+// Keywords: userhooks; biasing
 
-// Example how you can use UserHooks to enhance rare emission rates,
-// in this case q -> q gamma.
-// To concentrate on the photons from the showers, MPI and hadronization
-// are switched off by default.
+// Example on how to enhance rare emission rates, in this case q -> q
+// gamma. To concentrate on the photons from the showers, MPI and
+// hadronization are switched off by default.
 
 #include "Pythia8/Pythia.h"
 using namespace Pythia8;
-
-//==========================================================================
-
-// Write own derived UserHooks class.
-
-class EnhanceHooks : public UserHooks {
-
-public:
-
-  // Constructor and destructor do nothing.
-  EnhanceHooks() {}
-  ~EnhanceHooks() {}
-
-  // Enhance real-emission rate. Thus no trial-emission enhancement.
-  bool canEnhanceEmission() { return true;}
-  bool canEnhanceTrial()    { return false;}
-
-  // Function to return the weight enhance factor.
-  double enhanceFactor(string name) {
-    if (name == "isr:Q2QA") return 50.;
-    return 1.0;
-  }
-
-  // Function to return the vetoing probability.
-  double vetoProbability(string name) {
-    if (name == "isr:Q2QA") return 0.5;
-    return 0.0;
-  }
-
-};
-
-//==========================================================================
 
 int main() {
 
@@ -62,12 +29,9 @@ int main() {
     pythia.readFile("main63.cmnd");
     int nEvent = pythia.mode("Main:numberOfEvents");
 
-    // Set up a user hook and send it in.
-    shared_ptr<UserHooks> enhanceHooks = 0;
-    if (iCase == 1) {
-      enhanceHooks = make_shared<EnhanceHooks>();
-      pythia.setUserHooksPtr( enhanceHooks);
-    }
+    // No enhancement.
+    if (iCase == 0)
+      pythia.readString("Enhancements:doEnhance = false");
 
     // LHC initialization.
     pythia.init();
@@ -78,8 +42,7 @@ int main() {
 
       // Generate events. Find and histogram event weight.
       pythia.next();
-      double weight = (iCase == 1)
-                    ? enhanceHooks->getEnhancedEventWeight() : 1.;
+      double weight = (iCase == 1) ? pythia.info.weight() : 1.;
       if (iCase == 1) eventWt.fill( log10(weight) );
       sumWt += weight;
 
@@ -109,10 +72,10 @@ int main() {
 
   // Write histogram data to files.
   ofstream write;
-  write.open("PTA_0");
+  write.open("PTA_0.dat");
   gamNoEnh.table(write);
   write.close();
-  write.open("PTA_1");
+  write.open("PTA_1.dat");
   gamWithEnh.table(write);
   write.close();
 

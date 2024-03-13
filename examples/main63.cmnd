@@ -6,6 +6,10 @@
 
 # Number of events.
 Main:numberOfEvents = 10000
+UncertaintyBands:overSampleFSR = 5
+
+EnhancedSplittings:List = {fsr:Q2QA=50.0}
+Enhancements:doEnhance = true
 
 # Collision energy.
 Beams:ecm           = 13000.
@@ -19,3 +23,4 @@ PhaseSpace:pTHatMin = 200.
 # Switch off MPI and hadronization.
 PartonLevel:MPI = off
 HadronLevel:all = off
+PartonLevel:ISR = off

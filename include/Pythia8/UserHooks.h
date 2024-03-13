@@ -1,5 +1,5 @@
 // UserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -20,9 +20,10 @@ namespace Pythia8 {
 
 //==========================================================================
 
-// Forward references to the PhaseSpace and StringEnd classes.
+// Forward references.
 class PhaseSpace;
 class StringEnd;
+class HadronLevel;
 
 //==========================================================================
 
@@ -61,6 +62,15 @@ public:
   // Decide whether to veto current process or not, based on process record.
   // Usage: doVetoProcessLevel( process).
   virtual bool doVetoProcessLevel(Event& ) {return false;}
+
+  // Possibility to set low energy cross sections.
+  // Usage: canSetLowEnergySigma(idA, idB).
+  virtual bool canSetLowEnergySigma(int, int) const {return false;}
+
+  // Set low energy cross sections for ids where canSetLowEnergySigma is true.
+  // Usage: doSetLowEnergySigma(idA, idB, eCM, mA, mB).
+  virtual double doSetLowEnergySigma(int, int, double, double, double) const {
+    return 0.;}
 
   // Possibility to veto resonance decay chain.
   virtual bool canVetoResonanceDecays() {return false;}
@@ -172,21 +182,6 @@ public:
   // Value of PartonLevel:earlyResDec determines where method is called.
   virtual bool doReconnectResonanceSystems( int, Event &) {return true;}
 
-  // Enhance emission rates (sec. 4 in EPJC (2013) 73).
-  virtual bool canEnhanceEmission() {return false;}
-  virtual double enhanceFactor( string ) {return 1.;}
-  virtual double vetoProbability( string ) {return 0.;}
-  void setEnhancedEventWeight(double wt) { enhancedEventWeight = wt;}
-  double getEnhancedEventWeight() { return enhancedEventWeight;}
-
-  // Bookkeeping of weights for enhanced actual or trial emissions
-  // (sec. 3 in EPJC (2013) 73).
-  virtual bool canEnhanceTrial() {return false;}
-  void setEnhancedTrial( double pTIn, double wtIn) { pTEnhanced = pTIn;
-    wtEnhanced = wtIn; }
-  double getEnhancedTrialPT() { return pTEnhanced;}
-  double getEnhancedTrialWeight() { return wtEnhanced;}
-
   // Can change fragmentation parameters.
   virtual bool canChangeFragPar() { return false;}
 
@@ -213,11 +208,23 @@ public:
   virtual bool doVetoFragmentation(Particle, Particle,
     const StringEnd*, const StringEnd* ) { return false;}
 
+  // Possibility to veto an event after hadronization based
+  // on event contents. Works as an early trigger to avoid
+  // running the time consuming rescattering process on
+  // uninteresting events.
+  virtual bool canVetoAfterHadronization() {return false;}
+
+  // Do the actual veto after hadronization.
+  virtual bool doVetoAfterHadronization(const Event& ) {return false;}
+
   // Can set the overall impact parameter for the MPI treatment.
   virtual bool canSetImpactParameter() const { return false; }
 
   // Set the overall impact parameter for the MPI treatment.
   virtual double doSetImpactParameter() { return 0.0; }
+
+  // Custom processing at the end of HadronLevel::next.
+  virtual bool onEndHadronLevel(HadronLevel&, Event&) { return true; }
 
 protected:
 
@@ -315,17 +322,17 @@ public:
       if (hooks[i]->canSetImpactParameter()) ++nCanSetImpactParameter;
     }
     if (nCanSetResonanceScale > 1) {
-      infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
+      loggerPtr->ERROR_MSG(
         "multiple UserHooks with canSetResonanceScale() not allowed");
       return false;
     }
     if (nCanChangeFragPar > 1) {
-      infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
+      loggerPtr->ERROR_MSG(
         "multiple UserHooks with canChangeFragPar() not allowed");
       return false;
     }
     if (nCanSetImpactParameter > 1) {
-      infoPtr->errorMsg("Error in UserHooksVector::initAfterBeams "
+      loggerPtr->ERROR_MSG(
         "multiple UserHooks with canSetImpactParameter() not allowed");
       return false;
     }
@@ -623,40 +630,33 @@ public:
     return false;
   }
 
-  // Enhance emission rates (sec. 4 in EPJC (2013) 73).
-  virtual bool canEnhanceEmission() {
-    for ( int i = 0, N = hooks.size(); i < N; ++i )
-      if ( hooks[i]->canEnhanceEmission() ) return true;
-    return false;
-  }
-  virtual double enhanceFactor( string s) {
-    double f = 1.0;
-    for ( int i = 0, N = hooks.size(); i < N; ++i )
-      if ( hooks[i]->canEnhanceEmission() ) f *= hooks[i]->enhanceFactor(s);
-    return f;
-  }
-  virtual double vetoProbability( string s) {
-    double keep = 1.0;
-    for ( int i = 0, N = hooks.size(); i < N; ++i )
-      if ( hooks[i]->canEnhanceEmission() )
-        keep *= 1.0 - hooks[i]->vetoProbability(s);
-    return 1.0 - keep;
-  }
-
-  // Bookkeeping of weights for enhanced actual or trial emissions
-  // (sec. 3 in EPJC (2013) 73).
-  virtual bool canEnhanceTrial() {
-    for ( int i = 0, N = hooks.size(); i < N; ++i )
-      if ( hooks[i]->canEnhanceTrial() ) return true;
-    return false;
-  }
-
   // Can change fragmentation parameters.
   virtual bool canChangeFragPar() {
     for ( int i = 0, N = hooks.size(); i < N; ++i )
       if ( hooks[i]->canChangeFragPar() ) return true;
     return false;
   }
+
+  // Set initial ends of a string to be fragmented. This is done once
+  // for each string. Note that the second string end may be zero in
+  // case we are hadronising a string piece leading to a junction.
+  virtual void setStringEnds( const StringEnd* pos, const StringEnd* neg,
+    vector<int> iPart) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      hooks[i]->setStringEnds( pos, neg, iPart);
+  }
+
+  // Do change fragmentation parameters.
+  // Input: flavPtr, zPtr, pTPtr, idEnd, m2Had, iParton and posEnd (or
+  // negEnd).
+  virtual bool doChangeFragPar( StringFlav* sfIn, StringZ* zIn,
+    StringPT* ptIn, int idIn, double mIn, vector<int> parIn,
+    const StringEnd* endIn) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar()
+           && hooks[i]->doChangeFragPar(sfIn, zIn, ptIn, idIn,
+                                     mIn, parIn, endIn) ) return true;
+    return false;}
 
   // Do a veto on a hadron just before it is added to the final state.
   virtual bool doVetoFragmentation(Particle p, const StringEnd* nowEnd) {
@@ -671,6 +671,23 @@ public:
     for ( int i = 0, N = hooks.size(); i < N; ++i )
       if ( hooks[i]->canChangeFragPar()
         && hooks[i]->doVetoFragmentation(p1, p2, e1, e2) ) return true;
+    return false;
+  }
+
+  // Possibility to veto an event after hadronization based on event
+  // contents. Works as an early trigger to avoid running the time
+  // consuming rescattering process on uninteresting events.
+  virtual bool canVetoAfterHadronization() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoAfterHadronization() ) return true;
+    return false;
+  }
+
+  // Do the actual veto after hadronization.
+  virtual bool doVetoAfterHadronization(const Event& e) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoAfterHadronization()
+        && hooks[i]->doVetoAfterHadronization(e) ) return true;
     return false;
   }
 

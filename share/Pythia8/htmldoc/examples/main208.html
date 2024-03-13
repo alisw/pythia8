@@ -1,0 +1,92 @@
+<html><head><title>main208</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main208</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main208.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2024 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// This example illustrates Vincia (or Pythia) showers for
+// double-dissociative photon-initiated gamma-gamma -&gt; mu+mu- at LHC.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+int main() {
+
+  // Construct Pythia.
+  Pythia pythia;
+
+  // Set up the process.
+  pythia.readString(&quot;PhotonCollision:gmgm2mumu = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 5.&quot;);
+
+  // Use Vincia (or Pythia) showers.
+  pythia.readString(&quot;PartonShowers:model = 2&quot;); // 1: Pythia, 2: Vincia.
+
+  // Simple shower settings.
+  // pythia.readString(&quot;PartonShowers:model = 1&quot;);
+  // pythia.readString(&quot;SpaceShower:dipoleRecoil = on&quot;);
+  // pythia.readString(&quot;SpaceShower:pTmaxMatch = 2&quot;);
+  // pythia.readString(&quot;SpaceShower:pTdampMatch = 1&quot;);
+
+  // Vincia shower settings.
+  pythia.readString(&quot;Vincia:EWMode = 2&quot;); // vincia Multipole QED shower
+  pythia.readString(&quot;Vincia:pTmaxMatch = 2&quot;); // 2: power showers
+  pythia.readString(&quot;Vincia:pTdampMatch = 1&quot;); // 1: dampening.
+
+  // Switch off hadronisation and MPI for simplicity and speed.
+  pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+  pythia.readString(&quot;HadronLevel:all = off&quot;);
+
+  // Initialise
+  pythia.init();
+
+  // Book a histogram.
+  // Second-to-last argument =&gt; use logarithmic x axis.
+  // Last argument = true =&gt; compute stat uncertainties.
+  Hist hisPTgam(&quot;log(pT(gamma)/GeV)&quot;, 100, 1.e-6, 10000., true, true);
+  Hist hisPTele(&quot;log(pT(e)/GeV)&quot;, 100, 1.e-6, 10000., true, true);
+  Hist hisPTmu(&quot;log(pT(mu)/GeV)&quot;, 100, 1.e-6, 10000., true, true);
+  Hist hisPTtau(&quot;log(pT(tau)/GeV)&quot;, 100, 1.e-6, 10000., true, true);
+  Hist hisPToth(&quot;log(pT(other)/GeV)&quot;, 100, 1.e-6, 10000., true, true);
+
+  // Number of events.
+  int nEvent = 1000;
+
+  // Begin event loop; generate until none left in input file.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate next event.
+    pythia.next();
+
+    // Look for final-state photons.
+    for ( int i = 1; i &lt; pythia.event.size(); ++i ) {
+      if ( !pythia.event[i].isFinal() ) continue;
+      if ( pythia.event[i].id() == 22) {
+        hisPTgam.fill(pythia.event[i].pT());
+      } else if ( pythia.event[i].idAbs() == 11) {
+        hisPTele.fill(pythia.event[i].pT());
+      } else if ( pythia.event[i].idAbs() == 13) {
+        hisPTmu.fill(pythia.event[i].pT());
+      } else if ( pythia.event[i].idAbs() == 15) {
+        hisPTtau.fill(pythia.event[i].pT());
+      } else {
+        hisPToth.fill(pythia.event[i].pT());
+      }
+    }
+
+  }
+
+  // Give statistics.
+  pythia.stat();
+
+  // Stat output
+  cout &lt;&lt; hisPTgam &lt;&lt; hisPTele &lt;&lt; hisPTmu &lt;&lt; hisPTtau &lt;&lt; hisPToth;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

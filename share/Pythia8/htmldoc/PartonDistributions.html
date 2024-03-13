@@ -7,6 +7,12 @@
 <body>
  
 <h2>Parton Distributions</h2> 
+<ol id="toc">
+  <li><a href="#section0">The PDF base class</a></li>
+  <li><a href="#section1">Symmetries and special cases</a></li>
+  <li><a href="#section2">Derived classes</a></li>
+</ol>
+
  
 The parton distributions file contains the <code>PDF</code> class. 
 <code>PDF</code> is the base class, from which specific <code>PDF</code> 
@@ -29,55 +35,126 @@ even if used for a proton PDF, one needs to know whether the beam
 is actually an antiproton. This is one of the reasons why <code>Pythia</code> 
 always defines two PDF objects in an event, one for each beam. 
  
-<p/> 
-Once a <code>PDF</code> object has been constructed, call it <code>pdf</code>, 
-the main method is <code>pdf.xf( id, x, Q2)</code>, which returns 
-<i>x*f_id(x, Q2)</i>, properly taking into account whether the beam 
-is an antiparticle or not. 
+PDFs should be defined by overriding the <code>PDF</code> base class, then 
+overriding the following protected method: 
+ 
+<a name="anchor1"></a>
+<p/><strong> virtual void PDF::xfUpdate(int id, double x, double Q2) &nbsp;</strong> <br/>
+Calculates the PDF distributions for the specified parton id at 
+<i>(x, Q^2)</i> and stores the resulting values in the corresponding 
+fields. If <code>id == 9</code>, the values should be calculated for all 
+relevant partons. The user may choose to always calculate the value for 
+all partons, in which case they should set <code>idSav = 9</code>. 
+ 
+The <code>PDF</code> class flexibly handles antiparticle and isospin 
+symmetries, so <code>xfUpdate</code> should always give the values that 
+correspond to the particle with positive <code>id</code> and isospin. 
+Further details and special cases are discussed below, and users should 
+read those carefully before implementing their own PDFs. 
+   
  
 <p/> 
-Whenever the <code>xf</code> member is called with a new flavour, <i>x</i> 
-or <i>Q^2</i>, the <code>xfUpdate</code> member is called to do the actual 
-updating. This routine may either update that particular flavour or all 
-flavours at this <i>(x, Q^2)</i> point. (In the latter case the saved 
-<code>id</code> value <code>idSav</code> should be set to 9.) The choice is 
-to be made by the producer of a given set, based on what he/she deems most 
-effective, given that sometimes only one flavour need be evaluated, and 
-about equally often all flavours are needed at the same <i>x</i> and 
-<i>Q^2</i>. Anyway, the latest value is always kept in memory. This is 
-the other reason why <code>Pythia</code> has one separate <code>PDF</code> 
-object for each beam, so that values at different <i>x</i> can be kept 
-in memory. 
+PDFs can be obtained from PYTHIA through the 
+<code>Pythia::getPDFPtr</code> method. The <code>PDF</code> class offers 
+a number of public methods. 
  
-<p/> 
-Two further public methods are <code>xfVal( id, x, Q2)</code> and 
-<code>xfSea( id, x, Q2)</code>. These are simple variants whereby 
-the quark distributions can be subdivided into a valence and a sea part. 
-If these are not directly accessible in the parametrization, one can 
-make the simplified choices <i>u_sea = ubar_sea, u_val = u_tot - u_sea</i>, 
-and correspondingly for <i>d</i>. (Positivity will always be guaranteed 
-at output.) The <code>xfUpdate</code> method should also take care of 
-updating this information. 
+<a name="anchor2"></a>
+<p/><strong> double PDF::xf(int id, double x, double Q2) &nbsp;</strong> <br/>
+Returns <i>x * f_id(x, Q2)</i> for the hadron represented by the 
+<code>PDF</code> object. The actual value is calculated by a call 
+to <code>xfUpdate</code>, which must be overridden by classes inheriting 
+from <code>PDF</code>. The result is cached, and subsequent calls 
+with the same <code>id</code>, <code>x</code> and <code>Q2</code> arguments 
+will return the cached value instead of recalculating them. 
+   
  
-<p/> 
-A method <code>setExtrapolate(bool)</code> allows you to switch between 
-freezing parametrizations  at the low-<i>x</i> boundary 
+<a name="anchor3"></a>
+<p/><strong> double PDF::xfVal(int id, double x, double Q2) &nbsp;</strong> <br/>
+   
+<a name="anchor4"></a>
+<strong> double PDF::xfSea(int id, double x, double Q2) &nbsp;</strong> <br/>
+Returns the valence or sea part of the specified distribution. These methods 
+also use caching, as described above, and will call <code>xfUpdate</code> 
+to calculate the distributions if necessary. 
+   
+ 
+<a name="anchor5"></a>
+<p/><strong> virtual void setExtrapolate(bool extrapolate) &nbsp;</strong> <br/>
+Subclasses of <code>PDF</code> may override this method to switch 
+between freezing parametrizations at the low-<i>x</i> boundary 
 (<code>false</code>) or extrapolate them outside the boundary 
 (<code>true</code>). This method works both for LHAPDF 5, LHAPDF6 and 
 modern internal PDFs. (For some older PDFs the behaviour implemented by 
 the original authors is maintained.) In either case the PDFs are frozen 
 at <i>Q_min</i> and <i>Q_max</i>. (And also at <i>x_max</i>, but 
 this is irrelevant when <i>x_max = 1</i>.) 
+   
  
-<p/> 
-With <code>insideBounds(double x, double Q2)</code> you can probe whether 
-an <i>(x, Q^2)</i> pair falls inside the fit region or not. The 
-<code>alphaS(double Q2)</code> method returns the <i>alpha_s</i> of the 
-PDF at the given <i>Q^2</i> scale, while <code>mQuarkPDF(int id)</code> 
-returns the quark masses used to set flavour thresholds. Currently these 
-three methods are only implemented for LHAPDF6. 
+<a name="anchor6"></a>
+<p/><strong> virtual bool insideBounds(double x, double Q2) &nbsp;</strong> <br/>
+Subclasses of <code>PDF</code> may override this method to give the user 
+information about whether the specified <i>(x, Q^2)</i> pair falls inside 
+the fit region or not. Currently only implemented for LHAPDF6. 
+   
+ 
+<a name="anchor7"></a>
+<p/><strong> double alphaS(double Q2) &nbsp;</strong> <br/>
+   
+<a name="anchor8"></a>
+<strong> double mQuarkPDF(int id) &nbsp;</strong> <br/>
+Subclasses of <code>PDF</code> may override these methods to respectively 
+give the <i>alpha_s</i> of the PDF at the specified <i>Q^2</i> scale, 
+and the quark mass used to set the flavour threshold for the specified 
+quark <i>id</i>. Currently only implemented for LHAPDF6. 
+   
  
 <a name="section1"></a> 
+<h3>Symmetries and special cases</h3> 
+The <code>PDF</code> class is designed to handle particles through 
+charge conjugation and isospin symmetries when available. For this reason, 
+<code>xfUpdate</code> should always behave the same way, independent of 
+which beam variant is specified for the PDF. Specifically, the particle should 
+always be assumed to have a positive id, and if there are isospin variants, 
+it should be assumed it is the particle with the largest available isospin 
+(the only exceptions are <i>Delta^+^+</i> and <i>Delta^-</i>, which are 
+treated as variants of the proton). For instance, that means that if the beam 
+is <i>n</i>, then <code>xfUpdate</code> should return values as though 
+it was <i>p</i>. 
+Particles where <i>u</i> and <i>d</i> are symmetric (at least 
+at LO), such as <i>Sigma^0</i> and <i>Lambda^0</i>, use the average 
+of the <i>u</i> and <i>d</i> contents. The <i>pi^0</i> also uses 
+the average of <i>pi^+/pi^-</i>, with additional complications due to 
+its ambiguous valence content, as described in the next paragraph. Finally, 
+<i>K^0_S/K^0_L</i> should be treated as <i>K^+</i> by 
+<code>xfUpdate</code>. 
+ 
+<p/> 
+Some mesons have ambiguous valence content. These are <i>eta/eta'</i>, 
+<i>K^0_S/K^0_L</i>, the pomeron, and all unflavoured diagonal mesons such 
+as <i>pi^0</i>, <i>rho^0</i>, <i>omega</i>, <i>f_0(980)</i>, etc. 
+In these cases, the <code>PDF</code> class keeps track of the current 
+valence content, and gives the corresponding PDF values. The valence content 
+is randomly chosen for each generated event. When the <code>PDF</code> is 
+created, the default choice is defined as the content that is implied by 
+the particle id, i.e. <i>d dbar</i> for <i>pi^0</i> or <i>rho^0</i>, 
+<i>u ubar</i> for <i>eta</i> or <i>omega</i>, and <i>s sbar</i> for 
+<i>eta'</i>. 
+ 
+<p/> 
+For diagonal mesons (except <i>pi^0</i>), the <i>q</i> and 
+<i>qbar</i> contents are always the same. In some contexts, it is 
+still physically meaningful to separate the content into valence 
+and sea, but the valence content can no longer be defined as 
+<i>v(x) = q(x) - qbar(x)</i>, since <i>qbar</i> does not 
+correspond to sea content in this scenario. To circumvent this, the 
+antiquark content will instead be used to store the sea content, and the 
+<code>PDF</code> class will take this into account when determining which 
+value to return. This is implemented in the SU21 data files, e.g. 
+the <i>-4</i> column in <code>SU21Jpsi.dat</code> gives the value of 
+the <i>c/cbar</i> sea. This is also true for <i>eta/eta'</i>, which 
+use this scheme for <i>d/dbar</i>, <i>u/ubar</i> and <i>s/sbar</i>. 
+ 
+<a name="section2"></a> 
 <h3>Derived classes</h3> 
  
 There is only one pure virtual method, <code>xfUpdate</code>, that 
@@ -85,6 +162,15 @@ therefore must be implemented in any derived class. A reasonable
 number of such classes come with the program: 
  
 <p/> 
+For any particle, including all modern proton sets and the SU21 
+family covering almost all hadrons: 
+<ul> 
+<li><code>LHAGrid1</code> can read and use files in the LHAPDF6 lhagrid1 
+format, assuming that the same <i>x</i> grid is used for all <i>Q</i> 
+subgrids. Results are not exactly identical with LHAPDF6, owing to a 
+different interpolation.</li> 
+</ul> 
+ 
 For protons: 
 <ul> 
 <li><code>LHAPDF</code> provides a plugin interface class to the 
@@ -100,10 +186,6 @@ MRST/MSTW group that have been implemented.</li>
 CTEQ/CT group that have been implemented.</li> 
 <li><code>NNPDF</code> gives four distributions from the NNPDF 2.3 
 QCD+QED sets that have been implemented.</li> 
-<li><code>LHAGrid1</code> can read and use files in the LHAPDF6 lhagrid1 
-format, assuming that the same x grid is used for all Q subgrids. 
-Results are not exactly identical with LHAPDF6, owing to different 
-interpolation.</li> 
 <li><code>nPDF, Isospin, EPS09</code> three classes allowing to introduce 
 nuclear modifications to a specified proton PDF. The first is base class 
 for the other two, where <code>Isospin</code> only provides the 
@@ -191,4 +273,4 @@ the header files for explicit constructor descriptions.
 </body>
 </html>
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

@@ -1,14 +1,15 @@
 // main51.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: parton distribution; LHAPDF;
+// Keywords: parton distribution; LHAPDF
 
 // Test of LHAPDF interface and whether PDF's behave sensibly.
 // October 2017: updated to test external LHAPDF6 vs internal LHAGrid1.
 
 #include "Pythia8/Pythia.h"
+#include "Pythia8/Plugins.h"
 
 using namespace Pythia8;
 
@@ -56,14 +57,15 @@ double integrate(PDFPtr nowPDF, double Q2) {
 int main() {
 
   // Info member for possible error printouts etc.
-  Info info;
+  Logger logger;
 
   // Pointers to external LHAPDF6 and internal LHAGrid1 PDF packages,
   // for the same  NNPDF3.1 QCD+QED NNLOPDF set, the central member.
-  PDFPtr extPDF = make_shared<LHAPDF>
-    ( 2212, "LHAPDF6:NNPDF31_nnlo_as_0118_luxqed", &info);
+  PDFPtr extPDF = make_plugin<PDF>("libpythia8lhapdf6.so", "LHAPDF6");
+  extPDF->init(2212, "NNPDF31_nnlo_as_0118_luxqed", 0, &logger);
+  if (!extPDF) return 1;
   PDFPtr intPDF = make_shared<LHAGrid1>
-    ( 2212, "20", "../share/Pythia8/xmldoc/", &info);
+    ( 2212, "20", "../share/Pythia8/pdfdata/", &logger);
 
   // Alternative: compare two Pomeron PDF's. Boost second by factor 2.
   //PDF* extPDF = new PomFix( 990, -0.2, 2.5, 0., 3., 0.4, 0.5);

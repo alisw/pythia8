@@ -1,9 +1,9 @@
 // main74.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: jet finding; fastjet;
+// Keywords: jet finding; fastjet
 
 // Example how to use the modified Mass Drop Tagger on Pythia jets.
 // Note: to run this you must install and link the FastJet Contrib add-ons.

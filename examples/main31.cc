@@ -1,11 +1,11 @@
 // main31.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Keywords: matching; merging; powheg;
+// Keywords: matching; merging; powheg
 
-// Example how to perform merging with POWHEG-BOX events,
+// Example how to perform matching with POWHEG-BOX events,
 // based on the code found in include/Pythia8Plugins/PowhegHooks.h.
 
 #include "Pythia8/Pythia.h"
@@ -22,27 +22,49 @@ int main() {
   // Load configuration file
   pythia.readFile("main31.cmnd");
 
-  // Read in main settings
+  // Read in main settings.
   int nEvent      = pythia.settings.mode("Main:numberOfEvents");
   int nError      = pythia.settings.mode("Main:timesAllowErrors");
-  // Read in key POWHEG merging settings
-  int vetoMode    = pythia.settings.mode("POWHEG:veto");
-  int MPIvetoMode = pythia.settings.mode("POWHEG:MPIveto");
-  bool loadHooks  = (vetoMode > 0 || MPIvetoMode > 0);
+  // Read in key POWHEG matching settings.
+  int powhegVeto    = pythia.settings.mode("POWHEG:veto");
+  int powhegMPIveto = pythia.settings.mode("POWHEG:MPIveto");
+  bool loadHooks  = (powhegVeto > 0 || powhegMPIveto > 0);
+  // Read in shower settings.
+  int showerModel = pythia.settings.mode("PartonShowers:model");
 
-  // Add in user hooks for shower vetoing
-  //PowhegHooks *powhegHooks = NULL;
+  // Add in user hooks for shower vetoing.
   shared_ptr<PowhegHooks> powhegHooks;
   if (loadHooks) {
 
-    // Set ISR and FSR to start at the kinematical limit
-    if (vetoMode > 0) {
-      pythia.readString("SpaceShower:pTmaxMatch = 2");
-      pythia.readString("TimeShower:pTmaxMatch = 2");
+    // For POWHEG:veto >= 1, setup to do vetoed power showers.
+    //   1) Setting pTmaxMatch = 2 forces PYTHIA's shower to sweep over the
+    //      full phase space.
+    //   2) Loading the POWHEG hooks will then veto any shower branchings that
+    //      are judged (according to the POWHEG settings) to double-count the
+    //      POWHEG one.
+    if (powhegVeto > 0) {
+      if (showerModel == 1 || showerModel == 3) {
+        // For PYTHIA's simple shower (and also for Dire), the FSR and ISR
+        // shower starting scales are set by the respective pTmaxMatch values.
+        pythia.readString("TimeShower:pTmaxMatch = 2");
+        pythia.readString("SpaceShower:pTmaxMatch = 2");
+        // Use undamped power showers, except for cases for which there could
+        // be an interplay with ISR branchings not simulated by the pure
+        // shower, like ISR g->tt.
+        pythia.readString("SpaceShower:pTdampMatch = 3");
+        pythia.readString("TimeShower:pTdampMatch = 0");
+      } else if (showerModel == 2) {
+        // Vincia has common settings that apply to both ISR and FSR.
+        pythia.readString("Vincia:pTmaxMatch = 2");
+        // Use undamped power showers, except for cases for which there could
+        // be an interplay with ISR branchings not simulated by the pure
+        // shower, like g->tt.
+        pythia.readString("Vincia:pTdampMatch = 3");
+      }
     }
 
-    // Set MPI to start at the kinematical limit
-    if (MPIvetoMode > 0) {
+    // For POWHEG:MPIveto >= 1, also set MPI to start at the kinematical limit.
+    if (powhegMPIveto > 0) {
       pythia.readString("MultipartonInteractions:pTmaxMatch = 2");
     }
 
@@ -70,7 +92,7 @@ int main() {
       // Otherwise count event failure and continue/exit as necessary
       cout << "Warning: event " << iEvent << " failed" << endl;
       if (++iError == nError) {
-        cout << "Error: too many event failures.. exiting" << endl;
+        cout << "Error: too many event failures... exiting" << endl;
         break;
       }
 
@@ -100,6 +122,5 @@ int main() {
   cout << endl;
 
   // Done.
-  //if (powhegHooks) delete powhegHooks;
   return 0;
 }

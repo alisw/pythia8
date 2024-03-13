@@ -45,7 +45,7 @@ apart from the factor of 3 enhancement of spin 1 from counting the
 number of states. 
 </parm> 
  
-<pvec name="StringFlav:probQQ1toQQ0join" default="0.5,0.7,0.9,1.0" 
+<pvec name="StringFlav:probQQ1toQQ0join" default="{0.5,0.7,0.9,1.0}" 
 min="0.0" max="1.0"> 
 when two already produced quarks are to be combined to a diquark, 
 e.g. in the junction framework, these numbers give the suppression 
@@ -379,7 +379,7 @@ flavour is chosen according to
 </eq> 
 Here <ei>T</ei> is primarily given by <code>StringPT:temperature</code>, 
 but can be further modified in the context of closely packed strings, 
-<code>StringPT:closePacking = on</code>. 
+<code>ClosePacking:doClosePacking = on</code>. 
 Additional factors are included from theory arguments, for instance 
 the ratio of vector-to-pseudocalar meson production is set according 
 to spin-counting rules. 
@@ -429,4 +429,4 @@ nonet (L=1).
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 

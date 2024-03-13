@@ -1,5 +1,5 @@
 // SigmaDM.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -54,7 +54,7 @@ private:
   double mRes, GammaRes, m2Res, sigma0, preFac, gZp, eps;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -97,7 +97,7 @@ protected:
   double mRes, GammaRes, m2Res, preFac, sigma0, gZp, eps;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -159,7 +159,7 @@ private:
   double mRes, GammaRes, m2Res, sigma0, gZp, eps, coupZpH, openFrac;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -197,7 +197,7 @@ private:
   double mRes, GammaRes, m2Res, sigma0;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -238,7 +238,7 @@ protected:
   double mRes, GammaRes, m2Res, propS, sigma0;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
 };
 
@@ -311,7 +311,7 @@ protected:
   bool isUD;
 
   // Pointer to properties of the particle species, to access decay channels.
-  ParticleDataEntry* particlePtr;
+  ParticleDataEntryPtr particlePtr;
 
   };
 

@@ -1,21 +1,32 @@
 #include <Pythia8/Analysis.h>
 #include <Pythia8/Basics.h>
 #include <Pythia8/BeamParticle.h>
+#include <Pythia8/BeamSetup.h>
+#include <Pythia8/BeamShape.h>
 #include <Pythia8/BoseEinstein.h>
 #include <Pythia8/ColourReconnection.h>
 #include <Pythia8/Event.h>
 #include <Pythia8/FragmentationFlavZpT.h>
 #include <Pythia8/FragmentationSystems.h>
 #include <Pythia8/GammaKinematics.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/HIBasics.h>
+#include <Pythia8/HIInfo.h>
+#include <Pythia8/HINucleusModel.h>
+#include <Pythia8/HISubCollisionModel.h>
+#include <Pythia8/HadronLevel.h>
+#include <Pythia8/HadronWidths.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/HelicityBasics.h>
 #include <Pythia8/History.h>
 #include <Pythia8/Info.h>
 #include <Pythia8/LHEF3.h>
 #include <Pythia8/LesHouches.h>
+#include <Pythia8/Logger.h>
+#include <Pythia8/MathTools.h>
 #include <Pythia8/Merging.h>
 #include <Pythia8/MergingHooks.h>
+#include <Pythia8/MultipartonInteractions.h>
+#include <Pythia8/NucleonExcitations.h>
 #include <Pythia8/ParticleData.h>
 #include <Pythia8/ParticleDecays.h>
 #include <Pythia8/PartonDistributions.h>
@@ -33,6 +44,7 @@
 #include <Pythia8/Settings.h>
 #include <Pythia8/SharedPointers.h>
 #include <Pythia8/ShowerModel.h>
+#include <Pythia8/SigmaLowEnergy.h>
 #include <Pythia8/SigmaProcess.h>
 #include <Pythia8/SigmaTotal.h>
 #include <Pythia8/SimpleSpaceShower.h>
@@ -42,6 +54,7 @@
 #include <Pythia8/SusyLesHouches.h>
 #include <Pythia8/UserHooks.h>
 #include <Pythia8/Weights.h>
+#include <array>
 #include <complex>
 #include <deque>
 #include <functional>
@@ -54,6 +67,7 @@
 #include <sstream>
 #include <sstream> // __str__
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -61,11 +75,12 @@
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -87,7 +102,13 @@ void bind_std_stl_vector(std::function< pybind11::module &(std::string const &na
 
 	// std::vector file:bits/stl_vector.h line:214
 
+	// std::vector file:bits/stl_vector.h line:214
+
 	// std::vector file:bits/stl_bvector.h line:541
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
 
 	// std::map file:bits/stl_map.h line:96
 

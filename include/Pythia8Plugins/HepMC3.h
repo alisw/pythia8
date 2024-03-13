@@ -1,5 +1,5 @@
 // HepMC3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 //
@@ -11,12 +11,20 @@
 #ifndef Pythia8_HepMC3_H
 #define Pythia8_HepMC3_H
 
+#ifdef Pythia8_HepMC2_H
+#error Cannot include HepMC3.h if HepMC2.h has already been included.
+#endif
+
 #include <vector>
 #include "Pythia8/Pythia.h"
+#include "Pythia8/HIInfo.h"
 #include "HepMC3/GenVertex.h"
 #include "HepMC3/GenParticle.h"
 #include "HepMC3/GenEvent.h"
 #include "HepMC3/WriterAscii.h"
+#include "HepMC3/WriterAsciiHepMC2.h"
+#include "HepMC3/GenHeavyIon.h"
+#include "HepMC3/GenPdfInfo.h"
 
 namespace HepMC3 {
 
@@ -37,8 +45,13 @@ public:
   bool fill_next_event( Pythia8::Pythia& pythia, GenEvent* evt,
     int ievnum = -1 ) { return fill_next_event( pythia.event, evt,
     ievnum, &pythia.info, &pythia.settings); }
+  bool fill_next_event( Pythia8::Pythia& pythia, GenEvent& evt) {
+    return fill_next_event( pythia, &evt); }
 
   // Alternative method to convert Pythia events into HepMC3 ones.
+  bool fill_next_event( Pythia8::Event& pyev, GenEvent&evt, int ievnum = -1,
+    const Pythia8::Info* pyinfo = 0, Pythia8::Settings* pyset = 0) {
+    return fill_next_event(pyev, &evt, ievnum, pyinfo, pyset); }
   bool fill_next_event( Pythia8::Event& pyev, GenEvent* evt, int ievnum = -1,
     const Pythia8::Info* pyinfo = 0, Pythia8::Settings* pyset = 0) {
 
@@ -61,6 +74,24 @@ public:
 
     // Set units to be GeV and mm, to agree with Pythia ones.
     evt->set_units(Units::GEV,Units::MM);
+
+    // 1a. If there is a HIInfo object fill info from that.
+    if ( pyinfo && pyinfo->hiInfo ) {
+      auto ion = make_shared<HepMC3::GenHeavyIon>();
+      ion->Ncoll_hard = pyinfo->hiInfo->nCollNDTot();
+      ion->Ncoll = pyinfo->hiInfo->nAbsProj() +
+                   pyinfo->hiInfo->nDiffProj() +
+                   pyinfo->hiInfo->nAbsTarg() +
+                   pyinfo->hiInfo->nDiffTarg() -
+                   pyinfo->hiInfo->nCollND() -
+                   pyinfo->hiInfo->nCollDD();
+      ion->Npart_proj = pyinfo->hiInfo->nAbsProj() +
+                        pyinfo->hiInfo->nDiffProj();
+      ion->Npart_targ = pyinfo->hiInfo->nAbsTarg() +
+                        pyinfo->hiInfo->nDiffTarg();
+      ion->impact_parameter = pyinfo->hiInfo->b();
+      evt->set_heavy_ion(ion);
+    }
 
     // 2. Fill particle information.
     std::vector<GenParticlePtr> hepevt_particles;
@@ -99,8 +130,8 @@ public:
 
     // Here we assume that the first two particles are the beam particles.
     vector<GenParticlePtr> beam_particles;
-    beam_particles.push_back(hepevt_particles[0]);
     beam_particles.push_back(hepevt_particles[1]);
+    beam_particles.push_back(hepevt_particles[2]);
 
     // Add particles and vertices in topological order.
     evt->add_tree( beam_particles );
@@ -134,7 +165,7 @@ public:
       // the HepMC event standard.
       if ( !hepevt_particles[i] ) {
         std::cerr << "hanging particle " << i << std::endl;
-        GenVertexPtr prod_vtx;
+        GenVertexPtr prod_vtx = make_shared<GenVertex>();
         prod_vtx->add_particle_out( hepevt_particles[i] );
         evt->add_vertex(prod_vtx);
       }
@@ -183,26 +214,29 @@ public:
         std::make_shared<DoubleAttribute>(pyinfo->alphaEM()));
     }
 
-    // Store cross-section information in pb.
-    if (m_store_xsec && pyinfo != 0) {
-      GenCrossSectionPtr xsec = make_shared<GenCrossSection>();
-      xsec->set_cross_section( pyinfo->sigmaGen() * 1e9,
-        pyinfo->sigmaErr() * 1e9);
-      evt->set_cross_section(xsec);
-    }
-
     // Store event weights.
     if (m_store_weights && pyinfo != 0) {
       evt->weights().clear();
-      //for (int iweight = 0; iweight < pyinfo->nWeights(); ++iweight) {
-      //  evt->weights().push_back(pyinfo->weight(iweight));
-      //}
-      for (int iweight = 0; iweight < pyinfo->numberOfWeights();
-        ++iweight) {
-        double value = pyinfo->weightValueByIndex(iweight);
-        evt->weights().push_back(value);
-      }
+      for (int iWeight = 0; iWeight < pyinfo->numberOfWeights(); ++iWeight)
+        evt->weights().push_back(pyinfo->weightValueByIndex(iWeight));
+    }
 
+    // Store cross-section information in pb.
+    if (m_store_xsec && pyinfo != 0) {
+      // First set atribute to event, such that
+      // GenCrossSection::set_cross_section knows how many weights the
+      // event has and sets the number of cross sections accordingly.
+      GenCrossSectionPtr xsec = make_shared<GenCrossSection>();
+      evt->set_cross_section(xsec);
+      xsec->set_cross_section( pyinfo->sigmaGen() * 1e9,
+        pyinfo->sigmaErr() * 1e9);
+      // If multiweights with possibly different xsec, overwrite central value
+      vector<double> xsecVec = pyinfo->weightContainerPtr->getTotalXsec();
+      if (xsecVec.size() > 0) {
+        for (unsigned int iXsec = 0; iXsec < xsecVec.size(); ++iXsec) {
+          xsec->set_xsec(iXsec, xsecVec[iXsec]*1e9);
+        }
+      }
     }
 
     // Done.
@@ -244,12 +278,166 @@ private:
        m_convert_gluon_to_0, m_store_pdf, m_store_proc, m_store_xsec,
        m_store_weights;
 
-  //GenRunInfo genRunInfo;
-
 };
 
 //==========================================================================
 
 } // end namespace HepMC3
+
+namespace Pythia8 {
+
+//==========================================================================
+// This a wrapper around HepMC::Pythia8ToHepMC in the Pythia8
+// namespace that simplify the most common use cases. It stores the
+// current GenEvent and output stream internally to avoid cluttering
+// of user code. This class is also defined in HepMC2.h with the same
+// signatures, and the user can therefore switch between HepMC version
+// 2 and 3, by simply changing the include file.
+class Pythia8ToHepMC : public HepMC3::Pythia8ToHepMC3 {
+
+public:
+
+  // We can either have standard ascii output version 2 or three or
+  // none at all.
+  enum OutputType { none, ascii2, ascii3 };
+
+  // Typedef for the version 3 specific classes used.
+  typedef HepMC3::GenEvent GenEvent;
+  typedef shared_ptr<GenEvent> EventPtr;
+  typedef HepMC3::Writer Writer;
+  typedef shared_ptr<Writer> WriterPtr;
+
+  // The empty constructor does not creat an aoutput stream.
+  Pythia8ToHepMC() : runinfo(make_shared<HepMC3::GenRunInfo>()) {}
+
+  // Construct an object with an internal output stream.
+  Pythia8ToHepMC(string filename, OutputType ft = ascii3)
+    : runinfo(make_shared<HepMC3::GenRunInfo>()) {
+    setNewFile(filename, ft);
+  }
+
+  // Open a new external output stream.
+  bool setNewFile(string filename, OutputType ft = ascii3) {
+    switch ( ft ) {
+    case ascii3:
+      writerPtr = make_shared<HepMC3::WriterAscii>(filename);
+      break;
+    case ascii2:
+      writerPtr = make_shared<HepMC3::WriterAsciiHepMC2>(filename);
+      break;
+    case none:
+      break;
+    }
+    return writerPtr != nullptr;
+  }
+
+  // Create a new GenEvent object and fill it with information from
+  // the given Pythia object.
+  bool fillNextEvent(Pythia & pythia) {
+    geneve = make_shared<HepMC3::GenEvent>(runinfo);
+    if (runinfo->weight_names().size() == 0)
+      setWeightNames(pythia.info.weightNameVector());
+    return fill_next_event(pythia, *geneve);
+  }
+
+  // Write out the current GenEvent to the internal stream.
+  void writeEvent() {
+    writerPtr->write_event(*geneve);
+  }
+
+  // Create a new GenEvent object and fill it with information from
+  // the given Pythia object and write it out directly to the
+  // internal stream.
+  bool writeNextEvent(Pythia & pythia) {
+    if ( !fillNextEvent(pythia) ) return false;
+    writeEvent();
+    return !writerPtr->failed();
+  }
+
+  // Get a reference to the current GenEvent.
+  GenEvent & event() {
+    return *geneve;
+  }
+
+  // Get a pointer to the current GenEvent.
+   EventPtr getEventPtr() {
+    return geneve;
+  }
+
+  // Get a reference to the internal stream.
+  Writer & output() {
+    return *writerPtr;
+  }
+
+  // Get a pointer to the internal stream.
+  WriterPtr outputPtr() {
+    return writerPtr;
+  }
+
+  // Set cross section information in the current GenEvent.
+  void setXSec(double xsec, double xsecerr) {
+    auto xsecptr = geneve->cross_section();
+    if ( !xsecptr ) {
+      xsecptr = make_shared<HepMC3::GenCrossSection>();
+      geneve->set_cross_section(xsecptr);
+    }
+    xsecptr->set_cross_section(xsec, xsecerr);
+  }
+
+  // Update all weights in the current GenEvent.
+  void setWeights(const vector<double> & wv) {
+    geneve->weights() = wv;
+  }
+
+  // Set all weight names in the current run.
+  void setWeightNames(const vector<string> &wnv) {
+    runinfo->set_weight_names(wnv);
+  }
+
+  // Update the PDF information in the current GenEvent
+  void setPdfInfo(int id1, int id2, double x1, double x2,
+                  double scale, double xf1, double xf2,
+                  int pdf1 = 0, int pdf2 = 0) {
+    auto pdf = make_shared<HepMC3::GenPdfInfo>();
+    pdf->set(id1, id2, x1, x2, scale, xf1, xf2, pdf1, pdf2);
+    geneve->set_pdf_info(pdf);
+  }
+
+  // Add an additional attribute derived from HepMC3::Attribute
+  // to the current event.
+  template<class T>
+  void addAtribute(const string& name, T& attribute) {
+    shared_ptr<HepMC3::Attribute> att = make_shared<T>(attribute);
+    geneve->add_attribute(name, att);
+  }
+
+  // Add an attribute of double type.
+  template<class T=double>
+  void addAttribute(const string& name, double& attribute) {
+    auto dAtt = HepMC3::DoubleAttribute(attribute);
+    shared_ptr<HepMC3::Attribute> att =
+      make_shared<HepMC3::DoubleAttribute>(dAtt);
+    geneve->add_attribute(name, att);
+  }
+
+  // Remove an attribute from the current event.
+  void removeAttribute(const string& name) {
+    geneve->remove_attribute(name);
+  }
+
+private:
+
+  // The current GenEvent
+  EventPtr geneve = nullptr;
+
+  // The output stream.
+  WriterPtr writerPtr = nullptr;
+
+  // The current run info.
+  shared_ptr<HepMC3::GenRunInfo> runinfo;
+
+};
+
+}
 
 #endif // end Pythia8_HepMC3_H

@@ -1,20 +1,45 @@
+#include <Pythia8/Basics.h>
+#include <Pythia8/BeamShape.h>
+#include <Pythia8/Event.h>
+#include <Pythia8/HIInfo.h>
+#include <Pythia8/HINucleusModel.h>
+#include <Pythia8/HeavyIons.h>
+#include <Pythia8/Info.h>
+#include <Pythia8/LesHouches.h>
+#include <Pythia8/Merging.h>
+#include <Pythia8/MergingHooks.h>
+#include <Pythia8/ParticleData.h>
+#include <Pythia8/ParticleDecays.h>
+#include <Pythia8/PartonDistributions.h>
+#include <Pythia8/PartonVertex.h>
+#include <Pythia8/PhaseSpace.h>
+#include <Pythia8/Pythia.h>
+#include <Pythia8/ResonanceWidths.h>
+#include <Pythia8/Settings.h>
+#include <Pythia8/ShowerModel.h>
+#include <Pythia8/SigmaProcess.h>
+#include <Pythia8/UserHooks.h>
+#include <array>
 #include <functional>
+#include <istream>
 #include <iterator>
 #include <memory>
 #include <sstream> // __str__
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include <pybind11/pybind11.h>
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -34,7 +59,7 @@ struct PyCallBack_std_runtime_error : public std::runtime_error {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<const char *>::value) {
-				static pybind11::detail::overload_caster_t<const char *> caster;
+				static pybind11::detail::override_caster_t<const char *> caster;
 				return pybind11::detail::cast_ref<const char *>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<const char *>(std::move(o));

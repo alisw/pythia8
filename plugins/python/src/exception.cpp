@@ -5,11 +5,12 @@
 #include <functional>
 #include <string>
 #include <Pythia8/UserHooks.h>
-#include <Pythia8/HIUserHooks.h>
+#include <Pythia8/SplittingsOnia.h>
 #include <Pythia8/HeavyIons.h>
 #include <Pythia8/BeamShape.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
+#include <pybind11/functional.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -29,7 +30,7 @@ struct PyCallBack_std_exception : public std::exception {
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<const char *>::value) {
-				static pybind11::detail::overload_caster_t<const char *> caster;
+				static pybind11::detail::override_caster_t<const char *> caster;
 				return pybind11::detail::cast_ref<const char *>(std::move(o), caster);
 			}
 			else return pybind11::detail::cast_safe<const char *>(std::move(o));

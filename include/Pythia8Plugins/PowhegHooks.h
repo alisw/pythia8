@@ -1,21 +1,22 @@
 // PowhegHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Richard Corke, Torbjorn Sjostrand.
+// Copyright (C) 2024 Richard Corke, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Author: Richard Corke.
+// Author: Richard Corke, modified by Christian T Preuss.
 // This class is used to perform a vetoed shower, where emissions
 // already covered in a POWHEG NLO generator should be omitted.
 // To first approximation the handover should happen at the SCALE
 // of the LHA, but since the POWHEG-BOX uses a different pT definition
 // than PYTHIA, both for ISR and FSR, a more sophisticated treatment
-// is needed. See the online manual on POWHEG merging for details.
+// is needed. See the online manual on POWHEG matching for details.
 
 #ifndef Pythia8_PowhegHooks_H
 #define Pythia8_PowhegHooks_H
 
 // Includes
 #include "Pythia8/Pythia.h"
+#include "Pythia8/Plugins.h"
 
 namespace Pythia8 {
 
@@ -27,11 +28,12 @@ class PowhegHooks : public UserHooks {
 
 public:
 
-  // Constructor and destructor.
-   PowhegHooks() {}
+  // Constructors and destructor.
+  PowhegHooks() {}
+  PowhegHooks(Pythia*, Settings*, Logger*) {}
   ~PowhegHooks() {}
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
   // Initialize settings, detailing merging strategy to use.
   bool initAfterBeams() {
@@ -44,18 +46,34 @@ public:
     pTdefMode   = settingsPtr->mode("POWHEG:pTdef");
     MPIvetoMode = settingsPtr->mode("POWHEG:MPIveto");
     QEDvetoMode = settingsPtr->mode("POWHEG:QEDveto");
+    showerModel = settingsPtr->mode("PartonShowers:model");
     return true;
   }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
-  // Routines to calculate the pT (according to pTdefMode) in a splitting:
+  // Routines to calculate the pT (according to pTdefMode) in a branching:
   //   ISR: i (radiator after)  -> j (emitted after) k (radiator before)
   //   FSR: i (radiator before) -> j (emitted after) k (radiator after)
-  // For the Pythia pT definition, a recoiler (after) must be specified.
+  // For the Pythia pT definitions, a recoiler (after) must be specified.
 
-  // Compute the Pythia pT separation. Based on pTLund function in History.cc
-  inline double pTpythia(const Event &e, int RadAfterBranch,
+  // Top-level wrapper for shower pTs.
+  inline double pT(const Event& e, int RadAfterBranch,
+    int EmtAfterBranch, int RecAfterBranch, bool FSR) {
+    // VINCIA pT definition.
+    if (showerModel == 2)
+      return pTvincia(e, RadAfterBranch, EmtAfterBranch, RecAfterBranch);
+    // DIRE pT definition.
+    if (showerModel == 3)
+      return pTdire(e, RadAfterBranch, EmtAfterBranch, RecAfterBranch);
+    return pTpythia(e, RadAfterBranch, EmtAfterBranch, RecAfterBranch, FSR);
+  }
+
+  //--------------------------------------------------------------------------
+
+  // Compute the Pythia pT separation.
+  // Based on pTLund function in History.cc and identical to pTevol.
+  inline double pTpythia(const Event& e, int RadAfterBranch,
     int EmtAfterBranch, int RecAfterBranch, bool FSR) {
 
     // Convenient shorthands for later
@@ -95,9 +113,9 @@ public:
     // Virtuality with correct sign
     pTnow *= (Qsq - sign * m2Rad);
 
-    // Can get negative pT for massive splittings
+    // Can get negative pT for massive splittings.
     if (pTnow < 0.) {
-      cout << "Warning: pTpythia was negative" << endl;
+      loggerPtr->WARNING_MSG("negative pT");
       return -1.;
     }
 
@@ -105,7 +123,124 @@ public:
     return sqrt(pTnow);
   }
 
-  // Compute the POWHEG pT separation between i and j
+  //--------------------------------------------------------------------------
+
+  // Compute the Vincia pT as in Eq. (2.63)-(2.66) in arXiv:2003.00702.
+  // Branching is assumed to be {13} {23} -> 1 3 2.
+  inline double pTvincia(const Event& event, int i1, int i3, int i2) {
+
+    // Shorthands.
+    Vec4 p1 = event[i1].p();
+    Vec4 p3 = event[i3].p();
+    Vec4 p2 = event[i2].p();
+
+    // Fetch mothers of 1 and 2.
+    int iMoth1 = event[i1].mother1();
+    int iMoth2 = event[i2].mother1();
+    if (iMoth1 == 0 || iMoth2 == 0) {
+      loggerPtr->ABORT_MSG("could not find mothers of particles");
+      exit(1);
+    }
+
+    // Invariants defined as in Eq. (5) in arXiv:2008.09468.
+    double mMoth1Sq = event[iMoth1].m2();
+    double mMoth2Sq = event[iMoth2].m2();
+    double sgn1 = event[i1].isFinal() ? 1. : -1.;
+    double sgn2 = event[i2].isFinal() ? 1. : -1.;
+    double qSq13 = sgn1*(m2(sgn1*p1+p3) - mMoth1Sq);
+    double qSq23 = sgn2*(m2(sgn2*p2+p3) - mMoth2Sq);
+
+    // Normalisation as in Eq. (6) in arXiv:2008.09468.
+    double sMax = -1.;
+    if (event[i1].isFinal() && event[i2].isFinal()) {
+      // FF.
+      sMax = m2(p1+p2+p3) - mMoth1Sq - mMoth2Sq;
+    } else if ((event[i1].isResonance() && event[i2].isFinal())
+      || (!event[i1].isFinal() && event[i2].isFinal())) {
+      // RF or IF.
+      sMax = 2.*p1*p3 + 2.*p1*p2;
+    } else if ((event[i1].isFinal() && event[i2].isResonance())
+      || (event[i1].isFinal() && !event[i2].isFinal())) {
+      // FR or FI.
+      sMax = 2.*p2*p3 + 2.*p1*p2;
+    } else if (!event[i1].isFinal() || !event[i2].isFinal()) {
+      // II.
+      sMax = 2.*p1*p2;
+    } else {
+      loggerPtr->ABORT_MSG("could not determine branching type");
+      exit(1);
+    }
+
+    // Calculate pT2 as in Eq. (5) in arXiv:2008.09468.
+    double pT2now = qSq13*qSq23/sMax;
+
+    // Sanity check.
+    if (pT2now < 0.) {
+      loggerPtr->WARNING_MSG("negative pT");
+      return -1.;
+    }
+
+    // Return pT.
+    return sqrt(pT2now);
+  }
+
+  //--------------------------------------------------------------------------
+
+  // Compute the Dire pT as in
+  // DireTimes::pT2_FF, DireTimes::pT2_FI,
+  // DireSpace::pT2_IF, DireSpace::pT2_II.
+  inline double pTdire(const Event& event, int iRad, int iEmt, int iRec) {
+
+    // Shorthands.
+    const Particle& rad = event[iRad];
+    const Particle& emt = event[iEmt];
+    const Particle& rec = event[iRec];
+
+    // Calculate pT2 depending on dipole configuration.
+    double pT2 = -1.;
+    if (rad.isFinal() && rec.isFinal()) {
+      // FF -- copied from DireTimes::pT2_FF.
+      const double sij = 2.*rad.p()*emt.p();
+      const double sik = 2.*rad.p()*rec.p();
+      const double sjk = 2.*rec.p()*emt.p();
+      pT2 = sij*sjk/(sij+sik+sjk);
+    } else if (rad.isFinal() && !rec.isFinal()) {
+      // FI.
+      const double sij =  2.*rad.p()*emt.p();
+      const double sai = -2.*rec.p()*rad.p();
+      const double saj = -2.*rec.p()*emt.p();
+      pT2 = sij*saj/(sai+saj)*(sij+saj+sai)/(sai+saj);
+      if (sij+saj+sai < 1e-5 && abs(sij+saj+sai) < 1e-5) pT2 = sij;
+    } else if (!rad.isFinal() && rec.isFinal()) {
+      // IF.
+      const double sai = -2.*rad.p()*emt.p();
+      const double sik =  2.*rec.p()*emt.p();
+      const double sak = -2.*rad.p()*rec.p();
+      pT2 = sai*sik/(sai+sak)*(sai+sik+sak)/(sai+sak);
+    } else if (!rad.isFinal() || !rec.isFinal()) {
+      // II.
+      const double sai = -2.*rad.p()*emt.p();
+      const double sbi = -2.*rec.p()*emt.p();
+      const double sab =  2.*rad.p()*rec.p();
+      pT2 = sai*sbi/sab*(sai+sbi+sab)/sab;
+    } else {
+      loggerPtr->ABORT_MSG("could not determine branching type");
+      exit(1);
+    }
+
+    // Sanity check.
+    if (pT2 < 0.) {
+      loggerPtr->WARNING_MSG("negative pT");
+      return -1.;
+    }
+
+    // Return pT.
+    return sqrt(pT2);
+  }
+
+  //--------------------------------------------------------------------------
+
+  // Compute the POWHEG pT separation between i and j.
   inline double pTpowheg(const Event &e, int i, int j, bool FSR) {
 
     // pT value for FSR and ISR
@@ -130,20 +265,22 @@ public:
       pTnow = e[j].pT();
     }
 
-    // Check result
+    // Check result.
     if (pTnow < 0.) {
-      cout << "Warning: pTpowheg was negative" << endl;
+      loggerPtr->WARNING_MSG("negative pT");
       return -1.;
     }
 
     return pTnow;
   }
 
+  //--------------------------------------------------------------------------
+
   // Calculate pT for a splitting based on pTdefMode.
   // If j is -1, all final-state partons are tried.
   // If i, k, r and xSR are -1, then all incoming and outgoing
   // partons are tried.
-  // xSR set to 0 means ISR, while xSR set to 1 means FSR
+  // xSR set to 0 means ISR, while xSR set to 1 means FSR.
   inline double pTcalc(const Event &e, int i, int j, int k, int r, int xSRin) {
 
     // Loop over ISR and FSR if necessary
@@ -161,11 +298,11 @@ public:
 
       // Pythia ISR, need i, j and r.
       } else if (!FSR && pTdefMode == 2 && i > 0 && j > 0 && r > 0) {
-        pTemt = pTpythia(e, i, j, r, FSR);
+        pTemt = pT(e, i, j, r, FSR);
 
       // Pythia FSR, need k, j and r.
       } else if (FSR && pTdefMode == 2 && j > 0 && k > 0 && r > 0) {
-        pTemt = pTpythia(e, k, j, r, FSR);
+        pTemt = pT(e, k, j, r, FSR);
 
       // Otherwise need to try all possible combinations.
       } else {
@@ -178,20 +315,20 @@ public:
         while (e[iInA].mother1() != 1) { iInA = e[iInA].mother1(); }
         while (e[iInB].mother1() != 2) { iInB = e[iInB].mother1(); }
 
-        // If we do not have j, then try all final-state partons
+        // If we do not have j, then try all final-state partons.
         int jNow = (j > 0) ? j : 0;
         int jMax = (j > 0) ? j + 1 : e.size();
         for (; jNow < jMax; jNow++) {
 
-          // Final-state only
+          // Final-state only.
           if (!e[jNow].isFinal()) continue;
           // Exclude photons (and W/Z!)
           if (QEDvetoMode==0 && e[jNow].colType() == 0) continue;
 
-          // POWHEG
+          // POWHEG.
           if (pTdefMode == 0 || pTdefMode == 1) {
 
-            // ISR - only done once as just kinematical pT
+            // ISR - only done once as just kinematical pT.
             if (!FSR) {
               pTnow = pTpowheg(e, iInA, jNow, (pTdefMode == 0) ? false : FSR);
               if (pTnow > 0.) pTemt = (pTemt < 0) ? pTnow : min(pTemt, pTnow);
@@ -220,14 +357,14 @@ public:
              // for (iMem)
             }
             // if (!FSR)
-          // Pythia
+          // Pythia.
           } else if (pTdefMode == 2) {
 
-            // ISR - other incoming as recoiler
+            // ISR - other incoming as recoiler.
             if (!FSR) {
-              pTnow = pTpythia(e, iInA, jNow, iInB, FSR);
+              pTnow = pT(e, iInA, jNow, iInB, FSR);
               if (pTnow > 0.) pTemt = (pTemt < 0) ? pTnow : min(pTemt, pTnow);
-              pTnow = pTpythia(e, iInB, jNow, iInA, FSR);
+              pTnow = pT(e, iInB, jNow, iInA, FSR);
               if (pTnow > 0.) pTemt = (pTemt < 0) ? pTnow : min(pTemt, pTnow);
 
             // FSR - try all final-state coloured partons as radiator
@@ -239,10 +376,10 @@ public:
 
                 // For this kNow, need to have a recoiler.
                 // Try two incoming.
-                pTnow = pTpythia(e, kNow, jNow, iInA, FSR);
+                pTnow = pT(e, kNow, jNow, iInA, FSR);
                 if (pTnow > 0.) pTemt = (pTemt < 0)
                   ? pTnow : min(pTemt, pTnow);
-                pTnow = pTpythia(e, kNow, jNow, iInB, FSR);
+                pTnow = pT(e, kNow, jNow, iInB, FSR);
                 if (pTnow > 0.) pTemt = (pTemt < 0)
                   ? pTnow : min(pTemt, pTnow);
 
@@ -251,7 +388,7 @@ public:
                   if (rNow == kNow || rNow == jNow ||
                       !e[rNow].isFinal()) continue;
                   if(QEDvetoMode==0 && e[rNow].colType() == 0) continue;
-                  pTnow = pTpythia(e, kNow, jNow, rNow, FSR);
+                  pTnow = pT(e, kNow, jNow, rNow, FSR);
                   if (pTnow > 0.) pTemt = (pTemt < 0)
                     ? pTnow : min(pTemt, pTnow);
                 }
@@ -271,7 +408,7 @@ public:
     return pTemt;
   }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
   // Extraction of pThard based on the incoming event.
   // Assume that all the final-state particles are in a continuous block
@@ -283,50 +420,89 @@ public:
   inline bool doVetoMPIStep(int nMPI, const Event &e) {
     // Extra check on nMPI
     if (nMPI > 1) return false;
+    int iEmt = -1;
+    double pT1(0.), pTsum(0.);
 
-    // Find if there is a POWHEG emission. Go backwards through the
-    // event record until there is a non-final particle. Also sum pT and
-    // find pT_1 for possible MPI vetoing
-    int    count = 0;
-    double pT1 = 0., pTsum = 0.;
-    for (int i = e.size() - 1; i > 0; i--) {
-      if (e[i].isFinal()) {
-        count++;
-        pT1    = e[i].pT();
-        pTsum += e[i].pT();
-      } else break;
+    // When nFinal is set, be strict about comparing the number of final-state
+    // particles with expectation from Born and single-real emission states.
+    // (Note: the default from 8.309 onwards is nFinal = -1).
+    if (nFinal > 0) {
+      // Find if there is a POWHEG emission. Go backwards through the
+      // event record until there is a non-final particle. Also sum pT and
+      // find pT_1 for possible MPI vetoing
+      int count = 0;
+      for (int i = e.size() - 1; i > 0; i--) {
+        if (e[i].isFinal()) {
+          count++;
+          pT1    = e[i].pT();
+          pTsum += e[i].pT();
+        } else break;
+      }
+      // Extra check that we have the correct final state
+      if (count != nFinal && count != nFinal + 1) {
+        loggerPtr->ABORT_MSG("wrong number of final state particles in event");
+        exit(1);
+      }
+      // Flag if POWHEG radiation present and index
+      isEmt = (count == nFinal) ? false : true;
+      iEmt  = (isEmt) ? e.size() - 1 : -1;
+
+    // If nFinal == -1, then go through the event and extract only the
+    // information on the emission and its pT, but do not enforce strict
+    // comparisons of final state multiplicity.
+    } else {
+
+      // Flag whether POWHEG radiation is present, and save index of emission.
+      isEmt = false;
+      for (int i = e.size() - 1; i > 0; i--) {
+        if (e[i].isFinal()) {
+          if ( e[i].isParton() && iEmt < 0
+            && e[e[i].mother1()].isParton() ) {
+            isEmt = true;
+            iEmt = i;
+          }
+          pT1    = e[i].pT();
+          pTsum += e[i].pT();
+        } else break;
+      }
     }
-    // Extra check that we have the correct final state
-    if (count != nFinal && count != nFinal + 1) {
-      cout << "Error: wrong number of final state particles in event" << endl;
-      exit(1);
-    }
-    // Flag if POWHEG radiation present and index
-    isEmt = (count == nFinal) ? false : true;
-    int  iEmt  = (isEmt) ? e.size() - 1 : -1;
 
     // If there is no radiation or if pThardMode is 0 then set pThard = SCALUP.
     if (!isEmt || pThardMode == 0) {
       pThard = infoPtr->scalup();
 
     // If pThardMode is 1 then the pT of the POWHEG emission is checked against
-    // all other incoming and outgoing partons, with the minimal value taken
+    // all other incoming and outgoing partons, with the minimal value taken.
     } else if (pThardMode == 1) {
-      pThard = pTcalc(e, -1, iEmt, -1, -1, -1);
+      if (nFinal < 0) {
+        loggerPtr->WARNING_MSG(
+          "pThard == 1 not available for nFinal == -1, reset pThard = 0.");
+        pThardMode = 0;
+        pThard = infoPtr->scalup();
+      } else {
+        pThard = pTcalc(e, -1, iEmt, -1, -1, -1);
+      }
 
     // If pThardMode is 2, then the pT of all final-state partons is checked
     // against all other incoming and outgoing partons, with the minimal value
-    // taken
+    // taken.
     } else if (pThardMode == 2) {
-      pThard = pTcalc(e, -1, -1, -1, -1, -1);
+      if (nFinal < 0) {
+        loggerPtr->WARNING_MSG(
+          "pThard == 2 not available for nFinal == -1, reset pThard = 0.");
+        pThardMode = 0;
+        pThard = infoPtr->scalup();
+      } else {
+        pThard = pTcalc(e, -1, -1, -1, -1, -1);
+      }
     }
 
-    // Find MPI veto pT if necessary
+    // Find MPI veto pT if necessary.
     if (MPIvetoMode == 1) {
       pTMPI = (isEmt) ? pTsum / 2. : pT1;
     }
 
-    // Initialise other variables
+    // Initialise other variables.
     accepted   = false;
     nAcceptSeq = nISRveto = nFSRveto = 0;
 
@@ -334,9 +510,9 @@ public:
     return false;
   }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
-  // ISR veto
+  // ISR veto.
 
   inline bool canVetoISREmission() { return (vetoMode == 0) ? false : true; }
   inline bool doVetoISREmission(int, const Event &e, int iSys) {
@@ -349,14 +525,29 @@ public:
     // Pythia radiator after, emitted and recoiler after.
     int iRadAft = -1, iEmt = -1, iRecAft = -1;
     for (int i = e.size() - 1; i > 0; i--) {
-      if      (iRadAft == -1 && e[i].status() == -41) iRadAft = i;
-      else if (iEmt    == -1 && e[i].status() ==  43) iEmt    = i;
-      else if (iRecAft == -1 && e[i].status() == -42) iRecAft = i;
+      if (showerModel == 1) {
+        // Pythia.
+        if      (iRadAft == -1 && e[i].status() == -41) iRadAft = i;
+        else if (iEmt    == -1 && e[i].status() ==  43) iEmt    = i;
+        else if (iRecAft == -1 && e[i].status() == -42) iRecAft = i;
+      } else if (showerModel == 2) {
+        // Vincia.
+        if      (iRadAft == -1 && e[i].status() == -41) iRadAft = i;
+        else if (iEmt    == -1 && e[i].status() ==  43) iEmt    = i;
+        else if (iRecAft == -1
+          && (e[i].status() == -41 || e[i].status() == 44)) iRecAft = i;
+      } else if (showerModel == 3) {
+        // Dire.
+        if      (iRadAft == -1 && e[i].status() == -41) iRadAft = i;
+        else if (iEmt    == -1 && e[i].status() ==  43) iEmt    = i;
+        else if (iRecAft == -1
+          && (e[i].status() == -41
+            || e[i].status() == 44 || e[i].status() == 48)) iRecAft = i;
+      }
       if (iRadAft != -1 && iEmt != -1 && iRecAft != -1) break;
     }
     if (iRadAft == -1 || iEmt == -1 || iRecAft == -1) {
-      e.list();
-      cout << "Error: couldn't find Pythia ISR emission" << endl;
+      loggerPtr->ABORT_MSG("could not find ISR emission");
       exit(1);
     }
 
@@ -371,14 +562,14 @@ public:
     double pTemt = pTcalc(e, i, j, k, r, xSR);
 
     // If a Born configuration, and a photon, and QEDvetoMode=2,
-    //  then don't veto photons, W, or Z harder than pThard
+    //  then don't veto photons, W, or Z harder than pThard.
     bool vetoParton = (!isEmt && e[iEmt].colType()==0 && QEDvetoMode==2)
       ? false: true;
 
-    // Veto if pTemt > pThard
+    // Veto if pTemt > pThard.
     if (pTemt > pThard) {
       if(!vetoParton) {
-        // Don't veto ANY emissions afterwards
+        // Don't veto ANY emissions afterwards.
         nAcceptSeq = vetoCount-1;
       } else {
         nAcceptSeq = 0;
@@ -387,33 +578,41 @@ public:
       }
     }
 
-    // Else mark that an emission has been accepted and continue
+    // Else mark that an emission has been accepted and continue.
     nAcceptSeq++;
     accepted = true;
     return false;
   }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
-  // FSR veto
+  // FSR veto.
 
   inline bool canVetoFSREmission() { return (vetoMode == 0) ? false : true; }
   inline bool doVetoFSREmission(int, const Event &e, int iSys, bool) {
-    // Must be radiation from the hard system
+    // Must be radiation from the hard system.
     if (iSys != 0) return false;
 
-    // If we already have accepted 'vetoCount' emissions in a row, do nothing
+    // If we already have accepted 'vetoCount' emissions in a row, do nothing.
     if (vetoMode == 1 && nAcceptSeq >= vetoCount) return false;
 
-    // Pythia radiator (before and after), emitted and recoiler (after)
+    // Pythia radiator (before and after), emitted and recoiler (after).
     int iRecAft = e.size() - 1;
     int iEmt    = e.size() - 2;
     int iRadAft = e.size() - 3;
     int iRadBef = e[iEmt].mother1();
-    if ( (e[iRecAft].status() != 52 && e[iRecAft].status() != -53) ||
-      e[iEmt].status() != 51 || e[iRadAft].status() != 51) {
-      e.list();
-      cout << "Error: couldn't find Pythia FSR emission" << endl;
+    bool stop = false;
+    if (showerModel == 1 || showerModel == 3) {
+      // Pythia or Dire.
+      if ( (e[iRecAft].status() != 52 && e[iRecAft].status() != -53) ||
+        e[iEmt].status() != 51 || e[iRadAft].status() != 51) stop = true;
+    } else if (showerModel == 2) {
+      // Vincia.
+      if ( (e[iRecAft].status() != 51 && e[iRecAft].status() != 52) ||
+        e[iEmt].status() != 51 || e[iRadAft].status() != 51) stop = true;
+    }
+    if (stop) {
+      loggerPtr->ABORT_MSG("could not find FSR emission");
       exit(1);
     }
 
@@ -426,7 +625,7 @@ public:
     int k   = (pTemtMode == 0) ? iRadAft : -1;
     int r   = (pTemtMode == 0) ? iRecAft : -1;
 
-    // When pTemtMode is 0 or 1, iEmt has been selected
+    // When pTemtMode is 0 or 1, iEmt has been selected.
     double pTemt = 0.;
     if (pTemtMode == 0 || pTemtMode == 1) {
       // Which parton is emitted, based on emittedMode:
@@ -475,9 +674,9 @@ public:
     return false;
   }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
-  // MPI veto
+  // MPI veto.
 
   inline bool canVetoMPIEmission() {return (MPIvetoMode == 0) ? false : true;}
   inline bool doVetoMPIEmission(int, const Event &e) {
@@ -487,18 +686,18 @@ public:
     return false;
   }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
-  // Functions to return information
+  // Functions to return information.
 
-  inline int    getNISRveto() { return nISRveto; }
-  inline int    getNFSRveto() { return nFSRveto; }
+  inline int getNISRveto() { return nISRveto; }
+  inline int getNFSRveto() { return nFSRveto; }
 
-//--------------------------------------------------------------------------
+  //--------------------------------------------------------------------------
 
-private:
-  int nFinal, vetoMode, vetoCount, pThardMode, pTemtMode,
-    emittedMode, pTdefMode, MPIvetoMode, QEDvetoMode;
+ private:
+  int    showerModel, nFinal, vetoMode, MPIvetoMode, QEDvetoMode, vetoCount;
+  int    pThardMode, pTemtMode, emittedMode, pTdefMode;
   double pThard, pTMPI;
   bool   accepted, isEmt;
   // The number of accepted emissions (in a row)
@@ -508,6 +707,13 @@ private:
   unsigned long int nISRveto, nFSRveto;
 
 };
+
+//--------------------------------------------------------------------------
+
+// Declare the plugin.
+
+PYTHIA8_PLUGIN_CLASS(UserHooks, PowhegHooks, false, false, false)
+PYTHIA8_PLUGIN_VERSIONS(PYTHIA_VERSION_INTEGER)
 
 //==========================================================================
 

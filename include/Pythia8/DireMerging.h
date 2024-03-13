@@ -1,5 +1,5 @@
 // DireMerging.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -141,13 +141,12 @@ public:
   vector<double> getStartingScales() {
     return startingScalesSave;
   }
-  void getStoppingInfo(double scales [100][100], double masses [100][100]);
-  vector<double> stoppingScalesSave, startingScalesSave, mDipSave;
-  vector<int>    radSave, emtSave, recSave;
+  virtual void getStoppingInfo(double scales[100][100],
+    double masses[100][100]);
+  vector<double> startingScalesSave;
 
-  double generateSingleSudakov ( double pTbegAll,
-   double pTendAll, double m2dip, int idA, int type, double s = -1.,
-   double x = -1.);
+  virtual double generateSingleSudakov (double pTbegAll, double pTendAll,
+    double m2dip, int idA, int type, double s = -1., double x = -1.);
 
   vector<double> getSignalProb(string key) { return signalProbSave[key]; }
   vector<double> getBkgrndProb(string key) { return bkgrndProbSave[key]; }
@@ -254,4 +253,4 @@ protected:
 
 } // end namespace Pythia8
 
-#endif // end Pythia8_DireMerging_H
+#endif // Pythia8_DireMerging_H

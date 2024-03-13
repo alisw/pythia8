@@ -4,7 +4,7 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main12.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,11 +22,11 @@ Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 // In the first file top decays have been performed, in the second not,
 // and are instead handled by the internal PYTHIA resonance-decay machinery.
 // Furthermore the internal top production processes are switched on and
-// mixed in, giving an unrealistic "double up" total top cross section.
+// mixed in, giving an unrealistic &quot;double up&quot; total top cross section.
 // Much of this of course is not intended to be realistic,
 // but rather illustrates several tricks that can be useful.
 
-#include "Pythia8/Pythia.h"
+#include &quot;Pythia8/Pythia.h&quot;
 using namespace Pythia8;
 int main() {
 
@@ -39,25 +39,25 @@ int main() {
   Pythia pythia;
 
   // Switch on internal ttbar production.
-  pythia.readString("Top:gg2ttbar = on");
-  pythia.readString("Top:qqbar2ttbar = on");
+  pythia.readString(&quot;Top:gg2ttbar = on&quot;);
+  pythia.readString(&quot;Top:qqbar2ttbar = on&quot;);
 
   // Use same top mass as in Pythia 6.4 to simplify comparison.
-  pythia.readString("6:m0 = 175.");
+  pythia.readString(&quot;6:m0 = 175.&quot;);
 
   // No automatic event listings - do it manually below.
-  pythia.readString("Next:numberShowLHA = 0");
-  pythia.readString("Next:numberShowInfo = 0");
-  pythia.readString("Next:numberShowProcess = 0");
-  pythia.readString("Next:numberShowEvent = 0");
+  pythia.readString(&quot;Next:numberShowLHA = 0&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
 
   // Initialize Les Houches Event File run.
-  pythia.readString("Beams:frameType = 4");
-  pythia.readString("Beams:LHEF = ttbar.lhe");
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = ttbar.lhe&quot;);
   pythia.init();
 
   // Book histogram.
-  Hist nCharged("charged particle multiplicity",100,-0.5,399.5);
+  Hist nCharged(&quot;charged particle multiplicity&quot;,100,-0.5,399.5);
 
   // Set counters.
   int iPrintLHA  = 0;
@@ -66,7 +66,7 @@ int main() {
   int iFile      = 1;
 
   // Begin event loop
-  for (int iEvent = 0; ; ++iEvent) {
+  while (iAbort &lt; nAbort) {
 
     // Generate until none left in input file.
     if (!pythia.next()) {
@@ -74,27 +74,25 @@ int main() {
 
         // First time open next file, second time stop event loop.
         if (iFile == 1) {
-          pythia.readString("Beams:newLHEFsameInit = on");
-          pythia.readString("Beams:LHEF = ttbar2.lhe");
+          pythia.readString(&quot;Beams:newLHEFsameInit = on&quot;);
+          pythia.readString(&quot;Beams:LHEF = ttbar2.lhe&quot;);
           pythia.init();
           ++iFile;
           continue;
         } else break;
       }
-
-      // First few failures write off as "acceptable" errors, then quit.
-      if (++iAbort < nAbort) continue;
-      break;
+      ++iAbort;
+      continue;
     }
 
     // List first few Les Houches and other events.
-    if (pythia.info.isLHA() && iPrintLHA < nPrintLHA) {
+    if (pythia.info.isLHA() &amp;&amp; iPrintLHA &lt; nPrintLHA) {
       pythia.LHAeventList();
       pythia.info.list();
       pythia.process.list();
       pythia.event.list();
       ++iPrintLHA;
-    } else if (!pythia.info.isLHA() && iPrintRest < nPrintRest) {
+    } else if (!pythia.info.isLHA() &amp;&amp; iPrintRest &lt; nPrintRest) {
       pythia.info.list();
       pythia.process.list();
       pythia.event.list();
@@ -103,8 +101,8 @@ int main() {
 
     // Sum up final charged multiplicity and fill in histogram.
     int nChg = 0;
-    for (int i = 0; i < pythia.event.size(); ++i)
-    if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
       ++nChg;
     nCharged.fill(nChg);
 
@@ -113,7 +111,7 @@ int main() {
 
   // Give statistics. Print histogram.
   pythia.stat();
-  cout << nCharged;
+  cout &lt;&lt; nCharged;
 
   // Done.
   return 0;

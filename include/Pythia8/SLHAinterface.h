@@ -1,5 +1,5 @@
 // SLHAinterface.h is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // Main authors of this file: N. Desai, P. Skands
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
@@ -37,6 +37,7 @@ public:
     settingsPtr     = infoPtr->settingsPtr;
     particleDataPtr = infoPtr->particleDataPtr;
     rndmPtr         = infoPtr->rndmPtr;
+    loggerPtr       = infoPtr->loggerPtr;
     coupSMPtr       = infoPtr->coupSMPtr;
     coupSUSYPtr     = infoPtr->coupSUSYPtr;
 }
@@ -59,6 +60,7 @@ public:
   Settings*            settingsPtr;
   ParticleData*        particleDataPtr;
   Rndm*                rndmPtr;
+  Logger*              loggerPtr;
 
   // SM couplings and SLHA derived couplings class.
   CoupSM*              coupSMPtr;

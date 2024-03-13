@@ -1,5 +1,5 @@
 // VinciaQED.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -11,382 +11,7 @@
 
 namespace Pythia8 {
 
-//==========================================================================
-
-// Class for the "Hungarian" pairing algorithm.
-
-//--------------------------------------------------------------------------
-
-// A single function wrapper for solving assignment problem.
-
-double HungarianAlgorithm::solve(std::vector <std::vector<double> >&
-  distMatrix, std::vector<int>& assignment) {
-
-  unsigned int nRows = distMatrix.size();
-  unsigned int nCols = distMatrix[0].size();
-  double *distMatrixIn = new double[nRows * nCols];
-  int *solution = new int[nRows];
-  double cost = 0.0;
-
-  // Fill in the distMatrixIn. Mind the index is "i + nRows * j".
-  // Here the cost matrix of size MxN is defined as a double precision
-  // array of N*M elements. In the solving functions matrices are seen
-  // to be saved MATLAB-internally in row-order. (i.e. the matrix [1
-  // 2; 3 4] will be stored as a vector [1 3 2 4], NOT [1 2 3 4]).
-  for (unsigned int i = 0; i < nRows; i++)
-    for (unsigned int j = 0; j < nCols; j++)
-      distMatrixIn[i + nRows * j] = distMatrix[i][j];
-
-  // Call solving function.
-  optimal(solution, &cost, distMatrixIn, nRows, nCols);
-  assignment.clear();
-  for (unsigned int r = 0; r < nRows; r++)
-    assignment.push_back(solution[r]);
-  delete[] distMatrixIn;
-  delete[] solution;
-  return cost;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Solve optimal solution for assignment.
-
-void HungarianAlgorithm::optimal(int *assignment, double *cost,
-  double *distMatrixIn, int nOfRows, int nOfColumns) {
-
-  // Initialization.
-  double *distMatrix, *distMatrixTemp, *distMatrixEnd, *columnEnd,
-    value, minValue;
-  bool *coveredColumns, *coveredRows, *starMatrix, *newStarMatrix,
-    *primeMatrix;
-  int nOfElements, minDim, row, col;
-  *cost = 0;
-  for (row = 0; row<nOfRows; row++) assignment[row] = -1;
-
-  // Generate working copy of distance matrix. Check if all matrix
-  // elements are positive.
-  nOfElements = nOfRows * nOfColumns;
-  distMatrix = (double *)malloc(nOfElements * sizeof(double));
-  distMatrixEnd = distMatrix + nOfElements;
-  for (row = 0; row<nOfElements; row++) {
-    value = distMatrixIn[row];
-    if (value < 0)
-      std::cerr << "HungarianAlgorithm::assigmentoptimal(): All"
-                << " matrix elements have to be non-negative." << std::endl;
-    distMatrix[row] = value;
-  }
-
-  // Memory allocation.
-  coveredColumns = (bool *)calloc(nOfColumns, sizeof(bool));
-  coveredRows    = (bool *)calloc(nOfRows, sizeof(bool));
-  starMatrix     = (bool *)calloc(nOfElements, sizeof(bool));
-  primeMatrix    = (bool *)calloc(nOfElements, sizeof(bool));
-  // Used in step4.
-  newStarMatrix = (bool *)calloc(nOfElements, sizeof(bool));
-
-  // Preliminary steps.
-  if (nOfRows <= nOfColumns) {
-      minDim = nOfRows;
-      for (row = 0; row<nOfRows; row++) {
-        // Find the smallest element in the row.
-        distMatrixTemp = distMatrix + row;
-        minValue = *distMatrixTemp;
-        distMatrixTemp += nOfRows;
-        while (distMatrixTemp < distMatrixEnd) {
-          value = *distMatrixTemp;
-          if (value < minValue)
-            minValue = value;
-          distMatrixTemp += nOfRows;
-        }
-
-        // Subtract the smallest element from each element of the row.
-        distMatrixTemp = distMatrix + row;
-        while (distMatrixTemp < distMatrixEnd) {
-          *distMatrixTemp -= minValue;
-          distMatrixTemp += nOfRows;
-        }
-      }
-
-      // Steps 1 and 2a.
-      for (row = 0; row<nOfRows; row++)
-        for (col = 0; col<nOfColumns; col++)
-          if (abs(distMatrix[row + nOfRows*col]) < DBL_EPSILON)
-            if (!coveredColumns[col]) {
-              starMatrix[row + nOfRows*col] = true;
-              coveredColumns[col] = true;
-              break;
-            }
-  } else {
-    minDim = nOfColumns;
-    for (col = 0; col<nOfColumns; col++) {
-        // Find the smallest element in the column.
-        distMatrixTemp = distMatrix + nOfRows*col;
-        columnEnd = distMatrixTemp + nOfRows;
-        minValue = *distMatrixTemp++;
-        while (distMatrixTemp < columnEnd) {
-          value = *distMatrixTemp++;
-          if (value < minValue)
-            minValue = value;
-        }
-
-        // Subtract the smallest element from each element of the column.
-        distMatrixTemp = distMatrix + nOfRows*col;
-        while (distMatrixTemp < columnEnd)
-          *distMatrixTemp++ -= minValue;
-    }
-
-    // Steps 1 and 2a.
-    for (col = 0; col<nOfColumns; col++)
-      for (row = 0; row<nOfRows; row++)
-        if (abs(distMatrix[row + nOfRows*col]) < DBL_EPSILON)
-          if (!coveredRows[row]) {
-            starMatrix[row + nOfRows*col] = true;
-            coveredColumns[col] = true;
-            coveredRows[row] = true;
-            break;
-          }
-    for (row = 0; row<nOfRows; row++)
-      coveredRows[row] = false;
-  }
-
-  // Move to step 2b.
-  step2b(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
-    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
-
-  // Compute cost and remove invalid assignments.
-  calcCost(assignment, cost, distMatrixIn, nOfRows);
-
-  // Free allocated memory.
-  free(distMatrix);
-  free(coveredColumns);
-  free(coveredRows);
-  free(starMatrix);
-  free(primeMatrix);
-  free(newStarMatrix);
-  return;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Build the assignment vector.
-
-void HungarianAlgorithm::vect(int *assignment,
-  bool *starMatrix, int nOfRows, int nOfColumns) {
-  int row, col;
-  for (row = 0; row<nOfRows; row++)
-    for (col = 0; col<nOfColumns; col++)
-      if (starMatrix[row + nOfRows*col]) {
-        assignment[row] = col;
-        break;
-      }
-}
-
-//--------------------------------------------------------------------------
-
-// Calculate the assignment cost.
-
-void HungarianAlgorithm::calcCost(int *assignment, double *cost,
-  double *distMatrix, int nOfRows) {
-  int row, col;
-  for (row = 0; row<nOfRows; row++) {
-    col = assignment[row];
-    if (col >= 0) *cost += distMatrix[row + nOfRows*col];
-  }
-}
-
-//--------------------------------------------------------------------------
-
-// Factorized step 2a of the algorithm.
-
-void HungarianAlgorithm::step2a(int *assignment, double *distMatrix,
-  bool *starMatrix, bool *newStarMatrix, bool *primeMatrix,
-  bool *coveredColumns, bool *coveredRows, int nOfRows, int nOfColumns,
-  int minDim) {
-
-  // Cover every column containing a starred zero.
-  bool *starMatrixTemp, *columnEnd;
-  int col;
-  for (col = 0; col<nOfColumns; col++) {
-    starMatrixTemp = starMatrix + nOfRows*col;
-    columnEnd = starMatrixTemp + nOfRows;
-    while (starMatrixTemp < columnEnd) {
-      if (*starMatrixTemp++) {
-        coveredColumns[col] = true;
-        break;
-      }
-    }
-  }
-
-  // Move to step 2b (note, original comment changed by Skands).
-  step2b(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
-    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
-
-}
-
-//--------------------------------------------------------------------------
-
-// Factorized step 2b of the algorithm.
-
-void HungarianAlgorithm::step2b(int *assignment, double *distMatrix,
-  bool *starMatrix, bool *newStarMatrix, bool *primeMatrix,
-  bool *coveredColumns, bool *coveredRows, int nOfRows, int nOfColumns,
-  int minDim) {
-
-  // Count covered columns.
-  int col, nOfCoveredColumns;
-  nOfCoveredColumns = 0;
-  for (col = 0; col<nOfColumns; col++)
-    if (coveredColumns[col]) nOfCoveredColumns++;
-
-  // Algorithm finished.
-  if (nOfCoveredColumns == minDim)
-      vect(assignment, starMatrix, nOfRows, nOfColumns);
-  // Move to step 3.
-  else step3(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
-        coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
-
-}
-
-//--------------------------------------------------------------------------
-
-// Factorized step 3 of the algorithm.
-
-void HungarianAlgorithm::step3(int *assignment, double *distMatrix,
-  bool *starMatrix, bool *newStarMatrix, bool *primeMatrix,
-  bool *coveredColumns, bool *coveredRows, int nOfRows, int nOfColumns,
-  int minDim) {
-
-  bool zerosFound;
-  int row, col, starCol;
-  zerosFound = true;
-  while (zerosFound) {
-      zerosFound = false;
-      for (col = 0; col<nOfColumns; col++)
-        if (!coveredColumns[col])
-          for (row = 0; row<nOfRows; row++)
-            if ((!coveredRows[row]) && (abs(distMatrix[row + nOfRows*col])
-                                        < DBL_EPSILON)) {
-              // Prime zero.
-              primeMatrix[row + nOfRows*col] = true;
-
-              // Find starred zero in current row.
-              for (starCol = 0; starCol<nOfColumns; starCol++)
-                if (starMatrix[row + nOfRows*starCol])
-                  break;
-
-              // No starred zero found, move to step 4.
-              if (starCol == nOfColumns) {
-                step4(assignment, distMatrix, starMatrix, newStarMatrix,
-                      primeMatrix, coveredColumns, coveredRows, nOfRows,
-                      nOfColumns, minDim, row, col);
-                return;
-              } else {
-                coveredRows[row] = true;
-                coveredColumns[starCol] = false;
-                zerosFound = true;
-                break;
-              }
-            }
-  }
-
-  // Move to step 5.
-  step5(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
-    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
-
-}
-
-//--------------------------------------------------------------------------
-
-// Factorized step 4 of the algorithm.
-
-void HungarianAlgorithm::step4(int *assignment, double *distMatrix,
-  bool *starMatrix, bool *newStarMatrix, bool *primeMatrix,
-  bool *coveredColumns, bool *coveredRows, int nOfRows, int nOfColumns,
-  int minDim, int row, int col) {
-
-  // Generate temporary copy of starMatrix.
-  int n, starRow, starCol, primeRow, primeCol;
-  int nOfElements = nOfRows*nOfColumns;
-  for (n = 0; n<nOfElements; n++) newStarMatrix[n] = starMatrix[n];
-  // Star current zero.
-  newStarMatrix[row + nOfRows*col] = true;
-  // Find starred zero in current column.
-  starCol = col;
-  for (starRow = 0; starRow<nOfRows; starRow++)
-    if (starMatrix[starRow + nOfRows*starCol])
-      break;
-  while (starRow < nOfRows) {
-      // Unstar the starred zero.
-      newStarMatrix[starRow + nOfRows*starCol] = false;
-      // Find primed zero in current row.
-      primeRow = starRow;
-      for (primeCol = 0; primeCol<nOfColumns; primeCol++)
-        if (primeMatrix[primeRow + nOfRows*primeCol])
-          break;
-      // Star the primed zero.
-      newStarMatrix[primeRow + nOfRows*primeCol] = true;
-      // Find starred zero in current column.
-      starCol = primeCol;
-      for (starRow = 0; starRow<nOfRows; starRow++)
-        if (starMatrix[starRow + nOfRows*starCol])
-          break;
-  }
-
-  // Use temporary copy as new starMatrix, delete all primes, uncover
-  // all rows.
-  for (n = 0; n<nOfElements; n++) {
-    primeMatrix[n] = false;
-    starMatrix[n] = newStarMatrix[n];
-  }
-  for (n = 0; n<nOfRows; n++) coveredRows[n] = false;
-
-  // Move to step 2a.
-  step2a(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
-    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
-
-}
-
-//--------------------------------------------------------------------------
-
-// Factorized step 5 of the algorithm.
-
-void HungarianAlgorithm::step5(int *assignment, double *distMatrix,
-  bool *starMatrix, bool *newStarMatrix, bool *primeMatrix,
-  bool *coveredColumns, bool *coveredRows, int nOfRows, int nOfColumns,
-  int minDim) {
-
-  // Find smallest uncovered element h.
-  double h, value;
-  int row, col;
-  h = DBL_MAX;
-  for (row = 0; row<nOfRows; row++)
-    if (!coveredRows[row])
-      for (col = 0; col<nOfColumns; col++)
-        if (!coveredColumns[col]) {
-            value = distMatrix[row + nOfRows*col];
-            if (value < h)
-              h = value;
-        }
-
-  // Add h to each covered row.
-  for (row = 0; row<nOfRows; row++)
-    if (coveredRows[row])
-      for (col = 0; col<nOfColumns; col++)
-        distMatrix[row + nOfRows*col] += h;
-
-  // Subtract h from each uncovered column.
-  for (col = 0; col<nOfColumns; col++)
-    if (!coveredColumns[col])
-      for (row = 0; row<nOfRows; row++)
-        distMatrix[row + nOfRows*col] -= h;
-
-  // Move to step 3.
-  step3(assignment, distMatrix, starMatrix, newStarMatrix, primeMatrix,
-    coveredColumns, coveredRows, nOfRows, nOfColumns, minDim);
-
-}
+using namespace VinciaConstants;
 
 //==========================================================================
 
@@ -435,8 +60,8 @@ void QEDemitElemental::init(Event &event, int xIn, int yIn, double shhIn,
 
   idx = event[x].id();
   idy = event[y].id();
-  mx2 = event[x].m2();
-  my2 = event[y].m2();
+  mx2 = max(0., event[x].m2());
+  my2 = max(0., event[y].m2());
   ex = event[x].e();
   ey = event[y].e();
   m2Ant = m2(event[x], event[y]);
@@ -485,13 +110,13 @@ void QEDemitElemental::init(Event &event, int xIn, vector<int> iRecoilIn,
   isIA = false;
   isDip = true;
   idx = event[x].id();
-  mx2 = event[x].m2();
+  mx2 = max(0., event[x].m2());
 
   // Compute total recoiler momentum.
   Vec4 pRecoil;
   for (int i = 0; i < (int)iRecoil.size(); i++)
     pRecoil += event[iRecoil[i]].p();
-  my2 = pRecoil.m2Calc();
+  my2 = max(0., pRecoil.m2Calc());
   m2Ant = (pRecoil + event[xIn].p()).m2Calc();
   sAnt = 2*pRecoil*event[xIn].p();
   QQ = 1;
@@ -507,8 +132,15 @@ void QEDemitElemental::init(Event &event, int xIn, vector<int> iRecoilIn,
 double QEDemitElemental::generateTrial(Event &event, double q2Start,
   double q2Low, double alphaIn, double cIn) {
 
-  if (hasTrial) return q2Sav;
-  q2Sav = q2Low;
+  if (!isInit) return 0.;
+
+  if (hasTrial) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__, "Elemental has a trial already.");
+    return q2Sav;
+  }
+  q2Sav = 0.;
+  double q2TrialNow = 0.;
   alpha = alphaIn;
   c = cIn;
 
@@ -516,28 +148,34 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
   if (isFF || isDip) {
     // Adjust starting scale.
     q2Start = min(q2Start, sAnt/4.);
-    if (q2Start < q2Low) return q2Low;
+    if (q2Start < q2Low) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "No phase space for FF in this window.");
+      return 0.;
+    }
 
     // Compute phase space constants.
     double lambda = m2Ant*m2Ant + mx2*mx2 + my2*my2
       - 2.*m2Ant*mx2 - 2.*m2Ant*my2 - 2.*mx2*my2;
     // zMin is identical for all instances.
-    double zMin = (4*q2Low/sAnt < 1E-8)
-      ? q2Low/sAnt
+    double zMin = (4*q2Low/sAnt < 1E-8) ? q2Low/sAnt
       : 0.5*(1. - sqrt(1. - 4*q2Low/sAnt));
 
     // Generate scale for eikonal piece.
     if (true) {
-      double Iz = (zMin < 1E-8)
-        ? -2*log(zMin) - 2*zMin - pow2(zMin)
+      double Iz = (zMin < 1E-8) ? -2*log(zMin) - 2*zMin - pow2(zMin)
         : 2*log((1-zMin)/zMin);
       double comFac = 2*M_PI*sqrt(lambda)/alpha/Iz/c/sAnt;
       double q2New  = q2Start*pow(rndmPtr->flat(), comFac);
-      if (q2New > q2Sav) {
-        q2Sav   = q2New;
+      if (q2New > q2TrialNow) {
+        q2TrialNow = q2New;
         zetaSav = 1/(exp(Iz*(0.5 - rndmPtr->flat())) + 1);
-        sxjSav  = sqrt(sAnt*q2Sav*zetaSav/((1-zetaSav)));
-        syjSav  = sqrt(sAnt*q2Sav*(1-zetaSav)/(zetaSav));
+        // Note: return infinity if zeta=1 or =0 within machine precision
+        // to make sure it gets vetoed later.
+        sxjSav  = zetaSav != 1 ? sqrt(sAnt*q2TrialNow*zetaSav/((1-zetaSav))) :
+          numeric_limits<double>::infinity();
+        syjSav  = zetaSav != 0 ? sqrt(sAnt*q2TrialNow*(1-zetaSav)/(zetaSav)) :
+          numeric_limits<double>::infinity();
       }
     }
     // Generate scale for additional W piece on x.
@@ -546,31 +184,28 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
         -log(zMin) - zMin - pow2(zMin)/2. : log((1-zMin)/zMin);
       double comFac = 3.*M_PI*sqrt(lambda)/alpha/Iz/c/sAnt/2.;
       double q2New = q2Start*pow(rndmPtr->flat(), comFac);
-      if (q2New > q2Sav) {
-        q2Sav    = q2New;
+      if (q2New > q2TrialNow) {
+        q2TrialNow = q2New;
         double r = rndmPtr->flat();
-        zetaSav  = (zMin < 1E-8)
-          ? 1 - pow(zMin,r)*(1. - (1.-r)*zMin)
+        zetaSav  = (zMin < 1E-8) ? 1 - pow(zMin,r)*(1. - (1.-r)*zMin)
           : 1 - pow(zMin,r)*pow(1.-zMin, 1.-r);
-        sxjSav   = q2Sav/zetaSav;
+        sxjSav   = q2TrialNow/zetaSav;
         syjSav   = zetaSav*sAnt;
       }
     }
     // Generate scale for additional W piece on y.
     if (isFF && abs(idy) == 24) {
-      double Iz = (zMin < 1E-8)
-        ? -log(zMin) - zMin - pow2(zMin)/2.
+      double Iz = (zMin < 1E-8) ? -log(zMin) - zMin - pow2(zMin)/2.
         : log((1-zMin)/zMin);
       double comFac = 3.*M_PI*sqrt(lambda)/alpha/Iz/c/sAnt/2.;
       double q2New  = q2Start*pow(rndmPtr->flat(), comFac);
-      if (q2New > q2Sav) {
-        q2Sav    = q2New;
+      if (q2New > q2TrialNow) {
+        q2TrialNow = q2New;
         double r = rndmPtr->flat();
-        zetaSav  = (zMin < 1E-8)
-          ? 1 - pow(zMin,r)*(1. - (1.-r)*zMin)
+        zetaSav  = (zMin < 1E-8) ? 1 - pow(zMin,r)*(1. - (1.-r)*zMin)
           : 1 - pow(zMin,r)*pow(1.-zMin, 1.-r);
         sxjSav   = zetaSav*sAnt;
-        syjSav   = q2Sav/zetaSav;
+        syjSav   = q2TrialNow/zetaSav;
       }
     }
   }
@@ -591,7 +226,11 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
 
     // Adjust starting scale.
     q2Start = min(q2Start, sAnt*(exMax - ex)/ex);
-    if (q2Start < q2Low) return q2Low;
+    if (q2Start < q2Low) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "No phase space for IF in this window.");
+      return 0.;
+    }
     double zMax = sjkMax/(sjkMax + my2);
     double zMin = q2Low/sjkMax;
 
@@ -603,11 +242,11 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
         double Rpdf   = 1.;
         double comFac = M_PI/alpha/Iz/c/Rpdf;
         double q2New  = q2Start*pow(rndmPtr->flat(), comFac);
-        if (q2New > q2Sav) {
-          q2Sav   = q2New;
+        if (q2New > q2TrialNow) {
+          q2TrialNow = q2New;
           zetaSav = zMin*pow(zMax/zMin, rndmPtr->flat());
-          sxjSav  = sAnt*zetaSav + q2Sav;
-          syjSav  = q2Sav/zetaSav;
+          sxjSav  = sAnt*zetaSav + q2TrialNow;
+          syjSav  = q2TrialNow/zetaSav;
         }
       }
 
@@ -622,7 +261,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
         double zetaNew, sxjNew, syjNew;
         while (true) {
           q2New  *= pow(rndmPtr->flat(), comFac);
-          if (q2New < q2Sav) {break;}
+          if (q2New < q2TrialNow) {break;}
           zetaNew = 1. - (1-zMin)*pow((1-zMax)/(1-zMin),rndmPtr->flat());
           sxjNew  = sAnt*zetaNew + q2New;
           syjNew  = q2New/zetaNew;
@@ -630,7 +269,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
           // Veto probability.
           double pVeto = sAnt/(sAnt + syjNew);
           if (rndmPtr->flat() < pVeto) {
-            q2Sav   = q2New;
+            q2TrialNow = q2New;
             zetaSav = zetaNew;
             sxjSav  = sxjNew;
             syjSav  = syjNew;
@@ -645,7 +284,11 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
   if (isII) {
     // Adjust starting scale.
     q2Start = min(q2Start, pow2(shh-sAnt)/shh/4.);
-    if (q2Start < q2Low) {return q2Low;}
+    if (q2Start < q2Low) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "No phase space for II in this window.");
+      return 0.;
+    }
 
     // Generate scale for eikonal piece.
     if (true) {
@@ -659,13 +302,13 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
       double Rpdf   = 1.;
       double comFac = M_PI/alpha/Iz/c/Rpdf;
       double q2New  = q2Start*pow(rndmPtr->flat(), comFac);
-      if (q2New > q2Sav) {
-        q2Sav    = q2New;
+      if (q2New > q2TrialNow) {
+        q2TrialNow = q2New;
         double r = rndmPtr->flat();
         double w = pow(zMax/(1-zMax), r) * pow(zMin/(1-zMin), 1.-r);
         zetaSav  = w/(1.+w);
-        sxjSav   = (q2Sav + sAnt*zetaSav)/(1.-zetaSav);
-        syjSav   = q2Sav/zetaSav;
+        sxjSav   = (q2TrialNow + sAnt*zetaSav)/(1.-zetaSav);
+        syjSav   = q2TrialNow/zetaSav;
       }
     }
   }
@@ -688,14 +331,14 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
     if (true) {
       double zMin   = q2Low/sjkMax;
       double zMax   = sajMax/sAnt;
-      if(zMin < zMax){
+      if (zMin < zMax) {
         double Iz     = log(zMax/zMin);
         double comFac = M_PI*sqrt(lambda)*sAnt/alpha/Iz/c/pow2(sAnt+sjkMax);
         double q2New  = q2Start;
         double zetaNew, sxjNew, syjNew;
         while (true) {
           q2New *= pow(rndmPtr->flat(), comFac);
-          if (q2New < q2Sav) {break;}
+          if (q2New < q2TrialNow) break;
           zetaNew = zMin*pow(zMax/zMin, rndmPtr->flat());
           sxjNew  = sAnt*zetaNew + q2New;
           syjNew  = q2New/zetaNew;
@@ -703,7 +346,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
           // Veto probability.
           double pVeto = pow2(syjNew+sAnt)/pow2(sjkMax+sAnt);
           if (rndmPtr->flat() < pVeto) {
-            q2Sav   = q2New;
+            q2TrialNow = q2New;
             zetaSav = zetaNew;
             sxjSav  = sxjNew;
             syjSav  = syjNew;
@@ -717,13 +360,13 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
     if (abs(idx) == 24) {
       double zMin   = q2Low/(sajMax - q2Low);
       double zMax   = sjkMax/sAnt;
-      if(zMin < zMax && zMin > 0){
+      if (zMin < zMax && zMin > 0) {
         double Iz     = pow2(zMax) + (1./3.)*pow3(zMax)
           - pow2(zMin) - (1./3.)*pow3(zMin);
         double comFac = 3.*M_PI*sqrt(lambda)/alpha/Iz/c/sAnt/2.;
         double q2New  = q2Start*pow(rndmPtr->flat(), comFac);
 
-        if (q2New > q2Sav) {
+        if (q2New > q2TrialNow) {
           double a = rndmPtr->flat()*Iz + pow2(zMin) + (1./3.)*pow3(zMin);
           // Solve for zeta using Newton-Raphson.
           int n = 0;
@@ -746,8 +389,8 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
             }
             zetaSav = zetaNew;
           }
-          q2Sav  = q2New;
-          sxjSav = (1.+zetaSav)*q2Sav/zetaSav;
+          q2TrialNow = q2New;
+          sxjSav = (1.+zetaSav)*q2TrialNow/zetaSav;
           syjSav = sAnt*zetaSav;
         }
       }
@@ -764,7 +407,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
         double zetaNew, sxjNew, syjNew;
         while (true) {
           q2New *= pow(rndmPtr->flat(), comFac);
-          if (q2New < q2Sav) {break;}
+          if (q2New < q2TrialNow) {break;}
           zetaNew = 1. - (1-zMin)*pow((1-zMax)/(1-zMin),rndmPtr->flat());
           sxjNew  = sAnt*zetaNew + q2New;
           syjNew  = q2New/zetaNew;
@@ -772,7 +415,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
           // Veto probability.
           double pVeto = (syjNew+sAnt)/(sjkMax+sAnt);
           if (rndmPtr->flat() < pVeto) {
-            q2Sav = q2New;
+            q2TrialNow = q2New;
             zetaSav = zetaNew;
             sxjSav = sxjNew;
             syjSav = syjNew;
@@ -783,52 +426,110 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
     }
   }
   phiSav = 2.*M_PI*rndmPtr->flat();
-  hasTrial = true;
-  return q2Sav;
+  if (q2TrialNow > q2Low) {
+    hasTrial = true;
+    q2Sav = q2TrialNow;
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Generated a new trial.");
+  }
+  return q2TrialNow;
+}
+
+//==========================================================================
+
+// QEDsystem (base class) member functions.
+
+//--------------------------------------------------------------------------
+
+// Initialize pointers.
+
+void QEDsystem::initPtr(Info* infoPtrIn, ParticleData* particleDataPtrIn,
+  PartonSystems* partonSystemsPtrIn, Rndm* rndmPtrIn,
+  Settings* settingsPtrIn, VinciaCommon* vinComPtrIn) {
+  infoPtr = infoPtrIn;
+  loggerPtr = infoPtr->loggerPtr;
+  particleDataPtr = particleDataPtrIn;
+  partonSystemsPtr = partonSystemsPtrIn;
+  rndmPtr = rndmPtrIn;
+  settingsPtr = settingsPtrIn;
+  vinComPtr = vinComPtrIn;
+  isInitPtr = true;
+}
+
+//--------------------------------------------------------------------------
+
+// Update the partons systems.
+
+void QEDsystem::updatePartonSystems() {
+
+  if (partonSystemsPtr == nullptr) return;
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss(" Updating iSys = ");
+    ss <<iSys<<" sizeSys = " << partonSystemsPtr->sizeSys();
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  if (iSys < partonSystemsPtr->sizeSys()) {
+    int iAOld(0), iBOld(0);
+    if (isInitial() && partonSystemsPtr->hasInAB(iSys)) {
+      iAOld = partonSystemsPtr->getInA(iSys);
+      iBOld = partonSystemsPtr->getInB(iSys);
+    }
+
+    // Replace old IDs.
+    for (auto it = iReplace.begin(); it!= iReplace.end() ; ++it) {
+      int iOld(it->first), iNew(it->second);
+      if (iAOld == iOld) partonSystemsPtr->setInA(iSys,iNew);
+      else if (iBOld == iOld) partonSystemsPtr->setInB(iSys,iNew);
+      partonSystemsPtr->replace(iSys, iOld, iNew);
+    }
+
+    // Add new.
+    partonSystemsPtr->addOut(iSys, jNew);
+
+    // Save sHat if we set it.
+    if (shat > 0.) partonSystemsPtr->setSHat(iSys, shat);
+  }
 
 }
 
 //==========================================================================
 
-// Class for a QED emission system.
-
-//--------------------------------------------------------------------------
-
-// Initialize the pointers.
-
-void QEDemitSystem::initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) {
-  infoPtr       = infoPtrIn;
-  particleDataPtr  = infoPtr->particleDataPtr;
-  partonSystemsPtr = infoPtr->partonSystemsPtr;
-  rndmPtr          = infoPtr->rndmPtr;
-  settingsPtr      = infoPtr->settingsPtr;
-  vinComPtr        = vinComPtrIn;
-  isInitPtr = true;
-}
+// QEDemitSystem member functions.
 
 //--------------------------------------------------------------------------
 
 // Initialize settings for current run.
 
 void QEDemitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    int verboseIn) {
+  int verboseIn) {
 
   // Verbose setting.
   if (!isInitPtr)
-    printOut(__METHOD_NAME__,"QEDemitSystem:initPtr not called");
+    printOut(__METHOD_NAME__, "QEDemitSystem:initPtr not called");
   verbose = verboseIn;
 
   // Set beam pointers.
   beamAPtr = beamAPtrIn;
   beamBPtr = beamBPtrIn;
+  bool isHadronA  = beamAPtr->isHadron();
+  bool isHadronB  = beamBPtr->isHadron();
+  bool doRemnants = settingsPtr->flag("PartonLevel:Remnants");
 
-  // Settings.
-  mode = settingsPtr->mode("Vincia:photonEmissionMode");
+  // QED mode for hard systems: pairing or multipole.
+  qedMode        = settingsPtr->mode("Vincia:ewMode");
+  // (If weak shower used for hard systems, use pairing as fallback.
+  if (qedMode == 3) qedMode = 1;
+  // QED mode for MPI cannot be more sophisticated than that of hard process.
+  qedModeMPI     = min(settingsPtr->mode("Vincia:ewModeMPI"),qedMode);
+  // Other QED settings.
+  kMapTypeFinal  = settingsPtr->mode("Vincia:kineMapEWFinal");
   useFullWkernel = settingsPtr->flag("Vincia:fullWkernel");
-  emitBelowHad = settingsPtr->flag("PartonLevel:Remnants");
+  emitBelowHad   = (isHadronA || isHadronB) ? doRemnants : true;
 
   // Constants.
-  TINYPDF = pow(10,-10);
+  TINYPDF = 1.0e-10;
 
   // Initialized.
   isInit = true;
@@ -843,12 +544,13 @@ void QEDemitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
   bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) {
 
   if (!isInit) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": Not initialised.");
+    loggerPtr->ERROR_MSG("not initialised");
     return;
   }
 
   // Verbose output.
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
 
   // Input.
   iSys = iSysIn;
@@ -860,8 +562,1084 @@ void QEDemitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
 
   // Build internal system.
   buildSystem(event);
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "end --------------");
 
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) print();
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Set up antenna pairing for incoherent mode.
+
+void QEDemitSystem::buildSystem(Event &event) {
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+
+  // Clear previous antennae.
+  eleVec.clear();
+  eleMat.clear();
+  iCoh.clear();
+
+  // Construct hungarian algorithm solver.
+  HungarianAlgorithm ha;
+  // Below hadronization scale.
+  if (isBelowHad && emitBelowHad) {
+    map<int, vector<int> > posMap, negMap;
+    vector<Vec4> posMoms, negMoms;
+
+    // Find all (final-state) quarks and leptons.
+    vector<int> iTriplets, iLeptons;
+    int sysSize = partonSystemsPtr->sizeOut(iSys);
+    for (int i = 0; i < sysSize; ++i) {
+      int iEv = partonSystemsPtr->getOut(iSys, i);
+      if (event[iEv].col() != 0 && event[iEv].acol()==0 &&
+        event[iEv].isFinal()) {
+        // For now, ignore quarks that are connected to junctions. In
+        // principle, we could add them, and any antijunction dittos.
+        bool isJun = false;
+        for (int iJun = 0; iJun < event.sizeJunction(); ++iJun) {
+          for (int iLeg = 0; iLeg < 3; ++iLeg) {
+            if (event[iEv].col() == event.endColJunction(iJun,iLeg)) {
+              isJun = true;
+              break;
+            }
+          }
+        }
+        if (!isJun) iTriplets.push_back(iEv);
+      }
+      if (event[iEv].isLepton() && event[iEv].isCharged())
+        iLeptons.push_back(iEv);
+    }
+
+    // Currently no showering below hadronisation scale if no leptons.
+    if (iLeptons.size() == 0) return;
+
+    // Sort all leptons into maps.
+    for (int i = 0; i < (int)iLeptons.size(); i++) {
+      int iEv = iLeptons[i];
+      vector<int> iLeptonVec;
+      iLeptonVec.push_back(iEv);
+      if (event[iEv].chargeType() == 3) {
+        posMoms.push_back(event[iEv].p());
+        posMap[posMoms.size()-1] = iLeptonVec;
+      }
+      if (event[iEv].chargeType() == -3) {
+        negMoms.push_back(event[iEv].p());
+        negMap[negMoms.size()-1] = iLeptonVec;
+      }
+    }
+    // Find all colour strings.
+    for (int i = 0; i < (int)iTriplets.size(); i++) {
+      // Get initial quark and add to pseudo particle.
+      Vec4 pPseudo;
+      int iEv = iTriplets[i];
+      vector<int> iPseudoVec;
+      iPseudoVec.push_back(iEv);
+      pPseudo += event[iEv].p();
+
+      // Find next colour-connected particle.
+      double nLoop = 0;
+      do {
+        if (++nLoop > 10000) {
+          loggerPtr->ERROR_MSG("caught in infinite loop");
+          break;
+        }
+        int colTag = event[iEv].col();
+        for (int j = 0; j < sysSize; j++) {
+          int jEv = partonSystemsPtr->getOut(iSys, j);
+          if (event[jEv].acol() == colTag && event[jEv].isFinal()) {
+            iEv = jEv;
+            break;
+          }
+        }
+        if (iEv == iPseudoVec.back()) {
+          loggerPtr->ERROR_MSG("colour tracing failed");
+          break;
+        }
+        iPseudoVec.push_back(iEv);
+        pPseudo += event[iEv].p();
+      } while(!event[iEv].isQuark()&&!event[iEv].isDiquark());
+
+      // Get charge of pseudoparticle and sort into maps.
+      int chargeTypePseudo = event[iPseudoVec.front()].chargeType()
+        + event[iPseudoVec.back()].chargeType();
+      // Strings with only quarks are total charge 1 or -1.
+      if (chargeTypePseudo == 3) {
+        posMoms.push_back(pPseudo);
+        posMap[posMoms.size()-1] = iPseudoVec;
+      } else if (chargeTypePseudo == -3) {
+        negMoms.push_back(pPseudo);
+        negMap[negMoms.size()-1] = iPseudoVec;
+      // Strings with a diquark can be charge 2 or -2. Add these
+      // twice to list of recoilers.
+      } else if (chargeTypePseudo == 6) {
+        posMoms.push_back(pPseudo);
+        posMap[posMoms.size()-1] = iPseudoVec;
+        posMoms.push_back(pPseudo);
+        posMap[posMoms.size()-1] = iPseudoVec;
+      } else if (chargeTypePseudo == -6) {
+        negMoms.push_back(pPseudo);
+        negMap[negMoms.size()-1] = iPseudoVec;
+        negMoms.push_back(pPseudo);
+        negMap[negMoms.size()-1] = iPseudoVec;
+      }
+    }
+
+    // If no leptons and overall hadronic system has charge = 0, do nothing.
+    if (posMoms.size() == 0) return;
+
+    // Solve assignment problem.
+    vector<vector<double> > weights;
+    weights.resize(posMoms.size());
+    for (int i = 0; i < (int)posMoms.size(); i++) {
+      weights[i].resize(negMoms.size());
+      for (int j = 0; j < (int)negMoms.size(); j++)
+        weights[i][j] =
+          posMoms[i]*negMoms[j] - posMoms[i].mCalc()*negMoms[j].mCalc();
+    }
+    vector<int> assignment;
+    ha.solve(weights, assignment);
+
+    for (int i = 0; i < (int)posMoms.size(); i++) {
+      int iPos = i;
+      int iNeg = assignment[i];
+      // Only keep antennae with at least one lepton.
+      if (posMap[iPos].size() == 1 || negMap[iNeg].size() == 1) {
+        eleVec.push_back(QEDemitElemental());
+        eleVec.back().initPtr(rndmPtr, partonSystemsPtr);
+        // If two leptons, add regular antenna.
+        if (posMap[iPos].size() == 1 && negMap[iNeg].size() == 1)
+          eleVec.back().init(event, posMap[iPos][0], negMap[iNeg][0], shh,
+            verbose);
+        // If lepton + pseudoparticle, add dipole.
+        if (posMap[iPos].size() == 1 && negMap[iNeg].size() != 1)
+          eleVec.back().init(event, posMap[iPos][0], negMap[iNeg], shh,
+            verbose);
+        if (posMap[iPos].size()!=1 && negMap[iNeg].size()==1)
+          eleVec.back().init(event, negMap[iNeg][0], posMap[iPos], shh,
+            verbose);
+      }
+    }
+
+  // Above hadronization scale.
+  } else if (!isBelowHad) {
+    // Collect relevant particles.
+    int sysSize = partonSystemsPtr->sizeAll(iSys);
+    for (int i = 0; i < sysSize; i++) {
+      int iEv = partonSystemsPtr->getAll(iSys, i);
+      if (event[iEv].isCharged()) iCoh.push_back(iEv);
+    }
+
+    // Catch cases (like hadron->partons decays) where an explicit
+    // charged mother may not have been added to the partonSystem as a
+    // resonance.
+    if (partonSystemsPtr->getInA(iSys) == 0 &&
+        partonSystemsPtr->getInB(iSys) == 0 &&
+        partonSystemsPtr->getInRes(iSys) == 0) {
+      // Guess that the decaying particle is mother of first parton.
+      int iRes = event[partonSystemsPtr->getOut(iSys, 0)].mother1();
+      if (iRes != 0 && event[iRes].isCharged()) {
+        // Check daughter list consistent with whole system.
+        int ida1 = event[iRes].daughter1();
+        int ida2 = event[iRes].daughter2();
+        if (ida2 > ida1) {
+          bool isOK = true;
+          for (int i=0; i<partonSystemsPtr->sizeOut(iSys); ++i)
+            if (partonSystemsPtr->getOut(iSys,i) < ida1
+              || partonSystemsPtr->getOut(iSys,i) > ida2) isOK = false;
+          if (isOK) {iCoh.push_back(iRes);}
+        }
+      }
+    }
+
+    // First check charge conservation.
+    int chargeTypeTot = 0;
+    for (int i = 0; i < (int)iCoh.size(); i++) {
+      double cType = event[iCoh[i]].chargeType();
+      chargeTypeTot += (event[iCoh[i]].isFinal() ? cType : -cType);
+    }
+
+    if (chargeTypeTot != 0) {
+      loggerPtr->ERROR_MSG("charge not conserved above hadronization scale");
+      if (verbose >= Logger::REPORT) {
+        printOut(__METHOD_NAME__, "Printing events and systems");
+        event.list();
+        partonSystemsPtr->list();
+      }
+    }
+
+    // Decide whether to use pairing (1) or coherent (2) algorithm.
+    int qedModeSys = qedMode;
+    if (iSys > 0 && partonSystemsPtr->hasInAB(iSys)) qedModeSys = qedModeMPI;
+
+    // Dipole-Pairing Algorithm.
+    if (qedModeSys == 1) {
+      vector<vector<int> > posChargeTypes;
+      posChargeTypes.resize(3);
+      vector<vector<int> > negChargeTypes;
+      negChargeTypes.resize(3);
+
+      for (int i = 0; i < (int)iCoh.size(); i++) {
+        int iEv = iCoh[i];
+        // Separate particles into charge types.
+        double Q = event[iEv].charge();
+        // Get index in pos/negChargeTypes.
+        int n = abs(event[iEv].chargeType()) - 1;
+        // Flip charge contribution of initial state.
+        if (!event[iEv].isFinal()) {Q = -Q;}
+        if (Q > 0)  posChargeTypes[n].push_back(iEv);
+        else negChargeTypes[n].push_back(iEv);
+      }
+
+      // Clear list of charged particles.
+      iCoh.clear();
+
+      // Solve assignment problems.
+      for (int i=0; i<3; i++) {
+        int posSize = posChargeTypes[i].size();
+        int negSize = negChargeTypes[i].size();
+        int maxSize = max(posSize,negSize);
+        if (maxSize > 0) {
+          vector<vector<double> > weights;
+          weights.resize(maxSize);
+          // Set up matrix of weights.
+          for (int x = 0; x < maxSize; x++) {
+            weights[x].resize(maxSize);
+            for (int y = 0; y < maxSize; y++) {
+              // If either index is out of range. Add some random
+              // large weight.
+              double wIn = (0.9 + 0.2*rndmPtr->flat())*1E300;
+              if (x < posSize && y < negSize) {
+                int xEv = posChargeTypes[i][x];
+                int yEv = negChargeTypes[i][y];
+                wIn = event[xEv].p()*event[yEv].p()
+                  - event[xEv].m()*event[yEv].m();
+              }
+              weights[x][y] = wIn;
+            }
+          }
+
+          // Find solution.
+          vector<int> assignment;
+          ha.solve(weights, assignment);
+
+          // Add pairings to list of emitElementals.
+          // Add unpaired particles to index list for coherent algorithm.
+          for (int j = 0; j < maxSize; j++) {
+            int x = j;
+            int y = assignment[j];
+            if (x < posSize && y < negSize) {
+              int xEv = posChargeTypes[i][x];
+              int yEv = negChargeTypes[i][y];
+              eleVec.push_back(QEDemitElemental());
+              eleVec.back().initPtr(rndmPtr, partonSystemsPtr);
+              eleVec.back().init(event, xEv, yEv, shh, verbose);
+            } else if (x < posSize) {
+              int xEv = posChargeTypes[i][x];
+              iCoh.push_back(xEv);
+            } else if (y < negSize) {
+              int yEv = negChargeTypes[i][y];
+              iCoh.push_back(yEv);
+            }
+          }
+        }
+      }
+    }
+
+    // Create eleMat.
+    eleMat.resize(iCoh.size());
+    for (int i = 0; i < (int)iCoh.size(); i++) {
+      eleMat[i].resize(i);
+      for (int j = 0; j < i; j++) {
+        eleMat[i][j].initPtr(rndmPtr, partonSystemsPtr);
+        eleMat[i][j].init(event, iCoh[i], iCoh[j], shh, verbose);
+      }
+    }
+
+    // Compute overestimate constant.
+    cMat = 0;
+    for (int i = 0; i < (int)eleMat.size(); i++)
+      for (int j = 0; j < i; j++) cMat += max(eleMat[i][j].QQ, 0.);
+  }
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__,"end (nEmitters(II+IF+RF+FF) ="
+      + num2str((int)eleVec.size())+" (pairs) + "+num2str((int)eleMat.size())
+      + " (multipole))");
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+// Generate a trial scale.
+
+double QEDemitSystem::q2Next(Event &event, double q2Start) {
+  // Don't do anything if empty!
+  if (eleVec.size() == 0 && eleMat.size()==0 ) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Nothing to do.");
+    return 0.;
+  }
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss<<"Starting evolution at q2Start = "<<q2Start;
+    printOut(__METHOD_NAME__,ss.str());
+  }
+
+  // Check if qTrial is below the cutoff.
+  if (q2Start < q2Cut || evolutionWindows.size() == 0) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Below cutoff.");
+    return 0;
+  }
+
+  // Find lower value from evolution window.
+  int iEvol = evolutionWindows.size() - 1;
+  while (iEvol >= 1 && q2Start <= evolutionWindows[iEvol]) iEvol--;
+  double q2Low = evolutionWindows[iEvol];
+  if (q2Low < 0)
+    loggerPtr->ERROR_MSG("Evolution window < 0");
+  double q2Trial = 0;
+
+  // Generate a scale.
+  double alphaMax = al.alphaEM(q2Start);
+
+  // Pull scales from eleVec.
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss<<"Looping over "<<eleVec.size()<< " emit pairing elementals.";
+    printOut(__METHOD_NAME__,ss.str());
+  }
+  for (int i = 0; i < (int)eleVec.size(); i++) {
+    double c = eleVec[i].QQ;
+    double q2New = eleVec[i].generateTrial(event, q2Start, q2Low, alphaMax, c);
+    if (q2New > q2Low && q2New > q2Trial) {
+      q2Trial = q2New;
+      eleTrial = &eleVec[i];
+      trialIsVec = true;
+    }
+  }
+
+  // Pull scales from eleMat.
+  for (int i = 0; i < (int)eleMat.size(); i++) {
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss<<"Looping over "<<eleMat[i].size()<<" coherent elementals.";
+      printOut(__METHOD_NAME__,ss.str());
+    }
+    for (int j = 0; j < i; j++) {
+      double q2New = eleMat[i][j].generateTrial(event, q2Start, q2Low,
+        alphaMax, cMat);
+      if (q2New > q2Low && q2New > q2Trial) {
+        q2Trial = q2New;
+        eleTrial = &eleMat[i][j];
+        trialIsVec = false;
+      }
+    }
+  }
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss<<"Generated a new trial = "<< q2Trial;
+    ss<<" in window = "<<iEvol << " (q2Low = "<<q2Low<<" )";
+    printOut(__METHOD_NAME__,ss.str());
+  }
+
+  // Check if evolution window was crossed.
+  if (q2Trial < q2Low) {
+    if (iEvol == 0) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "Dropped below QED cutoff.");
+      return 0;
+    }
+    else if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Trial was below window lower bound. Try again. ");
+    // Reset all trials.
+    for (int i = 0; i < (int)eleVec.size(); i++) eleVec[i].hasTrial = false;
+    for (int i=0; i<(int)eleMat.size(); i++)
+      for (int j=0; j<i; j++) eleMat[i][j].hasTrial = false;
+    return q2Next(event, q2Low);
+  }
+
+  // Otherwise return trial scale.
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,"Done");
+  return q2Trial;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Check the veto. Return false if branching should be vetoed.
+
+bool QEDemitSystem::acceptTrial(Event &event) {
+
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+  // Mark trial as used.
+  eleTrial->hasTrial = false;
+
+  // Pre- and post-branching momenta.
+  vector<Vec4> pOld;
+  pNew.clear();
+
+  // Global recoil momenta.
+  pRec.clear();
+  iRec.clear();
+
+  // II.
+  if (eleTrial->isII) {
+    double saj = eleTrial->sxjSav;
+    double sbj = eleTrial->syjSav;
+    double phi = eleTrial->phiSav;
+    double sAB = eleTrial->sAnt;
+    double sab = sAB + saj + sbj;
+
+    // Pre-branching momenta.
+    pOld.push_back(event[eleTrial->x].p());
+    pOld.push_back(event[eleTrial->y].p());
+
+    // Collect the recoiling final state particles.
+    int sysSize = partonSystemsPtr->sizeAll(iSys);
+    for (int i = 0; i < sysSize; i++) {
+      int iEv = partonSystemsPtr->getAll(iSys, i);
+      if (iEv < 0 || !event[iEv].isFinal()) continue;
+      if (iEv == eleTrial->x || iEv == eleTrial->y) continue;
+      pRec.push_back(event[iEv].p());
+      iRec.push_back(iEv);
+    }
+
+    // Kinematics.
+    if (!vinComPtr->map2to3II(pNew, pRec, pOld, sAB,saj,sbj,sab, phi))
+      return false;
+
+    // Check if new energies don't exceed hadronic maxima.
+    double eaUsed = 0, ebUsed = 0;
+    int nSys = partonSystemsPtr->sizeSys();
+    for (int i = 0; i < nSys; i++) {
+      eaUsed += event[partonSystemsPtr->getInA(i)].e();
+      ebUsed += event[partonSystemsPtr->getInB(i)].e();
+    }
+    if ((eaUsed - pOld[0].e() + pNew[0].e()) > 0.98*sqrt(shh)/2.) return false;
+    if ((ebUsed - pOld[1].e() + pNew[2].e()) > 0.98*sqrt(shh)/2.) return false;
+  }
+
+  // IF.
+  else if (eleTrial->isIF) {
+    double saj = eleTrial->sxjSav;
+    double sjk = eleTrial->syjSav;
+    double phi = eleTrial->phiSav;
+    double sAK = eleTrial->sAnt;
+    double sak = sAK + sjk - saj;
+    double mK2 = eleTrial->my2;
+
+    // Check phase space.
+    if (sak < 0 || saj*sjk*sak - saj*saj*mK2 < 0) {return false;}
+
+    // Pre-branching momenta.
+    pOld.push_back(event[eleTrial->x].p());
+    pOld.push_back(event[eleTrial->y].p());
+
+    // Kinematics.
+    // (Could in principle allow for global, but not done for now since
+    // more complicated and difference presumably too small to be relevant.)
+    if (!vinComPtr->map2to3IFlocal(pNew, pOld, sAK, saj, sjk, sak, phi,
+        mK2, 0, mK2)) return false;
+
+    // Check if new energy doesn't exceed the hadronic maximum.
+    double eaUsed = 0;
+    int nSys = partonSystemsPtr->sizeSys();
+    for (int i = 0; i < nSys; i++) {
+      int iEv;
+      if (eleTrial->isIA) iEv = partonSystemsPtr->getInA(i);
+      else iEv = partonSystemsPtr->getInB(i);
+      eaUsed += event[iEv].e();
+    }
+    if ((eaUsed - pOld[0].e() + pNew[0].e()) > 0.98*sqrt(shh)/2.) return false;
+  }
+
+  // RF.
+  else if (eleTrial->isRF) {
+    double saj = eleTrial->sxjSav;
+    double sjk = eleTrial->syjSav;
+    double sAK = eleTrial->sAnt;
+    double sak = sAK + sjk - saj;
+    double phi = eleTrial->phiSav;
+    double mA2 = eleTrial->mx2;
+    double mK2 = eleTrial->my2;
+
+    // Check phase space.
+    if (sak < 0 || saj*sjk*sak - saj*saj*mK2 - sjk*sjk*mA2 < 0) return false;
+
+    // Pre-branching momenta.
+    pOld.push_back(event[eleTrial->x].p());
+    pOld.push_back(event[eleTrial->y].p());
+
+    // Collect the recoiling final state particles.
+    int sysSize = partonSystemsPtr->sizeAll(iSys);
+    for (int i = 0; i < sysSize; i++) {
+      int iEv = partonSystemsPtr->getAll(iSys, i);
+      if (iEv < 0 || !event[iEv].isFinal()) {continue;}
+      if (iEv == eleTrial->x || iEv == eleTrial->y) {continue;}
+      pRec.push_back(event[iEv].p());
+      iRec.push_back(iEv);
+    }
+
+    // Do kinematics.
+    vector<double> masses;
+    masses.push_back(sqrt(mA2));
+    masses.push_back(0.);
+    masses.push_back(sqrt(mK2));
+    masses.push_back(sqrtpos(mA2+mK2-sAK));
+    vector<double> invariants;
+    invariants.push_back(sAK);
+    invariants.push_back(saj);
+    invariants.push_back(sjk);
+    invariants.push_back(sak);
+    vector<Vec4> pAfter;
+    vector<Vec4> pBefore = pOld;
+    pBefore.insert(pBefore.end(), pRec.begin(), pRec.end());
+    if (!vinComPtr->map2toNRF(pAfter, pBefore, 0, 1, invariants, phi,
+        masses)) return false;
+    pNew.push_back(pAfter[0]);
+    pNew.push_back(pAfter[1]);
+    pNew.push_back(pAfter[2]);
+
+    // Replace momenta with boosted counterpart.
+    pRec.clear();
+    for (int i = 3; i < (int)pAfter.size(); i++) pRec.push_back(pAfter[i]);
+
+    // Check if nothing got messed up along the way.
+    if (pRec.size() != iRec.size()) {
+      loggerPtr->ERROR_MSG("inconsistent recoilers in RF kinematics");
+      return false;
+    }
+  }
+
+  // FF.
+  else if (eleTrial->isFF) {
+    double sIK = eleTrial->m2Ant - eleTrial->mx2 - eleTrial->my2;
+    double sij = eleTrial->sxjSav;
+    double sjk = eleTrial->syjSav;
+    double sik = sIK - sij - sjk;
+    double mi  = sqrt(eleTrial->mx2);
+    double mk  = sqrt(eleTrial->my2);
+    double phi = eleTrial->phiSav;
+
+    vector<double> invariants;
+    invariants.push_back(sIK);
+    invariants.push_back(sij);
+    invariants.push_back(sjk);
+
+    vector<double> masses;
+    masses.push_back(mi);
+    masses.push_back(0);
+    masses.push_back(mk);
+
+    // Check phase space.
+    if (sik < 0) return false;
+    if (sij*sjk*sik - pow2(sij)*pow2(mk) - pow2(sjk)*pow2(mi) < 0)
+      return false;
+
+    // Pre-branching momenta.
+    pOld.push_back(event[eleTrial->x].p());
+    pOld.push_back(event[eleTrial->y].p());
+
+    // Kinematics.
+    if (!vinComPtr->map2to3FF(pNew, pOld, kMapTypeFinal, invariants, phi,
+        masses)) return false;
+  }
+
+  // Dipole.
+  else if (eleTrial->isDip) {
+    // Construct recoiler momentum.
+    Vec4 pk;
+    for (int i = 0; i < (int)eleTrial->iRecoil.size(); i++)
+      pk += event[eleTrial->iRecoil[i]].p();
+    double sIK = eleTrial->m2Ant - eleTrial->mx2 - eleTrial->my2;
+    double sij = eleTrial->sxjSav;
+    double sjk = eleTrial->syjSav;
+    double sik = sIK - sij - sjk;
+    double mi  = sqrt(eleTrial->mx2);
+    double mk  = pk.mCalc();
+    double phi = eleTrial->phiSav;
+
+    vector<double> invariants;
+    invariants.push_back(sIK);
+    invariants.push_back(sij);
+    invariants.push_back(sjk);
+
+    vector<double> masses;
+    masses.push_back(mi);
+    masses.push_back(0);
+    masses.push_back(mk);
+
+    // Check phase space.
+    if (sik < 0) {return false;}
+    if (sij*sjk*sik - pow2(sij)*pow2(mk) - pow2(sjk)*pow2(mi) < 0)
+      return false;
+
+    // Pre-branching momenta.
+    pOld.push_back(event[eleTrial->x].p());
+    pOld.push_back(pk);
+
+    // Kinematics.
+    if (!vinComPtr->map2to3FF(pNew, pOld, kMapTypeFinal, invariants, phi,
+        masses)) return false;
+  }
+
+  // Save.
+  pRecSum = pOld[1];
+
+  Vec4 pPhot = pNew[1];
+  Vec4 px = pNew[0];
+  Vec4 py = pNew[2];
+  int x = eleTrial->x;
+  int y = eleTrial->y;
+  double sxj = eleTrial->sxjSav;
+  double syj = eleTrial->syjSav;
+  double sxy = px*py*2.;
+
+  // Compute veto probability.
+  double pVeto = 1.;
+
+  // Add alpha veto.
+  pVeto *= al.alphaEM(eleTrial->q2Sav) / eleTrial->alpha;
+  if (pVeto > 1) printOut(__METHOD_NAME__, "Alpha increased");
+
+  // Add antenna veto. Simple veto for eleTrial in eleVec.
+  if (trialIsVec) {
+    // Note that charge factor is included at generation step.
+    double aTrialNow = aTrial(eleTrial, sxj, syj, sxy);
+    double aPhysNow = aPhys(eleTrial, sxj, syj, sxy);
+
+    if (aPhysNow/aTrialNow > 1.001) {
+      stringstream ss1;
+      ss1 << "at q = " << sqrt(eleTrial->q2Sav)
+          <<" GeV,  ratio = " << aPhysNow/aTrialNow;
+      loggerPtr->WARNING_MSG("incorrect overestimate (dipole)",ss1.str());
+
+      if (verbose >= VinciaConstants::DEBUG) {
+        stringstream ss2, ss3;
+        if (eleTrial->isFF) ss2 << "Antenna is FF";
+        if (eleTrial->isIF) ss2 << "Antenna is IF";
+        if (eleTrial->isRF) ss2 << "Antenna is RF";
+        if (eleTrial->isII) ss2 << "Antenna is II";
+        printOut(__METHOD_NAME__, ss2.str());
+        printOut(__METHOD_NAME__, ss3.str());
+      }
+    }
+    pVeto *= aPhysNow/aTrialNow;
+
+  // Construct full branching kernel for eleTrial in eleMat. Perform
+  // sector check too.
+  } else {
+    double aSectorNow = aPhys(eleTrial, sxj, syj, sxy);
+    double aTrialFull = eleTrial->c*aTrial(eleTrial, sxj, syj, sxy);
+    double aPhysFull  = 0;
+
+    // Build map of momenta & invariants with new photon.
+    map<int, double> sj;
+    map<int, Vec4> p;
+    // Loop over the first column in eleMat.
+    for (int i = 0; i < (int)iCoh.size(); i++) {
+      int iEv = iCoh[i];
+      // If the particle is in eleTrial, use shower variables.
+      if (iEv == x) {
+        p[iEv] = px;
+        sj[iEv] = sxj;
+      } else if (iEv == y) {
+        p[iEv] = py;
+        sj[iEv] = syj;
+      // Otherwise get the momenta elsewhere
+      } else {
+        // If global recoil, get them from pRec.
+        if (eleTrial->isII) {
+          // Find index.
+          for (int j = 0; j < (int)iRec.size(); j++) {
+            if (iEv == iRec[j]) {
+              p[iEv] = pRec[j];
+              sj[iEv] = 2.*pRec[j]*pPhot;
+              break;
+            }
+          }
+        // Otherwise use momentum from event.
+        } else {
+          p[iEv] = event[iEv].p();
+          sj[iEv] = 2.*event[iEv].p()*pPhot;
+        }
+      }
+    }
+
+    // Then build aPhys.
+    for (int v=0; v<(int)eleMat.size(); v++) {
+      for (int w=0; w<v; w++) {
+        double sxjNow = sj[eleMat[v][w].x];
+        double syjNow = sj[eleMat[v][w].y];
+        double sxyNow = 2.*p[eleMat[v][w].x]*p[eleMat[v][w].y];
+        double aPhysNow = aPhys(&eleMat[v][w], sxjNow, syjNow, sxyNow);
+
+        // Sector veto.
+        if (aPhysNow > aSectorNow) return false;
+
+        // Add aPhysNew to aPhys.
+        aPhysFull += eleMat[v][w].QQ*aPhysNow;
+      }
+    }
+    // Set aPhys to zeto if below zero.
+    if (aPhysFull < 0) {aPhysFull = 0;}
+
+    // Check overestimate.
+    if (aPhysFull/aTrialFull > 1) {
+      stringstream ss1;
+      ss1 << "at q = " << sqrt(eleTrial->q2Sav)
+          << " GeV,  ratio = " << aPhysFull/aTrialFull;
+      loggerPtr->WARNING_MSG("incorrect overestimate (multipole)",ss1.str());
+    }
+    // Add antenna veto.
+    pVeto *= aPhysFull/aTrialFull;
+  }
+
+  // Add PDF veto.
+  if (eleTrial->isIF) {
+    pVeto *= pdfRatio(eleTrial->isIA, pOld[0].e(), pNew[0].e(),
+      eleTrial->idx, eleTrial->q2Sav);
+  }
+  if (eleTrial->isII) {
+    pVeto *= pdfRatio(true,  pOld[0].e(), pNew[0].e(),
+      eleTrial->idx, eleTrial->q2Sav);
+    pVeto *= pdfRatio(false, pOld[1].e(), pNew[2].e(),
+      eleTrial->idy, eleTrial->q2Sav);
+  }
+
+  // Perform veto.
+  if (rndmPtr->flat() > pVeto) {
+    return false;
+  }
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) {
+    event.list();
+    partonSystemsPtr->list();
+    printOut(__METHOD_NAME__,"end", DASHLEN);
+  }
+  return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Update the event after accepted emission.
+
+void QEDemitSystem::updateEvent(Event &event) {
+  // Clear information for replacing later in partonSystems.
+  iReplace.clear();
+  shat = 0.;
+
+  Vec4 pPhot = pNew[1];
+  Vec4 px = pNew[0];
+  Vec4 py = pNew[2];
+  int x = eleTrial->x;
+  int y = eleTrial->y;
+
+  // Invariants to determine order of photon mothers
+  double sxj = eleTrial->sxjSav;
+  double syj = eleTrial->syjSav;
+
+  // Different procedures for dipoles and antennae.
+  // 1) If it is a dipole:
+  if (eleTrial->isDip) {
+    // Set up new particles.
+    Particle newPhoton(22, 51, 0, 0, 0, 0, 0, 0, pPhot);
+    Particle newPartx = event[x];
+    newPartx.p(px);
+    // Shower may occur at a displaced vertex, or for unstable particle.
+    if (newPartx.hasVertex()) newPhoton.vProd( event[x].vProd() );
+
+    // Add to event and save updates to be done on PartonSystems later.
+    int xNew = event.append(newPartx);
+    jNew = event.append(newPhoton);
+    iReplace[x] = xNew;
+
+    // Set old particles to negative.
+    event[x].statusNeg();
+
+    // Update mother-daughter structure.
+    event[xNew].mothers(x,0);
+    event[jNew].mothers(x,0);
+    event[x].daughters(xNew, jNew);
+    event[xNew].daughters(0,0);
+    event[jNew].daughters(0,0);
+    event[xNew].statusCode(51);
+    event[jNew].statusCode(51);
+
+    // Boost momenta and update.
+    for (int i = 0; i < (int)eleTrial->iRecoil.size(); i++) {
+      int iDipRec = eleTrial->iRecoil[i];
+      Vec4 pDipRec = event[iDipRec].p();
+      pDipRec.bstback(pRecSum);
+      pDipRec.bst(pNew[2]);
+      // Copy the recoiler.
+      int iDipRecNew = event.copy(iDipRec, 52);
+      // Change the momentum.
+      event[iDipRecNew].p(pDipRec);
+      // Save update to be done on PartonSystems later.
+      iReplace[iDipRec] = iDipRecNew;
+    }
+
+  }
+  // 2) If it is an RF:
+  else if (eleTrial->isRF) {
+
+    // Set up new particles.
+    Particle newPhoton(22, 51, 0, 0, 0, 0, 0, 0, pPhot);
+    Particle newParty = event[y];
+    newParty.p(py);
+
+    // Shower may occur at a displaced vertex, or for unstable particle.
+    if (newParty.hasVertex()) newPhoton.vProd( newParty.vProd() );
+
+    // Add branched particles to event.
+    int yNew;
+    if (x < y) {
+      jNew = event.append(newPhoton);
+      yNew = event.append(newParty);
+    } else {
+      yNew = event.append(newParty);
+      jNew = event.append(newPhoton);
+    }
+
+    // Save update to be done on PartonSystems later.
+    iReplace[y] = yNew;
+
+    // Set old particles to negative.
+    event[y].statusNeg();
+    event[jNew].mothers(y,0);
+    event[yNew].mothers(y,0);
+    event[jNew].daughters(0,0);
+    event[yNew].daughters(0,0);
+    event[y].daughters(yNew,jNew);
+    event[yNew].statusCode(51);
+
+    // Update event for global recoil.
+    for (int j=0; j<event.size(); j++) {
+      if (event[j].isFinal()) {
+        for (int k=0; k<(int)iRec.size(); k++) {
+          if (iRec[k] == j) {
+            // Copy the recoiler.
+            int inew = event.copy(j, 52);
+            // Change the momentum.
+            event[inew].p(pRec[k]);
+            // Save update to be done on PartonSystems later.
+            iReplace[iRec[k]] = inew;
+          }
+        }
+      }
+    }
+  }
+  // 3) If it is an antenna:
+  else {
+    // Set up new particles.
+    Particle newPhoton(22, 51, 0, 0, 0, 0, 0, 0, pPhot);
+    Particle newPartx = event[x];
+    newPartx.p(px);
+    Particle newParty = event[y];
+    newParty.p(py);
+
+    // Shower may occur at a displaced vertex, or for unstable particle.
+    if (sxj < syj) {
+      if ( newPartx.hasVertex() ) newPhoton.vProd( newPartx.vProd() );
+      else if ( newParty.hasVertex() ) newPhoton.vProd( newParty.vProd() );
+    } else {
+      if ( newParty.hasVertex() ) newPhoton.vProd( newParty.vProd() );
+      else if ( newPartx.hasVertex() ) newPhoton.vProd( newPartx.vProd() );
+    }
+
+    // Add branched particles to event.
+    int xNew, yNew;
+    if (x < y) {
+      xNew = event.append(newPartx);
+      jNew = event.append(newPhoton);
+      yNew = event.append(newParty);
+    } else {
+      yNew = event.append(newParty);
+      jNew = event.append(newPhoton);
+      xNew = event.append(newPartx);
+    }
+
+    // Save changes to be done on PartonSystems later.
+    iReplace[x] = xNew;
+    iReplace[y] = yNew;
+
+    // Set old particles to negative.
+    event[x].statusNeg();
+    event[y].statusNeg();
+
+    // Update everything.
+    if (eleTrial->isII) {
+      event[xNew].mothers(event[x].mother1(), event[x].mother2());
+      if (sxj < syj) event[jNew].mothers(xNew, yNew);
+      else event[jNew].mothers(yNew, xNew);
+      event[yNew].mothers(event[y].mother1(), event[y].mother2());
+      event[x].mothers(xNew, 0);
+      event[y].mothers(yNew, 0);
+      event[xNew].daughters(jNew, x);
+      event[yNew].daughters(jNew, y);
+      event[jNew].daughters(0,0);
+      event[xNew].status(-41);
+      event[yNew].status(-41);
+      event[jNew].status(43);
+
+      // Update beam daughters.
+      if (iSys == 0) {
+        bool founda = false;
+        bool foundb = false;
+        for (int i = 0; i < (int)event.size(); i++) {
+          if (!founda)
+            if (event[i].daughter1() == x) {
+              event[i].daughters(xNew, 0);
+              founda = true;
+            }
+          if (!foundb)
+            if (event[i].daughter1() == y) {
+              event[i].daughters(yNew, 0);
+              foundb = true;
+            }
+          if (founda && foundb) break;
+        }
+      }
+
+      // Update event for global recoil.
+      for (int j=0; j<event.size(); j++) {
+        if (event[j].isFinal()) {
+          for (int k=0; k<(int)iRec.size(); k++) {
+            if (iRec[k] == j) {
+              // Copy the recoiler.
+              int inew = event.copy(j, 44);
+              // Change the momentum.
+              event[inew].p(pRec[k]);
+              // Save update to be done on PartonSystems later.
+              iReplace[iRec[k]] = inew;
+            }
+          }
+        }
+      }
+
+      // Save sHat for parton systems.
+      shat = (event[xNew].p() +  event[yNew].p()).m2Calc();
+
+      // Update beams.
+      BeamParticle& beam1 = *beamAPtr;
+      BeamParticle& beam2 = *beamBPtr;
+
+      // Check that x is always a with pz>0.
+      if (event[xNew].pz() < 0) {
+        printOut(__METHOD_NAME__, "Swapped II  antenna");
+        beam1 = *beamBPtr;
+        beam2 = *beamAPtr;
+      }
+      beam1[iSys].update(xNew, event[xNew].id(), event[xNew].e()/beam1.e());
+      beam2[iSys].update(yNew, event[yNew].id(), event[yNew].e()/beam2.e());
+    }
+
+    if (eleTrial->isIF) {
+      event[xNew].mothers(event[x].mother1(), event[x].mother2());
+      if (sxj < syj) event[jNew].mothers(xNew,y);
+      else event[jNew].mothers(y,xNew);
+      event[yNew].mothers(y,0);
+      event[x].mothers(xNew,0);
+      event[xNew].daughters(jNew,x);
+      event[jNew].daughters(0,0);
+      event[yNew].daughters(0,0);
+      event[y].daughters(jNew, yNew);
+      event[xNew].status(-41);
+      event[yNew].status(43);
+      event[jNew].status(43);
+
+      // Update beam daughter.
+      if (iSys == 0)
+        for (int i=0; i<(int)event.size(); i++)
+          if (event[i].daughter1() == x) {
+            event[i].daughters(xNew, 0);
+            break;
+          }
+
+      // Save sHat for PartonSystems.
+      if (eleTrial->isIA) shat = (event[xNew].p()
+        + event[partonSystemsPtr->getInB(iSys)].p()).m2Calc();
+      else
+        shat = (event[xNew].p()
+          + event[partonSystemsPtr->getInA(iSys)].p()).m2Calc();
+
+      // Update beams.
+      BeamParticle& beam = (eleTrial->isIA ? *beamAPtr : *beamBPtr);
+      beam[iSys].update(xNew, event[xNew].id(), event[xNew].e()/beam.e());
+    }
+
+    if (eleTrial->isFF) {
+      event[xNew].mothers(x,0);
+      if (sxj < syj) event[jNew].mothers(x,y);
+      else event[jNew].mothers(y,x);
+      event[yNew].mothers(y,0);
+      event[x].daughters(xNew, jNew);
+      event[y].daughters(yNew, jNew);
+      event[xNew].daughters(0,0);
+      event[jNew].daughters(0,0);
+      event[yNew].daughters(0,0);
+      event[xNew].statusCode(51);
+      event[jNew].statusCode(51);
+      event[yNew].statusCode(51);
+    }
+
+    // Update event pointers.
+    event.restorePtrs();
+  }
+}
+
+//--------------------------------------------------------------------------
+
+// Print the internal state of a QEDemitSystem
+
+void QEDemitSystem::print() {
+  if (eleVec.size() + eleMat.size() == 0) {
+    cout<< " --------  No QED Emitters in System";
+    return;
+  }
+  cout << " --------  QEDemitSystem  ---------------------"
+       << "----------------------------------------------------" << endl;
+  if (eleVec.size() > 0) cout << "  Pairing elementals: " << endl;
+  for (int i=0; i<(int)eleVec.size(); i++) {
+    if (eleVec[i].isDip) {
+      cout << "    Dipole: x = ";
+      cout << eleVec[i].x << " Recoilers: (";
+      for (int j=0; j<(int)eleVec[i].iRecoil.size(); j++) {
+        cout << eleVec[i].iRecoil[j] << ", ";
+        if (j==(int)eleVec[i].iRecoil.size()-1) {cout << ")";}
+        else {cout << ", ";}
+      }
+    }
+    else {
+      cout << "  Antennae: x = " << eleVec[i].x << ", y = " << eleVec[i].y;
+    }
+    cout << ", QQ = " << eleVec[i].QQ << ", s = " << eleVec[i].sAnt << endl;
+  }
+  if (eleMat.size() > 0) cout << "  Coherent elementals: " << endl;
+  for (int i=0; i<(int)eleMat.size(); i++) {
+    for (int j=0; j<i; j++) {
+      cout << "    x = " << eleMat[i][j].x << ", y = " << eleMat[i][j].y <<
+        "  QxQy = " << num2str(eleMat[i][j].QQ,6) << ",  s = "
+           << num2str(eleMat[i][j].sAnt,9) << endl;
+    }
+  }
+  cout << " ----------------------------------------------"
+       << "----------------------------------------------------" << endl;
 }
 
 //--------------------------------------------------------------------------
@@ -991,7 +1769,7 @@ double QEDemitSystem::aPhys(QEDemitElemental* ele, double sxj, double syj,
 
 // Ratio between PDFs.
 
-double QEDemitSystem::PDFratio(bool isA, double eOld, double eNew, int id,
+double QEDemitSystem::pdfRatio(bool isA, double eOld, double eNew, int id,
   double Qt2) {
   double xOld = eOld/(sqrt(shh)/2.0);
   double xNew = eNew/(sqrt(shh)/2.0);
@@ -1010,995 +1788,9 @@ double QEDemitSystem::PDFratio(bool isA, double eOld, double eNew, int id,
   return newPDF/oldPDF;
 }
 
-//--------------------------------------------------------------------------
-
-// Set up antenna pairing for incoherent mode.
-
-void QEDemitSystem::buildSystem(Event &event) {
-
-  // Clear previous antennae.
-  eleVec.clear();
-  eleMat.clear();
-  iCoh.clear();
-
-  // Construct hungarian algorithm solver.
-  HungarianAlgorithm ha;
-  // Below hadronization scale.
-  if (isBelowHad && emitBelowHad) {
-    map<int, vector<int> > posMap, negMap;
-    vector<Vec4> posMoms, negMoms;
-
-    // Find all (final-state) quarks and leptons.
-    vector<int> iQuarks, iLeptons;
-    int sysSize = partonSystemsPtr->sizeOut(iSys);
-    for (int i = 0; i < sysSize; i++) {
-      int iEv = partonSystemsPtr->getOut(iSys, i);
-      if (event[iEv].col() != 0 && event[iEv].acol()==0 &&
-        event[iEv].isFinal()) {
-        // For now, ignore quarks that are connected to junctions. In
-        // principle, we could add them, and any antijunction dittos.
-        bool isJun = false;
-        for (int iJun = 0; iJun < event.sizeJunction(); ++iJun) {
-          for (int iLeg = 0; iLeg < 3; ++iLeg) {
-            if (event[iEv].col() == event.endColJunction(iJun,iLeg)) {
-              isJun = true;
-              break;
-            }
-          }
-        }
-        if (!isJun) iQuarks.push_back(iEv);
-      }
-      if (event[iEv].isLepton() && event[iEv].isCharged())
-        iLeptons.push_back(iEv);
-    }
-
-    // Currently no showering below hadronisation scale if no leptons.
-    if (iLeptons.size() == 0) return;
-
-    // Sort all leptons into maps.
-    for (int i = 0; i < (int)iLeptons.size(); i++) {
-      int iEv = iLeptons[i];
-      vector<int> iLeptonVec;
-      iLeptonVec.push_back(iEv);
-      if (event[iEv].chargeType() == 3) {
-        posMoms.push_back(event[iEv].p());
-        posMap[posMoms.size()-1] = iLeptonVec;
-      }
-      if (event[iEv].chargeType() == -3) {
-        negMoms.push_back(event[iEv].p());
-        negMap[negMoms.size()-1] = iLeptonVec;
-      }
-    }
-    // Find all colour strings.
-    for (int i = 0; i < (int)iQuarks.size(); i++) {
-      // Get initial quark and add to pseudo particle.
-      Vec4 pPseudo;
-      int iEv = iQuarks[i];
-      vector<int> iPseudoVec;
-      iPseudoVec.push_back(iEv);
-      pPseudo += event[iEv].p();
-
-      // Find next colour-connected particle.
-      do {
-        int colTag = event[iEv].col();
-        for (int j = 0; j < sysSize; j++) {
-          int jEv = partonSystemsPtr->getOut(iSys, j);
-          if (event[jEv].acol() == colTag && event[jEv].isFinal()) {
-            iEv = jEv;
-            break;
-          }
-        }
-        if (iEv == iPseudoVec.back()) {
-          infoPtr->errorMsg("Error in "+__METHOD_NAME__
-            +": Colour tracing failed.");
-          break;
-        }
-        iPseudoVec.push_back(iEv);
-        pPseudo += event[iEv].p();
-      }
-      while(!event[iEv].isQuark()&&!event[iEv].isDiquark());
-
-      // Get charge of pseudoparticle and sort into maps.
-      int chargeTypePseudo = event[iPseudoVec.front()].chargeType()
-        + event[iPseudoVec.back()].chargeType();
-      // Strings with only quarks are total charge 1 or -1.
-      if (chargeTypePseudo == 3) {
-        posMoms.push_back(pPseudo);
-        posMap[posMoms.size()-1] = iPseudoVec;
-      }
-      if (chargeTypePseudo == -3) {
-        negMoms.push_back(pPseudo);
-        negMap[negMoms.size()-1] = iPseudoVec;
-      }
-      // Strings with a diquark can be charge 2 or -2. Add these
-      // twice to list of recoilers.
-      if (chargeTypePseudo == 6) {
-        posMoms.push_back(pPseudo);
-        posMap[posMoms.size()-1] = iPseudoVec;
-        posMoms.push_back(pPseudo);
-        posMap[posMoms.size()-1] = iPseudoVec;
-      }
-      if (chargeTypePseudo == -6) {
-        negMoms.push_back(pPseudo);
-        negMap[negMoms.size()-1] = iPseudoVec;
-        negMoms.push_back(pPseudo);
-        negMap[negMoms.size()-1] = iPseudoVec;
-      }
-    }
-
-    // If no leptons and overall hadronic system has charge = 0, do nothing.
-    if (posMoms.size() == 0) return;
-
-    // Solve assignment problem.
-    vector<vector<double> > weights;
-    weights.resize(posMoms.size());
-    for (int i=0; i<(int)posMoms.size(); i++) {
-      weights[i].resize(negMoms.size());
-      for (int j=0; j<(int)negMoms.size(); j++) {
-        double w = posMoms[i]*negMoms[j]
-          - posMoms[i].mCalc()*negMoms[j].mCalc();
-        weights[i][j] = w;
-      }
-    }
-    vector<int> assignment;
-    ha.solve(weights, assignment);
-
-    for (int i = 0; i < (int)posMoms.size(); i++) {
-      int iPos = i;
-      int iNeg = assignment[i];
-      // Only keep antennae with at least one lepton.
-      if (posMap[iPos].size() == 1 || negMap[iNeg].size() == 1) {
-        eleVec.push_back(QEDemitElemental());
-        eleVec.back().initPtr(rndmPtr, partonSystemsPtr);
-        // If two leptons, add regular antenna.
-        if (posMap[iPos].size() == 1 && negMap[iNeg].size() == 1)
-          eleVec.back().init(event, posMap[iPos][0], negMap[iNeg][0], shh,
-            verbose);
-        // If lepton + pseudoparticle, add dipole.
-        if (posMap[iPos].size() == 1 && negMap[iNeg].size() != 1)
-          eleVec.back().init(event, posMap[iPos][0], negMap[iNeg], shh,
-            verbose);
-        if (posMap[iPos].size()!=1 && negMap[iNeg].size()==1)
-          eleVec.back().init(event, negMap[iNeg][0], posMap[iPos], shh,
-            verbose);
-      }
-    }
-
-  // Above hadronization scale.
-  } else if(!isBelowHad) {
-    // Collect relevant particles.
-    int sysSize = partonSystemsPtr->sizeAll(iSys);
-    for (int i = 0; i < sysSize; i++) {
-      int iEv = partonSystemsPtr->getAll(iSys, i);
-      if (event[iEv].isCharged()) iCoh.push_back(iEv);
-    }
-
-    // Catch cases (like hadron->partons decays) where an explicit
-    // charged mother may not have been added to the partonSystem as a
-    // resonance.
-    if (partonSystemsPtr->getInA(iSys) == 0 &&
-        partonSystemsPtr->getInB(iSys) == 0 &&
-        partonSystemsPtr->getInRes(iSys) == 0) {
-      // Guess that the decaying particle is mother of first parton.
-      int iRes = event[partonSystemsPtr->getOut(iSys, 0)].mother1();
-      if (iRes != 0 && event[iRes].isCharged()) {
-        // Check daughter list consistent with whole system.
-        int ida1 = event[iRes].daughter1();
-        int ida2 = event[iRes].daughter2();
-        if (ida2 > ida1) {
-          bool isOK = true;
-          for (int i=0; i<partonSystemsPtr->sizeOut(iSys); ++i)
-            if (partonSystemsPtr->getOut(iSys,i) < ida1
-              || partonSystemsPtr->getOut(iSys,i) > ida2) isOK = false;
-          if (isOK) {iCoh.push_back(iRes);}
-        }
-      }
-    }
-
-    // First check charge conservation.
-    int chargeTypeTot = 0;
-    for (int i = 0; i < (int)iCoh.size(); i++) {
-      double cType = event[iCoh[i]].chargeType();
-      chargeTypeTot += (event[iCoh[i]].isFinal() ? cType : -cType);
-    }
-
-    if (chargeTypeTot != 0) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": Charge not conserved above hadronization scale");
-      if (verbose >= superdebug) {
-        printOut(__METHOD_NAME__, "Printing events and systems");
-        event.list();
-        partonSystemsPtr->list();
-      }
-    }
-
-    // Pairing algorithm.
-    if (mode == 1) {
-      vector<vector<int> > posChargeTypes;
-      posChargeTypes.resize(3);
-      vector<vector<int> > negChargeTypes;
-      negChargeTypes.resize(3);
-
-      for (int i = 0; i < (int)iCoh.size(); i++) {
-        int iEv = iCoh[i];
-        // Separate particles into charge types.
-        double Q = event[iEv].charge();
-        // Get index in pos/negChargeTypes.
-        int n = abs(event[iEv].chargeType()) - 1;
-        // Flip charge contribution of initial state.
-        if (!event[iEv].isFinal()) {Q = -Q;}
-        if (Q > 0)  posChargeTypes[n].push_back(iEv);
-        else negChargeTypes[n].push_back(iEv);
-      }
-
-      // Clear list of charged particles.
-      iCoh.clear();
-
-      // Solve assignment problems.
-      for (int i=0; i<3; i++) {
-        int posSize = posChargeTypes[i].size();
-        int negSize = negChargeTypes[i].size();
-        int maxSize = max(posSize,negSize);
-        if (maxSize > 0) {
-          vector<vector<double> > weights;
-          weights.resize(maxSize);
-          // Set up matrix of weights.
-          for (int x = 0; x < maxSize; x++) {
-            weights[x].resize(maxSize);
-            for (int y = 0; y < maxSize; y++) {
-              // If either index is out of range. Add some random
-              // large weight.
-              double wIn = (0.9 + 0.2*rndmPtr->flat())*1E300;
-              if (x < posSize && y < negSize) {
-                int xEv = posChargeTypes[i][x];
-                int yEv = negChargeTypes[i][y];
-                wIn = event[xEv].p()*event[yEv].p()
-                  - event[xEv].m()*event[yEv].m();
-              }
-              weights[x][y] = wIn;
-            }
-          }
-
-          // Find solution.
-          vector<int> assignment;
-          ha.solve(weights, assignment);
-
-          // Add pairings to list of emitElementals.
-          // Add unpaired particles to index list for coherent algorithm.
-          for (int j = 0; j < maxSize; j++) {
-            int x = j;
-            int y = assignment[j];
-            if (x < posSize && y < negSize) {
-              int xEv = posChargeTypes[i][x];
-              int yEv = negChargeTypes[i][y];
-              eleVec.push_back(QEDemitElemental());
-              eleVec.back().initPtr(rndmPtr, partonSystemsPtr);
-              eleVec.back().init(event, xEv, yEv, shh, verbose);
-            } else if (x < posSize) {
-              int xEv = posChargeTypes[i][x];
-              iCoh.push_back(xEv);
-            } else if (y < negSize) {
-              int yEv = negChargeTypes[i][y];
-              iCoh.push_back(yEv);
-            }
-          }
-        }
-      }
-    }
-
-    // Create eleMat.
-    eleMat.resize(iCoh.size());
-    for (int i = 0; i < (int)iCoh.size(); i++) {
-      eleMat[i].resize(i);
-      for (int j = 0; j < i; j++) {
-        eleMat[i][j].initPtr(rndmPtr, partonSystemsPtr);
-        eleMat[i][j].init(event, iCoh[i], iCoh[j], shh, verbose);
-      }
-    }
-
-    // Compute overestimate constant.
-    cMat = 0;
-    for (int i = 0; i < (int)eleMat.size(); i++)
-      for (int j = 0; j < i; j++) cMat += max(eleMat[i][j].QQ, 0.);
-  }
-
-}
-
-//--------------------------------------------------------------------------
-
-// Generate a trial scale.
-
-double QEDemitSystem::generateTrialScale(Event &event, double q2Start) {
-
-  // Check if qTrial is below the cutoff.
-  if (q2Start < q2Cut || evolutionWindows.size() == 0) {return 0;}
-
-  // Find lower value from evolution window.
-  int iEvol = evolutionWindows.size() - 1;
-  while (iEvol >= 1 && q2Start <= evolutionWindows[iEvol]) iEvol--;
-  double q2Low = evolutionWindows[iEvol];
-  if (q2Low < 0)
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": Evolution window < 0");
-  double q2Trial = 0;
-
-  // Generate a scale.
-  double alphaMax = al.alphaEM(q2Start);
-
-  // Pull scales from eleVec.
-  for (int i = 0; i < (int)eleVec.size(); i++) {
-    double c = eleVec[i].QQ;
-    double q2New = eleVec[i].generateTrial(event, q2Start, q2Low, alphaMax, c);
-    if (q2New > q2Low && q2New > q2Trial) {
-      q2Trial = q2New;
-      eleTrial = &eleVec[i];
-      trialIsVec = true;
-    }
-  }
-
-  // Pull scales from eleMat.
-  for (int i = 0; i < (int)eleMat.size(); i++) {
-    for (int j = 0; j < i; j++) {
-      double q2New = eleMat[i][j].generateTrial(event, q2Start, q2Low,
-        alphaMax, cMat);
-      if (q2New > q2Low && q2New > q2Trial) {
-        q2Trial = q2New;
-        eleTrial = &eleMat[i][j];
-        trialIsVec = false;
-      }
-    }
-  }
-
-  // Check if evolution window was crossed.
-  if (q2Trial < q2Low) {
-    if (iEvol == 0) {return 0;}
-    // Reset all trials.
-    for (int i = 0; i < (int)eleVec.size(); i++) eleVec[i].hasTrial = false;
-    for (int i=0; i<(int)eleMat.size(); i++)
-      for (int j=0; j<i; j++) eleMat[i][j].hasTrial = false;
-    return generateTrialScale(event, q2Low);
-  }
-
-  // Otherwise return trial scale.
-  return q2Trial;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Check the veto.
-
-bool QEDemitSystem::checkVeto(Event &event) {
-
-  // Mark trial as used.
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
-  eleTrial->hasTrial = false;
-
-  // Pre- and post-branching momenta.
-  vector<Vec4> pOld, pNew;
-
-  // Global recoil momenta.
-  vector<Vec4> pRec;
-  vector<int>  iRec;
-
-  // II.
-  if (eleTrial->isII) {
-    double saj = eleTrial->sxjSav;
-    double sbj = eleTrial->syjSav;
-    double phi = eleTrial->phiSav;
-    double sAB = eleTrial->sAnt;
-    double sab = sAB + saj + sbj;
-
-    // Pre-branching momenta.
-    pOld.push_back(event[eleTrial->x].p());
-    pOld.push_back(event[eleTrial->y].p());
-
-    // Collect the recoiling final state particles.
-    int sysSize = partonSystemsPtr->sizeAll(iSys);
-    for (int i = 0; i < sysSize; i++) {
-      int iEv = partonSystemsPtr->getAll(iSys, i);
-      if (iEv < 0 || !event[iEv].isFinal()) continue;
-      if (iEv == eleTrial->x || iEv == eleTrial->y) continue;
-      pRec.push_back(event[iEv].p());
-      iRec.push_back(iEv);
-    }
-
-    // Kinematics.
-    if (!vinComPtr->map2to3IImassless(pNew, pRec, pOld, sAB,saj,sbj,sab, phi))
-      return false;
-
-    // Check if new energies don't exceed hadronic maxima.
-    double eaUsed = 0, ebUsed = 0;
-    int nSys = partonSystemsPtr->sizeSys();
-    for (int i = 0; i < nSys; i++) {
-      eaUsed += event[partonSystemsPtr->getInA(i)].e();
-      ebUsed += event[partonSystemsPtr->getInB(i)].e();
-    }
-    if ((eaUsed - pOld[0].e() + pNew[0].e()) > 0.98*sqrt(shh)/2.) return false;
-    if ((ebUsed - pOld[1].e() + pNew[2].e()) > 0.98*sqrt(shh)/2.) return false;
-  }
-
-  // IF.
-  else if (eleTrial->isIF) {
-    double saj = eleTrial->sxjSav;
-    double sjk = eleTrial->syjSav;
-    double phi = eleTrial->phiSav;
-    double sAK = eleTrial->sAnt;
-    double sak = sAK + sjk - saj;
-    double mK2 = eleTrial->my2;
-
-    // Check phase space.
-    if (sak < 0 || saj*sjk*sak - saj*saj*mK2 < 0) {return false;}
-
-    // Pre-branching momenta.
-    pOld.push_back(event[eleTrial->x].p());
-    pOld.push_back(event[eleTrial->y].p());
-
-    // Kinematics. (TODO: check if need for global kinematics map here).
-    if (!vinComPtr->map2to3IFlocal(pNew, pOld, sAK, saj, sjk, sak, phi,
-        mK2, 0, mK2)) return false;
-
-    // Check if new energy doesn't exceed the hadronic maximum.
-    double eaUsed = 0;
-    int nSys = partonSystemsPtr->sizeSys();
-    for (int i = 0; i < nSys; i++) {
-      int iEv;
-      if (eleTrial->isIA) iEv = partonSystemsPtr->getInA(i);
-      else iEv = partonSystemsPtr->getInB(i);
-      eaUsed += event[iEv].e();
-    }
-    if ((eaUsed - pOld[0].e() + pNew[0].e()) > 0.98*sqrt(shh)/2.) return false;
-  }
-
-  // RF.
-  else if (eleTrial->isRF) {
-    double saj = eleTrial->sxjSav;
-    double sjk = eleTrial->syjSav;
-    double sAK = eleTrial->sAnt;
-    double sak = sAK + sjk - saj;
-    double phi = eleTrial->phiSav;
-    double mA2 = eleTrial->mx2;
-    double mK2 = eleTrial->my2;
-
-    // Check phase space.
-    if (sak < 0 || saj*sjk*sak - saj*saj*mK2 - sjk*sjk*mA2 < 0) return false;
-
-    // Pre-branching momenta.
-    pOld.push_back(event[eleTrial->x].p());
-    pOld.push_back(event[eleTrial->y].p());
-
-    // Collect the recoiling final state particles.
-    int sysSize = partonSystemsPtr->sizeAll(iSys);
-    for (int i = 0; i < sysSize; i++) {
-      int iEv = partonSystemsPtr->getAll(iSys, i);
-      if (iEv < 0 || !event[iEv].isFinal()) {continue;}
-      if (iEv == eleTrial->x || iEv == eleTrial->y) {continue;}
-      pRec.push_back(event[iEv].p());
-      iRec.push_back(iEv);
-    }
-
-    // Do kinematics.
-    vector<double> masses;
-    masses.push_back(sqrt(mA2));
-    masses.push_back(0.);
-    masses.push_back(sqrt(mK2));
-    masses.push_back(sqrt(mA2+mK2-sAK));
-    vector<double> invariants;
-    invariants.push_back(sAK);
-    invariants.push_back(saj);
-    invariants.push_back(sjk);
-    invariants.push_back(sak);
-    vector<Vec4> pAfter;
-    vector<Vec4> pBefore = pOld;
-    pBefore.insert(pBefore.end(), pRec.begin(), pRec.end());
-    if (!vinComPtr->map2toNRFmassive(pAfter, pBefore, 0, 1, invariants, phi,
-        masses)) return false;
-    pNew.push_back(pAfter[0]);
-    pNew.push_back(pAfter[1]);
-    pNew.push_back(pAfter[2]);
-
-    // Replace momenta with boosted counterpart.
-    pRec.clear();
-    for (int i = 3; i < (int)pAfter.size(); i++) pRec.push_back(pAfter[i]);
-
-    // Check if nothing got messed up along the way.
-    if (pRec.size() != iRec.size()) {
-      infoPtr->errorMsg("Error in "+__METHOD_NAME__
-        +": inconsistent recoilers in RF kinematics.");
-      return false;
-    }
-  }
-
-  // FF>
-  else if (eleTrial->isFF) {
-    double sIK = eleTrial->m2Ant - eleTrial->mx2 - eleTrial->my2;
-    double sij = eleTrial->sxjSav;
-    double sjk = eleTrial->syjSav;
-    double sik = sIK - sij - sjk;
-    double mi  = sqrt(eleTrial->mx2);
-    double mk  = sqrt(eleTrial->my2);
-    double phi = eleTrial->phiSav;
-
-    vector<double> invariants;
-    invariants.push_back(sIK);
-    invariants.push_back(sij);
-    invariants.push_back(sjk);
-
-    vector<double> masses;
-    masses.push_back(mi);
-    masses.push_back(0);
-    masses.push_back(mk);
-
-    // Check phase space.
-    if (sik < 0) return false;
-    if (sij*sjk*sik - pow2(sij)*pow2(mk) - pow2(sjk)*pow2(mi) < 0)
-      return false;
-
-    // Pre-branching momenta.
-    pOld.push_back(event[eleTrial->x].p());
-    pOld.push_back(event[eleTrial->y].p());
-
-    // Kinematics.
-    if (!vinComPtr->map2to3FF(pNew, pOld, 3, invariants, phi, masses))
-      return false;
-  }
-
-  // Dipole.
-  else if (eleTrial->isDip) {
-    // Construct recoiler momentum.
-    Vec4 pk;
-    for (int i = 0; i < (int)eleTrial->iRecoil.size(); i++)
-      pk += event[eleTrial->iRecoil[i]].p();
-    double sIK = eleTrial->m2Ant - eleTrial->mx2 - eleTrial->my2;
-    double sij = eleTrial->sxjSav;
-    double sjk = eleTrial->syjSav;
-    double sik = sIK - sij - sjk;
-    double mi  = sqrt(eleTrial->mx2);
-    double mk  = pk.mCalc();
-    double phi = eleTrial->phiSav;
-
-    vector<double> invariants;
-    invariants.push_back(sIK);
-    invariants.push_back(sij);
-    invariants.push_back(sjk);
-
-    vector<double> masses;
-    masses.push_back(mi);
-    masses.push_back(0);
-    masses.push_back(mk);
-
-    // Check phase space.
-    if (sik < 0) {return false;}
-    if (sij*sjk*sik - pow2(sij)*pow2(mk) - pow2(sjk)*pow2(mi) < 0)
-      return false;
-
-    // Pre-branching momenta.
-    pOld.push_back(event[eleTrial->x].p());
-    pOld.push_back(pk);
-
-    // Kinematics.
-    if (!vinComPtr->map2to3FF(pNew, pOld, 3, invariants, phi, masses))
-      return false;
-  }
-  Vec4 pPhot = pNew[1];
-  Vec4 px = pNew[0];
-  Vec4 py = pNew[2];
-  int x = eleTrial->x;
-  int y = eleTrial->y;
-  double sxj = eleTrial->sxjSav;
-  double syj = eleTrial->syjSav;
-  double sxy = px*py*2.;
-
-  // Compute veto probability.
-  double pVeto = 1.;
-
-  // Add alpha veto.
-  pVeto *= al.alphaEM(eleTrial->q2Sav) / eleTrial->alpha;
-  if (pVeto > 1) printOut(__METHOD_NAME__, "Alpha increased");
-
-  // Add antenna veto. Simple veto for eleTrial in eleVec.
-  if (trialIsVec) {
-    // Note that charge factor is included at generation step.
-    double aTrialNow = aTrial(eleTrial, sxj, syj, sxy);
-    double aPhysNow = aPhys(eleTrial, sxj, syj, sxy);
-
-    if (aPhysNow/aTrialNow > 1.001) {
-      stringstream ss1;
-      ss1 << "Incorrect overestimate (eleVec) " << aPhysNow/aTrialNow;
-      printOut(__METHOD_NAME__, ss1.str());
-      if (verbose > louddebug) {
-        stringstream ss2, ss3;
-        if (eleTrial->isFF) ss2 << "Antenna is FF";
-        if (eleTrial->isIF) ss2 << "Antenna is IF";
-        if (eleTrial->isRF) ss2 << "Antenna is RF";
-        if (eleTrial->isII) ss2 << "Antenna is II";
-        printOut(__METHOD_NAME__, ss2.str());
-        printOut(__METHOD_NAME__, ss3.str());
-      }
-    }
-    pVeto *= aPhysNow/aTrialNow;
-
-  // Construct full branching kernel for eleTrial in eleMat. Perform
-  // sector check too.
-  } else {
-    double aSectorNow = aPhys(eleTrial, sxj, syj, sxy);
-    double aTrialFull = eleTrial->c*aTrial(eleTrial, sxj, syj, sxy);
-    double aPhysFull  = 0;
-
-    // Build map of momenta & invariants with new photon.
-    map<int, double> sj;
-    map<int, Vec4> p;
-    // Loop over the first column in eleMat.
-    for (int i = 0; i < (int)iCoh.size(); i++) {
-      int iEv = iCoh[i];
-      // If the particle is in eleTrial, use shower variables.
-      if (iEv == x) {
-        p[iEv] = px;
-        sj[iEv] = sxj;
-      } else if (iEv == y) {
-        p[iEv] = py;
-        sj[iEv] = syj;
-      // Otherwise get the momenta elsewhere
-      } else {
-        // If global recoil, get them from pRec.
-        if (eleTrial->isII) {
-          // Find index.
-          for (int j = 0; j < (int)iRec.size(); j++) {
-            if (iEv == iRec[j]) {
-              p[iEv] = pRec[j];
-              sj[iEv] = 2.*pRec[j]*pPhot;
-              break;
-            }
-          }
-        // Otherwise use momentum from event.
-        } else {
-          p[iEv] = event[iEv].p();
-          sj[iEv] = 2.*event[iEv].p()*pPhot;
-        }
-      }
-    }
-
-    // Then build aPhys.
-    for (int v=0; v<(int)eleMat.size(); v++) {
-      for (int w=0; w<v; w++) {
-        double sxjNow = sj[eleMat[v][w].x];
-        double syjNow = sj[eleMat[v][w].y];
-        double sxyNow = 2.*p[eleMat[v][w].x]*p[eleMat[v][w].y];
-        double aPhysNow = aPhys(&eleMat[v][w], sxjNow, syjNow, sxyNow);
-
-        // Sector veto.
-        if (aPhysNow > aSectorNow) return false;
-
-        // Add aPhysNew to aPhys.
-        aPhysFull += eleMat[v][w].QQ*aPhysNow;
-      }
-    }
-    // Set aPhys to zeto if below zero.
-    if (aPhysFull < 0) {aPhysFull = 0;}
-
-    // Check overestimate.
-    if (aPhysFull/aTrialFull > 1) {
-      stringstream ss1;
-      ss1 << "Incorrect overestimate (eleVec) " << aPhysFull/aTrialFull;
-      printOut(__METHOD_NAME__, ss1.str());
-    }
-    // Add antenna veto.
-    pVeto *= aPhysFull/aTrialFull;
-  }
-
-  // Add PDF veto.
-  if (eleTrial->isIF) {
-    pVeto *= PDFratio(eleTrial->isIA, pOld[0].e(), pNew[0].e(),
-      eleTrial->idx, eleTrial->q2Sav);
-  }
-  if (eleTrial->isII) {
-    pVeto *= PDFratio(true,  pOld[0].e(), pNew[0].e(),
-      eleTrial->idx, eleTrial->q2Sav);
-    pVeto *= PDFratio(false, pOld[1].e(), pNew[2].e(),
-      eleTrial->idy, eleTrial->q2Sav);
-  }
-
-  // Perform veto.
-  if (rndmPtr->flat() > pVeto) return false;
-
-  // Accepted, now fix the event. Different procedures for dipole and
-  // antennae.
-
-  // If it is a dipole.
-  if (eleTrial->isDip) {
-    // Set up new particles.
-    Particle newPhoton(22, 51, 0, 0, 0, 0, 0, 0, pPhot);
-    Particle newPartx = event[x];
-    newPartx.p(px);
-
-    // Add to event.
-    int xNew = event.append(newPartx);
-    int jNew = event.append(newPhoton);
-
-    // Update parton system.
-    partonSystemsPtr->replace(iSys, x, xNew);
-    partonSystemsPtr->addOut(iSys, jNew);
-
-    // Set old particles to negative.
-    event[x].statusNeg();
-
-    // Update mother-daughter structure.
-    event[xNew].mothers(x,0);
-    event[jNew].mothers(x,0);
-    event[x].daughters(xNew, jNew);
-    event[xNew].daughters(0,0);
-    event[jNew].daughters(0,0);
-    event[xNew].statusCode(51);
-    event[jNew].statusCode(51);
-
-    // Boost momenta and update.
-    for (int i = 0; i < (int)eleTrial->iRecoil.size(); i++) {
-      int iDipRec = eleTrial->iRecoil[i];
-      Vec4 pDipRec = event[iDipRec].p();
-      pDipRec.bstback(pOld[1]);
-      pDipRec.bst(pNew[2]);
-      // Copy the recoiler.
-      int iDipRecNew = event.copy(iDipRec, 52);
-      // Change the momentum.
-      event[iDipRecNew].p(pDipRec);
-      // Update parton system.
-      partonSystemsPtr->replace(iSys, iDipRec, iDipRecNew);
-    }
-
-  } else if (eleTrial->isRF) {
-
-    // Set up new particles.
-    Particle newPhoton(22, 51, 0, 0, 0, 0, 0, 0, pPhot);
-    Particle newParty = event[y];
-    newParty.p(py);
-
-    // Add branched particles to event.
-    int jNew, yNew;
-    if (x < y) {
-      jNew = event.append(newPhoton);
-      yNew = event.append(newParty);
-    } else {
-      yNew = event.append(newParty);
-      jNew = event.append(newPhoton);
-    }
-
-    // Update parton system.
-    partonSystemsPtr->addOut(iSys, jNew);
-    partonSystemsPtr->replace(iSys, y, yNew);
-
-    // Set old particles to negative.
-    event[y].statusNeg();
-    event[jNew].mothers(y,0);
-    event[yNew].mothers(y,0);
-    event[jNew].daughters(0,0);
-    event[yNew].daughters(0,0);
-    event[y].daughters(yNew,jNew);
-    event[yNew].statusCode(51);
-
-    // Update event for global recoil.
-    vector<pair<int,int> > iRecNew;
-    iRecNew.clear();
-    iRecNew.resize(0);
-    for (int j = 0; j < event.size(); j++)
-      if (event[j].isFinal())
-        for (int k = 0; k < (int)iRec.size(); k++)
-          if (iRec[k] == j) {
-            // Copy the recoiler.
-            int inew = event.copy(j, 52);
-            // Change the momentum.
-            event[inew].p(pRec[k]);
-            iRecNew.push_back(make_pair(iRec[k], inew));
-          }
-
-    // Update parton system.
-    for (int k=0; k<(int)iRecNew.size(); k++)
-      partonSystemsPtr->replace(iSys, iRecNew[k].first, iRecNew[k].second);
-
-  // If it is an antenna
-  } else {
-    // Set up new particles.
-    Particle newPhoton(22, 51, 0, 0, 0, 0, 0, 0, pPhot);
-    Particle newPartx = event[x];
-    newPartx.p(px);
-    Particle newParty = event[y];
-    newParty.p(py);
-
-    // Add branched particles to event.
-    int xNew, jNew, yNew;
-    if (x < y) {
-      xNew = event.append(newPartx);
-      jNew = event.append(newPhoton);
-      yNew = event.append(newParty);
-    } else {
-      yNew = event.append(newParty);
-      jNew = event.append(newPhoton);
-      xNew = event.append(newPartx);
-    }
-
-    // Update parton system.
-    partonSystemsPtr->replace(iSys, x, xNew);
-    partonSystemsPtr->addOut(iSys, jNew);
-    partonSystemsPtr->replace(iSys, y, yNew);
-
-    // Set old particles to negative.
-    event[x].statusNeg();
-    event[y].statusNeg();
-
-    // Update everything.
-    if (eleTrial->isII) {
-      event[xNew].mothers(event[x].mother1(), event[x].mother2());
-      event[jNew].mothers(xNew, yNew);
-      event[yNew].mothers(event[y].mother1(), event[y].mother2());
-      event[x].mothers(xNew, 0);
-      event[y].mothers(yNew, 0);
-      event[xNew].daughters(jNew, x);
-      event[yNew].daughters(jNew, y);
-      event[jNew].daughters(0,0);
-      event[xNew].status(-41);
-      event[yNew].status(-41);
-      event[jNew].status(43);
-
-      // Update beam daughters.
-      if (iSys == 0) {
-        bool founda = false;
-        bool foundb = false;
-        for (int i = 0; i < (int)event.size(); i++) {
-          if (!founda)
-            if (event[i].daughter1() == x) {
-              event[i].daughters(xNew, 0);
-              founda = true;
-            }
-          if (!foundb)
-            if (event[i].daughter1() == y) {
-              event[i].daughters(yNew, 0);
-              foundb = true;
-            }
-          if (founda && foundb) break;
-        }
-      }
-
-      // Update event for global recoil.
-      vector<pair<int,int> > iRecNew;
-      iRecNew.clear();
-      iRecNew.resize(0);
-      for (int j=0; j<event.size(); j++)
-        if (event[j].isFinal())
-          for (int k=0; k<(int)iRec.size(); k++)
-            if (iRec[k] == j) {
-              // Copy the recoiler.
-              int inew = event.copy(j, 44);
-              // Change the momentum.
-              event[inew].p(pRec[k]);
-              iRecNew.push_back(make_pair(iRec[k], inew));
-            }
-
-
-      // Update parton system.
-      for (int k = 0; k < (int)iRecNew.size(); k++)
-        partonSystemsPtr->replace(iSys, iRecNew[k].first, iRecNew[k].second);
-      partonSystemsPtr->setInA(iSys, xNew);
-      partonSystemsPtr->setInB(iSys, yNew);
-
-      // Update beams.
-      BeamParticle& beam1 = *beamAPtr;
-      BeamParticle& beam2 = *beamBPtr;
-
-      // Check that x is always a with pz>0.
-      if (event[xNew].pz() < 0) {
-        printOut(__METHOD_NAME__, "Swapped II  antenna");
-        beam1 = *beamBPtr;
-        beam2 = *beamAPtr;
-      }
-      beam1[iSys].update(xNew, event[xNew].id(), event[xNew].e()/beam1.e());
-      beam2[iSys].update(yNew, event[yNew].id(), event[yNew].e()/beam2.e());
-    }
-
-    if (eleTrial->isIF) {
-      event[xNew].mothers(event[x].mother1(), event[x].mother2());
-      event[jNew].mothers(y,xNew);
-      event[yNew].mothers(y,0);
-      event[x].mothers(xNew,0);
-      event[xNew].daughters(jNew,x);
-      event[jNew].daughters(0,0);
-      event[yNew].daughters(0,0);
-      event[y].daughters(jNew, yNew);
-      event[xNew].status(-41);
-      event[yNew].status(43);
-      event[jNew].status(43);
-
-      // Update beam daughter.
-      if (iSys == 0)
-        for (int i=0; i<(int)event.size(); i++)
-          if (event[i].daughter1() == x) {
-            event[i].daughters(xNew, 0);
-            break;
-          }
-
-      // Update parton system.
-      if (eleTrial->isIA) partonSystemsPtr->setInA(iSys, xNew);
-      else partonSystemsPtr->setInB(iSys, xNew);
-
-      // Update beams.
-      BeamParticle& beam = (eleTrial->isIA ? *beamAPtr : *beamBPtr);
-      beam[iSys].update(xNew, event[xNew].id(), event[xNew].e()/beam.e());
-    }
-
-    if (eleTrial->isFF) {
-      event[xNew].mothers(x,0);
-      event[jNew].mothers(x,y);
-      event[yNew].mothers(y,0);
-      event[x].daughters(xNew, jNew);
-      event[y].daughters(yNew, jNew);
-      event[xNew].daughters(0,0);
-      event[jNew].daughters(0,0);
-      event[yNew].daughters(0,0);
-      event[xNew].statusCode(51);
-      event[jNew].statusCode(51);
-      event[yNew].statusCode(51);
-    }
-
-    // Update event pointers.
-    event.restorePtrs();
-
-    // Fix sHat for parton system.
-    double shat = (event[partonSystemsPtr->getInA(iSys)].p() +
-      event[partonSystemsPtr->getInB(iSys)].p()).m2Calc();
-    partonSystemsPtr->setSHat(iSys, shat);
-  }
-  if (verbose >= debug) {
-    if (verbose >= superdebug) {
-      event.list();
-      partonSystemsPtr->list();
-    }
-    printOut(__METHOD_NAME__, "end --------------");
-  }
-  return true;
-
-}
-
-//--------------------------------------------------------------------------
-
-// Print the QED emit internal system.
-
-void QEDemitSystem::print() {
-  cout << "Printing QEDemit internal system" << endl;
-  cout << "Pairing elementals" << endl;
-  for (int i = 0; i < (int)eleVec.size(); i++) {
-    if (eleVec[i].isDip) {
-      cout << "Dipole: x = ";
-      cout << eleVec[i].x << " Recoilers: (";
-      for (int j = 0; j < (int)eleVec[i].iRecoil.size(); j++) {
-        cout << eleVec[i].iRecoil[j] << ", ";
-        if (j == (int)eleVec[i].iRecoil.size()-1) cout << ")";
-        else cout << ", ";
-      }
-    } else cout << "Antennae: x = " << eleVec[i].x << ", y = " << eleVec[i].y;
-    cout << ", QQ = " << eleVec[i].QQ << ", s = " << eleVec[i].sAnt << endl;
-  }
-  cout << "Coherent elementals" << endl;
-  for (int i = 0; i < (int)eleMat.size(); i++)
-    for (int j = 0; j < i; j++)
-      cout << "x = " << eleMat[i][j].x << ", y = " << eleMat[i][j].y
-           << ", QQ = " << eleMat[i][j].QQ << ", s = " << eleMat[i][j].sAnt
-           << endl;
-}
-
 //==========================================================================
 
 // Class for a QED splitting system.
-
-//--------------------------------------------------------------------------
-
-// Initialize pointers.
-
-void QEDsplitSystem::initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) {
-  infoPtr       = infoPtrIn;
-  particleDataPtr  = infoPtr->particleDataPtr;
-  partonSystemsPtr = infoPtr->partonSystemsPtr;
-  rndmPtr          = infoPtr->rndmPtr;
-  settingsPtr      = infoPtr->settingsPtr;
-  vinComPtr = vinComPtrIn;
-  isInitPtr = true;
-}
 
 //--------------------------------------------------------------------------
 
@@ -2011,6 +1803,7 @@ void QEDsplitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
   q2Max   = pow2(settingsPtr->parm("Vincia:mMaxGamma"));
   nLepton = settingsPtr->mode("Vincia:nGammaToLepton");
   nQuark  = settingsPtr->mode("Vincia:nGammaToQuark");
+  kMapTypeFinal = settingsPtr->mode("Vincia:kineMapEWFinal");
   beamAPtr = beamAPtrIn;
   beamBPtr = beamBPtrIn;
   isInit = true;
@@ -2024,10 +1817,11 @@ void QEDsplitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
   bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) {
 
   if (!isInit) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": Not initialised.");
+    loggerPtr->ERROR_MSG("Not initialised");
     return;
   }
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
 
   // Input.
   iSys = iSysIn;
@@ -2040,7 +1834,6 @@ void QEDsplitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
   ids.clear();
   idWeights.clear();
   totIdWeight = 0;
-  maxIdWeight = 0;
 
   // Splittings for gamma->lepton+lepton-.
   for (int i = 0; i < nLepton; i++) {
@@ -2054,15 +1847,17 @@ void QEDsplitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
       idWeights.push_back((i%2==0 ? 4./3. : 1./3.));
     }
   }
-  // Total weights.
-  for (int i=0; i<(int)ids.size(); i++) {
-    totIdWeight += idWeights[i];
-    if (idWeights[i] > maxIdWeight) maxIdWeight = idWeights[i];
-  }
+  // Total weight.
+  for (int i=0; i<(int)ids.size(); i++) totIdWeight += idWeights[i];
 
   // Build internal system.
   buildSystem(event);
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "end --------------");
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) {
+    print();
+    printOut(__METHOD_NAME__, "end", DASHLEN);
+  }
 
 }
 
@@ -2072,6 +1867,10 @@ void QEDsplitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
 
 void QEDsplitSystem::buildSystem(Event &event) {
 
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+
   // Get rid of saved trial and clear all antennae.
   hasTrial = false;
   eleVec.clear();
@@ -2079,6 +1878,9 @@ void QEDsplitSystem::buildSystem(Event &event) {
   // Build lists of particles.
   vector<int> photList, chSpecList, uchSpecList;
   int sysSize = partonSystemsPtr->sizeAll(iSys);
+  photList.reserve(sysSize);
+  chSpecList.reserve(sysSize);
+  uchSpecList.reserve(sysSize);
   for (int i = 0; i < sysSize; i++) {
     int iEv = partonSystemsPtr->getAll(iSys, i);
     if (iEv > 0) {
@@ -2132,25 +1934,42 @@ void QEDsplitSystem::buildSystem(Event &event) {
       eleVec.insert(eleVec.end(), tempEleVec.begin(), tempEleVec.end());
     }
   }
+
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__,"end (nComb(Gam+Rec) ="
+      + num2str((int)eleVec.size())+")");
+  }
+
 }
 
 //--------------------------------------------------------------------------
 
 // Generate a scale for the system.
 
-double QEDsplitSystem::generateTrialScale(Event &event, double q2Start) {
+double QEDsplitSystem::q2Next(Event &event, double q2Start) {
 
-  // Return saved trial.
-  if (hasTrial) return q2Trial;
+  // Return saved trial if we have one.
+  if (hasTrial) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Returning saved trial.");
+    return q2Trial;
+  }
 
   // Check if there are any photons left.
-  if (eleVec.size() == 0) return 0;
-
+  if (eleVec.size() == 0) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"No photons, can't generate a splitting.");
+    return 0.;
+  }
   // Starting scale - account for cut on mGammaMax.
   q2Trial = min(q2Max, q2Start);
 
   // Check if qTrial is below the cutoff.
-  if (q2Trial <= q2Cut) return 0;
+  if (q2Trial <= q2Cut) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Below cutoff.");
+    return 0.;
+  }
 
   // Find lower value from evolution window.
   int iEvol = evolutionWindows.size() - 1;
@@ -2159,66 +1978,85 @@ double QEDsplitSystem::generateTrialScale(Event &event, double q2Start) {
 
   // Compute weights.
   vector<double> weightVec;
-  double totWeight(0), maxWeight(0);
+  double totWeight(0);
   for (int i = 0; i < (int)eleVec.size(); i++) {
     double Iz = q2Low > eleVec[i].m2Ant ? 0 : 1. - q2Low/eleVec[i].m2Ant;
     double w = totIdWeight*eleVec[i].ariWeight*Iz*eleVec[i].getKallen();
     weightVec.push_back(w);
     totWeight += w;
-    if (w > maxWeight) maxWeight = w;
   }
 
   // If no antennae are active, don't generate new scale.
-  if (totWeight < TINY) q2Trial = 0;
+  if (totWeight < NANO) q2Trial = 0.;
 
   // Generate scale and do alpha veto.
   else {
-    while (true) {
+    while (q2Trial > q2Low) {
       double alphaMax = al.alphaEM(q2Trial);
       q2Trial *= pow(rndmPtr->flat(), M_PI/totWeight/alphaMax);
       double alphaNew = al.alphaEM(q2Trial);
+      if (alphaNew <= 0.) return 0.;
       if (rndmPtr->flat() < alphaNew/alphaMax) break;
     }
   }
 
   // Check if evolution window was crossed.
-  if (q2Trial < q2Low) {
-    if (iEvol == 0) return 0;
-    return generateTrialScale(event, q2Low);
+  if (q2Trial <= q2Low) {
+    if (iEvol == 0) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "Dropped below QED cutoff.");
+      return 0.;
+    }
+    else if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Trial was below window lower bound. Try again. ");
+    return q2Next(event, q2Low);
   }
 
   // Select antenna.
-  while (true) {
-    int i = rndmPtr->flat()*weightVec.size();
-    if (rndmPtr->flat() < weightVec[i]/maxWeight) {
+  double ranWeight = rndmPtr->flat() * totWeight;
+  for (int i=0; i<(int)weightVec.size(); ++i) {
+    if ( (ranWeight -= weightVec[i]) < 0 ) {
       eleTrial = &eleVec[i];
       break;
     }
   }
 
   // Select splitting ID.
-  while (true) {
-    int idIndex = rndmPtr->flat()*ids.size();
-    idTrial = ids[idIndex];
-    if (rndmPtr->flat() < idWeights[idIndex]/maxIdWeight) break;
+  double ranFlav = rndmPtr->flat() * totIdWeight;
+  for (int iFlav=0; iFlav<(int)idWeights.size(); ++iFlav) {
+    if ( (ranFlav -= idWeights[iFlav]) < 0 ) {
+      idTrial = ids[iFlav];
+      break;
+    }
+  }
+
+  // Safety check.
+  if (ranFlav >= 0 || ranWeight >= 0) {
+    hasTrial = false;
+    q2Trial  = 0.;
+    return 0.;
   }
 
   // Generate value of zeta and phi.
   zTrial = (1. - q2Low/eleTrial->m2Ant)*rndmPtr->flat();
   phiTrial = rndmPtr->flat()*2*M_PI;
+
+  // Done.
   hasTrial = true;
+  if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,"Done");
   return q2Trial;
 
 }
 
 //--------------------------------------------------------------------------
 
-// Check the veto.
+// Generate kinematics and check veto.
 
-bool QEDsplitSystem::checkVeto(Event &event) {
+bool QEDsplitSystem::acceptTrial(Event &event) {
 
-  // Mark trial as used
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+  // Mark trial as used.
   hasTrial = false;
 
   // Set up some shorthands.
@@ -2227,7 +2065,15 @@ bool QEDsplitSystem::checkVeto(Event &event) {
   double m2Ant = eleTrial->m2Ant;
 
   // New momenta.
-  vector<Vec4> pOld, pNew;
+  vector<Vec4> pOld;
+  pNew.clear();
+
+  // Safety check.
+  if (iPhot > event.size() || iSpec > event.size()) {
+    loggerPtr->ERROR_MSG("inconsistent parent(s)");
+    return false;
+  }
+
   pOld.push_back(event[iPhot].p());
   pOld.push_back(event[iSpec].p());
 
@@ -2244,9 +2090,18 @@ bool QEDsplitSystem::checkVeto(Event &event) {
   if (sij*sjk*sik - pow2(sij)*pow2(mSpec)
     - (pow2(sjk) + pow2(sik))*pow2(mFerm) < 0) return false;
 
+  // Make sure any new qqbar pair has at least the invariant mass
+  // of the lightest meson.
+  // sijMin is 0 if these are not quarks.
+  double sijMin = vinComPtr->mHadMin(idTrial, -idTrial);
+  if (sij < sijMin) return false;
+
   // Kernel veto.
   double pVeto = ( (pow2(sik) + pow2(sjk))/m2Ant + 2.*pow2(mFerm)/q2Trial)/2.;
-  if (rndmPtr->flat() > pVeto) return false;
+  if (rndmPtr->flat() > pVeto) {
+    return false;
+  }
+
   vector<double> invariants;
   invariants.push_back(sIK);
   invariants.push_back(sij);
@@ -2257,8 +2112,28 @@ bool QEDsplitSystem::checkVeto(Event &event) {
   masses.push_back(mSpec);
 
   // Kinematics.
-  if (!vinComPtr->map2to3FF(pNew, pOld, 3, invariants, phiTrial, masses))
-    return false;
+  if (!vinComPtr->map2to3FF(pNew, pOld, kMapTypeFinal, invariants, phiTrial,
+      masses)) return false;
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Update event after splitting.
+
+void QEDsplitSystem::updateEvent(Event &event) {
+
+  //Clear information for replacing later in partonSystems
+  iReplace.clear();
+  shat = 0.;
+
+  int iPhot = eleTrial->iPhot;
+  int iSpec = eleTrial->iSpec;
+  double mFerm = particleDataPtr->m0(idTrial);
 
   // Set up the new fermions. Stochastic colour tag.
   int colTag = idTrial < 10 ? 10*(event.nextColTag()/10 + 1) + 1
@@ -2269,6 +2144,17 @@ bool QEDsplitSystem::checkVeto(Event &event) {
   partSpecNew.mothers(iSpec, iSpec);
   partSpecNew.p(pNew[2]);
   partSpecNew.statusCode(52);
+
+  // Shower may occur at a displaced vertex, or for unstable particle.
+  if ( event[iPhot].hasVertex() ) {
+    partFermNew.vProd( event[iPhot].vProd() );
+    partAFermNew.vProd( event[iPhot].vProd() );
+  }
+  double tau0 = particleDataPtr->tau0( abs(idTrial) );
+  if (tau0 > 0.) {
+    partFermNew.tau( tau0 * rndmPtr->exp() );
+    partAFermNew.tau( tau0 * rndmPtr->exp() );
+  }
 
   // Change the event - add new particles.
   int iFermNew  = event.append(partFermNew);
@@ -2281,13 +2167,12 @@ bool QEDsplitSystem::checkVeto(Event &event) {
   event[iSpec].statusNeg();
   event[iSpec].daughters(iSpecNew, 0);
 
-  // Update parton system.
-  partonSystemsPtr->replace(iSys, iPhot, iFermNew);
-  partonSystemsPtr->addOut(iSys, iAFermNew);
-  partonSystemsPtr->replace(iSys, iSpec, iSpecNew);
+  // Save updates to be done on PartonSystems later.
+  jNew = iAFermNew;
+  iReplace[iPhot] = iFermNew;
+  iReplace[iSpec] = iSpecNew;
+
   event.restorePtrs();
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
-  return true;
 
 }
 
@@ -2296,11 +2181,18 @@ bool QEDsplitSystem::checkVeto(Event &event) {
 // Print the system.
 
 void QEDsplitSystem::print() {
-  cout << "Splitting" << endl;
+  if (eleVec.size() == 0) {
+    cout<< "  --------  No QED Splitters in System"<<endl;
+    return;
+  }
+  cout << "  --------  QEDsplitSystem  ----------------"
+       << "----------------------------------------------" << endl;
   for (int i = 0; i < (int)eleVec.size(); i++)
-    cout << "(" << eleVec[i].iPhot << " " << eleVec[i].iSpec << ") "
+    cout << "    (" << eleVec[i].iPhot << " " << eleVec[i].iSpec << ") "
          << "s = " << eleVec[i].m2Ant << " ariFac = " << eleVec[i].ariWeight
          << endl;
+  cout << "  --------------------------------------------------------------"
+       << "----------------------------------------------" << endl;
 }
 
 //==========================================================================
@@ -2309,21 +2201,8 @@ void QEDsplitSystem::print() {
 
 //--------------------------------------------------------------------------
 
-// Initialize the pointers.
-
-void QEDconvSystem::initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) {
-  infoPtr       = infoPtrIn;
-  particleDataPtr  = infoPtr->particleDataPtr;
-  partonSystemsPtr = infoPtr->partonSystemsPtr;
-  rndmPtr          = infoPtr->rndmPtr;
-  settingsPtr      = infoPtr->settingsPtr;
-  vinComPtr        = vinComPtrIn;
-  isInitPtr = true;
-}
-
-//--------------------------------------------------------------------------
-
 // Initialize the system.
+
 void QEDconvSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
   int verboseIn) {
 
@@ -2337,19 +2216,14 @@ void QEDconvSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
   if (!settingsPtr->flag("Vincia:convertGammaToQuark")) nQuark = 0;
 
   // Set trial pdf ratios.
-  Rhat[1]  = 77;
-  Rhat[2]  = 140;
-  Rhat[3]  = 30;
-  Rhat[4]  = 22;
-  Rhat[5]  = 15;
-  Rhat[-1] = 63;
-  Rhat[-2] = 65;
-  Rhat[-3] = 30;
-  Rhat[-4] = 30;
-  Rhat[-5] = 16;
+  Rhat[1]  = 77;  Rhat[-1] = 63;
+  Rhat[2]  = 140; Rhat[-2] = 65;
+  Rhat[3]  = 60;  Rhat[-3] = 60;
+  Rhat[4]  = 44;  Rhat[-4] = 60;
+  Rhat[5]  = 30;  Rhat[-5] = 32;
 
   // Constants.
-  TINYPDF = pow(10, -10);
+  TINYPDF = 1.0e-10;
 
   // Beam pointers.
   beamAPtr = beamAPtrIn;
@@ -2366,10 +2240,11 @@ void QEDconvSystem::prepare(int iSysIn, Event &event, double q2CutIn,
   bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) {
 
   if (!isInit) {
-    infoPtr->errorMsg("Error in "+__METHOD_NAME__+": Not initialised.");
+    loggerPtr->ERROR_MSG("not initialised");
     return;
   }
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
 
   // Input.
   iSys = iSysIn;
@@ -2404,7 +2279,10 @@ void QEDconvSystem::prepare(int iSysIn, Event &event, double q2CutIn,
 
   // Build system.
   buildSystem(event);
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "end --------------");
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
 
 }
 
@@ -2424,19 +2302,31 @@ void QEDconvSystem::buildSystem(Event &event) {
   isBPhot = event[iB].id() == 22;
   s = (event[iA].p() + event[iB].p()).m2Calc();
 
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, " convA =" + bool2str(isAPhot)
+      +", convB =" + bool2str(isBPhot));
+  }
+
 }
 
 //--------------------------------------------------------------------------
 
 // Generate a trial scale.
 
-double QEDconvSystem::generateTrialScale(Event &event, double q2Start) {
+double QEDconvSystem::q2Next(Event &event, double q2Start) {
 
-  // Return if saved trial.
-  if (hasTrial) return q2Trial;
-
-  // Check if there are any photons.
-  if (!isAPhot && !isBPhot) {return 0;}
+  // Return saved trial if we have one.
+  if (hasTrial) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Returning saved trial.");
+    return q2Trial;
+  }
+  // Check if there are any initial-state photons.
+  if (!isAPhot && !isBPhot) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "No initial-state photons, so can't generate a conversion.");
+    return 0.;
+  }
   double totWeight = 1.;
 
   // Select a photon.
@@ -2453,7 +2343,11 @@ double QEDconvSystem::generateTrialScale(Event &event, double q2Start) {
   q2Trial = q2Start;
 
   // Check if qTrial is below the cutoff.
-  if (q2Trial <= q2Cut) return 0;
+  if (q2Trial <= q2Cut) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Below cutoff.");
+    return 0.;
+  }
 
   // Find lower value from evolution window.
   int iEvol = evolutionWindows.size() - 1;
@@ -2463,12 +2357,20 @@ double QEDconvSystem::generateTrialScale(Event &event, double q2Start) {
   // Iz integral.
   double zPlus = shh/s;
   double zMin = 1 + q2Low/s;
-  if (zPlus < zMin) {return 0;}
+  if (zPlus < zMin) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Phase space closed");
+    return 0.;
+  }
   double Iz = log(zPlus/zMin);
   totWeight *= totIdWeight*Iz;
 
   // If no antennae are active, don't generate new scale.
-  if (totWeight < TINY) return 0;
+  if (totWeight < NANO) {
+    if (verbose >= VinciaConstants::DEBUG)
+      printOut(__METHOD_NAME__,"Below cutoff.");
+    return 0.;
+  }
 
   // Generate scale and do alpha veto.
   else
@@ -2481,8 +2383,14 @@ double QEDconvSystem::generateTrialScale(Event &event, double q2Start) {
 
   // Check if evolution window was crossed.
   if (q2Trial < q2Low) {
-    if (iEvol==0) return 0;
-    return generateTrialScale(event, q2Low);
+    if (iEvol==0) {
+      if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+        "Dropped below QED cutoff.");
+      return 0.;
+    }
+    else if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Trial was below window lower bound. Try again. ");
+    return q2Next(event, q2Low);
   }
 
   // Select conversion ID.
@@ -2502,10 +2410,11 @@ double QEDconvSystem::generateTrialScale(Event &event, double q2Start) {
 
 // Check the veto.
 
-bool QEDconvSystem::checkVeto(Event &event) {
+bool QEDconvSystem::acceptTrial(Event &event) {
 
-  // Mark trial as used
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+  // Mark trial as used.
   hasTrial = false;
 
   // Conversion mass.
@@ -2514,10 +2423,13 @@ bool QEDconvSystem::checkVeto(Event &event) {
   // Spectator ID.
   int idSpec = event[iSpecTrial].id();
 
-  // New momenta.
-  vector<Vec4> pOld, pNew;
+  // Old momenta.
+  vector<Vec4> pOld;
   pOld.push_back(event[iPhotTrial].p());
   pOld.push_back(event[iSpecTrial].p());
+
+  // Clear new momenta.
+  pNew.clear();
 
   // Note that we treat the initial state as massless and the final
   // state as massive. q2 is defined as saj - 2*mf2, but otherwise we
@@ -2534,8 +2446,8 @@ bool QEDconvSystem::checkVeto(Event &event) {
   bool isPhotA = (iPhotTrial == iA) ? true : false;
 
   // Global recoil momenta.
-  vector<Vec4> pRec;
-  vector<int>  iRec;
+  pRec.clear();
+  iRec.clear();
   int sysSize = partonSystemsPtr->sizeAll(iSys);
   for (int i=0; i<sysSize; i++) {
     int iEv = partonSystemsPtr->getAll(iSys, i);
@@ -2606,18 +2518,39 @@ bool QEDconvSystem::checkVeto(Event &event) {
 
   if (Rpdf > Rhat[idTrial]) {
     stringstream ss;
-    ss << "Incorrect pdf overestimate " << "id = " << idTrial << "ratio = "
-       << Rpdf/Rhat[idTrial];
-    printOut(__METHOD_NAME__, ss.str());
+    ss << "at q = "<<sqrt(q2Trial)<<" GeV,  id = " << idTrial
+       << ",  ratio = " << Rpdf/Rhat[idTrial];
+    loggerPtr->WARNING_MSG("incorrect PDF overestimate",ss.str());
   }
 
   // Pdf ratio veto probability.
   pVeto *= (Rpdf/Rhat[idTrial]);
 
   // Do veto.
-  if (rndmPtr->flat() > pVeto) return false;
+  if (rndmPtr->flat() > pVeto) {
+    return false;
+  }
 
-  // Passed veto, set up new particles.
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
+  return true;
+}
+
+//--------------------------------------------------------------------------
+
+// Update event after QED conversion.
+
+void QEDconvSystem::updateEvent(Event &event) {
+
+  //Clear information for replacing later in partonSystems
+  iReplace.clear();
+  shat = 0.;
+
+  // Conversion mass
+  double mf2 = pow2(particleDataPtr->m0(idTrial));
+
+  // Set up new particles.
   Particle partSpecNew = event[iSpecTrial];
   partSpecNew.p(pNew[2]);
   partSpecNew.statusCode(41);
@@ -2664,55 +2597,53 @@ bool QEDconvSystem::checkVeto(Event &event) {
   }
 
   // Update event for global recoil.
-  vector<pair<int,int> > iRecNew;
-  iRecNew.clear();
-  iRecNew.resize(0);
-  for (int j = 0; j < event.size(); j++)
-    if (event[j].isFinal())
-      for (int k = 0; k < (int)iRec.size(); k++)
+  for (int j=0; j<event.size(); j++) {
+    if (event[j].isFinal()) {
+      for (int k=0; k<(int)iRec.size(); k++) {
         if (iRec[k] == j) {
-          // Copy the recoiler and change the momentum.
-          int inew = event.copy(j,44);
+          // Copy the recoiler.
+          int inew = event.copy(j, 44);
+          // Change the momentum.
           event[inew].p(pRec[k]);
-          iRecNew.push_back(make_pair(iRec[k], inew));
+          // Save update to do on PartonSystems later.
+          iReplace[iRec[k]] = inew;
         }
-
-  // Update parton system.
-  partonSystemsPtr->replace(iSys, iPhotTrial, iBeamNew);
-  partonSystemsPtr->addOut(iSys, iFinalNew);
-  partonSystemsPtr->replace(iSys, iSpecTrial, iSpecNew);
-
-  // Recoilers and initial particles.
-  for (int k=0; k<(int)iRecNew.size(); k++) {
-    partonSystemsPtr->replace(iSys, iRecNew[k].first, iRecNew[k].second);
+      }
+    }
   }
-  if (isPhotA) {
-    partonSystemsPtr->setInA(iSys, iBeamNew);
-    partonSystemsPtr->setInB(iSys, iSpecNew);
-  } else {
-    partonSystemsPtr->setInA(iSys, iSpecNew);
-    partonSystemsPtr->setInB(iSys, iBeamNew);
-  }
-  double shat = (event[partonSystemsPtr->getInA(iSys)].p() +
-    event[partonSystemsPtr->getInB(iSys)].p()).m2Calc();
-  partonSystemsPtr->setSHat(iSys, shat);
+
+  // Save updates to do on PartonSystems later.
+  jNew = iFinalNew;
+  iReplace[iPhotTrial] = iBeamNew;
+  iReplace[iSpecTrial] = iSpecNew;
+  shat = (event[iBeamNew].p() + event[iSpecNew].p()).m2Calc();
 
   // Update beams.
   BeamParticle& beam1 = *beamAPtr;
   BeamParticle& beam2 = *beamBPtr;
+  // Check if photon is in beam a or b
+  bool isPhotA = (iPhotTrial == iA) ? true : false;
   if (isPhotA) {
-    beam1[iSys].update(iBeamNew, event[iBeamNew].id(),
-      event[iBeamNew].e()/beam1.e());
-    beam2[iSys].update(iSpecNew, event[iSpecNew].id(),
-      event[iSpecNew].e()/beam2.e());
+    double x1 = event[iBeamNew].e()/beam1.e();
+    double x2 = event[iSpecNew].e()/beam2.e();
+    beam1[iSys].update(iBeamNew, event[iBeamNew].id(), x1);
+    beam2[iSys].update(iSpecNew, event[iSpecNew].id(), x2);
+    // Redo choice of valence/sea/companion kind.
+    beam1.xfISR(iSys, event[iBeamNew].id(), x1, q2Trial );
+    beam1.pickValSeaComp();
   } else {
-    beam1[iSys].update(iSpecNew, event[iSpecNew].id(),
-      event[iSpecNew].e()/beam1.e());
-    beam2[iSys].update(iBeamNew, event[iBeamNew].id(),
-      event[iBeamNew].e()/beam2.e());
+    double x1 = event[iSpecNew].e()/beam1.e();
+    double x2 = event[iBeamNew].e()/beam2.e();
+    beam1[iSys].update(iSpecNew, event[iSpecNew].id(), x1);
+    beam2[iSys].update(iBeamNew, event[iBeamNew].id(), x2);
+    // Redo choice of valence/sea/companion kind.
+    beam2.xfISR(iSys, event[iBeamNew].id(), x2, q2Trial );
+    beam2.pickValSeaComp();
   }
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
-  return true;
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
 
 }
 
@@ -2721,8 +2652,9 @@ bool QEDconvSystem::checkVeto(Event &event) {
 // Print.
 
 void QEDconvSystem::print() {
-  cout << "Conversion" << endl;
-  cout << "s = " << s << endl;
+  cout << "  --------  QEDconvSystem  ----------------"
+       << "----------------------------------------------" << endl;
+  cout << "    s = " << s << endl;
 }
 
 //==========================================================================
@@ -2733,13 +2665,24 @@ void QEDconvSystem::print() {
 
 // Initialize the pointers.
 
-void QEDShower::initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) {
+void VinciaQED::initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) {
   infoPtr       = infoPtrIn;
   particleDataPtr  = infoPtr->particleDataPtr;
   partonSystemsPtr = infoPtr->partonSystemsPtr;
   rndmPtr          = infoPtr->rndmPtr;
   settingsPtr      = infoPtr->settingsPtr;
+  loggerPtr        = infoPtr->loggerPtr;
   vinComPtr        = vinComPtrIn;
+
+  // Initialise the empty templates we use to make new QED shower systems.
+  emptyQEDemitSystem.initPtr(infoPtr, particleDataPtr, partonSystemsPtr,
+    rndmPtr, settingsPtr, vinComPtr);
+  emptyQEDsplitSystem.initPtr(infoPtr, particleDataPtr, partonSystemsPtr,
+    rndmPtr, settingsPtr, vinComPtr);
+  emptyQEDconvSystem.initPtr(infoPtr, particleDataPtr, partonSystemsPtr,
+    rndmPtr, settingsPtr, vinComPtr);
+
+  // Done.
   isInitPtr = true;
 }
 
@@ -2747,10 +2690,12 @@ void QEDShower::initPtr(Info* infoPtrIn, VinciaCommon* vinComPtrIn) {
 
 // Initialize settings for current run.
 
-void QEDShower::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
+void VinciaQED::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
+
+  // Verbose setting
+  verbose = settingsPtr->mode("Vincia:verbose");
 
   // Initialize alphaEM
-  verbose = settingsPtr->mode("Vincia:verbose");
   double alpEM0Vincia = settingsPtr->parm("Vincia:alphaEM0");
   double alpEMmzVincia = settingsPtr->parm("Vincia:alphaEMmz");
   double alpEM0Pythia = settingsPtr->parm("StandardModel:alphaEM0");
@@ -2765,7 +2710,7 @@ void QEDShower::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
   settingsPtr->parm("StandardModel:alphaEMmz", alpEMmzPythia);
 
   // Get settings.
-  doQED          = settingsPtr->flag("Vincia:doQED");
+  doQED          = settingsPtr->mode("Vincia:EWmode") >= 1;
   doEmission     = doQED;
   nGammaToLepton = settingsPtr->mode("Vincia:nGammaToLepton");
   nGammaToQuark  = settingsPtr->mode("Vincia:nGammaToQuark") >= 1;
@@ -2779,6 +2724,13 @@ void QEDShower::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
   // Set beam pointers.
   beamAPtr = beamAPtrIn;
   beamBPtr = beamBPtrIn;
+
+  // Initialise the empty templates we use to make new QED shower systems.
+  emptyQEDemitSystem.init(beamAPtrIn, beamBPtrIn, verbose);
+  emptyQEDsplitSystem.init(beamAPtrIn, beamBPtrIn, verbose);
+  emptyQEDconvSystem.init(beamAPtrIn, beamBPtrIn, verbose);
+
+  // All done.
   isInitSav = true;
 
 }
@@ -2787,23 +2739,34 @@ void QEDShower::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
 
 // Prepare to shower a system.
 
-void QEDShower::prepare(int iSysIn, Event &event, bool isBelowHad) {
+bool VinciaQED::prepare(int iSysIn, Event &event, bool isBelowHad) {
+  // Check if QED is switched on for this system.
+  if (!doQED) return false;
 
   // Verbose output
-  if (!doQED) return;
-  if (verbose >= debug) {
-    printOut(__METHOD_NAME__, "begin --------------");
-    if (verbose >= superdebug) event.list();
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    stringstream ss;
+    ss << "Preparing system " << iSysIn;
+    printOut(__METHOD_NAME__,ss.str());
   }
 
   // Above or below hadronisation scale.
   double q2cut = (isBelowHad) ? q2minSav : q2minColouredSav;
 
-  // Initialize windows for the hard systen and
-  // the final after beam remnants system.
-  if (iSysIn == 0 || iSysIn == -1) {
-    // The cutoff scale is the lowest window boundary, then step up to
-    // q2Max successively by factor winStep.
+  // If below hadronization scale or this is resonance system,
+  // clear information about any other systems.
+  if ( iSysIn == -1 || isBelowHad || partonSystemsPtr->hasInRes(iSysIn)) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "clearing previous QED systems");
+    clear();
+  }
+
+  // Initialize windows for the hard system
+  // and the final after-beam-remnants system.
+  if ( nBranchers()==0 ) {
+    // The cutoff scale is the lowest window boundary,
+    // then step up to q2Max successively by factor winStep
     double q2BiggestEver  = infoPtr->s();
     double q2Window       = q2cut;
     double winStep        = 100.0;
@@ -2812,22 +2775,6 @@ void QEDShower::prepare(int iSysIn, Event &event, bool isBelowHad) {
       evolutionWindows.push_back(q2Window);
       q2Window *= winStep;
     } while(q2Window < q2BiggestEver);
-  }
-
-  // Find out if showering a resonance decay.
-  bool isResDecay = false;
-  if (iSysIn >= 0)
-    if (partonSystemsPtr->hasInRes(iSysIn) ||
-        (partonSystemsPtr->getInA(iSysIn)==0 &&
-         partonSystemsPtr->getInB(iSysIn)==0) ) isResDecay = true;
-
-  // If showering a resonance decay or below hadronization scale clear
-  // out all previous systems.
-  if ( iSysIn <= 0 || isResDecay || isBelowHad ) {
-    iSystems.clear();
-    emitSystems.clear();
-    splitSystems.clear();
-    convSystems.clear();
   }
 
   // Special case: iSysIn = -1 implies below hadronisation scale.
@@ -2842,35 +2789,48 @@ void QEDShower::prepare(int iSysIn, Event &event, bool isBelowHad) {
       if (!event[i].isFinal()) continue;
       partonSystemsPtr->addOut(iSysIn, i);
     }
+    if (verbose >= VinciaConstants::DEBUG) {
+      printOut(__METHOD_NAME__,"Created new parton system for post-remnant "
+        "QED showering:");
+      partonSystemsPtr->list();
+    }
   }
 
-  // Add new systems.
-  iSystems.push_back(iSysIn);
-  emitSystems.push_back(QEDemitSystem());
-  splitSystems.push_back(QEDsplitSystem());
-  convSystems.push_back(QEDconvSystem());
+  // Safety checks for systems that should have been deleted.
+  bool forceClear(false);
+  for (auto it=emitSystems.begin(); it!=emitSystems.end(); ++it) {
+    if (it->first >= partonSystemsPtr->sizeSys()) forceClear = true;
+  }
+  for (auto it=splitSystems.begin(); it!=splitSystems.end(); ++it) {
+    if (it->first >= partonSystemsPtr->sizeSys()) forceClear = true;
+  }
+  for (auto it=convSystems.begin(); it!=convSystems.end(); ++it) {
+    if (it->first >= partonSystemsPtr->sizeSys()) forceClear = true;
+  }
+  if (forceClear) {
+    clear();
+    loggerPtr->WARNING_MSG("cleared inconsistent list of QED systems");
+  }
 
-  // Initialze pointers.
-  emitSystems.back().initPtr(infoPtr, vinComPtr);
-  splitSystems.back().initPtr(infoPtr, vinComPtr);
-  convSystems.back().initPtr(infoPtr, vinComPtr);
+  // Add and prepare new system for initial- and final-state photon emissions.
+  emitSystems[iSysIn] = emptyQEDemitSystem;
+  emitSystems[iSysIn].prepare(iSysIn, event, q2cut, isBelowHad,
+    evolutionWindows,al);
 
-  // Initialize. Note, these calls read from settings database, should
-  // be rewritten to require settings to be read only once.
-  emitSystems.back().init(beamAPtr, beamBPtr,verbose);
-  splitSystems.back().init(beamAPtr, beamBPtr,verbose);
-  convSystems.back().init(beamAPtr, beamBPtr,verbose);
+  // Add and prepare new system for final-state photon splittings.
+  splitSystems[iSysIn] = emptyQEDsplitSystem;
+  splitSystems[iSysIn].prepare(iSysIn, event, q2cut, isBelowHad,
+    evolutionWindows,al);
 
-  // Prepare and build QED systems.
-  emitSystems.back().prepare(iSysIn, event, q2cut, isBelowHad,
-    evolutionWindows, al);
-  splitSystems.back().prepare(iSysIn, event, q2cut, isBelowHad,
-    evolutionWindows, al);
-  convSystems.back().prepare(iSysIn, event, q2cut, isBelowHad,
-    evolutionWindows, al);
+  // Add and prepare new system for initial-state photon conversions.
+  convSystems[iSysIn] = emptyQEDconvSystem;
+  convSystems[iSysIn].prepare(iSysIn, event, q2cut, isBelowHad,
+    evolutionWindows,al);
 
-  // Verbose output.
-  if(verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
+  return true;
 
 }
 
@@ -2878,22 +2838,24 @@ void QEDShower::prepare(int iSysIn, Event &event, bool isBelowHad) {
 
 // Update QED shower system(s) each time something has changed in event.
 
-void QEDShower::update(Event &event, int iSys) {
+void VinciaQED::update(Event &event, int iSys) {
 
   // Find index of the system.
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
-  for (int i = 0; i < (int)iSystems.size(); i++) {
-    if (iSystems[i] == iSys) {
-      // Rebuild systems.
-      emitSystems[i].buildSystem(event);
-      splitSystems[i].buildSystem(event);
-      convSystems[i].buildSystem(event);
-      break;
-    }
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin (iSys"+num2str(iSys,2)+")", DASHLEN);
   }
-  if (verbose >= debug) {
-    if (verbose >= superdebug) event.list();
-    printOut(__METHOD_NAME__, "end --------------");
+
+  if (emitSystems.find(iSys) != emitSystems.end())
+    emitSystems[iSys].buildSystem(event);
+  if (splitSystems.find(iSys) != splitSystems.end())
+    splitSystems[iSys].buildSystem(event);
+  if (convSystems.find(iSys) != convSystems.end())
+    convSystems[iSys].buildSystem(event);
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) {
+    event.list();
+    printOut(__METHOD_NAME__, "end", DASHLEN);
   }
 }
 
@@ -2901,72 +2863,52 @@ void QEDShower::update(Event &event, int iSys) {
 
 // Generate a trial scale.
 
-double QEDShower::generateTrialScale(Event &event, double q2Start) {
+double VinciaQED::q2Next(Event &event, double q2Start, double) {
 
   // Get a trial from every system.
-  q2Trial = 0;
-  isTrialEmit = false;
-  isTrialSplit = false;
-  isTrialConv = false;
+  qedTrialSysPtr = nullptr;
+  q2Trial = 0.;
+
+  // Sanity check.
   if (!doQED) return 0.0;
-  if (verbose >= louddebug) {
-    printOut(__METHOD_NAME__, "begin --------------");
-    if (verbose >= superdebug)
-      cout << " QEDShower::generateTrialScale() q2Start = " << q2Start
-           << " doEmit = " << bool2str(doEmission)
-           << " nSplitGamToLep = " << num2str(nGammaToLepton)
-           << " nSplitGamToQuark = " << num2str(nGammaToQuark)
-           << " doConv = " << bool2str(doConvertGamma) << endl;
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG) {
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    stringstream ss;
+    ss << "q2Start = " << q2Start
+       << " doEmit = " << bool2str(doEmission)
+       << " nSplitGamToLep = " << num2str(nGammaToLepton)
+       << " nSplitGamToQuark = " << num2str(nGammaToQuark)
+       << " doConv = " << bool2str(doConvertGamma);
+    printOut(__METHOD_NAME__,ss.str());
   }
 
   // Emissions.
-  if (doEmission) {
-    for (int i = 0; i < (int)emitSystems.size(); i++) {
-      double q2TrialEmitNew =
-        emitSystems[i].generateTrialScale(event, q2Start);
-      if (q2TrialEmitNew > q2Trial) {
-        q2Trial = q2TrialEmitNew;
-        iSysTrial = iSystems[i];
-        iSysIndexTrial = i;
-        isTrialEmit = true;
-        isTrialSplit = false;
-        isTrialConv = false;
-      }
-    }
+  if (doEmission && emitSystems.size() >= 1) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Generating QED emissions.");
+    q2NextSystem(emitSystems,event,q2Start);
   }
 
-  // Splittings.
-  if (nGammaToLepton + nGammaToQuark > 0) {
-    for (int i = 0; i < (int)splitSystems.size(); i++) {
-      double q2TrialSplitNew =
-        splitSystems[i].generateTrialScale(event, q2Start);
-      if (q2TrialSplitNew > q2Trial) {
-        q2Trial = q2TrialSplitNew;
-        iSysTrial = iSystems[i];
-        iSysIndexTrial = i;
-        isTrialEmit = false;
-        isTrialSplit = true;
-        isTrialConv = false;
-      }
-    }
+  // Splittings (no point trying if starting scale is below electron mass).
+  if (q2Start < pow2(2*particleDataPtr->m0(11))) splitSystems.clear();
+  else if (nGammaToLepton + nGammaToQuark > 0 && splitSystems.size() >= 1) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Generating QED splittings.");
+    q2NextSystem(splitSystems,event,q2Start);
   }
 
   // Conversions.
-  if (doConvertGamma) {
-    for (int i = 0; i < (int)convSystems.size(); i++) {
-      double q2TrialConvNew =
-        convSystems[i].generateTrialScale(event, q2Start);
-      if (q2TrialConvNew > q2Trial) {
-        q2Trial = q2TrialConvNew;
-        iSysTrial = iSystems[i];
-        iSysIndexTrial = i;
-        isTrialEmit = false;
-        isTrialSplit = false;
-        isTrialConv = true;
-      }
-    }
+  if (doConvertGamma && convSystems.size() >= 1) {
+    if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
+      "Generating QED conversions.");
+    q2NextSystem(convSystems,event,q2Start);
   }
-  if (verbose >= louddebug) printOut(__METHOD_NAME__, "end --------------");
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "end", DASHLEN);
   return q2Trial;
 
 }
@@ -2975,14 +2917,92 @@ double QEDShower::generateTrialScale(Event &event, double q2Start) {
 
 // Check the veto.
 
-bool QEDShower::checkVeto(Event &event) {
-  if (verbose >= debug) printOut(__METHOD_NAME__, "begin --------------");
-  bool doVeto = false;
-  if (isTrialEmit)  doVeto = emitSystems[iSysIndexTrial].checkVeto(event);
-  if (isTrialSplit) doVeto = splitSystems[iSysIndexTrial].checkVeto(event);
-  if (isTrialConv)  doVeto = convSystems[iSysIndexTrial].checkVeto(event);
-  if (verbose >= debug) printOut(__METHOD_NAME__, "end --------------");
-  return doVeto;
+bool VinciaQED::acceptTrial(Event &event) {
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__, "begin", DASHLEN);
+  bool accept = false;
+
+  // Delegate.
+  if (qedTrialSysPtr) accept = qedTrialSysPtr->acceptTrial(event);
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG) {
+    string result = (accept) ? "accept" : "reject";
+    printOut(__METHOD_NAME__, "end ("+result+")", DASHLEN);
+  }
+  return accept;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Update Event after QED shower branching
+
+void VinciaQED::updateEvent(Event &event) {
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"begin", DASHLEN);
+
+  // Delegate.
+  if (qedTrialSysPtr != nullptr) qedTrialSysPtr->updateEvent(event);
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
+
+  return;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Update PartonSystems after QED shower branching.
+
+void VinciaQED::updatePartonSystems(Event&) {
+
+  // Verbose output.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"begin", DASHLEN);
+
+  // Delegate.
+  if (qedTrialSysPtr!=nullptr) qedTrialSysPtr->updatePartonSystems();
+
+  // Done.
+  if (verbose >= VinciaConstants::DEBUG)
+    printOut(__METHOD_NAME__,"end", DASHLEN);
+  return;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Find Q2 next for a given system.
+
+template <class T> void VinciaQED::q2NextSystem(
+  map<int, T>& systemList, Event& event, double q2Start) {
+
+  // Loop over all QED systems.
+  if (verbose >= VinciaConstants::DEBUG) {
+    stringstream ss;
+    ss << "Looping over " << systemList.size()
+       << " QED systems (q2start=" << q2Start << ")";
+    printOut(__METHOD_NAME__, ss.str());
+  }
+  for(auto it = systemList.begin(); it != systemList.end(); ++it) {
+    QEDsystem* qedSysPtrNow = &(it->second);
+    double q2TrialNow = qedSysPtrNow->q2Next(event, q2Start);
+    // Highest trial so far?
+    if (q2TrialNow > q2Trial) {
+      // Save
+      q2Trial = q2TrialNow;
+      iSysTrial = it->first;
+      qedTrialSysPtr = qedSysPtrNow;
+    }
+  }
+
 }
 
 //==========================================================================

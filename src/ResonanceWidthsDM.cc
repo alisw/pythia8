@@ -1,5 +1,5 @@
 // ResonanceWidthsDM.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2020 Torbjorn Sjostrand.
+// Copyright (C) 2024 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -254,7 +254,8 @@ void ResonanceCha::setMassMix(){
 
   // Check if using the Nplet model
   // (do not over-ride DM mass if using s-channel mediators).
-  doDY = settingsPtr->flag("DM:qqbar2DY");
+  doDY = settingsPtr->flag("DM:qqbar2DY") &&
+    settingsPtr->mode("DM:DYtype") > 1;
   if (!doDY) return;
 
   // Locally stored properties and couplings.

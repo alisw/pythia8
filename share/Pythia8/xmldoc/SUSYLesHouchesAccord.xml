@@ -71,7 +71,7 @@ and <code>SUSYResonanceWidths</code> classes.
 As an aid for basic validation, some checks and ranges are imposed 
  on SLHA input during initialization, as follows: 
 <ul> 
-<li>Several parameters (<code>SLHA:keepSM</code>, <code>minMassSM</code>, 
+<li>Several parameters (<code>minMassSM</code>, 
 and <code>SLHA:allowUserOverride</code>) provide some safety against 
 unintentionally overwriting PYTHIA's Standard-Model information. 
 These parameters can be altered to hand over more or less control to the SLHA 
@@ -148,17 +148,6 @@ spectra, and (optionally) decay tables. Default <code>void</code>
 signals that no such file has been assigned. 
 </word> 
  
-<flag name="SLHA:keepSM" default="on"> 
-Some programs write SLHA output also for SM particles where normally 
-one would not want to have masses and decay modes changed unwittingly. 
-Therefore, by default, known SM particles are ignored in SLHA files. 
-To be more specific, particle data for identity codes in the ranges 
-1 - 24 and 81 - 999,999 are ignored. Notably this includes <ei>Z^0</ei>, 
-<ei>W^+-</ei> and <ei>t</ei>. The SM Higgs is modified by the SLHA input, 
-as is other codes in the range 25 - 80 and 1,000,000 - . If you 
-switch off this flag then also SM particles are modified by SLHA input. 
-</flag> 
- 
 <parm name="SLHA:minMassSM" default="100.0"> 
 This parameter provides an alternative possibility to ignore SLHA input 
 for all particles with identity codes below 1,000,000 (which mainly 
@@ -201,6 +190,12 @@ found. (To set a particle stable, you may either omit an SLHA
 use PYTHIA's internal <code>id:MayDecay</code> switch for that 
 particle, or you may include an SLHA <code>DECAY</code> table for it, 
 with the width set explicitly to zero.) 
+</flag> 
+ 
+<flag name="SLHA:allowOnlyOffShell" default="off"> 
+Switch to allow a decay table with only off-shell decays. By default, 
+internal checks require particles to have at least one on-shell decay 
+mode. 
 </flag> 
  
 <mode name="SLHA:meMode" default="100" min="100" max="103"> 
@@ -324,4 +319,4 @@ recompute the EW parameters as best suited for the application at hand.
  
 </chapter> 
  
-<!-- Copyright (C) 2020 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
