@@ -1,11 +1,12 @@
 // HadronLevel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the HadronLevel class.
 
 #include "Pythia8/HadronLevel.h"
+#include "Pythia8/StringInteractions.h"
 
 namespace Pythia8 {
 
@@ -53,13 +54,17 @@ const double HadronLevel::MTINY = 0.1;
 
 // Find settings. Initialize HadronLevel classes as required.
 
-bool HadronLevel::init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
+bool HadronLevel::init( TimeShowerPtr timesDecPtrIn, RHadronsPtr rHadronsPtrIn,
+  LundFragmentationPtr fragPtrIn, vector<FragmentationModelPtr>* fragPtrsIn,
   DecayHandlerPtr decayHandlePtr, vector<int> handledParticles,
   StringIntPtr stringInteractionsPtrIn, PartonVertexPtr partonVertexPtrIn,
   SigmaLowEnergy& sigmaLowEnergyIn, NucleonExcitations& nucleonExcitationsIn) {
 
   // Store other input pointers.
   rHadronsPtr     = rHadronsPtrIn;
+  timesDecPtr     = timesDecPtrIn;
+  fragPtr         = fragPtrIn;
+  fragPtrs        = fragPtrsIn;
 
   // Main flags.
   doHadronize     = flag("HadronLevel:Hadronize");
@@ -67,12 +72,7 @@ bool HadronLevel::init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
   doRescatter     = flag("HadronLevel:Rescatter");
   doBoseEinstein  = flag("HadronLevel:BoseEinstein");
   doDeuteronProd  = flag("HadronLevel:DeuteronProduction");
-
-  // Boundary mass between string and ministring handling.
-  mStringMin      = parm("HadronLevel:mStringMin");
-
-  // Try ministring fragmentation also if normal fails.
-  tryMiniAfterFailedFrag = flag("MiniStringFragmentation:tryAfterFailedFrag");
+  doQED           = flag("HadronLevel:QED");
 
   // For junction processing.
   pNormJunction   = parm("StringFragmentation:pNormJunction");
@@ -98,14 +98,20 @@ bool HadronLevel::init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
   // Initialize auxiliary fragmentation classes.
   flavSel.init();
   pTSel.init();
-  zSel.init();
+  // If initialisation of z selection fails, abort.
+  if ( !zSel.init() ) return false;
+
+  // Set the fragmentation weights container.
+  if (wvec("VariationFrag:list").size() != 0)
+    wgtsPtr = &infoPtr->weightContainerPtr->weightsFragmentation;
 
   // Initialize auxiliary administrative class.
   colConfig.init(infoPtr, &flavSel);
 
-  // Initialize string and ministring fragmentation.
-  stringFrag.init(&flavSel, &pTSel, &zSel, fragmentationModifierPtr);
-  ministringFrag.init(&flavSel, &pTSel, &zSel);
+  // Initialize the fragmentation pointers.
+  fragPtr->init(&flavSel, &pTSel, &zSel, fragmentationModifierPtr);
+  for (auto &ptr: *fragPtrs)
+    ptr->init(&flavSel, &pTSel, &zSel, fragmentationModifierPtr);
 
   // Initialize particle decays.
   decays.init(timesDecPtr, &flavSel, decayHandlePtr, handledParticles);
@@ -113,8 +119,8 @@ bool HadronLevel::init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
   // Initialize low-energy framework.
   sigmaLowEnergyPtr = &sigmaLowEnergyIn;
   nucleonExcitationsPtr = &nucleonExcitationsIn;
-  lowEnergyProcess.init( &flavSel, &stringFrag, &ministringFrag,
-    &sigmaLowEnergyIn, &nucleonExcitationsIn);
+  lowEnergyProcess.init( &flavSel, fragPtr->stringFragPtr,
+    fragPtr->ministringFragPtr, &sigmaLowEnergyIn, &nucleonExcitationsIn);
 
   // Initialize rescattering settings if applicable.
   if (doRescatter) {
@@ -148,11 +154,8 @@ bool HadronLevel::init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
   // Initialize DeuteronProduction.
   if (doDeuteronProd) deuteronProd.init();
 
-  // Initialize Hidden-Valley fragmentation, if necessary.
-  useHiddenValley = hiddenvalleyFrag.init();
-
   // Send flavour and z selection pointers to R-hadron machinery.
-  rHadronsPtr->fragPtrs( &flavSel, &zSel);
+  rHadronsPtr->init(&flavSel, &pTSel, &zSel);
 
   // Initialize the colour tracing class.
   colTrace.init(loggerPtr);
@@ -171,14 +174,12 @@ bool HadronLevel::init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
 
 bool HadronLevel::next( Event& event) {
 
-  // Clear the fragmentation weights.
-  infoPtr->weightContainerPtr->weightsFragmentation.clear();
+  // Clear the fragmentation weights and flavor counts.
+  if (wgtsPtr != nullptr) wgtsPtr->clear();
 
   // Store current event size to mark Parton Level content.
   event.savePartonLevelSize();
-
-  // Do Hidden-Valley fragmentation, if necessary and possible.
-  if (useHiddenValley && !hiddenvalleyFrag.fragment(event)) return false;
+  int sizePartonLevel = event.size();
 
   // Colour-octet onia states must be decayed to singlet + gluon.
   if (!decayOctetOnia(event)) return false;
@@ -207,10 +208,6 @@ bool HadronLevel::next( Event& event) {
       // Find the complete colour singlet configuration of the event.
       // Keep junctions if we do shoving.
       if (!findSinglets( event, (stringRepulsionPtr != nullptr) ))
-        return false;
-
-      // Fragment off R-hadrons, if necessary.
-      if (allowRH && !rHadronsPtr->produce( colConfig, event))
         return false;
 
       // Save list with rapidity pairs of the different string pieces.
@@ -244,6 +241,11 @@ bool HadronLevel::next( Event& event) {
       // MiniStringFragmentation needs to know if the event is diffractive.
       bool isDiff = infoPtr->isDiffractiveA() || infoPtr->isDiffractiveB();
 
+      // Fragment models that do not use the color systems,
+      // e.g. HiddenValleyFragmentation and RHadrons.
+      for (auto &ptr: *fragPtrs)
+        if (!ptr->fragment(-1, colConfig, event, isDiff)) return false;
+
       // Process all colour singlet (sub)systems.
       for (int iSub = 0; iSub < colConfig.size(); ++iSub) {
 
@@ -252,31 +254,19 @@ bool HadronLevel::next( Event& event) {
         int nBefFrag = event.size();
 
         // String fragmentation of each colour singlet (sub)system.
-        // If fails optionally try ministring fragmentation.
-        if ( colConfig[iSub].massExcess > mStringMin ) {
-          if (!stringFrag.fragment( iSub, colConfig, event)) {
-            if (!tryMiniAfterFailedFrag) return false;
-            loggerPtr->ERROR_MSG("string fragmentation failed, "
-              "trying ministring fragmetation instead");
-            if (!ministringFrag.fragment(iSub, colConfig, event, isDiff)) {
-              loggerPtr->ERROR_MSG("also ministring fragmentation failed "
-                "after failed normal fragmentation");
-              return false;
-            }
-          }
-
-        // Low-mass string treated separately.
-        } else {
-          if (!ministringFrag.fragment( iSub, colConfig, event, isDiff)) {
-            loggerPtr->ERROR_MSG("ministring fragmentation failed");
-              return false;
-          }
-        }
+        for (auto &ptr: *fragPtrs)
+          if (!ptr->fragment(iSub, colConfig, event, isDiff)) return false;
 
         // Displace hadron vertices transversely from parton MPI + shower.
         if (doPartonVertex) partonVertexPtr->vertexHadrons( nBefFrag, event);
       }
     }
+
+    // Calculate the in-situ flavor weights.
+    if (wgtsPtr != nullptr)
+      for (auto &parms : wgtsPtr->weightParms[WeightsFragmentation::Flav])
+        wgtsPtr->reweightValueByIndex(
+          parms.second, wgtsPtr->flavWeight(parms.first));
 
     // The event can be vetoed here by the user.
     if (userHooksPtr && userHooksPtr->canVetoAfterHadronization() &&
@@ -317,6 +307,19 @@ bool HadronLevel::next( Event& event) {
   // Normally done first time around, but sometimes not.
   // (e.g. Upsilon decay can cause create unstable hadrons).
   } while (decaysCausedHadronization);
+
+  // Allow for QED radiation to be added to the full post-hadronization system,
+  // after particle decays.
+  // Up to the shower to decide if everything was already handled during each
+  // particle decay, and/or if there is more to do now (e.g., interleaved QED
+  // radiation may be added only after all decay chains have been determined).
+  // Note: leptons from the perturbative stage were already showered during
+  // the showerQEDafterRemnants stage in PartonLevel and not included here.
+  if (doQED) {
+    // No 4th argument means shower must determine the starting scale itself.
+    timesDecPtr->showerQEDafterDecays( sizePartonLevel + 1, event.size(),
+      event );
+  }
 
   if (userHooksPtr && !userHooksPtr->onEndHadronLevel(*this, event)) {
     loggerPtr->ERROR_MSG("user event onEndHadronLevel failed");

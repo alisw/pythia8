@@ -1,0 +1,148 @@
+<html><head><title>main509</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main509</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main509.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#hidden+valley">Hidden&nbsp;Valley</a>
+
+// Test of Hidden Valley production in a few different channels.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Some main settings. Many other options exist; see examples further down.
+
+  // Process type: 1 = Fv pair, 2 = Zv portal to qv, 3 = Higgs portal to gv.
+  int  procType = 1;
+
+  // Details of simulation: QCD/QED, gammav massive or not, simplifications.
+  bool doHVQCD     = true;
+  bool brokenQED   = false;
+  bool onlyFSR     = false;
+  bool onlyHVinFSR = false;
+
+  // Recover default recoil strategy behaviour in resonance decays (like Dv)
+  // prior to Pythia 8.314. Affects Hidden Valley activity by some amount.
+  bool oldRecoil   = false;
+
+  // Number of events.
+  int nEvent = 1000;
+
+  // Begin to set up generator: beams.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+
+  // Production process via Fv Fvbar.
+  if (procType == 1) {
+    pythia.readString(&quot;HiddenValley:gg2DvDvbar = on&quot;);
+    pythia.readString(&quot;4900001:m0 = 1000.&quot;);
+
+  // Production process via Zv.
+  } else if (procType == 2) {
+    pythia.readString(&quot;HiddenValley:ffbar2Zv = on&quot;);
+    pythia.readString(&quot;4900023:m0   = 1000.&quot;);
+    pythia.readString(&quot;4900023:mMin =  500.&quot;);
+    pythia.readString(&quot;4900023:mMax = 1500.&quot;);
+    pythia.readString(&quot;4900023:onMode = off&quot;);
+    pythia.readString(&quot;4900023:onIfAny = 4900101 4900102 4900103&quot;);
+
+  // Production process via H, and decay to gv gv or gammav gammav.
+  } else {
+    pythia.readString(&quot;HiggsSM:all = on&quot;);
+    pythia.readString(&quot;25:onMode = 0&quot;);
+    if (doHVQCD)
+      pythia.readString(&quot;25:addChannel = 1 0.1 100 4900021 4900021&quot;);
+    else
+      pythia.readString(&quot;25:addChannel = 1 0.1 100 4900022 4900022&quot;);
+  }
+
+  // Hidden-Valley parton shower.
+  pythia.readString(&quot;Hiddenvalley:FSR = on&quot;);
+  if (doHVQCD) pythia.readString(&quot;Hiddenvalley:alphaOrder = 1&quot;);
+  pythia.readString(&quot;HiddenValley:setLambda = on&quot;);
+  pythia.readString(&quot;Hiddenvalley:Lambda = 4.&quot;);
+  pythia.readString(&quot;HiddenValley:pTminFSR = 6.&quot;);
+
+  // Fragmentation process of qv to HV-mesons.
+  if (doHVQCD) pythia.readString(&quot;HiddenValley:Ngauge = 3&quot;);
+  else         pythia.readString(&quot;HiddenValley:Ngauge = 1&quot;);
+  pythia.readString(&quot;HiddenValley:nFlav = 3&quot;);
+  pythia.readString(&quot;HiddenValley:fragment = on&quot;);
+
+  // Mass of a Hidden-Valley photon.
+  if (brokenQED) pythia.readString(&quot;4900022:m0 = 1.&quot;);
+  else           pythia.readString(&quot;4900022:mayDecay = off&quot;);
+
+  // Switch off unwanted parts for HV-only simulation.
+  if (onlyFSR) {
+    pythia.readString(&quot;PartonLevel:ISR = off&quot;);
+    pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+    pythia.readString(&quot;HadronLevel:all = off&quot;);
+  }
+  if (onlyHVinFSR) {
+    pythia.readString(&quot;TimeShower:QCDshower = off&quot;);
+    pythia.readString(&quot;TimeShower:QEDshowerByQ = off&quot;);
+    pythia.readString(&quot;TimeShower:QEDshowerByL = off&quot;);
+    pythia.readString(&quot;TimeShower:QEDshowerByGamma = off&quot;);
+  }
+
+  // Revert to old (prior t0 8.314) shower recoil handling.
+  if (oldRecoil) pythia.readString(&quot;TimeShower:recoilStrategyRF = 1&quot;);
+
+  // Restrict output.
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Book histograms.
+  Hist nGluonv( &quot;number of HV gluons&quot;,  100, -0.5, 99.5);
+  Hist nGammav( &quot;number of HV gammas&quot;,  100, -0.5, 99.5);
+  Hist nHadronv(&quot;number of HV hadrons&quot;, 100, -0.5, 99.5);
+
+   // Begin event loop. Generate event. Extra HV colour output.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+    if (iEvent == 0 &amp;&amp; (pythia.process.hasHVcols() || event.hasHVcols())) {
+      pythia.process.listHVcols();
+      event.listHVcols();
+    }
+
+    // Number of &quot;final&quot; gv, gammav and hadronv in current event.
+    int nGluonvNow  = 0;
+    int nGammavNow  = 0;
+    int nHadronvNow = 0;
+    for (int i = 0; i &lt; event.size(); ++i) {
+      int idNow = event[i].idAbs();
+      int idDau = event[ event[i].daughter1() ].idAbs();
+      if      (idNow == 4900021 &amp;&amp; idDau != 4900021) ++nGluonvNow;
+      else if (idNow == 4900022 &amp;&amp; idDau != 4900022) ++nGammavNow;
+      else if (idNow &gt;  4900110) ++nHadronvNow;
+    }
+    nGluonv.fill( nGluonvNow);
+    nGammav.fill( nGammavNow);
+    nHadronv.fill( nHadronvNow);
+
+  // End of event loop. Print statistics and histograms.
+  }
+  pythia.stat();
+  cout &lt;&lt; nGluonv &lt;&lt; nGammav &lt;&lt; nHadronv;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

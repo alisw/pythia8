@@ -36,20 +36,44 @@ but with a separate set of parameters. Relevant parameters for it
 are closely related to the scenario chosen, and therefore are 
 documented on the same page. 
  
-<h3>Fragmentation functions</h3> 
- 
+<p/> 
 The <code>StringZ</code> class handles the choice of longitudinal 
-lightcone fraction <ei>z</ei> according to one of two possible 
-shape sets. 
+lightcone fraction <ei>z</ei>. 
+<ul> 
+<li>For light quark flavours, only the Lund Symmetric Fragmentation 
+Function (or Lund FF for short) is available in PYTHIA, with several 
+different options for parameterization and parameter values. See the 
+section on <a href="#lundFF">light quark flavours</a> below.</li> 
+<li>For massive quarks (and exotic coloured particles), the Bowler 
+modification to the Lund FF is the default choice, but the 
+Peterson/SLAC fragmentation function is also available as an 
+alternative. See the section on <a href="#massiveQuarks">massive quark 
+flavours</a> below.</li> 
+</ul> 
  
 <p/> 
-The Lund symmetric fragmentation function <ref>And83</ref> is the 
-only alternative for light quarks. It is of the form 
+The <code>StringPT</code> class handles the choice of fragmentation 
+<ei>pT</ei>. Two models are available in PYTHIA: Gaussian (default) 
+and thermal, with switches and parameters documented in the section on 
+<a href="#fragmentationPT">Fragmentation pT</a> below. 
+ 
+<p/> 
+Several further options and parameters, e.g., for the joining of jets 
+and for the handling of a number of special systems such as string 
+systems with low invariant masses and string junctions, are also 
+documented on this page. 
+ 
+<a name="lundFF"></a> 
+<h3>The fragmentation function for light quark flavours</h3> 
+ 
+<p/> 
+The Lund symmetric fragmentation function <ref>And83</ref> is the only 
+option for light quark (and diquark) flavours and is of the form 
 <eq> 
     f(z) = (1/z) * (1-z)^a * exp(-b m_T^2 / z) 
 </eq> 
 with the two main free parameters <ei>a</ei> and <ei>b</ei> to be 
-tuned to data. They are stored in 
+tuned to data. They are set with the following two parameters. 
  
 <parm name="StringZ:aLund" default="0.68" min="0.0" max="2.0"> 
 The <ei>a</ei> parameter of the Lund symmetric fragmentation function. 
@@ -57,40 +81,6 @@ The <ei>a</ei> parameter of the Lund symmetric fragmentation function.
  
 <parm name="StringZ:bLund" default="0.98" min="0.2" max="2.0"> 
 The <ei>b</ei> parameter of the Lund symmetric fragmentation function. 
-</parm> 
- 
-<p/> 
-In the context of fits to experimental data, note that the <ei>a</ei> 
-and <ei>b</ei> parameters typically exhibit a very high degree of 
-correlation. An option for choosing an alternative parameterisation 
-is therefore provided, whereby the user specifies the desired average 
-value of the fragmentation function for primary rho mesons instead of 
-the <ei>b</ei> parameter. The <ei>a</ei> parameter should still be 
-given by <code>StringZ:aLund</code> as usual. The rho has been chosen 
-as reference since its mass is near the average of the primary hadron 
-production, while pions come to dominate only after secondary decays. 
-This option can be enabled via the following flag: 
- 
-<flag name="StringZ:deriveBLund" default="off"> 
-When set to <code>on</code>, the <ei>b</ei> parameter is treated as a 
-derived quantity; i.e., the value of <code>StringZ:bLund</code> is 
-ignored in favour of the <code>StringZ:avgZLund</code> parameter 
-below. (The <code>StringZ:bLund</code> parameter is then also reset to 
-the derived value so that it can be queried after initialisation, if 
-desired.) 
-</flag> 
- 
-<parm name="StringZ:avgZLund" default="0.55" min="0.30" max="0.70"> 
-When <code>StringZ:deriveBLund</code> is set to <code>on</code>, 
-this parameter specifies the average of the fragmentation function 
-for primary rho mesons, evaluated at 
-<ei>mT^2 = mRho^2 + 2<code>StringPT:sigma</code>^2</ei>. 
-The appropriate <ei>b</ei>-parameter value is computed automatically 
-during initialisation and the <code>StringZ:bLund</code> parameter is 
-updated accordingly. Note that the derived value is allowed to exceed 
-the nominal limits given for <code>bLund</code> above. This is intended 
-to allow fits to see the functional behaviour even outside the nominal 
-limits. 
 </parm> 
  
 <p/> 
@@ -102,9 +92,11 @@ the shape is
 </eq> 
 This is only implemented for s quarks and diquarks relative to normal quarks: 
  
-<parm name="StringZ:aExtraSQuark" default="0.0" min="0.0" max="2.0"> 
-allows a larger <ei>a</ei> for s quarks, with total 
-<ei>a = aLund + aExtraSQuark</ei>. 
+<parm name="StringZ:aExtraSQuark" default="0.0" min="-1.0" max="2.0"> 
+allows a different <ei>a</ei> for s quarks, with total 
+<ei>a = aLund + aExtraSQuark</ei>. For negative values, 
+note that the resulting <ei>a</ei> for strange quarks is not allowed 
+to be smaller than zero. 
 </parm> 
  
 <parm name="StringZ:aExtraDiquark" default="0.97" min="0.0" max="2.0"> 
@@ -112,15 +104,135 @@ allows a larger <ei>a</ei> for diquarks, with total
 <ei>a = aLund + aExtraDiquark</ei>. 
 </parm> 
  
+<flag name="StringZ:useOldAExtra" default="off"> 
+flag which, when on, reproduces an old incorrect behavior of updating 
+<code>aExtra</code>. This bug was introduced in the transition from 
+Pythia 6 to Pythia 8, and fixed in Pythia 8.315, when also this flag 
+was introduced. Inadvertently, the type of the old and new strange quark 
+or diquark was flipped in the <ei>(1-z)^a</ei> factor when updating 
+<code>aExtra</code> between string breaks. This flag has now been 
+set to <code>on</code> for all past tunes distributed with Pythia, 
+to ensure that these tunes still are valid, since they were tuned 
+with this old behavior. All future tunes should be made with 
+this flag set to <code>off</code> (the default value). 
+<note>Note:</note> If you are using an old custom tune file with 
+Pythia 8.315 or beyond, you should include 
+<code>StringZ:useOldAExtra = on</code> to ensure that such a tune 
+remains valid. Conversely, if you are using an old tune but want to 
+study how it would be impacted by a correct <ei>z</ei> selection, 
+you need to set <code>StringZ:useOldAExtra = off</code> to 
+annul the change from the default <code>off</code> to <code>on</code> 
+when the tune is read. 
+</flag> 
+ 
 <p/> 
-Finally, the Bowler modification <ref>Bow81</ref> introduces an extra 
+In the context of fits to experimental data, the <ei>a</ei> 
+and <ei>b</ei> parameters typically exhibit a very high degree of 
+correlation. An option for choosing alternative parameterizations of 
+the Lund FF is therefore provided, whereby the user can specify a 
+desired mean of the fragmentation function instead of the 
+<ei>b</ei> parameter. Optionally, the <ei>a</ei> 
+parameter can also be derived, from a user-specified root-mean-square 
+(RMS) width of the FF. And, finally, the 
+<ei>aExtraDiquark</ei> and <ei>aExtraSQuark</ei> parameters can also 
+be recast in terms of multiplicative (rather than additive) 
+parameters. These options can be enabled via the following switch: 
+ 
+<modepick name="StringZ:deriveLundPars" default="0" min="0" max="4"> 
+<option value="0">The standard parameterization of the Lund FF is 
+used, in terms of <code>aLund</code>, <code>bLund</code>, 
+<code>aExtraDiquark</code>, and <code>aExtraSQuark</code>. 
+</option> 
+<option value="1">The <code>avgZLund</code> parameter below is 
+used. The <code>bLund</code> parameter is treated as a derived 
+quantity which is determined during program initialization. 
+</option> 
+<option value="2">The <code>avgZLund</code> and 
+<code>rmsZLund</code> parameters below are used. Both 
+<code>aLund</code> and <code>bLund</code> are treated 
+as derived quantities which are determined during program initialization. 
+</option> 
+<option value="3">As for option <code>2</code> but also the 
+<code>facALundDiquark</code> parameter below is used instead of 
+<code>aExtraDiquark</code>. 
+</option> 
+<option value="4">As for option <code>3</code> but also the 
+<code>facALundSQuark</code> parameter below is used instead of 
+<code>aExtraSQuark</code>. 
+</option> 
+</modepick> 
+with parameters: 
+ 
+<parm name="StringZ:avgZLund" default="0.550" min="0.375" max="0.615"> 
+For <code>StringZ:deriveLundPars >= 1</code>, this parameter specifies 
+the average of the fragmentation function for primary rho mesons, 
+evaluated at <ei>mT^2 = mRho^2 + 2<code>StringPT:sigma</code>^2</ei>. 
+The appropriate <ei>b</ei>-parameter value is computed automatically 
+during initialization and the <code>StringZ:bLund</code> parameter is 
+updated accordingly. Note that the derived value is allowed to exceed 
+the nominal limits given for <code>bLund</code> above. This is 
+intended to allow fits to see the functional behaviour even outside 
+the nominal limits. 
+</parm> 
+ 
+<parm name="StringZ:rmsZLund" default="0.197" min="0.165" max="0.225"> 
+For <code>StringZ:deriveLundPars >= 2</code>, this parameter specifies 
+the width of the fragmentation function for primary rho mesons, in 
+terms of the root-mean-square deviation (RMSD), <ei>rmsZ = sqrt( 
+&lt;z^2&gt; - &lt;z&gt;^2 )</ei>, of the fragmentation function for 
+primary rho mesons. The appropriate <ei>a</ei>-parameter value is 
+computed automatically during initialization and the 
+<code>StringZ:aLund</code> parameter is updated accordingly. Note that 
+the derived value is allowed to exceed the nominal limits given for 
+<code>aLund</code> above. This is intended to allow fits to see the 
+functional behaviour even outside the nominal limits. Note however 
+that the initialization step will produce an error if a value for 
+<code>aLund</code> less than zero would be required for the requested 
+combination of <code>avgZLund</code> and <code>rmsZLund</code>. The 
+The <code>min</code> and <code>max</code> values for the 
+<code>avgZLund</code> and <code>rmsZLund</code> parameters have been 
+chosen such that this should not happen when these parameters are 
+chosen inside their nominal ranges. 
+</parm> 
+ 
+<parm name="StringZ:facALundDiquark" default="2.430" min="1.000" max="4.000"> 
+For <code>StringZ:deriveLundPars >= 3</code>, this parameter specifies 
+the ratio of the Lund <ei>a</ei> parameter for diquarks to that for 
+quarks. The appropriate <ei>aExtraDiquark</ei>-parameter value is 
+computed automatically during initialization and the 
+<code>StringZ:aExtraDiquark</code> parameter is updated 
+accordingly. Note that the derived value is allowed to exceed the 
+nominal limits given for <code>aExtraDiquark</code> above. This is 
+intended to allow fits to see the functional behaviour even outside 
+the nominal limits. 
+</parm> 
+ 
+<parm name="StringZ:facALundSQuark" default="1.0" min="0.0" max="2.0"> 
+For <code>StringZ:deriveLundPars = 4</code>, this parameter specifies 
+the ratio of the Lund <ei>a</ei> parameter for strange quarks to that 
+for up and down quarks. The appropriate 
+<ei>aExtraSQuark</ei>-parameter value is computed automatically during 
+initialization and the <code>StringZ:aExtraSQuark</code> parameter is 
+updated accordingly. Note that the derived value is allowed to exceed 
+the nominal limits given for <code>aExtraSQuark</code> above. This is 
+intended to allow fits to see the functional behaviour even outside 
+the nominal limits. 
+</parm> 
+ 
+<a name="massiveQuarks"></a> 
+<h3>Fragmentation functions for massive quarks and exotics</h3> 
+ 
+<h4>The Lund-Bowler FF for massive quark flavours</h4> 
+<p/> 
+The Bowler modification <ref>Bow81</ref> introduces an extra 
 factor 
 <eq> 
     1/z^{r_Q * b * m_Q^2} 
 </eq> 
-for heavy quarks. To keep some flexibility, a multiplicative factor 
-<ei>r_Q</ei> is introduced, which ought to be unity (provided that 
-quark masses were uniquely defined) but can be set in 
+on the Lund FF for heavy quarks (and/or exotic coloured particles). 
+To keep some flexibility, a multiplicative factor <ei>r_Q</ei> is 
+introduced, which ought to be unity (provided that quark masses were 
+uniquely defined) but can be set in 
  
 <parm name="StringZ:rFactC" default="1.32" min="0.0" max="2.0"> 
 <ei>r_c</ei>, i.e. the above parameter for <ei>c</ei> quarks. 
@@ -135,6 +247,7 @@ quark masses were uniquely defined) but can be set in
 or in general any new coloured particle long-lived enough to hadronize. 
 </parm> 
  
+<h4>Options for non-universal bLund parameters for massive quark flavours</h4> 
 <p/> 
 Within the string framework, the <ei>b</ei> parameter is universal, 
 i.e. common for all flavours. Nevertheless, for fits to experimental 
@@ -156,7 +269,8 @@ use the above nonstandard Lund ansatz for <ei>b</ei> quarks.
 </flag> 
  
 <flag name="StringZ:useNonstandardH" default="off"> 
-use the above nonstandard Lund ansatz for hypothetical heavier quarks. 
+use the above nonstandard Lund ansatz for hypothetical heavier 
+coloured particles. 
 </flag> 
  
 <parm name="StringZ:aNonstandardC" default="0.3" min="0.0" max="2.0"> 
@@ -171,7 +285,7 @@ The <ei>a</ei> parameter in the nonstandard Lund ansatz for
  
 <parm name="StringZ:aNonstandardH" default="0.3" min="0.0" max="2.0"> 
 The <ei>a</ei> parameter in the nonstandard Lund ansatz for 
-hypothetical heavier quarks. 
+hypothetical heavier coloured particles. 
 </parm> 
  
 <parm name="StringZ:bNonstandardC" default="0.8" min="0.2" max="2.0"> 
@@ -186,9 +300,10 @@ The <ei>b</ei> parameter in the nonstandard Lund ansatz for
  
 <parm name="StringZ:bNonstandardH" default="0.8" min="0.2" max="2.0"> 
 The <ei>b</ei> parameter in the nonstandard Lund ansatz for 
-hypothetical heavier quarks. 
+hypothetical heavier coloured particles. 
 </parm> 
  
+<h4>The Peterson/SLAC FF for massive quark flavours</h4> 
 <p/> 
 As another nonstandard alternative, it is possible to switch over to the 
 Peterson/SLAC formula <ref>Pet83</ref> 
@@ -206,7 +321,7 @@ use Peterson for <ei>b</ei> quarks.
 </flag> 
  
 <flag name="StringZ:usePetersonH" default="off"> 
-use Peterson for hypothetical heavier quarks. 
+use Peterson for hypothetical heavier coloured particles. 
 </flag> 
  
 <p/> 
@@ -222,22 +337,22 @@ When switched on, the corresponding epsilon values are chosen to be
  
 <parm name="StringZ:epsilonH" default="0.005" min="0.0001" max="0.25"> 
 <ei>epsilon_h</ei>, i.e. the above parameter for hypothetical heavier 
-quarks, normalized to the case where <ei>m_h = m_b</ei>. The actually 
-used parameter is then <ei>epsilon = epsilon_h * (m_b^2 / m_h^2)</ei>. 
-This allows a sensible scaling to a particle with an unknown higher 
-mass without the need for a user intervention. 
+(and exotic) flavours, normalized to the case where <ei>m_h = 
+m_b</ei>. The actually  used parameter is then <ei>epsilon = epsilon_h 
+* (m_b^2 / m_h^2)</ei>. This allows a sensible scaling to a particle 
+with an unknown higher mass without the need for a user intervention. 
 </parm> 
  
+<a name="fragmentationPT"></a> 
 <h3>Fragmentation <ei>pT</ei></h3> 
  
-The <code>StringPT</code> class handles the choice of fragmentation 
-<ei>pT</ei>. At each string breaking the quark and antiquark of the pair 
+ At each string breaking the quark and antiquark of the produced pair 
 are supposed to receive opposite and compensating <ei>pT</ei> kicks. 
 How they are distributed depends on the following flag: 
  
 <flag name="StringPT:thermalModel" default="off"> 
 If switched off the quark <ei>pT</ei> is generated according to 
-the traditional Gaussion distribution in <ei>p_x</ei> and <ei>p_y</ei> 
+the traditional Gaussian distribution in <ei>p_x</ei> and <ei>p_y</ei> 
 separately. If switched on, the new "thermal model" <ref>Fis16</ref> 
 is instead used, wherein the quark <ei>pT</ei> is generated such that the 
 resulting hadron receives a <ei>pT</ei> according to an exponential 
@@ -324,7 +439,7 @@ the temperature <ei>T</ei> in the fragmentation process.
 <parm name="StringPT:tempPreFactor" default="1.21" min="1.0" max="1.5"> 
 Temperature prefactor for strange quarks and diquarks. Default is 
 determined to have the same average <ei>pT</ei> in <ei>u/d &rarr; s</ei> 
-and <ei>s &rarr; u/d</ei> transistions. 
+and <ei>s &rarr; u/d</ei> transitions. 
 </parm> 
  
 <h3>Jet joining procedure</h3> 
@@ -332,8 +447,8 @@ and <ei>s &rarr; u/d</ei> transistions.
 String fragmentation is carried out iteratively from both string ends 
 inwards, which means that the two chains of hadrons have to be joined up 
 somewhere in the middle of the event. This joining is described by 
-parameters that in principle follows from the standard fragmentation 
-parameters, but in a way too complicated to parametrize. The dependence 
+parameters that in principle follow from the standard fragmentation 
+parameters, but in a way too complicated to parameterize. The dependence 
 is rather mild, however, so for a sensible range of variation the 
 parameters in this section should not be touched. 
  
@@ -448,16 +563,17 @@ failed fragmentation (hence throwing the whole event away may skew the
 multiplicity distribution). 
 </flag> 
  
-<h3>Junction treatment</h3> 
+<h3>String junctions</h3> 
  
 A junction topology corresponds to an Y arrangement of strings 
 i.e. where three string pieces have to be joined up in a junction. 
 Such topologies can arise if several valence quarks are kicked out 
 from a proton beam, or in baryon-number-violating SUSY decays. 
-Special attention is necessary to handle the region just around 
-the junction, where the baryon number topologically is located. 
-The junction fragmentation scheme is described in <ref>Sjo03</ref>. 
-The parameters in this section should not be touched except by experts. 
+Special attention is necessary to handle the region just around the 
+junction, where the baryon number topologically is located. The 
+junction fragmentation scheme is described in <ref>Sjo03</ref> and 
+<ref>Alt24</ref>. The parameters in this section should not be 
+touched except by experts. 
  
 <parm name="StringFragmentation:pNormJunction" default="2.0" min="0.5" 
 max="10"> 
@@ -490,48 +606,21 @@ and the leftover momentum of the first two treated legs falls below
 junction rest frame). 
 </parm> 
  
-<flag name="StringFragmentation:pearlFragmentation" default="off"> 
-Optionally allow to use a gluon approximation for pearl-on-a-string 
-junction topologies. Pearl-on-a-string is a junction topology such 
-that the junction gets stuck to a soft endpoint parton. In these cases 
-for light quarks, the propagation of the <ei>pT</ei> is similar to a 
-soft gluon kink, and can be fragmented by approximating the pearl as a 
-gluon. 
-</flag> 
- 
-<parm name="StringFragmentation:pearlProbFactor" default="4" min="1"> 
-The gluon approximation for pearl-on-a-string cases is chosen 
-probabilistically. This parameter, <ei>f_pearl</ei>, modifies the 
-probability distribution used and has the general form of 
-<eq> 
-    prob(x) = 1 / (1 + (4<ei>&Delta;v</ei>)<sup>f<sub>pearl</sub></sup>). 
-</eq> 
-Here <ei>&Delta;v</ei>, which varies between 0 and 1/2, is a measure 
-of the total deceleration the pearl (ie the soft parton) experiences 
-over a time characteristic of hadronization (here given by the 
-<code>pNormJunction</code> parameter above). 
-</parm> 
- 
-<flag name="StringFragmentation:strangeJunctions" default="off"> 
+<flag name="StringFragmentation:doStrangeJunctions" default="off"> 
 Switching this parameter on allows strangeness enhancement for string breaks 
 next to a junction. 
 </flag> 
  
-<parm name="StringFragmentation:strangeJuncFactor" default="0.5" min="0." 
+<parm name="StringFragmentation:enhanceStrangeJunction" default="0.5" min="0." 
       max="1.0"> 
-This parameter, <ei>s_J</ei>, scales how much strangeness enhancement 
-around a junction by modifying the probability 
+This parameter, <ei>s<sub>J</sub></ei>, scales how much strangeness 
+enhancement around a junction by modifying the probability 
 <code>StringFlav:probStoUD</code>, 
 <eq> 
     P'(s:u/d) = P(s:u/d)<sup>(1 - s_J)</sup>. 
 </eq> 
 </parm> 
  
-<parm name="StringFragmentation:strangePearlFactor" default="0.5" min="0." 
-      max="1.0"> 
-Allow a different strangeness enhancement around a pearl junction. 
-</parm> 
- 
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

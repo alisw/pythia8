@@ -1,0 +1,53 @@
+! Reset the relevant settings for a pp tune to their defaults.
+
+! PDF set.
+PDF:pSet                            = DEFAULT
+
+! Hard matrix elements alpha_s value.
+SigmaProcess:alphaSvalue            = DEFAULT
+
+! Diffraction: cross sections and mass distributions.
+SigmaTotal:zeroAXB                  = DEFAULT
+SigmaDiffractive:dampen             = DEFAULT
+SigmaDiffractive:maxXB              = DEFAULT
+SigmaDiffractive:maxAX              = DEFAULT
+SigmaDiffractive:maxXX              = DEFAULT
+Diffraction:largeMassSuppress       = DEFAULT
+
+! FSR: dipoles to beam, spin correlations.
+TimeShower:dampenBeamRecoil         = DEFAULT
+TimeShower:phiPolAsym               = DEFAULT
+
+! ISR: strong coupling, IR cutoff, coherence and spin correlations.
+SpaceShower:alphaSvalue             = DEFAULT
+SpaceShower:alphaSorder             = DEFAULT
+SpaceShower:alphaSuseCMW            = DEFAULT
+SpaceShower:samePTasMPI             = DEFAULT
+SpaceShower:pT0Ref                  = DEFAULT
+SpaceShower:ecmRef                  = DEFAULT
+SpaceShower:ecmPow                  = DEFAULT
+SpaceShower:pTmaxFudge              = DEFAULT
+SpaceShower:pTdampFudge             = DEFAULT
+SpaceShower:rapidityOrder           = DEFAULT
+SpaceShower:rapidityOrderMPI        = DEFAULT
+SpaceShower:phiPolAsym              = DEFAULT
+SpaceShower:phiIntAsym              = DEFAULT
+
+! MPI: strong coupling, IR regularization, energy scaling.
+MultipartonInteractions:alphaSvalue = DEFAULT
+MultipartonInteractions:pT0Ref      = DEFAULT
+MultipartonInteractions:ecmRef      = DEFAULT
+MultipartonInteractions:ecmPow      = DEFAULT
+MultipartonInteractions:bProfile    = DEFAULT
+MultipartonInteractions:expPow      = DEFAULT
+MultipartonInteractions:a1          = DEFAULT
+
+! Beam remnant parameters.
+BeamRemnants:primordialKTsoft       = DEFAULT
+BeamRemnants:primordialKThard       = DEFAULT
+BeamRemnants:halfScaleForKT         = DEFAULT
+BeamRemnants:halfMassForKT          = DEFAULT
+
+! Colour reconnection parameters.
+ColourReconnection:mode             = DEFAULT
+ColourReconnection:range            = DEFAULT

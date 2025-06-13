@@ -137,7 +137,7 @@ in addition to the global <code>pTmax</code>. When not set the scale
 defaults to 0, meaning no radiation for that parton. 
  
 <p/> 
-The sample program in <code>main21.cc</code> illustrates how you can work 
+The sample program in <code>main234.cc</code> illustrates how you can work 
 with this facility, both for simple parton configurations and for more 
 complicated ones with junctions, and also how to force a shower. 
  
@@ -258,10 +258,10 @@ particles of the species and restore a positive status code with
 <code>event[i].statusPos()</code>. 
  
 <p/> 
-The <code>main15.cc</code> program illustrates both these methods, 
+The <code>main361.cc</code> program illustrates both these methods, 
 i.e. either repeated hadronization or repeated decay of PYTHIA 
 events. 
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,0 +1,18 @@
+! main111.cmnd.
+! This file contains commands to be read in for a Pythia8 run.
+! Lines not beginning with a letter or digit are comments.
+! Names are case-insensitive -  but spellings-sensitive!
+
+! 1) Settings used in the main program.
+Main:numberOfEvents = 10000        ! number of events to generate
+
+! 2) Settings related to the incoming beams
+Beams:idA = -11                    ! first beam e+
+Beams:idB = 11                     ! second beam e-
+Beams:eCM = 91.2                   ! CM energy of collision
+PDF:lepton = off                   ! e+- assumed pointlike, so no radiation
+
+! 3) Settings related
+WeakSingleBoson:ffbar2gmZ = on     ! (gamma*/) Z0 production
+23:onMode = off                    ! switch off all Z0 decay channels
+23:onIfAny = 1 2 3 4 5             ! switch back on Z0 goes to d/u/s/c/b

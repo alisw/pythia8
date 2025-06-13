@@ -381,7 +381,7 @@ available in <code>include/Pythia8Plugins</code> provides a convenient
 way to select a specific final state from resonance decays. For 
 example, this could be applied to provide events from top pair 
 production that include leptons + jets. The example 
-<code>main103</code> demonstrates how to use this user hook. Further 
+<code>main248.cc</code> demonstrates how to use this user hook. Further 
 documentation on the available settings can by found in the 
 <code>ResonanceDecayFilterHooks.h</code> header file. 
 Note, by default, particle types are treated individually. 
@@ -439,4 +439,4 @@ Add documentation.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

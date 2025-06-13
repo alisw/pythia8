@@ -76,7 +76,7 @@ superseeded by the PYTHIA 8.3 manual.
  
 <p/> 
 Furthermore, a separate 
-<br/><a href="../pdfdoc/worksheet8309.pdf" target="page"> 
+<br/><a href="../pdfdoc/worksheet8312.pdf" target="page"> 
 <b>PYTHIA 8.3 Worksheet</b></a>, 
 <br/>also an attached PDF file, offers a practical introduction to 
 using the generator. It has been developed for and used at a few 
@@ -111,12 +111,6 @@ Homi Bhabha Road, Mumbai 400005, India<br/>
 e-mail: desai@theory.tifr.res.in 
  
 <p/> 
-<b>Leif Gellersen</b><br/> 
-Department of Physics, Lund University, 
-Box 118, SE-221 00 Lund, Sweden<br/> 
-e-mail: leif.gellersen@fysik.lu.se 
- 
-<p/> 
 <b>Ilkka Helenius</b><br/> 
 Department of Physics, University of Jyv&auml;skyl&auml;, P.O. Box 35, 
 FI-40014 University of Jyv&auml;skyl&auml;, Finland<br/> 
@@ -143,9 +137,9 @@ e-mail: mrenna@fnal.gov
  
 <p/> 
 <b>Christian Preuss</b><br/> 
-Institute for Theoretical Physics, ETH Z&uuml;rich, 
-Wolfgang-Pauli-Strasse 27, 8093 Z&uuml;rich, Switzerland<br/> 
-e-mail: cpreuss@phys.ethz.ch 
+Department of Physics, University of Wuppertal, 
+Gaussstrasse 20, 42119 Wuppertal, Germany<br/> 
+e-mail: preuss@uni-wuppertal.de 
  
 <p/> 
 <b>Torbj&ouml;rn Sj&ouml;strand</b><br/> 
@@ -159,18 +153,6 @@ School of Physics and Astronomy, Monash University, PO Box 27, 3800 Melbourne,
 Australia<br/> 
 e-mail: peter.skands@monash.edu 
  
-<p/> 
-<b>Marius Utheim</b><br/> 
-Department of Physics, University of Jyv&auml;skyl&auml;, P.O. Box 35, 
-FI-40014 University of Jyv&auml;skyl&auml;, Finland<br/> 
-e-mail: marius.m.utheim@jyu.fi 
- 
-<p/> 
-<b>Rob Verheyen</b><br/> 
-Department of Physics and Astronomy, University College London, Gower St, 
-Bloomsbury, London WC1E 6BT, UK<br/> 
-e-mail: r.verheyen@ucl.ac.uk 
- 
 <a name="section3"></a> 
 <h3>Former authors</h3> 
  
@@ -182,9 +164,15 @@ e-mail: r.verheyen@ucl.ac.uk
  
 <p/><b>Nadine Fischer</b> 
  
+<p/><b>Leif Gellersen</b> 
+ 
 <p/><b>Stefan Prestel</b> 
  
 <p/><b>Christine O. Rasmussen</b> 
+ 
+<p/><b>Marius Utheim</b> 
+ 
+<p/><b>Rob Verheyen</b> 
  
 <a name="section4"></a> 
 <h3>Further contributions</h3> 
@@ -230,18 +218,20 @@ implemented by <b>Baptiste Cabouat</b>.
 <br/>Space-time hadronic production points in string fragmentation have 
 been studied and implemented by <b>Silvia Ferreres-Sol&eacute;</b>. 
 <br/>The code for deuteron production was tested by <b>Sophie Baker</b>. 
-<br/>C++ interface to MG5 matrix elements by <b>V. Hirschi</b> with 
-additional work by <b>O. Mattelaer</b>. 
+<br/>C++ interface to MG5 matrix elements by <b>Valentin Hirschi</b> with 
+additional work by <b>Olivier Mattelaer</b>. 
 <br/>Mass corrections and initial-state showers in Vincia by 
-<b>M. Ritzmann</b>. 
-<br/>Final-state sector showers in Vincia by <b>J. Lopez-Villarejo</b>. 
-<br/>Helicity-dependence in Vincia by <b>A. Larkoski</b>. 
+<b>Mathias Ritzmann</b>. 
+<br/>Final-state sector showers in Vincia by <b>Juan Lopez-Villarejo</b>. 
+<br/>Helicity-dependence in Vincia by <b>Andrew Larkoski</b>. 
 <br/>Interleaved resonance showers and work on 
-MESS merging and QED+EW showers in Vincia by <b>H. Brooks</b>. 
+MESS merging and QED+EW showers in Vincia by <b>Helen Brooks</b>. 
 <br/>Plugin and hadronization reweighting framework by the <b><a 
 href="https://uchep.gitlab.io/mlhad-docs/">MLhad team</a></b>. 
 <br/>Mini-junction string improvements and additions to the QCD-based colour 
 reconnection model by <b>Harsh Shah</b>. 
+<br/>Python batch interface using Awkward arrays by <b>Aartem Havryliuk</b> 
+and <b>Jim Pivarski</b>. 
 <br/> 
  
 <br/><b>Note</b>: in several cases modifications have been made to 
@@ -293,7 +283,7 @@ new cleanly compiled PYTHIA library code.</li>
 <li>Write a simple standalone main program <code>mymainNN.cc</code>, 
 with <code>NN</code> between 00 and 99, that demonstrates the 
 claimed bug. Feel free to use some of the existing sample main programs 
-<code>share/Pythia8/examples/mainNN.cc</code> as templates.</li> 
+<code>share/Pythia8/examples/mainNNN.cc</code> as templates.</li> 
 <li>Put the <code>mymainNN.cc</code> program in the 
 <code>share/Pythia8/examples</code> subdirectory and run it from there 
 (<code>make mymainNN</code> followed by <code>./mymainNN</code>).</li> 
@@ -347,9 +337,9 @@ for Event Generator Authors and Users.
  
 <p/> 
 The program and the documentation is 
-Copyright &copy; 2024 Torbj&ouml;rn Sj&ouml;strand 
+Copyright &copy; 2025 Torbj&ouml;rn Sj&ouml;strand 
  
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,0 +1,251 @@
+<html><head><title>main343</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main343</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main343.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:ilkka.m.helenius@jyu.fi">Ilkka Helenius</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#photon+beam">Photon&nbsp;beam</a>
+//            <a href="../ExampleKeywords.html#photoproduction">Photoproduction</a>
+//            <a href="../ExampleKeywords.html#photon-photon">Photon&#8209;photon</a>
+
+// Main program to generate charged hadron spectra from photon-initiated
+// hard processes, by combining sub-runs with direct or resolved photons
+// or by generating all with contributions in a single run.
+
+// In case of photon-photon interactions four different contributions are
+// present:              ProcessType:
+//  - resolved-resolved  1
+//  - resolved-direct    2
+//  - direct-resolved    3
+//  - direct-direct      4
+// Events can be generated either with photon beams or with photons emitted
+// from lepton beams.
+
+// In case of photon-proton interaction two contributions are present
+//  - resolved
+//  - direct
+// When the photon is from beam A the relevant contributions are
+// set with &quot;Photon:ProcessType&quot; values 1 (resolved) and 3 (direct) as the
+// convention follows the photon-photon case above.
+// Also lepton-&gt;photon + proton can be generated.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator.
+  Pythia pythia;
+
+  // Decrease the output.
+  pythia.readString(&quot;Init:showChangedSettings = off&quot;);
+  pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  pythia.readString(&quot;Next:numberCount = 0&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // Shorthand for some public members of pythia (also static ones).
+  Settings&amp; settings  = pythia.settings;
+  const Info&amp; info = pythia.info;
+
+  // Photon-proton collisions.
+  bool photonProton         = false;
+
+  // Generate photon-photon events in leptonic or photon beams.
+  bool photonsFromElectrons = false;
+
+  // Each contributions separately or in a one combined run.
+  bool automaticMix         = true;
+
+  // Optionally use different PDFs from LHAPDF for hard process.
+  // Requires linking with LHAPDF5.
+  // pythia.readString(&quot;PDF:useHard = on&quot;);
+  // pythia.readString(&quot;PDF:GammaHardSet = LHAPDF5:SASG.LHgrid/5&quot;);
+
+  // Beam parameters.
+  pythia.readString(&quot;Beams:eCM = 200.&quot;);
+
+  // Set up beam particles for electron -&gt; photon + proton.
+  if ( photonProton) {
+    if ( photonsFromElectrons) {
+      pythia.readString(&quot;Beams:idA = 11&quot;);
+      pythia.readString(&quot;Beams:idB = 2212&quot;);
+      pythia.readString(&quot;PDF:beamA2gamma = on&quot;);
+
+    // Set up beam particles for photon + proton.
+    } else {
+      pythia.readString(&quot;Beams:idA = 22&quot;);
+      pythia.readString(&quot;Beams:idB = 2212&quot;);
+    }
+
+  // Set up beam particles for photon-photon in e+e-.
+  } else if ( photonsFromElectrons) {
+    pythia.readString(&quot;Beams:idA = -11&quot;);
+    pythia.readString(&quot;Beams:idB =  11&quot;);
+    pythia.readString(&quot;PDF:beamA2gamma = on&quot;);
+    pythia.readString(&quot;PDF:beamB2gamma = on&quot;);
+
+  // Set up beam particles for photon-photon.
+  } else {
+    pythia.readString(&quot;Beams:idA = 22&quot;);
+    pythia.readString(&quot;Beams:idB = 22&quot;);
+  }
+
+  // Cuts on photon virtuality and invariant mass of gamma-gamma/hadron pair.
+  if ( photonsFromElectrons) {
+    pythia.readString(&quot;Photon:Q2max = 1.0&quot;);
+    pythia.readString(&quot;Photon:Wmin  = 10.0&quot;);
+  }
+
+  // For photon-proton increase pT0Ref (for better agreement with HERA data).
+  // Photon-photon has a new default pT0 parametrization tuned to LEP data.
+  if ( photonProton)
+    pythia.readString(&quot;MultipartonInteractions:pT0Ref = 3.00&quot;);
+
+  // Limit partonic pThat.
+  settings.parm(&quot;PhaseSpace:pTHatMin&quot;, 5.0);
+
+  // Reset statistics after each subrun.
+  pythia.readString(&quot;Stat:reset = on&quot;);
+
+  // Parameters for histograms.
+  double pTmin = 0.0;
+  double pTmax = 40.0;
+  int nBinsPT  = 40;
+
+  // Initialize the histograms.
+  Hist pTtot(&quot;Total charged hadron pT distribution&quot;, nBinsPT, pTmin, pTmax);
+  Hist pTresres(&quot;Resolved-resolved contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTresdir(&quot;Resolved-direct contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTdirres(&quot;Direct-resolved contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTdirdir(&quot;Direct-direct contribution for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+  Hist pTiRun(&quot;Contribution from Run i for pT distribution&quot;,
+    nBinsPT, pTmin, pTmax);
+
+  // Initialize hard QCD processes with 0, 1, or 2 initial photons.
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhotonParton:all = on&quot;);
+  if ( !photonProton) {
+    pythia.readString(&quot;PhotonCollision:gmgm2qqbar = on&quot;);
+    pythia.readString(&quot;PhotonCollision:gmgm2ccbar = on&quot;);
+    pythia.readString(&quot;PhotonCollision:gmgm2bbbar = on&quot;);
+  }
+
+  // Number of runs.
+  int nRuns = photonProton ? 2 : 4;
+  if (automaticMix) nRuns = 1;
+
+  // Number of events per run.
+  int nEvent = 10000;
+
+  // Loop over relevant processes.
+  for ( int iRun = 1; iRun &lt; nRuns + 1; ++iRun) {
+
+    // Turn of MPIs for processes with unresolved photons.
+    if (iRun == 2) pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+
+    // For photon+proton direct contribution with processType = 3.
+    if (photonProton &amp;&amp; iRun == 2) iRun = 3;
+
+    // Set the type of gamma-gamma process:
+    // 0 = mix of all below,
+    // 1 = resolved-resolved,
+    // 2 = resolved-direct,
+    // 3 = direct-resolved,
+    // 4 = direct-direct.
+    if (automaticMix) settings.mode(&quot;Photon:ProcessType&quot;, 0);
+    else              settings.mode(&quot;Photon:ProcessType&quot;, iRun);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Clear the histogram.
+    pTiRun.null();
+
+    // Begin event loop. Skip if fails.
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+      // Generate next event.
+      if (!pythia.next()) continue;
+
+      // List the first process and event for each run.
+      if (iEvent == 0) {
+        pythia.process.list();
+        pythia.event.list();
+      }
+
+      // Possible event weights.
+      double weight = info.weight();
+
+      // Loop over event record and find charged final state particles.
+      for (int i = 0; i &lt; pythia.event.size(); ++i){
+        if ( pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged() ) {
+
+          // Store the pT value.
+          double pTch = pythia.event[i].pT();
+
+          // Fill the correct histogram depending on the process type.
+          if (automaticMix) {
+            pTtot.fill(pTch, weight);
+            if (info.photonMode() == 1) pTresres.fill(pTch, weight);
+            if (info.photonMode() == 2) pTresdir.fill(pTch, weight);
+            if (info.photonMode() == 3) pTdirres.fill(pTch, weight);
+            if (info.photonMode() == 4) pTdirdir.fill(pTch, weight);
+          } else {
+            pTiRun.fill(pTch, weight);
+          }
+        }
+      }
+    } // End of event loop.
+
+    // Show statistics after each run.
+    pythia.stat();
+
+    // Normalize to cross section [mb].
+    double sigmaNorm = info.sigmaGen() / info.weightSum();
+    double pTBin     = (pTmax - pTmin) / (1. * nBinsPT);
+
+    // For mix of all contributions normalize with total cross section.
+    if (automaticMix) {
+      pTtot    *= sigmaNorm / pTBin;
+      pTresres *= sigmaNorm / pTBin;
+      pTresdir *= sigmaNorm / pTBin;
+      pTdirres *= sigmaNorm / pTBin;
+      pTdirdir *= sigmaNorm / pTBin;
+
+    // For each contribution normalize with cross section for the given run.
+    } else {
+      pTiRun *= sigmaNorm / pTBin;
+      if (iRun == 1) pTresres = pTiRun;
+      if (iRun == 2) pTresdir = pTiRun;
+      if (iRun == 3) pTdirres = pTiRun;
+      if (iRun == 4) pTdirdir = pTiRun;
+      pTtot += pTiRun;
+    }
+
+  // End of loop over runs.
+  }
+
+  // Print histograms.
+  cout &lt;&lt; pTresres &lt;&lt; pTresdir &lt;&lt; pTdirres &lt;&lt; pTdirdir &lt;&lt; pTtot;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

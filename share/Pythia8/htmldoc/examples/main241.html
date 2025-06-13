@@ -1,0 +1,145 @@
+<html><head><title>main241</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main241</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main241.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#two-body+decay">Two&#8209;body&nbsp;decay</a>
+//            <a href="../ExampleKeywords.html#astroparticle">Astroparticle</a>
+//            <a href="../ExampleKeywords.html#python">Python</a>
+//            <a href="../ExampleKeywords.html#matplotlib">Matplotlib</a>
+
+// Illustration how to generate various two-body channels from
+// astroparticle processes, e.g. neutralino annihilation or decay.
+// To this end a &quot;blob&quot; of energy is created with unit cross section,
+// from the fictitious collision of two non-radiating incoming e+e-.
+// In the accompanying main241.cmnd file the decay channels of this
+// blob can be set up. Furthermore, only gamma, e+-, p/pbar and
+// neutrinos are stable, everything else is set to decay.
+// (The &quot;single-particle gun&quot; of main234.cc offers another possible
+// approach to the same problem.)
+// Also illustrated output to be plotted by Python/Matplotlib/pyplot.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// A derived class for (e+ e- -&gt;) GenericResonance -&gt; various final states.
+
+class Sigma1GenRes : public Sigma1Process {
+
+public:
+
+  // Constructor.
+  Sigma1GenRes() {}
+
+  // Evaluate sigmaHat(sHat): dummy unit cross section.
+  virtual double sigmaHat() {return 1.;}
+
+  // Select flavour. No colour or anticolour.
+  virtual void setIdColAcol() {setId( -11, 11, 999999);
+    setColAcol( 0, 0, 0, 0, 0, 0);}
+
+  // Info on the subprocess.
+  virtual string name()    const {return &quot;GenericResonance&quot;;}
+  virtual int    code()    const {return 9001;}
+  virtual string inFlux()  const {return &quot;ffbarSame&quot;;}
+
+};
+
+//==========================================================================
+
+int main() {
+
+  // Pythia generator.
+  Pythia pythia;
+
+  // A class to generate the fictitious resonance initial state.
+  SigmaProcessPtr sigma1GenRes = make_shared&lt;Sigma1GenRes&gt;();
+
+  // Hand pointer to Pythia.
+  pythia.addSigmaPtr( sigma1GenRes);
+
+  // Read in the rest of the settings and data from a separate file.
+  pythia.readFile(&quot;main241.cmnd&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Extract settings to be used in the main program.
+  int nEvent  = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort  = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+
+  // Histogram particle spectra.
+  Hist eGamma(&quot;energy spectrum of photons&quot;,        100, 0., 250.);
+  Hist eE(    &quot;energy spectrum of e+ and e-&quot;,      100, 0., 250.);
+  Hist eP(    &quot;energy spectrum of p and pbar&quot;,     100, 0., 250.);
+  Hist eNu(   &quot;energy spectrum of neutrinos&quot;,      100, 0., 250.);
+  Hist eRest( &quot;energy spectrum of rest particles&quot;, 100, 0., 250.);
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Loop over all particles and analyze the final-state ones.
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (pythia.event[i].isFinal()) {
+      int idAbs = pythia.event[i].idAbs();
+      double eI = pythia.event[i].e();
+      if (idAbs == 22) eGamma.fill(eI);
+      else if (idAbs == 11) eE.fill(eI);
+      else if (idAbs == 2212) eP.fill(eI);
+      else if (idAbs == 12 || idAbs == 14 || idAbs == 16) eNu.fill(eI);
+      else {
+        eRest.fill(eI);
+        cout &lt;&lt; &quot; Error: stable id = &quot; &lt;&lt; pythia.event[i].id() &lt;&lt; endl;
+      }
+    }
+
+  // End of event loop.
+  }
+
+  // Final statistics.
+  pythia.stat();
+
+  // Divide histograms by bin width, and normalize by 1/nEvent.
+  eGamma.normalizeSpectrum(nEvent);
+  eE.normalizeSpectrum(nEvent);
+  eP.normalizeSpectrum(nEvent);
+  eNu.normalizeSpectrum(nEvent);
+  eRest.normalizeSpectrum(nEvent);
+  cout &lt;&lt; eGamma &lt;&lt; eE &lt;&lt; eP &lt;&lt; eNu &lt;&lt; eRest;
+
+  // Write Python code that can generate a PDF file with the spectra.
+  // Assuming you have Python installed on your platform, do as follows.
+  // After the program has run, type &quot;python3 plot241.py&quot; (without the &quot; &quot;)
+  // in a terminal window, and open &quot;fig241.pdf&quot; in a PDF viewer.
+  HistPlot hpl(&quot;plot241&quot;);
+  hpl.frame( &quot;fig241&quot;, &quot;Particle energy spectra&quot;, &quot;$E$ (GeV)&quot;,
+    &quot;$(1/N_{\\mathrm{event}}) \\mathrm{d}N / \\mathrm{d}E$ (GeV$^{-1}$)&quot;);
+  hpl.add( eGamma, &quot;-&quot;, &quot;$\\gamma$&quot;);
+  hpl.add( eE, &quot;-&quot;, &quot;$e^{\\pm}$&quot;);
+  hpl.add( eP, &quot;-&quot;, &quot;$p/\\overline{p}$&quot;);
+  hpl.add( eNu, &quot;-&quot;, &quot;$\\nu$&quot;);
+  hpl.add( eRest, &quot;-&quot;, &quot;others&quot;);
+  // Set x and y limits and use logarithmic y scale.
+  hpl.plot( 0., 250., 1e-5, 1e2, true);
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

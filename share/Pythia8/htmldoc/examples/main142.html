@@ -1,0 +1,348 @@
+<html><head><title>main142</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main142</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main142.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:dag.gillberg@cern.ch">Dag Gillberg</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#root">Root</a>
+//            <a href="../ExampleKeywords.html#jets">Jets</a>
+//            <a href="../ExampleKeywords.html#event+display">Event&nbsp;display</a>
+
+// This is a program to use ROOT to visualize different jet algoritms.
+// The produced figure is used in the article &quot;50 years of Quantum
+// Chromodynamics&quot; in celebration of the 50th anniversary of QCD (EPJC).
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;TCanvas.h&quot;
+#include &quot;TString.h&quot;
+#include &quot;TH2D.h&quot;
+#include &quot;TMath.h&quot;
+#include &quot;TPave.h&quot;
+#include &quot;TMarker.h&quot;
+#include &quot;TLatex.h&quot;
+#include &quot;TRandom3.h&quot;
+#include &quot;TStyle.h&quot;
+#include &quot;fastjet/PseudoJet.hh&quot;
+#include &quot;fastjet/ClusterSequence.hh&quot;
+
+//==========================================================================
+
+// Hard-coded settings
+
+// Jet and hadron pT thresholds.
+// Will only show particles with pT &gt; pTmin and |y| &lt; yMax.
+double pTmin_jet = 25;
+double pTmin_hadron = 1;
+double yMax = 4;
+
+// Amount of pileup. Average number of inelastic pp collisions per event
+// (=bunch-crossing). Set to zero to turn off pileup.
+double mu = 60;
+
+// Style format. Colours used by various drawn markers.
+int colHS = kBlack, colPos = kRed, colNeg = kBlue;
+int colNeut = kGreen + 3, colPU = kGray + 1;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// Method to print descriptive text to the canvas.
+// (x, y) are relative coordinates (NDC).
+
+void drawText(double x, double y, TString txt, int align= 11,
+  double tsize= 0.032) {
+  static auto tex = new TLatex();
+  tex-&gt;SetTextAlign(align);
+  tex-&gt;SetTextSize(tsize);
+  tex-&gt;SetTextFont(42);
+  tex-&gt;SetNDC();
+  tex-&gt;DrawLatex(x, y, txt);
+}
+
+//==========================================================================
+
+// Text to draw a marker at the (y, phi) coordinates of a particle.
+// Absolute coordinates.
+
+void drawParticleMarker(const Particle &amp;p, int style, int col,
+  double size= 1.0) {
+  static auto m = new TMarker();
+  m-&gt;SetMarkerStyle(style);
+  m-&gt;SetMarkerSize(size);
+  m-&gt;SetMarkerColor(col);
+  m-&gt;DrawMarker(p.y(), p.phi());
+}
+
+//==========================================================================
+
+// Method to draw a marker+text of a particle.
+
+void drawParticleText(const Particle &amp;p) {
+  // Draws a marker at (y, phi) of particle. Circle for parton, star
+  // for boson.
+  bool isParton =  (std::abs(p.id()) &lt;= 5 || p.id() == 21);
+  int col = colHS;
+  drawParticleMarker( p, isParton?20:29, col, isParton?0.8:1.2);
+
+  // Format the name-string of the particle according to ROOT&apos;s TLatex.
+  // Print the text right under the marker.
+  TString name = p.name();
+  if (name.Contains(&quot;bar&quot;)) name = &quot;#bar{&quot; + name.ReplaceAll(&quot;bar&quot;, &quot;&quot;) + &quot;}&quot;;
+  name.ReplaceAll(&quot;+&quot;, &quot;^{+}&quot;).ReplaceAll(&quot;-&quot;, &quot;^{-}&quot;).ReplaceAll(&quot;h0&quot;, &quot;H&quot;);
+  static auto tex = new TLatex();
+  tex-&gt;SetTextSize(0.03);
+  tex-&gt;SetTextFont(42);
+  tex-&gt;SetTextAlign(11);
+  tex-&gt;SetTextColor(col);
+  tex-&gt;DrawLatex(p.y() + 0.1, p.phi() - 0.1, &quot;#it{&quot; + name + &quot;}&quot;);
+}
+
+//==========================================================================
+
+// Draws a box for text to appear.
+
+void drawLegendBox(double x1, double y1, double x2, double y2) {
+  static auto *box = new TPave(x1, y1, x2, y2, 1, &quot;ndc&quot;);
+  box-&gt;SetFillColor(kWhite);
+  box-&gt;Draw();
+}
+
+//==========================================================================
+
+// Draw a marker for legend.
+
+void drawMarker(double x, double y, int style, int col, double size= 1.0) {
+  auto m = new TMarker(x, y, style);
+  m-&gt;SetMarkerSize(size);
+  m-&gt;SetMarkerColor(col);
+  m-&gt;SetNDC(true);
+  m-&gt;Draw();
+}
+
+//==========================================================================
+
+// Example main program to vizualize jet algorithms.
+
+int main() {
+
+  // Adjust ROOTs default style.
+  gStyle-&gt;SetOptTitle(0);
+  gStyle-&gt;SetOptStat(0);
+  gStyle-&gt;SetPadTickX(1);
+  // Tick marks on top and RHS.
+  gStyle-&gt;SetPadTickY(1);
+  gStyle-&gt;SetTickLength(0.02, &quot;x&quot;);
+  gStyle-&gt;SetTickLength(0.015, &quot;y&quot;);
+  // Good with SetMax higher. 57, 91 and 104 also OK.
+  gStyle-&gt;SetPalette(55);
+
+  // Define the canvas.
+  auto can = new TCanvas();
+  double x = 0.06, y = 0.96;
+  // Left-right-bottom-top
+  can-&gt;SetMargin(x, 0.02, 0.08, 0.06);
+
+  // Define the energy-flow histogram.
+  int NyBins = 400/2, NphiBins = 314/2;
+  double yMax = 4, phiMax = TMath::Pi();
+  auto pTflow = new TH2D(&quot;&quot;,
+    &quot;;Rapidity #it{y};Azimuth #it{#phi};Jet #it{p}_{T} [GeV]&quot;,
+    NyBins, -yMax, yMax, NphiBins, -phiMax, phiMax);
+  pTflow-&gt;GetYaxis()-&gt;SetTitleOffset(0.8);
+  pTflow-&gt;GetZaxis()-&gt;SetTitleOffset(1.1);
+
+  // Name of output pdf file + open canvas for printing pages to it.
+  TString pdf = &quot;fig142.pdf&quot;;
+  can-&gt;Print(pdf + &quot;[&quot;);
+
+  // Generator. Process selection. LHC initialization.
+  Pythia pythia;
+  // Description of the process (using ROOT&apos;s TLatex notation).
+  TString desc = &quot;#it{pp} #rightarrow #it{WH} #rightarrow&quot;
+    &quot; #it{q#bar{q}b#bar{b}},  #sqrt{#it{s}} = 13.6 TeV&quot;;
+  pythia.readString(&quot;Beams:eCM = 13600.&quot;);
+  pythia.readString(&quot;HiggsSM:ffbar2HW = on&quot;);
+  // Force H-&gt;bb decays and hadronic W decays.
+  pythia.readString(&quot;25:onMode = off&quot;);
+  pythia.readString(&quot;25:onIfAny = 5&quot;);
+  pythia.readString(&quot;24:onMode = off&quot;);
+  pythia.readString(&quot;24:onIfAny = 1 2 3 4 5&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Pileup particles
+  Pythia pythiaPU;
+  pythiaPU.readString(&quot;Beams:eCM = 13600.&quot;);
+  pythiaPU.readString(&quot;SoftQCD:inelastic = on&quot;);
+  if (mu &gt; 0) pythiaPU.init();
+
+  // Setup fasjet. Create map with (key, value) = (descriptive text, jetDef).
+  std::map&lt;TString, fastjet::JetDefinition&gt; jetDefs;
+  jetDefs[&quot;Anti-#it{k_{t}} jets, #it{R} = 0.4&quot;] = fastjet::JetDefinition(
+    fastjet::antikt_algorithm, 0.4, fastjet::E_scheme, fastjet::Best);
+  jetDefs[&quot;#it{k_{t}} jets, #it{R} = 0.4&quot;] = fastjet::JetDefinition(
+    fastjet::kt_algorithm, 0.4, fastjet::E_scheme, fastjet::Best);
+  jetDefs[&quot;Cambridge-Aachen jets,  #it{R} = 0.4&quot;] = fastjet::JetDefinition(
+    fastjet::cambridge_algorithm, 0.4, fastjet::E_scheme, fastjet::Best);
+  jetDefs[&quot;Anti-#it{k_{t}} jets, #it{R} = 1.0&quot;] = fastjet::JetDefinition(
+    fastjet::antikt_algorithm, 1.0, fastjet::E_scheme, fastjet::Best);
+
+  auto &amp;event = pythia.event;
+  for (int iEvent = 0; iEvent &lt; 100; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Identify particles. Jets are built from all stable particles after
+    // hadronization (particle-level jets).
+    std::vector&lt;Particle&gt; VH, ptcls_hs, ptcls_pu;
+    std::vector&lt;fastjet::PseudoJet&gt; stbl_ptcls;
+    for (int i = 0; i &lt; event.size(); ++i) {
+      auto &amp;p = event[i];
+      if (p.isResonance() &amp;&amp; p.status() == -62) VH.push_back(p);
+      if (not p.isFinal()) continue;
+      stbl_ptcls.push_back(fastjet::PseudoJet(p.px(), p.py(), p.pz(), p.e()));
+      ptcls_hs.push_back(p);
+    }
+
+    // Should not happen!
+    if (VH.size()!= 2) continue;
+
+    // Want to show an example where one of the boson is boosted and hence
+    // contained within a R=1.0 jet, and one is not.
+    // The diboson system should also be fairly central.
+    auto pVH = VH[0].p() + VH[1].p();
+    double DR1 = event.RRapPhi(VH[0].daughter1(), VH[0].daughter2());
+    double DR2 = event.RRapPhi(VH[1].daughter1(), VH[1].daughter2());
+    // Central system.
+    if ( std::abs(pVH.rap())&gt;0.5 || std::abs(VH[0].phi())&gt;2.5 ||
+      std::abs(VH[1].phi())&gt;2.5 ) continue;
+    // One contained, one resolved.
+    if ( (DR1&lt;1.0 &amp;&amp; DR2&lt;1.0) || (DR1&gt;1.0 &amp;&amp; DR2&gt;1.0) ) continue;
+
+    // Add in ghost particles on the grid defined by the pTflow histogram.
+    fastjet::PseudoJet ghost;
+    double pTghost = 1e-100;
+    for (int iy= 1;iy&lt;= NyBins; ++iy) {
+      for (int iphi= 1;iphi&lt;= NphiBins; ++iphi) {
+        double y   = pTflow-&gt;GetXaxis()-&gt;GetBinCenter(iy);
+        double phi = pTflow-&gt;GetYaxis()-&gt;GetBinCenter(iphi);
+        ghost.reset_momentum_PtYPhiM(pTghost, y, phi, 0);
+        stbl_ptcls.push_back(ghost);
+      }
+    }
+
+    // Add in pileup!
+    int n_inel = gRandom-&gt;Poisson(mu);
+    printf(&quot;Overlaying particles from %i pileup interactions!\n&quot;, n_inel);
+    for (int i_pu= 0; i_pu&lt;n_inel; ++i_pu) {
+      if (!pythiaPU.next()) continue;
+      for (int i = 0; i &lt; pythiaPU.event.size(); ++i) {
+        auto &amp;p = pythiaPU.event[i];
+        if (not p.isFinal()) continue;
+        stbl_ptcls.push_back(
+          fastjet::PseudoJet(p.px(), p.py(), p.pz(), p.e()));
+        ptcls_pu.push_back(p);
+      }
+    }
+
+    can-&gt;SetLogz();
+    can-&gt;SetRightMargin(0.13);
+    bool first = true;
+    for (auto jetDef:jetDefs) {
+      fastjet::ClusterSequence clustSeq(stbl_ptcls, jetDef.second);
+      auto jets = sorted_by_pt( clustSeq.inclusive_jets(pTmin_jet) );
+      // Fill the pT flow.
+      pTflow-&gt;Reset();
+      // For each jet:
+      for (auto jet:jets) {
+        // For each particle:
+        for (auto c:jet.constituents()) {
+          if (c.pt() &gt; 1e-50) continue;
+          pTflow-&gt;Fill(c.rap(), c.phi_std(), jet.pt());
+        }
+      }
+      pTflow-&gt;GetZaxis()-&gt;SetRangeUser(pTmin_jet/4,
+        pTflow-&gt;GetBinContent(pTflow-&gt;GetMaximumBin())*4);
+      // pTflow-&gt;GetZaxis()-&gt;SetRangeUser(8, 1100);
+      // pTflow-&gt;GetZaxis()-&gt;SetMoreLogLabels();
+      pTflow-&gt;Draw(&quot;colz&quot;);
+
+      for (auto &amp;p:ptcls_pu) {
+        if ( std::abs(p.y()) &lt; yMax &amp;&amp; p.pT() &gt; pTmin_hadron ) {
+          drawParticleMarker(p, p.charge()?24:25, colPU, 0.4);
+        }
+      }
+
+      // Draw the stable particles.
+      for (auto &amp;p:ptcls_hs) {
+        if ( std::abs(p.y()) &lt; yMax &amp;&amp; p.pT() &gt; pTmin_hadron ) {
+          if (p.charge()&gt;0) {
+            drawParticleMarker(p, 5, colPos, 0.8);
+          } else if (p.charge()&lt;0) {
+            drawParticleMarker(p, 5, colNeg, 0.8);
+          } else {
+            drawParticleMarker(p, 21, colNeut, 0.4);
+            drawParticleMarker(p, 5, colNeut, 0.8);
+          }
+        }
+      }
+
+      // Draw the W and H.
+      for (auto p:VH) {
+        auto d1 = pythia.event[p.daughter1()];
+        auto d2 = pythia.event[p.daughter2()];
+        drawParticleText(p);
+        drawParticleText(d1);
+        drawParticleText(d2);
+      }
+
+      drawText(x, y, desc);
+      drawText(0.87, y, jetDef.first +
+        Form(&quot;, #it{p}_{T} &gt; %.0f GeV&quot;, pTmin_jet), 31);
+
+      // &apos;Hand-made&apos; legend used to specific plot in the
+      // &apos;50 years of Quantum Chromodynamics&apos;, EPJC.
+      if (first) {
+        drawLegendBox(0.66, 0.67, 0.85, 0.925);
+        drawText(0.715, 0.90, &quot;Hard scatter&quot;, 12);
+        drawMarker(0.68, 0.90, 20, colHS, 0.8);
+        drawMarker(0.7, 0.90, 29, colHS, 1.2);
+
+        drawText(0.675, 0.85, &quot;Stable particles&quot;, 12);
+        drawText(0.675, 0.824, &quot;   +    #bf{#minus}    #scale[0.9]{neutral}&quot;,
+          12);
+        drawMarker(0.683, 0.82, 5, colPos, 0.8);
+        drawMarker(0.717, 0.82, 5, colNeg, 0.8);
+        drawMarker(0.75, 0.82, 21, colNeut, 0.4);
+        drawMarker(0.75, 0.82, 5, colNeut, 0.8);
+
+        drawText(0.675, 0.775, Form(&quot;Pileup  #it{#mu} = %.0f&quot;, mu), 12);
+        drawText(0.675, 0.745, &quot;   #pm    #scale[0.9]{neutral}&quot;, 12);
+        drawMarker(0.683, 0.74, 24, colPU, 0.4);
+        drawMarker(0.717, 0.74, 25, colPU, 0.4);
+        drawText(0.70, 0.70, Form(&quot;#scale[0.8]{#it{p}_{T}^{ptcl} &gt; %.1f GeV}&quot;,
+            pTmin_hadron), 12);
+      }
+      first = false;
+      can-&gt;Print(pdf);
+    }
+    break; // remove this to draw several events
+  }
+
+  // Close the pdf
+  can-&gt;Print(pdf + &quot;]&quot;);
+  printf(&quot;Produced %s\n\n&quot;, pdf.Data());
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

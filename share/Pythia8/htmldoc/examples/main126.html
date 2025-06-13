@@ -1,0 +1,109 @@
+<html><head><title>main126</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main126</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main126.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#matplotlib">Matplotlib</a>
+
+// This is a simple test program.
+// It illustrates how Les Houches Event File version 3.0 input can be used
+// to mix events according to several different event weights.
+
+// Warning: the (tiny) default wbj_lhef3.lhe input file stores nine weights,
+// but with only three different values each occuring thrice.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Plot distributions in same pdf or save results as files.
+  bool doPlot = true;
+
+  // Generator
+  Pythia pythia;
+
+  // Initialize Les Houches Event File run.
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = wbj_lhef3.lhe&quot;);
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Get number of event weights.
+  int ninitrwgt = pythia.info.initrwgt ? pythia.info.initrwgt-&gt;size() : 0;
+
+  // Initialise as many histograms as there are event weights.
+  vector&lt;Hist&gt; pTw;
+  for (int iHist = 0; iHist &lt; ninitrwgt; ++iHist)
+    pTw.push_back( Hist(&quot;pT W&quot;,50,0.,200.) );
+
+  // Begin event loop; generate until none left in input file.
+  for (int iEvent = 0; iEvent &lt; 10; ++iEvent) {
+
+    // Generate events, and check whether generation failed.
+    if (!pythia.next()) {
+      // If failure because reached end of file then exit event loop.
+      if (pythia.info.atEndOfFile()) break;
+      else continue;
+    }
+
+    // Find the final copy of the W and its pT.
+    int iW = 0;
+    for (int i = pythia.event.size() - 1; i &gt; 0; --i)
+      if (pythia.event[i].idAbs() == 24) { iW = i; break;}
+    double pT = pythia.event[iW].pT();
+
+    // Loop over the event weights in the detailed format and histogram.
+    int iwgt = 0;
+    const map&lt;string,double&gt;* weights = pythia.info.weights_detailed;
+    if (weights) {
+      for ( map&lt;string,double&gt;::const_iterator it = weights-&gt;begin();
+            it != weights-&gt;end(); ++it ) {
+        pTw[iwgt].fill( max(pT,0.5), it-&gt;second );
+        ++iwgt;
+      }
+    }
+
+  // End of event loop.
+  }
+
+  // Give statistics.
+  pythia.stat();
+
+  // Plot histogram with different weight curves.
+  if (doPlot) {
+    HistPlot hpl(&quot;plot126&quot;);
+    hpl.frame(&quot;fig126&quot;, &quot;W $p_{\\perp}$ spectrum&quot;,
+     &quot;$p_{\\perp}$&quot;, &quot;$\\mathrm{d}P/\\mathrm{d}p_{\\perp}$&quot;);
+    for (int iHist = 0; iHist &lt; ninitrwgt; ++iHist)
+      hpl.add(pTw[iHist], &quot;h&quot;, &quot;weight &quot; + to_string(iHist));
+    hpl.plot();
+
+  // Alternatively print histograms.
+  } else {
+    ofstream write;
+    stringstream suffix;
+    for (int iHist = 0; iHist &lt; ninitrwgt; ++iHist) {
+      suffix &lt;&lt; iHist &lt;&lt; &quot;.dat&quot;;
+      // Write histograms to file.
+      write.open( (char*)(&quot;PTW_&quot; + suffix.str()).c_str());
+      pTw[iHist].table(write);
+      suffix.str(&quot;&quot;);
+      write.close();
+    }
+  }
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

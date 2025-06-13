@@ -1,5 +1,5 @@
 // StringLength.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -53,7 +53,7 @@ double StringLength::getStringLength( Event& event, int i, int j) {
 
 // Calculate string length for two particles given their four-momenta.
 
-double StringLength::getStringLength( Vec4 p1, Vec4 p2) {
+double StringLength::getStringLength( Vec4 p1, Vec4 p2) const {
 
   // Check for very small energies and angles.
   if (p1.e() < TINY || p2.e() < TINY || theta(p1,p2) < MINANGLE) return 1e9;
@@ -75,7 +75,8 @@ double StringLength::getStringLength( Vec4 p1, Vec4 p2) {
 // The first vector is the 4 vector of the particle.
 // The second vector represents (1,0,0,0) in dipole restframe.
 
-double StringLength::getLength(Vec4 p, Vec4 v, bool isJunc) {
+double StringLength::getLength(const Vec4& p, const Vec4& v, bool isJunc)
+  const {
 
   double e = v * p;
 
@@ -108,7 +109,8 @@ double StringLength::getJuncLength( Event& event, int i, int j, int k) {
 
 // Calculate the length of a single junction given the 3 four-momenta.
 
-double StringLength::getJuncLength(Vec4 p1, Vec4 p2, Vec4 p3) {
+double StringLength::getJuncLength(const Vec4& p1, const Vec4& p2,
+  const Vec4& p3) const {
 
   // Check for very small energies and angles.
   if (p1.e() < TINY || p2.e() < TINY || p3.e() < TINY
@@ -157,7 +159,8 @@ double StringLength::getJuncLength( Event& event, int i, int j, int k, int l) {
 // Calculate the length of a double junction given the 4 four-momenta.
 // The first two are expected to be quarks, the second two to be anti quarks.
 
-double StringLength::getJuncLength(Vec4 p1, Vec4 p2, Vec4 p3, Vec4 p4) {
+double StringLength::getJuncLength(const Vec4& p1, const Vec4& p2,
+  const Vec4& p3, const Vec4& p4) const {
 
   // Check for very small energies, momenta, and angles.
   if ( p1.e() < TINY || p2.e() < TINY || p3.e() < TINY || p4.e() < TINY

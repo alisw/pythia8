@@ -1,5 +1,5 @@
-// VinciaCommon.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Vincia.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -44,16 +44,18 @@ bool Vincia::init(MergingPtr mrgPtrIn, MergingHooksPtr mrgHooksPtrIn,
   // Clear Vincia's register of PhysicsBase objects.
   subObjects.clear();
 
-  bool vinciaOn     = (settingsPtr->mode("PartonShowers:model") == 2);
-  bool doCutMerging = flag("Merging:doCutBasedMerging");
-  bool doKTMerging  = flag("Merging:doKTMerging");
-  bool doMGMerging  = flag("Merging:doMGMerging");
-  doMerging         = flag("Merging:doMerging");
-  if ((doCutMerging || doKTMerging || doMGMerging) && !doMerging) {
+  bool vinciaOn      = (settingsPtr->mode("PartonShowers:model") == 2);
+  bool doCutMerging  = flag("Merging:doCutBasedMerging");
+  bool doKTMerging   = flag("Merging:doKTMerging");
+  bool doMGMerging   = flag("Merging:doMGMerging");
+  bool doDynMerging  = flag("Merging:doDynamicMerging");
+  doMerging          = flag("Merging:doMerging");
+  if ((doCutMerging || doKTMerging || doMGMerging || doDynMerging)
+    && !doMerging) {
     doMerging = true;
-    settingsPtr->readString("Merging:doMerging = on");
+    settingsPtr->flag("Merging:doMerging",true);
   }
-  doMerging       = ( doMerging && vinciaOn );
+  doMerging          = ( doMerging && vinciaOn );
 
   // Setup Vincia's merging if requested.
   if (doMerging) {
@@ -74,12 +76,6 @@ bool Vincia::init(MergingPtr mrgPtrIn, MergingHooksPtr mrgHooksPtrIn,
       // uses the TimeShower one.
       settingsPtr->readString("Vincia:interleaveResDec = off");
       settingsPtr->readString("TimeShower:interleaveResDec = off");
-    }
-    // TODO this could be fixed relatively easily.
-    if (mode("Vincia:kineMapFFsplit") != 1) {
-      loggerPtr->WARNING_MSG("forcing kineMapFFsplit = 1; "
-        "others not yet supported by merging");
-      settingsPtr->readString("Vincia:kineMapFFsplit = 1");
     }
 
     // Set and register merging pointers
@@ -237,30 +233,6 @@ bool Vincia::init(MergingPtr mrgPtrIn, MergingHooksPtr mrgHooksPtrIn,
   timesPtr->setEWShowerPtr(ewShowerPtr);
   spacePtr->setEWShowerPtr(ewShowerPtr);
 
-  // Now set tune parameters
-  int baseTune = settingsPtr->mode("Vincia:Tune");
-  if (vinciaOn && baseTune >= 0) {
-    // Store user-specified settings before overwriting with tune parameters.
-    vector<string> userSettings = settingsPtr->getReadHistory();
-    if (initTune(baseTune)) {
-      // Reapply user settings.
-      for (int i=0; i<(int)userSettings.size(); ++i) {
-        string lineNow      = userSettings[i];
-        string lineNowLower = toLower(lineNow);
-        // Ensure no run settings are changed.
-        if (lineNowLower.find("init") != string::npos
-          || lineNowLower.find("next") != string::npos
-          || lineNowLower.find("stat") != string::npos) continue;
-        // Allow Main:spare for development purposes.
-        if (lineNowLower.find("main") != string::npos
-          && lineNowLower.find("main:spare") == string::npos) continue;
-        if (lineNowLower.find("tune:ee") == string::npos &&
-          lineNowLower.find("tune:pp") == string::npos)
-          settingsPtr->readString(lineNow);
-      }
-    }
-  }
-
   // If Vincia is on, allow to override some Pythia settings by
   // Vincia-specific ones.
   if (vinciaOn) {
@@ -298,70 +270,11 @@ bool Vincia::init(MergingPtr mrgPtrIn, MergingHooksPtr mrgHooksPtrIn,
 
 //--------------------------------------------------------------------------
 
-// Vincia tune settings.
-
-bool Vincia::initTune(int iTune) {
-
-  // iTune = 0 : default Vincia tune from Pythia 8.302
-  if (iTune == 0) {
-    // Z fractions in string breaks
-    settingsPtr->parm("StringZ:aLund            ", 0.45 );
-    settingsPtr->parm("StringZ:bLund            ", 0.80 );
-    settingsPtr->parm("StringZ:aExtraDiquark    ", 0.90 );
-    // Z fractions for heavy quarks
-    settingsPtr->parm("StringZ:rFactC           ", 1.15 );
-    settingsPtr->parm("StringZ:rFactB           ", 0.85 );
-    // pT in string breaks
-    settingsPtr->parm("StringPT:sigma",            0.305);
-    settingsPtr->parm("StringPT:enhancedFraction", 0.01);
-    settingsPtr->parm("StringPT:enhancedWidth",    2.0);
-    // String breakup flavour parameters
-    settingsPtr->parm("StringFlav:probStoUD     ", 0.205);
-    settingsPtr->parm("StringFlav:mesonUDvector ", 0.42 );
-    settingsPtr->parm("StringFlav:mesonSvector  ", 0.53 );
-    settingsPtr->parm("StringFlav:mesonCvector  ", 1.3  );
-    settingsPtr->parm("StringFlav:mesonBvector  ", 2.2  );
-    settingsPtr->parm("StringFlav:probQQtoQ     ", 0.077);
-    settingsPtr->parm("StringFlav:probSQtoQQ    ", 1.0  );
-    settingsPtr->parm("StringFlav:probQQ1toQQ0  ", 0.025);
-    settingsPtr->parm("StringFlav:etaSup        ", 0.5  );
-    settingsPtr->parm("StringFlav:etaPrimeSup   ", 0.1  );
-    settingsPtr->parm("StringFlav:decupletSup   ", 1.0  );
-    settingsPtr->parm("StringFlav:popcornSpair  ", 0.75 );
-    settingsPtr->parm("StringFlav:popcornSmeson ", 0.75 );
-    // Primordial kT
-    settingsPtr->parm("BeamRemnants:primordialKThard ", 0.4 );
-    settingsPtr->parm("BeamRemnants:primordialKTsoft ", 0.25);
-    // MB/UE tuning parameters (MPI)
-    // Use a "low" alphaS and 2-loop running everywhere, also for MPI
-    settingsPtr->parm("SigmaProcess:alphaSvalue ", 0.119);
-    settingsPtr->mode("SigmaProcess:alphaSorder ", 2);
-    settingsPtr->parm("MultiPartonInteractions:alphaSvalue", 0.119);
-    settingsPtr->mode("MultiPartonInteractions:alphaSorder", 2);
-    settingsPtr->parm("MultiPartonInteractions:pT0ref     ", 2.24);
-    settingsPtr->parm("MultiPartonInteractions:expPow     ", 1.75);
-    settingsPtr->parm("MultiPartonInteractions:ecmPow     ", 0.21);
-    // Use PYTHIA 8's baseline CR model
-    settingsPtr->flag("ColourReconnection:reconnect", true);
-    settingsPtr->parm("ColourReconnection:range    ", 1.75);
-    // Diffraction: switch off Pythia's perturbative MPI
-    // (colours in diffractive systems not yet handled by Vincia)
-    settingsPtr->parm("Diffraction:mMinPert", 1000000.0);
-    return true;
-  }
-  // Unknown iTune.
-  else return false;
-}
-
-//--------------------------------------------------------------------------
-
 // Automatically set verbose level in all members.
 
 void Vincia::setVerbose(int verboseIn) {
 
   verbose = verboseIn;
-  if (verboseIn < VinciaConstants::DEBUG) loggerPtr->setVerbosity(verbose+1);
-  else loggerPtr->setVerbosity(verboseIn);
   vinCom.setVerbose(verboseIn);
   resolution.setVerbose(verboseIn);
   timesPtr->setVerbose(verboseIn);
@@ -375,6 +288,10 @@ void Vincia::setVerbose(int verboseIn) {
   if (ewShowerPtr != nullptr) ewShowerPtr->setVerbose(verboseIn);
   if (qedShowerHardPtr != nullptr) qedShowerHardPtr->setVerbose(verboseIn);
   if (qedShowerSoftPtr != nullptr) qedShowerSoftPtr->setVerbose(verboseIn);
+
+  // If Vincia:Debug is on, also set Logger verbosity to REPORT.
+  if (verbose >= VinciaConstants::DEBUG)
+    loggerPtr->setVerbosity(Logger::REPORT);
 
 }
 

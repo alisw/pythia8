@@ -1,5 +1,5 @@
 // SpaceShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -51,34 +51,34 @@ public:
   }
 
   // New beams possible for handling of hard diffraction. (Not virtual.)
-  void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    int beamOffsetIn = 0) {beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn;
-    beamOffset = beamOffsetIn;}
+  void reassignBeamPtrs(BeamParticle* beamAPtrIn,
+    BeamParticle* beamBPtrIn, int beamOffsetIn = 0) {
+    beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn; beamOffset = beamOffsetIn;}
 
   // Initialize generation. Possibility to force re-initialization by hand.
-  // Usage: init( beamAPtr, beamBPtr).
-  virtual void init(BeamParticle* , BeamParticle* ) {}
+  // Usage: init(beamAPtr, beamBPtr).
+  virtual void init(BeamParticle*, BeamParticle*) {}
 
   // Find whether to limit maximum scale of emissions, and whether to dampen.
   // Usage: limitPTmax( event, Q2Fac, double Q2Ren).
-  virtual bool limitPTmax( Event& , double = 0., double = 0.) {return true;}
+  virtual bool limitPTmax(Event& , double = 0., double = 0.) {return true;}
 
   // Prepare system for evolution; identify ME.
   // Usage: prepare( iSys, event, limitPTmax).
-  virtual void prepare( int , Event& , bool = true) {}
+  virtual void prepare(int , Event& , bool = true) {}
 
   // Update dipole list after each FSR emission.
   // Usage: update( iSys, event, hasWeakRad).
-  virtual void update( int , Event&, bool = false) {}
+  virtual void update(int , Event&, bool = false) {}
 
   // Select next pT in downwards evolution.
   // Usage: pTnext( event, pTbegAll, pTendAll, nRadIn, doTrialIn).
-  virtual double pTnext( Event& , double , double , int = -1, bool = false)
-    { return 0.;}
+  virtual double pTnext(Event& , double , double , int = -1, bool = false)
+    {return 0.;}
 
   // ME corrections and kinematics that may give failure.
   // Usage: branch( event).
-  virtual bool branch( Event& ) {return true;}
+  virtual bool branch(Event&) {return true;}
 
   // Print dipole list; for debug mainly.
   virtual void list() const {}

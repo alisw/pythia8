@@ -4,91 +4,47 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main103.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors:
-//            <a href="mailto:mrenna@fnal.gov">Steve Mrenna</a>
-
 // Keywords:
-//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
-//            <a href="../ExampleKeywords.html#user+hook">User&nbsp;hook</a>
+//            <a href="../ExampleKeywords.html#electron-positron">Electron&#8209;positron</a>
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#charged+multiplicity">Charged&nbsp;multiplicity</a>
 
-// This is a simple test program.
-// It illustrates how to filter resonance decay products to obtain a certain
-// final state.
-// Usage:  (this executable) (command-file)
-// If no command-file is provided, a default is use.
+// This is a simple test program. It fits on one slide in a talk.
+// It studies the charged multiplicity distribution at LEP 1.
 
 #include &quot;Pythia8/Pythia.h&quot;
-#include &quot;Pythia8Plugins/ResonanceDecayFilterHook.h&quot;
-
 using namespace Pythia8;
-
-//==========================================================================
-
-int main(int argc, char* argv[]) {
-
-  // Generator. Shorthand for the event.
+int main() {
+  // Generator. Incoming e+e- beams ar LEP1 energies. No photons from e+-.
   Pythia pythia;
-
-  auto myUserHooks = make_shared&lt;ResonanceDecayFilterHook&gt;(pythia.settings);
-  pythia.setUserHooksPtr( myUserHooks);
-
-  // Read in commands from external file.
-  if (argc == 1) {
-    cout &lt;&lt; &quot;Using default command-file main103.cmnd&quot; &lt;&lt; endl;
-    pythia.readFile(&quot;main103.cmnd&quot;);
-  } else {
-    // Check that the provided input name corresponds to an existing file.
-    ifstream is(argv[1]);
-    if (!is.good()) {
-      cerr &lt;&lt; &quot; Usage:  executable command-file. \n&quot;;
-      cerr &lt;&lt; &quot; Command-line file &quot; &lt;&lt; argv[1] &lt;&lt; &quot; was not found. \n&quot;
-           &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
-      return 1;
-    }
-    pythia.readFile(argv[1]);
+  pythia.readString(&quot;Beams:idA = -11&quot;);
+  pythia.readString(&quot;Beams:idB = 11&quot;);
+  pythia.readString(&quot;Beams:eCM = 91.2&quot;);
+  pythia.readString(&quot;PDF:lepton = off&quot;);
+  // Process: hadronic decays of Z0. Initialize. Histogram.
+  pythia.readString(&quot;WeakSingleBoson:ffbar2gmZ = on&quot;);
+  pythia.readString(&quot;23:onMode = off&quot;);
+  pythia.readString(&quot;23:onIfAny = 1 2 3 4 5&quot;);
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+  Hist mult(&quot;charged multiplicity&quot;, 100, -0.5, 99.5);
+  // Begin event loop. Generate event. Skip if error. List first one.
+  for (int iEvent = 0; iEvent &lt; 10000; ++iEvent) {
+    if (!pythia.next()) continue;
+    // Find number of all final charged particles and fill histogram.
+    int nCharged = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
+        ++nCharged;
+    mult.fill( nCharged );
+  // End of event loop. Statistics. Histogram. Done.
   }
-
-  // Extract settings to be used in the main program.
-  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
-  int nAbort = pythia.mode(&quot;Main:timesAllowErrors&quot;);
-
-  // Initialize.
-  pythia.init();
-
-  int iAbort = 0;
-  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
-
-    // Generate events. Quit if too many failures.
-    if (!pythia.next()) {
-      if (++iAbort &lt; nAbort) continue;
-      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
-      break;
-    }
-
-  // End of event loop.
-  }
-
-  // Final statistics and histograms.
   pythia.stat();
-  double filterEfficiency = (double) pythia.info.getCounter(4)
-    / (double) myUserHooks-&gt;returnCounter();
-
-  ParticleDataEntryPtr particlePtr =
-    pythia.particleData.particleDataEntryPtr(24);
-  double br_lepton(0.0);
-  br_lepton += particlePtr-&gt;channel(6).bRatio();
-  br_lepton += particlePtr-&gt;channel(7).bRatio();
-  br_lepton += particlePtr-&gt;channel(8).bRatio();
-
-  double exactFilter = 2.0*br_lepton*(1.0-br_lepton);
-  cout &lt;&lt; &quot;ResonanceDecayFilterHook efficiency = &quot; &lt;&lt; filterEfficiency &lt;&lt; &quot;\n&quot;;
-  cout &lt;&lt; &quot;on-shell theoretical efficiency     = &quot; &lt;&lt; exactFilter &lt;&lt; &quot;\n&quot;;
-
-  // Done.
+  cout &lt;&lt; mult;
   return 0;
 }
 </code></pre></body></html>

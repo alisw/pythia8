@@ -1,0 +1,107 @@
+<html><head><title>main132</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main132</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main132.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:Mikhail.Kirsanov@cern.ch">Mikhail Kirsanov</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#command+line+option">Command&nbsp;line&nbsp;option</a>
+//            <a href="../ExampleKeywords.html#hepmc">Hepmc</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+
+// This program illustrates how HepMC files can be written by Pythia8.
+// Input and output files are specified on the command line, e.g. like
+//     ./main132 -c main132.cmnd -o main132.hepmc &gt; main132.log
+// Either internal Pythia processes or Les Houches Event Files can be used.
+// The main program contains no analysis; this is intended to happen later.
+// It therefore &quot;never&quot; has to be recompiled to handle different tasks.
+
+// WARNING: typically one needs 25 MB/100 events at the LHC.
+// Therefore large event samples may be impractical.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;This program illustrates how HepMC files can be written by&quot;
+    &quot; Pythia8.&quot;, {&quot;./main132 -c main132.cmnd -o main132.hepmc&quot;});
+  ip.require(&quot;c&quot;, &quot;Use this user-written command file.&quot;, {&quot;-cmnd&quot;});
+  ip.require(&quot;o&quot;, &quot;Specify HepMC output filename.&quot;, {&quot;-out&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Confirm that external files will be used for input and output.
+  string cmnd(ip.get&lt;string&gt;(&quot;c&quot;)), out(ip.get&lt;string&gt;(&quot;o&quot;));
+  cout &lt;&lt; &quot;\n &gt;&gt;&gt; PYTHIA settings will be read from file &apos;&quot; &lt;&lt; cmnd
+       &lt;&lt; &quot;&apos; &lt;&lt;&lt; \n &gt;&gt;&gt; HepMC events will be written to file &apos;&quot;
+       &lt;&lt; out &lt;&lt; &quot;&apos; &lt;&lt;&lt; \n&quot;;
+
+  // Interface for conversion from Pythia8::Event to HepMC event.
+  // Specify file where HepMC events will be stored.
+  Pythia8ToHepMC toHepMC(out);
+
+  // Generator.
+  Pythia pythia;
+
+  // Read in commands from external file.
+  pythia.readFile(cmnd);
+
+  // Extract settings to be used in the main program.
+  int    nEvent    = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int    nAbort    = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate event.
+    if (!pythia.next()) {
+
+      // If failure because reached end of file then exit event loop.
+      if (pythia.info.atEndOfFile()) {
+        cout &lt;&lt; &quot; Aborted since reached end of Les Houches Event File\n&quot;;
+        break;
+      }
+
+      // First few failures write off as &quot;acceptable&quot; errors, then quit.
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Construct new empty HepMC event, fill it and write it out.
+    toHepMC.writeNextEvent( pythia );
+
+  // End of event loop. Statistics.
+  }
+  pythia.stat();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

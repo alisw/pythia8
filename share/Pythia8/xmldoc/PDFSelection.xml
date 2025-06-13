@@ -141,8 +141,8 @@ behaviour in the region of small <ei>x</ei> and <ei>Q^2</ei>. A good
 PDF parametrization ought to be sensible down to <ei>x = 10^-6</ei> 
 (<ei>x = 10^-7</ei>) and <ei>Q^2 = 1</ei> GeV^2 for Tevatron (LHC) 
 applications. Unfortunately there are distributions on the market that 
-completely derail in that region. The <code>main51.cc</code> and 
-<code>main52.cc</code> programs in the <code>examples</code> 
+completely derail in that region. The <code>main201.cc</code> and 
+<code>main202.cc</code> programs in the <code>examples</code> 
 subdirectory provide some examples of absolutely minimal sanity checks 
 before a new PDF set is put in production. 
 <note>Warning 3:</note> NLO and LO sets tend to have quite different 
@@ -360,13 +360,13 @@ The nuclear modication to be used for beam A if enabled with the switch above.
 <option value = "1"> EPS09, LO <ref>Esk09</ref>.</option> 
 <option value = "2"> EPS09, NLO <ref>Esk09</ref>. The grid files can be 
 found from 
-<a href="https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/eps09"> 
+<a href="https://research.hip.fi/qcdtheory/nuclear-pdfs/eps09/"> 
 here</a> and are to be stored in the same folder as other PDF grid files 
 (usually share/Pythia8/xmldoc/). 
 </option> 
 <option value = "3"> EPPS16, NLO <ref>Esk16</ref>. The grid files can be 
 found from 
-<a href="https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/epps16-nuclear-pdfs"> 
+<a href="https://research.hip.fi/qcdtheory/nuclear-pdfs/epps16/"> 
 here</a>. 
 </option> 
 </modepick> 
@@ -597,7 +597,7 @@ the suppression of the <ei>s</ei> quark density relative to that of the
 Rescale several of the fits above by this uniform factor, e.g. to bring 
 up their momentum sum to around unity. By default many of the sets have 
 a momentum sum of order 0.5, suggesting that a factor around 2.0 
-should be used. You can use <code>examples/main51.cc</code> to get 
+should be used. You can use <code>examples/main201.cc</code> to get 
 a more precise value. Note that also other parameters in the 
 <aloc href="Diffraction">diffraction</aloc> framework may need to 
 be retuned when this parameter is changed. Specifically 
@@ -658,11 +658,19 @@ by shower emissions. If the initial-state showers are switched off
 these collinear photons will carry the full radiated energy. 
 </flag> 
  
-<p/> 
-Neutrinos are always taken pointlike. Do note that the phase space 
-selection machinery currently does not allow one resolved and one 
-unresolved lepton beam. For lepton-neutrino collisions to work you must 
-therefore set <code>PDF:lepton = off</code>. 
+<h3>Parton densities for neutrinos</h3> 
+ 
+Neutrinos are always taken pointlike. A flag has been added to separate these 
+from charged-lepton PDFs above to have the correct default behaviour. 
+ 
+<flag name="PDF:neutrino" default="off"> 
+Unresolved neutrino beams when set off. As no PDFs are currently implemented 
+for neutrinos this should not be changed. 
+</flag> 
+ 
+Do note that the phase space selection machinery currently does not allow one 
+resolved and one unresolved lepton beam. For lepton-neutrino collisions to 
+work you must therefore set also <code>PDF:lepton = off</code>. 
  
 <h3>Photon fluxes</h3> 
  
@@ -718,7 +726,7 @@ leptons a bit less efficient than option 1, but allows straightforward
 implementation of photon fluxes from different particles. To use this option 
 the user has to provide the external photon flux using method 
 <code>Pythia::setPhotonFluxPtr(pdfAPtr, pdfBPtr)</code> as demonstrated in the 
-sample program <code>main70.cc</code>.</option> 
+sample program <code>main344.cc</code>.</option> 
 <option value="1"> Convolute the photon flux from EPA with the selected photon 
 PDF set. Convolution integral is performed "on the fly", meaning that the 
 actual integral is not computed but the <ei>x_gamma</ei> is sampled 
@@ -752,7 +760,7 @@ appropriately suppress high virtualities.</option>
  
 Currently no flux from heavy ions are internally defined. However, using 
 the above options it is possible to define a suitable flux and pass this 
-to Pythia for event generation, see <code>main70.cc</code> for example. 
+to Pythia for event generation, see <code>main344.cc</code> for example. 
 To increase the sampling efficiency fo nuclear beams, the following options 
 have been introduced. 
  
@@ -761,7 +769,7 @@ Controls which type of overestimate is used for photon flux sampling.
 <option value="1"> Estimate optimized for photons from leptons. Works 
 reasonable well also for photoproduction in p+p.</option> 
 <option value="2"> Estimate optimized for ultraperipheral heavy-ion collisions 
-as presented in <code>main70.cc</code>. Here the estimate is divided into two 
+as presented in <code>main344.cc</code>. Here the estimate is divided into two 
 regions, a power-law in <ei>x_gamma</ei> below <ei>x_cut</ei> and an 
 exponential fall-off above, see the related parameters below. Default values 
 are optimized for p+Pb collisions where Pb-nucleus provide the photons, but 
@@ -809,4 +817,4 @@ partons, etc.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

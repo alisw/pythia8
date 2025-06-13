@@ -2,7 +2,7 @@
  
 <h2>Heavy Ion Collisions</h2> 
  
-PYTHIA includes a facility in which models for heavy ion collisions can 
+PYTHIA includes a facility in which simulation of heavy ion collisions can 
 be implemented through models which combine several nucleon-nucleon collisions 
 into one heavy ion collision. One such model, 
 called <a href="#Angantyr" target="page">Angantyr</a>, is provided with PYTHIA 
@@ -47,16 +47,16 @@ particle, the particle must be available in the
 nuclei are already added, including negative numbers for the 
 corresponding anti-particle:<br/> 
 <ul> 
- <li><sup>2</sup>H: <code>1000010020</code> </li> 
- <li><sup>4</sup>He:  <code>1000020040</code> </li> 
- <li><sup>6</sup>Li:  <code>1000030060</code> </li> 
- <li><sup>12</sup>C:  <code>1000060120</code> </li> 
- <li><sup>16</sup>O:  <code>1000080160</code> </li> 
- <li><sup>63</sup>Cu:  <code>1000290630</code> </li> 
- <li><sup>84</sup>Kr:  <code>1000360840</code> </li> 
- <li><sup>129</sup>Xe:  <code>1000541290</code> </li> 
+ <li><sup>2</sup>H: <code>1000010020</code></li> 
+ <li><sup>4</sup>He:  <code>1000020040</code></li> 
+ <li><sup>6</sup>Li:  <code>1000030060</code></li> 
+ <li><sup>12</sup>C:  <code>1000060120</code></li> 
+ <li><sup>16</sup>O:  <code>1000080160</code></li> 
+ <li><sup>63</sup>Cu:  <code>1000290630</code></li> 
+ <li><sup>84</sup>Kr:  <code>1000360840</code></li> 
+ <li><sup>129</sup>Xe:  <code>1000541290</code></li> 
  <li><sup>197</sup>Au:  <code>1000791970</code></li> 
- <li><sup>208</sup>Pb:  <code>1000822080</code> </li> 
+ <li><sup>208</sup>Pb:  <code>1000822080</code></li> 
 </ul> 
 More can be added by the user, using the function 
 <code>ParticleData::addParticle</code>, documented in the 
@@ -64,6 +64,10 @@ More can be added by the user, using the function
 but be mindful that a suitable  model geometry must be available for the 
 nucleus added, see the available 
 <a href="#NucleusModel" target="page">nucleus models</a> below. 
+ 
+Angantyr supports beam switching if <code>Beams:allowIDAswitch</code> is 
+turned on. In this case, <code>idA</code> is allowed to be any hadron, while 
+<code>idB</code> is allowed to be a proton, nucleon or any ion. 
  
 <h3>Top level flags</h3> 
  
@@ -97,7 +101,7 @@ in the primary <code>Pythia</code> object.
 conflicts with the <aloc href="Parallelism">Parallelism</aloc> 
 framework, but is expected to be reintroduced in the future. 
 Output detailed initialization information from the heavy ion 
-model. Typically there will be several <code>Pythia</code> object 
+model. Typically there will be several <code>Pythia</code> objects 
 initialised in a heavy ion run, this flag can be used to reduce the 
 amount of output.  If off, only the output from initialisation of the 
 primary <code>Pythia</code> object will be shown. 
@@ -109,10 +113,21 @@ class implements a Gaussian sampling, which means that the events
 produced will always be weighted. Other distributions can be 
 implemented in subclasses. 
 <parm name="HeavyIon:bWidth" default="0.0" min="0.0"> 
-  The width in fermi of the distribution by which the impact parameter 
-  is sampled. If zero, a suitable width will be guessed by the 
-  <code>ImpactParameterGenerator</code> itself. 
+The width in fermi of the distribution by which the impact parameter 
+is sampled. If zero, a suitable width will be guessed by the 
+<code>ImpactParameterGenerator</code> itself. 
 </parm> 
+ 
+<parm name="HeavyIon:bWidthCut" default="3.0" min="0.0"> 
+An additional upper cut for impact parameters, forcing it to always be 
+smaller than <code>HeavyIon:bWidthCut</code> times 
+<code>HeavyIon:bWidth</code>. 
+</parm> 
+ 
+<flag name="HeavyIon:forceUnitWeight" default="off"> 
+Allows completely flat generation of impact parameter in within 
+<code>HeavyIon:bWidthCut</code>, giving all events unit weight. 
+</flag> 
  
 <h3>Nucleus Models - the nuclear geometry</h3> 
  
@@ -161,7 +176,7 @@ parameters must be specified for beam A and B separately, using prefix
 <h4>Standard Woods-Saxon</h4> 
 For sufficiently large nuclei, the Woods-Saxon distribution:<br/> 
 <ei>rho(r) = rho_0/(1 + exp((r-R)/a))</ei> <br/> 
-is a suitable  choice. 
+is a suitable choice. 
 The model has two parameters, which can be set by: 
 <parm name="HeavyIonA:WSR" default="0.0" min="0.0"> 
 </parm> 
@@ -193,15 +208,86 @@ For lighter nuclei, a two-parameter Harmonic Oscillator Shell model
 is implemented. Here: <br/> 
 <ei>rho(r) = 4/(pi^(3/2)C^3)(1 + (A - 4)/6 * (r/C)^2)exp(-r^2/C^2)</ei> 
 with:<br/> 
-<ei>C = (5/2 - 4/A)^(-1) (&lt r^2&gt_A - &ltr^2&gt_p)</ei>.<br/> 
-The model parameters can be set by: 
+<ei>C = (5/2 - 4/A)^(-1) (&lt; r^2&gt;_A - &lt;r^2&gt;_p)</ei>.<br/> 
+The two model paramters are <ei>&lt; r^2&gt;_A</ei> (nuclear charge radius 
+squared) and <ei>&lt;r^2&gt;_p</ei> (proton charge radius squared). These can 
+be set, in units of fm^2. 
 <parm name="HeavyIonA:HONuclearChargeRadius" default="0.0" min="0.0"> 
 </parm> 
 <parm name="HeavyIonB:HONuclearChargeRadius" default="0.0" min="0.0"> 
-Use custom nuclear charge radius squared. If nothing is selected, 
-the program includes reasonable defaults for a number of often 
-used nuclei. Units of fm^2. 
 </parm> 
+If nothing is selected, the program includes the following reasonable 
+defaults for the following often used nuclei, using units of fm^2 throughout: 
+<table style="width:30%"> 
+  <tr> 
+    <th>Nucleus</th> 
+    <th>w. hard core</th> 
+    <th>w./o. hard core</th> 
+  </tr> 
+  <tr> 
+    <td><sup>4</sup>He</td> 
+    <td>2.45</td> 
+    <td>2.81</td> 
+  </tr> 
+  <tr> 
+    <td><sup>6</sup>Li</td> 
+    <td>6.4</td> 
+    <td>6.7</td> 
+  </tr> 
+  <tr> 
+    <td><sup>7</sup>Be</td> 
+    <td>6.69</td> 
+    <td>7.00</td> 
+  </tr> 
+  <tr> 
+    <td><sup>8</sup>Li</td> 
+    <td>5.1</td> 
+    <td>5.42</td> 
+  </tr> 
+  <tr> 
+    <td><sup>9</sup>Be</td> 
+    <td>6.0</td> 
+    <td>6.35</td> 
+  </tr> 
+  <tr> 
+    <td><sup>10</sup>B</td> 
+    <td>5.5</td> 
+    <td>5.89</td> 
+  </tr> 
+  <tr> 
+    <td><sup>11</sup>B</td> 
+    <td>5.36</td> 
+    <td>5.79</td> 
+  </tr> 
+  <tr> 
+    <td><sup>12</sup>C</td> 
+    <td>5.66</td> 
+    <td>6.10</td> 
+  </tr> 
+  <tr> 
+    <td><sup>13</sup>C</td> 
+    <td>5.6</td> 
+    <td>6.06</td> 
+  </tr> 
+  <tr> 
+    <td><sup>14</sup>N</td> 
+    <td>6.08</td> 
+    <td>6.54</td> 
+  </tr> 
+  <tr> 
+   <td><sup>15</sup>N</td> 
+    <td>6.32</td> 
+    <td>6.79</td> 
+  </tr> 
+  <tr> 
+    <td><sup>16</sup>N</td> 
+    <td>6.81</td> 
+    <td>7.29</td> 
+  </tr> 
+</table> 
+Note that you may need to add the nucleus as a particle as well. 
+<p/> 
+ 
 <parm name="HeavyIonA:HOProtonChargeRadius" default="0.7714" min="0.0"> 
 </parm> 
 <parm name="HeavyIonB:HOProtonChargeRadius" default="0.7714" min="0.0"> 
@@ -377,6 +463,12 @@ respectively in units of fm and scaled like in Pythia to have unit
 average for non-diffractive collisions. 
 </methodmore> 
  
+Information about whether a given potential sub-collision was actually 
+realized as a final state particle producing sub-collision, or if 
+it failed is given as: 
+<method name="bool SubCollision::failed"> 
+</method> 
+ 
 Finally the type of subcollision can be accessed by a method: 
 <method name="CollisionType SubCollision::type()"> 
 The subcollision type, meaning how the two nucleons interacted. It 
@@ -428,6 +520,14 @@ These are the default values of the parameters of the
 starting point when fitting to the inclusive nucleon cross sections. If left 
 empty, the values will be set to the model default. 
 </pvec> 
+ 
+<parm name="HeavyIon:SigFitDefAvNDb" default="0.0"> 
+This is the average non-diffractive impact parameter assumed in the 
+<code>SubCollisionModel</code> in Angantyr. It is something that comes out 
+the cross section fitting procedure but can be specified here if the fitting 
+procedure is omitted and the <code>HeavyIon:SigFitDefPar</code> 
+parameters are used instead. 
+</parm> 
  
 <p/> 
  
@@ -487,17 +587,16 @@ current <code>HIInfo</code> object. The methods of this class are:
 <method name="double HIInfo::b()"> 
 The impact parameter distance of the heavy ion event. 
 </method> 
-<method name="double HIInfo::sigmaTot()"> 
-The integrated total cross section in the current run (in millibarn). 
+<method name="double HIInfo::phi()"> 
+The impact parameter angle. 
 </method> 
-<method name="double HIInfo::sigmaTotErr()"> 
-The estimated statistical error on <code>sigmaTot()</code>. 
+<method name="double HIInfo::T()"> 
+The summed elastic amplitude for this event, from which cross 
+sections at Glauber level are calculated. 
 </method> 
-<method name="double HIInfo::sigmaND()"> 
-The integrated non-diffractive cross section in the current run. 
-</method> 
-<method name="double HIInfo::sigmaNDErr()"> 
-The estimated error on <code>sigmaND()</code>. 
+<method name="double HIInfo::avNDb()"> 
+The average NN non-diffractive impact parameter to be used to 
+communicate to Pythia's MPI machinery. 
 </method> 
 <method name="int HIInfo::nAttempts()"> 
 The number of attempted impact parameter points. 
@@ -507,54 +606,50 @@ The number of produced events.
 </method> 
  
 Several methods exist to extract information from the Glauber 
-calculation.  Caution should be taken when using this information 
+calculation. Caution should be taken when using this information 
 directly, under the assumption that obtained numbers correspond 
 one-to-one to numbers obtained from another calculation, as performed 
-eg. by an experiment. Since they are all model dependent quantities, a 
+e.g. by an experiment. Since they are all model dependent quantities, a 
 direct comparison can often not be made. 
  
 <p/> 
 A user is often better off by extracting the full set of 
 subcollisions, and extracting the relevant information from that. 
  
-<method name="multiset&ltSubCollision&gt* HIInfo::subCollisionsPtr()"> 
+<method name="multiset&lt;SubCollision&gt;* HIInfo::subCollisionsPtr()"> 
 A (pointer to) a multiset containing all <code>SubCollision</code>s of 
 the current event. Can be modified by the user. 
 </method> 
-<method name="void HIInfo::subCollisionsPtr(multiset&ltSubCollision&gt 
+<method name="void HIInfo::subCollisionsPtr(multiset&lt;SubCollision&gt; 
 * sPtrIn)"> 
 Sets this event's subcollision. Starting point for a user who wishes 
 to interface their own or an external Glauber calculation. 
 </method> 
 <method name="int HIInfo::nCollTot()"> 
-The total number of separate subcollisions in the current event. 
+The total number of subcollisions in the current event. 
 </method> 
 <method name="int HIInfo::nCollND()"> 
-The number of separate non-diffractive subcollisions in the current 
-event. 
-</method> 
-<method name="int HIInfo::nCollNDTot()"> 
-The total number of non-diffractive subcollisions in the current 
+The number of non-diffractive subcollisions in the current 
 event. 
 </method> 
 <method name="int HIInfo::nCollSDP()"> 
-The number of separate single diffractive projectile excitation 
+The number of single diffractive projectile excitation 
 subcollisions in the current event. 
 </method> 
 <method name="int HIInfo::nCollSDT()"> 
-The number of separate single diffractive target excitation 
+The number of single diffractive target excitation 
 subcollisions in the current event. 
 </method> 
 <method name="int HIInfo::nCollDD()"> 
-The number of separate double diffractive subcollisions in the current 
+The number of double diffractive subcollisions in the current 
 event. 
 </method> 
 <method name="int HIInfo::nCollCD()"> 
-The number of separate central diffractive subcollisions in the 
+The number of central diffractive subcollisions in the 
 current event. 
 </method> 
 <method name="int HIInfo::nCollEL"> 
-The number of separate elastic subcollisions in the current event. 
+The number of elastic subcollisions in the current event. 
 </method> 
 <method name="int HIInfo::nPartProj()"> 
 </method> 
@@ -579,6 +674,32 @@ the current event (number of diffractive participants).
 <methodmore name="int HIInfo::nElTarg()"> 
 The number of elastically interacting projectile/target nucleons in 
 the current event (number of elastic participants). 
+</methodmore> 
+<method name="double HIInfo::glauberTot()"> 
+</method> 
+<methodmore name="double HIInfo::glauberND()"> 
+</methodmore> 
+<methodmore name="double HIInfo::glauberINEL()"> 
+</methodmore> 
+<methodmore name="double HIInfo::glauberEL()"> 
+</methodmore> 
+<methodmore name="double HIInfo::glauberDiffT()"> 
+</methodmore> 
+<methodmore name="double HIInfo::glauberDiffP()"> 
+</methodmore> 
+<methodmore name="double HIInfo::glauberDDiff()"> 
+</methodmore> 
+<methodmore name="double HIInfo::glauberBSlope()"> 
+Various semi-inclusive cross sections obtained from the Glauber calculation 
+(total, non-diffractive, total inelastic, elastic, diffractive excitation of 
+the target and projectile or both, elastic b-slope, respectively). Note that 
+these are in general not the same as the generated cross sections, since 
+Angantyr does not generate elastic scatterings correctly. Also the error of 
+these cross sections are available from functions of the form 
+<code>HIInfo::glauberTotErr()</code>. The cross sections are given in 
+millibarns and the slope in Gev<sup>-2</sup>. Note also that when using 
+variable beam id and energy, the Glauber statistics are reset any time the 
+beams change. 
 </methodmore> 
 <method name="double HIInfo::weight()"> 
 The weight for this collision. Note that heavy ion weights are 
@@ -615,11 +736,11 @@ not yet been validated to work properly together.  Also the parameters
 in the model have not been properly tuned, so the results from running 
 must not be taken as definitive predictions.</li> 
 <li>A similar warning should be made regarding the use of 
-<aloc href="ColourReconnection">Colour Reconnection</aloc> models. In the 
-Angantyr model, colour reconnection takes place only inside individual 
-nucleon-nucleon collisions, and not in the nucleus-nucleus collision 
-as a whole.  One can therefore not expect large effects on eg. baryon 
-production by enabling the QCD colour reconnection.</li> 
+<aloc href="ColourReconnection">Colour Reconnection</aloc> models. By 
+default the colour reconnection takes place only inside individual 
+nucleon-nucleon sub-collisions, and not in the nucleus-nucleus collision 
+as a whole. To get reconnections also between sub-collisions, the 
+settings described in <ref>Lon23</ref> should be used.</li> 
 </ul> 
 <p/> 
 To determine which projectile nucleon interacts with which target 
@@ -639,19 +760,19 @@ the values used comes from PYTHIA's internal model of
 further documentation of this routine. 
 <p/> 
  
-<modepick name="Angantyr:CollisionModel" default="1" min="0" max="5"> 
+<modepick name="Angantyr:CollisionModel" default="2" min="0" max="5"> 
 The Angantyr model has a couple of option for the 
 <code>SubCollisionModel</code>. 
 <option value="0"> 
 A simplified model with fixed nucleon radii. 
 </option> 
 <option value="1"> 
-The <code>DoubleStrikman</code> default model with fluctuating radii 
+The <code>DoubleStrikman</code> model with fluctuating radii 
 and cross sections. 
 </option> 
 <option value="2"> 
-Fluctuating radii and cross sections but different treatment of 
-opacity. 
+Fluctuating radii and cross sections but an alternate treatment of 
+opacity (default). 
 </option> 
 <option value="3"> 
 Black disks with no fluctuations, ie. no diffraction. 
@@ -857,14 +978,7 @@ If on, at each evolution point, the algorithm will use the generated
 parameters from the previous point. If off, it start from the default 
 parameter set given by <code>HeavyIon:SigFitDefPar</code> at each point. 
 </flag> 
-<mode name="HeavyIon:varECMSigFitNGen" default="10" min="1"> 
-When performing stepwise evolution, the evolution at each interpolation point 
-starts from the parameters generated at the previous point. This gives a 
-better original estimate, so that fewer generations are necessary to 
-converge. This setting determines the number of generations at each point 
-after the first one. 
-</mode> 
-<modepick name="HeavyIon:SigFitReuseInit" default="0" min="0" max="4"> 
+<modepick name="HeavyIon:SigFitReuseInit" default="0" min="-2" max="3"> 
 If set, the parameters calculated from the evolutionary algorithm can be 
 saved/loaded to disk, for faster initialization in subsequent runs. 
 <option value="0">Initialize from scratch every time.</option> 
@@ -873,12 +987,23 @@ saved/loaded to disk, for faster initialization in subsequent runs.
 initialization fails.</option> 
 <option value="3">Load configuration from file if it exists, otherwise 
 initialize from scratch and save the file.</option> 
+<option value="-1">Initialize fit from <code>Init:reuseHeavyIonSigFit</code> 
+if not empty. In any case write the fitted parameters to 
+<code>Init:reuseHeavyIonSigFit</code>.</option> 
+<option value="-2">Same as <code>-1</code> but also read/write the 
+setting from/to the file <code>HeavyIon:SigFitInitFile</code>.</option> 
 </modepick> 
+ 
 <word name="HeavyIon:SigFitInitFile" default="Angantyr.sigfit"> 
 The file where the sigfit configuration is stored. 
 </word> 
  
-<mode name="HeavyIon:SasdMpiReuseInit" default="0" min="0" max="3"> 
+<wvec name="Init:reuseHeavyIonSigFit" default="{}"> 
+This is the internal setting where the fitted parameters are stored for 
+<code>HeavyIon:SigFitReuseInit &lt; 0</code>. 
+</wvec> 
+ 
+<mode name="HeavyIon:SasdMpiReuseInit" default="0" min="-2" max="3"> 
 This setting is similar to <code>MultipartonInteractions:reuseInit</code>, 
 but pertains to the SASD Pythia subobject used internally by Angantyr. 
 <option value="0">current run is self-contained.</option> 
@@ -889,13 +1014,40 @@ from a previous initialization, thereby saving time. If the file is not
 found, initialization fails.</option> 
 <option value="3">as option 2, but if the file is not found, it will be 
 generated and saved after normal initialization.</option> 
+<option value="-1">read initialization data from 
+<code>Init:reuseSasdMpiInit</code> if not empty. In any case write the 
+the data to <code>Init:reuseSasdMPI...</code> setting.</option> 
+<option value="-2">Same as <code>-1</code> but also read/write the 
+setting from/to the file <code>HeavyIon:SasdMpiInitFile</code>.</option> 
 </mode> 
+ 
 <word name="HeavyIon:SasdMpiInitFile" default="Angantyr.sasd.mpi"> 
 The file name used to store or read MPI initialization data for the SASD 
 Pythia object. It is up to the user to pick a suitable name 
 (including path if relevant) for the case at hand. 
 </word> 
  
+<wvec name="Init:reuseSasdMPIiDiffSys0" default = "{}"> 
+This is where the fitted parameters are stored for non-diffractive 
+processes. 
+</wvec> 
+ 
+<wvec name="Init:reuseSasdMPIiDiffSys1" default = "{}"> 
+This is where the fitted parameters are stored for single diffractive 
+(XB) processes. 
+</wvec> 
+ 
+<wvec name="Init:reuseSasdMPIiDiffSys2" default = "{}"> 
+This is where the fitted parameters are stored for single diffractive 
+(AX) processes. 
+</wvec> 
+ 
+<wvec name="Init:reuseSasdMPIiDiffSys3" default = "{}"> 
+This is where the fitted parameters are stored for doubly diffractive 
+(AXB) processes. 
+</wvec> 
+ 
+ 
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

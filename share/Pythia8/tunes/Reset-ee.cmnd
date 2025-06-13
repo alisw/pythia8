@@ -1,0 +1,36 @@
+! Reset the relevant settings for an ee tune to their defaults.
+
+! Flavour composition.
+StringFlav:probStoUD                = DEFAULT 
+StringFlav:probQQtoQ                = DEFAULT
+StringFlav:probSQtoQQ               = DEFAULT
+StringFlav:probQQ1toQQ0             = DEFAULT
+StringFlav:mesonUDvector            = DEFAULT
+StringFlav:mesonSvector             = DEFAULT
+StringFlav:mesonCvector             = DEFAULT
+StringFlav:mesonBvector             = DEFAULT
+StringFlav:etaSup                   = DEFAULT
+StringFlav:etaPrimeSup              = DEFAULT
+StringFlav:popcornSpair             = DEFAULT
+StringFlav:popcornSmeson            = DEFAULT
+StringFlav:suppressLeadingB         = DEFAULT
+
+! String breaks: z.
+StringZ:aLund                       = DEFAULT
+StringZ:bLund                       = DEFAULT
+StringZ:aExtraSquark                = DEFAULT
+StringZ:aExtraDiquark               = DEFAULT
+StringZ:rFactC                      = DEFAULT
+StringZ:rFactB                      = DEFAULT
+
+! String breaks: pT.
+StringPT:sigma                      = DEFAULT
+StringPT:enhancedFraction           = DEFAULT
+StringPT:enhancedWidth              = DEFAULT
+
+! FSR: strong coupling, IR cutoff.
+TimeShower:alphaSvalue              = DEFAULT
+TimeShower:alphaSorder              = DEFAULT
+TimeShower:alphaSuseCMW             = DEFAULT
+TimeShower:pTmin                    = DEFAULT
+TimeShower:pTminChgQ                = DEFAULT

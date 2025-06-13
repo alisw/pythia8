@@ -1,5 +1,5 @@
 // VinciaHistory.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -750,7 +750,7 @@ void HistoryNode::setClusterList(shared_ptr<VinciaMergingHooks>
       if (verboseIn >= VinciaConstants::DEBUG) {
         stringstream msg;
         msg << "Considering clustering: "
-            << dau1 <<" "<< dau2<<" "<<dau3;
+            << dau1 << " " << dau2 << " " << dau3;
         printOut(__METHOD_NAME__,msg.str());
       }
 
@@ -844,7 +844,7 @@ void HistoryNode::setClusterList(shared_ptr<VinciaMergingHooks>
         }
 
         // Initialise vectors of invariants and masses.
-        if (!clusterings.at(iHist).initInvariantAndMassVecs()) {
+        if (!clusterings.at(iHist).init()) {
           if (verboseIn >= VinciaConstants::DEBUG) {
             stringstream msg;
             msg << "No phase space left for clustering."
@@ -1112,7 +1112,7 @@ bool HistoryNode::doClustering(VinciaClustering& clus, Event& clusEvent,
 
 // Constructor.
 
-VinciaHistory::VinciaHistory(Event &stateIn,
+VinciaHistory::VinciaHistory(Event& stateIn,
   BeamParticle* beamAPtrIn,  BeamParticle* beamBPtrIn,
   MergingHooksPtr mergingHooksPtrIn,
   PartonLevel* trialPartonLevelPtrIn,
@@ -1163,12 +1163,9 @@ VinciaHistory::VinciaHistory(Event &stateIn,
   // Set whether the merging scale is set in terms of the evolution variable.
   msIsEvolVar = true;
   if ( vinMergingHooksPtr->doKTMerging() || vinMergingHooksPtr->doMGMerging()
-    || vinMergingHooksPtr->doCutBasedMerging()
-    || vinMergingHooksPtr->doPTLundMerging() ) {
-    msIsEvolVar = false;
-  }
+    || vinMergingHooksPtr->doCutBasedMerging() ) msIsEvolVar = false;
 
-  // Set the maximum multiplicites of matrix-element generator.
+  // Set the maximum multiplicites of the matrix-element generator.
   nMax = vinMergingHooksPtr->nMaxJets();
   nMaxRes = vinMergingHooksPtr->nMaxJetsRes();
 
@@ -1213,6 +1210,10 @@ double VinciaHistory::getWeightCKKWL() {
          << " with "<< history.size() << " nodes.";
       printOut(__METHOD_NAME__, ss.str());
     }
+    fsrShowerPtr->setVerbose(Logger::ABORT);
+    isrShowerPtr->setVerbose(Logger::ABORT);
+    vinComPtr->setVerbose(Logger::ABORT);
+    resPtr->setVerbose(Logger::ABORT);
 
     // Fetch shorthands for ME and Born node.
     HistoryNode* bornNodePtr = &history.back();
@@ -1318,6 +1319,12 @@ double VinciaHistory::getWeightCKKWL() {
 
     }// Finished loop over clustered states.
 
+    // Reinstate verbosity in other classes.
+    fsrShowerPtr->setVerbose(verbose);
+    isrShowerPtr->setVerbose(verbose);
+    vinComPtr->setVerbose(verbose);
+    resPtr->setVerbose(verbose);
+
     // PDF ratio with factorisation scale.
     double mu2F = pow2(vinMergingHooksPtr->muFinME());
     double wPDF = 1.;
@@ -1346,9 +1353,52 @@ double VinciaHistory::getWeightCKKWL() {
   isrShowerPtr->setIsTrialShowerRes(false);
 
   // Got to here - event passes!
-  if (verbose >= VinciaConstants::DEBUG)
-    printOut(__METHOD_NAME__, "wCKKWL = " + num2str(wCKKWL));
   return wCKKWL;
+}
+
+//--------------------------------------------------------------------------
+
+// Find the first clustered state above the merging scale.
+
+Event VinciaHistory::getFirstClusteredEventAboveTMS() {
+  // Initialise empty event record.
+  Event clusteredState = state;
+  clusteredState.clear();
+
+  // Loop over systems.
+  for (auto itSys(historyBest.begin()); itSys!=historyBest.end(); ++itSys) {
+    vector<HistoryNode>& history = itSys->second;
+
+    // Continue if this history is incomplete.
+    const int nStepsMax =
+      vinMergingHooksPtr->getNumberOfClusteringSteps(history[0].state,false);
+    if (getNClusterSteps() < nStepsMax) continue;
+
+    // Loop through history of this system and find first node above MS.
+    // Start at second node, as first node is the input state.
+    for (int iNode(1); iNode < int(history.size()); ++iNode) {
+      HistoryNode& node = history.at(iNode);
+
+      // If above MS, save this node and break out of loop.
+      if (node.getEvolNow() < qms) continue;
+      if (clusteredState.size() == 0) clusteredState = node.state;
+      else {
+        for (int iPtcl(3); iPtcl<node.state.size(); ++iPtcl)
+          clusteredState.append(node.state[iPtcl]);
+      }
+      break;
+    }
+  }
+
+  // Debug printout.
+  if (verbose >= DEBUG) {
+    printOut(__METHOD_NAME__,"integrated state");
+    clusteredState.list();
+  }
+
+  // Return event record. An empty record means we only found
+  // incomplete histories.
+  return clusteredState;
 }
 
 //--------------------------------------------------------------------------
@@ -1378,9 +1428,7 @@ int VinciaHistory::getNClusterSteps() {
 double VinciaHistory::getRestartScale() {
 
   // Scale of new (MPI) emission.
-  if (hasNewProcessSav && newProcessScale > 0.) {
-    return newProcessScale;
-  }
+  if (hasNewProcessSav && newProcessScale > 0.) return newProcessScale;
   // Return the reconstructed scale of the last node.
   else {
     // Note: scale of first node gets set correctly in getStartScale().
@@ -1391,17 +1439,10 @@ double VinciaHistory::getRestartScale() {
     auto itSysEnd = historyBest.end();
     for ( ; itSys != itSysEnd; ++itSys) {
       double qNow = itSys->second.front().state.scale();
-      if (qNow > 0.)
-        qRestart = min(qRestart, qNow);
-    }
-    if (verbose >= VinciaConstants::DEBUG) {
-      stringstream ss;
-      ss << "Shower restart scale: " << qRestart;
-      printOut(__METHOD_NAME__, ss.str());
+      if (qNow > 0.) qRestart = min(qRestart, qNow);
     }
 
-    if (qRestart < 2.*state[0].e())
-      return qRestart;
+    if (qRestart < 2.*state[0].e()) return qRestart;
   }
 
   // Merging scale. Should only be the last resort.
@@ -1592,17 +1633,12 @@ unsigned int VinciaHistory::countPerms() {
   int lepChargeSum  = 0;
   vector<HardProcessParticle*> leptons = vinMergingHooksPtr->getLeptons();
   for (auto lep : leptons) lepChargeSum += lep->chargeType();
-  int resChargeSum = lepChargeSum + nResPlusUndc - nResMinusUndc;
   if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__, "Charge sums: ");
     cout << "     chains: " << num2str(chargeSum,1) << endl;
     cout << "    leptons: " << num2str(lepChargeSum,1) << endl;
     cout << " resonances: "
          << num2str(nResPlusUndc-nResMinusUndc,1) << endl;
-  }
-  if (chargeSum + resChargeSum != 0) {
-    loggerPtr->ERROR_MSG("chain charges do not balance (with resonances)");
-    return 0;
   }
 
   // 3.) Look up the colour structure of the hard process to intialise.
@@ -2242,8 +2278,8 @@ std::tuple<bool,double,HistoryNodes> VinciaHistory::findHistoryPerm(
     return make_tuple(isIncomplete,0.,sysToHistory);
 
   // Now loop over systems and find histories.
-  for(auto itHistory = sysToHistory.begin(); itHistory != sysToHistory.end();
-      ++itHistory) {
+  for (auto itHistory = sysToHistory.begin(); itHistory != sysToHistory.end();
+       ++itHistory) {
 
     int iSys = itHistory->first;
     bool isResSys = (iSys == 0 ) ? false : true;
@@ -2323,7 +2359,7 @@ bool VinciaHistory::checkMergingCut(HistoryNodes& history) {
   // only check last state for each system.
   if (msIsEvolVar) {
     // Loop over systems and check last node.
-    for(auto itSys = history.begin() ; itSys != history.end(); ++itSys) {
+    for (auto itSys = history.begin(); itSys != history.end(); ++itSys) {
       HistoryNode& lastNode = itSys->second.back();
       double qmsNow = lastNode.getEvolNow();
       // Failed.
@@ -2349,7 +2385,6 @@ bool VinciaHistory::checkMergingCut(HistoryNodes& history) {
   return true;
 
 }
-
 
 //--------------------------------------------------------------------------
 
@@ -2832,7 +2867,6 @@ double VinciaHistory::calcPDFRatio(const HistoryNode* nodeNow,
 
   // Set beams for current node and calculate PDFs.
   setupBeams(nodeNow, pT2now);
-  //  cout << __METHOD_NAME__ << "calculating PDFs now." << endl;
   double xfAnow = nodeNow->colTypeA() != 0 ?
     beamA.xfISR(0, nodeNow->idA(), nodeNow->xA(), pT2now) : 1.;
   double xfBnow = nodeNow->colTypeB() != 0 ?

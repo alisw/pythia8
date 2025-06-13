@@ -1,0 +1,140 @@
+<html><head><title>main122</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main122</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main122.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#matplotlib">Matplotlib</a>
+
+// This is a simple test program.
+// It illustrates how Les Houches Event File input can be used in PYTHIA.
+// It uses two LHE files, ttbar.lhe and ttbar2.lhe, which are combined
+// using Beams:newLHEFsameInit = on to skip new initialization second time.
+// Then the second file is viewed as a simple continuation of the first,
+// just split for practical reasons, rather than as a separate new run
+// with a new set of processes.
+// In the first file top decays have been performed, in the second not,
+// and are instead handled by the internal PYTHIA resonance-decay machinery.
+// Furthermore the internal top production processes are switched on and
+// mixed in, giving an unrealistic &quot;double up&quot; total top cross section.
+// Much of this of course is not intended to be realistic,
+// but rather illustrates several tricks that can be useful.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  //  Number of listed events. Allow for possibility of a few faulty events.
+  int nPrintLHA  = 1;
+  int nPrintRest = 0;
+  int nAbort     = 10;
+
+  // Generator
+  Pythia pythia;
+
+  // Switch on internal ttbar production.
+  pythia.readString(&quot;Top:gg2ttbar = on&quot;);
+  pythia.readString(&quot;Top:qqbar2ttbar = on&quot;);
+
+  // Use same top mass as in LHE files to simplify comparison.
+  pythia.readString(&quot;6:m0 = 175.&quot;);
+
+  // No automatic event listings - do it manually below.
+  pythia.readString(&quot;Next:numberShowLHA = 0&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // Initialize Les Houches Event File run.
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = ttbar.lhe&quot;);
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Book histogram.
+  Hist nChargedL(&quot;nch, LHEF events&quot;,100,-0.5,399.5);
+  Hist nChargedI(&quot;nch, internal events&quot;,100,-0.5,399.5);
+
+  // Set counters.
+  int iPrintLHA  = 0;
+  int iPrintRest = 0;
+  int iAbort     = 0;
+  int iFile      = 1;
+
+  // Begin event loop
+  while (iAbort &lt; nAbort) {
+
+    // Generate until none left in input file.
+    if (!pythia.next()) {
+      if (pythia.info.atEndOfFile()) {
+
+        // First time open next file, second time stop event loop.
+        if (iFile == 1) {
+          pythia.readString(&quot;Beams:newLHEFsameInit = on&quot;);
+          pythia.readString(&quot;Beams:LHEF = ttbar2.lhe&quot;);
+
+          // If Pythia fails to initialize, exit with error.
+          if (!pythia.init()) {
+            cout &lt;&lt; &quot;Failed init() at file &quot; &lt;&lt; iFile &lt;&lt; endl;
+            return 1;
+          }
+
+          ++iFile;
+          continue;
+        } else break;
+      }
+      ++iAbort;
+      continue;
+    }
+
+    // List first few Les Houches and other events.
+    if (pythia.info.isLHA() &amp;&amp; iPrintLHA &lt; nPrintLHA) {
+      pythia.LHAeventList();
+      pythia.info.list();
+      pythia.process.list();
+      pythia.event.list();
+      ++iPrintLHA;
+    } else if (!pythia.info.isLHA() &amp;&amp; iPrintRest &lt; nPrintRest) {
+      pythia.info.list();
+      pythia.process.list();
+      pythia.event.list();
+      ++iPrintRest;
+    }
+
+    // Sum up final charged multiplicity and fill in histogram.
+    int nChg = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
+      ++nChg;
+    if (pythia.info.isLHA()) nChargedL.fill(nChg);
+    else                     nChargedI.fill(nChg);
+
+  // End of event loop.
+  }
+
+  // Give statistics. Print histograms.
+  pythia.stat();
+  cout &lt;&lt; nChargedL &lt;&lt; nChargedI;
+
+  // Plot histograms.
+  HistPlot hpl(&quot;plot122&quot;);
+  hpl.frame(&quot;fig122&quot;, &quot;Charged particle multiplicities&quot;,
+     &quot;$n_{\\mathrm{ch}}$&quot;, &quot;$\\mathrm{d}P/\\mathrm{d}n_{\\mathrm{ch}}$&quot;);
+  hpl.add(nChargedL);
+  hpl.add(nChargedI);
+  hpl.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

@@ -374,16 +374,14 @@ can conclude that
 m_i + m_j = (3 * m_ij,vector + m_ij, pseudoscalar) / 4 
 </i><br/> 
 which helps define the HV-quark masses. Note that some parameters, 
-in particular <code>HiddenValley:bmqv2</code>, have been given 
-default values based on a scaling related to the lightest HV-quark 
-mass defined by the equations above. It therefore is relevant to 
-work with consistently defined HV-quark masses. This still is based 
-on the lightest HV-quark having a constituent mass of the order of 
-<code>Lambda_HV</code>. If this is not the case then further thought 
-will be required. The HV-baryon masses should suitably be defined 
-as the sum of the the three constituent masses for <b>SU(3)</b>. 
-Furthermore decay modes also need to be set, and lifetimes if you want 
-to have displaced vertices. 
+like <code>HiddenValley:rFact</code>, should be given nonzero 
+values based on a consistent setup of HV quark and HV meson masses. 
+Often we also assume that the lightest HV quark has a constituent mass 
+below or of the order of <code>Lambda_HV</code>. If this is not the case 
+then further thought will be required. The HV-baryon masses should 
+suitably be defined approximately as the sum of the the three 
+constituent masses for <b>SU(3)</b>. Furthermore decay modes also 
+need to be set, and lifetimes if you want to have displaced vertices. 
  
 <p/> 
 In the <code>separateFlav = on</code> option the number of properties 
@@ -669,7 +667,7 @@ Order at which <i>alpha_HV</i> runs. This switch has no function for
 the <b>U(1)</b> case, where <i>alpha_HV</i> is always fixed, but only 
 for the <b>SU(N)</b> ones. For a running <i>alpha_HV</i> it is 
 possible either to set the <i>alpha_HV</i> value at a reference scale 
-or to set a <i>Lambda</i> scale, see further the next four entries. 
+or to set a <i>Lambda_HV</i> scale, see further the next four entries. 
 <br/><code>option </code><strong> 0</strong> : zeroth order, i.e. <i>alpha_HV</i> is kept 
 fixed at the value <i>alphaFSR</i> below.   
 <br/><code>option </code><strong> 1</strong> : first order, with the beta function based 
@@ -700,7 +698,10 @@ for <i>gv &rarr; gv + gv</i> by <i>N</i>.
 A reference scale, where the <code>HiddenValley:alphaFSR</code> value 
 above is defined, in case of a running coupling. Default value is the 
 <i>Z^0</i> mass, by analogy with QCD, but it can be picked to 
-whatever is convenient.   
+whatever is convenient. If the HV model resembles the QCD sector, 
+but with masses scaled up by some factor, then it would make sense to 
+increase the reference scale accordingly. 
+   
  
 <a name="anchor37"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:setLambda &nbsp;</strong> 
@@ -719,7 +720,10 @@ the <i>Lambda_HV</i> parameter used for the case of a running
 <i>alpha_HV(Q^2)</i> when <code>HiddenValley:setLambda = on</code>. 
 This <i>Lambda_HV</i> is used in the respective one-, two- or 
 three-loop <i>alpha_HV(Q^2)</i> expression, depending on 
-<code>HiddenValley:alphaOrder</code>. 
+<code>HiddenValley:alphaOrder</code>. This perturbative <i>Lambda</i> 
+value is not to be confused with the nonperturbative <i>Lambda</i> 
+defined in the hadronization section below, although the two ought 
+to be of the same order of magnitude. 
    
  
 <a name="anchor39"></a>
@@ -787,7 +791,7 @@ the formation of HV-mesons along the string, each with its
 the neighbouring one. 
  
 <p/> 
-Since, so far, we have only assumed there to be one <i>qv</i> 
+Since, to begin with, we have only assumed there to be one <i>qv</i> 
 species, all produced <i>qv qvbar</i> HV-mesons are of the 
 same flavour-diagonal species. Such an HV-meson can decay back to 
 the normal sector, typically by whatever mediator particle allowed 
@@ -809,7 +813,8 @@ This scenario contains more parameters than the first one, for the
 related to particle properties, both for <i>qv</i> and for the 
 two different kinds of HV-mesons, here labeled 4900111 and 4900113 
 for the diagonal ones, and +-4900211 and +-4900213 for the 
-off-diagonal ones, plus optionally an 4901114 baryon. Furthermore the 
+off-diagonal ones, plus optionally an 4901114 baryon. The extension 
+to more than two HV-quark species is trivial. Furthermore the 
 <i>hvMesonDiag</i> decay modes need to be set up. Like with the 
 <i>gammav</i> in the <b>U(1)</b> option, the default 
 <code>rhovDiag</code> decay table is based on the branching ratios 
@@ -820,11 +825,36 @@ factor of 3 where relevant.
 <p/> 
 The second set are fragmentation parameters that extend or replace 
 the ones used in normal string fragmentation. Some of them are not 
-encoded in the same way as normally, however, but rather scale as 
-the <i>qv</i> mass is changed, so as to keep a sensible default 
-behaviour. This does not mean that deviations from this set should 
-not be explored, or that other scaling rules could be preferred 
-within alternative scenarios. These parameters are as follows. 
+necessarily encoded straight off, however, but rather set to scale 
+with changed quark and hadron masses or with the nonperturbative 
+<i>Lambda</i> value, so as to keep a sensible default behaviour. 
+For QCD-like theories, the two 
+are approximately related by <i>Lambda = 0.4 * m(rho)</i> according 
+to lattice QCD calculations (we thank Matt Strassler for persistently 
+pointing this out). Here <i>rho</i> is the lightest spin-1 
+meson, assumed to be made out of light quarks, with bare masses 
+below the respective <i>Lambda</i> scale. This scaling assumption 
+is chosen as the default because it is simple and will give reasonable 
+answers across a wide range of models. If precision is needed, 
+however, <i>Lambda</i> should be set more carefully by the user. 
+Based on the above assumption, the definition 
+<br/><i> 
+  k = Lambda_HV / Lambda_QCD = m(rho_HV) / m(rho_QCD) 
+</i><br/> 
+offers two alternative ways to define a rescaling factor for some 
+of the fragmentation parameters. Notably, the <i>b</i> parameter 
+below occurs in the dimensionless combination <i>bm^2</i>, 
+suggesting a scaling of <i>b</i> by a factor <i>1 / k^2</i> 
+when <i>m</i> is scaled by <i>k</i>. Similarly, the <i>sigma</i> 
+parameter occurs in the dimensionless combination <i>pT/sigma</i>, 
+so here the <i>sigma</i> scale factor should rather be <i>k</i>. 
+Scaling would imply that, if particle masses and the subsystem energy 
+are scaled up (or down) by a common factor (like the <i>k</i> above), 
+then so are the longitudinal and transverse momentum spectra of (HV) 
+hadrons, with a constant average number of hadrons. 
+ 
+<p/> 
+The HV fragmentation parameters are as follows. 
  
 <a name="anchor40"></a>
 <p/><code>flag&nbsp; </code><strong> HiddenValley:fragment &nbsp;</strong> 
@@ -888,6 +918,9 @@ fraction of HV-mesons that are assigned spin 1 (vector), with the
 remainder spin 0 (pseudoscalar). Assuming the <i>qv</i> have 
 spin <i>1/2</i> and the mass splitting is small, spin counting 
 predicts that <i>3/4</i> of the mesons should have spin 1. 
+Note the difference relative to <code>StringFlav:mesonUDvector</code> 
+and related ones, which set the ratio V/PS, whereas here V/(V+PS) 
+is set. 
    
  
 <a name="anchor46"></a>
@@ -899,38 +932,165 @@ pseudoscalar meson with the largest code, for now assumed to be the
    
  
 <a name="anchor47"></a>
-<p/><code>parm&nbsp; </code><strong> HiddenValley:aLund &nbsp;</strong> 
- (<code>default = <strong>0.3</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
-The <i>a</i> parameter of the Lund symmetric fragmentation function. 
-See the normal <a href="Fragmentation.html" target="page">fragmentation 
-function</a> description for the shape of this function.   
+<p/><code>mode&nbsp; </code><strong> HiddenValley:setabsigma &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+set the fragmentation parameters, with options arranged in order of 
+increasing user control. The parameters affected are 
+<i>aV</i> = <code>HiddenValley:aLund</code>, 
+<i>bV</i> = <code>HiddenValley:bLund</code>, and 
+<i>sigmaV</i> = <code>HiddenValley:sigmaLund</code>. 
+<br/><code>option </code><strong> 0</strong> : the above-mentioned relation between the 
+nonperturbative <i>Lambda</i> confinement scale and the lightest 
+vector meson mass, both in the QCD (the <i>rho = rho_QCD</i> meson) 
+and in the HV sector (call it <i>rho_HV</i>), is assumed valid. 
+The ratio <i>k = m(rho_HV) / m(rho_QCD)</i> is then used 
+to rescale the standard QCD values as <i>bV = bQCD / k^2</i> 
+and <i>sigmaV = k * sigmaQCD</i>, while the <i>aV</i> value 
+remains as in QCD.   
+<br/><code>option </code><strong> 1</strong> : the nonperturbative <i>Lambda</i> confinement 
+scales are set by the user in <code>HiddenValley:LambdaNPHV</code> and 
+<code>HiddenValley:LambdaNPQCD</code> for the HV and QCD sectors, 
+respectively. From these two values the ratio 
+<i>k = Lambda_NP_HV / Lambda_NP_QCD</i> is obtained and the 
+fragmentation parameters are set, rescaled from the standard values 
+as for option 0 above.   
+<br/><code>option </code><strong> 2</strong> : full user control to set the three values for 
+<i>aV</i>, <i>bV</i> and <i>sigmaV</i> below. 
+It is especially important to ensure that <i>bV</i> and 
+<i>sigmaV</i> obtain properly rescaled values, as discussed above, 
+but with the possibility to deviate from a simple rescaling, e.g. 
+to define an "error band" for predictions.    
+   
  
 <a name="anchor48"></a>
-<p/><code>parm&nbsp; </code><strong> HiddenValley:bmqv2 &nbsp;</strong> 
- (<code>default = <strong>0.8</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)<br/>
-The <i>b</i> parameter of the Lund symmetric fragmentation function, 
-multiplied by the square of the <i>qv</i> mass. This scaling ensures 
-that the fragmentation function keeps the same shape when the 
-<i>qv</i> mass is changed (neglecting transverse momenta). 
+<p/><code>parm&nbsp; </code><strong> HiddenValley:LambdaNPQCD &nbsp;</strong> 
+ (<code>default = <strong>0.31</strong></code>; <code>minimum = 0.0</code>)<br/>
+the nonperturbative <i>Lambda_QCD</i> scale, by default taken to 
+be approximately 0.4 times the <i>rho^0</i> mass. Used in the 
+<code>HiddenValley:setabsigma = 1</code> option above. Not to be 
+confused with the <i>Lambda</i> value(s) of the perturbative QCD 
+description, although the two should not be too far apart. 
    
  
 <a name="anchor49"></a>
-<p/><code>parm&nbsp; </code><strong> HiddenValley:rFactqv &nbsp;</strong> 
- (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
-<i>r_qv</i>, i.e. the Bowler correction factor to the Lund symmetric 
-fragmentation function, which could be made weaker or stronger than 
-its natural value. 
+<p/><code>parm&nbsp; </code><strong> HiddenValley:LambdaNPHV &nbsp;</strong> 
+ (<code>default = <strong>0.31</strong></code>; <code>minimum = 0.0</code>)<br/>
+the nonperturbative <i>Lambda_HV</i> scale, for the user to set 
+in the <code>HiddenValley:setabsigma = 1</code> option, as described 
+above. The prescription of 0.4 times the lightest vector meson mass 
+might offer some guidance for QCD-like theories. If the model 
+studied does not have any close equivalent to the SM u and d quarks, 
+in terms of being well below <i>Lambda_HV</i> in bare mass, it could 
+be useful to estimate what the <i>rho</i> mass would have been, 
+had such equivalents existed. This parameter is set separately 
+from the <i>Lambda</i> scale used in the HV parton-shower description, 
+although it would make sense for the two to be closely related. 
    
  
 <a name="anchor50"></a>
-<p/><code>parm&nbsp; </code><strong> HiddenValley:sigmamqv &nbsp;</strong> 
- (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>)<br/>
-the width <i>sigma</i> of transverse momenta in the HV fragmentation 
-process, normalized to the <i>qv</i> mass. This ensures that 
-<i>sigma</i> scales proportionately to <i>m_qv</i>. 
-See the normal <a href="Fragmentation.html" target="page">fragmentation 
-<i>pT</i></a> description for conventions for factors of 2. 
+<p/><code>parm&nbsp; </code><strong> HiddenValley:aLund &nbsp;</strong> 
+ (<code>default = <strong>0.68</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
+the dimensionless <i>a</i> parameter of the Lund symmetric 
+fragmentation function. See the normal 
+<a href="Fragmentation.html" target="page">string fragmentation</a> description 
+for the shape of this function. For 
+<code>HiddenValley:setabsigma =</code> 0 or 1, the PYTHIA code will 
+read in and use the value of <code>StringZ:aLund</code>. 
+It is only for <code>HiddenValley:setabsigma = 2</code> that 
+<code>HiddenValley:aLund</code> is used, and therefore meaningfully 
+can be set by the user. 
+<br/><b>Note:</b> The default value has been changed as of PYTHIA 
+8.313, to agree with the Monash tune value. 
    
+ 
+<a name="anchor51"></a>
+<p/><code>parm&nbsp; </code><strong> HiddenValley:bLund &nbsp;</strong> 
+ (<code>default = <strong>0.98</strong></code>; <code>minimum = 0.</code>)<br/>
+The <i>b</i> parameter of the Lund symmetric fragmentation function, 
+with dimensions <i>GeV^{-2}</i>. See the normal 
+<a href="Fragmentation.html" target="page">string fragmentation</a> 
+description for the shape of this function. For 
+<code>HiddenValley:setabsigma =</code> 0 or 1, the PYTHIA code will 
+read in and use the value <code>StringZ:bLund</code>, 
+rescaled by the factor <i>1 / k^2</i> introduced above. It is only 
+for <code>HiddenValley:setabsigma = 2</code> that 
+<code>HiddenValley:bLund</code> is used, and therefore 
+meaningfully can be set by the user. Then it is important to remember 
+that its value should be rescaled approximately by a factor 
+<i>1 / k^2</i> from its default. 
+<br/><b>Note:</b> As of PYTHIA 8.313, this parameter replaces 
+the previous <code>HiddenValley:bmqv2</code>, which was dimensionless 
+by its multiplication with a squared HV quark mass. This could work for 
+simple HV quark and meson mass setups, but was confusing for richer 
+spectra. The default value was also off from what it should have been 
+for good scaling of the fragmentation function shape. It is possible 
+to reproduce the old behaviour within the 
+<code>HiddenValley:setabsigma = 2</code> option. 
+   
+ 
+<a name="anchor52"></a>
+<p/><code>parm&nbsp; </code><strong> HiddenValley:sigmaLund &nbsp;</strong> 
+ (<code>default = <strong>0.335</strong></code>; <code>minimum = 0.0</code>)<br/>
+the width <i>sigma</i> of transverse momenta in the HV fragmentation 
+process, with dimensions <i>GeV</i>. See the 
+<a href="Fragmentation.html" target="page">string fragmentation</a> page for 
+further details. For <code>HiddenValley:setabsigma =</code> 0 or 1, 
+the PYTHIA code will read in and use the value 
+<code>StringPT:sigma</code>, which is rescaled by the factor <i>k</i> 
+introduced above. It is only for <code>HiddenValley:setabsigma = 2</code> 
+that <code>HiddenValley:sigmaLund</code> is used, and therefore 
+meaningfully can be set by the user. Then it is important to remember 
+that its value should be rescaled approximately by a factor 
+<i>k</i> from its default. 
+<br/><b>Note:</b> As of PYTHIA 8.313, this parameter replaces 
+the previous <code>HiddenValley:sigmamqv</code>, which was dimensionless 
+by its division with a HV quark mass. Again it is possible to 
+reproduce the old behaviour within the 
+<code>HiddenValley:setabsigma = 2</code> option. 
+   
+ 
+<a name="anchor53"></a>
+<p/><code>pvec&nbsp; </code><strong> HiddenValley:rFact &nbsp;</strong> 
+ (<code>default = <strong>{0.,0.,0.,0.,0.,0.,0.,0.}</strong></code>; <code>minimum = 0.</code>; <code>maximum = 2.</code>)<br/>
+the Bowler correction factor to the Lund symmetric fragmentation 
+function, see the <code>StringZ:rFact</code> parameters on the 
+<a href="Fragmentation.html" target="page">string fragmentation</a> page. 
+Should be 0 for light quarks, like the <i>u/d/s</i> ones in the SM, 
+but around 1 for for heavy quarks, like the <i>c/b</i> ones. 
+Typically the lighter ones are those assumed to be produced in string 
+breakups, i.e. those with nonvanishing values in 
+<code>HiddenValley:probFlav</code>, while the heavy ones are only 
+produced at the endpoints of the string, from the perturbative process. 
+(Unless all quarks are heavy, i.e. much above the <i>Lambda</i> 
+scale, but then the fragmentation framework is skating on thin ice.) 
+Note that these parameters can (and should when relevant) be set 
+irrespective of the  <code>HiddenValley:setabsigma</code> value. 
+<br/><b>Note:</b> As of PYTHIA 8.313, this vector supersedes 
+<code>HiddenValley:rfactqv</code>, which only offered one common value 
+for all HV quarks. The default value has also been changed from 1 to 
+0, to be in line with a HV sector of light quarks. 
+   
+ 
+<p/> 
+In PYTHIA there are also a few more fragmentation parameters and 
+constants that are defined with our QCD world in mind. Largely this 
+poses no problem for HV scenarios with mass scales above the QCD one, 
+but would preclude studies with HV scales significantly below QCD 
+ditto. To this end, a rescaling has been introduced for them in the 
+HV option, so that the QCD values can be kept unchanged. 
+The rescaling factor is the <i>k = m(rho_HV) / m(rho_QCD)</i> 
+already introduced above. 
+Included in this rescaling are the input parameters 
+<code>FragmentationSystems:mJoin</code>, 
+(<code>FragmentationSystems:mJoinJunction</code>, but not used currently), 
+<code>HadronLevel:mStringMin</code>, and 
+<code>StringFragmentation:stopMass</code>. 
+Local rescaled parameters are also defined from the constants 
+<code>ColConfig::CONSTITUENTMASS</code>, 
+<code>StringRegion::MJOIN</code>, 
+<code>StringEnd::TINY</code>, 
+<code>StringEnd::PT2SAME</code>, and 
+<code>StringFragmentation::CLOSEDM2MAX</code>. 
  
 <a name="section4"></a> 
 <h3>Event information</h3> 
@@ -952,4 +1112,4 @@ Also some other methods are found there.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

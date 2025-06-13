@@ -32,9 +32,8 @@ cancellations that are implicitly happening in a non-merged shower. This makes
 very low merging scale values possible. 
  
 <p/> 
-The usage of UMEPS is illustrated in the sample main program 
-<code>main86.cc</code>, together with the input file 
-<code>main86.cmnd</code>. 
+The usage of UMEPS is illustrated in the input file 
+<code>main162umeps.cmnd</code> for <code>main162.cc</code>. 
  
 <p/> 
 Unitarised merging is heavily indebted to CKKW-L merging, and shares many 
@@ -74,50 +73,41 @@ than the cut given by the merging scale value <code>Merging:TMS</code>.
  
 <br/><br/><hr/> 
 <a name="section0"></a> 
-<h3>UMEPS merging with main86.cc</h3> 
+<h3>UMEPS merging with main162.cc</h3> 
  
-The UMEPS procedure is illustrated in the sample main program 
-<code>main86.cc</code> (with the input card <code>main86.cmnd</code>). This 
+The UMEPS procedure is illustrated in the input card 
+<code>main162umeps.cmnd</code> for <code>main162.cc</code>. This 
 program produces HepMC events [<a href="Bibliography.html#refDob01" target="page">Dob01</a>], that can be histogrammed (e.g. 
 using RIVET [<a href="Bibliography.html#refBuc10" target="page">Buc10</a>]), or used as input for a detector simulation. If 
 the user is not familiar with HepMC analysis tools, it is possible to instead 
 use Pythia's histogramming routines. For this, remove the lines referring to 
 HepMC, and histogram events as illustrated (for CKKW-L) for the histogram 
-<i>histPTFirstSum</i> in <code>main84.cc</code>, i.e. using 
-<i>weight*normhepmc</i> as weight. 
+<i>histPTW</i> in <code>main161.cc</code>, i.e. using 
+<i>weight*norm</i> as weight. 
  
 <p/> 
-In principle, no changes to <code>main86.cc</code> are necessary. Instead, all 
-settings can be transferred to <code>main86.cc</code> through an input file. 
-The input LHE files are also part of the (command line) input of 
-<code>main86.cc</code>. Note  that the sample program assumes that LHE file 
-names are of the form <i>name_tree_#nAdditionalJets.lhe</i>. If you want to 
-e.g. use the LHE files that are shipped with the Pythia distribution, you can 
-execute <code>main86.exe</code> with the command 
-<p> 
-<code>./main86.exe ./main86.cmnd ./w_production ./myhepmc.hepmc</code> 
-</p> 
- 
-Since <code>main86.cc</code> is currently the "front-end" for UMEPS merging, 
-we will briefly discuss this sample program in the following. 
+In principle, no changes to <code>main162.cc</code> are necessary. Instead, 
+all settings can be transferred to <code>main162.cc</code> through an input 
+file. The input LHE files are part of the command file 
+<code>main162umeps.cmnd</code>. 
  
 <h4>Inputs</h4> 
  
-In its current form, <code>main86.cc</code> uses separate tree-level LHE files 
-for different numbers of additional partons as input. If e.g. UMEPS merging 
-for W-boson + up to two additional partons is to be performed, three LHE files 
-(for W+zero, W+one, W+two partons) are required. The configurations in the 
-input files should be regularised with inclusive (i.e. weak) cuts. The actual 
-"merging scale cut" will be handled internally. If e.g. 
-<code>Merging:TMS = 15</code> is the desired merging scale value, 
-it is acceptable 
-to regularise the matrix element calculation for Higgs+jets events at the LHC 
-with the loose cuts <i>pT<sub>jet</sub> = 5 GeV</i>, 
+In its current form, <code>main162.cc</code> uses separate tree-level 
+LHE files for different numbers of additional partons as input. If 
+e.g. UMEPS merging for W-boson + up to two additional partons is to be 
+performed, three LHE files (for W+zero, W+one, W+two partons) are 
+required. The configurations in the input files should be regularised 
+with inclusive (i.e. weak) cuts. The actual "merging scale cut" will 
+be handled internally. If e.g. <code>Merging:TMS = 15</code> is the 
+desired merging scale value, it is acceptable to regularise the matrix 
+element calculation for Higgs+jets events at the LHC with the loose 
+cuts <i>pT<sub>jet</sub> = 5 GeV</i>, 
 <i> &Delta;R<sub>jetA jetB</sub> = 0.01</i> and 
 <i> Q<sub>jetA jetB</sub> = 5 GeV</i>. 
  
 <p/> 
-All input settings are handed to <code>main86.cc</code> in the form of an 
+All input settings are handed to <code>main162.cc</code> in the form of an 
 input file. This input file has to contain 
 <p/> 
  &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; The number of desired events 
@@ -131,13 +121,15 @@ input file. This input file has to contain
 <p/> 
  &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; The maximal number of additional partons 
 (<code>Merging:nJetMax</code>). 
- 
+&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; The number of subruns (for UMEPS 
+<i>2*<code>nJetMax</code>-1</i> are needed) 
+&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; One subrun for each multiplicity and 
+treatment, starting with <code>Main:subrun = &lt;nSubrun&gt;</code> 
 <p/> 
 Other settings are of course allowed. However, please refrain from adding 
 switches that are used to invoke other merging schemes (e.g. 
 <code>Merging:doKTMerging</code>) into the input file, since this can 
 cause problems. 
- 
  
 <h4>Program flow</h4> 
  
@@ -178,7 +170,7 @@ Parton shower unitarity leads to the conclusion that "resolved" and
 "unresolved" corrections always cancel between states that contain an 
 additional resolved jet, and states in which we "integrate over" the phase 
 space of the additional jet. 
-<code>main86.cc</code> makes this cancellation explicit by producing 
+UMEPS makes this cancellation explicit by producing 
 (correctly weighted) counter events by switching on 
  
 <a name="anchor2"></a>
@@ -205,11 +197,11 @@ multiplied by <i>-1</i>, should then be used as event weight (or to fill
 histogram bins). 
  
 <p/> 
-Before returning, <code>main86.cc</code> prints the merged cross section 
+Finally, <code>main162.cc</code> prints the merged cross section 
 after UMEPS merging. 
  
  
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

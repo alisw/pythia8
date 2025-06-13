@@ -1,0 +1,10 @@
+! CMS UE tune CUETP8S1-CTEQ6L1, April 2014.
+! See CMS note CMS-PAS-GEN-14-001 for further details.
+! Previously set by "Tune:pp = 15".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = 8        ! cteq6l1
+MultipartonInteractions:pT0Ref      = 2.1006
+MultipartonInteractions:ecmPow      = 0.2106
+MultipartonInteractions:expPow      = 1.6089
+MultipartonInteractions:a1          = 0.00  
+ColourReconnection:range            = 3.3126

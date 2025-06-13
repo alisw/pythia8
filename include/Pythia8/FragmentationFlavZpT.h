@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -19,14 +19,6 @@
 #include "Pythia8/Settings.h"
 
 namespace Pythia8 {
-
-//==========================================================================
-
-// Functions for unnormalised and average Lund FF.
-
-double LundFFRaw(double z, double a, double b, double c, double mT2);
-
-double LundFFAvg(double a, double b, double c, double mT2, double tol);
 
 //==========================================================================
 
@@ -94,13 +86,14 @@ public:
     mesonRateSum(), mesonMix1(), mesonMix2(), etaSup(), etaPrimeSup(),
     decupletSup(), baryonCGSum(), baryonCGMax(), popcornRate(), popcornSpair(),
     popcornSmeson(), barCGMax(), scbBM(), popFrac(), popS(), dWT(),
-    lightLeadingBSup(), heavyLeadingBSup(), qqKappa(), closePackingFacPT2(),
-    closePackingFacQQ2(), probStoUDSav(), probQQtoQSav(), probSQtoQQSav(),
-    probQQ1toQQ0Sav(), alphaQQSav(), sigmaHad(), widthPreStrange(),
-    widthPreDiquark(), thermalModel(), mesonNonetL1(), temperature(),
-    tempPreFactor(), nNewQuark(), mesMixRate1(), mesMixRate2(), mesMixRate3(),
-    baryonOctWeight(), baryonDecWeight(), closePacking(), exponentMPI(),
-    exponentNSP(), hadronIDwin(0), idNewWin(0), hadronMassWin(-1.0) {}
+    lightLeadingBSup(), heavyLeadingBSup(), probStoUDSav(), probQQtoQSav(),
+    probSQtoQQSav(), probQQ1toQQ0Sav(), alphaQQSav(), sigmaHad(),
+    widthPreStrange(), widthPreDiquark(), thermalModel(), mesonNonetL1(),
+    temperature(), tempPreFactor(), nNewQuark(), mesMixRate1(), mesMixRate2(),
+    mesMixRate3(), baryonOctWeight(), baryonDecWeight(), closePacking(),
+    doEnhanceDiquark(), enhanceStrange(), enhancePT(), enhanceDiquark(),
+    exponentMPI(), exponentNSP(), hadronIDwin(0), idNewWin(0),
+    hadronMassWin(-1.0) {}
 
   // Destructor.
   virtual ~StringFlav() {}
@@ -109,7 +102,8 @@ public:
   virtual void init();
 
   // Initialise parameters when using close packing.
-  virtual void init(double kappaRatio, double strangeFac, double probQQmod);
+  virtual void init(double kappaModifier, double strangeJunc,
+    double probQQmod);
 
   // Pick a light d, u or s quark according to fixed ratios.
   int pickLightQ() { double rndmFlav = probQandS * rndmPtr->flat();
@@ -120,15 +114,15 @@ public:
   // Pick a new flavour (including diquarks) given an incoming one,
   // either by old standard Gaussian or new alternative exponential.
   virtual FlavContainer pick(FlavContainer& flavOld, double pT = -1.0,
-    double kappaRatio = 0.0, bool allowPop = true) {
+    double kappaModifier = -1.0, bool allowPop = true) {
     hadronIDwin = 0; idNewWin = 0; hadronMassWin = -1.0;
     if ( (thermalModel || mT2suppression) && (pT >= 0.0) )
-      return pickThermal(flavOld, pT, kappaRatio);
+      return pickThermal(flavOld, pT, kappaModifier);
     return pickGauss(flavOld, allowPop); }
   virtual FlavContainer pickGauss(FlavContainer& flavOld,
     bool allowPop = true);
   virtual FlavContainer pickThermal(FlavContainer& flavOld,
-    double pT, double kappaRatio);
+    double pT, double kappaModifier);
 
   // Combine two flavours (including diquarks) to produce a hadron.
   virtual int combine(FlavContainer& flav1, FlavContainer& flav2);
@@ -154,14 +148,14 @@ public:
   // Combine two flavours into hadron for last two remaining flavours
   // for thermal model.
   virtual int combineLastThermal(FlavContainer& flav1, FlavContainer& flav2,
-    double pT, double kappaRatio);
+    double pT, double kappaModifier);
 
   // General function, decides whether to just return the hadron id
   // if thermal model was use or whether to combine the two flavours.
   virtual int getHadronID(FlavContainer& flav1, FlavContainer& flav2,
-    double pT = -1.0, double kappaRatio = 0, bool finalTwo = false) {
+    double pT = -1.0, double kappaModifier = -1.0, bool finalTwo = false) {
     if (finalTwo) return ((thermalModel || mT2suppression) ?
-      combineLastThermal(flav1, flav2, pT, kappaRatio)
+      combineLastThermal(flav1, flav2, pT, kappaModifier)
       : combine(flav1, flav2));
     if ((thermalModel || mT2suppression)&& (hadronIDwin != 0)
       && (idNewWin != 0)) return getHadronIDwin();
@@ -203,9 +197,6 @@ public:
   double getFlavourSpinRatios(int i, int j) {
     return (i < 3 && j < 7) ? dWT[i][j] : -1.0;}
 
-  // Calculate the flavor variations.
-  void variations(int idIn, bool early, bool noChoice);
-
 protected:
 
   // Initialise derived parameters.
@@ -225,9 +216,8 @@ protected:
          scbBM[3], popFrac, popS[3], dWT[3][7], lightLeadingBSup,
          heavyLeadingBSup;
   bool   qqKappa;
-  double closePackingFacPT2, closePackingFacQQ2, probStoUDSav, probQQtoQSav,
-         probSQtoQQSav, probQQ1toQQ0Sav, alphaQQSav;
-  double sigmaHad, widthPreStrange, widthPreDiquark;
+  double probStoUDSav, probQQtoQSav, probSQtoQQSav, probQQ1toQQ0Sav,
+         alphaQQSav, sigmaHad, widthPreStrange, widthPreDiquark;
 
   // Settings for thermal model.
   bool   thermalModel, mesonNonetL1;
@@ -237,8 +227,8 @@ protected:
   double baryonOctWeight[6][6][6][2], baryonDecWeight[6][6][6][2];
 
   // Settings used by both models.
-  bool   closePacking;
-  double exponentMPI, exponentNSP;
+  bool   closePacking, doEnhanceDiquark;
+  double enhanceStrange, enhancePT, enhanceDiquark, exponentMPI, exponentNSP;
 
   // Key = hadron id, value = list of constituent ids.
   map< int, vector< pair<int,int> > > hadronConstIDs;
@@ -255,7 +245,21 @@ protected:
   int    hadronIDwin, idNewWin;
   double hadronMassWin;
 
+  // Fragmentation weights container.
+  WeightsFragmentation* wgtsPtr{};
+
 };
+
+//==========================================================================
+
+// Functions for unnormalised, <z>, and RMSD(z) of Lund FF. The two latter
+// return negative values in case of failure.
+
+double LundFFRaw(double z, double a, double b, double c, double mT2);
+
+double LundFFAvg(double a, double b, double mT2, double tol);
+
+double LundFFRms(double a, double b, double mT2, double tol);
 
 //==========================================================================
 
@@ -267,16 +271,17 @@ public:
 
   // Constructor.
   StringZ() : useNonStandC(), useNonStandB(), useNonStandH(), usePetersonC(),
-    usePetersonB(), usePetersonH(), mc2(), mb2(), aLund(), bLund(),
-    aExtraSQuark(), aExtraDiquark(), rFactC(), rFactB(), rFactH(), aNonC(),
-    aNonB(), aNonH(), bNonC(), bNonB(), bNonH(), epsilonC(), epsilonB(),
-    epsilonH(), stopM(), stopNF(), stopS() {}
+    usePetersonB(), usePetersonH(), useOldAExtra(), mc2(), mb2(),
+    aLund(), bLund(), aExtraSQuark(), aExtraDiquark(), rFactC(),
+    rFactB(), rFactH(), aNonC(), aNonB(), aNonH(), bNonC(), bNonB(),
+    bNonH(), epsilonC(), epsilonB(), epsilonH(), stopM(), stopNF(),
+    stopS() {}
 
   // Destructor.
   virtual ~StringZ() {}
 
   // Initialize data members.
-  virtual void init();
+  virtual bool init();
 
   // Fragmentation function: top-level to determine parameters.
   virtual double zFrag( int idOld, int idNew = 0, double mT2 = 1.);
@@ -298,20 +303,26 @@ public:
   virtual double aAreaLund() {return aLund;}
   virtual double bAreaLund() {return bLund;}
 
+  // Method to derive both a and b parameters (from <z> and RMSD(z)).
+  bool deriveABLund( bool derivaA = false, bool deriveAExtraDiquark = false,
+                     bool deriveAExtraSQuark = false);
   // Method to derive bLund from <z> (for fixed a and reference mT2).
-  bool deriveBLund();
+  double deriveBLund( double avgZ, double a, double mT2ref);
 
-protected:
+ protected:
 
   // Constants: could only be changed in the code itself.
   static const double CFROMUNITY, AFROMZERO, AFROMC, EXPMAX;
 
   // Initialization data, to be read from Settings.
   bool   useNonStandC, useNonStandB, useNonStandH,
-         usePetersonC, usePetersonB, usePetersonH;
+         usePetersonC, usePetersonB, usePetersonH, useOldAExtra;
   double mc2, mb2, aLund, bLund, aExtraSQuark, aExtraDiquark, rFactC,
          rFactB, rFactH, aNonC, aNonB, aNonH, bNonC, bNonB, bNonH,
          epsilonC, epsilonB, epsilonH, stopM, stopNF, stopS;
+
+  // Fragmentation weights container.
+  WeightsFragmentation* wgtsPtr{};
 
 };
 
@@ -325,9 +336,9 @@ public:
 
   // Constructor.
   StringPT() : useWidthPre(), sigmaQ(), enhancedFraction(), enhancedWidth(),
-    sigma2Had(), widthPreStrange(), widthPreDiquark(), closePackingFacPT2(),
+    sigma2Had(), widthPreStrange(), widthPreDiquark(),
     thermalModel(), temperature(), tempPreFactor(), fracSmallX(),
-    closePacking(), exponentMPI(), exponentNSP() {}
+    closePacking(), enhancePT(), exponentMPI(), exponentNSP() {}
 
   // Destructor.
   virtual ~StringPT() {}
@@ -337,11 +348,11 @@ public:
 
   // General function, return px and py as a pair in the same call
   // in either model.
-  pair<double, double>  pxy(int idIn, double kappaRatio = 0.0) {
-    return (thermalModel ? pxyThermal(idIn, kappaRatio) :
-    pxyGauss(idIn, kappaRatio)); }
-  pair<double, double>  pxyGauss(int idIn = 0, double kappaRatio = 0.0);
-  pair<double, double>  pxyThermal(int idIn, double kappaRatio = 0.0);
+  pair<double, double>  pxy(int idIn, double kappaModifier = -1.0) {
+    return (thermalModel ? pxyThermal(idIn, kappaModifier) :
+    pxyGauss(idIn, kappaModifier)); }
+  pair<double, double>  pxyGauss(int idIn = 0, double kappaModifier = -1.0);
+  pair<double, double>  pxyThermal(int idIn, double kappaModifier = -1.0);
 
   // Gaussian suppression of given pT2; used in MiniStringFragmentation.
   double suppressPT2(double pT2) { return (thermalModel ?
@@ -356,18 +367,21 @@ protected:
   // Gaussian model.
   bool   useWidthPre;
   double sigmaQ, enhancedFraction, enhancedWidth, sigma2Had,
-         widthPreStrange, widthPreDiquark, closePackingFacPT2;
+         widthPreStrange, widthPreDiquark;
   // Thermal model.
   bool   thermalModel;
   double temperature, tempPreFactor, fracSmallX;
   // Both.
   bool   closePacking;
-  double exponentMPI, exponentNSP;
+  double enhancePT, exponentMPI, exponentNSP;
 
 private:
 
   // Evaluate Bessel function K_{1/4}(x).
   double BesselK14(double x);
+
+  // Fragmentation weights container.
+  WeightsFragmentation* wgtsPtr{};
 
 };
 

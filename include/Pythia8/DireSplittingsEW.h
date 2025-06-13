@@ -1,5 +1,5 @@
 // DireSplittingsEW.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -30,9 +30,8 @@ public:
   DireSplittingEW(string idIn, int softRS, Settings* settings,
     ParticleData* particleData, Rndm* rndm, BeamParticle* beamA,
     BeamParticle* beamB, CoupSM* coupSM, Info* info, DireInfo* direInfo) :
-    DireSplittingQCD(idIn,
-      softRS,settings,particleData,rndm,beamA,beamB,coupSM,info, direInfo)
-    { init(); }
+    DireSplittingQCD(idIn, softRS, settings, particleData, rndm, beamA, beamB,
+      coupSM,info, direInfo) {init();}
   virtual ~DireSplittingEW() {}
 
   void init();
@@ -82,9 +81,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -132,9 +131,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -182,9 +181,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -232,9 +231,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -282,9 +281,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -332,9 +331,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -384,9 +383,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();
@@ -440,9 +439,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int iRadBef, int iRecBef,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool isPartial()  { return false; }
 
   bool isSymmetric( const Particle* rad, const Particle* emt) {
@@ -509,9 +508,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int iRadBef, int iRecBef,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool isPartial()  { return false; }
 
   bool isSymmetric( const Particle* rad, const Particle* emt) {
@@ -574,9 +573,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int iRadBef, int iRecBef,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
 
   int kinMap ();
 
@@ -634,9 +633,9 @@ public:
 
   bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL);
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr);
   bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   int kinMap ();

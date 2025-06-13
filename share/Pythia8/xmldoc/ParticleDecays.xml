@@ -257,24 +257,11 @@ positive, the massless fermion approximation is used when the
 mediator mass for the process is above this value. 
 </parm> 
  
-<h3>QED radiation</h3> 
+<h3>QED Radiation in Particle Decays</h3> 
  
-So far PYTHIA does not have any generic machinery for handling QED radiation 
-in normal particle decays. In order to include this, a program like Photos 
-<ref>Bar94, Dav10</ref> could be used as an afterburner. In a few cases, 
-however, the existing shower machinery can be used also here: for 
-two-body decays to a lepton pair (<ei>l^+ l^-</ei> or <ei>l^+- nu_l</ei>). 
-Such decays are mediated by <ei>gamma^*/Z^0/W^+-</ei> exchange, for 
-which PYTHIA does have an existing machinery that can be applied, 
-including first-order matrix-element corrections for the first (hardest) 
-photon emission. 
- 
-<flag name="ParticleDecays:allowPhotonRadiation" default="off"> 
-Allow or not photon radiations in decays to a lepton pair, see above. 
-<note>Note:</note> The current default is to have radiation switched off, 
-in order to avoid double-counting of emissions if you link to an external 
-QED-radiation program, as is the norm in many collaborations. 
-</flag> 
+For QED radiation in particle decays, see the setting 
+<code>HadronLevel:QED</code> under <aloc href="MasterSwitches">Master 
+Switches</aloc>, and further options for each shower model. 
  
 <h3>Other variables</h3> 
  
@@ -436,4 +423,4 @@ multiplicity than the simple string assumed for 82, see the
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

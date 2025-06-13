@@ -81,13 +81,13 @@ Then, when <code>pythia.init()</code> is called, a <code>MyUserHooks</code>
 object will be automatically created and set as the <code>UserHooks</code> 
 object for the Pythia object via the method 
 <code>pythia.setUserHooksPtr</code>. For most plugin object classes of 
-generic type <code>BaseClass</code>, the relevant pointer will be set via 
-the corresponding <code>pythia.setBaseClassPtr</code> method. For some 
-class types, there is an option to either <code>set</code> the 
-pointer, overwriting any previous pointer, or <code>add</code> the 
-pointer to a list of pointers that will all be used. To specify 
-whether the plugin should be set or added, a third optional keyword 
-can be specified, 
+generic type <code>BaseClass</code>, the relevant pointer will be set 
+via the corresponding <code>pythia.setBaseClassPtr</code> method. For 
+some class types, there are options to either <code>set</code> the 
+pointer, overwriting any previous pointer, or <code>add</code> or 
+<code>insert</code> the pointer to a list of pointers that will all be 
+used. To specify whether the plugin should be set, inserted, or added, 
+a third optional keyword can be specified, 
  
 <p/> 
 <pre> 
@@ -95,8 +95,10 @@ Init:plugins = {libMyPlugins.so::MyUserHooks::set}
 </pre> 
 <p/> 
  
-where this third keyword can be either <code>set</code> (the default) or 
-<code>add</code>. In this example, if there was a previous 
+where this third keyword can be either <code>set</code> (the default), 
+<code>add</code>, or <code>insert(i)</code>. Here, <code>i</code> 
+specifies the index in the list of pointers where the new pointer 
+should be inserted. In this example, if there was a previous 
 <code>UserHooks</code> pointer, it would be replaced by a new 
 <code>MyUserHooks</code> pointer. 
  
@@ -154,21 +156,23 @@ which can be passed as external pointers to a Pythia object. These include:
 <li><code>DecayHandler</code> set via <code>Pythia::setDecayPtr</code></li> 
 <li><code>RndmEngine</code> set via <code>Pythia::setRndmEnginePtr</code></li> 
 <li><code>UserHooks</code> set via 
-<code>Pythia::set/addUserHooksPtr</code></li> 
+<code>Pythia::set/add/insertUserHooksPtr</code></li> 
 <li><code>Merging</code> set via <code>Pythia::setMergingPtr</code></li> 
 <li><code>MergingHooks</code> set via 
 <code>Pythia::setMergingHooksPtr</code></li> 
 <li><code>BeamShape</code> set via <code>Pythia::setBeamShapePtr</code></li> 
 <li><code>SigmaProcess</code> set via 
-<code>Pythia::set/addSigmaPtr</code> with a null argument for the 
+<code>Pythia::set/add/insertSigmaPtr</code> with a null argument for the 
 <code>PhaseSpace</code> pointer</li> 
 <li><code>PhaseSpace</code> set via the second argument of 
-<code>Pythia::set/addSigmaPtr</code>; the previous plugin must be the 
+<code>Pythia::set/add/insertSigmaPtr</code>; the previous plugin must be the 
 <code>SigmaProcess</code> which uses this phase-space generator</li> 
 <li><code>ResonanceWidths</code> set via 
-<code>Pythia::set/addResonancePtr</code></li> 
+<code>Pythia::set/add/insertResonancePtr</code></li> 
 <li><code>ShowerModel</code> set via 
 <code>Pythia::setShowerModelPtr</code></li> 
+<li><code>FragmentationModel</code> set via 
+<code>Pythia::set/add/insertFragmentationPtr</code></li> 
 <li><code>HeavyIons</code> set via <code>Pythia::setHeavyIonsPtr</code></li> 
 <li><code>HIUserHooks</code> set via <code>Pythia::setHIHooks</code></li> 
 </ol> 

@@ -183,6 +183,7 @@ Hard Processes</button>
 <aidx href="BoseEinsteinEffects">Bose-Einstein Effects</aidx><br/> 
 <aidx href="DeuteronProduction">Deuteron Production</aidx><br/> 
 <aidx href="HadronLevelStandalone">Hadron-Level Standalone</aidx><br/> 
+<aidx href="ImplementNewFragmentation">Implement New Fragmentation</aidx><br/> 
 </div> 
  
 <button class="expand" style="font-size:20px;">Study Output</button> 
@@ -219,15 +220,12 @@ Hard Processes</button>
 <aidx href="Bibliography">Bibliography</aidx><br/> 
 <aidx href="Glossary">Glossary</aidx><br/> 
 <aidx href="Version">Version</aidx> <br/> 
-<aidx href="ProgramFiles">Program Files</aidx><br/> 
-<aidx href="ProgramClasses">Program Classes</aidx><br/> 
-<aidx href="ProgramMethods">Program Methods</aidx><br/> 
 </div> 
  
 <button class="expand" style="font-size:20px;">Separate Documents</button> 
 <div class="panel"> 
 <a href="../pdfdoc/pythia8300.pdf" target="page">Introduction</a><br/> 
-<a href="../pdfdoc/worksheet8309.pdf" target="page">Worksheet</a> 
+<a href="../pdfdoc/worksheet8312.pdf" target="page">Worksheet</a> 
 </div> 
  
 <button class="expandAll" style="font-size:20px;">All</button> 
@@ -235,4 +233,4 @@ Hard Processes</button>
 <script src="Expand.js"></script> 
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

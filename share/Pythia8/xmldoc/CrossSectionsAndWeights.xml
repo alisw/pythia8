@@ -203,9 +203,8 @@ automatically contain weights from various sources, e.g. weights from
 for LHEF files, only the <ei>detailed format</ei> is currently 
 supported in the weight container, and that the names of weights 
 appearing in HepMC will use the convention discussed in 
-<ref>But14</ref>, page 162.  The sample main programs 
-<code>main44.cc</code> and <code>main45.cc</code> 
-illustrate this behaviour. 
+<ref>But14</ref>, page 162.  The sample main program 
+<code>main134.cc</code> illustrates this behaviour. 
  
 <p/> 
 In this context, the following program methods are relevant: 
@@ -232,7 +231,7 @@ is synchronized. For unweighted event generation (as would be the case
 when running stand-alone, of for LHEFs employing weight strategy 3), 
 the value is relative to the cross section. For weighted events 
 (e.g. when using LHEFs employing weight strategy +-4), the value will 
-include the cross section prefactor. <code>main44.cc</code> gives an 
+include the cross section prefactor. <code>main134.cc</code> gives an 
 example for both these cases. 
 </method> 
  
@@ -248,22 +247,28 @@ with the order of <code> Info::weightNameVector()</code>.
  
 <p/> 
 Custom weights such as shower variations weights, shower variation group 
-weights, and weights directly included from LHEF input receive an 
-<code>AUX_</code> prefix in the weight name as reported by the methods 
-<code>Info::weightNameByIndex</code> and <code>Info::weightNameVector</code> 
-to mark them as auxiliary output. This allows the user to further process or 
-combine the weights in a meaningful way. Since the number of these weights 
-depends on the LHEF input, different numbers of weights might occur in the 
-output when processing multiple LHEF input files. To avoid this, the following 
-flag allows to suppress the output of <code>AUX_</code> weights. 
+weights, and weights directly included from LHEF input may receive a 
+user-defined prefix in the weight name as reported by the methods 
+<code>Info::weightNameByIndex</code> and 
+<code>Info::weightNameVector</code>.  This allows the user to further 
+process or combine the weights in a meaningful way. 
+ 
+<word name="Weights:prefix" default=""> 
+A user-defined prefix to add to the weight name. 
+</word> 
+ 
+Since the number of these weights depends on the LHEF input, different 
+numbers of weights might occur in the output when processing multiple 
+LHEF input files.  To avoid this, the following flag allows to 
+suppress the output of auxiliary weights. 
  
 <flag name="Weights:suppressAUX" default="off"> 
-If on, the output of weights with <code>AUX</code> prefix will be 
-suppressed in the five above mentioned methods. The nominal weight and 
-combined weight variations from LHEF, parton shower and merging 
-remain. 
+If on, the output of auxiliary weights with user-defined prefix 
+<code>Weights:prefix</code> will be suppressed in the five above 
+mentioned methods. The nominal weight and combined weight variations 
+from LHEF, parton shower and merging remain. 
 </flag> 
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

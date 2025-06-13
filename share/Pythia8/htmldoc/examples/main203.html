@@ -1,0 +1,143 @@
+<html><head><title>main203</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main203</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main203.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:authors@pythia.org">Juan Rojo</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#parton+distribution">Parton&nbsp;distribution</a>
+//            <a href="../ExampleKeywords.html#lhapdf">LHAPDF</a>
+
+// This program compares the internal and LHAPDF implementations of
+// some NNPDF 2.3 QCD+QED sets, for results and for timing.
+// Warning: this example is constructed to work for LHAPDF5,
+// but current choice is LHAPDF6, which gives some differences.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8/Plugins.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  cout&lt;&lt;&quot;\n NNPDF3.1 QED LO phenomenology \n &quot;&lt;&lt;endl;
+  cout&lt;&lt;&quot;\n Check access to NNPDF3.1 NNLO QED sets \n &quot;&lt;&lt;endl;
+
+  // Generator.
+  Pythia pythia;
+
+  // Access the PDFs.
+  int idBeamIn = 2212;
+  string pdfPath = pythia.settings.word(&quot;xmlPath&quot;) + &quot;../pdfdata&quot;;
+  Logger logger;
+
+  // Grid of studied points.
+  string xpdf[] = {&quot;x*g&quot;,&quot;x*d&quot;,&quot;x*u&quot;,&quot;x*s&quot;};
+  double xlha[] = {1e-5, 1e-1};
+  double Q2[] = { 2.0, 10000.0 };
+  string setName;
+  string setName_lha;
+
+  // For timing checks.
+  int const nq = 500;
+  int const nx = 500;
+  int const iqMax = sizeof( xlha )/sizeof( xlha[0] );
+
+  // Loop over two internal PDF sets in Pythia8
+  // and compare with their LHAPDF correspondents.
+  for (int iFitIn = 3; iFitIn &lt; 5; iFitIn++) {
+
+    // Constructor for LHAPDF.
+    if (iFitIn == 3) setName = &quot;NNPDF31_nlo_as_0118_luxqed&quot;;
+    if (iFitIn == 4) setName = &quot;NNPDF31_nnlo_as_0118_luxqed&quot;;
+    PDFPtr pdfs_nnpdf_lha =
+      make_plugin&lt;PDF&gt;(&quot;libpythia8lhapdf6.so&quot;, &quot;LHAPDF6&quot;);
+    if (pdfs_nnpdf_lha == nullptr) return -1;
+    pdfs_nnpdf_lha-&gt;init(idBeamIn, setName, 0, &amp;logger);
+    cout &lt;&lt; &quot;\n PDF set = &quot; &lt;&lt; setName &lt;&lt; &quot; \n&quot; &lt;&lt; endl;
+
+    // Constructor for internal PDFs.
+    LHAGrid1 pdfs_nnpdf(
+      idBeamIn, setName + &quot;_0000.dat&quot;, pdfPath, &amp;logger);
+
+    // Check quarks and gluons.
+    cout &lt;&lt; setprecision(6);
+    for (int f = 0; f &lt; 4; f++) {
+      for (int iq = 0; iq &lt; iqMax; iq++) {
+        cout &lt;&lt; &quot;  &quot; &lt;&lt; xpdf[f] &lt;&lt; &quot;, Q2 = &quot; &lt;&lt; Q2[iq] &lt;&lt; endl;
+        cout &lt;&lt; &quot;   x \t     Pythia8\t   LHAPDF\t   diff(%) &quot; &lt;&lt; endl;
+        for (int ix = 0; ix &lt; 2; ix++) {
+          double a = pdfs_nnpdf.xf( f, xlha[ix], Q2[iq]);
+          double b = pdfs_nnpdf_lha-&gt;xf( f, xlha[ix], Q2[iq]);
+          double diff = b != 0 ? 1e2 * abs((a-b)/b) :
+            std::numeric_limits&lt;double&gt;::infinity();
+          cout &lt;&lt; scientific &lt;&lt; xlha[ix] &lt;&lt; &quot; &quot; &lt;&lt; a &lt;&lt; &quot; &quot; &lt;&lt; b
+               &lt;&lt; &quot; &quot; &lt;&lt; diff &lt;&lt; endl;
+        }
+      }
+    }
+
+    // Check photon.
+    cout &lt;&lt; &quot;\n Now checking the photon PDF \n&quot; &lt;&lt; endl;
+    for (int iq = 0; iq &lt; iqMax; iq++) {
+      cout &lt;&lt; &quot;  &quot; &lt;&lt; &quot;x*gamma&quot; &lt;&lt; &quot;, Q2 = &quot; &lt;&lt; Q2[iq] &lt;&lt; endl;
+      cout &lt;&lt; &quot;   x \t     Pythia8\t   LHAPDF\t   diff(%) &quot; &lt;&lt; endl;
+      for (int ix = 0; ix &lt; 2; ix++) {
+        double a = pdfs_nnpdf.xf( 22, xlha[ix], Q2[iq]);
+        double b = pdfs_nnpdf_lha-&gt;xf( 22, xlha[ix], Q2[iq]);
+        double diff = b != 0 ? 1e2 * abs((a-b)/b) :
+          std::numeric_limits&lt;double&gt;::infinity();
+        cout &lt;&lt; scientific &lt;&lt; xlha[ix] &lt;&lt; &quot; &quot; &lt;&lt; a &lt;&lt; &quot; &quot; &lt;&lt; b
+             &lt;&lt; &quot; &quot; &lt;&lt; diff &lt;&lt; endl;
+      }
+    }
+
+    // Now check the timings for evolution.
+    cout &lt;&lt; &quot;\n Checking timings &quot; &lt;&lt; endl;
+
+    // Internal timing.
+    clock_t tBegin = clock();
+    for (int f = -4; f &lt; 4; f++) {
+      for (int iq = 0; iq &lt; nq; iq++) {
+        double qq2 = 2.0 * pow( 1e6 / 2.0, double(iq)/nq);
+        for (int ix = 0; ix &lt; nx; ix++) {
+          double xx = 1e-6 * pow( 9e-1 / 1e-6, double(ix)/nx);
+          pdfs_nnpdf.xf(f,xx,qq2);
+        }
+      }
+    }
+    clock_t tEnd = clock();
+    double tUsed = double(tEnd - tBegin) / double(CLOCKS_PER_SEC);
+    cout &lt;&lt; &quot; NNPDF internal timing = &quot; &lt;&lt; tUsed &lt;&lt; endl;
+
+    // External timing.
+    tBegin = clock();
+    for (int f = -4; f &lt; 4; f++) {
+      for (int iq = 0; iq &lt; nq; iq++) {
+        double qq2 = 2.0 * pow(1e6 / 2.0, double(iq)/nq);
+        for (int ix = 0; ix &lt; nx; ix++) {
+          double xx = 1e-6 * pow( 9e-1 / 1e-6, double(ix)/nx);
+          pdfs_nnpdf_lha-&gt;xf(f,xx,qq2);
+        }
+      }
+    }
+    tEnd = clock();
+    tUsed = double(tEnd - tBegin) / double(CLOCKS_PER_SEC);
+    cout &lt;&lt; &quot; NNPDF LHAPDF   timing = &quot; &lt;&lt; tUsed &lt;&lt; endl;
+
+  } // End loop over NNPDF internal sets
+
+  // Done.
+  cout &lt;&lt; &quot;\n Compared LHAPDF and internal Pythia8 results.\n&quot; &lt;&lt; endl;
+
+  return 0;
+}
+</code></pre></body></html>

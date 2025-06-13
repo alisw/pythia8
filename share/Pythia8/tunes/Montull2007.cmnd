@@ -1,0 +1,33 @@
+! Marc Montull's tune to particle composition at LEP1, August 2007.
+! Previously set by "Tune:ee = 2".
+include                             = tunes/Reset-ee.cmnd ! reset ee tune
+StringFlav:probStoUD                = 0.22  
+StringFlav:probQQtoQ                = 0.08  
+StringFlav:probSQtoQQ               = 0.75  
+StringFlav:probQQ1toQQ0             = 0.025 
+StringFlav:mesonUDvector            = 0.5   
+StringFlav:mesonSvector             = 0.6   
+StringFlav:mesonCvector             = 1.5   
+StringFlav:mesonBvector             = 2.5   
+StringFlav:etaSup                   = 0.60  
+StringFlav:etaPrimeSup              = 0.15  
+StringFlav:popcornSpair             = 1.0   
+StringFlav:popcornSmeson            = 1.0   
+StringFlav:suppressLeadingB         = false    ! kept fixed
+StringZ:aLund                       = 0.76  
+StringZ:bLund                       = 0.58     ! kept fixed
+StringZ:aExtraSquark                = 0.00     ! kept fixed
+StringZ:aExtraDiquark               = 0.50     ! kept fixed
+StringZ:rFactC                      = 1.00     ! kept fixed
+StringZ:rFactB                      = 1.00     ! kept fixed
+StringPT:sigma                      = 0.36     ! kept fixed
+StringPT:enhancedFraction           = 0.01     ! kept fixed
+StringPT:enhancedWidth              = 2.0      ! kept fixed
+TimeShower:alphaSvalue              = 0.137    ! kept fixed
+TimeShower:alphaSorder              = 1        ! kept fixed
+TimeShower:alphaSuseCMW             = false    ! kept fixed
+TimeShower:pTmin                    = 0.5      ! kept fixed
+TimeShower:pTminChgQ                = 0.5      ! kept fixed
+
+! Reproduce hadronization behavior of the Pythia version used for this tune.
+StringZ:useOldAExtra                = on

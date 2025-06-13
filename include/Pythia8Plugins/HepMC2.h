@@ -1,5 +1,5 @@
 // HepMC2.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -131,6 +131,18 @@ public:
 
 private:
 
+  // Try to send warning message to the logger if present, otherwise
+  // send it to cout if print_inconsistency().
+  bool warning(const Pythia8::Info* pyinfo, std::string loc,
+    std::string message, std::string extraInfo = "") {
+    if (pyinfo != nullptr)
+      pyinfo->loggerPtr->warningMsg(loc, message, extraInfo);
+    else if ( print_inconsistency() )
+      std::cout << "Warning in " << loc << ": " << message << extraInfo
+                << std::endl;
+    return false;
+  }
+
   // Following methods are not implemented for this class.
   virtual bool fill_next_event( GenEvent*  ) { return 0; }
   virtual void write_event( const GenEvent* ) {;}
@@ -151,17 +163,14 @@ private:
 // Read one event from Pythia8 and fill a new GenEvent, alternatively
 // append to an existing GenEvent, and return T/F = success/failure.
 
-inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
+inline bool Pythia8ToHepMC::fill_next_event(Pythia8::Event& pyev,
   GenEvent* evt, int ievnum, const Pythia8::Info* pyinfo,
   Pythia8::Settings* pyset, bool append, GenParticle* rootParticle,
   int iBarcode) {
 
   // 1. Error if no event passed.
-  if (!evt) {
-    std::cout << " Pythia8ToHepMC::fill_next_event error: passed null event."
-              << std::endl;
-    return 0;
-  }
+  if (evt == nullptr) return warning(pyinfo,
+    "Pythia8ToHepMC::fill_next_event", "passed null event");
 
   // Update event number counter.
   if (!append) {
@@ -184,11 +193,9 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   int iStart     = 1;
   int newBarcode = 0;
   if (append) {
-    if (!rootParticle) {
-      std::cout << " Pythia8ToHepMC::fill_next_event error: passed null "
-                << "root particle in append mode." << std::endl;
-      return 0;
-    }
+    if (rootParticle == nullptr) return warning(pyinfo,
+      "Pythia8ToHepMC::fill_next_event",
+      "passed null root particle in append mode");
     iStart     = 2;
     newBarcode = (iBarcode > -1) ? iBarcode : evt->particles_size();
     // New vertex associated with appended particles.
@@ -200,13 +207,8 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   // 1a. If there is a HIInfo object fill info from that.
   if ( pyinfo && pyinfo->hiInfo ) {
     HepMC::HeavyIon ion;
-    ion.set_Ncoll_hard(pyinfo->hiInfo->nCollNDTot());
-    ion.set_Ncoll(pyinfo->hiInfo->nAbsProj() +
-                  pyinfo->hiInfo->nDiffProj() +
-                  pyinfo->hiInfo->nAbsTarg() +
-                  pyinfo->hiInfo->nDiffTarg() -
-                  pyinfo->hiInfo->nCollND() -
-                  pyinfo->hiInfo->nCollDD());
+    ion.set_Ncoll_hard(pyinfo->hiInfo->nCollND());
+    ion.set_Ncoll(pyinfo->hiInfo->nCollTot());
     ion.set_Npart_proj(pyinfo->hiInfo->nAbsProj() +
                        pyinfo->hiInfo->nDiffProj());
     ion.set_Npart_targ(pyinfo->hiInfo->nAbsTarg() +
@@ -298,12 +300,10 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
         // HEPEVT event record. Print an error.
         // Note: we could provide a fix by joining the two vertices with a
         // dummy particle if the problem arises often.
-        if ( m_print_inconsistency ) std::cout
-          << " Pythia8ToHepMC::fill_next_event: inconsistent mother/daugher "
-          << "information in Pythia8 event " << std::endl
-          << "i = " << i << " mother = " << mother
-          << "\n This warning can be turned off with the "
-          << "Pythia8ToHepMC::print_inconsistency switch." << std::endl;
+        warning(pyinfo, "Pythia8ToHepMC::fill_next_event",
+                "inconsistent mother/daugher information in Pythia8 event",
+                "i = " + Pythia8::toString(i) + " mother = " +
+                Pythia8::toString(mother));
       }
 
       // End of vertex-setting loops.
@@ -319,10 +319,10 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   // mothers or daughters. These need to be attached to a vertex, or else
   // they will never become part of the event.
   for (int i = iStart; i < pyev.size(); ++i) {
-    if ( !hepevt_particles[i]->end_vertex() &&
-         !hepevt_particles[i]->production_vertex() ) {
-      std::cout << " Pythia8ToHepMC::fill_next_event error: "
-        << "hanging particle " << i << std::endl;
+    if ( hepevt_particles[i]->end_vertex() == nullptr &&
+         hepevt_particles[i]->production_vertex() == nullptr ) {
+      warning(pyinfo, "Pythia8ToHepMC::fill_next_event"
+              "found orphan particle", "i = " + Pythia8::toString(i));
       GenVertex* prod_vtx = new GenVertex();
       prod_vtx->add_particle_out( hepevt_particles[i] );
       evt->add_vertex( prod_vtx );
@@ -358,6 +358,7 @@ inline bool Pythia8ToHepMC::fill_next_event( Pythia8::Event& pyev,
   // Store process code, scale, alpha_em, alpha_s.
   if (m_store_proc && pyinfo != 0) {
     evt->set_signal_process_id( pyinfo->code() );
+    evt->set_mpi( pyinfo->nMPI() );
     evt->set_event_scale( pyinfo->QRen() );
     if (evt->alphaQED() <= 0) evt->set_alphaQED( pyinfo->alphaEM() );
     if (evt->alphaQCD() <= 0) evt->set_alphaQCD( pyinfo->alphaS() );

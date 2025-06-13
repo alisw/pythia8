@@ -1,0 +1,13 @@
+! ATLAS UE tune AU2-CTEQ6L1, August 2012.
+! See ATLAS note ATL-PHYS-PUB-2012-003 for further details.
+! Previously set by "Tune:pp = 9".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = 8        ! cteq6l1
+SpaceShower:rapidityOrder           = false 
+SpaceShower:rapidityOrderMPI        = false 
+MultipartonInteractions:pT0Ref      = 2.13  
+MultipartonInteractions:ecmPow      = 0.21  
+MultipartonInteractions:bProfile    = 4     
+MultipartonInteractions:expPow      = 1.0   
+MultipartonInteractions:a1          = 0.00  
+ColourReconnection:range            = 2.21

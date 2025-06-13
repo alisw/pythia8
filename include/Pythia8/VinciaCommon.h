@@ -1,5 +1,5 @@
 // VinciaCommon.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -295,7 +295,7 @@ struct VinciaClustering {
   }
 
   // Initialise vectors of invariants and masses.
-  bool initInvariantAndMassVecs();
+  bool init();
 
   // Set invariants and masses.
   void setInvariantsAndMasses(const Event& state);

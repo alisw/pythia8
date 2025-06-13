@@ -1,5 +1,5 @@
 // ProcessContainer.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -46,7 +46,8 @@ public:
       sigmaProcessPtr(sigmaProcessPtrIn),
       phaseSpacePtr(phaseSpacePtrIn), resDecaysPtr(), gammaKinPtr(),
       matchInOut(), idRenameBeams(), setLifetime(), setQuarkMass(),
-      setLeptonMass(), idNewM(), mRecalculate(), mNewM(), isLHA(), isNonDiff(),
+      setLeptonMass(), idNewM(), smearHadronMass(), idSmearHadIn(),
+      idSmearHadrons(), mRecalculate(), mNewM(), isLHA(), isNonDiff(),
       isResolved(), isDiffA(), isDiffB(), isDiffC(), isQCD3body(),
       allowNegSig(), isSameSave(), increaseMaximum(), canVetoResDecay(),
       lhaStrat(), lhaStratAbs(), processCode(), useStrictLHEFscales(),
@@ -55,7 +56,7 @@ public:
       sigmaAvg(), sigmaFin(), deltaFin(), weightNow(), wtAccSum(),
       beamAhasResGamma(), beamBhasResGamma(), beamHasResGamma(),
       beamHasGamma(), beamAgammaMode(), beamBgammaMode(), gammaModeEvent(),
-      approximatedGammaFlux(), nTryRequested(), nSelRequested(),
+      approximatedGammaFlux(), doMerging(), nTryRequested(), nSelRequested(),
       nAccRequested(), sigmaTemp(), sigma2Temp(), normVar3() {}
 
   // Initialize phase space and counters.
@@ -178,7 +179,9 @@ private:
 
   // Possibility to modify Les Houches input.
   bool   matchInOut;
-  int    idRenameBeams, setLifetime, setQuarkMass, setLeptonMass, idNewM[9];
+  int    idRenameBeams, setLifetime, setQuarkMass, setLeptonMass, idNewM[9],
+         smearHadronMass;
+  vector<int> idSmearHadIn, idSmearHadrons;
   double mRecalculate, mNewM[9];
 
   // Info on process.
@@ -203,6 +206,9 @@ private:
 
   // Use approximated photon flux for process sampling.
   bool   approximatedGammaFlux;
+
+  // Check if merging is enabled.
+  bool   doMerging;
 
   // Statistics for Les Houches event classification.
   vector<int> codeLHA;

@@ -1,5 +1,5 @@
 // TimeShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -52,13 +52,13 @@ public:
   }
 
   // New beams possible for handling of hard diffraction. (Not virtual.)
-  void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    int beamOffsetIn = 0) {beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn;
-    beamOffset = beamOffsetIn;}
+  void reassignBeamPtrs( BeamParticle* beamAPtrIn,
+    BeamParticle* beamBPtrIn, int beamOffsetIn = 0) {
+    beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn; beamOffset = beamOffsetIn;}
 
   // Initialize alphaStrong and related pTmin parameters.
   // Usage: init( beamAPtr, beamBPtr).
-  virtual void init( BeamParticle* = 0, BeamParticle* = 0) {}
+  virtual void init( BeamParticle* = nullptr, BeamParticle* = nullptr) {}
 
   // Find whether to limit maximum scale of emissions, and whether to dampen.
   // Usage: limitPTmax( event, Q2Fac, double Q2Ren).
@@ -68,13 +68,17 @@ public:
   // Usage: shower( iBeg, iEnd, event, pTmax, nBranchMax).
   virtual int shower( int , int , Event& , double , int = 0) {return 0;}
 
-  // Top-level routine for QED radiation in hadronic decay to two leptons.
+  // Top-level routine for QED radiation in hadronic decays.
   // Usage: showerQED( i1, i2, event, pTmax).
-  virtual int showerQED( int , int , Event& , double ) {return 0;}
+  virtual int showerQED( int , int , Event& , double = -1.) {return 0;}
 
   // Optional method to add QED showers after remnants have been added
   // but before hadronisation. (Called from PartonLevel.)
   virtual int showerQEDafterRemnants(Event&) { return 0; }
+
+  // Optional method to add QED showers after all hadron decays have been
+  // treated, as an alternative to handling QED showers inside each decay.
+  virtual int showerQEDafterDecays( int , int , Event&) { return 0; }
 
   // Prepare process-level event for shower + interleaved resonance decays.
   // Usage: prepareProcess( process, event, iPos).

@@ -82,7 +82,7 @@ externally to the <code>Pythia</code> code.
  
 <p/> 
 An example illustrating how to run with an external random number 
-generator is provided in <code>main23.cc</code>. 
+generator is provided in <code>main245.cc</code>. 
  
 <a name="section2"></a> 
 <h3>MIXMAX random numbers</h3> 
@@ -103,7 +103,7 @@ In this implementation a dimensionality of 17 is used, as this has
 been found to provide faster access to large numbers of independent 
 sequences. A timing comparison between the external MIXMAX random 
 number generator, and the default internal PYTHIA random number 
-generator is provided in the example <code>main23.cc</code>. The 
+generator is provided in the example <code>main245.cc</code>. The 
 MIXMAX random number generator is found to be comparable in speed to 
 the default generator. The primary methods of 
 the <code>MixMaxRndm</code> class are given here. 
@@ -189,6 +189,12 @@ templated method) according to the Fisher-Yates algorithm.
    
  
 <a name="anchor14"></a>
+<p/><strong> double Rndm::peekFlat() &nbsp;</strong> <br/>
+peek at the next random number in the sequence without updating 
+the state. Useful for debugging purposes. 
+   
+ 
+<a name="anchor15"></a>
 <p/><strong> bool Rndm::dumpState(string fileName) &nbsp;</strong> <br/>
 save the current state of the random number generator to a binary 
 file. This involves two integers and 100 double-precision numbers. 
@@ -196,13 +202,13 @@ Intended for debug purposes. Note that binary files may be
 platform-dependent and thus not transportable. 
    
  
-<a name="anchor15"></a>
+<a name="anchor16"></a>
 <p/><strong> bool Rndm::readState(string fileName) &nbsp;</strong> <br/>
 set the state of the random number generator by reading in a binary 
 file saved by the above command. Comments as above. 
    
  
-<a name="anchor16"></a>
+<a name="anchor17"></a>
 <p/><strong> RndmState Rndm::getState() &nbsp;</strong> <br/>
 save the current state of the random number generator as a 
 <code>struct RndmState</code>. This can then later be used within the 
@@ -211,14 +217,14 @@ It circumvents the intermediate file of <code>dumpState</code>,
 but cannot be saved for a later run. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><strong> void Rndm::setState(RndmState&amp; state) &nbsp;</strong> <br/>
 set the state of the random number generator by reading in a 
 <code>struct RndmState</code> saved by the above command. 
 Comments as above. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><strong> virtual double RndmEngine::flat() &nbsp;</strong> <br/>
 if you want to construct an external random number generator 
 (or generator interface) then you must implement this method 
@@ -242,7 +248,7 @@ the following during the configuration of PYTHIA.
 </pre> 
 Then, when building any of the examples, the random number debugging 
 will be enabled. The output, for example when running 
-<code>main01</code>, will look something like the following. 
+<code>main101</code>, will look something like the following. 
 <pre> 
 ParticleDecays::twoBody:flat        3.5433e-01 src/ParticleDecays.cc:546 
 Rndm::exp:flat                      2.7883e-01 src/Basics.cc:96 
@@ -268,7 +274,7 @@ returned value are printed (here, four elements for two vectors).
 It is possible to control the output of the debugging with a number of 
 statically defined variables. These variables can be modified in 
 whatever code is being run. 
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><strong> bool Rndm::debugNow &nbsp;</strong> <br/>
 This can be used to switch the debug statements on and off. If set to 
 <code>false</code> then the debug statements will not be printed. If 
@@ -276,26 +282,26 @@ set to <code>true</code> (the default) they will be printed. In this
 way, printing of the debugging can be turned on only after a certain 
 event has passed, for example. 
    
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><strong> bool Rndm::debugLocation &nbsp;</strong> <br/>
 By default, set to <code>true</code>. If set to <code>false</code> the 
 location of the random number generator call within the source code 
 will no longer be printed. This is useful when running a difference on 
 two sets of output. 
    
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><strong> bool Rndm::debugIndex &nbsp;</strong> <br/>
 By default, set to <code>false</code>. If set to <code>true</code> the 
 number of RNG calls will be counted, and the index of the RNG call 
 will be printed. This can be useful when comparing two different 
 outputs where other print statements have been inserted in the code. 
    
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><strong> int Rndm::debugCall &nbsp;</strong> <br/>
 This integer tracks the number of random number generation calls, and 
 can be used to reset the index. 
    
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><strong> int Rndm::debugPrecision &nbsp;</strong> <br/>
 Sets the precision of the random number values being printed. By 
 default, this is <code>4</code> but could be set to <code>17</code>, 
@@ -309,19 +315,19 @@ filter strings into the following static variables. These filter
 strings are applied to the <code>Class::ClassMethod</code> portion of 
 the output, and if any of the defined sets are found, then the RNG 
 call is printed (an OR operation). 
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><strong> set&lt;string&gt; Rndm::debugStarts &nbsp;</strong> <br/>
 Print the call if the class name and method starts with this string. 
    
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><strong> set&lt;string&gt; Rndm::debugEnds &nbsp;</strong> <br/>
 Print the call if the class name and method ends with this string. 
    
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><strong> set&lt;string&gt; Rndm::debugContains &nbsp;</strong> <br/>
 Print the call if the class name and method contains this string. 
    
-<a name="anchor27"></a>
+<a name="anchor28"></a>
 <p/><strong> set&lt;string&gt; Rndm::debugContains &nbsp;</strong> <br/>
 Print the call if the class name and method exactly matches this string. 
    
@@ -348,8 +354,8 @@ used as a method name in user code, than compiling with the
 compile. This can be overcome by including the 
 <code>include/Pythia8/RngDebug.h</code> header after any PYTHIA 
 headers, but before any additional headers. As an example, 
-<code>main93</code> will fail to compile with RNG debugging 
-on. However, the following modification in <code>main93.cc</code> 
+<code>main144</code> will fail to compile with RNG debugging 
+on. However, the following modification in <code>main144.cc</code> 
 resolves the issue. 
 <pre> 
 #include "Pythia8/Pythia.h" 
@@ -363,4 +369,4 @@ header, but before additional headers.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

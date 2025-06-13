@@ -1,0 +1,13 @@
+! ATLAS MB tune A2-MSTW2008LO, August 2012.
+! See ATLAS note ATL-PHYS-PUB-2012-003 for further details.
+! Previously set by "Tune:pp = 8".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = 5        ! MSTW2008lo68cl   
+SpaceShower:rapidityOrder           = false 
+SpaceShower:rapidityOrderMPI        = false 
+MultipartonInteractions:pT0Ref      = 1.90  
+MultipartonInteractions:ecmPow      = 0.30  
+MultipartonInteractions:bProfile    = 4     
+MultipartonInteractions:expPow      = 1.0   
+MultipartonInteractions:a1          = 0.03  
+ColourReconnection:range            = 2.28  

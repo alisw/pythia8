@@ -1,5 +1,5 @@
 // DireSplitingLibrary.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -599,12 +599,12 @@ void DireSplittingLibrary::initISR() {
 
 DireSplitting* DireSplittingLibrary::operator[](string id) {
   if (splittings.find(id) != splittings.end()) return splittings[id];
-  return NULL;
+  return nullptr;
 }
 
 const DireSplitting* DireSplittingLibrary::operator[](string id) const {
   if (splittings.find(id) != splittings.end()) return splittings.at(id);
-  return NULL;
+  return nullptr;
 }
 
 //--------------------------------------------------------------------------

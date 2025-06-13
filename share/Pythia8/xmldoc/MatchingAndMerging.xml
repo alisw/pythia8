@@ -82,7 +82,7 @@ processes are available. The code required for merging the PYTHIA
 showers with POWHEG input can be found in 
 <code>include/Pythia8Plugins/PowHegHooks.h</code>, and is further 
 described on a <aloc href="POWHEGMatching">separate page</aloc>.  A 
-user example is found in <code>examples/main31</code>.</li> 
+user example is found in <code>examples/main153.cc</code>.</li> 
  
 <li>The other traditional approach for NLO calculations is the MC@NLO 
 one <ref>Fri02</ref>. In it the shower emission probability, without 
@@ -138,116 +138,157 @@ branchings that would doublecount emissions included in the matrix
 elements. 
  
 <br/><hr/> 
-<h3>main89.cc: A generic interface for matching and merging</h3> 
+<h3>main164.cc: A generic interface for matching and merging</h3> 
  
 A common Pythia main program for MC@NLO NLO+PS matching, MLM jet merging, 
 FxFx (NLO) jet merging, CKKW-L merging, UMEPS merging and UNLOPS (NLO) 
-merging is available through <code>main89.cc</code>, together with the input 
-files <code>main89mlm.cmnd</code>, <code>main89fxfx.cmnd</code>, 
-<code>main89ckkwl.cmnd</code>, <code>main89umeps.cmnd</code> and 
-<code>main89unlops.cmnd</code>. The interface to MLM jet matching relies 
-on MadGraph, while all other options of <code>main89.cc</code> use aMC@NLO 
-input. 
+merging is available through <code>main164.cc</code>, together with the input 
+files <code>main164mcatnlo.cmnd</code>, <code>main164powheg.cmnd</code>, 
+<code>main164mlm.cmnd</code>, <code>main164fxfx.cmnd</code>, 
+<code>main164ckkwl.cmnd</code>, <code>main164ckkwl.cmnd</code>, 
+<code>main164umeps.cmnd</code> and <code>main164unlops.cmnd</code>. 
+These rely on input from external matrix-element generators such as 
+MadGraph5_aMC@NLO or POWHEG-BOX. 
  
-<code>main89.cc</code> produces HepMC events <ref>Dob01</ref>, that can be 
-histogrammed (e.g. using RIVET <ref>Buc10</ref>), or used as input for a 
-detector simulation. If the user is not familiar with HepMC analysis tools, it 
-is possible to instead use Pythia's histogramming routines. For this, remove 
-the lines referring to HepMC, and histogram events as illustrated (for CKKW-L) 
-for the histogram <ei>histPTFirstSum</ei> in <code>main84.cc</code>, i.e. 
-using <ei>weight*normhepmc</ei> as weight. 
+<code>main164.cc</code> can produce HepMC events <ref>Dob01</ref> or 
+interfaced directly to RIVET <ref>Buc10</ref>. 
+If the user is not familiar with HepMC or RIVET, it is possible to instead use 
+Pythia's histogramming routines. For this,  histogram events as illustrated 
+for the histogram <ei>pTWsum</ei> in <code>main162.cc</code>. 
  
 <p/> 
-All settings can be transferred to <code>main89.cc</code> through an input 
+All settings can be transferred to <code>main164.cc</code> through an input 
 file. The input file is part of the command line input of 
-<code>main89.cc</code>, i.e. you can execute <code>main89</code> with the 
+<code>main164.cc</code>, i.e. you can execute <code>main164</code> with the 
 command 
 <p/> 
-<code>./main89 myInputFile.cmnd myhepmc.hepmc</code> 
+<code>./main164 myInputFile.cmnd</code> 
 <p/> 
- 
-to read the input <code>myInputFile.cmnd</code> and produce the output file 
-<code>myhepmc.hepmc</code> . Since <code>main89.cc</code> is currently a 
-"front-end" for different types of matching/merging, we will briefly discuss 
-the inputs for this sample program in the following. 
+to read the input <code>myInputFile.cmnd</code>. 
+Since <code>main164.cc</code> is currently a "front-end" for different types 
+of matching/merging, we will briefly discuss the inputs for this 
+sample program in the following. 
  
 <h4>Inputs</h4> 
  
-In its current form, <code>main89.cc</code> uses LHEF input to transfer 
-(weighted) phase space points to Pythia. It is possible to include all 
-parton multiplicities in one LHEF sample. If e.g. UMEPS merging for 
-W-boson + up to two additional partons is to be performed, one LHE file 
-containing W+zero, W+one and W+two parton events is required. 
+In its current form, <code>main164.cc</code> uses LHA input to transfer 
+(weighted) phase space points to Pythia. This can either be via traditional 
+LHE files by setting 
+<p/> 
+<code>Beams:frameType = 4</code><br/> 
+<code>Beams:LHEF      = file.lhe</code> 
+<p/> 
+or with HDF5 event files by setting 
+<p/> 
+<code>Beams:frameType = 5</code><br/> 
+<code>Beams:LHEF      = file.hdf5</code> 
+<p/> 
+It is possible to include all parton multiplicities in one sample. 
+If e.g. UMEPS merging for W-boson + up to two additional partons is to be 
+performed, either one LHE file containing W+zero, W+one and W+two parton 
+events or three separate LHE files can be generated. 
  
 <p/> 
-All input settings are handed to <code>main89.cc</code> in the form of an 
+All input settings are handed to <code>main164.cc</code> in the form of an 
 input file. We have included the input settings files 
 <p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main89mlm.cmnd</code>, which 
-illustrates the MLM jet matching interface, 
-<p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main89ckkwl.cmnd</code>, which 
-illustrates the CKKW-L multi-jet merging interface, 
-<p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;  <code>main89umeps.cmnd</code>, which 
-illustrates the UMEPS multi-jet merging interface, and 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main164mlm.cmnd</code>, which 
+ illustrates the MLM jet matching interface, 
  <p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main89fxfx.cmnd</code>, which 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main164fxfx.cmnd</code>, which 
 illustrates the FxFx NLO jet matching interface, 
 <p/> 
- &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;  <code>main89unlops.cmnd</code>, which 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main164ckkwl.cmnd</code>, which 
+illustrates the CKKW-L multi-jet merging interface, 
+<p/> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; <code>main164mess.cmnd</code>, which 
+illustrates the VINCIA MESS multi-jet merging interface, 
+<p/> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;  <code>main164umeps.cmnd</code>, which 
+illustrates the UMEPS multi-jet merging interface, and 
+ <p/> 
+ &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;  <code>main164unlops.cmnd</code>, which 
 illustrates the UNLOPS multi-jet NLO merging interface. 
 <p/> 
-Other settings (e.g. using <code>main89.cc</code> as simple LO+PS or as MC@NLO 
-interface) are of course possible. In the following, we will briefly explain 
-how input for the five choices above are generated and handled. 
+Other settings (e.g. using <code>main164.cc</code> as simple LO+PS or 
+as MC@NLO interface) are of course possible. In the following, we will 
+briefly explain how input for the five choices above are generated and 
+handled. 
  
-<h4>MLM jet matching with main89.cc</h4> 
+<h4>MC@NLO matching with main164.cc</h4> 
  
-For MLM jet matching, <code>main89.cc</code> currently relies on LHEF input 
+For MC@NLO matching, <code>main164.cc</code> currently relies on LHEF input 
+from MadGraph5_aMC@NLO, which relies on the simple shower with a specific 
+global recoil scheme for final-state branchings. As such, it can only be used 
+with <code>PartonShowers:model = 1</code> and specific settings within this 
+shower model. Example MC@NLO settings can be found in 
+<code>main164mcatnlo.cmnd</code>. Be aware that the lines below 
+<code>! DO NOT TOUCH</code> must not be changed in order to ensure correct 
+NLO matching. Please consult 
+<aloc href="aMCatNLOMatching">aMC@NLO matching</aloc> for more details. 
+ 
+<h4>POWHEG matching with main164.cc</h4> 
+ 
+For POWHEG matching, <code>main164.cc</code> currently relies on LHEF input 
+from POWHEG-BOX. It is not tied to a specific parton shower and can be used 
+with either of the <code>PartonShowers:model</code> settings. 
+Example POWHEG settings can be found in <code>main164powheg.cmnd</code>. 
+Please consult <aloc href="POWHEGMatching">POWHEG matching</aloc> for more 
+details. 
+ 
+<h4>MLM jet matching with main164.cc</h4> 
+ 
+For MLM jet matching, <code>main164.cc</code> currently relies on LHEF input 
 from MadGraph. Due to the particular unweighting strategy performed in the 
 generation of these inputs, the sample program starts by estimating the 
 cross section. After this estimate, MLM jet matching within the Madgraph 
 approach is performed in a second Pythia run. Example MLM settings can be 
-found in <code>main89mlm.cmnd</code>. Please consult 
+found in <code>main164mlm.cmnd</code>. Please consult 
 <aloc href="JetMatching">Jet Matching</aloc> for more details. 
  
-<h4>CKKW-L merging with main89.cc</h4> 
+<h4>FxFx (NLO) jet matching with main164.cc</h4> 
  
-For CKKW-L merging, <code>main89.cc</code> currently relies on LHEF inputs 
-generated with the leading-order mode of aMC@NLO (i.e. events should 
-be generated with <code>./bin/generate_events aMC@LO</code>). 
-No run to estimate the cross section estimate is needed. Example CKKW-L 
-settings can be found in <code>main89ckkwl.cmnd</code>. Please consult 
-<aloc href="CKKWLMerging">CKKW-L merging</aloc> for more details. 
- 
-<h4>UMEPS merging with main89.cc</h4> 
- 
-For UMEPS merging, <code>main89.cc</code> currently relies on LHEF inputs 
-generated with the leading-order mode of aMC@NLO as well (see above). 
-<code>main89.cc</code> automatically assigns if an event will be used as 
-"standard" event or as "subtractive" contribution. Example UMEPS 
-settings can be found in <code>main89umeps.cmnd</code>. Please 
-consult <aloc href="UMEPSMerging">UMEPS merging</aloc> and 
-<aloc href="CKKWLMerging">CKKW-L merging</aloc> for more details. 
- 
-<h4>FxFx (NLO) jet matching with main89.cc</h4> 
- 
-For FxFx jet matching, <code>main89.cc</code> relies on MC@NLO input LHE 
+For FxFx jet matching, <code>main164.cc</code> relies on MC@NLO input LHE 
 files generated with aMC@NLO. To produce FxFx outputs in aMC@NLO, the settings 
 <code>PYTHIA8  = parton_shower</code>, <code>3 = ickkw</code> and 
 <code>x = ptj</code> are necessary in your aMC@NLO run card. Here, 
 <code>x</code> is the value of the matching scale in FxFx, i.e. has be 
 identical to <code>JetMatching:qCutME</code> in the Pythia inputs. 
-Example FxFx settings for Pythia can be found in <code>main89fxfx.cmnd</code>. 
-Please consult <aloc href="JetMatching">Jet Matching</aloc> and 
+Example FxFx settings for Pythia can be found in 
+<code>main164fxfx.cmnd</code>. Please consult 
+<aloc href="JetMatching">Jet Matching</aloc> and 
 <aloc href="aMCatNLOMatching">aMC@NLO matching</aloc> for more details. 
  
+<h4>CKKW-L merging with main164.cc</h4> 
  
-<h4>UNLOPS (NLO) merging with main89.cc</h4> 
+For CKKW-L merging, <code>main164.cc</code> currently relies on LHEF inputs 
+generated with the leading-order mode of MadGraph5_aMC@NLO. 
+No run to estimate the cross section estimate is needed. Example CKKW-L 
+settings can be found in <code>main164ckkwl.cmnd</code>. Please consult 
+<aloc href="CKKWLMerging">CKKW-L merging</aloc> for more details. 
  
-For UNLOPS merging, <code>main89.cc</code> currently relies on LHEF inputs 
-generated with the aMC@NLO. The UNLOPS interface in <code>main89.cc</code> 
+<h4>Sector merging (MESS) in VINCIA with main164.cc</h4> 
+ 
+For MESS merging, <code>main164.cc</code> currently relies on LHEF inputs 
+generated with the leading-order mode of MadGraph5_aMC@NLO. 
+No run to estimate the cross section estimate is needed. Example MESS 
+settings can be found in <code>main164mess.cmnd</code>. Please consult 
+<aloc href="VinciaMerging">MESS merging</aloc> for more details. 
+ 
+<h4>UMEPS merging with main164.cc</h4> 
+ 
+For UMEPS merging, <code>main164.cc</code> currently relies on LHEF inputs 
+generated with the leading-order mode of aMC@NLO as well (see above). 
+<code>main164.cc</code> automatically assigns if an event will be used as 
+"standard" event or as "subtractive" contribution. Example UMEPS 
+settings can be found in <code>main164umeps.cmnd</code>. Please 
+consult <aloc href="UMEPSMerging">UMEPS merging</aloc> and 
+<aloc href="CKKWLMerging">CKKW-L merging</aloc> for more details. 
+ 
+<h4>UNLOPS (NLO) merging with main164.cc</h4> 
+ 
+For UNLOPS merging, <code>main164.cc</code> currently relies on LHEF inputs 
+generated with the aMC@NLO. The UNLOPS interface in <code>main164.cc</code> 
 requires a) leading-order inputs generated with the leading-order mode of 
 aMC@NLO, using the UNLOPS prescription, and b) next-to-leading-order inputs 
 generated with the NLO mode of aMC@NLO, using the UNLOPS prescription. 
@@ -256,14 +297,14 @@ To produce UNLOPS outputs in aMC@NLO, the settings
 <code>x = ptj</code> are necessary in your aMC@NLO run card. Here, 
 <code>x</code> is the value of the merging scale in UNLOPS, i.e. 
 has be identical to <code>Merging:TMS</code> in the Pythia inputs. 
-<code>main89.cc</code> will then process NLO inputs and LO inputs 
+<code>main164.cc</code> will then process NLO inputs and LO inputs 
 consecutively, and will automatically assign if an event will be used as 
 "standard" event or as "subtractive" contribution. Example UNLOPS 
-settings can be found in <code>main89umeps.cmnd</code>. Please 
+settings can be found in <code>main164umeps.cmnd</code>. Please 
 consult <aloc href="NLOMerging">NLO Merging</aloc>, 
 <aloc href="UMEPSMerging">UMEPS merging</aloc>, and 
 <aloc href="CKKWLMerging">CKKW-L merging</aloc> for more details. 
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,14 +1,14 @@
 // Weights.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Function definitions (not found in the header) for the Weight classes.
 
+#include "Pythia8/FragmentationFlavZpT.h"
 #include "Pythia8/Info.h"
 #include "Pythia8/Settings.h"
 #include "Pythia8/Weights.h"
-#include "Pythia8/FragmentationFlavZpT.h"
 
 namespace Pythia8 {
 
@@ -325,10 +325,11 @@ vector<double> WeightsSimpleShower::getMuRWeightVector() {
 // Collect shower weight names.
 
 void WeightsSimpleShower::collectWeightNames(vector<string>& outputNames) {
+  string prefix = infoPtr->settingsPtr->word("Weights:prefix");
   for (int iwt=1; iwt < getWeightsSize(); ++iwt)
-    outputNames.push_back("AUX_" + getWeightsName(iwt));
+    outputNames.push_back(prefix + getWeightsName(iwt));
   for (int iwtGrp = 1; iwtGrp < nWeightGroups(); ++iwtGrp)
-    outputNames.push_back("AUX_" + getGroupName(iwtGrp));
+    outputNames.push_back(prefix + getGroupName(iwtGrp));
 }
 
 //--------------------------------------------------------------------------
@@ -397,20 +398,20 @@ void WeightsLHEF::collectWeightValues(vector<double>& ret, double norm) {
 // Function to return processed weight names to weight container.
 
 void WeightsLHEF::collectWeightNames(vector<string>& ret) {
-
   // Attach the LHEF weights, starting with well-defined MUF and MUR
   // variations, and then followed by any other LHEF weight.
+  string prefix = infoPtr->settingsPtr->word("Weights:prefix");
   for (int iwt = 0; iwt < getWeightsSize(); ++iwt) {
     string name = getWeightsName(iwt);
     if (name.find("MUR") == string::npos || name.find("MUF") == string::npos)
       continue;
-    ret.push_back("AUX_"+name);
+    ret.push_back(prefix + name);
   }
   for (int iwt=0; iwt < getWeightsSize(); ++iwt) {
     string name  = getWeightsName(iwt);
     if (name.find("MUR") != string::npos || name.find("MUF") != string::npos)
       continue;
-    ret.push_back("AUX_"+name);
+    ret.push_back(prefix + name);
   }
 }
 
@@ -738,24 +739,19 @@ void WeightsFragmentation::init() {
   weightParms.clear();
   externalGroupNames.clear();
   externalMap.clear();
-
-  // Initialize a flavor selector.
-  StringFlav flavSel;
-  flavSel.initInfoPtr(*infoPtr);
+  flavBreaks = vector<int>(13, 0);
 
   // Read weight groups into a dictionary.
   map<string, map<string, double> > weightGroups;
   parse("VariationFrag:list", weightGroups);
 
   // Define the ordering of the parameters and key mapping.
-  vector<vector< pair<string, string> > > keyOrder = {
-    {{"frag:alund", "StringZ:aLund"}, {"frag:blund", "StringZ:bLund"},
-     {"frag:rfactc",  "StringZ:rFactC"}, {"frag:rfactb", "StringZ:rFactB"}},
-    {{"frag:xi", "StringFlav:ProbQQtoQ"}, {"frag:rho", "StringFlav:ProbStoUD"},
-     {"frag:x", "StringFlav:ProbSQtoQQ"},
-     {"frag:y", "StringFlav:ProbQQ1toQQ0"}},
-    {{"frag:ptsigma", "StringPT:sigma"}}};
   weightParms.resize(keyOrder.size());
+
+  // Initialize the flavor selector.
+  StringFlav flavSel;
+  flavSel.initInfoPtr(*infoPtr);
+  flavSel.init();
 
   // Create a map from variation keys to standard keys.
   vector<map<string, string> > keyMap(keyOrder.size());
@@ -764,10 +760,16 @@ void WeightsFragmentation::init() {
 
   // Store the baseline parameters.
   Settings *settingsPtr = infoPtr->settingsPtr;
-  vector<map<string, double> > baseParms(3);
-  for (int iFac = 0; iFac < (int)keyMap.size(); ++iFac)
-    for(auto &key : keyMap[iFac])
+  vector<map<string, double> > baseParms(keyOrder.size());
+  flavBase.resize(0);
+  for (auto &idx : flavIdxs)
+    flavBase.push_back(flavSel.getFlavourSpinRatios(0, idx));
+  for (int iFac = 0; iFac < (int)keyOrder.size(); ++iFac) {
+    for(auto &key : keyOrder[iFac]) {
       baseParms[iFac][key.first] = settingsPtr->parm(key.second);
+      if (iFac == Flav) flavBase.push_back(baseParms[iFac][key.first]);
+    }
+  }
 
   // Loop over the groups and determine the parameter variations.
   for (auto &group : weightGroups) {
@@ -794,8 +796,8 @@ void WeightsFragmentation::init() {
         for (auto &var : varParms[iFac])
           settingsPtr->parm(keyMap[Flav][var.first], var.second, true);
         flavSel.init();
-        for (auto &iParm : vector<int>{0, 1, 2, 3, 6})
-          key.push_back(flavSel.getFlavourSpinRatios(0, iParm));
+        for (auto &idx : flavIdxs)
+          key.push_back(flavSel.getFlavourSpinRatios(0, idx));
         for (auto &var : baseParms[iFac])
           settingsPtr->parm(keyMap[Flav][var.first], var.second, true);
       }
@@ -820,18 +822,19 @@ void WeightsFragmentation::init() {
 
 //--------------------------------------------------------------------------
 
-// Collect shower weight names.
+// Collect fragmentation weight names.
 
 void WeightsFragmentation::collectWeightNames(vector<string>& outputNames) {
+  string prefix = infoPtr->settingsPtr->word("Weights:prefix");
   for (int iWgt = 1; iWgt < getWeightsSize(); ++iWgt)
-    outputNames.push_back("AUX_" + getWeightsName(iWgt));
+    outputNames.push_back(prefix + getWeightsName(iWgt));
   for (int iWG = 0; iWG < nWeightGroups(); ++iWG)
-    outputNames.push_back("AUX_" + getGroupName(iWG));
+    outputNames.push_back(prefix + getGroupName(iWG));
 }
 
 //--------------------------------------------------------------------------
 
-// Collect shower weight values.
+// Collect fragmentation weight values.
 
 void WeightsFragmentation::collectWeightValues(vector<double>& outputWeights,
   double norm) {
@@ -839,6 +842,117 @@ void WeightsFragmentation::collectWeightValues(vector<double>& outputWeights,
     outputWeights.push_back(getWeightsValue(iWgt)*norm);
   for (int iWG = 0; iWG < nWeightGroups(); ++iWG)
     outputWeights.push_back(getGroupWeight(iWG)*norm);
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate the derived flavor parameters.
+
+vector<double> WeightsFragmentation::flavParms(
+  double xi, double rho, double x, double y) {
+
+  // Set the primary parameters.
+  int offset = flavIdxs.size();
+  vector<double> parms(offset + 4, 0);
+  parms[offset + 0] = xi;
+  parms[offset + 1] = rho;
+  parms[offset + 2] = x;
+  parms[offset + 3] = y;
+
+  // Pass the primary parameters to settings.
+  Settings* settingsPtr = infoPtr->settingsPtr;
+  for (int idx = 0; idx < (int)keyOrder[Flav].size(); ++idx)
+    settingsPtr->parm(keyOrder[Flav][idx].second,
+      parms[offset + idx], true);
+
+  // Initialize a flavor selector.
+  StringFlav flavSel;
+  flavSel.initInfoPtr(*infoPtr);
+  flavSel.init();
+
+  // Set the derived parameters.
+  for (int idx = 0; idx < (int)flavIdxs.size(); ++idx)
+    parms[idx] = flavSel.getFlavourSpinRatios(0, flavIdxs[idx]);
+
+  // Reset the settings.
+  for (int idx = 0; idx < (int)keyOrder[Flav].size(); ++idx)
+    settingsPtr->parm(keyOrder[Flav][idx].second,
+      flavBase[offset + idx], true);
+  return parms;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Calculate a flavor weight, given the derived parameters and breaks.
+
+double WeightsFragmentation::flavWeight(const vector<double>& parms,
+  const vector<int>& breaks) {
+
+  // Loop over parameter ratios (avoids floating point exceptions).
+  double wgt = 1;
+  static const vector<int> iParms  = {6, 5, 0, 1, 2, 3, 4};
+  static const vector<int> iBreaks = {2, 3, 4, 6, 8, 9, 12};
+  for (int i = 0; i < (int)iParms.size(); ++i) {
+    // Weight unchanged if negative for 5th parameter.
+    if (iParms[i] == 5 && parms[iParms[i]] <= 0) continue;
+    // Weight unchanged if no breaks.
+    if (breaks[iBreaks[i]] == 0) continue;
+    // Infinite weight if parameter is infinite.
+    if (isinf(parms[iParms[i]])) return numeric_limits<double>::infinity();
+    wgt *= pow(parms[iParms[i]] / flavBase[iParms[i]], breaks[iBreaks[i]]);
+  }
+
+  // Include remaining weight terms and return.
+  return wgt * pow((1. + flavBase[5]) / (1. + parms[5]), breaks[0])
+    * pow((2. + flavBase[6]) / (2. + parms[6]), breaks[1])
+    * pow((2. + flavBase[0]) / (2. + parms[0]), breaks[3])
+    * pow((2. + flavBase[1]) / (2. + parms[1]), breaks[5])
+    * pow((2. + flavBase[2]) / (2. + parms[2]), breaks[7])
+    * pow((1. - parms[3]) / (1. - flavBase[3]), breaks[10])
+    * pow((1. + flavBase[4]) / (1. + parms[4]), breaks[11]);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Count the flavor breaks for variations.
+
+void WeightsFragmentation::flavCount(int idIn, bool early, bool noChoice) {
+
+  // Determine the break properties and store.
+  int idPop = idIn / 1000;
+  int idVtx = (idIn - idPop*1000) / 100;
+  int spin  = idIn - idPop*1000 - idVtx*100;
+
+  // No diquark break from a diquark mother.
+  if (!noChoice) ++flavBreaks[0];
+  // If early is true, this is a quark-pair.
+  if (early) {
+    ++flavBreaks[1];
+    // Include additional factor for s quark.
+    if (idIn == 3) ++flavBreaks[2];
+    return;
+  }
+  // Additional pieces for diquark probabilities.
+  ++flavBreaks[3];
+  if (idPop > 2) ++flavBreaks[4];
+  if (idPop < 3) {
+    ++flavBreaks[5];
+    if (idVtx > 2) ++flavBreaks[6];
+  } else {
+    ++flavBreaks[7];
+    if (idVtx > 2) ++flavBreaks[8];
+  }
+  if (idPop < 3 && idVtx < 3) {
+    if (idPop == idVtx) ++flavBreaks[9];
+    else ++flavBreaks[10];
+  }
+  if (idPop != idVtx) {
+    ++flavBreaks[11];
+    if (spin > 1) ++flavBreaks[12];
+  }
+
 }
 
 //==========================================================================

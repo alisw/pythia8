@@ -189,9 +189,10 @@ diffractive mass.
  
 <parm name="Diffraction:sigmaRefPomP" default="10." min="2." max="40."> 
 The assumed Pomeron-proton effective cross section, as used for 
-multiparton interactions in diffractive systems. If this cross section 
-is made to depend on the mass of the diffractive system then the above 
-value refers to the cross section at the reference scale, and 
+multiparton interactions in single and double diffractive systems. 
+If this cross section is made to depend on the mass of the diffractive 
+system then the above value refers to the cross section at the 
+reference scale, and 
 <eq> 
 sigma_PomP(m) = sigma_PomP(m_ref) * (m / m_ref)^p 
 </eq> 
@@ -212,6 +213,16 @@ The <ei>mRef</ei> reference mass scale introduced above.
  
 <parm name="Diffraction:mPowPomP" default="0.0" min="0.0" max="0.5"> 
 The <ei>p</ei> mass rescaling pace introduced above. 
+</parm> 
+ 
+<parm name="Diffraction:sigmaRefPomPom" default="2." min="0.5" max="10."> 
+The assumed Pomeron-Pomeron effective cross section, as used for 
+multiparton interactions in central diffractive systems. Closely 
+parallels the <code>Diffraction:sigmaRefPomP</code> above, so see 
+there for details. Given the absence of relevant data, there is no 
+point in introducing a separate possibility for an energy dependence, 
+so instead <code>Diffraction:mRefPomP</code> and 
+<code>Diffraction:mPowPomP</code> are used also here. 
 </parm> 
  
 <p/> 
@@ -302,7 +313,7 @@ If the hard process is likely to have been created inside a diffractively
 excited system, then we also evaluate the momentum fraction carried by the 
 Pomeron, <ei>x_Pomeron</ei>, and the momentum transfer, <ei>t</ei>, in 
 the process. This information can also be extracted in the main programs, 
-see eg. example <code>main61.cc</code>. 
+see eg. example <code>main325.cc</code>. 
  
 <p/> 
 Further, we distiguish between two alternative scenarios for the 
@@ -440,4 +451,4 @@ one.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,0 +1,94 @@
+<html><head><title>main261</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main261</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main261.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#userhooks">Userhooks</a>
+//            <a href="../ExampleKeywords.html#biasing">Biasing</a>
+
+// Example on how to enhance rare emission rates, in this case q -&gt; q gamma.
+// To concentrate on the photons from the showers, MPI and hadronization
+// are switched off by default.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Histogram pT spectrum of photons and event weights.
+  Hist gamNoEnh(   &quot;gamma pT spectrum, no enhancement&quot;,   100, 0., 100.);
+  Hist gamWithEnh( &quot;gamma pT spectrum, with enhancement&quot;, 100, 0., 100.);
+  Hist gamRatio(&quot;gamma pT spectrum, with/no enhancement&quot;, 100, 0., 100.);
+  Hist gamBefWt(   &quot;gamma pT spectrum, without weight&quot;,   100, 0., 100.);
+  Hist eventWt(    &quot;log10(event weight)&quot;,                 100, -7., 3.);
+
+  // Compare generation without and with enhanced q -&gt; q gamma emission.
+  for (int iCase = 0; iCase &lt; 2; ++iCase) {
+
+    // Generator.
+    Pythia pythia;
+    pythia.readFile(&quot;main261.cmnd&quot;);
+    int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+
+    // No enhancement.
+    if (iCase == 0)
+      pythia.readString(&quot;Enhancements:doEnhance = false&quot;);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Begin event loop.
+    double sumWt = 0.;
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+      // Generate events. Find and histogram event weight.
+      pythia.next();
+      double weight = (iCase == 1) ? pythia.info.weight() : 1.;
+      if (iCase == 1) eventWt.fill( log10(weight) );
+      sumWt += weight;
+
+      // Find all final-state photons and histogram them.
+      for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].id() == 22) {
+        double pT = pythia.event[i].pT();
+        if (iCase == 0) gamNoEnh.fill(   pT, 1.);
+        if (iCase == 1) gamBefWt.fill(   pT, 1.);
+        if (iCase == 1) gamWithEnh.fill( pT, weight);
+      }
+
+    // End of event loop.
+    }
+
+    // Statistics.
+    pythia.stat();
+    cout &lt;&lt; &quot;\n Average event weight = &quot; &lt;&lt; scientific
+         &lt;&lt; sumWt / nEvent &lt;&lt; endl;
+
+    // End of case loop.
+  }
+
+  // Write histograms to output stream.
+  gamRatio = gamWithEnh / gamNoEnh;
+  cout &lt;&lt; gamNoEnh &lt;&lt; gamWithEnh &lt;&lt; gamRatio &lt;&lt; gamBefWt &lt;&lt; eventWt;
+
+  // Write histogram data to files.
+  ofstream write;
+  write.open(&quot;PTA_0.dat&quot;);
+  gamNoEnh.table(write);
+  write.close();
+  write.open(&quot;PTA_1.dat&quot;);
+  gamWithEnh.table(write);
+  write.close();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

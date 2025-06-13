@@ -1,5 +1,5 @@
 // FragmentationFlavZpT.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,48 +9,6 @@
 #include "Pythia8/FragmentationFlavZpT.h"
 
 namespace Pythia8 {
-
-//==========================================================================
-
-// Functions for unnormalised and average Lund FF.
-
-//--------------------------------------------------------------------------
-
-// The unnormalised Lund FF
-
-double LundFFRaw(double z, double a, double b, double c, double mT2) {
-  if (z <= 0. || z >= 1.) return 0.;
-  return pow(1. - z, a) / pow(z, c) * exp(-b * mT2 / z);
-}
-
-//--------------------------------------------------------------------------
-
-// Average, <z>, of Lund FF.
-
-double LundFFAvg(double a, double b, double c,
-  double mT2, double tol = 1.e-6) {
-
-  // Checks whether the integration succeeded.
-  bool check;
-
-  // Define lundFF as a function of only z, fixing a, b, c, mT2 as parameters
-  // Note that c must be captured by reference, since it is modified later.
-  auto lundFF = [=, &c](double z) { return LundFFRaw(z, a, b, c, mT2); };
-
-  // Get denominator.
-  double denominator = 1.;
-  check = integrateGauss(denominator, lundFF, 0, 1, tol);
-  if (!check || denominator <= 0.) return -1.;
-
-  // Get numerator
-  c -= 1;
-  double numerator = 0.;
-  check = integrateGauss(numerator, lundFF, 0., 1., tol);
-  if (!check || numerator <= 0.) return -1.;
-
-  // Done.
-  return numerator / denominator;
-}
 
 //==========================================================================
 
@@ -78,6 +36,11 @@ const double StringFlav::baryonCGDec[6]
 // Initialize data members of the flavour generation.
 
 void StringFlav::init() {
+
+  // Set the fragmentation weights container.
+  if (flag("VariationFrag:flav") || !infoPtr->weightContainerPtr
+    ->weightsFragmentation.weightParms[WeightsFragmentation::Flav].empty())
+    wgtsPtr = &infoPtr->weightContainerPtr->weightsFragmentation;
 
   // Basic parameters for generation of new flavour.
   probQQtoQ       = parm("StringFlav:probQQtoQ");
@@ -181,12 +144,12 @@ void StringFlav::init() {
   useWidthPre      = (widthPreStrange > 1.0) || (widthPreDiquark > 1.0);
 
   // Enhanced-rate prefactor for MPIs and/or nearby string pieces.
-  closePacking       = flag("ClosePacking:doClosePacking");
-  closePackingFacPT2 = pow2( parm("ClosePacking:facPT") );
-  qqKappa            = flag("ClosePacking:qqKappa");
-  closePackingFacQQ2 = pow2(parm("ClosePacking:facQQ"));
-  exponentMPI        = parm("ClosePacking:expMPI");
-  exponentNSP        = parm("ClosePacking:expNSP");
+  closePacking     = flag("ClosePacking:doClosePacking");
+  enhanceStrange   = parm("ClosePacking:enhanceStrange");
+  doEnhanceDiquark = flag("ClosePacking:doEnhanceDiquark");
+  enhanceDiquark   = parm("ClosePacking:enhanceDiquark");
+  exponentMPI      = parm("ClosePacking:expMPI");
+  exponentNSP      = parm("ClosePacking:expNSP");
 
   // Save "vacuum" parameters for closepacking init() function.
   probStoUDSav    = probStoUD;
@@ -709,26 +672,29 @@ void StringFlav::init() {
 
 // Initialise parameters when using close packing.
 
-void StringFlav::init(double kappaRatio, double strangeFac, double probQQmod) {
+void StringFlav::init(double kappaModifier, double strangeJunc,
+  double probQQmod) {
 
-  double kappaInvRatio   = 1. / pow(kappaRatio, 2*exponentNSP);
+  double kappaRatio    = 1. + enhanceStrange * kappaModifier;
+  double kappaInvRatio = 1. / pow(kappaRatio, 2*exponentNSP);
 
   // Altered probabilities with close packing.
-  probStoUD    = pow(probStoUDSav, kappaInvRatio * (1 - strangeFac));
+  probStoUD    = pow(probStoUDSav, kappaInvRatio * (1 - strangeJunc));
   probSQtoQQ   = pow(probSQtoQQSav, kappaInvRatio);
   probQQ1toQQ0 = pow(probQQ1toQQ0Sav, kappaInvRatio);
   probQQtoQ    = probQQtoQSav;
 
   // If allowing effective kappa to enhance baryon production, do this.
-  if (qqKappa) {
+  if (doEnhanceDiquark) {
     double alphaQQ = 1. + 2. * probSQtoQQ * probStoUD + 9. * probQQ1toQQ0
       + 6. * probSQtoQQ * probQQ1toQQ0 * probStoUD
       + 3. * probQQ1toQQ0 * pow2(probSQtoQQ * probStoUD);
-    alphaQQ  *= 1. / (2 + probStoUD);
-    // Diquark scaling power controlled by closePackingFacQQ.
-    double kappaRatioQQ    = 1. + closePackingFacQQ2 * ( kappaRatio - 1.);
-    double kappaInvRatioQQ = 1. / pow(kappaRatioQQ, 2*exponentNSP);
-    probQQtoQ = alphaQQ * pow( (probQQtoQSav / alphaQQSav ), kappaInvRatioQQ);
+    alphaQQ /= (2 + probStoUD);
+
+    // Diquark scaling power controlled by enhanceDiquark.
+    kappaRatio = 1. + enhanceDiquark * kappaModifier;
+    kappaInvRatio   = 1. / pow(kappaRatio, 2*exponentNSP);
+    probQQtoQ = alphaQQ * pow( (probQQtoQSav / alphaQQSav ), kappaInvRatio);
   }
 
   // Probability of a diquark being formed can scale with the probability
@@ -736,6 +702,9 @@ void StringFlav::init(double kappaRatio, double strangeFac, double probQQmod) {
   // for x probability of reconnection,
   // probability of diquark survival scales with 1/2 * [(1-x)^nG + (1-x)^nB]
   probQQtoQ = probQQmod * probQQtoQ;
+
+  // Make sure probability is sensible.
+  if (probQQtoQ > 1.) probQQtoQ = 1.;
 
   // Calculate derived parameters.
   initDerived();
@@ -784,8 +753,9 @@ FlavContainer StringFlav::pickGauss(FlavContainer& flavOld, bool allowPop) {
     if ( (flavOld.id > 0 && flavOld.id < 9) || flavOld.id < -1000 )
       flavNew.id = -flavNew.id;
 
-    // Caclulate variations, then done for simple-quark case.
-    variations(abs(flavNew.id), true, doOldBaryon);
+    // Count breaks for variations, then done for simple-quark case.
+    if (wgtsPtr != nullptr)
+      wgtsPtr->flavCount(abs(flavNew.id), true, doOldBaryon);
     return flavNew;
   }
 
@@ -827,12 +797,13 @@ FlavContainer StringFlav::pickGauss(FlavContainer& flavOld, bool allowPop) {
     if ((1. + spinWT) * rndmPtr->flat() < 1.) spin = 1;
   }
 
-  // Form outgoing diquark. Calculate variations. Done.
+  // Form outgoing diquark. Count breaks for variations. Done.
   flavNew.id = 1000 * max(flavNew.idVtx, flavNew.idPop)
     + 100 * min(flavNew.idVtx, flavNew.idPop) + spin;
   if ( (flavOld.id < 0 && flavOld.id > -9) || flavOld.id > 1000 )
     flavNew.id = -flavNew.id;
-  variations(abs(flavNew.id), false, doOldBaryon);
+  if (wgtsPtr != nullptr)
+    wgtsPtr->flavCount(abs(flavNew.id), false, doOldBaryon);
   return flavNew;
 
 }
@@ -846,7 +817,10 @@ FlavContainer StringFlav::pickGauss(FlavContainer& flavOld, bool allowPop) {
 // First return value is hadron ID, second new (di)quark ID.
 
 FlavContainer StringFlav::pickThermal(FlavContainer& flavOld,
-  double pT, double kappaRatio) {
+  double pT, double kappaModifier) {
+
+  // Determine close-packing scaling.
+  double kappaRatio = 1. + enhancePT * kappaModifier;
 
   // Initial values for new flavour.
   FlavContainer flavNew;
@@ -1161,7 +1135,10 @@ int StringFlav::combineToLightest( int id1, int id2) {
 // called in case of combining the two remaining flavours into last hadron.
 
 int StringFlav::combineLastThermal(FlavContainer& flav1, FlavContainer& flav2,
-  double pT, double kappaRatio) {
+  double pT, double kappaModifier) {
+
+  // Determine close-packing scaling.
+  double kappaRatio = 1. + enhancePT * kappaModifier;
 
   // Decide randomly on whether to treat flav1 or flav2 as incoming.
   int idIn[2]    = { flav1.id, flav2.id };
@@ -1392,9 +1369,10 @@ void StringFlav::initDerived() {
   // Suppression for a heavy quark of a diquark to fit into a baryon
   // on the other side of popcorn meson: (0) s/u for q -> B M;
   // (1) s/u for rank 0 diquark su -> M B; (2) ditto for s -> c/b.
+  double inf = numeric_limits<double>::infinity();
   double uNorm = 1. + qBM[ud1] + qBM[uu1] + qBM[us0] + qBM[us1];
   scbBM[0] = (2. * (qBM[su0] + qBM[su1]) + qBM[ss1]) / uNorm;
-  scbBM[1] = scbBM[0] * popcornSpair * qBM[su0] / qBM[us0];
+  scbBM[1] = qBM[us0] != 0 ? scbBM[0] * popcornSpair * qBM[su0]/qBM[us0] : inf;
   scbBM[2] = (1. + qBM[ud1]) * (2. + qBM[us0]) / uNorm;
 
   // Include maximum of Clebsch-Gordan coefficients.
@@ -1411,9 +1389,9 @@ void StringFlav::initDerived() {
 
   // Popcorn fraction for rank 0 diquarks, depending on number of s quarks.
   popS[0] = qNorm * qBM[ud1] / qBB[ud1];
-  popS[1] = qNorm * 0.5 * (qBM[us1] / qBB[us1]
-    + sNorm * qBM[su1] / qBB[su1]);
-  popS[2] = qNorm * sNorm * qBM[ss1] / qBB[ss1];
+  popS[1] = qBB[us1] != 0 && qBB[su1] != 0 ? qNorm * 0.5 * (qBM[us1] / qBB[us1]
+    + sNorm * qBM[su1] / qBB[su1]) : inf;
+  popS[2] = qBB[ss1] != 0 ? qNorm * sNorm * qBM[ss1] / qBB[ss1] : inf;
 
   // Recombine diquark weights to flavour and spin ratios. Second index:
   // 0 = s/u popcorn quark ratio.
@@ -1425,84 +1403,119 @@ void StringFlav::initDerived() {
   dWT[0][0] = (2. * (qBB[su0] + qBB[su1]) + qBB[ss1])
     / (1. + qBB[ud1] + qBB[uu1] + qBB[us0] + qBB[us1]);
   dWT[0][1] = 2. * (qBB[us0] + qBB[us1]) / (1. + qBB[ud1] + qBB[uu1]);
-  dWT[0][2] = qBB[ss1] / (qBB[su0] + qBB[su1]);
+  dWT[0][2] = qBB[su0] + qBB[su1] != 0 ? qBB[ss1]/(qBB[su0] + qBB[su1]) : inf;
   dWT[0][3] = qBB[uu1] / (1. + qBB[ud1] + qBB[uu1]);
-  dWT[0][4] = qBB[su1] / qBB[su0];
-  dWT[0][5] = qBB[us1] / qBB[us0];
+  dWT[0][4] = qBB[su0] != 0 ? qBB[su1] / qBB[su0] : inf;
+  dWT[0][5] = qBB[us0] != 0 ? qBB[us1] / qBB[us0] : inf;
   dWT[0][6] = qBB[ud1];
 
   // Case 1: q -> B M B.
   dWT[1][0] = (2. * (qBM[su0] + qBM[su1]) + qBM[ss1])
     / (1. + qBM[ud1] + qBM[uu1] + qBM[us0] + qBM[us1]);
   dWT[1][1] = 2. * (qBM[us0] + qBM[us1]) / (1. + qBM[ud1] + qBM[uu1]);
-  dWT[1][2] = qBM[ss1] / (qBM[su0] + qBM[su1]);
+  dWT[1][2] = qBM[su0] + qBM[su1] != 0 ? qBM[ss1]/(qBM[su0] + qBM[su1]) : inf;
   dWT[1][3] = qBM[uu1] / (1. + qBM[ud1] + qBM[uu1]);
-  dWT[1][4] = qBM[su1] / qBM[su0];
-  dWT[1][5] = qBM[us1] / qBM[us0];
+  dWT[1][4] = qBM[su0] != 0 ? qBM[su1] / qBM[su0] : inf;
+  dWT[1][5] = qBM[us0] != 0 ? qBM[us1] / qBM[us0] : inf;
   dWT[1][6] = qBM[ud1];
 
   // Case 2: qq -> M B; diquark inside chain.
   dWT[2][0] = (2. * (dMB[su0] + dMB[su1]) + dMB[ss1])
     / (1. + dMB[ud1] + dMB[uu1] + dMB[us0] + dMB[us1]);
   dWT[2][1] = 2. * (dMB[us0] + dMB[us1]) / (1. + dMB[ud1] + dMB[uu1]);
-  dWT[2][2] = dMB[ss1] / (dMB[su0] + dMB[su1]);
+  dWT[2][2] = dMB[su0] + dMB[su1] != 0 ? dMB[ss1]/(dMB[su0] + dMB[su1]) : inf;
   dWT[2][3] = dMB[uu1] / (1. + dMB[ud1] + dMB[uu1]);
-  dWT[2][4] = dMB[su1] / dMB[su0];
-  dWT[2][5] = dMB[us1] / dMB[us0];
+  dWT[2][4] = dMB[su0] != 0 ? dMB[su1] / dMB[su0] : inf;
+  dWT[2][5] = dMB[us0] != 0 ? dMB[us1] / dMB[us0] : inf;
   dWT[2][6] = dMB[ud1];
+
+}
+
+//==========================================================================
+
+// Functions for the Lund symmetric FF: unnormalised, average, and RMSD.
+
+//--------------------------------------------------------------------------
+
+// The unnormalised Lund FF
+
+double LundFFRaw(double z, double a, double b, double c, double mT2) {
+
+  if (z <= 0. || z >= 1.) return 0.;
+  return pow(1. - z, a) / pow(z, c) * exp(-b * mT2 / z);
 
 }
 
 //--------------------------------------------------------------------------
 
-// Calculate the flavor variations.
+// Average, <z>, of Lund FF.
+// Return values:
+//   > 0. : <z>.
+//    -1. : failed to compute normalisation.
+//    -2. : failed to compute <z>.
 
-void StringFlav::variations(int idIn, bool early, bool noChoice) {
+double LundFFAvg(double a, double b, double mT2, double tol = 1.e-6) {
 
-  if (infoPtr->weightContainerPtr->weightsFragmentation.
-    weightParms[WeightsFragmentation::Flav].empty()) return;
-  int idPop = idIn / 1000;
-  int idVtx = (idIn-idPop*1000) / 100;
-  int spin  = idIn - idPop*1000 - idVtx*100;
+  // Checks whether the integration succeeded.
+  bool check;
 
-  // Loop over the variation parameters.
-  WeightsFragmentation &wgts = infoPtr->weightContainerPtr->
-    weightsFragmentation;
-  for (auto &parms : wgts.weightParms[WeightsFragmentation::Flav]) {
-    const vector<double> &vals = parms.first;
-    int iWgt = parms.second;
-    double wgt = 1.0;
-    // No diquark break from a diquark mother
-    if( !noChoice ) wgt = (1. + probQQtoQ) / (1. + vals[5]);
-    // If early is true, this is a quark-pair.
-    if (early) {
-      wgt *= (2. + probStoUD) / (2. + vals[6]);
-      // Include additional factor for s quark.
-      if (idIn == 3) wgt *= vals[6] / probStoUD;
-      wgts.reweightValueByIndex(iWgt, wgt);
-      continue;
-    }
-    // Additional pieces for diquark probabilities.
-    if( vals[5] > 0.0 ) wgt *= vals[5] / probQQtoQ;
-    wgt *= (2. + dWT[0][0]) / (2. + vals[0]);
-    if (idPop > 2) wgt *= vals[0] / dWT[0][0];
-    if (idPop < 3) {
-      wgt *= (2. + dWT[0][1]) / (2. + vals[1]);
-      if (idVtx > 2) wgt *= vals[1] / dWT[0][1];
-    } else {
-      wgt *= (2. + dWT[0][2]) / (2. + vals[2]);
-      if (idVtx > 2) wgt *= vals[2] / dWT[0][2] ;
-    }
-    if (idPop < 3 && idVtx < 3) {
-        if (idPop == idVtx) wgt *= vals[3] / dWT[0][3];
-        else wgt *= (1. - vals[3]) / (1. - dWT[0][3]);
-    }
-    if (idPop != idVtx) {
-      wgt *= (1. + dWT[0][6]) / (1. + vals[4]);
-      if (spin > 1) wgt *= vals[4] / dWT[0][6];
-    }
-    wgts.reweightValueByIndex(iWgt, wgt);
-  }
+  // Fragmentation function dependent on only z (defined as a lambda function).
+  function<double(double)> lundFF;
+
+  // Get denominator (lundFF is function of only z, c = 1).
+  lundFF = [=](double z) { return LundFFRaw(z, a, b, 1., mT2); };
+  double denominator = 1.;
+  check = integrateGauss(denominator, lundFF, 0., 1., tol);
+  if (!check || denominator <= 0.) return -1.;
+
+  // Get numerator (lundFF is function of only z, c = 0).
+  lundFF = [=](double z) { return LundFFRaw(z, a, b, 0., mT2); };
+  double numerator = 0.;
+  check = integrateGauss(numerator, lundFF, 0., 1., tol);
+  if (!check || numerator <= 0.) return -2.;
+
+  // Done.
+  return numerator / denominator;
+
+}
+
+//--------------------------------------------------------------------------
+
+// RMSD(z) = sqrt(<z^2> - <z>^2) of Lund FF.
+// Return values:
+//   > 0. : rmsd
+//    -1. : failed to compute normalisation.
+//    -2. : failed to compute <z>.
+//    -3. : failed to compute <z^2>.
+
+double LundFFRms(double a, double b, double mT2, double tol = 1.e-6) {
+
+  // Checks whether the integration succeeded.
+  bool check;
+
+  // Fragmentation function dependent on only z (defined as a lambda function).
+  function<double(double)> lundFF;
+
+  // Get denominator (lundFF is function of only z, c = 1).
+  lundFF = [=](double z) { return LundFFRaw(z, a, b, 1., mT2); };
+  double denominator = 1.;
+  check = integrateGauss(denominator, lundFF, 0., 1., tol);
+  if (!check || denominator <= 0.) return -1.;
+
+  // Get first moment (lundFF is function of only z, c = 0).
+  lundFF = [=](double z) { return LundFFRaw(z, a, b, 0., mT2); };
+  double moment1 = 0.;
+  check = integrateGauss(moment1, lundFF, 0., 1., tol);
+  if (!check || moment1 <= 0.) return -2.;
+
+  // Get second moment (lundFF is function of only z, c = -1).
+  lundFF = [=](double z) { return LundFFRaw(z, a, b, -1., mT2); };
+  double moment2 = 0.;
+  check = integrateGauss(moment2, lundFF, 0., 1., tol);
+  if (!check || moment2 <= 0.) return -3.;
+
+  // Done.
+  return sqrt(moment2 / denominator - pow2(moment1 / denominator));
 
 }
 
@@ -1526,8 +1539,14 @@ const double StringZ::EXPMAX     = 50.;
 //--------------------------------------------------------------------------
 
 // Initialize data members of the string z selection.
+// Returns true if initialisation succeeded, false if failed.
 
-void StringZ::init() {
+bool StringZ::init() {
+
+  // Set the fragmentation weights container.
+  if (!infoPtr->weightContainerPtr->weightsFragmentation.weightParms[
+      WeightsFragmentation::Z].empty())
+    wgtsPtr = &infoPtr->weightContainerPtr->weightsFragmentation;
 
   // c and b quark masses.
   mc2           = pow2( particleDataPtr->m0(4));
@@ -1542,14 +1561,20 @@ void StringZ::init() {
   rFactB        = parm("StringZ:rFactB");
   rFactH        = parm("StringZ:rFactH");
 
-  // Alternative parameterisation of Lund FF using average z(rho) instead of b.
-  if (flag("StringZ:deriveBLund")) {
-    if (!deriveBLund()) {
-      loggerPtr->ERROR_MSG(
-        "derivation of b parameter failed. Reverting to default");
-      settingsPtr->resetParm("StringZ:bLund");
+  // Alternative parameterisation of Lund FF it terms of its average and
+  // optionally rms and multiplicative factors for aDiquark and aStrange.
+  if ( mode("StringZ:deriveLundPars") >= 1 ) {
+    bool deriveA   = mode("StringZ:deriveLundPars") >= 2;
+    bool deriveAQQ = mode("StringZ:deriveLundPars") >= 3;
+    bool deriveAS  = mode("StringZ:deriveLundPars") >= 4;
+    if (!deriveABLund( deriveA, deriveAQQ, deriveAS )) {
+      loggerPtr->ABORT_MSG("derivation of Lund FF parameters failed");
+      return false;
     }
   }
+
+  // Use old or new behavior for aExtraSQuark and aExtraDiquark
+  useOldAExtra  = flag("StringZ:useOldAExtra");
 
   // Flags and parameters of nonstandard Lund fragmentation functions.
   useNonStandC  = flag("StringZ:useNonstandardC");
@@ -1575,6 +1600,9 @@ void StringZ::init() {
   stopNF        = parm("StringFragmentation:stopNewFlav");
   stopS         = parm("StringFragmentation:stopSmear");
 
+  // All is well.
+  return true;
+
 }
 
 //--------------------------------------------------------------------------
@@ -1582,45 +1610,212 @@ void StringZ::init() {
 // Alternative parameterisation of the Lund function. Derive the bLund
 // parameter given the average z for fixed a and mT2.
 
-bool StringZ::deriveBLund() {
+double StringZ::deriveBLund(double avgZ, double a, double mT2ref) {
 
-  // Set up using reference mT2 = mRho^2 + 2*sigmaPT^2
-  double mRef   = particleDataPtr->m0(113);
-  double mT2ref = pow2(mRef) + 2.*pow2(parm("stringPT:sigma"));
-  double avgZ   = parm("StringZ:avgZLund");
-  double a      = parm("StringZ:aLund");
+  // Define lundFF as a function of only b, fixing a, and mT2 as parameters.
+  auto lundFF = [=](double b) { return LundFFAvg(a, b, mT2ref); };
 
-  // Define lundFF as a function of only b, fixing a, c and mT2 as parameters
-  auto lundFF = [=](double b) { return LundFFAvg(a, b, 1., mT2ref, 1.e-6); };
+  // Solve for b and return.
+  double bNow = -1;
+  bool check = brent(bNow, lundFF, avgZ, 0.0, 20.0, 1.e-7);
+  return check ? bNow : -1;
 
-  // Solve for b
-  double bNow;
-  bool check = brent(bNow, lundFF, avgZ, 0.01, 20.0, 1.e-6);
+}
 
-  // Check if derived b fell inside the nominal range for bLund
-  if (check) {
-    settingsPtr->parm("StringZ:bLund", bNow, false);
+//--------------------------------------------------------------------------
 
-    // Print out derived value for b (and mT2ref), noting if outside range.
-    stringstream msg;
-    msg << fixed << setprecision(2) << "\n <z(rho)> = " << setw(5)
-         << avgZ << " for aLund = "<< a <<" & mT2ref = " << setw(5) << mT2ref
-         << " GeV^2 gave bLund = " << setw(5) << bNow << " GeV^-2:";
-    if ( bNow == parm("StringZ:bLund") ) {
-      if (!settingsPtr->parm("Print:quiet"))
-        cout << msg.str() << " accepted" << endl;
-    } else {
-      // If outside range, tell user but force anyway so fits can see
-      // behaviour.
-      msg << " accepted (forced)";
-      loggerPtr->WARNING_MSG(msg.str());
-      settingsPtr->parm("StringZ:bLund", bNow, true);
-    }
+// Method to derive bLund and, optionally, aLund, aExtraDiquark,
+// and aExtraSQuark, from:
+//      avgZLund = <z(rho)>,
+//      rmsZLund = sqrt( <z(rho)^2> - <z(rho)>^2),
+//      facALundDiquark = (aLund + aExtraDiquark)/aLund,
+//      facALundSQuark  = (aLund + aExtraStrange)/aLund,
+// for reference (typical) values of the transverse mass mT.
 
-    // No further calls needed since b parameter updated in settings database.
-    settingsPtr->flag("StringZ:deriveBLund", false);
+bool StringZ::deriveABLund( bool deriveA, bool deriveAExtraDiquark,
+  bool deriveAExtraSQuark ) {
+
+  // Set up using reference mT2ref = mHad^2 + 2*sigmaPT^2 with mHad =
+  // mRho, mK*, mp+ for light mesons, strange mesons, and baryons.
+  double mRef        = particleDataPtr->m0(113);
+  double mT2ref      = pow2(mRef) + 2.*pow2(parm("StringPT:sigma"));
+  double mRefQQ      = particleDataPtr->m0(2212);
+  double mT2refQQ    = pow2(mRefQQ) + 2.*pow2(parm("StringPT:sigma"));
+  double mRefS       = particleDataPtr->m0(323);
+  double mT2refS     = pow2(mRefS) + 2.*pow2(parm("StringPT:sigma"));
+  double avgZ        = parm("StringZ:avgZLund");
+  double rmsZ        = parm("StringZ:rmsZLund");
+  double facAQQ      = parm("StringZ:facALundDiquark");
+  double facAS       = parm("StringZ:facALundSQuark");
+  double aNow        = 0.5;
+  double bNow        = 1.0;
+  double aExtraQQNow = parm("StringZ:aExtraDiquark");
+  double aExtraSNow  = parm("StringZ:aExtraSQuark");
+
+  // Debug output if requested.
+  bool doReport = settingsPtr->mode("Print:verbosity") >= 3;
+  if (doReport) {
+    cout << "\n Deriving Lund FF parameter(s) with avgZ = " << avgZ;
+    if (deriveA) cout << " rmsZ = " << rmsZ;
+    else cout << " aLund = " << aNow;
+    if (deriveAExtraDiquark) cout << " facADiquark = " << facAQQ;
+    else cout << " aExtraDiquark = " << aExtraDiquark;
+    if (deriveAExtraSQuark) cout << " facASQuark = " << facAS;
+    else cout << " aExtraSQuark = " << aExtraSQuark;
+    cout << endl;
   }
-  return check;
+
+  // Simplest option: just derive bLund from requested avgZ.
+  if ( !deriveA ) {
+    if (doReport) {
+      double avgZNow = LundFFAvg(aNow, bNow, mT2ref, 1.e-6);
+      double rmsZNow = LundFFRms(aNow, bNow, mT2ref, 1.e-7);
+      if (doReport) cout << fixed
+                         << "   For aNow = " << aNow << " bNow = " << bNow
+                         << ", got avgZNow = " << avgZNow
+                         << " rmsZNow = " << rmsZNow << endl;
+    }
+    bNow = deriveBLund( avgZ, aNow, mT2ref);
+    if (bNow < 0) {
+      loggerPtr->ERROR_MSG("unable to converge on bLund");
+      return false;
+    }
+  } else {
+    // Derive both aLund and bLund from requested avgZ and rmsZ.
+    bool accept  = false;
+    double nLoop = 0;
+    while (!accept) {
+      if (++nLoop > 10000.) {
+        loggerPtr->ERROR_MSG("maximum number of iterations exceeded");
+        break;
+      }
+      const double TOLAVGZ = 1.e-5;
+      const double TOLRMSZ = 1.e-5;
+      double avgZNow   = LundFFAvg(aNow, bNow, mT2ref, 1.e-7);
+      double rmsZNow   = LundFFRms(aNow, bNow, mT2ref, 1.e-7);
+      if (doReport) cout << "   For aNow = " << aNow << " bNow = " << bNow
+                         << "  =>  avgZNow = " << avgZNow
+                         << " rmsZNow = " << rmsZNow << endl;
+      double deltaAvg = avgZNow - avgZ;
+      double deltaRms = rmsZNow - rmsZ;
+
+      // Take big steps in the beginning, then smaller ones.
+      double step;
+      if (nLoop < 500) step = 20.;
+      else if (nLoop < 1000) step = 10.;
+      else if (nLoop < 2000) step = 5.;
+      else if (nLoop < 5000) step = 2.;
+      else step = 1.;
+
+      if ( abs(deltaRms) > TOLRMSZ ) {
+        // First see if we can get the right RMS.
+        aNow *= (1. + min(0.1,max(-0.1, step*deltaRms)));
+        bNow = deriveBLund( avgZ, aNow, mT2ref);
+        // Stop if we cannot possibly get a bigger width.
+        if (aNow <= 0.001 && LundFFRms(aNow, bNow, mT2ref, 1.e-7)
+          + 2*TOLRMSZ < rmsZ) {
+          loggerPtr->ERROR_MSG("requested rmsZLund gave aLund < 0: "
+            "forcing aLund = 0");
+          aNow = 0.0;
+          bNow = deriveBLund( avgZ, aNow, mT2ref);
+          break;
+        }
+      }
+      else if ( abs(deltaAvg) > TOLAVGZ ) {
+        // Then get the right mean.
+        aNow *= (1. + min(0.1,max(-0.1, step*deltaAvg)));
+        bNow = deriveBLund( avgZ, aNow, mT2ref);
+      }
+      else accept = true;
+    }
+    // Check if method produced physical values.
+    if (aNow < 0. || bNow < 0.) {
+      loggerPtr->ERROR_MSG("unable to converge");
+      return false;
+    }
+  }
+
+  // Derive aExtraDiquark if requested.
+  if (deriveAExtraDiquark) aExtraQQNow = (facAQQ - 1)*aNow;
+
+  // Derive aExtraStrange if requested.
+  if (deriveAExtraSQuark) aExtraSNow = (facAS - 1)*aNow;
+
+  // Print out derived value(s).
+  if ( !settingsPtr->flag("Print:quiet") ) {
+    cout << "\n *-------  PYTHIA Derivation of Lund FF Parameters ----------"
+      "------------------------------------------------------*" << endl;
+    cout << fixed << setprecision(3) << " |\n | aLund = " << aNow
+         << " & bLund = " << bNow << " GeV^-2 accepted";
+    cout << "  (=> avgZ(rho) = " << setw(5)
+         << LundFFAvg(aNow, bNow, mT2ref, 1.e-6)
+         << " & rmsZ(rho) = " << setw(5)
+         << LundFFRms(aNow, bNow, mT2ref, 1.e-6)
+         << " for mTref = " << setw(5) << sqrt(mT2ref) << " GeV)" << endl;
+    cout << fixed << setprecision(3) << " | aExtraSQuark  = " << aExtraSNow
+         << "   (=> avgZ(K*) = " << setw(5)
+         << LundFFAvg(aNow + aExtraSNow, bNow, mT2refS, 1.e-6)
+         << " & rmsZ(K*) = " << setw(5)
+         << LundFFRms(aNow + aExtraSNow, bNow, mT2refS, 1.e-6)
+         << " for mTref = " << setw(5) << sqrt(mT2refS) << " GeV)" << endl;
+    cout << fixed << setprecision(3) << " | aExtraDiquark = " << aExtraQQNow
+         << "   (=> rmsZ(p+) = " << setw(5)
+         << LundFFAvg(aNow + aExtraQQNow, bNow, mT2refQQ, 1.e-6)
+         << " & rmsZ(p+) = " << setw(5)
+         << LundFFRms(aNow + aExtraQQNow, bNow, mT2refQQ, 1.e-6)
+         << " for mTref = " << setw(5) << sqrt(mT2refQQ) << " GeV)" << endl;
+    cout << " |\n *-------  End PYTHIA Derivation of Lund FF Parameters "
+      "------------------------------------------------------------*" << endl;
+  }
+
+  // Set and check if derived bLund fell inside the nominal range.
+  bool outOfRange = false;
+  settingsPtr->parm("StringZ:bLund", bNow, false);
+  if ( bNow != parm("StringZ:bLund") ) {
+    // If outside nominal range, force so fits can see behaviour.
+    outOfRange = true;
+    settingsPtr->parm("StringZ:bLund", bNow, true);
+  }
+
+  // Set and check if derived aLund fell inside the nominal range.
+  if ( deriveA ) {
+    settingsPtr->parm("StringZ:aLund", aNow, false);
+    if ( aNow != parm("StringZ:aLund") ) {
+      // If outside nominal range, force so fits can see behaviour.
+      outOfRange = true;
+      settingsPtr->parm("StringZ:aLund", aNow, true);
+    }
+  }
+
+  // Set and check if derived aExtraDiquark fell inside the nominal range.
+  if ( deriveAExtraDiquark ) {
+    settingsPtr->parm("StringZ:aExtraDiquark", aExtraQQNow, false);
+    if ( aExtraQQNow != parm("StringZ:aExtraDiquark") ) {
+      // If outside nominal range, force so fits can see behaviour.
+      outOfRange = true;
+      settingsPtr->parm("StringZ:aExtraDiquark", aExtraQQNow, true);
+    }
+  }
+
+  // Set and check if derived aExtraDiquark fell inside the nominal range.
+  if ( deriveAExtraSQuark ) {
+    settingsPtr->parm("StringZ:aExtraSQuark", aExtraSNow, false);
+    if ( aExtraSNow != parm("StringZ:aExtraSQuark") ) {
+      // If outside nominal range, force so fits can see behaviour.
+      outOfRange = true;
+      settingsPtr->parm("StringZ:aExtraSQuark", aExtraSNow, true);
+    }
+  }
+
+  // Issue warning if one or more parameters out of range.
+  if (outOfRange) {
+    loggerPtr->WARNING_MSG("one or more parameters out of range (forced)");
+  }
+
+  // No further calls needed since parameters updated in settings database.
+  settingsPtr->mode("StringZ:deriveLundPars", 0);
+  return true;
+
 }
 
 //--------------------------------------------------------------------------
@@ -1667,8 +1862,17 @@ double StringZ::zFrag( int idOld, int idNew, double mT2) {
 
   // Shape parameters of Lund symmetric fragmentation function.
   double aShape = aNow;
-  if (isOldSQuark)  aShape += aExtraSQuark;
-  if (isOldDiquark) aShape += aExtraDiquark;
+  // Old behavior used a_old instead of a_new in the
+  // (1-z)^a factor for strange quarks and diquarks.
+  // This is a bug but is kept for older tune compatibility.
+  if (useOldAExtra) {
+    if (isOldSQuark)  aShape += aExtraSQuark;
+    if (isOldDiquark) aShape += aExtraDiquark;
+  // This is the correct behavior that should by default be used.
+  } else {
+    if (isNewSQuark)  aShape += aExtraSQuark;
+    if (isNewDiquark) aShape += aExtraDiquark;
+  }
   double bShape = bNow * mT2;
   double cShape = 1.;
   if (isOldSQuark)  cShape -= aExtraSQuark;
@@ -1801,9 +2005,8 @@ double StringZ::zLund( double a, double b, double c,
       accept = fPrb > fRnd;
 
       // Loop over the variation parameters.
-      WeightsFragmentation &wgts = infoPtr->weightContainerPtr->
-        weightsFragmentation;
-      for (auto &parms : wgts.weightParms[WeightsFragmentation::Z]) {
+      if (wgtsPtr == nullptr) continue;
+      for (auto &parms : wgtsPtr->weightParms[WeightsFragmentation::Z]) {
         const vector<double>& vals = parms.first;
         int iWgt = parms.second;
 
@@ -1853,7 +2056,7 @@ double StringZ::zLund( double a, double b, double c,
           loggerPtr->WARNING_MSG(msg.str());
           wgt = 0.95 / fPrb;
         }
-        wgts.reweightValueByIndex(iWgt, accept ? wgt :
+        wgtsPtr->reweightValueByIndex(iWgt, accept ? wgt :
           (1. - wgt*fPrb)/(1. - fPrb));
       }
     }
@@ -1924,6 +2127,11 @@ const double StringPT::SIGMAMIN     = 0.2;
 
 void StringPT::init() {
 
+  // Set the fragmentation weights container.
+  if (!infoPtr->weightContainerPtr->weightsFragmentation.weightParms[
+      WeightsFragmentation::PT].empty())
+    wgtsPtr = &infoPtr->weightContainerPtr->weightsFragmentation;
+
   // Parameters of the pT width and enhancement.
   double sigma     = parm("StringPT:sigma");
   sigmaQ           = sigma / sqrt(2.);
@@ -1942,9 +2150,10 @@ void StringPT::init() {
   fracSmallX       = 0.6 / (0.6 + (1.2/0.9) * exp(-0.9));
 
   // Enhanced-width prefactor for MPIs and/or nearby string pieces.
-  closePacking     = flag("ClosePacking:doClosePacking");
-  exponentMPI      = parm("ClosePacking:expMPI");
-  exponentNSP      = parm("ClosePacking:expNSP");
+  closePacking        = flag("ClosePacking:doClosePacking");
+  enhancePT           = parm("ClosePacking:enhancePT");
+  exponentMPI         = parm("ClosePacking:expMPI");
+  exponentNSP         = parm("ClosePacking:expNSP");
 
   // Parameter for pT suppression in MiniStringFragmentation.
   sigma2Had        = 2. * pow2( max( SIGMAMIN, sigma) );
@@ -1956,7 +2165,7 @@ void StringPT::init() {
 // Generate quark pT according to fitting functions, such that
 // hadron pT is generated according to exp(-pT/T) d^2pT.
 
-pair<double, double> StringPT::pxyThermal(int idIn, double kappaRatio) {
+pair<double, double> StringPT::pxyThermal(int idIn, double kappaModifier) {
 
   double temprNow = temperature;
   // Temperature increase to work against asymmetry. Apply for
@@ -1965,8 +2174,8 @@ pair<double, double> StringPT::pxyThermal(int idIn, double kappaRatio) {
 
   // Enhanced-width prefactor for MPIs and/or nearby string pieces.
   if (closePacking) {
-    temprNow *= pow(max(1.0,double(infoPtr->nMPI())), exponentMPI);
-    temprNow *= pow(max(1.0,kappaRatio), exponentNSP);
+    temprNow *= pow(max(1.0, double(infoPtr->nMPI())), exponentMPI);
+    temprNow *= pow(max(1.0, kappaModifier), exponentNSP);
   }
 
   // Pick x = pT_quark/T according to K_{1/4}(x)/x^{1/4} * x dx.
@@ -1992,7 +2201,7 @@ pair<double, double> StringPT::pxyThermal(int idIn, double kappaRatio) {
 // Generate Gaussian pT such that <p_x^2> = <p_x^2> = sigma^2 = width^2/2,
 // but with small fraction multiplied up to a broader spectrum.
 
-pair<double, double> StringPT::pxyGauss(int idIn, double kappaRatio) {
+pair<double, double> StringPT::pxyGauss(int idIn, double kappaModifier) {
 
   // Normal (classical) width selection and factor for sigma variations.
   double sigma = sigmaQ;
@@ -2008,8 +2217,8 @@ pair<double, double> StringPT::pxyGauss(int idIn, double kappaRatio) {
   // Enhanced-width prefactor for MPIs and/or nearby string pieces.
   if (closePacking) {
     mult *= pow(max(1.0,double(infoPtr->nMPI())), exponentMPI);
-    double kappaRatioPT2 = closePackingFacPT2 * (kappaRatio - 1) + 1;
-    mult *= pow(max(1.0, kappaRatioPT2), exponentNSP);
+    double kappaRatio = 1. + enhancePT * kappaModifier;
+    mult *= pow(max(1.0, kappaRatio), exponentNSP);
   }
   sigma *= mult;
 
@@ -2017,13 +2226,11 @@ pair<double, double> StringPT::pxyGauss(int idIn, double kappaRatio) {
   pair<double, double> gauss2 = rndmPtr->gauss2();
 
   // Calculate the weights from the variations.
-  WeightsFragmentation &wgts = infoPtr->weightContainerPtr->
-    weightsFragmentation;
-  if (!wgts.weightParms[WeightsFragmentation::PT].empty()) {
+  if (wgtsPtr != nullptr) {
     double pre = -0.5*(pow2(gauss2.first) + pow2(gauss2.second));
-    for (auto &parms : wgts.weightParms[WeightsFragmentation::PT]) {
+    for (auto &parms : wgtsPtr->weightParms[WeightsFragmentation::PT]) {
       double ratio =  pow2(sigma / (parms.first[0] * mult/sqrt(2.)));
-      wgts.reweightValueByIndex(parms.second, ratio*exp(pre*(ratio - 1.)));
+      wgtsPtr->reweightValueByIndex(parms.second, ratio*exp(pre*(ratio - 1.)));
     }
   }
 

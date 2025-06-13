@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2024 Torbjorn Sjostrand.
+# Copyright (C) 2025 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 # Author: Philip Ilten, August 2019.
@@ -14,6 +14,8 @@
 #     OPTIONS:   List of valid options that can be passed by the user.
 #     CLASSES:   Classes to include in the partial interface.
 #     FUNCTIONS: Functions to include in the partial interface.
+#     PLUGINS:   Plugin classes with dependencies to exclude.
+#     GILS:      Functions where the Python global interpreter lock is needed.
 ################################################################################
 read -d "" USAGE << "BLOCKTEXT"
 Usage: ./generate [OPTION]
@@ -24,15 +26,17 @@ indicated in caps, i.e. FILE.
 Configuration options.
 --help      : Print this message (also -h, --h, and -help).
 --part      : Generate the partial/simplified Python interface.
---full      : Generate the full Python interface.
+--full      : Generate the full Python interface (default).
+--no-batch  : Exclude the Awkward-array batch interface.
 --user=FILE : Generate a user defined Python interface using the Binder 
               configuration in FILE.
 --debug     : Do not remove generated files.
 BLOCKTEXT
-OPTIONS="-h --h -help --help --part --full --user --debug"
-CLASSES="Pythia PythiaParallel Event Vec4 RotBstMatrix Particle ParticleData ParticleDataEntry DecayChannel Info HIInfo Settings Flag Mode Parm Word FVec MVec PVec WVec Rndm PDF DecayHandler RndmEngine UserHooks MergingHooks BeamShape SigmaProcess TimeShower SpaceShower HeavyIons PartonVertex Hist HistPlot SlowJet SlowJetHook"
-GILS="PythiaParallel::init PythiaParallel::run"
+OPTIONS="-h --h -help --help --part --full --no-batch --user --debug"
+CLASSES="Pythia PythiaParallel Event Vec4 RotBstMatrix Particle ParticleData ParticleDataEntry DecayChannel Info HIInfo Settings Flag Mode Parm Word FVec MVec PVec WVec Rndm PDF DecayHandler RndmEngine UserHooks MergingHooks BeamShape SigmaProcess TimeShower SpaceShower HeavyIons PartonVertex Hist HistPlot CellJet ClusterJet SlowJet SlowJetHook Sphericity Thrust"
 FUNCTIONS="m m2 dot3 cross3 cross4 theta costheta phi cosphi RRapPhi REtaPhi"
+PLUGINS="EvtGen execinfo ExternalMEsMadgraph HepMC2 HepMC3 FastJet3 LHAFortran LHAHDF5 LHAHDF5v2 LHAPDF5 LHAPDF6 LHAPowheg LHEH5 LHEH5v2 PowhegHooks Pythia8Rivet Pythia8Yoda"
+GILS="PythiaParallel::init PythiaParallel::run"
 PYTHIA_INCLUDE="../../include"
 BINDER_INCLUDE="include"
 BINDER_SRC="src"
@@ -45,11 +49,17 @@ GCC_INCLUDE="/usr/include/c++/6.3.1"
 # FUNCTION: Create the bindings.
 ################################################################################
 function binder() {
+    BATCH_SRC=PythiaBatch.cpp
+    BATCH_TRG=$BATCH_SRC
+    if [ -f $BINDER_SRC/.PythiaBatch.cpp ]; then BATCH_SRC=".$BATCH_SRC"; fi
+    if [ "$NO_BATCH_SET" = true ]; then BATCH_TRG=".$BATCH_TRG"; fi
+    mv $BINDER_SRC/$BATCH_SRC ./$BATCH_SRC
     rm -rf $BINDER_SRC; mkdir $BINDER_SRC
     docker run -i -t -v "$PWD:$PWD" -w $PWD -u $(id -u) --rm pythia8/dev:binder\
      --config $BINDER_CFG --root-module pythia8 --prefix $BINDER_SRC/\
      $BINDER_HPP -- -w -std=c++11 -I$BINDER_INCLUDE\
      -I$GCC_INCLUDE -I$GCC_INCLUDE/x86_64-redhat-linux -I/usr/include/clang
+    mv $BATCH_SRC $BINDER_SRC/$BATCH_TRG
 }
 
 ################################################################################
@@ -191,6 +201,17 @@ echo "#include <Pythia8/Pythia.h>" > $BINDER_HPP
 echo "#include <Pythia8/PythiaParallel.h>" > $BINDER_HPP
 echo "#include <Pythia8/HeavyIons.h>" >> $BINDER_HPP
 
+# Include the plugin headers without dependencies.
+for HEADER in $PYTHIA_INCLUDE/Pythia8Plugins/*.h; do
+    HEADER=${HEADER%.h}
+    HEADER=${HEADER##*/}
+    EXCLUDE=false
+    for PLUGIN in $PLUGINS; do
+        if [ "$HEADER" = "$PLUGIN" ]; then EXCLUDE=true; break; fi; done
+    if [ "$EXCLUDE" = false ]; then
+        echo "#include <Pythia8Plugins/$HEADER.h>" >> $BINDER_HPP; fi
+done
+
 # Generate the bindings.
 if [ "$USER_SET" = true ]; then
     if [ ! -f "$USER" ]; then
@@ -199,13 +220,13 @@ if [ "$USER_SET" = true ]; then
     fi
     cp $USER $BINDER_CFG
     binder
-elif [ "$FULL_SET" = true ]; then
-    configure_full
-    binder
-else
+elif [ "$PART_SET" = true ]; then
     configure_part
     binder
     configure_part $BINDER_SRC/Pythia8
+    binder
+else
+    configure_full
     binder
 fi
 
@@ -213,6 +234,26 @@ fi
 mv $BINDER_SRC/Pythia8/*.cpp $BINDER_SRC
 mv $BINDER_SRC/std/*.cpp $BINDER_SRC
 rmdir $BINDER_SRC/Pythia8 $BINDER_SRC/std
+
+# Combine the plugin bindings as they are header only.
+cat $BINDER_SRC/Pythia8Plugins/*.cpp > $BINDER_SRC/Pythia8Plugins.cpp
+rm -r $BINDER_SRC/Pythia8Plugins
+
+# Remove the plugin headers.
+for SRC in $BINDER_SRC/*.cpp; do
+    if [ "$SRC" = "$BINDER_SRC/Pythia8Plugins.cpp" ]; then continue; fi
+    sed -i.sed "/#include <Pythia8Plugins/d" $SRC
+done
+
+# Insert the Awkward batch interface.
+if [ "$NO_BATCH_SET" != true ]; then
+    BATCH="		cl.def(\"nextBatch\", \&nextBatch, pybind11::arg(\"nEv"
+    BATCH+="ents\"), pybind11::arg(\"errorMode\") = pybind11::str(\"skip\"));"
+    ENTRY="cl.def(\"next\".*In\"));"
+    sed -i.sed "s/\($ENTRY\)/\1\n$BATCH/" $BINDER_SRC/Pythia.cpp
+    INCLUDE="#include <awkward\/PythiaBatch.h>"
+    sed -i.sed "s/\(functional.h>\)/\1\n$INCLUDE/" $BINDER_SRC/Pythia.cpp
+fi
 
 # Remove the stream bindings.
 sed -i.sed "/_tcc/d" $BINDER_SRC/pythia8.cpp
@@ -260,7 +301,7 @@ sed -i.sed "s/$OLD/$NEW/g" $BINDER_SRC/postypes.cpp
 
 # Include the module documentation.
 cat > $BINDER_DOC << BLOCKTEXT
-Copyright (C) 2024 Torbjorn Sjostrand.
+Copyright (C) 2025 Torbjorn Sjostrand.
 PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -274,15 +315,15 @@ if [ "$USER_SET" = true ]; then cat > $BINDER_DOC << BLOCKTEXT
 * A custom user interface to PYTHiA has been defined. See main01.py for
   a direct Python translation of the C++ main01.cc example.
 BLOCKTEXT
-elif [ "$FULL_SET" = true ]; then cat > $BINDER_DOC << BLOCKTEXT
-* All PYTHIA classes and functions are available. See main01.py for
-  a direct Python translation of the C++ main01.cc example.
-BLOCKTEXT
-else cat > $BINDER_DOC << BLOCKTEXT
+elif [ "$PART_SET" = true ]; then cat > $BINDER_DOC << BLOCKTEXT
 * A limited subset of PYTHIA classes and functions are available. See
-  main01.py for a direct Python translation of the C++ main01.cc
+  main291.py for a direct Python translation of the C++ main101.cc
   example. To generate the full Python bindings, use "generate --full"
   in the "plugins/python" directory.
+BLOCKTEXT
+else cat > $BINDER_DOC << BLOCKTEXT
+* All PYTHIA classes and functions are available. See main291.py for
+  a direct Python translation of the C++ main101.cc example.
 BLOCKTEXT
 fi
 cat > $BINDER_DOC << BLOCKTEXT

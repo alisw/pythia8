@@ -1,0 +1,112 @@
+<html><head><title>main216</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main216</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main216.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#jet+finding">Jet&nbsp;finding</a>
+
+// This is a simple test program, convenient for tutorials.
+// It illustrates searches for a 1 TeV Z&apos; decaying to two jets.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events, generated and listed ones.
+  int nEvent    = 1000;
+  int nListJets = 5;
+
+  // Pythia generator at LHC energy; pp is default beam setup.
+  Pythia pythia;
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+
+  // Z&apos; production with 1 TeV mass (+- 200 GeV) and decay only to d/u/s/c/b.
+  pythia.readString(&quot;NewGaugeBoson:ffbar2gmZZprime = on&quot;);
+  pythia.readString(&quot;32:m0 = 1000.&quot;);
+  pythia.readString(&quot;PhaseSpace:mHatMin = 800.&quot;);
+  pythia.readString(&quot;PhaseSpace:mHatMax = 1200.&quot;);
+  pythia.readString(&quot;32:onMode = off&quot;);
+  pythia.readString(&quot;32:onIfAny = 1 2 3 4 5&quot;);
+
+  // Put other settings here.
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+
+  // Required parameters for an anti-kT jet finder.
+  int    jetPower  = -1;
+  double jetRadius = 0.7;
+  double jetpTmin  = 100.;
+  // Exclude high-eta and neutrinos (and other invisible) from study.
+  double etaMax    = 4.;
+  int    nSel      = 2;
+  // Set up jet finder, with pion mass assumed for non-photons.
+  SlowJet slowJet( jetPower, jetRadius, jetpTmin, etaMax, nSel, 1);
+
+  // Histograms.
+  Hist massZp(&quot;true Zprime mass&quot;, 100, 0., 2000.);
+  Hist mass2j(&quot;two-jet mass&quot;, 100, 0., 2000.);
+  Hist deltaM(&quot;mass shift&quot;, 100, -500., 500.);
+  Hist deltaMz(&quot;mass shift zoomed&quot;, 100, -50., 50.);
+
+  // Begin event loop. Generate event. Skip if error.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // A copy of the Z&apos; is always stored in slot 5 of the event record.
+    double mZp = pythia.event[5].m();
+    massZp.fill( mZp);
+
+    // Analyze Slowet jet properties. List first few.
+    slowJet.analyze( pythia.event );
+    if (iEvent &lt; nListJets) slowJet.list();
+
+    // Form invariant mass of two highest-pT jets.
+    if ( slowJet.sizeJet() &gt; 1) {
+      double m2j = (slowJet.p(0) + slowJet.p(1)).mCalc();
+      mass2j.fill( m2j);
+
+      // Shift in mass from true to reconstructed.
+      deltaM.fill( m2j - mZp);
+      deltaMz.fill( m2j - mZp);
+    }
+
+  // End of event loop. Statistics.
+  }
+  pythia.stat();
+
+  // Normalize histograms to rate per GeV and print them.
+  massZp *= 0.05 / double(nEvent);
+  mass2j *= 0.05 / double(nEvent);
+  deltaM *= 0.10 / double(nEvent);
+  deltaMz *= 1.0 / double(nEvent);
+  cout &lt;&lt; massZp &lt;&lt; mass2j &lt;&lt; deltaM &lt;&lt; deltaMz;
+
+  // Plot histograms for nicer output.
+  HistPlot hpl(&quot;plot216&quot;);
+  hpl.frame( &quot;fig216&quot;, &quot;Zprime mass distribution&quot;, &quot;$m$ (GeV)&quot;,
+    &quot;Probability&quot;);
+  hpl.add( massZp, &quot;h,blue&quot;, &quot;true mass&quot;);
+  hpl.add( mass2j, &quot;h,red&quot;, &quot;reconstructed mass&quot;);
+  hpl.plot();
+  hpl.plotFrame(&quot;&quot;, deltaM, &quot;Zprime mass shift from true to reconstructed&quot;,
+    &quot;$\\Delta m$ (GeV)&quot;, &quot;Probability&quot;, &quot;h,magenta&quot;, &quot;reconstructed$-$true&quot;);
+  hpl.plotFrame(&quot;&quot;, deltaMz,
+    &quot;Zprime mass shift from true to reconstructed (zoomed-in)&quot;,
+    &quot;$\\Delta m$ (GeV)&quot;, &quot;Probability&quot;, &quot;h,magenta&quot;, &quot;reconstructed$-$true&quot;);
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

@@ -1,0 +1,99 @@
+<html><head><title>main302</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main302</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main302.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#colour+reconnection">Colour&nbsp;reconnection</a>
+//            <a href="../ExampleKeywords.html#e+e-+events">E+e&#8209;&nbsp;events</a>
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjörn Sjostrand</a>
+
+// Plot the colour reconnection rate in W+W- hadronic events
+// as a function of collision energy.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events.
+  int nEvent = 4000;
+
+  // Histograms.
+  Hist recrateSK1(&quot;reconnection rate SK1&quot;, 40, 0., 400.);
+  Hist recrateSK2(&quot;reconnection rate SK2&quot;, 40, 0., 400.);
+
+  // Loop over reconnection model and CM energy.
+  for (int iRec = 1; iRec &lt; 3; ++iRec) {
+    Hist&amp; recrate = (iRec == 1) ? recrateSK1 : recrateSK2;
+    for (int iEcm = 14; iEcm &lt; 40; ++iEcm) {
+      double eCM = 10. * iEcm - 5.;
+
+      // Quiet generator creation. Shorthand for the event record.
+      Pythia pythia (&quot;../share/Pythia8/xmldoc&quot;, false);
+      Event&amp; event = pythia.event;
+
+      // Incoming beams and energy. Optionally no ISR.
+      pythia.readString(&quot;Beams:idA = -11&quot;);
+      pythia.readString(&quot;Beams:idB = 11&quot;);
+      pythia.settings.parm(&quot;Beams:eCM&quot;, eCM);
+      pythia.readString(&quot;PDF:lepton = off&quot;);
+
+      // Hard process, with hadronic W decays.
+      pythia.readString(&quot;WeakDoubleBoson:ffbar2WW = on&quot;);
+      pythia.readString(&quot;24:onMode = off&quot;);
+      pythia.readString(&quot;24:onIfAny = 1 2 3 4 5&quot;);
+
+      // Switch on CR.
+      pythia.readString(&quot;ColourReconnection:reconnect = on&quot;);
+      pythia.settings.mode(&quot;ColourReconnection:mode&quot;, iRec + 2);
+      pythia.readString(&quot;ColourReconnection:forceResonance = on&quot;);
+
+      // Reduce printout. Switch off hadronization and decays.
+      pythia.readString(&quot;Print:quiet = on&quot;);
+      pythia.readString(&quot;HadronLevel:Hadronize = off&quot;);
+      pythia.readString(&quot;HadronLevel:Decay = off&quot;);
+
+      // If Pythia fails to initialize, exit with error.
+      if (!pythia.init()) return 1;
+
+      int nRecon = 0;
+
+      // Begin event loop.
+      for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+        if (!pythia.next()) continue;
+
+        // Check if colour reconnection has occured.
+        bool hasRec = false;
+        for (int i = 6; i &lt; event.size(); ++i)
+          if (event[i].statusAbs() == 79) hasRec = true;
+        if (hasRec) ++nRecon;
+
+      // End of loops. Fill reconnection rate.
+      }
+      recrate.fill( eCM, double(nRecon) / double(nEvent));
+    }
+  }
+
+  // Print and plot histograms.
+  cout &lt;&lt; recrateSK1 &lt;&lt; recrateSK2;
+  HistPlot hpl(&quot;plot302&quot;);
+  hpl.frame( &quot;fig302&quot;, &quot;Reconnection rate as a function of CM energy for &quot;
+    &quot;e$^+$e$^-$ $\\to$ W$^+$W$^-$&quot;, &quot;$E_{\\mathrm{CM}}$ (GeV)&quot;, &quot;Probability&quot;);
+  hpl.add( recrateSK1, &quot;h,blue&quot;, &quot;SK I&quot;);
+  hpl.add( recrateSK2, &quot;h,red&quot;, &quot;SK II&quot;);
+  hpl.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

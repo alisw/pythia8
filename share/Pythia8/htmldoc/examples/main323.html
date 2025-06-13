@@ -1,0 +1,98 @@
+<html><head><title>main323</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main323</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main323.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#biasing">Biasing</a>
+//            <a href="../ExampleKeywords.html#second+interaction">Second&nbsp;interaction</a>
+
+// Generate a predetermined second hard interaction in the MPI framework.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator.
+  Pythia pythia;
+  Event&amp; event   = pythia.event;
+
+  // Select first hard process (just a small sample of possibilities).
+  //pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;Top:all = on&quot;);
+  //pythia.readString(&quot;WeakSingleBoson:ffbar2gmZ = on&quot;);
+  //pythia.readString(&quot;WeakSingleBoson:ffbar2W = on&quot;);
+
+  // Select second hard process (complete list of options).
+  pythia.readString(&quot;SecondHard:generate = on&quot;);
+  //pythia.readString(&quot;SecondHard:TwoJets = on&quot;);
+  pythia.readString(&quot;SecondHard:PhotonAndJet = on&quot;);
+  //pythia.readString(&quot;SecondHard:TwoPhotons = on&quot;);
+  //pythia.readString(&quot;SecondHard:SingleGmZ = on&quot;);
+  //pythia.readString(&quot;SecondHard:SingleW = on&quot;);
+  //pythia.readString(&quot;SecondHard:TwoBJets = on&quot;);
+
+  // Kinematics cuts, common for the two.
+  pythia.readString(&quot;PhaseSpace:mHatMin = 40.&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 20.&quot;);
+
+  // Initialize for LHC at 8 TeV.
+  pythia.readString(&quot;Beams:eCM = 8000.&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histogram.
+  Hist pTfirst(&quot;pT first collision&quot;,    100, 0., 400.);
+  Hist pTsecond(&quot;pT second collision&quot;,  100, 0., 200.);
+  Hist pTdiff(&quot;pT first-second collision&quot;, 100, -100., 300.);
+  Hist nMult(&quot;number of multiparton interactions&quot;, 100, -0.5, 99.5);
+  Hist bMore(&quot;b enhancement factor&quot;,    100, 0., 10.);
+  Hist nChg(&quot;charged multiplicity&quot;, 100, -0.5, 999.5);
+
+  // Generate events.
+  for (int iev = 0; iev &lt; 1000; ++iev) {
+    pythia.next();
+
+    // Histogram pT.
+    double pT1 = pythia.info.pTMPI(0);
+    double pT2 = pythia.info.pTMPI(1);
+    pTfirst.fill( pT1 );
+    pTsecond.fill( pT2 );
+    pTdiff.fill( pT1 - pT2 );
+
+    // Histogram multiparton interactions
+    double nMPI = pythia.info.nMPI();
+    nMult.fill( nMPI );
+    bMore.fill( pythia.info.enhanceMPI() );
+
+    // Histogram charged multiplicity.
+    int nCharged = 0;
+    for (int i = 0; i &lt; event.size(); ++i)
+      if (event[i].isFinal() &amp;&amp; event[i].isCharged()) ++nCharged;
+    nChg.fill( nCharged );
+
+  }
+
+  // Compare full statistics listing with what is set in info.
+  pythia.stat();
+  cout &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; &quot;\n From pythia.info: sigma = &quot;
+       &lt;&lt; pythia.info.sigmaGen() &lt;&lt; &quot; +- &quot; &lt;&lt; pythia.info.sigmaErr()
+       &lt;&lt; endl;
+
+  // Print histograms.
+  cout &lt;&lt; pTfirst &lt;&lt; pTsecond &lt;&lt; pTdiff &lt;&lt; nMult &lt;&lt; bMore &lt;&lt; nChg;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

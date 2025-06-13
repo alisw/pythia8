@@ -1,5 +1,5 @@
 // HadronLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -22,7 +22,6 @@
 #include "Pythia8/JunctionSplitting.h"
 #include "Pythia8/LowEnergyProcess.h"
 #include "Pythia8/SigmaLowEnergy.h"
-#include "Pythia8/MiniStringFragmentation.h"
 #include "Pythia8/NucleonExcitations.h"
 #include "Pythia8/ParticleData.h"
 #include "Pythia8/ParticleDecays.h"
@@ -50,7 +49,8 @@ public:
   HadronLevel() = default;
 
   // Initialize HadronLevel classes as required.
-  bool init( TimeShowerPtr timesDecPtr, RHadrons* rHadronsPtrIn,
+  bool init( TimeShowerPtr timesDecPtrIn, RHadronsPtr rHadronsPtrIn,
+    LundFragmentationPtr fragPtrIn, vector<FragmentationModelPtr>* fragPtrsIn,
     DecayHandlerPtr decayHandlePtr, vector<int> handledParticles,
     StringIntPtr stringInteractionsPtrIn, PartonVertexPtr partonVertexPtrIn,
     SigmaLowEnergy& sigmaLowEnergyIn,
@@ -95,12 +95,9 @@ protected:
     registerSubObject(flavSel);
     registerSubObject(pTSel);
     registerSubObject(zSel);
-    registerSubObject(stringFrag);
-    registerSubObject(ministringFrag);
     registerSubObject(decays);
     registerSubObject(lowEnergyProcess);
     registerSubObject(boseEinstein);
-    registerSubObject(hiddenvalleyFrag);
     registerSubObject(junctionSplitting);
     registerSubObject(deuteronProd);
   }
@@ -112,8 +109,9 @@ private:
 
   // Initialization data, read from Settings.
   bool doHadronize{}, doDecay{}, doPartonVertex{}, doBoseEinstein{},
-    doDeuteronProd{}, allowRH{}, closePacking{}, doNonPertAll{};
-  double mStringMin{}, pNormJunction{}, widthSepBE{}, widthSepRescatter{};
+    doDeuteronProd{}, allowRH{}, closePacking{}, doNonPertAll{},
+    doQED;
+  double pNormJunction{}, widthSepBE{}, widthSepRescatter{};
   vector<int> nonPertProc{};
 
   // Configuration of colour-singlet systems.
@@ -124,17 +122,11 @@ private:
                  iAntiLegA{}, iAntiLegB{}, iAntiLegC{}, iGluLeg{};
   vector<double> m2Pair{};
 
-  // The generator class for normal string fragmentation.
-  StringFragmentation stringFrag;
-
-  // The generator class for special low-mass string fragmentation.
-  MiniStringFragmentation ministringFrag;
-
-  // Try ministring fragmentation also if normal fails.
-  bool tryMiniAfterFailedFrag{};
-
   // The generator class for normal decays.
   ParticleDecays decays;
+
+  // Pointer to TimeShower for interleaved QED in hadron decays.
+  TimeShowerPtr timesDecPtr;
 
   // The generator class for Bose-Einstein effects.
   BoseEinstein boseEinstein;
@@ -154,11 +146,15 @@ private:
   JunctionSplitting junctionSplitting;
 
   // The RHadrons class is used to fragment off and decay R-hadrons.
-  RHadrons*  rHadronsPtr;
+  RHadronsPtr rHadronsPtr{};
 
-  // Special class for Hidden-Valley hadronization. Not always used.
-  HiddenValleyFragmentation hiddenvalleyFrag;
-  bool useHiddenValley{};
+  // The LundFragmentation class is used for fragmentation and low
+  // energy processes.
+  LundFragmentationPtr fragPtr{};
+
+  // The fragmentation model pointer vector allows multiple
+  // fragmentation models to be used sequentially.
+  vector<FragmentationModelPtr>* fragPtrs{};
 
   // Special case: colour-octet onium decays, to be done initially.
   bool decayOctetOnia(Event& event);
@@ -212,6 +208,9 @@ private:
     mTemp = (mTemp >= 0.) ? sqrt(mTemp) : -sqrt(-mTemp);
     double temp = log( ( pIn.e() + abs(pIn.pz()) ) / max( mTiny, mTemp) );
     return (pIn.pz() > 0) ? temp : -temp; }
+
+  // Fragmentation weights container.
+  WeightsFragmentation* wgtsPtr{};
 
 };
 

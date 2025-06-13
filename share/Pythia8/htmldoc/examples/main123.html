@@ -1,0 +1,83 @@
+<html><head><title>main123</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main123</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main123.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#subruns">Subruns</a>
+
+// This is a simple test program.
+// It illustrates how two Les Houches Event Files can be combined in PYTHIA,
+// just like in main122.cc, but here with the difference that information is
+// stored in main123.cmnd and read out using the subruns possibility.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Book histogram.
+  Hist nCharged(&quot;charged particle multiplicity&quot;,100,-0.5,399.5);
+
+  // Generator.
+  Pythia pythia;
+
+  // Read in subrun-independent data from main123.cmnd.
+  pythia.readFile( &quot;main123.cmnd&quot;, 0);
+
+  // Extract data to be used in main program. Set counters.
+  int nSubrun = pythia.mode(&quot;Main:numberOfSubruns&quot;);
+  int nAbort  = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+  int iAbort  = 0;
+
+  // Begin loop over subruns.
+  for (int iSubrun = 1; iSubrun &lt;= nSubrun; ++iSubrun) {
+
+    // Read in subrun-specific data from main123.cmnd.
+    pythia.readFile( &quot;main123.cmnd&quot;, iSubrun);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Begin infinite event loop - to be exited at end of file.
+    while (iAbort &lt; nAbort) {
+
+      // Generate next event.
+      if (!pythia.next()) {
+
+        // Leave event loop if at end of file.
+        if (pythia.info.atEndOfFile()) break;
+        ++iAbort;
+        continue;
+      }
+
+      // Sum up final charged multiplicity and fill in histogram.
+      int nChg = 0;
+      for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged()) ++nChg;
+      nCharged.fill(nChg);
+
+    // End of event loop.
+    }
+
+  // End of subrun loop.
+  }
+
+  // Give statistics. Print histogram.
+  pythia.stat();
+  cout &lt;&lt; nCharged;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

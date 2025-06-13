@@ -1,0 +1,140 @@
+! This file demonstrates the usage of UNLOPS merging in Pythia.
+! The merging scale is defined in terms of the shower evolution
+! variable pTlund.
+
+! Number of generated events.
+Main:numberOfEvents       = 1000
+
+! Use LHEF input for events.
+Beams:frameType           = 4
+
+! Event-generation options.
+PartonLevel:MPI           = on
+HadronLevel:all           = on
+
+! Switch enforced rapidity ordering off.
+SpaceShower:rapidityOrder = off
+
+! Core process for merging.
+Merging:Process           = pp>LEPTONS,NEUTRINOS
+
+! Maximal number of additional LO jets.
+Merging:nJetMax           = 2
+! Maximal number of additional NLO jets.
+Merging:nJetMaxNLO        = 1
+
+! Merging scale value.
+Merging:TMS               = 15
+
+! Values of (fixed) scales in the matrix element calculation.
+Merging:muFacInME         = 80.4
+Merging:muRenInME         = 91.188
+! Values of (fixed) scales for the PS lowest multiplicity process.
+Merging:muFac             = 80.4
+Merging:muRen             = 91.188
+
+! Include PDFs into the choice of histories.
+Merging:includeRedundant  = on
+
+! Switch off enforced rapidity ordering
+SpaceShower:rapidityOrder = off
+
+! Since UNLOPS is a next-to-leading order merging method, next-to-leading
+! order PDFs are necessary in the matrix element calculation. However, the
+! parton shower and multiparton interactions favour leading-order PDFs,
+! since multiparton interactions probe the incoming hadron at small momentum
+! scales. Until a NLO-merged tune becomes available, LO PDFs should be used
+! throughout the shower.
+! Example PDF files generated with CTEQ6 PDFs.
+!PDF:pSet                  = LHAPDF6:cteq6l1
+SpaceShower:alphaSvalue   = 0.118
+TimeShower:alphaSvalue    = 0.118
+
+! Subruns are used to select which merging contribution is run when.
+! Subrun info should always go at the end of the input file.
+! Here Main:subrun = iMerge of pythia.readFile(...) in main162.cc.
+! Note that in the case of UNLOPS we have
+! numberOfSubruns = 2*nJetMax+2*nJetMaxNLO+2
+! but the LO +0j run is dummy and can be skipped.
+Main:numberOfSubruns      = 8
+!-----------------------------------------------------------------------
+! LO +2j events.
+Main:subrun               = 1
+Merging:doUNLOPSTree      = on
+Merging:doUNLOPSLoop      = off
+Merging:doUNLOPSSubt      = off
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 2
+Beams:LHEF                = w_production_tree_2.lhe
+!-----------------------------------------------------------------------
+! LO +1j events.
+Main:subrun               = 2
+Merging:doUNLOPSTree      = on
+Merging:doUNLOPSLoop      = off
+Merging:doUNLOPSSubt      = off
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 1
+Beams:LHEF                = w_production_tree_1.lhe
+!-----------------------------------------------------------------------
+! LO +0j events.
+Main:subrun               = 3
+Merging:doUNLOPSTree      = on
+Merging:doUNLOPSLoop      = off
+Merging:doUNLOPSSubt      = off
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 0
+Beams:LHEF                = w_production_tree_0.lhe
+!-----------------------------------------------------------------------
+! NLO +1j events.
+Main:subrun               = 4
+Merging:doUNLOPSTree      = off
+Merging:doUNLOPSLoop      = on
+Merging:doUNLOPSSubt      = off
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 1
+Beams:LHEF                = w_production_powheg_1.lhe
+!-----------------------------------------------------------------------
+! NLO +0j events.
+Main:subrun               = 5
+Merging:doUNLOPSTree      = off
+Merging:doUNLOPSLoop      = on
+Merging:doUNLOPSSubt      = off
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 0
+Beams:LHEF                = w_production_powheg_0.lhe
+!-----------------------------------------------------------------------
+! LO +2j counter events.
+Main:subrun               = 6
+Merging:doUNLOPSTree      = off
+Merging:doUNLOPSLoop      = off
+Merging:doUNLOPSSubt      = on
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 1
+Merging:nRequested        = 2
+Beams:LHEF                = w_production_tree_2.lhe
+!-----------------------------------------------------------------------
+! LO +1j counter events.
+Main:subrun               = 7
+Merging:doUNLOPSTree      = off
+Merging:doUNLOPSLoop      = off
+Merging:doUNLOPSSubt      = on
+Merging:doUNLOPSSubtNLO   = off
+Merging:nRecluster        = 1
+Merging:nRequested        = 1
+Beams:LHEF                = w_production_tree_1.lhe
+!-----------------------------------------------------------------------
+! NLO +1j counter events.
+Main:subrun               = 8
+Merging:doUNLOPSTree      = off
+Merging:doUNLOPSLoop      = off
+Merging:doUNLOPSSubt      = off
+Merging:doUNLOPSSubtNLO   = on
+Merging:nRecluster        = 1
+Merging:nRequested        = 1
+Beams:LHEF                = w_production_powheg_1.lhe
+!-----------------------------------------------------------------------

@@ -1,5 +1,5 @@
 // PowhegHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Richard Corke, Torbjorn Sjostrand.
+// Copyright (C) 2025 Richard Corke, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -695,10 +695,12 @@ public:
 
   //--------------------------------------------------------------------------
 
+ protected:
+  double pThard, pTMPI;
+
  private:
   int    showerModel, nFinal, vetoMode, MPIvetoMode, QEDvetoMode, vetoCount;
   int    pThardMode, pTemtMode, emittedMode, pTdefMode;
-  double pThard, pTMPI;
   bool   accepted, isEmt;
   // The number of accepted emissions (in a row)
   // Flag for PowHeg Born or Radiation

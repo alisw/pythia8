@@ -1,0 +1,72 @@
+! This file demonstrates the usage of UMEPS merging in Pythia.
+! The merging scale is defined in terms of the shower evolution
+! variable pTlund.
+
+! Number of generated events.
+Main:numberOfEvents       = 1000
+
+! Use LHEF input for events.
+Beams:frameType           = 4
+
+! Event-generation options.
+HadronLevel:all           = on
+PartonLevel:MPI           = on
+
+! Switch enforced rapidity ordering off.
+SpaceShower:rapidityOrder = off
+
+! Merging scale value.
+Merging:TMS               = 15
+
+! Core process definition.
+Merging:Process           = pp>LEPTONS,NEUTRINOS
+
+! Maximal number of additional LO jets.
+Merging:nJetMax           = 2
+
+! Subruns are used to select which merging contribution is run when.
+! Subrun info should always go at the end of the input file.
+! Here Main:subrun = iMerge of pythia.readFile(...) in main162.cc.
+! Note that in the case of UMEPS we have numberOfSubruns = 2*nJetMax+1.
+Main:numberOfSubruns      = 5
+!-----------------------------------------------------------------------
+! LO +2j events.
+Main:subrun               = 1
+Merging:doUMEPSTree       = on
+Merging:doUMEPSSubt       = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 2
+Beams:LHEF                = w_production_tree_2.lhe
+!-----------------------------------------------------------------------
+! LO +1j events.
+Main:subrun               = 2
+Merging:doUMEPSTree       = on
+Merging:doUMEPSSubt       = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 1
+Beams:LHEF                = w_production_tree_1.lhe
+!-----------------------------------------------------------------------
+! LO +0j events.
+Main:subrun               = 3
+Merging:doUMEPSTree       = on
+Merging:doUMEPSSubt       = off
+Merging:nRecluster        = 0
+Merging:nRequested        = 0
+Beams:LHEF                = w_production_tree_0.lhe
+!-----------------------------------------------------------------------
+! LO +2j counter events.
+Main:subrun               = 4
+Merging:doUMEPSTree       = off
+Merging:doUMEPSSubt       = on
+Merging:nRecluster        = 1
+Merging:nRequested        = 2
+Beams:LHEF                = w_production_tree_2.lhe
+!-----------------------------------------------------------------------
+! LO +1j counter events.
+Main:subrun               = 5
+Merging:doUMEPSTree       = off
+Merging:doUMEPSSubt       = on
+Merging:nRecluster        = 1
+Merging:nRequested        = 1
+Beams:LHEF                = w_production_tree_1.lhe
+!-----------------------------------------------------------------------

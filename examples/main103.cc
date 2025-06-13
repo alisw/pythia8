@@ -1,85 +1,41 @@
 // main103.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Steve Mrenna <mrenna@fnal.gov>
+// Keywords: electron-positron; basic usage; charged multiplicity
 
-// Keywords: command file; user hook
-
-// This is a simple test program.
-// It illustrates how to filter resonance decay products to obtain a certain
-// final state.
-// Usage:  (this executable) (command-file)
-// If no command-file is provided, a default is use.
+// This is a simple test program. It fits on one slide in a talk.
+// It studies the charged multiplicity distribution at LEP 1.
 
 #include "Pythia8/Pythia.h"
-#include "Pythia8Plugins/ResonanceDecayFilterHook.h"
-
 using namespace Pythia8;
-
-//==========================================================================
-
-int main(int argc, char* argv[]) {
-
-  // Generator. Shorthand for the event.
+int main() {
+  // Generator. Incoming e+e- beams ar LEP1 energies. No photons from e+-.
   Pythia pythia;
-
-  auto myUserHooks = make_shared<ResonanceDecayFilterHook>(pythia.settings);
-  pythia.setUserHooksPtr( myUserHooks);
-
-  // Read in commands from external file.
-  if (argc == 1) {
-    cout << "Using default command-file main103.cmnd" << endl;
-    pythia.readFile("main103.cmnd");
-  } else {
-    // Check that the provided input name corresponds to an existing file.
-    ifstream is(argv[1]);
-    if (!is.good()) {
-      cerr << " Usage:  executable command-file. \n";
-      cerr << " Command-line file " << argv[1] << " was not found. \n"
-           << " Program stopped! " << endl;
-      return 1;
-    }
-    pythia.readFile(argv[1]);
+  pythia.readString("Beams:idA = -11");
+  pythia.readString("Beams:idB = 11");
+  pythia.readString("Beams:eCM = 91.2");
+  pythia.readString("PDF:lepton = off");
+  // Process: hadronic decays of Z0. Initialize. Histogram.
+  pythia.readString("WeakSingleBoson:ffbar2gmZ = on");
+  pythia.readString("23:onMode = off");
+  pythia.readString("23:onIfAny = 1 2 3 4 5");
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+  Hist mult("charged multiplicity", 100, -0.5, 99.5);
+  // Begin event loop. Generate event. Skip if error. List first one.
+  for (int iEvent = 0; iEvent < 10000; ++iEvent) {
+    if (!pythia.next()) continue;
+    // Find number of all final charged particles and fill histogram.
+    int nCharged = 0;
+    for (int i = 0; i < pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() && pythia.event[i].isCharged())
+        ++nCharged;
+    mult.fill( nCharged );
+  // End of event loop. Statistics. Histogram. Done.
   }
-
-  // Extract settings to be used in the main program.
-  int nEvent = pythia.mode("Main:numberOfEvents");
-  int nAbort = pythia.mode("Main:timesAllowErrors");
-
-  // Initialize.
-  pythia.init();
-
-  int iAbort = 0;
-  for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
-
-    // Generate events. Quit if too many failures.
-    if (!pythia.next()) {
-      if (++iAbort < nAbort) continue;
-      cout << " Event generation aborted prematurely, owing to error!\n";
-      break;
-    }
-
-  // End of event loop.
-  }
-
-  // Final statistics and histograms.
   pythia.stat();
-  double filterEfficiency = (double) pythia.info.getCounter(4)
-    / (double) myUserHooks->returnCounter();
-
-  ParticleDataEntryPtr particlePtr =
-    pythia.particleData.particleDataEntryPtr(24);
-  double br_lepton(0.0);
-  br_lepton += particlePtr->channel(6).bRatio();
-  br_lepton += particlePtr->channel(7).bRatio();
-  br_lepton += particlePtr->channel(8).bRatio();
-
-  double exactFilter = 2.0*br_lepton*(1.0-br_lepton);
-  cout << "ResonanceDecayFilterHook efficiency = " << filterEfficiency << "\n";
-  cout << "on-shell theoretical efficiency     = " << exactFilter << "\n";
-
-  // Done.
+  cout << mult;
   return 0;
 }

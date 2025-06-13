@@ -1,5 +1,5 @@
 // ResonanceWidthsDM.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -83,6 +83,7 @@ double ResonanceS::eta2gg() {
   for (int idNow = 3; idNow < 7; ++idNow) {
     mLoop   = particleDataPtr->m0(idNow);
     epsilon = pow2(2. * mLoop / mHat);
+    if (mLoop == 0.) continue;
 
     // Value of loop integral.
     if (epsilon <= 1.) {

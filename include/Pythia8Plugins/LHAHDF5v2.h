@@ -1,5 +1,5 @@
 // LHAHDF5v2.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Authors: Christian Preuss, Stefan Hoeche December 2023.
@@ -97,7 +97,16 @@ bool LHAupH5v2::setEvent(int) {
 
   // Read event.
   LHEH5::Event evt(lhefPtr->GetEvent(nReadSav));
-  if (evt[0].pz<0 && evt[1].pz>0) swap<LHEH5::Particle>(evt[0], evt[1]);
+  // Skip zero-weight events (empty), but add trials.
+  while (evt.size() == 0) {
+    ++nReadSav;
+    nTrialsSav += evt.trials;
+    if (nReadSav >= readSizeSav) return false;
+    evt = lhefPtr->GetEvent(nReadSav);
+  }
+  // Events with zero weight are empty.
+  if (evt.size()>0 && evt[0].pz<0 && evt[1].pz>0)
+    swap<LHEH5::Particle>(evt[0], evt[1]);
 
   setProcess(evt.pinfo.pid, evt.wgts[0], evt.mur, evt.aqed, evt.aqcd);
   nupSave    = evt.size();
@@ -110,7 +119,6 @@ bool LHAupH5v2::setEvent(int) {
 
   // Communicate event weight to Info.
   _eventweightvalues=evt.wgts;
-  // infoPtr->weights_compressed_names = &_weightnames;
   infoPtr->weights_compressed = &_eventweightvalues;
 
   // Set particles.

@@ -1,0 +1,13 @@
+! ATLAS UE tune AU2-MRST2007LO*, August 2012.
+! See ATLAS note ATL-PHYS-PUB-2012-003 for further details.
+! Previously set by "Tune:pp = 12".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = 3        ! MRST2007lomod   
+SpaceShower:rapidityOrder           = false 
+SpaceShower:rapidityOrderMPI        = false 
+MultipartonInteractions:pT0Ref      = 2.39  
+MultipartonInteractions:ecmPow      = 0.24  
+MultipartonInteractions:bProfile    = 4     
+MultipartonInteractions:expPow      = 1.0   
+MultipartonInteractions:a1          = 0.01  
+ColourReconnection:range            = 1.76

@@ -2,6 +2,11 @@
  
 <h2>Dire Parton Showers</h2> 
  
+<h3><strong>Please note:</strong> Due to lack of person power, the 
+Dire Shower code is currently not maintained by the Pythia team and 
+may be removed in a future release.</h3> 
+ 
+<p/> 
 The Dire parton shower combines dipole-shower ideas in the spirit of Ariadne 
 with the careful handling of collinear enhancements in classical parton 
 showers. It includes a detailed treatment of mass effects and various 
@@ -11,9 +16,10 @@ The Dire physics publication is arxiv:1506.05057 [hep-ph]. Please cite this
 article (and of course the Pythia 8 reference) if you use Pythia 8 + Dire for 
 your research. 
  
+<p/> 
 Dire is a complete replacement for the default showers in Pythia, and is 
 automatically interleaved with Pythia's multiple interaction model. 
-At present, Dire offers 
+At present, Dire offers: 
  
 <ul> 
 <li> 
@@ -32,13 +38,12 @@ phase space.
 </li> 
 </ul> 
  
-Built-in CKKW-L and UNLOPS merging are in preparation.  It is worth 
-noting that Dire is constructed as as weighted parton shower, meaning 
-that all events that are produced with Dire acquire a weight close to, 
-but not identical to, unity. These weights need to be included when 
-filling histograms or storing events. These weights can, conveniently 
-combined with other weights (due to weighted LHEF inputs, merging 
-etc.), be retrieved from <code>pythia.info.weight()</code>. 
+It is worth noting that Dire is constructed as as weighted parton 
+shower, meaning that all events that are produced with Dire acquire a 
+weight close to, but not identical to, unity. These weights need to be 
+included when filling histograms or storing events. These weights can, 
+conveniently combined with other weights (due to weighted LHEF inputs, 
+merging etc.), be retrieved from <code>pythia.info.weight()</code>. 
  
 <p/> 
 The following discusses some basic settings that might be of interest. Some 
@@ -254,4 +259,4 @@ final state particles is reached.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Stefan Prestel --> 
+<!-- Copyright (C) 2025 Stefan Prestel --> 

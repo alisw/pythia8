@@ -1,5 +1,5 @@
 // HeavyIons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -84,6 +84,11 @@ public:
     loggerPtr->ERROR_MSG("method not implemented for this heavy ion model");
     return false; }
 
+  // Set beam particles.
+  virtual bool setBeamIDs(int /*idAIn*/, int /*idBIn*/ = 0) {
+    loggerPtr->ERROR_MSG("method not implemented for this heavy ion model");
+    return false; }
+
   // The HIInfo object contains information about the last generated heavy
   // ion event as well as overall statistics of the generated events.
   HIInfo hiInfo;
@@ -110,6 +115,9 @@ protected:
   // Copy settings on the form HImatch: to the corresponding match:
   // in the given Pythia object.
   static void setupSpecials(Pythia& p, string match);
+
+  // Save current beam configuration.
+  int idProj, idTarg;
 
   // This is the pointer to the main Pythia object to which this
   // object is assigned.
@@ -186,16 +194,21 @@ public:
   bool setUserHooksPtr(PythiaObject sel, UserHooksPtr userHooksPtrIn);
 
   // Set beam kinematics.
+  bool setKinematicsCM();
   bool setKinematics(double eCMIn) override;
   bool setKinematics(double eAIn, double eBIn) override;
   bool setKinematics(double, double, double, double, double, double) override;
   bool setKinematics(Vec4, Vec4) override;
   bool setKinematics();
 
+  // Set beam IDs.
+  bool setBeamIDs(int idAIn, int idBIn = 0) override;
+
   // Make sure the correct information is available irrespective of frame type.
   void unifyFrames();
 
-  void banner(int idProj, int idTarg) const;
+  // Print the Angantyr banner.
+  void banner() const;
 
   // Subcollisions for the current event.
   const SubCollisionSet& subCollisions() const {
@@ -204,6 +217,10 @@ public:
   // Get the underlying subcollision model.
   const SubCollisionModel& subCollisionModel() const {
     return *collPtr.get(); }
+
+  SubCollisionModel* subCollPtr() {
+    return collPtr.get();
+  }
 
   // Get the underlying impact parameter generator.
   const ImpactParameterGenerator impactParameterGenerator() const {
@@ -270,6 +287,7 @@ protected:
   bool addEL(const SubCollisionSet& subCollsIn, list<EventInfo>& subEventsIn);
   void addELsecond(const SubCollisionSet& subCollsIn);
 
+  void resetEvent();
   bool buildEvent(list<EventInfo>& subEventsIn);
 
   bool setupFullCollision(EventInfo& ei, const SubCollision& coll,

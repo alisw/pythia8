@@ -317,19 +317,38 @@ The abovementioned power for valence <i>d</i> quarks in protons.
    
  
 <a name="anchor16"></a>
+<p/><code>pvec&nbsp; </code><strong> BeamRemnants:heavyQuarkEnhance &nbsp;</strong> 
+ (<code>default = <strong>{1.5,4.5,14.5}</strong></code>; <code>minimum = 1.</code>)<br/>
+Enhancement factors for the momentum fraction assigned to heavy valence quarks 
+(<i>s, c, b</i> respectively) relative to the normal <i>u</i> and 
+<i>d</i> ones. The default values are based on the ratio of constituent 
+masses, as can be motivated by an expectation of equal average velocity for 
+all valence quarks. In low-mass  diffraction, its inverse is also used 
+to provide the relative probability for each valence quark to be kicked 
+backwards, out from the incoming hadron. (And thus the value itself 
+the relative probability to remain in the beam direction.) This is 
+consistent with the Additive Quark Model approach, where it is often 
+assumed that each valence quark adds to the total cross section of 
+its hadron inversely to its mass. Thus, in both cases, an above-unity 
+value for a constituent quark flavour will tend to enhance its momentum 
+fraction in the beam direction. Note that sea quarks are not affected by 
+either of these two considerations. 
+   
+ 
+<a name="anchor17"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:valenceDiqEnhance &nbsp;</strong> 
  (<code>default = <strong>2.0</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 10.</code>)<br/>
 Enhancement factor for valence diquarks in baryons, relative to the 
 simple sum of the two constituent quarks. 
    
  
-<a name="anchor17"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:gluonPower &nbsp;</strong> 
  (<code>default = <strong>4.0</strong></code>; <code>minimum = 0.</code>)<br/>
 The abovementioned power for gluons. 
    
  
-<a name="anchor18"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:xGluonCutoff &nbsp;</strong> 
  (<code>default = <strong>1E-7</strong></code>; <code>minimum = 1E-10</code>; <code>maximum = 1</code>)<br/>
 The gluon PDF is approximated with <i>g(x) ~ (1 - x)^p / x</i>, which 
@@ -337,7 +356,7 @@ integrates to infinity when integrated from 0 to 1. This cut-off is
 introduced as a minimum to avoid the problems with infinities. 
    
  
-<a name="anchor19"></a>
+<a name="anchor20"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:allowJunction &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 The <code>off</code> option is intended for debug purposes only, as 
@@ -352,7 +371,7 @@ multiparton interactions and showers are redone until a
 junction-free topology is found. 
    
  
-<a name="anchor20"></a>
+<a name="anchor21"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:beamJunction &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This parameter is only relevant if the new colour reconnection scheme is used. 
@@ -362,7 +381,7 @@ than two valence quarks are found in the beam remnants. If off a di-quark is
 formed and if on a junction will be formed. 
    
  
-<a name="anchor21"></a>
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:allowBeamJunction &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 This parameter is only relevant if the new Beam remnant model is used. 
@@ -370,7 +389,7 @@ This parameter tells whether to allow the formation of junction structures
 in the colour configuration of the scattered partons. 
    
  
-<a name="anchor22"></a>
+<a name="anchor23"></a>
 <p/><code>mode&nbsp; </code><strong> BeamRemnants:unresolvedHadron &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Switch to to force either or both of the beam remnants to collapse to a 
@@ -389,7 +408,7 @@ region is softer in PYTHIA than in data. The following settings
 allow the possibility to modify the leading-diquark fragmentation to 
 (partly) address this issue. 
  
-<a name="anchor23"></a>
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:dampPopcorn &nbsp;</strong> 
  (<code>default = <strong>1.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.</code>)<br/>
 Controls whether a beam remnant diquark can hadronize to a leading meson 
@@ -399,7 +418,7 @@ a leading baryon. Intermediate values will interpolate between these two
 extremes. Has no influence on diquarks not coming from a beam remnant. 
    
  
-<a name="anchor24"></a>
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> BeamRemnants:hardRemnantBaryon &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allows a remnant diquark to hadronize to a harder-than-normal baryon, 
@@ -408,7 +427,7 @@ two parameters override the normal <i>a</i> and <i>b</i> of the
 Lund symmetric fragmentation function. 
    
  
-<a name="anchor25"></a>
+<a name="anchor26"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:aRemnantBaryon &nbsp;</strong> 
  (<code>default = <strong>0.</strong></code>; <code>minimum = 0.</code>; <code>maximum = 2.</code>)<br/>
 For the special hard remnant baryon handling above, this parameter is 
@@ -416,7 +435,7 @@ the power <i>a</i> in the <i>(1-z)^a</i> factor of the fragmentation
 function. 
    
  
-<a name="anchor26"></a>
+<a name="anchor27"></a>
 <p/><code>parm&nbsp; </code><strong> BeamRemnants:bRemnantBaryon &nbsp;</strong> 
  (<code>default = <strong>2.</strong></code>; <code>minimum = 0.5</code>; <code>maximum = 5.</code>)<br/>
 For the special hard remnant baryon handling above, this parameter is 
@@ -427,4 +446,4 @@ fragmentation function.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

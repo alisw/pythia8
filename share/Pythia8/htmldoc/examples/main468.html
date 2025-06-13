@@ -1,0 +1,150 @@
+<html><head><title>main468</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main468</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main468.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#resonances">Resonances</a>
+
+// Illustration of how to create new resonance particles that can form
+// during rescattering. The resonances are exotic hadrons defined in
+// main468.cmnd. The resulting invariant mass spectra are plotted, but the
+// exotic hadrons are rare and statistics are low, even with 100k events.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events. In 100k events, we expect a handful of T(2900)
+  // tetraquarks, a few chi_1c(3872) tetraquarks, and possibly a few
+  // P_c^+ pentaquarks.
+  int nEvent = 100000;
+
+  // Initialize Pythia.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+
+  // Read file for exotic hadron definitions.
+  pythia.readFile(&quot;main468.cmnd&quot;);
+
+  // Run configuration. Charmonium processes favour production of the
+  // relevant exotic hadrons.
+  pythia.readString(&quot;Charmonium:all = on&quot;);
+  pythia.readString(&quot;Beams:eCM = 13000&quot;);
+
+  // Enable rescattering. Retune pT0Ref to get correct charged multiplicity.
+  pythia.readString(&quot;HadronLevel:rescatter = on&quot;);
+  pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.345&quot;);
+
+  // Initialize.
+  if (!pythia.init()) {
+    cout &lt;&lt; &quot; Pythia failed to initialize.&quot; &lt;&lt; endl;
+    return 1;
+  }
+
+  // Exotic hadron mass spectra.
+  Hist mX3872(&quot;chi_1c(3872)&quot;,  30, 3.82, 3.92);
+
+  Hist mTcs0(&quot;T_0cs(2900)0&quot;,        30, 2.2, 3.6);
+  Hist mTcs1(&quot;T_1cs(2900)0&quot;,        30, 2.2, 3.6);
+  Hist mTcsbar0(&quot;T_csbar(2900)0&quot;,   30, 2.2, 3.6);
+  Hist mTcsbarPP(&quot;T_csbar(2900)++&quot;, 30, 2.2, 3.6);
+
+  Hist mPc4312(&quot;P_c(4312)+&quot;, 30, 4.2, 4.6);
+  Hist mPc4440(&quot;P_c(4440)+&quot;, 30, 4.2, 4.6);
+  Hist mPc4457(&quot;P_c(4457)+&quot;, 30, 4.2, 4.6);
+
+  // Generate events.
+  int nSuccess = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next())
+      continue;
+    nSuccess += 1;
+
+    // Loop over event record and find tetraquarks.
+    for (Particle&amp; h : event) {
+      if      (h.idAbs() == 9044111) mX3872.fill(h.m());
+      else if (h.idAbs() == 9043211) mTcs0.fill(h.m());
+      else if (h.idAbs() == 9043212) mTcs1.fill(h.m());
+      else if (h.idAbs() == 9043213) mTcsbar0.fill(h.m());
+      else if (h.idAbs() == 9043214) mTcsbarPP.fill(h.m());
+      else if (h.idAbs() == 9422141) mPc4312.fill(h.m());
+      else if (h.idAbs() == 9422142) mPc4440.fill(h.m());
+      else if (h.idAbs() == 9422143) mPc4457.fill(h.m());
+    }
+
+  }
+
+  // Normalize and calculate production cross sections.
+  double sigGen = pythia.info.sigmaGen();
+  mX3872.normalizeSpectrum(nSuccess); mX3872 *= sigGen;
+  mTcs0.normalizeSpectrum(nSuccess); mTcs0 *= sigGen;
+  mTcs1.normalizeSpectrum(nSuccess); mTcs1 *= sigGen;
+  mTcsbar0.normalizeSpectrum(nSuccess); mTcsbar0 *= sigGen;
+  mTcsbarPP.normalizeSpectrum(nSuccess); mTcsbarPP *= sigGen;
+  mPc4312.normalizeSpectrum(nSuccess); mPc4312 *= sigGen;
+  mPc4440.normalizeSpectrum(nSuccess); mPc4440 *= sigGen;
+  mPc4457.normalizeSpectrum(nSuccess); mPc4457 *= sigGen;
+
+  // Plot.
+  string plotName = &quot;fig468&quot;;
+  HistPlot plt(&quot;plot468&quot;);
+
+  // Plot production cross sections for T(2900) tetraquarks.
+  plt.frame(plotName, &quot;$T(2900)$ tetraquark production cross sections&quot;,
+    &quot;$E_{CM}$ [GeV]&quot;, &quot;$\\sigma$ [mb]&quot;);
+  plt.add(Hist::plotFunc([&amp;](double eCM) {
+    return pythia.getSigmaPartial(-411, 321, eCM, 9043211);
+  }, &quot;&quot;, 200, 2.2, 3.6), &quot;-&quot;, &quot;$\\bar{D}^- K^+ \\to T_{cs0}(2900)^0$&quot;);
+  plt.add(Hist::plotFunc([&amp;](double eCM) {
+    return pythia.getSigmaPartial(-411, 321, eCM, 9043212);
+  }, &quot;&quot;, 200, 2.2, 3.6), &quot;-&quot;, &quot;$\\bar{D}^- K^+ \\to T_{cs1}(2900)^0$&quot;);
+  plt.add(Hist::plotFunc([&amp;](double eCM) {
+    return pythia.getSigmaPartial(431, -211, eCM, 9043213);
+  }, &quot;&quot;, 200, 2.2, 3.6), &quot;-&quot;, &quot;$D_s^+ \\pi^- \\to T_{c\\bar{s}}^a(2900)^0$&quot;);
+  plt.add(Hist::plotFunc([&amp;](double eCM) {
+    return pythia.getSigmaPartial(431,  211, eCM, 9043214);
+  }, &quot;&quot;, 200, 2.2, 3.6), &quot;-&quot;,
+    &quot;$D_s^+ \\pi^+ \\to T_{c\\bar{s}}^a(2900)^{++}$&quot;);
+  plt.plot();
+
+  // Plot invariant mass spectra.
+  plt.frame(plotName, &quot;$T(2900)$ tetraquark invariant mass spectra&quot;,
+    &quot;$m$ [GeV]&quot;, &quot;$d\\sigma/dm$&quot;);
+  plt.add(mTcs0, &quot;h&quot;, &quot;$T_{cs0}(2900)^0$&quot;);
+  plt.add(mTcs1,  &quot;h&quot;, &quot;$T_{cs1}(2900)^0$&quot;);
+  plt.add(mTcsbar0, &quot;h&quot;, &quot;$T_{c\\bar{s}}^a(2900)^0$&quot;);
+  plt.add(mTcsbarPP, &quot;h&quot;, &quot;$T_{c\\bar{s}}^a(2900)^{++}$&quot;);
+  plt.plot();
+
+  plt.frame(plotName, &quot;$\\chi_{c1}(3872)$ invariant mass spectra&quot;,
+    &quot;$m$ [GeV]&quot;, &quot;$d\\sigma/dm$&quot;);
+  plt.add(mX3872, &quot;h&quot;, &quot;$X(3872)$&quot;);
+  plt.plot();
+
+  plt.frame(plotName, &quot;$P_c$ invariant mass spectra&quot;,
+    &quot;$m$ [GeV]&quot;, &quot;$d\\sigma/dm$&quot;);
+  plt.add(mPc4312, &quot;h&quot;, &quot;$P_c^+(4312)$&quot;);
+  plt.add(mPc4440, &quot;h&quot;, &quot;$P_c^+(4440)$&quot;);
+  plt.add(mPc4457, &quot;h&quot;, &quot;$P_c^+(4457)$&quot;);
+  plt.plot();
+
+  // Print statistics and done.
+  pythia.stat();
+  return 0;
+}
+</code></pre></body></html>

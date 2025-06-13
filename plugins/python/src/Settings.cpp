@@ -1,4 +1,7 @@
+#include <Pythia8/Info.h>
 #include <Pythia8/Logger.h>
+#include <Pythia8/ParticleData.h>
+#include <Pythia8/ResonanceWidths.h>
 #include <Pythia8/Settings.h>
 #include <cwchar>
 #include <functional>
@@ -8,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <sstream> // __str__
 #include <streambuf>
 #include <string>
@@ -35,7 +39,7 @@
 
 void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &namespace_) > &M)
 {
-	{ // Pythia8::Flag file:Pythia8/Settings.h line:29
+	{ // Pythia8::Flag file:Pythia8/Settings.h line:30
 		pybind11::class_<Pythia8::Flag, std::shared_ptr<Pythia8::Flag>> cl(M("Pythia8"), "Flag", "");
 		pybind11::handle cl_type = cl;
 
@@ -49,7 +53,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valDefault", &Pythia8::Flag::valDefault);
 		cl.def("assign", (class Pythia8::Flag & (Pythia8::Flag::*)(const class Pythia8::Flag &)) &Pythia8::Flag::operator=, "C++: Pythia8::Flag::operator=(const class Pythia8::Flag &) --> class Pythia8::Flag &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::Mode file:Pythia8/Settings.h line:47
+	{ // Pythia8::Mode file:Pythia8/Settings.h line:48
 		pybind11::class_<Pythia8::Mode, std::shared_ptr<Pythia8::Mode>> cl(M("Pythia8"), "Mode", "");
 		pybind11::handle cl_type = cl;
 
@@ -73,7 +77,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("optOnly", &Pythia8::Mode::optOnly);
 		cl.def("assign", (class Pythia8::Mode & (Pythia8::Mode::*)(const class Pythia8::Mode &)) &Pythia8::Mode::operator=, "C++: Pythia8::Mode::operator=(const class Pythia8::Mode &) --> class Pythia8::Mode &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::Parm file:Pythia8/Settings.h line:71
+	{ // Pythia8::Parm file:Pythia8/Settings.h line:72
 		pybind11::class_<Pythia8::Parm, std::shared_ptr<Pythia8::Parm>> cl(M("Pythia8"), "Parm", "");
 		pybind11::handle cl_type = cl;
 
@@ -95,7 +99,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valMax", &Pythia8::Parm::valMax);
 		cl.def("assign", (class Pythia8::Parm & (Pythia8::Parm::*)(const class Pythia8::Parm &)) &Pythia8::Parm::operator=, "C++: Pythia8::Parm::operator=(const class Pythia8::Parm &) --> class Pythia8::Parm &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::Word file:Pythia8/Settings.h line:94
+	{ // Pythia8::Word file:Pythia8/Settings.h line:95
 		pybind11::class_<Pythia8::Word, std::shared_ptr<Pythia8::Word>> cl(M("Pythia8"), "Word", "");
 		pybind11::handle cl_type = cl;
 
@@ -109,7 +113,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valDefault", &Pythia8::Word::valDefault);
 		cl.def("assign", (class Pythia8::Word & (Pythia8::Word::*)(const class Pythia8::Word &)) &Pythia8::Word::operator=, "C++: Pythia8::Word::operator=(const class Pythia8::Word &) --> class Pythia8::Word &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::FVec file:Pythia8/Settings.h line:111
+	{ // Pythia8::FVec file:Pythia8/Settings.h line:112
 		pybind11::class_<Pythia8::FVec, std::shared_ptr<Pythia8::FVec>> cl(M("Pythia8"), "FVec", "");
 		pybind11::handle cl_type = cl;
 
@@ -123,7 +127,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valDefault", &Pythia8::FVec::valDefault);
 		cl.def("assign", (class Pythia8::FVec & (Pythia8::FVec::*)(const class Pythia8::FVec &)) &Pythia8::FVec::operator=, "C++: Pythia8::FVec::operator=(const class Pythia8::FVec &) --> class Pythia8::FVec &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::MVec file:Pythia8/Settings.h line:129
+	{ // Pythia8::MVec file:Pythia8/Settings.h line:130
 		pybind11::class_<Pythia8::MVec, std::shared_ptr<Pythia8::MVec>> cl(M("Pythia8"), "MVec", "");
 		pybind11::handle cl_type = cl;
 
@@ -145,7 +149,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valMax", &Pythia8::MVec::valMax);
 		cl.def("assign", (class Pythia8::MVec & (Pythia8::MVec::*)(const class Pythia8::MVec &)) &Pythia8::MVec::operator=, "C++: Pythia8::MVec::operator=(const class Pythia8::MVec &) --> class Pythia8::MVec &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::PVec file:Pythia8/Settings.h line:152
+	{ // Pythia8::PVec file:Pythia8/Settings.h line:153
 		pybind11::class_<Pythia8::PVec, std::shared_ptr<Pythia8::PVec>> cl(M("Pythia8"), "PVec", "");
 		pybind11::handle cl_type = cl;
 
@@ -167,7 +171,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valMax", &Pythia8::PVec::valMax);
 		cl.def("assign", (class Pythia8::PVec & (Pythia8::PVec::*)(const class Pythia8::PVec &)) &Pythia8::PVec::operator=, "C++: Pythia8::PVec::operator=(const class Pythia8::PVec &) --> class Pythia8::PVec &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::WVec file:Pythia8/Settings.h line:175
+	{ // Pythia8::WVec file:Pythia8/Settings.h line:176
 		pybind11::class_<Pythia8::WVec, std::shared_ptr<Pythia8::WVec>> cl(M("Pythia8"), "WVec", "");
 		pybind11::handle cl_type = cl;
 
@@ -181,7 +185,7 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def_readwrite("valDefault", &Pythia8::WVec::valDefault);
 		cl.def("assign", (class Pythia8::WVec & (Pythia8::WVec::*)(const class Pythia8::WVec &)) &Pythia8::WVec::operator=, "C++: Pythia8::WVec::operator=(const class Pythia8::WVec &) --> class Pythia8::WVec &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
-	{ // Pythia8::Settings file:Pythia8/Settings.h line:195
+	{ // Pythia8::Settings file:Pythia8/Settings.h line:196
 		pybind11::class_<Pythia8::Settings, std::shared_ptr<Pythia8::Settings>> cl(M("Pythia8"), "Settings", "");
 		pybind11::handle cl_type = cl;
 
@@ -195,7 +199,17 @@ void bind_Pythia8_Settings(std::function< pybind11::module &(std::string const &
 		cl.def("reInit", [](Pythia8::Settings &o) -> bool { return o.reInit(); }, "");
 		cl.def("reInit", (bool (Pythia8::Settings::*)(std::string)) &Pythia8::Settings::reInit, "C++: Pythia8::Settings::reInit(std::string) --> bool", pybind11::arg("startFile"));
 		cl.def("readString", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.readString(a0); }, "", pybind11::arg("line"));
-		cl.def("readString", (bool (Pythia8::Settings::*)(std::string, bool)) &Pythia8::Settings::readString, "C++: Pythia8::Settings::readString(std::string, bool) --> bool", pybind11::arg("line"), pybind11::arg("warn"));
+		cl.def("readString", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, bool const & a1) -> bool { return o.readString(a0, a1); }, "", pybind11::arg("line"), pybind11::arg("warn"));
+		cl.def("readString", (bool (Pythia8::Settings::*)(std::string, bool, int)) &Pythia8::Settings::readString, "C++: Pythia8::Settings::readString(std::string, bool, int) --> bool", pybind11::arg("line"), pybind11::arg("warn"), pybind11::arg("subrun"));
+		cl.def("readFile", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.readFile(a0); }, "", pybind11::arg("fileName"));
+		cl.def("readFile", [](Pythia8::Settings &o, class std::basic_string<char> const & a0, bool const & a1) -> bool { return o.readFile(a0, a1); }, "", pybind11::arg("fileName"), pybind11::arg("warn"));
+		cl.def("readFile", (bool (Pythia8::Settings::*)(std::string, bool, int)) &Pythia8::Settings::readFile, "C++: Pythia8::Settings::readFile(std::string, bool, int) --> bool", pybind11::arg("fileName"), pybind11::arg("warn"), pybind11::arg("subrun"));
+		cl.def("readFile", (bool (Pythia8::Settings::*)(std::string, int)) &Pythia8::Settings::readFile, "C++: Pythia8::Settings::readFile(std::string, int) --> bool", pybind11::arg("fileName"), pybind11::arg("subrun"));
+		cl.def("readFile", [](Pythia8::Settings &o) -> bool { return o.readFile(); }, "");
+		cl.def("readFile", [](Pythia8::Settings &o, class std::basic_istream<char> & a0) -> bool { return o.readFile(a0); }, "", pybind11::arg("is"));
+		cl.def("readFile", [](Pythia8::Settings &o, class std::basic_istream<char> & a0, bool const & a1) -> bool { return o.readFile(a0, a1); }, "", pybind11::arg("is"), pybind11::arg("warn"));
+		cl.def("readFile", (bool (Pythia8::Settings::*)(class std::basic_istream<char> &, bool, int)) &Pythia8::Settings::readFile, "C++: Pythia8::Settings::readFile(class std::basic_istream<char> &, bool, int) --> bool", pybind11::arg("is"), pybind11::arg("warn"), pybind11::arg("subrun"));
+		cl.def("readFile", (bool (Pythia8::Settings::*)(class std::basic_istream<char> &, int)) &Pythia8::Settings::readFile, "C++: Pythia8::Settings::readFile(class std::basic_istream<char> &, int) --> bool", pybind11::arg("is"), pybind11::arg("subrun"));
 		cl.def("registerPluginLibrary", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.registerPluginLibrary(a0); }, "", pybind11::arg("libName"));
 		cl.def("registerPluginLibrary", (bool (Pythia8::Settings::*)(std::string, std::string)) &Pythia8::Settings::registerPluginLibrary, "C++: Pythia8::Settings::registerPluginLibrary(std::string, std::string) --> bool", pybind11::arg("libName"), pybind11::arg("startFile"));
 		cl.def("writeFile", [](Pythia8::Settings &o, class std::basic_string<char> const & a0) -> bool { return o.writeFile(a0); }, "", pybind11::arg("toFile"));

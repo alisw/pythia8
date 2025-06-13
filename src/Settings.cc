@@ -1,5 +1,5 @@
 // Settings.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -39,9 +39,12 @@ bool Settings::init(string startFile, bool append) {
   files.push_back(startFile);
 
   // If nontrivial startfile path, then use that for other files as well.
-  string pathName = "";
+  string xmlNow = "";
   if (startFile.rfind("/") != string::npos)
-    pathName = startFile.substr(0, startFile.rfind("/") + 1);
+    xmlNow = startFile.substr(0, startFile.rfind("/") + 1);
+
+  // Only update the XML path if reading in the main XML.
+  if (!append) xmlPath = xmlNow;
 
   // Loop over files. Open them for read.
   for (int i = 0; i < int(files.size()); ++i) {
@@ -64,7 +67,7 @@ bool Settings::init(string startFile, bool append) {
       getfirst >> tag;
       if (tag.find("more") != string::npos) tag.erase( tag.find("more"), 4);
 
-      // Skip ahead if not interesting. Only look for new files in startfile.
+      // Skip ahead if not interesting.
       if (tag != "<flag" && tag != "<flagfix" && tag != "<mode"
          && tag != "<modeopen" && tag != "<modepick" && tag != "<modefix"
          && tag != "<parm" && tag != "<parmfix" && tag != "<word"
@@ -83,7 +86,7 @@ bool Settings::init(string startFile, bool append) {
       // Remove extra blanks before an = sign.
       while (line.find(" =") != string::npos) line.erase( line.find(" ="), 1);
 
-      // Add file also to be read.
+      // Add file also to be read. Avoid duplication.
       if (tag == "<aidx") {
         string name = attributeValue( line, "href");
         if (name == "") {
@@ -92,7 +95,11 @@ bool Settings::init(string startFile, bool append) {
           ++nError;
           continue;
         }
-        files.push_back(pathName + name + ".xml");
+        string fullName = xmlNow + name + ".xml";
+        bool inBase = false;
+        for (int ifile = 0; ifile < int(files.size()); ++ifile)
+          if (fullName == files[ifile]) inBase = true;
+        if (!inBase) files.push_back(fullName);
         continue;
       }
 
@@ -180,10 +187,15 @@ bool Settings::init(string startFile, bool append) {
   };
 
   // Set up default e+e- and pp tunes, if positive.
-  int eeTune = mode("Tune:ee");
-  if (eeTune > 0) initTuneEE( eeTune);
-  int ppTune = mode("Tune:pp");
-  if (ppTune > 0) initTunePP( ppTune);
+  // Only initialize the tunes if the main XML init, i.e. append is false.
+  if (!append) {
+    int eeTune = mode("Tune:ee");
+    if (eeTune > 0) initTuneEE(eeTune);
+    int ppTune = mode("Tune:pp");
+    if (ppTune > 0) initTunePP(ppTune);
+    int vinciaTune = mode("Vincia:Tune");
+    if (vinciaTune > -1) initTuneVincia(vinciaTune);
+  }
 
   // Done.
   if (nError > 0) return false;
@@ -329,9 +341,11 @@ bool Settings::init(istream& is, bool append) {
 
   // Set up default e+e- and pp tunes, if positive.
   int eeTune = mode("Tune:ee");
-  if (eeTune > 0) initTuneEE( eeTune);
+  if (eeTune > 0) initTuneEE(eeTune);
   int ppTune = mode("Tune:pp");
-  if (ppTune > 0) initTunePP( ppTune);
+  if (ppTune > 0) initTunePP(ppTune);
+  int vinciaTune = mode("Vincia:Tune");
+  if (vinciaTune > -1) initTuneVincia(vinciaTune);
 
   // Done.
   if (nError > 0) return false;
@@ -367,7 +381,7 @@ bool Settings::reInit(string startFile) {
 // Read in updates from a character string, like a line of a file.
 // Is used by readString (and readFile) in Pythia.
 
-bool Settings::readString(string line, bool warn) {
+bool Settings::readString(string line, bool warn, int subrun) {
 
   // If empty line then done.
   if (line.find_first_not_of(" \n\t\v\b\r\f\a") == string::npos) return true;
@@ -375,9 +389,18 @@ bool Settings::readString(string line, bool warn) {
   // If unfinished line then add new to existing, else use input line as is.
   string lineNow = (lineSaved) ? savedLine + line : line;
   lineSaved = false;
+  int firstChar = lineNow.find_first_not_of(" \n\t\v\b\r\f\a");
+
+  // Send on particle data to the ParticleData database if connected.
+  if (isdigit(lineNow[firstChar])) {
+    if (pdPtr != nullptr) {
+      bool passed = pdPtr->readString(lineNow, warn);
+      if (passed && pdbPtr != nullptr) (*pdbPtr) << lineNow << endl;
+      return passed;
+    } else return false;
+  }
 
   // If first character is not a letter, then taken to be a comment line.
-  int firstChar = lineNow.find_first_not_of(" \n\t\v\b\r\f\a");
   if (!isalpha(lineNow[firstChar])) return true;
 
   // Allow the += notation to add to a settings vector.
@@ -400,6 +423,7 @@ bool Settings::readString(string line, bool warn) {
   istringstream splitLine(lineNow);
   string name;
   splitLine >> name;
+  name = toLower(name);
 
   // Replace two colons by one (:: -> :) to allow for such mistakes.
   while (name.find("::") != string::npos) {
@@ -407,16 +431,21 @@ bool Settings::readString(string line, bool warn) {
     name.replace(firstColonColon, 2, ":");
   }
 
+  // Check the subrun.
+  if (name != "main:subrun"
+    && subrunNow != subrun && subrunNow != SUBRUNDEFAULT) return true;
+
   // Check whether this is in the database.
   int inDataBase = 0;
-  if      (isFlag(name)) inDataBase = 1;
-  else if (isMode(name)) inDataBase = 2;
-  else if (isParm(name)) inDataBase = 3;
-  else if (isWord(name)) inDataBase = 4;
-  else if (isFVec(name)) inDataBase = 5;
-  else if (isMVec(name)) inDataBase = 6;
-  else if (isPVec(name)) inDataBase = 7;
-  else if (isWVec(name)) inDataBase = 8;
+  if      (isFlag(name))      inDataBase = 1;
+  else if (isMode(name))      inDataBase = 2;
+  else if (isParm(name))      inDataBase = 3;
+  else if (isWord(name))      inDataBase = 4;
+  else if (isFVec(name))      inDataBase = 5;
+  else if (isMVec(name))      inDataBase = 6;
+  else if (isPVec(name))      inDataBase = 7;
+  else if (isWVec(name))      inDataBase = 8;
+  else if (name == "include") inDataBase = 9;
 
   // Warn and done if not in database.
   if (inDataBase == 0) {
@@ -432,10 +461,11 @@ bool Settings::readString(string line, bool warn) {
     return false;
   }
 
-  // Find value. Warn if none found.
+  // Find value. Warn if none found, except that a word (string) can be empty.
   string valueString;
   splitLine >> valueString;
-  if (!splitLine) {
+  if (!splitLine && inDataBase == 4) valueString = "";
+  else if (!splitLine) {
     if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
       << " not meaningful:\n   " << line << endl;
     readingFailedSave = true;
@@ -445,6 +475,19 @@ bool Settings::readString(string line, bool warn) {
   // If value is a ? then echo the current value.
   if (valueString == "?") {
     cout << output(name);
+    return true;
+  }
+
+  // If value is DEFAULT, then reset to the default value.
+  if (valueString == "DEFAULT") {
+    if      (inDataBase == 1) resetFlag(name);
+    else if (inDataBase == 2) resetMode(name);
+    else if (inDataBase == 3) resetParm(name);
+    else if (inDataBase == 4) resetWord(name);
+    else if (inDataBase == 5) resetFVec(name);
+    else if (inDataBase == 6) resetMVec(name);
+    else if (inDataBase == 7) resetPVec(name);
+    else if (inDataBase == 8) resetWVec(name);
     return true;
   }
 
@@ -490,6 +533,10 @@ bool Settings::readString(string line, bool warn) {
         << " not meaningful:\n   " << line << endl;
       readingFailedSave = true;
       return false;
+    }
+    if (name == "main:subrun") {
+      subrunNow = value;
+      if (subrun != subrunNow) return true;
     }
     if (!mode(name, value, force)) {
       if (warn) cout << "\n PYTHIA Error: variable recognized, but its value"
@@ -601,17 +648,92 @@ bool Settings::readString(string line, bool warn) {
       value = old;
     }
     wvec(name, value, force);
+
+  // Include files directive.
+  } else if (inDataBase == 9) {
+
+    // Try normal path first.
+    ifstream isUser(valueString.c_str());
+    if (!isUser.good()) {
+
+      // Split the paths from PYTHIA8CMND.
+      vector<string> paths;
+      size_t pos(0);
+      const char* envChar = getenv("PYTHIA8CMND");
+      string envPath = envChar ? envChar : "";
+      while (envPath != "" && pos != string::npos) {
+        pos = envPath.find(":");
+        paths.push_back(envPath.substr(0, pos));
+        envPath = envPath.substr(pos + 1);
+      }
+
+      // Add the Pythia share directory.
+      paths.push_back(xmlPath + "../");
+
+      // Try the different paths.
+      for (string path : paths) {
+        ifstream isPath((path + "/" + valueString).c_str());
+        if (isPath.good()) return readFile(isPath, warn, subrun);
+      }
+      loggerPtr->ERROR_MSG("did not find file", valueString);
+      loggerPtr->ERROR_MSG("searched along the following paths:");
+      for (string path : paths) loggerPtr->ERROR_MSG(path);
+      readingFailedSave = true;
+      return false;
+    } else return readFile(isUser, warn, subrun);
   }
 
-  // Store history of valid readString statements
+  // Store history of valid readString statements.
   readStringHistory.push_back(lineNow);
-  int subrun = max(-1,mode("Main:subrun"));
-  if (readStringSubrun.find(subrun) == readStringSubrun.end())
-    readStringSubrun[subrun] = vector<string>();
-  readStringSubrun[subrun].push_back(lineNow);
+  readStringSubrun[max(-1, mode("Main:subrun"))].push_back(lineNow);
 
   // Done.
   return true;
+
+}
+
+//--------------------------------------------------------------------------
+
+// Read in updates from a user-defined file.
+
+bool Settings::readFile(string fileName, bool warn, int subrun) {
+
+  // Open file for reading.
+  ifstream is(fileName.c_str());
+  if (!is.good()) {
+    loggerPtr->ERROR_MSG("did not find file", fileName);
+    return false;
+  }
+
+  // Hand over real work to next method.
+  return readFile(is, warn, subrun);
+
+}
+
+//--------------------------------------------------------------------------
+
+// Read in updates from a user-defined stream (or file).
+
+bool Settings::readFile(istream& is, bool warn, int subrun) {
+
+  // Read in one line at a time.
+  string line;
+  bool isCommented = false;
+  bool accepted = true;
+  subrunNow = SUBRUNDEFAULT;
+  while (getline(is, line)) {
+
+    // Check whether entering, leaving or inside commented-commands section.
+    int    pos = line.find_first_not_of(" \n\t\v\b\r\f\a");
+    string sub = line.length() - pos > 2 ? line.substr(pos, 2) : "";
+    if      (sub == "/*") isCommented = true;
+    else if (sub == "*/") isCommented = false;
+    else if (!isCommented && !readString(line, warn, subrun)) accepted = false;
+  }
+
+  // Reached end of input file.
+  return accepted;
+
 }
 
 //--------------------------------------------------------------------------
@@ -636,19 +758,19 @@ bool Settings::registerPluginLibrary(string libName, string startFile) {
 
   // Find the path to the XML, first PYTHIA8CONTRIB, then Pythia XML path.
   const char* envPath = getenv("PYTHIA8CONTRIB");
-  string xmlPath = envPath ? envPath : "";
-  if (xmlPath.length() && xmlPath[xmlPath.length() - 1] != '/') xmlPath += "/";
-  ifstream xmlFile((xmlPath + startFile).c_str());
+  string xmlNow = envPath ? envPath : "";
+  if (xmlNow.length() && xmlNow[xmlNow.length() - 1] != '/') xmlNow += "/";
+  ifstream xmlFile((xmlNow + startFile).c_str());
   if (!xmlFile.good()) {
     xmlFile.close();
-    xmlPath = word("xmlPath") + "../../";
-    xmlFile.open((xmlPath + startFile).c_str());
-    if (!xmlFile.good()) xmlPath = "";
+    xmlNow = xmlPath + "../../";
+    xmlFile.open((xmlNow + startFile).c_str());
+    if (!xmlFile.good()) xmlNow = "";
   }
   xmlFile.close();
 
   // Load the XML files, if specified.
-  if (startFile != "") init(xmlPath + startFile, true);
+  if (startFile != "") init(xmlNow + startFile, true);
 
   // Load the settings registration symbol.
   auto registerSettings =
@@ -821,10 +943,14 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
       vector<string> valDefault = wvecEntry->second.valDefault;
       if ( writeAll || valNow != valDefault ) {
         if (valNow.size() > 0) {
-        os  << wvecEntry->second.name << " = {";
-        for (vector<string>::iterator val = valNow.begin();
-             val != --valNow.end(); ++val) os << *val + ",";
-        os << *(--valNow.end()) + "}\n";
+          os  << wvecEntry->second.name << " = {";
+          for (vector<string>::iterator val = valNow.begin();
+               val != --valNow.end(); ++val) {
+            if ( val != valNow.begin() ) os << "\n      ";
+            os << trimString(*val) + ",";
+          }
+          if ( valNow.size() > 1 )  os << "\n      ";
+          os << *(--valNow.end()) + "}\n";
         } else os << "}\n";
       }
       ++wvecEntry;
@@ -837,7 +963,7 @@ bool Settings::writeFile(ostream& os, bool writeAll) {
 
 //--------------------------------------------------------------------------
 
-  // Write updates or everything to user-defined stream (or file).
+// Write updates or everything to user-defined stream (or file).
 
 bool Settings::writeFileXML(ostream& os) {
 
@@ -884,12 +1010,12 @@ bool Settings::writeFileXML(ostream& os) {
       ) {
       int valDefault = modeEntry->second.valDefault;
       os << "<mode name=\"" << modeEntry->second.name << "\" default=\""
-         << valDefault << "\">";
+         << valDefault << "\"";
       if (modeEntry->second.hasMin ) os << " min=\""
         << modeEntry->second.valMin << "\"";
       if (modeEntry->second.hasMax ) os << " max=\""
         << modeEntry->second.valMax << "\"";
-      os << "</mode>" << endl;
+      os << "></mode>" << endl;
       ++modeEntry;
 
     // Else check if parm is next, and if so print it; fixed or scientific.
@@ -908,7 +1034,7 @@ bool Settings::writeFileXML(ostream& os) {
       else if ( abs(valDefault) < 1000. ) os << fixed << setprecision(5);
       else if ( abs(valDefault) < 1000000. ) os << fixed << setprecision(3);
       else os << scientific << setprecision(4);
-      os << valDefault << "\">";
+      os << valDefault << "\"";
       if (parmEntry->second.hasMin) {
         os << " min=\"";
         valDefault = parmEntry->second.valMin;
@@ -918,7 +1044,7 @@ bool Settings::writeFileXML(ostream& os) {
         else if ( abs(valDefault) < 1000. ) os << fixed << setprecision(5);
         else if ( abs(valDefault) < 1000000. ) os << fixed << setprecision(3);
         else os << scientific << setprecision(4);
-        os << valDefault << "\">";
+        os << valDefault << "\"";
       }
       if (parmEntry->second.hasMax) {
         os << " max=\"";
@@ -929,9 +1055,9 @@ bool Settings::writeFileXML(ostream& os) {
         else if ( abs(valDefault) < 1000. ) os << fixed << setprecision(5);
         else if ( abs(valDefault) < 1000000. ) os << fixed << setprecision(3);
         else os << scientific << setprecision(4);
-        os << valDefault << "\">";
+        os << valDefault << "\"";
       }
-      os << "</parm>" << endl;
+      os << "></parm>" << endl;
       ++parmEntry;
 
     // Else check if word is next, and if so print it.
@@ -954,7 +1080,7 @@ bool Settings::writeFileXML(ostream& os) {
       ) {
       string state[2] = {"off", "on"};
       vector<bool> valDefault = fvecEntry->second.valDefault;
-      os << "<fvec name=\"" << fvecEntry->second.name << "\" default={\"";
+      os << "<fvec name=\"" << fvecEntry->second.name << "\" default=\"{";
       if (valDefault.size() > 0) {
         for (vector<bool>::iterator val = valDefault.begin();
              val != --valDefault.end(); ++val) os << state[*val] << ",";
@@ -968,17 +1094,17 @@ bool Settings::writeFileXML(ostream& os) {
       && ( wvecEntry == wvecs.end() || mvecEntry->first < wvecEntry->first )
       ) {
       vector<int> valDefault = mvecEntry->second.valDefault;
-      os << "<mvec name=\"" << mvecEntry->second.name << "\" default={\"";
+      os << "<mvec name=\"" << mvecEntry->second.name << "\" default=\"{";
       if (valDefault.size() > 0) {
         for (vector<int>::iterator val = valDefault.begin();
              val != --valDefault.end(); ++val) os << *val << ",";
-        os << *(--valDefault.end()) << "}\">";
+        os << *(--valDefault.end()) << "}\"";
       } else os << "}\">";
       if (mvecEntry->second.hasMin ) os << " min=\""
         << mvecEntry->second.valMin << "\"";
       if (mvecEntry->second.hasMax ) os << " max=\""
         << mvecEntry->second.valMax << "\"";
-      os << "</mvec>" << endl;
+      os << "></mvec>" << endl;
       ++mvecEntry;
 
     // Else check if pvec is next; print fixed or scientific.
@@ -986,7 +1112,7 @@ bool Settings::writeFileXML(ostream& os) {
       && ( wvecEntry == wvecs.end() || pvecEntry->first < wvecEntry->first )
       ) {
       vector<double> valDefault = pvecEntry->second.valDefault;
-      os << "<pvec name=\"" << pvecEntry->second.name << "\" default={\"";
+      os << "<pvec name=\"" << pvecEntry->second.name << "\" default=\"{";
       if (valDefault.size() > 0) {
         for (vector<double>::iterator val = valDefault.begin();
              val != --valDefault.end(); ++val) {
@@ -998,7 +1124,7 @@ bool Settings::writeFileXML(ostream& os) {
           else os << scientific << setprecision(4);
           os << *val << ",";
         }
-        os << *(--valDefault.end()) << "}\">";
+        os << *(--valDefault.end()) << "}\"";
       } else os << "}\">";
       if (pvecEntry->second.hasMin ) {
         double valLocal = pvecEntry->second.valMin;
@@ -1009,7 +1135,7 @@ bool Settings::writeFileXML(ostream& os) {
         else if ( abs(valLocal) < 1000. ) os << fixed << setprecision(5);
         else if ( abs(valLocal) < 1000000. ) os << fixed << setprecision(3);
         else os << scientific << setprecision(4);
-        os << valLocal << "\">";
+        os << valLocal << "\"";
       }
       if (pvecEntry->second.hasMax ) {
         double valLocal = pvecEntry->second.valMax;
@@ -1020,15 +1146,15 @@ bool Settings::writeFileXML(ostream& os) {
         else if ( abs(valLocal) < 1000. ) os << fixed << setprecision(5);
         else if ( abs(valLocal) < 1000000. ) os << fixed << setprecision(3);
         else os << scientific << setprecision(4);
-        os << valLocal << "\">";
+        os << valLocal << "\"";
       }
-      os << "</pvec>" <<       endl;
+      os << "></pvec>" <<       endl;
       ++pvecEntry;
 
     // Else print wvec.
     } else {
       vector<string> valDefault = wvecEntry->second.valDefault;
-      os << "<wvec name=\"" << wvecEntry->second.name << "\" default={\"";
+      os << "<wvec name=\"" << wvecEntry->second.name << "\" default=\"{";
       if (valDefault.size() > 0) {
         for (vector<string>::iterator val = valDefault.begin();
              val != --valDefault.end(); ++val) os << *val << ",";
@@ -1312,6 +1438,9 @@ void Settings::list(bool doListAll,  bool doListString, string match) {
     } else {
       vector<string> valsNow = wvecEntry->second.valNow;
       vector<string> valsDefault = wvecEntry->second.valDefault;
+      if ( wvecEntry->first.length() > 10 &&
+           wvecEntry->first.substr(0, 10) == "init:reuse" )
+        valsDefault = valsNow;
       if ( doListAll || (!doListString && valsNow != valsDefault )
         || (doListString && wvecEntry->first.find(match) != string::npos) ) {
         for (unsigned int i = 0; i < valsNow.size() || i < valsDefault.size();
@@ -1694,9 +1823,10 @@ bool Settings::mode(string keyIn, int nowIn, bool force) {
       return false;
     }
     else modeNow.valNow = nowIn;
-    // Tune:ee and Tune:pp each trigger a whole set of changes.
-    if (keyLower == "tune:ee") initTuneEE( modeNow.valNow);
-    if (keyLower == "tune:pp") initTunePP( modeNow.valNow);
+    // Tunes each trigger a whole set of changes.
+    if (keyLower == "tune:ee") initTuneEE(modeNow.valNow);
+    if (keyLower == "tune:pp") initTunePP(modeNow.valNow);
+    if (keyLower == "vincia:tune") initTuneVincia(modeNow.valNow);
   }
   else if (force)
     addMode(keyIn, nowIn, false, false, 0, 0);
@@ -1806,8 +1936,8 @@ void Settings::resetMode(string keyIn) {
   if (isMode(keyIn)) modes[keyLower].valNow
     = modes[toLower(keyIn)].valDefault ;
   // For Tune:ee and Tune:pp must also restore variables involved in tunes.
-  if (keyLower == "tune:ee") resetTuneEE();
-  if (keyLower == "tune:pp") resetTunePP();
+  if (keyLower == "tune:ee") readString("include = tunes/Reset-ee.cmnd", true);
+  if (keyLower == "tune:pp") readString("include = tunes/Reset-pp.cmnd", true);
 }
 
 void Settings::resetParm(string keyIn) {
@@ -1921,342 +2051,17 @@ void Settings::printQuiet(bool quiet) {
 
 //--------------------------------------------------------------------------
 
-// Restore all e+e- settings to their original values.
-
-void Settings::resetTuneEE() {
-
-  // Flavour composition.
-  resetParm("StringFlav:probStoUD");
-  resetParm("StringFlav:probQQtoQ");
-  resetParm("StringFlav:probSQtoQQ");
-  resetParm("StringFlav:probQQ1toQQ0");
-  resetParm("StringFlav:mesonUDvector");
-  resetParm("StringFlav:mesonSvector");
-  resetParm("StringFlav:mesonCvector");
-  resetParm("StringFlav:mesonBvector");
-  resetParm("StringFlav:etaSup");
-  resetParm("StringFlav:etaPrimeSup");
-  resetParm("StringFlav:popcornSpair");
-  resetParm("StringFlav:popcornSmeson");
-  resetFlag("StringFlav:suppressLeadingB");
-
-  // String breaks: z.
-  resetParm("StringZ:aLund");
-  resetParm("StringZ:bLund");
-  resetParm("StringZ:aExtraSquark");
-  resetParm("StringZ:aExtraDiquark");
-  resetParm("StringZ:rFactC");
-  resetParm("StringZ:rFactB");
-
-  // String breaks: pT.
-  resetParm("StringPT:sigma");
-  resetParm("StringPT:enhancedFraction");
-  resetParm("StringPT:enhancedWidth");
-
-  // FSR: strong coupling, IR cutoff.
-  resetParm("TimeShower:alphaSvalue");
-  resetMode("TimeShower:alphaSorder");
-  resetFlag("TimeShower:alphaSuseCMW");
-  resetParm("TimeShower:pTmin");
-  resetParm("TimeShower:pTminChgQ");
-
-}
-
-//--------------------------------------------------------------------------
-
-// Restore all pp settings to their original values.
-
-void Settings::resetTunePP() {
-
-  // PDF set.
-  resetWord("PDF:pSet");
-
-  // Hard matrix elements alpha_s value.
-  resetParm("SigmaProcess:alphaSvalue");
-
-  // Diffraction: cross sections and mass distributions.
-  resetFlag("SigmaTotal:zeroAXB");
-  resetFlag("SigmaDiffractive:dampen");
-  resetParm("SigmaDiffractive:maxXB");
-  resetParm("SigmaDiffractive:maxAX");
-  resetParm("SigmaDiffractive:maxXX");
-  resetParm("Diffraction:largeMassSuppress");
-
-  // FSR: dipoles to beam, spin correlations.
-  resetFlag("TimeShower:dampenBeamRecoil");
-  resetFlag("TimeShower:phiPolAsym");
-
-  // ISR: strong coupling, IR cutoff, coherence and spin correlations.
-  resetParm("SpaceShower:alphaSvalue");
-  resetMode("SpaceShower:alphaSorder");
-  resetParm("SpaceShower:alphaSuseCMW");
-  resetFlag("SpaceShower:samePTasMPI");
-  resetParm("SpaceShower:pT0Ref");
-  resetParm("SpaceShower:ecmRef");
-  resetParm("SpaceShower:ecmPow");
-  resetParm("SpaceShower:pTmaxFudge");
-  resetParm("SpaceShower:pTdampFudge");
-  resetFlag("SpaceShower:rapidityOrder");
-  resetFlag("SpaceShower:rapidityOrderMPI");
-  resetFlag("SpaceShower:phiPolAsym");
-  resetFlag("SpaceShower:phiIntAsym");
-
-  // MPI: strong coupling, IR regularization, energy scaling.
-  resetParm("MultipartonInteractions:alphaSvalue");
-  resetParm("MultipartonInteractions:pT0Ref");
-  resetParm("MultipartonInteractions:ecmRef");
-  resetParm("MultipartonInteractions:ecmPow");
-  resetMode("MultipartonInteractions:bProfile");
-  resetParm("MultipartonInteractions:expPow");
-  resetParm("MultipartonInteractions:a1");
-
-  // Beam remnant parameters.
-  resetParm("BeamRemnants:primordialKTsoft");
-  resetParm("BeamRemnants:primordialKThard");
-  resetParm("BeamRemnants:halfScaleForKT");
-  resetParm("BeamRemnants:halfMassForKT");
-
-  // Colour reconnection parameters.
-  resetMode("ColourReconnection:mode");
-  resetParm("ColourReconnection:range");
-
-}
-
-//--------------------------------------------------------------------------
-
 // Set the values related to a tune of e+e- data,
 // i.e. mainly for final-state radiation and hadronization.
 
-void Settings::initTuneEE( int eeTune) {
+void Settings::initTuneEE(int eeTune) {
 
-  // Do nothing for tune 0.
-  if (eeTune == 0) return;
-
-  // Restore all e+e- settings to their original values.
-  // Is first step for setting up a specific tune.
-  resetTuneEE();
-
-  // Old flavour and FSR defaults carried over from very old JETSET tune,
-  // only with alphaS roughly tuned for "new" pT-ordered shower.
-  if (eeTune == 1) {
-    parm("StringFlav:probStoUD",        0.30  );
-    parm("StringFlav:probQQtoQ",        0.10  );
-    parm("StringFlav:probSQtoQQ",       0.40  );
-    parm("StringFlav:probQQ1toQQ0",     0.05  );
-    parm("StringFlav:mesonUDvector",    1.00  );
-    parm("StringFlav:mesonSvector",     1.50  );
-    parm("StringFlav:mesonCvector",     2.50  );
-    parm("StringFlav:mesonBvector",     3.00  );
-    parm("StringFlav:etaSup",           1.00  );
-    parm("StringFlav:etaPrimeSup",      0.40  );
-    parm("StringFlav:popcornSpair",     0.50  );
-    parm("StringFlav:popcornSmeson",    0.50  );
-    flag("StringFlav:suppressLeadingB", false );
-    parm("StringZ:aLund",               0.30  );
-    parm("StringZ:bLund",               0.58  );
-    parm("StringZ:aExtraSquark",        0.00  );
-    parm("StringZ:aExtraDiquark",       0.50  );
-    parm("StringZ:rFactC",              1.00  );
-    parm("StringZ:rFactB",              1.00  );
-    parm("StringPT:sigma",              0.36  );
-    parm("StringPT:enhancedFraction",   0.01  );
-    parm("StringPT:enhancedWidth",      2.0   );
-    parm("TimeShower:alphaSvalue",      0.137 );
-    mode("TimeShower:alphaSorder",      1     );
-    flag("TimeShower:alphaSuseCMW",     false );
-    parm("TimeShower:pTmin",            0.5   );
-    parm("TimeShower:pTminChgQ",        0.5   );
-  }
-
-  // Marc Montull's tune to particle composition at LEP1 (August 2007).
-  else if (eeTune == 2) {
-    parm("StringFlav:probStoUD",        0.22  );
-    parm("StringFlav:probQQtoQ",        0.08  );
-    parm("StringFlav:probSQtoQQ",       0.75  );
-    parm("StringFlav:probQQ1toQQ0",     0.025 );
-    parm("StringFlav:mesonUDvector",    0.5   );
-    parm("StringFlav:mesonSvector",     0.6   );
-    parm("StringFlav:mesonCvector",     1.5   );
-    parm("StringFlav:mesonBvector",     2.5   );
-    parm("StringFlav:etaSup",           0.60  );
-    parm("StringFlav:etaPrimeSup",      0.15  );
-    parm("StringFlav:popcornSpair",     1.0   );
-    parm("StringFlav:popcornSmeson",    1.0   );
-    flag("StringFlav:suppressLeadingB", false );   // kept fixed
-    parm("StringZ:aLund",               0.76  );
-    parm("StringZ:bLund",               0.58  );   // kept fixed
-    parm("StringZ:aExtraSquark",        0.00  );   // kept fixed
-    parm("StringZ:aExtraDiquark",       0.50  );   // kept fixed
-    parm("StringZ:rFactC",              1.00  );   // kept fixed
-    parm("StringZ:rFactB",              1.00  );   // kept fixed
-    parm("StringPT:sigma",              0.36  );   // kept fixed
-    parm("StringPT:enhancedFraction",   0.01  );   // kept fixed
-    parm("StringPT:enhancedWidth",      2.0   );   // kept fixed
-    parm("TimeShower:alphaSvalue",      0.137 );   // kept fixed
-    mode("TimeShower:alphaSorder",      1     );   // kept fixed
-    flag("TimeShower:alphaSuseCMW",     false );   // kept fixed
-    parm("TimeShower:pTmin",            0.5   );   // kept fixed
-    parm("TimeShower:pTminChgQ",        0.5   );   // kept fixed
-  }
-
-  // Full e+e- tune of flavours and FSR to LEP1 data within the
-  // Rivet + Professor framework, by Hendrik Hoeth (June 2009).
-  else if (eeTune == 3) {
-    parm("StringFlav:probStoUD",        0.19  );
-    parm("StringFlav:probQQtoQ",        0.09  );
-    parm("StringFlav:probSQtoQQ",       1.00  );
-    parm("StringFlav:probQQ1toQQ0",     0.027 );
-    parm("StringFlav:mesonUDvector",    0.62  );
-    parm("StringFlav:mesonSvector",     0.725 );
-    parm("StringFlav:mesonCvector",     1.06  );
-    parm("StringFlav:mesonBvector",     3.0   );
-    parm("StringFlav:etaSup",           0.63  );
-    parm("StringFlav:etaPrimeSup",      0.12  );
-    parm("StringFlav:popcornSpair",     0.5   );   // kept fixed
-    parm("StringFlav:popcornSmeson",    0.5   );   // kept fixed
-    flag("StringFlav:suppressLeadingB", false );   // kept fixed
-    parm("StringZ:aLund",               0.3   );   // kept fixed
-    parm("StringZ:bLund",               0.8   );
-    parm("StringZ:aExtraSquark",        0.00  );   // kept fixed
-    parm("StringZ:aExtraDiquark",       0.50  );   // kept fixed
-    parm("StringZ:rFactC",              1.00  );   // kept fixed
-    parm("StringZ:rFactB",              0.67  );
-    parm("StringPT:sigma",              0.304 );
-    parm("StringPT:enhancedFraction",   0.01  );   // kept fixed
-    parm("StringPT:enhancedWidth",      2.0   );   // kept fixed
-    parm("TimeShower:alphaSvalue",      0.1383);
-    mode("TimeShower:alphaSorder",      1     );   // kept fixed
-    flag("TimeShower:alphaSuseCMW",     false );   // kept fixed
-    parm("TimeShower:pTmin",            0.4   );   // kept fixed (near limit)
-    parm("TimeShower:pTminChgQ",        0.4   );   // kept same as pTmin
-  }
-
-  // Full e+e- tune of flavours and FSR to LEP1 data, by Peter Skands
-  // (September 2013). Note use of CMW convention for shower.
-  else if (eeTune == 4) {
-    parm("StringFlav:probStoUD",        0.21  );
-    parm("StringFlav:probQQtoQ",        0.086 );
-    parm("StringFlav:probSQtoQQ",       1.00  );
-    parm("StringFlav:probQQ1toQQ0",     0.031 );
-    parm("StringFlav:mesonUDvector",    0.45  );
-    parm("StringFlav:mesonSvector",     0.60  );
-    parm("StringFlav:mesonCvector",     0.95  );
-    parm("StringFlav:mesonBvector",     3.0   );   // kept fixed
-    parm("StringFlav:etaSup",           0.65  );
-    parm("StringFlav:etaPrimeSup",      0.08  );
-    parm("StringFlav:popcornSpair",     0.5   );   // kept fixed
-    parm("StringFlav:popcornSmeson",    0.5   );   // kept fixed
-    flag("StringFlav:suppressLeadingB", false );   // kept fixed
-    parm("StringZ:aLund",               0.55  );
-    parm("StringZ:bLund",               1.08  );
-    parm("StringZ:aExtraSquark",        0.00  );   // kept fixed
-    parm("StringZ:aExtraDiquark",       1.00  );
-    parm("StringZ:rFactC",              1.00  );   // kept fixed
-    parm("StringZ:rFactB",              0.85  );
-    parm("StringPT:sigma",              0.305 );
-    parm("StringPT:enhancedFraction",   0.01  );   // kept fixed
-    parm("StringPT:enhancedWidth",      2.0   );   // kept fixed
-    parm("TimeShower:alphaSvalue",      0.127 );
-    mode("TimeShower:alphaSorder",      1     );   // kept fixed
-    flag("TimeShower:alphaSuseCMW",     true  );
-    parm("TimeShower:pTmin",            0.4   );
-    parm("TimeShower:pTminChgQ",        0.4   );   // kept same as pTmin
-  }
-
-  // First e+e- tune by Nadine Fischer, using eeTune = 3 for flavour
-  // composition (September 2013).
-  else if (eeTune == 5) {
-    parm("StringFlav:probStoUD",        0.19  );   // kept fixed
-    parm("StringFlav:probQQtoQ",        0.09  );   // kept fixed
-    parm("StringFlav:probSQtoQQ",       1.00  );   // kept fixed
-    parm("StringFlav:probQQ1toQQ0",     0.027 );   // kept fixed
-    parm("StringFlav:mesonUDvector",    0.62  );   // kept fixed
-    parm("StringFlav:mesonSvector",     0.725 );   // kept fixed
-    parm("StringFlav:mesonCvector",     1.06  );   // kept fixed
-    parm("StringFlav:mesonBvector",     3.0   );   // kept fixed
-    parm("StringFlav:etaSup",           0.63  );   // kept fixed
-    parm("StringFlav:etaPrimeSup",      0.12  );   // kept fixed
-    parm("StringFlav:popcornSpair",     0.5   );   // kept fixed
-    parm("StringFlav:popcornSmeson",    0.5   );   // kept fixed
-    flag("StringFlav:suppressLeadingB", false );   // kept fixed
-    parm("StringZ:aLund",               0.386 );
-    parm("StringZ:bLund",               0.977 );
-    parm("StringZ:aExtraSquark",        0.00  );   // kept fixed
-    parm("StringZ:aExtraDiquark",       0.940 );
-    parm("StringZ:rFactC",              1.00  );   // kept fixed
-    parm("StringZ:rFactB",              0.67  );   // kept fixed
-    parm("StringPT:sigma",              0.286 );
-    parm("StringPT:enhancedFraction",   0.01  );   // kept fixed
-    parm("StringPT:enhancedWidth",      2.0   );   // kept fixed
-    parm("TimeShower:alphaSvalue",      0.139 );
-    mode("TimeShower:alphaSorder",      1     );   // kept fixed
-    flag("TimeShower:alphaSuseCMW",     false );   // kept fixed
-    parm("TimeShower:pTmin",            0.409 );
-    parm("TimeShower:pTminChgQ",        0.409 );   // kept same as pTmin
-  }
-
-  // Second e+e- tune by Nadine Fischer, using eeTune = 3 for flavour
-  // composition (September 2013).
-  else if (eeTune == 6) {
-    parm("StringFlav:probStoUD",        0.19  );   // kept fixed
-    parm("StringFlav:probQQtoQ",        0.09  );   // kept fixed
-    parm("StringFlav:probSQtoQQ",       1.00  );   // kept fixed
-    parm("StringFlav:probQQ1toQQ0",     0.027 );   // kept fixed
-    parm("StringFlav:mesonUDvector",    0.62  );   // kept fixed
-    parm("StringFlav:mesonSvector",     0.725 );   // kept fixed
-    parm("StringFlav:mesonCvector",     1.06  );   // kept fixed
-    parm("StringFlav:mesonBvector",     3.0   );   // kept fixed
-    parm("StringFlav:etaSup",           0.63  );   // kept fixed
-    parm("StringFlav:etaPrimeSup",      0.12  );   // kept fixed
-    parm("StringFlav:popcornSpair",     0.5   );   // kept fixed
-    parm("StringFlav:popcornSmeson",    0.5   );   // kept fixed
-    flag("StringFlav:suppressLeadingB", false );   // kept fixed
-    parm("StringZ:aLund",               0.351 );
-    parm("StringZ:bLund",               0.942 );
-    parm("StringZ:aExtraSquark",        0.00  );   // kept fixed
-    parm("StringZ:aExtraDiquark",       0.547 );
-    parm("StringZ:rFactC",              1.00  );   // kept fixed
-    parm("StringZ:rFactB",              0.67  );   // kept fixed
-    parm("StringPT:sigma",              0.283 );
-    parm("StringPT:enhancedFraction",   0.01  );   // kept fixed
-    parm("StringPT:enhancedWidth",      2.0   );   // kept fixed
-    parm("TimeShower:alphaSvalue",      0.139);
-    mode("TimeShower:alphaSorder",      1     );   // kept fixed
-    flag("TimeShower:alphaSuseCMW",     false );   // kept fixed
-    parm("TimeShower:pTmin",            0.406 );
-    parm("TimeShower:pTminChgQ",        0.406 );   // kept same as pTmin
-  }
-
-  // The Monash 2013 tune by Peter Skands, the e+e- part (January 2014).
-  else if (eeTune == 7) {
-    parm("StringFlav:probStoUD",        0.217 );
-    parm("StringFlav:probQQtoQ",        0.081 );
-    parm("StringFlav:probSQtoQQ",       0.915 );
-    parm("StringFlav:probQQ1toQQ0",     0.0275);
-    parm("StringFlav:mesonUDvector",    0.50  );
-    parm("StringFlav:mesonSvector",     0.55  );
-    parm("StringFlav:mesonCvector",     0.88  );
-    parm("StringFlav:mesonBvector",     2.20  );
-    parm("StringFlav:etaSup",           0.60  );
-    parm("StringFlav:etaPrimeSup",      0.12  );
-    parm("StringFlav:popcornSpair",     0.90  );
-    parm("StringFlav:popcornSmeson",    0.50  );
-    flag("StringFlav:suppressLeadingB", false );   // kept fixed
-    parm("StringZ:aLund",               0.68  );
-    parm("StringZ:bLund",               0.98  );
-    parm("StringZ:aExtraSquark",        0.00  );   // kept fixed
-    parm("StringZ:aExtraDiquark",       0.97  );
-    parm("StringZ:rFactC",              1.32  );
-    parm("StringZ:rFactB",              0.855 );
-    parm("StringPT:sigma",              0.335 );
-    parm("StringPT:enhancedFraction",   0.01  );   // kept fixed
-    parm("StringPT:enhancedWidth",      2.0   );   // kept fixed
-    parm("TimeShower:alphaSvalue",      0.1365);
-    mode("TimeShower:alphaSorder",      1     );   // kept fixed
-    flag("TimeShower:alphaSuseCMW",     false );   // kept fixed
-    parm("TimeShower:pTmin",            0.5   );   // kept fixed
-    parm("TimeShower:pTminChgQ",        0.5   );   // kept fixed
-  }
+  // Map the tune files to integer values.
+  vector<string> tunes = {
+    "Reset-ee", "", "OldJETSET", "Montull2007", "Hoeth2009", "Skands2013",
+    "Fischer2013-1", "Fischer2013-2", "Monash2013-ee"};
+  if (eeTune + 1 < (int)tunes.size() && tunes[eeTune + 1] != "")
+    readString("include = tunes/" + tunes[eeTune + 1] + ".cmnd", true);
 
 }
 
@@ -2265,766 +2070,34 @@ void Settings::initTuneEE( int eeTune) {
 // Set the values related to a tune of pp/ppbar data,
 // i.e. mainly for initial-state radiation and multiparton interactions.
 
-void Settings::initTunePP( int ppTune) {
+void Settings::initTunePP(int ppTune) {
 
-  // Do nothing for tune 0.
-  if (ppTune == 0) return;
+  // Map the tune files to integer values.
+  vector<string> tunes = {
+    "Rest-pp", "", "OldIsrMpi", "Skands2009", "Tune2C", "Tune2M", "Tune4C",
+    "Tune4Cx", "ATLAS-MB-A2-CTEQ6L1", "ATLAS-MB-A2-MSTW2008LO",
+    "ATLAS-UE-AU2-CTEQ6L1", "ATLAS-UE-AU2-MSTW2008LO", "ATLAS-UE-AU2-CT10",
+    "ATLAS-UE-AU2-MRST2007LOx", "ATLAS-UE-AU2-MRST2007LOxx", "Monash2013",
+    "CMS-CUETP8S1-CTEQ6L1", "CMS-CUETP8S1-HERAPDF1", "ATLAS-AZ",
+    "CMS-CUETP8M1-NNPDF23LO", "ATLAS-A14-CTEQL1", "ATLAS-A14-MSTW2008LO",
+    "ATLAS-A14-NNPDF23LO", "ATLAS-A14-HERAPDF15LO", "ATLAS-A14-v+1",
+    "ATLAS-A14-v-1", "ATLAS-A14-v+2", "ATLAS-A14-v-2", "ATLAS-A14-v+3a",
+    "ATLAS-A14-v-3a", "ATLAS-A14-v+3b", "ATLAS-A14-v-3b", "ATLAS-A14-v+3c",
+    "ATLAS-A14-v-3c"};
+  if (ppTune + 1 < (int)tunes.size() && tunes[ppTune + 1] != "")
+    readString("include = tunes/" + tunes[ppTune + 1] + ".cmnd", true);
 
-  // Restore all pp/ppbar settings to their original values.
-  // Is first step for setting up a specific tune.
-  resetTunePP();
+}
 
-  // Set up e+e- tune that goes with the corresponding pp tune.
-  if (ppTune > 0) {
-    int eeTune = 3;
-    if (ppTune == 14 || ppTune >= 18) eeTune = 7;
-    // The mode setting is for documentation, the real action is by initTuneEE.
-    mode("Tune:ee",                            eeTune );
-    initTuneEE( eeTune);
-  }
+//--------------------------------------------------------------------------
 
-  // Decide whether to use LHAPFD where possible.
-  int preferLHAPDF = mode("Tune:preferLHAPDF");
+// Set the values related to a tune of Vincia.
 
-  // Old ISR and MPI defaults from early and primitive comparisons with data.
-  if (ppTune == 1) {
-    word("PDF:pSet",                            "2"   );
-    parm("SigmaProcess:alphaSvalue",            0.1265);
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             false );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         false );
-    flag("TimeShower:phiPolAsym",               false );
-    parm("SpaceShower:alphaSvalue",             0.127 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             true  );
-    parm("SpaceShower:pT0Ref",                  2.2   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.16  );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           false );
-    flag("SpaceShower:rapidityOrderMPI",        false );
-    flag("SpaceShower:phiPolAsym",              false );
-    flag("SpaceShower:phiIntAsym",              false );
-    parm("MultipartonInteractions:alphaSvalue", 0.127 );
-    parm("MultipartonInteractions:pT0Ref",      2.15  );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.16  );
-    mode("MultipartonInteractions:bProfile",    2     );
-    parm("MultipartonInteractions:expPow",      1.0  );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.4   );
-    parm("BeamRemnants:primordialKThard",       2.1   );
-    parm("BeamRemnants:halfScaleForKT",         7.0   );
-    parm("BeamRemnants:halfMassForKT",          2.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            2.5   );
-  }
+void Settings::initTuneVincia(int vinciaTune) {
 
-  // "Tune 1" simple first tune by Peter Skands to ISR and MPI, July 2009.
-  else if (ppTune == 2) {
-    word("PDF:pSet",                            "2"   );
-    parm("SigmaProcess:alphaSvalue",            0.1265);
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             false );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         false );
-    flag("TimeShower:phiPolAsym",               false );
-    parm("SpaceShower:alphaSvalue",             0.137 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           false );
-    flag("SpaceShower:rapidityOrderMPI",        false );
-    flag("SpaceShower:phiPolAsym",              false );
-    flag("SpaceShower:phiIntAsym",              false );
-    parm("MultipartonInteractions:alphaSvalue", 0.127 );
-    parm("MultipartonInteractions:pT0Ref",      2.25  );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.24  );
-    mode("MultipartonInteractions:bProfile",    1     );
-    parm("MultipartonInteractions:expPow",      1.0  );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.5   );
-    parm("BeamRemnants:primordialKThard",       2.0   );
-    parm("BeamRemnants:halfScaleForKT",         1.0   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            10.0  );
-  }
-
-  // Tune 2C, July 2010.
-  else if (ppTune == 3) {
-    word("PDF:pSet",                            "8"   );
-    parm("SigmaProcess:alphaSvalue",            0.135 );
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             false );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.137 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true  );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.135 );
-    parm("MultipartonInteractions:pT0Ref",      2.32  );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.21  );
-    mode("MultipartonInteractions:bProfile",    3     );
-    parm("MultipartonInteractions:expPow",      1.6   );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.5   );
-    parm("BeamRemnants:primordialKThard",       2.0   );
-    parm("BeamRemnants:halfScaleForKT",         1.0   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            3.0   );
-  }
-
-  // Tune 2M, July 2010.
-  else if (ppTune == 4) {
-    word("PDF:pSet",                            "4"   );
-    parm("SigmaProcess:alphaSvalue",            0.1265);
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             false );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.130 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true  );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.127 );
-    parm("MultipartonInteractions:pT0Ref",      2.455 );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.26  );
-    mode("MultipartonInteractions:bProfile",    3     );
-    parm("MultipartonInteractions:expPow",      1.15  );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.5   );
-    parm("BeamRemnants:primordialKThard",       2.0   );
-    parm("BeamRemnants:halfScaleForKT",         1.0   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            3.0   );
-  }
-
-  // Tune 4C, October 2010.
-  else if (ppTune == 5) {
-    word("PDF:pSet",                            "8"   );
-    parm("SigmaProcess:alphaSvalue",            0.135 );
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             true  );
-    parm("SigmaDiffractive:maxXB",              65.0  );
-    parm("SigmaDiffractive:maxAX",              65.0  );
-    parm("SigmaDiffractive:maxXX",              65.0  );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.137 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true  );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.135 );
-    parm("MultipartonInteractions:pT0Ref",      2.085 );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.19  );
-    mode("MultipartonInteractions:bProfile",    3     );
-    parm("MultipartonInteractions:expPow",      2.0   );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.5   );
-    parm("BeamRemnants:primordialKThard",       2.0   );
-    parm("BeamRemnants:halfScaleForKT",         1.0   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            1.5   );
-  }
-
-  // Tune 4Cx, January 2011.
-  else if (ppTune == 6) {
-    word("PDF:pSet",                            "8"   );
-    parm("SigmaProcess:alphaSvalue",            0.135 );
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             true  );
-    parm("SigmaDiffractive:maxXB",              65.0  );
-    parm("SigmaDiffractive:maxAX",              65.0  );
-    parm("SigmaDiffractive:maxXX",              65.0  );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.137 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true  );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.135 );
-    parm("MultipartonInteractions:pT0Ref",      2.15  );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.19  );
-    mode("MultipartonInteractions:bProfile",    4     );
-    parm("MultipartonInteractions:expPow",      1.0   );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.5   );
-    parm("BeamRemnants:primordialKThard",       2.0   );
-    parm("BeamRemnants:halfScaleForKT",         1.0   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            1.5   );
-  }
-
-  // The Monash 2013 tune by Peter Skands, the pp part (January 2014).
-  else if (ppTune == 14) {
-    word("PDF:pSet",                            "13"  );   // NNPDF
-    parm("SigmaProcess:alphaSvalue",            0.130 );   // same as PDF
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             true  );
-    parm("SigmaDiffractive:maxXB",              65.0  );
-    parm("SigmaDiffractive:maxAX",              65.0  );
-    parm("SigmaDiffractive:maxXX",              65.0  );
-    parm("Diffraction:largeMassSuppress",       4.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.1365);   // same as FSR
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  7000.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true  );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.130 );   // same as PDF
-    parm("MultipartonInteractions:pT0Ref",      2.28  );
-    parm("MultipartonInteractions:ecmRef",      7000. );
-    parm("MultipartonInteractions:ecmPow",      0.215 );
-    mode("MultipartonInteractions:bProfile",    3     );
-    parm("MultipartonInteractions:expPow",      1.85  );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.9   );
-    parm("BeamRemnants:primordialKThard",       1.8   );
-    parm("BeamRemnants:halfScaleForKT",         1.5   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            1.80  );
-  }
-
-  // Several ATLAS and CMS tunes start out from Tune 4C.
-  else if (ppTune > 0 && ppTune < 18) {
-    parm("SigmaProcess:alphaSvalue",            0.135 );
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             true  );
-    parm("SigmaDiffractive:maxXB",              65.0  );
-    parm("SigmaDiffractive:maxAX",              65.0  );
-    parm("SigmaDiffractive:maxXX",              65.0  );
-    parm("Diffraction:largeMassSuppress",       2.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.137 );
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  1800.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.135 );
-    parm("MultipartonInteractions:pT0Ref",      2.085 );
-    parm("MultipartonInteractions:ecmRef",      1800. );
-    parm("MultipartonInteractions:ecmPow",      0.19  );
-    mode("MultipartonInteractions:bProfile",    3     );
-    parm("MultipartonInteractions:expPow",      2.0   );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.5   );
-    parm("BeamRemnants:primordialKThard",       2.0   );
-    parm("BeamRemnants:halfScaleForKT",         1.0   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            1.5   );
-
-    // Several ATLAS tunes in the A2 and AU2 series, see
-    // ATLAS note ATL-PHYS-PUB-2012-003 (August 2012).
-    // ATLAS MB tune A2-CTEQ6L1.
-    if (ppTune == 7) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet",       "LHAPDF5:cteq6ll.LHpdf");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",             "LHAPDF6:cteq6l1");
-      else word("PDF:pSet",                     "8"   );
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    2.18  );
-      parm("MultipartonInteractions:ecmPow",    0.22  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.06  );
-      parm("ColourReconnection:range",          1.55  );
-    }
-
-    // ATLAS MB tune A2-MSTW2008LO.
-    else if (ppTune == 8) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet", "LHAPDF5:MSTW2008lo68cl.LHgrid");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",      "LHAPDF6:MSTW2008lo68cl");
-      else word("PDF:pSet",                     "5"   );
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    1.90  );
-      parm("MultipartonInteractions:ecmPow",    0.30  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.03  );
-      parm("ColourReconnection:range",          2.28  );
-    }
-
-    // ATLAS UE tune AU2-CTEQ6L1.
-    if (ppTune == 9) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet",       "LHAPDF5:cteq6ll.LHpdf");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",             "LHAPDF6:cteq6l1");
-      else word("PDF:pSet",                     "8"   );
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    2.13  );
-      parm("MultipartonInteractions:ecmPow",    0.21  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.00  );
-      parm("ColourReconnection:range",          2.21  );
-    }
-
-    // ATLAS UE tune AU2-MSTW2008LO.
-    else if (ppTune == 10) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet", "LHAPDF5:MSTW2008lo68cl.LHgrid");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",      "LHAPDF6:MSTW2008lo68cl");
-      else word("PDF:pSet",                     "5"   );
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    1.87  );
-      parm("MultipartonInteractions:ecmPow",    0.28  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.01  );
-      parm("ColourReconnection:range",          5.32  );
-    }
-
-    // ATLAS UE tune AU2-CT10.
-    else if (ppTune == 11) {
-      if (preferLHAPDF == 2)
-        word("PDF:pSet",                "LHAPDF6:CT10");
-      else
-        word("PDF:pSet",         "LHAPDF5:CT10.LHgrid");
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    1.70  );
-      parm("MultipartonInteractions:ecmPow",    0.16  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.10  );
-      parm("ColourReconnection:range",          4.67  );
-    }
-
-    // ATLAS UE tune AU2-MRST2007LO*.
-    else if (ppTune == 12) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet", "LHAPDF5:MRST2007lomod.LHgrid");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",       "LHAPDF6:MRST2007lomod");
-      else word("PDF:pSet",                     "3"   );
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    2.39  );
-      parm("MultipartonInteractions:ecmPow",    0.24  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.01  );
-      parm("ColourReconnection:range",          1.76  );
-    }
-
-    // ATLAS UE tune AU2-MRST2007LO**.
-    else if (ppTune == 13) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet",     "LHAPDF5:MRSTMCal.LHgrid");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",            "LHAPDF6:MRSTMCal");
-      else word("PDF:pSet",                     "4"   );
-      flag("SpaceShower:rapidityOrder",         false );
-      flag("SpaceShower:rapidityOrderMPI",      false );
-      parm("MultipartonInteractions:pT0Ref",    2.57  );
-      parm("MultipartonInteractions:ecmPow",    0.23  );
-      mode("MultipartonInteractions:bProfile",  4     );
-      parm("MultipartonInteractions:expPow",    1.0   );
-      parm("MultipartonInteractions:a1",        0.01  );
-      parm("ColourReconnection:range",          1.47  );
-    }
-
-    // The CMS UE tunes CUETP8S1-CTEQ6L1 and CUETP8S1-HERAPDF1.5LO,
-    // see the note CMS PAS GEN-14-001 (April 2014).
-    // CMS UE tune CUETP8S1-CTEQ6L1.
-    else if (ppTune == 15) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet",       "LHAPDF5:cteq6ll.LHpdf");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",             "LHAPDF6:cteq6l1");
-      else word("PDF:pSet",                     "8"   );
-      parm("MultipartonInteractions:pT0Ref",    2.1006);
-      parm("MultipartonInteractions:ecmPow",    0.2106);
-      parm("MultipartonInteractions:expPow",    1.6089);
-      parm("MultipartonInteractions:a1",        0.00  );
-      parm("ColourReconnection:range",          3.3126);
-    }
-
-    // CMS UE tune CUETP8S1-HERAPDF1.5LO.
-    else if (ppTune == 16) {
-      if (preferLHAPDF == 2)
-        word("PDF:pSet",     "LHAPDF6:HERAPDF15LO_EIG");
-      else
-        word("PDF:pSet", "LHAPDF5:HERAPDF1.5LO_EIG.LHgrid");
-      parm("MultipartonInteractions:pT0Ref",    2.0001);
-      parm("MultipartonInteractions:ecmPow",    0.2499);
-      parm("MultipartonInteractions:expPow",    1.6905);
-      parm("MultipartonInteractions:a1",        0.00  );
-      parm("ColourReconnection:range",          6.0964);
-    }
-
-    // ATLAS tune AZ to the Z0/gamma* pTspectrum, see the note
-    // CERN-PH-EP-2014-075 [arXiv:1406.3660 [hep-ex]] (June 2014).
-    else if (ppTune == 17) {
-      parm("SpaceShower:alphaSvalue",           0.1237);
-      parm("SpaceShower:pT0Ref",                0.59  );
-      parm("MultipartonInteractions:pT0Ref",    2.18  );
-      parm("BeamRemnants:primordialKThard",     1.71  );
-    }
-  }
-
-  // Several ATLAS and CMS tunes and tunes close-packing of strings
-  // and hadron rescattering with start out from Monash 2013 tune.
-  else if (ppTune >= 18) {
-    word("PDF:pSet",                            "13"  );   // NNPDF
-    parm("SigmaProcess:alphaSvalue",            0.130 );   // same as PDF
-    flag("SigmaTotal:zeroAXB",                  true  );
-    flag("SigmaDiffractive:dampen",             true  );
-    parm("SigmaDiffractive:maxXB",              65.0  );
-    parm("SigmaDiffractive:maxAX",              65.0  );
-    parm("SigmaDiffractive:maxXX",              65.0  );
-    parm("Diffraction:largeMassSuppress",       4.0   );
-    flag("TimeShower:dampenBeamRecoil",         true  );
-    flag("TimeShower:phiPolAsym",               true  );
-    parm("SpaceShower:alphaSvalue",             0.1365);   // same as FSR
-    mode("SpaceShower:alphaSorder",             1     );
-    flag("SpaceShower:alphaSuseCMW",            false );
-    flag("SpaceShower:samePTasMPI",             false );
-    parm("SpaceShower:pT0Ref",                  2.0   );
-    parm("SpaceShower:ecmRef",                  7000.0);
-    parm("SpaceShower:ecmPow",                  0.0   );
-    parm("SpaceShower:pTmaxFudge",              1.0   );
-    parm("SpaceShower:pTdampFudge",             1.0   );
-    flag("SpaceShower:rapidityOrder",           true  );
-    flag("SpaceShower:rapidityOrderMPI",        true  );
-    flag("SpaceShower:phiPolAsym",              true  );
-    flag("SpaceShower:phiIntAsym",              true  );
-    parm("MultipartonInteractions:alphaSvalue", 0.130 );   // same as PDF
-    parm("MultipartonInteractions:pT0Ref",      2.28  );
-    parm("MultipartonInteractions:ecmRef",      7000. );
-    parm("MultipartonInteractions:ecmPow",      0.215 );
-    mode("MultipartonInteractions:bProfile",    3     );
-    parm("MultipartonInteractions:expPow",      1.85  );
-    parm("MultipartonInteractions:a1",          0.15  );
-    parm("BeamRemnants:primordialKTsoft",       0.9   );
-    parm("BeamRemnants:primordialKThard",       1.8   );
-    parm("BeamRemnants:halfScaleForKT",         1.5   );
-    parm("BeamRemnants:halfMassForKT",          1.0   );
-    mode("ColourReconnection:mode",             0     );
-    parm("ColourReconnection:range",            1.80  );
-
-    // CMS tune MonashStar = CUETP8M1-NNPDF2.3LO.
-    // See R.D. Field, presentation at MPI@LHC 2014, Krakow, Poland.
-    if (ppTune == 18) {
-      parm("MultipartonInteractions:pT0Ref",    2.4024);
-      parm("MultipartonInteractions:ecmPow",    0.25208);
-      parm("MultipartonInteractions:expPow",    1.60  );
-    }
-
-    // The ATLAS A14 tunes, central tune with CTEQL1.
-    // See ATL-PHYS-PUB-2014-021 (November 2014).
-    // Warning: note that TimeShower:alphaSvalue is set here, although
-    // normally it would be in the domain of ee tunes. This makes the
-    // order of Tune:ee and Tune:pp commands relevant.
-    else if (ppTune == 19) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet",       "LHAPDF5:cteq6ll.LHpdf");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",             "LHAPDF6:cteq6l1");
-      else word("PDF:pSet",                     "8"   );
-      parm("SigmaProcess:alphaSvalue",          0.144 );
-      parm("TimeShower:alphaSvalue",            0.126 );
-      parm("SpaceShower:alphaSvalue",           0.125 );
-      parm("SpaceShower:pT0Ref",                1.3   );
-      parm("SpaceShower:pTmaxFudge",            0.95   );
-      parm("SpaceShower:pTdampFudge",           1.21  );
-      parm("MultipartonInteractions:alphaSvalue",0.118);
-      parm("MultipartonInteractions:pT0Ref",    1.98  );
-      parm("BeamRemnants:primordialKThard",     1.72  );
-      parm("ColourReconnection:range",          2.08  );
-    }
-
-    // The ATLAS A14 tunes, central tune with MSTW2008LO.
-    else if (ppTune == 20) {
-      if (preferLHAPDF == 1)
-        word("PDF:pSet", "LHAPDF5:MSTW2008lo68cl.LHgrid");
-      else if (preferLHAPDF == 2)
-        word("PDF:pSet",      "LHAPDF6:MSTW2008lo68cl");
-      else word("PDF:pSet",                     "5"   );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.129 );
-      parm("SpaceShower:alphaSvalue",           0.129 );
-      parm("SpaceShower:pT0Ref",                1.62  );
-      parm("SpaceShower:pTmaxFudge",            0.92  );
-      parm("SpaceShower:pTdampFudge",           1.14  );
-      parm("MultipartonInteractions:alphaSvalue",0.130);
-      parm("MultipartonInteractions:pT0Ref",    2.28  );
-      parm("BeamRemnants:primordialKThard",     1.82  );
-      parm("ColourReconnection:range",          1.87  );
-    }
-
-    // The ATLAS A14 tunes, central tune with NNPDF2.3LO.
-    else if (ppTune == 21) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.127 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.05  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, central tune with HERAPDF1.5LO.
-    else if (ppTune == 22) {
-      if (preferLHAPDF == 2)
-        word("PDF:pSet",     "LHAPDF6:HERAPDF15LO_EIG");
-      else
-        word("PDF:pSet", "LHAPDF5:HERAPDF1.5LO_EIG.LHgrid");
-      parm("SigmaProcess:alphaSvalue",          0.141 );
-      parm("TimeShower:alphaSvalue",            0.130 );
-      parm("SpaceShower:alphaSvalue",           0.128);
-      parm("SpaceShower:pT0Ref",                1.61  );
-      parm("SpaceShower:pTmaxFudge",            0.95  );
-      parm("SpaceShower:pTdampFudge",           1.10  );
-      parm("MultipartonInteractions:alphaSvalue",0.123);
-      parm("MultipartonInteractions:pT0Ref",    2.14  );
-      parm("BeamRemnants:primordialKThard",     1.83  );
-      parm("ColourReconnection:range",          1.78  );
-    }
-
-    // The ATLAS A14 tunes, variation 1+.
-    else if (ppTune == 23) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.127 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.05  );
-      parm("MultipartonInteractions:alphaSvalue",0.131);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.73  );
-    }
-
-    // The ATLAS A14 tunes, variation 1-.
-    else if (ppTune == 24) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.127 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.05  );
-      parm("MultipartonInteractions:alphaSvalue",0.121);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.69  );
-    }
-
-    // The ATLAS A14 tunes, variation 2+.
-    else if (ppTune == 25) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.139 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.60  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.04  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 2-.
-    else if (ppTune == 26) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.111 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.50  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.08  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 3a+.
-    else if (ppTune == 27) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.136 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.67  );
-      parm("SpaceShower:pTmaxFudge",            0.98  );
-      parm("SpaceShower:pTdampFudge",           1.36  );
-      parm("MultipartonInteractions:alphaSvalue",0.125);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 3a-.
-    else if (ppTune == 28) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.124 );
-      parm("SpaceShower:alphaSvalue",           0.127 );
-      parm("SpaceShower:pT0Ref",                1.51  );
-      parm("SpaceShower:pTmaxFudge",            0.88  );
-      parm("SpaceShower:pTdampFudge",           0.93  );
-      parm("MultipartonInteractions:alphaSvalue",0.127);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 3b+.
-    else if (ppTune == 29) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.114 );
-      parm("SpaceShower:alphaSvalue",           0.129 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            1.00  );
-      parm("SpaceShower:pTdampFudge",           1.04  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 3b-.
-    else if (ppTune == 30) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.138 );
-      parm("SpaceShower:alphaSvalue",           0.126 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            0.83  );
-      parm("SpaceShower:pTdampFudge",           1.07  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 3c+.
-    else if (ppTune == 31) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.127 );
-      parm("SpaceShower:alphaSvalue",           0.140 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.05  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-    // The ATLAS A14 tunes, variation 3c-.
-    else if (ppTune == 32) {
-      word("PDF:pSet",                          "13"  );
-      parm("SigmaProcess:alphaSvalue",          0.140 );
-      parm("TimeShower:alphaSvalue",            0.127 );
-      parm("SpaceShower:alphaSvalue",           0.115 );
-      parm("SpaceShower:pT0Ref",                1.56  );
-      parm("SpaceShower:pTmaxFudge",            0.91  );
-      parm("SpaceShower:pTdampFudge",           1.05  );
-      parm("MultipartonInteractions:alphaSvalue",0.126);
-      parm("MultipartonInteractions:pT0Ref",    2.09  );
-      parm("BeamRemnants:primordialKThard",     1.88  );
-      parm("ColourReconnection:range",          1.71  );
-    }
-
-  }
+  // Currently only a single tune.
+  if (vinciaTune == 0)
+    readString("include = tunes/VinciaDefault.cmnd", true);
 
 }
 

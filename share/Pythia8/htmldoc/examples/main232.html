@@ -1,0 +1,240 @@
+<html><head><title>main232</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main232</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main232.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#event+filter">Event&nbsp;filter</a>
+//            <a href="../ExampleKeywords.html#analysis">Analysis</a>
+
+// This is a simple test program.
+// It illustrates how to write an event filter.
+// No new functionality is involved - all could be done in the main program
+// - but the division of tasks may be more convenient for recurrent cuts.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// The EventFilter class.
+
+// The constructor takes the following arguments
+// select = 1 : keep only final particles.
+//        = 2 : keep only final visible particles (i.e. not neutrinos).
+//        = 3 : keep only final charged particles.
+// etaMax (default = 50) : keep only particles with pseudorapidity
+//        |eta| &lt; etaMax.
+// pTminCharged (default = 0) : keep a charged particle only if
+//        its transverse momentum pT &lt; pTminCharged.
+// pTminNeutral (default = 0) : keep a neutral particle only if
+//        its transverse momentum pT &lt; pTminNeutral.
+
+// Main methods:
+// filter( event) takes an event record as input and analyzes it.
+// size() returns the number of particles kept.
+// index(i) returns the index in the full event of the i&apos;th kept particle.
+// particlePtr(i) returns a pointer to the i&apos;th kept particle.
+// particleRef(i) returns a reference to the i&apos;th kept particle.
+// list() gives a listing of the kept particles only.
+
+class EventFilter {
+
+public:
+
+  // Constructor sets properties of filter.
+  EventFilter( int selectIn, double etaMaxIn = 50.,
+    double pTminChargedIn = 0., double pTminNeutralIn = 0.)
+    : select(selectIn), etaMax(etaMaxIn), pTminCharged(pTminChargedIn),
+    pTminNeutral(pTminNeutralIn) {}
+
+  // Analysis of each new event to find acceptable particles.
+  void filter(Event&amp; event);
+
+  // Return size of array, and index of a particle.
+  int size()       const {return keptPtrs.size();}
+  int index(int i) const {return keptIndx[i];}
+
+  // Return pointer or reference to a particle.
+  Particle* particlePtr(int i) {return  keptPtrs[i];}
+  Particle&amp; particleRef(int i) {return *keptPtrs[i];}
+
+  // List kept particles only.
+  void list(ostream&amp; os = cout);
+
+private:
+
+  // Filter properties, set by constructor.
+  int    select;
+  double etaMax, pTminCharged, pTminNeutral;
+
+  // Kept particle indices and pointers, referring to original event.
+  vector&lt;int&gt;       keptIndx;
+  vector&lt;Particle*&gt; keptPtrs;
+
+};
+
+//--------------------------------------------------------------------------
+
+// The filter method.
+
+void EventFilter::filter(Event&amp; event) {
+
+  // Reset arrays in preparation for new event.
+  keptIndx.resize(0);
+  keptPtrs.resize(0);
+
+  // Loop over all particles in the event record.
+  for (int i = 0; i &lt; event.size(); ++i) {
+
+    // Skip if particle kind selection criteria not fulfilled.
+    if (!event[i].isFinal()) continue;
+    if (select == 2 &amp;&amp; !event[i].isVisible()) continue;
+    bool isCharged = event[i].isCharged();
+    if (select == 3 &amp;&amp; !isCharged) continue;
+
+    // Skip if too large pseudorapidity.
+    if (abs(event[i].eta()) &gt; etaMax) continue;
+
+    // Skip if too small pT.
+    if       (isCharged &amp;&amp; event[i].pT() &lt; pTminCharged) continue;
+    else if (!isCharged &amp;&amp; event[i].pT() &lt; pTminNeutral) continue;
+
+    // Add particle to vectors of indices and pointers.
+    keptIndx.push_back( i );
+    keptPtrs.push_back( &amp;event[i] );
+
+  // End of particle loop. Done.
+  }
+
+}
+
+//--------------------------------------------------------------------------
+
+// The list method: downscaled version of Event::list.
+
+void EventFilter::list(ostream&amp; os) {
+
+  // Header.
+  os &lt;&lt; &quot;\n --------  PYTHIA Event Listing  (filtered)  ------------------&quot;
+     &lt;&lt; &quot;-----------------------------------------------------------------&quot;
+     &lt;&lt; &quot;----\n \n    no        id   name            status     mothers  &quot;
+     &lt;&lt; &quot; daughters     colours      p_x        p_y        p_z         e  &quot;
+     &lt;&lt; &quot;        m \n&quot;;
+
+  // At high energy switch to scientific format for momenta.
+  double eSum = 0.;
+  for (int iKept = 0; iKept &lt; size(); ++iKept) eSum += keptPtrs[iKept]-&gt;e();
+  bool useFixed = (eSum &lt; 1e5);
+
+  // Listing of kept particles in event.
+  for (int iKept = 0; iKept &lt; size(); ++iKept) {
+    int i = keptIndx[iKept];
+    Particle&amp; pt = *keptPtrs[iKept];
+
+    // Basic line for a particle, always printed.
+    os &lt;&lt; setw(6) &lt;&lt; i &lt;&lt; setw(10) &lt;&lt; pt.id() &lt;&lt; &quot;   &quot; &lt;&lt; left
+       &lt;&lt; setw(18) &lt;&lt; pt.nameWithStatus(18) &lt;&lt; right &lt;&lt; setw(4)
+       &lt;&lt; pt.status() &lt;&lt; setw(6) &lt;&lt; pt.mother1() &lt;&lt; setw(6)
+       &lt;&lt; pt.mother2() &lt;&lt; setw(6) &lt;&lt; pt.daughter1() &lt;&lt; setw(6)
+       &lt;&lt; pt.daughter2() &lt;&lt; setw(6) &lt;&lt; pt.col() &lt;&lt; setw(6) &lt;&lt; pt.acol()
+       &lt;&lt; ( (useFixed) ? fixed : scientific ) &lt;&lt; setprecision(3)
+       &lt;&lt; setw(11) &lt;&lt; pt.px() &lt;&lt; setw(11) &lt;&lt; pt.py() &lt;&lt; setw(11)
+       &lt;&lt; pt.pz() &lt;&lt; setw(11) &lt;&lt; pt.e() &lt;&lt; setw(11) &lt;&lt; pt.m() &lt;&lt; &quot;\n&quot;;
+  }
+
+  // Listing finished.
+  os &lt;&lt; &quot;\n --------  End PYTHIA Event Listing  ----------------------------&quot;
+     &lt;&lt; &quot;-------------------------------------------------------------------&quot;
+     &lt;&lt; endl;
+}
+
+//==========================================================================
+
+// Use the EventFilter method to plot some event properties.
+
+int main() {
+
+  // Number of events to generate, to list, to allow aborts.
+  int    nEvent   = 100;
+  int    nList    = 1;
+  int    nAbort   = 3;
+
+  // Declare generator.
+  Pythia pythia;
+
+  // Default setings suitable for LHC.
+  // Hard QCD events with pThat &gt; 100.
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 100.&quot;);
+
+  // No automatic event listings - do it manually below.
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Values for filter.
+  int    select   = 3;
+  double etaMax   = 3.;
+  double pTminChg = 1.;
+
+  // Declare Event Filter according to specification.
+  EventFilter filter( select, etaMax, pTminChg);
+
+  // Histograms.
+  Hist nCharged(   &quot;selected charged multiplicity&quot;,     100, -0.5, 199.5);
+  Hist etaCharged( &quot;selected charged eta distribution&quot;, 100, -5.0, 5.0);
+  Hist pTCharged(  &quot;selected charged pT distribution&quot;,  100,  0.0, 50.0);
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if too many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Find final charged particles with |eta| &lt; 3 and pT &gt; 1 GeV.
+    filter.filter( pythia.event);
+
+    // List first few events, both complete and after filtering.
+    if (iEvent &lt; nList) {
+      pythia.info.list();
+      pythia.process.list();
+      pythia.event.list();
+      filter.list();
+    }
+
+    // Analyze selected particle sample.
+    nCharged.fill( filter.size() );
+    for (int i = 0; i &lt; filter.size(); ++i) {
+      // Use both reference and pointer notation to illustrate freedom.
+      etaCharged.fill( filter.particleRef(i).eta() );
+      pTCharged.fill(  filter.particlePtr(i)-&gt;pT() );
+    }
+
+  // End of event loop.
+  }
+
+  // Final statistics.
+  pythia.stat();
+
+  // Histograms.
+  cout &lt;&lt; nCharged &lt;&lt; etaCharged &lt;&lt; pTCharged;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

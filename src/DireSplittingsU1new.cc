@@ -1,5 +1,5 @@
 // DireSplittingsU1new.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -75,14 +75,15 @@ double DireSplittingU1new::aem2Pi( double pT2, int ) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_u1new_Q2QA::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].isQuark() && state[ints.second].isCharged()
         && bools["doQEDshowerByQ"]);
 }
 
 bool Dire_fsr_u1new_Q2QA::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal()
         && state[iRadBef].isQuark() && state[iRecBef].isCharged()
         && doU1NEWshowerByQ);
@@ -292,14 +293,15 @@ bool Dire_fsr_u1new_Q2QA::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_u1new_Q2AQ::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].isQuark() && state[ints.second].isCharged()
         && bools["doQEDshowerByQ"]);
 }
 
 bool Dire_fsr_u1new_Q2AQ::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal()
         && state[iRadBef].isQuark() && state[iRecBef].isCharged()
         && doU1NEWshowerByQ);
@@ -508,7 +510,8 @@ bool Dire_fsr_u1new_Q2AQ::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_u1new_L2LA::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (state[ints.first].isFinal() && (state[ints.first].isLepton()
     || state[ints.first].idAbs() == 900012
     || state[ints.first].idAbs() == 900040)
@@ -519,7 +522,7 @@ bool Dire_fsr_u1new_L2LA::canRadiate ( const Event& state, pair<int,int> ints,
 }
 
 bool Dire_fsr_u1new_L2LA::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal()
         && (state[iRadBef].isLepton() || state[iRadBef].idAbs() == 900012
             || state[iRadBef].idAbs() == 900040)
@@ -707,13 +710,14 @@ bool Dire_fsr_u1new_L2LA::calc(const Event& state, int orderNow) {
 
 // Class inheriting from SplittingU1new class.
 
-// SplittingU1new function Q->GQ (FSR)
-// At leading order, this can be combined with Q->QG because of symmetry. Since
-// this is no longer possible at NLO, we keep the kernels separately.
+// SplittingU1new function Q->GQ (FSR) At leading order, this can be
+// combined with Q->QG because of symmetry. Since this is no longer
+// possible at NLO, we keep the kernels separately.
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_u1new_L2AL::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return ( state[ints.first].isFinal()
     && (state[ints.first].isLepton() || state[ints.first].idAbs() == 900012
     || state[ints.first].idAbs() == 900040)
@@ -723,7 +727,7 @@ bool Dire_fsr_u1new_L2AL::canRadiate ( const Event& state, pair<int,int> ints,
 }
 
 bool Dire_fsr_u1new_L2AL::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal()
     && (state[iRadBef].isLepton() || state[iRadBef].idAbs() == 900012
     || state[iRadBef].idAbs() == 900040)
@@ -933,7 +937,8 @@ bool Dire_fsr_u1new_L2AL::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_isr_u1new_Q2QA::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (!state[ints.first].isFinal()
         && state[ints.first].isQuark()
         && state[ints.second].isCharged()
@@ -941,7 +946,7 @@ bool Dire_isr_u1new_Q2QA::canRadiate ( const Event& state, pair<int,int> ints,
 }
 
 bool Dire_isr_u1new_Q2QA::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return (!state[iRadBef].isFinal()
         && state[iRadBef].isQuark()
         && state[iRecBef].isCharged()
@@ -1096,14 +1101,15 @@ bool Dire_isr_u1new_Q2QA::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_isr_u1new_A2QQ::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (!state[ints.first].isFinal()
         && state[ints.first].isQuark()
         && bools["doQEDshowerByQ"] );
 }
 
 bool Dire_isr_u1new_A2QQ::canRadiate ( const Event& state, int iRadBef,
-  int, Settings*, PartonSystems*, BeamParticle*){
+  int, Settings*, PartonSystems*, BeamParticle*) {
   return (!state[iRadBef].isFinal()
         && state[iRadBef].isQuark()
         && doU1NEWshowerByQ);
@@ -1197,14 +1203,15 @@ bool Dire_isr_u1new_A2QQ::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_isr_u1new_Q2AQ::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (!state[ints.first].isFinal()
         && state[ints.first].id() == 900032
         && bools["doQEDshowerByQ"] );
 }
 
 bool Dire_isr_u1new_Q2AQ::canRadiate ( const Event& state, int iRadBef,
-  int, Settings*, PartonSystems*, BeamParticle*){
+  int, Settings*, PartonSystems*, BeamParticle*) {
   return (!state[iRadBef].isFinal()
         && state[iRadBef].id() == 900032
         && doU1NEWshowerByQ);
@@ -1307,7 +1314,8 @@ bool Dire_isr_u1new_Q2AQ::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_isr_u1new_L2LA::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (!state[ints.first].isFinal()
     && (state[ints.first].isLepton() || state[ints.first].idAbs() == 900012
     || state[ints.first].idAbs() == 900040)
@@ -1317,7 +1325,7 @@ bool Dire_isr_u1new_L2LA::canRadiate ( const Event& state, pair<int,int> ints,
 }
 
 bool Dire_isr_u1new_L2LA::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return (!state[iRadBef].isFinal()
    && (state[iRadBef].isLepton() || state[iRadBef].idAbs() == 900012
    || state[iRadBef].idAbs() == 900040)
@@ -1475,14 +1483,15 @@ bool Dire_isr_u1new_L2LA::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_isr_u1new_A2LL::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (!state[ints.first].isFinal()
         && state[ints.first].isLepton() && state[ints.first].isCharged()
         && bools["doQEDshowerByL"]);
 }
 
 bool Dire_isr_u1new_A2LL::canRadiate ( const Event& state, int iRadBef,
-  int, Settings*, PartonSystems*, BeamParticle*){
+  int, Settings*, PartonSystems*, BeamParticle*) {
   return (!state[iRadBef].isFinal()
         && state[iRadBef].isLepton()
         && state[iRadBef].isCharged()
@@ -1577,14 +1586,15 @@ bool Dire_isr_u1new_A2LL::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_isr_u1new_L2AL::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return (!state[ints.first].isFinal()
         && state[ints.first].id() == 900032
         && bools["doQEDshowerByL"]);
 }
 
 bool Dire_isr_u1new_L2AL::canRadiate ( const Event& state, int iRadBef,
-  int, Settings*, PartonSystems*, BeamParticle*){
+  int, Settings*, PartonSystems*, BeamParticle*) {
   return (!state[iRadBef].isFinal()
         && state[iRadBef].id() == 900032
         && doU1NEWshowerByL);

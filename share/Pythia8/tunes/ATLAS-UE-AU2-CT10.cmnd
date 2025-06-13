@@ -1,0 +1,13 @@
+! ATLAS UE tune AU2-CT10, August 2012.
+! See ATLAS note ATL-PHYS-PUB-2012-003 for further details.
+! Previously set by "Tune:pp = 11".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = LHAPDF6:CT10
+SpaceShower:rapidityOrder           = false 
+SpaceShower:rapidityOrderMPI        = false 
+MultipartonInteractions:pT0Ref      = 1.70  
+MultipartonInteractions:ecmPow      = 0.16  
+MultipartonInteractions:bProfile    = 4     
+MultipartonInteractions:expPow      = 1.0   
+MultipartonInteractions:a1          = 0.10  
+ColourReconnection:range            = 4.67

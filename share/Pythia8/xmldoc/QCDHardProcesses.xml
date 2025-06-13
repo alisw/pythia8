@@ -1,6 +1,6 @@
 <chapter name="QCD Processes"> 
  
-  <h2>Hard QCD Processes</h2> 
+<h2>Hard QCD Processes</h2> 
  
 This group contains the processes for QCD jet production above 
 some minimum <ei>pT</ei> threshold, with 
@@ -13,7 +13,7 @@ in this process group, without any regularization modifications.
 An eikonalized description, intended to be valid at all <ei>pT</ei>, 
 is instead included as part of the multiparton-interactions framework, 
 specifically in <code>SoftQCD:nonDiffractive</code>, see the manual section 
-on <aidx href="QCDSoftProcesses">Soft QCD Processes</aidx>. 
+on <aloc href="QCDSoftProcesses">Soft QCD Processes</aloc>. 
 <note>Warning 1</note>: you <b>must</b> remember to set the 
 <code>PhaseSpace:pTHatMin</code> value if you use any of these 
 processes; there is no sensible default. 
@@ -206,4 +206,4 @@ Code 140.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

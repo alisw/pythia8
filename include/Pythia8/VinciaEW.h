@@ -1,5 +1,5 @@
 // VinciaEW.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -944,7 +944,8 @@ private:
   double q2Cut;
 
   // Pointers.
-  BeamParticle* beamAPtr{}, *beamBPtr{};
+  BeamParticle* beamAPtr{};
+  BeamParticle* beamBPtr{};
   Info* infoPtr{};
   PartonSystems* partonSystemsPtr{};
   Rndm* rndmPtr{};
@@ -1006,8 +1007,8 @@ public:
     isInitPtr = true;}
 
   // Initialise settings for current run (called as part of Pythia::init()).
-  void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0)
-    override;
+  void init(BeamParticle* beamAPtrIn = nullptr,
+    BeamParticle* beamBPtrIn = nullptr) override;
 
   // Select helicities for a resonance-decay system.
   bool polarise(vector<Particle> &state) override {
@@ -1016,7 +1017,7 @@ public:
 
   // Prepare to shower a system.
   // (If isBelowHadIn = true, assume only resonance decays may be left to do.)
-  bool prepare(int iSysIn, Event &event, bool isBelowHadIn=false) override;
+  bool prepare(int iSysIn, Event &event, int scaleRegionIn = 0) override;
 
   // Update EW shower system each time something has changed.
   void update(Event &event, int iSysIn) override {

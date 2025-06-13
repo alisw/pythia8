@@ -15,7 +15,7 @@ It is therefore possible to define your own class, derived from the
 <code><aloc href="ProgramFlow"> 
 pythia.setBeamShapePtr( BeamShape*)</aloc></code> method. 
 Below we describe what such a class has to do. An explicit toy example 
-is shown in <code>main23.cc</code>. 
+is shown in <code>main245.cc</code>. 
  
 <p/> 
 The <code>BeamShape</code> base class has a very simple structure. 
@@ -76,4 +76,4 @@ read out the production-vertex position and time that were set by
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -16,8 +16,9 @@
   <li><a href="#section5">Parton densities for Pomerons</a></li>
   <li><a href="#section6">Parton densities for photons</a></li>
   <li><a href="#section7">Parton densities for leptons</a></li>
-  <li><a href="#section8">Photon fluxes</a></li>
-  <li><a href="#section9">Incoming parton selection</a></li>
+  <li><a href="#section8">Parton densities for neutrinos</a></li>
+  <li><a href="#section9">Photon fluxes</a></li>
+  <li><a href="#section10">Incoming parton selection</a></li>
 </ol>
 
  
@@ -169,8 +170,8 @@ behaviour in the region of small <i>x</i> and <i>Q^2</i>. A good
 PDF parametrization ought to be sensible down to <i>x = 10^-6</i> 
 (<i>x = 10^-7</i>) and <i>Q^2 = 1</i> GeV^2 for Tevatron (LHC) 
 applications. Unfortunately there are distributions on the market that 
-completely derail in that region. The <code>main51.cc</code> and 
-<code>main52.cc</code> programs in the <code>examples</code> 
+completely derail in that region. The <code>main201.cc</code> and 
+<code>main202.cc</code> programs in the <code>examples</code> 
 subdirectory provide some examples of absolutely minimal sanity checks 
 before a new PDF set is put in production. 
 <br/><b>Warning 3:</b> NLO and LO sets tend to have quite different 
@@ -406,13 +407,13 @@ The nuclear modication to be used for beam A if enabled with the switch above.
 <br/><code>option </code><strong> 1</strong> :  EPS09, LO [<a href="Bibliography.html#refEsk09" target="page">Esk09</a>].   
 <br/><code>option </code><strong> 2</strong> :  EPS09, NLO [<a href="Bibliography.html#refEsk09" target="page">Esk09</a>]. The grid files can be 
 found from 
-<a href="https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/eps09"> 
+<a href="https://research.hip.fi/qcdtheory/nuclear-pdfs/eps09/"> 
 here</a> and are to be stored in the same folder as other PDF grid files 
 (usually share/Pythia8/xmldoc/). 
    
 <br/><code>option </code><strong> 3</strong> :  EPPS16, NLO [<a href="Bibliography.html#refEsk16" target="page">Esk16</a>]. The grid files can be 
 found from 
-<a href="https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/epps16-nuclear-pdfs"> 
+<a href="https://research.hip.fi/qcdtheory/nuclear-pdfs/epps16/"> 
 here</a>. 
    
    
@@ -672,7 +673,7 @@ the suppression of the <i>s</i> quark density relative to that of the
 Rescale several of the fits above by this uniform factor, e.g. to bring 
 up their momentum sum to around unity. By default many of the sets have 
 a momentum sum of order 0.5, suggesting that a factor around 2.0 
-should be used. You can use <code>examples/main51.cc</code> to get 
+should be used. You can use <code>examples/main201.cc</code> to get 
 a more precise value. Note that also other parameters in the 
 <a href="Diffraction.html" target="page">diffraction</a> framework may need to 
 be retuned when this parameter is changed. Specifically 
@@ -743,13 +744,24 @@ by shower emissions. If the initial-state showers are switched off
 these collinear photons will carry the full radiated energy. 
    
  
-<p/> 
-Neutrinos are always taken pointlike. Do note that the phase space 
-selection machinery currently does not allow one resolved and one 
-unresolved lepton beam. For lepton-neutrino collisions to work you must 
-therefore set <code>PDF:lepton = off</code>. 
- 
 <a name="section8"></a> 
+<h3>Parton densities for neutrinos</h3> 
+ 
+Neutrinos are always taken pointlike. A flag has been added to separate these 
+from charged-lepton PDFs above to have the correct default behaviour. 
+ 
+<a name="anchor30"></a>
+<p/><code>flag&nbsp; </code><strong> PDF:neutrino &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Unresolved neutrino beams when set off. As no PDFs are currently implemented 
+for neutrinos this should not be changed. 
+   
+ 
+Do note that the phase space selection machinery currently does not allow one 
+resolved and one unresolved lepton beam. For lepton-neutrino collisions to 
+work you must therefore set also <code>PDF:lepton = off</code>. 
+ 
+<a name="section9"></a> 
 <h3>Photon fluxes</h3> 
  
 Charged beam particles may emit photons that can act as initiators for 
@@ -769,12 +781,12 @@ fluxes (e.g. photons from heavy ions) can be externally defined and
 passed to Pythia for event generation. The photon sub-beams are enabled 
 with the following flags 
  
-<a name="anchor30"></a>
+<a name="anchor31"></a>
 <p/><code>flag&nbsp; </code><strong> PDF:beamA2gamma &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Enables photon sub-beam from beam particle <code>A</code>, 
    
-<a name="anchor31"></a>
+<a name="anchor32"></a>
 <p/><code>flag&nbsp; </code><strong> PDF:beamB2gamma &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Enables photon sub-beam from beam particle <code>B</code>. 
@@ -787,7 +799,7 @@ Further options specific for different beam types are described below.
 In case of leptons the photon fluxes can also be enabled with the 
 following flag. 
  
-<a name="anchor32"></a>
+<a name="anchor33"></a>
 <p/><code>flag&nbsp; </code><strong> PDF:lepton2gamma &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Enables photon sub-beam from all lepton beams. 
@@ -802,7 +814,7 @@ Events with two unresolved photon initiators can be generated also with
 <code>PDF:lepton = on</code>, but then additional phase-space cuts 
 (e.g. cut on the invariant mass of the photon-photon pair) are not applied. 
  
-<a name="anchor33"></a>
+<a name="anchor34"></a>
 <p/><code>mode&nbsp; </code><strong> PDF:lepton2gammaSet &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 The type of photon flux. 
@@ -812,7 +824,7 @@ leptons a bit less efficient than option 1, but allows straightforward
 implementation of photon fluxes from different particles. To use this option 
 the user has to provide the external photon flux using method 
 <code>Pythia::setPhotonFluxPtr(pdfAPtr, pdfBPtr)</code> as demonstrated in the 
-sample program <code>main70.cc</code>.   
+sample program <code>main344.cc</code>.   
 <br/><code>option </code><strong> 1</strong> :  Convolute the photon flux from EPA with the selected photon 
 PDF set. Convolution integral is performed "on the fly", meaning that the 
 actual integral is not computed but the <i>x_gamma</i> is sampled 
@@ -828,7 +840,7 @@ There are currently two internally defined photon fluxes from a proton,
 and the user can also provide an externally defined flux. The applied flux is 
 set with the following option. 
  
-<a name="anchor34"></a>
+<a name="anchor35"></a>
 <p/><code>mode&nbsp; </code><strong> PDF:Proton2gammaSet &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 <br/><code>option </code><strong> 0</strong> : Use an externally provided photon flux. This flux 
@@ -848,18 +860,18 @@ appropriately suppress high virtualities.
  
 Currently no flux from heavy ions are internally defined. However, using 
 the above options it is possible to define a suitable flux and pass this 
-to Pythia for event generation, see <code>main70.cc</code> for example. 
+to Pythia for event generation, see <code>main344.cc</code> for example. 
 To increase the sampling efficiency fo nuclear beams, the following options 
 have been introduced. 
  
-<a name="anchor35"></a>
+<a name="anchor36"></a>
 <p/><code>mode&nbsp; </code><strong> PDF:beam2gammaApprox &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
 Controls which type of overestimate is used for photon flux sampling. 
 <br/><code>option </code><strong> 1</strong> :  Estimate optimized for photons from leptons. Works 
 reasonable well also for photoproduction in p+p.   
 <br/><code>option </code><strong> 2</strong> :  Estimate optimized for ultraperipheral heavy-ion collisions 
-as presented in <code>main70.cc</code>. Here the estimate is divided into two 
+as presented in <code>main344.cc</code>. Here the estimate is divided into two 
 regions, a power-law in <i>x_gamma</i> below <i>x_cut</i> and an 
 exponential fall-off above, see the related parameters below. Default values 
 are optimized for p+Pb collisions where Pb-nucleus provide the photons, but 
@@ -871,35 +883,35 @@ sampling efficiency.
 <br/><b>Note 2:</b> This option was formerly named as 
 <code>PDF:lepton2gammaApprox</code> but is renamed for version 8.3. 
  
-<a name="anchor36"></a>
+<a name="anchor37"></a>
 <p/><code>parm&nbsp; </code><strong> PDF:gammaFluxApprox2bMin &nbsp;</strong> 
  (<code>default = <strong>7.336</strong></code>; <code>minimum = 0.0</code>)<br/>
 Minimal allowed impact parameter for which the flux is considered. Units in 
 <code>fm</code>. Should match the flux provided by user. 
    
  
-<a name="anchor37"></a>
+<a name="anchor38"></a>
 <p/><code>parm&nbsp; </code><strong> PDF:gammaFluxApprox2mBeam &nbsp;</strong> 
  (<code>default = <strong>0.9314</strong></code>; <code>minimum = 0.0</code>)<br/>
 Per-nucleon mass used for the overestimate. Units in 
 <code>GeV</code> and should again match to the user-provided flux. 
    
  
-<a name="anchor38"></a>
+<a name="anchor39"></a>
 <p/><code>parm&nbsp; </code><strong> PDF:gammaFluxApprox2xPow &nbsp;</strong> 
  (<code>default = <strong>1.15</strong></code>; <code>minimum = 0.0</code>)<br/>
 Value of the exponent of the power law. The default value should work well 
 for the foreseen cases, so vary with caution. 
    
  
-<a name="anchor39"></a>
+<a name="anchor40"></a>
 <p/><code>parm&nbsp; </code><strong> PDF:gammaFluxApprox2xCut &nbsp;</strong> 
  (<code>default = <strong>0.01</strong></code>; <code>minimum = 0.0</code>)<br/>
 Value that defines at which <i>x_gamma</i> different approximations are 
 used. As above, vary with caution. 
    
  
-<a name="section9"></a> 
+<a name="section10"></a> 
 <h3>Incoming parton selection</h3> 
  
 There is one useful degree of freedom to restrict the set of incoming 
@@ -908,7 +920,7 @@ only which quarks are allowed to contribute to the hard-process cross
 sections. Note that separate but similarly named modes are available 
 for multiparton interactions and spacelike showers. 
  
-<a name="anchor40"></a>
+<a name="anchor41"></a>
 <p/><code>mode&nbsp; </code><strong> PDFinProcess:nQuarkIn &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed incoming quark flavours in the beams; a change 
@@ -919,4 +931,4 @@ partons, etc.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

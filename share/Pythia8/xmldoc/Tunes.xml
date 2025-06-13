@@ -204,203 +204,242 @@ final set of changes is the intended one.
  
 <modepick name="Tune:ee" default="7" min="-1" max="7"> 
 Choice of tune to <ei>e^+e^-</ei> data, mainly for the hadronization 
-and timelike-showering aspects of PYTHIA. You should study the 
-<code>Settings::initTuneEE(...)</code> method to find exactly which 
-are the settings for the respective tune. 
-<option value="-1">reset all values that are affected by any of the 
-<ei>e^+e^-</ei> tunes to the default values. This option can be used 
-on its own, but is also automatically used as a first step for either 
-of the positive tune values below, to undo the effect of previous tune 
-settings. 
+and timelike-showering aspects of PYTHIA. In the following options the 
+settings file used to load the tune is provided after the tune 
+number. Every tune here can then be equivalently loaded with the 
+command <code>include = tunes/settings.cmnd</code> where 
+<code>settings.cmnd</code> is the corresponding settings file. In the 
+future the <code>Tune:ee</code> setting will be removed in favor of 
+the <code>include</code> syntax. 
+<option value="-1">(<code>tunes/Reset-ee.cmnd</code>) reset all values 
+that are affected by any of the <ei>e^+e^-</ei> tunes to the default 
+values. 
 </option> 
 <option value="0">no values are overwritten during the initial setup, 
 step 2 above. Note that changing to <code>0</code> in the user code 
 has no effect; if you want to restore the individual settings you 
 should instead use <code>-1</code>. 
 </option> 
-<option value="1">the original PYTHIA 8 parameter set, based on some 
-very old flavour studies (with JETSET around 1990) and a simple tune 
-<ei>of alpha_strong</ei> to three-jet shapes to the new 
-<ei>pT</ei>-ordered shower. These were the default values before 
-version 8.125. 
+<option value="1">(<code>tunes/OldJETSET.cmnd</code>) the original 
+PYTHIA 8 parameter set, based on some very old flavour studies (with 
+JETSET around 1990) and a simple tune <ei>of alpha_strong</ei> to 
+three-jet shapes to the new <ei>pT</ei>-ordered shower. These were the 
+default values before version 8.125. 
 </option> 
-<option value="2">a tune by Marc Montull to the LEP 1 particle 
-composition, as published in the RPP (August 2007). No related (re)tune 
-to event shapes has been performed, however. 
+<option value="2">(<code>tunes/Montull2007.cmnd</code>) a tune by Marc 
+Montull to the LEP 1 particle composition, as published in the RPP 
+(August 2007). No related (re)tune to event shapes has been performed, 
+however. 
 </option> 
-<option value="3">a tune to a wide selection of LEP1 data by Hendrik 
-Hoeth within the Rivet + Professor framework, both to hadronization and 
-timelike-shower parameters (June 2009). These were the default values 
-starting from version 8.125. 
+<option value="3">(<code>tunes/Hoeth2009.cmnd</code>) a tune to a wide 
+selection of LEP1 data by Hendrik Hoeth within the Rivet + Professor 
+framework, both to hadronization and timelike-shower parameters (June 
+2009). These were the default values starting from version 8.125. 
 </option> 
-<option value="4">a tune to LEP data by Peter Skands, by hand, both 
-to hadronization and timelike-shower parameters (September 2013). 
-Note the use of the CMW convention for the shower <ei>alpha_s</ei> 
-scale. 
+<option value="4">(<code>tunes/Skands2013.cmnd</code>) a tune to LEP 
+data by Peter Skands, by hand, both to hadronization and 
+timelike-shower parameters (September 2013).  Note the use of the CMW 
+convention for the shower <ei>alpha_s</ei> scale. 
 </option> 
-<option value="5">first tune to LEP data by Nadine Fischer 
-(September 2013), based on the default flavour-composition 
-parameters. Input is event shapes (ALEPH and DELPHI), 
-identified particle spectra (ALEPH), multiplicities (PDG), 
+<option value="5">(<code>tunes/Fischer2013-1.cmnd</code>) first tune to 
+LEP data by Nadine Fischer (September 2013), based on the default 
+flavour-composition parameters. Input is event shapes (ALEPH and 
+DELPHI), identified particle spectra (ALEPH), multiplicities (PDG), 
 and B hadron fragmentation functions (ALEPH). 
 </option> 
-<option value="6">second tune to LEP data by Nadine Fischer 
-(September 2013). Similar to the first one, but event shapes 
-are weighted up significantly, and multiplicites not included. 
+<option value="6">(<code>tunes/Fischer2013-2.cmnd</code>) second tune 
+to LEP data by Nadine Fischer (September 2013). Similar to the first 
+one, but event shapes are weighted up significantly, and multiplicites 
+not included. 
 </option> 
-<option value="7">the Monash 2013 tune by Peter Skands at al. 
-<ref>Ska14</ref>, to both <ei>e^+e^-</ei> and <ei>pp/pbarp</ei> data. 
+<option value="7">(<code>tunes/Monash2013-ee.cmnd</code>) the Monash 
+2013 tune by Peter Skands at al. <ref>Ska14</ref>, to both 
+<ei>e^+e^-</ei> and <ei>pp/pbarp</ei> data. 
 </option> 
 </modepick> 
  
-<modepick name="Tune:preferLHAPDF" default="2" min="0" max="2"> 
+<modepick name="Tune:preferLHAPDF" default="0" min="0" max="3"> 
 Tunes made by experimental collaborations typically use the LHAPDF 
 package to obtain their PDF values, and so PYTHIA must be built 
 accordingly. See the <aloc href="PDFSelection">PDF 
 documentation</aloc> for more information. For PDFs implemented 
 natively in PYTHIA it is possible to use the respective tunes, without 
-having to use LHAPDF, if you set <code>Tune:preferLHAPDF = 0</code> 
-<i>before</i> the <code>Tune:pp</code> choice. 
+having to use LHAPDF, if you set <code>Tune:preferLHAPDF = 
+0</code>. Alternatively, setting <code>Tune:preferLHAPDF = 3</code> 
+will use the internal PYTHIA interpolation of LHAPDF6 PDF grids, so 
+while the LHAPDF6 library is not needed, the PDF grid is. 
 <option value="0"> Use the internal PYTHIA PDFs. 
 </option> 
 <option value="1"> Use LHAPDF5 PDFs. 
 </option> 
 <option value="2"> Use LHAPDF6 PDFs. 
 </option> 
+<option value="3"> Use LHAPDF6 PDF grids with the internal PYTHIA 
+interpolation rather than the LHAPDF6 library. 
+</option> 
 </modepick> 
  
 <modepick name="Tune:pp" default="14" min="-1" max="34"> 
 Choice of tune to <ei>pp/ppbar</ei> data, mainly for the 
-initial-state-radiation, multiparton-interactions and  beam-remnants 
-aspects of PYTHIA. You should study the 
-<code>Settings::initTunePP(...)</code> method to find exactly which 
-are the settings for the respective tune. Note that all early tunes, 
-including those done by the LHC collaborations based on tune 4C, 
-imply the settings of <code>Tune:ee = 3</code>, while the Monash 2013 
-tune and the further tunes based on it imply <code>Tune:ee = 7</code>. 
-This is set automatically, and has to be overridden afterwards if not 
-the wanted behaviour. 
-<option value="-1">reset all values that are affected by any of the 
-<ei>pp/ppbar</ei> tunes to the default values. This option can be used 
-on its own, but is also automatically used as a first step for either 
-of the positive tune values below, to undo the effect of previous tune 
-settings. 
+initial-state-radiation, multiparton-interactions and beam-remnants 
+aspects of PYTHIA. Note that all early tunes, including those done by 
+the LHC collaborations based on tune 4C, use the <ei>e^+e^-</ei> tune 
+<code>tunes/Hoeth2009.cmnd</code> (<code>Tune:ee = 3</code>), while the 
+Monash 2013 tune and the further tunes based on it use 
+<code>Monash2013-ee.cmnd</code> (<code>Tune:ee = 7</code>). All the 
+tune configurations provided also load their corresponding 
+<ei>e^+e^-</ei>. If this is not the wanted behaviour, then these 
+<ei>e^+e^-</ei> settings must be changed after setting the 
+<ei>pp/ppbar</ei> tune. In the following options the settings file 
+used to load the tune is provided after the tune number. Every tune 
+here can then be equivalently loaded with the command <code>include = 
+tunes/settings.cmnd</code> where <code>settings.cmnd</code> is the 
+corresponding settings file. In the future the <code>Tune:pp</code> 
+setting will be removed in favor of the <code>include</code> syntax. 
+<option value="-1">(<code>tunes/Reset-pp.cmnd</code>) reset all values 
+that are affected by any of the <ei>pp/ppbar</ei> tunes to the default 
+values. 
 </option> 
 <option value="0">no values are overwritten during the initial setup, 
 step 2 above. Note that changing to <code>0</code> in the user code 
 has no effect; if you want to restore the individual settings you 
 should instead use <code>-1</code>. 
 </option> 
-<option value="1">default used up to version 8.126, based on 
-some early and primitive comparisons with data. 
+<option value="1">(<code>tunes/OldIsrMpi.cmnd</code>) default used up 
+to version 8.126, based on some early and primitive comparisons with 
+data. 
 </option> 
-<option value="2">"Tune 1", default in 8.127 - 8.139, based on some 
-data comparisons by Peter Skands. Largely but not wholly overlaps 
-with the default option 0. 
+<option value="2">(<code>tunes/Skands2009.cmnd</code>) "Tune 1", 
+default in 8.127 - 8.139, based on some data comparisons by Peter 
+Skands. Largely but not wholly overlaps with the default option 0. 
 </option> 
-<option value="3">"Tune 2C", introduced with 8.140 <ref>Cor10a</ref>. 
-It uses the CTEQ 6L1 PDF, and is intended to give good agreement with 
-much of the published CDF data. 
+<option value="3">(<code>tunes/Tune2C.cmnd</code>) "Tune 2C", 
+introduced with 8.140 <ref>Cor10a</ref>.  It uses the CTEQ 6L1 PDF, 
+and is intended to give good agreement with much of the published CDF 
+data. 
 </option> 
-<option value="4">"Tune 2M", introduced with 8.140 <ref>Cor10a</ref>. 
-It is uses the MRST LO** PDF, which has a momentum sum somewhat above 
-unity, which is compensated by a smaller <ei>alpha_s</ei> than in the 
-previous tune. Again it is intended to give good agreement with much of 
-the published CDF data. 
+<option value="4">(<code>tunes/Tune2M.cmnd</code>) "Tune 2M", 
+introduced with 8.140 <ref>Cor10a</ref>.  It is uses the MRST LO** 
+PDF, which has a momentum sum somewhat above unity, which is 
+compensated by a smaller <ei>alpha_s</ei> than in the previous 
+tune. Again it is intended to give good agreement with much of the 
+published CDF data. 
 </option> 
-<option value="5">"Tune 4C", newer tune, introduced with 8.145 
-<ref>Cor10a</ref>. Starts out from tune 2C, but with a reduced cross 
-section for diffraction, plus modified multiparton interactions parameters 
-to give a higher and more rapidly increasing charged pseudorapidity 
-plateau, for better agreement with some early key LHC numbers. 
-See also the comparative study in <ref>Buc11</ref>. 
-The starting point for many later tunes. 
+<option value="5">(<code>tunes/Tune4C.cmnd</code>) "Tune 4C", newer 
+tune, introduced with 8.145 <ref>Cor10a</ref>. Starts out from tune 
+2C, but with a reduced cross section for diffraction, plus modified 
+multiparton interactions parameters to give a higher and more rapidly 
+increasing charged pseudorapidity plateau, for better agreement with 
+some early key LHC numbers.  See also the comparative study in 
+<ref>Buc11</ref>.  The starting point for many later tunes. 
 </option> 
-<option value="6">"Tune 4Cx", based on tune 4C, but using the x-dependent 
-matter profile, <code>MultipartonInteractions:bProfile = 4</code> and an 
-increased <code>MultipartonInteractions:pT0Ref</code> <ref>Cor11</ref>. 
+<option value="6">(<code>tunes/Tune4Cx.cmnd</code>) "Tune 4Cx", based 
+on tune 4C, but using the x-dependent matter profile, 
+<code>MultipartonInteractions:bProfile = 4</code> and an increased 
+<code>MultipartonInteractions:pT0Ref</code> <ref>Cor11</ref>. 
 </option> 
-<option value="7">"ATLAS MB Tune A2-CTEQ6L1", a minimum-bias tune based 
-on tune 4Cx, but without rapidity-ordered spacelike emissions 
-<ref>ATL12</ref>. Uses CTEQ 6L1, by default from LHAPDF. 
+<option value="7">(<code>tunes/ATLAS-MB-A2-CTEQ6L1.cmnd</code>) "ATLAS 
+MB Tune A2-CTEQ6L1", a minimum-bias tune based on tune 4Cx, but 
+without rapidity-ordered spacelike emissions <ref>ATL12</ref>. Uses 
+CTEQ 6L1, by default from LHAPDF. 
 </option> 
-<option value="8">"ATLAS MB Tune A2-MSTW2008LO", as above, 
-but uses MSTW 2008 LO, by default from LHAPDF. 
+<option value="8">(<code>tunes/ATLAS-MB-A2-MSTW2008LO.cmnd</code>) 
+"ATLAS MB Tune A2-MSTW2008LO", as above, but uses MSTW 2008 LO, by 
+default from LHAPDF. 
 </option> 
-<option value="9">"ATLAS UE Tune AU2-CTEQ6L1", an underlying-event tune 
-based on tune 4Cx, but without rapidity-ordered spacelike emissions 
-<ref>ATL12</ref>. Uses CTEQ 6L1, by default from LHAPDF. 
+<option value="9">(<code>tunes/ATLAS-UE-AU2-CTEQ6L1.cmnd</code>) "ATLAS 
+UE Tune AU2-CTEQ6L1", an underlying-event tune based on tune 4Cx, but 
+without rapidity-ordered spacelike emissions <ref>ATL12</ref>. Uses 
+CTEQ 6L1, by default from LHAPDF. 
 </option> 
-<option value="10">"ATLAS UE Tune AU2-MSTW2008LO", as above, 
-but uses MSTW 2008 LO, by default from LHAPDF. 
+<option value="10">(<code>tunes/ATLAS-UE-AU2-MSTW2008LO.cmnd</code>) 
+"ATLAS UE Tune AU2-MSTW2008LO", as above, but uses MSTW 2008 LO, by 
+default from LHAPDF. 
 </option> 
-<option value="11">"ATLAS UE Tune AU2-CT10", as above, 
-but uses CT 10, which is not currently implemented in PYTHIA, 
-so you must link LHAPDF. 
+<option value="11">(<code>tunes/ATLAS-UE-AU2-CT10.cmnd</code>) "ATLAS 
+UE Tune AU2-CT10", as above, but uses CT 10, which is not currently 
+implemented in PYTHIA, so you must link LHAPDF. 
 </option> 
-<option value="12">"ATLAS UE Tune AU2-MRST2007LO*", as above, 
-but uses MRST 2007 LO*, by default from LHAPDF. 
+<option value="12">(<code>tunes/ATLAS-UE-AU2-MRST2007LOx.cmnd</code>) 
+"ATLAS UE Tune AU2-MRST2007LO*", as above, but uses MRST 2007 LO*, by 
+default from LHAPDF. 
 </option> 
-<option value="13">"ATLAS UE Tune AU2-MRST2007LO**", as above, 
-but uses MRST 2007 LO**, by default from LHAPDF. 
+<option value="13">(<code>tunes/ATLAS-UE-AU2-MRST2007LOxx.cmnd</code>) 
+"ATLAS UE Tune AU2-MRST2007LO**", as above, but uses MRST 2007 LO**, 
+by default from LHAPDF. 
 </option> 
-<option value="14">the Monash 2013 tune by Peter Skands at al. 
-<ref>Ska14</ref>, to both <ei>e^+e^-</ei> and <ei>pp/pbarp</ei> data. 
-The starting point for many later tunes. 
+<option value="14">(<code>tunes/Monash2013.cmnd</code>) the Monash 2013 
+tune by Peter Skands at al. <ref>Ska14</ref>, to both <ei>e^+e^-</ei> 
+and <ei>pp/pbarp</ei> data. The starting point for many later tunes. 
 </option> 
-<option value="15">"CMS UE Tune CUETP8S1-CTEQ6L1", an underlying-event 
-tune based on tune 4C <ref>CMS14</ref>. Uses CTEQ 6L1, by default 
-from LHAPDF. 
+<option value="15">(<code>tunes/CMS-CUETP8S1-CTEQ6L1.cmnd</code>) "CMS 
+UE Tune CUETP8S1-CTEQ6L1", an underlying-event tune based on tune 4C 
+<ref>CMS14</ref>. Uses CTEQ 6L1, by default from LHAPDF. 
 </option> 
-<option value="16">"CMS UE Tune CUETP8S1-HERAPDF1.5LO", an underlying-event 
-tune based on tune 4C <ref>CMS14</ref>. Uses HERAPDF1.5LO, which is not 
-currently implemented in PYTHIA, so you must link LHAPDF. 
+<option value="16">(<code>tunes/CMS-CUETP8S1-HERAPDF1.cmnd</code>) "CMS 
+UE Tune CUETP8S1-HERAPDF1.5LO", an underlying-event tune based on tune 
+4C <ref>CMS14</ref>. Uses HERAPDF1.5LO, which is not currently 
+implemented in PYTHIA, so you must link LHAPDF. 
 </option> 
-<option value="17">"ATLAS Tune AZ", is tuned to the <ei>pT</ei> spectrum 
-of the <ei>Z^/gamma^*0</ei> boson in a set of rapidity bins <ref>ATL14</ref>. 
+<option value="17">(<code>tunes/ATLAS-AZ.cmnd</code>) "ATLAS Tune AZ", 
+is tuned to the <ei>pT</ei> spectrum of the <ei>Z^/gamma^*0</ei> boson 
+in a set of rapidity bins <ref>ATL14</ref>. 
 </option> 
-<option value="18">"CMS Tune MonashStar", alias CUETP8M1-NNPDF2.3LO, 
-an underlying-event tune based on the Monash 2013 tune. 
+<option value="18">(<code>tunes/CMS-CUETP8M1-NNPDF23LO.cmnd</code>) 
+"CMS Tune MonashStar", alias CUETP8M1-NNPDF2.3LO, an underlying-event 
+tune based on the Monash 2013 tune. 
 </option> 
-<option value="19">"ATLAS A14 central tune with CTEQL1", a full-scale 
-tune to most ATLAS jet and underlying-event observables <ref>ATL14a</ref>, 
-starting out from the Monash 2013 tune. The following tunes 20 - 32 
-belong to the same group. 
+<option value="19">(<code>tunes/ATLAS-A14-CTEQL1.cmnd</code>) "ATLAS 
+A14 central tune with CTEQL1", a full-scale tune to most ATLAS jet and 
+underlying-event observables <ref>ATL14a</ref>, starting out from the 
+Monash 2013 tune. The following tunes 20 - 32 belong to the same 
+group. 
 </option> 
-<option value="20">"ATLAS A14 central tune with MSTW2008LO", 
-see above tune 19. 
+<option value="20">(<code>tunes/ATLAS-A14-MSTW2008LO.cmnd</code>) 
+"ATLAS A14 central tune with MSTW2008LO", see above tune 19. 
 </option> 
-<option value="21">"ATLAS A14 central tune with NNPDF2.3LO", 
-see above tune 19. Defines the center of the 23 - 32 variations, 
-so would be a good choice if you only want to study one tune from 
-the A14 family. 
+<option value="21">(<code>tunes/ATLAS-A14-NNPDF32LO.cmnd</code>) "ATLAS 
+A14 central tune with NNPDF2.3LO", see above tune 19. Defines the 
+center of the 23 - 32 variations, so would be a good choice if you 
+only want to study one tune from the A14 family. 
 </option> 
-<option value="22">"ATLAS A14 central tune with HERAPDF1.5LO", 
-see above tune 19. Uses HERAPDF1.5LO, which is not currently implemented 
-in PYTHIA, so you must link LHAPDF. 
+<option value="22">(<code>tunes/ATLAS-A14-HERAPDF15LO.cmnd</code>) 
+"ATLAS A14 central tune with HERAPDF1.5LO", see above tune 19. Uses 
+HERAPDF1.5LO, which is not currently implemented in PYTHIA, so you 
+must link LHAPDF. 
 </option> 
-<option value="23">"ATLAS A14 variation 1+" of tune 21. 
+<option value="23">(<code>tunes/ATLAS-A14-v+1.cmnd</code>) "ATLAS A14 
+variation 1+" of tune 21. 
 </option> 
-<option value="24">"ATLAS A14 variation 1-" of tune 21. 
+<option value="24">(<code>tunes/ATLAS-A14-v-1.cmnd</code>) "ATLAS A14 
+variation 1-" of tune 21. 
 </option> 
-<option value="25">"ATLAS A14 variation 2+" of tune 21. 
+<option value="25">(<code>tunes/ATLAS-A14-v+2.cmnd</code>) "ATLAS A14 
+variation 2+" of tune 21. 
 </option> 
-<option value="26">"ATLAS A14 variation 2-" of tune 21. 
+<option value="26">(<code>tunes/ATLAS-A14-v-2.cmnd</code>) "ATLAS A14 
+variation 2-" of tune 21. 
 </option> 
-<option value="27">"ATLAS A14 variation 3a+" of tune 21. 
+<option value="27">(<code>tunes/ATLAS-A14-v+3a.cmnd</code>) "ATLAS A14 
+variation 3a+" of tune 21. 
 </option> 
-<option value="28">"ATLAS A14 variation 3a-" of tune 21. 
+<option value="28">(<code>tunes/ATLAS-A14-v-3a.cmnd</code>) "ATLAS A14 
+variation 3a-" of tune 21. 
 </option> 
-<option value="29">"ATLAS A14 variation 3b+" of tune 21. 
+<option value="29">(<code>tunes/ATLAS-A14-v+3b.cmnd</code>) "ATLAS A14 
+variation 3b+" of tune 21. 
 </option> 
-<option value="30">"ATLAS A14 variation 3b-" of tune 21. 
+<option value="30">(<code>tunes/ATLAS-A14-v-3b.cmnd</code>) "ATLAS A14 
+variation 3b-" of tune 21. 
 </option> 
-<option value="31">"ATLAS A14 variation 3c+" of tune 21. 
+<option value="31">(<code>tunes/ATLAS-A14-v+3c.cmnd</code>) "ATLAS A14 
+variation 3c+" of tune 21. 
 </option> 
-<option value="32">"ATLAS A14 variation 3c-" of tune 21. 
+<option value="32">(<code>tunes/ATLAS-A14-v-3c.cmnd</code>) "ATLAS A14 
+variation 3c-" of tune 21. 
 </option> 
 </modepick> 
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // PythiaCascade.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Torbjorn Sjostrand.
@@ -81,14 +81,20 @@ public:
   // * tau0 = 1e-10 mm = 100 fm.  Note that time dilation effects are
   // not included, and they can be large.
 
-  // Set reuseMPI = false in case you cannot reuse the
-  // pythiaCascade.mpi file, or any other relevant stored file. The
-  // saved initialization must have been done with the same or a
-  // larger eMax than the one now being used.
+  // The reuseMPI argument mimics MultipartonInteractions:reuseInit,
+  // but streamlined into three main options;
+  // 0 = current run is self-contained, so MPI is initialized from scratch,
+  //     but MPI data is stored on initFile for future use;
+  // 3 = read MPI initialization data from initFile, if it exists,
+  //     and else initialize and save the MPI data on initFile;
+  // -1 = read MPI initialization data and other run settings from
+  //    a .cmnd file, if not empty.
+  // In each case, the saved initialization must have been done with
+  // the same or a larger eMax than the one now being used.
 
-  void init(double eMaxIn = 1e9, bool listFinalIn = false,
+  bool init(double eMaxIn = 1e9, bool listFinalIn = false,
     bool rapidDecaysIn = false, double smallTau0In = 1e-10,
-    bool reuseMPI = true, string initFile = "pythiaCascade.mpi") {
+    int reuseMPI = 3, string initFile = "pythiaCascade.mpi") {
 
     // Store input for future usage.
     eMax        = eMaxIn;
@@ -113,8 +119,13 @@ public:
     pythiaMain.readString("Stat:showProcessLevel = off");
     pythiaMain.readString("Stat:showPartonLevel = off");
 
-    // Initialize.
-    pythiaMain.init();
+    // Initialize. Return if failure.
+    if (!pythiaMain.init()) return false;
+
+    if ( reuseMPI < 0 ) {
+      pythiaColl.readFile(initFile);
+      initFile = "";
+    }
 
     // Secondary Pythia object for performing individual collisions,
     // or decays. Variable incoming beam type and energy.
@@ -152,13 +163,16 @@ public:
     pythiaColl.readString("Stat:showPartonLevel = off");
 
     // Reuse MPI initialization file if it exists; else create a new one.
-    if (reuseMPI)
-         pythiaColl.readString("MultipartonInteractions:reuseInit = 3");
-    else pythiaColl.readString("MultipartonInteractions:reuseInit = 1");
-    pythiaColl.settings.word("MultipartonInteractions:initFile", initFile);
+    if (reuseMPI > 0)
+      pythiaColl.readString("MultipartonInteractions:reuseInit = 3");
+    else if (reuseMPI == 0)
+      pythiaColl.readString("MultipartonInteractions:reuseInit = 1");
+    if (reuseMPI >= 0)
+      pythiaColl.settings.word("MultipartonInteractions:initFile", initFile);
 
     // Initialize.
-    pythiaColl.init();
+    if (!pythiaColl.init()) return false;
+    return true;
 
   }
 

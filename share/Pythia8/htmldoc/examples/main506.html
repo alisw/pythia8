@@ -1,0 +1,106 @@
+<html><head><title>main506</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main506</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main506.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#parton+distribution">Parton&nbsp;distribution</a>
+//            <a href="../ExampleKeywords.html#photon+beam">Photon&nbsp;beam</a>
+
+// Example how to set up the simulation of isotropic QED gamma + gamma
+// production at 750 GeV by modifying gamma + gamma -&gt; H -&gt; gamma + gamma.
+// Contains a semirealistic analysis of associated jet production.
+// Exemplifies how an lhagrid1 PDF file can be used for hard processes.
+// Cross section not to be taken seriously, but event properties realistic.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events.
+  int nEvent = 5000;
+
+  // Generator and collision energy.
+  Pythia pythia;
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+
+  // Pick gamma + gamma -&gt; H -&gt; gamma + gamma production.
+  pythia.readString(&quot;HiggsSM:gmgm2H = on&quot;);
+  pythia.readString(&quot;25:onMode = off&quot;);
+  pythia.readString(&quot;25:onIfMatch = 22 22&quot;);
+
+  // Force H to have 750 GeV mass and yet be narrow.
+  pythia.readString(&quot;25:m0 = 750.&quot;);
+  pythia.readString(&quot;25:mWidth = 1.&quot;);
+  pythia.readString(&quot;25:doForceWidth = on&quot;);
+
+  // Use NLO CT14qed central member for hard process, default LO for rest.
+  pythia.readString(&quot;PDF:useHard = on&quot;);
+  pythia.readString(&quot;PDF:pHardSet = LHAGrid1:CT14qed_proton_0000.dat&quot;);
+
+  // Do not allow gamma -&gt; fermion pair by showering.
+  // (To simplify removal of photons for jet finding in the rest of the event.)
+  pythia.readString(&quot;TimeShower:QEDshowerByGamma = off&quot;);
+
+  // No event printout.
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Event shorthand.
+  Event&amp; event = pythia.event;
+
+  // Set up anti-kT jet finder with R = 0.5, pT &gt; 30., |eta| &lt; 5.
+  SlowJet slowJet( -1, 0.5, 30., 5.);
+
+  // Histogram.
+  Hist massH( &quot;mass of Higgs&quot;, 100, 500., 1000.);
+  Hist pTH(  &quot;pT of Higgs&quot;, 100, 0., 500.);
+  Hist pTj1( &quot;pT of jet 1&quot;, 100, 0., 500.);
+  Hist pTj2( &quot;pT of jet 2&quot;, 100, 0., 500.);
+  Hist yj1(   &quot;y of jet 1&quot;, 100, -5., 5.);
+  Hist yj2(   &quot;y of jet 2&quot;, 100, -5., 5.);
+
+  // Begin event loop. Generate event. Skip if error.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Find location of (final copy of) Higgs. Histogram Higgs mass and pT.
+    int iH = 0;
+    for (int i = 1; i &lt; event.size(); ++i) if (event[i].id() == 25) iH = i;
+    massH.fill( event[iH].m() );
+    pTH.fill( event[iH].pT() );
+
+    // Mark the two daughter photons decayed to do jet finding without them.
+    event[event[iH].daughter1()].statusNeg();
+    event[event[iH].daughter2()].statusNeg();
+    slowJet.analyze( pythia.event );
+
+    // Histogram pT and rapidity of two hardest jets, if they exist.
+    if (slowJet.sizeJet() &gt; 0) {
+      pTj1.fill( slowJet.pT(0) );
+      yj1.fill( slowJet.y(0) );
+    }
+    if (slowJet.sizeJet() &gt; 1) {
+      pTj2.fill( slowJet.pT(1) );
+      yj2.fill( slowJet.y(1) );
+    }
+
+  // End of event loop. Statistics. Histograms.
+  }
+  pythia.stat();
+  cout &lt;&lt; massH &lt;&lt; pTH &lt;&lt; pTj1 &lt;&lt; pTj2 &lt;&lt; yj1 &lt;&lt; yj2;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

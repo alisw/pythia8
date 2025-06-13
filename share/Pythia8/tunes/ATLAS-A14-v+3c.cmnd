@@ -1,0 +1,17 @@
+! The ATLAS A14 tunes, variation 3c+ with NNPDF2.3LO, November 2014.
+! See ATL-PHYS-PUB-2014-021 for further details.
+! Note that TimeShower:alphaSvalue is set here, although normally it would be
+! in the domain of ee tunes.
+! Previously set by "Tune:pp = 31".
+include                             = tunes/Monash2013.cmnd ! based on Monash
+PDF:pSet                            = 13       ! NNPDF23_lo_as_0130_qed
+SigmaProcess:alphaSvalue            = 0.140 
+TimeShower:alphaSvalue              = 0.127 
+SpaceShower:alphaSvalue             = 0.140 
+SpaceShower:pT0Ref                  = 1.56  
+SpaceShower:pTmaxFudge              = 0.91  
+SpaceShower:pTdampFudge             = 1.05  
+MultipartonInteractions:alphaSvalue = 0.126
+MultipartonInteractions:pT0Ref      = 2.09  
+BeamRemnants:primordialKThard       = 1.88  
+ColourReconnection:range            = 1.71  

@@ -305,6 +305,15 @@ Switch to initialize for a range of possible projectile hadrons, to
 hit a target of protons and neutrons. 
 </flag> 
  
+<mvec name="Beams:idAList" default="{2212,211,311,221,331,333,411,431, 
+443,511,531,541,553,3212,3312,3334,4112,4312,4332,5112,5312,5332}"> 
+A list of beam particles that are enabled when 
+<code>Beams:allowIDAswitch</code> is turned on. Particles with the same 
+flavour content as hadrons on this list are included automatically. In the 
+current version, some initialization may be performed for all particles, even 
+if they are omitted from the list. 
+</mvec> 
+ 
 <h3>Beam momentum spread</h3> 
  
 This framework currently is intended for a modest beam spread, such as 
@@ -461,4 +470,4 @@ The time <ei>t</ei> of the interaction vertex is centered at this value.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

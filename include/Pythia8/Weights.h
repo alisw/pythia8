@@ -1,5 +1,5 @@
 // Weights.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -16,11 +16,12 @@
 namespace Pythia8 {
 
 // Forward declare classes which need internal member access.
-class Info;
 class History;
+class Info;
 class PartonLevel;
 class Merging;
 class WeightContainer;
+class StringFlav;
 
 //==========================================================================
 
@@ -354,8 +355,15 @@ class WeightsFragmentation : public WeightsBase {
 
 public:
 
+  // Friends for fragmentation reweighitng.
+  friend class StringFlav;
+
   // Initialize the weights.
   void init() override;
+
+  // Clear the weights.
+  void clear() override {
+    WeightsBase::clear(); fill(flavBreaks.begin(), flavBreaks.end(), 0);}
 
   int nWeightGroups() const {return externalGroupNames.size();}
 
@@ -375,13 +383,44 @@ public:
   void collectWeightValues(vector<double>& outputWeights,
     double norm = 1.) override;
 
+  // Calculate the derived flavor parameters.
+  vector<double> flavParms(double xi, double rho, double x, double y);
+
+  // Calculate a flavor weight.
+  double flavWeight(const vector<double>& parms) {
+    return flavWeight(parms, flavBreaks);}
+  double flavWeight(const vector<double>& parms, const vector<int>& breaks);
+
   // Vectors for weight group handling.
   vector<map<vector<double>, int> > weightParms{};
   vector<string>       externalGroupNames{};
   vector<vector<int> > externalMap{};
 
+  // Track the breaks needed for reweighting.
+  vector<int> flavBreaks;
+
   // Factorization indices.
   enum FactIndex{Z, Flav, PT};
+
+private:
+
+  // Ordering of the fragmentation weight keys.
+  const vector<vector< pair<string, string> > > keyOrder{
+    {{"frag:alund", "StringZ:aLund"}, {"frag:blund", "StringZ:bLund"},
+     {"frag:rfactc", "StringZ:rFactC"}, {"frag:rfactb", "StringZ:rFactB"}},
+    {{"frag:xi", "StringFlav:ProbQQtoQ"}, {"frag:rho", "StringFlav:ProbStoUD"},
+     {"frag:x", "StringFlav:ProbSQtoQQ"},
+     {"frag:y", "StringFlav:ProbQQ1toQQ0"}},
+    {{"frag:ptsigma", "StringPT:sigma"}}};
+
+  // Flavor spin ratios to store in derived.
+  const vector<int> flavIdxs{0, 1, 2, 3, 6};
+
+  // Stored parameters for flavor reweighting.
+  vector<double> flavBase;
+
+  // Count the flavor breaks for variations.
+  void flavCount(int idIn, bool early, bool noChoice);
 
 };
 

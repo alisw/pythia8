@@ -1,5 +1,5 @@
 // Info.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -109,7 +109,7 @@ public:
   UserHooksPtr   userHooksPtr{};
 
   // Pointer to information about a HeavyIons run and the current event.
-  // (Is NULL if HeavyIons object is inactive.)
+  // (Is nullptr if HeavyIons object is inactive.)
   HIInfo*        hiInfo{};
 
   WeightContainer* weightContainerPtr{};
@@ -181,6 +181,12 @@ public:
   double QRen(int i = 0)      const {return sqrtpos(Q2RenSave[i]);}
   double Q2Ren(int i = 0)     const {return Q2RenSave[i];}
   double scalup(int i = 0)    const {return scalupSave[i];}
+
+  // DIS-specific kinematic variables.
+  double Q2DIS()              const {return Q2DISSave;}
+  double WDIS()               const {return WDISSave;}
+  double xDIS()               const {return xDISSave;}
+  double yDIS()               const {return yDISSave;}
 
   // Kinematics of photons from lepton beams.
   double xGammaA()            const {return x1GammaSave;}
@@ -552,6 +558,9 @@ public:
   vector<int>    codeMPISave, iAMPISave, iBMPISave;
   vector<double> pTMPISave, eMPISave;
 
+  // DIS-specific kinematic variables.
+  double Q2DISSave{}, WDISSave{}, xDISSave{}, yDISSave{};
+
   // Variables related to photon kinematics.
   bool   isVMDstateAEvent{}, isVMDstateBEvent{};
   int    gammaModeEvent{}, idVMDASave{}, idVMDBSave{};
@@ -576,6 +585,9 @@ public:
     idBSave = idBin; pzBSave = pzBin; eBSave = eBin; mBSave = mBin;}
   void setECM( double eCMin) {eCMSave = eCMin; sSave = eCMSave * eCMSave;}
 
+  // Set info on DIS-specific kinematic variables.
+  void setDISKinematics(double Q2In, double WIn, double xIn, double yIn) {
+    Q2DISSave = Q2In; WDISSave = WIn; xDISSave = xIn; yDISSave = yIn;}
   // Set info related to gamma+gamma subcollision.
   void setX1Gamma( double x1GammaIn)     { x1GammaSave    = x1GammaIn;   }
   void setX2Gamma( double x2GammaIn)     { x2GammaSave    = x2GammaIn;   }

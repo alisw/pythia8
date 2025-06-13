@@ -1,0 +1,145 @@
+<html><head><title>main426</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main426</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main426.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#heavy+ions">Heavy&nbsp;ions</a>
+//            <a href="../ExampleKeywords.html#glauber">Glauber</a>
+//            <a href="../ExampleKeywords.html#npart">Npart</a>
+//            <a href="../ExampleKeywords.html#ncoll">Ncoll</a>
+//            <a href="../ExampleKeywords.html#fixed+target">Fixed&nbsp;target</a>
+//            <a href="../ExampleKeywords.html#p-ne">p&#8209;Ne</a>
+//            <a href="../ExampleKeywords.html#angantyr">Angantyr</a>
+//            <a href="../ExampleKeywords.html#total+cross+sections">Total&nbsp;cross&nbsp;sections</a>
+
+// This test program is intended to showcase how initial state
+// quantities from the heavy ion model Angantyr can be extracted.
+// In the example, Neon is added as a target, Angantyr is run
+// in fixed target mode, and cross section and Glauber quantities
+// are extracted from the program, as well as calculated directly,
+// to illustrate how the numbers are obtained.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+// You need to include this to get access to the HIInfo object for
+// HeavyIons.
+#include &quot;Pythia8/HeavyIons.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  Pythia pythia;
+
+  // We want to do fixed target, proton on neon. Since 20Ne is not
+  // a standard particle in Pythia, we add it to the database before
+  // setting the beam.
+  pythia.particleData.addParticle(1000100200, &quot;20Ne&quot;, 6, 30, 0, 19.992440);
+
+  // Set up beams, use the newly added Ne.
+  pythia.readString(&quot;Beams:idA = 2212&quot;);
+  pythia.readString(&quot;Beams:idB = 1000100200&quot;);
+
+  // Run fixed target. When beam energy is lower than the mass per nucleon,
+  // it is assumed at rest.
+  pythia.readString(&quot;Beams:eA = 2500&quot;);
+  pythia.readString(&quot;Beams:eB = 0&quot;);
+  pythia.readString(&quot;Beams:frameType = 2&quot;);
+
+  // Parameters for cross section model.
+  pythia.readString(&quot;Angantyr:CollisionModel = 2&quot;);
+  pythia.readString(&quot;HeavyIon:SigFitDefPar = &quot;
+    &quot;21.06,27.80,0.15&quot;);
+  pythia.readString(&quot;HeavyIon:SigFitNGen = 10&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Count the number of inelastic non-diffractive subcollisions.
+  // In proton-Ion, this is the same as wounded nucleons in the target.
+  // Compare to the ones output by built-in methods.
+  Hist nColl1(&quot;nColl1&quot;, 15, 0, 15);
+  Hist nColl2(&quot;nColl2&quot;, 15, 0, 15);
+  Hist nCollGlauber(&quot;nCollGlauber&quot;, 15, 0, 15);
+  // Number of participants in the target.
+  Hist nPart(&quot;nPart&quot;, 15, 0, 15);
+  // Sum of weights.
+  double sumW = 0;
+
+  // Loop over events.
+  for ( int iEvent = 0; iEvent &lt; 100000; ++iEvent ) {
+    if ( !pythia.next() ) continue;
+    // Short-hand for the pointer to Heavy Ion Info.
+    auto hiPtr = pythia.info.hiInfo;
+    // Short-hand for the pointer to SubCollisions.
+    auto scPtr = hiPtr-&gt;subCollisionsPtr();
+    // nColl are all the subcollisions which ended up generating
+    // particles, i.e. did not fail due to non-conservation of
+    // momentum.
+    int nColl = 0;
+    // nCollGlauber are all subcollisions from the Glauber
+    // calculation. Not all of them will be realized.
+    int nCollG = 0;
+    // Count subcollisions by type. Inelastic non-diffractive are
+    // called &quot;absorptive&quot;, code ABS.
+    for (auto sc : *scPtr) {
+      if (sc.type == SubCollision::ABS) ++nCollG;
+      if (sc.type == SubCollision::ABS &amp;&amp; !sc.failed) ++nColl;
+    }
+    // The event weight is needed to fill histograms.
+    const double weight = pythia.info.weight();
+    sumW += weight;
+    nColl1.fill(nColl, weight);
+    nColl2.fill(hiPtr-&gt;nCollND(), weight);
+    nCollGlauber.fill(nCollG, weight);
+    nPart.fill(hiPtr-&gt;nAbsTarg(), weight);
+  }
+
+  pythia.stat();
+  // Extract the incoherent, inelastic proton-ion cross sections,
+  // and print it, i.e. the cross section of everything that produces
+  // particles in the final state. It is the sum of all inelastic
+  // nucleon-nucleon channels.
+  double sigmaInel = 0.;
+  double sigmaInel2Err = 0.;
+  for (int i : {101, 103, 104, 105}) {
+    sigmaInel += pythia.info.sigmaGen(i);
+    sigmaInel2Err += pow2(pythia.info.sigmaErr(i));
+  }
+  // Convenient short-hands.
+  const string projName = pythia.particleData.name(pythia.event[1].id());
+  const string targName = pythia.particleData.name(pythia.event[2].id());
+  const double eCM = pythia.info.eCM();
+  cout &lt;&lt; &quot;\n=======Output from main426=====================&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;Incoherent, inelastic cross section for:&quot; &lt;&lt; endl;
+  cout &lt;&lt; projName &lt;&lt; &quot; on &quot; &lt;&lt; targName &lt;&lt; &quot; at sqrt(s_NN) = &quot;;
+  cout &lt;&lt; eCM &lt;&lt; &quot; GeV.&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;sigma = &quot; &lt;&lt; sigmaInel &lt;&lt; &quot; +/- &quot; &lt;&lt; sqrt(sigmaInel2Err) &lt;&lt;
+  &quot; mb.&quot; &lt;&lt;  endl;
+  cout &lt;&lt; &quot;===============================================&quot; &lt;&lt; endl;
+
+  // Plot the histograms with matplotlib.
+  HistPlot hpl(&quot;plot426&quot;);
+  hpl.frame(&quot;fig426&quot;, &quot;Glauber statistics &quot;+projName+&quot; on &quot;+targName+
+    &quot; $\\sqrt{s_{\\mathrm{NN}}}$ = &quot;+to_string(eCM)+&quot; GeV&quot;, &quot;$N$&quot;, &quot;$P(N)$&quot; );
+  hpl.add(nColl1/sumW, &quot;-,blue&quot;,&quot;Subcollisions from main426&quot;);
+  hpl.add(nColl2/sumW, &quot;x,green&quot;,&quot;Subcollisions from hiInfo&quot;);
+  hpl.add(nCollGlauber/sumW, &quot;-,red&quot;, &quot;Subcollisions from main426, &quot;
+    &quot;including failed&quot;);
+  hpl.add(nPart/sumW, &quot;*,orange&quot;, &quot;Participants from hiInfo&quot;);
+  hpl.plot(0, 15, 1e-6, 1, true);
+
+  return 0;
+}
+</code></pre></body></html>

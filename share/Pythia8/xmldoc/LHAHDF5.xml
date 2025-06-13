@@ -71,10 +71,10 @@ header library is also required which can be configured with the
 supported and can be downloaded as follows. 
 <pre> 
   curl -OL https://github.com/BlueBrain/HighFive/archive/tags/v2.7.1.zip \ 
-  && unzip v2.7.1.zip && mv HighFive-tags-v2.7.1/include/highfive highfive \ 
-  && rm -r HighFive-tags-v2.7.1 v2.7.1.zip 
+  && unzip v2.7.1.zip && mv HighFive-tags-v2.7.1 highfive \ 
+  && rm -r v2.7.1.zip 
 </pre> 
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

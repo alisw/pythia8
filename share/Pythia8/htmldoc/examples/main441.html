@@ -1,0 +1,132 @@
+<html><head><title>main441</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main441</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main441.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#hadronization">Hadronization</a>
+//            <a href="../ExampleKeywords.html#colour+reconnection">Colour&nbsp;reconnection</a>
+//            <a href="../ExampleKeywords.html#string+shoving">String&nbsp;shoving</a>
+
+// This program provides a demonstration of the string shoving model supplied
+// in the Rope Hadronization framework. It produces four histograms
+// showing the emergence of a &quot;ridge&quot; in two-particle correlations at high
+// event multiplicity.
+// No kind of background subtraction, event mixing, triggering or similar
+// is done is this simple demonstration analysis. It should therefore not be
+// taken as anything but a proof of concept.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator. Process selection.
+  Pythia pythia;
+  pythia.readString(&quot;Beams:eCM = 7000.&quot;);
+  pythia.readString(&quot;SoftQCD:nonDiffractive = on&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // Enabling string shoving, setting model parameters.
+  // The model is still untuned. These parameter values
+  // are chosen for illustrative purposes.
+  pythia.readString(&quot;Ropewalk:RopeHadronization = on&quot;);
+  pythia.readString(&quot;Ropewalk:doShoving = on&quot;);
+  pythia.readString(&quot;Ropewalk:doFlavour = off&quot;);
+  pythia.readString(&quot;Ropewalk:rCutOff = 10.0&quot;);
+  pythia.readString(&quot;Ropewalk:limitMom = on&quot;);
+  pythia.readString(&quot;Ropewalk:pTcut = 2.0&quot;);
+  pythia.readString(&quot;Ropewalk:r0 = 0.41&quot;);
+  pythia.readString(&quot;Ropewalk:m0 = 0.2&quot;);
+  pythia.readString(&quot;Ropewalk:gAmplitude = 10.0&quot;);
+  pythia.readString(&quot;Ropewalk:gExponent = 1.0&quot;);
+  pythia.readString(&quot;Ropewalk:deltat = 0.1&quot;);
+  pythia.readString(&quot;Ropewalk:tShove = 1.&quot;);
+  pythia.readString(&quot;Ropewalk:deltay = 0.1&quot;);
+  pythia.readString(&quot;Ropewalk:tInit = 1.5&quot;);
+
+  // Enabling setting of vertex information.
+  pythia.readString(&quot;PartonVertex:setVertex = on&quot;);
+  pythia.readString(&quot;PartonVertex:protonRadius = 0.7&quot;);
+  pythia.readString(&quot;PartonVertex:emissionWidth = 0.1&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  Hist deltaPhi1(&quot;dPhi, 0 &lt; Nch &lt; 20&quot;, 16, -M_PI/2., 3.);
+  Hist deltaPhi2(&quot;dPhi, 20 &lt; Nch &lt; 40&quot;, 16, -M_PI/2., 3.);
+  Hist deltaPhi3(&quot;dPhi, 40 &lt; Nch &lt; 60&quot;, 16, -M_PI/2., 3.);
+  Hist deltaPhi4(&quot;dPhi, 60 &lt; Nch &lt; 120&quot;, 16, -M_PI/2., 3.);
+
+  // Note: High statistics is needed to fill the high multiplicity
+  // histogram.
+  const int nEvent = 10000;
+
+  // Begin event loop. Generate event. Skip if error. List first one.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+    // Event short notation.
+    Event&amp; event = pythia.event;
+
+    // First we find the particles we need for the analysis,
+    // as well as event multiplicity.
+    vector&lt;Particle*&gt; parts;
+    int mult = 0;
+    for (int i = 0; i &lt; event.size(); ++i){
+        // Particle short notation
+        Particle&amp; p = event[i];
+        // Apply simple, particle level, cuts.
+        if(p.isFinal() &amp;&amp; p.isCharged() &amp;&amp; abs(p.eta()) &lt; 2.5 &amp;&amp;
+          p.pT() &gt; 0.5){
+                ++mult;
+                if(p.pT() &gt; 1.0 &amp;&amp; p.pT() &lt; 3.0)
+                  parts.push_back(&amp;p);
+
+        }
+    }
+
+    // We discard events outside multiplicity bounds.
+    int np = parts.size();
+    if(mult &lt; 2) continue;
+
+    // We loop over all particle pairs.
+    for (int i = 0; i &lt; np; ++i)
+      for(int j = 0; j &lt; np; ++j) {
+        // Skip if same particle.
+        if( i == j) continue;
+        // The distance in eta between the pair.
+        double dEta = abs(parts[i]-&gt;eta() - parts[j]-&gt;eta());
+        if(dEta &lt; 4 &amp;&amp; dEta &gt; 2){
+          // Calculate the phase difference.
+          double dPhi = parts[i]-&gt;phi() - parts[j]-&gt;phi();
+          while (dPhi &lt; -M_PI/2) dPhi += 2*M_PI;
+          while (dPhi &gt; 3*M_PI/2) dPhi -= 2*M_PI;
+          if(mult &lt;= 20)
+            deltaPhi1.fill(dPhi);
+          else if(mult &lt;= 40)
+            deltaPhi2.fill(dPhi);
+          else if(mult &lt;= 60)
+            deltaPhi3.fill(dPhi);
+          else
+            deltaPhi4.fill(dPhi);
+        }
+      }
+
+  // End of event loop. Statistics. Histogram. Done.
+  }
+  pythia.stat();
+  cout &lt;&lt; deltaPhi1 &lt;&lt; deltaPhi2 &lt;&lt; deltaPhi3 &lt;&lt; deltaPhi4;
+  return 0;
+}
+</code></pre></body></html>

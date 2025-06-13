@@ -1,5 +1,5 @@
 // DireTimes.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -275,7 +275,7 @@ public:
     int nBranchMax = 0);
 
   // Top-level routine for QED radiation in hadronic decay to two leptons.
-  virtual int showerQED( int i1, int i2, Event& event, double pTmax);
+  virtual int showerQED( int i1, int i2, Event& event, double pTmax = -1.);
 
   // Global recoil: reset counters and store locations of outgoing partons.
   virtual void prepareGlobal( Event&);

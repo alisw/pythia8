@@ -1,5 +1,5 @@
 // MiniStringFragmentation.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -32,10 +32,12 @@ const int MiniStringFragmentation::NTRYFLAV        = 10;
 
 // Initialize and save pointers.
 
-void MiniStringFragmentation::init(StringFlav* flavSelPtrIn,
-  StringPT* pTSelPtrIn, StringZ* zSelPtrIn) {
+bool MiniStringFragmentation::init(StringFlav* flavSelPtrIn,
+  StringPT* pTSelPtrIn, StringZ* zSelPtrIn, FragModPtr) {
 
   // Save pointers.
+  if (flavSelPtrIn == nullptr || pTSelPtrIn == nullptr || zSelPtrIn == nullptr)
+    return false;
   flavSelPtr      = flavSelPtrIn;
   pTSelPtr        = pTSelPtrIn;
   zSelPtr         = zSelPtrIn;
@@ -59,6 +61,9 @@ void MiniStringFragmentation::init(StringFlav* flavSelPtrIn,
   // Initialize the b parameter of the z spectrum, used when joining jets.
   bLund           = zSelPtr->bAreaLund();
 
+  // Return.
+  return true;
+
 }
 
 //--------------------------------------------------------------------------
@@ -69,6 +74,7 @@ bool MiniStringFragmentation::fragment(int iSub, ColConfig& colConfig,
   Event& event, bool isDiff, bool systemRecoil) {
 
   // Check for junction topologies
+  if (iSub == -1) return true;
   iParton = colConfig[iSub].iParton;
   isJunctionSystem = colConfig[iSub].hasJunction;
   SaveJunctionState saveJunctionState(*this, event);

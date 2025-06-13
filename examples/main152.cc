@@ -1,156 +1,126 @@
 // main152.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Torbjorn Sjostrand <torbjorn.sjostrand@fysik.lu.se>
+// Keywords: matching; merging; powheg
 
-// Keywords: rescattering; low energy; pT spectra
-
-// Compare multiplicities and hadron spectra with and without rescattering,
-// the former with or without rescattering between nearest string neighbours.
-// Note: many other parameters could be used to vary the rescattering rate.
+// Example how to perform matching with POWHEG-BOX events,
+// based on the code found in include/Pythia8Plugins/PowhegHooks.h.
 
 #include "Pythia8/Pythia.h"
+#include "Pythia8Plugins/PowhegHooks.h"
 using namespace Pythia8;
 
-//--------------------------------------------------------------------------
+//==========================================================================
 
 int main() {
 
-  // Main settings. All particles with tau0 > maxTau0 fm are set stable.
-  int nEvent = 5000;
-  double maxTau0 = 100.;
+  // Generator
+  Pythia pythia;
 
-  // Histograms.
-  Hist multFin0("n_final, no rescattering", 100, 0., 800.);
-  Hist multRes0("n_resc, no rescattering ", 100, 0., 300.);
-  Hist pTpi0("pT pions no rescattering",    100, 0., 5.);
-  Hist pTk0("pT kaons no rescattering",     100, 0., 5.);
-  Hist pTp0("pT protons no rescattering",   100, 0., 5.);
-  Hist multFin1("n_final, no neighbours ",  100, 0., 800.);
-  Hist multRes1("n_resc, no neighbours  ",  100, 0., 300.);
-  Hist pTpi1("pT pions, no neighbours ",    100, 0., 5.);
-  Hist pTk1("pT kaons, no neighbours ",     100, 0., 5.);
-  Hist pTp1("pT protons, no neighbours ",   100, 0., 5.);
-  Hist multFin2("n_final, all rescatter",   100, 0., 800.);
-  Hist multRes2("n_resc, all rescatter ",   100, 0., 300.);
-  Hist pTpi2("pT pions, all rescatter ",    100, 0., 5.);
-  Hist pTk2("pT kaons, all rescatter ",     100, 0., 5.);
-  Hist pTp2("pT protons, all rescatter ",   100, 0., 5.);
+  // Load configuration file
+  pythia.readFile("main152.cmnd");
 
-  // Loop over the three possible scenarios being compared.
-  for (int ic = 0; ic < 3; ++ic) {
+  // Read in main settings.
+  int nEvent      = pythia.settings.mode("Main:numberOfEvents");
+  int nError      = pythia.settings.mode("Main:timesAllowErrors");
+  // Read in key POWHEG matching settings.
+  int powhegVeto    = pythia.settings.mode("POWHEG:veto");
+  int powhegMPIveto = pythia.settings.mode("POWHEG:MPIveto");
+  bool loadHooks  = (powhegVeto > 0 || powhegMPIveto > 0);
+  // Read in shower settings.
+  int showerModel = pythia.settings.mode("PartonShowers:model");
 
-    // Create Pythia instance. Shorthand for event.
-    Pythia pythia;
-    Event& event = pythia.event;
+  // Add in user hooks for shower vetoing.
+  shared_ptr<PowhegHooks> powhegHooks;
+  if (loadHooks) {
 
-    // Process selection: nondiffractive pp.
-    pythia.readString("SoftQCD:nonDiffractive = on");
-    pythia.readString("Beams:eCM = 13000.");
-
-    // Turn rescattering on, which also requires vertices on.
-    if (ic > 0) {
-      pythia.readString("HadronLevel:Rescatter = on");
-      pythia.readString("Fragmentation:setVertices = on");
-      pythia.readString("PartonVertex:setVertex = on");
-
-      // Rescattering details.
-      //pythia.readString("Rescattering:quickCheck = off");
-      if (ic == 1) pythia.readString("Rescattering:nearestNeighbours = off");
-    }
-
-    // Switch off all decays with lifetime > maxTau0.
-    pythia.readString("ParticleDecays:limitTau0 = on");
-    pythia.settings.parm("ParticleDecays:tau0Max", maxTau0 * FM2MM);
-
-    // Initialize Pythia.
-    if (!pythia.init()) {
-      cout << " Pythia failed to initialize." << endl;
-      return -1;
-    }
-
-    // References to relevant histograms.
-    Hist& multFin = (ic == 0) ? multFin0 : ((ic == 1) ? multFin1 : multFin2);
-    Hist& multRes = (ic == 0) ? multRes0 : ((ic == 1) ? multRes1 : multRes2);
-    Hist& pTpi    = (ic == 0) ? pTpi0    : ((ic == 1) ? pTpi1    : pTpi2);
-    Hist& pTk     = (ic == 0) ? pTk0     : ((ic == 1) ? pTk1     : pTk2);
-    Hist& pTp     = (ic == 0) ? pTp0     : ((ic == 1) ? pTp1     : pTp2);
-
-    // Generate events.
-    int nSuccess = 0;
-    for (int iEvent = 0; iEvent < nEvent; ++iEvent) {
-      if (!pythia.next()) continue;
-      ++nSuccess;
-
-        // Final multiplicity and number of rescatterings.
-      int nFin = event.nFinal(false);
-      int nRes = 0;
-      for (Particle& particle : event) {
-        if (particle.isHadron() && !particle.isFinal()) {
-          Particle& daughter = event[particle.daughter1()];
-          if (daughter.isHadron() && daughter.statusAbs()/10 == 15) nRes += 1;
-        }
+    // For POWHEG:veto >= 1, setup to do vetoed power showers.
+    //   1) Setting pTmaxMatch = 2 forces PYTHIA's shower to sweep over the
+    //      full phase space.
+    //   2) Loading the POWHEG hooks will then veto any shower branchings that
+    //      are judged (according to the POWHEG settings) to double-count the
+    //      POWHEG one.
+    if (powhegVeto > 0) {
+      if (showerModel == 1 || showerModel == 3) {
+        // For PYTHIA's simple shower (and also for Dire), the FSR and ISR
+        // shower starting scales are set by the respective pTmaxMatch values.
+        pythia.readString("TimeShower:pTmaxMatch = 2");
+        pythia.readString("SpaceShower:pTmaxMatch = 2");
+        // Use undamped power showers, except for cases for which there could
+        // be an interplay with ISR branchings not simulated by the pure
+        // shower, like ISR g->tt.
+        pythia.readString("SpaceShower:pTdampMatch = 3");
+        pythia.readString("TimeShower:pTdampMatch = 0");
+      } else if (showerModel == 2) {
+        // Vincia has common settings that apply to both ISR and FSR.
+        pythia.readString("Vincia:pTmaxMatch = 2");
+        // Use undamped power showers, except for cases for which there could
+        // be an interplay with ISR branchings not simulated by the pure
+        // shower, like g->tt.
+        pythia.readString("Vincia:pTdampMatch = 3");
       }
-      // Exactly two hadrons participate in each rescattering. Fill histograms.
-      nRes /= 2;
-      multFin.fill(nFin + 0.5);
-      multRes.fill(nRes + 0.5);
-
-      // Hadron pT spectra at central rapidities.
-      for (Particle& particle : event) {
-        if (particle.isHadron() && particle.isFinal()
-        && abs(particle.y()) < 2.) {
-          int idAbs = particle.idAbs();
-          double pT = particle.pT();
-          if (idAbs == 211 || idAbs == 111) pTpi.fill(pT);
-          else if (idAbs == 311 || idAbs == 321 || idAbs == 310
-            || idAbs ==  130) pTk.fill(pT);
-          else if (idAbs == 2212) pTp.fill(pT);
-        }
-      }
-
-    // End of event loop. Normalize and print histograms.
     }
-    pythia.stat();
-    multFin *= 1. / (8. * nSuccess);
-    multRes *= 1. / (3. * nSuccess);
-    pTpi    *= 20. / nSuccess;
-    pTk     *= 20. / nSuccess;
-    pTp     *= 20. / nSuccess;
-    cout << multFin << multRes << pTpi << pTk << pTp;
 
-  // End loop over three cases.
+    // For POWHEG:MPIveto >= 1, also set MPI to start at the kinematical limit.
+    if (powhegMPIveto > 0) {
+      pythia.readString("MultipartonInteractions:pTmaxMatch = 2");
+    }
+
+    powhegHooks = make_shared<PowhegHooks>();
+    pythia.setUserHooksPtr((UserHooksPtr)powhegHooks);
   }
 
-  // Plot histograms.
-  HistPlot hpl("main152plot");
-  hpl.frame("out152plot", "Hadronic multiplicity", "n", "dN/dn");
-  hpl.add( multFin0, "", "no rescattering");
-  hpl.add( multFin1, "", "partial rescattering");
-  hpl.add( multFin2, "", "full rescattering");
-  hpl.plot(true);
-  hpl.frame("", "Number of rescatterings", "n", "dN/dn");
-  //hpl.add( multRes0, "", "no rescattering");
-  hpl.add( multRes1, ",g", "partial rescattering");
-  hpl.add( multRes2, ",r", "full rescattering");
-  hpl.plot(true);
-  hpl.frame("", "Pion pT distribution for |y| < 2", "pT (GeV)", "dN/dpT");
-  hpl.add( pTpi0, "", "no rescattering");
-  hpl.add( pTpi1, "", "partial rescattering");
-  hpl.add( pTpi2, "", "full rescattering");
-  hpl.plot(true);
-  hpl.frame("", "Kaon pT distribution for |y| < 2", "pT (GeV)", "dN/dpT");
-  hpl.add( pTk0, "", "no rescattering");
-  hpl.add( pTk1, "", "partial rescattering");
-  hpl.add( pTk2, "", "full rescattering");
-  hpl.plot(true);
-  hpl.frame("", "Proton pT distribution for |y| < 2", "pT (GeV)", "dN/dpT");
-  hpl.add( pTp0, "", "no rescattering");
-  hpl.add( pTp1, "", "partial rescattering");
-  hpl.add( pTp2, "", "full rescattering");
-  hpl.plot(true);
+  // Initialise and list settings
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Counters for number of ISR/FSR emissions vetoed
+  unsigned long int nISRveto = 0, nFSRveto = 0;
+
+  // Begin event loop; generate until nEvent events are processed
+  // or end of LHEF file
+  int iEvent = 0, iError = 0;
+  while (true) {
+
+    // Generate the next event
+    if (!pythia.next()) {
+
+      // If failure because reached end of file then exit event loop
+      if (pythia.info.atEndOfFile()) break;
+
+      // Otherwise count event failure and continue/exit as necessary
+      cout << "Warning: event " << iEvent << " failed" << endl;
+      if (++iError == nError) {
+        cout << "Error: too many event failures... exiting" << endl;
+        break;
+      }
+
+      continue;
+    }
+
+    /*
+     * Process dependent checks and analysis may be inserted here
+     */
+
+    // Update ISR/FSR veto counters
+    if (loadHooks) {
+      nISRveto += powhegHooks->getNISRveto();
+      nFSRveto += powhegHooks->getNFSRveto();
+    }
+
+    // If nEvent is set, check and exit loop if necessary
+    ++iEvent;
+    if (nEvent != 0 && iEvent == nEvent) break;
+
+  } // End of event loop.
+
+  // Statistics, histograms and veto information
+  pythia.stat();
+  cout << "Number of ISR emissions vetoed: " << nISRveto << endl;
+  cout << "Number of FSR emissions vetoed: " << nFSRveto << endl;
+  cout << endl;
 
   // Done.
   return 0;

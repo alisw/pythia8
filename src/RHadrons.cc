@@ -1,5 +1,5 @@
 // RHadrons.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -47,7 +47,15 @@ const double RHadrons::EGBORROWMAX = 4.;
 
 // Main routine to initialize R-hadron handling.
 
-bool RHadrons::init() {
+bool RHadrons::init(StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn,
+    StringZ* zSelPtrIn, FragModPtr) {
+
+  // Save pointers.
+  if (flavSelPtrIn == nullptr || pTSelPtrIn == nullptr || zSelPtrIn == nullptr)
+    return false;
+  flavSelPtr      = flavSelPtrIn;
+  pTSelPtr        = pTSelPtrIn;
+  zSelPtr         = zSelPtrIn;
 
   // Flags and parameters related to R-hadron formation and decay.
   allowRH          = flag("RHadrons:allow");
@@ -162,10 +170,14 @@ bool RHadrons::givesRHadron( int id) {
 
 // Produce R-hadrons by fragmenting them off from existing strings.
 
-bool RHadrons::produce( ColConfig& colConfig, Event& event) {
+bool RHadrons::fragment(int iSub, ColConfig& colConfig, Event& event,
+  bool, bool) {
+
+  // Check if first request.
+  if (iSub != -1) return true;
 
   // Check whether some sparticles are allowed to hadronize.
-  if (!allowSomeR) return true;
+  if (!allowRH || !allowSomeR) return true;
 
   // Reset arrays and values.
   iBefRHad.resize(0);

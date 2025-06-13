@@ -1,0 +1,215 @@
+<html><head><title>main505</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main505</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main505.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#bsm">BSM</a>
+//            <a href="../ExampleKeywords.html#r-hadron">R&#8209;hadron</a>
+//            <a href="../ExampleKeywords.html#displaced+vertex">Displaced&nbsp;vertex</a>
+
+// Example of of R-hadron production.
+// Several of the possibilities shown here, like displaced vertices,
+// are extras that need not be used for the basic setup.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Key settings to be used in the main program.
+  // nGluino = 0, 1, 2 give stop pair, single gluino or gluino pair.
+  int nGluino  = 2;
+  int nEvent   = 200;
+  int nAbort   = 3;
+  int nList    = 0;
+  double eCM   = 7000.;
+
+  // Generator. Shorthand for the event.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+
+  // Set up beams: p p is default so only need set energy.
+  pythia.settings.parm(&quot;Beams:eCM&quot;, eCM);
+
+  // Squark pair: use stop-antistop as example.
+  if (nGluino == 0) {
+    pythia.readString(&quot;SUSY:gg2squarkantisquark = on&quot;);
+    pythia.readString(&quot;SUSY:idA = 1000006&quot;);
+    pythia.readString(&quot;SUSY:idB = 1000006&quot;);
+  // Squark-gluino pair: also supersymmetric u has been made long-lived.
+  // Stop does not work since then one would need inoming top PDF.
+  // Nevertheless R-hadrons are numbered/named as if containing a stop.
+  } else if (nGluino == 1) {
+    pythia.readString(&quot;SUSY:qg2squarkgluino  = on&quot;);
+    pythia.readString(&quot;SUSY:idA = 1000002&quot;);
+    pythia.readString(&quot;RHadrons:idStop = 1000002&quot;);
+    pythia.readString(&quot;SUSY:idB = 1000021&quot;);
+  // Gluino pair.
+  } else {
+    pythia.readString(&quot;SUSY:gg2gluinogluino  = on&quot;);
+  }
+
+  // Use hacked sps1a file, with stop (+su) and gluino made long-lived.
+  // This is based on the width being less than 0.2 GeV by default.
+  pythia.readString(&quot;SLHA:file = sps1aNarrowStopGluino.spc&quot;);
+  // Further hacked file, to test R-parity violating gluino decay.
+  //pythia.readString(&quot;SLHA:file = sps1aNarrowStopGluinoRPV.spc&quot;);
+
+  // Allow R-hadron formation.
+  pythia.readString(&quot;Rhadrons:allow = on&quot;);
+
+  // If you want to do the decay separately later,
+  // you need to switch off automatic decays.
+  pythia.readString(&quot;RHadrons:allowDecay = off&quot;);
+
+  // Fraction of gluinoballs.
+  pythia.readString(&quot;RHadrons:probGluinoball = 0.1&quot;);
+
+  // Switch off key components.
+  //pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+  //pythia.readString(&quot;PartonLevel:ISR = off&quot;);
+  //pythia.readString(&quot;PartonLevel:FSR = off&quot;);
+  //pythia.readString(&quot;HadronLevel:Hadronize = off&quot;);
+
+  // Allow the R-hadrons to have secondary vertices: set c*tau in mm.
+  // Note that width and lifetime can be set independently.
+  // (Nonzero small widths are needed e.g. to select branching ratios.)
+  pythia.readString(&quot;1000002:tau0 = 200.&quot;);
+  pythia.readString(&quot;1000006:tau0 = 250.&quot;);
+  pythia.readString(&quot;1000021:tau0 = 300.&quot;);
+
+  // Checks. Optionally relax E-p-conservation.
+  pythia.readString(&quot;Check:nErrList = 2&quot;);
+  //pythia.readString(&quot;Check:epTolErr = 2e-3&quot;);
+
+  // Possibility to switch off particle data and event listings.
+  // Also to shop location of displaced vertices.
+  pythia.readString(&quot;Init:showChangedSettings = on&quot;);
+  pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 1&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 1&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+  pythia.readString(&quot;Next:showScaleAndVertex = on&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  Hist nChargedH(&quot;charged multiplicity&quot;, 100, -0.5, 799.5);
+  Hist dndyChargedH(&quot;dn/dy charged&quot;, 100, -10., 10.);
+  Hist dndyRH(&quot;dn/dy R-hadrons&quot;, 100, -5., 5.);
+  Hist pTRH(&quot;pT R-hadrons&quot;, 100, 0., 1000.);
+  Hist xRH(&quot;p_RHadron / p_sparticle&quot;, 100, 0.9, 1.1);
+  Hist mDiff(&quot;m(Rhadron) - m(sparticle)&quot;, 100, 0., 5.);
+  Hist decVtx(&quot;R-hadron decay vertex (mm from origin)&quot;, 100, 0., 1000.);
+
+  // R-hadron flavour composition.
+  map&lt;int, int&gt; flavours;
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if failure.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Loop over final charged particles in the event.
+    // The R-hadrons may not yet have decayed here.
+    int nCharged = 0;
+    Vec4 pSum;
+    for (int i = 0; i &lt; event.size(); ++i) {
+      if (event[i].isFinal()) {
+        pSum += event[i].p();
+        if (event[i].isCharged()) {
+          ++nCharged;
+          dndyChargedH.fill( event[i].y() );
+        }
+      }
+    }
+    nChargedH.fill( nCharged );
+
+    // Loop over final R-hadrons in the event: kinematic distribution
+    for (int i = 0; i &lt; event.size(); ++i) {
+      int idAbs = event[i].idAbs();
+      if (idAbs &gt; 1000100 &amp;&amp; idAbs &lt; 2000000 &amp;&amp; idAbs != 1009002) {
+        ++flavours[ event[i].id() ];
+        dndyRH.fill( event[i].y() );
+        pTRH.fill( event[i].pT() );
+        // Trace back to mother; compare momenta and masses.
+        int iMother = i;
+        while( event[iMother].statusAbs() &gt; 100)
+          iMother = event[iMother].mother1();
+        double xFrac = event[i].pAbs() / event[iMother].pAbs();
+        xRH.fill( xFrac);
+        double mShift = event[i].m() - event[iMother].m();
+        mDiff.fill( mShift );
+        // Separation of R-hadron decay vertex from origin.
+        // Don&apos;t be fooled by pAbs(); it gives the three-vector length
+        // of any Vec4, also one representing spatial coordinates.
+        double dist = event[i].vDec().pAbs();
+        decVtx.fill( dist);
+
+        // This is a place where you could allow a R-hadron shift of
+        // identity, momentum and decay vertex to allow for detector effects.
+        // Identity not illustrated here; requires a change of mass as well.
+        // Toy model: assume an exponential energy loss, &lt; &gt; = 1 GeV,
+        // but at most half of kinetic energy. Unchanged direction.
+        // Note that event will no longer conserve energy and momentum.
+        double eLossAvg = 1.;
+        double eLoss = 0.;
+        do { eLoss = eLossAvg * pythia.rndm.exp(); }
+        while (eLoss &gt; 0.5 * (event[i].e() - event[i].m()));
+        double eNew = event[i].e() - eLoss;
+        Vec4   pNew = event[i].p() * sqrt( pow2(eNew) - pow2(event[i].m()) )
+                    / event[i].pAbs();
+        pNew.e( eNew);
+        event[i].p( pNew);
+        // The decay vertex will be calculated based on the production vertex,
+        // the proper lifetime tau and the NEW four-momentum, rather than
+        // e.g. some average momentum, if you do not set it by hand.
+        // This commented-out piece illustrates brute-force setting,
+        // but you should provide real numbers from some tracking program.
+        // With tau = 0 the decay is right at the chosen point.
+        //event[i].tau( 0.);
+        //event[i].vProd( 132., 155., 233., 177.);
+
+      // End of loop over final R-hadrons.
+      }
+    }
+
+    // If you have set R-hadrons stable above,
+    // you can still force them to decay at this stage.
+    pythia.forceRHadronDecays();
+    if (iEvent &lt; nList) pythia.event.list(true);
+
+  // End of event loop.
+  }
+
+  // Final statistics, flavour composition and histogram output.
+  pythia.stat();
+  cout &lt;&lt; &quot;\n Composition of produced R-hadrons \n    code            &quot;
+       &lt;&lt; &quot;name   times &quot; &lt;&lt; endl;
+  for (map&lt;int, int&gt;::iterator flavNow = flavours.begin();
+    flavNow != flavours.end(); ++flavNow)  cout &lt;&lt; setw(8)
+    &lt;&lt; flavNow-&gt;first &lt;&lt; setw(16) &lt;&lt; pythia.particleData.name(flavNow-&gt;first)
+    &lt;&lt; setw(8) &lt;&lt; flavNow-&gt;second &lt;&lt; endl;
+  cout &lt;&lt; nChargedH &lt;&lt; dndyChargedH &lt;&lt; dndyRH &lt;&lt; pTRH &lt;&lt; xRH &lt;&lt; mDiff
+       &lt;&lt; decVtx;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

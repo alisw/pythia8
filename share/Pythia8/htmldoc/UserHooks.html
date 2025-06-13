@@ -30,7 +30,7 @@ you this access at a few selected places. This class in itself does
 nothing; the idea is that you should write your own derived class 
 for your task. One simple derived class (<code>SuppressSmallPT</code>) 
 comes with the program, mainly as illustration, and the 
-<code>main10.cc</code> program provides a complete (toy) example how 
+<code>main242.cc</code> program provides a complete (toy) example how 
 a derived class could be set up and used. 
  
 <p/> 
@@ -995,9 +995,8 @@ thus repeating a step in the hadronization procedure.
 <a name="anchor42"></a>
 <p/><strong> virtual bool canChangeFragPar() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
-return true, it will enable the methods <code>doChangeFragPar(...)</code>, 
-<code>doVetoFragmentation(...)</code> and 
-<code>setStringEnds(...)</code>. 
+return true, it will enable the method <code>doChangeFragPar(...)</code> 
+and <code>setStringEnds(...)</code>. 
    
  
 <a name="anchor43"></a>
@@ -1046,6 +1045,13 @@ record for all the partons in the string currently being hadronized.
    
  
 <a name="anchor44"></a>
+<p/><strong> virtual bool canVetoFragmentation() &nbsp;</strong> <br/>
+In the base class this method returns false. If you redefine it to 
+return true, it will enable the method <code>doVetoFragmentation(...)</code>, 
+<code>doVetoFinalTwo(...)</code> and <code>setStringEnds(...)</code>. 
+   
+ 
+<a name="anchor45"></a>
 <p/><strong> virtual bool doVetoFragmentation(Particle had, const StringEnd * sEnd) &nbsp;</strong> <br/>
 This method can veto the production of a hadron, whereby the current 
 string break is redone. 
@@ -1057,10 +1063,13 @@ containing additional information about the string break.
    
    
  
-<a name="anchor45"></a>
+<a name="anchor46"></a>
 <p/><strong> virtual bool doVetoFragmentation(Particle had1, Particle had2, const StringEnd * sEnd1, const StringEnd * sEnd1) &nbsp;</strong> <br/>
 This method can veto the production of the final hadrons produced in the 
-fragmentation of a string. 
+fragmentation of a string. Note that a veto from this function 
+will refragment the whole string. If only the regeneration of 
+the final two is desired, the doVetoFinalTwo function should be 
+used instead. 
 <br/><code>argument</code><strong> had1,had2 </strong>  :  are (copies of) the two final hadrons being 
 produced, just before they are added to the event record. 
    
@@ -1069,7 +1078,21 @@ containing additional information about the string break.
    
    
  
-<a name="anchor46"></a>
+<a name="anchor47"></a>
+<p/><strong> virtual bool doVetoFinalTwo(Particle had1, Particle had2, const StringEnd * sEnd1, const StringEnd * sEnd1) &nbsp;</strong> <br/>
+This method can veto the production of the final hadrons produced in the 
+fragmentation of a string. If the refragmentation of the whole 
+string is desired, the doVetoFragmentation function should be 
+used instead. 
+<br/><code>argument</code><strong> had1,had2 </strong>  :  are (copies of) the two final hadrons being 
+produced, just before they are added to the event record. 
+   
+<br/><code>argument</code><strong> sEnd1,sEnd2 </strong>  :  are pointers to <code>StringEnd</code> objects 
+containing additional information about the string break. 
+   
+   
+ 
+<a name="anchor48"></a>
 <p/><strong> canVetoAfterHadronization() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to return 
 true, the method <code>doVetoAfterHadronization()</code> will be called 
@@ -1078,7 +1101,7 @@ post-hadronization effects such as decays, hadronic rescattering or
 Bose-Einstein effects. 
    
  
-<a name="anchor47"></a>
+<a name="anchor49"></a>
 <p/><strong> virtual bool doVetoAfterHadronization(const Event& event) &nbsp;</strong> <br/>
 can optionally be called, as described above. You can study, but not 
 modify, the <code>event</code> record of the hadronized state. 
@@ -1090,13 +1113,13 @@ completely new event, so the vetoed event will not appear in the
 output of <code>Pythia::next()</code>. 
    
  
-<a name="anchor48"></a>
+<a name="anchor50"></a>
 <p/><strong> virtual bool canSetImpactParameter() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it to 
 return true, it will enable the method <code>doSetImpactParameter()</code> . 
    
  
-<a name="anchor49"></a>
+<a name="anchor51"></a>
 <p/><strong> virtual bool doSetImpactParameter() &nbsp;</strong> <br/>
 This method allows the user to select a particular impact parameter in the 
 MPI machinery in the generation of minimum-bias events. The function takes no 
@@ -1139,4 +1162,4 @@ occurs.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

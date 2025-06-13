@@ -255,6 +255,29 @@ make exceptions for this.  Our decision will be guided by the two goals
 of preserving the free status of all derivatives of our free software and
 of promoting the sharing and reuse of software generally.
 
+Linking exception for PYTHIA:
+In addition to the terms of the GNU General Public License (GPL) version 2 
+or later, the authors of PYTHIA grant you permission to link the PYTHIA 
+library with independent modules to produce a container or executable, 
+regardless of the license terms of these independent modules, and to copy 
+and distribute the resulting container or executable under terms of your 
+choice, provided that you also meet the terms and conditions of the license
+of each independent module used to create the executable or container.
+ 
+Additional Requirements:
+  1. You must accompany the container or executable with either the complete 
+corresponding source code of PYTHIA, distributed under the terms of the GNU 
+General Public License, or instructions on how to obtain it.
+
+  2. You must ensure that users have practical means to modify or replace 
+PYTHIA in the distributed container or executable, such as by providing tools,
+instructions, or source access to rebuild the container or executable with a
+user-specified version of PYTHIA.
+
+  3. This linking exception applies only to the use of PYTHIA without 
+modification. Any modifications to PYTHIA itself must be licensed under the 
+GNU General Public License without this exception.
+
                             NO WARRANTY
 
   11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY

@@ -180,6 +180,17 @@ Consider also turning on <code>PartonVertex:setVertex</code>. Further options
 are found <aloc href="HadronicRescattering">here</aloc>. 
 </flag> 
  
+<flag name="HadronLevel:QED" default="off"> 
+Master switch for hadron-level QED radiation, including during hadron 
+(and tau) decays. This switch only has an effect if the selected 
+shower model allows for hadron-level QED radiation, see further 
+documentation on the pages describing each of PYTHIA's shower models. 
+<note>Note:</note> The current default is to have hadron-level QED 
+radiation switched off, in order to avoid double-counting of emissions 
+if you link to an external QED-radiation program (such as PHOTOS 
+<ref>Bar94, Dav10</ref>), as is the norm in many collaborations. 
+</flag> 
+ 
 <flag name="HadronLevel:BoseEinstein" default="off"> 
 Master switch for the simulation of Bose-Einstein effects; 
 on/off = true/false. Further options are found 
@@ -194,4 +205,4 @@ event; on/off = true/false. Further options are found
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

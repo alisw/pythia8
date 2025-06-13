@@ -66,7 +66,7 @@ externally to the <code>Pythia</code> code.
  
 <p/> 
 An example illustrating how to run with an external random number 
-generator is provided in <code>main23.cc</code>. 
+generator is provided in <code>main245.cc</code>. 
  
 <h3>MIXMAX random numbers</h3> 
  
@@ -86,7 +86,7 @@ In this implementation a dimensionality of 17 is used, as this has
 been found to provide faster access to large numbers of independent 
 sequences. A timing comparison between the external MIXMAX random 
 number generator, and the default internal PYTHIA random number 
-generator is provided in the example <code>main23.cc</code>. The 
+generator is provided in the example <code>main245.cc</code>. The 
 MIXMAX random number generator is found to be comparable in speed to 
 the default generator. The primary methods of 
 the <code>MixMaxRndm</code> class are given here. 
@@ -159,6 +159,11 @@ randomly shuffle a vector of objects (<code>type T</code>, i.e. any type,
 templated method) according to the Fisher-Yates algorithm. 
 </method> 
  
+<method name="double Rndm::peekFlat()"> 
+peek at the next random number in the sequence without updating 
+the state. Useful for debugging purposes. 
+</method> 
+ 
 <method name="bool Rndm::dumpState(string fileName)"> 
 save the current state of the random number generator to a binary 
 file. This involves two integers and 100 double-precision numbers. 
@@ -207,7 +212,7 @@ the following during the configuration of PYTHIA.
 </pre> 
 Then, when building any of the examples, the random number debugging 
 will be enabled. The output, for example when running 
-<code>main01</code>, will look something like the following. 
+<code>main101</code>, will look something like the following. 
 <pre> 
 ParticleDecays::twoBody:flat        3.5433e-01 src/ParticleDecays.cc:546 
 Rndm::exp:flat                      2.7883e-01 src/Basics.cc:96 
@@ -304,8 +309,8 @@ used as a method name in user code, than compiling with the
 compile. This can be overcome by including the 
 <code>include/Pythia8/RngDebug.h</code> header after any PYTHIA 
 headers, but before any additional headers. As an example, 
-<code>main93</code> will fail to compile with RNG debugging 
-on. However, the following modification in <code>main93.cc</code> 
+<code>main144</code> will fail to compile with RNG debugging 
+on. However, the following modification in <code>main144.cc</code> 
 resolves the issue. 
 <pre> 
 #include "Pythia8/Pythia.h" 
@@ -318,4 +323,4 @@ header, but before additional headers.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

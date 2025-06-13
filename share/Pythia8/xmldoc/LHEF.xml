@@ -164,7 +164,7 @@ recalculated for the new mass without any transfer. The energy violation
 is partly compensated by changed energies for the incoming partons to 
 the hard collision if <code>LesHouches:matchInOut = on</code>, but not 
 always perfectly. One possibility then is to change the 
-<aloc href="ErrorChecks">tolerance</aloc> to such errors. 
+<aloc href="ErrorChecks">tolerance</aloc> to reduce such errors. 
 </modepick> 
  
 <modepick name="LesHouches:setQuarkMass" default="1" min="0" max="2"> 
@@ -210,6 +210,52 @@ One possibility then is to change the
 <aloc href="ErrorChecks">tolerance</aloc> to such errors. 
 </modepick> 
  
+<modepick name="LesHouches:smearHadronMass" default="0" min="0" max="2"> 
+setting of mass for a selection of hadrons. The reason here is that some 
+matrix-element generators fix hadrons to be on the mass shell, so as to 
+simplify calculations. One problem is that such hadrons then are 
+easily distinguished from internally generated hadrons of the same 
+species, which may fool machine learning tools for the separation of 
+signal from background. 
+<option value="0"> all hadron masses are taken unchanged from the 
+Les Houches input. 
+</option> 
+<option value="1"> the hadrons listed in the 
+<code>LesHouches:idSmearHadrons</code> vector below are assigned a new 
+mass according to the internal PYTHIA prescription. A warning is issued 
+if the original mass lies outside the mass range set in PYTHIA, and then 
+nothing is done. 
+</option> 
+<option value="2"> as option 1, but there is no mass range check, so 
+relevant hadrons will always receive a smeared mass. 
+</option> 
+<note>Warning:</note> when the mass is changed, also energy and momentum 
+need to be shifted. This cannot be done for the hadron in isolation, 
+but should be made so as to preserve the energy and momentum of the event 
+as a whole. An attempt is therefore made to find another outgoing 
+particle recoiler that can transfer the appropriate amount of energy 
+and momentum. The recoiler may be unstable, and if so the transfer is 
+inherited by its decay products. The choice is straightforward if only 
+two final-state particles exist, or in a two-body decay of an intermediate 
+resonance. If no recoiler is found this way then the potential final-state 
+recoiler with largest relative invariant mass is picked. In either case, 
+if the transfer fails because the intended recoiler has too little energy 
+to give up, then instead the energy is recalculated for the new mass 
+without any transfer. The energy violation is partly compensated by 
+changed energies for the incoming partons to the hard collision if 
+<code>LesHouches:matchInOut = true</code>, but not always perfectly. 
+One possibility then is to change the 
+<aloc href="ErrorChecks">tolerance</aloc> to such errors. 
+</modepick> 
+ 
+<mvec name="LesHouches:idSmearHadrons" default="{113,213}" min="0"> 
+list of hadron identity codes, whose masses will be smeared if 
+<code>LesHouches:smearHadronMass &gt; 0</code>, see above. Only 
+(positive) particle codes should be given, with their antiparticles 
+automatically included. It is assumed that the hadron to be smeared 
+has not yet been decayed. 
+</mvec> 
+ 
 <parm name="LesHouches:mRecalculate" default="-1."> 
 Does not have any effect by default, or more generally when it is negative. 
 If it is positive then all particles with an input mass above this 
@@ -235,8 +281,8 @@ The incoming partons are set massless. There are two main applications
 for this option. Firstly, if there is a mismatch in the Les Houches 
 input itself, e.g. owing to limited precision in the stored momenta. 
 Secondly, if a mismatch is induced by PYTHIA recalculations, notably when 
-an outgoing lepton or quark is assigned a mass although assumed massless 
-in the Les Houches input. 
+an outgoing lepton, quark or hadron is assigned a mass although assumed 
+massless (or with a different mass than wanted) in the Les Houches input. 
 <note>Warning:</note> it is assumed that the incoming partons are along 
 the <ei>+-z</ei> axis; else the kinematics construction will fail. 
 </flag> 
@@ -353,7 +399,7 @@ on how to do this.
  
 <p/> 
 An example how to generate events from an LHEF is found in 
-<code>main11.cc</code>. Note the use of 
+<code>main121.cc</code>. Note the use of 
 <code>Info::atEndOfFile()</code> to find out when the whole 
 LHEF has been processed. 
  
@@ -367,8 +413,8 @@ It is assumed (but never checked) that the initialization information is
 identical, and that the new file simply contains further events of 
 exactly the same kind as the previous one. An example of this possibility, 
 and the option to mix with internal processes, is found in 
-<code>main12.cc</code>. A variant, based on input in a command file, 
-is given in <code>main13.cc</code>. 
+<code>main122.cc</code>. A variant, based on input in a command file, 
+is given in <code>main123.cc</code>. 
  
 <p/> 
 In C++, real numbers are printed with an 'E' to denote the exponent part, 
@@ -523,7 +569,7 @@ details.
  
 Please find below the documentation of LHEF 3.0 information as stored in 
 the <code>Info</code> class. An example main program using LHEF 3.0 
-information is <code>main38.cc</code>. Note also the description of some 
+information is <code>main127.cc</code>. Note also the description of some 
 settings in the <aloc href="BeamParameters">Beam Parameters</aloc> section. 
  
 LHEF 3.0 offers new features both in the initialisation and the event sections 
@@ -767,7 +813,7 @@ Furthermore, <code>updateSigma()</code> can be used at the end
 of the run to update cross-section information, cf. 
 <code>closeLHEF(true)</code> above. An example how the 
 generation, translation and writing methods should be ordered is 
-found in <code>main20.cc</code>. 
+found in <code>main124.cc</code>. 
  
 <p/> 
 Currently there are some limitations, that could be overcome if 
@@ -788,7 +834,7 @@ that the above initialization is replaced by
 <br/><code>LHAupFromPYTHIA8 myLHA(&pythia.event, &pythia.info);</code> 
 <br/> i.e. that <code>process</code> is replaced by <code>event</code>. 
 In addition, the <code>PartonLevel:all = off</code> command found in 
-<code>main20.cc</code> obviously must be removed if one wants to 
+<code>main124.cc</code> obviously must be removed if one wants to 
 obtain complete events. 
  
 <h3>PYTHIA 8 output to a Les Houches Event File version 3.0</h3> 
@@ -800,7 +846,7 @@ file writer are used in the <code>LHEF3FromPYTHIA8</code>.
 This latter class allows users to output PYTHIA events 
 in LHEF3 format from a PYTHIA main program. An example of how to use 
 <code>LHEF3FromPYTHIA8</code> is found in the 
-<code>main20lhef3.cc</code> example. Please note that, although 
+<code>main125.cc</code> example. Please note that, although 
 similar, the usage of <code>LHEF3FromPYTHIA8</code> differs from 
 the usage of <code>LHAupFromPYTHIA8</code>, with  <code>LHEF3FromPYTHIA8 
 </code> requiring fewer function calls. 
@@ -858,4 +904,4 @@ for the case that <code>Pythia::process</code> is not in this frame.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

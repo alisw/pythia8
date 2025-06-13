@@ -1,5 +1,5 @@
 // PartonLevel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -51,7 +51,7 @@ public:
 
   // Initialization of all classes at the parton level.
   bool init( TimeShowerPtr timesDecPtrIn, TimeShowerPtr timesPtrIn,
-    SpaceShowerPtr spacePtrIn, RHadrons* rHadronsPtrIn,
+    SpaceShowerPtr spacePtrIn, RHadronsPtr rHadronsPtrIn,
     MergingHooksPtr mergingHooksPtr, PartonVertexPtr partonVertexPtrIn,
     StringIntPtr stringInteractionPtrIn,
     bool useAsTrial);
@@ -110,15 +110,15 @@ public:
   }
 
   // Spare copies of normal beam pointers.
-  BeamParticle*  beamHadAPtr{};
-  BeamParticle*  beamHadBPtr{};
+  BeamParticle* beamHadAPtr{};
+  BeamParticle* beamHadBPtr{};
 
   // Pointers to timelike showers for resonance decays and the rest.
-  TimeShowerPtr  timesDecPtr{};
-  TimeShowerPtr  timesPtr{};
+  TimeShowerPtr   timesDecPtr{};
+  TimeShowerPtr   timesPtr{};
 
   // Pointer to spacelike showers.
-  SpaceShowerPtr spacePtr{};
+  SpaceShowerPtr  spacePtr{};
 
 protected:
 
@@ -192,7 +192,7 @@ private:
   BeamRemnants remnants;
 
   // The RHadrons class is used to fragment off and decay R-hadrons.
-  RHadrons*    rHadronsPtr{};
+  RHadronsPtr rHadronsPtr{};
 
   // ResonanceDecay object does sequential resonance decays.
   ResonanceDecays resonanceDecays;

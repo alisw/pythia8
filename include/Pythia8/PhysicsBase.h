@@ -1,13 +1,9 @@
 // PhysicsBase.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file contains the base class for physics classes used inside Pyhia8.
-
-// Still to convert:
-// BeamParticle
-// BeamShape
 
 #ifndef Pythia8_PhysicsBase_H
 #define Pythia8_PhysicsBase_H
@@ -98,15 +94,15 @@ protected:
 
   // Pointers to the two incoming beams and to Pomeron, photon or VMD
   // beam-inside-beam cases.
-  BeamSetup*     beamSetupPtr     = {};
-  BeamParticle*  beamAPtr         = {};
-  BeamParticle*  beamBPtr         = {};
-  BeamParticle*  beamPomAPtr      = {};
-  BeamParticle*  beamPomBPtr      = {};
-  BeamParticle*  beamGamAPtr      = {};
-  BeamParticle*  beamGamBPtr      = {};
-  BeamParticle*  beamVMDAPtr      = {};
-  BeamParticle*  beamVMDBPtr      = {};
+  BeamSetup*    beamSetupPtr    = {};
+  BeamParticle* beamAPtr        = {};
+  BeamParticle* beamBPtr        = {};
+  BeamParticle* beamPomAPtr     = {};
+  BeamParticle* beamPomBPtr     = {};
+  BeamParticle* beamGamAPtr     = {};
+  BeamParticle* beamGamBPtr     = {};
+  BeamParticle* beamVMDAPtr     = {};
+  BeamParticle* beamVMDBPtr     = {};
 
   // Pointer to information on subcollision parton locations.
   PartonSystems* partonSystemsPtr = {};
@@ -121,7 +117,7 @@ protected:
 
   // Pointer to the UserHooks object (needs to be sett to null in
   // classes deriving from UserHooks to avoid closed loop ownership).
-  UserHooksPtr   userHooksPtr;
+  UserHooksPtr      userHooksPtr;
 
 private:
 

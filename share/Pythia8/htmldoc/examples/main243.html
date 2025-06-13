@@ -1,0 +1,203 @@
+<html><head><title>main243</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main243</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main243.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#userhooks">Userhooks</a>
+//            <a href="../ExampleKeywords.html#onia">Onia</a>
+//            <a href="../ExampleKeywords.html#external+decays">External&nbsp;decays</a>
+
+// This is a simple test program.
+// It illustrates
+// (a) how to use UserHooks to regularize onium cross section for pT -&gt; 0,
+// (b) how decays could be handled externally.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// A derived class to do J/psi decays.
+
+class JpsiDecay : public DecayHandler {
+
+public:
+
+  // Constructor.
+  JpsiDecay(ParticleData* pdtPtrIn, Rndm* rndmPtrIn) {times = 0;
+    pdtPtr = pdtPtrIn; rndmPtr = rndmPtrIn;}
+
+  // Routine for doing the decay.
+  bool decay(vector&lt;int&gt;&amp; idProd, vector&lt;double&gt;&amp; mProd,
+    vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event);
+
+private:
+
+  // Count number of times JpsiDecay is called.
+  int times;
+
+  // Pointer to the particle data table.
+  ParticleData* pdtPtr;
+
+  // Pointer to the random number generator.
+  Rndm* rndmPtr;
+
+};
+
+//--------------------------------------------------------------------------
+
+// The actual J/psi decay routine.
+// Not intended for realism, just to illustrate the principles.
+
+bool JpsiDecay::decay(vector&lt;int&gt;&amp; idProd, vector&lt;double&gt;&amp; mProd,
+  vector&lt;Vec4&gt;&amp; pProd, int iDec, const Event&amp; event) {
+
+  // Always do decay J/psi -&gt; mu+ mu-; store the muons.
+  idProd.push_back(-13);
+  idProd.push_back(13);
+
+  // Muon mass(es), here from Pythia tables, also stored.
+  double mMuon = pdtPtr-&gt;m0(13);
+  mProd.push_back(mMuon);
+  mProd.push_back(mMuon);
+
+  // Calculate muon energy and momentum in J/psi rest frame.
+  double eMuon = 0.5 * mProd[0];
+  double pAbsMuon = sqrt(eMuon * eMuon - mMuon * mMuon);
+
+  // Assume decay angles isotropic in rest frame.
+  double cosTheta = 2. * rndmPtr-&gt;flat() - 1.;
+  double sinTheta = sqrt(max(0., 1. - cosTheta * cosTheta));
+  double phi = 2. * M_PI * rndmPtr-&gt;flat();
+  double pxMuon = pAbsMuon * sinTheta * cos(phi);
+  double pyMuon = pAbsMuon * sinTheta * sin(phi);
+  double pzMuon = pAbsMuon * cosTheta;
+
+  // Define mu+ and mu- four-vectors in the J/psi rest frame.
+  Vec4 pMuPlus(   pxMuon,  pyMuon,  pzMuon, eMuon);
+  Vec4 pMuMinus( -pxMuon, -pyMuon, -pzMuon, eMuon);
+
+  // Boost them by velocity vector of the J/psi mother and store.
+  pMuPlus.bst(pProd[0]);
+  pMuMinus.bst(pProd[0]);
+  pProd.push_back(pMuPlus);
+  pProd.push_back(pMuMinus);
+
+  // Print message the first few times, to show that it works.
+  if (times++ &lt; 10) {
+    int iMother = event[iDec].mother1();
+    int idMother = event[iMother].id();
+    cout &lt;&lt; &quot;\n J/psi decay performed, J/psi in line &quot; &lt;&lt; iDec
+         &lt;&lt; &quot;, mother id = &quot; &lt;&lt; idMother &lt;&lt; &quot;\n&quot;;
+  }
+
+  // Done
+  return true;
+
+}
+
+//==========================================================================
+
+int main() {
+
+  // Number of events to generate and to list. Max number of errors.
+  int nEvent = 2000;
+  int nList  = 2;
+  int nAbort = 5;
+
+  // Pythia generator.
+  Pythia pythia;
+
+  // Initialization for charmonium (singlet+octet) production at the LHC.
+  pythia.readString(&quot;Charmonium:all = on&quot;);
+  pythia.readString(&quot;Beams:eCM = 7000.&quot;);
+
+  // Normally cutoff at pTHat = 1, but push it lower combined with dampening.
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 0.5&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMinDiverge = 0.5&quot;);
+
+  // Set up to do a user veto and send it in.
+  // First argument: multiplies the pT0 of multiparton interactions
+  // to define the pT dampeing scale.
+  // Second argument: how many powers of alpha_strong to
+  // reweight with new (larger) argument.
+  // Third argument: choice of process scale two different ways;
+  // probably does not make much difference.
+  // See &quot;User Hooks&quot; in manual for detail on SuppressSmallPT.
+  auto oniumUserHook = make_shared&lt;SuppressSmallPT&gt;( 1., 3, false);
+  pythia.setUserHooksPtr( oniumUserHook);
+
+  // A class to do J/psi decays externally.
+  DecayHandlerPtr handleDecays = make_shared&lt;JpsiDecay&gt;(&amp;pythia.particleData,
+    &amp;pythia.rndm);
+
+  // The list of particles the class can handle.
+  vector&lt;int&gt; handledParticles;
+  handledParticles.push_back(443);
+
+  // Hand pointer and list to Pythia.
+  pythia.setDecayPtr( handleDecays, handledParticles);
+
+  // Switch off automatic event listing in favour of manual.
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Book histograms.
+  Hist pThard(&quot;pTHat of hard subprocess&quot;, 100, 0., 50.);
+  Hist pTJPsi(&quot;pT of J/Psi&quot;, 100, 0., 50.);
+
+  // Begin event loop.
+  int iList = 0;
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Histogram pThard spectrum of process.
+    double pTHat = pythia.info.pTHat();
+    pThard.fill( pTHat );
+
+    // Look for event with externally handled decays.
+    bool externalDecay = false;
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      int status = pythia.event[i].statusAbs();
+      if (status == 93 || status == 94) {externalDecay = true; break;}
+    }
+
+    // List first few events with external decay.
+    if (externalDecay &amp;&amp; ++iList &lt;= nList) {
+      pythia.process.list();
+      pythia.event.list();
+    }
+
+    // Histogram pT spectrum of J/Psi.
+   for (int i = 0; i &lt; pythia.event.size(); ++i)
+   if (pythia.event[i].id() == 443) pTJPsi.fill( pythia.event[i].pT() );
+
+  // End of event loop.
+  }
+
+  // Final statistics. Print histograms.
+  pythia.stat();
+  cout &lt;&lt; pThard &lt;&lt; pTJPsi;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

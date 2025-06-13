@@ -1,0 +1,243 @@
+<html><head><title>main469</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main469</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main469.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#space-time+picture">Space&#8209;time&nbsp;picture</a>
+//            <a href="../ExampleKeywords.html#hadronic+rescattering">Hadronic&nbsp;rescattering</a>
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjörn Sjostrand</a>
+
+// Space-time evolution of the hadronization process.
+// Output plotted by Python/Matplotlib/pyplot.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Allow hadronic rescattering or not.
+  bool doRescatter = true;
+
+  // Number of events.
+  int nEvent  = 2000;
+  int nAbort  = 5;
+  int nStatus = 20;
+
+  // Time/distance steps for histogramming and other counters.
+  double tScale[90], sScale[100];
+  int    ntPri[90], ntSec[90], ntRes[90], ntAll[90], nrPri[90], nrSec[90],
+         nrRes[90], nrAll[90], nsPri[100], nsSec[100], nsRes[100], nsAll[100];
+  for (int j = 0; j &lt; 90; ++j) {
+    tScale[j] = pow( 10., (j + 0.5) / 6.);
+    ntPri[j] = ntSec[j] = ntRes[j]= ntAll[j] = nrPri[j] = nrSec[j]
+      = nrRes[j] = nrAll[j] = 0;
+  }
+  for (int j = 0; j &lt; 100; ++j) {
+    sScale[j] = 0.2 * (j + 0.5);
+    nsPri[j] = nsSec[j] = nsRes[j] = nsAll[j] = 0;
+  }
+  bool   isPri, isSec, isRes;
+  int    iDau;
+  double tProd, tDec, rProd, rDec, sProd, sDec, zProd, yProd;
+
+  // Histogram particle time and space distributions.
+  Hist tPri(&quot;primary hadrons&quot;,   90, 1., 1e15, true);
+  Hist tSec(&quot;secondary hadrons&quot;, 90, 1., 1e15, true);
+  Hist tRes(&quot;rescattered hadrons&quot;, 90, 1., 1e15, true);
+  Hist tAll(&quot;all hadrons&quot;,       90, 1., 1e15, true);
+  Hist rPri(&quot;primary hadrons&quot;,   90, 1., 1e15, true);
+  Hist rSec(&quot;secondary hadrons&quot;, 90, 1., 1e15, true);
+  Hist rRes(&quot;rescattered hadrons&quot;, 90, 1., 1e15, true);
+  Hist rAll(&quot;all hadrons&quot;,       90, 1., 1e15, true);
+  Hist sPri(&quot;primary hadrons&quot;,   100, 0., 20.);
+  Hist sSec(&quot;secondary hadrons&quot;, 100, 0., 20.);
+  Hist sRes(&quot;rescattered hadrons&quot;, 100, 0., 20.);
+  Hist sAll(&quot;all hadrons&quot;,       100, 0., 20.);
+  Hist qPri(&quot;primary hadrons&quot;,   100, 0., 10.);
+  Hist qSec(&quot;secondary hadrons&quot;, 100, 0., 10.);
+  Hist qRes(&quot;rescattered hadrons&quot;, 100, 0., 10.);
+  Hist qAll(&quot;all hadrons&quot;,       100, 0., 10.);
+  Hist yPri(&quot;primary hadrons&quot;,   100, -10., 10.);
+  Hist ySec(&quot;secondary hadrons&quot;, 100, -10., 10.);
+  Hist yRes(&quot;rescattered hadrons&quot;, 100, -10., 10.);
+  Hist yAll(&quot;all hadrons&quot;,       100, -10., 10.);
+
+  // Pythia generator. Event record shorthand.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+
+  // Process choice.
+  pythia.readString(&quot;SoftQCD:nondiffractive = on&quot;);
+  //pythia.readString(&quot;SoftQCD:inelastic = on&quot;);
+  //pythia.readString(&quot;HardQCD:all = on&quot;);
+  //pythia.readString(&quot;PhaseSpace:pTHatMin = 100.&quot;);
+
+  // Vertex selection choices. Parton vertex can be removed.
+  pythia.readString(&quot;Fragmentation:setVertices = on&quot;);
+  pythia.readString(&quot;PartonVertex:setVertex = on&quot;);
+
+  // Optionally switch on rescattering. Several parameters can be set.
+  if (doRescatter) {
+    pythia.readString(&quot;HadronLevel:Rescatter = on&quot;);
+    //pythia.readString(&quot;Rescattering:nearestNeighbours = off&quot;);
+  }
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Loop over all particles and analyze the hadrons.
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (event[i].isHadron() &amp;&amp; event[i].statusAbs() &gt; 20) {
+      isPri = (event[i].statusAbs() / 10 == 8);
+      isSec = (event[i].statusAbs() / 10 == 9);
+      isRes = (event[i].statusAbs() / 10 == 15);
+      iDau = event[i].daughter1();
+      if (!isPri &amp;&amp; !isSec &amp;&amp; !isRes &amp;&amp; ++nStatus &lt; 20) cout &lt;&lt; &quot; status &quot;
+        &lt;&lt; event[i].status() &lt;&lt; &quot; for hadron &quot; &lt;&lt; event[i].id()
+        &lt;&lt; &quot; with mother id &quot; &lt;&lt; event[event[i].mother1()].id() &lt;&lt; endl;
+
+      // Particle production and decay time and radius, in units of fm.
+      tProd = MM2FM * event[i].tProd();
+      tDec  = (event[i].status() &gt; 0) ? 1e15 : MM2FM * event[iDau].tProd();
+      rProd = MM2FM * sqrt( pow2(event[i].xProd()) + pow2(event[i].yProd()) );
+      rDec  = (event[i].status() &gt; 0) ? 1e15
+        : MM2FM * sqrt(pow2(event[iDau].xProd()) + pow2(event[iDau].yProd()));
+      sProd = rProd;
+      sDec  = rDec;
+      zProd = MM2FM * event[i].zProd();
+      yProd = 0.5 * log( max(1e-30, tProd + zProd)
+            / max(1e-30, tProd - zProd) );
+
+      // Check whether it exists at any of the time slots and count up.
+      for (int j = 0; j &lt; 90; ++j) if (tProd &lt; tScale[j] &amp;&amp; tDec &gt; tScale[j]) {
+        if (isPri) ++ntPri[j];
+        if (isSec) ++ntSec[j];
+        if (isRes) ++ntRes[j];
+        ++ntAll[j];
+      }
+
+      // Check whether it exists at any of the radii slots and count up.
+      for (int j = 0; j &lt; 90; ++j) if (rProd &lt; tScale[j] &amp;&amp; rDec &gt; tScale[j]) {
+        if (isPri) ++nrPri[j];
+        if (isSec) ++nrSec[j];
+        if (isRes) ++nrRes[j];
+        ++nrAll[j];
+      }
+      for (int j = 0; j &lt; 100; ++j)
+      if (sProd &lt; sScale[j] &amp;&amp; sDec &gt; sScale[j]) {
+        if (isPri) ++nsPri[j];
+        if (isSec) ++nsSec[j];
+        if (isRes) ++nsRes[j];
+        ++nsAll[j];
+      }
+
+      // Histogram production r and y_tau.
+      if (isPri) qPri.fill( sProd);
+      if (isSec) qSec.fill( sProd);
+      if (isRes) qRes.fill( sProd);
+      qAll.fill( sProd);
+      if (isPri) yPri.fill( yProd);
+      if (isSec) ySec.fill( yProd);
+      if (isRes) yRes.fill( yProd);
+      yAll.fill( yProd);
+    }
+
+  // End of event loop. Final statistics.
+  }
+  pythia.stat();
+
+  // Histogram particle time and space distributions.
+  double wt = 1. / nEvent;
+  for (int j = 0; j &lt; 90; ++j) {
+    tPri.fill( tScale[j], wt * ntPri[j]);
+    tSec.fill( tScale[j], wt * ntSec[j]);
+    tRes.fill( tScale[j], wt * ntRes[j]);
+    tAll.fill( tScale[j], wt * ntAll[j]);
+    rPri.fill( tScale[j], wt * nrPri[j]);
+    rSec.fill( tScale[j], wt * nrSec[j]);
+    rRes.fill( tScale[j], wt * nrRes[j]);
+    rAll.fill( tScale[j], wt * nrAll[j]);
+  }
+  for (int j = 0; j &lt; 100; ++j) {
+    sPri.fill( sScale[j], wt * nsPri[j]);
+    sSec.fill( sScale[j], wt * nsSec[j]);
+    sRes.fill( sScale[j], wt * nsRes[j]);
+    sAll.fill( sScale[j], wt * nsAll[j]);
+  }
+  qPri *= 10. * wt;
+  qSec *= 10. * wt;
+  qRes *= 10. * wt;
+  qAll *= 10. * wt;
+  yPri *= 5. * wt;
+  ySec *= 5. * wt;
+  yRes *= 5. * wt;
+  yAll *= 5. * wt;
+  cout &lt;&lt; tPri &lt;&lt; tSec &lt;&lt; tRes &lt;&lt; tAll &lt;&lt; rPri &lt;&lt; rSec &lt;&lt; rRes &lt;&lt; rAll
+       &lt;&lt; sPri &lt;&lt; sSec &lt;&lt; sRes  &lt;&lt; sAll &lt;&lt; qPri &lt;&lt; qSec &lt;&lt; qRes &lt;&lt; qAll
+       &lt;&lt; yPri &lt;&lt; ySec &lt;&lt; yRes &lt;&lt; yAll;
+
+  // Write Python code that can generate a PDF file with the distributions.
+  HistPlot hpl(&quot;plot469&quot;);
+  hpl.frame( &quot;fig469&quot;, &quot;Hadron multiplicity at different times&quot;,
+    &quot;$ct$ (fm)&quot;, &quot;$N_{\\mathrm{hadron}}(t)$&quot;);
+  hpl.add( tPri, &quot;-,red&quot;);
+  hpl.add( tSec, &quot;-,blue&quot;);
+  hpl.add( tRes, &quot;-,olive&quot;);
+  hpl.add( tAll, &quot;-,black&quot;);
+  hpl.plot();
+  hpl.frame( &quot;&quot;, &quot;Hadron multiplicity at different radii&quot;,
+    &quot;$r$ (fm)&quot;, &quot;$N_{\\mathrm{hadron}}(r)$&quot;);
+  hpl.add( rPri, &quot;-,red&quot;);
+  hpl.add( rSec, &quot;-,blue&quot;);
+  hpl.add( rRes, &quot;-,olive&quot;);
+  hpl.add( rAll, &quot;-,black&quot;);
+  hpl.plot();
+  hpl.frame( &quot;&quot;, &quot;Hadron multiplicity at different radii&quot;,
+    &quot;$r$ (fm)&quot;, &quot;$N_{\\mathrm{hadron}}(r)$&quot;);
+  hpl.add( sPri, &quot;-,red&quot;);
+  hpl.add( sSec, &quot;-,blue&quot;);
+  hpl.add( sRes, &quot;-,olive&quot;);
+  hpl.add( sAll, &quot;-,black&quot;);
+  hpl.plot();
+  hpl.frame( &quot;&quot;, &quot;Hadron production at different radii&quot;,
+    &quot;$r$ (fm)&quot;, &quot;$\\mathrm{d}N_{\\mathrm{hadron}} / \\mathrm{d}r$&quot;);
+  hpl.add( qPri, &quot;-,red&quot;);
+  hpl.add( qSec, &quot;-,blue&quot;);
+  hpl.add( qRes, &quot;-,olive&quot;);
+  hpl.add( qAll, &quot;-,black&quot;);
+  hpl.plot();
+  hpl.frame( &quot;&quot;, &quot;Hadron production at different $y_{\\tau}$&quot;,
+    &quot;$y_{\\tau}$&quot;, &quot;$\\mathrm{d}N_{\\mathrm{hadron}} / \\mathrm{d}y_{\\tau}$&quot;);
+  hpl.add( yPri, &quot;-,red&quot;);
+  hpl.add( ySec, &quot;-,blue&quot;);
+  hpl.add( yRes, &quot;-,olive&quot;);
+  hpl.add( yAll, &quot;-,black&quot;);
+  hpl.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

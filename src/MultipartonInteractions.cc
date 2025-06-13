@@ -1,5 +1,5 @@
 // MultipartonInteractions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -363,7 +363,6 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
     return false;
   }
 
-
   // Identify either or both beams as pomerons.
   hasPomeronBeams = ( beamAPtr->id() == 990 || beamBPtr->id() == 990 );
 
@@ -449,7 +448,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
 
   // Various other parameters.
   nQuarkIn       = mode("MultipartonInteractions:nQuarkIn");
-  nSample        = mode("MultipartonInteractions:nSample");
+  nSample        = mode("MultipartonInteractions:nSample") / NSUDPTS;
 
   // Optional dampening at small pT's when large multiplicities.
   enhanceScreening = mode("MultipartonInteractions:enhanceScreening");
@@ -458,6 +457,7 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   sigmaPomP      = parm("Diffraction:sigmaRefPomP");
   mPomP          = parm("Diffraction:mRefPomP");
   pPomP          = parm("Diffraction:mPowPomP");
+  sigmaPomPom    = parm("Diffraction:sigmaRefPomPom");
   mMinPertDiff   = parm("Diffraction:mMinPert");
   bSelHard       = mode("Diffraction:bSelHard");
 
@@ -550,8 +550,10 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   // Read or write initialization data from/to file, to save time.
   reuseInit = mode("MultipartonInteractions:reuseInit");
   initFile  = word("MultipartonInteractions:initFile");
+  int idAsave = infoPtr->idA();
   int idBsave = infoPtr->idB();
-  bool reuseWorked = (reuseInit == 2 || reuseInit == 3) && loadMPIdata();
+  bool reuseWorked = (reuseInit == 2 || reuseInit == 3 || reuseInit < 0 )
+                     && loadMPIdata();
   if (!reuseWorked) {
     if (reuseInit == 2) {
       loggerPtr->ABORT_MSG("failed to load MPI data");
@@ -605,8 +607,8 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
 
     // Normally fixed collision cm energy.
     nStep       = 1;
-    eStepMin    = 1.;
-    eStepMax    = 1.;
+    eStepMin    = eCM;
+    eStepMax    = eCM;
     eStepSize   = 1.;
     // For variable-energy beams cover range of cm energies.
     if (doVarEcm || iDiffSys > 0 || hasGamma) {
@@ -669,7 +671,8 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
             }
             gamPomRatio = sigGamP / sigPP;
           }
-          sigmaND = gamPomRatio * sigmaPomP * pow( eCM / mPomP, pPomP);
+          double sigmaPomNow = (iDiffSys < 3) ? sigmaPomP : sigmaPomPom;
+          sigmaND = gamPomRatio * sigmaPomNow * pow( eCM / mPomP, pPomP);
           if (showMPI) cout << " |   diffractive mass = " << scientific
             << setprecision(2) << setw(8) << eCM << " GeV and sigmaNorm = "
             << ((sigmaND > SIGMAMBLIMIT) ? fixed : scientific)
@@ -790,12 +793,12 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
       sigmaMaxViol = max( sigmaMaxViol, pT4dSigmaMax / pT4dSigmaMaxBeg);
 
       // Save values calculated.
-      if (nStep > 1 || reuseInit == 1 || reuseInit == 3) {
+      if (nStep > 1 || reuseInit == 1 || reuseInit == 3 || reuseInit < 0 ) {
         mpis[iPA].pT0Save[iStep]          = pT0;
         mpis[iPA].pT4dSigmaMaxSave[iStep] = pT4dSigmaMax;
         mpis[iPA].pT4dProbMaxSave[iStep]  = pT4dProbMax;
         mpis[iPA].sigmaIntSave[iStep]     = sigmaInt;
-        for (int j = 0; j <= 100; ++j)
+        for (int j = 0; j <= NSUDPTS; ++j)
           mpis[iPA].sudExpPTSave[iStep][j] = sudExpPT[j];
         mpis[iPA].zeroIntCorrSave[iStep]  = zeroIntCorr;
         mpis[iPA].normOverlapSave[iStep]  = normOverlap;
@@ -843,17 +846,18 @@ bool MultipartonInteractions::init( bool doMPIinit, int iDiffSysIn,
   // End of internal initialization. Optionally store outcome for reuse.
   }
 
-  if (reuseInit == 1 || (reuseInit == 3 && !reuseWorked) ) {
-    if (saveMPIdata())
-      loggerPtr->INFO_MSG("wrote initialization data to file", initFile);
-    else
+  if (reuseInit == 1 || (reuseInit == 3 && !reuseWorked) || reuseInit < 0 ) {
+    if (saveMPIdata()) {
+      if ( reuseInit != -1 )
+        loggerPtr->INFO_MSG("wrote initialization data to file", initFile);
+    } else
       loggerPtr->ERROR_MSG("failed to write initialization data");
   }
 
   // Restore to default setup with option 0. Does not apply for Pomeron beam.
   if (nPDFA != 1 && iDiffSys < 2) {
-    beamAPtr->setBeamID( idAList[0], 0);
-    infoPtr->setBeamIDs( idAList[0], idBsave);
+    beamAPtr->setBeamID( idAsave);
+    infoPtr->setBeamIDs( idAsave, idBsave);
   }
 
   // Reset statistics.
@@ -907,8 +911,11 @@ void MultipartonInteractions::reset( ) {
       sigmaTotPtr->calc( beamAPtr->id(), -beamBPtr->id(), eCM );
       sigmaND = 0.5 * (sigmaND + sigmaTotPtr->sigmaND());
     }
-  // Set fictitious Pomeron-proton cross section for diffractive system.
-  } else sigmaND = sigmaPomP * pow( eCM / mPomP, pPomP);
+  // Set fictitious Pomeron-p/Pomeron cross section for diffractive system.
+  } else {
+    double sigmaPomNow = (iDiffSys < 3) ? sigmaPomP : sigmaPomPom;
+    sigmaND = sigmaPomNow * pow( eCM / mPomP, pPomP);
+  }
 
   // Update interpolation data.
   iPDFAsave = iPDFA;
@@ -945,7 +952,7 @@ void MultipartonInteractions::reset( ) {
                 + eStepTo   * mpis[iPDFA].pT4dProbMaxSave[iStepTo];
   sigmaInt      = eStepFrom * mpis[iPDFA].sigmaIntSave[iStepFrom]
                 + eStepTo   * mpis[iPDFA].sigmaIntSave[iStepTo];
-  for (int j = 0; j <= 100; ++j)
+  for (int j = 0; j <= NSUDPTS; ++j)
     sudExpPT[j] = eStepFrom * mpis[iPDFA].sudExpPTSave[iStepFrom][j]
                 + eStepTo   * mpis[iPDFA].sudExpPTSave[iStepTo][j];
 
@@ -1574,8 +1581,8 @@ void MultipartonInteractions::upperEnvelope() {
   pT4dSigmaMax = 0.;
 
   // Loop thorough allowed pT range logarithmically evenly.
-  for (int iPT = 0; iPT < 100; ++iPT) {
-    double pT = pTmin * pow( pTmax/pTmin, 0.01 * (iPT + 0.5) );
+  for (int iPT = 0; iPT < NSUDPTS; ++iPT) {
+    double pT = pTmin * pow( pTmax/pTmin, (iPT + 0.5)/NSUDPTS );
     pT2       = pT*pT;
     pT2shift  = pT2 + pT20;
     pT2Ren    = pT2shift;
@@ -1621,7 +1628,7 @@ void MultipartonInteractions::upperEnvelope() {
 void MultipartonInteractions::jetCrossSection() {
 
   // Common factor from bin size in dpT2 / (pT2 + r * pT20)^2 and statistics.
-  double sigmaFactor = (1. / pT20minR - 1. / pT20maxR) / (100. * nSample);
+  double sigmaFactor = (1. / pT20minR - 1. / pT20maxR) / (NSUDPTS * nSample);
 
   // Reset overlap-weighted cross section for x-dependent matter profile.
   if (bProfile == 4) for (int bBin = 0; bBin < XDEP_BBIN; bBin++)
@@ -1630,9 +1637,9 @@ void MultipartonInteractions::jetCrossSection() {
   // Loop through allowed pT range evenly in dpT2 / (pT2 + r * pT20)^2.
   sigmaInt         = 0.;
   double dSigmaMax = 0.;
-  sudExpPT[100]  = 0.;
+  sudExpPT[NSUDPTS]  = 0.;
 
-  for (int iPT = 99; iPT >= 0; --iPT) {
+  for (int iPT = NSUDPTS - 1; iPT >= 0; --iPT) {
     double sigmaSum = 0.;
 
     // Reset pT-binned overlap-weigted integration.
@@ -1641,7 +1648,7 @@ void MultipartonInteractions::jetCrossSection() {
 
     // In each pT bin sample a number of random pT values.
     for (int iSample = 0; iSample < nSample; ++iSample) {
-      double mappedPT2 = 1. - 0.01 * (iPT + rndmPtr->flat());
+      double mappedPT2 = 1. - (iPT + rndmPtr->flat())/NSUDPTS;
       pT2 = pT20min0maxR / (pT20minR + mappedPT2 * pT2maxmin) - pT20R;
 
       // Evaluate cross section dSigma/dpT2 in phase space point.
@@ -1691,101 +1698,143 @@ void MultipartonInteractions::jetCrossSection() {
 
 //--------------------------------------------------------------------------
 
-// Write initialization data to file, to save startup time.
+// Write initialization data to settings/file, to save startup time.
 
 bool MultipartonInteractions::saveMPIdata() {
 
-  // Open file for writing.
-  const char* cstring = initFile.c_str();
-  ofstream os(cstring, std::ofstream::app);
-  if (!os.good()) {
-    loggerPtr->ERROR_MSG("could not open file", initFile);
-    return false;
-  }
+  string settingname = "Init:reuseMPIiDiffSys";
+  settingname += char( '0' + iDiffSys);
+  vector<string> setting;
 
   // Header for this type of system (nondiffractive, diffractive, ...).
-  os << "======iDiffSys= " << iDiffSys << " nPDFA= " << nPDFA
-     << " ====== " << endl << scientific << setprecision(10);
+  ostringstream os;
+  os << nPDFA;
+  setting.push_back(os.str());
 
   // Loop over number of different PDF sets, and thereby projectiles.
   for (int iPA = 0; iPA < nPDFA; ++iPA) {
+    ostringstream oss;
+    oss << scientific << setprecision(5);
     MPIInterpolationInfo& mpiNow = mpis[iPA];
-    os << mpiNow.nStepSave << " " << mpiNow.eStepMinSave << " "
-       << mpiNow.eStepMaxSave << " " << mpiNow.eStepSizeSave << endl;
+    int idAOut = ( idAList.size()? idAList[iPA]: infoPtr->idA() );
+    oss << idAOut << " " << infoPtr->idB() << " "
+        << mpiNow.nStepSave << " " << mpiNow.eStepMinSave << " "
+        << mpiNow.eStepMaxSave << " " << mpiNow.eStepSizeSave;
+    setting.push_back(oss.str());
+
     int nStepTmp = mpiNow.nStepSave;
 
     // Loop over number of energies in grid and store info for each energy.
     for (int iStep = 0; iStep < nStepTmp; ++iStep) {
-      os << mpiNow.pT0Save[iStep] << " " << mpiNow.pT4dSigmaMaxSave[iStep]
-         << " " << mpiNow.pT4dProbMaxSave[iStep] << " "
-         << mpiNow.sigmaIntSave[iStep] << " ";
-      for (int j = 0; j <= 100; ++j)
-        os << mpiNow.sudExpPTSave[iStep][j] << " ";
-      os << " " << mpiNow.zeroIntCorrSave[iStep] << " "
+      ostringstream osss;
+      osss << scientific << setprecision(5);
+      osss << mpiNow.pT0Save[iStep] << " " << mpiNow.pT4dSigmaMaxSave[iStep]
+          << " " << mpiNow.pT4dProbMaxSave[iStep] << " "
+          << mpiNow.sigmaIntSave[iStep] << fixed;
+      for (int j = 0; j <= NSUDPTS; ++j)
+        osss << " " << mpiNow.sudExpPTSave[iStep][j];
+      osss << scientific << " " << mpiNow.zeroIntCorrSave[iStep] << " "
          << mpiNow.normOverlapSave[iStep] << " " << mpiNow.kNowSave[iStep]
          << " " << mpiNow.bAvgSave[iStep] << " " << mpiNow.bDivSave[iStep]
          << " " << mpiNow.probLowBSave[iStep] << " "
          << mpiNow.fracAhighSave[iStep] << " " << mpiNow.fracBhighSave[iStep]
          << " " << mpiNow.fracChighSave[iStep] << " "
          << mpiNow.fracABChighSave[iStep] << " " << mpiNow.cDivSave[iStep]
-         << " " << mpiNow.cMaxSave[iStep] << endl;
+         << " " << mpiNow.cMaxSave[iStep];
+      setting.push_back(osss.str());
     }
   }
 
+  settingsPtr->wvec(settingname, setting);
+
+  if ( initFile.length() == 0 ||
+       mode("MultipartonInteractions:reuseInit") == -1 ) return true;
+
+  // Open file for writing.
+  ofstream ofs(initFile.c_str());
+  if (!os.good()) {
+    loggerPtr->ERROR_MSG("could not open file", initFile);
+    return false;
+  }
+
+  for ( int id = 0; id < 4; ++id ) {
+    settingname[settingname.length() - 1] = char('0' + id);
+    setting = settingsPtr->wvec(settingname);
+    if ( setting.empty() ) continue;
+    ofs << settingname << " = { " << trimString(setting[0]) << ",\n      ";
+    for ( int i = 1, N = setting.size(); i < N; ++i ) {
+      ofs << trimString(setting[i]);
+      if ( i == N - 1 ) ofs << " }" << endl;
+      else              ofs << ",\n      ";
+    }
+  }
   // Close file and done.
-  os.close();
+  ofs.close();
+
   return true;
 }
 
 //--------------------------------------------------------------------------
 
-// Load initialization data from file, to save startup time.
+// Load initialization data from settings/file, to save startup time.
 
 bool MultipartonInteractions::loadMPIdata() {
 
-  // Open file for reading.
-  const char* cstring = initFile.c_str();
-  ifstream is(cstring);
-  if (!is.good()) {
-    loggerPtr->ERROR_MSG("could not open file", initFile);
+  string settingname = "Init:reuseMPIiDiffSys";
+  settingname += char( '0' + iDiffSys);
+
+  if ( initFile.length() > 0 ) {
+    ifstream istest(initFile);
+    if ( istest.good() )
+      settingsPtr->readFile(initFile);
+  }
+
+  vector<string> strings =
+    settingsPtr->wvec(settingname);
+
+  if ( strings.size() < 2 ) {
+    loggerPtr->WARNING_MSG(settingname + " contained no information. "
+                           "Regenerating.");
     return false;
   }
 
-  // Read in one line at a time. Search for header of wanted iDiffSys.
-  bool foundMatch = false;
-  string line;
-  while ( getline(is, line) ) {
-    istringstream matchHeader(line);
-    string tag, tag2;
-    matchHeader >> tag;
-    if (tag != "======iDiffSys=") continue;
-    int iDiffSysIn;
-    matchHeader >> iDiffSysIn;
-    if (iDiffSysIn != iDiffSys) continue;
-    foundMatch = true;
-    matchHeader >> tag2 >> nPDFA;
-    break;
-  }
-  if (!foundMatch) return false;
+  istringstream isi(strings[0]);
+  isi >> nPDFA;
 
   // Need to set up minimal mpis array for iDiffSys = 2 or 3.
-  if (nPDFA == 1 && mpis.size() == 0)
+  if (mpis.size() == 0)
     mpis  = vector<MPIInterpolationInfo>(nPDFA);
+  vector<int> idAListIn(nPDFA);
+  int idBIn = 0;
 
   // Loop over number of different PDF sets, and thereby projectiles.
+  unsigned int idx = 1;
   for (int iPA = 0; iPA < nPDFA; ++iPA) {
+    if ( idx >= strings.size() ) {
+      loggerPtr->WARNING_MSG(settingname + " was badly formatted. "
+                           "Regenerating.");
+      return false;
+    }
+    istringstream is(strings[idx++]);
     MPIInterpolationInfo& mpiNow = mpis[iPA];
-    is >> mpiNow.nStepSave >> mpiNow.eStepMinSave >> mpiNow.eStepMaxSave
-       >> mpiNow.eStepSizeSave;
+    is >> idAListIn[iPA] >> idBIn
+       >> mpiNow.nStepSave >> mpiNow.eStepMinSave
+       >> mpiNow.eStepMaxSave >> mpiNow.eStepSizeSave;
     int nStepTmp = mpiNow.nStepSave;
     mpiNow.init(nStepTmp);
 
     // Loop over number of energies in grid and store info for each energy.
     for (int iStep = 0; iStep < nStepTmp; ++iStep) {
-      is >> mpiNow.pT0Save[iStep] >> mpiNow.pT4dSigmaMaxSave[iStep]
+      if ( idx >= strings.size() ) {
+        loggerPtr->WARNING_MSG(settingname + " was badly formatted. "
+                               "Regenerating.");
+        return false;
+      }
+      istringstream iss(strings[idx++]);
+      iss >> mpiNow.pT0Save[iStep] >> mpiNow.pT4dSigmaMaxSave[iStep]
           >> mpiNow.pT4dProbMaxSave[iStep] >> mpiNow.sigmaIntSave[iStep];
-      for (int j = 0; j <= 100; ++j) is >> mpiNow.sudExpPTSave[iStep][j];
-      is >> mpiNow.zeroIntCorrSave[iStep] >> mpiNow.normOverlapSave[iStep]
+      for (int j = 0; j <= NSUDPTS; ++j) iss >> mpiNow.sudExpPTSave[iStep][j];
+      iss >> mpiNow.zeroIntCorrSave[iStep] >> mpiNow.normOverlapSave[iStep]
           >> mpiNow.kNowSave[iStep] >> mpiNow.bAvgSave[iStep]
           >> mpiNow.bDivSave[iStep] >> mpiNow.probLowBSave[iStep]
           >> mpiNow.fracAhighSave[iStep] >> mpiNow.fracBhighSave[iStep]
@@ -1794,31 +1843,87 @@ bool MultipartonInteractions::loadMPIdata() {
     }
   }
 
-  // Also store it in regular location at fixed or maximal (= eCMsave) energy.
+  // Now check if the beams and energies matches with the current run.
+  if ( idAList.empty() ) idAList.push_back(infoPtr->idA());
+  vector<MPIInterpolationInfo> mpisIn;
+  mpisIn.swap(mpis);
+  map<int,int> mapIdA;
+  for ( unsigned int iPA = 0; iPA < idAListIn.size(); ++iPA )
+    mapIdA[idAListIn[iPA]] = iPA;
+  for ( int idA : idAList )
+    if ( mapIdA.find(idA) != mapIdA.end() )
+      mpis.push_back(mpisIn[mapIdA[idA]]);
+    else {
+      loggerPtr->ERROR_MSG("the requested beam particle was not included "
+                           "in the loaded init file. ",
+                           "Reuested beam particle: " + to_string(idA));
+      return false;
+    }
+
+  if ( infoPtr->eCM() > mpis[0].eStepMaxSave ||
+       infoPtr->eCM() < mpis[0].eStepMinSave ) {
+    loggerPtr->ERROR_MSG("the requested CM energy is outside the limits of"
+                         "the loaded init file.", "Reuested energy: "
+                         + to_string(infoPtr->eCM()));
+    return false;
+  }
+
+  // Set up for the default beam configuration
   iPDFAsave    = 0;
-  eCMsave      = mpis[0].eStepMaxSave;
-  nStep        = mpis[0].nStepSave;
-  eStepMin     = mpis[0].eStepMinSave;
-  eStepMax     = mpis[0].eStepMaxSave;
-  eStepSize    = mpis[0].eStepSizeSave;
-  pT0          = mpis[0].pT0Save[nStep - 1];
-  pT4dSigmaMax = mpis[0].pT4dSigmaMaxSave[nStep - 1];
-  pT4dProbMax  = mpis[0].pT4dProbMaxSave[nStep - 1];
-  sigmaInt     = mpis[0].sigmaIntSave[nStep - 1];
-  for (int j = 0; j <= 100; ++j)
-    sudExpPT[j] = mpis[0].sudExpPTSave[nStep - 1][j];
-  zeroIntCorr  = mpis[0].zeroIntCorrSave[nStep - 1];
-  normOverlap  = mpis[0].normOverlapSave[nStep - 1];
-  kNow         = mpis[0].kNowSave[nStep - 1];
-  bAvg         = mpis[0].bAvgSave[nStep - 1];
-  bDiv         = mpis[0].bDivSave[nStep - 1];
-  probLowB     = mpis[0].probLowBSave[nStep - 1];
-  fracAhigh    = mpis[0].fracAhighSave[nStep - 1];
-  fracBhigh    = mpis[0].fracBhighSave[nStep - 1];
-  fracBhigh    = mpis[0].fracChighSave[nStep - 1];
-  fracABChigh  = mpis[0].fracABChighSave[nStep - 1];
-  cDiv         = mpis[0].cDivSave[nStep - 1];
-  cMax         = mpis[0].cMaxSave[nStep - 1];
+  nStep     = mpis[0].nStepSave;
+  eStepMin  = mpis[0].eStepMinSave;
+  eStepMax  = mpis[0].eStepMaxSave;
+  eStepSize = mpis[0].eStepSizeSave;
+
+  // Current interpolation point.
+  eCM = infoPtr->eCM();
+  eCMsave   = eCM;
+  eStepMix  = log(eCM / eStepMin)     / eStepSize;
+  iStepFrom = max( 0, min( nStep - 2, int( eStepMix) ) );
+  iStepTo   = min(iStepFrom + 1, nStep - 1);
+  eStepTo   = max( 0., min( 1., eStepMix - iStepFrom) );
+  eStepFrom = 1. - eStepTo;
+
+  // Update pT0 and combinations derived from it.
+  pT0           = eStepFrom * mpis[0].pT0Save[iStepFrom]
+                + eStepTo   * mpis[0].pT0Save[iStepTo];
+
+  // Update other parameters used in pT choice.
+  pT4dSigmaMax  = eStepFrom * mpis[0].pT4dSigmaMaxSave[iStepFrom]
+                + eStepTo   * mpis[0].pT4dSigmaMaxSave[iStepTo];
+  pT4dProbMax   = eStepFrom * mpis[0].pT4dProbMaxSave[iStepFrom]
+                + eStepTo   * mpis[0].pT4dProbMaxSave[iStepTo];
+  sigmaInt      = eStepFrom * mpis[0].sigmaIntSave[iStepFrom]
+                + eStepTo   * mpis[0].sigmaIntSave[iStepTo];
+  for (int j = 0; j <= NSUDPTS; ++j)
+    sudExpPT[j] = eStepFrom * mpis[0].sudExpPTSave[iStepFrom][j]
+                + eStepTo   * mpis[0].sudExpPTSave[iStepTo][j];
+
+  // Update parameters related to the impact-parameter picture.
+  zeroIntCorr   = eStepFrom * mpis[0].zeroIntCorrSave[iStepFrom]
+                + eStepTo   * mpis[0].zeroIntCorrSave[iStepTo];
+  normOverlap   = eStepFrom * mpis[0].normOverlapSave[iStepFrom]
+                + eStepTo   * mpis[0].normOverlapSave[iStepTo];
+  kNow          = eStepFrom * mpis[0].kNowSave[iStepFrom]
+                + eStepTo   * mpis[0].kNowSave[iStepTo];
+  bAvg          = eStepFrom * mpis[0].bAvgSave[iStepFrom]
+                + eStepTo   * mpis[0].bAvgSave[iStepTo];
+  bDiv          = eStepFrom * mpis[0].bDivSave[iStepFrom]
+                + eStepTo   * mpis[0].bDivSave[iStepTo];
+  probLowB      = eStepFrom * mpis[0].probLowBSave[iStepFrom]
+                + eStepTo   * mpis[0].probLowBSave[iStepTo];
+  fracAhigh     = eStepFrom * mpis[0].fracAhighSave[iStepFrom]
+                + eStepTo   * mpis[0].fracAhighSave[iStepTo];
+  fracBhigh     = eStepFrom * mpis[0].fracBhighSave[iStepFrom]
+                + eStepTo   * mpis[0].fracBhighSave[iStepTo];
+  fracChigh     = eStepFrom * mpis[0].fracChighSave[iStepFrom]
+                + eStepTo   * mpis[0].fracChighSave[iStepTo];
+  fracABChigh   = eStepFrom * mpis[0].fracABChighSave[iStepFrom]
+                + eStepTo   * mpis[0].fracABChighSave[iStepTo];
+  cDiv          = eStepFrom * mpis[0].cDivSave[iStepFrom]
+                + eStepTo   * mpis[0].cDivSave[iStepTo];
+  cMax          = eStepFrom * mpis[0].cMaxSave[iStepFrom]
+                + eStepTo   * mpis[0].cMaxSave[iStepTo];
 
   // Derived pT kinematics combinations and some others.
   pT20         = pT0*pT0;
@@ -1832,9 +1937,9 @@ bool MultipartonInteractions::loadMPIdata() {
   pT2maxmin    = pT2max - pT2min;
   normPi       = 1. / (2. * M_PI);
 
-  // Close file and done.
-  is.close();
+  // Close file and do final check.
   return true;
+
 }
 
 //--------------------------------------------------------------------------
@@ -1847,7 +1952,7 @@ double MultipartonInteractions::sudakov(double pT2sud, double enhance) {
   // Find bin the pT2 scale falls in.
   double xBin = (pT2sud - pT2min) * pT20maxR
     / (pT2maxmin * (pT2sud + pT20R));
-  xBin = max(1e-6, min(100. - 1e-6, 100. * xBin) );
+  xBin = max(1e-6, min(NSUDPTS - 1e-6, NSUDPTS * xBin) );
   int iBin = int(xBin);
 
   // Interpolate inside bin. Optionally include enhancement factor.
@@ -2957,7 +3062,8 @@ void MultipartonInteractions::MPIInterpolationInfo::init(int nStepIn) {
   fracABChighSave  = vector<double>(nStepIn);
   cDivSave         = vector<double>(nStepIn);
   cMaxSave         = vector<double>(nStepIn);
-  sudExpPTSave     = vector<array<double, 101>>(nStepIn);
+  sudExpPTSave     = vector<
+    array<double, MultipartonInteractions::NSUDPTS + 1> >(nStepIn);
 }
 
 //==========================================================================

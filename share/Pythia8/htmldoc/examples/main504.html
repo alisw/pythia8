@@ -1,0 +1,163 @@
+<html><head><title>main504</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main504</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main505.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#extra+dimensions">Extra&nbsp;dimensions</a>
+//            <a href="../ExampleKeywords.html#bsm">BSM</a>
+
+// Kaluza-Klein gamma*/Z resonances in TeV-sized extra dimensions.
+
+#include &lt;assert.h&gt;
+#include &lt;time.h&gt;
+#include &lt;sstream&gt;
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator.
+  Pythia pythia;
+  ParticleData&amp; pdt = pythia.particleData;
+
+  // Pick new random number seed for each run, based on clock.
+  pythia.readString(&quot;Random:setSeed = on&quot;);
+  pythia.readString(&quot;Random:seed = 0&quot;);
+
+  // Process selection.
+  // ANY COMBINATION OF THE PROCESSES FLAGS BELOW IS ALLOWED
+  // HERE WE SWITCH ON ONLY THE MU+MU- FINAL STATE.
+  // TO SWITCH ALL POSSIBLE FINAL STATES ON, UNCOMMENT ALL
+  // THE RELEVANT LINES BELOW:
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2e+e- = on&quot;);
+  pythia.readString(&quot;ExtraDimensionsTEV:ffbar2mu+mu- = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2tau+tau- = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2uubar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2ddbar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2ccbar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2ssbar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2bbbar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2ttbar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2nuenuebar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2numunumubar = on&quot;);
+  //pythia.readString(&quot;ExtraDimensionsTEV:ffbar2nutaunutaubar = on&quot;);
+
+  // Pick KK mass.
+  double newMass = 4000.; // GeV
+  cout &lt;&lt; &quot;|-------------------------&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;| KK mass is: &quot; &lt;&lt; newMass &lt;&lt; endl;
+  cout &lt;&lt; &quot;|-------------------------&quot; &lt;&lt; endl;
+  stringstream strm;
+  string sNewMass, sNewWidth, sNewLowBound, sNewHighBound;
+
+  // Manually set the mass and therefore the width
+  // and the phase space for the sampling
+  strm.clear();
+  strm &lt;&lt; newMass;
+  strm &gt;&gt; sNewMass;
+  strm.clear();
+  strm &lt;&lt; newMass / pdt.m0(5000023) * pdt.mWidth(5000023);
+  strm &gt;&gt; sNewWidth;
+  strm.clear();
+  strm &lt;&lt; newMass/4.;
+  strm &gt;&gt; sNewLowBound;
+  strm.clear();
+  strm &lt;&lt; newMass*2.;
+  strm &gt;&gt; sNewHighBound;
+
+  // Feed in KK state information and other generation specifics.
+  pythia.readString(&quot;5000023:m0 = &quot; + sNewMass);
+  pythia.readString(&quot;5000023:mWidth = &quot; + sNewWidth);
+  pythia.readString(&quot;5000023:mMin = &quot; + sNewLowBound);
+  pythia.readString(&quot;5000023:mMax = &quot; + sNewHighBound);
+  //////////////////////////////////////////////////////////////////////////
+  pythia.readString(&quot;5000023:isResonance = false&quot;); // THIS IS MANDATORY  //
+  //////////////////////////////////////////////////////////////////////////
+  // 0=(gm+Z), 1=(gm), 2=(Z), 3=(gm+Z+gmKK+ZKK), 4=(m+Z+gmKK), 5=(m+Z+ZKK)
+  pythia.readString(&quot;ExtraDimensionsTEV:gmZmode = 3&quot;);
+  // min=0, max=100, default=10
+  pythia.readString(&quot;ExtraDimensionsTEV:nMax = 100&quot;);
+  pythia.readString(&quot;ExtraDimensionsTEV:mStar = &quot; + sNewMass);
+  pythia.readString(&quot;PhaseSpace:mHatMin = &quot; + sNewLowBound);
+  pythia.readString(&quot;PhaseSpace:mHatMax = &quot; + sNewHighBound);
+
+  // Initialize for LHC.
+  pythia.readString(&quot;Beams:eCM = 14000.&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  Hist mHatHisto(&quot;dN/dmHat&quot;, 50, newMass/4., newMass*2.);
+  Hist pTmuHisto(&quot;(dN/dpT)_mu^-&quot;, 50, 1., 2501.);
+
+  vector&lt;int&gt; moms;
+
+  // Measure the cpu runtime.
+  clock_t start, stop;
+  double t = 0.0;
+  // Depending on operating system, either of lines below gives warning.
+  //assert((start = clock()) != -1); // Start timer; clock_t signed.
+  //assert((start = clock()) != -1u); // Start timer; clock_t unsigned.
+  // Simpler option, not using assert.
+  start = clock();
+
+  // Begin event loop. Generate event. Skip if error. List first one.
+  for (int iEvent = 0 ; iEvent &lt; 500 ; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Begin event analysis.
+    bool isZ = false;
+    bool ismu = false;
+    int iZ = 0;
+    int imu = 0;
+    for (int i = 0 ; i &lt; pythia.event.size() ; ++i) {
+      // find the most recent Z
+      if (pythia.event[i].id() == 5000023) {
+        iZ = i;
+        isZ = true;
+      }
+      // find the final muon who&apos;s first mother is the Z
+      if (pythia.event[i].id() == 13 &amp;&amp; pythia.event[i].isFinal()) {
+        moms.clear();
+        moms = pythia.event[i].motherList();
+        for (int m = 0 ; m &lt; int(moms.size()) ; m++) {
+          if( pythia.event[ moms[m] ].id() == 5000023 ) {
+            imu = i;
+            ismu = true;
+            break;
+          } // end if 5000023
+        } // end for moms.size()
+      } // end if final muon
+    } // end for event.size()
+    if(isZ &amp;&amp; ismu) {
+      mHatHisto.fill( pythia.event[iZ].m() );
+      pTmuHisto.fill( pythia.event[imu].pT() );
+    }
+    if(iEvent%10 == 0) cout &lt;&lt; &quot;Event: &quot; &lt;&lt; iEvent &lt;&lt; endl &lt;&lt; std::flush;
+  } // end for iEvent&lt;500
+
+  // Done. Print results.
+  stop = clock(); // Stop timer
+  t = (double) (stop-start)/CLOCKS_PER_SEC;
+
+  pythia.stat();
+  cout &lt;&lt; mHatHisto;
+  cout &lt;&lt; pTmuHisto;
+
+  cout &lt;&lt; &quot;\n&quot; &lt;&lt; &quot;|----------------------------------------|&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;| CPU Runtime = &quot; &lt;&lt; t &lt;&lt; &quot; sec&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;|----------------------------------------|&quot; &lt;&lt; &quot;\n&quot; &lt;&lt; endl;
+
+  return 0;
+}
+</code></pre></body></html>

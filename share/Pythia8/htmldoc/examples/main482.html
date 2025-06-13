@@ -1,0 +1,256 @@
+<html><head><title>main482</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main482</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main182.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#switch+beam">Switch&nbsp;beam</a>
+//            <a href="../ExampleKeywords.html#switch+collision+energy">Switch&nbsp;collision&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#reuse+mpi+initialization">reuse&nbsp;MPI&nbsp;initialization</a>
+//            <a href="../ExampleKeywords.html#arxiv:2108.03481+[hep-ph]">arXiv:2108.03481&nbsp;[hep&#8209;ph]</a>
+
+// Test that events behave as intended when incoming beam is switched
+// within one Pythia instance, and also that intermediate storage of
+// MPI data works. Check execution time slowdown from switching.
+// Specifically, compare three scenarios:
+// Fixed:  each of the ten beams are handled separately, with no variation.
+// Switch: initialize &quot;all&quot; beams,  switch beam for each new event.
+// Reuse:  reuse initialization above, switch beam and energy for each event.
+// Warning: the runtime is rather long (~15 minutes), since it involves
+// the initialization of and looping over multiple incoming beam types.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &lt;time.h&gt;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of test events per beam configuration (iType).
+  int nEvent = 10000;
+
+  // List of alternating incoming hadrons.
+  vector&lt;int&gt; idAtype = { 2212, 213, 323, 2224, 331, 421, -421, 3212,
+    3334, 4214};
+
+  // Histograms.
+  Hist typefixed[10], typeswitch[10], typereuse[10],
+       nMPIfixed[10], nMPIswitch[10], nMPIreuse[10],
+       nchgfixed[10], nchgswitch[10], nchgreuse[10];
+  for (int iType = 0; iType &lt; 10;++iType) {
+    typefixed[iType].book( &quot;event type, fixed  &quot;, 10, -0.5, 9.5);
+    typeswitch[iType].book(&quot;event type, switch &quot;, 10, -0.5, 9.5);
+    typereuse[iType].book( &quot;event type, reuse  &quot;, 10, -0.5, 9.5);
+    nMPIfixed[iType].book( &quot;number of MPIs, fixed  &quot;, 40, -0.5, 39.5);
+    nMPIswitch[iType].book(&quot;number of MPIs, switch &quot;, 40, -0.5, 39.5);
+    nMPIreuse[iType].book( &quot;number of MPIs, reuse  &quot;, 40, -0.5, 39.5);
+    nchgfixed[iType].book( &quot;charged multiplicity, fixed  &quot;, 100, -0.5, 399.5);
+    nchgswitch[iType].book(&quot;charged multiplicity, switch &quot;, 100, -0.5, 399.5);
+    nchgreuse[iType].book( &quot;charged multiplicity, reuse  &quot;, 100, -0.5, 399.5);
+  }
+
+  // Timing info.
+  clock_t tstart, tstop, tFixedInit, tFixedRun, tSwitchInit, tSwitchRun,
+    tReuseInit, tReuseRun;
+  tFixedInit = tFixedRun = 0;
+  tstart = clock();
+
+  // First case: fixed.  ------------------------------------------------
+
+  // Do each incoming beam particle separately, without any switching.
+  for (int iType = 0; iType &lt; 10; ++iType) {
+
+    // Object with fixed beam hadron. (New for each idA value.)
+    Pythia pythiaFixed;
+    // Fixed incoming beam type (and energy).
+    pythiaFixed.settings.mode(&quot;Beams:idA&quot;, idAtype[iType]);
+    pythiaFixed.readString(&quot;Beams:eCM = 8000.&quot;);
+    // SoftQCD processes to compare with above.
+    pythiaFixed.readString(&quot;SoftQCD:all = on&quot;);
+    // Reduce output.
+    pythiaFixed.readString(&quot;Print:quiet = on&quot;);
+    // Initialize.
+    if (!pythiaFixed.init()) {
+      cout &lt;&lt; &quot;pythiaFixed failed to initialize.&quot; &lt;&lt; endl;
+      return -2;
+    }
+
+    // Timing.
+    tstop = clock();
+    tFixedInit += tstop - tstart;
+    tstart = tstop;
+
+    // Generate test events.
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+      pythiaFixed.next();
+
+      // Fill histograms.
+      typefixed[iType].fill( pythiaFixed.info.code() - 100);
+      nMPIfixed[iType].fill(  pythiaFixed.info.nMPI() );
+      nchgfixed[iType].fill(  pythiaFixed.event.nFinal(true) );
+    }
+    pythiaFixed.stat();
+
+    // Timing. End of beam particle loop.
+    tstop = clock();
+    tFixedRun += tstop - tstart;
+    tstart = tstop;
+  }
+
+  // Second case: switch.  ------------------------------------------------
+
+  // Object which allows switching ids, creating a new MPI init file.
+  Pythia pythiaSwitch;
+  // Variable incoming beam type (and energy).
+  pythiaSwitch.readString(&quot;Beams:allowVariableEnergy = on&quot;);
+  pythiaSwitch.readString(&quot;Beams:allowIDAswitch = on&quot;);
+  pythiaSwitch.readString(&quot;Beams:eCM = 8000.&quot;);
+  // Must use SoftQCD processes. Save MPI initialization results.
+  pythiaSwitch.readString(&quot;SoftQCD:all = on&quot;);
+  pythiaSwitch.readString(&quot;MultipartonInteractions:reuseInit = 1&quot;);
+  pythiaSwitch.readString(&quot;MultipartonInteractions:initFile = main482.mpi&quot;);
+  // Reduce output and reset statistics after each subrun.
+  pythiaSwitch.readString(&quot;Print:quiet = on&quot;);
+  // Initialize.
+  if (!pythiaSwitch.init()) {
+    cout &lt;&lt; &quot;pythiaSwitch failed to initialize.&quot; &lt;&lt; endl;
+    return -1;
+  }
+
+  // Timing.
+  tstop = clock();
+  tSwitchInit = tstop - tstart;
+  tstart = tstop;
+
+  // Generate events, switching incoming particle, but same energy.
+  for (int iEvent = 0; iEvent &lt; 10 * nEvent; ++iEvent) {
+    int iType = iEvent%10;
+    pythiaSwitch.setBeamIDs(idAtype[iType]);
+    pythiaSwitch.next();
+
+    // Fill histograms.
+    typeswitch[iType].fill( pythiaSwitch.info.code() - 100);
+    nMPIswitch[iType].fill( pythiaSwitch.info.nMPI() );
+    nchgswitch[iType].fill( pythiaSwitch.event.nFinal(true) );
+  }
+  pythiaSwitch.stat();
+
+  // Timing.
+  tstop = clock();
+  tSwitchRun = tstop - tstart;
+  tstart = tstop;
+
+  // Third case: reuse.  ------------------------------------------------
+
+  // Object which allows switching ids, reading an existing MPI init file.
+  Pythia pythiaReuse;
+  // Variable incoming beam type (and energy).
+  pythiaReuse.readString(&quot;Beams:allowVariableEnergy = on&quot;);
+  pythiaReuse.readString(&quot;Beams:allowIDAswitch = on&quot;);
+  pythiaReuse.readString(&quot;Beams:eCM = 8000.&quot;);
+  // Must use SoftQCD processes. Read MPI initialization results from above.
+  pythiaReuse.readString(&quot;SoftQCD:all = on&quot;);
+  pythiaReuse.readString(&quot;MultipartonInteractions:reuseInit = 2&quot;);
+  pythiaReuse.readString(&quot;MultipartonInteractions:initFile = main482.mpi&quot;);
+  // Reduce output and reset statistics after each subrun.
+  pythiaReuse.readString(&quot;Print:quiet = on&quot;);
+  // Initialize.
+  if (!pythiaReuse.init()) {
+    cout &lt;&lt; &quot;pythiaReuse failed to initialize.&quot; &lt;&lt; endl;
+    return -1;
+  }
+
+  // Timing.
+  tstop = clock();
+  tReuseInit = tstop - tstart;
+  tstart = tstop;
+
+  // Generate events, switching incoming particle and energy.
+  for (int iEvent = 0; iEvent &lt; 10 * nEvent; ++iEvent) {
+    int iType = iEvent%10;
+    double eCMnow = 7990 + 10. * pythiaReuse.rndm.flat();
+    pythiaReuse.setBeamIDs(idAtype[iType]);
+    pythiaReuse.setKinematics(eCMnow);
+    pythiaReuse.next();
+
+    // Fill histograms.
+    typereuse[iType].fill( pythiaReuse.info.code() - 100);
+    nMPIreuse[iType].fill( pythiaReuse.info.nMPI() );
+    nchgreuse[iType].fill( pythiaReuse.event.nFinal(true) );
+  }
+  pythiaReuse.stat();
+
+  // Timing.
+  tstop = clock();
+  tReuseRun = tstop - tstart;
+
+  // Output processing. ------------------------------------------------
+
+  // Print timing info (in seconds).
+  double conv = 1. / double(CLOCKS_PER_SEC);
+  cout &lt;&lt; endl &lt;&lt; fixed &lt;&lt; setprecision(3)
+       &lt;&lt; &quot; initialization time, fixed  &quot; &lt;&lt; setw(8)
+       &lt;&lt; conv * tFixedInit  &lt;&lt; &quot; s&quot; &lt;&lt; endl
+       &lt;&lt; &quot; initialization time, switch &quot; &lt;&lt; setw(8)
+       &lt;&lt; conv * tSwitchInit &lt;&lt; &quot; s&quot; &lt;&lt; endl
+       &lt;&lt; &quot; initialization time, reuse  &quot; &lt;&lt; setw(8)
+       &lt;&lt; conv * tReuseInit  &lt;&lt; &quot; s&quot; &lt;&lt; endl
+       &lt;&lt; &quot; generation time, fixed      &quot; &lt;&lt; setw(8)
+       &lt;&lt; conv * tFixedRun   &lt;&lt; &quot; s&quot; &lt;&lt; endl
+       &lt;&lt; &quot; generation time, switch     &quot; &lt;&lt; setw(8)
+       &lt;&lt; conv * tSwitchRun  &lt;&lt; &quot; s&quot; &lt;&lt; endl
+       &lt;&lt; &quot; generation time, reuse      &quot; &lt;&lt; setw(8)
+       &lt;&lt; conv * tReuseRun   &lt;&lt; &quot; s&quot; &lt;&lt; endl;
+
+    // Plotting object. Names of incoming beam hadrons.
+  HistPlot hpl(&quot;plot482&quot;);
+  vector&lt;string&gt; idAname = { &quot;p&quot;, &quot;$\\rho^+$&quot;, &quot;K$^{*+}$&quot;, &quot;$\\Delta^{++}$&quot;,
+    &quot;$\\eta^{\\mathrm{prime}}$&quot;, &quot;D$^0$&quot;, &quot;$\\overline{\\mathrm{D}}^0$&quot;,
+    &quot;$\\Sigma^0$&quot;, &quot;$\\Omega^-$&quot;, &quot;$\\Lambda_{\\mathrm{c}}^+$&quot; };
+
+    // Normalize histograms, one beam hadron at a time.
+  for (int iType = 0; iType &lt; 10; ++iType) {
+    typefixed[iType]  /= nEvent;
+    typeswitch[iType] /= nEvent;
+    typereuse[iType]  /= nEvent;
+    nMPIfixed[iType]  /= nEvent;
+    nMPIswitch[iType] /= nEvent;
+    nMPIreuse[iType]  /= nEvent;
+    nchgfixed[iType]  /= 4 * nEvent;
+    nchgswitch[iType] /= 4 * nEvent;
+    nchgreuse[iType]  /= 4 * nEvent;
+
+    // Plot histograms.
+    string label0 = idAname[iType] + &quot;p event type (ND/EL/SD(XB)/SD(AX)/DD)&quot;;
+    string label1 = idAname[iType] + &quot;p number of MPIs&quot;;
+    string label2 = idAname[iType] + &quot;p charged multiplicity&quot;;
+    hpl.frame( &quot;fig482&quot;, label0, &quot;type - 100&quot;, &quot;Probability&quot;);
+    hpl.add( typefixed[iType],  &quot;h,black&quot;, &quot;fixed beam&quot;);
+    hpl.add( typeswitch[iType], &quot;h,red&quot;,   &quot;switch beam&quot;);
+    hpl.add( typereuse[iType],  &quot;h,blue&quot;,  &quot;reuse beam&quot;);
+    hpl.plot();
+    hpl.frame( &quot;fig482&quot;, label1, &quot;$n_{\\mathrm{MPI}}$&quot;, &quot;Probability&quot;);
+    hpl.add( nMPIfixed[iType],  &quot;h,black&quot;, &quot;fixed beam&quot;);
+    hpl.add( nMPIswitch[iType], &quot;h,red&quot;,   &quot;switch beam&quot;);
+    hpl.add( nMPIreuse[iType],  &quot;h,blue&quot;,  &quot;reuse beam&quot;);
+    hpl.plot();
+    hpl.frame( &quot;fig482&quot;, label2, &quot;$n_{\\mathrm{ch}}$&quot;, &quot;Probability&quot;);
+    hpl.add( nchgfixed[iType],  &quot;h,black&quot;, &quot;fixed beam&quot;);
+    hpl.add( nchgswitch[iType], &quot;h,red&quot;,   &quot;switch beam&quot;);
+    hpl.add( nchgreuse[iType],  &quot;h,blue&quot;,  &quot;reuse beam&quot;);
+    hpl.plot();
+  }
+
+  return 0;
+}
+</code></pre></body></html>

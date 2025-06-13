@@ -1,0 +1,121 @@
+<html><head><title>main262</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main262</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main262.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#analysis">Analysis</a>
+//            <a href="../ExampleKeywords.html#tuning">Tuning</a>
+//            <a href="../ExampleKeywords.html#uncertainty+bands">Uncertainty&nbsp;bands</a>
+//            <a href="../ExampleKeywords.html#gnuplot">Gnuplot</a>
+
+// Illustrate how to set up automatic uncertainty band calculations.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Initialize Pythia.
+  Pythia pythia;
+  pythia.readFile(&quot;main262.cmnd&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Define multiple histograms, one for each variation.
+  int nWeights = pythia.info.nWeights();
+  vector&lt;double&gt; sumOfWeights;
+  vector&lt;Hist&gt; pTtop, nCh;
+  vector&lt;string&gt; names;
+  vector&lt;string&gt; weightStrings = pythia.settings.wvec(&quot;UncertaintyBands:List&quot;);
+
+  // Loop through weights to initialize the histograms.
+  for (int iWeight=0; iWeight &lt; nWeights; ++iWeight) {
+    names.push_back( (iWeight==0)
+      ? &quot;baseline&quot; : pythia.info.getGroupName(iWeight));
+    pTtop.push_back ( Hist(&quot;top transverse momentum&quot;,       100,  0., 200.));
+    nCh.push_back   ( Hist(&quot;charged particle multiplicity&quot;, 100, -1., 399.));
+    sumOfWeights.push_back(0.);
+  }
+
+  // Event generation loop.
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  for (int iEvent=0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate next event. Break out of event loop if at end of an LHE file.
+    if ( !pythia.next() ) {
+      if ( pythia.info.atEndOfFile() ) break;
+      else continue;
+    }
+
+    // Find last top in event record and count number of charged particles.
+    int iTop = 0;
+    int nChg = 0;
+    for (int i=0; i &lt; pythia.event.size(); ++i) {
+      if (pythia.event[i].id() == 6) iTop = i;
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged()) ++nChg;
+    }
+    // Get top pT.
+    double pT = pythia.event[iTop].pT();
+
+    // Fill histograms with variation weights.
+    for (int iWeight = 0; iWeight &lt; nWeights; ++iWeight) {
+      // Get weight
+      double w = pythia.info.getGroupWeight(iWeight);
+      // Add the weight of the current event to the wsum of weights.
+      sumOfWeights[iWeight]  += w;
+      // Fill histograms.
+      pTtop[iWeight].fill(pT, w);
+      nCh[iWeight].fill(nChg, w);
+    }
+
+  }
+
+  // Print cross section information.
+  pythia.stat();
+
+  // Normalize histograms and print data tables. Also, construct a simple
+  // gnuplot command to plot the histograms.
+  stringstream gnuplotCommand;
+  gnuplotCommand &lt;&lt; &quot;gnuplot -e \&quot;plot&quot;;
+  for (int iWeight=0; iWeight &lt; nWeights; ++iWeight) {
+    if (sumOfWeights[iWeight] != 0) {
+      cout &lt;&lt; &quot;Normalize histogram for weight &quot; &lt;&lt; names[iWeight] &lt;&lt; &quot; to &quot;
+           &lt;&lt; scientific &lt;&lt; setprecision(8) &lt;&lt; sumOfWeights[iWeight] &lt;&lt; endl;
+      pTtop[iWeight] *= pythia.info.sigmaGen() / sumOfWeights[iWeight]
+        / 2.; // ... and divide by bin width.
+      nCh[iWeight]   *= pythia.info.sigmaGen() / sumOfWeights[iWeight]
+        / 4.; // ... and divide by bin width.
+    }
+    // Print data tables.
+    ofstream write;
+    write.open( (&quot;pTtop-&quot; + names[iWeight] + &quot;.dat&quot;).c_str());
+    pTtop[iWeight].table(write);
+    write.close();
+    write.open( (&quot;nCh-&quot; + names[iWeight] + &quot;.dat&quot;).c_str());
+    nCh[iWeight].table(write);
+    write.close();
+    // Construct gnuplot command.
+    gnuplotCommand &lt;&lt; &quot; \&apos;pTtop-&quot; &lt;&lt; names[iWeight]
+    &lt;&lt; &quot;.dat\&apos; using 1:2 w steps title \&apos;&quot; &lt;&lt; names[iWeight] &lt;&lt; &quot;\&apos;,&quot;;
+  }
+  gnuplotCommand.seekp(-1, std::ios_base::end);
+  gnuplotCommand &lt;&lt; &quot;; pause -1\&quot;&quot;;
+
+  // Print suggested gnuplot command.
+  cout &lt;&lt; &quot;You can plot the variation by e.g. using the command:&quot; &lt;&lt; endl;
+  cout &lt;&lt; gnuplotCommand.str() &lt;&lt; endl &lt;&lt; endl;
+
+  // Done.
+  return 0;
+
+}
+</code></pre></body></html>

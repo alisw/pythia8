@@ -1,0 +1,7 @@
+# This command file enables the generation of a ROOT file that stores
+# parts of the Pythia event record using main144. The amount of
+# information stored per particle, is defined in the classes in
+# main144RootEvent.h, and the implementation of their Pythia-sepcific
+# init methods in main144.cc. Change and recompile for customization
+# of the ROOT file.
+Main:writeRoot = on

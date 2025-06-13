@@ -1,0 +1,125 @@
+<html><head><title>main507</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main507</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main507.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:nishita.desai@tifr.res.in">Nishita Desai</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#jet+finding">Jet&nbsp;finding</a>
+//            <a href="../ExampleKeywords.html#fastjet">Fastjet</a>
+//            <a href="../ExampleKeywords.html#bsm">BSM</a>
+//            <a href="../ExampleKeywords.html#dark+matter">Dark&nbsp;matter</a>
+
+// This is a simple test program to study jets in Dark Matter production.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;fastjet/PseudoJet.hh&quot;
+#include &quot;fastjet/ClusterSequence.hh&quot;
+
+//==========================================================================
+
+using namespace Pythia8;
+
+int main() {
+
+  // Generator. Process selection.
+  Pythia pythia;
+  pythia.readFile(&quot;main507.cmnd&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Event (process) shorthand.
+  Event&amp; process = pythia.process;
+
+  // Fastjet analysis - select algorithm and parameters.
+  double Rparam = 0.4;
+  fastjet::Strategy               strategy = fastjet::Best;
+  fastjet::RecombinationScheme    recombScheme = fastjet::E_scheme;
+  fastjet::JetDefinition         *jetDef = NULL;
+  jetDef = new fastjet::JetDefinition( fastjet::kt_algorithm, Rparam,
+           recombScheme, strategy);
+
+  // Fastjet input.
+  std::vector &lt;fastjet::PseudoJet&gt; fjInputs;
+
+  // Histograms. Error counter.
+  Hist pTj(&quot;dN/dpTj&quot;, 100, 0., 100.);
+  Hist mRec(&quot;mRec&quot;, 100, 0., 1000.);
+  int iErr = 0;
+
+  // Begin event loop. Generate event. Skip if error.
+  for (int iEvent = 0; iEvent &lt; 1000; ++iEvent) {
+    if (!pythia.next()) {
+      if (++iErr &lt; 100) continue;
+      else {
+        cout &lt;&lt; &quot;Too many errors&quot; &lt;&lt; endl;
+        break;
+      }
+    }
+
+    // Invariant mass of DM system.
+    Vec4 mRes = process[5].p() + process[6].p();
+    mRec.fill(mRes.mCalc());
+
+    // Keep track of missing ET.
+    Vec4 missingETvec;
+    fjInputs.clear();
+
+    // Loop over event record to decide what to pass to FastJet.
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      // Final state only.
+      if (!pythia.event[i].isFinal()) continue;
+
+      // No neutrinos or DM.
+      if ( pythia.event[i].idAbs() == 12 || pythia.event[i].idAbs() == 14
+        || pythia.event[i].idAbs() == 16 || pythia.event[i].idAbs() == 52)
+        continue;
+
+      // Only |eta| &lt; 3.6.
+      if (abs(pythia.event[i].eta()) &gt; 3.6) continue;
+
+      // Missing ET.
+      missingETvec += pythia.event[i].p();
+
+      // Store as input to Fastjet.
+      fjInputs.push_back( fastjet::PseudoJet( pythia.event[i].px(),
+        pythia.event[i].py(), pythia.event[i].pz(), pythia.event[i].e() ) );
+    }
+
+    // Check that event contains analyzable particles.
+    if (fjInputs.size() == 0) {
+      cout &lt;&lt; &quot;Error: event with no final state particles&quot; &lt;&lt; endl;
+      continue;
+    }
+
+    // Run Fastjet algorithm.
+    vector &lt;fastjet::PseudoJet&gt; inclusiveJets, sortedJets;
+    fastjet::ClusterSequence clustSeq(fjInputs, *jetDef);
+
+    // Extract inclusive jets sorted by pT (note minimum pT of 20.0 GeV).
+    inclusiveJets = clustSeq.inclusive_jets(20.0);
+    sortedJets    = sorted_by_pt(inclusiveJets);
+
+    if(sortedJets.size() &lt; 1) {
+      // cout &lt;&lt; &quot; No jets found in event &quot; &lt;&lt; iEvent &lt;&lt; endl;
+      continue;
+    }
+    pTj.fill( sortedJets[0].pt() );
+
+  // End of event loop. Statistics. Histogram.
+  }
+  pythia.stat();
+  cout &lt;&lt; pTj;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

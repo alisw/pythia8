@@ -1,5 +1,5 @@
 // Basics.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -53,8 +53,11 @@ void Logger::msg(int verbosityLevel, string message, string extraInfo,
   // Update message counter.
   int times = messages[message]++;
 
+  // Return if not doing any printout.
+  if (!mayPrintErrors()) return;
+
   // Print message.
-  if ( (times == 0 || showAlways) && mayPrintErrors() ) {
+  if ( (times == 0 || showAlways || verbosity >= REPORT) ) {
     string messageNow = " PYTHIA " + message;
     if (extraInfo != "") messageNow += " " + extraInfo;
     errorStream() << messageNow + "\n";

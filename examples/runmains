@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2024 Torbjorn Sjostrand.
+# Copyright (C) 2025 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -27,32 +27,24 @@ indicated in caps, i.e. SKIP.
 Configuration options.
 --help      : Print this message (also -h, --h, and -help).
 --threads=N : Number of threads to run the examples.
---skip=SKIP : Examples to skip passed as a string, e.g. "01 02 03".
---run=MAIN  : Opposite of --skip, only run these mains, e.g. "01 02 03".
+--skip=SKIP : Examples to skip passed as a string, e.g. "101 102 103".
+--run=MAIN  : Opposite of --skip, only run these mains, e.g. "101 102 103".
 --pre=PRE   : Insert a command before running each main, e.g. a debugger call.
 BLOCKTEXT
 OPTIONS="-h --h -help --threads --skip --run --pre"
-LOGFILE="runmains.log"
-main16="main16.cmnd"
-main42="main42.cmnd hepmcout42.dat"
-main43="main43.cmnd hepmcout43.dat"
-main44="main44.cmnd hepmcout44.dat"
-main45="main44.cmnd hepmcout45.dat"
-main46="main46.cmnd ttbar.hdf5 main46.hepmc"
-main48="/hep/evtgen/share/DECAY_2010.DEC /hep/evtgen/share/evt.pdl "
-main48+=" /hep/evtgen/share/Pythia8/xmldoc/ true"
-main81="main81.cmnd w+_production_lhc_0.lhe histout81.dat"
-main82="main82.cmnd w+_production_lhc_0.lhe histout82.dat"
-main83="main83.cmnd w+_production_lhc_0.lhe histout83.dat"
-main84="main84.cmnd hepmcout84.dat 2 w+_production_lhc histout84.dat"
-main85="main85.cmnd w_production hepmcout85.dat"
-main86="main86.cmnd w_production hepmcout86.dat"
-main87="main87.cmnd w_production hepmcout87.dat"
-main88="main88.cmnd w_production hepmcout88.dat"
-main89="main89ckkwl.cmnd hepmcout89.dat"
-main93="-c main93.cmnd -n 1000 -o main93.out"
-main280="main280.cmnd w+_production_lhc_ output.hepmc"
-main300="--nevents 50 --setting \"WeakSingleBoson:ffbar2gmZ=on\""
+main132="-c main132.cmnd -o main132.hepmc"
+main133="-c main133.cmnd -o main133.hepmc"
+main134="-c main134.cmnd -o main134.hepmc"
+main136="-c main136.cmnd -i ttbar.hdf5 -o main136.hepmc"
+main144="-c main144.cmnd"
+main161="-c main161.cmnd -i w+_production_lhc_0.lhe -o histout161.dat"
+main162="-c main162ckkwl.cmnd"
+main164="-c main164ckkwl.cmnd"
+main224="-n 50 -s \"WeakSingleBoson:ffbar2gmZ=on\""
+main231="-c main231.cmnd"
+main364="-d /hep/evtgen/share/EvtGen/DECAY_2010.DEC"
+main364+=" -p /hep/evtgen/share/EvtGen/evt.pdl"
+main364+=" -x /hep/evtgen/share/Pythia8/xmldoc/ -e"
 
 ################################################################################
 # FUNCTION: Print warning message.
@@ -66,24 +58,27 @@ function warn() {
 # FUNCTION: Compile and run a set of examples using a common lockfile.
 ################################################################################
 function runmains() {
-    while [ -f "$LOGFILE" ]; do
-	read -a MAINS < $LOGFILE
-	if (("${#MAINS[@]}" > 1)); then echo "${MAINS[@]:1}" > $LOGFILE
-	else rm -f $LOGFILE; fi
-	MAIN=${MAINS[0]}
+    for MAIN in "${MAINS[@]}"; do
 	MAIN=${MAIN%.cc}
-	USE=true
-	for N in $SKIP; do
-	    if [ "$MAIN" = "main$N" ]; then USE=false; break; fi;
-	done
-	if [ ! -z "$RUN" ]; then USE=false; fi
-	for N in $RUN; do
-	    if [ "$MAIN" = "main$N" ]; then USE=true; break; fi;
-	done
-	if [ "$USE" = false ]; then continue; fi
-	eval ARGS=\$${MAIN}
-	make $MAIN
-	{ time $PRE ./$MAIN $ARGS ; } > $MAIN.log 2>&1
+	if { set -C; 2>/dev/null > "$MAIN.log"; }; then
+    	    USE=true
+    	    for N in $SKIP; do
+    	        if [ "$MAIN" = "main$N" ]; then USE=false; break; fi;
+    	    done
+    	    if [ ! -z "$RUN" ]; then USE=false; fi
+    	    for N in $RUN; do
+    	        if [ "$MAIN" = "main$N" ]; then USE=true; break; fi;
+    	    done
+    	    if [ "$USE" = false ]; then continue; fi
+    	    eval ARGS=\$${MAIN}
+    	    set +e # Continue on error.
+	    set +C # Allow writing to the log file.
+    	    make $MAIN
+    	    { time $PRE ./$MAIN $ARGS ; } > $MAIN.log 2>&1
+    	    set -e # Stop on error.
+	else
+	    sleep 0.1
+	fi
     done
 }
 
@@ -113,12 +108,10 @@ for VAR in "$@"; do
 done
 
 # Build the parallel runs.
-MAINS=(main*.cc); THREAD=0
-echo "${MAINS[@]}" > $LOGFILE
+MAINS=(main[0-9][0-9][0-9].cc); THREAD=0
 if [ -z $THREADS ]; then THREADS=1; fi
 while ((THREAD < THREADS)); do
     ((THREAD++))
     runmains &
-    sleep 1
 done
 wait

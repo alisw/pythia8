@@ -1,5 +1,5 @@
 // VinciaEW.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -4580,7 +4580,7 @@ void VinciaEW::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
 
 // Prepare to shower a system.
 
-bool VinciaEW::prepare(int iSysIn, Event &event, bool isBelowHadIn) {
+bool VinciaEW::prepare(int iSysIn, Event &event, int scaleRegionIn) {
 
   // Sanity check.
   if (!doEW) return false;
@@ -4588,7 +4588,7 @@ bool VinciaEW::prepare(int iSysIn, Event &event, bool isBelowHadIn) {
     DASHLEN);
 
   // Prepare system
-  if (!ewSystem.prepare(event, iSysIn, q2minSav, isBelowHadIn)) {
+  if (!ewSystem.prepare(event, iSysIn, q2minSav, scaleRegionIn)) {
     loggerPtr->WARNING_MSG("failed to prepare EW shower system");
     return false;
   }

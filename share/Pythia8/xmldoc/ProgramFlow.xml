@@ -455,6 +455,31 @@ to the parton shower machinery and perform diagnostics.
  
 <p/> 
 <li> 
+Additional expertise allows you to add fragmentation models using the 
+experimental feature, 
+<pre> 
+      pythia.addFragmentationPtr( fragmentationPtr); 
+</pre> 
+where <code>fragmentationPtr</code> is a shared 
+<code>FragmentationModel</code> pointer. The default fragmentation 
+models, in order, are <code>HiddenValleyFragmentation</code>, 
+<code>RHadrons</code>, and <code>LundFragmentation</code>, where this 
+final pointer contains an instance of both the 
+<code>StringFragmentation</code> and 
+<code>MiniStringFragmentation</code> models. These fragmentation 
+models are executed in sequence during the hadronization process, for 
+each colour subsystem, or the entire event. A model can be inserted 
+anywhere in this sequence using, 
+<pre> 
+      pythia.insertFragmentationPtr(index, fragmentationPtr); 
+</pre> 
+where <code>index</code> is the index in the fragmentation model 
+sequence. For example, an <code>index</code> of <code>0</code> would 
+insert a fragmentation model at the begining of the sequence. 
+</li> 
+ 
+<p/> 
+<li> 
 With even bigger expertise you can plug in your own 
 <aloc href="HeavyIons">Heavy Ions</aloc> generator, to replace the 
 default Angantyr one, with 
@@ -489,7 +514,7 @@ so each instance could be run inside a separate thread.
 <li> 
 In some cases it is convenient to use more than one <code>Pythia</code> 
 object. The key example would be the simultaneous generation of signal 
-and pileup events, see <code>main19.cc</code>. The two objects are then 
+and pileup events, see <code>main324.cc</code>. The two objects are then 
 set up and initialized separately, and generate events completely 
 independently of each other. It is only afterwards that the event records 
 are combined into one single super-event per beam crossing. 
@@ -522,7 +547,7 @@ file could have a structure like
     Main:subrun = 2 
     ( lines only read with readFile(fileName, 2) ) 
 </pre> 
-Both of these possibilities are illustrated in <code>main08.cc</code>. 
+Both of these possibilities are illustrated in <code>main322.cc</code>. 
 </li> 
  
 <p/> 
@@ -675,11 +700,12 @@ The subrun number should not be negative; negative codes like
 make sense out of any one line. 
 </methodmore> 
  
-<method name="bool Pythia::setPDFPtr( PDF* pdfAPtr, PDF* pdfBPtr, 
-PDF* pdfHardAPtr = 0, PDF* pdfHardBPtr = 0, PDF* pdfPomAPtr = 0, 
-PDF* pdfPomBPtr = 0, PDF* pdfGamAPtr = 0, PDF* pdfGamBPtr = 0, 
-PDF* pdfHardGamAPtr = 0, PDF* pdfHardGamBPtr = 0, PDF* pdfUnresAPtr = 0, 
-PDF* pdfUnresBPtr = 0, PDF* pdfUnresGamAPtr = 0, PDF* pdfUnresGamBPtrIn = 0)"> 
+<method name="bool Pythia::setPDFPtr( PDFPtr pdfAPtr, PDFPtr pdfBPtr, 
+PDFPtr pdfHardAPtr = 0, PDFPtr pdfHardBPtr = 0, PDFPtr pdfPomAPtr = 0, 
+PDFPtr pdfPomBPtr = 0, PDFPtr pdfGamAPtr = 0, PDFPtr pdfGamBPtr = 0, 
+PDFPtr pdfHardGamAPtr = 0, PDFPtr pdfHardGamBPtr = 0, PDFPtr pdfUnresAPtr = 0, 
+PDFPtr pdfUnresBPtr = 0, PDFPtr pdfUnresGamAPtr = 0, 
+PDFPtr pdfUnresGamBPtrIn = 0)"> 
 offers the possibility to link in external PDF sets for usage inside 
 the program. The rules for constructing your own class from 
 the <code>PDF</code> base class are described 
@@ -742,8 +768,8 @@ to the normal internal PDF selection you must call
 <code>setPDFPtr(0, 0)</code> before <code>Pythia::init()</code>. 
 </method> 
  
-<method name="bool Pythia::setPhotonFluxPtr( PDF* photonFluxAIn, 
-PDF* photonFluxBIn)"> 
+<method name="bool Pythia::setPhotonFluxPtr( PDFPtr photonFluxAIn, 
+PDFPtr photonFluxBIn)"> 
 offers the possibility to link in external photon fluxes for usage 
 inside the program. The rules for constructing your own class from 
 the <code>PDF</code> base class are described 
@@ -755,7 +781,7 @@ in your program.
 </argument> 
 </method> 
  
-<method name="bool Pythia::setLHAupPtr( LHAup* lhaUpPtrIn)"> 
+<method name="bool Pythia::setLHAupPtr( LHAupPtr lhaUpPtrIn)"> 
 offers linkage to an external generator that feeds in events 
 in the LHA format, see 
 <aloc href="LHA">Les Houches Accord</aloc>, 
@@ -768,7 +794,7 @@ pointer to a <code>LHAup</code>-derived object.
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::setDecayPtr( DecayHandler* decayHandlePtr, 
+<method name="bool Pythia::setDecayPtr( DecayHandlerPtr decayHandlePtr, 
 vector&lt;int&gt; handledParticles)"> 
 offers the possibility to link to an external program that can do some 
 of the particle decays, instead of using the internal decay machinery. 
@@ -791,7 +817,7 @@ antiparticle is always included as well.
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::setRndmEnginePtr( RndmEngine* rndmEnginePtr)"> 
+<method name="bool Pythia::setRndmEnginePtr( RndmEnginePtr rndmEnginePtr)"> 
 offers the possibility to link to an external random number generator. 
 The rules for constructing your own class from the 
 <code>RndmEngine</code> base class are described 
@@ -804,7 +830,7 @@ must be instantiated by you in your program.
 from 0. 
 </method> 
  
-<method name="bool Pythia::setUserHooksPtr( UserHooks* userHooksPtr)"> 
+<method name="bool Pythia::setUserHooksPtr( UserHooksPtr userHooksPtr)"> 
 offers the possibility to interact with the generation process at 
 a few different specified points, e.g. to reject undesirable events 
 at an early stage to save computer time. The rules for constructing 
@@ -819,7 +845,7 @@ must be instantiated by you in your program.
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
-<method name="bool Pythia::addUserHooksPtr( UserHooks* userHooksPtr)"> 
+<method name="bool Pythia::addUserHooksPtr( UserHooksPtr userHooksPtr)"> 
 offers the possibility to add further user hooks, see 
 <code>setUserHooksPtr</code> above for further information. 
 <note>Note:</note> The method currently always returns true. 
@@ -829,7 +855,17 @@ of the user to check that a particular combination works as intended.
 Also see <aloc href="UserHooks">here</aloc>. 
 </method> 
  
-<method name="bool Pythia::setBeamShapePtr( BeamShape* beamShapePtr)"> 
+<method name="bool Pythia::insertUserHooksPtr( int idx, UserHooksPtr 
+userHooksPtr)"> 
+offers the possibility to insert further user hooks, see 
+<code>setUserHooksPtr</code> above for further information. 
+<note>Warning:</note> usually it is meaningful to combine several 
+requirements, but there are examples where not. It is the responsibility 
+of the user to check that a particular combination works as intended. 
+Also see <aloc href="UserHooks">here</aloc>. 
+</method> 
+ 
+<method name="bool Pythia::setBeamShapePtr( BeamShapePtr beamShapePtr)"> 
 offers the possibility to provide your own shape of the momentum and 
 space-time spread of the incoming beams. The rules for constructing 
 your own class from the <code>BeamShape</code> base class are described 
@@ -873,6 +909,12 @@ offers the possibility to add further processes, see
 <note>Note:</note> The method currently always returns true. 
 </method> 
  
+<method name="bool Pythia::insertSigmaPtr( idx int, SigmaProcessPtr sigmaPtr, 
+PhaseSpacePtr phaseSpacePtrIn = 0)"> 
+offers the possibility to insert further processes, see 
+<code>setSigmaPtr</code> above for further information. 
+</method> 
+ 
 <method name="bool Pythia::setResonancePtr( ResonanceWidthsPtr resonancePtr)"> 
 offers the possibility to link your own implementation of the 
 calculation of partial resonance widths, to make it a part of the 
@@ -896,6 +938,12 @@ shared pointer to a <code>ResonanceWidths</code>-derived object.
 offers the possibility to add further resonances, see 
 <code>setResonancePtr</code> above for further information. 
 <note>Note:</note> The method currently always returns true. 
+</method> 
+ 
+<method name="bool Pythia::insertResonancePtr( int idx, ResonanceWidthsPtr 
+resonancePtr)"> 
+offers the possibility to insert further resonances, see 
+<code>setResonancePtr</code> above for further information. 
 </method> 
  
 <method name="bool Pythia::setShowerModelPtr( ShowerModelPtr showerModelPtr)"> 
@@ -1344,4 +1392,4 @@ see <aloc href="AdvancedUsage">here</aloc> for further details.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,5 +1,5 @@
 // VinciaCommon.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -899,7 +899,7 @@ void VinciaClustering::setDaughters(const vector<Particle>& state, int dau1In,
 
 //--------------------------------------------------------------------------
 
-bool VinciaClustering::initInvariantAndMassVecs() {
+bool VinciaClustering::init() {
   // Save masses of daughters.
   double ma = mDau[0];
   double mj = mDau[1];
@@ -965,7 +965,7 @@ bool VinciaClustering::initInvariantAndMassVecs() {
     else if (antFunType == QXConvII) {
       mA = mj;
       mB = mb;
-      sAB = sab - saj - sjb + pow2(ma);
+      sAB = sab - saj - sjb + pow2(mj);
     }
     // II quark conversion.
     else if (antFunType == GXConvII) {
@@ -982,11 +982,6 @@ bool VinciaClustering::initInvariantAndMassVecs() {
     }
   }
 
-  // Check if masses and antenna invariant make sense.
-  if (mA < 0. || mB < 0.) return false;
-  // Check if we have phase space left for this emission.
-  if (sAB < 0.) return false;
-
   // Save masses and invariants
   invariants.clear();
   invariants.push_back(sAB);
@@ -996,6 +991,11 @@ bool VinciaClustering::initInvariantAndMassVecs() {
   mMot.clear();
   mMot.push_back(mA);
   mMot.push_back(mB);
+
+  // Check if masses and antenna invariant make sense.
+  if (mA < 0. || mB < 0.) return false;
+  // Check if we have phase space left for this emission.
+  if (sAB < 0.) return false;
 
   return true;
 }
@@ -2164,7 +2164,7 @@ vector<VinciaClustering> VinciaCommon::findClusterings(
 
       // Save clustering to list of all clusterings.
       thisClus.setAntenna(isFSR, antFunType);
-      if (!thisClus.initInvariantAndMassVecs()) {
+      if (!thisClus.init()) {
         stringstream ss;
         ss << ": Couldn't initialise invariants and masses for "
            << thisClus.getAntName() << ". Skip clustering.";
@@ -2206,7 +2206,7 @@ vector<VinciaClustering> VinciaCommon::findClusterings(
           thisClus.setDaughters(state, ij, ia, ib);
           thisClus.setMothers(21, state[ib].id());
           thisClus.setAntenna(isFSR, antFunType);
-          if (!thisClus.initInvariantAndMassVecs()) {
+          if (!thisClus.init()) {
             stringstream ss;
             ss << ": Couldn't initialise invariants and masses for "
                << thisClus.getAntName() << ". Skip clustering.";
@@ -2247,7 +2247,7 @@ vector<VinciaClustering> VinciaCommon::findClusterings(
         thisClus.setDaughters(state, ia, ij, iRec);
         thisClus.setMothers(-state[ij].id(), state[iRec].id());
         thisClus.setAntenna(isFSR, antFunType);
-        if (!thisClus.initInvariantAndMassVecs()) {
+        if (!thisClus.init()) {
           stringstream ss;
           ss << ": Couldn't initialise invariants and masses for "
              << thisClus.getAntName() << ". Skip clustering.";
@@ -2319,7 +2319,7 @@ vector<VinciaClustering> VinciaCommon::findClusterings(
         thisClus.setDaughters(state, ia, ij, ib);
         thisClus.setMothers(idA, idB);
         thisClus.setAntenna(isFSR, antFunType);
-        if (!thisClus.initInvariantAndMassVecs()) {
+        if (!thisClus.init()) {
           stringstream ss;
           ss << ": Couldn't initialise invariants and masses for "
              << thisClus.getAntName() << ". Skip clustering.";
@@ -2937,7 +2937,22 @@ bool VinciaCommon::map2to3FFmassive(vector<Vec4>& pThree,
   // Check whether we are inside massive phase space.
   double gDet = gramDet(s01, s12, s02, mass0, mass1, mass2);
   if (gDet <= 0.) {
-    loggerPtr->WARNING_MSG("failed massive phase space check");
+    // Verbose output in case of failure.
+    if (verbose >= VinciaConstants::DEBUG) {
+      loggerPtr->INFO_MSG("failed massive phase space check");
+      cout << "   I : " << pTwo[0];
+      cout << "   K : " << pTwo[1];
+      cout << "   IK: " << pTwo[0] + pTwo[1];
+      cout << "   Invariants: ";
+      for (int i = 0; i < int(invariants.size()); ++i)
+        cout << invariants[i] << " ";
+      cout << endl;
+      cout << "   Masses:     ";
+      for (int i = 0; i < int(masses.size()); ++i)
+        cout << masses[i] << " ";
+      cout << endl;
+      cout << "   Gram Determinant = "<<gDet<<endl;
+    }
     return false;
   }
 
@@ -4929,7 +4944,7 @@ string num2str(int i, int width) {
   else {
     string ab = "k";
     double r = i;
-    if      (abs(i) < 1e5)       {r /= 1e3;}
+    if      (abs(i) < 1e5)  {r /= 1e3;}
     else if (abs(i) < 1e8)  {r /= 1e6;  ab = "M";}
     else if (abs(i) < 1e11) {r /= 1e9;  ab = "G";}
     else if (abs(i) < 1e14) {r /= 1e12; ab = "T";}

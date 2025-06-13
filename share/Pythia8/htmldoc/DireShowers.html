@@ -8,14 +8,21 @@
  
 <h2>Dire Parton Showers</h2> 
 <ol id="toc">
-  <li><a href="#section0">Settings related to the evaluation of running (QCD) couplings</a></li>
-  <li><a href="#section1">Settings to perform variations to gauge shower uncertainties</a></li>
-  <li><a href="#section2">Settings related to parton distribution functions and quark masses</a></li>
-  <li><a href="#section3">Settings related to the tune of Pythia 8 + Dire</a></li>
-  <li><a href="#section4">Settings for debugging or educational purposes</a></li>
+  <li><a href="#section0"><strong>Please note:</strong> Due to lack of person power, the </a></li>
+  <li><a href="#section1">Settings related to the evaluation of running (QCD) couplings</a></li>
+  <li><a href="#section2">Settings to perform variations to gauge shower uncertainties</a></li>
+  <li><a href="#section3">Settings related to parton distribution functions and quark masses</a></li>
+  <li><a href="#section4">Settings related to the tune of Pythia 8 + Dire</a></li>
+  <li><a href="#section5">Settings for debugging or educational purposes</a></li>
 </ol>
 
  
+<a name="section0"></a> 
+<h3><strong>Please note:</strong> Due to lack of person power, the 
+Dire Shower code is currently not maintained by the Pythia team and 
+may be removed in a future release.</h3> 
+ 
+<p/> 
 The Dire parton shower combines dipole-shower ideas in the spirit of Ariadne 
 with the careful handling of collinear enhancements in classical parton 
 showers. It includes a detailed treatment of mass effects and various 
@@ -25,9 +32,10 @@ The Dire physics publication is arxiv:1506.05057 [hep-ph]. Please cite this
 article (and of course the Pythia 8 reference) if you use Pythia 8 + Dire for 
 your research. 
  
+<p/> 
 Dire is a complete replacement for the default showers in Pythia, and is 
 automatically interleaved with Pythia's multiple interaction model. 
-At present, Dire offers 
+At present, Dire offers: 
  
 <ul> 
 <li> 
@@ -46,13 +54,12 @@ phase space.
 </li> 
 </ul> 
  
-Built-in CKKW-L and UNLOPS merging are in preparation.  It is worth 
-noting that Dire is constructed as as weighted parton shower, meaning 
-that all events that are produced with Dire acquire a weight close to, 
-but not identical to, unity. These weights need to be included when 
-filling histograms or storing events. These weights can, conveniently 
-combined with other weights (due to weighted LHEF inputs, merging 
-etc.), be retrieved from <code>pythia.info.weight()</code>. 
+It is worth noting that Dire is constructed as as weighted parton 
+shower, meaning that all events that are produced with Dire acquire a 
+weight close to, but not identical to, unity. These weights need to be 
+included when filling histograms or storing events. These weights can, 
+conveniently combined with other weights (due to weighted LHEF inputs, 
+merging etc.), be retrieved from <code>pythia.info.weight()</code>. 
  
 <p/> 
 The following discusses some basic settings that might be of interest. Some 
@@ -157,7 +164,7 @@ values mean that variations are performed for all parton shower
 emissions. Default value is 2.0 GeV. 
    
  
-<a name="section0"></a> 
+<a name="section1"></a> 
 <h3>Settings related to the evaluation of running (QCD) couplings</h3> 
  
 <a name="anchor6"></a>
@@ -169,7 +176,7 @@ directly taken from the PDF set interfaced through LHAPDF6. This can be
 helpful when validating the code, but will lead to a longer run time. 
    
  
-<a name="section1"></a> 
+<a name="section2"></a> 
 <h3>Settings to perform variations to gauge shower uncertainties</h3> 
  
 <a name="anchor7"></a>
@@ -251,7 +258,7 @@ in the code.
    
  
  
-<a name="section2"></a> 
+<a name="section3"></a> 
 <h3>Settings related to parton distribution functions and quark masses</h3> 
  
 <a name="anchor17"></a>
@@ -291,7 +298,7 @@ that incoming quarks are massless, but yield a assive final state
 quark upon conversion to an incoming gluon. 
    
  
-<a name="section3"></a> 
+<a name="section4"></a> 
 <h3>Settings related to the tune of Pythia 8 + Dire</h3> 
  
 <a name="anchor22"></a>
@@ -302,7 +309,7 @@ Pythia8 + Dire. Currently, all other values mean that no Pythia
 parameters are automatically overwritten by Dire. 
    
  
-<a name="section4"></a> 
+<a name="section5"></a> 
 <h3>Settings for debugging or educational purposes</h3> 
  
 <a name="anchor23"></a>
@@ -322,4 +329,4 @@ final state particles is reached.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Stefan Prestel --> 
+<!-- Copyright (C) 2025 Stefan Prestel --> 

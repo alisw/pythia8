@@ -1,5 +1,5 @@
 // MultipartonInteractions.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -104,12 +104,12 @@ public:
   // Constructor.
   MultipartonInteractions() : allowRescatter(), allowDoubleRes(), canVetoMPI(),
     doPartonVertex(), doVarEcm(), setAntiSame(), setAntiSameNow(),
-    pTmaxMatch(), alphaSorder(),
-    alphaEMorder(), alphaSnfmax(), bProfile(), processLevel(), bSelScale(),
-    rescatterMode(), nQuarkIn(), nSample(), enhanceScreening(), pT0paramMode(),
-    alphaSvalue(), Kfactor(), pT0Ref(), ecmRef(), ecmPow(), pTmin(),
-    coreRadius(), coreFraction(), expPow(), ySepResc(), deltaYResc(),
-    sigmaPomP(), mPomP(), pPomP(), mMaxPertDiff(), mMinPertDiff(), a1(),
+    pTmaxMatch(), alphaSorder(), alphaEMorder(), alphaSnfmax(), bProfile(),
+    processLevel(), bSelScale(), rescatterMode(), nQuarkIn(), nSample(),
+    enhanceScreening(), pT0paramMode(), alphaSvalue(), Kfactor(), pT0Ref(),
+    ecmRef(), ecmPow(), pTmin(), coreRadius(), coreFraction(), expPow(),
+    ySepResc(), deltaYResc(), sigmaPomP(), mPomP(), pPomP(), sigmaPomPom(),
+    mMaxPertDiff(), mMinPertDiff(), a1(),
     a0now(), a02now(), bstepNow(), a2max(), b2now(), enhanceBmax(),
     enhanceBnow(), id1Save(), id2Save(), pT2Save(), x1Save(), x2Save(),
     sHatSave(), tHatSave(), uHatSave(), alpSsave(), alpEMsave(), pT2FacSave(),
@@ -124,7 +124,7 @@ public:
     fracBhigh(), fracChigh(), fracABChigh(), expRev(), cDiv(), cMax(),
     enhanceBavg(), bIsSet(false), bSetInFirst(), isAtLowB(), pickOtherSel(),
     id1(), id2(), i1Sel(), i2Sel(), id1Sel(), id2Sel(), iPDFA(), nPDFA(1),
-    idAList(), bNow(), enhanceB(), pT2(), pT2shift(), pT2Ren(), pT2Fac(), x1(),
+    bNow(), enhanceB(), pT2(), pT2shift(), pT2Ren(), pT2Fac(), x1(),
     x2(), xT(), xT2(), tau(), y(), sHat(), tHat(), uHat(), alpS(), alpEM(),
     xPDF1now(), xPDF2now(), dSigmaSum(), x1Sel(), x2Sel(), sHatSel(),
     tHatSel(), uHatSel(), iPDFAsave(), nStep(), iStepFrom(), iStepTo(),
@@ -227,7 +227,7 @@ private:
          enhanceScreening, pT0paramMode, reuseInit;
   double alphaSvalue, Kfactor, pT0Ref, ecmRef, ecmPow, pTmin, coreRadius,
          coreFraction, expPow, ySepResc, deltaYResc, sigmaPomP, mPomP, pPomP,
-         mMaxPertDiff, mMinPertDiff;
+         sigmaPomPom, mMaxPertDiff, mMinPertDiff;
   string initFile;
 
   // x-dependent matter profile:
@@ -263,11 +263,14 @@ private:
   int    vsc1, vsc2;
 
   // Other initialization data.
+  // Number of points in the interpolation of Sudakov exponents.
+  static const int NSUDPTS = 50;
+  friend class MPIInterpolationInfo;
   bool   hasPomeronBeams, hasLowPow, globalRecoilFSR;
   int    iDiffSys, nMaxGlobalRecoilFSR, bSelHard;
   double eCM, sCM, pT0, pT20, pT2min, pTmax, pT2max, pT20R, pT20minR,
          pT20maxR, pT20min0maxR, pT2maxmin, sigmaND, pT4dSigmaMax,
-         pT4dProbMax, dSigmaApprox, sigmaInt, sudExpPT[101],
+         pT4dProbMax, dSigmaApprox, sigmaInt, sudExpPT[NSUDPTS + 1],
          zeroIntCorr, normOverlap, nAvg, kNow, normPi, bAvg, bDiv,
          probLowB, radius2B, radius2C, fracA, fracB, fracC, fracAhigh,
          fracBhigh, fracChigh, fracABChigh, expRev, cDiv, cMax,
@@ -294,7 +297,7 @@ private:
          bAvgSave, bDivSave, probLowBSave,
          fracAhighSave, fracBhighSave, fracChighSave,
          fracABChighSave, cDivSave, cMaxSave;
-    vector<array<double, 101> >  sudExpPTSave;
+    vector<array<double, MultipartonInteractions::NSUDPTS + 1> >  sudExpPTSave;
 
     void init(int nStepIn);
   };
@@ -330,7 +333,8 @@ private:
   // Integrate the parton-parton interaction cross section.
   void jetCrossSection();
 
-  // Read or write initialization data from/to file, to save startup time.
+  // Read or write initialization data from/to settings/file, to save
+  // startup time.
   bool saveMPIdata();
   bool loadMPIdata();
 

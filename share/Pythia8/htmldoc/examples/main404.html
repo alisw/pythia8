@@ -1,0 +1,160 @@
+<html><head><title>main404</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main404</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main404.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+//            <a href="mailto:peter.skands@monash.edu">Peter Skands</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#vincia">Vincia</a>
+//            <a href="../ExampleKeywords.html#dire">Dire</a>
+//            <a href="../ExampleKeywords.html#parallelism">Parallelism</a>
+
+// This is a simple test program to compare Pythia and Vincia on
+// inclusive jet rates at the LHC, for a sample with pThat &gt; 100 GeV.
+// This program is equivalent to main402, but uses the built-in parallelism
+// framework to generate events in parallel, instead of running two Pythia
+// instances in parallel with OpenMP.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8/PythiaParallel.h&quot;
+using namespace Pythia8;
+
+int main() {
+
+  // Common parameters used for both runs
+  const int nEvent    = 1000;
+  const int nListJets = 5;
+
+  //************************************************************************
+
+  // Histograms.
+  Hist nJetsModel1(&quot;Model1 number of jets&quot;, 20, -0.5, 19.5);
+  Hist eTjetsModel1(&quot;Model1 pT for jets&quot;, 50, 0., 500.);
+  Hist yJetsModel1(&quot;Model1 y for jets&quot;, 20, -4., 4.);
+  Hist phiJetsModel1(&quot;Model1 phi for jets&quot;, 25, -M_PI, M_PI);
+  Hist distJetsModel1(&quot;Model1 R distance between jets&quot;, 50, 0., 10.);
+  Hist nJetsModel2(&quot;Model2 number of jets&quot;, 20, -0.5, 19.5);
+  Hist eTjetsModel2(&quot;Model2 pT for jets&quot;, 50, 0., 500.);
+  Hist yJetsModel2(&quot;Model2 y for jets&quot;, 20, -4., 4.);
+  Hist phiJetsModel2(&quot;Model2 phi for jets&quot;, 25, -M_PI, M_PI);
+  Hist distJetsModel2(&quot;Model2 R distance between jets&quot;, 50, 0., 10.);
+  Hist nJetsRatio(&quot;Model2/Model1 number of jets&quot;, 20, -0.5, 19.5);
+  Hist eTjetsRatio(&quot;Model2/Model1 pT for jets&quot;, 50, 0., 500.);
+  Hist yJetsRatio(&quot;Model2/Model1 y for jets&quot;, 20, -4., 4.);
+  Hist phiJetsRatio(&quot;Model2/Model1 phi for jets&quot;, 25, -M_PI, M_PI);
+  Hist distJetsRatio(&quot;Model2/Model1 R distance between jets&quot;, 50, 0., 10.);
+
+  // Loop over generators.
+  for (int iRun = 1; iRun &lt;= 2; ++iRun) {
+    PythiaParallel pythia;
+    // Settings common to both runs
+    pythia.readString(&quot;Beams:eCM = 7000.&quot;);
+    pythia.readString(&quot;HardQCD:all = on&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 100.&quot;);
+    pythia.readString(&quot;PartonLevel:MPI = on&quot;);
+    pythia.readString(&quot;HadronLevel:all = on&quot;);
+
+    // Settings specific to second run
+    if (iRun == 2) {
+      // Switch to VINCIA shower model
+      pythia.readString(&quot;PartonShowers:model = 2&quot;);
+      pythia.readString(&quot;Vincia:tune = 0&quot;);
+      // Output in parallel is not possible.
+      pythia.readString(&quot;Print:verbosity = 0&quot;);
+    }
+    // Initialise generator for this run
+    if(!pythia.init()) {continue;}
+
+    // Set histogram pointers
+    Hist* nJetsPtr    = &amp;nJetsModel1;
+    Hist* eTjetsPtr   = &amp;eTjetsModel1;
+    Hist* yJetsPtr    = &amp;yJetsModel1;
+    Hist* phiJetsPtr  = &amp;phiJetsModel1;
+    Hist* distJetsPtr = &amp;distJetsModel1;
+    // Switch to Model2 histograms for second
+    if (iRun == 2) {
+      nJetsPtr    = &amp;nJetsModel2;
+      eTjetsPtr   = &amp;eTjetsModel2;
+      yJetsPtr    = &amp;yJetsModel2;
+      phiJetsPtr  = &amp;phiJetsModel2;
+      distJetsPtr = &amp;distJetsModel2;
+    }
+
+    // Set up SlowJet jet finder, with anti-kT clustering, R = 0.7,
+    // pT &gt; 20 GeV, |eta| &lt; 4, and pion mass assumed for non-photons
+    double etaMax   = 4.;
+    double radius   = 0.7;
+    double pTjetMin = 20.;
+    // Exclude neutrinos (and other invisible) from study.
+    int    nSel     = 2;
+    SlowJet slowJet( -1, radius, pTjetMin, etaMax, nSel, 1);
+
+    // Begin event loop.
+    double sumWeights = 0.;
+    int iEvent = 0;
+    pythia.run(nEvent, [&amp;](Pythia* pythiaPtr) {
+
+      // Check for weights
+      double weight = pythiaPtr-&gt;info.weight();
+      sumWeights += weight;
+
+      // Analyze Slowet jet properties. List first few.
+      slowJet. analyze( pythiaPtr-&gt;event );
+
+      iEvent += 1;
+      if (iEvent &lt; nListJets) {
+        cout &lt;&lt; &quot; iRun = &quot; &lt;&lt; iRun &lt;&lt; &quot; iEvent = &quot; &lt;&lt; iEvent &lt;&lt; endl;
+        slowJet.list();
+      }
+
+      // Fill SlowJet inclusive jet distributions.
+      nJetsPtr-&gt;fill( slowJet.sizeJet() , weight);
+      for (int i = 0; i &lt; slowJet.sizeJet(); ++i) {
+        eTjetsPtr-&gt;fill( slowJet.pT(i) , weight);
+        yJetsPtr-&gt;fill( slowJet.y(i) , weight);
+        phiJetsPtr-&gt;fill( slowJet.phi(i) , weight);
+      }
+
+      // Fill SlowJet distance between jets.
+      for (int i = 0; i &lt; slowJet.sizeJet() - 1; ++i) {
+        for (int j = i +1; j &lt; slowJet.sizeJet(); ++j) {
+          double dEta = slowJet.y(i) - slowJet.y(j);
+          double dPhi = abs( slowJet.phi(i) - slowJet.phi(j) );
+          if (dPhi &gt; M_PI) dPhi = 2. * M_PI - dPhi;
+          double dR = sqrt( pow2(dEta) + pow2(dPhi) );
+          distJetsPtr-&gt;fill( dR , weight);
+        }
+      }
+    });
+
+    // End of event loop. Statistics. Histograms.
+    pythia.stat();
+
+  } // End loop over generators.
+
+  // Make ratio histograms
+  nJetsRatio    = nJetsModel2/nJetsModel1;
+  eTjetsRatio   = eTjetsModel2/eTjetsModel1;
+  yJetsRatio    = yJetsModel2/yJetsModel1;
+  phiJetsRatio  = phiJetsModel2/phiJetsModel1;
+  distJetsRatio = distJetsModel2/distJetsModel1;
+
+  // Output histograms
+  cout &lt;&lt; nJetsModel1 &lt;&lt; nJetsModel2 &lt;&lt; nJetsRatio;
+  cout &lt;&lt; eTjetsModel1 &lt;&lt; eTjetsModel2 &lt;&lt; eTjetsRatio;
+  cout &lt;&lt; yJetsModel1 &lt;&lt; yJetsModel2 &lt;&lt; yJetsRatio;
+  cout &lt;&lt; phiJetsModel1 &lt;&lt; phiJetsModel2 &lt;&lt; phiJetsRatio;
+  cout &lt;&lt; distJetsModel1 &lt;&lt; distJetsModel2 &lt;&lt; distJetsRatio;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

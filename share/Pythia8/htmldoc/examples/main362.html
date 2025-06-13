@@ -1,0 +1,254 @@
+<html><head><title>main362</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main362</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main362.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#colour+reconnection">Colour&nbsp;reconnection</a>
+//            <a href="../ExampleKeywords.html#hadronization">Hadronization</a>
+//            <a href="../ExampleKeywords.html#top+mass">Top&nbsp;mass</a>
+
+// Omnibus version for colour reconnection (CR) effect studies.
+
+// Links to two UserHooks that, along with the internal models,
+// implement all the models used for the top mass study in
+// S. Argyropoulos and T. Sjostrand,
+// arXiv:1407.6653 [hep-ph] (LU TP 14-23, DESY 14-134, MCnet-14-15)
+
+// Warning: some small modifications have been made when collecting
+// the models, but nothing intended to change the behaviour.
+// Note: the move model is also available with ColourReconnection:mode = 2,
+// while the ColourReconnection:mode = 1 model has not been used here.
+// Note: the new models tend to be slower than the default CR scenario,
+// since they have to probe many more reconnection possibilities.
+
+// Important: the top mass shift analysis encoded here is very primitive,
+// does not perform well at all, and should not be taken seriously.
+// The important part is that you see how the different scenarios
+// should be set up to operate as intended.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/ColourReconnectionHooks.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events to generate.
+  // Warning: much statistics is needed for significant results,
+  // so this is just an appetizer. Anyway, the reconstruction is
+  // pretty lousy, so not useful for real studies.
+  int nEvent = 250;
+
+  // Target t and W masses.
+  double mT = 173.3;
+  double mW = 80.385;
+
+  // Set up anti-kT jet finder.
+  double Rjet = 0.5;
+  double pTjetMin = 20.;
+  SlowJet sJet( -1, Rjet, pTjetMin);
+
+  // Loop over different reconnection scenarios.
+  for (int mLoop = 0; mLoop &lt; 14; ++mLoop) {
+  cout &lt;&lt; &quot;\n\n ================================ Now begin mLoop = &quot;
+       &lt;&lt; mLoop &lt;&lt; &quot; ================================\n&quot; &lt;&lt; endl;
+
+    // Generator at 8 TeV LHC.
+    Pythia pythia;
+    Event&amp; event = pythia.event;
+    pythia.readString(&quot;Beams:eCM = 8000.&quot;);
+
+    // q qbar, g g -&gt; t tbar.
+    pythia.readString(&quot;Top:qqbar2ttbar = on&quot;);
+    pythia.readString(&quot;Top:gg2ttbar = on&quot;);
+
+    // Colour reconnection setups.
+    shared_ptr&lt;UserHooks&gt; myUserHooks;
+
+    // Tuning parameters for CR scenarios have tune 4C as a starting point.
+    pythia.readString(&quot;Tune:pp = 5&quot;);
+
+    // No reconnection at all.
+    if (mLoop == 0) {
+      pythia.readString(&quot;ColourReconnection:reconnect = off&quot;);
+      pythia.readString(&quot;PartonLevel:earlyResDec = off&quot;);
+      pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.30&quot;);
+
+    // Standard reconnection, but top decay products unaffected.
+    } else if (mLoop == 1) {
+      pythia.readString(&quot;ColourReconnection:reconnect = on&quot;);
+      pythia.readString(&quot;PartonLevel:earlyResDec = off&quot;);
+
+    // Standard reconnection, including top decay products.
+    } else if (mLoop == 2) {
+      pythia.readString(&quot;ColourReconnection:reconnect = on&quot;);
+      pythia.readString(&quot;PartonLevel:earlyResDec = on&quot;);
+
+    // New gluon swap and move scenarios, including top decay products.
+    // (Note: the move scenario is also implemented internally.)
+    } else if (mLoop &gt;= 3 &amp;&amp; mLoop &lt;= 8) {
+      pythia.readString(&quot;ColourReconnection:reconnect = off&quot;);
+      pythia.readString(&quot;PartonLevel:earlyResDec = off&quot;);
+      // Swap (mode = 1) or move (2), and flip (1, 2) or not (0).
+      int mode = (mLoop &lt;= 5) ? 1 : 2;
+      int flip = ( mLoop - 3 * mode) % 3;
+      // Possibilities to vary effects by further parameters.
+      double dLamCut   = 0.;
+      double fracGluon = 1.;
+      if ( mode == 1 ) {
+        if ( flip &gt; 0 )
+             pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.20&quot;);
+        else pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.30&quot;);
+      }
+      else {
+        if ( flip &gt; 0 )
+             pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.15&quot;);
+        else pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.25&quot;);
+      }
+      myUserHooks = make_shared&lt;MBReconUserHooks&gt;(mode, flip, dLamCut,
+        fracGluon);
+      pythia.setUserHooksPtr( myUserHooks);
+
+    // New scenaros that do top reconnections separately from normal one.
+    // =  9: reconnect with random background gluon;
+    // = 10: reconnect with nearest (smallest-mass) background gluon;
+    // = 11: reconnect with furthest (largest-mass) background gluon;
+    // = 12: reconnect with smallest (with sign) lambda measure shift;
+    // = 13: reconnect only if reduced lamda, and then to most reduction.
+    } else if (mLoop &gt;= 9 &amp;&amp; mLoop &lt;= 13) {
+      pythia.readString(&quot;ColourReconnection:reconnect = on&quot;);
+      pythia.readString(&quot;PartonLevel:earlyResDec = off&quot;);
+      // Possibility with reduced reconnection strength.
+      double strength = ( mLoop == 13 ) ? 1. : 0.075;
+      myUserHooks = make_shared&lt;TopReconUserHooks&gt;(mLoop - 8, strength);
+      pythia.setUserHooksPtr( myUserHooks);
+    }
+
+    // Simplify generation. For tryout only.
+    //pythia.readString(&quot;ProcessLevel:resonanceDecays = off&quot;);
+    //pythia.readString(&quot;PartonLevel:ISR = off&quot;);
+    //pythia.readString(&quot;PartonLevel:FSR = off&quot;);
+    //pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+    //pythia.readString(&quot;BeamRemnants:primordialKT = off&quot;);
+    //pythia.readString(&quot;HadronLevel:all = off&quot;);
+
+    // Top and W masses. Semileptonic top decay chosen by W decay.
+    // (One of two charge states, so properly ought to symmetrize.)
+    // Trick: only allow decay to stable tau, standing in for e and mu
+    // as well, but the tau is easy to remove before jet finding.
+    pythia.readString(&quot;6:m0 = 173.3&quot;);
+    pythia.readString(&quot;24:m0 = 80.385&quot;);
+    pythia.readString(&quot;24:onPosIfAny = 1 2 3 4 5&quot;);
+    pythia.readString(&quot;24:onNegIfAny = 15&quot;);
+    pythia.readString(&quot;24:offIfAny = 11 13&quot;);
+    pythia.readString(&quot;15:mayDecay = off&quot;);
+
+    // Reduce printout.
+    pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+    pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+    pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+    pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+    pythia.readString(&quot;Next:numberCount = 100000&quot;);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Histograms for current scenario.
+    Hist nRecH(  &quot;number of top reconnections&quot;,  100, -0.5, 99.5);
+    Hist nchH(   &quot;charged multiplicity&quot;,         100,  -1., 799.);
+    Hist nJetH(  &quot;jet multiplicity&quot;,              20, -0.5, 19.5);
+    Hist mWH(    &quot;reconstructed W mass&quot;,         100,  40., 140.);
+    Hist mTH(    &quot;reconstructed t mass&quot;,         100, 120., 220.);
+    Hist mWerrH( &quot;reconstructed W mass error&quot;,   100, -10.,  10.);
+    Hist mTerrH( &quot;reconstructed t mass error&quot;,   100, -20.,  20.);
+    Hist pTTH(   &quot;reconstructed pT_t&quot;,            11,   0., 275.);
+    Hist mTpTH(  &quot;reconstructed delta-m_t(pT_t)&quot;, 11,   0., 275.);
+
+    // Begin event loop. Generate event. Skip if error.
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+      if (!pythia.next()) continue;
+
+      // Charged multiplicity.
+      int nch = 0;
+      for (int i = 0; i &lt; event.size(); ++i)
+        if (event[i].isFinal() &amp;&amp; event[i].isCharged()) ++nch;
+      nchH.fill(nch);
+
+      // Remove tau leptons. (Recall: they were put stable, so simple.)
+      for (int i = 0; i &lt; event.size(); ++i)
+        if (event[i].idAbs() == 15) event[i].statusNeg();
+
+      // Find number of jets. At least four to keep going.
+      sJet.analyze(event);
+      int nJet = sJet.sizeJet();
+      nJetH.fill( nJet);
+      if (nJet &lt; 4) continue;
+
+      // Find two jets that form mass closest to mW.
+      int i1min     = 0;
+      int i2min     = 0;
+      double m12min = 0.;
+      double diff   = 1e10;
+      for (int i1 = 0; i1 &lt; nJet - 1; ++i1)
+      for (int i2 = i1 + 1; i2 &lt; nJet; ++i2) {
+        double m12 = (sJet.p(i1) + sJet.p(i2)).mCalc();
+        if (abs(m12 - mW) &lt; diff) {
+          i1min  = i1;
+          i2min  = i2;
+          m12min = m12;
+          diff   = abs(m12 - mW);
+        }
+      }
+      mWH.fill( m12min);
+      mWerrH.fill( m12min - mW);
+
+      // Only keep going if within +-5 GeV.
+      if (abs(m12min - mW) &gt; 5.) continue;
+
+      // Find third jet that forms mass closest to mT.
+      int i3min      = 0;
+      double m123min = 0.;
+      diff           = 1e10;
+      for (int i3 = 0; i3 &lt; nJet; ++i3)
+      if (i3 != i1min &amp;&amp; i3 != i2min) {
+        double m123 = (sJet.p(i1min) + sJet.p(i2min) + sJet.p(i3)).mCalc();
+        if (abs(m123 - mT) &lt; diff) {
+          i3min   = i3;
+          m123min = m123;
+          diff    = abs(m123 - mT);
+        }
+      }
+      mTH.fill( m123min);
+      mTerrH.fill( m123min - mT);
+
+      // Only keep going if within +-20 GeV.
+      if (abs(m123min - mT) &gt; 20.) continue;
+
+      // Study top pT and dependence of top mass error.
+      double pTT = (sJet.p(i1min) + sJet.p(i2min) + sJet.p(i3min)).pT();
+      if (pTT &gt; 250.) pTT = 260.;
+      pTTH.fill( pTT);
+      mTpTH.fill( pTT, m123min - mT);
+
+    // End of event loop. Statistics. Histograms.
+    }
+    pythia.stat();
+    mTpTH /= pTTH;
+    cout &lt;&lt;  nchH &lt;&lt; nJetH &lt;&lt; mWH &lt;&lt; mTH &lt;&lt; mWerrH
+         &lt;&lt; mTerrH &lt;&lt; pTTH &lt;&lt; mTpTH;
+
+    // End loop over top colour reconnection scenarios.
+  }
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

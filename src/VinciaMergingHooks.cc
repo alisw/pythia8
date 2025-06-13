@@ -1,11 +1,12 @@
 // VinciaMergingHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand, Peter Skands.
+// Copyright (C) 2025 Torbjorn Sjostrand, Peter Skands.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // This file is written by Helen Brooks, Christian T Preuss.
 
 #include "Pythia8/VinciaMergingHooks.h"
+#include "Pythia8/VinciaHistory.h"
 
 namespace Pythia8 {
 
@@ -38,7 +39,7 @@ void HardProcessParticle::print() const {
 void HardProcessParticleList::list() const {
 
   cout << "\n *--------  VINCIA Hard Process Summary ----------------------"
-       <<"------------------------------------------*\n\n"
+       <<"------------------------*\n\n"
        << "  Hard Process:\n\n  ";
   // Loop over levels.
   for (auto it = particles.begin(); it != particles.end(); ++it) {
@@ -47,7 +48,9 @@ void HardProcessParticleList::list() const {
     for (auto pit = it->second.begin(); pit != it->second.end(); ++pit) {
       cout << " "; pit->print();}
   }
-  cout << endl << endl;
+  cout << endl << endl
+       << " *---------------------------------------------------------------"
+       <<"---------------------*\n";
 
 }
 
@@ -796,7 +799,7 @@ void VinciaMergingHooks::init() {
   }
 
   // Extract settings.
-  verbose = settingsPtr->mode("Vincia:verbose");
+  verbose = mode("Vincia:verbose");
 
   // Showers on/off.
   bool doFSR = settingsPtr->flag("PartonLevel:FSR");
@@ -807,32 +810,47 @@ void VinciaMergingHooks::init() {
   doRF = doFSR && settingsPtr->flag("Vincia:doRF");
 
   // Merging settings.
-  processSave           = settingsPtr->word("Merging:Process");
-  nQuarksMergeSave      = settingsPtr->mode("Merging:nQuarksMerge");
-  includeWGTinXSECSave  = settingsPtr->flag("Merging:includeWeightInXsection");
-  doCutBasedMergingSave = settingsPtr->flag("Merging:doCutBasedMerging");
-  doKTMergingSave       = settingsPtr->flag("Merging:doKTMerging");
-  doMGMergingSave       = settingsPtr->flag("Merging:doMGMerging");
-  // Currently pTLund merging not supported.
-  if (doCutBasedMergingSave) tmsListSave = {parm("Merging:dRijMS"),
-    parm("Merging:pTiMS"), parm("Merging:QijMS")};
-  else tmsValueSave     = settingsPtr->parm("Merging:TMS");
-  if (doKTMergingSave || doMGMergingSave) {
-    DparameterSave      = settingsPtr->parm("Merging:Dparameter");
-    ktTypeSave          = settingsPtr->mode("Merging:ktType");
-  }
-  doMergeRes            = settingsPtr->flag("Vincia:MergeInResSystems");
-  nJetMaxSave           = settingsPtr->mode("Merging:nJetMax");
-  nJetMaxResSave        = 0;
-  nMergeResSys          = 0;
-  if (doMergeRes) {
-    nJetMaxResSave      = settingsPtr->mode("Vincia:MergeNJetMaxRes");
-    nMergeResSys        = settingsPtr->mode("Vincia:MergeNResSys");
-  }
-  doHEFT                = settingsPtr->flag("Vincia:MergeHEFT");
-  doVBF                 = settingsPtr->flag("Vincia:MergeVBF");
+  processSave           = word("Merging:Process");
+  nJetMaxSave           = mode("Merging:nJetMax");
+  nQuarksMergeSave      = mode("Merging:nQuarksMerge");
+  includeWGTinXSECSave  = flag("Merging:includeWeightInXsection");
 
-  if (nJetMaxSave == 0 && (nJetMaxResSave == 0 || nMergeResSys == 0)) {
+  // Save merging scale definition and associated parameters.
+  doDynamicMergingSave  = flag("Merging:doDynamicMerging");
+  doCutBasedMergingSave = flag("Merging:doCutBasedMerging");
+  doPTLundMergingSave   = flag("Merging:doMerging");
+  doKTMergingSave       = flag("Merging:doKTMerging");
+  doMGMergingSave       = flag("Merging:doMGMerging");
+  if (doCutBasedMergingSave)
+    tmsListSave = {parm("Merging:dRijMS"),
+      parm("Merging:pTiMS"),
+      parm("Merging:QijMS")};
+  else tmsValueSave     = parm("Merging:TMS");
+  if (doKTMergingSave || doMGMergingSave) {
+    DparameterSave      = parm("Merging:Dparameter");
+    ktTypeSave          = mode("Merging:ktType");
+  }
+  if (doDynamicMergingSave) SparameterSave = parm("Merging:Sparameter");
+
+  // Special settings for merging in resonance systems.
+  doMergeRes            = flag("Vincia:MergeInResSystems");
+  nJetMaxResSave        = doMergeRes ? mode("Vincia:MergeNJetMaxRes") : 0;
+  nMergeResSys          = doMergeRes ? mode("Vincia:MergeNResSys") : 0;
+
+  // Special settings for merging in pure VBF or HEFT events.
+  doHEFT                = flag("Vincia:MergeHEFT");
+  doVBF                 = flag("Vincia:MergeVBF");
+
+  // Settings for UMESS merging (CKKW-L by default).
+  doUMEPSTreeSave       = flag("Merging:doUMEPSTree");
+  doUMEPSSubtSave       = flag("Merging:doUMEPSSubt");
+  if (doUMEPSTreeSave && doUMEPSSubtSave) {
+    loggerPtr->ERROR_MSG("conflicting UMEPS settings");
+    return;
+  }
+
+  // Sanity checks.
+  if (nJetMaxSave == 0 && ( nJetMaxResSave == 0 || nMergeResSys == 0)) {
     loggerPtr->ERROR_MSG(
       "no additional jets were requested, set Merging:nJetMax or "
       "Vincia:MergeNJetMaxRes with Vincia:MergeNResSys = on");
@@ -843,19 +861,15 @@ void VinciaMergingHooks::init() {
     return;
   }
 
-  // TODO: for now can't invert FF splitter map = 2.
-  int kineMapFFsplit = settingsPtr->mode("Vincia:kineMapFFsplit");
-  if (kineMapFFsplit != 1) {
-    stringstream ss;
-    ss << "inverse of Vincia:kineMapFFsplit = "
-       << kineMapFFsplit << " is not currently available";
-    loggerPtr->ERROR_MSG(ss.str(),
-      "set Vincia:kineMapFFsplit = 1 to do merging");
-    return;
+  // TODO: for now FF splitter map = 2 is not implemented.
+  if (mode("Vincia:kineMapFFsplit") != 1) {
+    loggerPtr->WARNING_MSG("forcing kineMapFFsplit = 1; "
+      "others not yet supported by merging");
+    settingsPtr->readString("Vincia:kineMapFFsplit = 1");
   }
 
   // TODO: for now can't do merging for polarised.
-  bool helicityShower = settingsPtr->flag("Vincia:helicityShower");
+  bool helicityShower = flag("Vincia:helicityShower");
   if (helicityShower) {
     loggerPtr->ERROR_MSG("currently merging is not available for "
       "helicity showers","set Vincia:helicityShower = off to do merging");
@@ -948,40 +962,23 @@ bool VinciaMergingHooks::setShowerStartingScales(bool isTrial, bool,
 double VinciaMergingHooks::tmsNow(const Event& event) {
   // Merging according to a cut in kT.
   if (doKTMergingSave || doMGMergingSave) return kTmin(event);
-  // Merging according to a cut in pTLund.
-  // TODO check implementation of rhoms().
-  if (doPTLundMergingSave) return rhoms(event, false);
-  // If nothing is enabled, use evolution variable, indicated by -1 here.
-  return -1.;
+  // In the other cases, merging scale is in terms of evolution variable.
+  return pTlast(event);
 }
 
 //-------------------------------------------------------------------------
 
-// Check if can veto step.
+// Check if event should be vetoed due to branching above merging scale.
 
-bool VinciaMergingHooks::canVetoStep() {
-  // We only veto events in the shower if we don't use the
-  // evolution variable as merging variable.
-  // Otherwise, we perform the last trial step in VinciaMerging already.
-  if (!doKTMergingSave && !doMGMergingSave && !doCutBasedMergingSave)
-    return false;
-  return !doIgnoreStepSave;
-}
-
-//-------------------------------------------------------------------------
-
-// Check if step is vetoed.
-
-bool VinciaMergingHooks::doVetoStep(const Event&, const Event& event,
-  bool) {
+bool VinciaMergingHooks::doVetoStep(const Event&, const Event& event, bool) {
   // Check whether we could in principle veto the event due to this branching.
   // If so, veto if the event is above the merging scale.
   bool doVeto = doIgnoreStepSave ? false : isAboveMS(event);
 
   if (verbose >= VinciaConstants::DEBUG) {
     stringstream ss;
-    ss << "Event " << (doVeto ? "vetoed" : "not vetoed")
-       << (doIgnoreStepSave ? " (ignored step)." : ".");
+    ss << "event " << (doVeto ? "vetoed" : "not vetoed")
+       << (doIgnoreStepSave ? " (ignored step)" : "");
     printOut(__METHOD_NAME__, ss.str());
   }
 
@@ -991,7 +988,24 @@ bool VinciaMergingHooks::doVetoStep(const Event&, const Event& event,
     else infoPtr->weightContainerPtr->setWeightNominal(0.);
   }
   return doVeto;
+}
 
+//-------------------------------------------------------------------------
+
+// Check if branching should be vetoed because it is above the merging scale.
+
+bool VinciaMergingHooks::doVetoEmission(const Event& event) {
+  // Check whether we should veto this branching.
+  // If so, veto if the branching is above the merging scale.
+  bool doVeto = doIgnoreEmissionsSave ? false : isAboveMS(event);
+  if (verbose >= DEBUG) {
+    stringstream ss;
+    ss << "branching " << (doVeto ? "vetoed" : "not vetoed")
+       << (doIgnoreEmissionsSave ? " (ignored emission)" : "");
+    printOut(__METHOD_NAME__, ss.str());
+  }
+
+  return doVeto;
 }
 
 //-------------------------------------------------------------------------
@@ -999,10 +1013,9 @@ bool VinciaMergingHooks::doVetoStep(const Event&, const Event& event,
 // Check if an event is above the merging scale.
 
 bool VinciaMergingHooks::isAboveMS(const Event& event) {
-
   // Merging according to cuts.
   if (doCutBasedMergingSave) {
-    // Fetch cuts in event. Order is pT, DeltRjj, Qjj.
+    // Fetch cuts in event. Order is pT, DeltaRjj, Qjj.
     vector<double> cutsEvt = cutsMin(event);
 
     // Fetch minimal values.
@@ -1018,15 +1031,119 @@ bool VinciaMergingHooks::isAboveMS(const Event& event) {
     double deltaRjjEvt = cutsEvt.at(2);
     return (QjjEvt > QjjMin && deltaRjjEvt > deltaRjjMin);
   }
-  // Otherwise check whether we are above the merging scale.
+
+  // Otherwise fetch current scale and merging scale.
   double tNow = tmsNow(event);
+  double tMS  = tmsCut();
   if (verbose >= VinciaConstants::DEBUG) {
     stringstream ss;
-    ss << "tNow = " << tNow << " and tMS = " << tmsCut();
+    ss << "tNow = " << tNow << " and tMS = " << tMS;
     printOut(__METHOD_NAME__,ss.str());
   }
-  return (tNow > tmsCut());
 
+  // Check against merging scale.
+  return tNow>tMS;
+
+}
+
+//-------------------------------------------------------------------------
+
+// Find Vincia pT of the last shower emission.
+// Note: this assumes that the event already contains an emission
+// generated by the shower. This is sufficient, as this should only be
+// called in the veto step of the main shower.
+
+double VinciaMergingHooks::pTlast(const Event& event) {
+  // Assume FSR.
+  int ii = event.size() - 3;
+  int ij = event.size() - 2;
+  int ik = event.size() - 1;
+  // Test if ISR.
+  if ( (event[ik].status() != 51 && event[ik].status() != 52) ||
+    event[ij].status() != 51 || event[ii].status() != 51) {
+    ii = -1;
+    ij = -1;
+    ik = -1;
+    for (int i(event.size()-1); i > 0; --i) {
+      if      (ii == -1 && event[i].status() == -41) ii = i;
+      else if (ij == -1 && event[i].status() ==  43) ij = i;
+      else if (ik == -1
+        && (event[i].status() == -41 || event[i].status() == 44)) ik = i;
+      if (ii != -1 && ij != -1 && ik != -1) break;
+    }
+  }
+  // Check if we found an emission.
+  if (ii < 0 || ij < 0 || ik < 0) {
+    loggerPtr->ERROR_MSG("no branching found");
+    return -1.;
+  }
+  // Otherwise return Vincia pT evolution scale.
+  return pTvincia(event, ii, ij, ik);
+}
+
+//-------------------------------------------------------------------------
+
+// Calculate Vincia's pT evolution scale. Based on PowhegHooks method.
+
+double VinciaMergingHooks::pTvincia(const Event& event,
+  int i1, int i3, int i2) {
+
+  // Sanity check.
+  if (i1 < 0 || i2 < 0 || i3 < 0) {
+    loggerPtr->ERROR_MSG("invalid event indices");
+    return -1.;
+  }
+
+  // Shorthands.
+  Vec4 p1 = event[i1].p();
+  Vec4 p3 = event[i3].p();
+  Vec4 p2 = event[i2].p();
+
+  // Fetch mothers of 1 and 2.
+  int iMoth1 = event[i1].mother1();
+  int iMoth2 = event[i2].mother1();
+  if (iMoth1 == 0 || iMoth2 == 0) {
+    loggerPtr->ERROR_MSG("mothers of particles not found");
+    return 0.;
+  }
+
+  // Invariants defined as in Eq. (5) in arXiv:2008.09468.
+  double mMoth1Sq = event[iMoth1].m2();
+  double mMoth2Sq = event[iMoth2].m2();
+  double sgn1 = event[i1].isFinal() ? 1. : -1.;
+  double sgn2 = event[i2].isFinal() ? 1. : -1.;
+  double qSq13 = sgn1*(m2(sgn1*p1+p3) - mMoth1Sq);
+  double qSq23 = sgn2*(m2(sgn2*p2+p3) - mMoth2Sq);
+
+  // Normalisation as in Eq. (6) in arXiv:2008.09468.
+  double sMax = -1.;
+  if (event[i1].isFinal() && event[i2].isFinal()) {
+    // FF.
+    sMax = m2(p1+p2+p3) - mMoth1Sq - mMoth2Sq;
+  } else if ((event[i1].isResonance() && event[i2].isFinal())
+    || (!event[i1].isFinal() && event[i2].isFinal())) {
+    // RF or IF.
+    sMax = 2.*p1*p3 + 2.*p1*p2;
+  } else if ((event[i1].isFinal() && event[i2].isResonance())
+    || (event[i1].isFinal() && !event[i2].isFinal())) {
+    // FR or FI.
+    sMax = 2.*p2*p3 + 2.*p1*p2;
+  } else if (!event[i1].isFinal() || !event[i2].isFinal()) {
+    // II.
+    sMax = 2.*p1*p2;
+  }
+
+  // Calculate pT2 as in Eq. (5) in arXiv:2008.09468.
+  double pT2now = qSq13*qSq23/sMax;
+
+  // Sanity check.
+  if (pT2now < 0.) {
+    loggerPtr->ERROR_MSG("negative pT");
+    return 0.;
+  }
+
+  // Return pT.
+  return sqrt(pT2now);
 }
 
 //-------------------------------------------------------------------------
@@ -1103,6 +1220,18 @@ vector<double> VinciaMergingHooks::cutsMin(const Event& event) {
 
 //-------------------------------------------------------------------------
 
+// Get maximal number of clustering steps (assuming no incomplete history).
+
+int VinciaMergingHooks::getNumberOfClusteringSteps(const Event& state, bool) {
+  int nStepsMax(0);
+  for (const Particle& ptcl : state)
+    if (ptcl.isQuark() || ptcl.isGluon()) nStepsMax += 1;
+  nStepsMax -= getNPartons();
+  return nStepsMax;
+}
+
+//-------------------------------------------------------------------------
+
 // Fetch the colour structure of the hard process.
 
 ColourStructure VinciaMergingHooks::getColourStructure() {
@@ -1147,8 +1276,8 @@ bool VinciaMergingHooks::setColourStructure() {
 
 void VinciaMergingHooks::printColStruct() {
 
-  cout << " * - - - -  Colour Structure Summary - - - - - - - - - - - - -"
-       <<" - - - - - - - - - - - - - - - - - - - - -*\n\n"
+  cout << "\n *--------  Colour Structure Summary -------------------------"
+       <<"------------------------*\n"
        <<"   Number of colour chains from beam scattering: "
        << colStructSav.nMinBeamChains
        <<" <= n <= "<< colStructSav.nMaxBeamChains << "\n"
@@ -1161,7 +1290,7 @@ void VinciaMergingHooks::printColStruct() {
        <<"   Number of colour chains from negative uncoloured resonances: "
        << colStructSav.resMinusHad.size() << "\n\n"
        << " *---------------------------------------------------------------"
-       <<"---------------------------------------*\n";
+       <<"---------------------*\n";
 }
 
 //-------------------------------------------------------------------------
@@ -1184,7 +1313,7 @@ bool VinciaMergingHooks::isResDecayProd(int iPtcl, const Event& event) {
 
 //-------------------------------------------------------------------------
 
-// Get indices of all jets in event, according to a specific jet deifnition.
+// Get indices of all jets in event, according to a specific jet definition.
 
 vector<int> VinciaMergingHooks::getJetsInEvent(const Event& event) {
 

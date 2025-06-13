@@ -1,0 +1,33 @@
+! Dire tune, October 2017.
+! Preliminary Professor tune, to be used with the following PDF settings:
+! PDF:pSet                  = LHAPDF6:MMHT2014nlo68cl
+! PDF:pHardSet              = LHAPDF6:MMHT2014nlo68cl
+! ShowerPDF:usePDFalphas    = on
+! ShowerPDF:useSummedPDF    = on
+! DireSpace:forceMassiveMap = on
+! ShowerPDF:usePDFmasses    = off
+TimeShower:alphaSvalue              = 0.1201
+SpaceShower:alphaSvalue             = 0.1201
+TimeShower:alphaSorder              = 2
+SpaceShower:alphaSorder             = 2
+! Tuned hadronization from e+e- data
+StringPT:sigma                      = 0.2952
+StringZ:aLund                       = 0.9704
+StringZ:bLund                       = 1.0809
+StringZ:aExtraDiquark               = 1.3490
+StringFlav:probStoUD                = 0.2046
+StringZ:rFactB                      = 0.8321
+StringZ:aExtraSQuark                = 0.0
+TimeShower:pTmin                    = 0.9
+! Tuned MPI and primordial kT to LHC data (UE in dijets + Drell-Yan pT).
+SpaceShower:pTmin                   = 0.9
+MultipartonInteractions:alphaSvalue = 0.1309
+MultipartonInteractions:pT0Ref      = 1.729
+MultipartonInteractions:expPow      = 1.769
+ColourReconnection:range            = 2.1720
+BeamRemnants:primordialKThard       = 2.2873
+BeamRemnants:primordialKTsoft       =  0.25
+BeamRemnants:reducedKTatHighY       =  0.47
+
+! Reproduce hadronization behavior of the Pythia version used for this tune.
+StringZ:useOldAExtra                = on

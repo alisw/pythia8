@@ -105,7 +105,11 @@ when calling <code>Pythia::stat</code>.
 <br/><code>option </code><strong> 0</strong> : No error messages are logged.   
 <br/><code>option </code><strong> 1</strong> : Only critical abort messages are logged.   
 <br/><code>option </code><strong> 2</strong> : All normal messages are logged (default).   
-<br/><code>option </code><strong> 3</strong> : Also report messages are logged.   
+<br/><code>option </code><strong> 3</strong> : Also report messages are logged, and errors and 
+warnings are printed every time they occur instead of just the first 
+time. Useful for user-level debugging, where combining with 
+<code>Next:numberCount = 1</code> will allow easier identification of 
+problematic events.    
    
  
 <a name="anchor6"></a>
@@ -119,4 +123,4 @@ to <code>cerr</code>.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

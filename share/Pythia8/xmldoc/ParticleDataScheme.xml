@@ -701,8 +701,8 @@ are interpreted by <code>readString</code> and thus also are listed.
 <method name="vector&lt;string&gt; ParticleData::getReadHistory(int subrun)"> 
 Method to retrieve the history of <code>readString</code> commands that 
 have been processed by the <code>ParticleData</code> instance, for a 
-specific subrun (see the section on <aidx href="MainProgramSettings"> 
-Main-Program Settings</aidx>). For <code>subrun = -1</code>, returns the 
+specific subrun (see the section on <aloc href="MainProgramSettings"> 
+Main-Program Settings</aloc>). For <code>subrun = -1</code>, returns the 
 <code>readString</code> history common to all subruns. For 
 <code>subrun >= 0</code>, returns the history of <code>readString</code> 
 commands for that specific subrun (omitting the common part). 
@@ -954,7 +954,7 @@ switch.
 <method name="bool ParticleData::varWidth(int id)"> 
 returns whether this particle has a defined mass-dependent width. These widths 
 are parametrised in the 
-<aidx href="HadronWidths"><code>HadronWidths</code></aidx> class. 
+<aloc href="HadronWidths"><code>HadronWidths</code></aloc> class. 
 </method> 
  
 <method name="double ParticleData::constituentMass(int id)"> 
@@ -1342,7 +1342,7 @@ is based on hardcoded calculations whenever available.
 <methodmore name="bool ParticleDataEntry::varWidth()"> 
 sets or returns whether this particle has a defined mass-dependent width. 
 These widths are parametrised in the 
-<aidx href="HadronWidths"><code>HadronWidths</code></aidx> class. 
+<aloc href="HadronWidths"><code>HadronWidths</code></aloc> class. 
 </methodmore> 
  
 <method name="void ParticleDataEntry::setHasChanged(bool hasChanged)"> 
@@ -1654,4 +1654,4 @@ positive and negative particles. For internal use.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

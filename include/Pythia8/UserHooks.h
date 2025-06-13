@@ -1,5 +1,5 @@
 // UserHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -197,6 +197,9 @@ public:
   virtual bool doChangeFragPar( StringFlav*, StringZ*, StringPT*, int,
     double, vector<int>, const StringEnd* ) { return false;}
 
+  // Can veto hadrons in the fragmentation.
+  virtual bool canVetoFragmentation() { return false;}
+
   // Do a veto on a hadron just before it is added to the final state.
   // The StringEnd from which the the hadron was produced is included
   // for information.
@@ -204,8 +207,19 @@ public:
     { return false;}
 
   // Do a veto on a hadron just before it is added to the final state
-  // (final two hadron case).
+  // (final two hadron case).  Note that a veto from this function
+  // will refragment the whole string. If only the regeneration of
+  // the final two is desired, the doVetoFinalTwo function should be
+  // used instead.
   virtual bool doVetoFragmentation(Particle, Particle,
+    const StringEnd*, const StringEnd* ) { return false;}
+
+  // Do a veto on a hadron just before it is added to the final state
+  // (final two hadron case). Note that a veto from this function will
+  // regenerate the final two. If the refragmentation of the whole
+  // string is desired, the doVetoFragmentation function should be
+  // used instead.
+  virtual bool doVetoFinalTwo(Particle, Particle,
     const StringEnd*, const StringEnd* ) { return false;}
 
   // Possibility to veto an event after hadronization based
@@ -231,9 +245,9 @@ protected:
   // Constructor.
   UserHooks() {}
 
-  // After initInfoPtr, initialize workEvent
+  // After initInfoPtr, initialize workEvent.
   virtual void onInitInfoPtr() override {
-    // Set smart pointer to null, in order to avoid circular dependency
+    // Set smart pointer to null, in order to avoid circular dependency.
     userHooksPtr = nullptr;
     workEvent.init("(work event)", particleDataPtr);
   }
@@ -658,6 +672,12 @@ public:
                                      mIn, parIn, endIn) ) return true;
     return false;}
 
+  // Can veto hadrons in the fragmentation.
+  virtual bool canVetoFragmentation() {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canVetoFragmentation() ) return true;
+    return false;}
+
   // Do a veto on a hadron just before it is added to the final state.
   virtual bool doVetoFragmentation(Particle p, const StringEnd* nowEnd) {
     for ( int i = 0, N = hooks.size(); i < N; ++i )
@@ -671,6 +691,14 @@ public:
     for ( int i = 0, N = hooks.size(); i < N; ++i )
       if ( hooks[i]->canChangeFragPar()
         && hooks[i]->doVetoFragmentation(p1, p2, e1, e2) ) return true;
+    return false;
+  }
+
+  virtual bool doVetoFinalTwo(Particle p1, Particle p2,
+    const StringEnd* e1, const StringEnd* e2) {
+    for ( int i = 0, N = hooks.size(); i < N; ++i )
+      if ( hooks[i]->canChangeFragPar()
+        && hooks[i]->doVetoFinalTwo(p1, p2, e1, e2) ) return true;
     return false;
   }
 

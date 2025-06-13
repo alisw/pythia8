@@ -18,15 +18,168 @@ from the previous interface generated with SWIG, which does not
 support C++11. 
  
 <p/> 
-A simplified interface ships with PYTHIA, which is intended to meet 
-the needs of most users while remaining lightweight. Note, not all 
-PYTHIA classes are available through this interface. It is also 
+A complete interface ships with PYTHIA. However, in some cases this 
+interface might be more than needed by users and so a simplified 
+lightweight interface can also be generated.  Note, not all PYTHIA 
+classes are available through this simplified interface. It is also 
 possible for users to automatically generate their own interface. This 
 is particularly useful if users modify the PYTHIA source code and need 
 to update the interface. When generating the interface there are three 
 options: the simplified interface, a full interface, and a user 
 defined interface. The process of generating these interfaces is 
 described in more detail below. 
+ 
+<p/> 
+There are some idiosyncrasies when working with standard template 
+library classes. One of the notable examples are maps with keys as 
+strings. In many cases, it is useful to be able to access the settings 
+maps from the <code>Settings</code> class of a <code>Pythia</code> 
+instance. Rather than calling something like 
+<code>getFlagMap()</code>, <code>getFlagMap("")</code> must be called 
+so the interface knows how to map the keys. A full working example is 
+given below. 
+<pre> 
+import pythia8 
+pythia = pythia8.Pythia("", False) 
+settings = pythia.settings 
+flags = settings.getFlagMap("") 
+for key, val in settings.getFlagMap("").items(): print(key) 
+</pre> 
+ 
+<p/> 
+The following points highlight some of the features of the interface. 
+<ul> 
+<li>Documentation through the built-in help function in Python 
+provides the relevant mappings between the Python interface and the 
+C++ code. For documentation on the purpose of the code, see the user 
+HTML manual and Doxygen.</li> 
+<li>Templated C++ types are returned as native Python types, 
+e.g. vectors are returned as lists, etc. Similarly, native Python 
+types can be passed as arguments and are converted to their equivalent 
+C++ templates.</li> 
+<li>No difference is made between passing by reference or pointer; 
+methods in C++ which take a pointer as an argument in Python 
+simply take the object, e.g. <code>foo(Vec4*)</code> and 
+<code>foo(Vec4&amp;)</code> are the same in the Python interface.</li> 
+<li>All operators defined in C++, e.g. <code>Vec4*double</code> are 
+available. Note that reverse operators are not, 
+e.g. <code>double*Vec4</code>.</li> 
+<li>Classes with defined <code>[]</code> operators are iterable, using 
+standard Python iteration, e.g. <code>for prt in 
+pythia.event</code>.</li> 
+<li>Classes with a <code>&lt;&lt;</code> operator can be printed via 
+the built-in print function in Python. Note this means that a string 
+representation via <code>str</code> is also available for these 
+classes in Python.</li> 
+<li>Derived classes in Python can be passed back to PYTHIA, and should 
+be available for all classes. See <code>main293.py</code> for a direct 
+Python translation of the C++ <code>main242.cc</code> example which 
+uses a derived class from the <code>UserHooks</code> class to veto 
+events.</li> 
+<li>Events can be generated in parallel using 
+<code>PythiaParallel</code> and providing an analysis function written 
+in Python. This is demonstrated in <code>main292.py</code>.</li> 
+<li>Events can be generated in batch using Awkward arrays, see below 
+for more details as well as <code>main247.py</code> and 
+<code>main248.py</code>.</li> 
+<li>The constant <code>Pythia::info</code> member is available as 
+<code>Pythia::infoPython</code>. Note, this creates a new instance of 
+the <code>Info</code> class, and so needs to be called each time the 
+information might be updated.</li> 
+</ul> 
+ 
+<p/> 
+In general, most code using PYTHIA implemented through C++ is also 
+possible in the Python interface. There are a number of issues, such 
+as passing streams, which cannot be handled in the Python 
+interface. Additionally, protected members of classes are exposed as 
+fully public members in the Python interface. 
+ 
+<h3>Batch Generation</h3> 
+ 
+Individually generating events and then accessing each particle by the Python 
+interface can slow things down considerably with respect to running directly 
+in C++. This is because the Python interface must translate the C++ PYTHIA 
+event record into Python as each particle is accessed by the user. Similarly, 
+using <code>PythiaParallel</code> where a Python function is passed back to 
+the Pythia C++ code to perform an analysis can result in a slow down. Another 
+option is to batch translate events to Python using the 
+<a href="https://awkward-array.org" target="_top">Awkward array 
+library</a>. In this way, the event translation is all done in a 
+single C++ call for a group of events, rather than on a per particle 
+basis. An example on how to generate events with the Awkward interface 
+are given in <code>main297.py</code>. 
+ 
+<p/> 
+For this batch interface to work, your Python version must be greater 
+than <code>3.5</code> and the Awkward module must be available in 
+Python. This can be installed via pip or the Python package manager of 
+your choice. 
+<pre> 
+python -m pip install awkward 
+</pre> 
+It should then be possible to use the <code>nextBatch</code> method of 
+the <code>Pythia</code> class which is called with two arguments 
+<code>nextBatch(nEvents, errorMode)</code>, where the second argument is 
+optional. In the following code, 100 events are generated and returned via the 
+Awkward array named <code>events</code>. 
+<pre> 
+pythia = pythia.Pythia() 
+pythia.readString("HardProcess:all = on") 
+pythia.init() 
+events = pythia.nextBatch(100) 
+</pre> 
+ 
+<p/> 
+For a single Pythia instance, failed events can be treated in 
+different ways using the optional <code>errorMode</code> argument that 
+can be passed to <code>nextBatch</code>. 
+<ul> 
+<li><code>"none"</code> - events that fail to generate are included 
+in the Awkward array as <code>None</code> objects.</li> 
+<li><code>"skip"</code> - this is the default behavior, and is similar 
+to what <code>PythiaParallel</code> also does. Events that fail to 
+generate are skipped, and events are generated until the requested 
+<code>nEvents</code> is reached.</li> 
+<li><code>"fail"</code> - if an event fails to generate, then an 
+exception is thrown.</li> 
+<li><code>fac</code> - here, <code>fac</code> is a real number greater 
+than <code>1</code>. This is the same as <code>"skip"</code> but event 
+generation will terminate after <code>fac*nEvents</code> attempts have 
+been made to generate an event and an exception will be thrown.</li> 
+</ul> 
+Some examples are given in <code>main298.py</code>. 
+ 
+<p/> 
+There are two other features for batch generation. First, 
+<code>nextBatch</code> can also be called from a 
+<code>PythiaParallel</code> instance, but without the optional 
+<code>errorMode</code> as <code>PythiaParallel</code> handles failed 
+events internally. Second, the momentum and production vertex 
+four-vectors can automatically be translated into a four-vector class 
+using the 
+<a href="https://vector.readthedocs.io/en/latest/index.html" target="_top"> 
+scikit-hep/vector library</a>. 
+<pre> 
+python -m pip install vector 
+</pre> 
+Translating automatically to this library can then be accomplished 
+with the following code. 
+<pre> 
+import vector 
+vector.register_awkward() 
+</pre> 
+This allows for analyses to be performed on the event record with 
+slicing. Some examples can be found in the <a 
+href="https://awkward-array.org/doc/main/getting-started/jagged-ragged-awkward-arrays.html" target="_top"> 
+Awkward array documentation</a>, as well as in <code>main297.py</code>. 
+ 
+Some older C++ compiler versions are not compatible with the C++11 
+templating that is required for the Awkward array bindings. However, 
+it is possible to generate the Python interface without the Awkward 
+array bindings by passing the <code>--no-batch</code> flag to the 
+<code>generate</code> script. See below for more details on how to 
+generate the Python interface. 
  
 <h3>Simplified Interface</h3> 
  
@@ -59,70 +212,15 @@ will return all the available classes and methods in the interface.
 <code>HeavyIons</code>, <code>PartonVertex</code></li> 
  
 <li>analysis tools: <code>Hist</code>, <code>HistPlot</code>, 
-<code>SlowJet</code>, <code>SlowJetHook</code></li> <li>kinematic 
-functions: <code>m</code>, <code>m2</code>, <code>dot3</code>, 
-<code>cross3</code>, <code>cross4</code>, <code>theta</code>, 
-<code>costheta</code>, <code>phi</code>, <code>cosphi</code>, 
-<code>RRapPhi</code>, <code>REtaPhi</code></li> 
+<code>CellJet</code>, <code>ClusterJet</code>, <code>SlowJet</code>, 
+<code>SlowJetHook</code>, <code>Sphericity</code>, 
+<code>Thrust</code></li> 
+ 
+<li>kinematic functions: <code>m</code>, <code>m2</code>, 
+<code>dot3</code>, <code>cross3</code>, <code>cross4</code>, 
+<code>theta</code>, <code>costheta</code>, <code>phi</code>, 
+<code>cosphi</code>, <code>RRapPhi</code>, <code>REtaPhi</code></li> 
 </ul> 
- 
-There are some idiosyncrasies when working with standard template 
-library classes. One of the notable examples are maps with keys as 
-strings. In many cases, it is useful to be able to access the settings 
-maps from the <code>Settings</code> class of a <code>Pythia</code> 
-instance. Rather than calling something like 
-<code>getFlagMap()</code>, <code>getFlagMap("")</code> must be called 
-so the interface knows how to map the keys. A full working example is 
-given below. 
-<pre> 
-import pythia8 
-pythia = pythia8.Pythia("", False) 
-settings = pythia.settings 
-flags = settings.getFlagMap("") 
-for key, val in settings.getFlagMap("").items(): print(key) 
-</pre> 
- 
-The following points highlight some of the features of the interface. 
-<ul> 
-<li>Documentation through the built-in help function in Python 
-provides the relevant mappings between the Python interface and the 
-C++ code. For documentation on the purpose of the code, see the user 
-HTML manual and Doxygen</li> 
-<li>Templated C++ types are returned as native Python types, 
-e.g. vectors are returned as lists, etc. Similarly, native Python 
-types can be passed as arguments and are converted to their equivalent 
-C++ templates</li> 
-<li>No difference is made between passing by reference or pointer; 
-methods in C++ which take a pointer as an argument in Python 
-simply take the object, e.g. <code>foo(Vec4*)</code> and 
-<code>foo(Vec4&amp;)</code> are the same in the Python interface.</li> 
-<li>All operators defined in C++, e.g. <code>Vec4*double</code> are 
-available. Note that reverse operators are not, 
-e.g. <code>double*Vec4</code>.</li> 
-<li>Classes with defined <code>[]</code> operators are iterable, using 
-standard Python iteration, e.g. <code>for prt in 
-pythia.event</code>.</li> 
-<li>Classes with a <code>&lt;&lt;</code> operator can be printed via 
-the built-in print function in Python. Note this means that a string 
-representation via <code>str</code> is also available for these 
-classes in Python.</li> 
-<li>Derived classes in Python can be passed back to PYTHIA, and should 
-be available for all classes. See <code>main10.py</code> for a direct 
-Python translation of the C++ <code>main10.cc</code> example which 
-uses a derived class from the UserHooks class to veto events.</li> 
-<li>The constant <code>Pythia::info</code> member is available as 
-<code>Pythia::infoPython</code>. Note, this creates a new instance of 
-the <code>Info</code> class, and so needs to be called each time the 
-information might be updated.</li> 
-</ul> 
- 
-<h3>Limitations</h3> 
- 
-In general, most code using PYTHIA implemented through C++ is also 
-possible in the Python interface. There are a number of issues, such 
-as passing streams, which cannot be handled in the Python 
-interface. Additionally, protected members of classes are exposed as 
-fully public members in the Python interface. 
  
 <h3>Installation</h3> 
  
@@ -157,7 +255,8 @@ library.</li>
  
 <p/> 
 To ensure that the <code>pythia8.so</code> module is available to 
-Python, the system variable <code>PYTHONPATH</code> should be set similar to 
+Python, the system variable <code>PYTHONPATH</code> should be set 
+similar to 
 <pre> 
     export PYTHONPATH=$(PREFIX_LIB):$PYTHONPATH 
 </pre> 
@@ -178,7 +277,7 @@ correctly recognize modules ending with the <code>dylib</code> suffix.
  
 To use the Python interface for PYTHIA, start Python 
 and <code>import pythia8</code>. The provided examples can be run 
-by <code>python mainXX.py</code> where <code>XX</code> is the number 
+by <code>python mainNNN.py</code> where <code>NNN</code> is the number 
 of the example. 
  
 <h3>Interface Generation</h3> 
@@ -197,6 +296,7 @@ default behaviour. Note that this requires running the interface
 generation twice. The first time the required classes are interfaced, 
 the second time additional classes are removed.</li> 
 <li><code>--full</code> generates the full interface.</li> 
+<li><code>--no-batch</code> exclude the Awkward-array batch interface.</li> 
 <li><code>--user=FILE</code> generates a user defined interface using 
 the Binder configuration given by <code>FILE</code>.</li> 
 <li><code>--debug</code> can be specified with any of the options 
@@ -214,4 +314,4 @@ interface is as follows.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

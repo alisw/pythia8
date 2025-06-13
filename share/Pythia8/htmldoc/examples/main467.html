@@ -1,0 +1,79 @@
+<html><head><title>main467</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main467</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main467.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#resonances">Resonances</a>
+
+// Illustration of how to create new resonance particles that can form
+// during rescattering. In this case, the new resonance is the chi_1c(3872)
+// tetraquark, which is produced from an initial D0 Dbar*0.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Initialize Pythia.
+  Pythia pythia;
+
+  // Define the chi_1c(3872)0 tetraquark.
+  ParticleData&amp; pd = pythia.particleData;
+  pd.addParticle(9044111, &quot;chi_1c(3872)0&quot;, &quot;chi_1c(3872)bar0&quot;,
+    2, 0, 0, 3.8720, 0.0012, 3.82, 3.92, 0., true);
+
+  ParticleDataEntryPtr pde = pythia.particleData.findParticle(9044111);
+  // Define decay channels. These can be used for resonance production.
+  pde-&gt;addChannel(1, 0.3700, 3, 421,  -423); // D0 Dbar*0
+  pde-&gt;addChannel(1, 0.0430, 3, 223,   443); // omega J/psi
+  pde-&gt;addChannel(1, 0.0380, 3, 113,   443); // rho0 J/psi
+  pde-&gt;addChannel(1, 0.0340, 3, 111, 20443); // pi0 chi_1c
+
+  // Resonance production is only possible in hadron-hadron collisions.
+  // These decay channels will not be used for resonance production,
+  // but are relevant since they can change the particle composition.
+  pde-&gt;addChannel(1, 0.0080, 3,  22,       443); // gamma J/psi
+  pde-&gt;addChannel(1, 0.0450, 3,  22,    100443); // gamma psi(2S)
+  pde-&gt;addChannel(1, 0.4900, 0, 421, -421, 111); // D0 Dbar0 pi0
+
+  // Process specification. Resonance formation will be the dominant process.
+  pythia.readString(&quot;LowEnergyQCD:all = on&quot;);
+  pythia.readString(&quot;Beams:idA =  421&quot;);
+  pythia.readString(&quot;Beams:idB = -423&quot;);
+  pythia.readString(&quot;Beams:eCM = 3.9&quot;);
+
+  // Number of events to generate/print.
+  pythia.readString(&quot;Main:numberOfEvents  = 10&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 10&quot;);
+
+  // Initialize.
+  if (!pythia.init()) {
+    cout &lt;&lt; &quot; Pythia failed to initialize.&quot; &lt;&lt; endl;
+    return 1;
+  }
+
+  // Generate events. They will be printed to cout.
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent)
+    pythia.next();
+
+  // Print statistics.
+  pythia.stat();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

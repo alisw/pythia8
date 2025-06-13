@@ -1,5 +1,5 @@
 // BeamParticle.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -81,6 +81,12 @@ void BeamParticle::init( int idIn, double pzIn, double eIn, double mIn,
   valencePowerMeson = parm("BeamRemnants:valencePowerMeson");
   valencePowerUinP  = parm("BeamRemnants:valencePowerUinP");
   valencePowerDinP  = parm("BeamRemnants:valencePowerDinP");
+
+  // x enhancement factor for remnant heavy valence quarks (s, c, b).
+  // Repackadge input so that new index = PDG id code for quarks.
+  vector<double> hqEnhanceIn = pvec("BeamRemnants:heavyQuarkEnhance");
+  for (int i = 0; i < 3; ++i) heavyQuarkEnhance[i] = 1.;
+  for (int i = 3; i < 6; ++i) heavyQuarkEnhance[i] = hqEnhanceIn[i - 3];
 
   // Enhancement factor of x of diquark.
   valenceDiqEnhance = parm("BeamRemnants:valenceDiqEnhance");
@@ -1141,6 +1147,9 @@ double BeamParticle::xRemnant( int i) {
       do xPart = pow2( rndmPtr->flat() );
       while ( pow(1. - xPart, xPow) < rndmPtr->flat() );
 
+      // Enhancement for heavier quark (motivated by equal-velocity argument).
+      xPart *= heavyQuarkEnhance[abs(idNow)];
+
       // End loop over (up to) two quarks. Possibly enhancement for diquarks.
       x += xPart;
     }
@@ -1366,10 +1375,15 @@ bool BeamParticle::pickGluon(double mDiff) {
 
 int BeamParticle::pickValence() {
 
-  // Pick one valence quark at random.
-  int nTotVal = (isBaryonBeam) ? 3 : 2;
-  double rnVal = rndmPtr->flat() * nTotVal;
-  int iVal = (rnVal < 1.) ? 1 : ( (rnVal < 2.) ? 2 : 3 );
+  // Pick one valence quark at random (biased based on Additive Quark Model).
+  double rAccVal[3] = { 0., 0., 0.};
+  int iAcc = -1;
+  for (int i = 0; i < nValKinds; ++i)
+  for (int j = 0; j < nVal[i]; ++j)
+    rAccVal[++iAcc] = 1. / heavyQuarkEnhance[abs(idVal[i])];
+  double rnVal = rndmPtr->flat() * (rAccVal[0] + rAccVal[1] + rAccVal[2]);
+  int iVal = (rnVal < rAccVal[0]) ? 1
+    : ( (rnVal < rAccVal[0] + rAccVal[1]) ? 2 : 3 );
 
   // This valence in slot 1, the rest thereafter.
   idVal1 = 0;

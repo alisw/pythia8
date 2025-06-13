@@ -1,0 +1,16 @@
+# This command file enables RIVET usage with main144.
+# Flag to run Rivet.
+Main:runRivet = on
+# Ignore the beams.
+Main:rivetIgnoreBeams = off
+# Period for dumping intermidiate histograms.
+Main:rivetDumpPeriod = -1
+# File name for dumping intermediate histograms.
+Main:rivetDumpFile = # Default is empty.
+# Optional run name for internal use.
+Main:rivetRunName = # Default is empty.
+# Names of Rivet analyses to be run, provided as a comma-separated list.
+# Analysis parameters can be added as ANALYSIS:KEY=VAL:KEY=VAL.
+Main:rivetAnalyses = {ATLAS_2010_I882098,ALICE_2010_S8625980,CMS_2011_I930319}
+# Add a YODA file pre-load pre-filled histogram from, comma separated list.
+Main:rivetPreload = {}

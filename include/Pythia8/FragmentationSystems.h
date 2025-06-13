@@ -1,5 +1,5 @@
 // FragmentationSystems.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -63,10 +63,10 @@ public:
 
   // Constructor.
   ColConfig() : loggerPtr(), flavSelPtr(), mJoin(), mJoinJunction(),
-    mStringMin() {singlets.resize(0);}
+    mStringMin(), constituentM() {singlets.resize(0);}
 
   // Initialize and save pointers.
-  void init(Info* infoPtrIn, StringFlav* flavSelPtrIn);
+  void init(Info* infoPtrIn, StringFlav* flavSelPtrIn, double mVecRatio = 1.);
 
   // Number of colour singlets.
   int size() const {return singlets.size();}
@@ -114,8 +114,8 @@ private:
   // Pointer to class for flavour generation.
   StringFlav* flavSelPtr;
 
-  // Initialization data, to be read from Settings.
-  double mJoin, mJoinJunction, mStringMin;
+  // Initialization data, mainly to be read from Settings.
+  double mJoin, mJoinJunction, mStringMin, constituentM;
 
   // List of all separate colour singlets.
   vector<ColSinglet> singlets;
@@ -160,7 +160,8 @@ public:
     double mc, double mb);
 
   // Set up four-vectors for longitudinal and transverse directions.
-  void setUp(Vec4 p1, Vec4 p2, int col1, int col2, bool isMassless = false);
+  void setUp(Vec4 p1, Vec4 p2, int col1, int col2, bool isMassless = false,
+    double mVecRatio = 1.);
 
   // Construct a four-momentum from (x+, x-, px, py).
   Vec4 pHad( double xPosIn, double xNegIn, double pxIn, double pyIn) const
@@ -191,7 +192,8 @@ public:
     iMax(), mJoin(), m2Join() {}
 
   // Set up system from parton list.
-  void setUp(const vector<int>& iSys, const Event& event);
+  void setUp(const vector<int>& iSys, const Event& event,
+    double mVecRatio = 1.);
 
   // Calculate string region from (iPos, iNeg) pair.
   int iReg( int iPos, int iNeg) const

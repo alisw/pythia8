@@ -77,7 +77,7 @@ option 2 could be combined with <code>UserHooks</code> vetoes on emissions
 that would lead to double-counting, using more flexible phase space 
 boundaries. Further details are found in the 
 <aloc href="MatchingAndMerging">Matching and Merging</aloc> description, 
-with an example in <code>examples/main31</code>. 
+with an example in <code>examples/main152</code>. 
 Option 0, finally, may be most realistic when only Born-level 
 processes are involved, possibly in combination with a nonzero 
 <code>SpaceShower:pTdampMatch</code>. The rules used for avoiding 
@@ -370,7 +370,7 @@ are neglected internally to ensure the same behaviour as obtained for
 <p/> 
 The dipole recoil option for the first time allows the simulation 
 of Deeply Inelastic Scattering processes in PYTHIA 8, see the 
-<code>main36.cc</code> example. Note that the simultaneous emission of 
+<code>main341.cc</code> example. Note that the simultaneous emission of 
 photons off the lepton leg has not yet been implemented, so you need to 
 set <code>PDF:lepton = off</code> and 
 <code>TimeShower:QEDshowerByL = off</code>. You are further recommended 
@@ -549,4 +549,4 @@ photon backwards-evolution in lepton beams.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

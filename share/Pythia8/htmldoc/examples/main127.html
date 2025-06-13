@@ -1,0 +1,214 @@
+<html><head><title>main127</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main127</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main127.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+
+// This is a simple test program.
+// It illustrates how Les Houches Event File version 3.0 information
+// can be extracted from pythia.info.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator
+  Pythia pythia;
+
+  // Stick with default values, so do not bother with a separate file
+  // for changes. However, do one change, to show readString in action.
+  pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+  pythia.readString(&quot;HadronLevel:all = off&quot;);
+
+  // Initialize Les Houches Event File run.
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = wbj_lhef3.lhe&quot;);
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Check if LHEF3 reader exists.
+  bool hasRead = (pythia.info.LHEFversion() == 3);
+
+  // Print header read from LHEF.
+  cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+       &lt;&lt; endl &lt;&lt; &quot;  PRINT HEADER OF LHE FILE&quot; &lt;&lt; endl;
+  if (hasRead) cout &lt;&lt; pythia.info.getHeaderBlock() &lt;&lt; endl;
+  cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+  // Print extra LHEF v3 header information.
+  cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+       &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE INITRWGT INFORMATION&quot; &lt;&lt; endl;
+  if (hasRead) {
+    const LHAinitrwgt* initrwgt = pythia.info.initrwgt;
+    cout &lt;&lt; endl &lt;&lt; &quot;Attributes: &quot; &lt;&lt; endl;
+    for ( map&lt;string,string&gt;::const_iterator
+      it = initrwgt-&gt;attributes.begin();
+      it != initrwgt-&gt;attributes.end(); ++it )
+      cout &lt;&lt; &quot;  Attribute: &quot; &lt;&lt; it-&gt;first &lt;&lt; &quot;.  .&quot; &lt;&lt; it-&gt;second
+           &lt;&lt; endl;
+    cout &lt;&lt; &quot;Contents: &quot; &lt;&lt; initrwgt-&gt;contents &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE WEIGHTGROUP INFORMATION&quot; &lt;&lt; endl;
+    map&lt;string,LHAweightgroup&gt; weightgroups = initrwgt-&gt;weightgroups;
+    for ( map&lt;string,LHAweightgroup&gt;::const_iterator
+      it = weightgroups.begin();
+      it != weightgroups.end(); ++it ) {
+      cout &lt;&lt; &quot;  Weightgroup: &quot; &lt;&lt; it-&gt;first &lt;&lt; endl;
+      for ( map&lt;string,string&gt;::const_iterator
+        it2 = it-&gt;second.attributes.begin();
+        it2 != it-&gt;second.attributes.end(); ++it2 ) {
+        cout &lt;&lt; &quot;  Attribute: &quot; &lt;&lt; it2-&gt;first &lt;&lt; &quot;.  .&quot; &lt;&lt; it2-&gt;second
+             &lt;&lt; endl;
+      }
+      cout &lt;&lt; endl &lt;&lt; &quot;  Retrieve weight information:&quot; &lt;&lt; endl;
+      map&lt;string,LHAweight&gt; weights = it-&gt;second.weights;
+      for ( map&lt;string,LHAweight&gt;::const_iterator
+        it2 = weights.begin(); it2 != weights.end(); ++it2 ) {
+        cout &lt;&lt; &quot;  Weight: &quot; &lt;&lt; it2-&gt;first &lt;&lt; endl;
+        for ( map&lt;string,string&gt;::const_iterator
+          it3 = it2-&gt;second.attributes.begin();
+          it3 != it2-&gt;second.attributes.end(); ++it3 ) {
+          cout &lt;&lt; &quot;  Attribute: &quot; &lt;&lt; it3-&gt;first &lt;&lt; &quot;.  .&quot; &lt;&lt; it3-&gt;second
+               &lt;&lt; endl;
+        }
+        cout &lt;&lt; &quot;  Contents: &quot; &lt;&lt; it2-&gt;second.contents &lt;&lt; endl;
+      }
+    }
+  }
+  cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+  // Print extra LHEF v3 initialization information.
+  cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+       &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE GENERATOR INFORMATION&quot; &lt;&lt; endl;
+  unsigned int ngen = 0;
+  if (hasRead) ngen = pythia.info.generators-&gt;size();
+  cout &lt;&lt; &quot;Number of generator tags &quot; &lt;&lt; ngen &lt;&lt; endl;
+  for (unsigned int igen = 0; igen &lt; ngen; ++igen) {
+    cout &lt;&lt; &quot;.  generator tag .&quot; &lt;&lt; igen &lt;&lt; &quot;. : .&quot;
+         &lt;&lt; pythia.info.generators-&gt;at(igen).contents &lt;&lt; &quot;.\n&quot;;
+    for ( map&lt;string, string&gt;::const_iterator
+            it = pythia.info.generators-&gt;at(igen).attributes.begin();
+          it != pythia.info.generators-&gt;at(igen).attributes.end(); ++it )
+      cout &lt;&lt; &quot;. &quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; .&quot; &lt;&lt; it-&gt;second;
+    cout &lt;&lt; &quot;\n&quot;;
+  }
+  cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+  // Begin event loop; generate until none left in input file.
+  for (int iEvent = 0; iEvent &lt; 1000; ++iEvent) {
+
+    cout &lt;&lt; endl &lt;&lt; &quot;Read event # &quot; &lt;&lt; iEvent &lt;&lt; endl;
+
+    // Generate events, and check whether generation failed.
+    if (!pythia.next()) {
+      // If failure because reached end of file then exit event loop.
+      if (pythia.info.atEndOfFile()) break;
+      else continue;
+    }
+
+    // Print process-level event.
+    pythia.process.list();
+
+    // Print extra LHEF v3 event information.
+    cout &lt;&lt; endl &lt;&lt; &quot;Print event # &quot; &lt;&lt; iEvent &lt;&lt; endl;
+
+    cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+         &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE EVENT INFORMATION&quot; &lt;&lt; endl;
+    if (hasRead) {
+      const map &lt;string,string&gt;* eventAttributes =
+        pythia.info.eventAttributes;
+      cout &lt;&lt; endl &lt;&lt; &quot;Attributes:&quot; &lt;&lt; endl;
+      for ( map&lt;string,string&gt;::const_iterator it = eventAttributes-&gt;begin();
+            it != eventAttributes-&gt;end(); ++it )
+          cout &lt;&lt; &quot;  Attribute\t&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; = &quot; &lt;&lt; it-&gt;second
+               &lt;&lt; endl;
+    }
+    cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+    // Print extra LHEF v3 event weight information.
+    cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+         &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE WEIGHTS (DETAILED FORMAT) INFORMATION&quot; &lt;&lt; endl;
+    if (hasRead) {
+      int nwgt = pythia.info.rwgt-&gt;size();
+      cout &lt;&lt; &quot;Number of wgt tags &quot; &lt;&lt; nwgt &lt;&lt; endl;
+      const map&lt;string,double&gt;* weights = pythia.info.weights_detailed;
+      for ( map&lt;string,double&gt;::const_iterator it = weights-&gt;begin();
+        it != weights-&gt;end(); ++it ) {
+        cout &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; &quot; &quot; &lt;&lt; endl;
+      }
+      cout &lt;&lt; &quot;Second option, from ordered vector:&quot; &lt;&lt; endl;
+      for ( int i = 0; i &lt; int(pythia.info.weights_detailed_vector.size());
+            ++i ) {
+        cout &lt;&lt; &quot;Weight &quot; &lt;&lt; i &lt;&lt; &quot; : &quot;
+             &lt;&lt; pythia.info.weights_detailed_vector.at(i) &lt;&lt; endl;
+      }
+    }
+    cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+    // Print extra LHEF v3 compressed format event weight information.
+    cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+         &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE WEIGHTS (COMPRESSED FORMAT) INFORMATION&quot;
+         &lt;&lt; endl;
+    if (hasRead) {
+      int nweights = pythia.info.weights-&gt;size();
+      cout &lt;&lt; &quot;Number of weights (only one tag!) &quot; &lt;&lt; nweights &lt;&lt; endl;
+      const LHAweights* weights = pythia.info.weights;
+      cout &lt;&lt; endl &lt;&lt; &quot;Attributes:&quot; &lt;&lt; endl;
+      for ( map&lt;string,string&gt;::const_iterator
+        it = weights-&gt;attributes.begin();
+        it != weights-&gt;attributes.end(); ++it )
+          cout &lt;&lt; &quot;  Attribute\t&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; = &quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
+      cout &lt;&lt; &quot;Weights:&quot; &lt;&lt; endl;
+      for ( int i = 0; i &lt; int(weights-&gt;weights.size()); ++i)
+        cout &lt;&lt; &quot;  Weight\t&quot; &lt;&lt; weights-&gt;weights[i] &lt;&lt; endl;
+      cout &lt;&lt; endl &lt;&lt; &quot;Contents:&quot; &lt;&lt; weights-&gt;contents &lt;&lt; endl;
+      cout &lt;&lt; &quot;Second option, from stored vector:&quot; &lt;&lt; endl;
+      for ( int i = 0; i &lt; int(pythia.info.weights_compressed-&gt;size());
+            ++i ) {
+        cout &lt;&lt; &quot;Weight\t&quot; &lt;&lt; i &lt;&lt; &quot; : &quot;
+             &lt;&lt; pythia.info.weights_compressed-&gt;at(1) &lt;&lt; endl;
+      }
+    }
+    cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+    // Print extra LHEF v3 scale information.
+    cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+         &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE SCALES INFORMATION&quot; &lt;&lt; endl;
+    if (hasRead) {
+      const LHAscales* scales = pythia.info.scales;
+      cout &lt;&lt; endl &lt;&lt; &quot;Attributes:&quot; &lt;&lt; endl;
+      for ( map&lt;string,double&gt;::const_iterator
+        it = scales-&gt;attributes.begin(); it != scales-&gt;attributes.end(); ++it )
+          cout &lt;&lt; &quot;  Attribute\t&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; = &quot; &lt;&lt; it-&gt;second &lt;&lt; endl;
+      cout &lt;&lt; &quot;Contents:&quot; &lt;&lt; scales-&gt;contents &lt;&lt; endl;
+    }
+    cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+    // Print event comments.
+    cout &lt;&lt; endl &lt;&lt; &quot;*****************************************************&quot;
+         &lt;&lt; endl &lt;&lt; &quot;  RETRIEVE EVENT COMMENTS&quot; &lt;&lt; endl;
+    if (hasRead) cout &lt;&lt; pythia.info.getEventComments() &lt;&lt; endl;
+    cout &lt;&lt; &quot;*****************************************************&quot; &lt;&lt; endl;
+
+
+  // End of event loop.
+  }
+
+  // Give statistics.
+  pythia.stat();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

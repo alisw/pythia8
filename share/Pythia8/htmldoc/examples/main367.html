@@ -1,0 +1,155 @@
+<html><head><title>main367</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main367</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main367.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#top">Top</a>
+//            <a href="../ExampleKeywords.html#r-hadrons">R&#8209;hadrons</a>
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjörn Sjostrand</a>
+
+// Fictitious scenario where the top is long-lived enough to hadronize.
+// This is studied using the R-hadron machinery, in e+e- or pp collisions.
+// Kindly disregard warning that wzDecayShowers find undecayed tops.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Key parameters: e+e- or pp, # events, t mass.
+  bool doee    = true;
+  int nEvent   = 1000;
+  double mTop  = 171.;
+
+  // Generator. Shorthand for the event and particle data.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+  ParticleData&amp; pData = pythia.particleData;
+
+  // Set up beams: e+e- or pp. Switch off ISR for former.
+  if (doee) {
+    pythia.readString(&quot;Beams:idA = 11&quot;);
+    pythia.readString(&quot;Beams:idB = -11&quot;);
+    pythia.readString(&quot;Beams:eCM = 500.&quot;);
+    pythia.readString(&quot;PDF:lepton = off&quot;);
+  } else {
+    pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+  }
+
+  // Set up top pair production.
+  if (doee) {
+    pythia.readString(&quot;Top:ffbar2ttbar(s:gmZ) = on&quot;);
+  } else {
+    pythia.readString(&quot;Top:gg2ttbar = on&quot;);
+    pythia.readString(&quot;Top:qqbar2ttbar = on&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 100.&quot;);
+  }
+
+  // Set top mass and width.
+  pData.m0( 6, mTop);
+  pData.mWidth( 6, 0.1);
+  pData.doForceWidth( 6, true);
+
+  // Allow R-hadron formation with top marked as stop.
+  pythia.readString(&quot;Rhadrons:allow = on&quot;);
+  pythia.readString(&quot;RHadrons:idStop = 6&quot;);
+
+  // Set R-hadrons stable.
+  //pythia.readString(&quot;RHadrons:allowDecay = off&quot;);
+
+  // Switch off key components. Useful for first checks, but not full run.
+  //pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+  //pythia.readString(&quot;PartonLevel:ISR = off&quot;);
+  //pythia.readString(&quot;PartonLevel:FSR = off&quot;);
+  //pythia.readString(&quot;HadronLevel:Hadronize = off&quot;);
+
+  // Possibility to switch off particle data and event listings.
+  //pythia.readString(&quot;Init:showChangedSettings = off&quot;);
+  //pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  //pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  //pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  //pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // Debug options.
+  pythia.readString(&quot;Check:nErrList = 5&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  Hist nChargedH(&quot;charged multiplicity&quot;, 100, -0.5, 799.5);
+  Hist dndyChargedH(&quot;dn/dy charged&quot;, 100, -10., 10.);
+  Hist dndyRH(&quot;dn/dy R-hadrons&quot;, 100, -5., 5.);
+  Hist pTRH(&quot;pT R-hadrons&quot;, 100, 0., 1000.);
+  Hist xRH(&quot;p_RHadron / p_sparticle&quot;, 100, 0.9, 1.1);
+  Hist mDiff(&quot;m(Rhadron) - m(sparticle)&quot;, 100, 0., 5.);
+
+  // R-hadron flavour composition.
+  map&lt;int, int&gt; flavours;
+
+  // Begin event loop. Generate events. Skip. if failure.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Loop over final charged particles in the event.
+    // The R-hadrons may not yet have decayed here.
+    int nCharged = 0;
+    Vec4 pSum;
+    for (int i = 0; i &lt; event.size(); ++i) {
+      if (event[i].isFinal()) {
+        pSum += event[i].p();
+        if (event[i].isCharged()) {
+          ++nCharged;
+          dndyChargedH.fill( event[i].y() );
+        }
+      }
+    }
+    nChargedH.fill( nCharged );
+
+    // Loop over final R-hadrons in the event: kinematic distribution
+    for (int i = 0; i &lt; event.size(); ++i) {
+      int idAbs = event[i].idAbs();
+      if (idAbs &gt; 1000100 &amp;&amp; idAbs &lt; 2000000 &amp;&amp; idAbs != 1009002) {
+        ++flavours[ event[i].id() ];
+        dndyRH.fill( event[i].y() );
+        pTRH.fill( event[i].pT() );
+        // Trace back to mother; compare momenta and masses.
+        int iMother = i;
+        while( event[iMother].statusAbs() &gt; 100)
+          iMother = event[iMother].mother1();
+        double xFrac = event[i].pAbs() / event[iMother].pAbs();
+        xRH.fill( xFrac);
+        double mShift = event[i].m() - event[iMother].m();
+        mDiff.fill( mShift );
+
+      // End of loop over final R-hadrons.
+      }
+    }
+
+  // End of event loop.
+  }
+
+  // Final statistics, flavour composition and histogram output.
+  pythia.stat();
+  cout &lt;&lt; &quot;\n Composition of produced R-hadrons \n    code            &quot;
+       &lt;&lt; &quot;name   times &quot; &lt;&lt; endl;
+  for (map&lt;int, int&gt;::iterator flavNow = flavours.begin();
+    flavNow != flavours.end(); ++flavNow)  cout &lt;&lt; setw(8)
+    &lt;&lt; flavNow-&gt;first &lt;&lt; setw(16) &lt;&lt; pythia.particleData.name(flavNow-&gt;first)
+    &lt;&lt; setw(8) &lt;&lt; flavNow-&gt;second &lt;&lt; endl;
+  cout &lt;&lt; nChargedH &lt;&lt; dndyChargedH &lt;&lt; dndyRH &lt;&lt; pTRH &lt;&lt; xRH &lt;&lt; mDiff;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

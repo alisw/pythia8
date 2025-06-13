@@ -1,4 +1,4 @@
-// fjcore -- extracted from FastJet v3.4.0 (http://fastjet.fr)
+// fjcore -- extracted from FastJet v3.4.3 (http://fastjet.fr)
 //
 // fjcore constitutes a digest of the main FastJet functionality.
 // The files fjcore.hh and fjcore.cc are meant to provide easy access to these 
@@ -54,7 +54,7 @@
 //FJSTARTHEADER
 // $Id$
 //
-// Copyright (c) 2005-2021, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
+// Copyright (c) 2005-2024, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
 //
 //----------------------------------------------------------------------
 // This file is part of FastJet (fjcore).
@@ -86,92 +86,90 @@
 #define __FJCORE_DROP_CGAL    // disable CGAL support
 #ifndef _INCLUDE_FJCORE_CONFIG_AUTO_H
 #define _INCLUDE_FJCORE_CONFIG_AUTO_H 1
-#ifndef FJCORE_HAVE_AUTO_PTR_INTERFACE 
+#ifndef FJCORE_HAVE_CXX14_DEPRECATED
 #endif
-#ifndef FJCORE_HAVE_CXX14_DEPRECATED 
+#ifndef FJCORE_HAVE_DLFCN_H
+# define FJCORE_HAVE_DLFCN_H 1
 #endif
-#ifndef FJCORE_HAVE_DLFCN_H 
-# define FJCORE_HAVE_DLFCN_H  1 
+#ifndef FJCORE_HAVE_EXECINFO_H
 #endif
-#ifndef FJCORE_HAVE_EXECINFO_H 
+#ifndef FJCORE_HAVE_EXPLICIT_FOR_OPERATORS
 #endif
-#ifndef FJCORE_HAVE_EXPLICIT_FOR_OPERATORS 
+#ifndef FJCORE_HAVE_GNUCXX_DEPRECATED
 #endif
-#ifndef FJCORE_HAVE_GNUCXX_DEPRECATED 
+#ifndef FJCORE_HAVE_INTTYPES_H
+# define FJCORE_HAVE_INTTYPES_H 1
 #endif
-#ifndef FJCORE_HAVE_INTTYPES_H 
-# define FJCORE_HAVE_INTTYPES_H  1 
+#ifndef FJCORE_HAVE_LIBM
+# define FJCORE_HAVE_LIBM 1
 #endif
-#ifndef FJCORE_HAVE_LIBM 
-# define FJCORE_HAVE_LIBM  1 
+#ifndef FJCORE_HAVE_OVERRIDE
 #endif
-#ifndef FJCORE_HAVE_MEMORY_H 
-# define FJCORE_HAVE_MEMORY_H  1 
+#ifndef FJCORE_HAVE_STDINT_H
+# define FJCORE_HAVE_STDINT_H 1
 #endif
-#ifndef FJCORE_HAVE_OVERRIDE 
+#ifndef FJCORE_HAVE_STDIO_H
+# define FJCORE_HAVE_STDIO_H 1
 #endif
-#ifndef FJCORE_HAVE_STDINT_H 
-# define FJCORE_HAVE_STDINT_H  1 
+#ifndef FJCORE_HAVE_STDLIB_H
+# define FJCORE_HAVE_STDLIB_H 1
 #endif
-#ifndef FJCORE_HAVE_STDLIB_H 
-# define FJCORE_HAVE_STDLIB_H  1 
+#ifndef FJCORE_HAVE_STRINGS_H
+# define FJCORE_HAVE_STRINGS_H 1
 #endif
-#ifndef FJCORE_HAVE_STRINGS_H 
-# define FJCORE_HAVE_STRINGS_H  1 
+#ifndef FJCORE_HAVE_STRING_H
+# define FJCORE_HAVE_STRING_H 1
 #endif
-#ifndef FJCORE_HAVE_STRING_H 
-# define FJCORE_HAVE_STRING_H  1 
+#ifndef FJCORE_HAVE_SYS_STAT_H
+# define FJCORE_HAVE_SYS_STAT_H 1
 #endif
-#ifndef FJCORE_HAVE_SYS_STAT_H 
-# define FJCORE_HAVE_SYS_STAT_H  1 
+#ifndef FJCORE_HAVE_SYS_TYPES_H
+# define FJCORE_HAVE_SYS_TYPES_H 1
 #endif
-#ifndef FJCORE_HAVE_SYS_TYPES_H 
-# define FJCORE_HAVE_SYS_TYPES_H  1 
+#ifndef FJCORE_HAVE_UNISTD_H
+# define FJCORE_HAVE_UNISTD_H 1
 #endif
-#ifndef FJCORE_HAVE_UNISTD_H 
-# define FJCORE_HAVE_UNISTD_H  1 
+#ifndef FJCORE_LT_OBJDIR
+# define FJCORE_LT_OBJDIR ".libs/"
 #endif
-#ifndef FJCORE_LT_OBJDIR 
-# define FJCORE_LT_OBJDIR  ".libs/" 
+#ifndef FJCORE_PACKAGE
+# define FJCORE_PACKAGE "fastjet"
 #endif
-#ifndef FJCORE_PACKAGE 
-# define FJCORE_PACKAGE  "fastjet" 
+#ifndef FJCORE_PACKAGE_BUGREPORT
+# define FJCORE_PACKAGE_BUGREPORT ""
 #endif
-#ifndef FJCORE_PACKAGE_BUGREPORT 
-# define FJCORE_PACKAGE_BUGREPORT  "" 
+#ifndef FJCORE_PACKAGE_NAME
+# define FJCORE_PACKAGE_NAME "FastJet"
 #endif
-#ifndef FJCORE_PACKAGE_NAME 
-# define FJCORE_PACKAGE_NAME  "FastJet" 
+#ifndef FJCORE_PACKAGE_STRING
+# define FJCORE_PACKAGE_STRING "FastJet 3.4.3"
 #endif
-#ifndef FJCORE_PACKAGE_STRING 
-# define FJCORE_PACKAGE_STRING  "FastJet 3.4.0" 
+#ifndef FJCORE_PACKAGE_TARNAME
+# define FJCORE_PACKAGE_TARNAME "fastjet"
 #endif
-#ifndef FJCORE_PACKAGE_TARNAME 
-# define FJCORE_PACKAGE_TARNAME  "fastjet" 
+#ifndef FJCORE_PACKAGE_URL
+# define FJCORE_PACKAGE_URL ""
 #endif
-#ifndef FJCORE_PACKAGE_URL 
-# define FJCORE_PACKAGE_URL  "" 
+#ifndef FJCORE_PACKAGE_VERSION
+# define FJCORE_PACKAGE_VERSION "3.4.3"
 #endif
-#ifndef FJCORE_PACKAGE_VERSION 
-# define FJCORE_PACKAGE_VERSION  "3.4.0" 
+#ifndef FJCORE_STDC_HEADERS
+# define FJCORE_STDC_HEADERS 1
 #endif
-#ifndef FJCORE_STDC_HEADERS 
-# define FJCORE_STDC_HEADERS  1 
+#ifndef FJCORE_VERSION
+# define FJCORE_VERSION "3.4.3"
 #endif
-#ifndef FJCORE_VERSION 
-# define FJCORE_VERSION  "3.4.0" 
+#ifndef FJCORE_VERSION_MAJOR
+# define FJCORE_VERSION_MAJOR 3
 #endif
-#ifndef FJCORE_VERSION_MAJOR 
-# define FJCORE_VERSION_MAJOR  3 
+#ifndef FJCORE_VERSION_MINOR
+# define FJCORE_VERSION_MINOR 4
 #endif
-#ifndef FJCORE_VERSION_MINOR 
-# define FJCORE_VERSION_MINOR  4 
+#ifndef FJCORE_VERSION_NUMBER
+# define FJCORE_VERSION_NUMBER 30403
 #endif
-#ifndef FJCORE_VERSION_NUMBER 
-# define FJCORE_VERSION_NUMBER  30400 
-#endif
-#ifndef FJCORE_VERSION_PATCHLEVEL 
-# define FJCORE_VERSION_PATCHLEVEL  0 
+#ifndef FJCORE_VERSION_PATCHLEVEL
+# define FJCORE_VERSION_PATCHLEVEL 3
 #endif
 #endif
 #ifndef __FJCORE_CONFIG_H__
@@ -355,7 +353,7 @@ FJCORE_END_NAMESPACE
 # define FJCORE_DEPRECATED(func)              func
 # define FJCORE_DEPRECATED_MSG(message,func)  func
 #endif
-#else  // SIWG
+#else  // SWIG
 # define FJCORE_DEPRECATED(func)              func
 # define FJCORE_DEPRECATED_MSG(message,func)  func
 #endif // SWIG
@@ -899,6 +897,9 @@ class PseudoJet {
   SharedPtr<UserInfoBase> & user_info_shared_ptr(){
     return _user_info;
   }
+  void set_user_info_shared_ptr(const SharedPtr<UserInfoBase> & user_info_in) {
+    _user_info = user_info_in;
+  }
   std::string description() const;
   bool has_associated_cluster_sequence() const;
   bool has_associated_cs() const {return has_associated_cluster_sequence();}
@@ -1061,9 +1062,21 @@ inline void PseudoJet::reset_momentum(const PseudoJet & pj) {
   _py  = pj._py ;
   _pz  = pj._pz ;
   _E   = pj._E  ;
+#ifdef FJCORE_HAVE_THREAD_SAFETY
+  int expected = Init_Done;
+  if (pj._init_status.compare_exchange_weak(expected, Init_Done)) {
+    _init_status = Init_Done;
+    _phi = pj._phi;
+    _rap = pj._rap;
+    _kt2 = pj._kt2;
+  } else {
+    _finish_init();
+  }
+#else 
   _phi = pj._phi;
   _rap = pj._rap;
   _kt2 = pj._kt2;
+#endif
 }
 template<typename StructureType>
 const StructureType & PseudoJet::structure() const{
@@ -1281,6 +1294,7 @@ enum Strategy {
   NlnNCam2pi2R = 13,
   NlnNCam      = 12, // 2piMultD
   BestFJ30     =  21, 
+  N2PlainEEAccurate =  31,
   plugin_strategy = 999
 };
 enum JetAlgorithm {
@@ -1700,6 +1714,10 @@ class ClusterSequence {
     assert(plugin_activated());
     _do_iB_recombination_step(jet_i, diB);
   }
+  PseudoJet & plugin_non_const_jet(unsigned i) {
+    assert(plugin_activated());
+    return _jets[i];
+  }
   class Extras {
   public:
     virtual ~Extras() {}
@@ -1724,17 +1742,15 @@ class ClusterSequence {
   }
 public:
   struct history_element{
-    int parent1; /// index in _history where first parent of this jet
-    int parent2; /// index in _history where second parent of this jet
-    int child;   /// index in _history where the current jet is
-		 /// recombined with another jet to form its child. It
-		 /// is Invalid if this jet does not further
-		 /// recombine.
-    int jetp_index; /// index in the _jets vector where we will find the
-    double dij;  /// the distance corresponding to the recombination
-		 /// at this stage of the clustering.
-    double max_dij_so_far; /// the largest recombination distance seen
-			   /// so far in the clustering history.
+    int parent1; 
+    int parent2; 
+		/// recombined with another jet to form its child. It
+		/// is Invalid if this jet does not further
+		/// recombine.
+    int child;   
+    int jetp_index; 
+    double dij;  
+    double max_dij_so_far; 
   };
   enum JetType {Invalid=-3, InexistentParent = -2, BeamJet = -1};
   const std::vector<PseudoJet> & jets()    const;
@@ -1907,8 +1923,10 @@ protected:
     int    _jets_index; // must also be present!
     double nx, ny, nz;  // our internal storage for fast distance calcs
   };
+  class EEAccurateBriefJet : public EEBriefJet { };
   void _simple_N2_cluster_BriefJet();
   void _simple_N2_cluster_EEBriefJet();
+  void _simple_N2_cluster_EEAccurateBriefJet();
 };
 template<class L> void ClusterSequence::_transfer_input_jets(
                                        const std::vector<L> & pseudojets) {

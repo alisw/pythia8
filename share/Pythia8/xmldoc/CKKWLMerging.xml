@@ -19,14 +19,10 @@ disentangling processes presented in <ref>Chr15a</ref> is discussed in
 the section Electroweak Merging below. 
  
 <p/> The usage of the merging procedure is illustrated in a few 
-example main  programs 
-(<code>main81.cc</code>, <code>main82.cc</code>, 
-<code>main83.cc</code>, <code>main84.cc</code> and <code>main85.cc</code>, 
-together with the input files <code>main81.cmnd</code>, 
-<code>main82.cmnd</code>, <code>main84.cmnd</code> and 
-<code>main85.cmnd</code>). These examples should of course only serve 
-as  an illustration, and as such will not make use of the merging in 
-all  possible ways. For full generality, the example programs link to 
+example main  programs (<code>main161.cc</code>, <code>main162.cc</code>, 
+and <code>main164.cc</code>). These examples should of course only serve 
+as an illustration, and as such will not make use of the merging in 
+all possible ways. For full generality, the example programs link to 
 LHAPDF,  FastJet and HepMC. Of course the user is welcome to  remove 
 these dependencies. To remove the FastJet dependence, the functions 
 calculating example observables have to be deleted. Removing the 
@@ -36,7 +32,7 @@ inbuilt PDF,  as outlined in the
 HepMC dependence can be removed by erasing the code allowing for HepMC 
 output. 
  
-<p/> The attached <a href="../pdfdoc/worksheet8309.pdf"> 
+<p/> The attached <a href="../pdfdoc/worksheet8312.pdf"> 
 PYTHIA 8.3 Worksheet</a> contains a Section 6 that walks you through 
 the basics of setting up a merging in PYTHIA. 
  
@@ -250,7 +246,7 @@ scale.
 </parm> 
  
 <word name="Merging:Process" default="void"> 
-The string specifying the hard core process, in MG4/ME notation. 
+The string specifying the hard core process, in MadGraph5/ME notation. 
 </word> 
  
 <p/> 
@@ -390,6 +386,24 @@ with the cuts <ei> &Delta;R<sub>ij</sub> = 0.1 </ei>,
 you will also need to set <code>Merging:Process</code> and the 
 maximal number of additional matrix element jets 
 <code>Merging:nJetMax</code>. 
+ 
+<h4>Merging with a dynamic merging scale:</h4> 
+ 
+For DIS events, a dynamic merging scale has to be chosen 
+to ensure that low <ei>Q<sup>2</sup></ei>, high 
+<ei>E<sub>T,B</sub><sup>2</sup></ei> are treated by the the 
+matrix-element. See <ref>Hel24</ref> for more details. 
+ 
+<flag name="Merging:doDynamicMerging" default="off"> 
+This switch will enable a functional scale definition which dynamically 
+changes per event. 
+Note that this option is available only in VINCIA's merging. 
+</flag> 
+ 
+<parm name="Merging:Sparameter" default="0.8" min="0.1" max="1.0"> 
+The value of the parameter <ei>S</ei> for dynamic merging-scale 
+definitions. 
+</parm> 
  
 <h4>Les Houches events outside the matrix element region</h4> 
  
@@ -565,7 +579,7 @@ W<sup>-</sup> and W<sup>+</sup> boson), <code>n1</code> (MSSM neutralino),
 <p/> 
 Finally, it is worth noting that including the header 
 <code>Pythia8Plugins/aMCatNLOHooks.h</code> (as is e.g. the case in the 
-<code>main89.cc</code> example) allows the user to instruct Pythia 
+<code>main164.cc</code> example) allows the user to instruct Pythia 
 to "guess" the hard process by setting <code>Merging:Process = guess</code>. 
 In this case, the code will inspect the hard process before starting the 
 merging code, and set <code>Merging:Process</code> on an event-by-event 
@@ -623,11 +637,10 @@ bins had instead been filled with the weight
 additional jets in current ME sample)</strong>. This is the way HepMC 
 events should be weighted to produce correct relative weights of 
 events (see below, and particularly examine the example programs 
-<code>main84.cc</code> and <code>main85.cc</code>). 
+<code>main162.cc</code> and <code>main164.cc</code>). 
  
-<p/> Examples how to use these options are given in <code>main81.cc</code> 
-(<ei>kT</ei> merging), <code>main84.cc</code> (automatic MG/ME merging 
-for RIVET usage), and <code>main85.cc</code> (HepMC output for RIVET usage). 
+<p/> Examples how to use these options are given in <code>main161.cc</code> 
+(<ei>kT</ei> merging) and <code>main162.cc</code>. 
  
 <br/><br/><hr/> 
 <h3>Merging with user-defined merging scale function</h3> 
@@ -668,9 +681,9 @@ The constructor and destructor do not need to do anything.
 <p/> For the class to be called during execution, a pointer to an 
 object of the class should be handed in with the 
 <br/><code><aloc href="ProgramFlow"> 
-Pythia::setMergingHooksPtr( MergingHooks*)</aloc></code> method. 
+Pythia::setMergingHooksPtr(MergingHooks*)</aloc></code> method. 
  
-An examples of this procedure are given in <code>main82.cc</code>. 
+An example of this procedure is given in <code>main161.cc</code>. 
  
 <h4>Defining a merging scale</h4> 
  
@@ -681,7 +694,7 @@ evaluate the merging scale variable.
 <method name="virtual double MergingHooks::tmsDefinition(const Event& event)"> 
 This method will have to calculate the value of the merging scale 
 defined in  some variable from the input event record. An example of 
-such a function is  given in <code>main82.cc</code>. 
+such a function is  given in <code>main161.cc</code>. 
 </method> 
  
 <p/> The base class <code>MergingHooks</code> contains many functions 
@@ -722,7 +735,7 @@ both intermediate bosons into the LHE file, this will return 2.
 <p/> Filling output histograms for the event then proceeds along the 
 lines described above in "Histogramming the events". 
  
-<p/> The full procedure is outlined in <code>main82.cc</code>. Special 
+<p/> The full procedure is outlined in <code>main161.cc</code>. Special 
 care needs to be  taken when the output is stored in the form of HepMC 
 files for RIVET usage. 
  
@@ -777,10 +790,6 @@ in the algorithm, and should be  considered very carefully. Generally,
 if this facility would have to be used extensively, it is certainly 
 preferable to be less restrictive when applying  additional, 
 non-merging-scale-related cuts to the matrix element. 
- 
-<p/> An example how to force a cut on lowest multiplicity reclustered 
-states for pure QCD matrix element configurations is given by 
-<code>main83.cc</code> (to be used with e.g. <code>main82.cmnd</code>). 
  
 <h4>Influencing the construction of all possible histories</h4> 
  
@@ -845,7 +854,7 @@ element, even for the QCD dijet case.
 <h3>Matrix element merging and HepMC output for RIVET</h3> 
  
 Examples how to produce matrix element merged events to be analysed 
-with RIVET are given by <code>main84.cc</code> and <code>main85.cc</code>. 
+with RIVET are given by <code>main162.cc</code> and <code>main164.cc</code>. 
  
 <p/> The main issue is that the output of separate RIVET runs can not 
 in general be combined. To perform a matrix element merging, we 
@@ -860,8 +869,6 @@ is performed. Finally, the cross section of the last event in the
 HepMC file has to be taken as the  full merged cross section 
 <ei>sigma_merge = Sum_{i=0}^N Sum_{j=0}*^{nEvents} 
 sigma_est(i)*wckkwl(j)</ei>. 
- 
-<p/> This procedure is outlined in <code>main84.cc</code>. 
  
 Input LHE files with only very inclusive cuts pose further difficulties. For 
 such files (which were already addressed under the heading <strong>Les Houches 
@@ -897,28 +904,7 @@ be set.
  
 <p/> 
 The usage of these switches to obtain the necessary cross section estimate is 
-illustrated in <code>main85.cc</code>. The example <code>main85.cc</code> 
-program is intended as a "front-end" for CKKW-L merging in Pythia8, so we will 
-discuss the program briefly. <code>main85.cc</code> should be used together 
-with an input file (like <code>main85.cmnd</code>). The executable should be 
-invoked with three arguments: the input file, the "name" of the input LHE 
-files, and the name of the output HepMC event file. To use the LHE files that 
-are shipped with the Pythia distribution, a valid usage would be 
-<p/> 
-<code>./main85.exe ./main85.cmnd ./w_production ./myhepmc.hepmc</code> 
-<p/> 
-If you want to use other input LHE files, note 
-that <code>main85.cc</code> assumes the naming 
-convention <ei>name_tree_#nAdditionalJets.lhe</ei>. All settings can 
-be included though the input file, so that <code>main85.cc</code> does not 
-have to be changed explicitly. <code>main85.cc</code> first switches off 
-showers, multiparton interactions and hadronization, and estimates the cross 
-sections (after enforcing the merging scale cut) of samples for different 
-numbers of additional jets. Then, showers, MPI and hadronization are switched 
-on again, and the CKKW-L merging procedure is performed. Events will be read 
-in a decreasing sequence of jet multiplicities, which also means that e.g. 
-events with two additional partons in the LHE file will be printed to the 
-HepMC file before events with one additional parton. 
+illustrated in <code>main162.cc</code>. 
  
 <br/><br/><hr/> 
 <h3>Electroweak Merging</h3> 
@@ -1346,4 +1332,4 @@ the method in <ref>Fre20</ref>.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

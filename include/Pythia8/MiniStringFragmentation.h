@@ -1,5 +1,5 @@
 // MiniStringFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,15 +9,7 @@
 #ifndef Pythia8_MiniStringFragmentation_H
 #define Pythia8_MiniStringFragmentation_H
 
-#include "Pythia8/Basics.h"
-#include "Pythia8/Event.h"
-#include "Pythia8/FragmentationFlavZpT.h"
-#include "Pythia8/FragmentationSystems.h"
-#include "Pythia8/Info.h"
-#include "Pythia8/ParticleData.h"
-#include "Pythia8/PythiaStdlib.h"
-#include "Pythia8/PhysicsBase.h"
-#include "Pythia8/Settings.h"
+#include "Pythia8/FragmentationModel.h"
 
 namespace Pythia8 {
 
@@ -27,37 +19,35 @@ namespace Pythia8 {
 // occasional low-mass colour singlet partonic systems, where the string
 // approach is not directly applicable (for technical reasons).
 
-class MiniStringFragmentation : public PhysicsBase {
+class MiniStringFragmentation : public FragmentationModel {
 
 public:
 
   // Constructor.
-  MiniStringFragmentation() : flavSelPtr(), pTSelPtr(), zSelPtr(),
-    setVertices(), constantTau(), smearOn(), nTryMass(), hadronVertex(),
-    bLund(), xySmear(), kappaVtx(), mc(), mb(), isClosed(), mSum(), m2Sum() {}
+  MiniStringFragmentation() : FragmentationModel(), setVertices(),
+    constantTau(), smearOn(), nTryMass(), hadronVertex(), bLund(), xySmear(),
+    kappaVtx(), mc(), mb(), mVecRatio(1.), isClosed(), mSum(), m2Sum() {}
 
   // Initialize and save pointers.
-  void init(StringFlav* flavSelPtrIn, StringPT* pTSelPtrIn,
-    StringZ* zSelPtrIn);
+  bool init(StringFlav* flavSelPtrIn = nullptr, StringPT* pTSelPtrIn = nullptr,
+    StringZ* zSelPtrIn = nullptr, FragModPtr fragModPtrIn = nullptr) override;
 
   // Do the fragmentation: driver routine.
-  bool fragment( int iSub, ColConfig& colConfig, Event& event,
-    bool isDiff = false, bool systemRecoil = true);
+  bool fragment(int iSub, ColConfig& colConfig, Event& event,
+    bool isDiff = false, bool systemRecoil = true) override;
+
+  // Set the vector mass ratio.
+  void setMVecRatio(double mVecRatioIn) {mVecRatio = mVecRatioIn;}
 
 private:
 
   // Constants: could only be changed in the code itself.
   static const int    NTRYDIFFRACTIVE, NTRYLASTRESORT, NTRYFLAV;
 
-  // Pointers to classes for flavour, pT and z generation.
-  StringFlav*   flavSelPtr;
-  StringPT*     pTSelPtr;
-  StringZ*      zSelPtr;
-
   // Initialization data, read from Settings.
   bool   setVertices, constantTau, smearOn;
   int    nTryMass, hadronVertex;
-  double bLund, xySmear, kappaVtx, mc, mb;
+  double bLund, xySmear, kappaVtx, mc, mb, mVecRatio;
 
   // Data members.
   bool   isClosed, isJunctionSystem;

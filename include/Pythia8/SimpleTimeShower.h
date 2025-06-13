@@ -1,5 +1,5 @@
 // SimpleTimeShower.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -87,28 +87,31 @@ public:
   SimpleTimeShower() : hasWeaklyRadiated(), iSysSel(), pTmaxFudge(),
     pTLastBranch(), doQCDshower(), doQEDshowerByQ(), doQEDshowerByL(),
     doQEDshowerByOther(), doQEDshowerByGamma(), doWeakShower(),
-    doMEcorrections(), doMEextended(), doMEafterFirst(), doPhiPolAsym(),
-    doPhiPolAsymHard(), doInterleave(), doInterleaveResDec(),
-    allowBeamRecoil(), dampenBeamRecoil(), useFixedFacScale(),
-    allowRescatter(), canVetoEmission(), doHVshower(), brokenHVsym(),
-    setLambdaHV(), globalRecoil(), useLocalRecoilNow(), doSecondHard(),
-    hasUserHooks(), singleWeakEmission(), alphaSuseCMW(), vetoWeakJets(),
-    allowMPIdipole(), weakExternal(), recoilDeadCone(), doDipoleRecoil(),
-    doPartonVertex(), pTmaxMatch(), pTdampMatch(), alphaSorder(),
-    alphaSnfmax(), nGluonToQuark(), weightGluonToQuark(), recoilStrategyRF(),
-    alphaEMorder(), nGammaToQuark(), nGammaToLepton(), nCHV(), nFlavHV(),
-    idHV(), alphaHVorder(), nMaxGlobalRecoil(), weakMode(), pTdampFudge(),
-    mc(), mb(), m2c(), m2b(), renormMultFac(), factorMultFac(),
-    fixedFacScale2(), alphaSvalue(), alphaS2pi(), Lambda3flav(),
-    Lambda4flav(), Lambda5flav(), Lambda3flav2(), Lambda4flav2(),
-    Lambda5flav2(), scaleGluonToQuark(), extraGluonToQuark(), pTcolCutMin(),
-    pTcolCut(), pT2colCut(), pTchgQCut(), pT2chgQCut(), pTchgLCut(),
-    pT2chgLCut(), pTweakCut(), pT2weakCut(), mMaxGamma(), m2MaxGamma(),
-    mZ(), gammaZ(), thetaWRat(),
-    mW(), gammaW(), CFHV(), alphaHVfix(), alphaHVref(), LambdaHV(),
-    pThvCut(), pT2hvCut(), mHV(), pTmaxFudgeMPI(), weakEnhancement(),
-    vetoWeakDeltaR2(), twoHard(), dopTlimit1(), dopTlimit2(), dopTdamp(),
-    pT2damp(), kRad(), kEmt(), pdfScale2(), doTrialNow(), canEnhanceEmission(),
+    doMEcorrections(), doMEextended(), doMEafterFirst(),
+    doPhiPolAsym(), doPhiPolAsymHard(), doInterleave(),
+    doInterleaveResDec(), allowBeamRecoil(), dampenBeamRecoil(),
+    useFixedFacScale(), allowRescatter(), canVetoEmission(),
+    doHVshower(), brokenHVsym(), setLambdaHV(), globalRecoil(),
+    useLocalRecoilNow(), doSecondHard(), hasUserHooks(),
+    singleWeakEmission(), alphaSuseCMW(), vetoWeakJets(),
+    allowMPIdipole(), weakExternal(), recoilDeadCone(),
+    doDipoleRecoil(), doPartonVertex(), recoilRFUseParents(false),
+    pTmaxMatch(), pTdampMatch(), alphaSorder(), alphaSnfmax(),
+    nGluonToQuark(), weightGluonToQuark(), recoilStrategyRF(),
+    alphaEMorder(), nGammaToQuark(), nGammaToLepton(), nCHV(),
+    nFlavHV(), idHV(), alphaHVorder(), nMaxGlobalRecoil(), weakMode(),
+    pTdampFudge(), mc(), mb(), m2c(), m2b(), renormMultFac(),
+    factorMultFac(), fixedFacScale2(), alphaSvalue(), alphaS2pi(),
+    Lambda3flav(), Lambda4flav(), Lambda5flav(), Lambda3flav2(),
+    Lambda4flav2(), Lambda5flav2(), scaleGluonToQuark(),
+    extraGluonToQuark(), weightRF(1), pTcolCutMin(), pTcolCut(),
+    pT2colCut(), pTchgQCut(), pT2chgQCut(), pTchgLCut(), pT2chgLCut(),
+    pTweakCut(), pT2weakCut(), mMaxGamma(), m2MaxGamma(), mZ(),
+    gammaZ(), thetaWRat(), mW(), gammaW(), CFHV(), alphaHVfix(),
+    alphaHVref(), LambdaHV(), pThvCut(), pT2hvCut(), mHV(),
+    pTmaxFudgeMPI(), weakEnhancement(), vetoWeakDeltaR2(), twoHard(),
+    dopTlimit1(), dopTlimit2(), dopTdamp(), pT2damp(), kRad(), kEmt(),
+    pdfScale2(), doTrialNow(), canEnhanceEmission(),
     canEnhanceTrial(), canEnhanceET(), doUncertaintiesNow(), dipSel(),
     iDipSel(), nHard(), nFinalBorn(), nMaxGlobalBranch(), nGlobal(),
     globalRecoilMode(), limitMUQ(), weakHardSize() { beamOffset = 0;
@@ -118,8 +121,8 @@ public:
   virtual ~SimpleTimeShower() override {}
 
   // Initialize alphaStrong and related pTmin parameters.
-  virtual void init( BeamParticle* beamAPtrIn = 0,
-    BeamParticle* beamBPtrIn = 0) override;
+  virtual void init( BeamParticle* beamAPtrIn = nullptr,
+    BeamParticle* beamBPtrIn = nullptr) override;
 
   // Find whether to limit maximum scale of emissions, and whether to dampen.
   virtual bool limitPTmax( Event& event, double Q2Fac = 0.,
@@ -130,7 +133,8 @@ public:
     int nBranchMax = 0) override;
 
   // Top-level routine for QED radiation in hadronic decay to two leptons.
-  virtual int showerQED( int i1, int i2, Event& event, double pTmax) override;
+  virtual int showerQED( int i1, int i2, Event& event, double pTmax = -1.)
+    override;
 
   // Prepare process-level event for shower + interleaved resonance decays.
   // Usage: prepareProcess( process, event, iPos).
@@ -227,7 +231,7 @@ private:
          brokenHVsym, setLambdaHV, globalRecoil, useLocalRecoilNow,
          doSecondHard, hasUserHooks, singleWeakEmission, alphaSuseCMW,
          vetoWeakJets, allowMPIdipole, weakExternal, recoilDeadCone,
-         doDipoleRecoil, doPartonVertex;
+         doDipoleRecoil, doPartonVertex, recoilRFUseParents;
   int    pdfModeSave;
   int    pTmaxMatch, pTdampMatch, alphaSorder, alphaSnfmax, nGluonToQuark,
          weightGluonToQuark, recoilStrategyRF, alphaEMorder, nGammaToQuark,
@@ -236,9 +240,9 @@ private:
   double pTdampFudge, mc, mb, m2c, m2b, renormMultFac, factorMultFac,
          fixedFacScale2, alphaSvalue, alphaS2pi, Lambda3flav, Lambda4flav,
          Lambda5flav, Lambda3flav2, Lambda4flav2, Lambda5flav2,
-         scaleGluonToQuark, extraGluonToQuark, pTcolCutMin, pTcolCut,
-         pT2colCut, pTchgQCut, pT2chgQCut, pTchgLCut, pT2chgLCut,
-         pTweakCut, pT2weakCut, mMaxGamma, m2MaxGamma,
+         scaleGluonToQuark, extraGluonToQuark, weightRF,
+         pTcolCutMin, pTcolCut, pT2colCut, pTchgQCut, pT2chgQCut,
+         pTchgLCut, pT2chgLCut, pTweakCut, pT2weakCut, mMaxGamma, m2MaxGamma,
          mZ, gammaZ, thetaWRat, mW, gammaW, CFHV,
          alphaHVfix, alphaHVref, LambdaHV, pThvCut, pT2hvCut, mHV,
          pTmaxFudgeMPI, weakEnhancement, vetoWeakDeltaR2;

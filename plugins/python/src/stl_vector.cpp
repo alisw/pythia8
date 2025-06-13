@@ -7,6 +7,7 @@
 #include <Pythia8/ColourReconnection.h>
 #include <Pythia8/Event.h>
 #include <Pythia8/FragmentationFlavZpT.h>
+#include <Pythia8/FragmentationModel.h>
 #include <Pythia8/FragmentationSystems.h>
 #include <Pythia8/GammaKinematics.h>
 #include <Pythia8/HIBasics.h>
@@ -104,13 +105,43 @@ void bind_std_stl_vector(std::function< pybind11::module &(std::string const &na
 
 	// std::vector file:bits/stl_vector.h line:214
 
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
 	// std::vector file:bits/stl_bvector.h line:541
 
 	// std::vector file:bits/stl_vector.h line:214
 
 	// std::vector file:bits/stl_vector.h line:214
 
-	// std::map file:bits/stl_map.h line:96
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
+
+	// std::vector file:bits/stl_vector.h line:214
 
 	// std::map file:bits/stl_map.h line:96
 
@@ -127,5 +158,27 @@ void bind_std_stl_vector(std::function< pybind11::module &(std::string const &na
 	// std::map file:bits/stl_map.h line:96
 
 	// std::map file:bits/stl_map.h line:96
+
+	// std::map file:bits/stl_map.h line:96
+
+	// std::map file:bits/stl_map.h line:96
+
+	// std::map file:bits/stl_map.h line:96
+
+	// std::map file:bits/stl_map.h line:96
+
+	// std::map file:bits/stl_map.h line:96
+
+	// std::map file:bits/stl_map.h line:96
+
+	// std::unordered_map file:bits/unordered_map.h line:98
+
+	// std::unordered_map file:bits/unordered_map.h line:98
+
+	// std::set file:bits/stl_set.h line:90
+
+	// std::set file:bits/stl_set.h line:90
+
+	// std::multiset file:bits/stl_multiset.h line:92
 
 }

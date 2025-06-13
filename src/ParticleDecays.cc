@@ -1,5 +1,5 @@
 // ParticleDecays.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -101,7 +101,7 @@ void ParticleDecays::init(TimeShowerPtr timesDecPtrIn,
 
   // Allow showers in decays to qqbar/gg/ggg/gammagg.
   doFSRinDecays = flag("ParticleDecays:FSRinDecays");
-  doGammaRad    = flag("ParticleDecays:allowPhotonRadiation");
+  doGammaRad    = flag("HadronLevel:QED");
 
   // Use standard decays or dedicated tau decay package
   tauMode       = mode("TauDecays:mode");
@@ -358,18 +358,18 @@ bool ParticleDecays::decay( int iDec, Event& event) {
   if (hasPartons && keepPartons && doFSRinDecays)
     timesDecPtr->shower( iProd[1], iProd.back(), event, mProd[0]);
 
-  // Photon radiation implemented only for two-body decay to leptons.
-  else if (doGammaRad && mult == 2 && event[iProd[1]].isLepton()
-  && event[iProd[2]].isLepton()) {
-    timesDecPtr->showerQED( iProd[1], iProd[2], event, mProd[0]);
-    checkForHadronization = true;
-
   // For Hidden Valley particles also allow leptons to shower.
-  } else if (event[iDec].idAbs() > 4900000 && event[iDec].idAbs() < 5000000
+  else if (event[iDec].idAbs() > 4900000 && event[iDec].idAbs() < 5000000
   && doFSRinDecays && mult == 2 && event[iProd[1]].isLepton()) {
     event[iProd[1]].scale(mProd[0]);
     event[iProd[2]].scale(mProd[0]);
     timesDecPtr->shower( iProd[1], iProd.back(), event, mProd[0]);
+    checkForHadronization = true;
+  }
+
+  // Photon radiation in particle decays.
+  else if (doGammaRad) {
+    if (timesDecPtr->showerQED( iProd[1], iProd.back(), event, mProd[0]) >= 0)
     checkForHadronization = true;
   }
   if( checkForHadronization ) {

@@ -1,37 +1,21 @@
 #include <Pythia8/Basics.h>
 #include <Pythia8/BeamSetup.h>
-#include <Pythia8/BeamShape.h>
 #include <Pythia8/Event.h>
 #include <Pythia8/HIBasics.h>
-#include <Pythia8/HIInfo.h>
 #include <Pythia8/HINucleusModel.h>
-#include <Pythia8/HISubCollisionModel.h>
 #include <Pythia8/HadronWidths.h>
-#include <Pythia8/HeavyIons.h>
 #include <Pythia8/Info.h>
 #include <Pythia8/LHEF3.h>
-#include <Pythia8/LesHouches.h>
 #include <Pythia8/Logger.h>
-#include <Pythia8/Merging.h>
-#include <Pythia8/MergingHooks.h>
 #include <Pythia8/ParticleData.h>
-#include <Pythia8/ParticleDecays.h>
-#include <Pythia8/PartonDistributions.h>
 #include <Pythia8/PartonSystems.h>
-#include <Pythia8/PartonVertex.h>
-#include <Pythia8/PhaseSpace.h>
-#include <Pythia8/PhysicsBase.h>
-#include <Pythia8/Pythia.h>
 #include <Pythia8/PythiaParallel.h>
 #include <Pythia8/ResonanceWidths.h>
 #include <Pythia8/Settings.h>
-#include <Pythia8/ShowerModel.h>
 #include <Pythia8/SigmaLowEnergy.h>
-#include <Pythia8/SigmaProcess.h>
 #include <Pythia8/SigmaTotal.h>
 #include <Pythia8/StandardModel.h>
 #include <Pythia8/SusyCouplings.h>
-#include <Pythia8/UserHooks.h>
 #include <Pythia8/Weights.h>
 #include <cwchar>
 #include <functional>
@@ -40,8 +24,6 @@
 #include <iterator>
 #include <map>
 #include <memory>
-#include <ostream>
-#include <set>
 #include <sstream> // __str__
 #include <streambuf>
 #include <string>
@@ -67,13 +49,13 @@
 	PYBIND11_MAKE_OPAQUE(std::shared_ptr<void>);
 #endif
 
-// Pythia8::HeavyIons file:Pythia8/HeavyIons.h line:31
-struct PyCallBack_Pythia8_HeavyIons : public Pythia8::HeavyIons {
-	using Pythia8::HeavyIons::HeavyIons;
+// Pythia8::NucleusModel file:Pythia8/HINucleusModel.h line:187
+struct PyCallBack_Pythia8_NucleusModel : public Pythia8::NucleusModel {
+	using Pythia8::NucleusModel::NucleusModel;
 
 	bool init() override { 
 		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "init");
+		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::NucleusModel *>(this), "init");
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
@@ -82,11 +64,11 @@ struct PyCallBack_Pythia8_HeavyIons : public Pythia8::HeavyIons {
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
 		}
-		pybind11::pybind11_fail("Tried to call pure virtual function \"HeavyIons::init\"");
+		return NucleusModel::init();
 	}
-	bool next() override { 
+	bool initGeometry() override { 
 		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "next");
+		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::NucleusModel *>(this), "initGeometry");
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
 			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
@@ -95,102 +77,11 @@ struct PyCallBack_Pythia8_HeavyIons : public Pythia8::HeavyIons {
 			}
 			else return pybind11::detail::cast_safe<bool>(std::move(o));
 		}
-		pybind11::pybind11_fail("Tried to call pure virtual function \"HeavyIons::next\"");
+		return NucleusModel::initGeometry();
 	}
-	bool setKinematics(double a0) override { 
+	void setPN(const class Pythia8::Vec4 & a0) override { 
 		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "setKinematics");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return HeavyIons::setKinematics(a0);
-	}
-	bool setKinematics(double a0, double a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "setKinematics");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return HeavyIons::setKinematics(a0, a1);
-	}
-	bool setKinematics(double a0, double a1, double a2, double a3, double a4, double a5) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "setKinematics");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4, a5);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return HeavyIons::setKinematics(a0, a1, a2, a3, a4, a5);
-	}
-	bool setKinematics(class Pythia8::Vec4 a0, class Pythia8::Vec4 a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "setKinematics");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return HeavyIons::setKinematics(a0, a1);
-	}
-	void stat() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "stat");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return HeavyIons::stat();
-	}
-	void onInitInfoPtr() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "onInitInfoPtr");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return PhysicsBase::onInitInfoPtr();
-	}
-	void onBeginEvent() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "onBeginEvent");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return PhysicsBase::onBeginEvent();
-	}
-	void onEndEvent(enum Pythia8::PhysicsBase::Status a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "onEndEvent");
+		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::NucleusModel *>(this), "setPN");
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
@@ -199,563 +90,11 @@ struct PyCallBack_Pythia8_HeavyIons : public Pythia8::HeavyIons {
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
 		}
-		return PhysicsBase::onEndEvent(a0);
+		return NucleusModel::setPN(a0);
 	}
-	void onStat() override { 
+	void setMN(double a0) override { 
 		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons *>(this), "onStat");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return PhysicsBase::onStat();
-	}
-};
-
-// Pythia8::HeavyIons::InfoGrabber file:Pythia8/HeavyIons.h line:139
-struct PyCallBack_Pythia8_HeavyIons_InfoGrabber : public Pythia8::HeavyIons::InfoGrabber {
-	using Pythia8::HeavyIons::InfoGrabber::InfoGrabber;
-
-	bool initAfterBeams() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "initAfterBeams");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::initAfterBeams();
-	}
-	bool canModifySigma() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canModifySigma");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canModifySigma();
-	}
-	bool canBiasSelection() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canBiasSelection");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canBiasSelection();
-	}
-	double biasedSelectionWeight() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "biasedSelectionWeight");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::override_caster_t<double> caster;
-				return pybind11::detail::cast_ref<double>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<double>(std::move(o));
-		}
-		return UserHooks::biasedSelectionWeight();
-	}
-	bool canVetoProcessLevel() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoProcessLevel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoProcessLevel();
-	}
-	bool doVetoProcessLevel(class Pythia8::Event & a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoProcessLevel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoProcessLevel(a0);
-	}
-	bool canSetLowEnergySigma(int a0, int a1) const override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canSetLowEnergySigma");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canSetLowEnergySigma(a0, a1);
-	}
-	double doSetLowEnergySigma(int a0, int a1, double a2, double a3, double a4) const override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doSetLowEnergySigma");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3, a4);
-			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::override_caster_t<double> caster;
-				return pybind11::detail::cast_ref<double>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<double>(std::move(o));
-		}
-		return UserHooks::doSetLowEnergySigma(a0, a1, a2, a3, a4);
-	}
-	bool canVetoResonanceDecays() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoResonanceDecays");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoResonanceDecays();
-	}
-	bool doVetoResonanceDecays(class Pythia8::Event & a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoResonanceDecays");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoResonanceDecays(a0);
-	}
-	bool canVetoPT() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoPT");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoPT();
-	}
-	double scaleVetoPT() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "scaleVetoPT");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::override_caster_t<double> caster;
-				return pybind11::detail::cast_ref<double>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<double>(std::move(o));
-		}
-		return UserHooks::scaleVetoPT();
-	}
-	bool doVetoPT(int a0, const class Pythia8::Event & a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoPT");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoPT(a0, a1);
-	}
-	bool canVetoStep() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoStep");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoStep();
-	}
-	int numberVetoStep() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "numberVetoStep");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::override_caster_t<int> caster;
-				return pybind11::detail::cast_ref<int>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<int>(std::move(o));
-		}
-		return UserHooks::numberVetoStep();
-	}
-	bool doVetoStep(int a0, int a1, int a2, const class Pythia8::Event & a3) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoStep");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoStep(a0, a1, a2, a3);
-	}
-	bool canVetoMPIStep() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoMPIStep");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoMPIStep();
-	}
-	int numberVetoMPIStep() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "numberVetoMPIStep");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<int>::value) {
-				static pybind11::detail::override_caster_t<int> caster;
-				return pybind11::detail::cast_ref<int>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<int>(std::move(o));
-		}
-		return UserHooks::numberVetoMPIStep();
-	}
-	bool doVetoMPIStep(int a0, const class Pythia8::Event & a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoMPIStep");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoMPIStep(a0, a1);
-	}
-	bool canVetoPartonLevelEarly() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoPartonLevelEarly");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoPartonLevelEarly();
-	}
-	bool doVetoPartonLevelEarly(const class Pythia8::Event & a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoPartonLevelEarly");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoPartonLevelEarly(a0);
-	}
-	bool retryPartonLevel() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "retryPartonLevel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::retryPartonLevel();
-	}
-	bool canVetoPartonLevel() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoPartonLevel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoPartonLevel();
-	}
-	bool doVetoPartonLevel(const class Pythia8::Event & a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoPartonLevel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoPartonLevel(a0);
-	}
-	bool canSetResonanceScale() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canSetResonanceScale");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canSetResonanceScale();
-	}
-	double scaleResonance(int a0, const class Pythia8::Event & a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "scaleResonance");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::override_caster_t<double> caster;
-				return pybind11::detail::cast_ref<double>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<double>(std::move(o));
-		}
-		return UserHooks::scaleResonance(a0, a1);
-	}
-	bool canVetoISREmission() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoISREmission");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoISREmission();
-	}
-	bool doVetoISREmission(int a0, const class Pythia8::Event & a1, int a2) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoISREmission");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoISREmission(a0, a1, a2);
-	}
-	bool canVetoFSREmission() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoFSREmission");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoFSREmission();
-	}
-	bool doVetoFSREmission(int a0, const class Pythia8::Event & a1, int a2, bool a3) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoFSREmission");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2, a3);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoFSREmission(a0, a1, a2, a3);
-	}
-	bool canVetoMPIEmission() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoMPIEmission");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoMPIEmission();
-	}
-	bool doVetoMPIEmission(int a0, const class Pythia8::Event & a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoMPIEmission");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoMPIEmission(a0, a1);
-	}
-	bool canReconnectResonanceSystems() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canReconnectResonanceSystems");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canReconnectResonanceSystems();
-	}
-	bool doReconnectResonanceSystems(int a0, class Pythia8::Event & a1) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doReconnectResonanceSystems");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doReconnectResonanceSystems(a0, a1);
-	}
-	bool canChangeFragPar() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canChangeFragPar");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canChangeFragPar();
-	}
-	bool canVetoAfterHadronization() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canVetoAfterHadronization");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canVetoAfterHadronization();
-	}
-	bool doVetoAfterHadronization(const class Pythia8::Event & a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doVetoAfterHadronization");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::doVetoAfterHadronization(a0);
-	}
-	bool canSetImpactParameter() const override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "canSetImpactParameter");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<bool>::value) {
-				static pybind11::detail::override_caster_t<bool> caster;
-				return pybind11::detail::cast_ref<bool>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<bool>(std::move(o));
-		}
-		return UserHooks::canSetImpactParameter();
-	}
-	double doSetImpactParameter() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "doSetImpactParameter");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<double>::value) {
-				static pybind11::detail::override_caster_t<double> caster;
-				return pybind11::detail::cast_ref<double>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<double>(std::move(o));
-		}
-		return UserHooks::doSetImpactParameter();
-	}
-	void onInitInfoPtr() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "onInitInfoPtr");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return UserHooks::onInitInfoPtr();
-	}
-	void onBeginEvent() override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "onBeginEvent");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return PhysicsBase::onBeginEvent();
-	}
-	void onEndEvent(enum Pythia8::PhysicsBase::Status a0) override { 
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "onEndEvent");
+		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::NucleusModel *>(this), "setMN");
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
 			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
@@ -764,20 +103,34 @@ struct PyCallBack_Pythia8_HeavyIons_InfoGrabber : public Pythia8::HeavyIons::Inf
 			}
 			else return pybind11::detail::cast_safe<void>(std::move(o));
 		}
-		return PhysicsBase::onEndEvent(a0);
+		return NucleusModel::setMN(a0);
 	}
-	void onStat() override { 
+	class Pythia8::Particle produceIon() override { 
 		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::HeavyIons::InfoGrabber *>(this), "onStat");
+		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::NucleusModel *>(this), "produceIon");
 		if (overload) {
 			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
+			if (pybind11::detail::cast_is_temporary_value_reference<class Pythia8::Particle>::value) {
+				static pybind11::detail::override_caster_t<class Pythia8::Particle> caster;
+				return pybind11::detail::cast_ref<class Pythia8::Particle>(std::move(o), caster);
 			}
-			else return pybind11::detail::cast_safe<void>(std::move(o));
+			else return pybind11::detail::cast_safe<class Pythia8::Particle>(std::move(o));
 		}
-		return PhysicsBase::onStat();
+		return NucleusModel::produceIon();
+	}
+	using _binder_ret_0 = class std::vector<class Pythia8::Nucleon, class std::allocator<class Pythia8::Nucleon> >;
+	_binder_ret_0 generate() const override { 
+		pybind11::gil_scoped_acquire gil;
+		pybind11::function overload = pybind11::get_overload(static_cast<const Pythia8::NucleusModel *>(this), "generate");
+		if (overload) {
+			auto o = overload.operator()<pybind11::return_value_policy::reference>();
+			if (pybind11::detail::cast_is_temporary_value_reference<_binder_ret_0>::value) {
+				static pybind11::detail::override_caster_t<_binder_ret_0> caster;
+				return pybind11::detail::cast_ref<_binder_ret_0>(std::move(o), caster);
+			}
+			else return pybind11::detail::cast_safe<_binder_ret_0>(std::move(o));
+		}
+		pybind11::pybind11_fail("Tried to call pure virtual function \"NucleusModel::generate\"");
 	}
 };
 
@@ -812,79 +165,102 @@ void bind_Pythia8_PythiaParallel(std::function< pybind11::module &(std::string c
 		cl.def("sigmaGen", (double (Pythia8::PythiaParallel::*)() const) &Pythia8::PythiaParallel::sigmaGen, "C++: Pythia8::PythiaParallel::sigmaGen() const --> double");
 		cl.def("weightSum", (double (Pythia8::PythiaParallel::*)() const) &Pythia8::PythiaParallel::weightSum, "C++: Pythia8::PythiaParallel::weightSum() const --> double");
 	}
-	{ // Pythia8::HIInfo file:Pythia8/HIInfo.h line:27
-		pybind11::class_<Pythia8::HIInfo, std::shared_ptr<Pythia8::HIInfo>> cl(M("Pythia8"), "HIInfo", "");
+	{ // Pythia8::EventInfo file:Pythia8/HIBasics.h line:25
+		pybind11::class_<Pythia8::EventInfo, std::shared_ptr<Pythia8::EventInfo>> cl(M("Pythia8"), "EventInfo", "");
 		pybind11::handle cl_type = cl;
 
-		cl.def( pybind11::init( [](){ return new Pythia8::HIInfo(); } ) );
-		cl.def( pybind11::init( [](Pythia8::HIInfo const &o){ return new Pythia8::HIInfo(o); } ) );
-		cl.def("b", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::b, "C++: Pythia8::HIInfo::b() const --> double");
-		cl.def("phi", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::phi, "C++: Pythia8::HIInfo::phi() const --> double");
-		cl.def("sigmaTot", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::sigmaTot, "C++: Pythia8::HIInfo::sigmaTot() const --> double");
-		cl.def("sigmaTotErr", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::sigmaTotErr, "C++: Pythia8::HIInfo::sigmaTotErr() const --> double");
-		cl.def("sigmaND", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::sigmaND, "C++: Pythia8::HIInfo::sigmaND() const --> double");
-		cl.def("sigmaNDErr", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::sigmaNDErr, "C++: Pythia8::HIInfo::sigmaNDErr() const --> double");
-		cl.def("avNDb", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::avNDb, "C++: Pythia8::HIInfo::avNDb() const --> double");
-		cl.def("nAttempts", (long (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nAttempts, "C++: Pythia8::HIInfo::nAttempts() const --> long");
-		cl.def("nAccepted", (long (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nAccepted, "C++: Pythia8::HIInfo::nAccepted() const --> long");
-		cl.def("nCollTot", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollTot, "C++: Pythia8::HIInfo::nCollTot() const --> int");
-		cl.def("nCollND", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollND, "C++: Pythia8::HIInfo::nCollND() const --> int");
-		cl.def("nCollNDTot", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollNDTot, "C++: Pythia8::HIInfo::nCollNDTot() const --> int");
-		cl.def("nCollSDP", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollSDP, "C++: Pythia8::HIInfo::nCollSDP() const --> int");
-		cl.def("nCollSDT", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollSDT, "C++: Pythia8::HIInfo::nCollSDT() const --> int");
-		cl.def("nCollDD", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollDD, "C++: Pythia8::HIInfo::nCollDD() const --> int");
-		cl.def("nCollCD", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollCD, "C++: Pythia8::HIInfo::nCollCD() const --> int");
-		cl.def("nCollEL", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nCollEL, "C++: Pythia8::HIInfo::nCollEL() const --> int");
-		cl.def("nPartProj", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nPartProj, "C++: Pythia8::HIInfo::nPartProj() const --> int");
-		cl.def("nAbsProj", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nAbsProj, "C++: Pythia8::HIInfo::nAbsProj() const --> int");
-		cl.def("nDiffProj", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nDiffProj, "C++: Pythia8::HIInfo::nDiffProj() const --> int");
-		cl.def("nElProj", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nElProj, "C++: Pythia8::HIInfo::nElProj() const --> int");
-		cl.def("nPartTarg", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nPartTarg, "C++: Pythia8::HIInfo::nPartTarg() const --> int");
-		cl.def("nAbsTarg", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nAbsTarg, "C++: Pythia8::HIInfo::nAbsTarg() const --> int");
-		cl.def("nDiffTarg", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nDiffTarg, "C++: Pythia8::HIInfo::nDiffTarg() const --> int");
-		cl.def("nElTarg", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nElTarg, "C++: Pythia8::HIInfo::nElTarg() const --> int");
-		cl.def("weight", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::weight, "C++: Pythia8::HIInfo::weight() const --> double");
-		cl.def("weightSum", (double (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::weightSum, "C++: Pythia8::HIInfo::weightSum() const --> double");
-		cl.def("nFail", (int (Pythia8::HIInfo::*)() const) &Pythia8::HIInfo::nFail, "C++: Pythia8::HIInfo::nFail() const --> int");
-		cl.def("failedExcitation", (void (Pythia8::HIInfo::*)()) &Pythia8::HIInfo::failedExcitation, "C++: Pythia8::HIInfo::failedExcitation() --> void");
-		cl.def("assign", (class Pythia8::HIInfo & (Pythia8::HIInfo::*)(const class Pythia8::HIInfo &)) &Pythia8::HIInfo::operator=, "C++: Pythia8::HIInfo::operator=(const class Pythia8::HIInfo &) --> class Pythia8::HIInfo &", pybind11::return_value_policy::reference, pybind11::arg(""));
+		cl.def( pybind11::init( [](){ return new Pythia8::EventInfo(); } ) );
+		cl.def( pybind11::init( [](Pythia8::EventInfo const &o){ return new Pythia8::EventInfo(o); } ) );
+		cl.def_readwrite("event", &Pythia8::EventInfo::event);
+		cl.def_readwrite("info", &Pythia8::EventInfo::info);
+		cl.def_readwrite("code", &Pythia8::EventInfo::code);
+		cl.def_readwrite("ordering", &Pythia8::EventInfo::ordering);
+		cl.def_readwrite("ok", &Pythia8::EventInfo::ok);
+		cl.def_readwrite("projs", &Pythia8::EventInfo::projs);
+		cl.def_readwrite("targs", &Pythia8::EventInfo::targs);
 	}
-	{ // Pythia8::HeavyIons file:Pythia8/HeavyIons.h line:31
-		pybind11::class_<Pythia8::HeavyIons, std::shared_ptr<Pythia8::HeavyIons>, PyCallBack_Pythia8_HeavyIons> cl(M("Pythia8"), "HeavyIons", "");
+	{ // Pythia8::Nucleon file:Pythia8/HINucleusModel.h line:28
+		pybind11::class_<Pythia8::Nucleon, std::shared_ptr<Pythia8::Nucleon>> cl(M("Pythia8"), "Nucleon", "");
 		pybind11::handle cl_type = cl;
 
-		{ // Pythia8::HeavyIons::InfoGrabber file:Pythia8/HeavyIons.h line:139
-			auto & enclosing_class = cl;
-			pybind11::class_<Pythia8::HeavyIons::InfoGrabber, std::shared_ptr<Pythia8::HeavyIons::InfoGrabber>, PyCallBack_Pythia8_HeavyIons_InfoGrabber, Pythia8::UserHooks> cl(enclosing_class, "InfoGrabber", "");
-			pybind11::handle cl_type = cl;
+		cl.def( pybind11::init( [](){ return new Pythia8::Nucleon(); } ), "doc" );
+		cl.def( pybind11::init( [](int const & a0){ return new Pythia8::Nucleon(a0); } ), "doc" , pybind11::arg("idIn"));
+		cl.def( pybind11::init( [](int const & a0, int const & a1){ return new Pythia8::Nucleon(a0, a1); } ), "doc" , pybind11::arg("idIn"), pybind11::arg("indexIn"));
+		cl.def( pybind11::init<int, int, const class Pythia8::Vec4 &>(), pybind11::arg("idIn"), pybind11::arg("indexIn"), pybind11::arg("pos") );
 
-			cl.def( pybind11::init( [](){ return new Pythia8::HeavyIons::InfoGrabber(); }, [](){ return new PyCallBack_Pythia8_HeavyIons_InfoGrabber(); } ) );
-			cl.def("getInfo", (class Pythia8::Info * (Pythia8::HeavyIons::InfoGrabber::*)()) &Pythia8::HeavyIons::InfoGrabber::getInfo, "C++: Pythia8::HeavyIons::InfoGrabber::getInfo() --> class Pythia8::Info *", pybind11::return_value_policy::automatic);
-			cl.def("assign", (struct Pythia8::HeavyIons::InfoGrabber & (Pythia8::HeavyIons::InfoGrabber::*)(const struct Pythia8::HeavyIons::InfoGrabber &)) &Pythia8::HeavyIons::InfoGrabber::operator=, "C++: Pythia8::HeavyIons::InfoGrabber::operator=(const struct Pythia8::HeavyIons::InfoGrabber &) --> struct Pythia8::HeavyIons::InfoGrabber &", pybind11::return_value_policy::reference, pybind11::arg(""));
-		}
+		cl.def( pybind11::init( [](Pythia8::Nucleon const &o){ return new Pythia8::Nucleon(o); } ) );
 
-		cl.def( pybind11::init<class Pythia8::Pythia &>(), pybind11::arg("mainPythiaIn") );
+		pybind11::enum_<Pythia8::Nucleon::Status>(cl, "Status", pybind11::arithmetic(), "")
+			.value("UNWOUNDED", Pythia8::Nucleon::Status::UNWOUNDED)
+			.value("ELASTIC", Pythia8::Nucleon::Status::ELASTIC)
+			.value("DIFF", Pythia8::Nucleon::Status::DIFF)
+			.value("ABS", Pythia8::Nucleon::Status::ABS)
+			.export_values();
 
-		cl.def_readwrite("hiInfo", &Pythia8::HeavyIons::hiInfo);
-		cl.def_readwrite("sigTotNN", &Pythia8::HeavyIons::sigTotNN);
-		cl.def_readwrite("HIHooksPtr", &Pythia8::HeavyIons::HIHooksPtr);
-		cl.def_readwrite("pythia", &Pythia8::HeavyIons::pythia);
-		cl.def_readwrite("pythiaNames", &Pythia8::HeavyIons::pythiaNames);
-		cl.def_readwrite("info", &Pythia8::HeavyIons::info);
-		cl.def("init", (bool (Pythia8::HeavyIons::*)()) &Pythia8::HeavyIons::init, "C++: Pythia8::HeavyIons::init() --> bool");
-		cl.def("next", (bool (Pythia8::HeavyIons::*)()) &Pythia8::HeavyIons::next, "C++: Pythia8::HeavyIons::next() --> bool");
-		cl.def_static("addSpecialSettings", (void (*)(class Pythia8::Settings &)) &Pythia8::HeavyIons::addSpecialSettings, "C++: Pythia8::HeavyIons::addSpecialSettings(class Pythia8::Settings &) --> void", pybind11::arg("settings"));
-		cl.def_static("isHeavyIon", (bool (*)(class Pythia8::Settings &)) &Pythia8::HeavyIons::isHeavyIon, "C++: Pythia8::HeavyIons::isHeavyIon(class Pythia8::Settings &) --> bool", pybind11::arg("settings"));
-		cl.def("setHIUserHooksPtr", (bool (Pythia8::HeavyIons::*)(class std::shared_ptr<class Pythia8::HIUserHooks>)) &Pythia8::HeavyIons::setHIUserHooksPtr, "C++: Pythia8::HeavyIons::setHIUserHooksPtr(class std::shared_ptr<class Pythia8::HIUserHooks>) --> bool", pybind11::arg("userHooksPtrIn"));
-		cl.def("setKinematics", (bool (Pythia8::HeavyIons::*)(double)) &Pythia8::HeavyIons::setKinematics, "C++: Pythia8::HeavyIons::setKinematics(double) --> bool", pybind11::arg(""));
-		cl.def("setKinematics", (bool (Pythia8::HeavyIons::*)(double, double)) &Pythia8::HeavyIons::setKinematics, "C++: Pythia8::HeavyIons::setKinematics(double, double) --> bool", pybind11::arg(""), pybind11::arg(""));
-		cl.def("setKinematics", (bool (Pythia8::HeavyIons::*)(double, double, double, double, double, double)) &Pythia8::HeavyIons::setKinematics, "C++: Pythia8::HeavyIons::setKinematics(double, double, double, double, double, double) --> bool", pybind11::arg(""), pybind11::arg(""), pybind11::arg(""), pybind11::arg(""), pybind11::arg(""), pybind11::arg(""));
-		cl.def("setKinematics", (bool (Pythia8::HeavyIons::*)(class Pythia8::Vec4, class Pythia8::Vec4)) &Pythia8::HeavyIons::setKinematics, "C++: Pythia8::HeavyIons::setKinematics(class Pythia8::Vec4, class Pythia8::Vec4) --> bool", pybind11::arg(""), pybind11::arg(""));
-		cl.def("stat", (void (Pythia8::HeavyIons::*)()) &Pythia8::HeavyIons::stat, "C++: Pythia8::HeavyIons::stat() --> void");
-		cl.def("updateInfo", (void (Pythia8::HeavyIons::*)()) &Pythia8::HeavyIons::updateInfo, "C++: Pythia8::HeavyIons::updateInfo() --> void");
-		cl.def("clearProcessLevel", (void (Pythia8::HeavyIons::*)(class Pythia8::Pythia &)) &Pythia8::HeavyIons::clearProcessLevel, "C++: Pythia8::HeavyIons::clearProcessLevel(class Pythia8::Pythia &) --> void", pybind11::arg("pyt"));
-		cl.def_static("setupSpecials", (void (*)(class Pythia8::Settings &, std::string)) &Pythia8::HeavyIons::setupSpecials, "C++: Pythia8::HeavyIons::setupSpecials(class Pythia8::Settings &, std::string) --> void", pybind11::arg("settings"), pybind11::arg("match"));
-		cl.def_static("setupSpecials", (void (*)(class Pythia8::Pythia &, std::string)) &Pythia8::HeavyIons::setupSpecials, "C++: Pythia8::HeavyIons::setupSpecials(class Pythia8::Pythia &, std::string) --> void", pybind11::arg("p"), pybind11::arg("match"));
-		cl.def("assign", (class Pythia8::HeavyIons & (Pythia8::HeavyIons::*)(const class Pythia8::HeavyIons &)) &Pythia8::HeavyIons::operator=, "C++: Pythia8::HeavyIons::operator=(const class Pythia8::HeavyIons &) --> class Pythia8::HeavyIons &", pybind11::return_value_policy::reference, pybind11::arg(""));
+		cl.def("id", (int (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::id, "C++: Pythia8::Nucleon::id() const --> int");
+		cl.def("index", (int (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::index, "C++: Pythia8::Nucleon::index() const --> int");
+		cl.def("nPos", (const class Pythia8::Vec4 & (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::nPos, "C++: Pythia8::Nucleon::nPos() const --> const class Pythia8::Vec4 &", pybind11::return_value_policy::reference);
+		cl.def("bPos", (const class Pythia8::Vec4 & (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::bPos, "C++: Pythia8::Nucleon::bPos() const --> const class Pythia8::Vec4 &", pybind11::return_value_policy::reference);
+		cl.def("bShift", (void (Pythia8::Nucleon::*)(const class Pythia8::Vec4 &)) &Pythia8::Nucleon::bShift, "C++: Pythia8::Nucleon::bShift(const class Pythia8::Vec4 &) --> void", pybind11::arg("bvec"));
+		cl.def("status", (enum Pythia8::Nucleon::Status (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::status, "C++: Pythia8::Nucleon::status() const --> enum Pythia8::Nucleon::Status");
+		cl.def("done", (bool (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::done, "C++: Pythia8::Nucleon::done() const --> bool");
+		cl.def("event", (class Pythia8::EventInfo * (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::event, "C++: Pythia8::Nucleon::event() const --> class Pythia8::EventInfo *", pybind11::return_value_policy::automatic);
+		cl.def("state", (const class std::vector<double, class std::allocator<double> > & (Pythia8::Nucleon::*)() const) &Pythia8::Nucleon::state, "C++: Pythia8::Nucleon::state() const --> const class std::vector<double, class std::allocator<double> > &", pybind11::return_value_policy::reference);
+		cl.def("altState", [](Pythia8::Nucleon &o) -> const std::vector<double, class std::allocator<double> > & { return o.altState(); }, "", pybind11::return_value_policy::reference);
+		cl.def("altState", (const class std::vector<double, class std::allocator<double> > & (Pythia8::Nucleon::*)(int)) &Pythia8::Nucleon::altState, "C++: Pythia8::Nucleon::altState(int) --> const class std::vector<double, class std::allocator<double> > &", pybind11::return_value_policy::reference, pybind11::arg("i"));
+		cl.def("status", (void (Pythia8::Nucleon::*)(enum Pythia8::Nucleon::Status)) &Pythia8::Nucleon::status, "C++: Pythia8::Nucleon::status(enum Pythia8::Nucleon::Status) --> void", pybind11::arg("s"));
+		cl.def("state", (void (Pythia8::Nucleon::*)(class std::vector<double, class std::allocator<double> >)) &Pythia8::Nucleon::state, "C++: Pythia8::Nucleon::state(class std::vector<double, class std::allocator<double> >) --> void", pybind11::arg("s"));
+		cl.def("addAltState", (void (Pythia8::Nucleon::*)(class std::vector<double, class std::allocator<double> >)) &Pythia8::Nucleon::addAltState, "C++: Pythia8::Nucleon::addAltState(class std::vector<double, class std::allocator<double> >) --> void", pybind11::arg("s"));
+		cl.def("select", (void (Pythia8::Nucleon::*)(class Pythia8::EventInfo &, enum Pythia8::Nucleon::Status)) &Pythia8::Nucleon::select, "C++: Pythia8::Nucleon::select(class Pythia8::EventInfo &, enum Pythia8::Nucleon::Status) --> void", pybind11::arg("evp"), pybind11::arg("s"));
+		cl.def("select", (void (Pythia8::Nucleon::*)()) &Pythia8::Nucleon::select, "C++: Pythia8::Nucleon::select() --> void");
+		cl.def("debug", (void (Pythia8::Nucleon::*)()) &Pythia8::Nucleon::debug, "C++: Pythia8::Nucleon::debug() --> void");
+		cl.def("reset", (void (Pythia8::Nucleon::*)()) &Pythia8::Nucleon::reset, "C++: Pythia8::Nucleon::reset() --> void");
+		cl.def("assign", (class Pythia8::Nucleon & (Pythia8::Nucleon::*)(const class Pythia8::Nucleon &)) &Pythia8::Nucleon::operator=, "C++: Pythia8::Nucleon::operator=(const class Pythia8::Nucleon &) --> class Pythia8::Nucleon &", pybind11::return_value_policy::reference, pybind11::arg(""));
+	}
+	{ // Pythia8::Nucleus file:Pythia8/HINucleusModel.h line:152
+		pybind11::class_<Pythia8::Nucleus, std::shared_ptr<Pythia8::Nucleus>> cl(M("Pythia8"), "Nucleus", "");
+		pybind11::handle cl_type = cl;
+
+		cl.def( pybind11::init( [](){ return new Pythia8::Nucleus(); } ) );
+		cl.def( pybind11::init<class std::vector<class Pythia8::Nucleon, class std::allocator<class Pythia8::Nucleon> >, class Pythia8::Vec4>(), pybind11::arg("nucleons"), pybind11::arg("bPos") );
+
+		cl.def("assign", (class Pythia8::Nucleus & (Pythia8::Nucleus::*)(const class Pythia8::Nucleus &)) &Pythia8::Nucleus::operator=, "C++: Pythia8::Nucleus::operator=(const class Pythia8::Nucleus &) --> class Pythia8::Nucleus &", pybind11::return_value_policy::reference, pybind11::arg(""));
+	}
+	{ // Pythia8::NucleusModel file:Pythia8/HINucleusModel.h line:187
+		pybind11::class_<Pythia8::NucleusModel, std::shared_ptr<Pythia8::NucleusModel>, PyCallBack_Pythia8_NucleusModel> cl(M("Pythia8"), "NucleusModel", "");
+		pybind11::handle cl_type = cl;
+
+		cl.def( pybind11::init( [](){ return new PyCallBack_Pythia8_NucleusModel(); } ) );
+		cl.def(pybind11::init<PyCallBack_Pythia8_NucleusModel const &>());
+		cl.def_readwrite("isProj", &Pythia8::NucleusModel::isProj);
+		cl.def_readwrite("idSave", &Pythia8::NucleusModel::idSave);
+		cl.def_readwrite("ISave", &Pythia8::NucleusModel::ISave);
+		cl.def_readwrite("ASave", &Pythia8::NucleusModel::ASave);
+		cl.def_readwrite("ZSave", &Pythia8::NucleusModel::ZSave);
+		cl.def_readwrite("LSave", &Pythia8::NucleusModel::LSave);
+		cl.def_readwrite("RSave", &Pythia8::NucleusModel::RSave);
+		cl.def_readwrite("mSave", &Pythia8::NucleusModel::mSave);
+		cl.def_readwrite("pNSave", &Pythia8::NucleusModel::pNSave);
+		cl.def_readwrite("mNSave", &Pythia8::NucleusModel::mNSave);
+		cl.def_readwrite("idNSave", &Pythia8::NucleusModel::idNSave);
+		cl.def_static("create", (class std::shared_ptr<class Pythia8::NucleusModel> (*)(int)) &Pythia8::NucleusModel::create, "C++: Pythia8::NucleusModel::create(int) --> class std::shared_ptr<class Pythia8::NucleusModel>", pybind11::arg("model"));
+		cl.def("initPtr", (void (Pythia8::NucleusModel::*)(int, bool, class Pythia8::Info &)) &Pythia8::NucleusModel::initPtr, "C++: Pythia8::NucleusModel::initPtr(int, bool, class Pythia8::Info &) --> void", pybind11::arg("idIn"), pybind11::arg("isProjIn"), pybind11::arg("infoIn"));
+		cl.def("init", (bool (Pythia8::NucleusModel::*)()) &Pythia8::NucleusModel::init, "C++: Pythia8::NucleusModel::init() --> bool");
+		cl.def("initGeometry", (bool (Pythia8::NucleusModel::*)()) &Pythia8::NucleusModel::initGeometry, "C++: Pythia8::NucleusModel::initGeometry() --> bool");
+		cl.def("setParticle", (void (Pythia8::NucleusModel::*)(int)) &Pythia8::NucleusModel::setParticle, "C++: Pythia8::NucleusModel::setParticle(int) --> void", pybind11::arg("idIn"));
+		cl.def("setPN", (void (Pythia8::NucleusModel::*)(const class Pythia8::Vec4 &)) &Pythia8::NucleusModel::setPN, "C++: Pythia8::NucleusModel::setPN(const class Pythia8::Vec4 &) --> void", pybind11::arg("pNIn"));
+		cl.def("setMN", (void (Pythia8::NucleusModel::*)(double)) &Pythia8::NucleusModel::setMN, "C++: Pythia8::NucleusModel::setMN(double) --> void", pybind11::arg("mNIn"));
+		cl.def("produceIon", (class Pythia8::Particle (Pythia8::NucleusModel::*)()) &Pythia8::NucleusModel::produceIon, "C++: Pythia8::NucleusModel::produceIon() --> class Pythia8::Particle");
+		cl.def("generate", (class std::vector<class Pythia8::Nucleon, class std::allocator<class Pythia8::Nucleon> > (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::generate, "C++: Pythia8::NucleusModel::generate() const --> class std::vector<class Pythia8::Nucleon, class std::allocator<class Pythia8::Nucleon> >");
+		cl.def("id", (int (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::id, "C++: Pythia8::NucleusModel::id() const --> int");
+		cl.def("I", (int (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::I, "C++: Pythia8::NucleusModel::I() const --> int");
+		cl.def("A", (int (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::A, "C++: Pythia8::NucleusModel::A() const --> int");
+		cl.def("Z", (int (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::Z, "C++: Pythia8::NucleusModel::Z() const --> int");
+		cl.def("L", (int (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::L, "C++: Pythia8::NucleusModel::L() const --> int");
+		cl.def("R", (double (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::R, "C++: Pythia8::NucleusModel::R() const --> double");
+		cl.def("idN", (int (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::idN, "C++: Pythia8::NucleusModel::idN() const --> int");
+		cl.def("pN", (const class Pythia8::Vec4 & (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::pN, "C++: Pythia8::NucleusModel::pN() const --> const class Pythia8::Vec4 &", pybind11::return_value_policy::reference);
+		cl.def("mN", (double (Pythia8::NucleusModel::*)() const) &Pythia8::NucleusModel::mN, "C++: Pythia8::NucleusModel::mN() const --> double");
+		cl.def("assign", (class Pythia8::NucleusModel & (Pythia8::NucleusModel::*)(const class Pythia8::NucleusModel &)) &Pythia8::NucleusModel::operator=, "C++: Pythia8::NucleusModel::operator=(const class Pythia8::NucleusModel &) --> class Pythia8::NucleusModel &", pybind11::return_value_policy::reference, pybind11::arg(""));
 	}
 }

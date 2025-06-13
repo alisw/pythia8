@@ -24,7 +24,7 @@ contributions. With the default value of the parameter below, a mix of
 relevant contributions is generated but each process type can also be 
 generated individually. Note that for photon-hadron collisions the code 
 for direct contribution depends on which of the beams is photon. 
-The sample main program <code>main69.cc</code> demonstrates different 
+The sample main program <code>main343.cc</code> demonstrates different 
 possibilities. 
 </p> 
  
@@ -326,4 +326,4 @@ for the sampled <ei>W</ei>.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

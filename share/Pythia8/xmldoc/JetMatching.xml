@@ -40,7 +40,7 @@ of Madgraph parameters.
 combine the reading of events with the merging of them. 
 </li> 
 <li> 
-<code>main32.cc, main32.cmnd</code> : a sample main program and card 
+<code>main163.cc, main163.cmnd</code> : a sample main program and card 
 file showing the usage of the previous files/classes. 
 </li> 
 </ul> 
@@ -684,4 +684,4 @@ above example, the only shared methods are the constructor and
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

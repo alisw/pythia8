@@ -1,0 +1,341 @@
+<html><head><title>main245</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main245</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main245.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#external+derived+class">External&nbsp;derived&nbsp;class</a>
+//            <a href="../ExampleKeywords.html#parton+distribution">Parton&nbsp;distribution</a>
+//            <a href="../ExampleKeywords.html#random+number+generator">Random&nbsp;number&nbsp;generator</a>
+//            <a href="../ExampleKeywords.html#beam+momentum">Beam&nbsp;momentum</a>
+//            <a href="../ExampleKeywords.html#vertex+spread">Vertex&nbsp;spread</a>
+
+// Examples how to write external derived classes
+// that can be handed to Pythia for internal generation.
+// 1) The MIXMAX random number generator; see include/Pythia8Plugins/MixMax.h.
+// 2) A simple derived class for external beam momentum and vertex spread.
+// 3) A simple derived class for external parton distributions.
+// Warning: the parameters are not realistic.
+// Two subruns are made, to compare runtime (and results)
+// for the RanMar and MixMax random number generators.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8/BeamShape.h&quot;
+#include &quot;Pythia8Plugins/MixMax.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// A derived class to set beam momentum and interaction vertex spread.
+
+class MyBeamShape : public BeamShape {
+
+public:
+
+  // Constructor.
+  MyBeamShape() {}
+
+  // Initialize beam parameters.
+  // In this particular example we will reuse the existing settings names
+  // but with modified meaning, so init() in the base class can be kept.
+  //virtual void init( Settings&amp; settings, Rndm* rndmPtrIn);
+
+  // Set the two beam momentum deviations and the beam vertex.
+  virtual void pick();
+
+};
+
+//--------------------------------------------------------------------------
+
+// Set the two beam momentum deviations and the beam vertex.
+// Note that momenta are in units of GeV and vertices in mm,
+// always with c = 1, so that e.g. time is in mm/c.
+
+void MyBeamShape::pick() {
+
+  // Reset all values.
+  deltaPxA = deltaPyA = deltaPzA = deltaPxB = deltaPyB = deltaPzB
+    = vertexX = vertexY = vertexZ = vertexT = 0.;
+
+  // Set beam A transverse momentum deviation by a two-dimensional Gaussian.
+  if (allowMomentumSpread) {
+    double totalDev, gauss;
+    do {
+      totalDev = 0.;
+      if (sigmaPxA &gt; 0.) {
+        gauss     = rndmPtr-&gt;gauss();
+        deltaPxA  = sigmaPxA * gauss;
+        totalDev += gauss * gauss;
+      }
+      if (sigmaPyA &gt; 0.) {
+        gauss     = rndmPtr-&gt;gauss();
+        deltaPyA  = sigmaPyA * gauss;
+        totalDev += gauss * gauss;
+      }
+    } while (totalDev &gt; maxDevA * maxDevA);
+
+    // Set beam A longitudinal momentum as a triangular shape.
+    // Reuse sigmaPzA to represent maximum deviation in this case.
+    if (sigmaPzA &gt; 0.) {
+      deltaPzA    = sigmaPzA * ( 1. - sqrt(rndmPtr-&gt;flat()) );
+      if (rndmPtr-&gt;flat() &lt; 0.5) deltaPzA = -deltaPzA;
+    }
+
+    // Set beam B transverse momentum deviation by a two-dimensional Gaussian.
+    do {
+      totalDev = 0.;
+      if (sigmaPxB &gt; 0.) {
+        gauss     = rndmPtr-&gt;gauss();
+        deltaPxB  = sigmaPxB * gauss;
+        totalDev += gauss * gauss;
+      }
+      if (sigmaPyB &gt; 0.) {
+        gauss     = rndmPtr-&gt;gauss();
+        deltaPyB  = sigmaPyB * gauss;
+        totalDev += gauss * gauss;
+      }
+    } while (totalDev &gt; maxDevB * maxDevB);
+
+    // Set beam B longitudinal momentum as a triangular shape.
+    // Reuse sigmaPzB to represent maximum deviation in this case.
+    if (sigmaPzB &gt; 0.) {
+      deltaPzB = sigmaPzB * ( 1. - sqrt(rndmPtr-&gt;flat()) );
+      if (rndmPtr-&gt;flat() &lt; 0.5) deltaPzB = -deltaPzB;
+    }
+  }
+
+  // Set beam vertex location by a two-dimensional Gaussian.
+  if (allowVertexSpread) {
+    double totalDev, gauss;
+    do {
+      totalDev = 0.;
+      if (sigmaVertexX &gt; 0.) {
+        gauss     = rndmPtr-&gt;gauss();
+        vertexX   = sigmaVertexX * gauss;
+        totalDev += gauss * gauss;
+      }
+      if (sigmaVertexY &gt; 0.) {
+        gauss     = rndmPtr-&gt;gauss();
+        vertexY   = sigmaVertexY * gauss;
+        totalDev += gauss * gauss;
+      }
+    } while (totalDev &gt; maxDevVertex * maxDevVertex);
+
+    // Set beam B longitudinal momentum as a triangular shape.
+    // This corresponds to two step-function beams colliding.
+    // Reuse sigmaVertexZ to represent maximum deviation in this case.
+    if (sigmaVertexZ &gt; 0.) {
+      vertexZ     = sigmaVertexZ * ( 1. - sqrt(rndmPtr-&gt;flat()) );
+      if (rndmPtr-&gt;flat() &lt; 0.5) vertexZ = -vertexZ;
+
+      // Set beam collision time flat between +-(sigmaVertexZ - |vertexZ|).
+      // This corresponds to two step-function beams colliding (with v = c).
+      vertexT = (2. * rndmPtr-&gt;flat() - 1.) * (sigmaVertexZ - abs(vertexZ));
+    }
+
+    // Add offset to beam vertex.
+    vertexX      += offsetX;
+    vertexY      += offsetY;
+    vertexZ      += offsetZ;
+    vertexT      += offsetT;
+  }
+
+}
+
+//==========================================================================
+
+// A simple scaling PDF. Not realistic; only to check that it works.
+
+class Scaling : public PDF {
+
+public:
+
+  // Constructor.
+  Scaling(int idBeamIn = 2212) : PDF(idBeamIn) {}
+
+private:
+
+  // Update PDF values.
+  void xfUpdate(int id, double x, double Q2);
+
+};
+
+//--------------------------------------------------------------------------
+
+// No dependence on Q2, so leave out name for last argument.
+
+void Scaling::xfUpdate(int, double x, double ) {
+
+  // Valence quarks, carrying 60% of the momentum.
+  double dv  = 4. * x * pow3(1. - x);
+  double uv  = 2. * dv;
+
+  // Gluons and sea quarks carrying the rest.
+  double gl  = 2.  * pow5(1. - x);
+  double sea = 0.4 * pow5(1. - x);
+
+  // Update values
+  xg    = gl;
+  xu    = uv + 0.18 * sea;
+  xd    = dv + 0.18 * sea;
+  xubar = 0.18 * sea;
+  xdbar = 0.18 * sea;
+  xs    = 0.08 * sea;
+  xc    = 0.04 * sea;
+  xb    = 0.02 * sea;
+
+  // idSav = 9 to indicate that all flavours reset.
+  idSav = 9;
+
+}
+
+//==========================================================================
+
+int main() {
+
+  // Number of events to generate. Max number of errors.
+  int nEvent = 10000;
+  int nAbort = 5;
+
+  // Comparative statistics.
+  double time[2];
+  Hist nchRM(&quot;charged multiplicity RanMar&quot;, 100, -1., 399.);
+  Hist nchMM(&quot;charged multiplicity MixMax&quot;, 100, -1., 399.);
+
+  // Compare runtime (and results) for RanMar and MixMax random numbers.
+  for (int iRNG = 0; iRNG &lt; 2; ++iRNG) {
+    clock_t start = clock();
+
+    // Pythia generator.
+    Pythia pythia;
+
+    // Process selection.
+    pythia.readString(&quot;HardQCD:all = on&quot;);
+    pythia.readString(&quot;PhaseSpace:pTHatMin = 20.&quot;);
+
+    // LHC with acollinear beams in the x plane.
+    // Use that default is pp with pz = +-7000 GeV, so this need not be set.
+    pythia.readString(&quot;Beams:frameType = 3&quot;);
+    pythia.readString(&quot;Beams:pxA = 1.&quot;);
+    pythia.readString(&quot;Beams:pxB = 1.&quot;);
+
+    // A class to generate beam parameters according to own parametrization.
+    BeamShapePtr myBeamShape = make_shared&lt;MyBeamShape&gt;();
+
+    // Hand pointer to Pythia.
+    // If you comment this out you get internal Gaussian-style implementation.
+    pythia.setBeamShapePtr( myBeamShape);
+
+    // Set up beam spread parameters - reused by MyBeamShape.
+    pythia.readString(&quot;Beams:allowMomentumSpread = on&quot;);
+    pythia.readString(&quot;Beams:sigmapxA = 0.1&quot;);
+    pythia.readString(&quot;Beams:sigmapyA = 0.1&quot;);
+    pythia.readString(&quot;Beams:sigmapzA = 5.&quot;);
+    pythia.readString(&quot;Beams:sigmapxB = 0.1&quot;);
+    pythia.readString(&quot;Beams:sigmapyB = 0.1&quot;);
+    pythia.readString(&quot;Beams:sigmapzB = 5.&quot;);
+
+    // Set up beam vertex parameters - reused by MyBeamShape.
+    pythia.readString(&quot;Beams:allowVertexSpread = on&quot;);
+    pythia.readString(&quot;Beams:sigmaVertexX = 0.3&quot;);
+    pythia.readString(&quot;Beams:sigmaVertexY = 0.3&quot;);
+    pythia.readString(&quot;Beams:sigmaVertexZ = 50.&quot;);
+    // In MyBeamShape the time width is not an independent parameter.
+    //pythia.readString(&quot;Beams:sigmaTime = 50.&quot;);
+
+    // Optionally simplify generation and output.
+    //pythia.readString(&quot;PartonLevel:all = off&quot;);
+    pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+    // A class to do random numbers externally. Hand pointer to Pythia.
+    // You can provide four 32-bit unsigned integers to set random sequence.
+    if (iRNG == 1)
+      pythia.setRndmEnginePtr(make_shared&lt;MixMaxRndm&gt;( 0, 0, 0, 123));
+
+    // Two classes to do the two PDFs externally. Hand pointers to Pythia.
+    PDFPtr pdfAPtr = make_shared&lt;Scaling&gt;(2212);
+    PDFPtr pdfBPtr = make_shared&lt;Scaling&gt;(2212);
+    pythia.setPDFPtr( pdfAPtr, pdfBPtr);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Read out nominal energy.
+    double eCMnom = pythia.info.eCM();
+
+    // Local histograms.
+    Hist eCM(&quot;center-of-mass energy deviation&quot;, 100, -20., 20.);
+    Hist pXsum(&quot;net pX offset&quot;, 100, -1.0, 1.0);
+    Hist pYsum(&quot;net pY offset&quot;, 100, -1.0, 1.0);
+    Hist pZsum(&quot;net pZ offset&quot;, 100, -10., 10.);
+    Hist pZind(&quot;individual abs(pZ) offset&quot;, 100, -10., 10.);
+    Hist vtxX(&quot;vertex x position&quot;, 100, -1.0, 1.0);
+    Hist vtxY(&quot;vertex y position&quot;, 100, -1.0, 1.0);
+    Hist vtxZ(&quot;vertex z position&quot;, 100, -100., 100.);
+    Hist vtxT(&quot;vertex time&quot;, 100, -100., 100.);
+    Hist vtxZT(&quot;vertex |x| + |t|&quot;, 100, 0., 100.);
+
+    // Begin event loop. Generate event.
+    int iAbort = 0;
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+      if (!pythia.next()) {
+
+        // List faulty events and quit if many failures.
+        pythia.info.list();
+        pythia.process.list();
+        //pythia.event.list();
+        if (++iAbort &lt; nAbort) continue;
+        cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+        break;
+      }
+
+      // Fill comparative histograms.
+      int nch = 0;
+      for (int i = 0; i &lt; pythia.event.size(); ++i)
+        if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged()) ++nch;
+      if (iRNG == 0) nchRM.fill( nch );
+      else           nchMM.fill( nch );
+
+      // Fill local histograms.
+      double eCMnow = pythia.info.eCM();
+      eCM.fill( eCMnow - eCMnom);
+      pXsum.fill(  pythia.process[0].px() - 2. );
+      pYsum.fill(  pythia.process[0].py() );
+      pZsum.fill(  pythia.process[0].pz() );
+      pZind.fill(  pythia.process[1].pz() - 7000. );
+      pZind.fill( -pythia.process[2].pz() - 7000. );
+      vtxX.fill(  pythia.process[0].xProd() );
+      vtxY.fill(  pythia.process[0].yProd() );
+      vtxZ.fill(  pythia.process[0].zProd() );
+      vtxT.fill(  pythia.process[0].tProd() );
+      double absSum = abs(pythia.process[0].zProd())
+                    + abs(pythia.process[0].tProd());
+      vtxZT.fill( absSum );
+
+    // End of event loop. Statistics. Histograms.
+    }
+    pythia.stat();
+    cout &lt;&lt; eCM &lt;&lt; pXsum &lt;&lt; pYsum &lt;&lt; pZsum &lt;&lt; pZind
+         &lt;&lt; vtxX &lt;&lt; vtxY &lt;&lt; vtxZ &lt;&lt; vtxT &lt;&lt; vtxZT;
+
+    // Check time; end of loop over random number generators. Done.
+    clock_t stop = clock();
+    time[iRNG] = double(stop - start) / double(CLOCKS_PER_SEC);
+  }
+  cout &lt;&lt; nchRM &lt;&lt; nchMM;
+  cout &lt;&lt; &quot;\n =========================================================&quot;
+       &lt;&lt; &quot;============&quot; &lt;&lt; endl;
+  cout &lt;&lt; fixed &lt;&lt; setprecision(3) &lt;&lt; &quot;\n Time for run with RanMar is &quot;
+       &lt;&lt; time[0] &lt;&lt; &quot; s and for run with MixMax &quot; &lt;&lt; time[1] &lt;&lt; &quot; s&quot;&lt;&lt; endl;
+  cout &lt;&lt; &quot;\n =========================================================&quot;
+       &lt;&lt; &quot;============&quot; &lt;&lt; endl;
+
+  return 0;
+}
+</code></pre></body></html>

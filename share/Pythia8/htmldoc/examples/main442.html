@@ -1,0 +1,121 @@
+<html><head><title>main442</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main442</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main442.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#hadronization">Hadronization</a>
+//            <a href="../ExampleKeywords.html#colour+reconnection">Colour&nbsp;reconnection</a>
+//            <a href="../ExampleKeywords.html#rope+hadronization">Rope&nbsp;hadronization</a>
+
+// This program provides a demonstration of the flavour rope model supplied
+// in the Rope Hadronization framework. It produces four histograms
+// showing the ratio of respectively K^0_s, Lambda_0, Cascade and Omega^-
+// to pions as function of event multiplicity.
+// No kind of Levy-Tsallis fitting, triggering or similar is done
+// is this simple demonstration analysis. It should therefore not
+// be taken as anything but a proof of concept.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator. Process selection. LHC initialization.
+  Pythia pythia;
+  pythia.readString(&quot;Beams:eCM = 7000.&quot;);
+  pythia.readString(&quot;SoftQCD:nonDiffractive = on&quot;);
+
+  // Enabling flavour ropes, setting model parameters.
+  // The model is still untuned. These parameter values
+  // are chosen for illustrative purposes.
+  pythia.readString(&quot;Ropewalk:RopeHadronization = on&quot;);
+  pythia.readString(&quot;Ropewalk:doShoving = off&quot;);
+  pythia.readString(&quot;Ropewalk:doFlavour = on&quot;);
+  pythia.readString(&quot;Ropewalk:r0 = 0.5&quot;);
+  pythia.readString(&quot;Ropewalk:m0 = 0.2&quot;);
+  pythia.readString(&quot;Ropewalk:beta = 0.1&quot;);
+
+  // Enabling setting of vertex information.
+  pythia.readString(&quot;PartonVertex:setVertex = on&quot;);
+
+  // Prevent unstable particles from decaying.
+  pythia.readString(&quot;ParticleDecays:limitTau0 = on&quot;);
+  pythia.readString(&quot;ParticleDecays:tau0Max = 10&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  Hist pion(&quot;pions (mult)&quot;, 50, 10., 135.);
+  Hist kaon(&quot;kaons (mult)&quot;, 50, 10., 135.);
+  Hist lambda(&quot;lambdas (mult)&quot;, 50, 10., 135.);
+  Hist xi(&quot;xi (mult)&quot;, 50, 10., 135.);
+  Hist omega(&quot;omega (mult)&quot;, 50, 10., 135.);
+
+  // Note: High statistics is needed to fill the high multiplicity end
+  // of the histograms, especially for Omega.
+  const int nEvent = 4000;
+
+  // Begin event loop. Generate event. Skip if error. List first one.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Counters for particle species.
+    int nCharged = 0, nPions = 0, nKaons = 0;
+    int nLambdas = 0, nXis = 0, nOmegas = 0;
+    // Event short notation.
+    Event&amp; event = pythia.event;
+    for (int i = 0; i &lt; event.size(); ++i){
+        Particle&amp; p = event[i];
+        // Apply simple, particle level, cuts.
+        if (p.isFinal() &amp;&amp; abs(p.eta()) &lt; 2.5 &amp;&amp; p.pT() &gt; 0.1 ) {
+          if(p.isCharged()) ++nCharged;
+          int absid = abs(p.id());
+          if(absid == 211) ++nPions;
+          else if(absid == 310) ++nKaons;
+          else if(absid == 3122) ++nLambdas;
+          else if(absid == 3312) ++nXis;
+          else if(absid == 3334) ++nOmegas;
+        }
+     }
+
+     // Discard events with event multiplicity less than 10.
+     if(nCharged &lt; 10) continue;
+
+     // Fill histograms.
+     pion.fill( double(nCharged), double(nPions) );
+     kaon.fill( double(nCharged), double(nKaons) );
+     lambda.fill( double(nCharged), double(nLambdas) );
+     xi.fill( double(nCharged), double(nXis) );
+     omega.fill( double(nCharged), double(nOmegas) );
+
+  // End of event loop.
+  }
+
+  // Construct ratio histograms.
+  Hist kp = kaon / pion;
+  kp.title(&quot;kaon / pion (multiplicity)&quot;);
+  Hist lp = lambda / pion;
+  lp.title(&quot;lambda / pion (multiplicity)&quot;);
+  Hist xp = xi / pion;
+  xp.title(&quot;xi / pion (multiplicity)&quot;);
+  Hist op = omega / pion;
+  op.title(&quot;omega / pion (multiplicity)&quot;);
+
+  // Statistics. Histograms. Done.
+  pythia.stat();
+  cout &lt;&lt; kp &lt;&lt; lp &lt;&lt; xp &lt;&lt; op;
+  return 0;
+}
+</code></pre></body></html>

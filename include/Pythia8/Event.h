@@ -1,5 +1,5 @@
 // Event.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -403,51 +403,6 @@ public:
 
 //==========================================================================
 
-// The StringBreaks class stores information about how a single string has
-// been broken up into quark/antiquark and diquark/anti-diquark pairs.
-
-class StringBreaks {
-
-public:
-
-  // Set and get string end indices.
-  void setEnds(int iPosIn, int iNegIn) {iPos = iPosIn; iNeg = iNegIn;}
-  int posEnd() {return iPos;}
-  int negEnd() {return iNeg;}
-
-  // Clear the breaks.
-  void clear() {breaks.clear();}
-
-  // Add a string break by particle ID.
-  void add(int id) {breaks[abs(id)] += 1;}
-
-  // Returns the number of breaks for a given particle ID, or the the sum of
-  // all, light quark, or diquark breaks.
-  const map<int, int>& nId() {return breaks;}
-  int nId(int id) const {
-    auto itr = breaks.find(abs(id));
-    return itr == breaks.end() ? 0 : itr->second;}
-  int nAll() const {int nSum = 0; for (auto &id : breaks) nSum += id.second;
-    return nSum;}
-  int nQuark() const {return nId(1) + nId(2) + nId(3) + nId(4);}
-  int nDiquark() const {int nSum = 0;
-    for (const auto &id : breaks)
-      if (id.first > 1000 && id.first < 10000 && (id.first/10)%10 == 0)
-        nSum += id.second;
-    return nSum;}
-
-private:
-
-  // Index of string end partons and sums of all, quark, and diquark breaks.
-  int iPos{0}, iNeg{0};
-
-  // Number of breaks mapped by particle ID.
-  map<int, int> breaks{};
-
-};
-
-//==========================================================================
-
 // The Event class holds all info on the generated event.
 
 class Event {
@@ -472,10 +427,10 @@ public:
   // Clear event record.
   void clear() {entry.resize(0); maxColTag = startColTag;
     savedPartonLevelSize = 0; scaleSave = 0.; scaleSecondSave = 0.;
-    clearJunctions(); clearHV(); clearStringBreaks();}
+    clearJunctions(); clearHV();}
   void free() {vector<Particle>().swap(entry); maxColTag = startColTag;
     savedPartonLevelSize = 0; scaleSave = 0.; scaleSecondSave = 0.;
-    clearJunctions(); clearHV(); clearStringBreaks();}
+    clearJunctions(); clearHV();}
 
   // Clear event record, and set first particle empty.
   void reset() {clear(); append(90, -11, 0, 0, 0., 0., 0., 0., 0.);}
@@ -660,7 +615,9 @@ public:
   void listJunctions() const;
 
   // Tell whether event has Hidden Valley colours stored.
-  bool hasHVcols() const {return (hvCols.size() > 0);}
+  bool hasHVcols() const {
+    for (const HVcols& col: hvCols) {if (at(col.iHV).isFinal()) return true;}
+    return false;}
 
   // List any Hidden Valley colours. Find largest HV colour.
   void listHVcols() const;
@@ -672,15 +629,6 @@ public:
 
   // Save event record size at Parton Level, i.e. before hadronization.
   void savePartonLevelSize() {savedPartonLevelSize = entry.size();}
-
-  // Add information about string breaks for a single string.
-  void addStringBreaks(StringBreaks& sbIn) {stringBreaks.push_back(sbIn);}
-
-  // Clear string breaks information.
-  void clearStringBreaks() {stringBreaks.clear();}
-
-  // Get information about all string breaks in the event.
-  const vector<StringBreaks> &getStringBreaks() const {return stringBreaks;}
 
   // Operator overloading allows to append one event to an existing one.
   // Warning: particles should be OK, but some other information unreliable.
@@ -711,9 +659,6 @@ private:
   // The list of Hidden-Valley-coloured partons.
   // The explicit use of Pythia8:: qualifier patches a limitation in ROOT.
   vector<Pythia8::HVcols> hvCols;
-
-  // The list of string break information for each string in the event.
-  vector<Pythia8::StringBreaks> stringBreaks;
 
   // Find index in Hidden Valley list for a particle in the event record.
   bool findIndexHV(int iIn) { if (iIn > 0 && iIn == iEventHV) return true;

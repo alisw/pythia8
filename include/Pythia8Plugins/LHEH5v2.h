@@ -50,9 +50,9 @@
 #include <vector>
 
 // HighFive includes.
-#include "H5File.hpp"
-#include "H5FileDriver.hpp"
-#include "H5DataSet.hpp"
+#include "highfive/H5File.hpp"
+#include "highfive/H5FileDriver.hpp"
+#include "highfive/H5DataSet.hpp"
 
 using namespace HighFive;
 

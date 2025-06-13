@@ -1,5 +1,5 @@
 // VinciaMerging.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -29,9 +29,8 @@ void VinciaMerging::init() {
   // Are we doing merging?
   bool vinciaOn     = (mode("PartonShowers:model")==2);
   bool sectorShower = flag("Vincia:sectorShower");
-  doMerging         = flag("Merging:doMerging");
-  doMerging         = ( doMerging && vinciaOn );
-  doSectorMerging   = ( doMerging && sectorShower );
+  doMerging         = vinciaOn && flag("Merging:doMerging");
+  doSectorMerging   = doMerging && sectorShower;
 
   // Check consistency.
   if (doMerging && !doSectorMerging && verbose >= Logger::NORMAL) {
@@ -51,9 +50,10 @@ void VinciaMerging::init() {
   doMergeRes = flag("Vincia:MergeInResSystems");
 
   // Check if we need to insert resonances.
+  // Note: this should normally not be used.
   doInsertRes = settingsPtr->flag("Vincia:InsertResInMerging");
 
-  // What is the maximum multiplicity of the ME-generator?
+  // What is the maximum jet multiplicity?
   nMaxJets = mode("Merging:nJetMax");
   nMaxJetsRes = 0;
   nMergeResSys = 0;
@@ -166,26 +166,9 @@ int VinciaMerging::mergeProcess(Event& process) {
     printOut(__METHOD_NAME__, "begin", DASHLEN);
   int vetoCode = 1;
 
-  // If we just want to calculate the cross section,
-  // check cut here and exit.
-  if (doXSecEstimate) {
-    shared_ptr<VinciaMergingHooks> vinMergingHooksPtr
-      = dynamic_pointer_cast<VinciaMergingHooks>(mergingHooksPtr);
-    // Check whether we have a pointer to Vincia's own MergingHooks object now.
-    if (!vinMergingHooksPtr) {
-      loggerPtr->ERROR_MSG("failed to fetch Vincia's MergingHooks pointer");
-      vetoCode = -1;
-    } else {
-      // Check whether event is above merging scale.
-      if (!vinMergingHooksPtr->isAboveMS(process))
-        vetoCode = 0;
-    }
-  // Sector shower merging.
-  } else if (doSectorMerging) {
-    vetoCode = mergeProcessSector(process);
-  }
-  // Could add other types of merging here in future?
-  // E.g. merging for regular shower.
+  // Sector-shower merging.
+  if (doSectorMerging) vetoCode = mergeProcessSector(process);
+
   if (verbose >= VinciaConstants::DEBUG)
     printOut(__METHOD_NAME__, "end", DASHLEN);
   return vetoCode;
@@ -195,7 +178,8 @@ int VinciaMerging::mergeProcess(Event& process) {
 
 //--------------------------------------------------------------------------
 
-// Basically a simpler version of CKKW-L merging for sector showers.
+// Top-level function to perform sectorised merging in the
+// CKKW-L and UMEPS schemes (MESS, UMESS).
 
 int VinciaMerging::mergeProcessSector(Event& process) {
 
@@ -239,8 +223,6 @@ int VinciaMerging::mergeProcessSector(Event& process) {
     mergingHooksPtr, trialPartonLevelPtr, particleDataPtr, infoPtr);
   auto stop = std::clock();
 
-  //TODO implement accept for unordered histories for MOPS-like merging.
-
   // Check if the event is below merging scale.
   if (history.isBelowMS()) {
     ++nBelowMS;
@@ -252,6 +234,10 @@ int VinciaMerging::mergeProcessSector(Event& process) {
     return 0;
   }
 
+  // If only estimating cross section, return here.
+  if (doXSecEstimate) return 1;
+
+  // Check if the history is valid.
   if (!history.isValid()) {
     loggerPtr->ERROR_MSG("no valid history found");
     ++nAbort;
@@ -260,8 +246,8 @@ int VinciaMerging::mergeProcessSector(Event& process) {
 
   // Get number of clustering steps and save.
   int nClus = history.getNClusterSteps();
+  // Check if something went wrong.
   if (nClus > nMaxJets) {
-    // Something went wrong.
     loggerPtr->ERROR_MSG(
       "multiplicity exceeded expected maximum; please check");
     return -1;
@@ -274,13 +260,37 @@ int VinciaMerging::mergeProcessSector(Event& process) {
   historyCompTime[nClus] += compTime;
   nHistories[nClus]++;
 
-  // Get CKKW-L weight.
+  // TODO: could implement accept for unordered histories for MOPS.
+
+  // For UMEPS subtraction, get integrated (clustered) configuration.
+  if (mergingHooksPtr->doUMEPSSubt()) {
+    Event clusProcess = history.getFirstClusteredEventAboveTMS();
+    // If no complete history exists, veto the event.
+    if (clusProcess.size() == 0) return 0;
+    mergingHooksPtr->reattachResonanceDecays(clusProcess);
+    process = clusProcess;
+  }
+
+  // Get merging weight depending on merging scheme.
+  // Recycle CKKW-L weight for UMEPS tree-level samples.
+  // Note that "last" no-branching probability from S_n is
+  // calculated in the main shower.
   wts[0] = history.getWeightCKKWL();
+  // Use CKKW-L weight for UMEPS subtraction
+  // (negative sign applied in main program).
+  if (mergingHooksPtr->doUMEPSSubt()) wts[0] *= 1.;
+
+  // Check for infinite or nan weights.
+  if (isinf(wts[0]) || isnan(wts[0])) {
+    loggerPtr->ERROR_MSG("infinite or NaN merging weight");
+    return -1;
+  }
+
   // Check that the weight is non-vanishing.
-  if (wts[0] <= MICRO) wts[0] = 0.;
+  if (abs(wts[0]) <= MICRO) wts[0] = 0.;
   if (verbose>=VinciaConstants::DEBUG) {
     stringstream ss;
-    ss << "CKKW-L weight is " << wts[0];
+    ss << "merging weight is " << wts[0];
     printOut(__METHOD_NAME__,ss.str());
   }
   // For now no variations implemented.
@@ -315,9 +325,7 @@ int VinciaMerging::mergeProcessSector(Event& process) {
     }
     nVetoByMult[nClus]++;
     ++nVeto;
-  }
-  else if (history.hasNewProcess()) {
-
+  } else if (history.hasNewProcess()) {
     // We need to overwrite the hard process.
     // (e.g. because an MPI was generated).
     process = history.getNewProcess();
@@ -332,13 +340,35 @@ int VinciaMerging::mergeProcessSector(Event& process) {
   // Set the scale at which to restart the shower.
   if (!doVeto) {
     process.scale(history.getRestartScale());
-    // Tell MergingHooks whether we should veto the first emission.
-    bool vetoFirst = (nClus < nMaxJets) ? true : false;
-    mergingHooksPtr->doIgnoreStep(!vetoFirst);
-    if (verbose >= VinciaConstants::DEBUG)
-      printOut(__METHOD_NAME__, "Shower restart scale: "
-        +num2str(process.scale())+", can veto first step: "
-        +(mergingHooksPtr->canVetoStep() ? " yes" : "  no"));
+
+    // Tell MergingHooks whether we should veto the event based on
+    // whether the first branching is above the MS.
+    // TODO: we would want to check if the history is incomplete here.
+    bool vetoStep = (nClus < nMaxJets) ? true : false;
+    // Never veto events in UMEPS.
+    if (mergingHooksPtr->doUMEPSTree() || mergingHooksPtr->doUMEPSSubt())
+      vetoStep = false;
+    mergingHooksPtr->doIgnoreStep(!vetoStep);
+
+    // Tell MergingHooks whether we should veto branchings based on
+    // whether the first branching is above the MS.
+    // TODO: we would want to check if the history is incomplete here.
+    bool vetoEmissions = (nClus < nMaxJets) ? true : false;
+    // Never veto branchings in CKKW-L.
+    if (!mergingHooksPtr->doUMEPSTree() && !mergingHooksPtr->doUMEPSSubt())
+      vetoEmissions = false;
+    mergingHooksPtr->doIgnoreEmissions(!vetoEmissions);
+
+    // Print information about restart scale and shower veto.
+    if (verbose >= VinciaConstants::DEBUG) {
+      stringstream ss;
+      ss << "Shower restart scale: " << process.scale()
+         << ", can veto first step: "
+         << (mergingHooksPtr->canVetoStep() ? " yes" : " no")
+         << ", can veto first emission: "
+         << (mergingHooksPtr->canVetoEmission() ? " yes" : " no");
+      printOut(__METHOD_NAME__, ss.str());
+    }
   }
 
   if (verbose >= VinciaConstants::DEBUG)

@@ -1,0 +1,47 @@
+! This file demonstrates the usage of CKKW-L merging with Vincia.
+! The merging scale is defined in terms of Vincia's evolution
+! variable pT.
+
+! Number of generated events.
+Main:numberOfEvents       = 1000
+
+! Use LHEF input for events.
+Beams:frameType           = 4
+
+! Event-generation options.
+HadronLevel:all           = on
+PartonLevel:MPI           = on
+
+! Switch Vincia on.
+PartonShowers:model        = 2
+
+! Switch on merging with shower evolution as merging scale.
+Merging:doMerging         = on
+
+! Merging scale value.
+Merging:TMS               = 15
+
+! Core process for merging.
+Merging:Process           = {p p > LEPTONS NEUTRINOS}
+
+! Maximal number of additional LO jets.
+Merging:nJetMax           = 2
+
+! Subruns are used to select which LHE file to read when.
+! Subrun info should always go at the end of the input file.
+! Here Main:subrun = iMerge of pythia.readFile(...) in main162.cc.
+! Note that in the case of CKKW-L we have numberOfSubruns = nJetMax+1.
+Main:numberOfSubruns = 3
+!-----------------------------------------------------------------------
+! LO 2j events.
+Main:subrun             = 1
+Beams:LHEF              = w_production_tree_2.lhe
+!-----------------------------------------------------------------------
+! LO 1j events.
+Main:subrun             = 2
+Beams:LHEF              = w_production_tree_1.lhe
+!-----------------------------------------------------------------------
+! LO 0j events.
+Main:subrun             = 3
+Beams:LHEF              = w_production_tree_0.lhe
+!-----------------------------------------------------------------------

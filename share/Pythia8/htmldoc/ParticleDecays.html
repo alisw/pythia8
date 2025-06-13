@@ -11,7 +11,7 @@
   <li><a href="#section0">Variables determining whether a particle decays</a></li>
   <li><a href="#section1">Mixing</a></li>
   <li><a href="#section2">Tau decays</a></li>
-  <li><a href="#section3">QED radiation</a></li>
+  <li><a href="#section3">QED Radiation in Particle Decays</a></li>
   <li><a href="#section4">Other variables</a></li>
   <li><a href="#section5">Modes for Matrix Element Processing</a></li>
 </ol>
@@ -310,31 +310,16 @@ mediator mass for the process is above this value.
    
  
 <a name="section3"></a> 
-<h3>QED radiation</h3> 
+<h3>QED Radiation in Particle Decays</h3> 
  
-So far PYTHIA does not have any generic machinery for handling QED radiation 
-in normal particle decays. In order to include this, a program like Photos 
-[<a href="Bibliography.html#refBar94" target="page">Bar94</a>, <a href="Bibliography.html#refDav10" target="page">Dav10</a>] could be used as an afterburner. In a few cases, 
-however, the existing shower machinery can be used also here: for 
-two-body decays to a lepton pair (<i>l^+ l^-</i> or <i>l^+- nu_l</i>). 
-Such decays are mediated by <i>gamma^*/Z^0/W^+-</i> exchange, for 
-which PYTHIA does have an existing machinery that can be applied, 
-including first-order matrix-element corrections for the first (hardest) 
-photon emission. 
- 
-<a name="anchor18"></a>
-<p/><code>flag&nbsp; </code><strong> ParticleDecays:allowPhotonRadiation &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
-Allow or not photon radiations in decays to a lepton pair, see above. 
-<br/><b>Note:</b> The current default is to have radiation switched off, 
-in order to avoid double-counting of emissions if you link to an external 
-QED-radiation program, as is the norm in many collaborations. 
-   
+For QED radiation in particle decays, see the setting 
+<code>HadronLevel:QED</code> under <a href="MasterSwitches.html" target="page">Master 
+Switches</a>, and further options for each shower model. 
  
 <a name="section4"></a> 
 <h3>Other variables</h3> 
  
-<a name="anchor19"></a>
+<a name="anchor18"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:mSafety &nbsp;</strong> 
  (<code>default = <strong>0.0005</strong></code>; <code>minimum = 0.</code>; <code>maximum = 0.01</code>)<br/>
 Minimum mass difference required between the decaying mother mass 
@@ -342,7 +327,7 @@ and the sum of the daughter masses, kept as a safety margin to avoid
 numerical problems in the decay generation. 
    
  
-<a name="anchor20"></a>
+<a name="anchor19"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:sigmaSoft &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.</code>)<br/>
 In semileptonic decays to more than one hadron, such as 
@@ -373,14 +358,14 @@ new try is made, including a new multiplicity. These constraints
 imply that the actual average multiplicity does not quite agree with 
 the formula above. 
  
-<a name="anchor21"></a>
+<a name="anchor20"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multIncrease &nbsp;</strong> 
  (<code>default = <strong>4.</strong></code>; <code>minimum = 2.</code>; <code>maximum = 6.</code>)<br/>
 The above <i>multIncrease</i> parameter, except for 
 <code>meMode = 23</code>. 
    
  
-<a name="anchor22"></a>
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multIncreaseWeak &nbsp;</strong> 
  (<code>default = <strong>2.5</strong></code>; <code>minimum = 1.</code>; <code>maximum = 4.</code>)<br/>
 The above <i>multIncrease</i> parameter, specifically for 
@@ -389,19 +374,19 @@ virtual W mass should contribute to the production of new particles,
 rather than the full meson mass. 
    
  
-<a name="anchor23"></a>
+<a name="anchor22"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multRefMass &nbsp;</strong> 
  (<code>default = <strong>0.7</strong></code>; <code>minimum = 0.2</code>; <code>maximum = 2.0</code>)<br/>
 The above <i>multRefMass</i> parameter. 
    
  
-<a name="anchor24"></a>
+<a name="anchor23"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:multGoffset &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 2.0</code>)<br/>
 The above <i>multGoffset</i> parameter. 
    
  
-<a name="anchor25"></a>
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> ParticleDecays:colRearrange &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.</code>; <code>maximum = 1.0</code>)<br/>
 When a decay is given as a list of four partons to be turned into 
@@ -412,7 +397,7 @@ the probability that this original assignment is not respected, and
 default corresponds to no memory of this original colour topology. 
    
  
-<a name="anchor26"></a>
+<a name="anchor25"></a>
 <p/><code>flag&nbsp; </code><strong> ParticleDecays:FSRinDecays &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 When a particle decays to <i>q qbar</i>, <i>g g</i>, <i>g g g</i> 
@@ -510,4 +495,4 @@ multiplicity than the simple string assumed for 82, see the
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

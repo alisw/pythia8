@@ -1,5 +1,5 @@
 // Dire.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -59,64 +59,14 @@ void Dire::initTune() {
   int iTune = settingsPtr->mode("Dire:Tune");
 
   // Default tune.
-  if (iTune == 1) {
-    // Preliminary Professor tune, dated 2017-10-10. To be used with:
-    // PDF:pSet                   = LHAPDF6:MMHT2014nlo68cl
-    // PDF:pHardSet               = LHAPDF6:MMHT2014nlo68cl
-    // TimeShower:alphaSvalue     = 0.1201
-    // SpaceShower:alphaSvalue    = 0.1201
-    // ShowerPDF:usePDFalphas     = on
-    // ShowerPDF:useSummedPDF     = on
-    // DireSpace:forceMassiveMap  = on
-    // ShowerPDF:usePDFmasses     = off
+  if (iTune == 1) settingsPtr->readString("include = tunes/Dire.cmnd");
 
-    settingsPtr->readString("TimeShower:alphaSvalue     = 0.1201");
-    settingsPtr->readString("SpaceShower:alphaSvalue    = 0.1201");
-    settingsPtr->readString("TimeShower:alphaSorder     = 2");
-    settingsPtr->readString("SpaceShower:alphaSorder    = 2");
-
-    // Tuned hadronization from e+e- data
-    settingsPtr->readString("StringPT:sigma = 0.2952");
-    settingsPtr->readString("StringZ:aLund = 0.9704");
-    settingsPtr->readString("StringZ:bLund = 1.0809");
-    settingsPtr->readString("StringZ:aExtraDiquark = 1.3490");
-    settingsPtr->readString("StringFlav:probStoUD = 0.2046");
-    settingsPtr->readString("StringZ:rFactB = 0.8321");
-    settingsPtr->readString("StringZ:aExtraSQuark = 0.0");
-    settingsPtr->readString("TimeShower:pTmin = 0.9");
-
-    // Tuned MPI and primordial kT to LHC data (UE in dijets + Drell-Yan pT).
-    settingsPtr->readString("SpaceShower:pTmin = 0.9");
-    settingsPtr->readString("MultipartonInteractions:alphaSvalue = 0.1309");
-    settingsPtr->readString("MultipartonInteractions:pT0Ref = 1.729");
-    settingsPtr->readString("MultipartonInteractions:expPow = 1.769");
-    settingsPtr->readString("ColourReconnection:range = 2.1720");
-    settingsPtr->readString("BeamRemnants:primordialKThard = 2.2873");
-    settingsPtr->readString("BeamRemnants:primordialKTsoft =  0.25");
-    settingsPtr->readString("BeamRemnants:reducedKTatHighY =  0.47");
-
-  }
-
-  // For new U(1) splittings, teach Pythia new particles, if not already read
-  // from input file.
+  // For new U(1) splittings, teach Pythia new particles.
   if ( settingsPtr->flag("TimeShower:U1newShowerByL")
     || settingsPtr->flag("TimeShower:U1newShowerByQ")
     || settingsPtr->flag("SpaceShower:U1newShowerByL")
-    || settingsPtr->flag("SpaceShower:U1newShowerByQ")) {
-    if (!particleDataPtr->isParticle(900032)) {
-      settingsPtr->readString("900032:all = Zp void 1 0 0 1. 0.01 0. 0. 0.");
-      settingsPtr->readString("900032:addChannel = 1 0.33 101 11 -11");
-      settingsPtr->readString("900032:addChannel = 1 0.33 101 13 -13");
-      settingsPtr->readString("900032:addChannel = 1 0.34 101 211 -211");
-      settingsPtr->readString("900032:isResonance = true");
-    }
-    if (!particleDataPtr->isParticle(900012)) {
-      settingsPtr->readString("900012:all = nup nup_bar"
-                              " 1 0 0 0.0 0.0 0. 0. 0.");
-    }
-  }
-
-  return;
+    || settingsPtr->flag("SpaceShower:U1newShowerByQ"))
+    settingsPtr->readString("include = tunes/DireU1.cmnd");
 
 }
 
@@ -191,7 +141,7 @@ void Dire::setup(BeamParticle* beamA, BeamParticle* beamB) {
 
   // Reset Pythia masses if necessary.
   if ( settingsPtr->flag("ShowerPDF:usePDFmasses")
-    && ( beamA != NULL || beamB != NULL) ) {
+    && ( beamA != nullptr || beamB != nullptr) ) {
     for (int i=1; i <= 5; ++i) {
       // Try to get masses from the hadron beams.
       double mPDF = (abs(beamA->id()) > 30)
@@ -199,9 +149,9 @@ void Dire::setup(BeamParticle* beamA, BeamParticle* beamB) {
                   : (abs(beamB->id()) > 30)
                     ? beamB->mQuarkPDF(i) : -1.0;
       // If there are no hadron beams, get the masses from either beam.
-      if (beamA != NULL && mPDF < 0.)
+      if (beamA != nullptr && mPDF < 0.)
         mPDF = beamA->mQuarkPDF(i);
-      if (beamB != NULL && mPDF < 0.)
+      if (beamB != nullptr && mPDF < 0.)
         mPDF = beamB->mQuarkPDF(i);
       if (mPDF > -1.) {
         stringstream resetMass;

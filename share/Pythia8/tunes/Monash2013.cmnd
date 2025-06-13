@@ -1,0 +1,42 @@
+! The pp Monash 2013 tune by Peter Skands, January 2014.
+! See Eur.Phys.J.C 74 (2014) 8, 3024 [arXiv:1404.5630 [hep-ph]] for details.
+! Previously set by "Tune:pp = 1".
+include                             = tunes/Reset-pp.cmnd      ! reset pp tune
+include                             = tunes/Monash2013-ee.cmnd ! set ee tune
+PDF:pSet                            = 13       ! NNPDF23_lo_as_0130_qed
+SigmaProcess:alphaSvalue            = 0.130    ! same as PDF
+SigmaTotal:zeroAXB                  = true  
+SigmaDiffractive:dampen             = true  
+SigmaDiffractive:maxXB              = 65.0  
+SigmaDiffractive:maxAX              = 65.0  
+SigmaDiffractive:maxXX              = 65.0  
+Diffraction:largeMassSuppress       = 4.0   
+TimeShower:dampenBeamRecoil         = true  
+TimeShower:phiPolAsym               = true  
+SpaceShower:alphaSvalue             = 0.1365   ! same as FSR
+SpaceShower:alphaSorder             = 1     
+SpaceShower:alphaSuseCMW            = false 
+SpaceShower:samePTasMPI             = false 
+SpaceShower:pT0Ref                  = 2.0   
+SpaceShower:ecmRef                  = 7000.0
+SpaceShower:ecmPow                  = 0.0   
+SpaceShower:pTmaxFudge              = 1.0   
+SpaceShower:pTdampFudge             = 1.0   
+SpaceShower:rapidityOrder           = true  
+SpaceShower:rapidityOrderMPI        = true  
+SpaceShower:phiPolAsym              = true  
+SpaceShower:phiIntAsym              = true  
+MultipartonInteractions:alphaSvalue = 0.130    ! same as PDF
+MultipartonInteractions:pT0Ref      = 2.28  
+MultipartonInteractions:ecmRef      = 7000. 
+MultipartonInteractions:ecmPow      = 0.215 
+MultipartonInteractions:bProfile    = 3     
+MultipartonInteractions:expPow      = 1.85  
+MultipartonInteractions:a1          = 0.15  
+BeamRemnants:primordialKTsoft       = 0.9   
+BeamRemnants:primordialKThard       = 1.8   
+BeamRemnants:halfScaleForKT         = 1.5   
+BeamRemnants:halfMassForKT          = 1.0   
+ColourReconnection:mode             = 0     
+ColourReconnection:range            = 1.80  
+

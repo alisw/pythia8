@@ -1,5 +1,5 @@
 // VinciaISR.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -537,7 +537,7 @@ double TrialIISplitA::getSj2(double Qt2, double zeta, double sAB) {
 
 double TrialIISplitA::trialPDFratio(BeamParticle* beamAPtr, BeamParticle*,
   int iSys, int idA, int, double eA, double, double Qt2A, double) {
-  double xA     = eA/(sqrt(shhSav)/2.0);
+  const double xA = eA/infoPtr->eA();
   double newPdf = max(beamAPtr->xfISR(iSys,  21, xA, Qt2A), TINYPDFtrial);
   double oldPdf = max(beamAPtr->xfISR(iSys, idA, xA, Qt2A), TINYPDFtrial);
   trialPDFratioSav = 1.0*newPdf/oldPdf;
@@ -697,7 +697,7 @@ double TrialIIConvA::getSj2(double Qt2, double zeta, double sAB) {
 double TrialIIConvA::trialPDFratio(BeamParticle* beamAPtr, BeamParticle*,
   int iSys, int, int, double eA, double, double Qt2A, double) {
 
-  double xA  = eA/(sqrt(shhSav)/2.0);
+  const double xA = eA/infoPtr->eA();
   int nQuark = nGtoQISRSav;
   if (nQuark >= 4 && Qt2A <= 4.0*mcSav*mcSav) nQuark = 3;
   else if (nQuark >= 5 && Qt2A <= 4.0*mbSav*mbSav) nQuark = 4;
@@ -829,10 +829,9 @@ double TrialIFSoft::getZmin(double Qt2, double sAK, double, double) {
 }
 
 double TrialIFSoft::getZmax(double, double, double eA, double eBeamUsed) {
-  const double xA     = eA/(sqrt(shhSav)/2.0);
-  const double eAmax  = ( (sqrt(shhSav)/2.0) - (eBeamUsed-eA) );
-  const double xAmax  = eAmax/(sqrt(shhSav)/2.0);
-  return xAmax / xA;
+  const double xA    = eA/infoPtr->eA();
+  const double xAMax = 1. - (eBeamUsed-eA)/infoPtr->eA();
+  return xAMax/xA;
 }
 
 //--------------------------------------------------------------------------
@@ -1004,10 +1003,9 @@ double TrialIFGCollA::getZmin(double Qt2, double sAK, double, double) {
 }
 
 double TrialIFGCollA::getZmax(double, double, double eA, double eBeamUsed) {
-  const double xA     = eA/(sqrt(shhSav)/2.0);
-  const double eAmax  = ( (sqrt(shhSav)/2.0) - (eBeamUsed - eA) );
-  const double xAmax  = eAmax/(sqrt(shhSav)/2.0);
-  return xAmax/xA;
+  const double xA    = eA/infoPtr->eA();
+  const double xAMax = 1. - (eBeamUsed-eA)/infoPtr->eA();
+  return xAMax/xA;
 }
 
 //--------------------------------------------------------------------------
@@ -1141,20 +1139,18 @@ double TrialIFGCollK::getIz(double zMin, double zMax) {
 
 double TrialIFGCollK::getZmax(double /*Qt2*/, double sAK, double eA,
   double) {
-  // Calculate dimensionless invariants and evolution variable.
-  double xA = eA/(sqrt(shhSav)/2.0);
+  const double xA = eA/infoPtr->eA();
   // Need a cutoff here, as we hit the 1-yaj singularity else.
   // This is justified as a value close yaj->1 is always in the
   // aj-collinear sector, where it will be vetoed.
-  //TODO A better solution would still be nice, though.
+  // TODO A better solution would still be nice, though.
   double q2cut = 1.;
   return 1./(1.+xA*q2cut/sAK);
 }
 
 double TrialIFGCollK::getZmin(double Qt2, double sAK, double eA,
   double) {
-  // Calculate dimensionless invariants and evolution variable.
-  double xA = eA/(sqrt(shhSav)/2.0);
+  const double xA = eA/infoPtr->eA();
   return xA/(1.-xA)*Qt2/sAK;
 }
 
@@ -1322,10 +1318,9 @@ double TrialIFSplitA::getZmin(double Qt2, double sAK, double, double) {
 }
 
 double TrialIFSplitA::getZmax(double, double, double eA, double eBeamUsed) {
-  double xA     = eA/(sqrt(shhSav)/2.0);
-  double eAmax  = ((sqrt(shhSav)/2.0) - (eBeamUsed - eA));
-  double xAmax  = eAmax/(sqrt(shhSav)/2.0);
-  return xAmax/xA;
+  const double xA    = eA/infoPtr->eA();
+  const double xAMax = 1. - (eBeamUsed-eA)/infoPtr->eA();
+  return xAMax/xA;
 }
 
 //--------------------------------------------------------------------------
@@ -1368,7 +1363,7 @@ double TrialIFSplitA::getSj2(double Qt2, double zeta, double sAK) {
 
 double TrialIFSplitA::trialPDFratio(BeamParticle* beamAPtr, BeamParticle*,
   int iSys, int idA, int, double eA, double, double Qt2A, double) {
-  double xA = eA/(sqrt(shhSav)/2.0);
+  const double xA = eA/infoPtr->eA();
   double newPdf = max(beamAPtr->xfISR(iSys,  21, xA, Qt2A), TINYPDFtrial);
   double oldPdf = max(beamAPtr->xfISR(iSys, idA, xA, Qt2A), TINYPDFtrial);
   trialPDFratioSav = newPdf/oldPdf;
@@ -1467,11 +1462,10 @@ double TrialIFSplitK::getIz(double zMin, double zMax) {
 double TrialIFSplitK::getZmin(double Qt2, double sAK, double eA,
   double eBeamUsed) {
   if (useMevolSav) return 0.0;
-  double xA     = eA/(sqrt(shhSav)/2.0);
-  double eAmax  = ( (sqrt(shhSav)/2.0) - (eBeamUsed-eA) );
-  double xAmax  = eAmax/(sqrt(shhSav)/2.0);
-  double sjkmax = sAK*(xAmax - xA)/xA;
-  return Qt2/sjkmax;
+  const double xA     = eA/infoPtr->eA();
+  const double xAMax  = 1. - (eBeamUsed-eA)/infoPtr->eA();
+  const double sjkMax = sAK*(xAMax-xA)/xA;
+  return Qt2/sjkMax;
 }
 
 double TrialIFSplitK::getZmax(double, double, double, double) {
@@ -1618,11 +1612,10 @@ double TrialIFConvA::getZmin(double Qt2, double sAK, double, double) {
 
 double TrialIFConvA::getZmax(double, double sAK, double eA,
   double eBeamUsed) {
-  double xA     = eA/(sqrt(shhSav)/2.0);
-  double eAmax  = ((sqrt(shhSav)/2.0) - (eBeamUsed - eA));
-  double xAmax  = eAmax/(sqrt(shhSav)/2.0);
-  double sjkmax = sAK*(xAmax - xA)/xA;
-  return (sjkmax+sAK)/sAK;
+  const double xA     = eA/infoPtr->eA();
+  const double xAMax  = 1. - (eBeamUsed-eA)/infoPtr->eA();
+  const double sjkMax = sAK*(xAMax-xA)/xA;
+  return (sjkMax+sAK)/sAK;
 }
 
 //--------------------------------------------------------------------------
@@ -1667,7 +1660,7 @@ double TrialIFConvA::trialPDFratio(BeamParticle* beamAPtr, BeamParticle*,
   int iSys, int, int, double eOldA, double, double Qt2A, double) {
 
   // Number of active flavours.
-  double xOldA = eOldA/(sqrt(shhSav)/2.0);
+  const double xOldA = eOldA/infoPtr->eA();
   int nQuark = nGtoQISRSav;
   if (nQuark >= 4 && Qt2A <= 4.0*mcSav*mcSav) nQuark = 3;
   else if (nQuark >= 5 && Qt2A <= 4.0*mbSav*mbSav) nQuark = 4;
@@ -1958,12 +1951,11 @@ void BranchElementalISR::list(bool header, bool footer) const {
 
 void VinciaISR::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
 
-  // Check if already initialized.
-  if (verbose >= VinciaConstants::DEBUG)
-    printOut(__METHOD_NAME__, "begin", DASHLEN);
-
   // Verbose level.
   verbose         = settingsPtr->mode("Vincia:verbose");
+
+  // Check if already initialized.
+  if (verbose >= DEBUG) printOut(__METHOD_NAME__, "begin", DASHLEN);
 
   // Showers on/off.
   bool doISR = settingsPtr->flag("PartonLevel:ISR");
@@ -3277,6 +3269,7 @@ bool VinciaISR::branch(Event& event) {
       diagnosticsPtr->stop(__METHOD_NAME__,"trialVeto(kinematics)");
     return false;
   }
+
   // If no recoilers for this branching, e.g. local IF map, zero iRecs,
   if (recoilers.size() <= 0) iRecs.clear();
 
@@ -3331,7 +3324,7 @@ bool VinciaISR::branch(Event& event) {
     thisClus.setDaughters(ptclsPost,indA,1,indB);
     thisClus.setMothers(winnerPtr->id1sav,winnerPtr->id2sav);
     thisClus.setAntenna(false,antFunTypeWin);
-    thisClus.initInvariantAndMassVecs();
+    if (!thisClus.init()) return false;
     double q2sectorThis = resolutionPtr->q2sector(thisClus);
     // Sanity check.
     if (q2sectorThis < 0.) {
@@ -3587,6 +3580,16 @@ bool VinciaISR::branch(Event& event) {
           event[i].daughters(iNew1, 0);
           break;
         }
+  }
+
+  // Allow veto by MergingHooks. Needed for unitary merging schemes,
+  // where only emissions are vetoed, not the whole event.
+  if (doMerging && mergingHooksPtr->canVetoEmission()) {
+    if (mergingHooksPtr->doVetoEmission(event)) {
+      // Restore backup event.
+      event = evtOld;
+      return false;
+    }
   }
 
   // Veto by userHooks, possibility to allow user veto of emission step.
@@ -4525,7 +4528,12 @@ bool VinciaISR::generateKinematicsII(Event& event,
       diagnosticsPtr->stop(__METHOD_NAME__,"trialVeto(map2to3II)");
     return false;
   }
+
   // Save momenta.
+  if (pNew.size() < 3) {
+    loggerPtr->WARNING_MSG("failed to construct post-branching momenta");
+    return false;
+  }
   trialPtr->new1.p(pNew[0]);
   trialPtr->new2.p(pNew[1]);
   trialPtr->new3.p(pNew[2]);
@@ -5072,7 +5080,10 @@ bool VinciaISR::acceptTrial(const Event& event,
   // Starting value for accept probability = Physical/Trial.
   Paccept[0] = antPhys*PDFphys/antPDFtrialSum;
   if (Paccept[0] > 1.05 && qNew > 2.0)
-    loggerPtr->WARNING_MSG("pAccept > 1");
+    loggerPtr->WARNING_MSG("pAccept > 1", "at qNew = " + to_string(qNew)
+      + " with m(1,j,2) = (" + to_string(m1ant) + "," + to_string(mjant)
+      + "," + to_string(m2ant) + ") isII = " + bool2str(isII)
+      + " P = " + to_string(Paccept[0]));
   if (verbose >= VinciaConstants::DEBUG ||
     (verbose >= Logger::REPORT && Paccept[0] > 1.05 && qNew > 2.0) ) {
     if (nTrialTerms == 1) {

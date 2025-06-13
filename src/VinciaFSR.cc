@@ -1,5 +1,5 @@
 // VinciaFSR.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -1305,7 +1305,7 @@ void VinciaFSR::init( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
   doII       = doISR && settingsPtr->flag("Vincia:doII");
   doIF       = doISR && settingsPtr->flag("Vincia:doIF");
   ewMode     = settingsPtr->mode("Vincia:EWmode");
-  ewModeMPI  = min(settingsPtr->mode("Vincia:EWmodeMPI"),ewMode);
+  qedModeMPI = min(settingsPtr->mode("Vincia:QEDmodeMPI"), ewMode);
   doQED      = ewMode >= 1;
   doWeak     = ewMode >= 3;
 
@@ -1583,22 +1583,43 @@ int VinciaFSR::showerQED(int iBeg, int iEnd, Event& event, double pTmax) {
   // Check if we are supposed to do anything.
   if (!doQED || infoPtr->getAbortPartonLevel()) return 0;
   if (verbose >= VinciaConstants::DEBUG) {
-    printOut(__METHOD_NAME__, "begin", DASHLEN);
+    printOut(__METHOD_NAME__, "begin" + num2str(iBeg) + "," + num2str(iEnd)
+      + " pTmax =" + num2str(pTmax), DASHLEN);
     event.list();
   }
-  // Construct a little QED system out of the given particles.
+
+  // Check if they all have the same mother.
+  int iMot = event[iBeg].mother1();
+  bool sameMother = true;
+  for (int i = iBeg; i <= iEnd; ++i) {
+    if (event[i].mother1() != iMot) sameMother = false;
+    else if (event[i].mother2() != 0 && event[i].mother2() != iMot)
+      sameMother = false;
+  }
+  if (!sameMother) loggerPtr->warningMsg(__METHOD_NAME__,
+    "Unable to identify unique mother");
+
+  // Construct a PartonSystem for the decay used by the QED shower module
+  // to build its systems.
+  partonSystemsPtr->clear();
   partonSystemsPtr->addSys();
   int iSys = partonSystemsPtr->sizeSys()-1;
-  // We could check if they all have the same mother and treat as
-  // resonance decay, but currently do not.
-  if (iBeg > iEnd) {
+  partonSystemsPtr->setInRes(iSys, iMot);
+  // Add final-state decay products to PartonSystem.
+  if (iBeg < iEnd) {
+    // Standard Case: contiguous decay products from iBeg to iEnd.
+    for (int i = iBeg; i <= iEnd; ++i) partonSystemsPtr->addOut(iSys, i);
+  } else {
+    // iEnd < iBeg: special case of two non-contiguous particles.
     partonSystemsPtr->addOut(iSys,iBeg);
     partonSystemsPtr->addOut(iSys,iEnd);
-  } else {
-    for (int i=iBeg; i<iEnd; ++i) partonSystemsPtr->addOut(iSys,i);
   }
+
+  // Prepare QED shower.
   qedShowerSoftPtr->clear();
-  qedShowerSoftPtr->prepare( iSys, event, true);
+  qedShowerSoftPtr->prepare( iSys, event, 1);
+
+  // Do QED shower evolution.
   double q2      = pow2(pTmax);
   double q2min   = qedShowerSoftPtr->q2min();
   int nBranchNow = 0;
@@ -1619,8 +1640,10 @@ int VinciaFSR::showerQED(int iBeg, int iEnd, Event& event, double pTmax) {
 
 //--------------------------------------------------------------------------
 
-// Method to add QED showers to partons below colour resolution scale
-// (TimeShower).
+// Method to add QED showers to partons below colour resolution scale.
+// Leptons shower from q2minColoured to q2min, using colour strings as
+// recoilers. Shower of hadronic system produced by string fragmentation
+// and in hadron decays will be handled as part of HadronLevel.
 
 int VinciaFSR::showerQEDafterRemnants(Event& event) {
   // Check if we are supposed to do anything.
@@ -1631,9 +1654,11 @@ int VinciaFSR::showerQEDafterRemnants(Event& event) {
   }
 
   // Prepare for showering below hadronisation scale. Include partons
-  // from all current systems (pass iSys = -1).
+  // from all current systems (pass iSys = -1). Giving
+  // remnantHadScaleIn = 2 lets QED system know that we are showering
+  // after remnants
   qedShowerSoftPtr->clear();
-  qedShowerSoftPtr->prepare( -1, event, true);
+  qedShowerSoftPtr->prepare( -1, event, 2);
 
   // Retrieve iSys for remnant system.
   int iSysRem    = partonSystemsPtr->sizeSys()-1;
@@ -1712,7 +1737,7 @@ int VinciaFSR::showerQEDafterRemnants(Event& event) {
     if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
       "Checking for leftover resonances");
     ewShowerPtr->clear();
-    ewShowerPtr->prepare(0, event, true);
+    ewShowerPtr->prepare(0, event, 1);
     if (ewShowerPtr->nResDec() > 0) {
       q2 = 1e6;
       while (q2 > 0.) {
@@ -2138,11 +2163,11 @@ void VinciaFSR::prepare(int iSys, Event& event, bool) {
     if (isHard) {
       // Check if doing full EW or "just" QED.
       if (doWeak && polarisedSys[iSys] &&
-        ewShowerPtr->prepare(iSys,event,false) ) {
+        ewShowerPtr->prepare(iSys,event,0) ) {
         ewHandlerHard = ewShowerPtr;
       } else {
         qedShowerHardPtr->clear(iSys);
-        qedShowerHardPtr->prepare(iSys, event, false);
+        qedShowerHardPtr->prepare(iSys, event, 0);
         ewHandlerHard = qedShowerHardPtr;
       }
       if (verbose >= VinciaConstants::DEBUG) {
@@ -2153,7 +2178,7 @@ void VinciaFSR::prepare(int iSys, Event& event, bool) {
       }
     } else {
       // MPI and non-resonance (eg hadron-) decay systems always use QED.
-      qedShowerSoftPtr->prepare(iSys, event, false);
+      qedShowerSoftPtr->prepare(iSys, event, 0);
     }
   }
 
@@ -3076,18 +3101,33 @@ void VinciaFSR::header() {
   // Information about EW/QED showers.
   cout << " |\n";
   cout << " |   QED/EW:       EWmode                    = "
-       <<num2str(settingsPtr->mode("Vincia:EWmode"),9)<<"\n";
+       << num2str(settingsPtr->mode("Vincia:EWmode"),9)<<"\n";
   if (settingsPtr->mode("Vincia:EWmode") >= 1) {
+    if (settingsPtr->mode("Vincia:EWmode") <= 2) {
+      cout << " |                 useSpinsQED               = ";
+      vector<bool> fvec = settingsPtr->fvec("Vincia:useSpinsQED");
+      cout << bool2str(fvec[0]) << ", " << bool2str(fvec[1]) << ", "
+           << bool2str(fvec[1]) << "\n";
+    }
     cout << " |                 nGammaToQuark             = "
-         <<num2str(settingsPtr->mode("Vincia:nGammaToQuark"),9)<<"\n"
+         << num2str(settingsPtr->mode("Vincia:nGammaToQuark"),9)<<"\n"
          << " |                 nGammaToLepton            = "
-         <<num2str(settingsPtr->mode("Vincia:nGammaToLepton"),9)<<"\n"
+         << num2str(settingsPtr->mode("Vincia:nGammaToLepton"),9)<<"\n"
          << " |                 convertGammaToQuark       = "
-         <<bool2str(settingsPtr->flag("Vincia:convertGammaToQuark"),9)<<"\n"
+         << bool2str(settingsPtr->flag("Vincia:convertGammaToQuark"),9)<<"\n"
          << " |                 convertQuarkToGamma       = "
-         <<bool2str(settingsPtr->flag("Vincia:convertQuarkToGamma"),9)<<"\n";
-    cout << " |                 EWmodeMPI                 = "
-         <<num2str(settingsPtr->mode("Vincia:EWmodeMPI"),9)<<"\n";
+         << bool2str(settingsPtr->flag("Vincia:convertQuarkToGamma"),9)<<"\n";
+    cout << " |                 QEDmodeMPI                = "
+         << num2str(settingsPtr->mode("Vincia:QEDmodeMPI"),9)<<"\n";
+    cout << " |                 QEDmodeHadDec             = "
+         << num2str(settingsPtr->mode("Vincia:QEDmodeHadDec"),9)<<"\n";
+    if (settingsPtr->mode("Vincia:QEDmodeHadDec") >= 1) {
+      cout << " |                 useSpinsQEDHadDec         = ";
+      vector<bool> fvec =
+        settingsPtr->fvec("Vincia:useSpinsQEDHadDec");
+      cout << bool2str(fvec[0]) << ", " << bool2str(fvec[1]) << ", "
+           << bool2str(fvec[1]) << "\n";
+    }
     // Further information about EW.
     if (ewMode >=3) {
       cout << " |                 doBosonicInterference     = "
@@ -3170,7 +3210,7 @@ void VinciaFSR::header() {
   // references.
   cout << " |\n";
   cout << " |-------------------------------------------"
-       << "---------------------------------------------*\n |\n";
+       << "---------------------------------------------------*\n |\n";
   cout << " | References :"<<endl;
   // Vincia QCD shower.
   cout << " |    VINCIA Shower   : Brooks, Preuss, Skands, "
@@ -3199,7 +3239,7 @@ void VinciaFSR::header() {
   cout << " |    PYTHIA 8        : Bierlich et al.,"
        << " SciPost Phys. Codebases 8-r8.3 (2022) arXiv:2203.11601" << endl;
   cout << " |\n *-------  End VINCIA Initialization  "
-       << "----------------------------------------------------*\n\n";
+       << "----------------------------------------------------------*\n\n";
   cout.setf(ios::right);
 
 }
@@ -3384,33 +3424,28 @@ void VinciaFSR::saveBornForTrialShower(Event& born) {
   // Index of system we do the trial shower for.
   int iSysTrial = 0;
 
-  // Only resolve Born for resonance systems.
-  if (isTrialShowerRes) {
-    // We have to find the resonance system.
-    // NOTE: by convention (!) this will be the only hadronically decaying one.
-    for (int iPtcl(2); iPtcl<born.size(); ++iPtcl) {
-      if (!born[iPtcl].isResonance()) continue;
-      // Otherwise always increase counter.
-      ++iSysTrial;
-      // Get indices of daughters.
-      int iDaughter1 = born[iPtcl].daughter1();
-      int iDaughter2 = born[iPtcl].daughter2();
-      // Skip if not quarks or gluons.
-      bool dtr1isQorG = iDaughter1 > 0 ?
-        (born[iDaughter1].isQuark() || born[iDaughter1].isGluon()) : false;
-      bool dtr2isQorG = iDaughter2 > 0 ?
-        (born[iDaughter2].isQuark() || born[iDaughter2].isGluon()) : false;
-      if (!dtr1isQorG && !dtr2isQorG) continue;
-      // Otherwise this is our system and we save the Born info.
-      resolveBorn[iSysTrial] = true;
-      if (born[iDaughter1].isGluon()) nFlavours[21]++;
-      else nFlavours[born[iDaughter1].id()]++;
-      if (born[iDaughter2].isGluon()) nFlavours[21]++;
-      else nFlavours[born[iDaughter2].id()]++;
-      break;
+  // We want to resolve the Born only when we have a non-QCD coupling in Born.
+  // TODO: probably we always want to resolve the Born.
+  int nNonQCD = 0;
+  int nIn     = 0;
+  for (int i(0); i<born.size(); ++i) {
+    Particle* partonPtr = &born[i];
+    if (!partonPtr->isFinal()) ++nIn;
+    if (partonPtr->isGluon()) nFlavours[partonPtr->id()]++;
+    else if (partonPtr->isQuark()) {
+      int idNow = partonPtr->isFinal() ? partonPtr->id() : -partonPtr->id();
+      nFlavours[idNow]++;
     }
-  } else resolveBorn[iSysTrial] = false;
-  nFlavsBorn[iSysTrial] = nFlavours;
+    else ++nNonQCD;
+  }
+
+  // If there are non-QCD partons in the system, resolve Born.
+  // (Also do this if there are no incoming partons, when using
+  // forceTimeShower to shower off specific user-defined configuration.)
+  if (nNonQCD > 0 || nIn == 0) {
+    resolveBorn[iSysTrial] = true;
+    nFlavsBorn[iSysTrial] = nFlavours;
+  }
 
   // Print information.
   if (verbose >= VinciaConstants::DEBUG) {
@@ -3499,7 +3534,8 @@ double VinciaFSR::getQ2Window(int iWindow, double q2cutoff) {
   switch (iWindow) {
   case 0:
     // [cutoff, mc]
-    qMinNow = min(sqrt(q2cutoff),particleDataPtr->m0(4));
+    qMinNow = particleDataPtr->m0(4) > 0. ?
+      min(sqrt(q2cutoff),particleDataPtr->m0(4)) : sqrt(q2cutoff);
     break;
   case 1:
     // [mc, mb] with 4-flavour running trial alphaS.
@@ -4076,6 +4112,16 @@ bool VinciaFSR::branchQCD(Event& event) {
     return false;
   }
 
+  // Allow veto by MergingHooks. Needed for unitary merging schemes,
+  // where only emissions are vetoed, not the whole event.
+  if (doMerging && mergingHooksPtr->canVetoEmission()) {
+    if (mergingHooksPtr->doVetoEmission(event)) {
+      // Restore backup event.
+      event = oldEvent;
+      return false;
+    }
+  }
+
   // Allow veto by Userhooks.
   // Possibility to allow user veto of emission step.
   if (canVetoEmission) {
@@ -4083,7 +4129,7 @@ bool VinciaFSR::branchQCD(Event& event) {
         iSysWin, isResonanceSys[iSysWin])) {
       if (verbose >= Logger::REPORT) printOut(__METHOD_NAME__,
         "Trial rejected (failed UserHooks::doVetoFSREmission)");
-      // restore backup event
+      // Restore backup event.
       event = oldEvent;
       return false;
     }
@@ -4698,7 +4744,7 @@ bool VinciaFSR::acceptTrial(Event& event) {
     thisClus.setDaughters(ptclsPost,0,1,2);
     thisClus.setMothers(winnerQCD->id0(),winnerQCD->id1());
     thisClus.setAntenna(true,antFunTypeWin);
-    thisClus.initInvariantAndMassVecs();
+    if (!thisClus.init()) return false;
     double q2sectorThis = resolutionPtr->q2sector(thisClus);
     // Sanity check.
     if (q2sectorThis < 0.) {

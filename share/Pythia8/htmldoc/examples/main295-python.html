@@ -1,0 +1,119 @@
+<html><head><title>main295-python</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main295-python</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-python">
+# main295.py is a part of the PYTHIA event generator.
+# Copyright (C) 2025 Torbjorn Sjostrand.
+# PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+# Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+# Authors:
+#            <a href="mailto:philten@cern.ch">Philip Ilten</a>
+
+# Keywords:
+#            <a href="../ExampleKeywords.html#matching">Matching</a>
+#            <a href="../ExampleKeywords.html#madgraph">Madgraph</a>
+#            <a href="../ExampleKeywords.html#amc@nlo">aMC@NLO</a>
+#            <a href="../ExampleKeywords.html#python">Python</a>
+
+# This example is equivalent with main153.cc, but written in Python.
+# The full Python interface must be generated to use this example,
+# &quot;cd plugins/python &amp;&amp; ./generate --full &amp;&amp; cd -&quot;.
+
+# An example where the hard process (p p -&gt; mu+ mu-) is automatically
+# produced externally with MadGraph 5, read in, and the remainder of
+# the event is then produced by Pythia (MPI, showers, hadronization,
+# and decays). A comparison is made between events produced with
+# Pythia at LO, MadGraph 5 at LO, and aMC@NLO at NLO.
+
+# For this example to run, MadGraph 5 must be installed and the
+# command &quot;exe&quot; (set by default as &quot;mg5_aMC&quot;) must be available via
+# the command line. Additionally, GZIP support must be enabled via
+# the &quot;--with-gzip&quot; configuration option(s). Note that this example has
+# only been tested with MadGraph 5 version 2.3.3; due to rapid
+# MadGraph development, this example may not work with other
+# versions. For more details on the LHAMadgraph class see the
+# comments of Pythia8Plugins/LHAMadgraph.h.
+
+# To set the path to the Pythia 8 Python interface do either (in a
+# shell prompt):
+#      export PYTHONPATH=$(PREFIX_LIB):$PYTHONPATH
+# or the following which sets the path from within Python.
+import sys
+cfg = open(&apos;Makefile.inc&apos;)
+lib = &apos;../lib&apos;
+for line in cfg:
+    if line.startswith(&apos;PREFIX_LIB=&apos;): lib = line[11:-1]; break
+sys.path.insert(0, lib)
+import pythia8
+
+#==========================================================================
+
+# A simple method to run Pythia, analyze the events, and fill a histogram.
+
+def run(pythia, hist, nEvent):
+  pythia.readString(&quot;Random:setSeed = on&quot;)
+  pythia.readString(&quot;Random:seed = 1&quot;)
+  pythia.init()
+  for iEvent in range(0, nEvent):
+      if not pythia.next(): continue
+      iMu1 = 0; iMu2 = 0
+      for prt in pythia.event:
+          if not iMu1 and prt.id() == 13:  iMu1 = prt.index()
+          if not iMu2 and prt.id() == -13: iMu2 = prt.index()
+          if iMu1 and iMu2:
+              iMu1 = pythia.event[iMu1].iBotCopyId()
+              iMu2 = pythia.event[iMu2].iBotCopyId()
+              hist.fill((pythia.event[iMu1].p() + pythia.event[iMu2].p()).pT())
+              break
+  pythia.stat()
+
+#==========================================================================
+
+# The name of the MadGraph5_aMC@NLO executable.
+# You must prepend this string with the path to the executable
+# on your local installation, or otherwise make it available.
+exe = &quot;mg5_aMC&quot;
+
+# Create the histograms.
+pyPtZ = pythia8.Hist(&quot;Pythia dN/dpTZ&quot;, 100, 0., 100.)
+mgPtZ = pythia8.Hist(&quot;MadGraph dN/dpTZ&quot;, 100, 0., 100.)
+amPtZ = pythia8.Hist(&quot;aMC@NLO dN/dpTZ&quot;, 100, 0., 100.)
+
+# Produce leading-order events with Pythia.
+pythia = pythia8.Pythia()
+pythia.readString(&quot;Beams:eCM = 13000.&quot;)
+pythia.readString(&quot;WeakSingleBoson:ffbar2gmZ = on&quot;)
+pythia.readString(&quot;23:onMode = off&quot;)
+pythia.readString(&quot;23:onIfMatch = -13 13&quot;)
+pythia.readString(&quot;PhaseSpace:mHatMin = 80.&quot;)
+run(pythia, pyPtZ, 100)
+
+# Produce leading-order events with MadGraph 5.
+pythia = pythia8.Pythia()
+madgraph = pythia8.LHAupMadgraph(pythia, True, &quot;madgraphrun&quot;, exe)
+madgraph.readString(&quot;generate p p &gt; mu+ mu-&quot;);
+# Note the need for a blank character before &quot;set&quot;.
+madgraph.readString(&quot; set ebeam1 6500&quot;)
+madgraph.readString(&quot; set ebeam2 6500&quot;)
+madgraph.readString(&quot; set mmll 80&quot;)
+pythia.setLHAupPtr(madgraph)
+run(pythia, mgPtZ, 1000)
+
+# Produce next-to-leading-order events with aMC@NLO.
+pythia = pythia8.Pythia()
+amcatnlo = pythia8.LHAupMadgraph(pythia, True, &quot;amcatnlorun&quot;, exe)
+amcatnlo.readString(&quot;generate p p &gt; mu+ mu- [QCD]&quot;)
+# Note the need for a blank character before &quot;set&quot;.
+amcatnlo.readString(&quot; set ebeam1 6500&quot;)
+amcatnlo.readString(&quot; set ebeam2 6500&quot;)
+amcatnlo.readString(&quot; set mll 80&quot;)
+pythia.setLHAupPtr(amcatnlo);
+run(pythia, amPtZ, 1000)
+
+# Print the histograms.
+print(pyPtZ)
+print(mgPtZ)
+print(amPtZ)
+</code></pre></body></html>

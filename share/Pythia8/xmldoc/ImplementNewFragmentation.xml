@@ -1,0 +1,73 @@
+<chapter name="Implement New Fragmentation"> 
+ 
+<h2>Implement New Fragmentation</h2> 
+ 
+In case you want to append or replace any of the Pythia fragmentation 
+models with your own, it is possible using some experimental features, 
+but is not trivial (just as for the parton showers). In general, 
+fragmentation models are expected to take a colour subsystem in an 
+event, and convert the partons of this system into colourless bound 
+hadrons. By default, Pythia runs a sequence of three fragmentation 
+models in the following order: a model for Hidden Valley (HV) 
+scenarios, a model for R-hadron scenarios, and the string 
+fragmentation coupled with the mini-string fragmentation. These models 
+can be switched on or off, via various settings; neither the HV nor 
+R-hadron model is run unless the corresponding processes have been 
+switched on. Typically, the string fragmentation is always run, 
+unless explicitly turned off. 
+ 
+<h3>The FragmentationModel interface</h3> 
+ 
+The <code><aloc href="ProgramFlow"> pythia.setFragmentationPtr( 
+fragmentationPtr)</aloc></code>, <code><aloc href="ProgramFlow"> 
+pythia.addFragmentationPtr( fragmentationPtr)</aloc></code>, and 
+<code><aloc href="ProgramFlow"> pythia.insertFragmentationPtr(index, 
+fragmentationPtr)</aloc></code> methods allow the fragmentation model 
+sequence to be completely replaced, appended, or modified with an 
+inserted model, respectively. If the default Pythia string 
+fragmentation models is removed from the fragmentation model sequence, 
+this model will not be used for the standard fragmentation. However, 
+an independent version of this model will still be used elsewhere in 
+Pythia, e.g. for low energy processes. At no point will any of the 
+user provided hadronization models replace this internal model. Each 
+<code>FragmentationModel</code> in the sequence is initialized by 
+Pythia during the main Pythia initialization call. Consequently, every 
+time the fragmentation pointer sequence is modified, Pythia must be 
+re-initialized. 
+<method name = "virtual bool FragmentationModel::init(StringFlav* flavSelPtr, 
+StringPT* pTSelPtr, StringZ* zSelPtr, FragModPtr fragModPtr)"> 
+This method sets the flavor selection, <ei>pT</ei> selection, 
+<ei>z</ei> selection, and fragmentation modification pointers. None of 
+these pointers needs be used by the fragmentation model, but in many 
+cases they may be useful. The default constructor for 
+<code>FragmentationModel</code> will set the internal 
+<code>flavSelPtr</code>, <code>pTSelPtr</code>, and 
+<code>zSelPtr</code> pointers for the base class. 
+</method> 
+ 
+The only other method that needs to be implemented is the main 
+fragmentation method. 
+<method name="virtual bool FragmentationModel::fragment(int iSub, ColConfig& 
+colConfig, Event& event, bool isDiff = false, bool systemRecoil = true)"> 
+This method fragments the colour subsystem with index 
+<code>iSub</code> with a colour configuration given by 
+<code>colConfig[iSub]</code>. The special index <code>iSub == 
+-1</code> indicates that the method is expected to fragment the entire 
+event, rather than the specified subsystem. Consequently, it is 
+important that models check the validity of <code>iSub</code>, i.e. it 
+is not <code>-1</code> befor passing it as an index to 
+<code>colConfig</code>. The event record should be modified so that 
+the fragmented partons are no longer final particles, and any 
+particles produced from the fragmentation should be appended to the 
+event record passed by the argument <code>event</code>. Some 
+fragmentation models require knowledge whether the event was 
+diffractive, which is specified by the <code>isDiff</code> 
+flag. Additionally, for the case of mini-string-like fragmentation, it 
+may be necessary to recoil against a single hadron, rather than the 
+entire system. This is specified by the <code>systemRecoil</code> 
+flag. 
+</method> 
+ 
+</chapter> 
+ 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

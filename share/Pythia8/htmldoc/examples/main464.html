@@ -1,0 +1,125 @@
+<html><head><title>main464</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main464</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main464.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#rescattering">Rescattering</a>
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#cross+sections">Cross&nbsp;sections</a>
+
+// Calculate all cross sections for the specified process and plot them.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Calculate all cross section for specified process.&quot;,
+    {&quot;./main464 -a 2212 -b 2212&quot;});
+  ip.add(&quot;a&quot;, &quot;0&quot;, &quot;ID for beam A.&quot;, {&quot;-idA&quot;});
+  ip.add(&quot;b&quot;, &quot;0&quot;, &quot;ID for beam B.&quot;, {&quot;-idB&quot;});
+  ip.add(&quot;n&quot;, &quot;300&quot;, &quot;Number of bins.&quot;, {&quot;-nbins&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Initialize Pythia.
+  Pythia pythia;
+  pythia.readFile(&quot;main464.cmnd&quot;);
+  if (!pythia.init()) {
+    cout &lt;&lt; &quot; Pythia failed to initialize.&quot; &lt;&lt; endl;
+    return 1;
+  }
+
+  int idA = ip.get&lt;int&gt;(&quot;a&quot;);
+  int idB = ip.get&lt;int&gt;(&quot;b&quot;);
+  if (idA == 0) idA = pythia.mode(&quot;Main:spareMode1&quot;);
+  if (idB == 0) idB = pythia.mode(&quot;Main:spareMode2&quot;);
+  double eMin = pythia.parm(&quot;Main:spareParm1&quot;);
+  double eMax = pythia.parm(&quot;Main:spareParm2&quot;);
+  if (eMin &lt; pythia.particleData.m0(idA) + pythia.particleData.m0(idB)) {
+    eMin = pythia.particleData.m0(idA) + pythia.particleData.m0(idB);
+    cout &lt;&lt; &quot;Warning, setting eMin to nominal mass sum of &quot; &lt;&lt; eMin &lt;&lt; &quot;.\n&quot;;
+  }
+  int nBin = ip.get&lt;int&gt;(&quot;n&quot;);
+
+  ParticleData&amp; particleData = pythia.particleData;
+
+  HistPlot plt(&quot;plot464&quot;);
+  plt.frame(&quot;fig464&quot;, &quot;Cross section for &quot; + particleData.name(idA)
+    + &quot; + &quot; + particleData.name(idB), &quot;$\\sqrt{s}$ (GeV)&quot;, &quot;$\\sigma$ (mb)&quot;);
+
+  // Basic cross sections: non-diffractive, elastic and diffractive.
+  Hist sigND = Hist::plotFunc(
+    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 1); },
+    &quot;Non-diffractive&quot;, nBin, eMin, eMax);
+  plt.add(sigND, &quot;-&quot;);
+
+  Hist sigEla = Hist::plotFunc(
+    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 2); },
+    &quot;Elastic&quot;, nBin, eMin, eMax);
+  plt.add(sigEla, &quot;-&quot;);
+
+  Hist sigSD = Hist::plotFunc(
+    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 3)
+                           + pythia.getSigmaPartial(idA, idB, eCM, 4); },
+    &quot;Single diffractive&quot;, nBin, eMin, eMax);
+  plt.add(sigSD, &quot;-&quot;);
+
+  Hist sigDD = Hist::plotFunc(
+    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 5); },
+    &quot;Double diffractive&quot;, nBin, eMin, eMax);
+  plt.add(sigDD, &quot;-&quot;);
+
+  // Add nucleon excitation cross section for NN.
+  if ((abs(idA) == 2212 || abs(idA) == 2112)
+   &amp;&amp; (abs(idB) == 2212 || abs(idB) == 2112)
+   &amp;&amp; idA * idB &gt; 0) {
+    Hist sigEx = Hist::plotFunc(
+      [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 7); },
+      &quot;Excitation&quot;, nBin, eMin, eMax);
+    plt.add(sigEx, &quot;-&quot;);
+  }
+
+  // Add annihilation cross section of baryon-antibaryon.
+  if (idA * idB &lt; 0 &amp;&amp; particleData.isBaryon(idA)
+                    &amp;&amp; particleData.isBaryon(idB)) {
+    Hist sigAnn = Hist::plotFunc(
+      [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 8); },
+      &quot;Annihilation&quot;, nBin, eMin, eMax);
+    plt.add(sigAnn, &quot;-&quot;);
+  }
+
+  // Add resonance cross sections if applicable.
+  if (pythia.hadronWidths.hasResonances(idA, idB)) {
+    Hist sigRes = Hist::plotFunc(
+      [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 9); },
+      &quot;Resonant&quot;, nBin, eMin, eMax);
+    plt.add(sigRes, &quot;-&quot;);
+  }
+
+  // Add total cross section at the end.
+  Hist sigTot = Hist::plotFunc(
+    [&amp;](double eCM) { return pythia.getSigmaTotal(idA, idB, eCM); },
+    &quot;Total&quot;, nBin, eMin, eMax);
+  plt.add(sigTot, &quot;k-&quot;);
+
+  // Plot.
+  plt.plot();
+
+}
+</code></pre></body></html>

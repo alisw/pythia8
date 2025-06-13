@@ -45,50 +45,6 @@
 
 void bind_Pythia8_ParticleData(std::function< pybind11::module &(std::string const &namespace_) > &M)
 {
-	{ // Pythia8::DecayChannel file:Pythia8/ParticleData.h line:35
-		pybind11::class_<Pythia8::DecayChannel, std::shared_ptr<Pythia8::DecayChannel>> cl(M("Pythia8"), "DecayChannel", "");
-		pybind11::handle cl_type = cl;
-
-		cl.def( pybind11::init( [](){ return new Pythia8::DecayChannel(); } ), "doc" );
-		cl.def( pybind11::init( [](int const & a0){ return new Pythia8::DecayChannel(a0); } ), "doc" , pybind11::arg("onModeIn"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1){ return new Pythia8::DecayChannel(a0, a1); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2){ return new Pythia8::DecayChannel(a0, a1, a2); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3){ return new Pythia8::DecayChannel(a0, a1, a2, a3); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3, int const & a4){ return new Pythia8::DecayChannel(a0, a1, a2, a3, a4); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3, int const & a4, int const & a5){ return new Pythia8::DecayChannel(a0, a1, a2, a3, a4, a5); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"), pybind11::arg("prod2"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3, int const & a4, int const & a5, int const & a6){ return new Pythia8::DecayChannel(a0, a1, a2, a3, a4, a5, a6); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"), pybind11::arg("prod2"), pybind11::arg("prod3"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3, int const & a4, int const & a5, int const & a6, int const & a7){ return new Pythia8::DecayChannel(a0, a1, a2, a3, a4, a5, a6, a7); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"), pybind11::arg("prod2"), pybind11::arg("prod3"), pybind11::arg("prod4"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3, int const & a4, int const & a5, int const & a6, int const & a7, int const & a8){ return new Pythia8::DecayChannel(a0, a1, a2, a3, a4, a5, a6, a7, a8); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"), pybind11::arg("prod2"), pybind11::arg("prod3"), pybind11::arg("prod4"), pybind11::arg("prod5"));
-		cl.def( pybind11::init( [](int const & a0, double const & a1, int const & a2, int const & a3, int const & a4, int const & a5, int const & a6, int const & a7, int const & a8, int const & a9){ return new Pythia8::DecayChannel(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9); } ), "doc" , pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"), pybind11::arg("prod2"), pybind11::arg("prod3"), pybind11::arg("prod4"), pybind11::arg("prod5"), pybind11::arg("prod6"));
-		cl.def( pybind11::init<int, double, int, int, int, int, int, int, int, int, int>(), pybind11::arg("onModeIn"), pybind11::arg("bRatioIn"), pybind11::arg("meModeIn"), pybind11::arg("prod0"), pybind11::arg("prod1"), pybind11::arg("prod2"), pybind11::arg("prod3"), pybind11::arg("prod4"), pybind11::arg("prod5"), pybind11::arg("prod6"), pybind11::arg("prod7") );
-
-		cl.def( pybind11::init( [](Pythia8::DecayChannel const &o){ return new Pythia8::DecayChannel(o); } ) );
-		cl.def("assign", (class Pythia8::DecayChannel & (Pythia8::DecayChannel::*)(const class Pythia8::DecayChannel &)) &Pythia8::DecayChannel::operator=, "C++: Pythia8::DecayChannel::operator=(const class Pythia8::DecayChannel &) --> class Pythia8::DecayChannel &", pybind11::return_value_policy::reference, pybind11::arg("oldDC"));
-		cl.def("onMode", (void (Pythia8::DecayChannel::*)(int)) &Pythia8::DecayChannel::onMode, "C++: Pythia8::DecayChannel::onMode(int) --> void", pybind11::arg("onModeIn"));
-		cl.def("bRatio", [](Pythia8::DecayChannel &o, double const & a0) -> void { return o.bRatio(a0); }, "", pybind11::arg("bRatioIn"));
-		cl.def("bRatio", (void (Pythia8::DecayChannel::*)(double, bool)) &Pythia8::DecayChannel::bRatio, "C++: Pythia8::DecayChannel::bRatio(double, bool) --> void", pybind11::arg("bRatioIn"), pybind11::arg("countAsChanged"));
-		cl.def("rescaleBR", (void (Pythia8::DecayChannel::*)(double)) &Pythia8::DecayChannel::rescaleBR, "C++: Pythia8::DecayChannel::rescaleBR(double) --> void", pybind11::arg("fac"));
-		cl.def("meMode", (void (Pythia8::DecayChannel::*)(int)) &Pythia8::DecayChannel::meMode, "C++: Pythia8::DecayChannel::meMode(int) --> void", pybind11::arg("meModeIn"));
-		cl.def("multiplicity", (void (Pythia8::DecayChannel::*)(int)) &Pythia8::DecayChannel::multiplicity, "C++: Pythia8::DecayChannel::multiplicity(int) --> void", pybind11::arg("multIn"));
-		cl.def("product", (void (Pythia8::DecayChannel::*)(int, int)) &Pythia8::DecayChannel::product, "C++: Pythia8::DecayChannel::product(int, int) --> void", pybind11::arg("i"), pybind11::arg("prodIn"));
-		cl.def("setHasChanged", (void (Pythia8::DecayChannel::*)(bool)) &Pythia8::DecayChannel::setHasChanged, "C++: Pythia8::DecayChannel::setHasChanged(bool) --> void", pybind11::arg("hasChangedIn"));
-		cl.def("onMode", (int (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::onMode, "C++: Pythia8::DecayChannel::onMode() const --> int");
-		cl.def("bRatio", (double (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::bRatio, "C++: Pythia8::DecayChannel::bRatio() const --> double");
-		cl.def("meMode", (int (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::meMode, "C++: Pythia8::DecayChannel::meMode() const --> int");
-		cl.def("multiplicity", (int (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::multiplicity, "C++: Pythia8::DecayChannel::multiplicity() const --> int");
-		cl.def("product", (int (Pythia8::DecayChannel::*)(int) const) &Pythia8::DecayChannel::product, "C++: Pythia8::DecayChannel::product(int) const --> int", pybind11::arg("i"));
-		cl.def("hasChanged", (bool (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::hasChanged, "C++: Pythia8::DecayChannel::hasChanged() const --> bool");
-		cl.def("contains", (bool (Pythia8::DecayChannel::*)(int) const) &Pythia8::DecayChannel::contains, "C++: Pythia8::DecayChannel::contains(int) const --> bool", pybind11::arg("id1"));
-		cl.def("contains", (bool (Pythia8::DecayChannel::*)(int, int) const) &Pythia8::DecayChannel::contains, "C++: Pythia8::DecayChannel::contains(int, int) const --> bool", pybind11::arg("id1"), pybind11::arg("id2"));
-		cl.def("contains", (bool (Pythia8::DecayChannel::*)(int, int, int) const) &Pythia8::DecayChannel::contains, "C++: Pythia8::DecayChannel::contains(int, int, int) const --> bool", pybind11::arg("id1"), pybind11::arg("id2"), pybind11::arg("id3"));
-		cl.def("currentBR", (void (Pythia8::DecayChannel::*)(double)) &Pythia8::DecayChannel::currentBR, "C++: Pythia8::DecayChannel::currentBR(double) --> void", pybind11::arg("currentBRIn"));
-		cl.def("currentBR", (double (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::currentBR, "C++: Pythia8::DecayChannel::currentBR() const --> double");
-		cl.def("onShellWidth", (void (Pythia8::DecayChannel::*)(double)) &Pythia8::DecayChannel::onShellWidth, "C++: Pythia8::DecayChannel::onShellWidth(double) --> void", pybind11::arg("onShellWidthIn"));
-		cl.def("onShellWidth", (double (Pythia8::DecayChannel::*)() const) &Pythia8::DecayChannel::onShellWidth, "C++: Pythia8::DecayChannel::onShellWidth() const --> double");
-		cl.def("onShellWidthFactor", (void (Pythia8::DecayChannel::*)(double)) &Pythia8::DecayChannel::onShellWidthFactor, "C++: Pythia8::DecayChannel::onShellWidthFactor(double) --> void", pybind11::arg("factor"));
-		cl.def("openSec", (void (Pythia8::DecayChannel::*)(int, double)) &Pythia8::DecayChannel::openSec, "C++: Pythia8::DecayChannel::openSec(int, double) --> void", pybind11::arg("idSgn"), pybind11::arg("openSecIn"));
-		cl.def("openSec", (double (Pythia8::DecayChannel::*)(int) const) &Pythia8::DecayChannel::openSec, "C++: Pythia8::DecayChannel::openSec(int) const --> double", pybind11::arg("idSgn"));
-	}
 	{ // Pythia8::ParticleDataEntry file:Pythia8/ParticleData.h line:125
 		pybind11::class_<Pythia8::ParticleDataEntry, std::shared_ptr<Pythia8::ParticleDataEntry>> cl(M("Pythia8"), "ParticleDataEntry", "");
 		pybind11::handle cl_type = cl;

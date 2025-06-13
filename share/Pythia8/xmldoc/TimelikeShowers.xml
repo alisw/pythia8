@@ -25,14 +25,15 @@ for shower uncertainty variations.
  
 <h3>Main variables</h3> 
  
-Often the maximum scale of the FSR shower evolution is understood from the 
-context. For instance, in a resonance decay half the resonance mass sets an 
-absolute upper limit. For a hard process in a hadronic collision the choice 
-is not as unique. Here the <aloc href="CouplingsAndScales">factorization 
-scale</aloc> has been chosen as the maximum evolution scale. This would be 
-the <ei>pT</ei> for a <ei>2 &rarr; 2</ei> process, supplemented by mass terms 
-for massive outgoing particles. For some special applications we do allow 
-an alternative. 
+Often the maximum scale of the FSR shower evolution is understood from 
+the context. For instance, in a resonance decay half the resonance 
+mass sets an absolute upper limit. For a hard process in a hadronic 
+collision the choice is not as unique. Here the 
+<aloc href="CouplingsAndScales">factorization scale</aloc> has been chosen 
+as the maximum evolution scale. This would be the <ei>pT</ei> for a 
+<ei>2 &rarr; 2</ei> process, supplemented by mass terms for massive 
+outgoing particles. For some special applications we do allow an 
+alternative. 
  
 <modepick name="TimeShower:pTmaxMatch" default="1" min="0" max="2"> 
 Way in which the maximum shower evolution scale is set to match the 
@@ -72,7 +73,7 @@ option 2 could be combined with <code>UserHooks</code> vetoes on
 emissions that would lead to double-counting, using more flexible 
 phase space boundaries. Further details are found in the 
 <aloc href="MatchingAndMerging">Matching and Merging</aloc> description, 
-with an example in <code>examples/main31</code>. 
+with an example in <code>examples/main152</code>. 
 Option 0, finally, may be most realistic when only Born-level processes 
 are involved, possibly in combination with a nonzero 
 <code>TimeShower:pTdampMatch</code>. 
@@ -279,6 +280,48 @@ Maximum invariant mass allowed for the created fermion pair in a
 <ei>gamma &rarr; f fbar</ei> branching in the shower. 
 </parm> 
  
+<h3>QED Radiation in Particle Decays</h3> 
+ 
+<p/> 
+<b>Note:</b>This option only takes effect if <code>HadronLevel:QED = 
+on</code>. 
+ 
+<p/> 
+Traditionally, PYTHIA did not have a generic machinery for handling 
+QED radiation in hadron (and tau) decays. In order to include this, a 
+program like PHOTOS <ref>Bar94, Dav10</ref> could be used as an 
+afterburner. The options below can be used to enable PYTHIA's internal 
+shower machinery for QED radiation. 
+<br/> 
+<b>Note 1:</b> Only two-body decays can be handled.<br/> 
+<b>Note 2:</b> The f &rarr; f&gamma; DGLAP kernels are used indiscriminately 
+irrespective of actual spins.<br/> 
+<b>Note 3:</b> First-order matrix-element corrections for the first 
+(hardest) photon emission are applied to <ei>V0 &rarr; ll and V&pm; 
+&rarr; l nu</ei> since such decays are mediated by <ei>gamma^*/Z^0/ 
+W^+-</ei> exchange, for which PYTHIA does have an existing machinery 
+that can be applied. 
+ 
+<modepick name="TimeShower:gammaModeHad" default="1" min="1" max="2"> 
+When <code>HadronLevel:QED = on</code> and the simple-shower model is 
+used, this switch determines how to handle hadron-level photon 
+radiation. 
+<option value="1">Photon radiation only in two-body decays to a lepton 
+pair, see above. Matrix element corrections are only applied in the 
+case of <ei>V0 &rarr; ll and V&pm; &rarr; l nu</ei>, based on the 
+equivalent corrections for <ei>Z</ei> and <ei>W</ei> decays. 
+</option> 
+<option value="2">Photon radiation in all two-body hadron 
+decays. Note: this option is mainly intended for comparisons and not 
+for serious studies. Since the simple shower's splitting kernels do 
+not encode the correct Lorentz structures for hadron decays in many 
+cases, nor are the correct matrix-element corrections implemented, 
+this option is not expected to deliver a faithful description of QED 
+radiation in hadron decays. (Nor are hadronic form factors or photon 
+VMD effects taken into account.) 
+</option> 
+</modepick> 
+ 
 <h3>Interleaved evolution</h3> 
  
 Multiparton interactions (MPI) and initial-state showers (ISR) are 
@@ -323,16 +366,14 @@ multiparton interactions and initial-state radiation have been considered.
 Whether such interleaving affects resonance decays or not is 
 controlled by the following switch: 
 <flag name="TimeShower:interleaveResDec" default="off"> 
-  When this flag is set to <code>off</code>, 
-  the interleaved evolution does not affect 
-  showering in resonance decays, such as a <ei>Z^0</ei>. These decays are 
-  only introduced after the production process has been considered in full, 
-  and the subsequent FSR is carried out inside the resonance, with 
-  preserved resonance mass. 
-  When this flag is set to <code>on</code>, 
-  resonance decays are inserted in the final-state shower evolution 
-  when it reaches the <ei>pT</ei> scale defined by 
-  <code>TimeShower:resDecScaleChoice</code> below. 
+When this flag is set to <code>off</code>, the interleaved evolution 
+does not affect showering in resonance decays, such as a 
+<ei>Z^0</ei>. These decays are only introduced after the production 
+process has been considered in full, and the subsequent FSR is carried 
+out inside the resonance, with preserved resonance mass.  When this 
+flag is set to <code>on</code>, resonance decays are inserted in the 
+final-state shower evolution when it reaches the <ei>pT</ei> scale 
+defined by <code>TimeShower:resDecScaleChoice</code> below. 
 </flag> 
  
 <p/>When <code>TimeShower:interleaveResDec</code> is set to 
@@ -340,17 +381,17 @@ controlled by the following switch:
 decays are inserted in the shower evolution is determined by the value 
 of the following switch: 
 <modepick name="TimeShower:resDecScaleChoice" default="1" min="0" max="2"> 
-  <option value="0">The on-shell width of the resonance.</option> 
-  <option value="1">Off-shellness determined by <ei>|m<sup>2</sup> - 
-  m0<sup>2</sup>|/m0</ei>. This implies, e.g., that the decay of 
-  a resonance which has <ei>m = m0 &pm; &Gamma;</ei> will be performed 
-  at a scale <ei>pT ~ sqrt(2) &Gamma;</ei>. 
-  </option> 
-  <option value="2"> Off-shellness determined by <ei>sqrt(|m<sup>2</sup> - 
-  m0<sup>2</sup>|)</ei>. This implies, e.g., that the decay of a 
-  resonance which has  <ei>m = m0 &pm; &Gamma;</ei> will be performed 
-  at a scale <ei>pT ~ sqrt(2 &Gamma; m0 )</ei>. 
-  </option> 
+<option value="0">The on-shell width of the resonance.</option> 
+<option value="1">Off-shellness determined by <ei>|m<sup>2</sup> - 
+m0<sup>2</sup>|/m0</ei>. This implies, e.g., that the decay of a 
+resonance which has <ei>m = m0 &pm; &Gamma;</ei> will be performed at 
+a scale <ei>pT ~ sqrt(2) &Gamma;</ei>. 
+</option> 
+<option value="2"> Off-shellness determined by <ei>sqrt(|m<sup>2</sup> 
+- m0<sup>2</sup>|)</ei>. This implies, e.g., that the decay of a 
+resonance which has <ei>m = m0 &pm; &Gamma;</ei> will be performed at 
+a scale <ei>pT ~ sqrt(2 &Gamma; m0 )</ei>. 
+</option> 
 </modepick> 
  
 <p/>Technically, the following steps happen when an interleaved 
@@ -522,10 +563,10 @@ likely to be any matrix elements available for matching.
  
 <p/> 
 Two variations of the scheme outlined above are also available, 
-(motivated by comparative studies within aMC@NLO). These studies indicate 
-that global recoils should be used as sparsely as possible, in order to 
-retain desirable features of the radiation pattern produced with the local 
-recoil prescription. 
+(motivated by comparative studies within aMC@NLO). These studies 
+indicate that global recoils should be used as sparsely as possible, 
+in order to retain desirable features of the radiation pattern 
+produced with the local recoil prescription. 
  
 <modepick name="TimeShower:globalRecoilMode" default="0" min="0" max="2"> 
 Choice which splittings are produced with the global recoil approach. 
@@ -627,6 +668,7 @@ There are several possibilities you can use to modify the behaviour
 of the shower, in general or for specific branchings. These options 
 should be modified from default only after due consideration. 
  
+<h4>Matrix-element corrections</h4> 
 <flag name="TimeShower:MEcorrections" default="on"> 
 Use of matrix element corrections where available; on/off = true/false. 
 </flag> 
@@ -664,6 +706,7 @@ explanation. Only those resonance with the listed PDG identifiers are
 affected. 
 </mvec> 
  
+<h4>Weights for gluon (and photon) splittings</h4> 
 <modepick name="TimeShower:weightGluonToQuark" default="4" min="1" max="8"> 
 Different options to assign kinematics distributions and weights 
 for <ei>g &rarr; q qbar</ei> branchings, notably for charm and bottom 
@@ -702,6 +745,7 @@ Extra scale parameter <ei>k</ei> for
 alike. 
 </parm> 
  
+<h4>Gluon polarization effects</h4> 
 <flag name="TimeShower:phiPolAsym" default="on"> 
 Azimuthal asymmetry induced by gluon polarization; on/off = true/false. 
 </flag> 
@@ -711,6 +755,7 @@ Extend the above azimuthal asymmetry (if on) also back to gluons produced
 in the hard process itself, where feasible; on/off = true/false. 
 </flag> 
  
+<h4>Dead cone effect</h4> 
 <flag name="TimeShower:recoilDeadCone" default="on"> 
 For topologies where a gluon recoils against a massive quark (or another 
 massive coloured particle) there are no suitable ME corrections implemented 
@@ -728,7 +773,8 @@ are not affected; the absence of a soft singularity implies that there
 is hardly any radiation into the recoiler hemisphere anyway. 
 </flag> 
  
-<modepick name="TimeShower:recoilStrategyRF" default="1" min="0" max="3"> 
+<h4>Resonance-final dipoles</h4> 
+<modepick name="TimeShower:recoilStrategyRF" default="0" min="0" max="1"> 
 In the decays of coloured resonances, notably <ei>t &rarr; b W</ei>, it 
 is not possible to set up dipoles with matched colours inside the final 
 state. In the first emission the <ei>b</ei> radiator therefore has 
@@ -739,56 +785,87 @@ line connects the gluon to the <ei>b</ei>, and the other to the
 <ei>t</ei>. The first line is a traditional dipole, so no problem, 
 but the second resonance-final (RF) one needs attention. Also in 
 subsequent shower steps there will always be one RF colour line. This 
-switch allows a few different alternative strategies to be applied for 
+switch allows two different alternative strategies to be applied for 
 radiation off the final-state end of such a dipole. 
 <option value="0">Let the <ei>W</ei> act as recoiler when the parton 
 with the top colour radiates. Before version 8.160 this was the only 
-possibility, which could give unphysical radiation patterns. It is 
-kept as an option to check backwards compatibility.</option> 
+possibility, which could give too much wide-angle radiation. From 
+version 8.314 onwards, the parameter <code>TimeShower:weightRF</code> 
+allows to suppress this wide-angle radiation by a factor proportional to 
+the RF eikonal, which should deliver a better description of RF 
+radiation patterns. 
+</option> 
 <option value="1">Assign the <ei>b</ei> as recoiler for both colour 
 lines of the first emitted gluon, i.e. also the one with the top 
 colour. This assignment then is inherited in the subsequent shower 
-evolution. This became default with 8.160.</option> 
-<option value="2">The <ei>W</ei> is picked as recoiler, as in option 0, 
-but the emission probability is reweighted by the ratio of two eikonal 
-radiation factors. In the numerator the top is considered to be the 
-recoiler, while in the denominator the <ei>W</ei> is it. The intention 
-with this is that the radiation pattern should attach to the one 
-expected for a final-initial dipole, while the recoil of this 
-radiation is taken by the final particle that best correlates with 
-the original top momentum. As a technical note, the denominator 
-eikonal factor depends on the <code>TimeShower:recoilDeadCone</code> 
-flag. If on, the radiation pattern has already been corrected for the 
-<ei>W</ei> mass effects.  Therefore the denominator eikonal will also 
-contain the <ei>W</ei> mass term. If off, the denominator will not 
-contain this term, such that the ratio introduces the mass correction. 
+evolution. This option was the default between versions 8.160 and 
+8.313. 
 </option> 
-<option value="3">A variation of option 2 above. The relevant dipole 
-eikonal factors are normally evaluated with the four-momenta of the 
-three partons that have been produced by the dipole emission. In 
-the current option, instead the radiator and recoiler momenta before 
-the emission are used. The radiated parton obviously only exists 
-afterwards, so there the choice is unique. The eikonal is valid in the 
-soft-emission limit, where the two choices agree, but option 2 
-better attaches to the singularity structure of matrix elements also 
-for harder emissions. Option 3 still represents a valid variation. 
-<note>Note 1:</note> Up to and including version 8.309 options 0 and 1 
+</modepick> 
+ 
+<note>Note 1: Up to and including version 8.309 options 0 and 1 
 were available as the <code>off/on</code> options of the 
 <code>TimeShower:recoilToColoured</code> flag. 
-<note>Note 2:</note> Currently options 2 and 3 are only implemented 
-for top. 
-<note>Note 3:</note> The same issue  exists for QED radiation, but 
+</note> 
+<note>Note 2: The same issue  exists for QED radiation, but 
 obviously is less significant. Consider the example 
 <ei>W &rarr; e nu</ei>,  where originally the <ei>nu</ei> takes the 
 recoil. In option 0 the <ei>nu</ei> would remain recoiler, while in 
 option 1 instead each newly emitted photon becomes the new recoiler. 
-</option> 
-</modepick> 
+</note> 
  
+<p/> 
+For <code>TimeShower:recoilStrategyRF = 0</code>, the following 
+parameter and flag allow to apply a correction to the emission 
+pattern for RF dipoles. The intention is that the radiation pattern should 
+attach to the one expected for a final-initial dipole, 
+while the recoil of this radiation is taken by the final particle that 
+best correlates with the original top momentum. 
+ 
+<parm name="TimeShower:weightRF" default="1." min="0." max="1."> 
+In RF dipoles such as that which carries the colour of the top quark 
+in <ei>t &rarr; b W</ei>, for <code>TimeShower:recoilStrategyRF = 
+0</code> the W is chosen as recoiler not only for the first emission 
+but also for subsequent emissions. The emission probability is 
+corrected by a factor <ei>1. + <code>weightRF</code> (eikTop/eikW - 
+1.)</ei>, where <ei>eikTop</ei> is an eikonal factor in which the top 
+is considered to be the recoiler while <ei>eikW</ei> is an eikonal 
+factor in which the <ei>W</ei> is considered to be the recoiler. Thus, 
+for <code>weightRF = 0</code> the radiation pattern is uncorrected 
+(and then corresponds to that for the <ei>W</ei> as recoiler), while 
+for <code>weightRF = 1</code> it is corrected by a factor 
+<ei>eikTop/eikW</ei>. As a technical note, the denominator eikonal 
+factor depends on the <code>TimeShower:recoilDeadCone</code> flag. If 
+on, the radiation pattern has already been corrected for the 
+<ei>W</ei> mass effects.  Therefore the denominator eikonal will also 
+contain the <ei>W</ei> mass term. If off, the denominator will not 
+contain this term, such that the ratio introduces the mass correction. 
+For <code>TimeShower:recoilStrategyRF = 0</code>, this parameter 
+allows to smoothly interpolate between applying the full RF eikonal 
+reweighting factor (obtained with the default value of <code>weightRF 
+= 1.</code>) and no reweighting (for <code>weightRF = 0.</code>). 
+</parm> 
+ 
+<flag name="TimeShower:recoilRFUseParents" default="off"> 
+The <code>weightRF</code> factor above is normally evaluated with the 
+four-momenta of the three partons that have been produced by the 
+dipole emission. If this flag is set to <code>on</code>, instead the 
+radiator and recoiler momenta before the emission are used. The 
+radiated parton obviously only exists afterwards, so there the choice 
+is unique. The eikonal is valid in the soft-emission limit, where the 
+two choices agree, but the <code>off</code> option better attaches to 
+the singularity structure of matrix elements also for harder 
+emissions. The <code>on</code> still represents a valid variation. 
+</flag> 
+ 
+<note>Note: <code>weightRF</code> and <code>recoilRFuseParents</code> 
+have no effect for <code>TimeShower:recoilStrategyRF = 1.</code></note> 
+ 
+<h4>Factorization scale and PDFs</h4> 
 <flag name="TimeShower:useFixedFacScale" default="off"> 
-Allow the possibility to use a fixed factorization scale, set by 
-the <code>parm</code> below. This option is unphysical and only 
-intended for toy-model and debug studies. 
+Allow the possibility to use a fixed factorization scale, set by the 
+<code>parm</code> below. This option is unphysical and only intended 
+for toy-model and debug studies. 
 </flag> 
  
 <parm name="TimeShower:fixedFacScale" default="100." min="1."> 
@@ -889,4 +966,4 @@ each newly emitted photon becomes the new recoiler.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,0 +1,194 @@
+<html><head><title>main282</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main282</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main282.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#pythia+6">Pythia&nbsp;6</a>
+//            <a href="../ExampleKeywords.html#process+cross+sections">Process&nbsp;cross&nbsp;sections</a>
+
+// Comparison with some PYTHIA 6.413 cross sections process by process.
+// Several processes have been left out to keep reasonable execution time.
+// Some processes are not handled absolutely identically, so minor
+// systematic differences may occur in addition to the statistical ones.
+// (For some MSSM Higgs processes 6.413 has been modified to use
+// running quark masses in loops, like 8.3, to allow proper comparison.)
+// Subruns  0 -  5 : QCD jets
+//          6 - 10 : prompt photons.
+//         11 - 12 : t-channel gamma/Z/W exchange.
+//         13 - 23 : gamma*/Z^0/W^+-, singly, in pairs or with parton
+//         24 - 25 : onia.
+//         26 - 30 : top.
+//         31 - 40 : Standard Model Higgs.
+//         41 - 45 : MSSM Higgses (trivial couplings).
+//         46 - 47 : Z&apos; and W&apos;
+//         48 - 51 : Left-right-symmetric scenario.
+//         52 - 52 : Leptoquark.
+//         53 - 55 : Excited fermions (compositeness).
+//         56 - 56 : excited Graviton (RS extra dimensions).
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // First and last process to test: can run from 0 through 56.
+  int iFirst = 0;
+  int iLast  = 56;
+
+  // Statistics. Pythia6 run was with 10000, so no point to use more.
+  int nEvent = 10000;
+
+  // Normally one subprocess word per subrun, but exceptions exist.
+  int nSub[100];
+  for (int i = 0; i &lt; 100; ++i) nSub[i] = 1;
+  nSub[1] = 3;
+  nSub[5] = 3;
+  // Starting positions in subprocess words list, recursively defined.
+  int iBeg[101] = { 0 };
+  for (int i = 0; i &lt; 100; ++i) iBeg[i + 1] = iBeg[i] + nSub[i];
+  // List of subprocess words.
+  string processes[61] = { &quot;HardQCD:gg2gg&quot;, &quot;HardQCD:gg2qqbar&quot;,
+    &quot;HardQCD:gg2ccbar&quot;,  &quot;HardQCD:gg2bbbar&quot;,&quot;HardQCD:qg2qg&quot; ,
+    &quot;HardQCD:qq2qq&quot;, &quot;HardQCD:qqbar2gg&quot;, &quot;HardQCD:qqbar2qqbarNew&quot;,
+    &quot;HardQCD:qqbar2ccbar&quot;, &quot;HardQCD:qqbar2bbbar&quot;, &quot;PromptPhoton:qg2qgamma&quot;,
+    &quot;PromptPhoton:qqbar2ggamma&quot;, &quot;PromptPhoton:gg2ggamma&quot;,
+    &quot;PromptPhoton:ffbar2gammagamma&quot;, &quot;PromptPhoton:gg2gammagamma&quot;,
+    &quot;WeakBosonExchange:ff2ff(t:gmZ)&quot;, &quot;WeakBosonExchange:ff2ff(t:W)&quot;,
+    &quot;WeakSingleBoson:ffbar2gmZ&quot;, &quot;WeakSingleBoson:ffbar2W&quot;,
+    &quot;WeakDoubleBoson:ffbar2gmZgmZ&quot;, &quot;WeakDoubleBoson:ffbar2ZW&quot;,
+    &quot;WeakDoubleBoson:ffbar2WW&quot;, &quot;WeakBosonAndParton:qqbar2gmZg&quot;,
+    &quot;WeakBosonAndParton:qg2gmZq&quot;, &quot;WeakBosonAndParton:ffbar2gmZgm&quot;,
+    &quot;WeakBosonAndParton:qqbar2Wg&quot;, &quot;WeakBosonAndParton:qg2Wq&quot;,
+    &quot;WeakBosonAndParton:ffbar2Wgm&quot;, &quot;Charmonium:all&quot;, &quot;Bottomonium:all&quot;,
+    &quot;Top:gg2ttbar&quot;,  &quot;Top:qqbar2ttbar&quot;,  &quot;Top:qq2tq(t:W)&quot;,
+    &quot;Top:ffbar2ttbar(s:gmZ)&quot;, &quot;Top:ffbar2tqbar(s:W)&quot;,
+    &quot;HiggsSM:ffbar2H&quot;, &quot;HiggsSM:gg2H&quot;, &quot;HiggsSM:ffbar2HZ&quot;,
+    &quot;HiggsSM:ffbar2HW&quot;, &quot;HiggsSM:ff2Hff(t:ZZ)&quot;, &quot;HiggsSM:ff2Hff(t:WW)&quot;,
+    &quot;HiggsSM:qg2Hq&quot;, &quot;HiggsSM:gg2Hg(l:t)&quot;, &quot;HiggsSM:qg2Hq(l:t)&quot;,
+    &quot;HiggsSM:qqbar2Hg(l:t)&quot;, &quot;HiggsBSM:allH1&quot;, &quot;HiggsBSM:allH2&quot;,
+    &quot;HiggsBSM:allA3&quot;, &quot;HiggsBSM:allH+-&quot;, &quot;HiggsBSM:allHpair&quot;,
+    &quot;NewGaugeBoson:ffbar2gmZZprime&quot;, &quot;NewGaugeBoson:ffbar2Wprime&quot;,
+    &quot;LeftRightSymmmetry:ffbar2ZR&quot;, &quot;LeftRightSymmmetry:ffbar2WR&quot;,
+    &quot;LeftRightSymmmetry:ffbar2HLHL&quot;, &quot;LeftRightSymmmetry:ffbar2HRHR&quot;,
+    &quot;LeptoQuark:all&quot;, &quot;ExcitedFermion:dg2dStar&quot;,
+    &quot;ExcitedFermion:qq2dStarq&quot;, &quot;ExcitedFermion:qqbar2eStare&quot;,
+    &quot;ExtraDimensionsG*:all&quot; };
+
+  // List of cross sections from Pythia6.
+  double sigma6[57] = {   4.960e-01, 1.627e-02, 2.790e-01, 2.800e-02,
+    3.310e-04, 3.653e-04, 1.697e-04, 1.163e-05, 1.065e-07, 8.259e-08,
+    8.237e-08, 2.544e-05, 5.321e-06, 5.571e-05, 1.621e-04, 9.039e-09,
+    2.247e-08, 5.893e-08, 3.781e-06, 1.078e-05, 4.551e-08, 1.025e-05,
+    3.208e-05, 5.435e-08, 1.038e-04, 3.929e-05, 4.155e-07, 6.685e-08,
+    1.898e-07, 4.240e-10, 7.142e-09, 1.547e-10, 7.064e-09, 1.316e-10,
+    2.332e-10, 5.105e-10, 1.316e-09, 4.462e-11, 5.557e-09, 1.966e-09,
+    8.725e-12, 2.450e-08, 5.839e-09, 1.687e-08, 8.950e-11, 4.188e-11,
+    1.980e-07, 4.551e-07, 6.005e-09, 1.102e-07, 7.784e-11, 3.488e-11,
+    6.006e-08, 3.235e-06, 1.689e-05, 5.986e-07, 3.241e-10 };
+
+  // Generator.
+  Pythia pythia;
+
+  // Standard set of masses for comparison with Fortran code.
+  pythia.readString(&quot;5:m0  = 4.2&quot;);
+  pythia.readString(&quot;6:m0  = 175.&quot;);
+  pythia.readString(&quot;23:m0 = 91.2&quot;);
+  pythia.readString(&quot;24:m0 = 80.&quot;);
+
+  // Same kinematics cuts as Fortran code.
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 20.&quot;);
+  pythia.readString(&quot;6:mMin = 20.&quot;);
+  pythia.readString(&quot;23:mMin = 20.&quot;);
+  pythia.readString(&quot;24:mMin = 20.&quot;);
+  pythia.readString(&quot;25:mMin = 20.&quot;);
+  pythia.readString(&quot;32:mMin = 400.&quot;);
+  pythia.readString(&quot;34:mMin = 400.&quot;);
+  pythia.readString(&quot;42:mMin = 50.&quot;);
+  pythia.readString(&quot;5000039:mMin = 50.&quot;);
+
+  // Also same renormalization and factorization scale.
+  pythia.readString(&quot;SigmaProcess:renormScale2 = 3&quot;);
+  pythia.readString(&quot;SigmaProcess:factorScale2 = 3&quot;);
+
+  // Switch off unnecessary parts.
+  pythia.readString(&quot;PartonLevel:all = off&quot;);
+  pythia.readString(&quot;ProcessLevel:resonanceDecays = off&quot;);
+
+  // No printing of settings, particle data or events.
+  pythia.readString(&quot;Init:showProcesses = off&quot;);
+  pythia.readString(&quot;Init:showChangedSettings = off&quot;);
+  pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  pythia.readString(&quot;Next:numberCount = 0&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // Debug: show information on cross section maximum and violation.
+  //pythia.readString(&quot;PhaseSpace:showSearch = on&quot;);
+  //pythia.readString(&quot;PhaseSpace:showViolation = on&quot;);
+
+  // Loop over processes.
+  for (int iProc = iFirst; iProc &lt;= iLast; ++iProc) {
+    cout &lt;&lt; &quot;\n Begin subrun number &quot; &lt;&lt; iProc &lt;&lt; &quot; : &quot;;
+
+    // Switch off previous process(es) and switch on new one(s).
+    if (iProc &gt; iFirst) for (int i = iBeg[iProc - 1]; i &lt; iBeg[iProc]; ++i)
+      pythia.readString( processes[i] + &quot; = off&quot; );
+    for (int i = iBeg[iProc]; i &lt; iBeg[iProc + 1]; ++i) {
+      pythia.readString( processes[i] + &quot; = on&quot; );
+      if (i &gt; iBeg[iProc]) cout &lt;&lt; &quot; + &quot;;
+      cout &lt;&lt; processes[i];
+    }
+    cout &lt;&lt; endl;
+
+    // Switch between SM and MSSM Higgs scenario.
+    if (iProc &lt;= 40) {
+      pythia.readString(&quot;Higgs:useBSM = off&quot;);
+      pythia.readString(&quot;25:m0 = 200.&quot;);
+    } else {
+      pythia.readString(&quot;Higgs:useBSM = on&quot;);
+      pythia.readString(&quot;25:m0 = 115.&quot;);
+      pythia.readString(&quot;35:m0 = 300.&quot;);
+      pythia.readString(&quot;36:m0 = 300.&quot;);
+      pythia.readString(&quot;37:m0 = 320.&quot;);
+      // With default option Higgs:clipWings = on need to reset mass range.
+      pythia.readString(&quot;25:mMin = 50.&quot;);
+      pythia.readString(&quot;25:mMax = 0.&quot;);
+    }
+
+    // Initialize for LHC.
+    pythia.readString(&quot;Beams:eCM = 14000.&quot;);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Debug: show initialized resonance data first time around.
+    //if (iProc == iFirst) pythia.particleData.listChanged(true);
+
+    // Generate events to get cross section statistics.
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) pythia.next();
+
+    // Show statistics.
+    //pythia.stat();
+    double sigma = pythia.info.sigmaGen();
+    cout &lt;&lt; &quot; Cross section is &quot; &lt;&lt; scientific &lt;&lt; setprecision(3)
+         &lt;&lt; sigma &lt;&lt; &quot; and in Pythia6 was &quot; &lt;&lt; sigma6[iProc]
+         &lt;&lt; &quot;,\n i.e. now is factor &gt;&gt;&gt; &quot; &lt;&lt; fixed
+         &lt;&lt; sigma / sigma6[iProc] &lt;&lt; &quot; &lt;&lt;&lt; different&quot; &lt;&lt;endl;
+
+  // End of loop over processes.
+  }
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

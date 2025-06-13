@@ -1,5 +1,5 @@
 // HepMC3.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 //
@@ -56,11 +56,8 @@ public:
     const Pythia8::Info* pyinfo = 0, Pythia8::Settings* pyset = 0) {
 
     // 1. Error if no event passed.
-    if (!evt) {
-      std::cerr << "Pythia8ToHepMC3::fill_next_event error - "
-                << "passed null event." << std::endl;
-      return false;
-    }
+    if (evt == nullptr) return warning(pyinfo,
+      "Pythia8ToHepMC::fill_next_event", "passed null event");
 
     // Event number counter.
     if ( ievnum >= 0 ) {
@@ -78,13 +75,8 @@ public:
     // 1a. If there is a HIInfo object fill info from that.
     if ( pyinfo && pyinfo->hiInfo ) {
       auto ion = make_shared<HepMC3::GenHeavyIon>();
-      ion->Ncoll_hard = pyinfo->hiInfo->nCollNDTot();
-      ion->Ncoll = pyinfo->hiInfo->nAbsProj() +
-                   pyinfo->hiInfo->nDiffProj() +
-                   pyinfo->hiInfo->nAbsTarg() +
-                   pyinfo->hiInfo->nDiffTarg() -
-                   pyinfo->hiInfo->nCollND() -
-                   pyinfo->hiInfo->nCollDD();
+      ion->Ncoll_hard = pyinfo->hiInfo->nCollND();
+      ion->Ncoll = pyinfo->hiInfo->nCollTot();
       ion->Npart_proj = pyinfo->hiInfo->nAbsProj() +
                         pyinfo->hiInfo->nDiffProj();
       ion->Npart_targ = pyinfo->hiInfo->nAbsTarg() +
@@ -105,8 +97,15 @@ public:
 
     // 3. Fill vertex information.
     std::vector<GenVertexPtr> vertex_cache;
+    vector<GenParticlePtr> beam_particles;
     for (int i = 1; i < pyev.size(); ++i) {
-      std::vector<int> mothers = pyev[i].motherList();
+      vector<int> mothers = pyev[i].motherList();
+      sort(mothers.begin(),mothers.end());
+      for (;;) {
+        if (!mothers.empty() && mothers.front() == 0)
+          mothers.erase(mothers.begin());
+        else break;
+      }
       if (mothers.size()) {
         GenVertexPtr prod_vtx = hepevt_particles[mothers[0]]->end_vertex();
         if (!prod_vtx) {
@@ -122,19 +121,15 @@ public:
         if (!prod_pos.is_zero() && prod_vtx->position().is_zero())
           prod_vtx->set_position( prod_pos );
         prod_vtx->add_particle_out( hepevt_particles[i] );
-      }
+      } else beam_particles.push_back(hepevt_particles[i]);
     }
 
     // Reserve memory for the event.
     evt->reserve( hepevt_particles.size(), vertex_cache.size() );
 
-    // Here we assume that the first two particles are the beam particles.
-    vector<GenParticlePtr> beam_particles;
-    beam_particles.push_back(hepevt_particles[1]);
-    beam_particles.push_back(hepevt_particles[2]);
-
     // Add particles and vertices in topological order.
     evt->add_tree( beam_particles );
+
     // Attributes should be set after adding the particles to event.
     for (int i = 0; i < pyev.size(); ++i) {
       /* TODO: Set polarization */
@@ -163,8 +158,10 @@ public:
       // Check for particles not added to the event.
       // NOTE: We have to check if this step makes any sense in
       // the HepMC event standard.
-      if ( !hepevt_particles[i] ) {
-        std::cerr << "hanging particle " << i << std::endl;
+      if ( hepevt_particles[i] == nullptr ||
+        !hepevt_particles[i]->in_event()) {
+        warning(pyinfo, "Pythia8ToHepMC::fill_next_event",
+          "found orphan particle", "i = " + Pythia8::toString(i));
         GenVertexPtr prod_vtx = make_shared<GenVertex>();
         prod_vtx->add_particle_out( hepevt_particles[i] );
         evt->add_vertex(prod_vtx);
@@ -173,13 +170,15 @@ public:
       // Also check for free partons (= gluons and quarks; not diquarks?).
       if ( doHadr && m_free_parton_warnings ) {
         if ( hepevt_particles[i]->pid() == 21
-           && !hepevt_particles[i]->end_vertex() ) {
-           std::cerr << "gluon without end vertex " << i << std::endl;
-           if ( m_crash_on_problem ) exit(1);
+           && hepevt_particles[i]->end_vertex() == nullptr ) {
+          warning(pyinfo, "Pythia8ToHepMC::fill_next_event",
+            "found gluon without end vertex", "i = " + Pythia8::toString(i));
+          if ( m_crash_on_problem ) exit(1);
         }
-        if ( std::abs(hepevt_particles[i]->pid()) <= 6
-          && !hepevt_particles[i]->end_vertex() ) {
-          std::cerr << "quark without end vertex " << i << std::endl;
+        if ( abs(hepevt_particles[i]->pid()) <= 6
+          && hepevt_particles[i]->end_vertex() == nullptr ) {
+          warning(pyinfo, "Pythia8ToHepMC::fill_next_event",
+            "found quark without end vertex", "i = " + Pythia8::toString(i));
           if ( m_crash_on_problem ) exit(1);
         }
       }
@@ -206,6 +205,8 @@ public:
     if (m_store_proc && pyinfo != 0) {
       evt->add_attribute("signal_process_id",
         std::make_shared<IntAttribute>( pyinfo->code()));
+      evt->add_attribute("mpi",
+        std::make_shared<IntAttribute>( pyinfo->nMPI()));
       evt->add_attribute("event_scale",
         std::make_shared<DoubleAttribute>(pyinfo->QRen()));
       evt->add_attribute("alphaQCD",
@@ -264,6 +265,17 @@ public:
   void set_store_weights(bool b = true)        { m_store_weights        = b; }
 
 private:
+
+    // Try to send warning message to the logger if present, otherwise
+  // send it to cout if print_inconsistency().
+  bool warning(const Pythia8::Info * pyinfo, string loc,
+               string message, string extraInfo = "") {
+    if ( pyinfo )
+      pyinfo->loggerPtr->warningMsg(loc, message, extraInfo);
+    else if ( print_inconsistency() )
+      cout << "Warning in " << loc << ": " << message << extraInfo << endl;
+    return false;
+  }
 
   // Following methods are not implemented for this class.
   virtual bool fill_next_event( GenEvent*  )  { return 0; }

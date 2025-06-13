@@ -1,0 +1,117 @@
+<html><head><title>main247</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main247</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main247.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#userhooks">Userhooks</a>
+//            <a href="../ExampleKeywords.html#performance">Performance</a>
+//            <a href="../ExampleKeywords.html#jets">Jets</a>
+//            <a href="../ExampleKeywords.html#hadronic+rescattering">Hadronic&nbsp;rescattering</a>
+
+// This main program illustrates the use of UserHooks to veto events
+// after hadronization, but before any subsequent processes such as
+// rescattering or Bose-Einstein.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+// Write own derived UserHooks class.
+
+class HadronUserHooks : public UserHooks {
+
+public:
+
+  bool canVetoAfterHadronization() override {return true;}
+
+  bool doVetoAfterHadronization(const Event&amp; e) override {
+    // This illustrates the use by requiring the presence of
+    // a high pT track central in eta.
+    for (const Particle&amp; p : e) {
+      // If a trigger particle is found, do not veto.
+      if (p.isFinal() &amp;&amp; p.isCharged() &amp;&amp; p.pT() &gt; 7 &amp;&amp; abs(p.eta()) &lt; 1.0)
+        return false;
+    }
+    // This info message will be printed in the stat summary.
+    loggerPtr-&gt;INFO_MSG(&quot;event vetoed by HadronUserHooks&quot;);
+    // If no trigger particle is found, veto the event.
+    return true;
+  }
+
+};
+
+//==========================================================================
+
+int main() {
+
+  // Generator.
+  Pythia pythia;
+
+  // Make a histogram of the leading track.
+  Hist leadingTrack(&quot;pTleading&quot;, 20, 0., 20.);
+
+  // Select the parton-level pTHatMin below the cut on track-level.
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 5.&quot;);
+
+  // Add a process after hadronization to motivate the veto.
+  pythia.readString(&quot;Fragmentation:setVertices = on&quot;);
+  pythia.readString(&quot;PartonVertex:setVertex = on&quot;);
+  pythia.readString(&quot;HadronLevel:Rescatter = on&quot;);
+  pythia.readString(&quot;MultipartonInteractions:pT0Ref = 2.345&quot;);
+
+  // Create and set user hook.
+  auto hadronUserHooks = make_shared&lt;HadronUserHooks&gt;();
+  pythia.setUserHooksPtr( hadronUserHooks);
+
+  // Initialize.
+  pythia.readString(&quot;Beams:eCM = 7000&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Collect sum of weights of accepted events.
+  double sumW = 0.;
+
+  // Begin event loop.
+  for (int iEvent = 0; iEvent &lt; 10000; ++iEvent) {
+
+    // Generate events.
+    if (!pythia.next()) continue;
+    sumW+=pythia.info.weight();
+
+    // Find highest-pT track.
+    double pTmax = 0;
+    for (int i = 0, N = pythia.event.size(); i &lt; N; ++i) {
+      Particle&amp; p = pythia.event[i];
+      if (p.isFinal() &amp;&amp; p.isCharged() &amp;&amp; abs(p.eta()) &lt; 0.8)
+        if (p.pT() &gt; pTmax) pTmax = p.pT();
+    }
+    leadingTrack.fill(pTmax);
+  // End of event loop.
+  }
+
+  // Statistics.
+  pythia.stat();
+  leadingTrack/=sumW;
+
+  // Plot leading track pT spectrum.
+  HistPlot hpl(&quot;plot247&quot;);
+  hpl.frame(&quot;fig247&quot;, &quot;Leading track pT&quot;, &quot;$p_{\\perp}$&quot;, &quot;Prob&quot;);
+  hpl.add( leadingTrack, &quot;h,black&quot; , &quot;leading track&quot;);
+  hpl.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

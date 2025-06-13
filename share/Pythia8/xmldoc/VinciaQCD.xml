@@ -3,8 +3,8 @@
  
 <p/> 
 Here, parameters specific to VINCIA's QCD antenna 
-shower are collected. See the <aidx href="Vincia">main VINCIA 
-antenna shower page</aidx> for more general parameters that are 
+shower are collected. See the <aloc href="Vincia">main VINCIA 
+antenna shower page</aloc> for more general parameters that are 
 common to both the QCD and QED showers. 
  
 <h3>Main Switches</h3> 
@@ -408,4 +408,4 @@ only.</parm>
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

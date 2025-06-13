@@ -1,0 +1,351 @@
+<html><head><title>main164</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main164</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main164.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Stefan Prestel
+//            Christian T Preuss
+
+// Contact: Christian T. Preuss &lt;christian.preuss@uni-goettingen.de&gt;
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#matching">Matching</a>
+//            <a href="../ExampleKeywords.html#merging">Merging</a>
+//            <a href="../ExampleKeywords.html#leading+order">Leading&nbsp;order</a>
+//            <a href="../ExampleKeywords.html#nlo">NLO</a>
+//            <a href="../ExampleKeywords.html#powheg">Powheg</a>
+//            <a href="../ExampleKeywords.html#madgraph">Madgraph</a>
+//            <a href="../ExampleKeywords.html#amc@nlo">aMC@NLO</a>
+//            <a href="../ExampleKeywords.html#ckkw-l">CKKW&#8209;L</a>
+//            <a href="../ExampleKeywords.html#umeps">UMEPS</a>
+//            <a href="../ExampleKeywords.html#nl3">NL3</a>
+//            <a href="../ExampleKeywords.html#unlops">UNLOPS</a>
+//            <a href="../ExampleKeywords.html#fxfx">FxFx</a>
+//            <a href="../ExampleKeywords.html#mlm">MLM</a>
+//            <a href="../ExampleKeywords.html#userhooks">Userhooks</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#hdf5+file">HDF5&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#lheh5">LHEH5</a>
+//            <a href="../ExampleKeywords.html#hepmc">Hepmc</a>
+//            <a href="../ExampleKeywords.html#rivet">Rivet</a>
+
+// This program illustrates how to do run PYTHIA with LHEF input, allowing a
+// sample-by-sample generation of
+// a) Non-matched/non-merged events
+// b) NLO matched events (with MadGraph5_aMC@NLO or POWHEG-BOX)
+// c) MLM jet-matched events (kT-MLM, shower-kT, FxFx)
+// d) CKKW-L and UMEPS LO merged events
+// e) UNLOPS NLO merged events
+// see the respective sections in the online manual for details.
+//
+// An example command is
+//     ./main164 -c main164ckkwl.cmnd
+// where main164ckkwl.cmnd supplies the commands.
+// This example requires HepMC2 or HepMC3 and optionally RIVET.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+#if defined(HEPMC3)
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#elif defined(HEPMC2)
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
+#ifdef RIVET
+#include &quot;Pythia8Plugins/Pythia8Rivet.h&quot;
+#endif
+#ifdef HDF5
+#include &quot;Pythia8Plugins/LHAHDF5v2.h&quot;
+#endif
+
+// Include UserHooks for POWHEG vetos.
+#include &quot;Pythia8Plugins/PowhegHooks.h&quot;
+// Include UserHooks for Jet Matching.
+#include &quot;Pythia8Plugins/CombineMatchingInput.h&quot;
+// Include UserHooks for randomly choosing between integrated and
+// non-integrated treatment for unitarised merging.
+#include &quot;Pythia8Plugins/aMCatNLOHooks.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// General example program for matching and merging in PYTHIA.
+
+int main(int argc, char** argv){
+
+  // Set up command line options.
+  InputParser ip(&quot;Illustrates how to do matching and merging.&quot;,
+    {&quot;./main164 -c main164ckkwl.cmnd&quot;,
+        &quot;./main164 -c main164amcatnlo.cmnd&quot;,
+        &quot;./main164 -c main164fxfx.cmnd&quot;,
+        &quot;./main164 -c main164mlm.cmnd&quot;,
+        &quot;./main164 -c main164umeps.cmnd&quot;,
+        &quot;./main164 -c main164mess.cmnd&quot;,
+        &quot;./main164 -c main164unlops.cmnd&quot;,
+        &quot;./main164 -c main164dis.cmnd&quot;,
+        &quot;./main164 -c main164powheg.cmnd&quot;,});
+  ip.require(&quot;c&quot;, &quot;Use this user-written command file.&quot;, {&quot;-cmnd&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Input file.
+  string cmndFile = ip.get&lt;string&gt;(&quot;c&quot;);
+
+  // Generator.
+  Pythia pythia;
+
+  // New settings for HepMC interface.
+  pythia.settings.addFlag(&quot;Main:HepMC&quot;, false);
+  pythia.settings.addWord(&quot;HepMC:output&quot;, &quot;events.hepmc&quot;);
+
+  // New settings for Rivet interface.
+  // Inactive if Rivet not used.
+  pythia.settings.addFlag(&quot;Main:Rivet&quot;, true);
+  pythia.settings.addWord(&quot;Rivet:output&quot;, &quot;analysis.yoda&quot;);
+  pythia.settings.addWVec(&quot;Rivet:analyses&quot;, vector&lt;string&gt;());
+
+  // Input parameters:
+  pythia.readFile(cmndFile, 0);
+
+  // Optionally HepMC interface.
+#if defined(HEPMC2) || defined(HEPMC3)
+  const bool doHepMC = pythia.flag(&quot;Main:HepMC&quot;);
+  Pythia8ToHepMC* toHepMCPtr = nullptr;
+  if (doHepMC) {
+    toHepMCPtr = new Pythia8ToHepMC(pythia.word(&quot;HepMC:output&quot;));
+    // Switch off warnings for parton-level events.
+    toHepMCPtr-&gt;set_print_inconsistency(false);
+    toHepMCPtr-&gt;set_free_parton_warnings(false);
+    // Do not store the following information.
+    toHepMCPtr-&gt;set_store_pdf(false);
+    toHepMCPtr-&gt;set_store_proc(false);
+  }
+#endif
+
+  // Optionally Rivet interface if Pythia is linked to Rivet.
+#ifdef RIVET
+  const bool doRivet = pythia.flag(&quot;Main:Rivet&quot;);
+  Pythia8Rivet rivet(pythia, pythia.word(&quot;Rivet:output&quot;));
+  vector&lt;string&gt; analyses = pythia.settings.wvec(&quot;Rivet:analyses&quot;);
+  for (const string&amp; analysis : analyses) rivet.addAnalysis(analysis);
+#endif
+
+  // Save which shower we are using.
+  int showerModel = pythia.mode(&quot;PartonShowers:model&quot;);
+
+  // Check if PowhegHooks should be used for NLO matching.
+  int  pwhgVetoMode     = pythia.mode(&quot;POWHEG:veto&quot;);
+  int  pwhgVetoModeMPI  = pythia.mode(&quot;POWHEG:MPIveto&quot;);
+  bool doPowhegMatching = (pwhgVetoMode&gt;0 || pwhgVetoModeMPI&gt;0);
+
+  // Check if jet matching should be applied.
+  bool doJetMatching = pythia.flag(&quot;JetMatching:merge&quot;);
+
+  // Check if internal merging should be applied.
+  bool doMerging = !(pythia.word(&quot;Merging:Process&quot;).compare(&quot;void&quot;)==0);
+
+  // Currently, only one scheme at a time is allowed.
+  if (doPowhegMatching + doJetMatching + doMerging &gt; 1) {
+    cerr &lt;&lt; &quot; Error in &quot; &lt;&lt; argv[0]
+         &lt;&lt; &quot;: matching and merging schemes cannot be combined&quot; &lt;&lt; endl;
+  }
+
+  // Set UserHooks for POWHEG vetos.
+  shared_ptr&lt;PowhegHooks&gt; powhegHooks;
+  int nVetoISR = 0, nVetoFSR = 0;
+  if (doPowhegMatching) {
+    // Set showers to start at the kinematical limit.
+    if (pwhgVetoMode &gt; 0) {
+      if (showerModel == 1 || showerModel == 3) {
+        pythia.readString(&quot;SpaceShower:pTmaxMatch = 2&quot;);
+        pythia.readString(&quot;TimeShower:pTmaxMatch = 2&quot;);
+      } else if (showerModel == 2) {
+        pythia.readString(&quot;Vincia:tune = 0&quot;);
+        pythia.readString(&quot;Vincia:pTmaxMatch = 2&quot;);
+      }
+    }
+    // Set MPI to start at the kinematical limit.
+    if (pwhgVetoModeMPI &gt; 0)
+      pythia.readString(&quot;MultipartonInteractions:pTmaxMatch = 2&quot;);
+    // Load POWHEG hooks.
+    powhegHooks = make_shared&lt;PowhegHooks&gt;();
+    pythia.setUserHooksPtr((UserHooksPtr)powhegHooks);
+  }
+
+  // Set UserHooks for jet matching.
+  CombineMatchingInput jetMatchingHook;
+  if (doJetMatching) jetMatchingHook.setHook(pythia);
+
+  // Set UserHooks for unitarised merging schemes.
+  shared_ptr&lt;amcnlo_unitarised_interface&gt; mergingHooks;
+  if (doMerging) {
+    // Store merging scheme.
+    int scheme = ( pythia.flag(&quot;Merging:doUMEPSTree&quot;)
+                || pythia.flag(&quot;Merging:doUMEPSSubt&quot;)) ?
+                1 :
+                 ( ( pythia.flag(&quot;Merging:doUNLOPSTree&quot;)
+                || pythia.flag(&quot;Merging:doUNLOPSSubt&quot;)
+                || pythia.flag(&quot;Merging:doUNLOPSLoop&quot;)
+                || pythia.flag(&quot;Merging:doUNLOPSSubtNLO&quot;)) ?
+                2 :
+                0 );
+    // Load merging hooks.
+    mergingHooks = make_shared&lt;amcnlo_unitarised_interface&gt;(scheme);
+    pythia.setUserHooksPtr(mergingHooks);
+  }
+
+  // Get number of subruns and information about external events.
+  int nMerge = pythia.mode(&quot;Main:numberOfSubruns&quot;);
+  if (nMerge == 0) nMerge = 1;
+  bool useLHA  = (pythia.mode(&quot;Beams:frameType&quot;) &gt;= 4);
+#ifdef HDF5
+  bool useHDF5 = (pythia.mode(&quot;Beams:frameType&quot;) == 5);
+#endif
+
+  // Allow abort of run if many errors.
+  int  nAbort  = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+  int  iAbort  = 0;
+  bool doAbort = false;
+
+  // Loop over subruns with varying number of jets.
+  for (int iMerge = 0; iMerge&lt;nMerge; ++iMerge) {
+
+    // Read in name of LHE file for current subrun and initialize.
+    pythia.readFile(cmndFile, iMerge);
+
+    // Set number of events.
+    long nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+
+    // Set up LHAupPtr for this run when using HDF5 event files.
+#ifdef HDF5
+    if (useHDF5) {
+      HighFive::File file(pythia.word(&quot;Beams:LHEF&quot;), HighFive::File::ReadOnly);
+      size_t readSize = size_t(nEvent);
+      size_t eventOffset = 0;
+      shared_ptr&lt;LHAupH5v2&gt; lhaUpPtr =
+        make_shared&lt;LHAupH5v2&gt;(&amp;file, eventOffset, readSize, true);
+      pythia.setLHAupPtr(lhaUpPtr);
+    }
+#endif
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Get the inclusive cross section by
+    // summing over all process cross sections.
+    double xs = 0.;
+    if (useLHA) {
+      for (int i=0; i&lt;pythia.info.nProcessesLHEF(); ++i)
+        xs += pythia.info.sigmaLHEF(i);
+    }
+
+    // Start generation loop.
+    while (pythia.info.nSelected() &lt; nEvent) {
+
+      // Generate next event.
+      if (!pythia.next()) {
+        if (pythia.info.atEndOfFile()) break;
+        else if (++iAbort &gt; nAbort) {doAbort = true; break;}
+        else continue;
+      }
+
+      // For internal events, get current cross section.
+      if (!useLHA) xs = pythia.info.sigmaGen();
+
+      // For POWHEG matching, count vetos.
+      if (doPowhegMatching) {
+        nVetoISR += powhegHooks-&gt;getNISRveto();
+        nVetoFSR += powhegHooks-&gt;getNFSRveto();
+      }
+
+      // Get event weight.
+      // Includes additional weight in unitarised merging due to random
+      // choice of reclustered/non-reclustered treatment and additional
+      // sign for subtractive samples.
+      double weight = pythia.info.weightValueByIndex();
+      // Do not print zero-weight events.
+      if (weight == 0.) continue;
+
+      // Do not print broken/empty events.
+      if (pythia.event.size() &lt; 3) continue;
+
+      // Work with unweighted events.
+      double norm = xs/double(nEvent);
+      // Work with weighted (LHA strategy=-4) events.
+      if (abs(pythia.info.lhaStrategy()) == 4)
+        norm = 1./double(nEvent);
+      if (useLHA) norm /= MB2PB;
+
+      // Accumulate cross section, including norm.
+      pythia.info.weightContainerPtr-&gt;accumulateXsec(norm);
+
+#if defined(HEPMC2) || defined(HEPMC3)
+      // Optionally write HepMC events.
+      if (doHepMC) {
+        // Copy the weight names to HepMC.
+        toHepMCPtr-&gt;setWeightNames(pythia.info.weightNameVector());
+        // Fill HepMC event.
+        toHepMCPtr-&gt;writeNextEvent(pythia);
+      }
+#endif
+
+#ifdef RIVET
+      // Optionally pass event to Rivet.
+      if (doRivet) rivet();
+#endif
+
+    }
+
+    // Break out of loop over iMerge if aborting.
+    if (doAbort) break;
+
+    // Print cross section and errors.
+    pythia.stat();
+
+    // Get cross section statistics for sample.
+    double sigmaSample = pythia.info.weightContainerPtr-&gt;getSampleXsec()[0];
+    double errorSample = pythia.info.weightContainerPtr-&gt;getSampleXsecErr()[0];
+
+    cout &lt;&lt; endl &lt;&lt; &quot; Cross section of sample &quot; &lt;&lt; iMerge &lt;&lt; &quot;: &quot;
+         &lt;&lt; scientific &lt;&lt; setprecision(8)
+         &lt;&lt; sigmaSample &lt;&lt; &quot; +- &quot; &lt;&lt; errorSample  &lt;&lt; endl &lt;&lt; endl;
+  }
+
+  // For Powheg matching, print veto information.
+  if (doPowhegMatching) {
+    cout &lt;&lt; &quot; PowhegHooks: ISR vetos: &quot; &lt;&lt; nVetoISR &lt;&lt; endl
+         &lt;&lt; &quot; PowhegHooks: FSR vetos: &quot; &lt;&lt; nVetoFSR &lt;&lt; endl &lt;&lt; endl;
+  }
+
+  // Get cross section statistics for total run.
+  double sigmaTotal = pythia.info.weightContainerPtr-&gt;getTotalXsec()[0];
+  double errorTotal = pythia.info.weightContainerPtr-&gt;getSampleXsecErr()[0];
+  if (doAbort)
+    cout &lt;&lt; &quot; Run was not completed owing to too many aborted events&quot; &lt;&lt; endl;
+  else
+    cout &lt;&lt; &quot; Inclusive cross section:   &quot; &lt;&lt; scientific &lt;&lt; setprecision(8)
+         &lt;&lt; sigmaTotal &lt;&lt; &quot;  +-  &quot; &lt;&lt; errorTotal &lt;&lt; &quot; mb&quot; &lt;&lt; endl &lt;&lt; endl;
+
+  // Optionally finalise Rivet analysis.
+#ifdef RIVET
+  if (doRivet) rivet.done();
+#endif
+
+  // Optionally delete HepMC converter pointer.
+#if defined(HEPMC2) || defined(HEPMC3)
+  if (doHepMC) delete toHepMCPtr;
+#endif
+
+  // Done.
+  return 0;
+
+}
+</code></pre></body></html>

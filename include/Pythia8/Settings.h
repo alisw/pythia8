@@ -1,5 +1,5 @@
 // Settings.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -18,6 +18,7 @@
 #define Pythia8_Settings_H
 
 #include "Pythia8/Logger.h"
+#include "Pythia8/ParticleData.h"
 #include "Pythia8/PythiaStdlib.h"
 
 namespace Pythia8 {
@@ -200,8 +201,10 @@ public:
   Settings() : loggerPtr(), isInit(false), readingFailedSave(false),
     lineSaved(false) {}
 
-  // Initialize Logger pointer.
-  void initPtrs(Logger* loggerPtrIn) {loggerPtr = loggerPtrIn;}
+  // Initialize pointers.
+  void initPtrs(Logger* loggerPtrIn, ParticleData* pdPtrIn = nullptr,
+    stringstream* pdbPtrIn = nullptr) {
+    loggerPtr = loggerPtrIn; pdPtr = pdPtrIn; pdbPtr = pdbPtrIn;}
 
   // Read in database from specific file.
   bool init(string startFile = "../share/Pythia8/xmldoc/Index.xml",
@@ -211,10 +214,20 @@ public:
   bool init(istream& is, bool append = false) ;
 
   // Overwrite existing database by reading from specific file.
-  bool reInit(string startFile = "../share/Pythia8/xmldoc/Index.xml") ;
+  bool reInit(string startFile = "../share/Pythia8/xmldoc/Index.xml");
 
   // Read in one update from a single line.
-  bool readString(string line, bool warn = true) ;
+  bool readString(string line, bool warn = true, int subrun = SUBRUNDEFAULT);
+
+  // Read in updates from a user-defined file.
+  bool readFile(string fileName, bool warn = true,
+    int subrun = SUBRUNDEFAULT);
+  bool readFile(string fileName, int subrun) {
+    return readFile(fileName, true, subrun);}
+  bool readFile(istream& is = cin, bool warn = true,
+    int subrun = SUBRUNDEFAULT);
+  bool readFile(istream& is, int subrun) {
+    return readFile(is, true, subrun);}
 
   // Register the settings from a plugin library.
   bool registerPluginLibrary(string libName, string startFile = "");
@@ -235,7 +248,7 @@ public:
 
   // Retrieve readString history (e.g., for inspection). Everything
   // (subrun=-999), up to first subrun (=-1), or subrun-specific (>=0).
-  vector<string> getReadHistory(int subrun=-999) {
+  vector<string> getReadHistory(int subrun = SUBRUNDEFAULT) {
     if (subrun == -999) return readStringHistory;
     else if (readStringSubrun.find(subrun) != readStringSubrun.end())
       return readStringSubrun[subrun];
@@ -358,7 +371,11 @@ public:
  private:
 
   // Pointer to logger.
-  Logger* loggerPtr;
+  Logger* loggerPtr{};
+
+  // Optional pointers to particle data and particle data buffer.
+  ParticleData* pdPtr{};
+  stringstream* pdbPtr{};
 
   // Map for bool flags.
   map<string, Flag> flags;
@@ -404,13 +421,10 @@ public:
   // Master switch for program printout.
   void printQuiet(bool quiet);
 
-  // Restore settings used in tunes to e+e- and pp/ppbar data.
-  void resetTuneEE();
-  void resetTunePP();
-
   // Initialize tunes to e+e- and pp/ppbar data.
   void initTuneEE(int eeTune);
   void initTunePP(int ppTune);
+  void initTuneVincia(int vinciaTune);
 
   // Useful functions for string handling.
   bool   boolString(string tag);
@@ -422,6 +436,10 @@ public:
   vector<int>    intVectorAttributeValue(string line, string attribute);
   vector<double> doubleVectorAttributeValue(string line, string attribute);
   vector<string> stringVectorAttributeValue(string line, string attribute);
+
+  // Track the current subrun and xmlpath.
+  int subrunNow{SUBRUNDEFAULT};
+  string xmlPath{};
 
 };
 

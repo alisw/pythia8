@@ -1,0 +1,17 @@
+! The ATLAS A14 tunes, central tune with HERAPDF1.5LO, November 2014.
+! See ATL-PHYS-PUB-2014-021 for further details.
+! Note that TimeShower:alphaSvalue is set here, although normally it would be
+! in the domain of ee tunes.
+! Previously set by "Tune:pp = 22".
+include                             = tunes/Monash2013.cmnd ! based on Monash
+PDF:pSet                            = LHAPDF6:HERAPDF15LO_EIG
+SigmaProcess:alphaSvalue            = 0.141 
+TimeShower:alphaSvalue              = 0.130 
+SpaceShower:alphaSvalue             = 0.128
+SpaceShower:pT0Ref                  = 1.61  
+SpaceShower:pTmaxFudge              = 0.95  
+SpaceShower:pTdampFudge             = 1.10  
+MultipartonInteractions:alphaSvalue = 0.123
+MultipartonInteractions:pT0Ref      = 2.14  
+BeamRemnants:primordialKThard       = 1.83  
+ColourReconnection:range            = 1.78  

@@ -1,5 +1,5 @@
 // BeamRemnants.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -49,8 +49,9 @@ public:
     ColRecPtr colourReconnectionPtrIn);
 
   // New beams possible for handling of hard diffraction.
-  void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-    int iDSin) {beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn; iDS = iDSin;}
+  void reassignBeamPtrs( BeamParticle* beamAPtrIn,
+    BeamParticle* beamBPtrIn, int iDSin) {
+    beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn; iDS = iDSin;}
 
   // Select the flavours/kinematics/colours of the two beam remnants.
   bool add( Event& event, int iFirst = 0, bool doDiffCR = false);

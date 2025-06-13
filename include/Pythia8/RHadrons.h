@@ -1,5 +1,5 @@
 // RHadrons.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -9,15 +9,7 @@
 #ifndef Pythia8_RHadrons_H
 #define Pythia8_RHadrons_H
 
-#include "Pythia8/Basics.h"
-#include "Pythia8/Event.h"
-#include "Pythia8/FragmentationFlavZpT.h"
-#include "Pythia8/FragmentationSystems.h"
-#include "Pythia8/Info.h"
-#include "Pythia8/ParticleData.h"
-#include "Pythia8/PythiaStdlib.h"
-#include "Pythia8/PhysicsBase.h"
-#include "Pythia8/Settings.h"
+#include "Pythia8/FragmentationModel.h"
 
 namespace Pythia8 {
 
@@ -26,25 +18,24 @@ namespace Pythia8 {
 // The RHadrons class contains the routines for the production and decay
 // of long-lived heavy coloured particles.
 
-class RHadrons : public PhysicsBase {
+class RHadrons : public FragmentationModel {
 
 public:
 
   // Constructor.
-  RHadrons() : allowRH(), allowRSb(), allowRSt(), allowRGo(), allowSomeR(),
-    setMassesRH(), idRSb(), idRSt(), idRGo(), maxWidthRH(), probGluinoballRH(),
-    mOffsetCloudRH(), mCollapseRH(), diquarkSpin1RH(), m0Sb(), m0St(), m0Go(),
-    nRHad(0), iRHad(), iBef(), iSys(), systemPtr(), flavSelPtr(), zSelPtr() {}
+  RHadrons() : FragmentationModel(), allowRH(), allowRSb(), allowRSt(),
+    allowRGo(), allowSomeR(), setMassesRH(), idRSb(), idRSt(), idRGo(),
+    maxWidthRH(), probGluinoballRH(), mOffsetCloudRH(), mCollapseRH(),
+    diquarkSpin1RH(), m0Sb(), m0St(), m0Go(), nRHad(0), iRHad(), iBef(),
+    iSys(), systemPtr() {}
 
-  // Initialization of R-hadron handling.
-  bool init();
+  // Initialize and save pointers.
+  bool init(StringFlav* flavSelPtrIn = nullptr, StringPT* pTSelPtrIn = nullptr,
+    StringZ* zSelPtrIn = nullptr, FragModPtr fragModPtrIn = nullptr) override;
 
-  // Pointers to flavours and z sent from HadronLevel.
-  void fragPtrs( StringFlav* flavSelPtrIn, StringZ* zSelPtrIn)
-    { flavSelPtr = flavSelPtrIn; zSelPtr = zSelPtrIn;}
-
-  // Produce R-hadrons.
-  bool produce( ColConfig& colConfig, Event& event);
+  // Fragment the event.
+  bool fragment(int iSub, ColConfig& colConfig, Event& event,
+    bool isDiff = false, bool systemRecoil = true) override;
 
   // Decay R-hadrons.
   bool decay( Event& event);
@@ -78,10 +69,6 @@ private:
   vector<bool> isTriplet;
   int          nRHad, iRHad, iBef, iSys;
   ColSinglet*  systemPtr;
-
-  // Pointers to classes for flavour and z generation.
-  StringFlav*    flavSelPtr;
-  StringZ*       zSelPtr;
 
   // Split a system that contains both a sparticle and a junction.
   bool splitOffJunction( ColConfig& colConfig, Event& event);

@@ -1,5 +1,5 @@
 // SplittingsOnia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Naomi Cooke, Philip Ilten, Leif Lonnblad, Steve Mrenna,
+// Copyright (C) 2025 Naomi Cooke, Philip Ilten, Leif Lonnblad, Steve Mrenna,
 // Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.

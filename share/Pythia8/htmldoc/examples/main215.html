@@ -1,0 +1,120 @@
+<html><head><title>main215</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main215</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main2125.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#jet+finding">Jet&nbsp;finding</a>
+//            <a href="../ExampleKeywords.html#fastjet">Fastjet</a>
+
+// Example how to use the modified Mass Drop Tagger on Pythia jets.
+// Note: to run this you must install and link the FastJet Contrib add-ons.
+
+// Pythia include and namespace.
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+// FastJet include and namespace.
+#include &quot;fastjet/ClusterSequence.hh&quot;
+#include &quot;fastjet/contrib/ModifiedMassDropTagger.hh&quot;
+using namespace fastjet;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events.
+  int nEvent = 1000;
+
+  // Set up Pythia generation of Z + jet; Z -&gt; hadrons; m_Z restricted.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+  pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+  pythia.readString(&quot;WeakBosonAndParton:qqbar2gmZg = on&quot;);
+  pythia.readString(&quot;WeakBosonAndParton:qg2gmZq = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 400.&quot;);
+  pythia.readString(&quot;23:onMode = off&quot;);
+  pythia.readString(&quot;23:onIfAny = 1 2 3 4 5&quot;);
+  pythia.readString(&quot;23:mMin = 70.&quot;);
+  pythia.readString(&quot;23:mMax = 120.&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Detector size, anti-kT radius, and modified mass-drop tagger z.
+  double etaMax = 5.;
+  double radius = 1.;
+  double z_cut  = 0.04;
+
+  // Set up FastJet jet finders and modified mass-drop tagger.
+  JetDefinition jetDefAKT( antikt_algorithm, radius);
+  JetDefinition jetDefCA( cambridge_algorithm, JetDefinition::max_allowable_R);
+  contrib::ModifiedMassDropTagger mMDT(z_cut);
+
+  // Histograms for Z mass: truth, before and after mass drop.
+  Hist rZjet( &quot;R separation true vs. reconstructed Z&quot;, 100, 0., 1.);
+  Hist mTrue(   &quot;Z0 mass as generated&quot;, 100, 0., 200.);
+  Hist mBefDrop( &quot;Z0 mass before mMDT&quot;, 100, 0., 200.);
+  Hist mAftDrop( &quot;Z0 mass after mMDT&quot;,  100, 0., 200.);
+
+  // Begin event loop. Generate event. Skip if error.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Store final visible central particle four-momenta as start
+    // configuration. Also find last copy 0f Z0, i.e. right before decay.
+    vector&lt;PseudoJet&gt; particles;
+    int iZ = 0;
+    for (int i = 0; i &lt; event.size(); ++i) {
+      if (event[i].isFinal() &amp;&amp; event[i].isVisible()
+        &amp;&amp; abs(event[i].eta()) &lt; etaMax) particles.push_back( PseudoJet(
+        event[i].px(), event[i].py(), event[i].pz(), event[i].e() ) );
+      if (event[i].id() == 23) iZ = i;
+    }
+
+    // Run Fastjet anti-kT algorithm and sort jets in pT order.
+    ClusterSequence clustSeq1( particles, jetDefAKT );
+    vector&lt;PseudoJet&gt; sortedJets = sorted_by_pt( clustSeq1.inclusive_jets() );
+
+    // Z should be close to either of two hardest jets (in R space).
+    if (sortedJets.size() &lt; 2) continue;
+    double y0Z   = sortedJets[0].rap() - event[iZ].y();
+    double phi0Z = abs(sortedJets[0].phi_std() - event[iZ].phi());
+    if (phi0Z &gt; M_PI) phi0Z = 2. * M_PI - phi0Z;
+    double r0Z   = sqrt( pow2(y0Z) + pow2(phi0Z) );
+    double y1Z   = sortedJets[1].rap() - event[iZ].y();
+    double phi1Z = abs(sortedJets[1].phi_std() - event[iZ].phi());
+    if (phi1Z &gt; M_PI) phi1Z = 2. * M_PI - phi1Z;
+    double r1Z   = sqrt( pow2(y1Z) + pow2(phi1Z) );
+    if (min( r0Z, r1Z) &gt; 1.) continue;
+    int iJet     = (r1Z &gt; r0Z) ? 0 : 1;
+
+    // Extract Z0-associated jet and run C/A on it. Should give one jet.
+    vector&lt;PseudoJet&gt; constituents = sortedJets[iJet].constituents();
+    ClusterSequence clustSeq2( constituents, jetDefCA );
+    vector&lt;PseudoJet&gt; subJets = sorted_by_pt( clustSeq2.inclusive_jets() );
+    if (subJets.size() &gt; 1) continue;
+
+    // Use modified mass-drop tagger to clean up jet.
+    PseudoJet reclusteredJet = subJets[0];
+    PseudoJet taggedJet = mMDT(reclusteredJet);
+
+    // Fill histograms.
+    rZjet.fill( min( r0Z, r1Z) );
+    mTrue.fill( event[iZ].m() );
+    mBefDrop.fill( reclusteredJet.m() );
+    mAftDrop.fill( taggedJet.m() );
+  }
+
+  // End of event loop. Statistics. Histograms. Done.
+  pythia.stat();
+  cout &lt;&lt; rZjet &lt;&lt; mTrue &lt;&lt; mBefDrop &lt;&lt; mAftDrop;
+  return 0;
+}
+</code></pre></body></html>

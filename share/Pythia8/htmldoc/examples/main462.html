@@ -1,0 +1,164 @@
+<html><head><title>main462</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main462</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main462.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#rescattering">Rescattering</a>
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#pt+spectra">pT&nbsp;spectra</a>
+
+// Compare multiplicities and hadron spectra with and without rescattering,
+// the former with or without rescattering between nearest string neighbours.
+// Note: many other parameters could be used to vary the rescattering rate.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Main settings. All particles with tau0 &gt; maxTau0 fm are set stable.
+  int nEvent = 5000;
+  double maxTau0 = 100.;
+
+  // Histograms.
+  Hist multFin0(&quot;n_final, no rescattering&quot;, 100, 0., 800.);
+  Hist multRes0(&quot;n_resc, no rescattering &quot;, 100, 0., 300.);
+  Hist pTpi0(&quot;pT pions no rescattering&quot;,    100, 0., 5.);
+  Hist pTk0(&quot;pT kaons no rescattering&quot;,     100, 0., 5.);
+  Hist pTp0(&quot;pT protons no rescattering&quot;,   100, 0., 5.);
+  Hist multFin1(&quot;n_final, no neighbours &quot;,  100, 0., 800.);
+  Hist multRes1(&quot;n_resc, no neighbours  &quot;,  100, 0., 300.);
+  Hist pTpi1(&quot;pT pions, no neighbours &quot;,    100, 0., 5.);
+  Hist pTk1(&quot;pT kaons, no neighbours &quot;,     100, 0., 5.);
+  Hist pTp1(&quot;pT protons, no neighbours &quot;,   100, 0., 5.);
+  Hist multFin2(&quot;n_final, all rescatter&quot;,   100, 0., 800.);
+  Hist multRes2(&quot;n_resc, all rescatter &quot;,   100, 0., 300.);
+  Hist pTpi2(&quot;pT pions, all rescatter &quot;,    100, 0., 5.);
+  Hist pTk2(&quot;pT kaons, all rescatter &quot;,     100, 0., 5.);
+  Hist pTp2(&quot;pT protons, all rescatter &quot;,   100, 0., 5.);
+
+  // Loop over the three possible scenarios being compared.
+  for (int ic = 0; ic &lt; 3; ++ic) {
+
+    // Create Pythia instance. Shorthand for event.
+    Pythia pythia;
+    Event&amp; event = pythia.event;
+
+    // Process selection: nondiffractive pp.
+    pythia.readString(&quot;SoftQCD:nonDiffractive = on&quot;);
+    pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+
+    // Turn rescattering on, which also requires vertices on.
+    if (ic &gt; 0) {
+      pythia.readString(&quot;HadronLevel:Rescatter = on&quot;);
+      pythia.readString(&quot;Fragmentation:setVertices = on&quot;);
+      pythia.readString(&quot;PartonVertex:setVertex = on&quot;);
+
+      // Rescattering details.
+      //pythia.readString(&quot;Rescattering:quickCheck = off&quot;);
+      if (ic == 1) pythia.readString(&quot;Rescattering:nearestNeighbours = off&quot;);
+    }
+
+    // Switch off all decays with lifetime &gt; maxTau0.
+    pythia.readString(&quot;ParticleDecays:limitTau0 = on&quot;);
+    pythia.settings.parm(&quot;ParticleDecays:tau0Max&quot;, maxTau0 * FM2MM);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // References to relevant histograms.
+    Hist&amp; multFin = (ic == 0) ? multFin0 : ((ic == 1) ? multFin1 : multFin2);
+    Hist&amp; multRes = (ic == 0) ? multRes0 : ((ic == 1) ? multRes1 : multRes2);
+    Hist&amp; pTpi    = (ic == 0) ? pTpi0    : ((ic == 1) ? pTpi1    : pTpi2);
+    Hist&amp; pTk     = (ic == 0) ? pTk0     : ((ic == 1) ? pTk1     : pTk2);
+    Hist&amp; pTp     = (ic == 0) ? pTp0     : ((ic == 1) ? pTp1     : pTp2);
+
+    // Generate events.
+    int nSuccess = 0;
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+      if (!pythia.next()) continue;
+      ++nSuccess;
+
+        // Final multiplicity and number of rescatterings.
+      int nFin = event.nFinal(false);
+      int nRes = 0;
+      for (Particle&amp; particle : event) {
+        if (particle.isHadron() &amp;&amp; !particle.isFinal()) {
+          Particle&amp; daughter = event[particle.daughter1()];
+          if (daughter.isHadron() &amp;&amp; daughter.statusAbs()/10 == 15) nRes += 1;
+        }
+      }
+      // Exactly two hadrons participate in each rescattering. Fill histograms.
+      nRes /= 2;
+      multFin.fill(nFin + 0.5);
+      multRes.fill(nRes + 0.5);
+
+      // Hadron pT spectra at central rapidities.
+      for (Particle&amp; particle : event) {
+        if (particle.isHadron() &amp;&amp; particle.isFinal()
+        &amp;&amp; abs(particle.y()) &lt; 2.) {
+          int idAbs = particle.idAbs();
+          double pT = particle.pT();
+          if (idAbs == 211 || idAbs == 111) pTpi.fill(pT);
+          else if (idAbs == 311 || idAbs == 321 || idAbs == 310
+            || idAbs ==  130) pTk.fill(pT);
+          else if (idAbs == 2212) pTp.fill(pT);
+        }
+      }
+
+    // End of event loop. Normalize and print histograms.
+    }
+    pythia.stat();
+    multFin *= 1. / (8. * nSuccess);
+    multRes *= 1. / (3. * nSuccess);
+    pTpi    *= 20. / nSuccess;
+    pTk     *= 20. / nSuccess;
+    pTp     *= 20. / nSuccess;
+    cout &lt;&lt; multFin &lt;&lt; multRes &lt;&lt; pTpi &lt;&lt; pTk &lt;&lt; pTp;
+
+  // End loop over three cases.
+  }
+
+  // Plot histograms.
+  HistPlot hpl(&quot;plot462&quot;);
+  hpl.frame(&quot;fig462&quot;, &quot;Hadronic multiplicity&quot;, &quot;n&quot;, &quot;dN/dn&quot;);
+  hpl.add( multFin0, &quot;&quot;, &quot;no rescattering&quot;);
+  hpl.add( multFin1, &quot;&quot;, &quot;partial rescattering&quot;);
+  hpl.add( multFin2, &quot;&quot;, &quot;full rescattering&quot;);
+  hpl.plot(true);
+  hpl.frame(&quot;&quot;, &quot;Number of rescatterings&quot;, &quot;n&quot;, &quot;dN/dn&quot;);
+  //hpl.add( multRes0, &quot;&quot;, &quot;no rescattering&quot;);
+  hpl.add( multRes1, &quot;,g&quot;, &quot;partial rescattering&quot;);
+  hpl.add( multRes2, &quot;,r&quot;, &quot;full rescattering&quot;);
+  hpl.plot(true);
+  hpl.frame(&quot;&quot;, &quot;Pion pT distribution for |y| &lt; 2&quot;, &quot;pT (GeV)&quot;, &quot;dN/dpT&quot;);
+  hpl.add( pTpi0, &quot;&quot;, &quot;no rescattering&quot;);
+  hpl.add( pTpi1, &quot;&quot;, &quot;partial rescattering&quot;);
+  hpl.add( pTpi2, &quot;&quot;, &quot;full rescattering&quot;);
+  hpl.plot(true);
+  hpl.frame(&quot;&quot;, &quot;Kaon pT distribution for |y| &lt; 2&quot;, &quot;pT (GeV)&quot;, &quot;dN/dpT&quot;);
+  hpl.add( pTk0, &quot;&quot;, &quot;no rescattering&quot;);
+  hpl.add( pTk1, &quot;&quot;, &quot;partial rescattering&quot;);
+  hpl.add( pTk2, &quot;&quot;, &quot;full rescattering&quot;);
+  hpl.plot(true);
+  hpl.frame(&quot;&quot;, &quot;Proton pT distribution for |y| &lt; 2&quot;, &quot;pT (GeV)&quot;, &quot;dN/dpT&quot;);
+  hpl.add( pTp0, &quot;&quot;, &quot;no rescattering&quot;);
+  hpl.add( pTp1, &quot;&quot;, &quot;partial rescattering&quot;);
+  hpl.add( pTp2, &quot;&quot;, &quot;full rescattering&quot;);
+  hpl.plot(true);
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

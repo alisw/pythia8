@@ -49,7 +49,7 @@ The <code>LHAupHelaconia</code> is precisely such a class, derived from
 <code>LHAup</code>, that contains the code needed to wrap a 
 HelacOnia executable. Thereby the generation of HelacOnia 
 processes from within Pythia becomes straightforward. An explicit 
-example is provided in <code>main35.cc</code>. We describe some of the 
+example is provided in <code>main363.cc</code>. We describe some of the 
 key elements used there and in the general case. 
  
 <method name="LHAupHelaconia::LHAupHelaconia(Pythia* pythia, string 
@@ -114,4 +114,4 @@ setEvents can be used to increase the number of events generated per run.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

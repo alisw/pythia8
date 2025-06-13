@@ -1,0 +1,263 @@
+<html><head><title>main423</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main423</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main423.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:leif.lonnblad@fysik.lu.se">Leif Lonnblad</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#heavy+ions">Heavy&nbsp;ions</a>
+//            <a href="../ExampleKeywords.html#charged+multiplicity">Charged&nbsp;multiplicity</a>
+//            <a href="../ExampleKeywords.html#centrality">Centrality</a>
+//            <a href="../ExampleKeywords.html#angantyr">Angantyr</a>
+
+// This test program will generate Pb-Pb collisions at sqrt(s_NN) = 2.76 TeV
+// using the Angantyr model for Heavy Ion collisions. The analysis will
+// divide the event in centrality classes using the same observable as was
+// used for p-Pb in the ATLAS analysis in arXiv:1508.00848 [hep-ex]
+// (see main422.cc). The centrality classes are same as in the ALICE analysis
+// in arXiv:1012.1657 [nucl-ex] although the actual observable used is not
+// the same. Histograms of multiplicity distributions are measured for each
+// for centrality percentile.
+
+// Note that heavy ion collisions are computationally quite CPU-intensive
+// and generating a single event will take around a second on a reasonable
+// desktop. To get reasonable statistics, this program will take a couple
+// of hours to run.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+// You need to include this to get access to the HIInfo object for HeavyIons.
+#include &quot;Pythia8/HeavyIons.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  Pythia pythia;
+
+  // Setup the beams.
+  pythia.readString(&quot;Beams:idA = 1000822080&quot;);
+  pythia.readString(&quot;Beams:idB = 1000822080&quot;); // The lead ions.
+  pythia.readString(&quot;Beams:eCM = 2760.0&quot;);
+  pythia.readString(&quot;Beams:frameType = 1&quot;);
+
+  // Initialize the Angantyr model to fit the total and semi-inclusive
+  // cross sections in Pythia within some tolerance.
+  pythia.readString(&quot;HeavyIon:SigFitErr = &quot;
+                    &quot;0.02,0.02,0.1,0.05,0.05,0.0,0.1,0.0&quot;);
+  // These parameters are typically suitable for sqrt(S_NN)=5TeV
+  pythia.readString(&quot;HeavyIon:SigFitDefPar = 2.15,17.24,0.33&quot;);
+  // A simple genetic algorithm is run for 20 generations to fit the
+  // parameters.
+  pythia.readString(&quot;HeavyIon:SigFitNGen = 20&quot;);
+
+  // There will be nine centrality bins based on the sum transverse
+  // emergy in a rapidity interval between 3.2 and 4.9 obtained from
+  // the borders from the generated transverse energy spectrum. The
+  // default settings should give approximately the following:
+  double genlim[] = {2979.4, 2400.1, 1587.5, 1028.8, 669.9,
+                     397.4, 220.3, 116.3, 54.5};
+  // If you change any parameters these should also be changed.
+
+  // The upper edge of the correponding percentiles:
+  double pclim[] = {0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
+
+  // Book the pseudorapidity and multiplicity histograms and get
+  // counters for number of events and sum of event weights:
+  typedef map&lt;double,int,std::greater&lt;double&gt; &gt; MapIdx;
+  MapIdx genetaidx;
+  vector&lt;Hist*&gt; etadist(9), lmult(9), hmult(9);
+  string etaname(&quot;EtadistC&quot;), mname(&quot;MultC&quot;);
+  vector&lt;double&gt; gensumw(9, 0.0), gensumn(9, 0.0);
+  for ( int i = 0; i &lt; 9; ++i ) {
+    genetaidx[genlim[i]] = i;
+    etadist[i] = new Hist(etaname + char(&apos;0&apos; + i), 54, -2.7, 2.7);
+    hmult[i] = new Hist(mname + &apos;H&apos; + char(&apos;0&apos; + i),
+                        75, -0.5, 2999.5);
+    lmult[i] = new Hist(mname + &apos;L&apos; + char(&apos;0&apos; + i),
+                        75, -0.5, 299.5);
+  }
+
+  // Book histogram for the centrality measure.
+  Hist sumet(&quot;SumETfwd&quot;, 200, 0.0, 4000.0);
+
+  // Also make a map of all weight to check the generated centrality
+  // classes.
+  multimap&lt;double,double&gt; gencent;
+
+  // Book a histogram for the distribution of number of wounded
+  // nucleons.
+  Hist wounded(&quot;Nwounded&quot;, 209, -0.5, 417.5);
+
+  // Profile for average central multiplicity and number of wounded
+  // nucleons as a function of centrality (with errors).
+  vector&lt;double&gt; cmult(9, 0.0), cmult2(9, 0.0);
+  vector&lt;double&gt; wound(9, 0.0), wound2(9, 0.0);
+
+  // Sum up the weights of all generated events.
+  double sumw = 0.0;
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Loop over events.
+  int nEvents = 100;
+  for ( int iEvent = 0; iEvent &lt; nEvents; ++iEvent ) {
+    if ( !pythia.next() ) continue;
+
+    // First sum up transverse energy for centrality measure and also
+    // check that the trigger requiring ar least one charged particle
+    // forward and backward.
+    double etfwd = 0.0;
+    bool trigfwd = false;
+    bool trigbwd = false;
+    int nc = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      Particle &amp; p = pythia.event[i];
+      if ( p.isFinal() ) {
+        double eta = p.eta();
+        if ( p.isCharged() &amp;&amp; p.pT() &gt; 0.1 &amp;&amp; eta &lt; -2.09 &amp;&amp; eta &gt; -3.84 )
+          trigfwd = true;
+        if ( p.isCharged() &amp;&amp; p.pT() &gt; 0.1 &amp;&amp; eta &gt; 2.09 &amp;&amp; eta &lt; 3.84 )
+          trigbwd = true;
+        if ( p.pT() &gt; 0.1 &amp;&amp; abs(eta) &gt; 3.2 &amp;&amp; abs(eta) &lt; 4.9 )
+          etfwd += p.eT();
+        if ( p.isCharged() &amp;&amp; p.pT() &gt; 0.1 &amp;&amp; abs(eta) &lt; 0.5 ) ++nc;
+      }
+    }
+    // Skip if not triggered
+    if ( !(trigfwd &amp;&amp; trigbwd) ) continue;
+
+    // Keep track of the sum of waights
+    double weight = pythia.info.weight();
+    sumw += weight;
+
+    // Histogram and save the summed Et.
+    sumet.fill(etfwd, weight);
+    gencent.insert(make_pair(etfwd, weight));
+
+    // Also fill the number of (absorptively and diffractively)
+    // wounded nucleaons.
+    int nw = pythia.info.hiInfo-&gt;nAbsTarg() +
+      pythia.info.hiInfo-&gt;nDiffTarg() +
+      pythia.info.hiInfo-&gt;nAbsProj() +
+      pythia.info.hiInfo-&gt;nDiffProj();
+    wounded.fill(nw, weight);
+
+    // Find the correct centrality histograms.
+    MapIdx::iterator genit = genetaidx.upper_bound(etfwd);
+    int genidx = genit== genetaidx.end()? -1: genit-&gt;second;
+
+    // Sum the weights in the centrality classes, skip if not in a class.
+    if ( genidx &lt; 0 ) continue;
+    gensumw[genidx] += weight;
+    hmult[genidx]-&gt;fill(nc, weight);
+    lmult[genidx]-&gt;fill(nc, weight);
+    gensumn[genidx] += 1.0;
+    cmult[genidx] += nc*weight;
+    cmult2[genidx] += nc*nc*weight;
+    wound[genidx] += nw*weight;
+    wound2[genidx] += nw*nw*weight;
+
+    // Go through the event again and fill the eta distributions.
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      Particle &amp; p = pythia.event[i];
+      if ( p.isFinal() &amp;&amp; p.isCharged() &amp;&amp;
+           abs(p.eta()) &lt; 2.7 &amp;&amp; p.pT() &gt; 0.1 ) {
+         etadist[genidx]-&gt;fill(p.eta(), weight);
+      }
+    }
+  }
+
+  // The run is over, so we write out some statistics.
+
+  // Now, we just have to normalize and prtint out the histograms. We
+  // choose to print the histograms to a file that can be read by
+  // eg. gnuplot.
+  ofstream ofs(&quot;main423.dat&quot;);
+
+  sumet /= sumw*2.0;
+  ofs &lt;&lt; &quot;# &quot; &lt;&lt; sumet.getTitle() &lt;&lt; endl;
+  sumet.table(ofs);
+
+  wounded /= sumw*2.0;
+  ofs &lt;&lt; &quot;\n# &quot; &lt;&lt; wounded.getTitle() &lt;&lt; endl;
+  wounded.table(ofs);
+
+  // Print out the centrality binned eta distributions and delete the
+  // heap-allocate histograms.
+  for ( int idx = 0; idx &lt; 9; ++idx ) {
+    *hmult[idx] /= gensumw[idx]*40.0;
+    ofs &lt;&lt; &quot;\n# &quot; &lt;&lt; hmult[idx]-&gt;getTitle() &lt;&lt; endl;
+    hmult[idx]-&gt;table(ofs);
+    delete hmult[idx];
+    *lmult[idx] /= gensumw[idx]*4.0;
+    ofs &lt;&lt; &quot;\n# &quot; &lt;&lt; lmult[idx]-&gt;getTitle() &lt;&lt; endl;
+    lmult[idx]-&gt;table(ofs);
+    delete lmult[idx];
+    *etadist[idx] /= gensumw[idx]*0.1;
+    ofs &lt;&lt; &quot;\n# &quot; &lt;&lt; etadist[idx]-&gt;getTitle() &lt;&lt; endl;
+    etadist[idx]-&gt;table(ofs);
+    delete etadist[idx];
+  }
+
+  // Print out average central charged multiplicity as a function of
+  // centrality.
+  ofs &lt;&lt; &quot;\n# Nch0\n&quot;;
+  for ( int idx = 0; idx &lt; 9; ++idx ) {
+    double Nch = cmult[idx]/gensumw[idx];
+    cmult2[idx] = (cmult2[idx]/gensumw[idx] - pow2(Nch))/gensumn[idx];
+    ofs &lt;&lt; setprecision(2) &lt;&lt; setw(4) &lt;&lt; int(pclim[idx]*100.0 + 0.5)
+        &lt;&lt; setw(10) &lt;&lt; Nch &lt;&lt; setw(10) &lt;&lt; sqrt(cmult2[idx]) &lt;&lt;endl;
+  }
+  ofs &lt;&lt; &quot;\n# Nwc\n&quot;;
+  for ( int idx = 0; idx &lt; 9; ++idx ) {
+    double Nw = wound[idx]/gensumw[idx];
+    wound2[idx] = (wound2[idx]/gensumw[idx] - pow2(Nw))/gensumn[idx];
+    ofs &lt;&lt; setprecision(2) &lt;&lt; setw(4) &lt;&lt; int(pclim[idx]*100.0 + 0.5)
+        &lt;&lt; setw(10) &lt;&lt; Nw &lt;&lt; setw(10) &lt;&lt; sqrt(wound2[idx]) &lt;&lt;endl;
+  }
+
+  // Befor we end we print out some statistics. Also, we want to check
+  // that our generated centrality classes were the same as we
+  // guessed.
+  pythia.stat();
+  double curr = 0.0;
+  double prev = 0.0;
+  double acc = 0.0;
+  int idxa = 8;
+  double lim = sumw*(1.0 - pclim[idxa]);
+  vector&lt;double&gt; newlim(9);
+  for ( multimap&lt;double, double&gt;::iterator it = gencent.begin();
+        it != gencent.end(); ++it ) {
+    prev = curr;
+    curr = it-&gt;first;
+    double w = it-&gt;second;
+    if ( acc &lt; lim &amp;&amp; acc + w &gt;= lim ) {
+      newlim[idxa--] = prev + (curr - prev)*(lim - acc)/w;
+      if ( idxa &lt; 0 ) break;
+      lim = sumw*(1.0 - pclim[idxa]);
+    }
+    acc += w;
+  }
+
+  cout &lt;&lt; &quot;The generated limits between centrality classes in this run:\n&quot;
+       &lt;&lt; &quot;   %   assumed    actual\n&quot;;
+  for ( int idx = 0; idx &lt; 9; ++idx )
+    cout &lt;&lt; setw(4) &lt;&lt; int(pclim[idx]*100.0 + 0.5)
+         &lt;&lt; setw(10) &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; genlim[idx]
+         &lt;&lt; setw(10) &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; newlim[idx] &lt;&lt; endl;
+
+  // And we&apos;re done!
+  return 0;
+}
+</code></pre></body></html>

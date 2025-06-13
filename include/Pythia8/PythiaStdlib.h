@@ -1,5 +1,5 @@
 // PythiaStdlib.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -46,6 +46,9 @@
 #include <atomic>
 #include <thread>
 
+// Handle floating point exceptions.
+#include "Pythia8/PythiaFpe.h"
+
 // Define pi if not yet done.
 #ifndef M_PI
 #define M_PI 3.1415926535897932385
@@ -54,18 +57,6 @@
 // Define the default subrun.
 #ifndef SUBRUNDEFAULT
 #define SUBRUNDEFAULT -999
-#endif
-
-// Set floating point exceptions from the gcc compiler for debug
-// purposes. Use the compilation flag -DGCCFPDEBUG to enable.
-#ifdef GCCFPDEBUG
-#ifndef __ENABLE_FP_DEBUG__
-#define __ENABLE_FP_DEBUG__
-#include <fenv.h>
-static void __attribute__((constructor)) raisefpe() {
-   feenableexcept (FE_DIVBYZERO | FE_OVERFLOW | FE_INVALID);
-}
-#endif
 #endif
 
 // By this declaration you do not need to use std:: qualifier everywhere.
@@ -205,6 +196,13 @@ string toLower(const string& name, bool trim = true);
 // Variant of above, with in-place replacement.
 inline void toLowerRep(string& name, bool trim = true) {
   name = toLower( name, trim);}
+
+// Remove any initial and trailing blanks or escape characters.
+string trimString(const string& name);
+
+// Variant of above, with in-place replacement.
+inline void trimStringRep(string& name) {
+  name = trimString( name);}
 
 // Convert a boolean to a string.
 inline string toString(bool val) {return val ? "on" : "off";}

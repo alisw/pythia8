@@ -75,8 +75,8 @@ The scope of this class is to provide a lightweight way of
 parallelising simple <code>Pythia</code> studies. As such, it may not 
 offer the necessary features to support more complicated use cases. 
 The specific features are documented below, and examples are given in 
-<code>main161</code>, <code>main162</code>, <code>main163</code>, and 
-<code>main204</code>. 
+<code>main221</code>, <code>main222</code>, <code>main223</code>, and 
+<code>main404</code>. 
  
 <method name="vector&lt;long&gt; PythiaParallel::run(long nEvents, 
 function&lt;void(Pythia*)&gt; callback)"> 

@@ -46,13 +46,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="UserHooks.html#anchor48" target="page">canSetImpactParameter()</a></td>
+<td><a href="UserHooks.html#anchor50" target="page">canSetImpactParameter()</a></td>
 <td>User Hooks</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="UserHooks.html#anchor46" target="page">canVetoAfterHadronization()</a></td>
+<td><a href="UserHooks.html#anchor48" target="page">canVetoAfterHadronization()</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
+<td><a href="UserHooks.html#anchor44" target="page">canVetoFragmentation()</a></td>
 <td>User Hooks</td>
 </tr>
 
@@ -64,13 +70,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor44" target="page">cosphi(...)</a></td>
+<td><a href="FourVectors.html#anchor45" target="page">cosphi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor46" target="page">cosphi(...)</a></td>
+<td><a href="FourVectors.html#anchor47" target="page">cosphi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -118,7 +124,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="UserHooks.html#anchor49" target="page">doSetImpactParameter()</a></td>
+<td><a href="UserHooks.html#anchor51" target="page">doSetImpactParameter()</a></td>
 <td>User Hooks</td>
 </tr>
 
@@ -130,19 +136,25 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="UserHooks.html#anchor47" target="page">doVetoAfterHadronization(...)</a></td>
+<td><a href="UserHooks.html#anchor49" target="page">doVetoAfterHadronization(...)</a></td>
 <td>User Hooks</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="UserHooks.html#anchor44" target="page">doVetoFragmentation(...)</a></td>
+<td><a href="UserHooks.html#anchor47" target="page">doVetoFinalTwo(...)</a></td>
 <td>User Hooks</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
 <td><a href="UserHooks.html#anchor45" target="page">doVetoFragmentation(...)</a></td>
+<td>User Hooks</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
+<td><a href="UserHooks.html#anchor46" target="page">doVetoFragmentation(...)</a></td>
 <td>User Hooks</td>
 </tr>
 
@@ -154,12 +166,6 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor99" target="page">fromCMframe(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>RotBstMatrix</td>
 <td><a href="FourVectors.html#anchor101" target="page">fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
@@ -167,6 +173,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 <tr>
 <td>RotBstMatrix</td>
 <td><a href="FourVectors.html#anchor103" target="page">fromCMframe(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>RotBstMatrix</td>
+<td><a href="FourVectors.html#anchor105" target="page">fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -190,7 +202,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>PDF*</td>
-<td><a href="ProgramFlow.html#anchor58" target="page">getPDFPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor61" target="page">getPDFPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -208,7 +220,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend pair&lt;Vec4,Vec4&gt;</td>
-<td><a href="FourVectors.html#anchor50" target="page">getTwoPerpendicular(...)</a></td>
+<td><a href="FourVectors.html#anchor51" target="page">getTwoPerpendicular(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -303,7 +315,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
-<td>friend double</td>
+<td>friend bool</td>
+<td><a href="FourVectors.html#anchor35" target="page">isfinite(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>friend bool</td>
 <td><a href="FourVectors.html#anchor34" target="page">isinf(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
@@ -311,12 +329,6 @@ Many of them are only intended for experts, while undocumented ones are only for
 <tr>
 <td>friend bool</td>
 <td><a href="FourVectors.html#anchor33" target="page">isnan(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>friend bool</td>
-<td><a href="FourVectors.html#anchor35" target="page">isnan(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -388,7 +400,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend ostream&</td>
-<td><a href="FourVectors.html#anchor97" target="page">operator&lt;&lt;(...)</a></td>
+<td><a href="FourVectors.html#anchor99" target="page">operator&lt;&lt;(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -400,19 +412,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor58" target="page">operator*(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>friend Vec4</td>
 <td><a href="FourVectors.html#anchor59" target="page">operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
+<td>friend Vec4</td>
+<td><a href="FourVectors.html#anchor60" target="page">operator*(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor61" target="page">operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor62" target="page">operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -436,7 +448,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor56" target="page">operator+(...)</a></td>
+<td><a href="FourVectors.html#anchor57" target="page">operator+(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -460,7 +472,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor57" target="page">operator-(...)</a></td>
+<td><a href="FourVectors.html#anchor58" target="page">operator-(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -484,7 +496,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend Vec4</td>
-<td><a href="FourVectors.html#anchor60" target="page">operator/(...)</a></td>
+<td><a href="FourVectors.html#anchor61" target="page">operator/(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -544,31 +556,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor43" target="page">phi(...)</a></td>
+<td><a href="FourVectors.html#anchor44" target="page">phi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor45" target="page">phi(...)</a></td>
+<td><a href="FourVectors.html#anchor46" target="page">phi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend bool</td>
-<td><a href="FourVectors.html#anchor49" target="page">pShift(...)</a></td>
+<td><a href="FourVectors.html#anchor50" target="page">pShift(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor48" target="page">REtaPhi(...)</a></td>
+<td><a href="FourVectors.html#anchor49" target="page">REtaPhi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>friend double</td>
-<td><a href="FourVectors.html#anchor47" target="page">RRapPhi(...)</a></td>
+<td><a href="FourVectors.html#anchor48" target="page">RRapPhi(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -588,6 +600,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 <td>double</td>
 <td><a href="HadronicRescattering.html#anchor21" target="page">sigmaCalc(...)</a></td>
 <td>Hadronic Rescattering</td>
+</tr>
+
+<tr>
+<td>friend double</td>
+<td><a href="FourVectors.html#anchor43" target="page">sintheta(...)</a></td>
+<td>Four-Vectors</td>
 </tr>
 
 <tr>
@@ -616,12 +634,6 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor98" target="page">toCMframe(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>RotBstMatrix</td>
 <td><a href="FourVectors.html#anchor100" target="page">toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
@@ -629,6 +641,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 <tr>
 <td>RotBstMatrix</td>
 <td><a href="FourVectors.html#anchor102" target="page">toCMframe(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>RotBstMatrix</td>
+<td><a href="FourVectors.html#anchor104" target="page">toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -688,7 +706,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>string Info::getGeneratorAttribute(unsigned int n,</td>
-<td><a href="LHEF.html#anchor16" target="page"></a></td>
+<td><a href="LHEF.html#anchor18" target="page"></a></td>
 <td>L H E F</td>
 </tr>
 
@@ -1659,6 +1677,18 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>virtual bool</td>
+<td><a href="ImplementNewFragmentation.html#anchor2" target="page">FragmentationModel::fragment(...)</a></td>
+<td>Implement New Fragmentation</td>
+</tr>
+
+<tr>
+<td>virtual bool</td>
+<td><a href="ImplementNewFragmentation.html#anchor1" target="page">FragmentationModel::init(...)</a></td>
+<td>Implement New Fragmentation</td>
+</tr>
+
+<tr>
 <td>void Hist::takeFunc(...)&gt;</td>
 <td><a href="Histograms.html#anchor49" target="page">func)</a></td>
 <td>Histograms</td>
@@ -1774,7 +1804,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor47" target="page">HIInfo::b()</a></td>
+<td><a href="HeavyIons.html#anchor51" target="page">HIInfo::b()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -1782,6 +1812,54 @@ Many of them are only intended for experts, while undocumented ones are only for
 <td>double</td>
 <td><a href="EventInformation.html#anchor102" target="page">HIInfo::b()</a></td>
 <td>Event Information</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor79" target="page">HIInfo::glauberBSlope()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor78" target="page">HIInfo::glauberDDiff()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor77" target="page">HIInfo::glauberDiffP()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor76" target="page">HIInfo::glauberDiffT()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor75" target="page">HIInfo::glauberEL()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor74" target="page">HIInfo::glauberINEL()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor73" target="page">HIInfo::glauberND()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor72" target="page">HIInfo::glauberTot()</a></td>
+<td>Heavy Ions</td>
 </tr>
 
 <tr>
@@ -1810,7 +1888,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="HeavyIons.html#anchor53" target="page">HIInfo::nAccepted()</a></td>
+<td><a href="HeavyIons.html#anchor54" target="page">HIInfo::nAccepted()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -1822,7 +1900,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="HeavyIons.html#anchor52" target="page">HIInfo::nAttempts()</a></td>
+<td><a href="HeavyIons.html#anchor53" target="page">HIInfo::nAttempts()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -1870,7 +1948,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="HeavyIons.html#anchor57" target="page">HIInfo::nCollND()</a></td>
+<td><a href="HeavyIons.html#anchor58" target="page">HIInfo::nCollND()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -1878,12 +1956,6 @@ Many of them are only intended for experts, while undocumented ones are only for
 <td>int</td>
 <td><a href="EventInformation.html#anchor111" target="page">HIInfo::nCollND()</a></td>
 <td>Event Information</td>
-</tr>
-
-<tr>
-<td>int</td>
-<td><a href="HeavyIons.html#anchor58" target="page">HIInfo::nCollNDTot()</a></td>
-<td>Heavy Ions</td>
 </tr>
 
 <tr>
@@ -1918,7 +1990,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="HeavyIons.html#anchor56" target="page">HIInfo::nCollTot()</a></td>
+<td><a href="HeavyIons.html#anchor57" target="page">HIInfo::nCollTot()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -2014,20 +2086,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor50" target="page">HIInfo::sigmaND()</a></td>
-<td>Heavy Ions</td>
-</tr>
-
-<tr>
-<td>double</td>
 <td><a href="EventInformation.html#anchor106" target="page">HIInfo::sigmaND()</a></td>
 <td>Event Information</td>
-</tr>
-
-<tr>
-<td>double</td>
-<td><a href="HeavyIons.html#anchor51" target="page">HIInfo::sigmaNDErr()</a></td>
-<td>Heavy Ions</td>
 </tr>
 
 <tr>
@@ -2038,20 +2098,8 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor48" target="page">HIInfo::sigmaTot()</a></td>
-<td>Heavy Ions</td>
-</tr>
-
-<tr>
-<td>double</td>
 <td><a href="EventInformation.html#anchor104" target="page">HIInfo::sigmaTot()</a></td>
 <td>Event Information</td>
-</tr>
-
-<tr>
-<td>double</td>
-<td><a href="HeavyIons.html#anchor49" target="page">HIInfo::sigmaTotErr()</a></td>
-<td>Heavy Ions</td>
 </tr>
 
 <tr>
@@ -2061,20 +2109,26 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
-<td>multiset&ltSubCollision&gt*</td>
-<td><a href="HeavyIons.html#anchor54" target="page">HIInfo::subCollisionsPtr()</a></td>
+<td>multiset&lt;SubCollision&gt;*</td>
+<td><a href="HeavyIons.html#anchor55" target="page">HIInfo::subCollisionsPtr()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HeavyIons.html#anchor55" target="page">HIInfo::subCollisionsPtr(...)</a></td>
+<td><a href="HeavyIons.html#anchor56" target="page">HIInfo::subCollisionsPtr(...)</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor72" target="page">HIInfo::weight()</a></td>
+<td><a href="HeavyIons.html#anchor52" target="page">HIInfo::T()</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="HeavyIons.html#anchor80" target="page">HIInfo::weight()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -2086,7 +2140,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor73" target="page">HIInfo::weightSum()</a></td>
+<td><a href="HeavyIons.html#anchor81" target="page">HIInfo::weightSum()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -2548,73 +2602,73 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>string</td>
-<td><a href="LHEF.html#anchor27" target="page">Info::getEventAttribute(...)</a></td>
+<td><a href="LHEF.html#anchor29" target="page">Info::getEventAttribute(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LHEF.html#anchor14" target="page">Info::getGeneratorSize()</a></td>
+<td><a href="LHEF.html#anchor16" target="page">Info::getGeneratorSize()</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="LHEF.html#anchor15" target="page">Info::getGeneratorValue(...)</a></td>
+<td><a href="LHEF.html#anchor17" target="page">Info::getGeneratorValue(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LHEF.html#anchor13" target="page">Info::getInitrwgtSize()</a></td>
+<td><a href="LHEF.html#anchor15" target="page">Info::getInitrwgtSize()</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LHEF.html#anchor26" target="page">Info::getScalesAttribute(...)</a></td>
+<td><a href="LHEF.html#anchor28" target="page">Info::getScalesAttribute(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="LHEF.html#anchor25" target="page">Info::getScalesValue()</a></td>
+<td><a href="LHEF.html#anchor27" target="page">Info::getScalesValue()</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="LHEF.html#anchor24" target="page">Info::getWeightsCompressedAttribute(...)</a></td>
+<td><a href="LHEF.html#anchor26" target="page">Info::getWeightsCompressedAttribute(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>unsigned int</td>
-<td><a href="LHEF.html#anchor22" target="page">Info::getWeightsCompressedSize()</a></td>
+<td><a href="LHEF.html#anchor24" target="page">Info::getWeightsCompressedSize()</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LHEF.html#anchor23" target="page">Info::getWeightsCompressedValue(...)</a></td>
+<td><a href="LHEF.html#anchor25" target="page">Info::getWeightsCompressedValue(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="LHEF.html#anchor21" target="page">Info::getWeightsDetailedAttribute(...)</a></td>
+<td><a href="LHEF.html#anchor23" target="page">Info::getWeightsDetailedAttribute(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>unsigned int</td>
-<td><a href="LHEF.html#anchor19" target="page">Info::getWeightsDetailedSize()</a></td>
+<td><a href="LHEF.html#anchor21" target="page">Info::getWeightsDetailedSize()</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LHEF.html#anchor20" target="page">Info::getWeightsDetailedValue(...)</a></td>
+<td><a href="LHEF.html#anchor22" target="page">Info::getWeightsDetailedValue(...)</a></td>
 <td>L H E F</td>
 </tr>
 
@@ -2638,13 +2692,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>string</td>
-<td><a href="LHEF.html#anchor7" target="page">Info::header(...)</a></td>
+<td><a href="LHEF.html#anchor9" target="page">Info::header(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>vector &lt;string&gt;</td>
-<td><a href="LHEF.html#anchor8" target="page">Info::headerKeys()</a></td>
+<td><a href="LHEF.html#anchor10" target="page">Info::headerKeys()</a></td>
 <td>L H E F</td>
 </tr>
 
@@ -2770,7 +2824,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="LHEF.html#anchor10" target="page">Info::LHEFversion()</a></td>
+<td><a href="LHEF.html#anchor12" target="page">Info::LHEFversion()</a></td>
 <td>L H E F</td>
 </tr>
 
@@ -2884,13 +2938,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="LHEF.html#anchor11" target="page">Info::nProcessesLHEF()</a></td>
+<td><a href="LHEF.html#anchor13" target="page">Info::nProcessesLHEF()</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="LHEF.html#anchor17" target="page">Info::nProcessesLHEF()</a></td>
+<td><a href="LHEF.html#anchor19" target="page">Info::nProcessesLHEF()</a></td>
 <td>L H E F</td>
 </tr>
 
@@ -3064,7 +3118,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="LHEF.html#anchor9" target="page">Info::setHeader(...)</a></td>
+<td><a href="LHEF.html#anchor11" target="page">Info::setHeader(...)</a></td>
 <td>L H E F</td>
 </tr>
 
@@ -3088,13 +3142,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="LHEF.html#anchor12" target="page">Info::sigmaLHEF(...)</a></td>
+<td><a href="LHEF.html#anchor14" target="page">Info::sigmaLHEF(...)</a></td>
 <td>L H E F</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="LHEF.html#anchor18" target="page">Info::sigmaLHEF(...)</a></td>
+<td><a href="LHEF.html#anchor20" target="page">Info::sigmaLHEF(...)</a></td>
 <td>L H E F</td>
 </tr>
 
@@ -3862,67 +3916,67 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual bool</td>
-<td><a href="CKKWLMerging.html#anchor27" target="page">MergingHooks::canCutOnRecState()</a></td>
+<td><a href="CKKWLMerging.html#anchor29" target="page">MergingHooks::canCutOnRecState()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="CKKWLMerging.html#anchor26" target="page">MergingHooks::dampenIfFailCuts(...)</a></td>
+<td><a href="CKKWLMerging.html#anchor28" target="page">MergingHooks::dampenIfFailCuts(...)</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>virtual bool</td>
-<td><a href="CKKWLMerging.html#anchor28" target="page">MergingHooks::doCutOnRecState(...)</a></td>
+<td><a href="CKKWLMerging.html#anchor30" target="page">MergingHooks::doCutOnRecState(...)</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="CKKWLMerging.html#anchor29" target="page">MergingHooks::hardProcessME(...)</a></td>
+<td><a href="CKKWLMerging.html#anchor31" target="page">MergingHooks::hardProcessME(...)</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="CKKWLMerging.html#anchor16" target="page">MergingHooks::MergingHooks()</a></td>
+<td><a href="CKKWLMerging.html#anchor18" target="page">MergingHooks::MergingHooks()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="CKKWLMerging.html#anchor23" target="page">MergingHooks::nHardInLeptons()</a></td>
+<td><a href="CKKWLMerging.html#anchor25" target="page">MergingHooks::nHardInLeptons()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="CKKWLMerging.html#anchor22" target="page">MergingHooks::nHardInPartons()</a></td>
+<td><a href="CKKWLMerging.html#anchor24" target="page">MergingHooks::nHardInPartons()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="CKKWLMerging.html#anchor21" target="page">MergingHooks::nHardOutLeptons()</a></td>
+<td><a href="CKKWLMerging.html#anchor23" target="page">MergingHooks::nHardOutLeptons()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="CKKWLMerging.html#anchor20" target="page">MergingHooks::nHardOutPartons()</a></td>
+<td><a href="CKKWLMerging.html#anchor22" target="page">MergingHooks::nHardOutPartons()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="CKKWLMerging.html#anchor19" target="page">MergingHooks::nMaxJets()</a></td>
+<td><a href="CKKWLMerging.html#anchor21" target="page">MergingHooks::nMaxJets()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="CKKWLMerging.html#anchor24" target="page">MergingHooks::nResInCurrent()</a></td>
+<td><a href="CKKWLMerging.html#anchor26" target="page">MergingHooks::nResInCurrent()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
@@ -3934,19 +3988,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="CKKWLMerging.html#anchor25" target="page">MergingHooks::tms()</a></td>
+<td><a href="CKKWLMerging.html#anchor27" target="page">MergingHooks::tms()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>virtual double</td>
-<td><a href="CKKWLMerging.html#anchor18" target="page">MergingHooks::tmsDefinition(...)</a></td>
+<td><a href="CKKWLMerging.html#anchor20" target="page">MergingHooks::tmsDefinition(...)</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
 <tr>
 <td>virtual</td>
-<td><a href="CKKWLMerging.html#anchor17" target="page">MergingHooks::~MergingHooks()</a></td>
+<td><a href="CKKWLMerging.html#anchor19" target="page">MergingHooks::~MergingHooks()</a></td>
 <td>C K K W L Merging</td>
 </tr>
 
@@ -4054,31 +4108,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>const Vec4&amp;</td>
-<td><a href="HeavyIons.html#anchor32" target="page">Nucleon::bPos()</a></td>
+<td><a href="HeavyIons.html#anchor34" target="page">Nucleon::bPos()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="HeavyIons.html#anchor33" target="page">Nucleon::bShift(...)</a></td>
+<td><a href="HeavyIons.html#anchor35" target="page">Nucleon::bShift(...)</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="HeavyIons.html#anchor30" target="page">Nucleon::id()</a></td>
+<td><a href="HeavyIons.html#anchor32" target="page">Nucleon::id()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>const Vec4&amp;</td>
-<td><a href="HeavyIons.html#anchor31" target="page">Nucleon::nPos()</a></td>
+<td><a href="HeavyIons.html#anchor33" target="page">Nucleon::nPos()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>Status</td>
-<td><a href="HeavyIons.html#anchor34" target="page">Nucleon::status()</a></td>
+<td><a href="HeavyIons.html#anchor36" target="page">Nucleon::status()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -6207,14 +6261,62 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
+<td>shared_ptr&lt;T&gt;</td>
+<td><a href="Histograms.html#anchor83" target="page">Pythia8Yoda::book(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td>Histo1DPtr</td>
+<td><a href="Histograms.html#anchor84" target="page">Pythia8Yoda::bookHisto1D(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td>Histo2DPtr</td>
+<td><a href="Histograms.html#anchor85" target="page">Pythia8Yoda::bookHisto2D(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td>Histo3DPtr</td>
+<td><a href="Histograms.html#anchor86" target="page">Pythia8Yoda::bookHisto3D(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td>Profile1DPtr</td>
+<td><a href="Histograms.html#anchor87" target="page">Pythia8Yoda::bookProfile1D(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td>Profile2DPtr</td>
+<td><a href="Histograms.html#anchor88" target="page">Pythia8Yoda::bookProfile2D(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td> </td>
+<td><a href="Histograms.html#anchor82" target="page">Pythia8Yoda::Pythia8Yoda(...)</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="Histograms.html#anchor89" target="page">Pythia8Yoda::write()</a></td>
+<td>Histograms</td>
+</tr>
+
+<tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor23" target="page">Pythia::addResonancePtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor25" target="page">Pythia::addResonancePtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor21" target="page">Pythia::addSigmaPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor22" target="page">Pythia::addSigmaPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6232,73 +6334,55 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>CoupSM</td>
-<td><a href="ProgramFlow.html#anchor65" target="page">Pythia::coupSM</a></td>
+<td><a href="ProgramFlow.html#anchor68" target="page">Pythia::coupSM</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor42" target="page">Pythia::doLowEnergyProcess(...)</a></td>
+<td><a href="ProgramFlow.html#anchor45" target="page">Pythia::doLowEnergyProcess(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Event</td>
-<td><a href="ProgramFlow.html#anchor60" target="page">Pythia::event</a></td>
+<td><a href="ProgramFlow.html#anchor63" target="page">Pythia::event</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor54" target="page">Pythia::flag(...)</a></td>
+<td><a href="ProgramFlow.html#anchor57" target="page">Pythia::flag(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor38" target="page">Pythia::forceHadronLevel(...)</a></td>
+<td><a href="ProgramFlow.html#anchor41" target="page">Pythia::forceHadronLevel(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor41" target="page">Pythia::forceRHadronDecays()</a></td>
+<td><a href="ProgramFlow.html#anchor44" target="page">Pythia::forceRHadronDecays()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ProgramFlow.html#anchor37" target="page">Pythia::forceTimeShower(...)</a></td>
+<td><a href="ProgramFlow.html#anchor40" target="page">Pythia::forceTimeShower(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>HeavyIons*</td>
-<td><a href="ProgramFlow.html#anchor27" target="page">Pythia::getHeavyIonsPtr()</a></td>
+<td><a href="ProgramFlow.html#anchor30" target="page">Pythia::getHeavyIonsPtr()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>ShowerModelPtr</td>
-<td><a href="ProgramFlow.html#anchor25" target="page">Pythia::getShowerModelPtr()</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>double</td>
-<td><a href="ProgramFlow.html#anchor47" target="page">Pythia::getSigmaPartial(...)</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>double</td>
-<td><a href="ProgramFlow.html#anchor48" target="page">Pythia::getSigmaPartial(...)</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>double</td>
-<td><a href="ProgramFlow.html#anchor49" target="page">Pythia::getSigmaPartial(...)</a></td>
+<td><a href="ProgramFlow.html#anchor28" target="page">Pythia::getShowerModelPtr()</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6310,37 +6394,55 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="ProgramFlow.html#anchor43" target="page">Pythia::getSigmaTotal()</a></td>
+<td><a href="ProgramFlow.html#anchor51" target="page">Pythia::getSigmaPartial(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ProgramFlow.html#anchor44" target="page">Pythia::getSigmaTotal(...)</a></td>
+<td><a href="ProgramFlow.html#anchor52" target="page">Pythia::getSigmaPartial(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ProgramFlow.html#anchor45" target="page">Pythia::getSigmaTotal(...)</a></td>
+<td><a href="ProgramFlow.html#anchor53" target="page">Pythia::getSigmaPartial(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ProgramFlow.html#anchor46" target="page">Pythia::getSigmaTotal(...)</a></td>
+<td><a href="ProgramFlow.html#anchor46" target="page">Pythia::getSigmaTotal()</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="ProgramFlow.html#anchor47" target="page">Pythia::getSigmaTotal(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="ProgramFlow.html#anchor48" target="page">Pythia::getSigmaTotal(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="ProgramFlow.html#anchor49" target="page">Pythia::getSigmaTotal(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Info</td>
-<td><a href="ProgramFlow.html#anchor61" target="page">Pythia::info</a></td>
+<td><a href="ProgramFlow.html#anchor64" target="page">Pythia::info</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor29" target="page">Pythia::init()</a></td>
+<td><a href="ProgramFlow.html#anchor32" target="page">Pythia::init()</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6351,68 +6453,86 @@ Many of them are only intended for experts, while undocumented ones are only for
 </tr>
 
 <tr>
-<td>void</td>
-<td><a href="ProgramFlow.html#anchor51" target="page">Pythia::LHAeventList()</a></td>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor26" target="page">Pythia::insertResonancePtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor52" target="page">Pythia::LHAeventSkip(...)</a></td>
+<td><a href="ProgramFlow.html#anchor23" target="page">Pythia::insertSigmaPtr(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor19" target="page">Pythia::insertUserHooksPtr(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="ProgramFlow.html#anchor54" target="page">Pythia::LHAeventList()</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor55" target="page">Pythia::LHAeventSkip(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>int</td>
-<td><a href="ProgramFlow.html#anchor55" target="page">Pythia::mode(...)</a></td>
+<td><a href="ProgramFlow.html#anchor58" target="page">Pythia::mode(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor39" target="page">Pythia::moreDecays()</a></td>
+<td><a href="ProgramFlow.html#anchor42" target="page">Pythia::moreDecays()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor40" target="page">Pythia::moreDecays(...)</a></td>
+<td><a href="ProgramFlow.html#anchor43" target="page">Pythia::moreDecays(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor30" target="page">Pythia::next()</a></td>
+<td><a href="ProgramFlow.html#anchor33" target="page">Pythia::next()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor31" target="page">Pythia::next(...)</a></td>
+<td><a href="ProgramFlow.html#anchor34" target="page">Pythia::next(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="ProgramFlow.html#anchor56" target="page">Pythia::parm(...)</a></td>
+<td><a href="ProgramFlow.html#anchor59" target="page">Pythia::parm(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>ParticleData</td>
-<td><a href="ProgramFlow.html#anchor63" target="page">Pythia::particleData</a></td>
+<td><a href="ProgramFlow.html#anchor66" target="page">Pythia::particleData</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>PartonSystems</td>
-<td><a href="ProgramFlow.html#anchor67" target="page">Pythia::partonSystems</a></td>
+<td><a href="ProgramFlow.html#anchor70" target="page">Pythia::partonSystems</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Event</td>
-<td><a href="ProgramFlow.html#anchor59" target="page">Pythia::process</a></td>
+<td><a href="ProgramFlow.html#anchor62" target="page">Pythia::process</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6466,19 +6586,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>Rndm</td>
-<td><a href="ProgramFlow.html#anchor64" target="page">Pythia::rndm</a></td>
+<td><a href="ProgramFlow.html#anchor67" target="page">Pythia::rndm</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor36" target="page">Pythia::setBeamIDs(...)</a></td>
+<td><a href="ProgramFlow.html#anchor39" target="page">Pythia::setBeamIDs(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor19" target="page">Pythia::setBeamShapePtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor20" target="page">Pythia::setBeamShapePtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6490,31 +6610,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor26" target="page">Pythia::setHeavyIonsPtr(...)</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="ProgramFlow.html#anchor32" target="page">Pythia::setKinematics(...)</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="ProgramFlow.html#anchor33" target="page">Pythia::setKinematics(...)</a></td>
-<td>Program Flow</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="ProgramFlow.html#anchor34" target="page">Pythia::setKinematics(...)</a></td>
+<td><a href="ProgramFlow.html#anchor29" target="page">Pythia::setHeavyIonsPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
 <td><a href="ProgramFlow.html#anchor35" target="page">Pythia::setKinematics(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor36" target="page">Pythia::setKinematics(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor37" target="page">Pythia::setKinematics(...)</a></td>
+<td>Program Flow</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="ProgramFlow.html#anchor38" target="page">Pythia::setKinematics(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6538,7 +6658,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor28" target="page">Pythia::setPartonVertexPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor31" target="page">Pythia::setPartonVertexPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6556,7 +6676,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor22" target="page">Pythia::setResonancePtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor24" target="page">Pythia::setResonancePtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6568,19 +6688,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor24" target="page">Pythia::setShowerModelPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor27" target="page">Pythia::setShowerModelPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="ProgramFlow.html#anchor20" target="page">Pythia::setSigmaPtr(...)</a></td>
+<td><a href="ProgramFlow.html#anchor21" target="page">Pythia::setSigmaPtr(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>Settings</td>
-<td><a href="ProgramFlow.html#anchor62" target="page">Pythia::settings</a></td>
+<td><a href="ProgramFlow.html#anchor65" target="page">Pythia::settings</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6592,19 +6712,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>SusyLesHouches</td>
-<td><a href="ProgramFlow.html#anchor66" target="page">Pythia::slha</a></td>
+<td><a href="ProgramFlow.html#anchor69" target="page">Pythia::slha</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="ProgramFlow.html#anchor53" target="page">Pythia::stat()</a></td>
+<td><a href="ProgramFlow.html#anchor56" target="page">Pythia::stat()</a></td>
 <td>Program Flow</td>
 </tr>
 
 <tr>
 <td>string</td>
-<td><a href="ProgramFlow.html#anchor57" target="page">Pythia::word(...)</a></td>
+<td><a href="ProgramFlow.html#anchor60" target="page">Pythia::word(...)</a></td>
 <td>Program Flow</td>
 </tr>
 
@@ -6658,13 +6778,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>int</td>
-<td><a href="RandomNumbers.html#anchor22" target="page">Rndm::debugCall</a></td>
-<td>Random Numbers</td>
-</tr>
-
-<tr>
-<td>set&lt;string&gt;</td>
-<td><a href="RandomNumbers.html#anchor26" target="page">Rndm::debugContains</a></td>
+<td><a href="RandomNumbers.html#anchor23" target="page">Rndm::debugCall</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -6676,43 +6790,49 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>set&lt;string&gt;</td>
-<td><a href="RandomNumbers.html#anchor25" target="page">Rndm::debugEnds</a></td>
-<td>Random Numbers</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="RandomNumbers.html#anchor21" target="page">Rndm::debugIndex</a></td>
-<td>Random Numbers</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="RandomNumbers.html#anchor20" target="page">Rndm::debugLocation</a></td>
-<td>Random Numbers</td>
-</tr>
-
-<tr>
-<td>bool</td>
-<td><a href="RandomNumbers.html#anchor19" target="page">Rndm::debugNow</a></td>
-<td>Random Numbers</td>
-</tr>
-
-<tr>
-<td>int</td>
-<td><a href="RandomNumbers.html#anchor23" target="page">Rndm::debugPrecision</a></td>
+<td><a href="RandomNumbers.html#anchor28" target="page">Rndm::debugContains</a></td>
 <td>Random Numbers</td>
 </tr>
 
 <tr>
 <td>set&lt;string&gt;</td>
-<td><a href="RandomNumbers.html#anchor24" target="page">Rndm::debugStarts</a></td>
+<td><a href="RandomNumbers.html#anchor26" target="page">Rndm::debugEnds</a></td>
 <td>Random Numbers</td>
 </tr>
 
 <tr>
 <td>bool</td>
-<td><a href="RandomNumbers.html#anchor14" target="page">Rndm::dumpState(...)</a></td>
+<td><a href="RandomNumbers.html#anchor22" target="page">Rndm::debugIndex</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="RandomNumbers.html#anchor21" target="page">Rndm::debugLocation</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="RandomNumbers.html#anchor20" target="page">Rndm::debugNow</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
+<td>int</td>
+<td><a href="RandomNumbers.html#anchor24" target="page">Rndm::debugPrecision</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
+<td>set&lt;string&gt;</td>
+<td><a href="RandomNumbers.html#anchor25" target="page">Rndm::debugStarts</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="RandomNumbers.html#anchor15" target="page">Rndm::dumpState(...)</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -6742,13 +6862,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>RndmState</td>
-<td><a href="RandomNumbers.html#anchor16" target="page">Rndm::getState()</a></td>
+<td><a href="RandomNumbers.html#anchor17" target="page">Rndm::getState()</a></td>
 <td>Random Numbers</td>
 </tr>
 
 <tr>
 <td>void</td>
 <td><a href="RandomNumbers.html#anchor5" target="page">Rndm::init(...)</a></td>
+<td>Random Numbers</td>
+</tr>
+
+<tr>
+<td>double</td>
+<td><a href="RandomNumbers.html#anchor14" target="page">Rndm::peekFlat()</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -6766,7 +6892,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>bool</td>
-<td><a href="RandomNumbers.html#anchor15" target="page">Rndm::readState(...)</a></td>
+<td><a href="RandomNumbers.html#anchor16" target="page">Rndm::readState(...)</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -6790,7 +6916,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="RandomNumbers.html#anchor17" target="page">Rndm::setState(...)</a></td>
+<td><a href="RandomNumbers.html#anchor18" target="page">Rndm::setState(...)</a></td>
 <td>Random Numbers</td>
 </tr>
 
@@ -6808,19 +6934,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>virtual double</td>
-<td><a href="RandomNumbers.html#anchor18" target="page">RndmEngine::flat()</a></td>
+<td><a href="RandomNumbers.html#anchor19" target="page">RndmEngine::flat()</a></td>
 <td>Random Numbers</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor81" target="page">RotBstMatrix::bst(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
-<td><a href="FourVectors.html#anchor82" target="page">RotBstMatrix::bst(...)</a></td>
+<td><a href="FourVectors.html#anchor83" target="page">RotBstMatrix::bst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -6832,109 +6952,115 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor83" target="page">RotBstMatrix::bstback(...)</a></td>
+<td><a href="FourVectors.html#anchor86" target="page">RotBstMatrix::bst(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor85" target="page">RotBstMatrix::bstback(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="FourVectors.html#anchor96" target="page">RotBstMatrix::deviation()</a></td>
+<td><a href="FourVectors.html#anchor98" target="page">RotBstMatrix::deviation()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor86" target="page">RotBstMatrix::fromCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor88" target="page">RotBstMatrix::fromCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor88" target="page">RotBstMatrix::fromSameVframe(...)</a></td>
+<td><a href="FourVectors.html#anchor90" target="page">RotBstMatrix::fromSameVframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix</td>
-<td><a href="FourVectors.html#anchor93" target="page">RotBstMatrix::inverse()</a></td>
+<td><a href="FourVectors.html#anchor95" target="page">RotBstMatrix::inverse()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor92" target="page">RotBstMatrix::invert()</a></td>
+<td><a href="FourVectors.html#anchor94" target="page">RotBstMatrix::invert()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix&</td>
-<td><a href="FourVectors.html#anchor90" target="page">RotBstMatrix::operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor92" target="page">RotBstMatrix::operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4</td>
-<td><a href="FourVectors.html#anchor91" target="page">RotBstMatrix::operator*(...)</a></td>
+<td><a href="FourVectors.html#anchor93" target="page">RotBstMatrix::operator*(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>RotBstMatrix&</td>
-<td><a href="FourVectors.html#anchor78" target="page">RotBstMatrix::operator=(...)</a></td>
+<td><a href="FourVectors.html#anchor80" target="page">RotBstMatrix::operator=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor94" target="page">RotBstMatrix::reset()</a></td>
+<td><a href="FourVectors.html#anchor96" target="page">RotBstMatrix::reset()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor79" target="page">RotBstMatrix::rot(...)</a></td>
+<td><a href="FourVectors.html#anchor81" target="page">RotBstMatrix::rot(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor80" target="page">RotBstMatrix::rot(...)</a></td>
+<td><a href="FourVectors.html#anchor82" target="page">RotBstMatrix::rot(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor89" target="page">RotBstMatrix::rotbst(...);</a></td>
+<td><a href="FourVectors.html#anchor91" target="page">RotBstMatrix::rotbst(...);</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="FourVectors.html#anchor76" target="page">RotBstMatrix::RotBstMatrix()</a></td>
+<td><a href="FourVectors.html#anchor78" target="page">RotBstMatrix::RotBstMatrix()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td> </td>
-<td><a href="FourVectors.html#anchor77" target="page">RotBstMatrix::RotBstMatrix(...)</a></td>
+<td><a href="FourVectors.html#anchor79" target="page">RotBstMatrix::RotBstMatrix(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor85" target="page">RotBstMatrix::toCMframe(...)</a></td>
+<td><a href="FourVectors.html#anchor87" target="page">RotBstMatrix::toCMframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor87" target="page">RotBstMatrix::toSameVframe(...)</a></td>
+<td><a href="FourVectors.html#anchor89" target="page">RotBstMatrix::toSameVframe(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="FourVectors.html#anchor95" target="page">RotBstMatrix::value(...)</a></td>
+<td><a href="FourVectors.html#anchor97" target="page">RotBstMatrix::value(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -7930,31 +8056,37 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor37" target="page">SubCollision::b</a></td>
+<td><a href="HeavyIons.html#anchor39" target="page">SubCollision::b</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>double</td>
-<td><a href="HeavyIons.html#anchor38" target="page">SubCollision::bp</a></td>
+<td><a href="HeavyIons.html#anchor40" target="page">SubCollision::bp</a></td>
+<td>Heavy Ions</td>
+</tr>
+
+<tr>
+<td>bool</td>
+<td><a href="HeavyIons.html#anchor41" target="page">SubCollision::failed</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>Nucleon*</td>
-<td><a href="HeavyIons.html#anchor35" target="page">SubCollision::proj</a></td>
+<td><a href="HeavyIons.html#anchor37" target="page">SubCollision::proj</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>Nucleon*</td>
-<td><a href="HeavyIons.html#anchor36" target="page">SubCollision::targ</a></td>
+<td><a href="HeavyIons.html#anchor38" target="page">SubCollision::targ</a></td>
 <td>Heavy Ions</td>
 </tr>
 
 <tr>
 <td>CollisionType</td>
-<td><a href="HeavyIons.html#anchor39" target="page">SubCollision::type()</a></td>
+<td><a href="HeavyIons.html#anchor42" target="page">SubCollision::type()</a></td>
 <td>Heavy Ions</td>
 </tr>
 
@@ -8416,12 +8548,6 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor69" target="page">Vec4::bst(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
 <td><a href="FourVectors.html#anchor70" target="page">Vec4::bst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
@@ -8440,13 +8566,19 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor73" target="page">Vec4::bstback(...)</a></td>
+<td><a href="FourVectors.html#anchor73" target="page">Vec4::bst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
 <td><a href="FourVectors.html#anchor74" target="page">Vec4::bstback(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor75" target="page">Vec4::bstback(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8459,6 +8591,12 @@ Many of them are only intended for experts, while undocumented ones are only for
 <tr>
 <td>void</td>
 <td><a href="FourVectors.html#anchor11" target="page">Vec4::e(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor77" target="page">Vec4::eInFrame(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8482,13 +8620,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor64" target="page">Vec4::flip3()</a></td>
+<td><a href="FourVectors.html#anchor65" target="page">Vec4::flip3()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor65" target="page">Vec4::flip4()</a></td>
+<td><a href="FourVectors.html#anchor66" target="page">Vec4::flip4()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8506,31 +8644,31 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor54" target="page">Vec4::operator*=(...)</a></td>
+<td><a href="FourVectors.html#anchor55" target="page">Vec4::operator*=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor52" target="page">Vec4::operator+=(...)</a></td>
+<td><a href="FourVectors.html#anchor53" target="page">Vec4::operator+=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4</td>
-<td><a href="FourVectors.html#anchor51" target="page">Vec4::operator-()</a></td>
+<td><a href="FourVectors.html#anchor52" target="page">Vec4::operator-()</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor53" target="page">Vec4::operator-=(...)</a></td>
+<td><a href="FourVectors.html#anchor54" target="page">Vec4::operator-=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>Vec4&</td>
-<td><a href="FourVectors.html#anchor55" target="page">Vec4::operator/=(...)</a></td>
+<td><a href="FourVectors.html#anchor56" target="page">Vec4::operator/=(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8644,13 +8782,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor62" target="page">Vec4::rescale3(...)</a></td>
+<td><a href="FourVectors.html#anchor63" target="page">Vec4::rescale3(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor63" target="page">Vec4::rescale4(...)</a></td>
+<td><a href="FourVectors.html#anchor64" target="page">Vec4::rescale4(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8662,13 +8800,7 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor66" target="page">Vec4::rot(...)</a></td>
-<td>Four-Vectors</td>
-</tr>
-
-<tr>
-<td>void</td>
-<td><a href="FourVectors.html#anchor67" target="page">Vec4::rotaxis(...)</a></td>
+<td><a href="FourVectors.html#anchor67" target="page">Vec4::rot(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8680,7 +8812,13 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 <tr>
 <td>void</td>
-<td><a href="FourVectors.html#anchor75" target="page">Vec4::rotbst(...)</a></td>
+<td><a href="FourVectors.html#anchor69" target="page">Vec4::rotaxis(...)</a></td>
+<td>Four-Vectors</td>
+</tr>
+
+<tr>
+<td>void</td>
+<td><a href="FourVectors.html#anchor76" target="page">Vec4::rotbst(...)</a></td>
 <td>Four-Vectors</td>
 </tr>
 
@@ -8716,4 +8854,4 @@ Many of them are only intended for experts, while undocumented ones are only for
 
 </table>
 
-<!-- Copyright (C) 2024 Torbjorn Sjostrand -->
+<!-- Copyright (C) 2025 Torbjorn Sjostrand -->

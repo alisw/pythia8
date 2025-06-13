@@ -1,0 +1,93 @@
+<html><head><title>main114</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main114</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main114.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.bierlich@fysik.lu.se">Christian Bierlich</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#plotting">Plotting</a>
+//            <a href="../ExampleKeywords.html#yoda">Yoda</a>
+
+// This is a simple test program.
+// It illustrates how YODA2 histograms can be used through the Pythia8Yoda
+// simplified interface. This can be useful for more advanced statistical
+// treatments than the built-in histogram types allow, for example using
+// profile histograms or custom types, as shown below.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/Pythia8Yoda.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+  Pythia pythia;
+  pythia.readString(&quot;Beams:eCM = 8000.&quot;);
+  pythia.readString(&quot;SoftQCD:all = on&quot;);
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+  Pythia8Yoda p8y(&quot;MAIN114&quot;, &quot;main114.yoda&quot;);
+  // Booking of normal types, as defined in Pythia8Yoda.
+  auto h1 = p8y.bookHisto1D(15, 0.5, 191.5, &quot;charged-mult&quot;);
+  auto h2 = p8y.bookProfile1D(15, 0.5, 191.5, &quot;mean-pt&quot;);
+  // Booking of custom YODA types. Two examples:
+  // 1) a 1D histogram with discrete string binning, used
+  // to count the number of pi, K and p per event, and
+  // 2) a 1D Profile histogram with discrete string binning,
+  // used to count &lt;pT&gt; of said particles.
+  // First the types:
+  using IntegerHisto1D = YODA::BinnedHisto1D&lt;string&gt;;
+  using IntegerProfile1D = YODA::BinnedProfile1D&lt;string&gt;;
+  // Then the desired axis binning.
+  const auto pidAxis = YODA::Axis&lt;string&gt;({&quot;211&quot;, &quot;321&quot;, &quot;2212&quot;});
+  // And finally the two histograms.
+  auto h3 = p8y.book&lt;IntegerHisto1D&gt;(pidAxis,
+    &quot;/MAIN114/pid-mult&quot;, &quot;pid-mult&quot;);
+  auto h4 = p8y.book&lt;IntegerProfile1D&gt;(pidAxis,
+    &quot;/MAIN114/pid-mean-pt&quot;, &quot;pid-mean-pt&quot;);
+
+  // Begin event loop. Generate event. Skip if error. List first one.
+  int nEvents = 10000;
+  for (int iEvent = 0; iEvent &lt; nEvents; ++iEvent) {
+    if (!pythia.next()) continue;
+    // Find number of all final charged particles and fill histogram.
+    int nCharged = 0;
+    double sumpT = 0.;
+    for (auto p : pythia.event) {
+      if (p.isFinal() &amp;&amp; p.isHadron() &amp;&amp; p.isCharged() &amp;&amp;
+        abs(p.eta()) &lt; 2.5) {
+        ++nCharged;
+        h3-&gt;fill(to_string(abs(p.id())));
+        sumpT += p.pT();
+        h4-&gt;fill(to_string(abs(p.id())), p.pT());
+      }
+    }
+    if (nCharged &gt; 0) {
+      h1-&gt;fill(nCharged);
+      h2-&gt;fill(nCharged, sumpT/double(nCharged));
+    }
+  // End of event loop. Statistics. Histogram. Done.
+  }
+  pythia.stat();
+  // Normalize to number of events generated.
+  h1-&gt;scaleW(1./double(nEvents));
+  h3-&gt;scaleW(1./double(nEvents));
+
+  // Write histograms to file.
+  p8y.write();
+  cout &lt;&lt; &quot;Histograms have been written. &quot;
+    &quot;You can now plot them with e.g. rivet-mkhtml or Python.\n&quot;;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

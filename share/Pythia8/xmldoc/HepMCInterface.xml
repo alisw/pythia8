@@ -11,14 +11,14 @@ the relevant libraries need to be linked, as explained in the
 <code>README</code> file.  Only version 2.06 (or later) of HepMC2 is 
 supported, and all version of HepMC3 are supported, by agreement with 
 the LHC experimental community. All examples use the HepMC3 interface, 
-with the exceptions of <code>main44.cc</code> and 
-<code>main93.cc</code> which still utilise the HepMC2 interface and 
+with the exceptions of <code>main144.cc</code> and optionally 
+<code>main134.cc</code> which still utilise the HepMC2 interface and 
 are provided as legacy examples. 
  
 <p/> 
 The (simple) procedure to translate PYTHIA 8 events into HepMC ones 
-is illustrated in the <code>main41.cc</code>, <code>main42.cc</code> 
-and <code>main43.cc</code> main programs. At the core is a call to the 
+is illustrated in the <code>main131.cc</code>, <code>main132.cc</code> 
+and <code>main133.cc</code> main programs. At the core is a call to the 
 <pre> 
 HepMC3::Pythia8ToHepMC3::fill_next_event( pythia, hepmcevt, ievnum = -1) 
 </pre> 
@@ -34,7 +34,7 @@ storage, see below.
 <p/> 
 While PYTHIA always stores momenta in units of GeV, with <ei>c = 1</ei>, the 
 <code>HepMC3::GenEvent</code> event record class may be created with units of 
-MeV or GeV and mm or cm, see e.g. the  <code>main41.cc</code> code. When 
+MeV or GeV and mm or cm, see e.g. the  <code>main131.cc</code> code. When 
 filling the HepMC event record,  PYTHIA will switch the current HepMC event 
 record units to GeV and mm. This can be switched back by the user with the 
 <code>HepMC3::GeneEvent::set_units</code> method. Note, the default 
@@ -59,8 +59,8 @@ weight, like in some Les Houches strategies, this weight is in units of pb.
  
 Provided that PYTHIA is properly linked to HepMC, implementation of the 
 most common user case (run PYTHIA with a runcard, output HepMC) exists. 
-The example <code>main93</code> implements this. 
-The sample command file <code>main93.cmnd</code> provides a good starting 
+The example <code>main144.cc</code> implements this. 
+The sample command file <code>main144.cmnd</code> provides a good starting 
 point. The line: 
 <pre> 
     Main:writeHepMC = on 
@@ -68,14 +68,14 @@ point. The line:
 is the switch needed to write a HepMC file. 
 The example is then run with: 
 <pre> 
-    ./main93 -c main93.cmnd 
+    ./main144 -c main144.cmnd 
 </pre> 
 and a HepMC file is then written. Note that this example currently 
 uses the legacy HepMC2 library to maintain Rivet compatability. 
  
 <p/> 
-There are several other useful command line options to <code>main93</code>. 
-They are all displayed by running <code>./main93 -h</code>. 
+There are several other useful command line options to <code>main144</code>. 
+They are all displayed by running <code>./main144 -h</code>. 
  
 <h3>The HepMC3 public methods</h3> 
  
@@ -359,4 +359,4 @@ like in some Les Houches strategies, this weight is in units of pb.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

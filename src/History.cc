@@ -1,5 +1,5 @@
 // History.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -6548,15 +6548,16 @@ Event History::cluster( Clustering & inSystem ) {
     iPosMoth[radPos] = Rad;
   }
 
-  // Append intermediate particle
+  // Append intermediate particles with beam parents.
   // (careful not to append reclustered recoiler).
   for (int i = 0; i < int(NewEvent.size()-1); ++i) {
-    if (NewEvent[i].status() == -22) {
+    if (NewEvent[i].status() == -22
+      && NewEvent[i].mother1() == 3 && NewEvent[i].mother2() == 4) {
       int iNext = outState.append( NewEvent[i] );
       iPosMoth[iNext] = iPosMothTmp[i];
     }
   }
-  // Append final state particles, resonances first.
+  // Append final state particles, first resonances.
   for (int i = 0; i < int(NewEvent.size()-1); ++i) {
     if (NewEvent[i].status() == 22) {
       int iNext = outState.append( NewEvent[i] );
@@ -6581,6 +6582,14 @@ Event History::cluster( Clustering & inSystem ) {
     if ( NewEvent[i].status()  != 22
       && NewEvent[i].colType() != 0
       && NewEvent[i].isFinal()) {
+      int iNext = outState.append( NewEvent[i] );
+      iPosMoth[iNext] = iPosMothTmp[i];
+    }
+  }
+  // Then resonances without beam parents.
+  for (int i = 0; i < int(NewEvent.size()-1); ++i) {
+    if (NewEvent[i].status() == -22
+      && NewEvent[i].mother1() != 3 && NewEvent[i].mother2() != 4) {
       int iNext = outState.append( NewEvent[i] );
       iPosMoth[iNext] = iPosMothTmp[i];
     }
@@ -6730,7 +6739,6 @@ Event History::cluster( Clustering & inSystem ) {
       else if ( radType == 1 && outState[radPos].colType() ==-1)
         outState[iColResNow].acol(radAcl);
     }
-
 
     // If a resonance has been found, but no colours match, and the position
     // of the resonance in the event record has been changed, update the

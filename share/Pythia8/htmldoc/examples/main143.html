@@ -1,0 +1,93 @@
+<html><head><title>main143</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main143</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main143.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Rene Brun
+//            Axel Naumann and Bernhard Meirose
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#analysis">Analysis</a>
+//            <a href="../ExampleKeywords.html#root">Root</a>
+
+// This is a simple test program, based on main101.cc,
+// but modified to use ROOT for histogramming.
+// It studies the charged multiplicity distribution at the LHC.
+
+// WARNING: for currently unknown reasons it may hang
+// with an empty canvas on a Mac.
+
+// Header file to access Pythia 8 program elements.
+#include &quot;Pythia8/Pythia.h&quot;
+
+// ROOT, for histogramming.
+#include &quot;TH1.h&quot;
+
+// ROOT, for interactive graphics.
+#include &quot;TVirtualPad.h&quot;
+#include &quot;TApplication.h&quot;
+
+// ROOT, for saving file.
+#include &quot;TFile.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Create the ROOT application environment.
+  TApplication theApp(&quot;hist&quot;, &amp;argc, argv);
+
+  // Create Pythia instance and set it up to generate hard QCD processes
+  // above pTHat = 20 GeV for pp collisions at 14 TeV.
+  Pythia pythia;
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 20.&quot;);
+  pythia.readString(&quot;Beams:eCM = 14000.&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Create file on which histogram(s) can be saved.
+  TFile* outFile = new TFile(&quot;hist.root&quot;, &quot;RECREATE&quot;);
+
+  // Book histogram.
+  TH1F *mult = new TH1F(&quot;mult&quot;,&quot;charged multiplicity&quot;, 100, -0.5, 799.5);
+
+  // Begin event loop. Generate event; skip if generation aborted.
+  for (int iEvent = 0; iEvent &lt; 1000; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Find number of all final charged particles.
+    int nCharged = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
+        ++nCharged;
+
+    // Fill charged multiplicity in histogram. End event loop.
+    mult-&gt;Fill( nCharged );
+  }
+
+  // Statistics on event generation.
+  pythia.stat();
+
+  // Show histogram. Possibility to close it.
+  mult-&gt;Draw();
+  std::cout &lt;&lt; &quot;\nDouble click on the histogram window to quit.\n&quot;;
+  gPad-&gt;WaitPrimitive();
+
+  // Save histogram on file and close file.
+  mult-&gt;Write();
+  delete outFile;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

@@ -1,0 +1,77 @@
+<html><head><title>main131</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main131</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main131.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:Mikhail.Kirsanov@cern.ch">Mikhail Kirsanov</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#hepmc">Hepmc</a>
+
+// This program illustrates how HepMC files can be written by Pythia8.
+// It also studies the charged multiplicity distribution at the LHC.
+// HepMC events are output to the main131.hepmc file.
+
+// WARNING: typically one needs 25 MB/100 events at the LHC.
+// Therefore large event samples may be impractical.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+// Preferably use HepMC3, but alternatively HepMC2.
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Interface for conversion from Pythia8::Event to HepMC event.
+  // Specify file where HepMC events will be stored.
+  Pythia8ToHepMC toHepMC(&quot;main131.hepmc&quot;);
+
+  // Generator. Process selection. LHC initialization. Histogram.
+  Pythia pythia;
+  pythia.readString(&quot;Beams:eCM = 8000.&quot;);
+  pythia.readString(&quot;HardQCD:all = on&quot;);
+  pythia.readString(&quot;PhaseSpace:pTHatMin = 20.&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  Hist mult(&quot;charged multiplicity&quot;, 100, -0.5, 799.5);
+
+  // Begin event loop. Generate event. Skip if error.
+  for (int iEvent = 0; iEvent &lt; 100; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Find number of all final charged particles and fill histogram.
+    int nCharged = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
+        ++nCharged;
+    mult.fill( nCharged );
+
+    // Construct new empty HepMC event, fill it and write it out.
+    toHepMC.writeNextEvent( pythia );
+
+  // End of event loop. Statistics. Histogram.
+  }
+  pythia.stat();
+  cout &lt;&lt; mult;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

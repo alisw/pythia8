@@ -1,0 +1,10 @@
+! CMS UE tune CUETP8S1-HERAPDF1, April 2014.
+! See CMS note CMS-PAS-GEN-14-001 for further details.
+! Previously set by "Tune:pp = 16".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = LHAPDF6:HERAPDF15LO_EIG
+MultipartonInteractions:pT0Ref      = 2.0001
+MultipartonInteractions:ecmPow      = 0.2499
+MultipartonInteractions:expPow      = 1.6905
+MultipartonInteractions:a1          = 0.00  
+ColourReconnection:range            = 6.0964

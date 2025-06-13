@@ -22,7 +22,13 @@ Be particularly aware that the code will not warn you, in case you have
 no statistical coverage for the values you are attempting to reweight to. 
 Use with caution. 
  
-<wvec name="VariationFrag:List" default="{}"> 
+<flag name="VariationFrag:flav" default="off"> 
+For the fragmentation flavor variations, it is possible to perform 
+post-hoc reweighting without running the in-situ variations below. To 
+enable post-hoc flavor reweighting, switch this flag on. 
+</flag> 
+ 
+<wvec name="VariationFrag:list" default="{}"> 
 Vector of uncertainty-variation strings defining groups of parameter 
 variations for string fragmentation. The groups are separated by commas, 
 and the elements of the group are separated by spaces, where the first 
@@ -62,19 +68,19 @@ the width sigma in the fragmentation process.</li>
 Flavour parameters can be adjusted with the following keywords: 
 <ul> 
 <li><code>frag:xi</code> : value for 
-<code>StringFlav:ProbQQtoQ</code>, the suppression of diquark 
+<code>StringFlav:probQQtoQ</code>, the suppression of diquark 
 production relative to quark production, i.e. of baryon relative to 
 meson production.</li> 
 <li><code>frag:rho</code> : value for 
-<code>StringFlav:ProbStoUD</code>, the suppression of <ei>s</ei> quark 
+<code>StringFlav:probStoUD</code>, the suppression of <ei>s</ei> quark 
 production relative to ordinary <ei>u</ei> or <ei>d</ei> one.</li> 
 <li><code>frag:x</code> : value for 
-<code>StringFlav:StringFlav:ProbSQtoQQ</code>, the suppression of 
+<code>StringFlav:probSQtoQQ</code>, the suppression of 
 strange diquark production relative to light 
 diquark production, over and above the one already given by 
-<code>StringFlav:ProbStoU</code>.</li> 
+<code>StringFlav:probStoU</code>.</li> 
 <li><code>frag:y</code> : value for 
-<code>StringFlav:StringFlav:ProbQQ1toQQ0</code>, the suppression of 
+<code>StringFlav:probQQ1toQQ0</code>, the suppression of 
 spin 1 diquark production relative to spin 0 one, apart from the 
 factor of 3 enhancement of spin 1 from counting the number of 
 states.</li> 
@@ -82,4 +88,4 @@ states.</li>
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

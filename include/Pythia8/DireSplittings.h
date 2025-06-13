@@ -1,5 +1,5 @@
 // DireSplittings.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -65,12 +65,12 @@ public:
     ParticleData* particleData, Rndm* rndm, BeamParticle* beamA,
     BeamParticle* beamB, CoupSM* coupSMPtrIn, Info* infoPtrIn,
                 DireInfo* direInfo) :
-      renormMultFac(0), id(idIn), correctionOrder(softRS),
+    renormMultFac(0), id(idIn), correctionOrder(softRS),
       settingsPtr(settings), particleDataPtr(particleData), rndmPtr(rndm),
       beamAPtr(beamA), beamBPtr(beamB), coupSMPtr(coupSMPtrIn),
       infoPtr(infoPtrIn), direInfoPtr(direInfo), is_qcd(false), is_qed(false),
       is_ewk(false), is_fsr(false), is_isr(false), is_dire(false),
-       nameHash(0) { init(); splitInfo.storeName(name()); }
+      nameHash(0) { init(); splitInfo.storeName(name());}
   virtual ~DireSplitting() {}
 
   void init();
@@ -104,16 +104,16 @@ public:
 
   virtual bool canRadiate ( const Event&, pair<int,int>,
     unordered_map<string,bool> = unordered_map<string,bool>(),
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   // Discard below the cut-off for the splitting.
   virtual bool aboveCutoff( double, const Particle&, const Particle&, int,
-    PartonSystems* = NULL) { return true; }
+    PartonSystems* = nullptr) { return true; }
 
   virtual bool useFastFunctions() { return false; }
   virtual bool canRadiate ( const Event&, int, int,
-    Settings* = NULL, PartonSystems* = NULL, BeamParticle* = NULL)
+    Settings* = nullptr, PartonSystems* = nullptr, BeamParticle* = nullptr)
     {return false;}
 
   // Function to return an identifier for the phase space mapping
@@ -138,8 +138,8 @@ public:
   virtual int  nEmissions() { return 0; }
 
   virtual bool swapRadEmt() { return false; }
-  virtual bool isSymmetric( const Particle* = NULL, const Particle* = NULL)
-    { return false; }
+  virtual bool isSymmetric( const Particle* = nullptr,
+    const Particle* = nullptr) { return false; }
 
   // Return a vector of all possible recoiler positions, given the
   // positions of the radiator and emission after the splitting.

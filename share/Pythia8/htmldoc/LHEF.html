@@ -187,7 +187,7 @@ recalculated for the new mass without any transfer. The energy violation
 is partly compensated by changed energies for the incoming partons to 
 the hard collision if <code>LesHouches:matchInOut = on</code>, but not 
 always perfectly. One possibility then is to change the 
-<a href="ErrorChecks.html" target="page">tolerance</a> to such errors. 
+<a href="ErrorChecks.html" target="page">tolerance</a> to reduce such errors. 
    
  
 <a name="anchor4"></a>
@@ -236,6 +236,56 @@ One possibility then is to change the
    
  
 <a name="anchor5"></a>
+<p/><code>mode&nbsp; </code><strong> LesHouches:smearHadronMass &nbsp;</strong> 
+ (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
+setting of mass for a selection of hadrons. The reason here is that some 
+matrix-element generators fix hadrons to be on the mass shell, so as to 
+simplify calculations. One problem is that such hadrons then are 
+easily distinguished from internally generated hadrons of the same 
+species, which may fool machine learning tools for the separation of 
+signal from background. 
+<br/><code>option </code><strong> 0</strong> :  all hadron masses are taken unchanged from the 
+Les Houches input. 
+   
+<br/><code>option </code><strong> 1</strong> :  the hadrons listed in the 
+<code>LesHouches:idSmearHadrons</code> vector below are assigned a new 
+mass according to the internal PYTHIA prescription. A warning is issued 
+if the original mass lies outside the mass range set in PYTHIA, and then 
+nothing is done. 
+   
+<br/><code>option </code><strong> 2</strong> :  as option 1, but there is no mass range check, so 
+relevant hadrons will always receive a smeared mass. 
+   
+<br/><b>Warning:</b> when the mass is changed, also energy and momentum 
+need to be shifted. This cannot be done for the hadron in isolation, 
+but should be made so as to preserve the energy and momentum of the event 
+as a whole. An attempt is therefore made to find another outgoing 
+particle recoiler that can transfer the appropriate amount of energy 
+and momentum. The recoiler may be unstable, and if so the transfer is 
+inherited by its decay products. The choice is straightforward if only 
+two final-state particles exist, or in a two-body decay of an intermediate 
+resonance. If no recoiler is found this way then the potential final-state 
+recoiler with largest relative invariant mass is picked. In either case, 
+if the transfer fails because the intended recoiler has too little energy 
+to give up, then instead the energy is recalculated for the new mass 
+without any transfer. The energy violation is partly compensated by 
+changed energies for the incoming partons to the hard collision if 
+<code>LesHouches:matchInOut = true</code>, but not always perfectly. 
+One possibility then is to change the 
+<a href="ErrorChecks.html" target="page">tolerance</a> to such errors. 
+   
+ 
+<a name="anchor6"></a>
+<p/><code>mvec&nbsp; </code><strong> LesHouches:idSmearHadrons &nbsp;</strong> 
+ (<code>default = <strong>{113,213}</strong></code>; <code>minimum = 0</code>)<br/>
+list of hadron identity codes, whose masses will be smeared if 
+<code>LesHouches:smearHadronMass &gt; 0</code>, see above. Only 
+(positive) particle codes should be given, with their antiparticles 
+automatically included. It is assumed that the hadron to be smeared 
+has not yet been decayed. 
+   
+ 
+<a name="anchor7"></a>
 <p/><code>parm&nbsp; </code><strong> LesHouches:mRecalculate &nbsp;</strong> 
  (<code>default = <strong>-1.</strong></code>)<br/>
 Does not have any effect by default, or more generally when it is negative. 
@@ -255,7 +305,7 @@ from its three-momntum and mass. This is to avoid spurious mismatches
 from limited numerical precision in an LHEF. 
    
  
-<a name="anchor6"></a>
+<a name="anchor8"></a>
 <p/><code>flag&nbsp; </code><strong> LesHouches:matchInOut &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 The energies and longitudinal momenta of the two incoming partons are 
@@ -264,8 +314,8 @@ The incoming partons are set massless. There are two main applications
 for this option. Firstly, if there is a mismatch in the Les Houches 
 input itself, e.g. owing to limited precision in the stored momenta. 
 Secondly, if a mismatch is induced by PYTHIA recalculations, notably when 
-an outgoing lepton or quark is assigned a mass although assumed massless 
-in the Les Houches input. 
+an outgoing lepton, quark or hadron is assigned a mass although assumed 
+massless (or with a different mass than wanted) in the Les Houches input. 
 <br/><b>Warning:</b> it is assumed that the incoming partons are along 
 the <i>+-z</i> axis; else the kinematics construction will fail. 
    
@@ -383,7 +433,7 @@ on how to do this.
  
 <p/> 
 An example how to generate events from an LHEF is found in 
-<code>main11.cc</code>. Note the use of 
+<code>main121.cc</code>. Note the use of 
 <code>Info::atEndOfFile()</code> to find out when the whole 
 LHEF has been processed. 
  
@@ -397,8 +447,8 @@ It is assumed (but never checked) that the initialization information is
 identical, and that the new file simply contains further events of 
 exactly the same kind as the previous one. An example of this possibility, 
 and the option to mix with internal processes, is found in 
-<code>main12.cc</code>. A variant, based on input in a command file, 
-is given in <code>main13.cc</code>. 
+<code>main122.cc</code>. A variant, based on input in a command file, 
+is given in <code>main123.cc</code>. 
  
 <p/> 
 In C++, real numbers are printed with an 'E' to denote the exponent part, 
@@ -440,17 +490,17 @@ this header information, which can then be read out later. Although the
 naming convention is arbitrary, in practice, it is dictated by the 
 XML-like format of LHE files. 
  
-<a name="anchor7"></a>
+<a name="anchor9"></a>
 <p/><strong> string Info::header(string key) &nbsp;</strong> <br/>
 return the header named <code>key</code> 
    
  
-<a name="anchor8"></a>
+<a name="anchor10"></a>
 <p/><strong> vector &lt;string&gt; Info::headerKeys() &nbsp;</strong> <br/>
 return a vector of all header key names 
    
  
-<a name="anchor9"></a>
+<a name="anchor11"></a>
 <p/><strong> void Info::setHeader(string key, string val) &nbsp;</strong> <br/>
 set the header named <code>key</code> with the contents of <code>val</code> 
    
@@ -480,7 +530,7 @@ Les Houches Event files can conform to version 1.0
 (as agreed upon in [<a href="Bibliography.html#refAlw06" target="page">Alw06</a>]) and version 3.0 
 of the standard (version 2.0 having been extended to 3.0 in [<a href="Bibliography.html#refBut14" target="page">But14</a>]). 
 The LHEF version of an input file can can be accessed by 
-<a name="anchor10"></a>
+<a name="anchor12"></a>
 <br/><strong> int Info::LHEFversion() &nbsp;</strong> <br/>
    
  
@@ -514,12 +564,12 @@ the cross section values and errors by calling
 <code>double Info::sigmaErr(int i = 0)</code>. Please consult the 
 <a href="EventInformation.html" target="page">Event Information</a> section for further 
 details. Alternatively, you may use the functions 
-<a name="anchor11"></a>
+<a name="anchor13"></a>
 <p/><strong> int Info::nProcessesLHEF() &nbsp;</strong> <br/>
 to retrieve the number of cross sections stored in the LHEF <code>init</code> 
 block 
    
-<a name="anchor12"></a>
+<a name="anchor14"></a>
 <p/><strong> double Info::sigmaLHEF(int i=0) &nbsp;</strong> <br/>
 to retrieve the value of i'th cross sections stored in the LHEF 
 <code>init</code> block 
@@ -560,7 +610,7 @@ details.
  
 Please find below the documentation of LHEF 3.0 information as stored in 
 the <code>Info</code> class. An example main program using LHEF 3.0 
-information is <code>main38.cc</code>. Note also the description of some 
+information is <code>main127.cc</code>. Note also the description of some 
 settings in the <a href="BeamParameters.html" target="page">Beam Parameters</a> section. 
  
 LHEF 3.0 offers new features both in the initialisation and the event sections 
@@ -602,7 +652,7 @@ contains all <code>&lt;weight&gt;</code> tags in the
 <code>&lt;initrwgt&gt;</code> container and its subcontainer 
 <code>&lt;weightgroup&gt;</code> tags. The size of the vector can be accessed 
 through the method 
-<a name="anchor13"></a>
+<a name="anchor15"></a>
 <br/><strong> int Info::getInitrwgtSize() &nbsp;</strong> <br/>
    
 </li> 
@@ -615,13 +665,13 @@ information stored in the tag can be retrieved by using the
 <code>Info</code> class member pointer 
 <code>vector&lt;LHAgenerators&gt; * Info::generators</code>. More easy-to-use 
 output functions are available. The size of this vector can be obtained from 
-<a name="anchor14"></a>
+<a name="anchor16"></a>
 <br/><strong> int Info::getGeneratorSize() &nbsp;</strong> <br/>
    
 <p/> 
 The contents of an individual <code>&lt;generator&gt;</code> tag can 
 be accessed through the method 
-<a name="anchor15"></a>
+<a name="anchor17"></a>
 <br/><strong> string Info::getGeneratorValue(unsigned int n = 0) &nbsp;</strong> <br/>
 Return the contents of the n'th <code>&lt;generator&gt;</code> tag in 
 the vector of tags. 
@@ -630,7 +680,7 @@ the vector of tags.
 <p/> 
 Attributes of the <code>&lt;generator&gt;</code> tag (e.g. the generator 
 <code>name</code> and <code>version</code>) can be accessed via 
-<a name="anchor16"></a>
+<a name="anchor18"></a>
 <br/><strong> string Info::getGeneratorAttribute(unsigned int n,  &nbsp;</strong> <br/>
 string key, bool doRemoveWhitespace = false)"> 
 Return the value of the generator attribute named <code>key</code> for 
@@ -648,11 +698,11 @@ member <code>string getHeaderBlock()</code>. For more information
 on the header block, please see the <i>Header information</i> paragraph 
 above. Finally, to obtain information on cross sections, the following two 
 methods can be used 
-<a name="anchor17"></a>
+<a name="anchor19"></a>
 <br/><strong> int Info::nProcessesLHEF() &nbsp;</strong> <br/>
 return the number of processes for which the cross section is stored. 
    
-<a name="anchor18"></a>
+<a name="anchor20"></a>
 <br/><strong> double Info::sigmaLHEF(int iProcess) &nbsp;</strong> <br/>
 return the cross section of the <code>iProcess</code>'th process. 
    
@@ -681,7 +731,7 @@ stored in the tag can be retrieved by using the <code>Info</code> class
 member pointer <code>vector&lt;LHAwgt&gt; * Info::weights_detailed</code>. 
 More easy-to-use output functions are available. The size of this vector 
 can be obtained from 
-<a name="anchor19"></a>
+<a name="anchor21"></a>
 <br/><strong> unsigned int Info::getWeightsDetailedSize() &nbsp;</strong> <br/>
    
  
@@ -694,7 +744,7 @@ tags appear in the event block.
 <p/> 
 The contents of a <code>&lt;wgt&gt;</code> tag can be accessed through the 
 method 
-<a name="anchor20"></a>
+<a name="anchor22"></a>
 <br/><strong> double Info::getWeightsDetailedValue(string n) &nbsp;</strong> <br/>
 Return the value of the n'th <code>&lt;wgt&gt;</code> tag in the 
 event. 
@@ -704,7 +754,7 @@ event.
 Attributes of the <code>&lt;wgt&gt;</code> tag (e.g. the weight 
 <code>id</code>) can be accessed via 
 <br/> 
-<a name="anchor21"></a>
+<a name="anchor23"></a>
 <strong> string Info::getWeightsDetailedAttribute(string n, string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 Return the value of the wgt attribute named <code>key</code> for 
 the n'th wgt in the vector. Setting <code>doRemoveWhitespace</code> to 
@@ -723,14 +773,14 @@ The <code>&lt;weights&gt;</code> tag: Tag containing
  Info::weights</code> and the vector <code> vector&lt;double&gt; 
  Info::weights_compressed</code>. More easy-to-use output functions are 
  available. The size of this vector can be obtained from 
-<a name="anchor22"></a>
+<a name="anchor24"></a>
 <br/><strong> unsigned int Info::getWeightsCompressedSize() &nbsp;</strong> <br/>
    
  
 <p/> 
 The n'th weight can be accessed through the method 
 <br/> 
-<a name="anchor23"></a>
+<a name="anchor25"></a>
 <strong> double Info::getWeightsCompressedValue(unsigned int n) &nbsp;</strong> <br/>
    
  
@@ -738,7 +788,7 @@ The n'th weight can be accessed through the method
 Attributes of the <code>&lt;weights&gt;</code> tag (not normally used) can be 
 accessed via 
 <br/> 
-<a name="anchor24"></a>
+<a name="anchor26"></a>
 <strong> string Info::getWeightsCompressedAttribute(string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 Return the value of the <code>&lt;weights&gt;</code> tag's attribute 
 named <code>key</code>. Setting <code>doRemoveWhitespace</code> to 
@@ -756,7 +806,7 @@ The <code>&lt;scales&gt;</code> tag: Contains information
  member pointer <code> LHAweights * Info::scales</code>. More easy-to-use 
  output functions are available. The contents of the scales tag can be 
  obtained from 
-<a name="anchor25"></a>
+<a name="anchor27"></a>
 <br/><strong> string Info::getScalesValue() &nbsp;</strong> <br/>
    
  
@@ -764,7 +814,7 @@ The <code>&lt;scales&gt;</code> tag: Contains information
 However, note that the actual scale values are stored as attributes (called 
 e.g. <code>muf</code> or <code>mur</code>). Attributes of the 
 <code>&lt;scales&gt;</code> tag can be accessed via 
-<a name="anchor26"></a>
+<a name="anchor28"></a>
 <br/><strong> double Info::getScalesAttribute(string key) &nbsp;</strong> <br/>
 Return the value of the <code>&lt;scales&gt;</code> tag's attribute 
 named <code>key</code>. Not-a-number will be returned if the attribute 
@@ -778,7 +828,7 @@ named <code>key</code> does not exist.
 Finally, arbitrary attributes of the <code>&lt;event&gt;</code> tag are 
 supported. Attributes of the <code>&lt;event&gt;</code> tag can be accessed by 
 <br/> 
-<a name="anchor27"></a>
+<a name="anchor29"></a>
 <strong> string Info::getEventAttribute(string key, bool doRemoveWhitespace = false) &nbsp;</strong> <br/>
 return the value of the event attribute named <code>key</code>. Setting 
 <code>doRemoveWhitespace</code> to true will return the value, stripped of 
@@ -817,7 +867,7 @@ Furthermore, <code>updateSigma()</code> can be used at the end
 of the run to update cross-section information, cf. 
 <code>closeLHEF(true)</code> above. An example how the 
 generation, translation and writing methods should be ordered is 
-found in <code>main20.cc</code>. 
+found in <code>main124.cc</code>. 
  
 <p/> 
 Currently there are some limitations, that could be overcome if 
@@ -838,7 +888,7 @@ that the above initialization is replaced by
 <br/><code>LHAupFromPYTHIA8 myLHA(&pythia.event, &pythia.info);</code> 
 <br/> i.e. that <code>process</code> is replaced by <code>event</code>. 
 In addition, the <code>PartonLevel:all = off</code> command found in 
-<code>main20.cc</code> obviously must be removed if one wants to 
+<code>main124.cc</code> obviously must be removed if one wants to 
 obtain complete events. 
  
 <a name="section5"></a> 
@@ -851,7 +901,7 @@ file writer are used in the <code>LHEF3FromPYTHIA8</code>.
 This latter class allows users to output PYTHIA events 
 in LHEF3 format from a PYTHIA main program. An example of how to use 
 <code>LHEF3FromPYTHIA8</code> is found in the 
-<code>main20lhef3.cc</code> example. Please note that, although 
+<code>main125.cc</code> example. Please note that, although 
 similar, the usage of <code>LHEF3FromPYTHIA8</code> differs from 
 the usage of <code>LHAupFromPYTHIA8</code>, with  <code>LHEF3FromPYTHIA8 
 </code> requiring fewer function calls. 
@@ -910,4 +960,4 @@ for the case that <code>Pythia::process</code> is not in this frame.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

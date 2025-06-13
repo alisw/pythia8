@@ -1,5 +1,5 @@
 // HINucleusModel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -202,9 +202,16 @@ public:
   // Init method.
   void initPtr(int idIn, bool isProjIn, Info& infoIn);
   virtual bool init() { return true; }
+  virtual bool initGeometry() { return false; }
+
+  // Set the particle id of the produced nucleus.
+  void setParticle(int idIn);
 
   // Set (new) nucleon momentum.
   virtual void setPN(const Vec4 & pNIn) { pNSave = pNIn; }
+
+  // Set (new) effective nucleon mass.
+  virtual void setMN(double mNIn) { mNSave = mNIn; }
 
   // Produce an instance of the incoming nucleon.
   virtual Particle produceIon();
@@ -220,6 +227,10 @@ public:
   int Z() const { return ZSave; }
   int L() const { return LSave; }
   double R() const { return RSave; }
+
+  int idN() const { return idNSave; }
+  const Vec4 & pN() const { return pNSave; }
+  double mN() const { return mNSave; }
 
 protected:
 
@@ -240,6 +251,11 @@ protected:
 
   // The nucleon beam momentum.
   Vec4 pNSave{};
+
+  // The effective nucleon mass.
+  double mNSave{};
+
+  int idNSave = 2212;
 
   // Pointers to useful objects.
   Info* infoPtr;
@@ -341,6 +357,7 @@ public:
 
   // Initialize parameters.
   bool init() override;
+  bool initGeometry() override;
 
   // Generate all the nucleons.
   vector<Nucleon> generate() const override;
@@ -393,6 +410,7 @@ public:
 
   // Initialize.
   bool init() override;
+  bool initGeometry() override;
 
 };
 

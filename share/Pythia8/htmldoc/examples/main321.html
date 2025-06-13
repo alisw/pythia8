@@ -1,0 +1,259 @@
+<html><head><title>main321</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main321</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main321.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#cross+sections">Cross&nbsp;sections</a>
+//            <a href="../ExampleKeywords.html#minimum+bias">Minimum&nbsp;bias</a>
+//            <a href="../ExampleKeywords.html#diffraction">Diffraction</a>
+
+// This is a simple test program.
+// It illustrates how to generate and study &quot;total cross section&quot; processes,
+// i.e. elastic, single and double diffractive, and the &quot;minimum-bias&quot; rest.
+// All input is specified in the default main321.cmnd file.
+// Optionally the main321photons.cmnd can be used as input (or your own code).
+// Note that the &quot;total&quot; cross section does NOT include
+// the Coulomb contribution to elastic scattering, as switched on here.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Filters a resonance decay.&quot;,
+    {&quot;./main321&quot;, &quot;./main321 -c main321.cmnd&quot;});
+  ip.add(&quot;c&quot;, &quot;main321.cmnd&quot;, &quot;Use this user-written command file.&quot;,
+    {&quot;-cmnd&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Generator. Shorthand for the event.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+  pythia.readFile(ip.get&lt;string&gt;(&quot;c&quot;));
+
+  // Extract settings to be used in the main program.
+  int    nEvent    = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int    nAbort    = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Book histograms: multiplicities and mean transverse momenta.
+  double nMax = 799.5;
+  Hist yChg(&quot;rapidity of charged particles; all&quot;,      100, -10., 10.);
+  Hist nChg(&quot;number of charged particles; all&quot;,        100, -0.5, nMax);
+  Hist nChgSD(&quot;number of charged particles; single diffraction&quot;,
+                                                       100, -0.5, nMax);
+  Hist nChgDD(&quot;number of charged particles, double diffractive&quot;,
+                                                       100, -0.5, nMax);
+  Hist nChgCD(&quot;number of charged particles, central diffractive&quot;,
+                                                       100, -0.5, nMax);
+  Hist nChgND(&quot;number of charged particles, non-diffractive&quot;,
+                                                       100, -0.5, nMax);
+  Hist pTnChg(&quot;&lt;pt&gt;(n_charged) all&quot;,                   100, -0.5, nMax);
+  Hist pTnChgSD(&quot;&lt;pt&gt;(n_charged) single diffraction&quot;,  100, -0.5, nMax);
+  Hist pTnChgDD(&quot;&lt;pt&gt;(n_charged) double diffraction&quot;,  100, -0.5, nMax);
+  Hist pTnChgCD(&quot;&lt;pt&gt;(n_charged) central diffraction&quot;, 100, -0.5, nMax);
+  Hist pTnChgND(&quot;&lt;pt&gt;(n_charged) non-diffractive   &quot;,  100, -0.5, nMax);
+
+  // Book histograms: ditto as function of separate subsystem mass.
+  Hist mLogInel(&quot;log10(mass), by diffractive system&quot;,  100, 0., 5.);
+  Hist nChgmLog(&quot;&lt;n_charged&gt;(log10(mass))&quot;,            100, 0., 5.);
+  Hist pTmLog(&quot;&lt;pT&gt;_charged&gt;(log10(mass))&quot;,            100, 0., 5.);
+
+  // Book histograms: elastic/diffractive.
+  Hist tSpecEl(&quot;elastic |t| spectrum&quot;,              100, 0., 1.);
+  Hist tSpecElLog(&quot;elastic log10(|t|) spectrum&quot;,    100, -5., 0.);
+  Hist tSpecSD(&quot;single diffractive |t| spectrum&quot;,   100, 0., 2.);
+  Hist tSpecDD(&quot;double diffractive |t| spectrum&quot;,   100, 0., 5.);
+  Hist tSpecCD(&quot;central diffractive |t| spectrum&quot;,  100, 0., 5.);
+  Hist mSpec(&quot;diffractive mass spectrum&quot;,           100, 0., 100.);
+  Hist mLogSpec(&quot;log10(diffractive mass spectrum)&quot;, 100, 0., 4.);
+
+  // Book histograms: inelastic nondiffractive.
+  double pTmax = 20.;
+  double bMax  = 4.;
+  Hist pTspec(&quot;total pT_hard spectrum&quot;,             100, 0., pTmax);
+  Hist pTspecND(&quot;nondiffractive pT_hard spectrum&quot;,  100, 0., pTmax);
+  Hist bSpec(&quot;b impact parameter spectrum&quot;,         100, 0., bMax);
+  Hist enhanceSpec(&quot;b enhancement spectrum&quot;,        100, 0., 10.);
+  Hist number(&quot;number of interactions&quot;,             100, -0.5, 99.5);
+  Hist pTb1(&quot;pT spectrum for b &lt; 0.5&quot;,               50, 0., pTmax);
+  Hist pTb2(&quot;pT spectrum for 0.5 &lt; b &lt; 1&quot;,           50, 0., pTmax);
+  Hist pTb3(&quot;pT spectrum for 1 &lt; b &lt; 1.5&quot;,           50, 0., pTmax);
+  Hist pTb4(&quot;pT spectrum for 1.5 &lt; b&quot;,               50, 0., pTmax);
+  Hist bpT1(&quot;b spectrum for pT &lt; 2&quot;,                 50, 0., bMax);
+  Hist bpT2(&quot;b spectrum for 2 &lt; pT &lt; 5&quot;,             50, 0., bMax);
+  Hist bpT3(&quot;b spectrum for 5 &lt; pT &lt; 15&quot;,            50, 0., bMax);
+  Hist bpT4(&quot;b spectrum for 15 &lt; pT&quot;,                50, 0., bMax);
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if too many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // Extract event classification.
+    int code = pythia.info.code();
+
+    // Charged multiplicity and mean pT: all and by event class.
+    int nch = 0;
+    double pTsum = 0.;
+    for (int i = 1; i &lt; event.size(); ++i)
+    if (event[i].isFinal() &amp;&amp; event[i].isCharged()) {
+      yChg.fill( event[i].y() );
+      ++nch;
+      pTsum += event[i].pT();
+    }
+    nChg.fill( nch );
+    if (nch &gt; 0) pTnChg.fill( nch, pTsum/nch);
+    if (code == 103 || code == 104) {
+      nChgSD.fill( nch );
+      if (nch &gt; 0) pTnChgSD.fill( nch, pTsum/nch);
+    } else if (code == 105) {
+      nChgDD.fill( nch );
+      if (nch &gt; 0) pTnChgDD.fill( nch, pTsum/nch);
+    } else if (code == 106) {
+      nChgCD.fill( nch );
+      if (nch &gt; 0) pTnChgCD.fill( nch, pTsum/nch);
+    } else if (code == 101) {
+      nChgND.fill( nch );
+      if (nch &gt; 0) pTnChgND.fill( nch, pTsum/nch);
+      double mLog = log10( event[0].m() );
+      mLogInel.fill( mLog );
+      nChgmLog.fill( mLog, nch );
+      if (nch &gt; 0) pTmLog.fill( mLog, pTsum / nch );
+    }
+
+    // Charged multiplicity and mean pT: per diffractive system.
+    for (int iDiff = 0; iDiff &lt; 3; ++iDiff)
+    if ( (iDiff == 0 &amp;&amp; pythia.info.isDiffractiveA())
+      || (iDiff == 1 &amp;&amp; pythia.info.isDiffractiveB())
+      || (iDiff == 2 &amp;&amp; pythia.info.isDiffractiveC()) ) {
+      int ndiff = 0;
+      double pTdiff = 0.;
+      int nDoc = (iDiff &lt; 2) ? 4 : 5;
+      for (int i = nDoc + 1; i &lt; event.size(); ++i)
+      if (event[i].isFinal() &amp;&amp; event[i].isCharged()) {
+        // Trace back final particle to see which system it comes from.
+        int k = i;
+        do k = event[k].mother1();
+        while (k &gt; nDoc);
+        if (k == iDiff + 3) {
+          ++ndiff;
+          pTdiff += event[i].pT();
+        }
+      }
+      // Study diffractive mass spectrum.
+      double mDiff = event[iDiff+3].m();
+      double mLog  = log10( mDiff);
+      mLogInel.fill( mLog );
+      nChgmLog.fill( mLog, ndiff );
+      if (ndiff &gt; 0) pTmLog.fill( mLog, pTdiff / ndiff );
+      mSpec.fill( mDiff );
+      mLogSpec.fill( mLog );
+    }
+
+    // Study pT spectrum of all hard collisions, no distinction.
+    double pT = pythia.info.pTHat();
+    pTspec.fill( pT );
+
+    // Study t distribution of elastic/diffractive events.
+    if (code &gt; 101) {
+      double tAbs = abs(pythia.info.tHat());
+      if (code == 102) {
+        tSpecEl.fill(tAbs);
+        tSpecElLog.fill(log10(tAbs));
+      }
+      else if (code == 103 || code == 104) tSpecSD.fill(tAbs);
+      else if (code == 105) tSpecDD.fill(tAbs);
+      else if (code == 106) {
+        double t1Abs = abs( (event[3].p() - event[1].p()).m2Calc() );
+        double t2Abs = abs( (event[4].p() - event[2].p()).m2Calc() );
+        tSpecCD.fill(t1Abs);
+        tSpecCD.fill(t2Abs);
+      }
+
+    // Study nondiffractive inelastic events in (pT, b) space.
+    } else {
+      double b = pythia.info.bMPI();
+      double enhance = pythia.info.enhanceMPI();
+      int nMPI = pythia.info.nMPI();
+      pTspecND.fill( pT );
+      bSpec.fill( b );
+      enhanceSpec.fill( enhance );
+      number.fill( nMPI );
+      if (b &lt; 0.5) pTb1.fill( pT );
+      else if (b &lt; 1.0) pTb2.fill( pT );
+      else if (b &lt; 1.5) pTb3.fill( pT );
+      else pTb4.fill( pT );
+      if (pT &lt; 2.) bpT1.fill( b );
+      else if (pT &lt; 5.) bpT2.fill( b );
+      else if (pT &lt; 15.) bpT3.fill( b );
+      else bpT4.fill( b );
+    }
+
+  // End of event loop.
+  }
+
+  // Final statistics and histograms.
+  pythia.stat();
+  pTnChg   /= nChg;
+  pTnChgSD /= nChgSD;
+  pTnChgDD /= nChgDD;
+  pTnChgCD /= nChgCD;
+  pTnChgND /= nChgND;
+  nChgmLog /= mLogInel;
+  pTmLog   /= mLogInel;
+  cout &lt;&lt; yChg &lt;&lt; nChg &lt;&lt; nChgSD &lt;&lt; nChgDD &lt;&lt; nChgCD &lt;&lt; nChgND
+       &lt;&lt; pTnChg &lt;&lt; pTnChgSD &lt;&lt; pTnChgDD &lt;&lt; pTnChgCD &lt;&lt; pTnChgND
+       &lt;&lt; mLogInel &lt;&lt; nChgmLog &lt;&lt; pTmLog
+       &lt;&lt; tSpecEl &lt;&lt; tSpecElLog &lt;&lt; tSpecSD &lt;&lt; tSpecDD &lt;&lt; tSpecCD
+       &lt;&lt; mSpec &lt;&lt; mLogSpec
+       &lt;&lt; pTspec &lt;&lt; pTspecND &lt;&lt; bSpec &lt;&lt; enhanceSpec &lt;&lt; number
+       &lt;&lt; pTb1 &lt;&lt; pTb2 &lt;&lt; pTb3 &lt;&lt; pTb4 &lt;&lt; bpT1 &lt;&lt; bpT2 &lt;&lt; bpT3 &lt;&lt; bpT4;
+
+  // Present some of the plots in a PDF file.
+  HistPlot plt(&quot;plot321&quot;);
+  plt.frame(&quot;fig321&quot;,
+    &quot;Hardest MPI $p_{\\perp}$ dependence on impact parameter&quot;,
+    &quot;$p_{\\perp}$&quot;, &quot;Rate&quot;, 6.4, 4.8);
+  plt.add( pTb1, &quot;h,black&quot;, &quot;$b &lt; 0.5$&quot;);
+  plt.add( pTb2, &quot;h,green&quot;, &quot;$0.5 &lt; b &lt; 1$&quot;);
+  plt.add( pTb3, &quot;h,red&quot;, &quot;$1 &lt; b &lt; 1.5$&quot;);
+  plt.add( pTb4, &quot;h,blue&quot;, &quot;$b &gt; 1.5$&quot;);
+  plt.plot();
+  plt.frame(&quot;fig321&quot;,
+    &quot;Impact parameter dependence on hardest MPI $p_{\\perp}$&quot;,
+    &quot;$b$&quot;, &quot;Rate&quot;, 6.4, 4.8);
+  plt.add( bpT1, &quot;h,black&quot;, &quot;$p_{\\perp} &lt; 2$&quot;);
+  plt.add( bpT2, &quot;h,green&quot;, &quot;$2 &lt; p_{\\perp} &lt; 5$&quot;);
+  plt.add( bpT3, &quot;h,red&quot;, &quot;$5 &lt; p_{\\perp} &lt; 15$&quot;);
+  plt.add( bpT4, &quot;h,blue&quot;, &quot;$p_{\\perp} &gt; 15$&quot;);
+  plt.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

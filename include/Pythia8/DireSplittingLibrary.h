@@ -1,5 +1,5 @@
 // DireSplittingLibrary.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -37,14 +37,15 @@ class DireSplittingLibrary {
 public:
 
   // Constructor and destructor.
-  DireSplittingLibrary() :  infoPtr(0), settingsPtr(0), particleDataPtr(0),
-    rndmPtr(0), beamAPtr(0), beamBPtr(0), coupSMPtr(0), hooksPtr(0),
-    hasExternalHook(false) {}
- ~DireSplittingLibrary() { clear();}
+  DireSplittingLibrary() :
+    infoPtr(0), settingsPtr(0), particleDataPtr(0),
+      rndmPtr(0), beamAPtr(0), beamBPtr(0), coupSMPtr(0), hooksPtr(0),
+      hasExternalHook(false) {}
+  ~DireSplittingLibrary() { clear();}
 
   // Initialisation.
   void init(Info* infoPtr, BeamParticle* beamA, BeamParticle* beamB,
-    DireInfo* direInfo, DireHooks* hooks = NULL);
+    DireInfo* direInfo, DireHooks* hooks = nullptr);
   void initFSR();
   void initISR();
   void clear();

@@ -1,5 +1,5 @@
 // ExternalMEs.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Stefan Prestel, Philip Ilten, Torbjorn
+// Copyright (C) 2025 Peter Skands, Stefan Prestel, Philip Ilten, Torbjorn
 // Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.

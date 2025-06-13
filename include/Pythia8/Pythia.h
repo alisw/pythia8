@@ -1,5 +1,5 @@
 // Pythia.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -10,8 +10,8 @@
 #define Pythia8_Pythia_H
 
 // Version number defined for use in macros and for consistency checks.
-#define PYTHIA_VERSION 8.311
-#define PYTHIA_VERSION_INTEGER 8311
+#define PYTHIA_VERSION 8.315
+#define PYTHIA_VERSION_INTEGER 8315
 
 // Header files for the Pythia class and for what else the user may need.
 #include "Pythia8/Analysis.h"
@@ -95,20 +95,24 @@ public:
   bool checkVersion();
 
   // Read in one update for a setting or particle data from a single line.
-  bool readString(string, bool warn = true, int subrun = SUBRUNDEFAULT);
+  inline bool readString(string line, bool warn = true,
+    int subrun = SUBRUNDEFAULT) {
+    return isConstructed ? settings.readString(line, warn, subrun) : false;}
 
   // Read in updates for settings or particle data from user-defined file.
-  bool readFile(string fileName, bool warn = true,
-    int subrun = SUBRUNDEFAULT);
-  bool readFile(string fileName, int subrun) {
+  inline bool readFile(string fileName, bool warn = true,
+    int subrun = SUBRUNDEFAULT) {
+    return isConstructed ? settings.readFile(fileName, warn, subrun) : false;}
+  inline bool readFile(string fileName, int subrun) {
     return readFile(fileName, true, subrun);}
-  bool readFile(istream& is = cin, bool warn = true,
-    int subrun = SUBRUNDEFAULT);
-  bool readFile(istream& is, int subrun) {
+  inline bool readFile(istream& is = cin, bool warn = true,
+    int subrun = SUBRUNDEFAULT) {
+    return isConstructed ? settings.readFile(is, warn, subrun) : false;}
+  inline bool readFile(istream& is, int subrun) {
     return readFile(is, true, subrun);}
 
   // Possibility to pass in pointers to PDF's.
-  bool setPDFPtr( PDFPtr pdfAPtrIn, PDFPtr pdfBPtrIn,
+  inline bool setPDFPtr(PDFPtr pdfAPtrIn, PDFPtr pdfBPtrIn,
     PDFPtr pdfHardAPtrIn = nullptr, PDFPtr pdfHardBPtrIn = nullptr,
     PDFPtr pdfPomAPtrIn = nullptr, PDFPtr pdfPomBPtrIn = nullptr,
     PDFPtr pdfGamAPtrIn = nullptr, PDFPtr pdfGamBPtrIn = nullptr,
@@ -120,35 +124,38 @@ public:
       pdfHardBPtrIn, pdfPomAPtrIn, pdfPomBPtrIn, pdfGamAPtrIn, pdfGamBPtrIn,
       pdfHardGamAPtrIn, pdfHardGamBPtrIn, pdfUnresAPtrIn, pdfUnresBPtrIn,
       pdfUnresGamAPtrIn, pdfUnresGamBPtrIn, pdfVMDAPtrIn, pdfVMDBPtrIn); }
-  bool setPDFAPtr( PDFPtr pdfAPtrIn ) {
+  inline bool setPDFAPtr( PDFPtr pdfAPtrIn ) {
     return beamSetup.setPDFAPtr( pdfAPtrIn); }
-  bool setPDFBPtr( PDFPtr pdfBPtrIn ) {
+  inline bool setPDFBPtr( PDFPtr pdfBPtrIn ) {
     return beamSetup.setPDFBPtr( pdfBPtrIn); }
 
   // Set photon fluxes externally. Used with option "PDF:lepton2gammaSet = 2".
-  bool setPhotonFluxPtr( PDFPtr photonFluxAIn, PDFPtr photonFluxBIn) {
+  inline bool setPhotonFluxPtr(PDFPtr photonFluxAIn, PDFPtr photonFluxBIn) {
     return beamSetup.setPhotonFluxPtr( photonFluxAIn, photonFluxBIn); }
 
   // Possibility to pass in pointer to external LHA-interfaced generator.
-  bool setLHAupPtr( LHAupPtr lhaUpPtrIn) {lhaUpPtr = lhaUpPtrIn;
-    useNewLHA = false; return beamSetup.setLHAupPtr( lhaUpPtrIn);}
+  inline bool setLHAupPtr(LHAupPtr lhaUpPtrIn) {
+    lhaUpPtr = lhaUpPtrIn;
+    useNewLHA = false;
+    return beamSetup.setLHAupPtr(lhaUpPtrIn);}
 
   // Possibility to pass in pointer for external handling of some decays.
-  bool setDecayPtr( DecayHandlerPtr decayHandlePtrIn,
-    vector<int> handledParticlesIn = {}) {decayHandlePtr = decayHandlePtrIn;
+  inline bool setDecayPtr(DecayHandlerPtr decayHandlePtrIn,
+    vector<int> handledParticlesIn = {}) {
+    decayHandlePtr = decayHandlePtrIn;
     handledParticles = handledParticlesIn.size() == 0 ?
       decayHandlePtrIn->handledParticles() : handledParticlesIn; return true;}
 
   // Possibility to pass in pointer for external random number generation.
-  bool setRndmEnginePtr( RndmEnginePtr rndmEnginePtrIn)
-    { return rndm.rndmEnginePtr( rndmEnginePtrIn);}
+  inline bool setRndmEnginePtr(RndmEnginePtr rndmEnginePtrIn) {
+    return rndm.rndmEnginePtr(rndmEnginePtrIn);}
 
   // Possibility to pass in pointer for user hooks.
-  bool setUserHooksPtr(UserHooksPtr userHooksPtrIn) {
+  inline bool setUserHooksPtr(UserHooksPtr userHooksPtrIn) {
     userHooksPtr = userHooksPtrIn; return true;}
 
   // Possibility to add further pointers to allow multiple user hooks.
-  bool addUserHooksPtr( UserHooksPtr userHooksPtrIn) {
+  inline bool addUserHooksPtr(UserHooksPtr userHooksPtrIn) {
     if ( !userHooksPtrIn ) return false;
     if ( !userHooksPtr ) return setUserHooksPtr(userHooksPtrIn);
     shared_ptr<UserHooksVector> uhv =
@@ -157,86 +164,119 @@ public:
       uhv->hooks.push_back(userHooksPtr); userHooksPtr = uhv; }
     uhv->hooks.push_back(userHooksPtrIn); return true;}
 
+  // Possibility to insert a user hook.
+  inline bool insertUserHooksPtr(int idx, UserHooksPtr userHooksPtrIn) {
+    if ( !userHooksPtrIn || !userHooksPtr ) return false;
+    shared_ptr<UserHooksVector> uhv =
+      dynamic_pointer_cast<UserHooksVector>(userHooksPtr);
+    if ( !uhv || idx < 0 || idx > (int)uhv->hooks.size() ) return false;
+    uhv->hooks.insert(uhv->hooks.begin() + idx, userHooksPtrIn); return true;}
+
   // Possibility to pass in pointer for full merging class.
-  bool setMergingPtr( MergingPtr mergingPtrIn)
-    { mergingPtr = mergingPtrIn; return true;}
+  inline bool setMergingPtr(MergingPtr mergingPtrIn) {
+    mergingPtr = mergingPtrIn; return true;}
 
   // Possibility to pass in pointer for merging hooks.
-  bool setMergingHooksPtr( MergingHooksPtr mergingHooksPtrIn)
-    { mergingHooksPtr = mergingHooksPtrIn; return true;}
+  inline bool setMergingHooksPtr(MergingHooksPtr mergingHooksPtrIn) {
+    mergingHooksPtr = mergingHooksPtrIn; return true;}
 
   // Possibility to pass in pointer for beam shape.
-  bool setBeamShapePtr( BeamShapePtr beamShapePtrIn)
-    { return beamSetup.setBeamShapePtr(beamShapePtrIn);}
+  inline bool setBeamShapePtr(BeamShapePtr beamShapePtrIn) {
+    return beamSetup.setBeamShapePtr(beamShapePtrIn);}
 
   // Possibility to pass in pointer for external cross section,
   // with option to include external phase-space generator.
-  bool setSigmaPtr( SigmaProcessPtr sigmaPtrIn,
-    PhaseSpacePtr phaseSpacePtrIn = nullptr)
-    { sigmaPtrs.resize(0), phaseSpacePtrs.resize(0);
-      sigmaPtrs.push_back(sigmaPtrIn);
-      phaseSpacePtrs.push_back(phaseSpacePtrIn); return true;}
+  inline bool setSigmaPtr(SigmaProcessPtr sigmaPtrIn,
+    PhaseSpacePtr phaseSpacePtrIn = nullptr) {
+    sigmaPtrs.resize(0), phaseSpacePtrs.resize(0);
+    sigmaPtrs.push_back(sigmaPtrIn);
+    phaseSpacePtrs.push_back(phaseSpacePtrIn); return true;}
 
   // Possibility to add further pointers to allow for multiple cross sections.
-  bool addSigmaPtr( SigmaProcessPtr sigmaPtrIn,
-    PhaseSpacePtr phaseSpacePtrIn = nullptr)
-    { sigmaPtrs.push_back(sigmaPtrIn);
-      phaseSpacePtrs.push_back(phaseSpacePtrIn); return true;}
+  inline bool addSigmaPtr(SigmaProcessPtr sigmaPtrIn,
+    PhaseSpacePtr phaseSpacePtrIn = nullptr) {
+    sigmaPtrs.push_back(sigmaPtrIn);
+    phaseSpacePtrs.push_back(phaseSpacePtrIn); return true;}
+
+  // Possibility to insert further pointers to allow for multiple
+  // cross sections.
+  inline bool insertSigmaPtr(int idx, SigmaProcessPtr sigmaPtrIn,
+    PhaseSpacePtr phaseSpacePtrIn = nullptr) {
+    if (idx < 0 || idx > (int)sigmaPtrs.size()) return false;
+    sigmaPtrs.insert(sigmaPtrs.begin() + idx, sigmaPtrIn);
+    phaseSpacePtrs.insert(phaseSpacePtrs.begin() + idx, phaseSpacePtrIn);
+    return true;}
 
   // Possibility to pass in pointer for external resonance.
-  bool setResonancePtr( ResonanceWidthsPtr resonancePtrIn)
-    { resonancePtrs.resize(0);
-      resonancePtrs.push_back( resonancePtrIn); return true;}
+  inline bool setResonancePtr(ResonanceWidthsPtr resonancePtrIn) {
+    resonancePtrs.resize(0);
+    resonancePtrs.push_back( resonancePtrIn); return true;}
 
   // Possibility to add further pointers to allow for multiple resonances.
-  bool addResonancePtr( ResonanceWidthsPtr resonancePtrIn)
-    { resonancePtrs.push_back( resonancePtrIn); return true;}
+  inline bool addResonancePtr(ResonanceWidthsPtr resonancePtrIn) {
+    resonancePtrs.push_back( resonancePtrIn); return true;}
+
+  // Possibility to insert further pointers to allow for multiple resonances.
+  inline bool insertResonancePtr(int idx, ResonanceWidthsPtr resonancePtrIn) {
+    if (idx < 0 || idx > (int)resonancePtrs.size()) return false;
+    resonancePtrs.insert( resonancePtrs.begin() + idx, resonancePtrIn);
+    return true;}
 
   // Possibility to pass in pointer for external showers.
-  bool setShowerModelPtr( ShowerModelPtr showerModelPtrIn)
-    { showerModelPtr = showerModelPtrIn; return true;}
+  inline bool setShowerModelPtr(ShowerModelPtr showerModelPtrIn) {
+    showerModelPtr = showerModelPtrIn; return true;}
+
+  // Possibility to pass in pointer for external fragmentation model.
+  inline bool setFragmentationPtr(FragmentationModelPtr fragmentationPtrIn) {
+    fragPtrs.resize(0);
+    fragPtrs.push_back(fragmentationPtrIn); return true;}
+
+  // Possibility to allow for multiple external fragmentation models.
+  inline bool addFragmentationPtr(FragmentationModelPtr fragmentationPtrIn) {
+    fragPtrs.push_back(fragmentationPtrIn); return true;}
+
+  // Possibility to insert external fragmentation model, in specific position.
+  inline bool insertFragmentationPtr(int idx,
+    FragmentationModelPtr fragmentationPtrIn) {
+    if (idx < 0 || idx > (int)fragPtrs.size()) return false;
+    fragPtrs.insert( fragPtrs.begin() + idx, fragmentationPtrIn);
+    return true;}
 
   // Possibility to pass in pointer for modelling of heavy ion collisions.
-  bool setHeavyIonsPtr( HeavyIonsPtr heavyIonsPtrIn)
-    { heavyIonsPtr = heavyIonsPtrIn; return true;}
+  inline bool setHeavyIonsPtr(HeavyIonsPtr heavyIonsPtrIn) {
+    heavyIonsPtr = heavyIonsPtrIn; return true;}
 
   // Possibility to pass a HIUserHooks pointer for modifying the
   // behavior of the heavy ion modelling.
-  bool setHIHooks(HIUserHooksPtr hiHooksPtrIn)
-    { hiHooksPtr = hiHooksPtrIn; return true; }
+  inline bool setHIHooks(HIUserHooksPtr hiHooksPtrIn) {
+    hiHooksPtr = hiHooksPtrIn; return true; }
 
   // Possibility to get the pointer to a object modelling heavy ion
   // collisions.
-  HeavyIonsPtr getHeavyIonsPtr() { return heavyIonsPtr;}
+  inline HeavyIonsPtr getHeavyIonsPtr() { return heavyIonsPtr;}
 
   // Possibility to access the pointer to the BeamShape object.
-  BeamShapePtr getBeamShapePtr() { return beamSetup.getBeamShapePtr(); }
+  inline BeamShapePtr getBeamShapePtr() { return beamSetup.getBeamShapePtr();}
 
   // Possibility to get the pointer to the parton-shower model.
-  ShowerModelPtr getShowerModelPtr() { return showerModelPtr; }
+  inline ShowerModelPtr getShowerModelPtr() { return showerModelPtr;}
 
   // Possibility to get the pointer to the LHA accessor.
-  LHAupPtr getLHAupPtr() { return lhaUpPtr; }
+  inline LHAupPtr getLHAupPtr() { return lhaUpPtr;}
 
   // Possibility to pass in pointer for setting of parton space-time vertices.
-  bool setPartonVertexPtr( PartonVertexPtr partonVertexPtrIn)
-    { partonVertexPtr = partonVertexPtrIn; return true;}
+  inline bool setPartonVertexPtr( PartonVertexPtr partonVertexPtrIn) {
+    partonVertexPtr = partonVertexPtrIn; return true;}
 
   // Initialize.
   bool init();
 
   // Generate the next event.
-  bool next() { return next(0); }
+  inline bool next() { return next(0); }
   bool next(int procTypeIn);
 
   // Switch to new beam particle identities; for similar hadrons only.
-  bool setBeamIDs( int idAin, int idBin = 0) {
-    if (!isInit) { logger.ERROR_MSG("Pythia is not properly initialized");
-    return false; }
-    if (!beamSetup.setBeamIDs( idAin, idBin)) return false;
-    if (beamSetup.hasSwitchedIDs) { processLevel.updateBeamIDs();
-      partonLevel.setBeamID(beamSetup.iPDFAsave); }
-    return true;}
+  bool setBeamIDs( int idAin, int idBin = 0);
 
   // Switch beam kinematics.
   bool setKinematics(double eCMIn);
@@ -246,11 +286,15 @@ public:
   bool setKinematics(Vec4 pAIn, Vec4 pBIn);
 
   // Generate only a single timelike shower as in a decay.
-  int forceTimeShower( int iBeg, int iEnd, double pTmax, int nBranchMax = 0)
-    { if (!isInit) {
-      logger.ERROR_MSG("Pythia is not properly initialized"); return 0; }
-      partonSystems.clear(); infoPrivate.setScalup( 0, pTmax);
-    return timesDecPtr->shower( iBeg, iEnd, event, pTmax, nBranchMax); }
+  inline int forceTimeShower( int iBeg, int iEnd, double pTmax,
+    int nBranchMax = 0) {
+    if (!isInit) {
+      logger.ERROR_MSG("Pythia is not properly initialized");
+      return 0;
+    }
+    partonSystems.clear();
+    infoPrivate.setScalup( 0, pTmax);
+    return timesDecPtr->shower(iBeg, iEnd, event, pTmax, nBranchMax);}
 
   // Generate only the hadronization/decay stage.
   bool forceHadronLevel( bool findJunctions = true);
@@ -263,53 +307,54 @@ public:
   bool forceRHadronDecays() {return doRHadronDecays();}
 
   // Do a low-energy collision between two hadrons in the event record.
-  bool doLowEnergyProcess(int i1, int i2, int procTypeIn) {
+  inline bool doLowEnergyProcess(int i1, int i2, int procTypeIn) {
     if (!isInit) {
       logger.ERROR_MSG("Pythia is not properly initialized"); return false; }
     return hadronLevel.doLowEnergyProcess( i1, i2, procTypeIn, event); }
 
   // Get total cross section for two hadrons in the event record or standalone.
-  double getSigmaTotal() { return getSigmaTotal(beamSetup.idA, beamSetup.idB,
-    beamSetup.eCM, 0); }
-  double getSigmaTotal(double eCM12, int mixLoHi = 0) {
-    return getSigmaTotal(beamSetup.idA, beamSetup.idB, eCM12, mixLoHi); }
-  double getSigmaTotal(int id1, int id2, double eCM12, int mixLoHi = 0) {
+  inline double getSigmaTotal() {
+    return getSigmaTotal(beamSetup.idA, beamSetup.idB, beamSetup.eCM, 0);}
+  inline double getSigmaTotal(double eCM12, int mixLoHi = 0) {
+    return getSigmaTotal(beamSetup.idA, beamSetup.idB, eCM12, mixLoHi);}
+  inline double getSigmaTotal(int id1, int id2, double eCM12,
+    int mixLoHi = 0) {
     return getSigmaTotal(id1, id2, eCM12, particleData.m0(id1),
       particleData.m0(id2), mixLoHi); }
-  double getSigmaTotal(int id1, int id2, double eCM12, double m1, double m2,
-    int mixLoHi = 0) {
+  inline double getSigmaTotal(int id1, int id2, double eCM12, double m1,
+    double m2, int mixLoHi = 0) {
     if (!isInit) {
       logger.ERROR_MSG("Pythia is not properly initialized"); return 0.; }
     return sigmaCmb.sigmaTotal(id1, id2, eCM12, m1, m2, mixLoHi); }
 
-  // Get partial (elastic, diffractive, nondiffractive, ...) cross sections
+  // Get partial (elastic, diffractive, non-diffractive, ...) cross sections
   // for two hadrons in the event record or standalone.
-  double getSigmaPartial(int procTypeIn) {
+  inline double getSigmaPartial(int procTypeIn) {
     return getSigmaPartial(beamSetup.idA, beamSetup.idB, beamSetup.eCM,
-    procTypeIn, 0); }
-  double getSigmaPartial(double eCM12, int procTypeIn, int mixLoHi = 0) {
-    return getSigmaPartial(beamSetup.idA, beamSetup.idB, eCM12, procTypeIn,
-    mixLoHi); }
-  double getSigmaPartial(int id1, int id2, double eCM12, int procTypeIn,
-    int mixLoHi = 0) { return getSigmaPartial(id1, id2, eCM12,
+      procTypeIn, 0); }
+  inline double getSigmaPartial(double eCM12, int procTypeIn,
+    int mixLoHi = 0) {return getSigmaPartial(
+      beamSetup.idA, beamSetup.idB, eCM12, procTypeIn, mixLoHi); }
+  inline double getSigmaPartial(int id1, int id2, double eCM12, int procTypeIn,
+    int mixLoHi = 0) {return getSigmaPartial(id1, id2, eCM12,
       particleData.m0(id1), particleData.m0(id2), procTypeIn, mixLoHi); }
-  double getSigmaPartial(int id1, int id2, double eCM12, double m1,
+  inline double getSigmaPartial(int id1, int id2, double eCM12, double m1,
     double m2, int procTypeIn, int mixLoHi = 0) {
     if (!isInit) {
-      logger.ERROR_MSG("Pythia is not properly initialized"); return 0.; }
-    return sigmaCmb.sigmaPartial(id1, id2, eCM12, m1, m2, procTypeIn, mixLoHi);
-  }
+      logger.ERROR_MSG("Pythia is not properly initialized"); return 0.;}
+    return sigmaCmb.sigmaPartial(
+      id1, id2, eCM12, m1, m2, procTypeIn, mixLoHi);}
 
   // Return a parton density set among list of possibilities.
-  PDFPtr getPDFPtr(int idIn, int sequence = 1, string beam = "A",
+  inline PDFPtr getPDFPtr(int idIn, int sequence = 1, string beam = "A",
     bool resolved = true) {
     return beamSetup.getPDFPtr( idIn, sequence, beam, resolved); }
 
   // List the current Les Houches event.
-  void LHAeventList() { if (lhaUpPtr != 0) lhaUpPtr->listEvent();}
+  inline void LHAeventList() { if (lhaUpPtr != 0) lhaUpPtr->listEvent();}
 
   // Skip a number of Les Houches events at input.
-  bool LHAeventSkip(int nSkip) {
+  inline bool LHAeventSkip(int nSkip) {
     if (lhaUpPtr != 0) return lhaUpPtr->skipEvent(nSkip);
     return false;}
 
@@ -400,7 +445,7 @@ private:
   void endEvent(PhysicsBase::Status status);
 
   // Register a PhysicsBase object and give it a pointer to the info object.
-  void registerPhysicsBase(PhysicsBase &pb) {
+  inline void registerPhysicsBase(PhysicsBase &pb) {
     if (find(physicsPtrs.begin(), physicsPtrs.end(), &pb) != physicsPtrs.end())
       return;
     pb.initInfoPtr(infoPrivate);
@@ -471,11 +516,18 @@ private:
   // Pointers to external calculation of resonance widths.
   vector<ResonanceWidthsPtr> resonancePtrs = {};
 
-  // Pointers to timelike and spacelike showers, including Vincia and Dire.
+  // Pointers to timelike and spacelike showers, including Vincia and
+  // Dire. Note, the showerModelPtr must be declared before the
+  // individual shower pointers, partonLevel, and hadronLevel. This
+  // ensures shared pointers that belong to showerModelPtr are
+  // unloaded correctly.
+  ShowerModelPtr showerModelPtr = {};
   TimeShowerPtr  timesDecPtr = {};
   TimeShowerPtr  timesPtr = {};
   SpaceShowerPtr spacePtr = {};
-  ShowerModelPtr showerModelPtr = {};
+
+  // Pointers to fragmentation models.
+  vector<FragmentationModelPtr> fragPtrs = {};
 
   // Pointer to assign space-time vertices during parton evolution.
   PartonVertexPtr partonVertexPtr;
@@ -510,20 +562,17 @@ private:
   NucleonExcitations nucleonExcitations = {};
   SigmaCombined      sigmaCmb = {};
 
+  // The fragmentation pointer is used in low energy processes and HadronLevel.
+  LundFragmentationPtr fragPtr{};
+
   // The RHadrons class is used both at PartonLevel and HadronLevel.
-  RHadrons   rHadrons = {};
+  RHadronsPtr rHadronsPtr{};
 
   // Flags for handling generation of heavy ion collisons.
   bool        hasHeavyIons = {}, doHeavyIons = {};
 
   // Write the Pythia banner, with symbol and version information.
   void banner();
-
-  // Check for lines in file that mark the beginning of new subrun.
-  int readSubrun(string line, bool warn = true);
-
-  // Check for lines that mark the beginning or end of commented section.
-  int readCommented(string line);
 
   // Check that combinations of settings are allowed; change if not.
   void checkSettings();

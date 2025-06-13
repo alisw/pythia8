@@ -1,0 +1,17 @@
+! The ATLAS A14 tunes, central tune with MSTW2008LO, November 2014.
+! See ATL-PHYS-PUB-2014-021 for further details.
+! Note that TimeShower:alphaSvalue is set here, although normally it would be
+! in the domain of ee tunes.
+! Previously set by "Tune:pp = 20".
+include                             = tunes/Monash2013.cmnd ! based on Monash
+PDF:pSet                            = 5        ! MSTW2008lo68cl
+SigmaProcess:alphaSvalue            = 0.140 
+TimeShower:alphaSvalue              = 0.129 
+SpaceShower:alphaSvalue             = 0.129 
+SpaceShower:pT0Ref                  = 1.62  
+SpaceShower:pTmaxFudge              = 0.92  
+SpaceShower:pTdampFudge             = 1.14  
+MultipartonInteractions:alphaSvalue = 0.130
+MultipartonInteractions:pT0Ref      = 2.28  
+BeamRemnants:primordialKThard       = 1.82  
+ColourReconnection:range            = 1.87  

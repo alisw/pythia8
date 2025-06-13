@@ -1,0 +1,40 @@
+! This file demonstrates NLO matching with MadGraph5_aMC@NLO in Pythia.
+
+! Number of generated events.
+Main:numberOfEvents         = 1000
+
+! Use events from LHEF input.
+Beams:frameType             = 4
+
+! aMC@NLO matching settings.
+! DO NOT CHANGE.
+PartonShowers:model           = 1
+TimeShower:globalRecoil       = on
+TimeShower:weightGluonToQuark = 1
+TimeShower:pTmaxMatch         = 1
+SpaceShower:pTmaxMatch        = 1
+TimeShower:pTmaxFudge         = 1.
+SpaceShower:pTmaxFudge        = 1.
+TimeShower:MEcorrections      = off
+SpaceShower:MEcorrections     = off
+
+! Optionally use same PDFs and alphaS as in ME calculation.
+! PDF:pSet                   = LHAPDF6:NNPDF23_nlo_as_0118_qed
+! SpaceShower:alphaSvalue    = 0.118
+! TimeShower:alphaSvalue     = 0.118
+
+! Optionally write HepMC events.
+! (Pythia has to be configured with --with-hepmc3 or --with-rivet).
+Main:HepMC                  = on
+HepMC:output                = main164amcatnlo.hepmc
+
+! Optionally include Rivet analyses.
+! (Pythia has to be configured with --with-rivet).
+Main:Rivet                  = on
+Rivet:output                = main164amcatnlo.yoda
+Rivet:analyses              = {MC_XS,MC_WEIGHTS}
+
+! Subruns for NLO matching with aMC@NLO events.
+Main:numberOfSubruns        = 1
+Main:subrun                 = 0
+Beams:LHEF                  = zProduction_Mcatnlo.lhe.gz

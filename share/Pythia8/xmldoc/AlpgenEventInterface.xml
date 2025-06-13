@@ -40,7 +40,7 @@ technical details of these classes are given at the end of this manual
 page. 
 </li> 
 <li> 
-<code>main32.cc, main32.cmnd</code> : a sample main program and card 
+<code>main163.cc, main163.cmnd</code> : a sample main program and card 
 file showing the usage of previous file and an MLM <code>UserHooks</code> 
 class. In combination, it reads in a sample ALPGEN (or Madgraph) event file 
 while performing the MLM merging procedure as implemented in ALPGEN 
@@ -48,7 +48,7 @@ while performing the MLM merging procedure as implemented in ALPGEN
 in the card file, which can be activated to try different merging setups. 
 </li> 
 <li> 
-<code>main32.unw, main32_unw.par</code> : an ALPGEN format event and 
+<code>main163.unw, main163_unw.par</code> : an ALPGEN format event and 
 parameter file containing 100 W + 3 jet events. It is not feasible 
 to package large event files with the PYTHIA distribution, but this 
 sample is enough to show the different components in action. 
@@ -260,4 +260,4 @@ present, which are then used to set further PYTHIA settings.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -36,13 +36,13 @@ script e.g.
 The PYTHIA library itself does not need to be recompiled. 
  
 <br/><br/> 
-The <code>examples/main42.cc</code> sample program can then be used to 
-generate events in HepMC format (which <code>examples/main43.cc</code> 
+The <code>examples/main132.cc</code> sample program can then be used to 
+generate events in HepMC format (which <code>examples/main133.cc</code> 
 extends by allowing subruns). When in the <code>examples</code> directory, 
 the main program can be built and used as follows 
 <pre> 
-  make main42 
-  ./main42 main42.cmnd main42.hepmc 
+  make main132 
+  ./main132 main132.cmnd main132.hepmc 
  
 </pre> 
 The first argument is the input file which provides the options for event 
@@ -52,7 +52,7 @@ should be written.
 <br/><br/> 
 This HepMC file may now be read and processed by RIVET 
 <pre> 
-  rivet --analysis=ANALYSIS_NAME main42.hepmc 
+  rivet --analysis=ANALYSIS_NAME main132.hepmc 
  
 </pre> 
 where <code>ANALYSIS_NAME</code> is a 
@@ -70,11 +70,11 @@ events directly to RIVET as they are produced by using a <code>FIFO</code>
 pipe. This is done with the <code>mkfifo</code> command 
 <pre> 
   mkfifo my_fifo 
-  ./main42.exe main42.cmnd my_fifo & 
+  ./main132.exe main132.cmnd my_fifo & 
   rivet --analysis=ANALYSIS_NAME my_fifo 
  
 </pre> 
-Note that <code>main42</code> is run in the background. 
+Note that <code>main132</code> is run in the background. 
  
 <a name="section1"></a> 
 <h3>Compiling PYTHIA with RIVET </h3> 
@@ -129,7 +129,7 @@ via the <code>rivet-config</code> script via the following.
 </pre> 
  
 <p/> 
-The example program <code>main111.cc</code> includes optional analysis with 
+The example program <code>main421.cc</code> includes optional analysis with 
 <code>Pythia8::Pythia8Rivet</code>. To use it configure Pythia with 
 the option <code>--with-rivet</code>. This will automatically use the 
 <code>rivet-config</code> script to determine all the necessary 
@@ -140,8 +140,8 @@ must be available to compile the Rivet examples.
  
 <p/> 
 The most common user case (run PYTHIA with a run card, using one or 
-several RIVET analyses) is implemented in the example <code>main93</code>. 
-The sample command file <code>main93.cmnd</code> provides a good starting 
+several RIVET analyses) is implemented in the example <code>main144</code>. 
+The sample command file <code>main144.cmnd</code> provides a good starting 
 point. The lines: 
 <pre> 
     Main:runRivet = on 
@@ -154,15 +154,15 @@ to add any number of (installed) RIVET analyses to the run, as a comma
 separated list. The last line is the switch needed to write a HepMC 
 file.  The example is run with: 
 <pre> 
-  ./main93 -c main93.cmnd 
+  ./main144 -c main144.cmnd 
  
 </pre> 
 and a .yoda file (the RIVET output) is then written. 
  
-There are several other useful command line options to <code>main93</code>. 
-They are all displayed by running <code>./main93 -h</code>. 
+There are several other useful command line options to <code>main144</code>. 
+They are all displayed by running <code>./main144 -h</code>. 
  
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

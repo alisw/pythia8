@@ -1,0 +1,7 @@
+! Dire tune for new U(1) splittings, October 2017.
+900032:all         = Zp void 1 0 0 1. 0.01 0. 0. 0.
+900032:addChannel  = 1 0.33 101 11 -11
+900032:addChannel  = 1 0.33 101 13 -13
+900032:addChannel  = 1 0.34 101 211 -211
+900032:isResonance = true
+900012:all         = nup nup_bar

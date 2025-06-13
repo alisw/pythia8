@@ -4,109 +4,61 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main154.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:marius.m.utheim@jyu.fi">Marius Utheim</a>
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
 
 // Keywords:
-//            <a href="../ExampleKeywords.html#rescattering">Rescattering</a>
-//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
-//            <a href="../ExampleKeywords.html#cross+sections">Cross&nbsp;sections</a>
+//            <a href="../ExampleKeywords.html#merging">Merging</a>
+//            <a href="../ExampleKeywords.html#matching">Matching</a>
+//            <a href="../ExampleKeywords.html#powheg">Powheg</a>
 
-// Calculate all cross sections for the specified process.
+// An example where the HVQ POWHEGBOX matrix element binary is
+// interfaced directly with PYTHIA. For this example to run correctly
+// PYTHIA must be configured with the
+// --with-powheg=&lt;path to directory containing only POWHEG libraries&gt;
+// option. This will build plugin libraries of the name
+// libpythia8powheg&lt;process name&gt;.so in the library directory.
+// For these plugin libraries to build correctly, special compiler flags
+// must have been used when building the POWHEGBOX binaries. These are
+// &quot;-rdynamic -fPIC&quot;. The following SED command will correctly
+// insert them into the relevant POWHEGBOX Makefile:
+//     sed -i &quot;s/F77= gfortran/F77= gfortran -rdynamic -fPIC/g&quot;
+//     Makefile
+// For this specific example the library libpythia8powheghvq.so must
+// have been built. A complete set of libraries can be built using the LCG
+// script available here:
+//     https://gitlab.cern.ch/sft/lcgcmake/-/blob/master/generators/
+//     powheg-box-v2/prepare.sh
 
 #include &quot;Pythia8/Pythia.h&quot;
+
 using namespace Pythia8;
 
-//--------------------------------------------------------------------------
+int main() {
 
-int main(int argc, char* argv[]) {
-
-  // Initialize Pythia.
+  // PYTHIA and the POWHEG user hooks must still be configured, here
+  // this is done via main154.cmnd. These settings are sensible
+  // defaults, but Powheg:nFinal is dependent upon the POWHEG matrix
+  // element being used and so must be changed as appropriate.
   Pythia pythia;
-  pythia.readFile(&quot;main154.cmnd&quot;);
-  if (!pythia.init()) {
-    cout &lt;&lt; &quot; Pythia failed to initialize.&quot; &lt;&lt; endl;
-    return 1;
-  }
+  pythia.readString(
+    &quot;Init:plugins = {libpythia8powheghvq.so::LHAupPowheg::set::main154.cmnd,&quot;
+    &quot;libpythia8powhegHooks.so::PowhegHooks::set::main154.cmnd}&quot;);
 
-  int idA = argc == 3 ? atoi(argv[1]) : pythia.mode(&quot;Main:spareMode1&quot;);
-  int idB = argc == 3 ? atoi(argv[2]) : pythia.mode(&quot;Main:spareMode2&quot;);
-  double eMin = pythia.parm(&quot;Main:spareParm1&quot;);
-  double eMax = pythia.parm(&quot;Main:spareParm2&quot;);
-  if (eMin &lt; pythia.particleData.m0(idA) + pythia.particleData.m0(idB)) {
-    eMin = pythia.particleData.m0(idA) + pythia.particleData.m0(idB);
-    cout &lt;&lt; &quot;Warning, setting eMin to nominal mass sum of &quot; &lt;&lt; eMin &lt;&lt; &quot;.\n&quot;;
-  }
+  // Initialize PYTHIA, based on the specified settings.
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
 
-  int nBin = 300;
+  // Run PYTHIA. The random numbers are taken from the associated
+  // PYTHIA random number generator.
+  for (int iEvent = 0; iEvent &lt; 100; ++iEvent) pythia.next();
 
-  ParticleData&amp; particleData = pythia.particleData;
-
-  HistPlot plt(&quot;main154plot&quot;);
-  plt.frame(&quot;out154plot&quot;, &quot;Cross section for &quot; + particleData.name(idA)
-    + &quot; + &quot; + particleData.name(idB), &quot;$\\sqrt{s}$ (GeV)&quot;, &quot;$\\sigma$ (mb)&quot;);
-
-  // Basic cross sections: non-diffractive, elastic and diffractive.
-  Hist sigND = Hist::plotFunc(
-    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 1); },
-    &quot;Non-diffractive&quot;, nBin, eMin, eMax);
-  plt.add(sigND, &quot;-&quot;);
-
-  Hist sigEla = Hist::plotFunc(
-    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 2); },
-    &quot;Elastic&quot;, nBin, eMin, eMax);
-  plt.add(sigEla, &quot;-&quot;);
-
-  Hist sigSD = Hist::plotFunc(
-    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 3)
-                           + pythia.getSigmaPartial(idA, idB, eCM, 4); },
-    &quot;Single diffractive&quot;, nBin, eMin, eMax);
-  plt.add(sigSD, &quot;-&quot;);
-
-  Hist sigDD = Hist::plotFunc(
-    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 5); },
-    &quot;Double diffractive&quot;, nBin, eMin, eMax);
-  plt.add(sigDD, &quot;-&quot;);
-
-  // Add nucleon excitation cross section for NN.
-  if ((abs(idA) == 2212 || abs(idA) == 2112)
-   &amp;&amp; (abs(idB) == 2212 || abs(idB) == 2112)
-   &amp;&amp; idA * idB &gt; 0) {
-    Hist sigEx = Hist::plotFunc(
-      [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 7); },
-      &quot;Excitation&quot;, nBin, eMin, eMax);
-    plt.add(sigEx, &quot;-&quot;);
-  }
-
-  // Add annihilation cross section of baryon-antibaryon.
-  if (idA * idB &lt; 0 &amp;&amp; particleData.isBaryon(idA)
-                    &amp;&amp; particleData.isBaryon(idB)) {
-    Hist sigAnn = Hist::plotFunc(
-      [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 8); },
-      &quot;Annihilation&quot;, nBin, eMin, eMax);
-    plt.add(sigAnn, &quot;-&quot;);
-  }
-
-  // Add resonance cross sections if applicable.
-  if (pythia.hadronWidths.hasResonances(idA, idB)) {
-    Hist sigRes = Hist::plotFunc(
-      [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 9); },
-      &quot;Resonant&quot;, nBin, eMin, eMax);
-    plt.add(sigRes, &quot;-&quot;);
-  }
-
-  // Add total cross section at the end.
-  Hist sigTot = Hist::plotFunc(
-    [&amp;](double eCM) { return pythia.getSigmaTotal(idA, idB, eCM); },
-    &quot;Total&quot;, nBin, eMin, eMax);
-  plt.add(sigTot, &quot;k-&quot;);
-
-  // Plot.
-  plt.plot();
-
+  // End of run.
+  pythia.stat();
+  return 0;
 }
 </code></pre></body></html>

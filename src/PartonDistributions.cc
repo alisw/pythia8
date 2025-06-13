@@ -1,5 +1,5 @@
 // PartonDistributions.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -3966,8 +3966,8 @@ void nPDF::xfUpdate(int id, double x, double Q2) {
 
 // Nuclear modifications of the PDFs from EPS09 fit, either LO or NLO.
 // Ref: K.J. Eskola, H. Paukkunen and C.A. Salgado, JHEP 0904 (2009) 065.
-// Grids files of different nuclei can be found from
-// https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/eps09
+// Links to grids files of different nuclei can be found from
+// https://research.hip.fi/qcdtheory/nuclear-pdfs/
 
 // Constants related to the fit.
 const double EPS09::Q2MIN = 1.69;
@@ -4133,9 +4133,8 @@ double EPS09::polInt(double* fi, double* xi, int n, double x) {
 // Nuclear modifications of the PDFs from EPPS16 NLO fit.
 // Ref: K.J. Eskola, P. Paakkinen, H. Paukkunen and C.A. Salgado,
 // Eur.Phys.J. C77 (2017) no.3, 163 [arXiv:1612.05741]
-// Grids files for different nuclei can be found from
-// https://www.jyu.fi/science/en/physics/research/highenergy/urhic/npdfs/
-// epps16-nuclear-pdfs.
+// Links to grids files for different nuclei can be found from
+// https://research.hip.fi/qcdtheory/nuclear-pdfs/
 
 // Constants related to the fit.
 const double EPPS16::Q2MIN = 1.69;
@@ -4170,6 +4169,8 @@ void EPPS16::init(int iSetIn, string pdfdataPath) {
   ifstream fileStream( gridFile.c_str() );
   if (!fileStream.good()) {
     printErr("EPPS16::init", "did not find grid file " + gridFile, loggerPtr);
+    printErr("EPPS16::init", "grids can be downloaded from "
+      "https://research.hip.fi/qcdtheory/nuclear-pdfs/", loggerPtr);
     isSet = false;
     return;
   }
@@ -4197,10 +4198,10 @@ void EPPS16::init(int iSetIn, string pdfdataPath) {
 void EPPS16::rUpdate(int , double x, double Q2) {
 
   // Freeze the x and Q2 values if outside the grid.
-  if( x  < XMIN )  x  = XMIN;
-  if( x  > XMAX )  x  = XMAX;
-  if( Q2 < Q2MIN ) Q2 = Q2MIN;
-  if( Q2 > Q2MAX ) Q2 = Q2MAX;
+  if (x  < XMIN)  x  = XMIN;
+  if (x  > XMAX)  x  = XMAX;
+  if (Q2 < Q2MIN) Q2 = Q2MIN;
+  if (Q2 > Q2MAX) Q2 = Q2MAX;
 
   // Do not use the points at mass threshold for interpolation.
   int cThreshold = 0;
@@ -4211,37 +4212,35 @@ void EPPS16::rUpdate(int , double x, double Q2) {
   int    iQ2 = int(dQ2);
 
   // Set the Q2 index to interval [1,...,28].
-  if      ( iQ2 < 1 )           iQ2 = 1;
-  else if ( iQ2 > Q2STEPS - 3 ) iQ2 = Q2STEPS - 2;
+  if      (iQ2 < 1)           iQ2 = 1;
+  else if (iQ2 > Q2STEPS - 3) iQ2 = Q2STEPS - 2;
 
   // Calculate the position in x grid.
   double dx = XSTEPS * ( 1. - (log(x) - 2. * (1. - x) ) / logX2min );
   int    ix = int(dx);
 
   // Set the x-index interval.
-  if ( ix < 1 ) ix = 1;
+  if (ix < 1) ix = 1;
 
   // Interpolate the grid values.
-  for ( int iFlavour = 0; iFlavour < 8; ++iFlavour) {
+  for (int iFlavour = 0; iFlavour < 8; ++iFlavour) {
 
     // Do not use the last grid points for interpolation.
     if ( (iFlavour > 1) && (iFlavour < 7) ) {
       if ( ix > XSTEPS - 6 ) ix = XSTEPS - 6;
-    } else {
-      if ( ix > XSTEPS - 4 ) ix = XSTEPS - 4;
-    }
+    } else if ( ix > XSTEPS - 4 ) ix = XSTEPS - 4;
 
     // Calculate the four nearest points in x grid.
     double xNear[4];
-    for(int i = 0;i < 4;i++) xNear[i] = ix - 1 + i;
+    for (int i = 0; i < 4; i++) xNear[i] = ix - 1 + i;
 
-    // Reject point Q=1.3 GeV from interpoilation for charm.
+    // Reject point Q=1.3 GeV from interpolation for charm.
     if ( (iFlavour == 5) && (iQ2 == 1) ) {
       cThreshold = iQ2;
       iQ2        = 2;
     }
 
-    // Reject points Q<4.75 GeV from interpoilation for bottom.
+    // Reject points Q<4.75 GeV from interpolation for bottom.
     if ( (iFlavour == 6) && (iQ2 < 17) && (iQ2 > 1) ) {
       bThreshold = iQ2;
       iQ2        = 17;
@@ -4249,14 +4248,14 @@ void EPPS16::rUpdate(int , double x, double Q2) {
 
     // Calculate the three nearest points in log(log Q^2) grid.
     double Q2Near[4];
-    for(int i = 0;i < 4;i++) Q2Near[i] = iQ2 - 1 + i;
+    for (int i = 0;i < 4;i++) Q2Near[i] = iQ2 - 1 + i;
 
     // Grid points used for interpolation.
     double xGrid[4];
     double Q2Grid[4];
 
     // Read in the relevant values from table and interpolate in x.
-    for ( int j = 0; j < 4; ++j) {
+    for (int j = 0; j < 4; ++j) {
       xGrid[0]  = grid[iSet - 1][iQ2 - 1 + j][ix - 1][iFlavour];
       xGrid[1]  = grid[iSet - 1][iQ2 - 1 + j][ix][iFlavour];
       xGrid[2]  = grid[iSet - 1][iQ2 - 1 + j][ix + 1][iFlavour];

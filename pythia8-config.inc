@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pythia8-config is a part of the PYTHIA event generator.
-# Copyright (C) 2024 Torbjorn Sjostrand.
+# Copyright (C) 2025 Torbjorn Sjostrand.
 # PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 # Please respect the MCnet Guidelines, see GUIDELINES for details.
 # Author: Philip Ilten, October 2014 - Februrary 2024.
@@ -24,10 +24,11 @@ Usage: ./pythia8-config [OPTIONS]
 Configuration tool for the PYTHIA event generator library. The available 
 options are defined below. All available options (without arguments) for the 
 PYTHIA configuration script are also valid for this script. See 
-"./configuration --help" in the top PYTHIA 8 directory for more details. 
+"./configure --help" in the top PYTHIA 8 directory for more details. 
 
 Available options.
 --help         : Print this help message (also -h, --h, and -help).
+--version      : Returns the Pythia version.
 --config       : Print the argument(s) used to configure Pythia.
 --prefix       : Installation prefix (cf. autoconf). Note that if the 
                  installation is spread over multiple directories, the
@@ -67,8 +68,8 @@ Available options.
   hdf5     : Support the use of HDF5.
   highfive : HighFive headers, also needed for reading HDF5 Les Houches.
 BLOCKTEXT
-OPTIONS="-h --h -help --help --config --prefix --bindir --libdir --includedir"
-OPTIONS+=" --datadir --xmldoc --cxxflags --cflags --ldflags --libs"
+OPTIONS="-h --h -help --help --version --config --prefix --bindir --libdir "
+OPTIONS+="--includedir --datadir --xmldoc --cxxflags --cflags --ldflags --libs"
 for PKG in "evtgen" "fastjet3" "hepmc2" "hepmc3" "lhapdf5" "lhapdf6" "powheg"\
     "rivet" "root" "gzip" "python" "mg5mes" "openmp" "mpich" "hdf5"\
     "highfive"; do
@@ -102,7 +103,9 @@ function error() {
 if [ $# -eq 0 ]; then echo "$USAGE"; exit; fi
 for VAR in "$@"; do
     if [ "$VAR" = "-h" ] || [ "$VAR" = "--h" ] || [ "$VAR" = "-help" ] \
-       || [ "$VAR" = "--help" ]; then echo "$USAGE"; exit; fi; done
+           || [ "$VAR" = "--help" ]; then echo "$USAGE"; exit;
+    elif [ "$VAR" = "--version" ]; then echo "8.315"; exit; fi
+done
 
 # Read the configuration (use local version first, then installed version).
 PREFIX=$(cd "$(dirname "${BASH_SOURCE[0]}")"; cd ../; pwd)
@@ -110,14 +113,14 @@ if [ -f $PREFIX/Makefile.inc ]; then CFG_FILE="$PREFIX/Makefile.inc"
 elif [ ! -f $CFG_FILE ]; then
     echo "Error: cannot find valid configuration for Pythia 8"; exit; fi
 while read LINE; do
-    if [[ $LINE == \#\ --* ]]; then CONFIG+=${LINE#?}; fi
+    if [[ $LINE == \#\ \./configure* ]]; then CONFIG+=${LINE#?}; fi
     if [[ $LINE != *=* ]]; then continue; fi
     VAR=${LINE%%=*}; VAL=${LINE#*=};
     eval $VAR=\"$VAL\"; done < $CFG_FILE
 
 # Check if configuration is requested.
 for VAR in "$@"; do
-    if [ "$VAR" = "--config" ]; then echo "./configure$CONFIG"; exit; fi; done
+    if [ "$VAR" = "--config" ]; then echo "$CONFIG"; exit; fi; done
 
 # Change the prefixes if local version.
 if [ "$CFG_FILE" = "$PREFIX/Makefile.inc" ]; then

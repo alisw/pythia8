@@ -1,5 +1,5 @@
 // SimpleTimeShower.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -112,6 +112,8 @@ void SimpleTimeShower::init( BeamParticle* beamAPtrIn,
   dampenBeamRecoil   = flag("TimeShower:dampenBeamRecoil");
   recoilDeadCone     = flag("TimeShower:recoilDeadCone");
   recoilStrategyRF   = mode("TimeShower:recoilStrategyRF");
+  weightRF           = parm("TimeShower:weightRF");
+  recoilRFUseParents = flag("TimeShower:recoilRFUseParents");
   allowMPIdipole     = flag("TimeShower:allowMPIdipole");
 
   // If SimpleSpaceShower does dipole recoil then SimpleTimeShower must adjust.
@@ -468,10 +470,20 @@ int SimpleTimeShower::shower( int iBeg, int iEnd, Event& event, double pTmax,
 
 //--------------------------------------------------------------------------
 
-// Top-level routine for QED radiation in hadronic decay to two leptons.
+// Top-level routine for QED radiation in hadronic two-body decays.
+// Matrix element corrections only for V0 -> ll and V+- -> l nu.
 // Intentionally only does photon radiation, i.e. no photon branchings.
 
 int SimpleTimeShower::showerQED( int i1, int i2, Event& event, double pTmax) {
+
+  // Check the multiplicity of the input only handles two-body decays
+  if (i2 - i1 + 1 != 2) return -1;
+
+  int showerMode = mode("TimeShower:gammaModeHad");
+  bool leptonFinalState = event[i1].isLepton() && event[i2].isLepton();
+
+  //Check that the shower is meant to handle non-leptonic decays
+  if (showerMode == 1 && !leptonFinalState) return -1;
 
   // Add new system, automatically with two empty beam slots.
   int iSys = partonSystemsPtr->addSys();
@@ -484,7 +496,9 @@ int SimpleTimeShower::showerQED( int i1, int i2, Event& event, double pTmax) {
   // Charge type of two leptons tells whether MEtype is gamma*/Z0 or W+-.
   int iChg1  = event[i1].chargeType();
   int iChg2  = event[i2].chargeType();
-  int MEtype = (iChg1 + iChg2 == 0) ? 102 : 101;
+  int MEtype = 0;
+  if (leptonFinalState && event[event[i1].mother1()].spinType() == 3)
+    MEtype = (iChg1 + iChg2 == 0) ? 102 : 101;
 
   // Fill dipole-ends list.
   dipEnd.resize(0);
@@ -1317,6 +1331,48 @@ void SimpleTimeShower::setupQCDdip( int iSys, int i, int colTag, int colSign,
                   && event[iRecNow].isFinal() ) ) {
           iRec = iRecNow;
           break;
+        }
+      }
+    }
+  }
+
+  // Coloured resonance decays: check recoil strategy.
+  int iRes = partonSystemsPtr->getInRes(iSys);
+  if (iRec == 0 && iRes != 0 && event[iRes].colType() != 0) {
+    // Recoil against the final-state colour partner.
+    if (recoilStrategyRF == 1) {
+      for (int j = 0; j < sizeRec; ++j) {
+        if (j + sizeInNonRec != iOffset) {
+          int iRecNow = useSystems
+            ? partonSystemsPtr->getAll(iSys, j + sizeInNonRec) : j;
+          if (!event[iRecNow].isFinal()) continue;
+          if (colSign > 0 && event[iRad].acol() > 0
+            && event[iRad].acol() == event[iRecNow].col()) {
+            iRec = iRecNow;
+            break;
+          }
+          if (colSign < 0 && event[iRad].col() >0
+            && event[iRad].col() == event[iRecNow].acol()) {
+            iRec = iRecNow;
+            break;
+          }
+        }
+      }
+    // Recoil against nearest colour-singlet daughter
+    // by (p_i + p_j)^2 - (m_i + m_j)^2 = 2 (p_i p_j - m_i m_j).
+    } else {
+      double ppMin = LARGEM2;
+      for (int j = 0; j < sizeOut; ++j) {
+        if (j != i) {
+          int iRecNow  = useSystems ? partonSystemsPtr->getOut(iSys, j) : j;
+          if (!event[iRecNow].isFinal() || event[iRecNow].colType() != 0)
+            continue;
+          double ppNow = event[iRecNow].p() * event[iRad].p()
+            - event[iRecNow].m() * event[iRad].m();
+          if (ppNow < ppMin) {
+            iRec  = iRecNow;
+            ppMin = ppNow;
+          }
         }
       }
     }
@@ -2266,7 +2322,6 @@ double SimpleTimeShower::pTnext( Event& event, double pTbegAll,
     // Find maximum evolution scale for dipole.
     dip.m2DipCorr    = pow2(dip.mDip - dip.mRec) - dip.m2Rad;
     double pTbegDip = min( pTbegAll, dip.pTmax );
-
     double pT2begDip = min( pow2(pTbegDip), 0.25 * dip.m2DipCorr);
 
     // For global recoil, always set the starting scale for first emission.
@@ -3034,10 +3089,19 @@ void SimpleTimeShower::pT2nextQED(double pT2begDip, double pT2sel,
 
       // Photon branching: either lepton or quark flavour choice.
       } else {
-        if (rndmPtr->flat() * chg2Sum < chg2SumL)
-          dip.flavour  = 9 + 2 * min(3, 1 + int(chg2SumL * rndmPtr->flat()));
-        else {
-          double rndmQ = 9. * chg2SumQ * rndmPtr->flat();
+        if (rndmPtr->flat() * chg2Sum < chg2SumL) {
+          // Check if splittings enhanced and scale lepton charge-sum
+          // if needed.
+          double chg2SumLsample = canEnhanceETnow ?
+            chg2SumL/enhanceFactor("fsr:A2LL") : chg2SumL;
+          dip.flavour  = 9
+            + 2 * min(3, 1 + int(chg2SumLsample * rndmPtr->flat()));
+        } else {
+          // Check if splittings enhanced and scale quark charge-sum
+          // when needed.
+          double chg2SumQsample = canEnhanceETnow ?
+            chg2SumQ/enhanceFactor("fsr:A2QQ") : chg2SumQ;
+          double rndmQ = 9. * chg2SumQsample * rndmPtr->flat();
           if      (rndmQ <  1.) dip.flavour = 1;
           else if (rndmQ <  5.) dip.flavour = 2;
           else if (rndmQ <  6.) dip.flavour = 3;
@@ -3959,8 +4023,8 @@ bool SimpleTimeShower::branch( Event& event, bool isInterleaved) {
       pTcorr, pzRadPlusEmt, pzRad, pzEmt, mRad, m2Rad, mEmt)) return false;
 
   // Reject g/gv emission where mass effects have reduced pT below cutoff.
-  // Separate cut for gv _could_ be added if needed.
-  if ( (idEmt == 21 || idEmt == 4900021) && pTorig < pTcolCut) return false;
+  if (idEmt == 21 && pTorig < pTcolCut) return false;
+  if (idEmt == 4900021 && pTorig < pThvCut) return false;
 
   // Find rest frame and angles of original dipole.
   RotBstMatrix M;
@@ -4072,7 +4136,7 @@ bool SimpleTimeShower::branch( Event& event, bool isInterleaved) {
   // Optional reweighting to dipole with decaying coloured (e.g., top) mother.
   // Skip if ME corrections are already made (= first emission in many cases).
   int iResMot = partonSystemsPtr->getInRes(iSysSel);
-  if (recoilStrategyRF > 1 && iResMot != 0 && event[iResMot].colType() != 0
+  if (recoilStrategyRF == 0 && iResMot != 0 && event[iResMot].colType() != 0
       && dipSel->MEtype == 0) {
 
     // Check if newly emitted gluon matches decaying resonance colour line.
@@ -4085,7 +4149,9 @@ bool SimpleTimeShower::branch( Event& event, bool isInterleaved) {
 
     // Recoiler should now be a colour-neutral particle (i.e., W for t -> bW).
     // (Allow triplet for exotic colour flows, eg 3 in 3->38 or 8->33bar.)
-    if (colourMatches && rec.colType() != 0) {
+    int recColType = rec.col() != 0 && rec.acol() != 0 ? 2 :
+      rec.col() != 0 ? 1 : rec.acol() != 0 ? -1 : 0;
+    if (colourMatches && recColType != 0) {
       // Check if there are any singlets at all among the daughters.
       int ird1 = event[iResMot].daughter1();
       int ird2 = event[iResMot].daughter2();
@@ -4096,7 +4162,7 @@ bool SimpleTimeShower::branch( Event& event, bool isInterleaved) {
           break;
         }
       }
-      if (foundSinglet || abs(rec.colType()) != 1) {
+      if (foundSinglet || abs(recColType) != 1) {
         loggerPtr->ERROR_MSG("flawed recoiler identity",
                              " is " + to_string(rec.idAbs()));
         colourMatches = false;
@@ -4105,8 +4171,8 @@ bool SimpleTimeShower::branch( Event& event, bool isInterleaved) {
 
     // Use dipole partons after or before emission (after recommended).
     if (colourMatches) {
-      Vec4 pRadNow = (recoilStrategyRF == 2) ? pRad : pRadBef;
-      Vec4 pRecNow = (recoilStrategyRF == 2) ? pRec : pRecBef;
+      Vec4 pRadNow = ( !recoilRFUseParents ) ? pRad : pRadBef;
+      Vec4 pRecNow = ( !recoilRFUseParents ) ? pRec : pRecBef;
 
       // Denominator: eikonal weight with X as recoiler (= W for t->bW).
       double pRadRec = pRadNow * pRecNow;
@@ -4121,6 +4187,12 @@ bool SimpleTimeShower::branch( Event& event, bool isInterleaved) {
       double pResEmt = event[iResMot].p() * pEmt;
       double wtRes = 2. * pRadRes / (pRadEmt * pResEmt)
         - pow2(mRad / pRadEmt) - pow2(event[iResMot].m() / pResEmt);
+
+      // PS March 2025.
+      // Option to continuously interpolate between Resonance and X recoiler.
+      //   weightRF = 1. => Resonance recoiler (RF).
+      //   weightRF = 0. => X recoiler.
+      wtRes = weightRF * wtRes + (1.-weightRF) * wtX;
 
       // Reweight accept probability by eikonal ratio Resonance / X recoiler.
       pAccept *= wtRes / wtX;
@@ -7112,27 +7184,33 @@ void SimpleTimeShower::list() const {
 
   // Header.
   cout << "\n --------  PYTHIA SimpleTimeShower Dipole Listing  -----------"
-       << "------------------------------------------------------- \n \n  "
-       << "  i    rad    rec       pTmax  col  chg  gam weak  oni   hv  is"
-       << "r  sys sysR type  MErec     mix  ord  spl  ~gR  pol \n"
-       << fixed << setprecision(3);
+       << "----------------------------------------------------------------"
+       << "-- \n \n    i    rad    rec       pTmax  col  chg  gam weak  oni"
+       << "   hv  isr  sys sysR type  MErec     mix  ord  spl  ~gR  jun   "
+       << "flex  pol\n" << fixed << setprecision(3);
 
   // Loop over dipole list and print it.
-  for (int i = 0; i < int(dipEnd.size()); ++i)
-  cout << setw(5) << i                     << setw(7) << dipEnd[i].iRadiator
-       << setw(7) << dipEnd[i].iRecoiler   << setw(12) << dipEnd[i].pTmax
-       << setw(5) << dipEnd[i].colType     << setw(5) << dipEnd[i].chgType
-       << setw(5) << dipEnd[i].gamType     << setw(5) << dipEnd[i].weakType
-       << setw(5) << dipEnd[i].colvType    << setw(5) << dipEnd[i].isrType
-       << setw(5) << dipEnd[i].system      << setw(5) << dipEnd[i].systemRec
-       << setw(5) << dipEnd[i].MEtype      << setw(7) << dipEnd[i].iMEpartner
-       << setw(8) << dipEnd[i].MEmix       << setw(5) << dipEnd[i].MEorder
-       << setw(5) << dipEnd[i].MEsplit     << setw(5) << dipEnd[i].MEgluinoRec
-       << setw(5) << dipEnd[i].weakPol << "\n";
+  for (int i = 0; i < int(dipEnd.size()); ++i) {
+    double flexFac = (dipEnd[i].isFlexible) ? dipEnd[i].flexFactor : 1.0;
+    cout << setw(5) << i                     << setw(7) << dipEnd[i].iRadiator
+         << setw(7) << dipEnd[i].iRecoiler   << setw(12) << dipEnd[i].pTmax
+         << setw(5) << dipEnd[i].colType     << setw(5) << dipEnd[i].chgType
+         << setw(5) << dipEnd[i].gamType     << setw(5) << dipEnd[i].weakType
+         << setw(5) << dipEnd[i].oniumType   << setw(5) << dipEnd[i].colvType
+         << setw(5) << dipEnd[i].isrType     << setw(5) << dipEnd[i].system
+         << setw(5) << dipEnd[i].systemRec   << setw(5) << dipEnd[i].MEtype
+         << setw(7) << dipEnd[i].iMEpartner  << setw(8) << dipEnd[i].MEmix
+         << setw(5) << dipEnd[i].MEorder     << setw(5) << dipEnd[i].MEsplit
+         << setw(5) << dipEnd[i].MEgluinoRec << setw(5)
+         << dipEnd[i].hasJunction
+         << setw(7) << flexFac               << setw(5) << dipEnd[i].weakPol
+         << "\n";
+  }
 
   // Done.
-  cout << "\n --------  End PYTHIA SimpleTimeShower Dipole Listing  -------"
-       << "-------------------------------------------------------" << endl;
+  cout << "\n --------  End PYTHIA SimpleTimeShower Dipole Listing  --------"
+       << "-----------------------------------------------------------------"
+       << endl;
 
 }
 

@@ -1,9 +1,9 @@
 // HISubCollisionModel.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// This file contains the definition of the ImpactParmeterGenerator,
+// This file contains the definition of the ImpactParameterGenerator,
 // SubCollision, and SubCollisionModel classes, as well as a set of
 // subclasses of SubCollisionModel.
 //
@@ -45,7 +45,8 @@ public:
   // Constructor with configuration.
   SubCollision(Nucleon & projIn, Nucleon & targIn,
                double bIn, double bpIn, CollisionType typeIn)
-    : proj(&projIn), targ(&targIn), b(bIn), bp(bpIn), type(typeIn) {}
+    : proj(&projIn), targ(&targIn), b(bIn), bp(bpIn), type(typeIn),
+    failed(false) {}
 
   // Default constructor.
   SubCollision()
@@ -75,6 +76,9 @@ public:
   // The type of collision.
   CollisionType type;
 
+  // Whether the subcollision failed, i.e. has a failed excitation.
+  mutable bool failed;
+
 };
 
 //==========================================================================
@@ -89,14 +93,16 @@ public:
   SubCollisionSet() = default;
 
   // Constructor with subcollisions.
-  SubCollisionSet(multiset<SubCollision> subCollisionsIn, double TIn)
-    : subCollisionsSave(subCollisionsIn), TSave(TIn) {}
+  SubCollisionSet(multiset<SubCollision> subCollisionsIn, double TIn,
+                  double T12In = 0.0, double T21In = 0.0, double T22In = 0.0)
+    : subCollisionsSave(subCollisionsIn), TSave({TIn, T12In, T21In, T22In}) {}
 
   // Reset the subcollisions.
   bool empty() const { return subCollisionsSave.empty(); }
 
-  // The summed elastic amplitude.
-  double T() const { return TSave; }
+  // The full elastic amplitude, optionally returning altenate states
+  // to gauge fluctuations.
+  double T(unsigned i = 0) const { return TSave[i]; }
 
   // Iterators over the subcollisions.
   multiset<SubCollision>::const_iterator begin() const {
@@ -108,7 +114,10 @@ private:
 
   // Saved subcollisions.
   multiset<SubCollision> subCollisionsSave;
-  double TSave;
+
+  // The full elastic amplitude together with alternate states gauging
+  // fluctuations.
+  vector<double> TSave = {};
 
 };
 
@@ -144,10 +153,11 @@ public:
   };
 
   // The default constructor is empty.
+  // The avNDb has units femtometer.
   SubCollisionModel(int nParm): sigTarg(8, 0.0), sigErr(8, 0.05),
     parmSave(nParm),
     NInt(100000), NPop(20), sigFuzz(0.2), impactFudge(1),
-    fitPrint(true), avNDb(1.0*femtometer),
+    fitPrint(true), avNDb(1.0),
     projPtr(), targPtr(), sigTotPtr(), settingsPtr(), infoPtr(), rndmPtr() {}
 
   // Virtual destructor.
@@ -214,8 +224,11 @@ public:
   // Set beam kinematics.
   void setKinematics(double eCMIn);
 
+  // Set projectile particle.
+  void setIDA(int idA);
+
   // Use a genetic algorithm to fit the parameters.
-  bool evolve(int nGenerations, double eCM);
+  bool evolve(int nGenerations, double eCM, int idANow);
 
   // Get the number of free parameters for the model.
   int nParms() const { return parmSave.size(); }
@@ -254,7 +267,7 @@ private:
   // Generate parameters based on run settings and the evolutionary algorithm.
   bool genParms();
 
-  // Save/load parameter configuration from disk.
+  // Save/load parameter configuration to/from settings/disk.
   bool saveParms(string fileName) const;
   bool loadParms(string fileName);
 
@@ -285,10 +298,19 @@ protected:
 
   // For variable energies.
   int idASave, idBSave;
-  bool doVarECM;
-  double eMin{}, eMax{};
+  bool doVarECM, doVarBeams;
+  double eMin, eMax, eSave;
   int eCMPts;
-  vector<LogInterpolator> subCollParms;
+
+  // The list of particles that have been fitted.
+  vector<int> idAList;
+
+  // A vector of interpolators for the current particle. Each entry
+  // corresponds to one parameter, each interpolator is over the energy range.
+  vector<LogInterpolator> *subCollParms;
+
+  // Mapping id -> interpolator, one entry for each particle.
+  map<int, vector<LogInterpolator>> subCollParmsMap;
 
 };
 
@@ -316,7 +338,7 @@ public:
   // Get cross sections used by this model.
   virtual SigEst getSig() const override {
     SigEst s;
-    s.sig[0] = sigTot();
+    s.sig[0] = 56.52;//sigTot();
     s.sig[1] = sigND();
     s.sig[6] = s.sig[0] - s.sig[1];
     s.sig[7] = bSlope();
@@ -380,9 +402,9 @@ public:
 
   // The default constructor simply lists the nucleon-nucleon cross sections.
   FluctuatingSubCollisionModel(int nParmIn, int modein)
-    : SubCollisionModel(nParmIn + 2),
-      sigd(parmSave[nParmIn]), alpha(parmSave[nParmIn + 1]),
-      opacityMode(modein) {}
+    : SubCollisionModel(nParmIn + 2), opacityMode(modein),
+      sigd(parmSave[nParmIn]), alpha(parmSave[nParmIn + 1]) {}
+
 
   // Virtual destructor.
   virtual ~FluctuatingSubCollisionModel() override {}
@@ -400,6 +422,9 @@ protected:
   virtual double pickRadiusProj() const = 0;
   virtual double pickRadiusTarg() const = 0;
 
+  // Optional mode for opacity.
+  int opacityMode;
+
 private:
 
   // Saturation scale of the nucleus.
@@ -408,13 +433,11 @@ private:
   // Power of the saturation scale
   double& alpha;
 
-  // Optional mode for opacity.
-  int opacityMode;
-
   // The opacity of the collision at a given sigma.
   double opacity(double sig) const {
     sig /= sigd;
-    if ( opacityMode == 1 ) sig = 1.0/sig;
+    if ( opacityMode == 1 )
+      return pow(-expm1(-sig), alpha);
     return sig > numeric_limits<double>::epsilon() ?
       pow(-expm1(-1.0/sig), alpha) : 1.0;
   }
@@ -449,12 +472,21 @@ public:
   // Get the minimum and maximum allowed parameter values for this model.
   vector<double> minParm() const override { return {  0.01,  1.0,  0.0  }; }
   vector<double> defParm() const override { return {  2.15, 17.24, 0.33 }; }
-  vector<double> maxParm() const override { return { 60.00, 60.0, 20.0  }; }
+  vector<double> maxParm() const override {
+    return { 60.00, 60.0, (opacityMode == 0? 20.0: 2.0 )  }; }
 
 protected:
 
-  double pickRadiusProj() const override { return rndmPtr->gamma(k0, r0()); }
-  double pickRadiusTarg() const override { return rndmPtr->gamma(k0, r0()); }
+  double pickRadiusProj() const override {
+    double r =  rndmPtr->gamma(k0, r0());
+    return (r < numeric_limits<double>::epsilon() ?
+      numeric_limits<double>::epsilon() : r);
+  }
+  double pickRadiusTarg() const override {
+    double r =  rndmPtr->gamma(k0, r0());
+    return (r < numeric_limits<double>::epsilon() ?
+      numeric_limits<double>::epsilon() : r);
+  }
 
 private:
 
@@ -482,9 +514,7 @@ public:
 
   // The default constructor takes a general width (in femtometers) as
   // argument.
-  ImpactParameterGenerator()
-    : widthSave(0.0), collPtr(0), projPtr(0), targPtr(0),
-      settingsPtr(0), rndmPtr(0) {}
+  ImpactParameterGenerator() = default;
 
   // Virtual destructor.
   virtual ~ImpactParameterGenerator() {}
@@ -496,6 +526,13 @@ public:
 
   // Return a new impact parameter and set the corresponding weight provided.
   virtual Vec4 generate(double & weight) const;
+
+  // Return the scaling of the cross section used together with the
+  // weight in genrate() to obtain the cross section. This is by
+  // default 1 unless forceUnitWeight is specified.
+  virtual double xSecScale() const {
+    return forceUnitWeight? M_PI*pow2(width()*cut): 2.0*M_PI *pow2(width());
+  }
 
   // Set the width (in femtometers).
   void width(double widthIn) { widthSave = widthIn; }
@@ -509,18 +546,25 @@ public:
 private:
 
   // The width of a distribution.
-  double widthSave;
+  double widthSave = 0.0;
+
+  // The the cut multiplied with widthSave to give the maximum allowed
+  // impact parameter.
+  double cut = 3.0;
+
+  // Sample flat instead of with a Gaussian.
+  bool forceUnitWeight = false;
 
 protected:
 
   // Pointers from the controlling HeavyIons object.
-  Info* infoPtr;
-  SubCollisionModel* collPtr;
-  NucleusModel* projPtr;
-  NucleusModel* targPtr;
-  Settings* settingsPtr;
-  Rndm* rndmPtr;
-  Logger* loggerPtr;
+  Info* infoPtr{};
+  SubCollisionModel* collPtr{};
+  NucleusModel* projPtr{};
+  NucleusModel* targPtr{};
+  Settings* settingsPtr{};
+  Rndm* rndmPtr{};
+  Logger* loggerPtr{};
 
 };
 

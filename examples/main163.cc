@@ -1,66 +1,67 @@
 // main163.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
-// Authors: Marius Utheim <marius.m.utheim@jyu.fi>
+// Keywords: matching; merging; MLM
 
-// Keywords: parallelism
+// This is a sample program showing Alpgen- or Madgraph-style MLM matching
+// for Madgraph LHEF or native Alpgen format event files.
+//
+// Please see the 'Jet Matching Style' manual page for a description of the
+// parameters and user options.
 
-// This is a simple test program to illustrate the usage of PythiaParallel.
-// This program illustrates how to perform both event generation and
-// analysis in parallel, using your own mutex object.
-
+// Includes and namespace
 #include "Pythia8/Pythia.h"
-#include "Pythia8/PythiaParallel.h"
-#include <mutex>
-#include <thread>
-
+#include "Pythia8Plugins/CombineMatchingInput.h"
 using namespace Pythia8;
+
+//==========================================================================
+
 int main() {
 
-  // Basic settings.
-  PythiaParallel pythia;
-  pythia.readString("Beams:eCM = 8000.");
-  pythia.readString("HardQCD:all = on");
-  pythia.readString("PhaseSpace:pTHatMin = 20.");
-  pythia.readString("Main:numberOfEvents = 10000");
+ // Generator and read in commands.
+  Pythia pythia;
+  pythia.readFile("main163.cmnd");
 
-  // This tells PythiaParallel to process events asynchronously.
-  // If this is set to off, the program will slow down significantly.
-  pythia.readString("Parallelism:processAsync = on");
+  // Extract settings to be used in the main program.
+  int nEvent = pythia.mode("Main:numberOfEvents");
+  int nAbort = pythia.mode("Main:timesAllowErrors");
+  int nSkip  = pythia.mode("Main:spareMode1");
 
-  // Initialize.
-  pythia.init();
-  Hist mult("charged multiplicity", 100, -0.5, 799.5);
+  // Create UserHooks pointer. Stop if it failed. Pass pointer to Pythia.
+  CombineMatchingInput combined;
+  combined.setHook(pythia);
 
-  // This mutual exclusion (mutex) object controls access to histogram.
-  mutex histMutex;
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
 
-  // Generate events.
-  pythia.run([&](Pythia* pythiaPtr) {
+  // Optionally skip ahead in LHEF.
+  pythia.LHAeventSkip( nSkip );
 
-    // Find number of all final charged particles and fill histogram.
-    int nCharged = 0;
-    for (int i = 0; i < pythiaPtr->event.size(); ++i)
-      if (pythiaPtr->event[i].isFinal() && pythiaPtr->event[i].isCharged())
-        ++nCharged;
+  // Begin event loop. Optionally quit it before end of file.
+  int iAbort = 0;
+  for (int iEvent = 0; ;  ++iEvent) {
+    if (nEvent > 0 && iEvent >= nEvent) break;
 
-    // Simulate a slow analysis by delaying for 20 milliseconds.
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    // Generate events. Quit if at end of file or many failures.
+    if (!pythia.next()) {
+      if (pythia.info.atEndOfFile()) {
+        cout << "Info: end of input file reached" << endl;
+        break;
+      }
+      if (++iAbort < nAbort) continue;
+      cout << "Abort: too many errors in generation" << endl;
+      break;
+    }
 
-    // Lock mutex. The above part of the analysis can be done in parallel,
-    // but two threads must not write to the histogram at the same time.
-    // If this line is removed, the output will be wrong.
-    std::lock_guard<mutex> lock(histMutex);
+    // Event analysis goes here.
 
-    // Fill histogram
-    mult.fill( nCharged );
+  // End of event loop.
+  }
 
-    // The mutex will be released when the lock_guard goes out of scope.
-  });
-
+  // Final statistics and done.
   pythia.stat();
-  cout << mult;
+
   return 0;
 }

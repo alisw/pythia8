@@ -1,5 +1,5 @@
 // VinciaMergingHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand, Peter Skands.
+// Copyright (C) 2025 Torbjorn Sjostrand, Peter Skands.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUidELINES for details.
 
@@ -356,16 +356,15 @@ class VinciaMergingHooks : public MergingHooks {
   virtual double tmsNow(const Event& event) override;
 
   // Check whether an event should be vetoed due to branching above tMS.
-  virtual bool canVetoStep() override;
-  virtual bool doVetoStep(const Event& process, const Event& event, bool)
-    override;
+  virtual bool doVetoStep(const Event& process,
+    const Event& event, bool) override;
+
+  // Check whether a branching should be vetoed because it is above tMS.
+  virtual bool doVetoEmission(const Event&) override;
 
   // Overridden base class methods.
-  virtual bool doVetoEmission(const Event&) override {return false;}
-  virtual bool canVetoEmission() override {return false;}
   virtual double dampenIfFailCuts(const Event& ) override {return 0.;}
-  virtual int getNumberOfClusteringSteps(const Event&, bool) override {
-    return 0;}
+  virtual int getNumberOfClusteringSteps(const Event&, bool) override;
   virtual bool canCutOnRecState() override {return false;}
   virtual bool doCutOnRecState(const Event&) override {return false;}
   virtual bool canVetoTrialEmission() override {return false;}
@@ -373,9 +372,6 @@ class VinciaMergingHooks : public MergingHooks {
     return false;}
   virtual bool useShowerPlugin() override {return false;}
   virtual double hardProcessME(const Event&) override {return 0;}
-
-  // Others.
-  virtual double tmsDefinition( const Event&) override {return 0.;}
 
   // Set and get verbosity.
   void setVerbose(int verboseIn) {verbose = verboseIn;}
@@ -496,6 +492,8 @@ class VinciaMergingHooks : public MergingHooks {
  private:
 
   // Merging scale implementations.
+  double pTlast(const Event& event);
+  double pTvincia(const Event& event, int ii, int ij, int ik);
   double kTmin(const Event& event);
   vector<double> cutsMin(const Event& event);
 

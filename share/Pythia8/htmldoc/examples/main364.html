@@ -1,0 +1,136 @@
+<html><head><title>main364</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main364</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main364.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#b+decays">B&nbsp;decays</a>
+//            <a href="../ExampleKeywords.html#external+decays">External&nbsp;decays</a>
+//            <a href="../ExampleKeywords.html#evtgen">EvtGen</a>
+
+// An example where decays are performed with EvtGen. See the
+// documentation in Pythia8Plugins/EvtGen.h for further details on the
+// EvtGenDecays class. In this example the decay B0 -&gt; nu_e e+ D*-[-&gt;
+// gamma D-[-&gt; nu_ebar e- pi0]] is forced. The invariant mass spectrum
+// of the final state electron and pion is then plotted.
+
+// The syntax to run this example is:
+//     ./main364 -d &lt;EvtGen decay file&gt; -p &lt;EvtGen particle data&gt;
+//               -x &lt;PYTHIA8DATA&gt;
+//               &lt;flag to use EvtGen&gt;
+
+// This example has only been tested with EvtGen version 1.3.0. The
+// EvtGen package is designed to use Pythia 8 for any decays that it
+// cannot perform. For this to be possible, EvtGen must be linked
+// against the Pythia 8 shared library. To modify how this example
+// program is compiled (i.e to remove linking against the
+// EvtGenExternal library) change the main364 rule in the Makefile of
+// this directory.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+#include &quot;Pythia8Plugins/EvtGen.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Optionally perform decays with EvtGen.&quot;,
+    {&quot;./main364 -d &lt;EvtGen decay file&gt; -p &lt;EvtGen particle data&gt;&quot;
+        &quot;\n\t          -x &lt;PYTHIA8DATA&gt; -e&quot;});
+  ip.require(&quot;d&quot;, &quot;EvtGen decay file (e.g. DECAY_2010.DEC).&quot;, {&quot;-dec&quot;});
+  ip.require(&quot;p&quot;, &quot;EvtGen particle data (e.g. evt.pdl).&quot;, {&quot;-pdl&quot;});
+  ip.require(&quot;x&quot;, &quot;PYTHIA8DATA path.&quot;, {&quot;-xml&quot;});
+  ip.add(&quot;e&quot;, &quot;false&quot;, &quot;Flag to use EvtGen.&quot;);
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Get the options.
+  string dec = ip.get&lt;string&gt;(&quot;d&quot;);
+  string pdl = ip.get&lt;string&gt;(&quot;p&quot;);
+  string xml = ip.get&lt;string&gt;(&quot;x&quot;);
+  bool use = ip.get&lt;bool&gt;(&quot;e&quot;);
+
+  // Intialize Pythia.
+  Pythia pythia;
+  pythia.readString(&quot;Print:quiet = on&quot;);
+  pythia.readString(&quot;HardQCD:hardbbbar = on&quot;);
+  if (!use) {
+    cout &lt;&lt; &quot;Not using EvtGen.&quot; &lt;&lt; endl;
+    pythia.readString(&quot;511:onMode = off&quot;);
+    pythia.readString(&quot;511:onIfMatch = 12 -11 -413&quot;);
+    pythia.readString(&quot;413:onMode = off&quot;);
+    pythia.readString(&quot;413:onIfMatch = 411 22&quot;);
+    pythia.readString(&quot;411:onMode = off&quot;);
+    pythia.readString(&quot;411:onIfMatch = -11 12 111&quot;);
+  } else cout &lt;&lt; &quot;Using EvtGen.&quot; &lt;&lt; endl;
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Initialize EvtGen.
+  EvtGenDecays *evtgen = 0;
+  if (use) {
+    setenv(&quot;PYTHIA8DATA&quot;, xml.c_str(), 1);
+    evtgen = new EvtGenDecays(&amp;pythia, dec, pdl);
+    evtgen-&gt;readDecayFile(&quot;main364.dec&quot;);
+  }
+
+  // The event loop.
+  Hist mass(&quot;m(e, pi0) [GeV]&quot;, 100, 0., 2.);
+  for (int iEvent = 0; iEvent &lt; 1000; ++iEvent) {
+    // Generate the event.
+    if (!pythia.next()) continue;
+    // Perform the decays with EvtGen.
+    if (evtgen) evtgen-&gt;decay();
+    // Analyze the event.
+    Event &amp;event = pythia.event;
+    for (int iPrt = 0; iPrt &lt; (int)event.size(); ++iPrt) {
+      if (event[iPrt].idAbs() != 511) continue;
+      int iB0(event[iPrt].iBotCopyId()), iDsm(-1), iDm(-1), iE(-1), iPi0(-1);
+      for (int iDtr = event[iB0].daughter1(); iDtr &lt;= event[iB0].daughter2();
+           ++ iDtr) {
+        if (event[iDtr].idAbs() == 413) {
+          iDsm = event[iDtr].iBotCopyId();
+          continue;
+        }
+      }
+      if (iDsm == -1) continue;
+      for (int iDtr = event[iDsm].daughter1(); iDtr &lt;= event[iDsm].daughter2();
+           ++ iDtr) {
+        if (event[iDtr].idAbs() == 411) {
+          iDm = event[iDtr].iBotCopyId();
+          continue;
+        }
+      }
+      if (iDm == -1) continue;
+      for (int iDtr = event[iDm].daughter1(); iDtr &lt;= event[iDm].daughter2();
+           ++ iDtr) {
+        if (event[iDtr].idAbs() == 11)  iE   = event[iDtr].iBotCopyId();
+        if (event[iDtr].idAbs() == 111) iPi0 = event[iDtr].iBotCopyId();
+      }
+      if (iE == -1 || iPi0 == -1) continue;
+      mass.fill((event[iE].p() + event[iPi0].p()).mCalc());
+    }
+  }
+
+  // Print the statistics and histogram.
+  pythia.stat();
+  mass /= mass.getEntries();
+  cout &lt;&lt; mass;
+  if (evtgen) delete evtgen;
+  return 0;
+}
+</code></pre></body></html>

@@ -1,0 +1,186 @@
+<html><head><title>main231</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main231</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main231.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#command+line+option">Command&nbsp;line&nbsp;option</a>
+//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#analysis">Analysis</a>
+
+// This is a simple test program.
+// It illustrates (a) how to collect the analysis code in a separate class
+// and (b) how to provide the .cmnd filename on the command line
+
+// Once you have linked the main program you can run it with a command line
+//     ./main231 -c main231.cmnd &gt; main231.log
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// Put all your own analysis code in the myAnalysis class.
+
+class MyAnalysis {
+
+public:
+
+  // Constructor can be empty.
+  MyAnalysis() {}
+
+  // Initialization actions.
+  void init();
+
+  // Analysis of each new event.
+  void analyze(Event&amp; event);
+
+  // Show final results.
+  void finish();
+
+private:
+
+  // Declare variables and objects that span init - analyze - finish.
+  int  nEvt;
+  Hist brH, yH, etaChg, mult;
+
+};
+
+//--------------------------------------------------------------------------
+
+// The initialization code.
+
+void MyAnalysis::init() {
+
+  // Initialize counter for number of events.
+  nEvt = 0;
+
+  // Book histograms.
+  brH.book(&quot;Higgs branching ratios by flavour&quot;, 30, -0.5, 29.5);
+  yH.book(&quot;Higgs rapidity&quot;, 100, -10., 10.);
+  etaChg.book(&quot;charged pseudorapidity&quot;, 100, -10., 10.);
+  mult.book( &quot;charged multiplicity&quot;, 100, -0.5, 799.5);
+
+}
+
+//--------------------------------------------------------------------------
+
+// The event analysis code.
+
+void MyAnalysis::analyze(Event&amp; event) {
+
+  // Increase counter.
+  ++nEvt;
+
+  // Find latest copy of Higgs and plot its rapidity.
+  int iH = 0;
+  for (int i = 0; i &lt; event.size(); ++i)
+    if (event[i].id() == 25) iH = i;
+  yH.fill( event[iH].y() );
+
+  // Plot flavour of decay channel.
+  int idDau1 = event[ event[iH].daughter1() ].idAbs();
+  int idDau2 = event[ event[iH].daughter2() ].idAbs();
+  int iChan  = 29;
+  if (idDau2 == idDau1 &amp;&amp; idDau1 &lt; 25) iChan = idDau1;
+  if (min( idDau1, idDau2) == 22 &amp;&amp; max( idDau1, idDau2) == 23) iChan = 26;
+  brH.fill( iChan);
+
+  // Plot pseudorapidity distribution. Sum up charged multiplicity.
+  int nChg = 0;
+  for (int i = 0; i &lt; event.size(); ++i)
+  if (event[i].isFinal() &amp;&amp; event[i].isCharged()) {
+    etaChg.fill( event[i].eta() );
+    ++nChg;
+  }
+  mult.fill( nChg );
+
+}
+
+//--------------------------------------------------------------------------
+
+// The finishing code.
+
+void MyAnalysis::finish() {
+
+  // Normalize histograms.
+  double binFactor = 5. / nEvt;
+  yH     *= binFactor;
+  etaChg *= binFactor;
+
+  // Print histograms.
+  cout &lt;&lt; brH &lt;&lt; yH &lt;&lt; etaChg &lt;&lt; mult;
+
+}
+
+//==========================================================================
+
+// You should not need to touch the main program: its actions are
+// determined by the .cmnd file and the rest belongs in MyAnalysis.
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Illustrates how collect analysis code and read commands.&quot;,
+    {&quot;./main231 -c main231.cmnd&quot;});
+  ip.require(&quot;c&quot;, &quot;Use this user-written command file.&quot;, {&quot;-cmnd&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Confirm that external file will be used for settings.
+  cout &lt;&lt; &quot; PYTHIA settings will be read from file &quot;
+       &lt;&lt; ip.get&lt;string&gt;(&quot;c&quot;) &lt;&lt; endl;
+
+  // Declare generator. Read in commands from external file.
+  Pythia pythia;
+  pythia.readFile(ip.get&lt;string&gt;(&quot;c&quot;));
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Declare user analysis class. Do initialization part of it.
+  MyAnalysis myAnalysis;
+  myAnalysis.init();
+
+  // Read in number of event and maximal number of aborts.
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+  bool hasPL = pythia.flag(&quot;PartonLevel:all&quot;);
+
+  // Begin event loop.
+  int iAbort = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate events. Quit if too many failures.
+    if (!pythia.next()) {
+      if (++iAbort &lt; nAbort) continue;
+      cout &lt;&lt; &quot; Event generation aborted prematurely, owing to error!\n&quot;;
+      break;
+    }
+
+    // User Analysis of current event.
+    myAnalysis.analyze( (hasPL ? pythia.event : pythia.process) );
+
+  // End of event loop.
+  }
+
+  // Final statistics.
+  pythia.stat();
+
+  // User finishing.
+  myAnalysis.finish();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

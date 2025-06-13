@@ -1,5 +1,5 @@
 // LesHouches.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -513,6 +513,11 @@ private:
 
 //==========================================================================
 
+// Forward declaration of Pythia needed by LHEF3FromPythia8.
+class Pythia;
+
+//--------------------------------------------------------------------------
+
 // A derived class with LHEF 3.0 information read from PYTHIA 8 itself, for
 // output.
 
@@ -521,6 +526,8 @@ class LHEF3FromPythia8 : public LHAup {
 public:
 
   // Constructor.
+  LHEF3FromPythia8(Pythia* pythiaPtrIn, int pDigitsIn = 15,
+    bool writeToFileIn = true);
   LHEF3FromPythia8(Event* eventPtrIn, const Info* infoPtrIn,
     int pDigitsIn = 15, bool writeToFileIn = true) :
     eventPtr(eventPtrIn),infoPtr(infoPtrIn),

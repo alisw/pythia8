@@ -1,0 +1,46 @@
+! This file demonstrates CKKW-L merging in DIS with Vincia.
+
+! Number of generated events.
+Main:numberOfEvents         = 10000
+
+! Use events from LHEF input.
+Beams:frameType             = 4
+
+! Be more forgiving with momentum mismatches.
+Check:epTolErr              = 2e-2
+
+! Use Vincia parton-shower model.
+PartonShowers:model         = 2
+
+! Merging settings.
+! Note that Vincia uses a different process syntax.
+Merging:Process             = {e- p > e- j}
+Merging:TMS                 = 5.0
+Merging:SParameter          = 0.7
+Merging:nJetMax             = 2
+Vincia:pTmaxMatch           = 1
+
+! Disable QED/EW, since QED histories are not yet included.
+Vincia:EWmode               = 0
+
+! Optionally use same PDFs and alphaS as in ME calculation.
+! PDF:pSet                   = LHAPDF6:CT10nlo
+! SpaceShower:alphaSvalue    = 0.118
+! TimeShower:alphaSvalue     = 0.118
+
+! Optionally write HepMC events.
+! (Pythia has to be configured with --with-hepmc3 or --with-rivet).
+Main:HepMC                  = on
+HepMC:output                = main164dis.hepmc
+
+! Optionally include Rivet analyses.
+! (Pythia has to be configured with --with-rivet).
+Main:Rivet                  = on
+Rivet:output                = main164dis.yoda
+Rivet:analyses              = {MC_XS,MC_WEIGHTS}
+
+! Subruns for CKKW-L merging.
+Main:numberOfSubruns        = 1
+Main:subrun                 = 0
+Merging:doDynamicMerging    = on
+Beams:LHEF                  = ncDIS_Ckkwl_012.lhe.gz

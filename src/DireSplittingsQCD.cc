@@ -1,5 +1,5 @@
 // DireSplittingsQCD.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -46,16 +46,16 @@ void DireSplittingQCD::init() {
   usePDFalphas       = settingsPtr->flag("ShowerPDF:usePDFalphas");
   pT2minVariations   = pow2(max(0.,settingsPtr->parm("Variations:pTmin")));
 
-  BeamParticle* beam = NULL;
-  if (beamAPtr != NULL || beamBPtr != NULL) {
-    beam = (beamAPtr != NULL && particleDataPtr->isHadron(beamAPtr->id())) ?
+  BeamParticle* beam = nullptr;
+  if (beamAPtr != nullptr || beamBPtr != nullptr) {
+    beam = (beamAPtr != nullptr && particleDataPtr->isHadron(beamAPtr->id())) ?
       beamAPtr
-         : (beamBPtr != NULL && particleDataPtr->isHadron(beamBPtr->id())) ?
-      beamBPtr : NULL;
-    if (beam == NULL && beamAPtr != 0) beam = beamAPtr;
-    if (beam == NULL && beamBPtr != 0) beam = beamBPtr;
+         : (beamBPtr != nullptr && particleDataPtr->isHadron(beamBPtr->id())) ?
+      beamBPtr : nullptr;
+    if (beam == nullptr && beamAPtr != 0) beam = beamAPtr;
+    if (beam == nullptr && beamBPtr != 0) beam = beamBPtr;
   }
-  alphaS2pi          = (usePDFalphas && beam != NULL)
+  alphaS2pi          = (usePDFalphas && beam != nullptr)
                         ? beam->alphaS(pTmin*pTmin) * 0.5/M_PI
                         : (alphaSorder > 0)
                         ? alphaS.alphaS(pTmin*pTmin) *0.5/M_PI
@@ -133,18 +133,18 @@ double DireSplittingQCD::getNF(double pT2) {
 
   pT2       = max( pT2, pow2(pTmin) );
 
-  BeamParticle* beam = NULL;
-  if (beamAPtr != NULL || beamBPtr != NULL) {
-    beam = (beamAPtr != NULL && particleDataPtr->isHadron(beamAPtr->id())) ?
+  BeamParticle* beam = nullptr;
+  if (beamAPtr != nullptr || beamBPtr != nullptr) {
+    beam = (beamAPtr != nullptr && particleDataPtr->isHadron(beamAPtr->id())) ?
       beamAPtr
-         : (beamBPtr != NULL && particleDataPtr->isHadron(beamBPtr->id())) ?
-      beamBPtr : NULL;
-    if (beam == NULL && beamAPtr != 0) beam = beamAPtr;
-    if (beam == NULL && beamBPtr != 0) beam = beamBPtr;
+         : (beamBPtr != nullptr && particleDataPtr->isHadron(beamBPtr->id())) ?
+      beamBPtr : nullptr;
+    if (beam == nullptr && beamAPtr != 0) beam = beamAPtr;
+    if (beam == nullptr && beamBPtr != 0) beam = beamBPtr;
   }
 
   // Get current number of flavours.
-  if ( !usePDFalphas || beam == NULL) {
+  if ( !usePDFalphas || beam == nullptr) {
     if ( pT2 > pow2( max(0., particleDataPtr->m0(5) ) )
       && pT2 < pow2( particleDataPtr->m0(6)) )                 NF = 5.;
     else if ( pT2 > pow2( max( 0., particleDataPtr->m0(4)) ) ) NF = 4.;
@@ -199,21 +199,21 @@ double DireSplittingQCD::as2Pi( double pT2, int orderNow,
   double renormMultFacNow) {
 
   // Get beam for PDF alphaS, if necessary.
-  BeamParticle* beam = NULL;
-  if (beamAPtr != NULL || beamBPtr != NULL) {
-    beam = (beamAPtr != NULL && particleDataPtr->isHadron(beamAPtr->id())) ?
+  BeamParticle* beam = nullptr;
+  if (beamAPtr != nullptr || beamBPtr != nullptr) {
+    beam = (beamAPtr != nullptr && particleDataPtr->isHadron(beamAPtr->id())) ?
       beamAPtr
-         : (beamBPtr != NULL && particleDataPtr->isHadron(beamBPtr->id())) ?
-      beamBPtr : NULL;
-    if (beam == NULL && beamAPtr != 0) beam = beamAPtr;
-    if (beam == NULL && beamBPtr != 0) beam = beamBPtr;
+         : (beamBPtr != nullptr && particleDataPtr->isHadron(beamBPtr->id())) ?
+      beamBPtr : nullptr;
+    if (beam == nullptr && beamAPtr != 0) beam = beamAPtr;
+    if (beam == nullptr && beamBPtr != 0) beam = beamBPtr;
   }
   double scale       = pT2 * ( (renormMultFacNow > 0.)
                               ? renormMultFacNow : renormMultFac);
   scale              = max(scale, pow2(pTmin) );
 
   // Get alphaS(k*pT^2) and subtractions.
-  double asPT2pi      = (usePDFalphas && beam != NULL)
+  double asPT2pi      = (usePDFalphas && beam != nullptr)
                       ? beam->alphaS(scale)  / (2.*M_PI)
                       : alphaS.alphaS(scale) / (2.*M_PI);
   int order = (orderNow > -1) ? orderNow : correctionOrder;
@@ -221,12 +221,12 @@ double DireSplittingQCD::as2Pi( double pT2, int orderNow,
 
   // Now find the necessary thresholds so that alphaS can be matched
   // correctly.
-  double m2cPhys = (usePDFalphas && beam != NULL)
+  double m2cPhys = (usePDFalphas && beam != nullptr)
                  ? pow2(max(0.,beam->mQuarkPDF(4)))
                  : alphaS.muThres2(4);
   if ( !( (scale > m2cPhys && pT2 < m2cPhys)
        || (scale < m2cPhys && pT2 > m2cPhys) ) ) m2cPhys = -1.;
-  double m2bPhys = (usePDFalphas && beam != NULL)
+  double m2bPhys = (usePDFalphas && beam != nullptr)
                  ? pow2(max(0.,beam->mQuarkPDF(5)))
                  : alphaS.muThres2(5);
   if ( !( (scale > m2bPhys && pT2 < m2bPhys)

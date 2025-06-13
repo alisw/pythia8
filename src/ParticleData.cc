@@ -1,5 +1,5 @@
 // ParticleData.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -1307,7 +1307,8 @@ void ParticleData::listFF(string outFile) {
        << setw(10) << particlePtr->mMin() << " "
        << setw(10) << particlePtr->mMax() << " "
        << scientific << setprecision(5)
-       << setw(12) << particlePtr->tau0() << "\n";
+       << setw(12) << particlePtr->tau0()
+       << setw(12) << particlePtr->varWidth() << "\n";
 
     // Loop through the decay channel table for each particle.
     if (particlePtr->sizeChannels() > 0) {

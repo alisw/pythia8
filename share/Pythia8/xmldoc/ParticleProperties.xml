@@ -148,11 +148,8 @@ In detail, the list of used or foreseen status codes is:
   <li>85, 86 : primary produced hadrons in junction fragmentation of 
            the first two string legs in to the junction, 
            in order of treatment</li> 
-  <li>87 : primary produced baryon from a junction using standard 
-           junction fragmentation of fragmenting two shortest 
-           legs into a diquark (status 78)</li> 
-  <li>88 : primary produced baryon from a junction using the 
-           pearl-on-a-string gluon approximation</li> 
+  <li>87, 88 : primary produced baryon from a junction, with technical 
+            difference similar to codes 83 and 84.</li> 
   <li>89 : primary produced baryon from a junction in the ministring 
            framework</li> 
   </ul> 
@@ -216,7 +213,7 @@ In detail, the list of used or foreseen status codes is:
   <li>159 : formation of a resonance particle</li> 
   </ul> 
 <li>181 - 189 : reserved for the tracking of a cascade through a medium. 
-  Is not (yet) used in the core code, but only in the <code>main183</code> 
+  Is not (yet) used in the core code, but only in the <code>main483</code> 
   example 
   <ul> 
   <li>181 : a nucleon hit in the medium, specifically the first 
@@ -1028,4 +1025,4 @@ particle species.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

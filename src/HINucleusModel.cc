@@ -1,5 +1,5 @@
 // HINucleusModel.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -62,12 +62,20 @@ shared_ptr<NucleusModel> NucleusModel::create(int model) {
 
 void NucleusModel::initPtr(int idIn, bool isProjIn, Info& infoIn) {
   isProj = isProjIn;
-  idSave = idIn;
   infoPtr = &infoIn;
   settingsPtr = infoIn.settingsPtr;
   loggerPtr = infoIn.loggerPtr;
   rndmPtr = infoIn.rndmPtr;
-  mSave  = infoIn.particleDataPtr->m0(idSave);
+  setParticle(idIn);
+}
+
+//--------------------------------------------------------------------------
+
+// Set the id of the produced particle.
+
+void NucleusModel::setParticle(int idIn) {
+  idNSave = idSave = idIn;
+  mSave  = infoPtr->particleDataPtr->m0(idSave);
   int decomp = abs(idSave);
   ISave = decomp%10;
   decomp /= 10;
@@ -84,6 +92,9 @@ void NucleusModel::initPtr(int idIn, bool isProjIn, Info& infoIn) {
     ASave = 0;
     ZSave = 0;
   }
+  mNSave = mSave/max(ASave, 1);
+  if ( A() > 1 ) idNSave = idSave < 0? -2212: 2212;
+  initGeometry();
 }
 
 //--------------------------------------------------------------------------
@@ -216,10 +227,24 @@ void HardCoreModel::initHardCore() {
 
 // Initialize.
 bool WoodsSaxonModel::init() {
+
+  // Initialize hard core (even if this is not actually a nucleus).
+  initHardCore();
   if (A() == 0) return true;
 
-  // Initialize hard core.
-  initHardCore();
+  // Initialize radius and other parameters.
+  initGeometry();
+
+  return NucleusModel::init();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize Radius and other parameters.
+
+bool WoodsSaxonModel::initGeometry() {
+  if (A() == 0) return true;
 
   // In the basic Woods-Saxon model we get parameters directly from settings.
   RSave = settingsPtr->parm(isProj ? "HeavyIonA:WSR" : "HeavyIonB:WSR");
@@ -227,8 +252,12 @@ bool WoodsSaxonModel::init() {
 
   // Calculate the overestimates.
   overestimates();
-  return NucleusModel::init();
+
+  return true;
+
 }
+
+//--------------------------------------------------------------------------
 
 // Place a nucleon inside a nucleus.
 Vec4 WoodsSaxonModel::generateNucleon() const {
@@ -321,25 +350,39 @@ vector<Nucleon> WoodsSaxonModel::generate() const {
 // Initialize parameters.
 
 bool GLISSANDOModel::init() {
+  // Initialize hard core (even if this is not actually a nucleus).
+  initHardCore();
   if ( A() == 0 ) return true;
 
-  // Initialize hard core.
-  initHardCore();
+  // Initialize radius and other parameters.
+  initGeometry();
 
-  // There are no parameters to be read.
+  return NucleusModel::init();
+
+}
+
+//--------------------------------------------------------------------------
+
+// Initialize radius and other parameters.
+
+bool GLISSANDOModel::initGeometry() {
+  if ( A() == 0 ) return true;
+
+  // There are no parameters to be read. R and a are in units of femtometer.
   if (useHardCore) {
     RSave = (1.1*pow(double(A()),1.0/3.0) -
-             0.656*pow(double(A()),-1.0/3.0))*femtometer;
-    aSave = 0.459*femtometer;
+             0.656*pow(double(A()),-1.0/3.0));
+    aSave = 0.459;
   } else {
     RSave = (1.12*pow(double(A()),1.0/3.0) -
-             0.86*pow(double(A()),-1.0/3.0))*femtometer;
-    aSave = 0.54*femtometer;
+             0.86*pow(double(A()),-1.0/3.0));
+    aSave = 0.54;
   }
 
-  // Calculate overestimates.
+  // Calculate the overestimates.
   overestimates();
-  return NucleusModel::init();
+
+  return true;
 
 }
 

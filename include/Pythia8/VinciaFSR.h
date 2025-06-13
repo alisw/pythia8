@@ -1,5 +1,5 @@
 // VinciaFSR.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -602,8 +602,8 @@ public:
   // TimeShower method is appended with (TimeShower).
 
   // Initialize alphaStrong and related pTmin parameters (TimeShower).
-  void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0)
-    override;
+  void init(BeamParticle* beamAPtrIn = nullptr,
+    BeamParticle* beamBPtrIn = nullptr) override;
 
   // Force reset at beginning of each event.
   void onBeginEvent() override { isPrepared = false; }
@@ -618,7 +618,7 @@ public:
     int nBranchMax = 0) override;
 
   // Method to add QED showers in hadron decays (TimeShower).
-  int showerQED(int iBeg, int iEnd, Event& event, double pTmax) override;
+  int showerQED(int iBeg, int iEnd, Event& event, double pTmax = -1.) override;
 
   // Method to add QED showers to partons below colour resolution
   // scale (TimeShower).
@@ -895,7 +895,7 @@ private:
 
   // Main on/off switches.
   bool doFF{}, doRF{}, doII{}, doIF{}, doQED{}, doWeak{};
-  int ewMode{}, ewModeMPI{};
+  int ewMode{}, qedModeMPI{};
 
   // Parameter setting which kind of 2->4 modifications (if any) are used.
   int mode2to4{};

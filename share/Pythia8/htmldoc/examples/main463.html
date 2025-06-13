@@ -1,0 +1,81 @@
+<html><head><title>main463</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main463</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main463.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+
+// Simple illustration how to generate events at low energies.
+// Outputs number of primary hadrons produced in the low energy interaction,
+// as well as cos(theta) distribution of 2 -&gt; 2 processes (if any).
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Initialize Pythia.
+  Pythia pythia;
+  pythia.readFile(&quot;main463.cmnd&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  Hist multPrim(&quot;n_primary&quot;,   9,  1., 10.);
+  Hist thetaEl(&quot;cos(theta) for 2 -&gt; 2 processes&quot;, 100, -1.,  1.);
+
+  // Generate events and print statistics.
+  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
+  int nSuccess = 0;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    if (!pythia.next())
+      continue;
+
+    Event&amp; ev = pythia.event;
+    nSuccess += 1;
+
+    // Fill number of primary hadrons.
+    int nPrimary = 0;
+    for (auto&amp; particle : ev)
+      if (particle.isHadron() &amp;&amp; particle.statusAbs() / 10 == 15)
+        nPrimary += 1;
+    multPrim.fill(nPrimary);
+
+    // Fill theta if scattering is elastic.
+    if (ev.nFinal() == 2) {
+      int in1 = ev[1].id(), in2 = ev[2].id();
+      int out1 = ev[ev.size() - 2].id(), out2 = ev[ev.size() - 1].id();
+
+      if ( (in1 == out1 &amp;&amp; in2 == out2) || (in1 == out2 &amp;&amp; in2 == out1) )
+        thetaEl.fill(cos(ev[ev.size() - 1].theta()));
+    }
+  }
+
+  // Plot histograms and statistics.
+  multPrim /= nSuccess;
+  cout &lt;&lt; multPrim;
+
+  if (thetaEl.getEntries() &gt; 0) {
+    thetaEl *= 50. / thetaEl.getEntries();
+    cout &lt;&lt; thetaEl;
+  }
+
+  pythia.stat();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

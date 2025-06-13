@@ -1,0 +1,18 @@
+! Second e+e- tune by Nadine Fischer, using Hoeth2009.cmnd for flavour
+! composition, September 2013.
+! Previously set by "Tune:ee = 6".
+include                             = tunes/Hoeth2009.cmnd ! based on Hoeth tune
+StringZ:aLund                       = 0.351 
+StringZ:bLund                       = 0.942 
+StringZ:aExtraSquark                = 0.00     ! kept fixed
+StringZ:aExtraDiquark               = 0.547 
+StringZ:rFactC                      = 1.00     ! kept fixed
+StringZ:rFactB                      = 0.67     ! kept fixed
+StringPT:sigma                      = 0.283 
+StringPT:enhancedFraction           = 0.01     ! kept fixed
+StringPT:enhancedWidth              = 2.0      ! kept fixed
+TimeShower:alphaSvalue              = 0.139
+TimeShower:alphaSorder              = 1        ! kept fixed
+TimeShower:alphaSuseCMW             = false    ! kept fixed
+TimeShower:pTmin                    = 0.406 
+TimeShower:pTminChgQ                = 0.406    ! kept same as pTmin

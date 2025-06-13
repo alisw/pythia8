@@ -1,5 +1,5 @@
 // DireHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -90,8 +90,8 @@ protected:
   Rndm*          rndmPtr;
 
   // Pointers to the two incoming beams and to Pomeron beam-inside-beam.
-  BeamParticle*  beamAPtr;
-  BeamParticle*  beamBPtr;
+  BeamParticle* beamAPtr;
+  BeamParticle* beamBPtr;
 
   // Pointers to Standard Model couplings.
   CoupSM*        coupSMPtr;

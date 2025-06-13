@@ -1,5 +1,5 @@
 // VinciaQED.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -47,17 +47,21 @@ void QEDemitElemental::init(Event &event, int xIn, int yIn, double shhIn,
   isIA = false;
   isDip = false;
 
-  // If an II antenna, make sure x is the positive pz state.
-  if (!event[x].isFinal() && !event[y].isFinal() && event[x].pz() < 0)
-      swap(x,y);
+  // II. Make sure x is the positive pz state.
+  if (!event[x].isFinal() && !event[y].isFinal()) {
+    isII = true;
+    if (event[x].pz() < 0) swap(x,y);
+  }
 
   // If an IF/RF antenna, make sure x is the initial state.
   if (event[x].isFinal() && !event[y].isFinal()) swap(x,y);
 
-  // If a dipole, make sure x is the emitting object.
+  // If an FF dipole, make sure x is the emitting object.
   if (event[x].isFinal() && event[y].isFinal())
     if (!event[x].isCharged() || event[y].isCharged()) swap(x,y);
 
+  spinTypex = event[x].spinType();
+  spinTypey = event[y].spinType();
   idx = event[x].id();
   idy = event[y].id();
   mx2 = max(0., event[x].m2());
@@ -68,17 +72,13 @@ void QEDemitElemental::init(Event &event, int xIn, int yIn, double shhIn,
   sAnt = 2*dot4(event[x], event[y]);
   QQ = - event[x].charge() * event[y].charge();
 
-  // II.
-  if (!event[x].isFinal() && !event[y].isFinal()) isII = true;
-
   // IF/RF.
   if (!event[x].isFinal() && event[y].isFinal()) {
     // QQ is flipped for IF antennae.
     QQ = -QQ;
     // Check if initial state is in a beam.
     int mother1 = event[x].mother1();
-    // Check if initial particle is A or B.
-    if (mother1 <= 2) {
+    if (event[mother1].statusAbs() <= 13 && event[mother1].id() != 90) {
       isIF = true;
       if (event[x].pz() > 0) isIA = true;
     // Otherwise it's a resonance decay.
@@ -110,6 +110,7 @@ void QEDemitElemental::init(Event &event, int xIn, vector<int> iRecoilIn,
   isIA = false;
   isDip = true;
   idx = event[x].id();
+  spinTypex = event[x].spinType();
   mx2 = max(0., event[x].m2());
 
   // Compute total recoiler momentum.
@@ -179,7 +180,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
       }
     }
     // Generate scale for additional W piece on x.
-    if (isFF && abs(idx) == 24) {
+    if (isFF && spinTypex == 3) {
       double Iz = (zMin < 1E-8) ?
         -log(zMin) - zMin - pow2(zMin)/2. : log((1-zMin)/zMin);
       double comFac = 3.*M_PI*sqrt(lambda)/alpha/Iz/c/sAnt/2.;
@@ -194,7 +195,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
       }
     }
     // Generate scale for additional W piece on y.
-    if (isFF && abs(idy) == 24) {
+    if (isFF && spinTypey == 3) {
       double Iz = (zMin < 1E-8) ? -log(zMin) - zMin - pow2(zMin)/2.
         : log((1-zMin)/zMin);
       double comFac = 3.*M_PI*sqrt(lambda)/alpha/Iz/c/sAnt/2.;
@@ -253,7 +254,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
       // Generate scale for additional W piece on y. The veto
       // probability for this antenna piece includes an additional
       // factor which is incorporated by a veto locally.
-      if (abs(idy) == 24) {
+      if (spinTypey == 3) {
         double Iz = log((1-zMin)/(1-zMax));
         double Rpdf = 1.;
         double comFac = 3.*M_PI/alpha/Iz/c/Rpdf/2.;
@@ -357,7 +358,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
     }
 
     // Generate scale for W in initial state.
-    if (abs(idx) == 24) {
+    if (spinTypex == 3) {
       double zMin   = q2Low/(sajMax - q2Low);
       double zMax   = sjkMax/sAnt;
       if (zMin < zMax && zMin > 0) {
@@ -397,7 +398,7 @@ double QEDemitElemental::generateTrial(Event &event, double q2Start,
     }
 
     // Generate scale for W in final state.
-    if (abs(idy) == 24) {
+    if (spinTypey == 3) {
       double zMin   = q2Low/sjkMax;
       double zMax   = sajMax/sAnt;
       if (zMin < zMax) {
@@ -502,8 +503,8 @@ void QEDsystem::updatePartonSystems() {
 
 // Initialize settings for current run.
 
-void QEDemitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  int verboseIn) {
+void QEDemitSystem::init(BeamParticle* beamAPtrIn,
+  BeamParticle* beamBPtrIn, int verboseIn) {
 
   // Verbose setting.
   if (!isInitPtr)
@@ -522,11 +523,15 @@ void QEDemitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
   // (If weak shower used for hard systems, use pairing as fallback.
   if (qedMode == 3) qedMode = 1;
   // QED mode for MPI cannot be more sophisticated than that of hard process.
-  qedModeMPI     = min(settingsPtr->mode("Vincia:ewModeMPI"),qedMode);
+  qedModeMPI     = min(settingsPtr->mode("Vincia:qedModeMPI"),qedMode);
   // Other QED settings.
   kMapTypeFinal  = settingsPtr->mode("Vincia:kineMapEWFinal");
-  useFullWkernel = settingsPtr->flag("Vincia:fullWkernel");
+  // Check to radiate off particles below the hadronisation scale.
   emitBelowHad   = (isHadronA || isHadronB) ? doRemnants : true;
+
+  // QED kernel settings for the process and hadron decay levels .
+  useSpinsQED       = settingsPtr->fvec("Vincia:useSpinsQED");
+  useSpinsQEDHadDec = settingsPtr->fvec("Vincia:useSpinsQEDHadDec");
 
   // Constants.
   TINYPDF = 1.0e-10;
@@ -540,8 +545,9 @@ void QEDemitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
 
 // Prepare a QED system.
 
-void QEDemitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
-  bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) {
+void QEDemitSystem::prepare(const int iSysIn, Event &event,
+  const double q2CutIn, const int scaleRegionIn,
+  const vector<double> evolutionWindowsIn, AlphaEM alIn) {
 
   if (!isInit) {
     loggerPtr->ERROR_MSG("not initialised");
@@ -549,16 +555,34 @@ void QEDemitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
   }
 
   // Verbose output.
-  if (verbose >= VinciaConstants::DEBUG)
+  if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__, "begin", DASHLEN);
+    cout << scientific << "   qCut = " <<sqrtpos(q2CutIn)
+         << ", scaleRegion = " << scaleRegionIn
+         << ", alpha(100GeV) = " << alIn.alphaEM(1.e4) << endl;
+  }
 
   // Input.
   iSys = iSysIn;
   shh = infoPtr->s();
   q2Cut = q2CutIn;
-  isBelowHad = isBelowHadIn;
+  scaleRegion = scaleRegionIn;
   evolutionWindows = evolutionWindowsIn;
   al = alIn;
+
+  // Check if in hadron decays.
+  isHadronDecay = true;
+  if (partonSystemsPtr->hasInAB(iSys)) isHadronDecay = false;
+  else if (partonSystemsPtr->hasInRes(iSys)){
+    int iRes = partonSystemsPtr->getInRes(iSys);
+    // Check if it is a resonance.
+    if (event[iRes].isResonance()) isHadronDecay =false;
+  }
+  else if (scaleRegion == 2) isHadronDecay = false;
+
+  if (isHadronDecay) useSpinsQEDNow = useSpinsQEDHadDec;
+  else useSpinsQEDNow = useSpinsQED;
+
 
   // Build internal system.
   buildSystem(event);
@@ -575,7 +599,6 @@ void QEDemitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
 // Set up antenna pairing for incoherent mode.
 
 void QEDemitSystem::buildSystem(Event &event) {
-
   // Verbose output.
   if (verbose >= VinciaConstants::DEBUG)
     printOut(__METHOD_NAME__, "begin", DASHLEN);
@@ -587,11 +610,163 @@ void QEDemitSystem::buildSystem(Event &event) {
 
   // Construct hungarian algorithm solver.
   HungarianAlgorithm ha;
+  // Above hadronization scale or Hadron Decay
+  if (scaleRegion == 0 || isHadronDecay) {
+    // Collect relevant particles.
+    int sysSize = partonSystemsPtr->sizeAll(iSys);
+    for (int i = 0; i < sysSize; i++) {
+      int iEv = partonSystemsPtr->getAll(iSys, i);
+      if (event[iEv].isCharged()) iCoh.push_back(iEv);
+    }
+
+    // Catch cases (like hadron->partons decays) where an explicit
+    // charged mother may not have been added to the partonSystem as a
+    // resonance.
+    if (isHadronDecay && !partonSystemsPtr->hasInRes(iSys)) {
+      // Guess that the decaying particle is mother of first parton.
+      int iRes = event[partonSystemsPtr->getOut(iSys, 0)].mother1();
+      if (iRes != 0 && event[iRes].isCharged()) {
+        // Check daughter list consistent with whole system.
+        int ida1 = event[iRes].daughter1();
+        int ida2 = event[iRes].daughter2();
+        if (ida2 > ida1) {
+          bool isOK = true;
+          for (int i=0; i<partonSystemsPtr->sizeOut(iSys); ++i)
+            if (partonSystemsPtr->getOut(iSys,i) < ida1
+              || partonSystemsPtr->getOut(iSys,i) > ida2) isOK = false;
+          if (isOK) {iCoh.push_back(iRes);}
+        }
+      }
+    }
+
+    // First check charge conservation.
+    int chargeTypeTot = 0;
+    for (int i = 0; i < (int)iCoh.size(); i++) {
+      double cType = event[iCoh[i]].chargeType();
+      chargeTypeTot += (event[iCoh[i]].isFinal() ? cType : -cType);
+    }
+
+    if (chargeTypeTot != 0) {
+      loggerPtr->ERROR_MSG("charge not conserved above hadronization scale");
+      if (verbose >= Logger::REPORT) {
+        printOut(__METHOD_NAME__, "Printing events and systems");
+        event.list();
+        partonSystemsPtr->list();
+      }
+    }
+
+    // Decide whether to use pairing (1) or coherent (2) algorithm.
+    int qedModeSys = qedMode;
+    if (iSys > 0 && partonSystemsPtr->hasInAB(iSys)) qedModeSys = qedModeMPI;
+    // Dipole-pairing algorithm.
+    if (qedModeSys == 1) {
+      // Vector of size 3 containing vectors of spin 1/3, 2/3, 1 charges
+      vector<vector<int> > posChargeTypes(3);
+      vector<vector<int> > negChargeTypes(3);
+
+
+      for (int i = 0; i < (int)iCoh.size(); i++) {
+        int iEv = iCoh[i];
+        // Separate particles into charge types.
+        double Q = event[iEv].charge();
+        // Get index in pos/negChargeTypes.
+        int n  = abs(event[iEv].chargeType()) - 1;
+        // Check that the particle has a charge <= 1.
+        if (n > 2) {
+          loggerPtr->WARNING_MSG("Particle with charge > 1 skipped in"
+            " pairing algorithm.", "id = "
+            + to_string(event[iEv].id()) + ", chargeType = " +
+            to_string(event[iEv].chargeType()));
+
+          if (verbose >= Logger::REPORT) {
+            printOut(__METHOD_NAME__, "Printing events and systems");
+            event.list();
+            partonSystemsPtr->list();
+          }
+        }
+        else {
+        // Flip charge contribution of initial state.
+        if (!event[iEv].isFinal()) {Q = -Q;}
+        if (Q > 0) posChargeTypes[n].push_back(iEv);
+        else negChargeTypes[n].push_back(iEv);
+        }
+      }
+
+      // Clear list of charged particles.
+      iCoh.clear();
+
+      // Solve assignment problems.
+      for (int i = 0; i < (int)posChargeTypes.size(); i++) {
+        int posSize = posChargeTypes[i].size();
+        int negSize = negChargeTypes[i].size();
+        int maxSize = max(posSize, negSize);
+        if (maxSize > 0) {
+          vector<vector<double> > weights;
+          weights.resize(maxSize);
+          // Set up matrix of weights.
+          for (int x = 0; x < maxSize; x++) {
+            weights[x].resize(maxSize);
+            for (int y = 0; y < maxSize; y++) {
+              // If either index is out of range. Add some random
+              // large weight.
+              double wIn = (0.9 + 0.2*rndmPtr->flat())*1E300;
+              if (x < posSize && y < negSize) {
+                int xEv = posChargeTypes[i][x];
+                int yEv = negChargeTypes[i][y];
+                wIn = event[xEv].p()*event[yEv].p()
+                  - event[xEv].m()*event[yEv].m();
+              }
+              weights[x][y] = wIn;
+            }
+          }
+
+          // Find solution.
+          vector<int> assignment;
+          ha.solve(weights, assignment);
+
+          // Add pairings to list of emitElementals.
+          // Add unpaired particles to index list for coherent algorithm.
+          for (int j = 0; j < maxSize; j++) {
+            int x = j;
+            int y = assignment[j];
+            if (x < posSize && y < negSize) {
+              int xEv = posChargeTypes[i][x];
+              int yEv = negChargeTypes[i][y];
+              eleVec.push_back(QEDemitElemental());
+              eleVec.back().initPtr(rndmPtr, partonSystemsPtr);
+              eleVec.back().init(event, xEv, yEv, shh, verbose);
+            } else if (x < posSize) {
+              int xEv = posChargeTypes[i][x];
+              iCoh.push_back(xEv);
+            } else if (y < negSize) {
+              int yEv = negChargeTypes[i][y];
+              iCoh.push_back(yEv);
+            }
+          }
+        }
+      }
+    }
+
+    // Create eleMat.
+    eleMat.resize(iCoh.size());
+    for (int i = 0; i < (int)iCoh.size(); i++) {
+      eleMat[i].resize(i);
+      for (int j = 0; j < i; j++) {
+        eleMat[i][j].initPtr(rndmPtr, partonSystemsPtr);
+        eleMat[i][j].init(event, iCoh[i], iCoh[j], shh, verbose);
+      }
+    }
+
+    // Compute overestimate constant.
+    cMat = 0;
+    for (int i = 0; i < (int)eleMat.size(); i++)
+      for (int j = 0; j < i; j++) cMat += max(eleMat[i][j].QQ, 0.);
+  }
+
   // Below hadronization scale.
-  if (isBelowHad && emitBelowHad) {
+  else if (scaleRegion >=1 && emitBelowHad) {
     map<int, vector<int> > posMap, negMap;
     vector<Vec4> posMoms, negMoms;
-
     // Find all (final-state) quarks and leptons.
     vector<int> iTriplets, iLeptons;
     int sysSize = partonSystemsPtr->sizeOut(iSys);
@@ -615,7 +790,6 @@ void QEDemitSystem::buildSystem(Event &event) {
       if (event[iEv].isLepton() && event[iEv].isCharged())
         iLeptons.push_back(iEv);
     }
-
     // Currently no showering below hadronisation scale if no leptons.
     if (iLeptons.size() == 0) return;
 
@@ -689,7 +863,6 @@ void QEDemitSystem::buildSystem(Event &event) {
         negMap[negMoms.size()-1] = iPseudoVec;
       }
     }
-
     // If no leptons and overall hadronic system has charge = 0, do nothing.
     if (posMoms.size() == 0) return;
 
@@ -704,7 +877,6 @@ void QEDemitSystem::buildSystem(Event &event) {
     }
     vector<int> assignment;
     ha.solve(weights, assignment);
-
     for (int i = 0; i < (int)posMoms.size(); i++) {
       int iPos = i;
       int iNeg = assignment[i];
@@ -725,148 +897,7 @@ void QEDemitSystem::buildSystem(Event &event) {
             verbose);
       }
     }
-
-  // Above hadronization scale.
-  } else if (!isBelowHad) {
-    // Collect relevant particles.
-    int sysSize = partonSystemsPtr->sizeAll(iSys);
-    for (int i = 0; i < sysSize; i++) {
-      int iEv = partonSystemsPtr->getAll(iSys, i);
-      if (event[iEv].isCharged()) iCoh.push_back(iEv);
-    }
-
-    // Catch cases (like hadron->partons decays) where an explicit
-    // charged mother may not have been added to the partonSystem as a
-    // resonance.
-    if (partonSystemsPtr->getInA(iSys) == 0 &&
-        partonSystemsPtr->getInB(iSys) == 0 &&
-        partonSystemsPtr->getInRes(iSys) == 0) {
-      // Guess that the decaying particle is mother of first parton.
-      int iRes = event[partonSystemsPtr->getOut(iSys, 0)].mother1();
-      if (iRes != 0 && event[iRes].isCharged()) {
-        // Check daughter list consistent with whole system.
-        int ida1 = event[iRes].daughter1();
-        int ida2 = event[iRes].daughter2();
-        if (ida2 > ida1) {
-          bool isOK = true;
-          for (int i=0; i<partonSystemsPtr->sizeOut(iSys); ++i)
-            if (partonSystemsPtr->getOut(iSys,i) < ida1
-              || partonSystemsPtr->getOut(iSys,i) > ida2) isOK = false;
-          if (isOK) {iCoh.push_back(iRes);}
-        }
-      }
-    }
-
-    // First check charge conservation.
-    int chargeTypeTot = 0;
-    for (int i = 0; i < (int)iCoh.size(); i++) {
-      double cType = event[iCoh[i]].chargeType();
-      chargeTypeTot += (event[iCoh[i]].isFinal() ? cType : -cType);
-    }
-
-    if (chargeTypeTot != 0) {
-      loggerPtr->ERROR_MSG("charge not conserved above hadronization scale");
-      if (verbose >= Logger::REPORT) {
-        printOut(__METHOD_NAME__, "Printing events and systems");
-        event.list();
-        partonSystemsPtr->list();
-      }
-    }
-
-    // Decide whether to use pairing (1) or coherent (2) algorithm.
-    int qedModeSys = qedMode;
-    if (iSys > 0 && partonSystemsPtr->hasInAB(iSys)) qedModeSys = qedModeMPI;
-
-    // Dipole-Pairing Algorithm.
-    if (qedModeSys == 1) {
-      vector<vector<int> > posChargeTypes;
-      posChargeTypes.resize(3);
-      vector<vector<int> > negChargeTypes;
-      negChargeTypes.resize(3);
-
-      for (int i = 0; i < (int)iCoh.size(); i++) {
-        int iEv = iCoh[i];
-        // Separate particles into charge types.
-        double Q = event[iEv].charge();
-        // Get index in pos/negChargeTypes.
-        int n = abs(event[iEv].chargeType()) - 1;
-        // Flip charge contribution of initial state.
-        if (!event[iEv].isFinal()) {Q = -Q;}
-        if (Q > 0)  posChargeTypes[n].push_back(iEv);
-        else negChargeTypes[n].push_back(iEv);
-      }
-
-      // Clear list of charged particles.
-      iCoh.clear();
-
-      // Solve assignment problems.
-      for (int i=0; i<3; i++) {
-        int posSize = posChargeTypes[i].size();
-        int negSize = negChargeTypes[i].size();
-        int maxSize = max(posSize,negSize);
-        if (maxSize > 0) {
-          vector<vector<double> > weights;
-          weights.resize(maxSize);
-          // Set up matrix of weights.
-          for (int x = 0; x < maxSize; x++) {
-            weights[x].resize(maxSize);
-            for (int y = 0; y < maxSize; y++) {
-              // If either index is out of range. Add some random
-              // large weight.
-              double wIn = (0.9 + 0.2*rndmPtr->flat())*1E300;
-              if (x < posSize && y < negSize) {
-                int xEv = posChargeTypes[i][x];
-                int yEv = negChargeTypes[i][y];
-                wIn = event[xEv].p()*event[yEv].p()
-                  - event[xEv].m()*event[yEv].m();
-              }
-              weights[x][y] = wIn;
-            }
-          }
-
-          // Find solution.
-          vector<int> assignment;
-          ha.solve(weights, assignment);
-
-          // Add pairings to list of emitElementals.
-          // Add unpaired particles to index list for coherent algorithm.
-          for (int j = 0; j < maxSize; j++) {
-            int x = j;
-            int y = assignment[j];
-            if (x < posSize && y < negSize) {
-              int xEv = posChargeTypes[i][x];
-              int yEv = negChargeTypes[i][y];
-              eleVec.push_back(QEDemitElemental());
-              eleVec.back().initPtr(rndmPtr, partonSystemsPtr);
-              eleVec.back().init(event, xEv, yEv, shh, verbose);
-            } else if (x < posSize) {
-              int xEv = posChargeTypes[i][x];
-              iCoh.push_back(xEv);
-            } else if (y < negSize) {
-              int yEv = negChargeTypes[i][y];
-              iCoh.push_back(yEv);
-            }
-          }
-        }
-      }
-    }
-
-    // Create eleMat.
-    eleMat.resize(iCoh.size());
-    for (int i = 0; i < (int)iCoh.size(); i++) {
-      eleMat[i].resize(i);
-      for (int j = 0; j < i; j++) {
-        eleMat[i][j].initPtr(rndmPtr, partonSystemsPtr);
-        eleMat[i][j].init(event, iCoh[i], iCoh[j], shh, verbose);
-      }
-    }
-
-    // Compute overestimate constant.
-    cMat = 0;
-    for (int i = 0; i < (int)eleMat.size(); i++)
-      for (int j = 0; j < i; j++) cMat += max(eleMat[i][j].QQ, 0.);
   }
-
   if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__,"end (nEmitters(II+IF+RF+FF) ="
       + num2str((int)eleVec.size())+" (pairs) + "+num2str((int)eleMat.size())
@@ -1648,23 +1679,23 @@ void QEDemitSystem::print() {
 
 double QEDemitSystem::aTrial(QEDemitElemental* ele, double sxj, double syj,
   double sxy) {
-  int idx = ele->idx;
-  int idy = ele->idy;
+  int spinTypex = ele->spinTypex;
+  int spinTypey = ele->spinTypey;
   double ant = 0;
 
   // FF.
   if (ele->isFF || ele->isDip) {
     double s = sxj + syj + sxy;
     ant += 4*s/sxj/syj;
-    if (ele->isFF && abs(idx) == 24) ant += 8.*s/sxj/(s - syj)/3.;
-    if (ele->isFF && abs(idy) == 24) ant += 8.*s/syj/(s - sxj)/3.;
+    if (ele->isFF && spinTypex == 3) ant += 8.*s/sxj/(s - syj)/3.;
+    if (ele->isFF && spinTypey == 3) ant += 8.*s/syj/(s - sxj)/3.;
   }
 
   // IF.
   if (ele->isIF) {
     double s = sxj + sxy - syj;
     ant += 4*pow2(s+syj)/(s*sxj*syj);
-    if (abs(idy) == 24) ant += 8.*(s + syj)/syj/(s + syj - sxj)/3.;
+    if (spinTypey == 3) ant += 8.*(s + syj)/syj/(s + syj - sxj)/3.;
   }
 
   // II.
@@ -1677,8 +1708,8 @@ double QEDemitSystem::aTrial(QEDemitElemental* ele, double sxj, double syj,
   if (ele->isRF) {
     double s = sxj + sxy - syj;
     ant += 4*pow2(s+syj)/s/sxj/syj;
-    if (abs(idx) == 24) ant += 8*(2.*syj/s + pow2(syj)/pow2(s))/sxj/3.;
-    if (abs(idy) == 24) ant += 8.*(s + syj)/syj/(s + syj - sxj)/3.;
+    if (spinTypex == 3) ant += 8*(2.*syj/s + pow2(syj)/pow2(s))/sxj/3.;
+    if (spinTypey == 3) ant += 8.*(s + syj)/syj/(s + syj - sxj)/3.;
   }
   return ant;
 
@@ -1692,8 +1723,8 @@ double QEDemitSystem::aPhys(QEDemitElemental* ele, double sxj, double syj,
   double sxy) {
   double mx2 = ele->mx2;
   double my2 = ele->my2;
-  int idx = ele->idx;
-  int idy = ele->idy;
+  int spinTypex = ele->spinTypex;
+  int spinTypey = ele->spinTypey;
   double ant = 0;
 
   // FF.
@@ -1702,16 +1733,24 @@ double QEDemitSystem::aPhys(QEDemitElemental* ele, double sxj, double syj,
     // Eikonal.
     ant += 4.*sxy/sxj/syj - 4.*mx2/sxj/sxj - 4.*my2/syj/syj;
 
-    // Check if x is a W or a fermion.
-    if (abs(idx) == 24 && useFullWkernel)
+    // Check if x is a vector or a fermion.
+    if (spinTypex ==2 && useSpinsQEDNow[0])
+      ant += 2.*syj/sxj/s;
+    else if (spinTypex ==3 && useSpinsQEDNow[1])
       ant += (4./3.)*(syj/(s - syj) + syj*(s - syj)/s/s)/sxj;
-    else
+    else if (spinTypex ==4 && useSpinsQEDNow[2])
+    // TODO: currently using the spin half expression, future work to
+    // determine spin three half expression.
       ant += 2.*syj/sxj/s;
 
-    // Check if y is a W or a fermion.
-    if (abs(idy) == 24 && useFullWkernel)
+    // Check if y is a vector or a fermion.
+    if (spinTypey == 2 && useSpinsQEDNow[0])
+      ant += 2.*sxj/syj/s;
+    else if (spinTypey == 3 && useSpinsQEDNow[1])
       ant += (4./3.)*(sxj/(s - sxj) + sxj*(s - sxj)/s/s)/syj;
-    else
+    else if (spinTypey == 4 && useSpinsQEDNow[2])
+    // TODO: currently using the spin half expression, future work to
+    // determine spin three half expression.
       ant += 2.*sxj/syj/s;
   }
 
@@ -1728,7 +1767,7 @@ double QEDemitSystem::aPhys(QEDemitElemental* ele, double sxj, double syj,
     // The initial state is never a W and has no mass.
     ant += 4.*sxy/sxj/syj - 4.*my2/syj/syj + 2.*syj/sxj/s;
 
-    if (abs(idy) == 24 && useFullWkernel)
+    if (spinTypey == 3 && useSpinsQEDNow[1])
       ant += (8./3.)*( sxj/(sxy + syj) + sxj/(s + syj)
         - pow2(sxj)/pow2(s + syj) )/syj;
     else
@@ -1748,17 +1787,17 @@ double QEDemitSystem::aPhys(QEDemitElemental* ele, double sxj, double syj,
     // Eikonal.
     ant = 4.*sxy/sxj/syj - 4.*mx2/sxj/sxj - 4.*my2/syj/syj;
 
-    // Check if x is a W or a fermion
-    if (abs(idx) == 24 && useFullWkernel)
+    // Check if x is a vector or a fermion
+    if (spinTypex == 3 && useSpinsQEDNow[1])
       ant += (8./3.)*( syj/(s+syj) + syj/s + pow2(syj)/pow2(s) )/sxj;
-    else
+    else if (spinTypex == 2 && useSpinsQEDNow[0])
       ant += 2.*syj/sxj/s;
 
-    // Check if y is a W or a fermion.
-    if (abs(idy) == 24 && useFullWkernel)
+    // Check if y is a vector or a fermion.
+    if (spinTypey == 3 && useSpinsQEDNow[1])
       ant += (8./3.)*( sxj/(sxy + syj) + sxj/(s + syj)
           - pow2(sxj)/pow2(s + syj) )/syj;
-    else
+    else if (spinTypey == 2 && useSpinsQEDNow[0])
       ant += 2.*sxj/syj/s;
   }
   return ant;
@@ -1796,8 +1835,8 @@ double QEDemitSystem::pdfRatio(bool isA, double eOld, double eNew, int id,
 
 // Initialize.
 
-void QEDsplitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  int verboseIn) {
+void QEDsplitSystem::init(BeamParticle* beamAPtrIn,
+  BeamParticle* beamBPtrIn, int verboseIn) {
   if (!isInitPtr) printOut(__METHOD_NAME__, "initPtr not called");
   verbose = verboseIn;
   q2Max   = pow2(settingsPtr->parm("Vincia:mMaxGamma"));
@@ -1813,20 +1852,25 @@ void QEDsplitSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
 
 // Prepare list of final-state photons - with recoilers - for splittings.
 
-void QEDsplitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
-  bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) {
+void QEDsplitSystem::prepare(const int iSysIn, Event &event,
+  const double q2CutIn, const int scaleRegionIn,
+  const vector<double> evolutionWindowsIn, AlphaEM alIn) {
 
   if (!isInit) {
     loggerPtr->ERROR_MSG("Not initialised");
     return;
   }
-  if (verbose >= VinciaConstants::DEBUG)
+  if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__, "begin", DASHLEN);
+    cout << scientific << "   qCut = " << sqrtpos(q2CutIn)
+         << ", scaleRegion = " << scaleRegionIn
+         << ", alpha(100GeV) = " << alIn.alphaEM(1.e4) << endl;
+  }
 
   // Input.
   iSys = iSysIn;
   q2Cut = q2CutIn;
-  isBelowHad = isBelowHadIn;
+  scaleRegion = scaleRegionIn;
   evolutionWindows = evolutionWindowsIn;
   al = alIn;
 
@@ -1841,7 +1885,7 @@ void QEDsplitSystem::prepare(int iSysIn, Event &event, double q2CutIn,
     idWeights.push_back(1);
   }
   // Only include gamma->qqbar if above hadronisation scale.
-  if (!isBelowHad) {
+  if (scaleRegion == 0) {
     for (int i = 1; i <= nQuark; i++) {
       ids.push_back(i);
       idWeights.push_back((i%2==0 ? 4./3. : 1./3.));
@@ -2203,8 +2247,8 @@ void QEDsplitSystem::print() {
 
 // Initialize the system.
 
-void QEDconvSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
-  int verboseIn) {
+void QEDconvSystem::init(BeamParticle* beamAPtrIn,
+  BeamParticle* beamBPtrIn, int verboseIn) {
 
   // Verbosity setting.
   if (!isInitPtr) printOut(__METHOD_NAME__, "initPtr not called");
@@ -2236,20 +2280,26 @@ void QEDconvSystem::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
 
 // Prepare for backwards-evolution of photons.
 
-void QEDconvSystem::prepare(int iSysIn, Event &event, double q2CutIn,
-  bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) {
+void QEDconvSystem::prepare(const int iSysIn, Event &event,
+  const double q2CutIn, const int scaleRegionIn,
+  const vector<double> evolutionWindowsIn, AlphaEM alIn) {
 
   if (!isInit) {
     loggerPtr->ERROR_MSG("not initialised");
     return;
   }
-  if (verbose >= VinciaConstants::DEBUG)
+  if (verbose >= VinciaConstants::DEBUG) {
     printOut(__METHOD_NAME__, "begin", DASHLEN);
+    cout << scientific << "   qCut = " << sqrtpos(q2CutIn)
+         << ", scaleRegion = " << scaleRegionIn
+         << ", alpha(100GeV) = " << alIn.alphaEM(1.e4)
+         << ", nQuark = " << nQuark << endl;
+  }
 
   // Input.
   iSys = iSysIn;
   shh = infoPtr->s();
-  isBelowHad = isBelowHadIn;
+  scaleRegion = scaleRegionIn;
   q2Cut = q2CutIn;
   evolutionWindows = evolutionWindowsIn;
   al = alIn;
@@ -2264,7 +2314,7 @@ void QEDconvSystem::prepare(int iSysIn, Event &event, double q2CutIn,
   if (nQuark == 0) return;
 
   // Only do conversions to quarks if above hadronisation scale.
-  if (!isBelowHad)
+  if (scaleRegion == 0)
     for (int i = 1; i <= nQuark; i++) {
       ids.push_back(i);
       ids.push_back(-i);
@@ -2739,7 +2789,7 @@ void VinciaQED::init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn) {
 
 // Prepare to shower a system.
 
-bool VinciaQED::prepare(int iSysIn, Event &event, bool isBelowHad) {
+bool VinciaQED::prepare(int iSysIn, Event &event, int scaleRegion) {
   // Check if QED is switched on for this system.
   if (!doQED) return false;
 
@@ -2752,11 +2802,12 @@ bool VinciaQED::prepare(int iSysIn, Event &event, bool isBelowHad) {
   }
 
   // Above or below hadronisation scale.
-  double q2cut = (isBelowHad) ? q2minSav : q2minColouredSav;
+  double q2cut = (scaleRegion >= 1) ? q2minSav : q2minColouredSav;
 
   // If below hadronization scale or this is resonance system,
   // clear information about any other systems.
-  if ( iSysIn == -1 || isBelowHad || partonSystemsPtr->hasInRes(iSysIn)) {
+  if ( iSysIn == -1 || scaleRegion >= 1
+    || partonSystemsPtr->hasInRes(iSysIn)) {
     if (verbose >= VinciaConstants::DEBUG) printOut(__METHOD_NAME__,
       "clearing previous QED systems");
     clear();
@@ -2814,17 +2865,17 @@ bool VinciaQED::prepare(int iSysIn, Event &event, bool isBelowHad) {
 
   // Add and prepare new system for initial- and final-state photon emissions.
   emitSystems[iSysIn] = emptyQEDemitSystem;
-  emitSystems[iSysIn].prepare(iSysIn, event, q2cut, isBelowHad,
+  emitSystems[iSysIn].prepare(iSysIn, event, q2cut, scaleRegion,
     evolutionWindows,al);
 
   // Add and prepare new system for final-state photon splittings.
   splitSystems[iSysIn] = emptyQEDsplitSystem;
-  splitSystems[iSysIn].prepare(iSysIn, event, q2cut, isBelowHad,
+  splitSystems[iSysIn].prepare(iSysIn, event, q2cut, scaleRegion,
     evolutionWindows,al);
 
   // Add and prepare new system for initial-state photon conversions.
   convSystems[iSysIn] = emptyQEDconvSystem;
-  convSystems[iSysIn].prepare(iSysIn, event, q2cut, isBelowHad,
+  convSystems[iSysIn].prepare(iSysIn, event, q2cut, scaleRegion,
     evolutionWindows,al);
 
   // Done.

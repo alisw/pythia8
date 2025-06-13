@@ -1,0 +1,8 @@
+! CMS tune CUETP8M1-NNPDF2.3LO, November 2014.
+! See R.D. Field, presentation at MPI@LHC 2014, Krakow, Poland.
+! Previously set by "Tune:pp = 18".
+include                             = tunes/Monash2013.cmnd ! based on Monash
+MultipartonInteractions:pT0Ref      = 2.4024
+MultipartonInteractions:ecmPow      = 0.25208
+MultipartonInteractions:expPow      = 1.60  
+

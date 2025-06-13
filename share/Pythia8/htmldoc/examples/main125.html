@@ -1,0 +1,65 @@
+<html><head><title>main125</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main125</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main125.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+
+// This is a simple test program. It shows how PYTHIA 8 can write
+// a Les Houches Event File v. 3.0 with hadron-level events, based on
+// its process-level input events. Event weights are carried along.
+// Note: HepMC is more commonly used for hadron-level output than LHEF.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Set up for external input of LHEF 3.0 process-level events.
+  Pythia pythia;
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = wbj_lhef3.lhe&quot;);
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Create and open file for LHEF 3.0 hadron-level output.
+  LHEF3FromPythia8 myLHEF3(&amp;pythia.event, &amp;pythia.info);
+  myLHEF3.openLHEF(&quot;weakbosons.lhe&quot;);
+
+  // Write out initialization info on the file.
+  myLHEF3.setInit();
+
+  // Event generation loop.
+  for (int iEvent = 0; iEvent &lt; 10; ++iEvent) {
+
+    // Generate next event.
+    if (!pythia.next()) {
+      if( pythia.info.atEndOfFile() ) break;
+      else continue;
+    }
+
+    // Store and write event info.
+    myLHEF3.setEvent();
+
+  } // End loop over events to generate.
+
+  // Statistics: full printout.
+  pythia.stat();
+
+  // Write endtag. Overwrite initialization info with new cross sections.
+  myLHEF3.closeLHEF(true);
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

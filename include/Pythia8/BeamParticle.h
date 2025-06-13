@@ -1,5 +1,5 @@
 // BeamParticle.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -141,11 +141,11 @@ public:
     maxValQuark(), companionPower(), valencePowerMeson(), valencePowerUinP(),
     valencePowerDinP(), valenceDiqEnhance(), pickQuarkNorm(), pickQuarkPower(),
     diffPrimKTwidth(), diffLargeMassSuppress(), beamSat(), gluonPower(),
-    xGluonCutoff(), idBeam(), idBeamAbs(), idVMDBeam(), mBeam(), mVMDBeam(),
-    scaleVMDBeam(), isUnresolvedBeam(), isLeptonBeam(), isHadronBeam(),
-    isMesonBeam(), isBaryonBeam(), isGammaBeam(), nValKinds(), idVal(), nVal(),
-    idSave(), iSkipSave(), nValLeft(), xqgTot(), xqVal(), xqgSea(),
-    xqCompSum(), doISR(), doMPI(), doND(), isResolvedGamma(),
+    xGluonCutoff(), heavyQuarkEnhance(), idBeam(), idBeamAbs(), idVMDBeam(),
+    mBeam(), mVMDBeam(), scaleVMDBeam(), isUnresolvedBeam(), isLeptonBeam(),
+    isHadronBeam(), isMesonBeam(), isBaryonBeam(), isGammaBeam(), nValKinds(),
+    idVal(), nVal(), idSave(), iSkipSave(), nValLeft(), xqgTot(), xqVal(),
+    xqgSea(), xqCompSum(), doISR(), doMPI(), doND(), isResolvedGamma(),
     hasResGammaInBeam(), isResUnres(), hasVMDstateInBeam(), initGammaBeam(),
     pTminISR(), pTminMPI(), pT2gm2qqbar(), iGamVal(), iPosVal(), gammaMode(),
     xGm(), Q2gm(), kTgamma(), phiGamma(), cPowerCache(-100), xsCache(-1),
@@ -289,6 +289,8 @@ public:
   // Overload index operator to access a resolved parton from the list.
   ResolvedParton& operator[](int i) {return resolved[i];}
   const ResolvedParton& operator[](int i) const {return resolved[i];}
+  ResolvedParton& at(int i) {return resolved.at(i);}
+  const ResolvedParton& at(int i) const {return resolved.at(i);}
 
   // Total number of partons extracted from beam, and initiators only.
   int size() const {return resolved.size();}
@@ -488,7 +490,7 @@ private:
   double valencePowerMeson, valencePowerUinP, valencePowerDinP,
          valenceDiqEnhance, pickQuarkNorm, pickQuarkPower,
          diffPrimKTwidth, diffLargeMassSuppress, beamSat, gluonPower,
-         xGluonCutoff;
+         xGluonCutoff, heavyQuarkEnhance[6];
 
   // Basic properties of a beam particle.
   int    idBeam, idBeamAbs, idVMDBeam;

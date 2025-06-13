@@ -1,5 +1,5 @@
 // DireHistory.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -563,8 +563,8 @@ private:
   // probability.
   double hardProcessME( const Event& event);
   double hardProcessCouplings( const Event& event, int order = 0,
-    double renormMultFac = 1., AlphaStrong* alphaS = NULL,
-    AlphaEM* alphaEM = NULL, bool fillCouplCounters = false,
+    double renormMultFac = 1., AlphaStrong* alphaS = nullptr,
+    AlphaEM* alphaEM = nullptr, bool fillCouplCounters = false,
     bool with2pi = true);
 
   // Perform the clustering of the current state and return the

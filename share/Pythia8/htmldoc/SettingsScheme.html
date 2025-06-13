@@ -101,28 +101,31 @@ cases (even if most of them are not).</li>
 to represent a reasonable choice.</li> 
 <li>The current value, which differs from the default when the user so 
 requests.</li> 
-<li>An allowed range of values, represented by meaningful 
-minimum and maximum values. This has no sense for a <code>flag</code>, 
-an <code>fvec</code> a <code>word</code> or a <code>wvec</code> 
-(and is not used there), is 
-usually rather well-defined for a <code>mode</code> or <code>mvec</code>, 
-but less so for a <code>parm</code> or <code>pvec</code>. Often the allowed 
-range exaggerates the degree of our current knowledge, so as not to restrict 
+<li>An allowed range of values, represented by meaningful minimum and 
+maximum values. This has no sense for a <code>flag</code>, an 
+<code>fvec</code> a <code>word</code> or a <code>wvec</code> (and is 
+not used there), is usually rather well-defined for a 
+<code>mode</code> or <code>mvec</code>, but less so for a 
+<code>parm</code> or <code>pvec</code>. Often the allowed range 
+exaggerates the degree of our current knowledge, so as not to restrict 
 too much what the user can do. One may choose not to set the lower or 
 upper limit, in which case the range is open-ended. 
-<br/>Normally input values outside the allowed range are changed 
-to the be at nearest limit. For <code>mode</code>s only, a further 
-boolean is stored to tell whether this should be allowed, or whether 
+<br/> 
+If an input value is set outside the limits, the code will fail at 
+runtime with an error, unless the keyword <code>force</code> is 
+specified (see below). For <code>mode</code>s only, a further boolean 
+is stored to specify whether even this should be allowed, or whether 
 out-of-range inputs should be forbidden, to the extent that the whole 
-PYTHIA initialization would abort. The latter applies to those modes 
-that have been defined with the <code>modepick</code> label in the 
-<code>xmldoc/*.xml</code> files, and where maximal and minimal values 
-have been specified. Such labels are used to represent a discrete set 
-of options, and so any value outside the allowed range is just plain 
-wrong. Also attempts to change <code>modefix</code> fixed-value 
-<code>mode</code>s lead to aborts. By contrast those defined with 
-<code>mode</code> or <code>modeopen</code> follow the normal rules 
-of being reset to fall into the allowed range, without any warnings.</li> 
+PYTHIA initialization should always abort. The latter applies to those 
+modes that have been defined with the <code>modepick</code> label in 
+the <code>xmldoc/*.xml</code> files, and where maximal and minimal 
+values have been specified. Such labels are used to represent a 
+discrete set of options, and so any value outside the allowed range is 
+just plain wrong. Also attempts to change <code>modefix</code> 
+fixed-value <code>mode</code>s lead to aborts. By contrast those 
+defined with <code>mode</code> or <code>modeopen</code> follow the 
+normal rules of being reset to fall into the allowed range, without 
+any warnings.</li> 
 </ul> 
  
 <p/> 
@@ -263,7 +266,7 @@ directories optionally specified by setting the
 PYTHIA8CMND = PATH1:PATH2:...</code>. Finally, if the file is not 
 found along these paths the file is searched for relative to the 
 directory <code>share/Pythia8/settings</code>, which itself is defined 
-relative to the XML path, i.e. <code>xmldoc/../settings</code>. 
+relative to the XML path, i.e. <code>xmldoc/..</code>. 
  
 <p/> 
 A file can make use of two extra features that are not available with the 
@@ -662,8 +665,8 @@ string "match" in its name.
 change the current value(s) of the respective setting to the provided 
 new value(s). If lower or upper limits have been set and 
 <code>force=false</code>, input values 
-outside the allowed range are reinterpreted as being at the nearest 
-limit. If <code>force = true</code>, upper and lower limits will be 
+outside the allowed range will result in the program failing with 
+an error. If <code>force = true</code>, upper and lower limits will be 
 ignored, allowing to force values outside the allowed range (to be 
 used with caution and at own responsibility!). Any key not found in the 
 settings database will be ignored, unless <code>force = true</code>, in 
@@ -748,4 +751,4 @@ hard decisions.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -1,0 +1,95 @@
+<html><head><title>main381</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main381</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main381.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#higgs">Higgs</a>
+//            <a href="../ExampleKeywords.html#electron-positron">Electron&#8209;positron</a>
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjörn Sjostrand</a>
+
+// Simple example of Higgs pruduction at future e+e- colliders.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events.
+  int nEvent = 25000;
+
+  // Generator. Incoming beams. (Switch off iniial-state photon radiation.)
+  Pythia pythia;
+  pythia.readString(&quot;Beams:idA = -11&quot;);
+  pythia.readString(&quot;Beams:idB = 11&quot;);
+  pythia.readString(&quot;Beams:eCM = 500.&quot;);
+  //pythia.readString(&quot;PDF:lepton = off&quot;);
+
+  // All Higgs production channels.
+  pythia.readString(&quot;HiggsSM:all = on&quot;);
+  //pythia.readString(&quot;23:onMode = off&quot;);
+  //pythia.readString(&quot;23:onIfAny = 1 2 3 4 5&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  Hist mult(&quot;charged multiplicity all&quot;, 50, -1., 99.);
+  Hist multS(&quot;charged multiplicity Higgsstrahlung&quot;, 50, -1., 99.);
+  Hist multG(&quot;charged multiplicity gammagamma fusion&quot;, 50, -1., 99.);
+  Hist multZ(&quot;charged multiplicity ZZ fusion&quot;, 50, -1., 99.);
+  Hist multW(&quot;charged multiplicity WW fusion&quot;, 50, -1., 99.);
+
+  // Begin event loop. Generate event. Skip if error.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Find number of all final charged particles and fill histogram.
+    int nCharged = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+      if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
+        ++nCharged;
+    mult.fill( nCharged );
+
+    // Split by process type.
+    int code = pythia.info.code();
+    if      (code == 904) multS.fill( nCharged );
+    else if (code == 903) multG.fill( nCharged );
+    else if (code == 906) multZ.fill( nCharged );
+    else if (code == 907) multW.fill( nCharged );
+    else cout &lt;&lt; &quot; Warning: unexpected process code &quot; &lt;&lt; code &lt;&lt; endl;
+
+  // End of event loop. Statistics. Normalize and print histograms.
+  }
+  pythia.stat();
+  mult  /= double(nEvent);
+  multS /= double(nEvent);
+  multG /= double(nEvent);
+  multZ /= double(nEvent);
+  multW /= double(nEvent);
+  cout &lt;&lt; mult &lt;&lt; multS &lt;&lt; multG &lt;&lt; multZ &lt;&lt; multW;
+
+  //Plot histograms.
+  HistPlot hpl(&quot;plot381&quot;);
+  hpl.frame( &quot;fig381&quot;, &quot;Charged multiplicity for Higgs production &quot;
+    &quot;in a 500 GeV e$^+$e$^-$ collider&quot;, &quot;$n_{\\mathrm{charged}}$&quot;,
+    &quot;Probability&quot;);
+  hpl.add( mult, &quot;h,black&quot;, &quot;all events&quot;);
+  hpl.add( multS, &quot;h,red&quot;, &quot;Higgsstrahlung&quot;);
+  hpl.add( multW, &quot;h,blue&quot;, &quot;WW fusion&quot;);
+  hpl.add( multZ, &quot;h,olive&quot;, &quot;ZZ fusion&quot;);
+  hpl.add( multG, &quot;h,magenta&quot;, &quot;$\\gamma\\gamma$ fusion&quot;);
+  hpl.plot();
+
+  // Done
+  return 0;
+}
+</code></pre></body></html>

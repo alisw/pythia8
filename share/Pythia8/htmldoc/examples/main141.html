@@ -1,0 +1,266 @@
+<html><head><title>main141</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main141</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main141.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:dag.gillberg@cern.ch">Dag Gillberg</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#root">Root</a>
+//            <a href="../ExampleKeywords.html#event+display">Event&nbsp;display</a>
+
+// This is a program that uses ROOT to visualize the particles produced by
+// Pythia. Particles are drawn in (y, phi)-space to depict the E/p flow.
+// A pdf file is produced with multiple pages showing WH-&gt;qqbb events.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;TCanvas.h&quot;
+#include &quot;TStyle.h&quot;
+#include &quot;TString.h&quot;
+#include &quot;TH2D.h&quot;
+#include &quot;TMath.h&quot;
+#include &quot;TLine.h&quot;
+#include &quot;TMarker.h&quot;
+#include &quot;TLatex.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// Draws text to the canvas using non-direct coordinates:
+// (x, y)=(0, 0) -&gt; lower-left, (1, 1) -&gt; upper-right.
+
+void drawText(double x, double y, TString txt, int col= kBlack,
+  double tsize = 0.032, int align = 11) {
+  static auto tex = new TLatex();
+  tex-&gt;SetTextColor(col);
+  tex-&gt;SetTextSize(tsize);
+  tex-&gt;SetTextFont(42);
+  tex-&gt;SetNDC();
+  tex-&gt;SetTextAlign(align);
+  tex-&gt;DrawLatex(x, y, txt);
+}
+
+//==========================================================================
+
+// Draws right-justified text, as above.
+
+void drawTextR(double x, double y, TString txt, int col = kBlack,
+  double tsize = 0.032) {
+  drawText(x, y, txt, col, tsize, 31);
+}
+
+//==========================================================================
+
+// Draw a particle in (y, phi)-space with a symbol and label.
+
+void drawParticle(double x, double y, TString txt, int col = kGray + 1,
+  double tsize = 0.03) {
+  static auto m = new TMarker();
+  m-&gt;SetMarkerColor(col);
+  m-&gt;SetMarkerStyle(20);
+  m-&gt;SetMarkerSize(1.2);
+  m-&gt;DrawMarker(x, y);
+
+  // Modify Pythia&apos;s default particle label to suit ROOT&apos;s TLatex format.
+  if (txt.Contains(&quot;bar&quot;)) txt = &quot;#bar{&quot; + txt.ReplaceAll(&quot;bar&quot;, &quot;&quot;) + &quot;}&quot;;
+  txt.ReplaceAll(&quot;pi&quot;, &quot;#pi&quot;);
+  txt.ReplaceAll(&quot;+&quot;, &quot;^{+}&quot;);
+  txt.ReplaceAll(&quot;-&quot;, &quot;^{-}&quot;);
+  txt.ReplaceAll(&quot;0&quot;, &quot;^{0}&quot;);
+  txt.ReplaceAll(&quot;_L&quot;, &quot;_{L}&quot;);
+  txt.ReplaceAll(&quot;gamma&quot;, &quot;#gamma&quot;);
+  txt.ReplaceAll(&quot;Lambda&quot;, &quot;#Lambda&quot;);
+  txt.ReplaceAll(&quot;Delta&quot;, &quot;#Delta&quot;);
+  txt.ReplaceAll(&quot;Sigma&quot;, &quot;#Sigma&quot;);
+  txt.ReplaceAll(&quot;rho&quot;, &quot;#rho&quot;);
+  txt.ReplaceAll(&quot;omega&quot;, &quot;#omega&quot;);
+  txt.ReplaceAll(&quot;eta&quot;, &quot;#eta&quot;);
+  txt.ReplaceAll(&quot;_S&quot;, &quot;_{S}&quot;);
+  static auto tex = new TLatex();
+  tex-&gt;SetTextColor(col);
+  tex-&gt;SetTextSize(tsize);
+  tex-&gt;SetTextFont(42);
+  tex-&gt;SetTextAlign(22);
+  tex-&gt;DrawLatex(x, y - 0.2, txt);
+}
+
+//==========================================================================
+
+// Draw a single particle.
+
+void drawParticle(const Particle &amp;p) {
+  int col =
+    // System.
+    p.idAbs() == 90 ? kGray    :
+    // Light quarks.
+    p.idAbs() &lt;=  4 ? kBlue    :
+    // b quarks.
+    p.idAbs() ==  5 ? kGreen + 2 :
+    p.idAbs() == 21 ? kGray + 1  :
+    p.isHadron()    ? kBlue    : kRed;
+  drawParticle(p.y(), p.phi(), p.name().c_str(), col);
+}
+
+//==========================================================================
+
+// Draw a line.
+
+void drawLine(double x1, double y1, double x2, double y2, int col, int style) {
+  static auto line = new TLine();
+  line-&gt;SetLineColor(col);
+  line-&gt;SetLineStyle(style);
+  line-&gt;DrawLine(x1, y1, x2, y2);
+}
+
+//==========================================================================
+
+// Example main program to draw an event display.
+
+int main() {
+
+  // Adjust ROOTs display options.
+  gStyle-&gt;SetOptTitle(0);
+  gStyle-&gt;SetOptStat(0);
+  gStyle-&gt;SetPadTickX(1);
+  // Tick marks on top and RHS.
+  gStyle-&gt;SetPadTickY(1);
+  gStyle-&gt;SetTickLength(0.02, &quot;x&quot;);
+  gStyle-&gt;SetTickLength(0.02, &quot;y&quot;);
+
+  // Define the canvas.
+  auto can = new TCanvas();
+  double x = 0.06, y = 0.96;
+  // left-right-bottom-top.
+  can-&gt;SetMargin(x, 0.02, 0.08, 0.05);
+
+  // To draw axis frame, I find it easiest to create an empty histogram.
+  double yMax = 5, phiMax = 3.4;
+  // Adding a bit of margin around pi
+  auto axis = new TH2D( &quot;&quot;, &quot;;Rapidity #it{y};Azimuth #it{#phi}&quot;, 1, -yMax,
+    yMax, 1, -phiMax, phiMax);
+  axis-&gt;GetYaxis()-&gt;SetTitleOffset(0.8);
+
+  // Name of output pdf file.
+  TString pdf = &quot;fig141.pdf&quot;;
+  can-&gt;Print(pdf + &quot;[&quot;);
+  // Turn off loads of TCanvas::Print Info messages.
+  // Current canvas added to pdf file.
+  gErrorIgnoreLevel = 4000;
+
+  // Configure and describe the process.
+  // Description uses ROOT&apos;s TLatex notation
+  TString desc = &quot;#it{pp} #rightarrow #it{WH} &quot;
+    &quot;#rightarrow #it{q#bar{q}b#bar{b}},  #sqrt{#it{s}} = 13.6 TeV&quot;;
+
+  // Generator.
+  Pythia pythia;
+
+  // PYTHIA setup. Process selection. LHC initialization.
+  pythia.readString(&quot;Beams:eCM = 13600.&quot;);
+  pythia.readString(&quot;HiggsSM:ffbar2HW = on&quot;);
+  // Force H-&gt;bb decays and hadronic W decays.
+  pythia.readString(&quot;25:onMode = off&quot;);
+  pythia.readString(&quot;25:onIfAny = 5&quot;);
+  pythia.readString(&quot;24:onMode = off&quot;);
+  pythia.readString(&quot;24:onIfAny = 1 2 3 4 5&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // List of status codes to draw with associated descriptions.
+  // Descriptions from &quot;Particle Properties&quot; in the Pythia8 manual.
+  std::map&lt;int, TString&gt; statusCodeMap;
+  //statusCodeMap[11] = &quot;Beam particles&quot;;
+  statusCodeMap[21] = &quot;Hardest subprocess&quot;;
+  statusCodeMap[31] = &quot;Particles of subsequent subprocesses&quot;;
+  statusCodeMap[41] = &quot;Initial-state radiation&quot;;
+  statusCodeMap[51] = &quot;Final-state radiation&quot;;
+  statusCodeMap[61] = &quot;Beam remnant treatment&quot;;
+  statusCodeMap[71] = &quot;Preparation of hadronization&quot;;
+  statusCodeMap[81] = &quot;Primary hadrons&quot;;
+  statusCodeMap[91] = &quot;Decay products&quot;;
+
+  // Event loop.
+  for (int iEvent = 0; iEvent &lt; 5; ++iEvent) {
+
+    // Generate event. (Skip to next if pythia.next() returns false = error.)
+    if (!pythia.next()) continue;
+
+    // Clear and draw an empty canvas to paint on.
+    axis-&gt;Reset();
+    axis-&gt;Draw();
+    drawLine( -yMax, TMath::Pi(), yMax, TMath::Pi(), kGray, 7);
+    drawLine( -yMax, -TMath::Pi(), yMax, -TMath::Pi(), kGray, 7);
+
+    // 1. Draw the hard process.
+    for (int i = 0; i &lt; pythia.process.size(); ++i) {
+      auto &amp;p = pythia.process[i];
+      drawParticle(p);
+      // printf(&quot;(id,pT,y,phi,status) = (%3i,%5.1f,%5.2f,%5.2f,%i)\n&quot;, p.id(),
+      //   p.pT(), p.y(), p.phi(), p.status());
+    }
+    // Text.
+    drawText( x, y, desc);
+    drawTextR( 0.98, y, &quot;Hard process&quot;);
+
+    // Redraw the axis to make sure they are not covered by points.
+    axis-&gt;Draw(&quot;axis same&quot;);
+    can-&gt;Print(pdf);
+
+    // 2. Draw intermediate particles.
+    for (auto statusCode:statusCodeMap) {
+      // Clear and re-draw the axis. Draw dashed-lines at +/- pi.
+      axis-&gt;Reset();
+      axis-&gt;Draw();
+      drawLine( -yMax, TMath::Pi(), yMax, TMath::Pi(), kGray, 7);
+      drawLine( -yMax, -TMath::Pi(), yMax, -TMath::Pi(), kGray, 7);
+      int max = -statusCode.first, min = max-8;
+      // printf(&quot;Range [%i,%i] %s\n&quot;, min, max, statusCode.second.Data());
+      for (int i = 0; i &lt; pythia.event.size(); ++i) {
+        auto &amp;p = pythia.event[i];
+        // Impose desired status code(s) and rapidity intervals.
+        if ( p.status() &lt; min || p.status() &gt; max) continue;
+        if ( std::abs(p.y()) &gt; yMax ) continue;
+        drawParticle(p);
+      }
+      // Text.
+      drawText( x, y, desc);
+      drawTextR( 0.98, y, statusCode.second + Form(&quot;, status #in  [%.i,%.i]&quot;,
+          min, max));
+      // Redraw the axis to make sure they are not covered by points.
+      axis-&gt;Draw(&quot;axis same&quot;);
+      can-&gt;Print(pdf);
+    }
+
+    // 3. Draw the final hadrons.
+    axis-&gt;Reset();
+    axis-&gt;Draw();
+    drawLine( -yMax, TMath::Pi(), yMax, TMath::Pi(), kGray, 7);
+    drawLine( -yMax, -TMath::Pi(), yMax, -TMath::Pi(), kGray, 7);
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      auto &amp;p = pythia.event[i];
+      if (not p.isFinal()) continue;
+      if (std::abs(p.y())&gt;yMax) continue;
+      drawParticle(p);
+    }
+    drawText( x, y, desc);
+    drawTextR( 0.98, y, &quot;Stable particles&quot;);
+    axis-&gt;Draw(&quot;axis same&quot;);
+    can-&gt;Print(pdf);
+  }
+
+  // Close the pdf
+  can-&gt;Print(pdf + &quot;]&quot;);
+  printf( &quot;\nProduced %s\n\n&quot;, pdf.Data());
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

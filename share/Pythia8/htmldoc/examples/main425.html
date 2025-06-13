@@ -1,0 +1,132 @@
+<html><head><title>main425</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main425</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main425.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#heavy+ions">Heavy&nbsp;ions</a>
+//            <a href="../ExampleKeywords.html#cross+sections.">Cross&nbsp;sections.</a>
+
+// This example calculates proton-oxygen cross sections at varying
+// energies using the Angantyr module in Pythia. Illustrates the
+// difference between the &quot;generated&quot; cross section and the cross
+// section calculated from the Glauber modelling.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+// You need to include this to get access to the HIInfo object for HeavyIons.
+#include &quot;Pythia8/HeavyIons.h&quot;
+
+using namespace Pythia8;
+//==========================================================================
+
+int main() {
+
+  // Input in fixed-target or CM frame.
+  bool useFixed   = true;
+  // Reuse precalculated initialization data or not.
+  bool usePrecalc = true;
+
+  // Set up momentum grid for fixed-target option.
+  double pMin = 1e2, pMax = 1e11;
+  int nPts = 4;
+  vector&lt;double&gt; pLabs = logSpace(nPts, pMin, pMax);
+  double dr = pow(pMax / pMin, 1. / (nPts - 1));
+
+  // Histograms.
+  Hist sigTotAn(&quot;Total&quot;, nPts, pMin / sqrt(dr), pMax * sqrt(dr), true);
+  Hist sigInelAn(&quot;Inelastic&quot;, nPts, pMin / sqrt(dr), pMax * sqrt(dr), true);
+  Hist sigTotPy(&quot;Total&quot;, nPts, pMin / sqrt(dr), pMax * sqrt(dr), true);
+  Hist sigInelPy(&quot;Inelastic&quot;, nPts, pMin / sqrt(dr), pMax * sqrt(dr), true);
+
+  // Iterate over momenta. Initialize for p 16O(xygen).
+  for (double pNow : pLabs) {
+    Pythia pythia;
+    pythia.readString(&quot;Beams:idA = 2212&quot;);
+    pythia.readString(&quot;Beams:idB = 1000080160&quot;);
+    pythia.readString(&quot;HadronLevel:all = off&quot;);
+
+    // Set up in fixed-target frame.
+    if (useFixed) {
+      pythia.readString(&quot;Beams:frameType = 3&quot;);
+      pythia.settings.parm(&quot;Beams:pzA&quot;, pNow);
+      pythia.settings.parm(&quot;Beams:pzB&quot;, 0.);
+
+    // Alternatively initialize for equivalent proton-nucleon CM energy.
+    } else {
+      pythia.readString(&quot;Beams:frameType = 1&quot;);
+      double eCMNow = ( Vec4(0., 0., pNow, pNow * sqrt(1 + pow2(0.938 / pNow)))
+                      + Vec4(0., 0., 0., 0.938) ).mCalc();
+      pythia.settings.parm(&quot;Beams:eCM&quot;, eCMNow);
+    }
+
+    // Optionally reuse initialization information (if it exists, see main424).
+    if (usePrecalc) {
+      pythia.readFile(&quot;main424.cmnd&quot;);
+    }
+
+    // Initialize.
+    if (!pythia.init()) {
+      cout &lt;&lt; &quot;Pythia failed to initialize.&quot; &lt;&lt; endl;
+      return -1;
+    }
+
+    // Generate events to get statistics.
+    for (int iEvent = 0; iEvent &lt; 10000; ++iEvent) {
+      pythia.next();
+      if (iEvent == 0) pythia.event.list();
+    }
+
+    // Read out total and inelastic cross section two ways:
+
+    // First we have the full total and inelastic non-diffractive
+    // cross for p-O, as obtained from the Glauber caclulation.
+    double hiTot  = pythia.info.hiInfo-&gt;glauberTot();
+    double hiInel = pythia.info.hiInfo-&gt;glauberND();
+
+    // Then we have the cross section of the generated events
+    // categorised according to the type primary p-nucleon
+    // scattering. Note that since Angantyr does not actually generate
+    // proper inelastic events, not even the total cross section is
+    // the same as the total p-O cross section, but also the inelastic
+    // non-diffractive may differ, since also a diffractive primary
+    // p-nucleon scattering may correspond to a non-diffractive p-O
+    // scattering.
+    double pyTot  = pythia.info.sigmaGen();
+    double pyInel = pythia.info.sigmaGen(101);
+
+    // Fill histograms with cross sections above.
+    sigTotAn.fill(pNow, hiTot);
+    sigInelAn.fill(pNow, hiInel);
+    sigTotPy.fill(pNow, pyTot);
+    sigInelPy.fill(pNow, pyInel);
+
+    // Print statistics.
+    pythia.stat();
+  }
+
+  // Print histograms.
+  cout &lt;&lt; sigTotAn &lt;&lt; sigInelAn &lt;&lt; sigTotPy &lt;&lt; sigInelPy;
+
+  // Plot histograms.
+  HistPlot plt(&quot;plot425&quot;);
+  plt.frame(&quot;fig425&quot;, &quot;p ${}^{16}$O cross sections&quot;,
+    &quot;$p_{Lab}$ (GeV)&quot;, &quot;$\\sigma$ (mb)&quot;, 6.4, 4.8);
+  plt.add(sigTotAn, &quot;-&quot;, &quot;Total p-O from Glauber&quot;);
+  plt.add(sigInelAn, &quot;-&quot;, &quot;Inelastic non-diffactive p-O from Glauber&quot;);
+  plt.add(sigTotPy, &quot;-&quot;, &quot;Total generated&quot;);
+  plt.add(sigInelPy, &quot;--&quot;, &quot;Generated with non-diffractive primary p-N&quot;);
+  plt.plot(0.5 * pMin, 2. * pMax, 0., 1200., false, true);
+
+  return 0;
+}
+</code></pre></body></html>

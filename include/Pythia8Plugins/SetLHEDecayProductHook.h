@@ -1,5 +1,5 @@
 // SetLHEDecayProductHook.h is part of the PYTHIA event generator.
-// Copyright (C) 2024 Stephen Mrenna, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stephen Mrenna, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 // Author: Stephen Mrenna, December 2022.

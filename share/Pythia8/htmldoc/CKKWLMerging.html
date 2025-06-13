@@ -34,14 +34,10 @@ disentangling processes presented in [<a href="Bibliography.html#refChr15a" targ
 the section Electroweak Merging below. 
  
 <p/> The usage of the merging procedure is illustrated in a few 
-example main  programs 
-(<code>main81.cc</code>, <code>main82.cc</code>, 
-<code>main83.cc</code>, <code>main84.cc</code> and <code>main85.cc</code>, 
-together with the input files <code>main81.cmnd</code>, 
-<code>main82.cmnd</code>, <code>main84.cmnd</code> and 
-<code>main85.cmnd</code>). These examples should of course only serve 
-as  an illustration, and as such will not make use of the merging in 
-all  possible ways. For full generality, the example programs link to 
+example main  programs (<code>main161.cc</code>, <code>main162.cc</code>, 
+and <code>main164.cc</code>). These examples should of course only serve 
+as an illustration, and as such will not make use of the merging in 
+all possible ways. For full generality, the example programs link to 
 LHAPDF,  FastJet and HepMC. Of course the user is welcome to  remove 
 these dependencies. To remove the FastJet dependence, the functions 
 calculating example observables have to be deleted. Removing the 
@@ -51,7 +47,7 @@ inbuilt PDF,  as outlined in the
 HepMC dependence can be removed by erasing the code allowing for HepMC 
 output. 
  
-<p/> The attached <a href="../pdfdoc/worksheet8309.pdf"> 
+<p/> The attached <a href="../pdfdoc/worksheet8312.pdf"> 
 PYTHIA 8.3 Worksheet</a> contains a Section 6 that walks you through 
 the basics of setting up a merging in PYTHIA. 
  
@@ -278,7 +274,7 @@ scale.
 <a name="anchor6"></a>
 <p/><code>word&nbsp; </code><strong> Merging:Process &nbsp;</strong> 
  (<code>default = <strong>void</strong></code>)<br/>
-The string specifying the hard core process, in MG4/ME notation. 
+The string specifying the hard core process, in MadGraph5/ME notation. 
    
  
 <p/> 
@@ -433,6 +429,28 @@ you will also need to set <code>Merging:Process</code> and the
 maximal number of additional matrix element jets 
 <code>Merging:nJetMax</code>. 
  
+<h4>Merging with a dynamic merging scale:</h4> 
+ 
+For DIS events, a dynamic merging scale has to be chosen 
+to ensure that low <i>Q<sup>2</sup></i>, high 
+<i>E<sub>T,B</sub><sup>2</sup></i> are treated by the the 
+matrix-element. See [<a href="Bibliography.html#refHel24" target="page">Hel24</a>] for more details. 
+ 
+<a name="anchor14"></a>
+<p/><code>flag&nbsp; </code><strong> Merging:doDynamicMerging &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+This switch will enable a functional scale definition which dynamically 
+changes per event. 
+Note that this option is available only in VINCIA's merging. 
+   
+ 
+<a name="anchor15"></a>
+<p/><code>parm&nbsp; </code><strong> Merging:Sparameter &nbsp;</strong> 
+ (<code>default = <strong>0.8</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 1.0</code>)<br/>
+The value of the parameter <i>S</i> for dynamic merging-scale 
+definitions. 
+   
+ 
 <h4>Les Houches events outside the matrix element region</h4> 
  
 <p/> 
@@ -451,7 +469,7 @@ fails merging scale cut. Cut by rejecting event</code>". These warnings
 should, in this case, rather be regarded as information. 
 To change the default behaviour, use the flag 
  
-<a name="anchor14"></a>
+<a name="anchor16"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:enforceCutOnLHE &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 This will check if the events read from LHE file are in the matrix element 
@@ -609,7 +627,7 @@ W<sup>-</sup> and W<sup>+</sup> boson), <code>n1</code> (MSSM neutralino),
 <p/> 
 Finally, it is worth noting that including the header 
 <code>Pythia8Plugins/aMCatNLOHooks.h</code> (as is e.g. the case in the 
-<code>main89.cc</code> example) allows the user to instruct Pythia 
+<code>main164.cc</code> example) allows the user to instruct Pythia 
 to "guess" the hard process by setting <code>Merging:Process = guess</code>. 
 In this case, the code will inspect the hard process before starting the 
 merging code, and set <code>Merging:Process</code> on an event-by-event 
@@ -668,11 +686,10 @@ bins had instead been filled with the weight
 additional jets in current ME sample)</strong>. This is the way HepMC 
 events should be weighted to produce correct relative weights of 
 events (see below, and particularly examine the example programs 
-<code>main84.cc</code> and <code>main85.cc</code>). 
+<code>main162.cc</code> and <code>main164.cc</code>). 
  
-<p/> Examples how to use these options are given in <code>main81.cc</code> 
-(<i>kT</i> merging), <code>main84.cc</code> (automatic MG/ME merging 
-for RIVET usage), and <code>main85.cc</code> (HepMC output for RIVET usage). 
+<p/> Examples how to use these options are given in <code>main161.cc</code> 
+(<i>kT</i> merging) and <code>main162.cc</code>. 
  
 <br/><br/><hr/> 
 <a name="section2"></a> 
@@ -683,7 +700,7 @@ slightly more  complicated, since the user has to write a small piece
 of code defining the  merging scale. To allow for a user defined 
 procedure, set the input 
  
-<a name="anchor15"></a>
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doUserMerging &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 General user defined merging on/off. 
@@ -707,10 +724,10 @@ should construct a class derived from <code>MergingHooks</code>, with
 a constructor and destructor 
  
 <p/> 
-<a name="anchor16"></a>
+<a name="anchor18"></a>
 <p/><strong> MergingHooks::MergingHooks() &nbsp;</strong> <br/>
    
-<a name="anchor17"></a>
+<a name="anchor19"></a>
 <p/><strong> virtual MergingHooks::~MergingHooks() &nbsp;</strong> <br/>
    
 The constructor and destructor do not need to do anything. 
@@ -718,9 +735,9 @@ The constructor and destructor do not need to do anything.
 <p/> For the class to be called during execution, a pointer to an 
 object of the class should be handed in with the 
 <br/><code><a href="ProgramFlow.html" target="page"> 
-Pythia::setMergingHooksPtr( MergingHooks*)</a></code> method. 
+Pythia::setMergingHooksPtr(MergingHooks*)</a></code> method. 
  
-An examples of this procedure are given in <code>main82.cc</code>. 
+An example of this procedure is given in <code>main161.cc</code>. 
  
 <h4>Defining a merging scale</h4> 
  
@@ -728,43 +745,43 @@ An examples of this procedure are given in <code>main82.cc</code>.
 needs to  supply the process to be merged by defining a methods to 
 evaluate the merging scale variable. 
  
-<a name="anchor18"></a>
+<a name="anchor20"></a>
 <p/><strong> virtual double MergingHooks::tmsDefinition(const Event& event) &nbsp;</strong> <br/>
 This method will have to calculate the value of the merging scale 
 defined in  some variable from the input event record. An example of 
-such a function is  given in <code>main82.cc</code>. 
+such a function is  given in <code>main161.cc</code>. 
    
  
 <p/> The base class <code>MergingHooks</code> contains many functions 
 giving  information on the hard process, to make the definition of the 
 merging scale as easy as possible: 
  
-<a name="anchor19"></a>
+<a name="anchor21"></a>
 <p/><strong> int MergingHooks::nMaxJets() &nbsp;</strong> <br/>
 Return the maximum number of additional jets to be merged. 
    
  
-<a name="anchor20"></a>
+<a name="anchor22"></a>
 <p/><strong> int MergingHooks::nHardOutPartons() &nbsp;</strong> <br/>
 Returns the number of outgoing partons in the hard core process. 
    
  
-<a name="anchor21"></a>
+<a name="anchor23"></a>
 <p/><strong> int MergingHooks::nHardOutLeptons() &nbsp;</strong> <br/>
 Returns the number of outgoing leptons in the hard core process. 
    
  
-<a name="anchor22"></a>
+<a name="anchor24"></a>
 <p/><strong> int MergingHooks::nHardInPartons() &nbsp;</strong> <br/>
 Returns the number of incoming partons in the hard core process. 
    
  
-<a name="anchor23"></a>
+<a name="anchor25"></a>
 <p/><strong> int MergingHooks::nHardInLeptons() &nbsp;</strong> <br/>
 Returns the number of incoming leptons in the hard core process. 
    
  
-<a name="anchor24"></a>
+<a name="anchor26"></a>
 <p/><strong> int MergingHooks::nResInCurrent() &nbsp;</strong> <br/>
 The number of resonances in the hard process reconstructed from the 
 current event. If e.g. the ME configuration was 
@@ -772,7 +789,7 @@ current event. If e.g. the ME configuration was
 both intermediate bosons into the LHE file, this will return 2. 
    
  
-<a name="anchor25"></a>
+<a name="anchor27"></a>
 <p/><strong> double MergingHooks::tms() &nbsp;</strong> <br/>
  Returns the value used as the merging scale. 
    
@@ -780,7 +797,7 @@ both intermediate bosons into the LHE file, this will return 2.
 <p/> Filling output histograms for the event then proceeds along the 
 lines described above in "Histogramming the events". 
  
-<p/> The full procedure is outlined in <code>main82.cc</code>. Special 
+<p/> The full procedure is outlined in <code>main161.cc</code>. Special 
 care needs to be  taken when the output is stored in the form of HepMC 
 files for RIVET usage. 
  
@@ -816,7 +833,7 @@ space differences for shower emissions and matrix element
 configurations due to LHEF generation cuts, the user has to  write a 
 small piece of code overwriting method 
  
-<a name="anchor26"></a>
+<a name="anchor28"></a>
 <p/><strong> virtual double MergingHooks::dampenIfFailCuts(const Event& event) &nbsp;</strong> <br/>
 multiplicity  reclustered state as an input Event. From this input 
 event, the user can then check if matrix element cuts are 
@@ -835,10 +852,6 @@ if this facility would have to be used extensively, it is certainly
 preferable to be less restrictive when applying  additional, 
 non-merging-scale-related cuts to the matrix element. 
  
-<p/> An example how to force a cut on lowest multiplicity reclustered 
-states for pure QCD matrix element configurations is given by 
-<code>main83.cc</code> (to be used with e.g. <code>main82.cmnd</code>). 
- 
 <h4>Influencing the construction of all possible histories</h4> 
  
 <p/> Even more powerful - and dangerous - is influencing the construction 
@@ -846,7 +859,7 @@ of histories directly. This should only be attempted by expert users. If you
 believe manipulations completely unavoidable, we advise you to take great care 
 when redefining the following functions. 
  
-<a name="anchor27"></a>
+<a name="anchor29"></a>
 <p/><strong> virtual bool MergingHooks::canCutOnRecState() &nbsp;</strong> <br/>
 In the base class this method returns false. If you redefine it 
 to return true then the method <code>doCutOnRecState(...)</code> 
@@ -854,7 +867,7 @@ will be called for each reclustered state encountered in the generation of
 all possible histories of the matrix element state. 
    
  
-<a name="anchor28"></a>
+<a name="anchor30"></a>
 <p/><strong> virtual bool MergingHooks::doCutOnRecState(const Event& event) &nbsp;</strong> <br/>
 This routine will be supplied internally with every possible reclustered 
 event that can be reached by reclustering any number of partons in 
@@ -878,7 +891,7 @@ sufficiently effective.
 <p/> The MergingHooks class also allows the expert user to define the matrix 
 element of the hard process, by defining the method 
  
-<a name="anchor29"></a>
+<a name="anchor31"></a>
 <p/><strong> virtual double MergingHooks::hardProcessME(const Event& inEvent) &nbsp;</strong> <br/>
 This routine will be supplied internally with the reconstructed 
 lowest-multiplicity event. From this, it is possible to calculate the squared 
@@ -904,7 +917,7 @@ element, even for the QCD dijet case.
 <h3>Matrix element merging and HepMC output for RIVET</h3> 
  
 Examples how to produce matrix element merged events to be analysed 
-with RIVET are given by <code>main84.cc</code> and <code>main85.cc</code>. 
+with RIVET are given by <code>main162.cc</code> and <code>main164.cc</code>. 
  
 <p/> The main issue is that the output of separate RIVET runs can not 
 in general be combined. To perform a matrix element merging, we 
@@ -920,8 +933,6 @@ HepMC file has to be taken as the  full merged cross section
 <i>sigma_merge = Sum_{i=0}^N Sum_{j=0}*^{nEvents} 
 sigma_est(i)*wckkwl(j)</i>. 
  
-<p/> This procedure is outlined in <code>main84.cc</code>. 
- 
 Input LHE files with only very inclusive cuts pose further difficulties. For 
 such files (which were already addressed under the heading <strong>Les Houches 
 events outside the matrix element region</strong>), the cross section after 
@@ -931,7 +942,7 @@ of the cross section after cuts. This however entails a careful cut definition
 by the user, which might become cumbersome for some in-built merging scale 
 definitions. A reasonable alternative is using the switch 
  
-<a name="anchor30"></a>
+<a name="anchor32"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:doXSectionEstimate &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, estimate cross section after merging scale cut. This switch has to be 
@@ -948,7 +959,7 @@ This switch also relies on knowledge on how many partons a LHE file should
 contain. This is important for real-emission kinematics in the case of 
 NLO merging. The number of (additional) partons in a LHE file can be set with 
  
-<a name="anchor31"></a>
+<a name="anchor33"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:nRequested &nbsp;</strong> 
  (<code>default = <strong>-1</strong></code>; <code>minimum = -1</code>)<br/>
 Exact number of additional jets requested for a particular LHE file. If 
@@ -960,28 +971,7 @@ be set.
  
 <p/> 
 The usage of these switches to obtain the necessary cross section estimate is 
-illustrated in <code>main85.cc</code>. The example <code>main85.cc</code> 
-program is intended as a "front-end" for CKKW-L merging in Pythia8, so we will 
-discuss the program briefly. <code>main85.cc</code> should be used together 
-with an input file (like <code>main85.cmnd</code>). The executable should be 
-invoked with three arguments: the input file, the "name" of the input LHE 
-files, and the name of the output HepMC event file. To use the LHE files that 
-are shipped with the Pythia distribution, a valid usage would be 
-<p/> 
-<code>./main85.exe ./main85.cmnd ./w_production ./myhepmc.hepmc</code> 
-<p/> 
-If you want to use other input LHE files, note 
-that <code>main85.cc</code> assumes the naming 
-convention <i>name_tree_#nAdditionalJets.lhe</i>. All settings can 
-be included though the input file, so that <code>main85.cc</code> does not 
-have to be changed explicitly. <code>main85.cc</code> first switches off 
-showers, multiparton interactions and hadronization, and estimates the cross 
-sections (after enforcing the merging scale cut) of samples for different 
-numbers of additional jets. Then, showers, MPI and hadronization are switched 
-on again, and the CKKW-L merging procedure is performed. Events will be read 
-in a decreasing sequence of jet multiplicities, which also means that e.g. 
-events with two additional partons in the LHE file will be printed to the 
-HepMC file before events with one additional parton. 
+illustrated in <code>main162.cc</code>. 
  
 <br/><br/><hr/> 
 <a name="section4"></a> 
@@ -1099,7 +1089,7 @@ W-boson emissions by using
  
 <p/> To enable the electroweak merging, use the following switch. 
  
-<a name="anchor32"></a>
+<a name="anchor34"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:allowWeakClustering &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow clustering of weak bosons, as necessary if a merging of matrix elements 
@@ -1189,7 +1179,7 @@ the switches.
 assessment of the merging prescription. Apart from this, we advise the 
 non-expert user to keep the default values. 
  
-<a name="anchor33"></a>
+<a name="anchor35"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:nQuarksMerge &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 2</code>; <code>maximum = 5</code>)<br/>
 This switch controls which quarks flavours (labelled by PDG id's) are 
@@ -1201,7 +1191,7 @@ for additional partons in the input LHE file does not exceed this value, since
 unnecessary double-counting might occur otherwise. 
    
  
-<a name="anchor34"></a>
+<a name="anchor36"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:includeMassive &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, use the correct massive evolution variable and massive 
@@ -1211,7 +1201,7 @@ scales, kinematics and splitting kernels  as if all partons were
 massless. 
    
  
-<a name="anchor35"></a>
+<a name="anchor37"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:enforceStrongOrdering &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, preferably pick parton shower histories of the matrix element 
@@ -1220,21 +1210,21 @@ which consecutive reclustered evolution scales are separated by a
 user-defined factor. 
    
  
-<a name="anchor36"></a>
+<a name="anchor38"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:scaleSeparationFactor &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 1.0</code>; <code>maximum = 10.0</code>)<br/>
 The factor by which scales should differ to be classified as strongly 
 ordered. 
    
  
-<a name="anchor37"></a>
+<a name="anchor39"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:orderInRapidity &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, preferably pick parton shower histories of the matrix element 
 with  consecutive splittings ordered in rapidity and <i>pT</i>. 
    
  
-<a name="anchor38"></a>
+<a name="anchor40"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:pickByFullP &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, pick parton shower histories of the matrix element by the full 
@@ -1242,14 +1232,14 @@ shower  splitting kernels, including potential ME corrections and
 Jacobians from joined evolution measures. 
    
  
-<a name="anchor39"></a>
+<a name="anchor41"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:pickByPoPT2 &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, pick parton shower histories of the matrix element by the 
 shower  splitting kernels divided by the evolution <i>pT</i>. 
    
  
-<a name="anchor40"></a>
+<a name="anchor42"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:pickBySumPT &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, exclusively pick parton shower histories of the matrix element 
@@ -1257,7 +1247,7 @@ for which have the smallest sum of scalar evolution <i>pT</i> for
 consecutive splittings has been calculated. 
    
  
-<a name="anchor41"></a>
+<a name="anchor43"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:includeRedundant &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, then also include PDF ratios and <i>&alpha;<sub>s</sub></i> 
@@ -1270,21 +1260,21 @@ sensitive the results  are to the prescription on how to choose PS
 histories. 
    
  
-<a name="anchor42"></a>
+<a name="anchor44"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:nonJoinedNorm &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)<br/>
 Normalisation factor with which to multiply splitting probability for 
 splittings without joined evolution equation. 
    
  
-<a name="anchor43"></a>
+<a name="anchor45"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:fsrInRecNorm &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)<br/>
 Normalisation factor with which to multiply splitting probability for 
 final state splittings with an initial state recoiler. 
    
  
-<a name="anchor44"></a>
+<a name="anchor46"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:aCollFSR &nbsp;</strong> 
  (<code>default = <strong>1.0</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)<br/>
 Factor with which to multiply the scalar <i>pT</i> of a final state 
@@ -1292,7 +1282,7 @@ splitting, when choosing the history by the smallest sum of scalar
 <i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.html#refTul09" target="page">Tul09</a>]. 
    
  
-<a name="anchor45"></a>
+<a name="anchor47"></a>
 <p/><code>parm&nbsp; </code><strong> Merging:aCollISR &nbsp;</strong> 
  (<code>default = <strong>0.9</strong></code>; <code>minimum = 0.0</code>; <code>maximum = 10.0</code>)<br/>
 Factor with which to multiply the scalar <i>pT</i> of an initial state 
@@ -1300,7 +1290,7 @@ splitting, when choosing the history by the smallest sum of scalar
 <i>pT</i>. Default value taken from Herwig++ [<a href="Bibliography.html#refTul09" target="page">Tul09</a>]. 
    
  
-<a name="anchor46"></a>
+<a name="anchor48"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:unorderedScalePrescrip &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 When the parton shower history of the matrix element contains a 
@@ -1317,7 +1307,7 @@ scales as  starting scale.
    
    
  
-<a name="anchor47"></a>
+<a name="anchor49"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:unorderedASscalePrescrip &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 Prescription which scale to use to evaluate <i>&alpha;<sub>s</sub></i> 
@@ -1331,7 +1321,7 @@ in evolution <i>pT</i>.
    
    
  
-<a name="anchor48"></a>
+<a name="anchor50"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:unorderedPDFscalePrescrip &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 Prescription which scale to use to evaluate ratios of parton distributions 
@@ -1345,7 +1335,7 @@ ratios, for each splitting separately.
    
    
  
-<a name="anchor49"></a>
+<a name="anchor51"></a>
 <p/><code>mode&nbsp; </code><strong> Merging:incompleteScalePrescrip &nbsp;</strong> 
  (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
 When no complete parton shower history (i.e. starting from a 
@@ -1366,7 +1356,7 @@ incomplete histories.
    
    
  
-<a name="anchor50"></a>
+<a name="anchor52"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:allowColourShuffling &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 If on, this will allow the algorithm to swap one colour index in the state, 
@@ -1378,7 +1368,7 @@ the radiation pattern. To however study the sensitivity of the predictions on
 these effects, allowing for colour reshuffling can be useful. 
    
  
-<a name="anchor51"></a>
+<a name="anchor53"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:usePythiaQRenHard &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, this will allow the algorithm to use a dynamical renormalisation scale 
@@ -1391,7 +1381,7 @@ masses of the two outgoing particles, as is the default prescription in
 Pythia. 
    
  
-<a name="anchor52"></a>
+<a name="anchor54"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:usePythiaQFacHard &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, this will allow the algorithm to use a dynamical factorisation scale 
@@ -1405,7 +1395,7 @@ factorisation scale is set to the smaller of the squared transverse masses
 of the two outgoing particles. 
    
  
-<a name="anchor53"></a>
+<a name="anchor55"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:mayRemoveDecayProducts &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Remove products of resonances in the hard process, in case Pythia generates 
@@ -1420,13 +1410,13 @@ and Pythia decides on a decay according to the branching fractions read from
 SLHA input. 
    
  
-<a name="anchor54"></a>
+<a name="anchor56"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:allowSQCDClustering &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Allow clustering of gluon emission off squarks. 
    
  
-<a name="anchor55"></a>
+<a name="anchor57"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:useShowerPlugin &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Use the splitting probabilities, evolution variables and phase space mappings 
@@ -1434,7 +1424,7 @@ of an external shower plugin. This will become possible as soon as new
 showers containing the necessary ingredients are available in Pythia. 
    
  
-<a name="anchor56"></a>
+<a name="anchor58"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:applyVeto &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If off, no event veto based on the merging scale is applied in CKKW-L merging. 
@@ -1443,7 +1433,7 @@ program. It can be useful to postpone event vetoes for the purpose of merging
 scale variations. 
    
  
-<a name="anchor57"></a>
+<a name="anchor59"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:includeWeightInXsection &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If on, then the reweighting of events in the CKKW-L scheme is included in 
@@ -1452,7 +1442,7 @@ the event weight <code>Info::weight()</code>, the merging weight
 by <code>Info::sigmaGen()</code> includes the effect of CKKW-L merging. 
    
  
-<a name="anchor58"></a>
+<a name="anchor60"></a>
 <p/><code>flag&nbsp; </code><strong> Merging:runtimeAMCATNLOInterface &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 This setting should only be touched by experts. 
@@ -1465,4 +1455,4 @@ the method in [<a href="Bibliography.html#refFre20" target="page">Fre20</a>].
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

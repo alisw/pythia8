@@ -1,0 +1,33 @@
+! The Monash 2013 tune by Peter Skands, the e+e- part, January 2014.
+! Previously set by "Tune:ee = 7".
+include                             = tunes/Reset-ee.cmnd ! reset ee tune
+StringFlav:probStoUD                = 0.217 
+StringFlav:probQQtoQ                = 0.081 
+StringFlav:probSQtoQQ               = 0.915 
+StringFlav:probQQ1toQQ0             = 0.0275
+StringFlav:mesonUDvector            = 0.50  
+StringFlav:mesonSvector             = 0.55  
+StringFlav:mesonCvector             = 0.88  
+StringFlav:mesonBvector             = 2.20  
+StringFlav:etaSup                   = 0.60  
+StringFlav:etaPrimeSup              = 0.12  
+StringFlav:popcornSpair             = 0.90  
+StringFlav:popcornSmeson            = 0.50  
+StringFlav:suppressLeadingB         = false    ! kept fixed
+StringZ:aLund                       = 0.68  
+StringZ:bLund                       = 0.98  
+StringZ:aExtraSquark                = 0.00     ! kept fixed
+StringZ:aExtraDiquark               = 0.97  
+StringZ:rFactC                      = 1.32  
+StringZ:rFactB                      = 0.855 
+StringPT:sigma                      = 0.335 
+StringPT:enhancedFraction           = 0.01     ! kept fixed
+StringPT:enhancedWidth              = 2.0      ! kept fixed
+TimeShower:alphaSvalue              = 0.1365
+TimeShower:alphaSorder              = 1        ! kept fixed
+TimeShower:alphaSuseCMW             = false    ! kept fixed
+TimeShower:pTmin                    = 0.5      ! kept fixed
+TimeShower:pTminChgQ                = 0.5      ! kept fixed
+
+! Reproduce hadronization behavior of the Pythia version used for this tune.
+StringZ:useOldAExtra                = on

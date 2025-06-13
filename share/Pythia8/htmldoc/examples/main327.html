@@ -1,0 +1,314 @@
+<html><head><title>main327</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main327</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main327.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#forward+physics">Forward&nbsp;physics</a>
+//            <a href="../ExampleKeywords.html#hadron+production">Hadron&nbsp;production</a>
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjörn Sjostrand</a>
+
+// Study forward p production with diffraction + nondiffractive.
+// Compare default, ditto without popcorn for remnant diquark, and
+// the QCDCR model.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events, beam energy and more.
+  int nEvent = 5000;
+  double eBeam = 3500.;
+  double etaForw = 10.76;
+
+  // Include single diffraction on the elastic side of the event or not.
+  bool includeSDel = false;
+
+  // Histograms.
+  int nSides[4] = { 0 };
+  Hist yp[4], xFp[4], pTp[4], yn[4], xFn[4], pTn[4], xFpDel[4], xFnDel[4],
+    xFpEta[4], xFnEta[4], pTpEta[4], pTnEta[4], ypi[4], xFpi[4], ygam[4],
+    xFgam[4], xFdi[4], xFpn[4], xFpi2[4], xFdiq[4];
+  for (int i = 0; i &lt; 4; ++i) {
+    yp[i].book(&quot;y_proton&quot;, 100, 0., 10.);
+    xFp[i].book(&quot;xF_proton&quot;, 95, 0.05, 1.);
+    pTp[i].book(&quot;pT_proton, xF &gt; 0.4&quot;, 100, 0., 2.);
+    yn[i].book(&quot;y_neutron&quot;, 100, 0., 10.);
+    xFn[i].book(&quot;xF_neutron&quot;, 95, 0.05, 1.);
+    pTn[i].book(&quot;pT_neutron, xF &gt; 0.4&quot;, 100, 0., 2.);
+    xFpDel[i].book(&quot;xF_proton Delta&quot;, 100, 0., 1.);
+    xFnDel[i].book(&quot;xF_neutron Delta&quot;, 100, 0., 1.);
+    xFpEta[i].book(&quot;xF_proton, eta &gt; 10.76&quot;, 100, 0., 1.);
+    xFnEta[i].book(&quot;xF_neutron eta &gt; 10.76&quot;, 100, 0., 1.);
+    pTpEta[i].book(&quot;pT_proton, eta &gt; 10.76&quot;, 100, 0., 2.);
+    pTnEta[i].book(&quot;pT_neutron eta &gt; 10.76&quot;, 100, 0., 2.);
+    ypi[i].book(&quot;y_pi+-&quot;, 100, 0., 10.);
+    xFpi[i].book(&quot;xF_pi+-&quot;, 95, 0.05, 1.);
+    ygam[i].book(&quot;y_gamma&quot;, 100, 0., 10.);
+    xFgam[i].book(&quot;xF_gamma&quot;, 95, 0.05, 1.);
+    xFdi[i].book(&quot;xF_diquark&quot;, 95, 0.05, 1.);
+    xFpn[i].book(&quot;xF_proton+neutron&quot;, 90, 0.1, 1.);
+    xFpi2[i].book(&quot;xF_pi+-&quot;, 90, 0.1, 1.);
+    xFdiq[i].book(&quot;xF_diquark&quot;, 100, 0., 1.);
+  }
+
+  // Loop over cases
+  for (int colType = 0; colType &lt; 3; ++colType) {
+
+    // Generator. Process selection.
+    Pythia pythia;
+    pythia.settings.parm(&quot;Beams:eCM&quot;, 2. * eBeam);
+    pythia.readString(&quot;SoftQCD:inelastic = on&quot;);
+    pythia.readString(&quot;Next:numberShowProcess = 2&quot;);
+    pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+    pythia.readString(&quot; Next:numberCount = 100000&quot;);
+
+    // Options with no remnant popcorn and QCDCR.
+    if (colType == 1) {
+      pythia.readString(&quot;BeamRemnants:dampPopcorn = 0.0&quot;);
+    } else if (colType == 2) {
+      pythia.readString(&quot;ColourReconnection:mode = 1&quot;);
+      pythia.readString(&quot;BeamRemnants:remnantMode = 1&quot;);
+    }
+
+    // Map of remnant constituents.
+    map&lt;int, int&gt; remnantTypes;
+
+    // Reuse MPI initialization.
+    pythia.readString(&quot;MultipartonInteractions:reuseInit = 3&quot;);
+    pythia.readString(&quot;MultipartonInteractions:initFile = main327.mpi&quot;);
+
+    // If Pythia fails to initialize, exit with error.
+    if (!pythia.init()) return 1;
+
+    // Event shorthand.
+    Event&amp; event = pythia.event;
+
+    // Begin event loop. Generate event. Skip if error.
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+      if (!pythia.next()) continue;
+
+      // Classify whether both sides should be bookkept.
+      int procCode = pythia.info.code();
+      bool doPos   = includeSDel || (procCode != 104);
+      bool doNeg   = includeSDel || (procCode != 103);
+      if (doPos) ++nSides[colType];
+      if (doNeg) ++nSides[colType];
+
+      // Loop over particles in the event. Get basic properties.
+      for (int i = 1; i &lt; event.size(); ++i) {
+        bool isPos    = (event[i].pz() &gt; 0.);
+        bool isNeg    = (event[i].pz() &lt; 0.);
+        bool doFill   = (doPos &amp;&amp; isPos) || (doNeg &amp;&amp; isNeg);
+        if (!doFill) continue;
+        double yAbs   = abs(event[i].y());
+        double etaAbs = abs(event[i].eta());
+        double xFAbs  = abs(event[i].pz()) / eBeam;
+        double pTAbs  = event[i].pT();
+
+        // Proton spectra in y, xF, pT. Also with eta cut.
+        if (event[i].isFinal() &amp;&amp; event[i].id() == 2212) {
+          yp[colType].fill( yAbs );
+          xFp[colType].fill( xFAbs );
+          xFpn[colType].fill( xFAbs );
+          if (xFAbs &gt; 0.4) pTp[colType].fill( pTAbs );
+          xFpDel[colType].fill( xFAbs );
+          if (etaAbs &gt; etaForw) {
+            xFpEta[colType].fill( xFAbs );
+            pTpEta[colType].fill( pTAbs );
+          }
+        // Antiproton spectrum subtraction in xF.
+        } else if (event[i].isFinal() &amp;&amp; event[i].id() == -2212) {
+          xFpDel[colType].fill( xFAbs, -1.);
+
+        // Neutron spectra in y, xF, pT. Also with eta cut.
+        } else if (event[i].isFinal() &amp;&amp; event[i].id() == 2112) {
+          yn[colType].fill( yAbs );
+          xFn[colType].fill( xFAbs );
+          xFpn[colType].fill( xFAbs );
+          if (xFAbs &gt; 0.4) pTn[colType].fill( pTAbs );
+          xFnDel[colType].fill( xFAbs );
+          if (etaAbs &gt; etaForw) {
+            xFnEta[colType].fill( xFAbs );
+            pTnEta[colType].fill( pTAbs );
+          }
+        // Antineutron spectrum subtraction in xF.
+        } else if (event[i].isFinal() &amp;&amp; event[i].id() == -2112) {
+          xFnDel[colType].fill( xFAbs, -1.);
+
+        // Remnant diquark spectra in xF.
+        } else if (colType == 0 &amp;&amp; event[i].isDiquark()
+          &amp;&amp; event[i].status() == -63) {
+            if (procCode == 101) xFdi[0].fill( xFAbs );
+            else                 xFdi[1].fill( xFAbs );
+
+        // pi+- spectrum in y and xF.
+        } else if (event[i].isFinal() &amp;&amp; event[i].idAbs() == 211) {
+          ypi[colType].fill( yAbs );
+          xFpi[colType].fill( xFAbs );
+          xFpi2[colType].fill( xFAbs );
+
+        // Photon spectrum in y and xF.
+        } else if (event[i].isFinal() &amp;&amp; event[i].id() == 22) {
+             ygam[colType].fill( event[i].y() );
+             xFgam[colType].fill( event[i].pz() / eBeam);
+        }
+
+      // End of loop over particles in event.
+      }
+
+      // Fill map with remnant composition and histogram with diquark xF.
+      for (int i = 1; i &lt; event.size(); ++i) if (event[i].statusAbs() == 63) {
+        ++remnantTypes[ event[i].id()];
+        if (event[i].id() &gt; 1000)
+          xFdiq[colType].fill( abs(event[i].pz()) / eBeam );
+      }
+
+    // End of event loop. Statistics.
+    }
+    pythia.stat();
+
+    // Print remnant composition.
+    for (auto iter = remnantTypes.begin(); iter != remnantTypes.end(); ++iter)
+      cout &lt;&lt; &quot; id = &quot; &lt;&lt; setw(6) &lt;&lt; iter-&gt;first &lt;&lt; &quot; count = &quot; &lt;&lt; setw(6)
+      &lt;&lt; iter-&gt;second &lt;&lt; endl;
+
+  // End of collision type loop.
+  }
+
+  // Normalize histograms.
+  for (int i = 0; i &lt; 4; ++i) {
+    yp[i]     *=  10. / max( 1, nSides[i]);
+    xFp[i]    *= 100. / max( 1, nSides[i]);
+    pTp[i]    *=  50. / max( 1, nSides[i]);
+    yn[i]     *=  10. / max( 1, nSides[i]);
+    xFn[i]    *= 100. / max( 1, nSides[i]);
+    pTn[i]    *=  50. / max( 1, nSides[i]);
+    xFdi[i]   *= 100. / max( 1, nSides[i]);
+    xFpDel[i] *= 100. / max( 1, nSides[i]);
+    xFnDel[i] *= 100. / max( 1, nSides[i]);
+    xFpEta[i] *= 100. / max( 1, nSides[i]);
+    xFnEta[i] *= 100. / max( 1, nSides[i]);
+    pTpEta[i] *=  50. / max( 1, nSides[i]);
+    pTnEta[i] *=  50. / max( 1, nSides[i]);
+    ypi[i]    *=  10. / max( 1, nSides[i]);
+    xFpi[i]   *= 100. / max( 1, nSides[i]);
+    ygam[i]   *=  10. / max( 1, nSides[i]);
+    xFgam[i]  *= 100. / max( 1, nSides[i]);
+    xFpn[i]   *= 100. / max( 1, nSides[i]);
+    xFpi2[i]  *= 100. / max( 1, nSides[i]);
+    xFdiq[i]  *= 100. / max( 1, nSides[i]);
+  }
+
+  // Plot histograms.
+  HistPlot hpl(&quot;plot327&quot;);
+  hpl.frame(&quot;fig327&quot;, &quot;Nucleon rapidity distribution&quot;,
+    &quot;$y$&quot;, &quot;d$n_{\\mathrm{p}}$/d$y$&quot;, 8.0, 5.4);
+  hpl.add( yp[0], &quot;-,red&quot;, &quot;p inelastic old default&quot;);
+  hpl.add( yn[0], &quot;--,red&quot;, &quot;n inelastic old default&quot;);
+  hpl.add( yp[1], &quot;-,blue&quot;, &quot;p inelastic no popcorn&quot;);
+  hpl.add( yn[1], &quot;--,blue&quot;, &quot;n inelastic no popcorn&quot;);
+  hpl.add( yp[2], &quot;-,green&quot;, &quot;p inelastic QCDCR&quot;);
+  hpl.add( yn[2], &quot;--,green&quot;, &quot;n inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;Nucleon Feynman-$x$ distribution&quot;, &quot;$x_{\\mathrm{F}}$&quot;,
+    &quot;d$n_{\\mathrm{p}}$/d$x_{\\mathrm{F}}$&quot;, 8.0, 5.4);
+  hpl.add( xFp[0], &quot;-,red&quot;, &quot;p inelastic old default&quot;);
+  hpl.add( xFn[0], &quot;--,red&quot;, &quot;n inelastic old default&quot;);
+  hpl.add( xFp[1], &quot;-,blue&quot;, &quot;p inelastic no popcorn&quot;);
+  hpl.add( xFn[1], &quot;--,blue&quot;, &quot;n inelastic no popcorn&quot;);
+  hpl.add( xFp[2], &quot;-,green&quot;, &quot;p inelastic QCDCR&quot;);
+  hpl.add( xFn[2], &quot;--,green&quot;, &quot;n inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;Nucleon - antinucleon Feynman-$x$ distribution&quot;,
+    &quot;$x_{\\mathrm{F}}$&quot;, &quot;d$n_{\\mathrm{p}}$/d$x_{\\mathrm{F}}$&quot;, 8.0, 5.4);
+  hpl.add( xFpDel[0], &quot;-,red&quot;, &quot;p inelastic old default&quot;);
+  hpl.add( xFnDel[0], &quot;--,red&quot;, &quot;n inelastic old default&quot;);
+  hpl.add( xFpDel[1], &quot;-,blue&quot;, &quot;p inelastic no popcorn&quot;);
+  hpl.add( xFnDel[1], &quot;--,blue&quot;, &quot;n inelastic no popcorn&quot;);
+  hpl.add( xFpDel[2], &quot;-,green&quot;, &quot;p inelastic QCDCR&quot;);
+  hpl.add( xFnDel[2], &quot;--,green&quot;, &quot;n inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;Nucleon transverse momentum distribution, $x_F &gt; 0.4$&quot;,
+    &quot;$p_{\\perp}$&quot;, &quot;d$n_{\\mathrm{p}}$/d$p_{\\perp}$&quot;, 8.0, 5.4);
+  hpl.add( pTp[0], &quot;-,red&quot;, &quot;p inelastic old default&quot;);
+  hpl.add( pTn[0], &quot;--,red&quot;, &quot;n inelastic old default&quot;);
+  hpl.add( pTp[1], &quot;-,blue&quot;, &quot;p inelastic no popcorn&quot;);
+  hpl.add( pTn[1], &quot;--,blue&quot;, &quot;n inelastic no popcorn&quot;);
+  hpl.add( pTp[2], &quot;-,green&quot;, &quot;p inelastic QCDCR&quot;);
+  hpl.add( pTn[2], &quot;--,green&quot;, &quot;n inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;Nucleon Feynman-$x$ distribution, $\\eta &gt; 10.76$&quot;,
+    &quot;$x_{\\mathrm{F}}$&quot;, &quot;d$n_{\\mathrm{p}}$/d$x_{\\mathrm{F}}$&quot;, 8.0, 5.4);
+  hpl.add( xFpEta[0], &quot;-,red&quot;, &quot;p inelastic old default&quot;);
+  hpl.add( xFnEta[0], &quot;--,red&quot;, &quot;n inelastic old default&quot;);
+  hpl.add( xFpEta[1], &quot;-,blue&quot;, &quot;p inelastic no popcorn&quot;);
+  hpl.add( xFnEta[1], &quot;--,blue&quot;, &quot;n inelastic no popcorn&quot;);
+  hpl.add( xFpEta[2], &quot;-,green&quot;, &quot;p inelastic QCDCR&quot;);
+  hpl.add( xFnEta[2], &quot;--,green&quot;, &quot;n inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;Nucleon transverse momentum distribution, $\\eta &gt; 10.76$&quot;,
+    &quot;$p_{\\perp}$&quot;, &quot;d$n_{\\mathrm{p}}$/d$p_{\\perp}$&quot;, 8.0, 5.4);
+  hpl.add( pTpEta[0], &quot;-,red&quot;, &quot;p inelastic old default&quot;);
+  hpl.add( pTnEta[0], &quot;--,red&quot;, &quot;n inelastic old default&quot;);
+  hpl.add( pTpEta[1], &quot;-,blue&quot;, &quot;p inelastic no popcorn&quot;);
+  hpl.add( pTnEta[1], &quot;--,blue&quot;, &quot;n inelastic no popcorn&quot;);
+  hpl.add( pTpEta[2], &quot;-,green&quot;, &quot;p inelastic QCDCR&quot;);
+  hpl.add( pTnEta[2], &quot;--,green&quot;, &quot;n inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;$\\pi^{\\pm}$ and $\\gamma$ rapidity distribution&quot;,
+    &quot;$y$&quot;, &quot;d$n$/d$y$&quot;, 8.0, 5.4);
+  hpl.add( ypi[0], &quot;-,red&quot;, &quot;pi, inelastic old default&quot;);
+  hpl.add( ypi[1], &quot;-,blue&quot;, &quot;pi, inelastic no popcorn&quot;);
+  hpl.add( ypi[2], &quot;-,green&quot;, &quot;pi, inelastic QCDCR&quot;);
+  hpl.add( ygam[0], &quot;--,red&quot;, &quot;gamma, inelastic old default&quot;);
+  hpl.add( ygam[1], &quot;--,blue&quot;, &quot;gamma, inelastic no popcorn&quot;);
+  hpl.add( ygam[2], &quot;--,green&quot;, &quot;gamma, inelastic QCDCR&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;$\\pi^{\\pm}$ and $\\gamma$ Feynman-$x$ distribution&quot;,
+    &quot;$x_{\\mathrm{F}}$&quot;, &quot;d$n$/d$x_{\\mathrm{F}}$&quot;, 8.0, 5.4);
+  hpl.add( xFpi[0], &quot;-,red&quot;, &quot;pi, inelastic old default&quot;);
+  hpl.add( xFpi[1], &quot;-,blue&quot;, &quot;pi, inelastic no popcorn&quot;);
+  hpl.add( xFpi[2], &quot;-,green&quot;, &quot;pi, inelastic QCDCR&quot;);
+  hpl.add( xFgam[0], &quot;--,red&quot;, &quot;gamma, inelastic old default&quot;);
+  hpl.add( xFgam[1], &quot;--,blue&quot;, &quot;gamma, inelastic no popcorn&quot;);
+  hpl.add( xFgam[2], &quot;--,green&quot;, &quot;gamma, inelastic QCDCR&quot;);
+  hpl.plot(0.05, 1.0, 1e-5, 1e2, true);
+  hpl.frame(&quot;&quot;, &quot;Diquark Feynman-$x$ distribution&quot;, &quot;$x_{\\mathrm{F}}$&quot;,
+    &quot;d$n_{\\mathrm{p}}$/d$x_{\\mathrm{F}}$&quot;, 8.0, 5.4);
+  hpl.add( xFdi[0], &quot;-,red&quot;, &quot;nondiffractive&quot;);
+  hpl.add( xFdi[1], &quot;-,blue&quot;, &quot;diffractive&quot;);
+  hpl.plot();
+  hpl.frame(&quot;&quot;, &quot;Nucleon Feynman-$x$ distribution&quot;,
+    &quot;$x_{\\mathrm{F}}$&quot;, &quot;d$n$/d$x_{\\mathrm{F}}$&quot;, 6.4, 4.8);
+  hpl.add( xFpn[0], &quot;-,red&quot;, &quot;default&quot;);
+  hpl.add( xFpn[1], &quot;-,blue&quot;, &quot;no popcorn&quot;);
+  hpl.add( xFpn[2], &quot;-,green&quot;, &quot;QCDCR&quot;);
+  hpl.plot(0.1, 1.0, 0., 3.0);
+  hpl.frame(&quot;&quot;, &quot;$\\pi^{\\pm}$ Feynman-$x$ distribution&quot;,
+    &quot;$x_{\\mathrm{F}}$&quot;, &quot;d$n$/d$x_{\\mathrm{F}}$&quot;, 6.4, 4.8);
+  hpl.add( xFpi[0], &quot;-,red&quot;, &quot;default&quot;);
+  hpl.add( xFpi[1], &quot;-,blue&quot;, &quot;no popcorn&quot;);
+  hpl.add( xFpi[2], &quot;-,green&quot;, &quot;QCDCR&quot;);
+  hpl.plot(0.1, 1.0, 1e-3, 20., true);
+  hpl.frame(&quot;&quot;, &quot;diquark Feynman-$x$ distribution&quot;,
+    &quot;$x_{\\mathrm{F}}$&quot;, &quot;d$n$/d$x_{\\mathrm{F}}$&quot;, 8.0, 5.4);
+  hpl.add( xFdiq[0], &quot;-,red&quot;, &quot;default&quot;);
+  hpl.add( xFdiq[1], &quot;-,blue&quot;, &quot;no popcorn&quot;);
+  hpl.add( xFdiq[2], &quot;-,green&quot;, &quot;QCDCR&quot;);
+  hpl.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

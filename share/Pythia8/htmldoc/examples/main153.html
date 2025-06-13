@@ -4,79 +4,127 @@
 Back to <a href="../ExampleKeywords.html" target="page">index.</a>
 <pre><code class="language-c++">
 // main153.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
 // Authors:
-//            <a href="mailto:marius.m.utheim@jyu.fi">Marius Utheim</a>
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
 
 // Keywords:
-//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#matching">Matching</a>
+//            <a href="../ExampleKeywords.html#madgraph">Madgraph</a>
+//            <a href="../ExampleKeywords.html#amc@nlo">aMC@NLO</a>
 
-// Simple illustration how to generate events at low energies.
-// Outputs number of primary hadrons produced in the low energy interaction,
-// as well as cos(theta) distribution of 2 -&gt; 2 processes (if any).
+// An example where the hard process (p p -&gt; mu+ mu-) is automatically
+// produced externally with MadGraph 5, read in, and the remainder of
+// the event is then produced by Pythia (MPI, showers, hadronization,
+// and decays). A comparison is made between events produced with
+// Pythia at LO, MadGraph 5 at LO, and aMC@NLO at NLO.
+
+// For this example to run, MadGraph 5 must be installed and the
+// command &quot;exe&quot; (set by default as &quot;mg5_aMC&quot;) must be available via
+// the command line. Additionally, GZIP support must be enabled via
+// the &quot;--with-gzip&quot; configuration option(s). Note that this example has
+// only been tested with MadGraph 5 version 2.3.3; due to rapid
+// MadGraph development, this example may not work with other
+// versions. For more details on the LHAMadgraph class see the
+// comments of Pythia8Plugins/LHAMadgraph.h.
 
 #include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/LHAMadgraph.h&quot;
+
 using namespace Pythia8;
 
-//--------------------------------------------------------------------------
+//==========================================================================
+
+// A simple method to run Pythia, analyze the events, and fill a histogram.
+
+bool run(Pythia&amp; pythia, Hist&amp; hist, int nEvent) {
+  pythia.readString(&quot;Random:setSeed = on&quot;);
+  pythia.readString(&quot;Random:seed = 1&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return false;
+
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+    int iMu1(0), iMu2(0);
+    for (int i = 0; i &lt; pythia.event.size(); ++i) {
+      if (!iMu1 &amp;&amp; pythia.event[i].id() == 13)  iMu1 = i;
+      if (!iMu2 &amp;&amp; pythia.event[i].id() == -13) iMu2 = i;
+      if (iMu1 &amp;&amp; iMu2) {
+        iMu1 = pythia.event[iMu1].iBotCopyId();
+        iMu2 = pythia.event[iMu2].iBotCopyId();
+        hist.fill((pythia.event[iMu1].p() + pythia.event[iMu2].p()).pT());
+        break;
+      }
+    }
+  }
+  pythia.stat();
+  return true;
+}
+
+//==========================================================================
 
 int main() {
 
-  // Initialize Pythia.
-  Pythia pythia;
-  pythia.readFile(&quot;main153.cmnd&quot;);
-  if (!pythia.init()) {
-    cout &lt;&lt; &quot; Pythia failed to initialize.&quot; &lt;&lt; endl;
-    return -1;
+  // The name of the MadGraph5_aMC@NLO executable.
+  // You must prepend this string with the path to the executable
+  // on your local installation, or otherwise make it available.
+  string exe(&quot;mg5_aMC&quot;);
+
+  // Create the histograms.
+  Hist pyPtZ(&quot;Pythia dN/dpTZ&quot;, 100, 0., 100.);
+  Hist mgPtZ(&quot;MadGraph dN/dpTZ&quot;, 100, 0., 100.);
+  Hist amPtZ(&quot;aMC@NLO dN/dpTZ&quot;, 100, 0., 100.);
+
+  // Produce leading-order events with Pythia.
+  {
+    Pythia pythia;
+    pythia.readString(&quot;Beams:eCM = 13000.&quot;);
+    pythia.readString(&quot;WeakSingleBoson:ffbar2gmZ = on&quot;);
+    pythia.readString(&quot;23:onMode = off&quot;);
+    pythia.readString(&quot;23:onIfMatch = -13 13&quot;);
+    pythia.readString(&quot;PhaseSpace:mHatMin = 80.&quot;);
+    // If initialization fails, return with error.
+    if (!run(pythia, pyPtZ, 1000)) return 1;
   }
 
-  // Histograms.
-  Hist multPrim(&quot;n_primary&quot;,   9,  1., 10.);
-  Hist thetaEl(&quot;cos(theta) for 2 -&gt; 2 processes&quot;, 100, -1.,  1.);
-
-  // Generate events and print statistics.
-  int nEvent = pythia.mode(&quot;Main:numberOfEvents&quot;);
-  int nSuccess = 0;
-  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
-
-    if (!pythia.next())
-      continue;
-
-    Event&amp; ev = pythia.event;
-    nSuccess += 1;
-
-    // Fill number of primary hadrons.
-    int nPrimary = 0;
-    for (auto&amp; particle : ev)
-      if (particle.isHadron() &amp;&amp; particle.statusAbs() / 10 == 15)
-        nPrimary += 1;
-    multPrim.fill(nPrimary);
-
-    // Fill theta if scattering is elastic.
-    if (ev.nFinal() == 2) {
-      int in1 = ev[1].id(), in2 = ev[2].id();
-      int out1 = ev[ev.size() - 2].id(), out2 = ev[ev.size() - 1].id();
-
-      if ( (in1 == out1 &amp;&amp; in2 == out2) || (in1 == out2 &amp;&amp; in2 == out1) )
-        thetaEl.fill(cos(ev[ev.size() - 1].theta()));
-    }
+  // Produce leading-order events with MadGraph 5.
+  {
+    Pythia pythia;
+    shared_ptr&lt;LHAupMadgraph&gt; madgraph = make_shared&lt;LHAupMadgraph&gt;(&amp;pythia,
+      true, &quot;madgraphrun&quot;, exe);
+    madgraph-&gt;readString(&quot;generate p p &gt; mu+ mu-&quot;);
+    // Note the need for a blank character before &quot;set&quot;.
+    madgraph-&gt;readString(&quot; set ebeam1 6500&quot;);
+    madgraph-&gt;readString(&quot; set ebeam2 6500&quot;);
+    madgraph-&gt;readString(&quot; set mmll 80&quot;);
+    pythia.setLHAupPtr((LHAupPtr)madgraph);
+    // If initialization fails, return with error.
+    if (!run(pythia, mgPtZ, 1000)) return 1;
   }
 
-  // Plot histograms and statistics.
-  multPrim /= nSuccess;
-  cout &lt;&lt; multPrim;
-
-  if (thetaEl.getEntries() &gt; 0) {
-    thetaEl *= 50. / thetaEl.getEntries();
-    cout &lt;&lt; thetaEl;
+  // Produce next-to-leading-order events with aMC@NLO.
+  {
+    Pythia pythia;
+    shared_ptr&lt;LHAupMadgraph&gt; amcatnlo = make_shared&lt;LHAupMadgraph&gt;(&amp;pythia,
+      true, &quot;amcatnlorun&quot;, exe);
+    amcatnlo-&gt;readString(&quot;generate p p &gt; mu+ mu- [QCD]&quot;);
+    // Note the need for a blank character before &quot;set&quot;.
+    amcatnlo-&gt;readString(&quot; set ebeam1 6500&quot;);
+    amcatnlo-&gt;readString(&quot; set ebeam2 6500&quot;);
+    amcatnlo-&gt;readString(&quot; set mll 80&quot;);
+    pythia.setLHAupPtr((LHAupPtr)amcatnlo);
+    // If initialization fails, return with error.
+    if (!run(pythia, amPtZ, 1000)) return 1;
   }
 
-  pythia.stat();
-
-  // Done.
+  // Print the histograms.
+  cout &lt;&lt; pyPtZ;
+  cout &lt;&lt; mgPtZ;
+  cout &lt;&lt; amPtZ;
   return 0;
 }
 </code></pre></body></html>

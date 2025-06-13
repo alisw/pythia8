@@ -35,45 +35,47 @@ with the appropriate (quasi-)collinear limits.
 <p/><code>mode&nbsp; </code><strong> Vincia:EWmode &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Main switch for QED and Weak showers in VINCIA, in particular for the 
-hard process. (See <code>Vincia:EWmodeMPI</code> below for 
-the handling of QED corrections in MPI systems.) 
+hard process. (See <code>Vincia:QEDmodeMPI</code> below for the 
+handling of QED corrections in MPI systems.) 
 <br/><code>option </code><strong> 0</strong> : No QED or weak showers at all. 
    
 <br/><code>option </code><strong> 1</strong> : Dipole QED showers. Partially coherent, based on 
-maximally screening dipole pairs. 
+maximally screening dipole pairs. Spin-dependent antenna terms can be 
+switched on/off using <code>Vincia:QEDfullKernels</code>, see below. 
    
-<br/><code>option </code><strong> 2</strong> : Multipole QED showers. Fully coherent but somewhat 
-computationally slower than the dipole approximation. 
+<br/><code>option </code><strong> 2</strong> : Multipole QED showers. Fully coherent but 
+computationally slower than the dipole approximation. Spin-dependent 
+antenna terms can be switched on/off using 
+<code>Vincia:QEDfullKernels</code>, see below. 
    
-<br/><code>option </code><strong> 3</strong> : Dipole QED + Weak showers. All electroweak branchings 
-are enabled, comprising emissions, splittings, and 
-self-interactions of W, Z, and H bosons, in addition to QED. 
-Note that the weak shower operates on helicity 
-eigenstates; this is particularly relevant for W and Z 
-bosons for which the longitudinal polarisations have different 
-splitting amplitudes than the transverse ones. Typically, the hard 
-process does not provide helicity information for the in- and outgoing 
-legs in Pythia. In this case, VINCIA will attempt to use its MG5 
-matrix-element interface and its internal EW splitting amplitudes to 
-assign such helicities. 
-Note that this requires Pythia to be configured using the 
-<code>--with-mg5mes</code> option 
-(see also the <a href="SampleMainPrograms.html" target="page">example program</a> 
-<code>main203.cc</code>). If the given hard process is not available 
+<br/><code>option </code><strong> 3</strong> : Dipole QED + Weak showers. All electroweak 
+branchings are enabled, comprising emissions, splittings, and 
+self-interactions of W, Z, and H bosons, in addition to QED. Note 
+that the weak shower operates on helicity eigenstates; this is 
+particularly relevant for W and Z bosons for which the longitudinal 
+polarisations have different splitting amplitudes than the transverse 
+ones. Typically, the hard process does not provide helicity 
+information for the in- and outgoing legs in Pythia. In this case, 
+VINCIA will attempt to use its MG5 matrix-element interface and its 
+internal EW splitting amplitudes to assign such helicities. Note that 
+this requires Pythia to be configured using the 
+<code>--with-mg5mes</code> option (see also the 
+<a href="SampleMainPrograms.html" target="page">example program</a> 
+<code>main404.cc</code>). If the given hard process is not available 
 in the linked MG5 library, or if the helicity assignment fails for any 
 other reason, then the QED dipole shower is used as a fallback. 
    
    
  
 <a name="anchor2"></a>
-<p/><code>mode&nbsp; </code><strong> Vincia:EWmodeMPI &nbsp;</strong> 
+<p/><code>mode&nbsp; </code><strong> Vincia:QEDmodeMPI &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 2</code>)<br/>
-  Treatment of QED showers for MPI systems. Note that 
-  <code>EWmodeMPI</code> is forced to be less than or equal to 
-  the main <code>EWmode</code> switch above so that the treatment of 
-  QED corrections for MPI cannot be more sophisticated than that of 
-  the hard interaction. Also note that there is 
-currently no option to include weak showers for MPI. 
+Treatment of QED showers for MPI systems. Note that 
+<code>QEDmodeMPI</code> is forced to be less than or equal to the main 
+<code>EWmode</code> switch above so that the treatment of QED 
+corrections for MPI cannot be more sophisticated than that of the hard 
+interaction. Also note that there is currently no option to include 
+weak showers for MPI. 
 <br/><code>option </code><strong> 0</strong> : No QED showers in MPI systems. 
    
 <br/><code>option </code><strong> 1</strong> : Dipole QED showers in MPI systems. 
@@ -84,38 +86,50 @@ computationally slower and would normally be overkill for MPI.
    
    
  
+<a name="anchor3"></a>
+<p/><code>mode&nbsp; </code><strong> Vincia:QEDmodeHadDec &nbsp;</strong> 
+ (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 2</code>)<br/>
+When <code>HadronLevel:QED = on</code>, this switch determines whether 
+QED multipole interference effects (similar to YFS) are taken into 
+account or not, for QED showers in hadron and tau decays (with spin 
+dependence according to <code>Vincia:useSpinsQEDHadDec</code>). 
+<br/><code>option </code><strong> 1</strong> : Dipole QED showers in hadron and tau decays. 
+   
+<br/><code>option </code><strong> 2</strong> : Multipole QED showers in hadron and tau decays. 
+   
+   
+ 
 <a name="section1"></a> 
 <h3>QED Shower Settings</h3> 
  
-<a name="anchor3"></a>
+<a name="anchor4"></a>
 <p/><code>mode&nbsp; </code><strong> Vincia:nGammaToQuark &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 6</code>)<br/>
 Number of allowed quark flavours in final-state photon splitting. 
    
  
-<a name="anchor4"></a>
+<a name="anchor5"></a>
 <p/><code>mode&nbsp; </code><strong> Vincia:nGammaToLepton &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
 Number of allowed lepton flavours in final-state photon splitting. 
    
  
-<a name="anchor5"></a>
+<a name="anchor6"></a>
 <p/><code>flag&nbsp; </code><strong> Vincia:convertGammaToQuark &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow incoming photons to backwards-evolve into (anti)quarks during the 
 initial-state shower evolution. 
    
  
-<a name="anchor6"></a>
+<a name="anchor7"></a>
 <p/><code>flag&nbsp; </code><strong> Vincia:convertQuarkToGamma &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 Allow incoming (anti)quarks to backwards-evolve into photons during the 
 initial-state shower evolution. 
    
  
- 
 <h4>The QED coupling in the VINCIA Shower</h4> 
-<a name="anchor7"></a>
+<a name="anchor8"></a>
 <p/><code>mode&nbsp; </code><strong> Vincia:alphaEMorder &nbsp;</strong> 
  (<code>default = <strong>1</strong></code>; <code>minimum = 0</code>; <code>maximum = 1</code>)<br/>
 <br/><code>option </code><strong> 0</strong> : zeroth order, i.e. <i>&alpha;<sub>em</sub></i> is kept 
@@ -125,123 +139,135 @@ fixed.
    
    
  
-<a name="anchor8"></a>
+<a name="anchor9"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:alphaEM0 &nbsp;</strong> 
  (<code>default = <strong>0.00729735</strong></code>; <code>minimum = 0.0072973</code>; <code>maximum = 0.0072974</code>)<br/>
 The <i>alpha_em</i> value at vanishing momentum transfer 
 (and also below <i>m_e</i>). 
    
  
-<a name="anchor9"></a>
+<a name="anchor10"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:alphaEMmZ &nbsp;</strong> 
  (<code>default = <strong>0.00781751</strong></code>; <code>minimum = 0.00780</code>; <code>maximum = 0.00783</code>)<br/>
 The <i>alpha_em</i> value at the <i>M_Z</i> mass scale. 
    
  
 <h4>Lower Cutoffs for the QED evolution</h4> 
-<a name="anchor10"></a>
+<a name="anchor11"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:QminChgQ &nbsp;</strong> 
  (<code>default = <strong>0.5</strong></code>; <code>minimum = 0.1</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off scale for photon coupling to coloured particles. 
    
  
-<a name="anchor11"></a>
+<a name="anchor12"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:QminChgL &nbsp;</strong> 
  (<code>default = <strong>1e-6</strong></code>; <code>minimum = 1e-10</code>; <code>maximum = 2.0</code>)<br/>
 Parton shower cut-off scale for pure QED branchings. Assumed smaller than 
 (or equal to) QminChgQ. 
    
  
-<a name="anchor12"></a>
-<p/><code>flag&nbsp; </code><strong> Vincia:fullWkernel &nbsp;</strong> 
- (<code>default = <strong>on</strong></code>)<br/>
-Switch to incorporate the full antenna function for W radiation. If disabled, 
-a W radiates as if it were a lepton. 
+<a name="anchor13"></a>
+<p/><code>fvec&nbsp; </code><strong> Vincia:useSpinsQED &nbsp;</strong> 
+ (<code>default = <strong>{on, on, on}</strong></code>)<br/>
+Switch to incorporate the full QED antenna functions (<code>on</code>) 
+or just their (spin-independent, YFS-style) scalar eikonal terms 
+(<code>off</code>), for QED in hard processes, resonance decays, and 
+MPI. The first entry switches the spin-dependent collinear terms 
+on/off for spin-1/2 radiators, the second for spin-1 radiators, and 
+the third for spin-3/2 ones. Note that the spin-3/2 case is not fully 
+implemented and currently defaults to use the same terms as the 
+spin-1/2 case. 
    
  
-<a name="anchor13"></a>
+<a name="anchor14"></a>
+<p/><code>fvec&nbsp; </code><strong> Vincia:useSpinsQEDHadDec &nbsp;</strong> 
+ (<code>default = <strong>{on, on, on}</strong></code>)<br/>
+Same as <code>Vincia:useSpinsQED</code> for QED in hadron and tau decays. 
+   
+ 
+<a name="anchor15"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:mMaxGamma &nbsp;</strong> 
  (<code>default = <strong>10.</strong></code>; <code>minimum = 0.001</code>; <code>maximum = 5000.0</code>)<br/>
 Maximum invariant mass allowed for the created fermion pair by photon 
 splitting in the shower. 
    
  
- 
 <a name="section2"></a> 
 <h3>EW Shower Settings</h3> 
  
-<a name="anchor14"></a>
+<a name="anchor16"></a>
 <p/><code>mode&nbsp; </code><strong> Vincia:kineMapEWFinal &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 1</code>; <code>maximum = 3</code>)<br/>
-  Kinematics Map for EW emissions (See <a 
-  href="#kinematics">section on kinematics.</a>) 
-<br/><code>option </code><strong> 1</strong> : The Ariadne angle   
+Kinematics Map for EW emissions (See <a href="#kinematics">section on 
+kinematics.</a>) 
+<br/><code>option </code><strong> 1</strong> : The Ariadne angle.   
 <br/><code>option </code><strong> 2</strong> : Longitudinal (dipole) map.   
 <br/><code>option </code><strong> 3</strong> : The Kosower map.   
    
  
-<a name="anchor15"></a>
+<a name="anchor17"></a>
 <p/><code>flag&nbsp; </code><strong> Vincia:doBosonicInterference &nbsp;</strong> 
  (<code>default = <strong>on</strong></code>)<br/>
 If switched on, apply an event weight to correct for interference 
 between $\gamma/Z_T$ and $h/Z_L$. 
    
  
-<a name="anchor16"></a>
+<a name="anchor18"></a>
 <p/><code>mode&nbsp; </code><strong> Vincia:bwMatchingMode &nbsp;</strong> 
  (<code>default = <strong>2</strong></code>; <code>minimum = 1</code>; <code>maximum = 3</code>)<br/>
 Whenever a resonance is produced as part of the hard process or as 
 part of the electroweak shower, its kinematic mass is distributed 
-according to a Breit-Wigner distribution.  When a shower branching of 
+according to a Breit-Wigner distribution. When a shower branching of 
 a resonance type occurs, the Breit-Wigner-generated mass is replaced 
 with an off-shellness acquired through the shower as normal. 
 Otherwise, it is decayed in a regular $1 \rightarrow 2$ decay process. 
 <br/><code>option </code><strong> 1</strong> : Resonance-type branchings in the shower are 
 disabled. Resonances are instead decayed according to a Breit-Wigner 
-distribution exclusively.   <br/><code>option </code><strong> 2</strong> : A suppression 
-factor $\frac{Q^4}{(Q^2 + Q^2_{\mathrm{EW}})^2} is applied to the 
-resonance decay-type branchings in the shower.  Any resonance that 
-does not disappear due to a shower branching before its 
-Breit-Wigner-sampled off-shellness is instead decayed according to the 
-Breit-Wigner distribution.    <br/><code>option </code><strong> 3</strong> : No 
-off-shellness is sampled from a Breit-Wigner. Only the shower is ran 
-without suppression factor. Does not guarantee that all resonances 
-decay.   
+distribution exclusively. 
    
- 
-<a name="anchor17"></a>
-<p/><code>parm&nbsp; </code><strong> Vincia:EWScale &nbsp;</strong> 
- (<code>default = <strong>100.</strong></code>; <code>minimum = 80.</code>; <code>maximum = 175.</code>)<br/>
-  Determines the value of $Q_\mathrm{EW}$ used 
-  with <code>Vincia:bwMatchingMode = 2</code>. 
+<br/><code>option </code><strong> 2</strong> : A suppression factor $\frac{Q^4}{(Q^2 + 
+Q^2_{\mathrm{EW}})^2} is applied to the resonance decay-type 
+branchings in the shower. Any resonance that does not disappear due to 
+a shower branching before its Breit-Wigner-sampled off-shellness is 
+instead decayed according to the Breit-Wigner distribution. 
    
- 
-<a name="anchor18"></a>
-<p/><code>flag&nbsp; </code><strong> Vincia:EWoverlapVeto &nbsp;</strong> 
- (<code>default = <strong>off</strong></code>)<br/>
-Settings to prevent double counting that may appear when running the 
-QCD and EW showers. 
-For example, configurations with 2 jets and 1 vector boson may be 
-reached by either an EW emission from pure QCD processes 
-or from QCD emissions from V + j processes. 
-If set to true, hard EW emissions off QCD processes and hard QCD 
-emissions off EW processes are vetoed, 
-as determined by the kT algorithm to prevent overlap in all regions of 
-phase space. 
-Note that the current implementation of the overlap veto does not 
-take interleaved resonance decays into account. This switch should 
-therefore only be set to <code>on</code> in conjunction with 
-<code>Vincia:interleaveResDec = off</code>. 
+<br/><code>option </code><strong> 3</strong> : No off-shellness is sampled from a 
+Breit-Wigner. Only the shower is ran without suppression factor. Does 
+not guarantee that all resonances decay. 
+   
    
  
 <a name="anchor19"></a>
+<p/><code>parm&nbsp; </code><strong> Vincia:EWScale &nbsp;</strong> 
+ (<code>default = <strong>100.</strong></code>; <code>minimum = 80.</code>; <code>maximum = 175.</code>)<br/>
+Determines the value of $Q_\mathrm{EW}$ used with 
+<code>Vincia:bwMatchingMode = 2</code>. 
+   
+ 
+<a name="anchor20"></a>
+<p/><code>flag&nbsp; </code><strong> Vincia:EWoverlapVeto &nbsp;</strong> 
+ (<code>default = <strong>off</strong></code>)<br/>
+Settings to prevent double counting that may appear when running the 
+QCD and EW showers. For example, configurations with 2 jets and 1 
+vector boson may be reached by either an EW emission from pure QCD 
+processes or from QCD emissions from V + j processes. If set to true, 
+hard EW emissions off QCD processes and hard QCD emissions off EW 
+processes are vetoed, as determined by the kT algorithm to prevent 
+overlap in all regions of phase space. Note that the current 
+implementation of the overlap veto does not take interleaved resonance 
+decays into account. This switch should therefore only be set to 
+<code>on</code> in conjunction with <code>Vincia:interleaveResDec = 
+off</code>. 
+   
+ 
+<a name="anchor21"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:EWoverlapVetoDeltaR &nbsp;</strong> 
  (<code>default = <strong>0.6</strong></code>; <code>minimum = 0.1</code>)<br/>
 The deltaR parameter used in the kT clustering for the overlap veto 
 algorithm used to avoid double counting. 
    
  
-<a name="anchor20"></a>
+<a name="anchor22"></a>
 <p/><code>flag&nbsp; </code><strong> Vincia:BWstrongOrdering &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 Controls the treatment of resonance production with Breit-Wigner 
@@ -250,14 +276,14 @@ If set to "off", resonances with such offshellness are immediately decayed.
 If set to 'on', the branching that produces the resonance is vetoed. 
    
  
-<a name="anchor21"></a>
+<a name="anchor23"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:EWheadroomF &nbsp;</strong> 
  (<code>default = <strong>1.1</strong></code>; <code>minimum = 1.</code>; <code>maximum = 2.</code>)<br/>
 Multiplicative factor to increase overestimate function for final 
 state electroweak branchings. 
    
  
-<a name="anchor22"></a>
+<a name="anchor24"></a>
 <p/><code>parm&nbsp; </code><strong> Vincia:EWheadroomI &nbsp;</strong> 
  (<code>default = <strong>3</strong></code>; <code>minimum = 1.</code>; <code>maximum = 5.</code>)<br/>
 Multiplicative factor to increase overestimate function for initial 
@@ -266,15 +292,14 @@ state electroweak branchings.
  
 <h4> Overestimate Determination for Electroweak Branchings</h4> 
  
-<p>As there are such a  very large number of electroweak branchings, 
+<p>As there are such a very large number of electroweak branchings, 
 the technical problem of determining the overestimate function (used 
-for generating trial branchings) has been automated. 
-The  overestimate function is first parameterised in terms of four 
-functions; the coefficients of these are then extracted by 
-numerically minimising the difference between the corresponding 
-functional and the branching kernels themselves. The 
-coefficients determined by this procedure are collected in the XML 
-file and are read in during initialisation. 
+for generating trial branchings) has been automated. The overestimate 
+function is first parameterised in terms of four functions; the 
+coefficients of these are then extracted by numerically minimising the 
+difference between the corresponding functional and the branching 
+kernels themselves. The coefficients determined by this procedure are 
+collected in the XML file and are read in during initialisation. 
 </p> 
  
 <!--  <h4>Final EW branchings data</h4> --> 
@@ -1152,4 +1177,4 @@ file and are read in during initialisation.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

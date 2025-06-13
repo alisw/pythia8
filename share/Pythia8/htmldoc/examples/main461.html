@@ -1,0 +1,133 @@
+<html><head><title>main461</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main461</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main461.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#rescattering">Rescattering</a>
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#multiplicities">Multiplicities</a>
+
+// Compare charged multiplicity energy dependence in various treatments,
+// specifically the simplified one used for low-energy collisions in
+// rescattering with the full-fledged standard based on an MPI framework.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Number of events per energy point.
+  int nEvent = 10000;
+
+  // All subprocesses (0), nondiffractive (1) or single diffractive (2).
+  int pick = 1;
+
+  // Histograms.
+  Hist multCh0(&quot;n_charged(e_CM), simple&quot;,      32, 1., 10000., true);
+  Hist multCh1(&quot;n_charged(e_CM), interpolate&quot;, 32, 1., 10000., true);
+  Hist multCh2(&quot;n_charged(e_CM), full MPI&quot;,    32, 1., 10000., true);
+
+  // Loop over the three scenarios at fifteen energies.
+  for (int ic = 0; ic &lt; 3; ++ic) {
+
+    // First scenario: low-energy handling as in rescattering.
+    // Second scenario: variable-energy interpolating description.
+    if (ic &lt; 2) {
+
+      // Create Pythia instance and set it up.
+      Pythia pythia;
+      Event&amp; event = pythia.event;
+      pythia.readString(&quot;Beams:allowVariableEnergy = on&quot;);
+      pythia.readString(&quot;Beams:eCM = 10000.&quot;);
+      // A raised eMinPert recovers the simple framework below new value.
+      if (ic == 0) pythia.readString(&quot;Beams:eMinPert = 9900.&quot;);
+      // Switch on all processes, nondiffractive or single diffractive.
+      if (pick == 0) {
+        pythia.readString(&quot;LowEnergyQCD:all = on&quot;);
+        pythia.readString(&quot;SoftQCD:all = on&quot;);
+      } else if (pick == 1) {
+        pythia.readString(&quot;LowEnergyQCD:nonDiffractive = on&quot;);
+        pythia.readString(&quot;SoftQCD:nonDiffractive = on&quot;);
+      } else {
+        pythia.readString(&quot;LowEnergyQCD:singleDiffractiveXB = on&quot;);
+        pythia.readString(&quot;LowEnergyQCD:singleDiffractiveAX = on&quot;);
+        pythia.readString(&quot;SoftQCD:singleDiffractive = on&quot;);
+      }
+      // If Pythia fails to initialize, exit with error.
+      if (!pythia.init()) return 1;
+
+      // Iterate over thirty energies.
+      for (int ie = 2; ie &lt; 32; ++ie) {
+        double eCM = pow( 10., (ie + 0.5) / 8.);
+        pythia.setKinematics(eCM);
+
+        // Generate events. Update charged multiplicity.
+        long nSuccess = 0;
+        long nCharged = 0;
+        for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+          if (!pythia.next()) continue;
+          ++nSuccess;
+          nCharged += event.nFinal(true);
+        }
+        if (nSuccess == 0);
+        else if (ic == 0) multCh0.fill(eCM, double(nCharged)/double(nSuccess));
+        else              multCh1.fill(eCM, double(nCharged)/double(nSuccess));
+      }
+
+    // Third scenario: full generation energy by energy (only above 10 GeV).
+    } else {
+      for (int ie = 8; ie &lt; 32; ++ie) {
+        double eCM = pow( 10., (ie + 0.5) / 8.);
+
+        // Create Pythia instance and set it up.
+        Pythia pythia;
+        Event&amp; event = pythia.event;
+        if (pick == 0) pythia.readString(&quot;SoftQCD:all = on&quot;);
+        else if (pick == 1)  pythia.readString(&quot;SoftQCD:nonDiffractive = on&quot;);
+        else pythia.readString(&quot;SoftQCD:singleDiffractive = on&quot;);
+        pythia.settings.parm(&quot;Beams:eCM&quot;, eCM);
+
+        // If Pythia fails to initialize, exit with error.
+        if (!pythia.init()) {
+          cout &lt;&lt; &quot;Pythia failed to initialize at eCM [GeV] = &quot; &lt;&lt; eCM &lt;&lt; endl;
+          return 1;
+        }
+
+        // Generate events. Update charged multiplicity.
+        long nSuccess = 0;
+        long nCharged = 0;
+        for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+          if (!pythia.next()) continue;
+          ++nSuccess;
+          nCharged += event.nFinal(true);
+        }
+        multCh2.fill( eCM, double(nCharged) / double(nSuccess) );
+      }
+    }
+  }
+
+  // Plot histograms.
+  cout &lt;&lt; multCh0 &lt;&lt; multCh1 &lt;&lt; multCh2;
+  HistPlot hpl(&quot;plot461&quot;);
+  hpl.frame(&quot;fig461&quot;, &quot;Rise of charged multiplicity with energy&quot;,
+    &quot;eCM&quot;, &quot;&lt;n_charged&gt;&quot;);
+  hpl.add( multCh0, &quot;-&quot;, &quot;low-energy model&quot;);
+  hpl.add( multCh1, &quot;-&quot;, &quot;interpolation&quot;);
+  hpl.add( multCh2, &quot;-&quot;, &quot;high-energy model&quot;);
+  hpl.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

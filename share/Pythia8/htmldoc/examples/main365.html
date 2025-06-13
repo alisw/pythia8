@@ -1,0 +1,190 @@
+<html><head><title>main365</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main365</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main365.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:philten@cern.ch">Philip Ilten</a>
+//            <a href="mailto:naomi.cooke@cern.ch">Naomi Cooke</a>
+//            <a href="mailto:leif.lonnblad@fysik.lu.se">Leif Lonnblad</a>
+//            <a href="mailto:mrenna@fnal.gov">Steve Mrenna</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#onia">Onia</a>
+
+// This calculates the inclusive branching fractions for the Standard Model
+// Higgs into quarkonia using the LETO parton shower.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+// Single-particle gun. The particle must be a colour singlet.
+
+void fillParticle(int id, Event&amp; event, ParticleData&amp; pdt, Rndm&amp; rndm) {
+
+  // Reset event record to allow for new event.
+  event.reset();
+
+  // Select particle mass; where relevant according to Breit-Wigner.
+  double mm = pdt.mSel(id);
+  double ee = mm;
+  double pp = 0.;
+
+  // Angles as input or uniform in solid angle.
+  double cThe = 2. * rndm.flat() - 1.;
+  double sThe = sqrtpos(1. - cThe * cThe);
+  double phi  = 2. * M_PI * rndm.flat();
+
+  // Store the particle in the event record.
+  event.append( id, 1, 0, 0, pp * sThe * cos(phi),
+    pp * sThe * sin(phi), pp * cThe, ee, mm);
+
+}
+
+//==========================================================================
+
+// Print a table.
+
+void printTable(ParticleData &amp;pdt, string title, vector&lt;int&gt; states,
+  vector&lt; pair&lt;string, string&gt; &gt; labels,
+  map&lt;string, map&lt;int, int&gt; &gt; &amp;counters, double scale = 1.,
+  double enhance = 1.) {
+  cout &lt;&lt; &quot;----------------------------------------------------------------\n&quot;
+       &lt;&lt; title + &quot;\n&quot;
+       &lt;&lt; &quot;----------------------------------------------------------------\n&quot;;
+  cout &lt;&lt; setw(7) &lt;&lt; &quot; &quot; &lt;&lt; setw(14) &lt;&lt; left &lt;&lt; &quot; state&quot; &lt;&lt; right;
+  for (auto label : labels) cout &lt;&lt; setw(10) &lt;&lt; label.second;
+  cout &lt;&lt; &quot;\n&quot;;
+  for (int state : states) {
+    cout &lt;&lt; setw(7) &lt;&lt; state &lt;&lt; setw(14) &lt;&lt; left
+         &lt;&lt;  &quot; (&quot; + pdt.name(state) + &quot;)&quot; &lt;&lt; right;
+    for (auto label : labels) {
+      double scaleNow = label.first == &quot;nFDH&quot; ? scale : enhance*scale;
+      if (scale*enhance == 1) cout &lt;&lt; fixed &lt;&lt; setprecision(0);
+      else cout &lt;&lt; scientific &lt;&lt; setprecision(2);
+      cout &lt;&lt; setw(10) &lt;&lt; counters[label.first][state]/scaleNow;
+    }
+    cout &lt;&lt; &quot;\n&quot;;
+  }
+
+}
+
+//==========================================================================
+
+int main() {
+
+  // Generator; shorthand for event and particleData.
+  Pythia pythia;
+  Event&amp; event      = pythia.event;
+  ParticleData&amp; pdt = pythia.particleData;
+
+  // Configure Pythia and initialize.
+  pythia.readFile(&quot;main365.cmnd&quot;);
+  pythia.readString(&quot;ProcessLevel:all = off&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Map of counters for onium production.
+  map&lt;string, map&lt;int, int&gt; &gt; counters = {
+    {&quot;nShower&quot;, {}}, {&quot;nOctet&quot;, {}}, {&quot;nSinglet&quot;, {}}, {&quot;nGluon&quot;, {}},
+    {&quot;nQuark&quot;, {}}, {&quot;nFDO&quot;, {}}, {&quot;nFDH&quot;, {}}, {&quot;nGG&quot;, {}}, {&quot;nCC&quot;, {}},
+    {&quot;nBB&quot;, {}}, {&quot;nVV&quot;, {}}};
+
+  // Begin of event loop.
+  int nEvent = pythia.settings.mode(&quot;Main:numberOfEvents&quot;);
+  int nAcc = 0;
+  bool hasPrintedOnium = false;
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Set up single particle, with random direction in solid angle.
+    fillParticle(25, event, pdt, pythia.rndm);
+
+    // Generate events. Continue if failure.
+    if (!pythia.next()) continue;
+    else nAcc++;
+
+    // Loop over the particles.
+    int nOnia = 0;
+    for (int iPrt = 0; iPrt &lt; event.size(); ++iPrt) {
+
+      // Find the onium (only color singlet states).
+      Particle *oPrt = &amp;event[iPrt];
+      ParticleDataEntry *oPDE = &amp;oPrt-&gt;particleDataEntry();
+      if (!oPDE-&gt;isOnium() || oPDE-&gt;isOctetHadron()) continue;
+
+      // Find the mother and ignore onia from hadronization.
+      int oTop = oPrt-&gt;iTopCopyId();
+      if (event[oTop].mother2() != 0) continue;
+      Particle *mPrt = &amp;event[event[oTop].mother1()];
+      ParticleDataEntry *mPDE = &amp;mPrt-&gt;particleDataEntry();
+
+      // Consider first hadron as mother.
+      while (mPrt-&gt;mother1() &gt; 0 &amp;&amp; event[mPrt-&gt;mother1()].isHadron()) {
+        mPrt = &amp;event[mPrt-&gt;mother1()];
+        mPDE = &amp;mPrt-&gt;particleDataEntry();
+      }
+
+      // Fill the counters.
+      int oID(oPrt-&gt;idAbs());
+      if (!mPDE-&gt;isHadron()) nOnia++;
+
+      // Fill if octet or singlet.
+      if (mPDE-&gt;isOctetHadron())  counters[&quot;nOctet&quot;][oID]++;
+      else if (!mPDE-&gt;isHadron()) counters[&quot;nSinglet&quot;][oID]++;
+
+      // Fill the production mechanism.
+      if      (mPDE-&gt;isGluon())  counters[&quot;nGluon&quot;][oID]++;
+      else if (mPDE-&gt;isQuark())  counters[&quot;nQuark&quot;][oID]++;
+      else if (mPDE-&gt;isOnium())  counters[&quot;nFDO&quot;][oID]++;
+      else if (mPDE-&gt;isHadron()) counters[&quot;nFDH&quot;][oID]++;
+
+      // Fill the Higgs branching; only consider shower production.
+      if (!mPDE-&gt;isHadron()) {
+        counters[&quot;nShower&quot;][oID]++;
+        int pID(event[2].idAbs());
+        if      (pID == 21)              counters[&quot;nGG&quot;][oID]++;
+        else if (pID == 4)               counters[&quot;nCC&quot;][oID]++;
+        else if (pID == 5)               counters[&quot;nBB&quot;][oID]++;
+        else if (pID == 23 || pID == 24) counters[&quot;nVV&quot;][oID]++;
+
+        // Make a printout of first event that contains a shower onium.
+        if (!hasPrintedOnium) {
+          cout &lt;&lt; &quot;\nFirst event with an onium from shower (i = &quot;
+               &lt;&lt; iPrt &lt;&lt; &quot;, id = &quot; &lt;&lt; oPrt-&gt;id() &lt;&lt; &quot;):&quot;
+               &lt;&lt; &quot; iEvent = &quot; &lt;&lt; iEvent &lt;&lt; endl;
+          event.list();
+          hasPrintedOnium = true;
+        }
+
+      }
+    }
+    if (nOnia &gt; 1) cout &lt;&lt; &quot;WARNING: more than one onia found\n&quot;;
+
+    // End of event loop.
+  }
+
+  // Define counters and order of states to print.
+  vector&lt;int&gt; states = {
+    441, 443, 10441, 20443, 445, 551, 553, 100553, 200553, 10551, 20553, 555};
+  vector&lt; pair&lt;string, string&gt; &gt; labels = {
+    {&quot;nFDO&quot;, &quot;FD-onium&quot;}, {&quot;nFDH&quot;, &quot;FD-hadron&quot;}, {&quot;nShower&quot;, &quot;shower&quot;},
+    {&quot;nOctet&quot;, &quot;octet&quot;}, {&quot;nSinglet&quot;, &quot;singlet&quot;}, {&quot;nGluon&quot;, &quot;g-&gt;X1&quot;},
+    {&quot;nQuark&quot;, &quot;Q-&gt;X1&quot;}, {&quot;nGG&quot;, &quot;H-&gt;gg&quot;}, {&quot;nCC&quot;, &quot;H-&gt;gg&quot;}, {&quot;nBB&quot;, &quot;H-&gt;bb&quot;},
+    {&quot;nVV&quot;, &quot;H-&gt;VV&quot;}};
+
+  // Print the tables.
+  printTable(pdt, &quot;raw event counts&quot;, states, labels, counters);
+  printTable(pdt, &quot;branching fractions&quot;, states, labels, counters, nAcc,
+    pythia.settings.parm(&quot;OniaShower:ldmeFac&quot;));
+  return 0;
+
+}
+</code></pre></body></html>

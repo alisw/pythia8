@@ -1,4 +1,4 @@
-// fjcore -- extracted from FastJet v3.4.0 (http://fastjet.fr)
+// fjcore -- extracted from FastJet v3.4.3 (http://fastjet.fr)
 //
 // fjcore constitutes a digest of the main FastJet functionality.
 // The files fjcore.hh and fjcore.cc are meant to provide easy access to these 
@@ -54,7 +54,7 @@
 //FJSTARTHEADER
 // $Id$
 //
-// Copyright (c) 2005-2021, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
+// Copyright (c) 2005-2024, Matteo Cacciari, Gavin P. Salam and Gregory Soyez
 //
 //----------------------------------------------------------------------
 // This file is part of FastJet (fjcore).
@@ -758,7 +758,6 @@ private:
 	      const Coord2D & left_corner, const Coord2D & right_corner,
 	      const unsigned int max_size);
   static const unsigned int _nshift = 3;
-  class Point; // will be defined below
   template<class T> class triplet {
   public:
     inline const T & operator[](unsigned int i) const {return _contents[i];};
@@ -766,6 +765,7 @@ private:
   private:
     T _contents[_nshift];
   };
+  class Point;
   class Shuffle {
   public:
     unsigned int x, y;
@@ -776,6 +776,17 @@ private:
   typedef SearchTree<Shuffle>     Tree;
   typedef Tree::circulator        circulator;
   typedef Tree::const_circulator  const_circulator;
+  class Point {
+  public:
+    Coord2D coord;
+    Point * neighbour;
+    double  neighbour_dist2;
+    triplet<circulator> circ;
+    unsigned int review_flag;
+    double distance2(const Point & other) const {
+      return coord.distance2(other.coord);
+    };
+  };
   triplet<SharedPtr<Tree> >  _trees;
   SharedPtr<MinHeap>     _heap;
   std::vector<Point>     _points;
@@ -796,17 +807,6 @@ private:
   triplet<unsigned int> _shifts;     // absolute shifts
   triplet<unsigned int> _rel_shifts; // shifts relative to previous shift
   unsigned int _cp_search_range;
-};
-class ClosestPair2D::Point {
-public:
-  Coord2D coord;
-  Point * neighbour;
-  double  neighbour_dist2;
-  triplet<circulator> circ;
-  unsigned int review_flag;
-  double distance2(const Point & other) const {
-    return coord.distance2(other.coord);
-  };
 };
 inline bool floor_ln2_less(unsigned x, unsigned y) {
   if (x>y) return false;
@@ -1443,7 +1443,6 @@ void ClusterSequence::_initialise_and_run_no_decant () {
     return;
   } else if (_jet_algorithm == ee_kt_algorithm ||
 	     _jet_algorithm == ee_genkt_algorithm) {
-    _strategy = N2Plain;
     if (_jet_algorithm == ee_kt_algorithm) {
       assert(_Rparam > 2.0); 
       _invR2 = 1.0;
@@ -1455,7 +1454,12 @@ void ClusterSequence::_initialise_and_run_no_decant () {
       }
       _invR2 = 1.0/_R2;
     }
-    _simple_N2_cluster_EEBriefJet();
+    if (_strategy == N2PlainEEAccurate) {
+      _simple_N2_cluster_EEAccurateBriefJet();      
+    } else {
+      _strategy = N2Plain;
+      _simple_N2_cluster_EEBriefJet();
+    }
     return;
   } else if (_jet_algorithm == undefined_jet_algorithm) {
     throw Error("A ClusterSequence cannot be created with an uninitialised JetDefinition");
@@ -1622,6 +1626,8 @@ string ClusterSequence::strategy_string (Strategy strategy_in)  const {
     strategy = "NlnN4pi"; break;
   case N2Plain:
     strategy = "N2Plain"; break;
+  case N2PlainEEAccurate:
+    strategy = "N2PlainEEAccurate"; break;
   case N2Tiled:
     strategy = "N2Tiled"; break;
   case N2MinHeapTiled:
@@ -2144,12 +2150,12 @@ void ClusterSequence::_add_step_to_history (
   int local_step = _history.size()-1;
   assert(parent1 >= 0);
   if (_history[parent1].child != Invalid){
-    throw InternalError("trying to recomine an object that has previsously been recombined");
+    throw InternalError("trying to recombine an object that has previously been recombined");
   }
   _history[parent1].child = local_step;
   if (parent2 >= 0) {
     if (_history[parent2].child != Invalid){
-      throw InternalError("trying to recomine an object that has previsously been recombined");
+      throw InternalError("trying to recombine an object that has previously been recombined");
     }
     _history[parent2].child = local_step;
   }
@@ -2644,6 +2650,10 @@ template<> inline void ClusterSequence::_bj_set_jetinfo(
   jetA->NN_dist = _R2;
   jetA->NN      = NULL;
 }
+template<> inline void ClusterSequence::_bj_set_jetinfo(
+                           EEAccurateBriefJet * const jetA, const int _jets_index) const {
+  _bj_set_jetinfo<EEBriefJet>(jetA, _jets_index);
+}
 template<> double ClusterSequence::_bj_dist(
                 const EEBriefJet * const jeta, 
                 const EEBriefJet * const jetb) const {
@@ -2651,14 +2661,32 @@ template<> double ClusterSequence::_bj_dist(
     - jeta->nx*jetb->nx
     - jeta->ny*jetb->ny
     - jeta->nz*jetb->nz;
-  dist *= 2; // distance is _2_*min(Ei^2,Ej^2)*(1-cos theta)
-  return dist;
+  return dist*2; // distance is _2_*min(Ei^2,Ej^2)*(1-cos theta)
+}
+template<> double ClusterSequence::_bj_dist(
+                const EEAccurateBriefJet * const jeta, 
+                const EEAccurateBriefJet * const jetb) const {
+  double dist = 1.0 
+    - jeta->nx*jetb->nx
+    - jeta->ny*jetb->ny
+    - jeta->nz*jetb->nz;
+  if (dist*dist < numeric_limits<double>::epsilon()) {
+    double cross_x = jeta->ny * jetb->nz - jetb->ny * jeta->nz;
+    double cross_y = jeta->nz * jetb->nx - jetb->nz * jeta->nx;
+    double cross_z = jeta->nx * jetb->ny - jetb->nx * jeta->ny;
+    dist = cross_x*cross_x + cross_y*cross_y + cross_z*cross_z;
+    return dist;
+  }
+  return dist*2; // distance is _2_*min(Ei^2,Ej^2)*(1-cos theta)
 }
 void ClusterSequence::_simple_N2_cluster_BriefJet() {  
   _simple_N2_cluster<BriefJet>();
 }
 void ClusterSequence::_simple_N2_cluster_EEBriefJet() {  
   _simple_N2_cluster<EEBriefJet>();
+}
+void ClusterSequence::_simple_N2_cluster_EEAccurateBriefJet() {  
+  _simple_N2_cluster<EEAccurateBriefJet>();
 }
 FJCORE_END_NAMESPACE
 #include <iostream>
@@ -3797,16 +3825,9 @@ PseudoJet::PseudoJet(const double px_in, const double py_in, const double pz_in,
 PseudoJet & PseudoJet::operator=(const PseudoJet & other_pj){
   _structure = other_pj._structure;
   _user_info = other_pj._user_info;
-  _kt2 = other_pj._kt2; 
   _cluster_hist_index = other_pj._cluster_hist_index;
   _user_index = other_pj._user_index;
-  _px = other_pj._px;
-  _py = other_pj._py;
-  _pz = other_pj._pz;
-  _E  = other_pj._E;
-  _phi = other_pj._phi; 
-  _rap = other_pj._rap;
-  _init_status.store(other_pj._init_status);
+  reset_momentum(other_pj);
   return *this;
 }
 #endif // FJCORE_HAVE_THREAD_SAFETY
@@ -3826,13 +3847,9 @@ void PseudoJet::_ensure_valid_rap_phi() const{
                                              std::memory_order_seq_cst,
                                              std::memory_order_relaxed)){
       _set_rap_phi();
-      _init_status = Init_Done; // can safely be done after all physics varlables are set
+      _init_status.store(Init_Done, memory_order_release); 
     } else {
-      do{
-        expected = Init_Done;
-      } while (!_init_status.compare_exchange_weak(expected, Init_Done,
-                                                   std::memory_order_relaxed,
-                                                   std::memory_order_relaxed));
+      while (_init_status.load(memory_order_acquire) != Init_Done);
     }
   }
 }
@@ -3883,9 +3900,9 @@ double PseudoJet::operator () (int i) const {
 double PseudoJet::pseudorapidity() const {
   if (px() == 0.0 && py() ==0.0) return MaxRap;
   if (pz() == 0.0) return 0.0;
-  double thetaCalc = atan(perp()/pz());
-  if (thetaCalc < 0) thetaCalc += pi;
-  return -log(tan(thetaCalc/2));
+  double theta = atan(perp()/pz());
+  if (theta < 0) theta += pi;
+  return -log(tan(theta/2));
 }
 PseudoJet operator+ (const PseudoJet & jet1, const PseudoJet & jet2) {
   return PseudoJet(jet1.px()+jet2.px(),

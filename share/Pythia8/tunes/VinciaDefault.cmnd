@@ -1,0 +1,47 @@
+! Vincia tune, April 2020.
+! Z fractions in string breaks
+StringZ:aLund                       = 0.45 
+StringZ:bLund                       = 0.80 
+StringZ:aExtraDiquark               = 0.90 
+! Z fractions for heavy quarks
+StringZ:rFactC                      = 1.15 
+StringZ:rFactB                      = 0.85 
+! pT in string breaks
+StringPT:sigma                      = 0.305
+StringPT:enhancedFraction=0.01
+StringPT:enhancedWidth              = 2.0
+! String breakup flavour parameters
+StringFlav:probStoUD                = 0.205
+StringFlav:mesonUDvector            = 0.42 
+StringFlav:mesonSvector             = 0.53 
+StringFlav:mesonCvector             = 1.3  
+StringFlav:mesonBvector             = 2.2  
+StringFlav:probQQtoQ                = 0.077
+StringFlav:probSQtoQQ               = 1.0  
+StringFlav:probQQ1toQQ0             = 0.025
+StringFlav:etaSup                   = 0.5  
+StringFlav:etaPrimeSup              = 0.1  
+StringFlav:decupletSup              = 1.0  
+StringFlav:popcornSpair             = 0.75 
+StringFlav:popcornSmeson            = 0.75 
+! Primordial kT
+BeamRemnants:primordialKThard       = 0.4 
+BeamRemnants:primordialKTsoft       = 0.25
+! MB/UE tuning parameters (MPI)
+! Use a "low" alphaS and 2-loop running everywhere, also for MPI
+SigmaProcess:alphaSvalue            = 0.119
+SigmaProcess:alphaSorder            = 2
+MultiPartonInteractions:alphaSvalue=0.119
+MultiPartonInteractions:alphaSorder = 2
+MultiPartonInteractions:pT0ref      = 2.24
+MultiPartonInteractions:expPow      = 1.75
+MultiPartonInteractions:ecmPow      = 0.21
+! Use PYTHIA 8's baseline CR model
+ColourReconnection:reconnect        = true
+ColourReconnection:range            = 1.75
+! Diffraction: switch off Pythia's perturbative MPI
+! (colours in diffractive systems not yet handled by Vincia)
+Diffraction:mMinPert                = 1000000.0
+
+! Reproduce hadronization behavior of the Pythia version used for this tune.
+StringZ:useOldAExtra                = on

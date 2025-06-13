@@ -1,5 +1,5 @@
 // MergingHooks.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -173,7 +173,8 @@ public:
     doMGMergingSave(false),
     doKTMergingSave(false),
     doPTLundMergingSave(false),
-    doCutBasedMergingSave(false), includeMassiveSave(),
+    doCutBasedMergingSave(false),
+    doDynamicMergingSave(false), includeMassiveSave(),
     enforceStrongOrderingSave(),
     orderInRapiditySave(), pickByFullPSave(), pickByPoPT2Save(),
     includeRedundantSave(), pickBySumPTSave(), allowColourShufflingSave(),
@@ -196,7 +197,8 @@ public:
     doRuntimeAMCATNLOInterfaceSave(false),
     applyVeto(),
     doRemoveDecayProducts(false), muMISave(), kFactor0jSave(), kFactor1jSave(),
-    kFactor2jSave(), tmsValueSave(), tmsValueNow(), DparameterSave(),
+    kFactor2jSave(), tmsValueSave(), tmsValueNow(),
+    DparameterSave(), SparameterSave(),
     nJetMaxSave(), nJetMaxNLOSave(),
     doOrderHistoriesSave(true),
     doCutOnRecStateSave(false),
@@ -285,8 +287,15 @@ public:
     else return tmsValueNow;
   }
   double tmsCut() {
-    if(doCutBasedMergingSave) return 0.;
-    else return tmsValueSave;
+    if (doCutBasedMergingSave) return 0.;
+    if (doDynamicMergingSave) {
+      // Fetch fixed merging cut and factorisation scale.
+      const double QbarCut = tmsValueSave;
+      const double Q2      = infoPtr->Q2DIS();
+      // Calculate dynamic merging scale, cf. eq. (2) in arXiv:0912.3715.
+      return QbarCut/sqrt(1. + pow2(QbarCut/SparameterSave)/Q2);
+    }
+    return tmsValueSave;
   }
   void tms( double tmsIn ) { tmsValueNow = tmsIn; }
 
@@ -338,8 +347,11 @@ public:
   bool doPTLundMerging() { return doPTLundMergingSave;}
   // Function to determine if cut based merging should be applied.
   bool doCutBasedMerging() { return doCutBasedMergingSave;}
+  // Function to determine if merging with dynamic scale should be applied.
+  bool doDynamicMerging() { return doDynamicMergingSave;}
   bool doCKKWLMerging() { return (doUserMergingSave || doMGMergingSave
-    || doKTMergingSave || doPTLundMergingSave || doCutBasedMergingSave); }
+      || doKTMergingSave || doPTLundMergingSave || doCutBasedMergingSave
+      || doDynamicMergingSave); }
   // Functions to determine if and which part of  UMEPS merging
   // should be applied
   bool doUMEPSTree() { return doUMEPSTreeSave;}
@@ -451,13 +463,11 @@ public:
 
   // Flag to indicate trial shower usage.
   void doIgnoreEmissions( bool doIgnoreIn ) {
-    doIgnoreEmissionsSave = doIgnoreIn;
-  }
+    doIgnoreEmissionsSave = doIgnoreIn;}
   // Function to allow not counting a trial emission.
   virtual bool canVetoEmission() { return !doIgnoreEmissionsSave; }
   // Function to check if emission should be rejected.
   virtual bool doVetoEmission( const Event& );
-  virtual bool usesVincia() {return false;}
 
   //----------------------------------------------------------------------//
   // Functions used as clusterings / probabilities
@@ -465,6 +475,7 @@ public:
 
   bool useShowerPluginSave;
   virtual bool useShowerPlugin() { return useShowerPluginSave; }
+  virtual bool usesVincia() {return false;}
 
   //----------------------------------------------------------------------//
   // Functions to retrieve if merging weight should countin the internal
@@ -513,7 +524,7 @@ public:
 
   // Flags for merging procedure definition.
   bool   doUserMergingSave, doMGMergingSave, doKTMergingSave,
-         doPTLundMergingSave, doCutBasedMergingSave,
+         doPTLundMergingSave, doCutBasedMergingSave, doDynamicMergingSave,
          includeMassiveSave, enforceStrongOrderingSave, orderInRapiditySave,
          pickByFullPSave, pickByPoPT2Save, includeRedundantSave,
          pickBySumPTSave, allowColourShufflingSave, resetHardQRenSave,
@@ -555,7 +566,7 @@ public:
   double kFactor2jSave;
 
   // Saved members.
-  double tmsValueSave, tmsValueNow, DparameterSave;
+  double tmsValueSave, tmsValueNow, DparameterSave, SparameterSave;
   int nJetMaxSave;
   int nJetMaxNLOSave;
 

@@ -1,5 +1,5 @@
 // ColourReconnection.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -57,8 +57,13 @@ public:
   vector<weak_ptr<ColourDipole> > colDips, acolDips;
   double p1p2;
 
+  // Information for caching dipole momentum.
+  Pythia8::Vec4 dipoleMomentum;
+  int ciCol{-1}, ciAcol{-1};
+  bool pCalculated{false};
+
   // Printing function, mainly intended for debugging.
-  void list();
+  void list() const;
   long index{0};
 
 };
@@ -94,7 +99,7 @@ public:
   void setColDip(int i, ColourDipolePtr dip) {dips[i] = dip;}
   ColourDipolePtr dips[3];
   ColourDipolePtr dipsOrig[3];
-  void list();
+  void list() const;
 
 };
 
@@ -176,8 +181,9 @@ public:
   bool init();
 
   // New beams possible for handling of hard diffraction.
-  void reassignBeamPtrs( BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn)
-    {beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn;}
+  void reassignBeamPtrs( BeamParticle* beamAPtrIn,
+    BeamParticle* beamBPtrIn) {
+    beamAPtr = beamAPtrIn; beamBPtr = beamBPtrIn;}
 
   // Do colour reconnection for current event.
   bool next( Event & event, int oldSize);
@@ -224,7 +230,7 @@ private:
   vector<ColourParticle> particles;
   vector<TrialReconnection> junTrials, dipTrials;
   vector<vector<int> > iColJun;
-  map<int,double> formationTimes;
+  vector<double> formationTimes;
 
   // This is only to access the function call junctionRestFrame.
   StringFragmentation stringFragmentation;
@@ -236,20 +242,20 @@ private:
   bool nextNew( Event & event, int oldSize);
 
   // Simple test swap between two dipoles.
-  void swapDipoles(ColourDipolePtr dip1, ColourDipolePtr dip2,
+  void swapDipoles(ColourDipolePtr& dip1, ColourDipolePtr& dip2,
     bool back = false);
 
   // Setup the dipoles.
   void setupDipoles( Event& event, int iFirst = 0);
 
   // Form pseuparticle of a given dipole (or junction system).
-  void makePseudoParticle(ColourDipolePtr dip, int status,
+  void makePseudoParticle(ColourDipolePtr& dip, int status,
     bool setupDone = false);
 
   // Find the indices in the particle list of the junction and also their
   // respectively leg numbers.
-  bool getJunctionIndices(ColourDipolePtr dip, int &iJun, int &i0, int &i1,
-    int &i2, int &junLeg0, int &junLeg1, int &junLeg2);
+  bool getJunctionIndices(const ColourDipolePtr& dip, int &iJun, int &i0,
+    int &i1, int &i2, int &junLeg0, int &junLeg1, int &junLeg2) const;
 
   // Form all possible pseudoparticles.
   void makeAllPseudoParticles(Event & event, int iFirst = 0);
@@ -257,20 +263,21 @@ private:
   // Update all colours in the event.
   void updateEvent( Event& event, int iFirst = 0);
 
-  double calculateStringLength( ColourDipolePtr dip,
+  double calculateStringLength( const ColourDipolePtr& dip,
     vector<ColourDipolePtr> & dips);
 
   // Calculate the string length for two event indices.
-  double calculateStringLength( int i, int j);
+  double calculateStringLength( int i, int j) const;
 
   // Calculate the length of a single junction
   // given the 3 entries in the particle list.
-  double calculateJunctionLength(int i, int j, int k);
+  double calculateJunctionLength(const int i, const int j, const int k) const;
 
   // Calculate the length of a double junction,
   // given the 4 entries in the particle record.
   // First two are expected to be the quarks and second two the anti quarks.
-  double calculateDoubleJunctionLength( int i, int j, int k, int l);
+  double calculateDoubleJunctionLength( const int i, const int j, const int k,
+    const int l) const;
 
   // Find all the particles connected in the junction.
   // If a single junction, the size of iParticles should be 3.
@@ -279,29 +286,29 @@ private:
     vector<bool> &usedJuns, int &nJuns, vector<ColourDipolePtr> &dips);
 
   // Do a single trial reconnection.
-  void singleReconnection( ColourDipolePtr dip1, ColourDipolePtr dip2);
+  void singleReconnection( ColourDipolePtr& dip1, ColourDipolePtr& dip2);
 
   // Do a single trial reconnection to form a junction.
-  void singleJunction(ColourDipolePtr dip1, ColourDipolePtr dip2);
+  void singleJunction(ColourDipolePtr& dip1, ColourDipolePtr& dip2);
 
   // Do a single trial reconnection to form a junction.
-  void singleJunction(ColourDipolePtr dip1, ColourDipolePtr dip2,
-    ColourDipolePtr dip3);
+  void singleJunction(const ColourDipolePtr& dip1, const ColourDipolePtr& dip2,
+    const ColourDipolePtr& dip3);
 
   // Print the chain containing the dipole.
-  void listChain(ColourDipolePtr dip);
+  void listChain(ColourDipolePtr& dip);
 
   // Print all the chains.
   void listAllChains();
 
   // Print dipoles, intended for debuggning purposes.
-  void listDipoles( bool onlyActive = false, bool onlyReal = false);
+  void listDipoles( bool onlyActive = false, bool onlyReal = false) const;
 
   // Print particles, intended for debugging purposes.
-  void listParticles();
+  void listParticles() const;
 
   // Print junctions, intended for debugging purposes.
-  void listJunctions();
+  void listJunctions() const;
 
   // Check that the current dipole setup is consistent. Debug purpose only.
   void checkDipoles();
@@ -310,20 +317,21 @@ private:
   void checkRealDipoles(Event& event, int iFirst);
 
   // Calculate the invariant mass of a dipole.
-  double mDip(ColourDipolePtr dip);
+  double mDip(const ColourDipolePtr& dip) const;
 
   // Find a vertex of the (anti)-colour side of the dipole. If
   // connected to a junction, recurse using the other junction
   // dipoles.
-  Vec4 getVProd(ColourDipolePtr dip, bool anti) const;
+  Vec4 getVProd(const ColourDipolePtr& dip, bool anti) const;
 
   // Find an average vertex of the (anti)-colour sides of the dipoles
   // connected to the given junction (not incuding the given dipole).
-  Vec4 getVProd(int iJun, ColourDipolePtr dip, bool anti) const;
+  Vec4 getVProd(int iJun, const ColourDipolePtr& dip, bool anti) const;
 
   // Check that the distance between the impact parameter centers of
   // the dipoles are within the allowed range of dipMaxDist.
-  bool checkDist(ColourDipolePtr dip1, ColourDipolePtr dip2);
+  bool checkDist(const ColourDipolePtr& dip1, const ColourDipolePtr& dip2)
+    const;
 
   // Find the neighbour to anti colour side. Return false if the dipole is
   // connected to a junction or the new particle has a junction inside of it.
@@ -349,11 +357,12 @@ private:
   bool doTripleJunctionTrial(Event& event, TrialReconnection& juncTrial);
 
   // Calculate the difference between the old and new lambda.
-  double getLambdaDiff(ColourDipolePtr dip1, ColourDipolePtr dip2,
-    ColourDipolePtr dip3, ColourDipolePtr dip4, int mode);
+  double getLambdaDiff(const ColourDipolePtr& dip1,
+    const ColourDipolePtr& dip2, const ColourDipolePtr& dip3,
+    const ColourDipolePtr& dip4, const int mode) const;
 
   // Calculate the difference between the old and new lambda (dipole swap).
-  double getLambdaDiff(ColourDipolePtr dip1, ColourDipolePtr dip2);
+  double getLambdaDiff(ColourDipolePtr& dip1, ColourDipolePtr& dip2);
 
   // Update the list of dipole trial swaps to account for latest swap.
   void updateDipoleTrials();
@@ -362,18 +371,20 @@ private:
   void updateJunctionTrials();
 
   // Check whether up to four dipoles are 'causally' connected.
-  bool checkTimeDilation(ColourDipolePtr dip1 = 0, ColourDipolePtr dip2 = 0,
-    ColourDipolePtr dip3 = 0, ColourDipolePtr dip4 = 0);
+  bool checkTimeDilation(const ColourDipolePtr& dip1 = 0,
+    const ColourDipolePtr& dip2 = 0, const ColourDipolePtr& dip3 = 0,
+    const ColourDipolePtr& dip4 = 0) const;
 
   // Check whether two four momenta are casually connected.
-  bool checkTimeDilation(Vec4 p1, Vec4 p2, double t1, double t2);
+  bool checkTimeDilation(const Vec4& p1, const Vec4& p2, const double t1,
+    const double t2) const;
 
   // Find the momentum of the dipole.
-  Vec4 getDipoleMomentum(ColourDipolePtr dip);
+  Vec4 getDipoleMomentum(const ColourDipolePtr& dip) const;
 
   // Find all particles connected to a junction system (particle list).
-  void addJunctionIndices(int iSinglePar, vector<int> &iPar,
-    vector<int> &usedJuncs);
+  void addJunctionIndices(const int iSinglePar, set<int> &iPar,
+    set<int> &usedJuncs) const;
 
   // Find all the formation times.
   void setupFormationTimes( Event & event);
@@ -382,8 +393,8 @@ private:
   double getJunctionMass(Event & event, int col);
 
   // Find all particles connected to a junction system (event list).
-  void addJunctionIndices(Event & event, int iSinglePar,
-    vector<int> &iPar, vector<int> &usedJuncs);
+  void addJunctionIndices(const Event & event, const int iSinglePar,
+    set<int> &iPar, set<int> &usedJuncs) const;
 
   // The old MPI-based scheme.
   bool reconnectMPIs( Event& event, int oldSize);

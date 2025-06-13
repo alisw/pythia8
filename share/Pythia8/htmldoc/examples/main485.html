@@ -1,0 +1,132 @@
+<html><head><title>main485</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main485</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main485.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#cosmic+ray+cascade">Cosmic&nbsp;ray&nbsp;cascade</a>
+//            <a href="../ExampleKeywords.html#switch+beam">Switch&nbsp;beam</a>
+//            <a href="../ExampleKeywords.html#switch+collision+energy">Switch&nbsp;collision&nbsp;energy</a>
+
+// This example is based on work from Eur. Phys. J. C82 (2022) 21 and
+// arXiv:2108.03481 [hep-ph]. This program illustrates how the
+// PythiaCascade class can be called for an interaction or a decay,
+// with properties as provided by the user.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/PythiaCascade.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// The main program tests both the collision and decay possibilities,
+// using four slightly different setups to illustrate variability.
+
+int main() {
+
+  // Basic parameter choices. Includes beam, target and decaying particle.
+  double eMax      = 1e8;
+  double smallTau0 = 1e-10;
+  int    nEvent    = 1000;
+  int    nList     = 1;
+  int    idHad     = 321;
+  int    Ztarg     = 18;
+  int    Atarg     = 40;
+  int    idDec     = 4122;
+
+  // Histograms for number of subcollisions or final particles.
+  Hist nhA( &quot;number of subcollisions&quot;, 40, 0.5, 40.5);
+  Hist nFin(&quot;number of final decay particles&quot;, 20, 0.5, 20.5);
+
+  // Main features of four subruns, illustrating variability.
+  for (int subrun = 0; subrun &lt; 4; ++subrun) {
+    bool listFinal   = (subrun &gt; 1);
+    bool rapidDecays = (subrun%2 == 1);
+
+    // Set up Pythia wrapper.
+    // Reuse of MPI data is here implicitly accepted.
+    PythiaCascade pythiaCascade;
+
+    // If any of the underlying Pythia objects fail to initialize,
+    // return with error.
+    if (!pythiaCascade.init( eMax, listFinal, rapidDecays, smallTau0))
+      return 1;
+
+    // Event loop.
+    for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+      // Test 1 : collision with fixed-target nucleus.
+      // Set up incoming particle.
+      double mHad  = pythiaCascade.particleData().m0(idHad);
+      double pzHad = eMax * pythiaCascade.rndm().flat();
+      double eHad  = sqrt( mHad * mHad + pzHad * pzHad);
+      Vec4   pHad( 0., 0., pzHad, eHad);
+
+      // Cross section for various target nucleons. Print for first event.
+      pythiaCascade.sigmaSetuphN( idHad, pHad, mHad);
+      if (subrun == 0 &amp;&amp; iEvent &lt; nList) {
+        cout &lt;&lt; &quot; Cross sections for incoming K+ on various targets for E = &quot;
+             &lt;&lt; scientific &lt;&lt; setprecision(3) &lt;&lt; eHad &lt;&lt; fixed &lt;&lt; endl;
+        cout &lt;&lt; &quot; p : &quot; &lt;&lt; setw(8) &lt;&lt; pythiaCascade.sigmahA( 1) &lt;&lt; endl;
+        cout &lt;&lt; &quot; N : &quot; &lt;&lt; setw(8) &lt;&lt; pythiaCascade.sigmahA(14) &lt;&lt; endl;
+        cout &lt;&lt; &quot; O : &quot; &lt;&lt; setw(8) &lt;&lt; pythiaCascade.sigmahA(16) &lt;&lt; endl;
+        cout &lt;&lt; &quot; Ar: &quot; &lt;&lt; setw(8) &lt;&lt; pythiaCascade.sigmahA(40) &lt;&lt; endl;
+      }
+
+      // Generate event. Skip empty = aborted event. List first event.
+      Event&amp; eventColl = pythiaCascade.nextColl( Ztarg, Atarg);
+      if (eventColl.size() == 0) continue;
+      if (iEvent &lt; nList) eventColl.list();
+
+      // Count number of subcollisions. Only meaningful if history remains.
+      if (!listFinal) {
+        int nSub = 0;
+        for (int i = 1; i &lt; eventColl.size(); ++i)
+          if (eventColl[i].status() == -181 || eventColl[i].status() == -182)
+            ++nSub;
+        nhA.fill( nSub);
+      }
+
+      // Test 2: decay of given particle.
+      // Set up decaying particle. Random momentum and decay vertex.
+      double mDec  = pythiaCascade.particleData().m0(idDec);
+      double pxDec = 10. * pythiaCascade.rndm().flat() - 5.;
+      double pyDec = 10. * pythiaCascade.rndm().flat() - 5.;
+      double pzDec = 1000. * pythiaCascade.rndm().flat();
+      double eDec  = sqrt(pxDec*pxDec + pyDec*pyDec + pzDec*pzDec + mDec*mDec);
+      Vec4   pDec( pxDec, pyDec, pzDec, eDec);
+      Vec4   vDec( pythiaCascade.rndm().flat(), pythiaCascade.rndm().flat(),
+                   pythiaCascade.rndm().flat(), pythiaCascade.rndm().flat());
+
+      // Generate decay. List first event, including production vertices.
+      Event&amp; eventDec = pythiaCascade.nextDecay( idDec, pDec, mDec, vDec);
+      if (eventDec.size() == 0) continue;
+      if (iEvent &lt; nList) eventDec.list( true);
+
+      // Count final multiplicity. Only done when secondary decays included.
+      if (rapidDecays) {
+        int nFinal = 0;
+        for (int i = 1; i &lt; eventDec.size(); ++i)
+          if (eventDec[i].isFinal()) ++nFinal;
+        nFin.fill( nFinal);
+      }
+
+    // End event loop. Error statistics. End subrun loop.
+    }
+    pythiaCascade.stat();
+  }
+
+  // Histogram printout. Done.
+  cout &lt;&lt; nhA &lt;&lt; nFin;
+}
+</code></pre></body></html>

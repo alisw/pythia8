@@ -1,5 +1,5 @@
 // DireSplitingsEW.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -70,7 +70,7 @@ double DireSplittingEW::aem2Pi( double pT2 ) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_Q2QZ::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   int nFinPartons(0), nFinQ(0), nFinOther(0);
   for(int i=0; i < state.size(); ++i) {
     if (!state[i].isFinal()) continue;
@@ -202,7 +202,7 @@ bool Dire_fsr_ew_Q2QZ::calc(const Event& state, int orderNow) {
       DireHistory myHistory( nSteps, 0.0, newProcess, DireClustering(),
         fsr->mergingHooksPtr, (*beamAPtr), (*beamBPtr), particleDataPtr,
         infoPtr,
-        NULL, fsr, isr, fsr->weights, coupSMPtr, true, true,
+        nullptr, fsr, isr, fsr->weights, coupSMPtr, true, true,
         1.0, 1.0, 1.0, 1.0, 0);
       // Project histories onto desired branches, e.g. only ordered paths.
       myHistory.projectOntoDesiredHistories();
@@ -267,7 +267,7 @@ bool Dire_fsr_ew_Q2QZ::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_Q2ZQ::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   int nFinPartons(0), nFinQ(0), nFinOther(0);
   for(int i=0; i < state.size(); ++i) {
     if (!state[i].isFinal()) continue;
@@ -398,7 +398,7 @@ bool Dire_fsr_ew_Q2ZQ::calc(const Event& state, int orderNow) {
       DireHistory myHistory( nSteps, 0.0, newProcess, DireClustering(),
         fsr->mergingHooksPtr, (*beamAPtr), (*beamBPtr), particleDataPtr,
         infoPtr,
-        NULL, fsr, isr, fsr->weights, coupSMPtr, true, true,
+        nullptr, fsr, isr, fsr->weights, coupSMPtr, true, true,
         1.0, 1.0, 1.0, 1.0, 0);
       // Project histories onto desired branches, e.g. only ordered paths.
       myHistory.projectOntoDesiredHistories();
@@ -463,7 +463,7 @@ bool Dire_fsr_ew_Q2ZQ::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_Z2QQ1::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 23 );
 }
@@ -584,7 +584,7 @@ bool Dire_fsr_ew_Z2QQ1::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_Z2QQ2::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 23 );
 }
@@ -705,7 +705,7 @@ bool Dire_fsr_ew_Z2QQ2::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_W2QQ1::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 24 );
 }
@@ -794,7 +794,7 @@ bool Dire_fsr_ew_W2QQ1::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_H2AA::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 25 );
 }
@@ -806,7 +806,7 @@ double Dire_fsr_ew_H2AA::coupling (double, double, double, double,
 }
 
 bool Dire_fsr_ew_H2AA::canRadiate ( const Event& state, int iRadBef,
-  int, Settings*, PartonSystems*, BeamParticle*){
+  int, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal() && state[iRadBef].id() == 25);
 }
 
@@ -923,7 +923,7 @@ bool Dire_fsr_ew_H2AA::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_H2GG::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 25 );
 }
@@ -935,7 +935,7 @@ double Dire_fsr_ew_H2GG::coupling (double, double, double, double,
 }
 
 bool Dire_fsr_ew_H2GG::canRadiate ( const Event& state, int iRadBef,
-  int, Settings*, PartonSystems*, BeamParticle*){
+  int, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal() && state[iRadBef].id() == 25);
 }
 
@@ -1054,7 +1054,7 @@ bool Dire_fsr_ew_H2GG::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_H2WW::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 25 );
 }
@@ -1163,7 +1163,7 @@ bool Dire_fsr_ew_H2WW::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_W2QQ2::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool>, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 24 );
 }
@@ -1249,7 +1249,8 @@ bool Dire_fsr_ew_W2QQ2::calc(const Event& state, int orderNow) {
 
 // Return true if this kernel should partake in the evolution.
 bool Dire_fsr_ew_W2WA::canRadiate ( const Event& state, pair<int,int> ints,
-  unordered_map<string,bool> bools, Settings*, PartonSystems*, BeamParticle*){
+  unordered_map<string,bool> bools, Settings*, PartonSystems*,
+  BeamParticle*) {
   return ( state[ints.first].isFinal()
         && state[ints.first].idAbs() == 24
         && state[ints.second].isCharged()
@@ -1257,7 +1258,7 @@ bool Dire_fsr_ew_W2WA::canRadiate ( const Event& state, pair<int,int> ints,
 }
 
 bool Dire_fsr_ew_W2WA::canRadiate ( const Event& state, int iRadBef,
-  int iRecBef, Settings*, PartonSystems*, BeamParticle*){
+  int iRecBef, Settings*, PartonSystems*, BeamParticle*) {
   return ( state[iRadBef].isFinal()
         && state[iRadBef].idAbs() == 24
         && state[iRecBef].isCharged()
@@ -1557,7 +1558,7 @@ bool Dire_isr_ew_Q2QZ::calc(const Event& state, int orderNow) {
       DireHistory myHistory( nSteps, 0.0, newProcess, DireClustering(),
         isr->mergingHooksPtr, (*beamAPtr), (*beamBPtr), particleDataPtr,
         infoPtr,
-        NULL, fsr, isr, isr->weights, coupSMPtr, true, true,
+        nullptr, fsr, isr, isr->weights, coupSMPtr, true, true,
         1.0, 1.0, 1.0, 1.0, 0);
       // Project histories onto desired branches, e.g. only ordered paths.
       myHistory.projectOntoDesiredHistories();

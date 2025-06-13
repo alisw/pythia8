@@ -1,5 +1,5 @@
 // SigmaTotal.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -205,7 +205,7 @@ bool SigmaTotal::calc(int idA, int idB, double eCM) {
   ispp = (idAbsA == 2212 && idAbsB == 2212 && idA * idB > 0);
 
   // Set up pointer to class that handles total and elastic cross sections.
-  if (modeTotElOld != modeTotElNow || sigTotElPtr == NULL) {
+  if (modeTotElOld != modeTotElNow || sigTotElPtr == nullptr) {
     if (sigTotElPtr != nullptr) delete sigTotElPtr;
     if      (modeTotElNow == 0) sigTotElPtr = new SigmaTotOwn();
     else if (modeTotElNow == 1) sigTotElPtr = new SigmaSaSDL();

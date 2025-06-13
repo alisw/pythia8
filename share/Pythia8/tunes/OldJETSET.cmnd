@@ -1,0 +1,34 @@
+! Old flavour and FSR defaults carried over from very old JETSET tune,
+! only with alphaS roughly tuned for "new" pT-ordered shower.
+! Previously set by "Tune:ee = 1".
+include                             = tunes/Reset-ee.cmnd ! reset ee tune
+StringFlav:probStoUD                = 0.30  
+StringFlav:probQQtoQ                = 0.10  
+StringFlav:probSQtoQQ               = 0.40  
+StringFlav:probQQ1toQQ0             = 0.05  
+StringFlav:mesonUDvector            = 1.00  
+StringFlav:mesonSvector             = 1.50  
+StringFlav:mesonCvector             = 2.50  
+StringFlav:mesonBvector             = 3.00  
+StringFlav:etaSup                   = 1.00  
+StringFlav:etaPrimeSup              = 0.40  
+StringFlav:popcornSpair             = 0.50  
+StringFlav:popcornSmeson            = 0.50  
+StringFlav:suppressLeadingB         = false 
+StringZ:aLund                       = 0.30  
+StringZ:bLund                       = 0.58  
+StringZ:aExtraSquark                = 0.00  
+StringZ:aExtraDiquark               = 0.50  
+StringZ:rFactC                      = 1.00  
+StringZ:rFactB                      = 1.00  
+StringPT:sigma                      = 0.36  
+StringPT:enhancedFraction           = 0.01  
+StringPT:enhancedWidth              = 2.0   
+TimeShower:alphaSvalue              = 0.137 
+TimeShower:alphaSorder              = 1     
+TimeShower:alphaSuseCMW             = false 
+TimeShower:pTmin                    = 0.5   
+TimeShower:pTminChgQ                = 0.5   
+
+! Reproduce hadronization behavior of the Pythia version used for this tune.
+StringZ:useOldAExtra                = on

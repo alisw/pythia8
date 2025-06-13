@@ -1,0 +1,84 @@
+<html><head><title>main502</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main502</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main502.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#hadronization">Hadronization</a>
+//            <a href="../ExampleKeywords.html#lhe+file">LHE&nbsp;file</a>
+
+// This is a simple test program.
+// It illustrates how Les Houches Event File input can be used in Pythia8.
+// Here the very few events are generated with MadGraph, and illustrate
+// more complicated colour topologies.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Generator
+  Pythia pythia;
+
+  // Stick with default values, so do not bother with a separate file
+  // for changes. However, do one change, to show readString in action.
+  pythia.readString(&quot;PartonLevel:ISR = off&quot;);
+  pythia.readString(&quot;PartonLevel:FSR = off&quot;);
+  pythia.readString(&quot;PartonLevel:MPI = off&quot;);
+  pythia.readString(&quot;HadronLevel:Hadronize = on&quot;);
+
+  // Initialize Les Houches Event File run.
+  pythia.readString(&quot;Beams:frameType = 4&quot;);
+  pythia.readString(&quot;Beams:LHEF = main502.lhe&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Book histogram.
+  Hist nCharged(&quot;charged particle multiplicity&quot;,100,-0.5,399.5);
+
+  // Allow for possibility of a few faulty events.
+  int nAbort = 10;
+  int iAbort = 0;
+
+  // Begin event loop; generate until none left in input file.
+  for (int iEvent = 0; ; ++iEvent) {
+    cout &lt;&lt; endl &lt;&lt; &quot;Begin event # &quot; &lt;&lt; iEvent &lt;&lt; endl;
+
+    // Generate events, and check whether generation failed.
+    if (!pythia.next()) {
+
+      // If failure because reached end of file then exit event loop.
+      if (pythia.info.atEndOfFile()) break;
+
+      // First few failures write off as &quot;acceptable&quot; errors, then quit.
+      if (++iAbort &lt; nAbort) continue;
+      break;
+    }
+
+    // Sum up final charged multiplicity and fill in histogram.
+    int nChg = 0;
+    for (int i = 0; i &lt; pythia.event.size(); ++i)
+    if (pythia.event[i].isFinal() &amp;&amp; pythia.event[i].isCharged())
+      ++nChg;
+    nCharged.fill(nChg);
+
+  // End of event loop.
+  }
+
+  // Give statistics. Print histogram.
+  pythia.stat();
+  cout &lt;&lt; nCharged;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

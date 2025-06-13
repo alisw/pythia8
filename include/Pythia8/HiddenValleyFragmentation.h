@@ -1,5 +1,5 @@
 // HiddenValleyFragmentation.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -8,15 +8,8 @@
 #ifndef Pythia8_HiddenValleyFragmentation_H
 #define Pythia8_HiddenValleyFragmentation_H
 
-#include "Pythia8/Basics.h"
-#include "Pythia8/Event.h"
-#include "Pythia8/FragmentationFlavZpT.h"
-#include "Pythia8/FragmentationSystems.h"
-#include "Pythia8/Info.h"
+#include "Pythia8/FragmentationModel.h"
 #include "Pythia8/MiniStringFragmentation.h"
-#include "Pythia8/ParticleData.h"
-#include "Pythia8/PythiaStdlib.h"
-#include "Pythia8/Settings.h"
 #include "Pythia8/StringFragmentation.h"
 
 namespace Pythia8 {
@@ -69,13 +62,22 @@ class HVStringPT : public StringPT {
 public:
 
   // Constructor.
-  HVStringPT() {}
+  HVStringPT() : setabsigma(), rescalebsigma() {}
 
   // Destructor.
   ~HVStringPT() {}
 
+  // Feed in extra parameters for HV handling, not part of base class.
+  void preinit( int setabsigmaIn, double rescalebsigmaIn);
+
   // Initialize data members.
   void init() override;
+
+private:
+
+  // Initialization data fed in from HiddenValleyFragmentation::init().
+  int    setabsigma;
+  double rescalebsigma;
 
 };
 
@@ -88,26 +90,32 @@ class HVStringZ : public StringZ {
 public:
 
   // Constructor.
-  HVStringZ() : mqv2(), bmqv2(), rFactqv(), mhvMeson() {}
+  HVStringZ() : setabsigma(), rescalebsigma(), mVecRatio(),
+    rFactBowler() {}
 
   // Destructor.
   virtual ~HVStringZ() {}
 
+  // Feed in extra parameters for HV handling, not part of base class.
+  void preinit( int setabsigmaIn, double rescalebsigmaIn, double mVecRatioIn);
+
   // Initialize data members.
-  void init() override;
+  bool init() override;
 
   // Fragmentation function: top-level to determine parameters.
   double zFrag( int idOld, int idNew = 0, double mT2 = 1.) override;
 
   // Parameters for stopping in the middle; for now hardcoded.
-  virtual double stopMass()    override {return 1.5 * mhvMeson;}
-  virtual double stopNewFlav() override {return 2.0;}
-  virtual double stopSmear()   override {return 0.2;}
+  virtual double stopMass()    override {return stopM;}
+  virtual double stopNewFlav() override {return stopNF;}
+  virtual double stopSmear()   override {return stopS;}
 
 private:
 
-  // Initialization data, to be read from Settings and ParticleData.
-  double mqv2, bmqv2, rFactqv, mhvMeson;
+  // Initialization data, from preinit, Settings and ParticleData.
+  int    setabsigma;
+  double rescalebsigma, mVecRatio;
+  vector<double> rFactBowler;
 
 };
 
@@ -116,19 +124,22 @@ private:
 // The HiddenValleyFragmentation class contains the routines
 // to fragment a Hidden Valley partonic system.
 
-class HiddenValleyFragmentation : public PhysicsBase {
+class HiddenValleyFragmentation : public FragmentationModel {
 
 public:
 
   // Constructor.
   HiddenValleyFragmentation() : doHVfrag(false), separateFlav(), nFlav(),
-    hvOldSize(), hvNewSize(), idEnd1(), idEnd2(), mhvMeson(), mSys() {}
+    hvOldSize(), hvNewSize(), idEnd1(), idEnd2(), mhvMeson(), mhvMin(),
+    mHVvecMin(), mSys(), ihvParton() {}
 
   // Initialize and save pointers.
-  bool init();
+  bool init(StringFlav* flavSelPtrIn = nullptr, StringPT* pTSelPtrIn = nullptr,
+    StringZ* zSelPtrIn = nullptr, FragModPtr fragModPtrIn = nullptr) override;
 
-  // Do the fragmentation: driver routine.
-  bool fragment(Event& event);
+  // Fragment the event.
+  bool fragment(int iSub, ColConfig& colConfig, Event& event,
+    bool isDiff = false, bool systemRecoil = true) override;
 
 protected:
 
@@ -145,7 +156,7 @@ private:
   // Data mambers.
   bool          doHVfrag, separateFlav;
   int           nFlav, hvOldSize, hvNewSize, idEnd1, idEnd2;
-  double        mhvMeson, mhvMin[9], mSys;
+  double        mhvMeson, mhvMin[9], mHVvecMin, mSys;
   vector<int>   ihvParton;
 
   // Configuration of colour-singlet systems.

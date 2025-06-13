@@ -1,0 +1,100 @@
+<html><head><title>main341</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main341</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main341.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#basic+usage">Basic&nbsp;usage</a>
+//            <a href="../ExampleKeywords.html#dis">DIS</a>
+
+// Basic setup for Deeply Inelastic Scattering at HERA.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Beam energies, minimal Q2, number of events to generate.
+  double eProton   = 920.;
+  double eElectron = 27.5;
+  double Q2min     = 25.;
+  int    nEvent    = 10000;
+
+  // Generator. Shorthand for event.
+  Pythia pythia;
+  Event&amp; event = pythia.event;
+
+  // Set up incoming beams, for frame with unequal beam energies.
+  pythia.readString(&quot;Beams:frameType = 2&quot;);
+  // BeamA = proton.
+  pythia.readString(&quot;Beams:idA = 2212&quot;);
+  pythia.settings.parm(&quot;Beams:eA&quot;, eProton);
+  // BeamB = electron.
+  pythia.readString(&quot;Beams:idB = 11&quot;);
+  pythia.settings.parm(&quot;Beams:eB&quot;, eElectron);
+
+  // Set up DIS process within some phase space.
+  // Neutral current (with gamma/Z interference).
+  pythia.readString(&quot;WeakBosonExchange:ff2ff(t:gmZ) = on&quot;);
+  // Uncomment to allow charged current.
+  //pythia.readString(&quot;WeakBosonExchange:ff2ff(t:W) = on&quot;);
+  // Phase-space cut: minimal Q2 of process.
+  pythia.settings.parm(&quot;PhaseSpace:Q2Min&quot;, Q2min);
+
+  // Set dipole recoil on. Necessary for DIS + shower.
+  pythia.readString(&quot;SpaceShower:dipoleRecoil = on&quot;);
+
+  // Allow emissions up to the kinematical limit,
+  // since rate known to match well to matrix elements everywhere.
+  pythia.readString(&quot;SpaceShower:pTmaxMatch = 2&quot;);
+
+  // QED radiation off lepton not handled yet by the new procedure.
+  pythia.readString(&quot;PDF:lepton = off&quot;);
+  pythia.readString(&quot;TimeShower:QEDshowerByL = off&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Histograms.
+  double Wmax = sqrt(4.* eProton * eElectron);
+  Hist Qhist(&quot;Q [GeV]&quot;, 100, 0., 50.);
+  Hist Whist(&quot;W [GeV]&quot;, 100, 0., Wmax);
+  Hist xhist(&quot;x&quot;, 100, 0., 1.);
+  Hist yhist(&quot;y&quot;, 100, 0., 1.);
+  Hist pTehist(&quot;pT of scattered electron [GeV]&quot;, 100, 0., 50.);
+  Hist pTrhist(&quot;pT of radiated parton [GeV]&quot;, 100, 0., 50.);
+  Hist pTdhist(&quot;ratio pT_parton/pT_electron&quot;, 100, 0., 5.);
+
+  // Begin event loop.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Fill kinematics histograms.
+    Qhist.fill( sqrt(pythia.info.Q2DIS()) );
+    Whist.fill( pythia.info.WDIS() );
+    xhist.fill( pythia.info.xDIS() );
+    yhist.fill( pythia.info.yDIS() );
+    pTehist.fill( event[6].pT() );
+
+    // pT spectrum of partons being radiated in shower.
+    for (int i = 0; i &lt; event.size(); ++i) if (event[i].statusAbs() == 43) {
+      pTrhist.fill( event[i].pT() );
+      pTdhist.fill( event[i].pT() / event[6].pT() );
+    }
+
+  // End of event loop. Statistics and histograms.
+  }
+  pythia.stat();
+  cout &lt;&lt; Qhist &lt;&lt; Whist &lt;&lt; xhist &lt;&lt; yhist &lt;&lt; pTehist &lt;&lt; pTrhist &lt;&lt; pTdhist;
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

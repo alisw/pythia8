@@ -544,7 +544,7 @@ the time savings can be considerable for repeated use.
  
 <a name="anchor24"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:reuseInit &nbsp;</strong> 
- (<code>default = <strong>0</strong></code>; <code>minimum = 0</code>; <code>maximum = 3</code>)<br/>
+ (<code>default = <strong>0</strong></code>; <code>minimum = -2</code>; <code>maximum = 3</code>)<br/>
 Action taken with respect to using MPI initialization data as above. 
 <br/><code>option </code><strong> 0</strong> : current run is self-contained.   
 <br/><code>option </code><strong> 1</strong> : MPI initialization is done as usual, but afterwards 
@@ -554,6 +554,13 @@ from a previous initialization, thereby saving time. If the file is not
 found, initialization fails.   
 <br/><code>option </code><strong> 3</strong> : as option 2, but if the file is not found, it will be 
 generated and saved after normal initialization.   
+<br/><code>option </code><strong> -1</strong> : Load initialization data from the 
+<code>Init:reuseMpiInit...</code> settings 
+if not empty. In any case write the data to 
+<code>Init:reuseMpiInit...</code>.   
+<br/><code>option </code><strong> -2</strong> : Same as <code>-1</code> but also read/write the 
+setting from/to the file 
+<code>MultipartonInteractions:initFile</code>.   
    
  
 <a name="anchor25"></a>
@@ -562,6 +569,30 @@ generated and saved after normal initialization.
 The file name used to store or read MPI initialization data. It is up 
 to the user to pick a suitable name (including path if relevant) for the 
 case at hand. 
+   
+ 
+<a name="anchor26"></a>
+<p/><code>wvec&nbsp; </code><strong> Init:reuseMPIiDiffSys0 &nbsp;</strong> <br/>
+This is where the fitted parameters are stored for non-diffractive 
+processes. 
+   
+ 
+<a name="anchor27"></a>
+<p/><code>wvec&nbsp; </code><strong> Init:reuseMPIiDiffSys1 &nbsp;</strong> <br/>
+This is where the fitted parameters are stored for single diffractive 
+(XB) processes. 
+   
+ 
+<a name="anchor28"></a>
+<p/><code>wvec&nbsp; </code><strong> Init:reuseMPIiDiffSys2 &nbsp;</strong> <br/>
+This is where the fitted parameters are stored for single diffractive 
+(AX) processes. 
+   
+ 
+<a name="anchor29"></a>
+<p/><code>wvec&nbsp; </code><strong> Init:reuseMPIiDiffSys3 &nbsp;</strong> <br/>
+This is where the fitted parameters are stored for doubly diffractive 
+(AXB) processes. 
    
  
 <p/> 
@@ -573,7 +604,7 @@ This is used for the <code>Beams:allowIDAswitch = on</code> option,
 to limit the number of options needed to cover, but can also be used 
 in other contexts. 
  
-<a name="anchor26"></a>
+<a name="anchor30"></a>
 <p/><code>flag&nbsp; </code><strong> MultipartonInteractions:setAntiSame &nbsp;</strong> 
  (<code>default = <strong>off</strong></code>)<br/>
 The cross sections for particle-particle and particle-antiparticle 
@@ -593,7 +624,7 @@ symmetrized Sudakov factor table and nondiffractive cross section.
 These should normally not be touched. Their only function is for 
 cross-checks. 
  
-<a name="anchor27"></a>
+<a name="anchor31"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:nQuarkIn &nbsp;</strong> 
  (<code>default = <strong>5</strong></code>; <code>minimum = 0</code>; <code>maximum = 5</code>)<br/>
 Number of allowed incoming quark flavours in the beams; a change 
@@ -601,15 +632,19 @@ to 4 would thus exclude <i>b</i> and <i>bbar</i> as incoming
 partons, etc. 
    
  
-<a name="anchor28"></a>
+<a name="anchor32"></a>
 <p/><code>mode&nbsp; </code><strong> MultipartonInteractions:nSample &nbsp;</strong> 
- (<code>default = <strong>1000</strong></code>; <code>minimum = 100</code>)<br/>
-The allowed <i>pT</i> range is split (unevenly) into 100 bins, 
-and in each of these the interaction cross section is evaluated in 
-<i>nSample</i> random phase space points. The full integral is used 
-at initialization, and the differential one during the run as a 
-"Sudakov form factor" for the choice of the hardest interaction. 
-A larger number implies increased accuracy of the calculations. 
+ (<code>default = <strong>100000</strong></code>; <code>minimum = 100000</code>)<br/>
+The allowed <i>pT</i> range is split into <code>NSUDPTS</code> 
+bins, by default 50, a number which is hardcoded in 
+<code>MultipartonInteractions.h</code>. In each of these bins the 
+interaction cross section is evaluated in <i>nSample / NSUDPTS</i> 
+random phase space points. The <i>pT</i> bins are of uneven size, 
+to obtain comparable integrated cross section in each bin. 
+The full integral is used at initialization, and the differential 
+one during the run as part of a "Sudakov form factor" for the 
+choice of the hardest interaction. A larger sample number implies 
+increased accuracy of the calculations. 
    
  
 <a name="section3"></a> 
@@ -746,4 +781,4 @@ interactions.
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

@@ -44,7 +44,7 @@ included, and the massive antenna functions have the appropriate
 quasi-collinear limits. </li> 
  
 <li><b>Efficient Multi-jet Merging:</b> see the section 
-on <aidx href="VinciaMerging">Sector Merging (MESS)</aidx>.</li> 
+on <aloc href="VinciaMerging">Sector Merging (MESS)</aloc>.</li> 
  
 <li><b>Interleaved Resonance Decays:</b> By default, resonance decays are 
 interleaved with the rest of the perturbative evolution. This means 
@@ -93,7 +93,7 @@ maximally-bijective nature of VINCIA's sector shower to vastly reduce
 the complexity of the merging procedure, so that merging especially 
 at high multiplicities becomes more efficient. 
 Settings for VINCIA's merging are described 
-<aidx href="VinciaMerging">here</aidx>. 
+<aloc href="VinciaMerging">here</aloc>. 
  
 <p/> 
 VINCIA also provides dedicated hooks for vetoed showers in POWHEG NLO matching 
@@ -102,12 +102,12 @@ between the ordering variables in POWHEG-BOX and VINCIA. They are
 contained in the same file 
 <code>include/Pythia8Plugins/PowhegHooks.h</code> as the standard 
 PYTHIA POWHEG hooks, and the usage is the same as for Pythia's 
-<code>PowhegHooks</code>, described <aidx href="POWHEGMatching">here</aidx>. 
-Any existing main program (e.g. <code>main31.cc</code>) that uses 
+<code>PowhegHooks</code>, described <aloc href="POWHEGMatching">here</aloc>. 
+Any existing main program (e.g. <code>main152.cc</code>) that uses 
 POWHEG-BOX+Pythia can be adapted to use VINCIA with POWHEG-BOX, simply 
 by changing the shower model and setting 
 <code>Vincia:pTmaxMatch = 2</code> and <code>Vincia:pTdampMatch = 3</code> 
-as recommended <aidx href="POWHEGMatching">here</aidx>. 
+as recommended <aloc href="POWHEGMatching">here</aloc>. 
  
 <h3>Main Shower Switches and Starting Scales</h3> 
  
@@ -450,7 +450,7 @@ TimeShower:recoilToColoured = off for Pythia.</option>
 Decays of resonances produced in the hard process can be interleaved 
 with the shower evolution (see also further comments under the 
 equivalent option for Pythia's 
-<aidx href="TimelikeShowers">TimelikeShowers</aidx>). In VINCIA, this 
+<aloc href="TimelikeShowers">TimelikeShowers</aloc>). In VINCIA, this 
 setting is controlled by the following switch: 
  
 <flag name="Vincia:interleaveResDec" default="on"> 
@@ -496,36 +496,35 @@ implies, e.g., that the decay of a resonance which has <ei>m = m0 &pm;
  
 <ul> 
 <li>Settings for VINCIA's QCD antenna showers 
-are described <aidx href="VinciaQCD">here</aidx>.</li> 
+are described <aloc href="VinciaQCD">here</aloc>.</li> 
 <li>Settings for VINCIA's QED and EW antenna showers 
-are described <aidx href="VinciaEW">here</aidx>.</li> 
+are described <aloc href="VinciaEW">here</aloc>.</li> 
 <li>Settings for VINCIA's matrix-element corrections (MECs) 
-are described <aidx href="VinciaMECs">here</aidx>.</li> 
+are described <aloc href="VinciaMECs">here</aloc>.</li> 
 </ul> 
  
 <h3>VINCIA Tunes</h3> 
  
 <p/> 
 <b>VINCIA has its own</b> set of dedicated tune presets, which can be 
-specified by the user. 
+specified by the user. Every tune here can then be equivalently loaded with 
+the command <code>include = tunes/settings.cmnd</code> where 
+<code>settings.cmnd</code> is the corresponding settings file. In the 
+future the <code>Vincia:tune</code> setting will be removed in favor 
+of the <code>include</code> syntax. 
  
-<modepick name="Vincia:Tune" default="0" min="-1" max="0"> 
+<modepick name="Vincia:Tune" default="-1" min="-1" max="0"> 
 <option value="-1">None. No VINCIA-specific tune parameter settings 
 will be used during initialisation.</option> 
-<option value="0">Hadronization and MPI parameters optimised for use 
-with the VINCIA shower model, used as default VINCIA parameters since 
-PYTHIA 8.302.</option> 
+<option value="0">(<code>tunes/VinciaDefault.cmnd</code>) Hadronization 
+and MPI parameters optimised for use with the VINCIA shower model, 
+used as default VINCIA parameters since PYTHIA 8.302.</option> 
 </modepick> 
- 
-<p/> 
-<b>Note:</b> the requested tune parameters will only be activated when 
-VINCIA is switched on, in order not to interfere with the PYTHIA 
-settings when VINCIA is switched off. 
  
 <p/> 
 <b>Note 2:</b> as with ordinary Pythia tune parameters, the tuned 
 parameter values will be superseded by any user modifications made in 
-the user's command file or main program.  This should allow sufficient 
+the user's command file or main program. This should allow sufficient 
 flexibility to explore user variations away from the tuned values. 
  
 <h4>Advice on Tuning</h4> 
@@ -690,4 +689,4 @@ elements.</li>
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

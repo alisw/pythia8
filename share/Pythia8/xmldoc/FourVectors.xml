@@ -176,12 +176,13 @@ ended with a newline.
  
 <method name="friend bool isnan(const Vec4& v)"> 
 </method> 
-<methodmore name="friend double isinf(const Vec4& v)"> 
+<methodmore name="friend bool isinf(const Vec4& v)"> 
 returns true if any of the four elements is not a number or infinite. 
 </methodmore> 
-<methodmore name="friend bool isnan(const Vec4& v)"> 
+ 
+<method name="friend bool isfinite(const Vec4& v)"> 
 returns true if all four elements are finite. 
-</methodmore> 
+</method> 
  
 <method name="friend double m(const Vec4& v1, const Vec4& v2)"> 
 </method> 
@@ -206,8 +207,13 @@ the cross-product of three four-vectors:
 <method name="friend double theta(const Vec4& v1, const Vec4& v2)"> 
 </method> 
 <methodmore name="friend double costheta(const Vec4& v1, const Vec4& v2)"> 
-the (cosine) of the opening angle between the vectors, 
-in the range 0 through <ei>pi</ei>. 
+</methodmore> 
+<methodmore name="friend double sintheta(const Vec4& v1, const Vec4& v2)"> 
+the opening angle between the two vectors, in the range 0 through 
+<ei>pi</ei>, or the cosine or sine of this angle. The cosine is derived 
+from the scalar product and the sine from the cross-product. Normally 
+the former is used to derive <ei>theta</ei>, but for small angles the 
+latter is used since it is more accurate there. 
 </methodmore> 
  
 <method name="friend double phi(const Vec4& v1, const Vec4& v2)"> 
@@ -379,6 +385,11 @@ perform a combined rotation and boost; see below for a description
 of the <code>RotBstMatrix</code>. 
 </method> 
  
+<method name="void Vec4::eInFrame(const Vec4& pIn)"> 
+calculate the energy of the four-momentum in the frame of the 
+four-momentum <code>pIn</code>. 
+</method> 
+ 
 <p/> 
 For a longer sequence of rotations and boosts, and where several 
 <code>Vec4</code> are to be rotated and boosted in the same way, 
@@ -421,8 +432,9 @@ parallel with <ei>p</ei>. More specifically, rotate by <ei>-phi</ei>,
 </method> 
  
 <method name="void RotBstMatrix::bst(double betaX = 0., double betaY = 0., 
-double betaZ = 0.)"> 
-boost by this <ei>beta</ei> vector. 
+double betaZ = 0., double gamma = 0.)"> 
+boost by this <ei>beta</ei> vector. If <ei>gamma &gt; 1</ei> then this 
+input value is used instead of calculating it from <ei>beta</ei>. 
 </method> 
  
 <method name="void RotBstMatrix::bst(const Vec4&)"> 
@@ -552,4 +564,4 @@ when in the rest frame.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

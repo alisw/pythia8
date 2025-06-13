@@ -1,5 +1,5 @@
 // DireSpace.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Stefan Prestel, Torbjorn Sjostrand.
+// Copyright (C) 2025 Stefan Prestel, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -240,16 +240,15 @@ void DireSpace::init( BeamParticle* beamAPtrIn,
   BeamParticle& beam = (particleDataPtr->isHadron(beamAPtr->id())) ?
     *beamAPtr : *beamBPtr;
   alphaS2piOverestimate = (usePDFalphas) ? beam.alphaS(pT2min) * 0.5/M_PI
-                        : (alphaSorder > 0) ? alphaS.alphaS(pT2min) * 0.5/M_PI
-                                            :  0.5 * 0.5/M_PI;
+    : (alphaSorder > 0) ? alphaS.alphaS(pT2min) * 0.5/M_PI : 0.5 * 0.5/M_PI;
   usePDFmasses       = settingsPtr->flag("ShowerPDF:usePDFmasses");
-  BeamParticle* bb   = ( particleDataPtr->isHadron(beamAPtr->id())) ? beamAPtr
-                     : ( particleDataPtr->isHadron(beamBPtr->id())) ?
-    beamBPtr : NULL;
-  m2cPhys            = (usePDFalphas && bb != NULL)
-                     ? pow2(max(0.,bb->mQuarkPDF(4))) : alphaS.muThres2(4);
-  m2bPhys            = (usePDFalphas && bb != NULL)
-                     ? pow2(max(0.,bb->mQuarkPDF(5))) : alphaS.muThres2(5);
+  BeamParticle* bb = ( particleDataPtr->isHadron(beamAPtr->id()))
+    ? beamAPtr : ( particleDataPtr->isHadron(beamBPtr->id())) ?
+    beamBPtr : nullptr;
+  m2cPhys            = (usePDFalphas && bb != nullptr)
+    ? pow2(max(0.,bb->mQuarkPDF(4))) : alphaS.muThres2(4);
+  m2bPhys            = (usePDFalphas && bb != nullptr)
+    ? pow2(max(0.,bb->mQuarkPDF(5))) : alphaS.muThres2(5);
   useSystems         = true;
 
   // Allow massive incoming particles. Currently not supported by Pythia.
@@ -1760,22 +1759,22 @@ void DireSpace::getNewOverestimates( int idDau, DireSpaceEnd* dip,
 double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
   string name, bool pickMother, double RN, int& idMother, int& idSister) {
 
-  BeamParticle& beam = (sideA) ? *beamAPtr : *beamBPtr;
+  BeamParticle* beam = (sideA) ? beamAPtr : beamBPtr;
   DireSplitting* splitNow = splits[name];
 
   // Get old PDF for PDF weights.
   double PDFscale2 = (useFixedFacScale) ? fixedFacScale2 : factorMultFac*tOld;
   PDFscale2        = max(PDFscale2, pT2min);
-  bool inD         = (hasPDF(idDau)) ? beam.insideBounds(xDau, PDFscale2) :
+  bool inD         = (hasPDF(idDau)) ? beam->insideBounds(xDau, PDFscale2) :
     true;
-  double xPDFdaughter = getXPDF( idDau, xDau, PDFscale2, iSysNow, &beam);
+  double xPDFdaughter = getXPDF( idDau, xDau, PDFscale2, iSysNow, beam);
   // Make PDF ratio overestimate larger close to threshold.
   if (abs(idDau) == 4 && m2cPhys > 0. && tOld < 4.*m2cPhys) {
-    double xPDFthres = getXPDF( idDau, xDau, m2cPhys+0.1, iSysNow, &beam);
+    double xPDFthres = getXPDF( idDau, xDau, m2cPhys+0.1, iSysNow, beam);
     xPDFdaughter     = min(xPDFdaughter, xPDFthres);
   }
   if (abs(idDau) == 5 && m2bPhys > 0. && tOld < 4.*m2bPhys) {
-    double xPDFthres = getXPDF( idDau, xDau, m2bPhys, iSysNow, &beam);
+    double xPDFthres = getXPDF( idDau, xDau, m2bPhys, iSysNow, beam);
     xPDFdaughter     = min(xPDFdaughter, xPDFthres);
   }
 
@@ -1791,7 +1790,7 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
       if (iQuark == 0) {
         xPDFmother[10] = 0.;
       } else {
-        xPDFmother[iQuark+10] = getXPDF(iQuark,xDau,PDFscale2,iSysNow,&beam);
+        xPDFmother[iQuark+10] = getXPDF(iQuark,xDau,PDFscale2,iSysNow,beam);
         xPDFmotherSum += xPDFmother[iQuark+10];
       }
     }
@@ -1812,7 +1811,7 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
   // PDF factors for G -> QQ
   } else if (splitNow->is(splittingsPtr->isrQCD_21_to_1_and_1)){
 
-    double xPDFmother = getXPDF(21, xDau, PDFscale2, iSysNow, &beam);
+    double xPDFmother = getXPDF(21, xDau, PDFscale2, iSysNow, beam);
     if ( xPDFmother != 0. && abs(xPDFmother) < tinypdf(xDau) ) {
       int sign   = (xPDFmother >= 0.) ? 1 : -1;
       xPDFmother = sign*tinypdf(xDau);
@@ -1827,15 +1826,15 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
     double xPDFmotherSum = 0.;
     for (int i =-nQuarkIn; i <= nQuarkIn; ++i)
       if (abs(i) != abs(idDau) && i != 0) {
-        double temp = getXPDF( i, xDau, PDFscale2, iSysNow, &beam);
+        double temp = getXPDF( i, xDau, PDFscale2, iSysNow, beam);
         // Make overestimate larger if heavy quark converts to valence quark.
-        if (particleDataPtr->isHadron(beam.id()) && (i == 1 || i == 2)) {
+        if (particleDataPtr->isHadron(beam->id()) && (i == 1 || i == 2)) {
           if (abs(idDau) == 4 && m2cPhys > 0. && tOld < 4.*m2cPhys) {
-            double xPDFval = getXPDF(i, 0.25, PDFscale2, iSysNow, &beam);
+            double xPDFval = getXPDF(i, 0.25, PDFscale2, iSysNow, beam);
             temp = max(temp, xPDFval);
           }
           if (abs(idDau) == 5 && m2bPhys > 0. && tOld < 4.*m2bPhys) {
-            double xPDFval = getXPDF( i, 0.25, PDFscale2, iSysNow, &beam);
+            double xPDFval = getXPDF( i, 0.25, PDFscale2, iSysNow, beam);
             temp = max(temp, xPDFval);
           }
         }
@@ -1861,7 +1860,7 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
   // PDF factors for q --> qbar splitting.
   } else if (splitNow->is(splittingsPtr->isrQCD_1_to_1_and_1_and_1)) {
 
-    double xPDFmother = getXPDF( -idDau, xDau, PDFscale2, iSysNow, &beam);
+    double xPDFmother = getXPDF( -idDau, xDau, PDFscale2, iSysNow, beam);
     if ( xPDFmother != 0. && abs(xPDFmother) < tinypdf(xDau) ) {
       int sign   = (xPDFmother >= 0.) ? 1 : -1;
       xPDFmother = sign*tinypdf(xDau);
@@ -1878,7 +1877,7 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
                                                         - pT2min);
       for (int j=1; j <= NXSTEPS; ++j) {
         double xNew = xDau + double(j)/double(NXSTEPS)*(0.999999-xDau);
-        double xPDFnew = getXPDF( 21, xNew, tNew, iSysNow, &beam);
+        double xPDFnew = getXPDF( 21, xNew, tNew, iSysNow, beam);
         xPDFmother = max(xPDFmother, xPDFnew);
       }
     }
@@ -1886,7 +1885,7 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
 
   // All other cases, e.g. for user-defined kernels.
   } else {
-    double xPDFmother = getXPDF(idMother,xDau, PDFscale2, iSysNow, &beam);
+    double xPDFmother = getXPDF(idMother,xDau, PDFscale2, iSysNow, beam);
 
     int NTSTEPS(3), NXSTEPS(3);
     for (int i=0; i <= NTSTEPS; ++i) {
@@ -1894,7 +1893,7 @@ double DireSpace::getPDFOverestimates( int idDau, double tOld, double xDau,
                                                         - pT2min);
       for (int j=1; j <= NXSTEPS; ++j) {
         double xNew = xDau + double(j)/double(NXSTEPS)*(0.999999-xDau);
-        double xPDFnew = getXPDF(idMother, xNew, tNew, iSysNow, &beam);
+        double xPDFnew = getXPDF(idMother, xNew, tNew, iSysNow, beam);
         xPDFmother = max(xPDFmother, xPDFnew);
       }
     }
@@ -1917,8 +1916,8 @@ void DireSpace::getNewSplitting( const Event& state, DireSpaceEnd* dip,
   int idDau, string name, bool forceFixedAs, int& idMother, int& idSister,
   double& z, double& wt, unordered_map<string,double>& full, double& over ) {
 
-  BeamParticle& beam = (sideA) ? *beamAPtr : *beamBPtr;
-  bool   isValence   = (usePDF) ? beam[iSysNow].isValence() : false;
+  BeamParticle* beam = (sideA) ? beamAPtr : beamBPtr;
+  bool   isValence   = (usePDF) ? beam->at(iSysNow).isValence() : false;
   // Pointer to splitting for easy/fast access.
   DireSplitting* splitNow = splits[name];
 
@@ -2197,8 +2196,8 @@ pair<bool, pair<double, double> > DireSpace::getMEC ( const Event& state,
     // Generate all histories
     DireHistory myHistory( nSteps, 0.0, newProcess, DireClustering(),
       mergingHooksPtr, (*beamAPtr), (*beamBPtr), particleDataPtr, infoPtr,
-      NULL, splits.begin()->second->fsr, splits.begin()->second->isr, weights,
-      coupSMPtr, true, true, 1.0, 1.0, 1.0, 1.0, 0);
+      nullptr, splits.begin()->second->fsr, splits.begin()->second->isr,
+      weights, coupSMPtr, true, true, 1.0, 1.0, 1.0, 1.0, 0);
     // Project histories onto desired branches, e.g. only ordered paths.
     myHistory.projectOntoDesiredHistories();
 
@@ -2644,10 +2643,10 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
   dip.m2Dip  = m2Dip;
 
   // Some properties and kinematical starting values.
-  BeamParticle& beam = (sideA) ? *beamAPtr : *beamBPtr;
-  double tnow        = pT2begDip;
-  double xMaxAbs     = beam.xMax(iSysNow);
-  double zMinAbs     = xDaughter;
+  BeamParticle* beam = (sideA) ? beamAPtr : beamBPtr;
+  double tnow    = pT2begDip;
+  double xMaxAbs = beam->xMax(iSysNow);
+  double zMinAbs = xDaughter;
 
   if (usePDF && xMaxAbs < 0.) {
     loggerPtr->ERROR_MSG("kinematics failure, xMaxAbs negative");
@@ -2740,7 +2739,7 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
     // Finish evolution if PDF vanishes.
     double tnew = (useFixedFacScale) ? fixedFacScale2 : factorMultFac*tnow;
     tnew        = max(tnew, pT2min);
-    bool inNew  = (hasPDFdau) ? beam.insideBounds(xDaughter, tnew) : true;
+    bool inNew  = (hasPDFdau) ? beam->insideBounds(xDaughter, tnew) : true;
     if (hasPDFdau && !inNew) { dip.pT2 = 0.0; return false; }
 
     // Bad sign if repeated looping with small daughter PDF, so fail.
@@ -2776,7 +2775,7 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
       // Parton density of daughter at current scale.
       pdfScale2    = (useFixedFacScale) ? fixedFacScale2 : factorMultFac*tnow;
       pdfScale2    = max(pdfScale2, pT2min);
-      xPDFdaughter = getXPDF(idDaughter, xDaughter, pdfScale2, iSysNow, &beam);
+      xPDFdaughter = getXPDF(idDaughter, xDaughter, pdfScale2, iSysNow, beam);
       if ( hasPDFdau && xPDFdaughter != 0.
         && abs(xPDFdaughter) < tinypdf(xDaughter)) {
         int sign      = (xPDFdaughter > 0.) ? 1 : -1;
@@ -2944,12 +2943,12 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
     double pdfScale2Old = pdfScale2;
     double pdfScale2New = pdfScale2;
     if (forceBranching) pdfScale2Old = pdfScale2New = infoPtr->Q2Fac();
-    bool inD = (hasPDFdau) ? beam.insideBounds(xDaughter, pdfScale2Old) : true;
-    bool inM = (hasPDFdau) ? beam.insideBounds(xMother,   pdfScale2New) : true;
+    bool inD = hasPDFdau ? beam->insideBounds(xDaughter, pdfScale2Old) : true;
+    bool inM = hasPDFdau ? beam->insideBounds(xMother,   pdfScale2New) : true;
     double xPDFdaughterNew = getXPDF( idDaughter, xDaughter, pdfScale2Old,
-      iSysNow, &beam, false, znow, m2Dip);
+      iSysNow, beam, false, znow, m2Dip);
     double xPDFmotherNew   = getXPDF( idMother, xMother, pdfScale2New,
-      iSysNow, &beam, false, znow, m2Dip);
+      iSysNow, beam, false, znow, m2Dip);
     if ( hasPDFdau && xPDFdaughterNew != 0.
       && abs(xPDFdaughterNew) < tinypdf(xDaughter) ) {
       hasTinyPDFdau = true;
@@ -2965,7 +2964,7 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
     // weights. (Note: Last resort - would like something more
     // physical here!)
     double xPDFdaughterLow = getXPDF( idDaughter, xDaughter,
-      pdfScale2Old*pdfScale2Old/max(teval,pT2min), iSysNow, &beam);
+      pdfScale2Old*pdfScale2Old/max(teval,pT2min), iSysNow, beam);
     if ( hasPDFdau && idDaughter == 21
       && ( abs(xPDFdaughterNew/xPDFdaughter) < 1e-4
         || abs(xPDFdaughterLow/xPDFdaughterNew) < 1e-4) ) {
@@ -3046,11 +3045,11 @@ bool DireSpace::pT2nextQCD_II( double pT2begDip, double pT2sel,
 
       // PDF variations.
       if (hasPDFdau && settingsPtr->flag("Variations:PDFup") ) {
-        int valSea = (beam[iSysNow].isValence()) ? 1 : 0;
-        if( beam[iSysNow].isUnmatched() ) valSea = 2;
-        beam.calcPDFEnvelope( make_pair(idMother, idDaughter),
+        int valSea = (beam->at(iSysNow).isValence()) ? 1 : 0;
+        if( beam->at(iSysNow).isUnmatched() ) valSea = 2;
+        beam->calcPDFEnvelope( make_pair(idMother, idDaughter),
           make_pair(xMother, xDaughter), pdfScale2, valSea);
-        PDF::PDFEnvelope ratioPDFEnv = beam.getPDFEnvelope();
+        PDF::PDFEnvelope ratioPDFEnv = beam->getPDFEnvelope();
         double deltaPDFplus
           = min(ratioPDFEnv.errplusPDF  / ratioPDFEnv.centralPDF, 10.);
         double deltaPDFminus
@@ -3168,12 +3167,11 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
   dip.m2Dip  = m2Dip;
 
   // Some properties and kinematical starting values.
-  BeamParticle& beam = (sideA && particleDataPtr->isHadron(beamAPtr->id()))
-                     ? *beamAPtr
-                     : (particleDataPtr->isHadron(beamBPtr->id()) ? *beamBPtr
-                                                      : *beamAPtr );
+  BeamParticle* beam = (sideA && particleDataPtr->isHadron(beamAPtr->id()))
+    ? beamAPtr : (particleDataPtr->isHadron(beamBPtr->id()) ? beamBPtr
+      : beamAPtr );
   double tnow        = pT2begDip;
-  double xMaxAbs     = beam.xMax(iSysNow);
+  double xMaxAbs     = beam->xMax(iSysNow);
   double zMinAbs     = xDaughter;
 
   // Get momentum of other beam, since this might be needed to calculate
@@ -3267,7 +3265,7 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
     // Finish evolution if PDF vanishes.
     double tnew = (useFixedFacScale) ? fixedFacScale2 : factorMultFac*tnow;
     tnew        = max(tnew, pT2min);
-    bool inNew  = (hasPDFdau) ? beam.insideBounds(xDaughter, tnew) : true;
+    bool inNew  = (hasPDFdau) ? beam->insideBounds(xDaughter, tnew) : true;
     if (!inNew && hasPDFdau) { dip.pT2 = 0.0; return false; }
 
     // Bad sign if repeated looping with small daughter PDF, so fail.
@@ -3302,7 +3300,7 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
       // Parton density of daughter at current scale.
       pdfScale2    = (useFixedFacScale) ? fixedFacScale2 : factorMultFac*tnow;
       pdfScale2    = max(pdfScale2, pT2min);
-      xPDFdaughter = getXPDF(idDaughter, xDaughter, pdfScale2, iSysNow, &beam);
+      xPDFdaughter = getXPDF(idDaughter, xDaughter, pdfScale2, iSysNow, beam);
       if ( hasPDFdau && xPDFdaughter != 0.
         && abs(xPDFdaughter) < tinypdf(xDaughter)) {
         int sign      = (xPDFdaughter > 0.) ? 1 : -1;
@@ -3554,12 +3552,12 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
     double pdfScale2Old = pdfScale2;
     double pdfScale2New = pdfScale2;
     if (forceBranching) pdfScale2Old = pdfScale2New = infoPtr->Q2Fac();
-    bool inD = (hasPDFdau) ? beam.insideBounds(xDaughter, pdfScale2Old) : true;
-    bool inM = (hasPDFdau) ? beam.insideBounds(xMother,   pdfScale2New) : true;
+    bool inD = hasPDFdau ? beam->insideBounds(xDaughter, pdfScale2Old) : true;
+    bool inM = hasPDFdau ? beam->insideBounds(xMother,   pdfScale2New) : true;
     double xPDFdaughterNew = getXPDF( idDaughter, xDaughter, pdfScale2Old,
-      iSysNow, &beam, true, znow, m2Dip);
+      iSysNow, beam, true, znow, m2Dip);
     double xPDFmotherNew   = getXPDF( idMother, xMother, pdfScale2New,
-      iSysNow, &beam, true, znow, m2Dip);
+      iSysNow, beam, true, znow, m2Dip);
 
     if ( hasPDFdau && xPDFdaughterNew != 0.
       && abs(xPDFdaughterNew) < tinypdf(xDaughter) ) {
@@ -3575,7 +3573,7 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
     // daughter PDF fell too rapidly, to avoid large shower weights.
     // (Note: Last resort - would like something more physical here!)
     double xPDFdaughterLow = getXPDF( idDaughter, xDaughter,
-      pdfScale2Old * pdfScale2Old/max(teval,pT2min), iSysNow, &beam);
+      pdfScale2Old * pdfScale2Old/max(teval,pT2min), iSysNow, beam);
     if ( hasPDFdau && idDaughter == 21
       && ( abs(xPDFdaughterNew/xPDFdaughter) < 1e-4
         || abs(xPDFdaughterLow/xPDFdaughterNew) < 1e-4) ) {
@@ -3656,11 +3654,11 @@ bool DireSpace::pT2nextQCD_IF( double pT2begDip, double pT2sel,
 
       // PDF variations.
       if (hasPDFdau && settingsPtr->flag("Variations:PDFup") ) {
-        int valSea = (beam[iSysNow].isValence()) ? 1 : 0;
-        if( beam[iSysNow].isUnmatched() ) valSea = 2;
-        beam.calcPDFEnvelope( make_pair(idMother, idDaughter),
+        int valSea = (beam->at(iSysNow).isValence()) ? 1 : 0;
+        if( beam->at(iSysNow).isUnmatched() ) valSea = 2;
+        beam->calcPDFEnvelope( make_pair(idMother, idDaughter),
           make_pair(xMother, xDaughter), pdfScale2, valSea);
-        PDF::PDFEnvelope ratioPDFEnv = beam.getPDFEnvelope();
+        PDF::PDFEnvelope ratioPDFEnv = beam->getPDFEnvelope();
         double deltaPDFplus
           = min(ratioPDFEnv.errplusPDF  / ratioPDFEnv.centralPDF, 10.);
         double deltaPDFminus
@@ -7784,13 +7782,13 @@ double DireSpace::alphasNow( double pT2, double renormMultFacNow, int iSys ) {
   BeamParticle* beam = (particleDataPtr->isHadron(beamAPtr->id()))
                      ? beamAPtr
                      : (particleDataPtr->isHadron(beamBPtr->id()) ? beamBPtr :
-                        NULL );
-  if (usePDFalphas && beam == NULL) beam = beamAPtr;
+                        nullptr );
+  if (usePDFalphas && beam == nullptr) beam = beamAPtr;
   double scale       = pT2*renormMultFacNow;
   scale              = max(scale, pT2min);
 
   // Get alphaS(k*pT^2) and subtractions.
-  double asPT2pi      = (usePDFalphas && beam != NULL)
+  double asPT2pi      = (usePDFalphas && beam != nullptr)
                       ? beam->alphaS(scale)  / (2.*M_PI)
                       : alphaS.alphaS(scale) / (2.*M_PI);
 
@@ -7844,9 +7842,9 @@ double DireSpace::getNF(double pT2) {
   BeamParticle* beam = (particleDataPtr->isHadron(beamAPtr->id()))
                      ? beamAPtr
                      : (particleDataPtr->isHadron(beamBPtr->id()) ? beamBPtr :
-                        NULL );
+                        nullptr );
   // Get current number of flavours.
-  if ( !usePDFalphas || beam == NULL ) {
+  if ( !usePDFalphas || beam == nullptr ) {
     if ( pT2 > pow2( max(0., particleDataPtr->m0(5) ) )
       && pT2 < pow2( particleDataPtr->m0(6)) )                 NF = 5.;
     else if ( pT2 > pow2( max( 0., particleDataPtr->m0(4)) ) ) NF = 4.;

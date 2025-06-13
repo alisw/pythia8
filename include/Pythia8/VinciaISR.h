@@ -1,5 +1,5 @@
 // VinciaISR.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -88,8 +88,8 @@ public:
   virtual double getSj2(double Qt2, double zeta, double sAB);
 
   // Compute trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idB, double eA, double eB,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idB, double eA, double eB,
     double Qt2A, double Qt2B);
 
   // Return last trial PDF ratio.
@@ -228,8 +228,8 @@ public:
     return TrialIIGCollA::getS1j(Qt2, zeta, sAB);}
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idB, double eA, double eB,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idB, double eA, double eB,
     double Qt2A, double Qt2B) override {
     // Note: arguments reversed intentionally!
     return TrialIIGCollA::trialPDFratio(
@@ -297,8 +297,8 @@ public:
   virtual double getSj2(double Qt2, double zeta, double sAB) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idB, double eA, double eB,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idB, double eA, double eB,
     double Qt2A, double Qt2B) override;
 
 };
@@ -355,9 +355,9 @@ public:
     return TrialIISplitA::getS1j(Qt2, zeta, sAB);}
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idB, double eA, double eB, double Qt2A, double Qt2B)
-    override {
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idB, double eA, double eB,
+    double Qt2A, double Qt2B) override {
     // Note: arguments reversed intentionally!
     return TrialIISplitA::trialPDFratio(beamBPtr, beamAPtr, iSys,
       idB, idA, eB, eA, Qt2B, Qt2A);}
@@ -415,8 +415,8 @@ public:
   virtual double getSj2(double Qt2, double zeta, double sAB) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idB, double eA, double eB,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idB, double eA, double eB,
     double Qt2A, double Qt2B) override;
 
 };
@@ -463,8 +463,8 @@ public:
     return TrialIIConvA::getS1j(Qt2, zeta, sAB);}
 
   // Trial PDF ratio
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idB, double eA, double eB,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idB, double eA, double eB,
     double Qt2A, double Qt2B) override {
     // Note: arguments reversed intentionally!
     return TrialIIConvA::trialPDFratio(
@@ -523,8 +523,8 @@ public:
   virtual double getSj2(double Qt2, double zeta, double sAK) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idK, double eA, double eK,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idK, double eA, double eK,
     double Qt2A, double Qt2B) override;
 
 };
@@ -605,8 +605,8 @@ class TrialIFGCollA : public TrialGeneratorISR {
   virtual double getSj2(double Qt2, double zeta, double sAK) override;
 
   // Trial PDF ratio (= just a simple headroom factor).
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idK, double eA, double eK,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idK, double eA, double eK,
     double Qt2A, double Qt2B) override;
 
 };
@@ -662,8 +662,8 @@ class TrialIFGCollK : public TrialGeneratorISR {
   virtual double getSj2(double Qt2, double zeta, double sAK) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idK, double eA, double eK,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idK, double eA, double eK,
     double Qt2A, double Qt2B) override;
 };
 
@@ -726,8 +726,8 @@ public:
   virtual double getSj2(double Qt2, double zeta, double sAK) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idK, double eA, double eK,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idK, double eA, double eK,
     double Qt2A, double Qt2B) override;
 
 };
@@ -784,8 +784,8 @@ class TrialIFSplitK : public TrialGeneratorISR {
   virtual double getSj2(double Qt2, double zeta, double sAK) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idK, double eA, double eK,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idK, double eA, double eK,
     double Qt2A, double Qt2B) override;
 
 };
@@ -844,8 +844,8 @@ public:
   virtual double getSj2(double Qt2, double zeta, double sAK) override;
 
   // Trial PDF ratio.
-  virtual double trialPDFratio(BeamParticle* beamAPtr, BeamParticle* beamBPtr,
-    int iSys, int idA, int idK, double eA, double eK,
+  virtual double trialPDFratio(BeamParticle* beamAPtr,
+    BeamParticle* beamBPtr, int iSys, int idA, int idK, double eA, double eK,
     double Qt2A, double Qt2B) override;
 
 };

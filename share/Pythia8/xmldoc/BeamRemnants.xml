@@ -269,6 +269,23 @@ The abovementioned power for valence <ei>u</ei> quarks in protons.
 The abovementioned power for valence <ei>d</ei> quarks in protons. 
 </parm> 
  
+<pvec name="BeamRemnants:heavyQuarkEnhance" default="{1.5,4.5,14.5}" min="1."> 
+Enhancement factors for the momentum fraction assigned to heavy valence quarks 
+(<ei>s, c, b</ei> respectively) relative to the normal <ei>u</ei> and 
+<ei>d</ei> ones. The default values are based on the ratio of constituent 
+masses, as can be motivated by an expectation of equal average velocity for 
+all valence quarks. In low-mass  diffraction, its inverse is also used 
+to provide the relative probability for each valence quark to be kicked 
+backwards, out from the incoming hadron. (And thus the value itself 
+the relative probability to remain in the beam direction.) This is 
+consistent with the Additive Quark Model approach, where it is often 
+assumed that each valence quark adds to the total cross section of 
+its hadron inversely to its mass. Thus, in both cases, an above-unity 
+value for a constituent quark flavour will tend to enhance its momentum 
+fraction in the beam direction. Note that sea quarks are not affected by 
+either of these two considerations. 
+</pvec> 
+ 
 <parm name="BeamRemnants:valenceDiqEnhance" default="2.0" min="0.5" 
 max="10."> 
 Enhancement factor for valence diquarks in baryons, relative to the 
@@ -358,4 +375,4 @@ fragmentation function.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

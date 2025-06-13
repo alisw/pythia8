@@ -12,6 +12,7 @@
   <li><a href="#section1">Basic output format</a></li>
   <li><a href="#section2">Matplotlib output format</a></li>
   <li><a href="#section3">The methods</a></li>
+  <li><a href="#section4">Using YODA histograms</a></li>
 </ol>
 
  
@@ -20,7 +21,9 @@ one-dimensional histograms, useful for quick-and-dirty testing,
 without the need to link to more sophisticated packages. 
 For this reason it is used in many of the 
 <a href="SampleMainPrograms.html" target="page">sample main programs</a> 
-found in the <code>examples</code> subdirectory. 
+found in the <code>examples</code> subdirectory. At the end 
+of the section we show an example of how to link to a more 
+sophisticated package. 
  
 <a name="section0"></a> 
 <h3>Basic principles</h3> 
@@ -236,8 +239,8 @@ and <code>onlyZ.pdf</code>. You may of course edit the python file further
 to improve on the finer details. 
  
 <p/> 
-Examples are provided in <code>main03.cc</code> and <code>main07.cc</code>, 
-where the latter is the simpler one. The <code>main51.cc</code> example 
+Several examples are provided, e.g. in <code>main112.cc</code> and 
+<code>main113.cc</code>. The <code>main201.cc</code> example 
 illustrates that the <i>x</i> scale can be chosen logarithmically, 
 by using an optional last argument when histograms are booked. 
  
@@ -364,10 +367,10 @@ The Pyplot interface will display correct values, however.
    
  
 <a name="anchor12"></a>
-<p/><strong> void Hist::table(ostream&amp; os = cout, bool printOverUnder = false, bool xMidBin = true, bool printError = true) &nbsp;</strong> <br/>
+<p/><strong> void Hist::table(ostream&amp; os = cout, bool printOverUnder = false, bool xMidBin = true, bool printError = false) &nbsp;</strong> <br/>
    
 <a name="anchor13"></a>
-<strong> void Hist::table(string fileName, bool printOverUnder = false, bool xMidBin = true, bool printError = true) &nbsp;</strong> <br/>
+<strong> void Hist::table(string fileName, bool printOverUnder = false, bool xMidBin = true, bool printError = false) &nbsp;</strong> <br/>
 print a three-column table, where the first column gives the center of 
 each bin, the second one the corresponding bin contents, and the bin 
 errors. The table may be useful for plotting e.g. with Gnuplot. 
@@ -401,10 +404,10 @@ be output as zero.
    
  
 <a name="anchor16"></a>
-<p/><strong> void Hist::pyplotTable(ostream&amp; os = cout, bool isHist = true) &nbsp;</strong> <br/>
+<p/><strong> void Hist::pyplotTable(ostream&amp; os = cout, bool isHist = true, bool printError = false) &nbsp;</strong> <br/>
    
 <a name="anchor17"></a>
-<strong> void Hist:pyplotTable(string fileName, bool isHist = true) &nbsp;</strong> <br/>
+<strong> void Hist:pyplotTable(string fileName, bool isHist = true, bool printError = false) &nbsp;</strong> <br/>
 prints either a two- or a three-column table, depending on whether 
 the contents are to be plotted as a curve or as a histogram, the latter 
 being default. In either case the first column gives the center of each 
@@ -897,7 +900,87 @@ is almost the same, the exception being that the two compulsory arguments
 <code>frameName</code> and <code>hist</code> have been put at the beginning. 
    
  
+<a name="section4"></a> 
+ <h3>Using YODA histograms</h3> 
+ 
+The <code>YODA</code> library [<a href="Bibliography.html#refBuc23" target="page">Buc23</a>] for statistics and plotting 
+(found at <a href="https://yoda.hepforge.org/">the YODA webpage</a>) is a 
+lightweight library for histogramming, which mainly serves as the plotting 
+framework for <a href="https://rivet.hepforge.org/">RIVET</a> (see also the 
+section on <a href="RIVETusage.html" target="page">RIVET usage in PYTHIA</a>). It can, 
+however, also be used in stand-alone form, and PYTHIA comes with a 
+simplistic interface to make it easy to link to <code>YODA</code> and use 
+the statistics objects. 
+ 
+<p/> 
+After installing the <code>YODA</code> library to a suitable location, 
+configure PYTHIA with <code>YODA</code> using <code>--with-yoda</code>, 
+after which you can use the interface, located in 
+<code>include/PythiaPlugins/Pythia8Yoda.h</code>. Note that programs using 
+<code>YODA</code> must be compiled with at least <code>--std=c++17</code>, 
+which is handled automatically by <code>examples/Makefile</code> for 
+the example <code>main114.cc</code>. 
+ 
+<p/> 
+Use the interface by creating a <code>Pythia8Yoda</code> object using the 
+constructor: 
+<a name="anchor82"></a>
+<p/><strong> Pythia8Yoda::Pythia8Yoda(const string& anaNameIn = &quot;/PYTHIA8/&quot;, const string& outputIn = &quot;pythia&quot;) &nbsp;</strong> <br/>
+which takes two optional arguments: one that gives histograms a prefix 
+for easier sorting, and a second providing the output file name, which 
+will be postfixed by <code>.yoda</code>. 
+   
+ 
+<p/> 
+The main method for booking new histograms or profiles is the templated: 
+<a name="anchor83"></a>
+<p/><strong> shared_ptr&lt;T&gt; Pythia8Yoda::book(Args&&... args) &nbsp;</strong> <br/>
+which will return a shared pointer to any <code>YODA</code> object of 
+type <code>T</code>, given its normal constructor arguments. 
+   
+<p/> 
+Specializations are given for the most common types, which are also aliased 
+as: <code>Histo1DPtr, Histo2DPtr, Histo3DPtr, Profile1DPtr</code>, and 
+<code>Profile2DPtr</code>. They can each, in turn, be booked by the methods: 
+ 
+<a name="anchor84"></a>
+<p/><strong> Histo1DPtr Pythia8Yoda::bookHisto1D(int nBins, double xMin, double xMax, const string& title) &nbsp;</strong> <br/>
+which books a 1D histogram. 
+   
+ 
+<a name="anchor85"></a>
+<p/><strong> Histo2DPtr Pythia8Yoda::bookHisto2D(int nBinsX, double xMin, double xMax, int nBinsY, double yMin, double yMax, const std::string& title) &nbsp;</strong> <br/>
+which books a 2D histogram. 
+   
+ 
+<a name="anchor86"></a>
+<p/><strong> Histo3DPtr Pythia8Yoda::bookHisto3D(int nBinsX, double xMin, double xMax, int nBinsY, double yMin, double yMax, int nBinsZ, double zMin, double zMax, const std::string& title) &nbsp;</strong> <br/>
+which books a 3D histogram. 
+   
+ 
+<a name="anchor87"></a>
+<p/><strong> Profile1DPtr Pythia8Yoda::bookProfile1D(int nBins, double xMin, double xMax, const std::string& title) &nbsp;</strong> <br/>
+which books a 1D profile histogram. 
+   
+<a name="anchor88"></a>
+<p/><strong> Profile2DPtr Pythia8Yoda::bookProfile2D(int nBinsX, double xMin, double xMax, int nBinsY, double yMin, double yMax, const std::string& title) &nbsp;</strong> <br/>
+which books a 2D profile histogram. 
+   
+<p/> 
+At the end of the run (or intermittently), histograms can be written to a file 
+by calling: 
+<a name="anchor89"></a>
+<p/><strong> void Pythia8Yoda::write() &nbsp;</strong> <br/>
+which writes to the file name given in the constructor. 
+   
+<p/> 
+Further example use cases can be studied in the example <code>main114</code>. 
+After writing out a histogram file, it can be plotted with the standard 
+<code>YODA</code> or <code>RIVET</code> tools (e.g. 
+<code>rivet-mkhtml</code>), or by yourself using a custom Python 
+script. We refer to the <a href="https://yoda.hepforge.org/">YODA 
+documentation</a> for details. 
 </body>
 </html>
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

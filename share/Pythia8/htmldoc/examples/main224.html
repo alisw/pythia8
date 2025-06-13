@@ -1,0 +1,824 @@
+<html><head><title>main224</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main224</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main224.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Nadine Fischer
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#dire">Dire</a>
+//            <a href="../ExampleKeywords.html#vincia">Vincia</a>
+//            <a href="../ExampleKeywords.html#hepmc">Hepmc</a>
+//            <a href="../ExampleKeywords.html#openmp">OpenMP</a>
+//            <a href="../ExampleKeywords.html#command+file">Command&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#command+line+option">Command&nbsp;line&nbsp;option</a>
+
+// The following functions analyze a scattering event and save the event in
+// an output format that can be converted into a postscript figure using the
+// &quot;graphviz&quot; program.
+
+// Pythia includes.
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+#ifdef HEPMC3
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#endif
+
+// OpenMP includes.
+#ifdef OPENMP
+#include &lt;omp.h&gt;
+#endif
+
+// Include graphviz visualisation plugin.
+#include &quot;Pythia8Plugins/Visualisation.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main( int argc, char* argv[] ) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Visualize an event with graphivz.&quot;,
+    {&quot;./main224 --nevents 50 --setting \&quot;WeakSingleBoson:ffbar2gmZ=on\&quot;&quot;,
+        &quot;./main224 --input main224.cmnd --hepmc_output myfile.hepmc&quot;});
+  ip.add(&quot;v&quot;, &quot;false&quot;, &quot;Saves an event for visialization.&quot;,
+    {&quot;-visualize_event&quot;});
+  ip.add(&quot;n&quot;, &quot;-1&quot;, &quot;Number of events to generate.&quot;,
+    {&quot;-nevents&quot;});
+#ifdef OPENMP
+  ip.add(&quot;j&quot;, &quot;1&quot;, &quot;Number of threads to use if OpenMP enabled.&quot;,
+    {&quot;-nthreads&quot;});
+#endif
+  ip.add(&quot;c&quot;, &quot;&quot;, &quot;Input files for settings, can use multiple times.&quot;,
+    {&quot;-input&quot;});
+  ip.add(&quot;m&quot;, &quot;&quot;, &quot;Store generated events in HepMC file.&quot;,
+    {&quot;-hepmc_output&quot;});
+  ip.add(&quot;l&quot;, &quot;&quot;, &quot;Store generated events in LHEF file.&quot;,
+    {&quot;-lhef_output&quot;});
+  ip.add(&quot;s&quot;, &quot;&quot;, &quot;Settings to be read by Pythia, can use multiple times.&quot;,
+    {&quot;-setting&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  string input             = ip.get&lt;string&gt;(&quot;c&quot;);
+  string hepmc_output      = ip.get&lt;string&gt;(&quot;m&quot;);
+  string lhef_output       = ip.get&lt;string&gt;(&quot;l&quot;);
+  int nevents              = ip.get&lt;int&gt;(&quot;n&quot;);
+#ifdef OPENMP
+  int nThreads             = ip.get&lt;int&gt;(&quot;j&quot;);;
+#endif
+  bool visualize_event     = ip.get&lt;bool&gt;(&quot;v&quot;);
+  string visualize_output  = (input == &quot;&quot;) ? &quot;event&quot; : &quot;event-&quot; + input;
+  replace(visualize_output.begin(), visualize_output.end(), &apos;/&apos;, &apos;-&apos;);
+
+  vector&lt;Pythia*&gt; pythiaPtr;
+
+  // Read input files.
+  vector&lt;string&gt; input_file = ip.getVector&lt;string&gt;(&quot;c&quot;);
+  int countInput(input_file.size());
+  if (input_file.size() &lt; 1) input_file.push_back(&quot;&quot;);
+
+  // For several settings files as input, check that they use
+  // a different process.
+  if (input_file.size() &gt; 1) {
+    bool sameProcess = false;
+    for (int i = 1; i &lt; int(input_file.size()); ++i)
+      if (input_file[i] == input_file[i-1]) sameProcess = true;
+    if (sameProcess)
+      cout &lt;&lt; &quot;WARNING: several input files with the same name\n&quot;
+        &lt;&lt; &quot; found; this will lead to a wrong cross section!\n&quot;;
+  }
+
+  std::streambuf *old = cout.rdbuf();
+  stringstream ss;
+  for (int i = 0; i &lt; int(input_file.size()); ++i) {
+    ss.str(&quot;&quot;);
+    // Redirect output so that Pythia banner will not be printed twice.
+    if(i&gt;0) cout.rdbuf (ss.rdbuf());
+    pythiaPtr.push_back( new Pythia());
+    // Restore print-out.
+    cout.rdbuf (old);
+  }
+
+#ifdef OPENMP
+  old = cout.rdbuf();
+  int nThreadsMax = omp_get_max_threads();
+  int nThreadsReq = min(nThreads,nThreadsMax);
+  // Divide a single Pythia object into several, in case of multiple threads.
+  int nPythiaOrg = (int)pythiaPtr.size();
+
+  if (nThreadsReq &gt; 1 &amp;&amp; (nPythiaOrg == 1 || nThreadsReq%nPythiaOrg ==0)) {
+    int niterations(0);
+    for (int i = nPythiaOrg; i &lt; nThreadsReq; ++i) {
+      if (i%nPythiaOrg == 0) niterations++;
+      int ifile    = i-niterations*nPythiaOrg;
+      string sfile = input_file[ifile];
+      input_file.push_back(sfile);
+      ss.str(&quot;&quot;);
+      // Redirect output so that Pythia banner will not be printed twice.
+      cout.rdbuf (ss.rdbuf());
+      pythiaPtr.push_back( new Pythia());
+    }
+  }
+
+  // Restore print-out.
+  cout.rdbuf (old);
+
+  bool doParallel = true;
+  int  nPythiaAct = (int)pythiaPtr.size();
+  // The number of Pythia objects exceeds the number of available threads.
+  if (nPythiaAct &gt; nThreadsReq) {
+    cout &lt;&lt; &quot;WARNING: The number of requested Pythia instances exceeds the\n&quot;
+      &lt;&lt; &quot; number of available threads! No parallelization will be done!\n&quot;;
+    nThreadsReq = 1;
+    doParallel  = false;
+  } else if (nPythiaAct == 1) {
+    cout &lt;&lt; &quot;WARNING: The number of requested Pythia instances still one!\n&quot;
+      &lt;&lt; &quot; No parallelization will be done!\n&quot;;
+    nThreadsReq = 1;
+    doParallel  = false;
+  } else if (nPythiaAct &lt; nThreadsReq) {
+    cout &lt;&lt; &quot;WARNING: The number of requested Pythia instances too small!\n&quot;
+      &lt;&lt; &quot; Reset to minimal parallelization!\n&quot;;
+    nThreadsReq = nPythiaAct;
+  }
+
+  // Only print with first Pythia instance to avoid output mangling.
+  if (doParallel) for (int j = 1; j &lt; int(pythiaPtr.size()); ++j)
+    pythiaPtr[j]-&gt;readString(&quot;Print:quiet = on&quot;);
+
+#endif
+
+  // Force PhaseSpace:pTHatMinDiverge to something very small to not bias DIS.
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i)
+    pythiaPtr[i]-&gt;settings.forceParm(&quot;PhaseSpace:pTHatMinDiverge&quot;,5e-2);
+  // Print warning that the parameter has been reset, some general guidelines,
+  // and then wait for a few seconds, so that users can read the comments.
+  cout
+    &lt;&lt; &quot;\nINFORMATION:\n&quot;
+    &lt;&lt; &quot;   Forcing PhaseSpace:pTHatMinDiverge to very small\n&quot;
+    &lt;&lt; &quot;   value 0.05 GeV to prevent aggressive phase-space\n&quot;
+    &lt;&lt; &quot;   restriction of deep-inelastic scattering configurations.\n&quot;
+    &lt;&lt; &quot;   Default minimum value of 0.5 GeV may be reinstated from command\n&quot;
+    &lt;&lt; &quot;   line or input file settings.\n&quot;
+    &lt;&lt; &quot;\nNOTE THAT\n&quot;
+    &lt;&lt; &quot;   2-&gt;2 processes in pp collisions require setting &quot;
+    &lt;&lt;     &quot;PhaseSpace:pTHatMin\n&quot;
+    &lt;&lt; &quot;   2-&gt;2 processes in DIS collisions require setting &quot;
+    &lt;&lt;     &quot;PhaseSpace:Q2min\n&quot;
+    &lt;&lt; &quot;   (see details in the &apos;&apos;Phase Space Cuts&apos;&apos; section of the online &quot;
+    &lt;&lt;     &quot;manual)&quot; &lt;&lt; endl;
+
+  // Read command line settings.
+  vector&lt;string&gt; settings = ip.getVector&lt;string&gt;(&quot;s&quot;);
+  int countSettings(0);
+  for (int i = 0; i &lt; (int)settings.size(); ++i) {
+    string setting = settings[i];
+    replace(setting.begin(), setting.end(), &apos;&quot;&apos;, &apos; &apos;);
+
+    // Skip Dire settings at this stage.
+    if (setting.find(&quot;Dire&quot;) != string::npos) continue;
+    if (setting.find(&quot;Enhance&quot;) != string::npos) continue;
+
+    for (int j = 0; j &lt; int(pythiaPtr.size()); ++j) {
+      pythiaPtr[j]-&gt;readString(setting);
+      countSettings++;
+    }
+  }
+
+  // Read command line settings again and overwrite file settings.
+  for (int i = 0; i &lt; (int)settings.size(); ++i) {
+    string setting = settings[i];
+    replace(setting.begin(), setting.end(), &apos;&quot;&apos;, &apos; &apos;);
+    for (int j = 0; j &lt; int(pythiaPtr.size()); ++j)
+      pythiaPtr[j]-&gt;readString(setting);
+  }
+
+  if( countInput == 0 &amp;&amp; countSettings == 0 ) {
+    cout &lt;&lt; &quot;Error:  no runtime parameters have been passed to Pythia&quot; ;
+    cout &lt;&lt; &quot; using --input or --setting.  Run with --help for options.&quot;
+         &lt;&lt; endl;
+    return 1;
+  }
+
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i)
+    if (i &lt; int(input_file.size()) &amp;&amp; input_file[i] != &quot;&quot;)
+      pythiaPtr[i]-&gt;readFile(input_file[i].c_str());
+
+  // Two classes to do the two PDFs externally. Hand pointers to Pythia.
+  PDFPtr pdfAPtr = nullptr;
+  PDFPtr pdfBPtr = nullptr;
+
+  // Allow Pythia to use Dire merging classes.
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    if (pdfAPtr != nullptr) pythiaPtr[i]-&gt;setPDFAPtr(pdfAPtr);
+    if (pdfBPtr != nullptr) pythiaPtr[i]-&gt;setPDFBPtr(pdfBPtr);
+  }
+
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    if (i &lt; int(input_file.size()) &amp;&amp; input_file[i] != &quot;&quot;)
+      pythiaPtr[i]-&gt;readFile(input_file[i].c_str());
+    if (!pythiaPtr[i]-&gt;init()) return 1;
+  }
+
+#ifdef OPENMP
+  // A divided single Pythia run does not work with Les Houches events.
+  if (nThreadsReq &gt; 1 &amp;&amp; nPythiaOrg == 1 &amp;&amp;
+    pythiaPtr.front()-&gt;mode(&quot;Beams:frameType&quot;) &gt; 3) {
+    cout &lt;&lt; &quot;WARNING: can not divide the run into subruns as the\n&quot;
+      &lt;&lt; &quot; same hard events from the Les Houches file would be\n&quot;
+      &lt;&lt; &quot; used multiple times!\n&quot;;
+    // Clean-up.
+    nThreadsReq = 1;
+    for (int i = 1; i &lt; int(pythiaPtr.size()); ++i) {
+      delete pythiaPtr[i]; pythiaPtr[i]=0;
+    }
+  }
+  // Add random seeds for parallelization of a single Pythia run.
+  bool splitSingleRun = false;
+  if (nThreadsReq &gt; 1 &amp;&amp; nPythiaOrg == 1) {
+    splitSingleRun = true;
+    int randomOffset = 100;
+    for (int j = 0; j &lt; int(pythiaPtr.size()); ++j) {
+      pythiaPtr[j]-&gt;readString(&quot;Random:setSeed = on&quot;);
+      pythiaPtr[j]-&gt;readString(&quot;Random:seed = &quot; +
+                               std::to_string(randomOffset + j));
+    }
+  }
+#endif
+
+  int nEventEst = pythiaPtr.front()-&gt;settings.mode(&quot;Main:numberOfEvents&quot;);
+  if (nevents &gt; 0) nEventEst = nevents;
+
+  int nEventEstEach = nEventEst;
+#ifdef OPENMP
+  // Number of events per thread.
+  if (nThreadsReq &gt; 1) {
+    while (nEventEst%nThreadsReq != 0) nEventEst++;
+    nEventEstEach = nEventEst/nThreadsReq;
+  }
+#endif
+
+  // Switch off all showering and MPI when estimating the cross section,
+  // and re-initialise (unfortunately).
+  bool fsr = pythiaPtr.front()-&gt;flag(&quot;PartonLevel:FSR&quot;);
+  bool isr = pythiaPtr.front()-&gt;flag(&quot;PartonLevel:ISR&quot;);
+  bool mpi = pythiaPtr.front()-&gt;flag(&quot;PartonLevel:MPI&quot;);
+  bool had = pythiaPtr.front()-&gt;flag(&quot;HadronLevel:all&quot;);
+  bool rem = pythiaPtr.front()-&gt;flag(&quot;PartonLevel:Remnants&quot;);
+  bool chk = pythiaPtr.front()-&gt;flag(&quot;Check:Event&quot;);
+  vector&lt;bool&gt; merge;
+  if (!visualize_event) {
+    for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+      bool doMerge = pythiaPtr[i]-&gt;flag(&quot;Merging:doMerging&quot;);
+      merge.push_back(doMerge);
+      pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:FSR&quot;,false);
+      pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:ISR&quot;,false);
+      pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:MPI&quot;,false);
+      pythiaPtr[i]-&gt;settings.flag(&quot;HadronLevel:all&quot;,false);
+      pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:Remnants&quot;,false);
+      pythiaPtr[i]-&gt;settings.flag(&quot;Check:Event&quot;,false);
+      if (doMerge) pythiaPtr[i]-&gt;settings.flag
+                     (&quot;Merging:doXSectionEstimate&quot;, true);
+    }
+  }
+
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i)
+    if(!pythiaPtr[i]-&gt;init()) return 1;
+
+  // Cross section estimate run.
+  vector&lt;double&gt; nash, sumsh;
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    nash.push_back(0.);
+    sumsh.push_back(0.);
+  }
+
+  // Save a single event for event generation visualization.
+  if (visualize_event) {
+    while ( !pythiaPtr.front()-&gt;next() )
+      if ( pythiaPtr.front()-&gt;info.atEndOfFile() ) break;
+    printEvent(pythiaPtr.front()-&gt;event, visualize_output);
+    cout &lt;&lt; &quot;\nCreated event visualization. Exiting event generation.\n&quot;&lt;&lt;endl;
+    // Clean-up.
+    for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+      delete pythiaPtr[i]; pythiaPtr[i]=0;
+    }
+    return 0;
+  }
+
+#ifdef OPENMP
+#pragma omp parallel num_threads(nThreadsReq)
+{
+  for (int i = 0; i &lt; nEventEstEach; ++i) {
+    vector&lt;int&gt; pythiaIDs;
+    // If parallelization can not be done, loop through all
+    // Pythia objects.
+    if (!doParallel)
+      for (int j = 0; j &lt; int(pythiaPtr.size()); ++j)
+        pythiaIDs.push_back(j);
+    else pythiaIDs.push_back(omp_get_thread_num());
+    for (int id = 0; id &lt; int(pythiaIDs.size()); ++id) {
+      int j = pythiaIDs[id];
+      if ( !pythiaPtr[j]-&gt;next() ) {
+        if ( pythiaPtr[j]-&gt;info.atEndOfFile() ) break;
+        else continue;
+      }
+      sumsh[j] += pythiaPtr[j]-&gt;info.weight();
+      map &lt;string,string&gt; eventAttributes;
+      if (pythiaPtr[j]-&gt;info.eventAttributes)
+        eventAttributes = *(pythiaPtr[j]-&gt;info.eventAttributes);
+      string trials = (eventAttributes.find(&quot;trials&quot;) != eventAttributes.end())
+                    ?  eventAttributes[&quot;trials&quot;] : &quot;&quot;;
+      if (trials != &quot;&quot;) nash[j] += atof(trials.c_str());
+    }
+  }
+}
+#pragma omp barrier
+#else
+
+  for (int i = 0; i &lt; nEventEstEach; ++i) {
+    for (int j = 0; j &lt; int(pythiaPtr.size()); ++j) {
+      if ( !pythiaPtr[j]-&gt;next() ) {
+        if ( pythiaPtr[j]-&gt;info.atEndOfFile() ) break;
+        else continue;
+      }
+      sumsh[j] += pythiaPtr[j]-&gt;info.weight();
+      map &lt;string,string&gt; eventAttributes;
+      if (pythiaPtr[j]-&gt;info.eventAttributes)
+        eventAttributes = *(pythiaPtr[j]-&gt;info.eventAttributes);
+      string trials = (eventAttributes.find(&quot;trials&quot;) != eventAttributes.end())
+                    ?  eventAttributes[&quot;trials&quot;] : &quot;&quot;;
+      if (trials != &quot;&quot;) nash[j] += atof(trials.c_str());
+    }
+  }
+#endif
+
+  // Store estimated cross sections.
+  vector&lt;double&gt; na, xss;
+  old = cout.rdbuf();
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    // Redirect output so that Pythia banner will not be printed twice.
+    ss.str(&quot;&quot;);
+    cout.rdbuf (ss.rdbuf());
+    pythiaPtr[i]-&gt;stat();
+    na.push_back(pythiaPtr[i]-&gt;info.nAccepted());
+    xss.push_back(pythiaPtr[i]-&gt;info.sigmaGen());
+  }
+  // Restore print-out.
+  cout.rdbuf (old);
+
+#ifdef HEPMC3
+  bool printHepMC = !(hepmc_output == &quot;&quot;);
+  // Interface for conversion from Pythia8::Event to HepMC one.
+  HepMC3::Pythia8ToHepMC3 toHepMC;
+  // Specify file where HepMC events will be stored.
+  HepMC3::WriterAscii ascii_io(hepmc_output);
+  // Switch off warnings for parton-level events.
+  toHepMC.set_print_inconsistency(false);
+  toHepMC.set_free_parton_warnings(false);
+  // Do not store cross section information, as this will be done manually.
+  toHepMC.set_store_pdf(false);
+  toHepMC.set_store_proc(false);
+  toHepMC.set_store_xsec(false);
+  vector&lt; HepMC3::WriterAscii* &gt; ascii_io_var;
+#endif
+
+  // Cross section and weights:
+  // Total for all runs combined: main.
+  double sigmaTotAll(0.);
+  // Total for all runs combined: variations.
+  vector&lt;double&gt; sigmaTotVarAll;
+  // Individual run: main.
+  vector&lt;double&gt; sigmaInc, sigmaTot, sumwt, sumwtsq;
+  // Individual run: variations.
+  vector&lt;vector&lt;double&gt; &gt; sigmaTotVar;
+  // Check variations.
+  bool doVariationsAll(true);
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i)
+    if ( ! pythiaPtr.front()-&gt;settings.flag(&quot;Variations:doVariations&quot;) )
+      doVariationsAll = false;
+  if ( doVariationsAll ) {
+    for (int iwt=0; iwt &lt; 3; ++iwt) {
+#ifdef HEPMC3
+      if (printHepMC) {
+        string hepmc_var = hepmc_output + &quot;-&quot; + std::to_string(iwt);
+        ascii_io_var.push_back(new HepMC3::WriterAscii(hepmc_var));
+      }
+#endif
+      sigmaTotVarAll.push_back(0.);
+    }
+  }
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    sigmaTotVar.push_back(vector&lt;double&gt;());
+    if ( doVariationsAll ) {
+      for (int iwt=0; iwt &lt; 3; ++iwt)
+        sigmaTotVar.back().push_back(0.);
+    }
+    sigmaInc.push_back(0.);
+    sigmaTot.push_back(0.);
+    sumwt.push_back(0.);
+    sumwtsq.push_back(0.);
+  }
+
+  int nEvent = pythiaPtr.front()-&gt;settings.mode(&quot;Main:numberOfEvents&quot;);
+  if (nevents &gt; 0) nEvent = nevents;
+
+  int nEventEach = nEvent;
+#ifdef OPENMP
+  // Number of events per thread.
+  if (nThreadsReq &gt; 1) {
+    while (nEvent%nThreadsReq != 0) nEvent++;
+    nEventEach = nEvent/nThreadsReq;
+  }
+#endif
+
+  // Histogram of the event weight.
+  Hist weight_histogram(&quot;weight&quot;,10000,-100.,100.);
+  Hist pos_weight_histogram(&quot;weight&quot;,100,0.,100.);
+  Hist neg_weight_histogram(&quot;weight&quot;,100,0.,100.);
+
+  cout &lt;&lt; endl &lt;&lt; endl &lt;&lt; endl;
+  cout &lt;&lt; &quot;Start generating events&quot; &lt;&lt; endl;
+
+  // Switch showering and multiple interaction back on.
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:FSR&quot;,fsr);
+    pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:ISR&quot;,isr);
+    pythiaPtr[i]-&gt;settings.flag(&quot;HadronLevel:all&quot;,had);
+    pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:MPI&quot;,mpi);
+    pythiaPtr[i]-&gt;settings.flag(&quot;PartonLevel:Remnants&quot;,rem);
+    pythiaPtr[i]-&gt;settings.flag(&quot;Check:Event&quot;,chk);
+    pythiaPtr[i]-&gt;settings.flag(&quot;Merging:doMerging&quot;,merge[i]);
+    pythiaPtr[i]-&gt;settings.flag(&quot;Merging:doXSectionEstimate&quot;, false);
+  }
+
+  // Reinitialize Pythia for event generation runs. If we fail to
+  // initialize, exit with an error.
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i)
+    if (!pythiaPtr[i]-&gt;init()) return 1;
+
+  // Event generation run.
+
+#ifdef OPENMP
+#pragma omp parallel num_threads(nThreadsReq)
+{
+  for (int i = 0; i &lt; nEventEach; ++i) {
+
+    vector&lt;int&gt; pythiaIDs;
+    // If parallelization can not be done, loop through all
+    // Pythia objects.
+    if (!doParallel)
+      for (int j = 0; j &lt; int(pythiaPtr.size()); ++j)
+        pythiaIDs.push_back(j);
+    else pythiaIDs.push_back(omp_get_thread_num());
+    for (int id = 0; id &lt; int(pythiaIDs.size()); ++id) {
+      int j = pythiaIDs[id];
+      if ( !pythiaPtr[j]-&gt;next() ) {
+        if ( pythiaPtr[j]-&gt;info.atEndOfFile() ) break;
+        else continue;
+      }
+
+      // Do MEM.
+      if (pythiaPtr[j]-&gt;settings.flag(&quot;Dire:doMEM&quot;)) { ; }
+
+      // Get event weight(s).
+      double evtweight = pythiaPtr[j]-&gt;info.weight();
+
+      // Do not print zero-weight events.
+      if ( evtweight == 0. ) continue;
+
+#pragma omp critical
+{
+      weight_histogram.fill( evtweight, 1.0);
+      if (evtweight&gt;0.) pos_weight_histogram.fill( evtweight, 1.0);
+      if (evtweight&lt;0.) neg_weight_histogram.fill(-evtweight, 1.0);
+      if (i&gt;0 &amp;&amp; i%1000==0) {
+        ofstream wr;
+        wr.open(&quot;weights.dat&quot;);
+        weight_histogram /= double(i);
+        weight_histogram.table(wr);
+        weight_histogram *= double(i);
+        wr.close();
+        wr.open(&quot;pos_weights.dat&quot;);
+        pos_weight_histogram /= double(i);
+        pos_weight_histogram.table(wr);
+        pos_weight_histogram *= double(i);
+        wr.close();
+        wr.open(&quot;neg_weights.dat&quot;);
+        neg_weight_histogram /= double(i);
+        neg_weight_histogram.table(wr);
+        neg_weight_histogram *= double(i);
+        wr.close();
+      }
+}
+
+      if (abs(evtweight) &gt; 1e3) {
+#pragma omp critical
+{
+        cout &lt;&lt; scientific &lt;&lt; setprecision(8)
+             &lt;&lt; &quot;Warning in main program main224.cc: Large shower weight wt=&quot;
+             &lt;&lt; evtweight &lt;&lt; endl;
+        if (abs(evtweight) &gt; 1e4) {
+          cout &lt;&lt; &quot;Warning in main program main224.cc: Shower weight larger&quot;
+               &lt;&lt; &quot; than 10000. Discard event with rare shower weight&quot;
+               &lt;&lt; &quot; fluctuation.&quot; &lt;&lt; endl;
+          evtweight = 0.;
+        }
+}
+      }
+
+      // Do not print zero-weight events.
+      if ( evtweight == 0. ) continue;
+
+      // Now retrieve additional shower weights, and combine these
+      // into muR-up and muR-down variations.
+      vector&lt;double&gt; evtweights;
+
+#pragma omp critical
+{
+
+      sumwt[j]   += evtweight;
+      sumwtsq[j] += pow2(evtweight);
+
+      double normhepmc = xss[j]/na[j];
+
+      // Weighted events with additional number of trial events to consider.
+      if ( pythiaPtr[j]-&gt;info.lhaStrategy() != 0
+        &amp;&amp; pythiaPtr[j]-&gt;info.lhaStrategy() != 3
+        &amp;&amp; nash[j] &gt; 0)
+        normhepmc = 1. / (1e9*nash[j]);
+      // Weighted events.
+      else if ( pythiaPtr[j]-&gt;info.lhaStrategy() != 0
+        &amp;&amp; pythiaPtr[j]-&gt;info.lhaStrategy() != 3
+        &amp;&amp; nash[j] == 0)
+        normhepmc = 1. / (1e9*na[j]);
+
+      if (pythiaPtr[j]-&gt;settings.flag(&quot;PhaseSpace:bias2Selection&quot;))
+        normhepmc = xss[j] / (sumsh[j]);
+
+      if (pythiaPtr[j]-&gt;event.size() &gt; 3) {
+
+        double w = evtweight*normhepmc;
+        // Add the weight of the current event to the cross section.
+        double divide = (splitSingleRun ? double(nThreadsReq) : 1.0);
+        sigmaTotAll += w/divide;
+        sigmaInc[j] += evtweight*normhepmc;
+        sigmaTot[j] += w;
+#ifdef HEPMC3
+        if (printHepMC) {
+          // Construct new empty HepMC event.
+          HepMC3::GenEvent hepmcevt;
+          // Set event weight
+          hepmcevt.weights().push_back(w);
+          // Fill HepMC event
+          toHepMC.fill_next_event( *pythiaPtr[j], &amp;hepmcevt );
+          // Report cross section to hepmc.
+          shared_ptr&lt;HepMC3::GenCrossSection&gt; xsec;
+          xsec = make_shared&lt;HepMC3::GenCrossSection&gt;();
+          // First add object to event, then set cross section. This
+          // order ensures that the lengths of the cross section and
+          // the weight vector agree.
+          hepmcevt.set_cross_section( xsec );
+          xsec-&gt;set_cross_section( sigmaTotAll*1e9,
+            pythiaPtr[j]-&gt;info.sigmaErr()*1e9 );
+          // Write the HepMC event to file. Done with it.
+          ascii_io.write_event(hepmcevt);
+        }
+#endif
+
+        // Write additional HepMC events.
+        for (int iwt=0; iwt &lt; int(evtweights.size()); ++iwt) {
+          double wVar = evtweight*evtweights[iwt]*normhepmc;
+          // Add the weight of the current event to the cross section.
+          double divideVar = (splitSingleRun ? double(nThreadsReq) : 1.0);
+          sigmaTotVarAll[iwt] += wVar/divideVar;
+          sigmaTotVar[j][iwt] += wVar;
+#ifdef HEPMC3
+          if (printHepMC) {
+            HepMC3::GenEvent hepmcevt;
+            // Set event weight
+            hepmcevt.weights().push_back(wVar);
+            // Fill HepMC event
+            toHepMC.fill_next_event( *pythiaPtr[j], &amp;hepmcevt );
+            // Report cross section to hepmc.
+            shared_ptr&lt;HepMC3::GenCrossSection&gt; xsec;
+            xsec = make_shared&lt;HepMC3::GenCrossSection&gt;();
+            // First add object to event, then set cross section. This
+            // order ensures that the lengths of the cross section and
+            // the weight vector agree.
+            hepmcevt.set_cross_section( xsec );
+            xsec-&gt;set_cross_section( sigmaTotVarAll[iwt]*1e9,
+              pythiaPtr[j]-&gt;info.sigmaErr()*1e9 );
+            // Write the HepMC event to file. Done with it.
+            ascii_io_var[iwt]-&gt;write_event(hepmcevt);
+          }
+#endif
+        }
+      }
+    }
+  }
+}
+}
+#pragma omp barrier
+#else
+  for (int i = 0; i &lt; nEventEach; ++i) {
+
+    for (int j = 0; j &lt; int(pythiaPtr.size()); ++j) {
+      if ( !pythiaPtr[j]-&gt;next() ) {
+        if ( pythiaPtr[j]-&gt;info.atEndOfFile() ) break;
+        else continue;
+      }
+
+      // Get event weight(s).
+      double evtweight = pythiaPtr[j]-&gt;info.weight();
+
+      // Do not print zero-weight events.
+      if ( evtweight == 0. ) continue;
+
+      weight_histogram.fill( evtweight, 1.0);
+      if (evtweight&gt;0.) pos_weight_histogram.fill( evtweight, 1.0);
+      if (evtweight&lt;0.) neg_weight_histogram.fill(-evtweight, 1.0);
+      if (i&gt;0 &amp;&amp; i%1000==0) {
+        ofstream wr;
+        wr.open(&quot;weights.dat&quot;);
+        weight_histogram /= double(i);
+        weight_histogram.table(wr);
+        weight_histogram *= double(i);
+        wr.close();
+        wr.open(&quot;pos_weights.dat&quot;);
+        pos_weight_histogram /= double(i);
+        pos_weight_histogram.table(wr);
+        pos_weight_histogram *= double(i);
+        wr.close();
+        wr.open(&quot;neg_weights.dat&quot;);
+        neg_weight_histogram /= double(i);
+        neg_weight_histogram.table(wr);
+        neg_weight_histogram *= double(i);
+        wr.close();
+      }
+
+      if (abs(evtweight) &gt; 1e3) {
+        cout &lt;&lt; scientific &lt;&lt; setprecision(8)
+          &lt;&lt; &quot;Warning in main program main224.cc: Large shower weight wt=&quot;
+          &lt;&lt; evtweight &lt;&lt; endl;
+        if (abs(evtweight) &gt; 1e4) {
+          cout &lt;&lt; &quot;Warning in main program main224.cc: Shower weight larger&quot;
+               &lt;&lt; &quot; than 10000. Discard event with rare shower weight&quot;
+               &lt;&lt; &quot; fluctuation.&quot; &lt;&lt; endl;
+          evtweight = 0.;
+        }
+      }
+
+      // Do not print zero-weight events.
+      if ( evtweight == 0. ) continue;
+
+      // Now retrieve additional shower weights, and combine these
+      // into muR-up and muR-down variations.
+      vector&lt;double&gt; evtweights;
+      sumwt[j]   += evtweight;
+      sumwtsq[j] += pow2(evtweight);
+      double normhepmc = xss[j]/na[j];
+
+      // Weighted events with additional number of trial events to consider.
+      if ( pythiaPtr[j]-&gt;info.lhaStrategy() != 0
+        &amp;&amp; pythiaPtr[j]-&gt;info.lhaStrategy() != 3
+        &amp;&amp; nash[j] &gt; 0)
+        normhepmc = 1. / (1e9*nash[j]);
+      // Weighted events.
+      else if ( pythiaPtr[j]-&gt;info.lhaStrategy() != 0
+        &amp;&amp; pythiaPtr[j]-&gt;info.lhaStrategy() != 3
+        &amp;&amp; nash[j] == 0)
+        normhepmc = 1. / (1e9*na[j]);
+
+      if (pythiaPtr[j]-&gt;settings.flag(&quot;PhaseSpace:bias2Selection&quot;))
+        normhepmc = 1. / (1e9*na[j]);
+
+      if (pythiaPtr[j]-&gt;event.size() &gt; 3) {
+
+        double w = evtweight*normhepmc;
+        // Add the weight of the current event to the cross section.
+        sigmaTotAll += w;
+        sigmaInc[j] += evtweight*normhepmc;
+        sigmaTot[j] += w;
+#ifdef HEPMC3
+        if (printHepMC) {
+          // Construct new empty HepMC event.
+          HepMC3::GenEvent hepmcevt;
+          // Set event weight
+          hepmcevt.weights().push_back(w);
+          // Fill HepMC event
+          toHepMC.fill_next_event( *pythiaPtr[j], &amp;hepmcevt );
+          // Report cross section to hepmc.
+          shared_ptr&lt;HepMC3::GenCrossSection&gt; xsec;
+          xsec = make_shared&lt;HepMC3::GenCrossSection&gt;();
+          // First add object to event, then set cross section. This
+          // order ensures that the lengths of the cross section and
+          // the weight vector agree.
+          hepmcevt.set_cross_section( xsec );
+          xsec-&gt;set_cross_section( sigmaTotAll*1e9,
+            pythiaPtr[j]-&gt;info.sigmaErr()*1e9 );
+          // Write the HepMC event to file.
+          ascii_io.write_event(hepmcevt);
+        }
+#endif
+
+        // Write additional HepMC events.
+        for (int iwt=0; iwt &lt; int(evtweights.size()); ++iwt) {
+          double wVar = evtweight*evtweights[iwt]*normhepmc;
+          // Add the weight of the current event to the cross section.
+          sigmaTotVarAll[iwt] += wVar;
+          sigmaTotVar[j][iwt] += wVar;
+#ifdef HEPMC3
+          if (printHepMC) {
+            HepMC3::GenEvent hepmcevt;
+            // Set event weight
+            hepmcevt.weights().push_back(wVar);
+            // Fill HepMC event
+            toHepMC.fill_next_event( *pythiaPtr[j], &amp;hepmcevt );
+            // Report cross section to hepmc.
+            shared_ptr&lt;HepMC3::GenCrossSection&gt; xsec;
+            xsec = make_shared&lt;HepMC3::GenCrossSection&gt;();
+            // First add object to event, then set cross section. This
+            // order ensures that the lengths of the cross section and
+            // the weight vector agree.
+            hepmcevt.set_cross_section( xsec );
+            xsec-&gt;set_cross_section( sigmaTotVarAll[iwt]*1e9,
+              pythiaPtr[j]-&gt;info.sigmaErr()*1e9 );
+            // Write the HepMC event to file.
+            ascii_io_var[iwt]-&gt;write_event(hepmcevt);
+          }
+#endif
+        }
+      }
+    }
+  }
+#endif
+
+  // Print cross section, errors.
+  double sumTot(0.), sum2Tot(0.), nacTot(0.);
+  cout &lt;&lt; &quot;\nSummary of individual runs:\n&quot;;
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    cout &lt;&lt; &quot;\nSummary of runs #&quot; &lt;&lt; i &lt;&lt; &quot; :\n&quot;;
+    pythiaPtr[i]-&gt;stat();
+    int nAc = pythiaPtr[i]-&gt;info.nAccepted();
+    cout &lt;&lt; scientific &lt;&lt; setprecision(6)
+      &lt;&lt; &quot;\n\t Mean shower weight         = &quot; &lt;&lt; sumwt[i]/double(nAc) &lt;&lt; &quot;\n&quot;
+      &lt;&lt; &quot;\t Variance of shower weight  = &quot;
+      &lt;&lt; sqrt(1/double(nAc)*(sumwtsq[i] - pow(sumwt[i],2)/double(nAc)))
+      &lt;&lt; endl;
+    cout &lt;&lt; &quot;\t Inclusive cross section    : &quot; &lt;&lt; sigmaInc[i] &lt;&lt; &quot;\n&quot;;
+    cout &lt;&lt; &quot;\t Cross section after shower : &quot; &lt;&lt; sigmaTot[i] &lt;&lt; &quot;\n&quot;;
+    sumTot += sumwt[i];
+    sum2Tot += sumwtsq[i];
+    nacTot += nAc;
+  }
+  cout &lt;&lt; &quot;\nCombination of runs:\n&quot;
+    &lt;&lt; scientific &lt;&lt; setprecision(6)
+    &lt;&lt; &quot;\t Mean shower weight         = &quot; &lt;&lt; sumTot/nacTot &lt;&lt; &quot;\n&quot;
+    &lt;&lt; &quot;\t Variance of shower weight  = &quot;
+    &lt;&lt; sqrt(1/nacTot*(sum2Tot - pow(sumTot,2)/nacTot ))
+    &lt;&lt; &quot; &quot; &lt;&lt; 1/nacTot*(sum2Tot - pow(sumTot,2)/nacTot )
+    &lt;&lt; &quot;\n&quot;
+    &lt;&lt; &quot;\t Cross section after shower : &quot; &lt;&lt; sigmaTotAll &lt;&lt; &quot;\n&quot;;
+
+#ifdef HEPMC3
+  // Clean-up.
+  if ( pythiaPtr.front()-&gt;settings.flag(&quot;Variations:doVariations&quot;) ) {
+    if (printHepMC) for (int iwt=0; iwt &lt; 3; ++iwt) delete ascii_io_var[iwt];
+ }
+#endif
+
+
+  // Write endtag. Overwrite initialization info with new cross sections.
+  ofstream write;
+  write.open(&quot;weights.dat&quot;);
+  weight_histogram /= double(nacTot);
+  weight_histogram.table(write);
+  write.close();
+  write.open(&quot;pos_weights.dat&quot;);
+  pos_weight_histogram /= double(nacTot);
+  pos_weight_histogram.table(write);
+  write.close();
+  write.open(&quot;neg_weights.dat&quot;);
+  neg_weight_histogram /= double(nacTot);
+  neg_weight_histogram.table(write);
+  write.close();
+
+  // Clean-up.
+  for (int i = 0; i &lt; int(pythiaPtr.size()); ++i) {
+    delete pythiaPtr[i]; pythiaPtr[i]=0;
+  }
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

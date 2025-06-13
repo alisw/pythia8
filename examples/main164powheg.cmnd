@@ -1,0 +1,42 @@
+! This file demonstrates NLO matching with POWHEG-BOX in Pythia.
+
+! Number of generated events.
+Main:numberOfEvents         = 100
+
+! Use events from LHEF input.
+Beams:frameType             = 4
+
+! Choose the shower model. 1:simple shower, 2:VINCIA, 3:DIRE.
+PartonShowers:model         = 1
+
+! POWHEG matching settings.
+POWHEG:veto                 = 1
+POWHEG:nFinal               = 2
+POWHEG:vetoCount            = 3
+POWHEG:pThard               = 2
+POWHEG:pTemt                = 0
+POWHEG:pTdef                = 1
+POWHEG:emitted              = 0
+POWHEG:MPIveto              = 0
+POWHEG:QEDveto              = 2
+
+! Optionally use same PDFs and alphaS as in ME calculation.
+! PDF:pSet                   = LHAPDF6:cteq6l1
+! SpaceShower:alphaSvalue    = 0.118
+! TimeShower:alphaSvalue     = 0.118
+
+! Optionally write HepMC events.
+! (Pythia has to be configured with --with-hepmc3 or --with-rivet).
+Main:HepMC                  = on
+HepMC:output                = main164powheg.hepmc
+
+! Optionally include Rivet analyses.
+! (Pythia has to be configured with --with-rivet).
+Main:Rivet                  = on
+Rivet:output                = main164powheg.yoda
+Rivet:analyses              = {MC_XS,MC_WEIGHTS}
+
+! Subruns for NLO matching with POWHEG-BOX events.
+Main:numberOfSubruns        = 1
+Main:subrun                 = 0
+Beams:LHEF                  = powheg-hvq.lhe

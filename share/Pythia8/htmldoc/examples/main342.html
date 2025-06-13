@@ -1,0 +1,185 @@
+<html><head><title>main342</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main342</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main342.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Christine O Rasmussen
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#diffraction">Diffraction</a>
+//            <a href="../ExampleKeywords.html#dis">DIS</a>
+//            <a href="../ExampleKeywords.html#photoproduction">Photoproduction</a>
+//            <a href="../ExampleKeywords.html#jets">Jets</a>
+//            <a href="../ExampleKeywords.html#hard+diffraction">Hard&nbsp;diffraction</a>
+
+// The y, pT, x_Pomeron and t distributions for forward Z bosons at HERA,
+// within the hard diffraction framework for an inclusive event sample.
+// Tests the impact of successive requirements.
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Create Pythia instance. Shorthand for event and info.
+  Pythia pythia;
+  const Info&amp; info = pythia.info;
+
+  // Set it up to generate dijets at HERA.
+  pythia.readString(&quot;Beams:frametype = 2&quot;);    // Beams with different energies
+  pythia.readString(&quot;Beams:idA = 2212&quot;);       // p+ at 920 GeV
+  pythia.readString(&quot;Beams:eA = 920&quot;);
+  pythia.readString(&quot;Beams:idB = -11&quot;);        // e+ at 27.5 GeV
+  pythia.readString(&quot;Beams:eB = 27.5&quot;);
+  pythia.readString(&quot;PDF:lepton2gamma = on&quot;);  // Allow for photon-from lepton
+  pythia.readString(&quot;Photon:ProcessType = 0&quot;); // Allow all photon processes
+  pythia.readString(&quot;Photon:Q2max = 1.&quot;);      // Maximal Q2
+  pythia.readString(&quot;HardQCD:all = on&quot;);       // All dijet MEs
+  pythia.readString(&quot;PhotonParton:all = on&quot;);  // All dijet MEs with photons
+  pythia.readString(&quot;PhaseSpace:pThatMin = 4.&quot;);            // Minimal pT cut
+  pythia.readString(&quot;MultipartonInteractions:pT0Ref = 3.&quot;); // Tuned ep value
+
+  // Setup of diffractive framework.
+  pythia.readString(&quot;Diffraction:doHard = on&quot;);
+  pythia.readString(&quot;Diffraction:sampleType = 1&quot;);   // &apos;PDF&apos; sample
+  pythia.readString(&quot;Diffraction:hardDiffSide = 2&quot;); // Diff. on photon side
+  pythia.readString(&quot;SigmaDiffractive:PomFlux = 7&quot;); // H1 Fit B LO
+  pythia.readString(&quot;PDF:PomSet = 6&quot;);               // H1 Fit B LO
+
+  // Simplify printout.
+  pythia.readString(&quot;Init:showChangedSettings = off&quot;);
+  pythia.readString(&quot;Init:showChangedParticleData = off&quot;);
+  pythia.readString(&quot;Init:showMultipartonInteractions = off&quot;);
+  pythia.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythia.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythia.readString(&quot;Next:numberShowEvent = 0&quot;);
+  pythia.readString(&quot;Next:showScaleAndVertex = off&quot;);
+
+  // If Pythia fails to initialize, exit with error.
+  if (!pythia.init()) return 1;
+
+  // Collect information on the number of diffractive events
+  int maxEvent      = 10000;
+  int nListJets     = 5;
+  int nDiffA        = 0;
+  int nDiffB        = 0;
+  int nReducedDiffA = 0;
+  int nReducedDiffB = 0;
+
+  // Histograms.
+  Hist nJets0(&quot;number of jets, inclusive&quot;,            50, -0.5,   9.5);
+  Hist nJets1(&quot;number of jets, after PDF selection&quot;,  50, -0.5,   9.5);
+  Hist nJets2(&quot;number of jets, after MPI selection&quot;,  50, -0.5,   9.5);
+  Hist eTjets0(&quot;pT for jets, inclusive&quot;,             100,  0.0,  50.0);
+  Hist eTjets1(&quot;pT for jets, after PDF selection&quot;,   100,  0.0,  50.0);
+  Hist eTjets2(&quot;pT for jets, after MPI selection&quot;,   100,  0.0,  50.0);
+  Hist etaJets0(&quot;y for jets, inclusive&quot;,             100, -5.0,   5.0);
+  Hist etaJets1(&quot;y for jets, after PDF selection&quot;,   100, -5.0,   5.0);
+  Hist etaJets2(&quot;y for jets, after MPI selection&quot;,   100, -5.0,   5.0);
+  Hist phiJets0(&quot;phi for jets, inclusive&quot;,           100, -M_PI, M_PI);
+  Hist phiJets1(&quot;phi for jets, after PDF selection&quot;, 100, -M_PI, M_PI);
+  Hist phiJets2(&quot;phi for jets, after MPI selection&quot;, 100, -M_PI, M_PI);
+  Hist xP1(&quot;dN/dxPom after PDF selection&quot;,           100,  0.0,   1.0);
+  Hist xP2(&quot;dN/dxPom after MPI selection&quot;,           100,  0.0,   1.0);
+  Hist tP1(&quot;dN/dt after PDF selection&quot;,              100, -2.0,   0.0);
+  Hist tP2(&quot;dN/dt after MPI selection&quot;,              100, -2.0,   0.0);
+
+  // Parameters for the jet finder.
+  double etaMax   = 4.;
+  double radius   = 1.0;
+  double pTjetMin = 3.;
+  int    nSel     = 2; // Exclude neutrinos from study.
+
+  // Set up SlowJet jet finder, with C/A clustering
+  // and pion mass assumed for non-photons..
+  SlowJet slowJet( 0, radius, pTjetMin, etaMax, nSel, 1);
+
+  // Begin event loop. Generate event; skip if generation failed.
+  for (int iEvent = 0; iEvent &lt; maxEvent; ++iEvent) {
+    if (!pythia.next()) continue;
+
+    // Analyze Slowet jet properties. List first few.
+    slowJet. analyze( pythia.event );
+    if (iEvent &lt; nListJets) slowJet.list();
+
+    // Fill SlowJet inclusive jet distributions.
+    nJets0.fill( slowJet.sizeJet() );
+    for (int i = 0; i &lt; slowJet.sizeJet(); ++i) {
+      eTjets0.fill( slowJet.pT(i) );
+      etaJets0.fill( slowJet.y(i) );
+      phiJets0.fill( slowJet.phi(i) );
+    }
+
+    // Find diffractive events. Histogram y and pT.
+    if ( info.isHardDiffractiveA() == 1 || info.isHardDiffractiveB() == 1) {
+      nJets1.fill( slowJet.sizeJet() );
+      for (int i = 1; i &lt; slowJet.sizeJet(); ++i) {
+        eTjets1.fill( slowJet.pT(i) );
+        etaJets1.fill( slowJet.y(i) );
+        phiJets1.fill( slowJet.phi(i) );
+      }
+      if (info.nMPI() == 1) {
+        nJets2.fill( slowJet.sizeJet() );
+        for (int i = 2; i &lt; slowJet.sizeJet(); ++i) {
+          eTjets2.fill( slowJet.pT(i) );
+          etaJets2.fill( slowJet.y(i) );
+          phiJets2.fill( slowJet.phi(i) );
+        }
+      }
+
+      // Statistics and histogram on x_Pomeron and t.
+      if ( info.isHardDiffractiveA() == 1) {
+        ++nDiffA;
+        xP1.fill( info.xPomeronB() );
+        tP1.fill( info.tPomeronB() );
+        if (info.nMPI() == 1) {
+          ++nReducedDiffA;
+          xP2.fill( info.xPomeronB() );
+          tP2.fill( info.tPomeronB() );
+        }
+      }
+      else if ( info.isHardDiffractiveB() == 1) {
+        ++nDiffB;
+        xP1.fill( info.xPomeronA() );
+        tP1.fill( info.tPomeronA() );
+        if (info.nMPI() == 1) {
+          ++nReducedDiffB;
+          xP2.fill( info.xPomeronA() );
+          tP2.fill( info.tPomeronA() );
+        }
+      }
+    }
+
+  // End of event loop. Statistics on event generation.
+  }
+  pythia.stat();
+
+  // Statistics on diffraction.
+  cout &lt;&lt; &quot;Side A is MPI-unchecked diffractive : &quot; &lt;&lt; nDiffA &lt;&lt; endl;
+  cout &lt;&lt; &quot;Side A is MPI-checked diffractive   : &quot; &lt;&lt; nReducedDiffA &lt;&lt; endl;
+  cout &lt;&lt; &quot;Side B is MPI-unchecked diffractive : &quot; &lt;&lt; nDiffB &lt;&lt; endl;
+  cout &lt;&lt; &quot;Side B is MPI-checked diffractive   : &quot; &lt;&lt; nReducedDiffB &lt;&lt; endl;
+  cout &lt;&lt; &quot;Total MPI-unchecked diffractive events : &quot; &lt;&lt; fixed
+       &lt;&lt; setprecision(2) &lt;&lt; (nDiffA + nDiffB) / double(maxEvent) * 100.
+       &lt;&lt; &quot;%&quot; &lt;&lt; endl;
+  cout &lt;&lt; &quot;Total MPI-checked diffractive events : &quot;
+       &lt;&lt; (nReducedDiffA + nReducedDiffB) / double(maxEvent) * 100.
+       &lt;&lt; &quot;%&quot; &lt;&lt; endl;
+
+  // Histograms.
+  cout &lt;&lt; xP1 &lt;&lt; xP2 &lt;&lt; tP1 &lt;&lt; tP2
+       &lt;&lt; nJets0 &lt;&lt; nJets1 &lt;&lt; nJets2 &lt;&lt; eTjets0 &lt;&lt; eTjets1 &lt;&lt; eTjets2
+       &lt;&lt; etaJets0 &lt;&lt; etaJets1 &lt;&lt; etaJets2 &lt;&lt; phiJets0 &lt;&lt; phiJets1 &lt;&lt; phiJets2;
+
+  return 0;
+}
+</code></pre></body></html>

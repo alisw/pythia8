@@ -10,7 +10,7 @@ you this access at a few selected places. This class in itself does
 nothing; the idea is that you should write your own derived class 
 for your task. One simple derived class (<code>SuppressSmallPT</code>) 
 comes with the program, mainly as illustration, and the 
-<code>main10.cc</code> program provides a complete (toy) example how 
+<code>main242.cc</code> program provides a complete (toy) example how 
 a derived class could be set up and used. 
  
 <p/> 
@@ -943,9 +943,8 @@ thus repeating a step in the hadronization procedure.
  
 <method name="virtual bool canChangeFragPar()"> 
 In the base class this method returns false. If you redefine it to 
-return true, it will enable the methods <code>doChangeFragPar(...)</code>, 
-<code>doVetoFragmentation(...)</code> and 
-<code>setStringEnds(...)</code>. 
+return true, it will enable the method <code>doChangeFragPar(...)</code> 
+and <code>setStringEnds(...)</code>. 
 </method> 
  
 <method name="virtual bool doChangeFragPar(StringFlav* flavPtr, StringZ* zPtr, 
@@ -994,6 +993,12 @@ record for all the partons in the string currently being hadronized.
 </argument> 
 </method> 
  
+<method name="virtual bool canVetoFragmentation()"> 
+In the base class this method returns false. If you redefine it to 
+return true, it will enable the method <code>doVetoFragmentation(...)</code>, 
+<code>doVetoFinalTwo(...)</code> and <code>setStringEnds(...)</code>. 
+</method> 
+ 
 <method name="virtual bool doVetoFragmentation(Particle had, 
 const StringEnd * sEnd)"> 
 This method can veto the production of a hadron, whereby the current 
@@ -1009,7 +1014,24 @@ containing additional information about the string break.
 <method name="virtual bool doVetoFragmentation(Particle had1, Particle had2, 
 const StringEnd * sEnd1, const StringEnd * sEnd1)"> 
 This method can veto the production of the final hadrons produced in the 
-fragmentation of a string. 
+fragmentation of a string. Note that a veto from this function 
+will refragment the whole string. If only the regeneration of 
+the final two is desired, the doVetoFinalTwo function should be 
+used instead. 
+<argument name="had1,had2"> are (copies of) the two final hadrons being 
+produced, just before they are added to the event record. 
+</argument> 
+<argument name="sEnd1,sEnd2"> are pointers to <code>StringEnd</code> objects 
+containing additional information about the string break. 
+</argument> 
+</method> 
+ 
+<method name="virtual bool doVetoFinalTwo(Particle had1, Particle had2, 
+const StringEnd * sEnd1, const StringEnd * sEnd1)"> 
+This method can veto the production of the final hadrons produced in the 
+fragmentation of a string. If the refragmentation of the whole 
+string is desired, the doVetoFragmentation function should be 
+used instead. 
 <argument name="had1,had2"> are (copies of) the two final hadrons being 
 produced, just before they are added to the event record. 
 </argument> 
@@ -1082,4 +1104,4 @@ occurs.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

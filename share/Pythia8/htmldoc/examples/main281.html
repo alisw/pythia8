@@ -1,0 +1,93 @@
+<html><head><title>main281</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main281</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main281.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:torbjorn.sjostrand@fysik.lu.se">Torbjorn Sjostrand</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#utility">Utility</a>
+
+// This program illustrates how all settings and especially particle data
+// can be written, and read back in after editing, either as plaintext or xml.
+
+// For settings the xml version gives complete information, including min
+// and max values, while min/max info is missing in the plaintext version.
+// Since permanent editing of settings has to be done in xmldoc/*.xml files,
+// the plaintext version may be more convenient for temporary changes.
+
+// The particle data options, both the xml and plaintext ones, can also be
+// used for temporary changes, and are then essentially equivalent.
+// But here an edited xml file can be directly pasted into relevant parts
+// of the share/Pythia8/xmldoc/ParticleData.xml file for a permanent update.
+
+// More options are available; see the &quot;Settings Scheme&quot; and
+// &quot;Particle Data Scheme&quot; in the html manual for further details.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main() {
+
+  // Write out or read in. XML or plaintext (= free format).
+  bool doSettings  = true;   // Can be combined freely with doParticles.
+  bool doParticles = true;   // Can be combined freely with doSettings.
+  bool doWrite     = true;   // If false then read instead.
+  bool doXML       = true;   // If false then plaintext instead.
+  bool checkRead   = true;   // Optional.
+
+  // File names for settings and particle data.
+  string settingsFile  = &quot;settings&quot;;
+  string particlesFile = &quot;particles&quot;;
+
+  // Create the Pythia instance, and read current settings and particle data.
+  Pythia pythia;
+
+  // Different ways to write settings.
+  if (doWrite) {
+    if (doSettings &amp;&amp; doXML) {
+      ofstream settingsStream( (settingsFile + &quot;.xml&quot;).c_str() );
+      pythia.settings.writeFileXML( settingsStream);
+    } else if (doSettings)
+      pythia.settings.writeFile( settingsFile + &quot;.dat&quot;, true);
+
+    // Different ways to write particle data.
+    if (doParticles &amp;&amp; doXML)
+      pythia.particleData.listXML(particlesFile + &quot;.xml&quot;);
+    else if (doParticles)
+      pythia.particleData.listFF(particlesFile + &quot;.dat&quot;);
+
+  // Different ways to read settings.
+  } else {
+    if (doSettings &amp;&amp; doXML)
+      pythia.settings.reInit( settingsFile + &quot;.xml&quot;);
+    else if (doSettings)
+      pythia.readFile( settingsFile + &quot;.dat&quot;);
+
+    // Different ways to read particle data.
+    if (doParticles &amp;&amp; doXML)
+      pythia.particleData.readXML(particlesFile + &quot;.xml&quot;);
+    else if (doParticles)
+      pythia.particleData.readFF(particlesFile + &quot;.dat&quot;);
+
+    // Use normal listing formats to check if the read back in has worked.
+    // These lists are formatted for human readability, and cannot be
+    // read back in by any methods in Pythia.
+    if (checkRead) {
+      if (doSettings)  pythia.settings.listAll();
+      if (doParticles) pythia.particleData.listAll();
+    }
+}
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

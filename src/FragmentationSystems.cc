@@ -1,5 +1,5 @@
 // FragmentationSystems.cc is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Torbjorn Sjostrand.
+// Copyright (C) 2025 Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -26,7 +26,8 @@ const double ColConfig::CONSTITUENTMASS = 0.325;
 
 // Initialize and save pointers.
 
-void ColConfig::init(Info* infoPtrIn, StringFlav* flavSelPtrIn) {
+void ColConfig::init(Info* infoPtrIn, StringFlav* flavSelPtrIn,
+  double mVecRatio) {
 
   Settings* settingsPtr = infoPtrIn->settingsPtr;
 
@@ -43,6 +44,17 @@ void ColConfig::init(Info* infoPtrIn, StringFlav* flavSelPtrIn) {
   // Simplification of q q q junction topology to quark - diquark one.
   mJoinJunction = settingsPtr->parm("FragmentationSystems:mJoinJunction");
   mStringMin    = settingsPtr->parm("HadronLevel:mStringMin");
+
+  // Lowest constituent quark mass,i.e m_u = m_d.
+  constituentM = CONSTITUENTMASS;
+
+  // Optional rescaling, e.g. to Hidden Valley mass scale.
+  if (mVecRatio != 1.) {
+    mJoin         *= mVecRatio;
+    mJoinJunction *= mVecRatio;
+    mStringMin    *= mVecRatio;
+    constituentM  *= mVecRatio;
+  }
 
 }
 
@@ -94,7 +106,7 @@ bool ColConfig::insert( vector<int>& iPartonIn, Event& event) {
   // Identify closed gluon loop. Assign "endpoint" masses as light quarks.
   bool isClosedIn = (iPartonIn[0] >= 0 && event[ iPartonIn[0] ].col() != 0
     && event[ iPartonIn[0] ].acol() != 0 );
-  if (isClosedIn) massExcessIn -= 2. * CONSTITUENTMASS;
+  if (isClosedIn) massExcessIn -= 2. * constituentM;
 
   // For junction topology: join two nearby legs into a diquark.
   if (hasJunctionIn && joinJunction( iPartonIn, event, massExcessIn))
@@ -447,7 +459,7 @@ void ColConfig::list() const {
 // Constants: could be changed here if desired, but normally should not.
 // These are of technical nature, as described for each.
 
-// If a string region is smaller thsan this it is assumed empty.
+// If a string region is smaller than this it is assumed empty.
 const double StringRegion::MJOIN = 0.1;
 
 // Avoid division by zero.
@@ -521,7 +533,10 @@ bool StringRegion::massiveOffset( int iPos, int iNeg, int iMax,
 // Set up four-vectors for longitudinal and transverse directions.
 
 void StringRegion::setUp(Vec4 p1, Vec4 p2, int col1, int col2,
-  bool isMassless) {
+  bool isMassless, double mVecRatio) {
+
+  // Allow for minimal region mass rescaling in Hidden Valley.
+  double m2Join = pow2(mVecRatio * MJOIN);
 
   // Store the original four-momenta; needed for the massive-quark case.
   pPosMass = p1;
@@ -532,7 +547,7 @@ void StringRegion::setUp(Vec4 p1, Vec4 p2, int col1, int col2,
 
     // Calculate w2, minimum value. Lightcone directions = input.
     w2 = 2. * (p1 * p2);
-    if (w2 < MJOIN*MJOIN) {isSetUp = true; isEmpty = true; return;}
+    if (w2 < m2Join) {isSetUp = true; isEmpty = true; return;}
     pPos = p1;
     pNeg = p2;
 
@@ -558,7 +573,7 @@ void StringRegion::setUp(Vec4 p1, Vec4 p2, int col1, int col2,
     }
 
     // If still small invariant mass then empty region (e.g. in gg system).
-    if (w2 < MJOIN*MJOIN) {isSetUp = true; isEmpty = true; return;}
+    if (w2 < m2Join) {isSetUp = true; isEmpty = true; return;}
 
     // Find two lightconelike longitudinal four-vector directions.
     double root = sqrt( max(TINY, rootSq) );
@@ -635,7 +650,8 @@ void StringRegion::project(Vec4 pIn) {
 
 // Set up system from parton list.
 
-void StringSystem::setUp(const vector<int>& iSys, const Event& event) {
+void StringSystem::setUp(const vector<int>& iSys, const Event& event,
+  double mVecRatio) {
 
   // Figure out how big the system is. (Closed gluon loops?)
   sizePartons = iSys.size();
@@ -656,7 +672,7 @@ void StringSystem::setUp(const vector<int>& iSys, const Event& event) {
     Vec4 p2 = event[ iSys[i+1] ].p();
     if ( event[ iSys[i+1] ].isGluon() ) p2 *= 0.5;
     int col = forward ? event[ iSys[i] ].col() : event[ iSys[i] ].acol();
-    system[ iReg(i, iMax - i) ].setUp( p1, p2, col, col, false);
+    system[ iReg(i, iMax - i) ].setUp( p1, p2, col, col, false, mVecRatio);
   }
 
 }

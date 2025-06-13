@@ -1,0 +1,168 @@
+<html><head><title>main136</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main136</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main136.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            <a href="mailto:christian.preuss@uni-goettingen.de">Christian T. Preuss</a>
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#hdf5+file">HDF5&nbsp;file</a>
+//            <a href="../ExampleKeywords.html#lheh5">LHEH5</a>
+//            <a href="../ExampleKeywords.html#hepmc">Hepmc</a>
+
+// This program (main136.cc) illustrates how a HDF5 event file can be
+// used by Pythia8. See main134.cc for how to use LHE files instead.
+// Example usage is:
+//     ./main136 -c main136.cmnd -i ttbar.hdf5 -o main136.hepmc
+
+#include &quot;Pythia8/Pythia.h&quot;
+
+// To use v2 of LHAHDF5, include &quot;Pythia8Plugins/LHAHDF5v2.h&quot; instead.
+//#include &quot;Pythia8Plugins/LHAHDF5v2.h&quot;
+#include &quot;Pythia8Plugins/LHAHDF5.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+#ifndef HEPMC2
+#include &quot;Pythia8Plugins/HepMC3.h&quot;
+#else
+#include &quot;Pythia8Plugins/HepMC2.h&quot;
+#endif
+
+using namespace Pythia8;
+
+//==========================================================================
+
+// Example main programm to illustrate simple HDF5 usage.
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Illustrates how a HDF5 event file can be used by Pythia8.&quot;,
+    {&quot;./main136 -c main136.cmnd -i ttbar.hdf5 -o main136.hepmc&quot;});
+  ip.require(&quot;c&quot;, &quot;Use this user-written command file.&quot;, {&quot;-cmnd&quot;});
+  ip.require(&quot;o&quot;, &quot;Specify HepMC output filename.&quot;, {&quot;-out&quot;});
+  ip.require(&quot;i&quot;, &quot;Specify HDF5 input filename.&quot;, {&quot;-in&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Check whether input file exists.
+  string cmndFile = ip.get&lt;string&gt;(&quot;c&quot;);
+  ifstream isCmnd(cmndFile);
+  if (!isCmnd) {
+    cerr &lt;&lt; &quot; File &quot; &lt;&lt; cmndFile &lt;&lt; &quot; was not found. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
+    return EXIT_FAILURE;
+  }
+
+  // Check whether event file exists.
+  string hdf5File = ip.get&lt;string&gt;(&quot;i&quot;);
+  ifstream isH5(hdf5File);
+  if (!isH5) {
+    cerr &lt;&lt; &quot; File &quot; &lt;&lt; hdf5File &lt;&lt; &quot; was not found. \n&quot;
+         &lt;&lt; &quot; Program stopped! &quot; &lt;&lt; endl;
+    return EXIT_FAILURE;
+  }
+
+  // Optionally: skip events.
+  size_t eventOffset = (argc &gt; 4) ? atoi(argv[4]) : 0;
+
+  // PYTHIA.
+  Pythia pythia;
+
+  // Settings.
+  pythia.readFile(cmndFile);
+  pythia.settings.mode(&quot;Beams:frameType&quot;, 5);
+
+  // Shorthands.
+  int nEvents  = pythia.settings.mode(&quot;Main:numberOfEvents&quot;);
+  int nAbort   = pythia.mode(&quot;Main:timesAllowErrors&quot;);
+
+  // HDF5.
+  HighFive::File file(hdf5File, HighFive::File::ReadOnly);
+
+  // Create an LHAup object that can access relevant information in pythia.
+  size_t readSize    = size_t(nEvents);
+  string version     = pythia.settings.word(&quot;LHAHDF5:version&quot;);
+  shared_ptr&lt;LHAupH5&gt; lhaUpPtr =
+    make_shared&lt;LHAupH5&gt;(&amp;file, eventOffset, readSize, version);
+  // When using v2 of LHAHDF5, then use the following.
+  // shared_ptr&lt;LHAupH5v2&gt; lhaUpPtr =
+  //   make_shared&lt;LHAupH5v2&gt;(&amp;file, eventOffset, readSize, true);
+
+  // HepMC.
+  string hepMCFile = ip.get&lt;string&gt;(&quot;o&quot;);
+  Pythia8::Pythia8ToHepMC toHepMC(hepMCFile);
+  toHepMC.set_print_inconsistency(false);
+
+  // Hand Pythia the external reader.
+  pythia.setLHAupPtr(lhaUpPtr);
+
+  // Initialise.
+  if (!pythia.init()) {
+    cout &lt;&lt; &quot; Failed to initialise Pythia. Program stopped.&quot; &lt;&lt; endl;
+    return EXIT_FAILURE;
+  }
+
+  // Abort for too many errors.
+  int  iAbort  = 0;
+  bool doAbort = false;
+
+  // Cross section and error.
+  cout &lt;&lt; &quot;Start generating events.\n&quot;;
+  double sigmaSample(0.), errorSample(0.);
+
+  // Get the inclusive x-section by summing over all process x-sections.
+  double xs = 0.;
+  for (int i=0; i &lt; pythia.info.nProcessesLHEF(); ++i)
+    xs += pythia.info.sigmaLHEF(i);
+
+  // Loop over events.
+  while(pythia.info.nSelected() &lt; nEvents) {
+    // Generate next event.
+    if( !pythia.next() ) {
+      ++iAbort;
+      if ( pythia.info.atEndOfFile() ) break;
+      else if (iAbort &gt; nAbort) {
+        cout &lt;&lt;  &quot; Aborting event generation after &quot;
+             &lt;&lt; iAbort &lt;&lt; &quot; failed events.&quot; &lt;&lt; endl;
+        break;
+      } else continue;
+    }
+
+    // Get event weight(s).
+    double evtweight = pythia.info.weight();
+
+    // Do not print zero-weight events.
+    if ( evtweight == 0. ) continue;
+
+    // Fill HepMC event.
+    toHepMC.writeNextEvent(pythia);
+    sigmaSample += evtweight;
+    errorSample += pow2(evtweight);
+
+  }
+
+  // print cross section, errors
+  pythia.stat();
+
+  // Finalise cross section.
+  double norm = 1./double(1.e9*lhaUpPtr-&gt;nTrials());
+  if (abs(pythia.info.lhaStrategy()) == 3) norm *= xs;
+  sigmaSample *= norm;
+  errorSample = sqrt(errorSample)*norm;
+
+  cout &lt;&lt; &quot; sigma = (&quot; &lt;&lt; scientific &lt;&lt; setprecision(8)
+       &lt;&lt; sigmaSample &lt;&lt; &quot;  +-  &quot; &lt;&lt; errorSample &lt;&lt; &quot;) mb\n&quot;;
+
+  // Done
+  return 0;
+
+}
+</code></pre></body></html>

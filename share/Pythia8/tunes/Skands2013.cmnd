@@ -1,0 +1,34 @@
+! Full e+e- tune of flavours and FSR to LEP1 data, by Peter Skands,
+! September 2013. Note use of CMW convention for shower.
+! Previously set by "Tune:ee = 4".
+include                             = tunes/Reset-ee.cmnd ! reset ee tune
+StringFlav:probStoUD                = 0.21  
+StringFlav:probQQtoQ                = 0.086 
+StringFlav:probSQtoQQ               = 1.00  
+StringFlav:probQQ1toQQ0             = 0.031 
+StringFlav:mesonUDvector            = 0.45  
+StringFlav:mesonSvector             = 0.60  
+StringFlav:mesonCvector             = 0.95  
+StringFlav:mesonBvector             = 3.0      ! kept fixed
+StringFlav:etaSup                   = 0.65  
+StringFlav:etaPrimeSup              = 0.08  
+StringFlav:popcornSpair             = 0.5      ! kept fixed
+StringFlav:popcornSmeson            = 0.5      ! kept fixed
+StringFlav:suppressLeadingB         = false    ! kept fixed
+StringZ:aLund                       = 0.55  
+StringZ:bLund                       = 1.08  
+StringZ:aExtraSquark                = 0.00     ! kept fixed
+StringZ:aExtraDiquark               = 1.00  
+StringZ:rFactC                      = 1.00     ! kept fixed
+StringZ:rFactB                      = 0.85  
+StringPT:sigma                      = 0.305 
+StringPT:enhancedFraction           = 0.01     ! kept fixed
+StringPT:enhancedWidth              = 2.0      ! kept fixed
+TimeShower:alphaSvalue              = 0.127 
+TimeShower:alphaSorder              = 1        ! kept fixed
+TimeShower:alphaSuseCMW             = true  
+TimeShower:pTmin                    = 0.4   
+TimeShower:pTminChgQ                = 0.4      ! kept same as pTmin
+
+! Reproduce hadronization behavior of the Pythia version used for this tune.
+StringZ:useOldAExtra                = on

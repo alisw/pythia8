@@ -87,7 +87,11 @@ when calling <code>Pythia::stat</code>.
 <option value="0">No error messages are logged.</option> 
 <option value="1">Only critical abort messages are logged.</option> 
 <option value="2">All normal messages are logged (default).</option> 
-<option value="3">Also report messages are logged.</option> 
+<option value="3">Also report messages are logged, and errors and 
+warnings are printed every time they occur instead of just the first 
+time. Useful for user-level debugging, where combining with 
+<code>Next:numberCount = 1</code> will allow easier identification of 
+problematic events. </option> 
 </modepick> 
  
 <flag name="Print:useErrorStream" default="off"> 
@@ -98,4 +102,4 @@ to <code>cerr</code>.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

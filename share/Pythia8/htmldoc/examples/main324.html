@@ -1,0 +1,220 @@
+<html><head><title>main324</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main324</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main324.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#beam+gas">Beam&nbsp;gas</a>
+//            <a href="../ExampleKeywords.html#fixed+target">Fixed&nbsp;target</a>
+//            <a href="../ExampleKeywords.html#pileup">Pileup</a>
+//            <a href="../ExampleKeywords.html#multi-instance">Multi&#8209;instance</a>
+
+// This program runs four instances of Pythia simultaneously,
+// one for signal events, one for pileup background ones, and two
+// For beam-gas background ones. Note that beam-gas is represented by
+// &quot;fixed-target&quot; pp collisions, rather than a full Angantyr setup.
+// The = and += overloaded operators are used to join several
+// event records into one, but should be used with caution.
+
+// The possibility to instantiate Pythia with Settings and ParticleData
+// databases is illustrated, but not essential here. It means that the
+// share/Pythia8/xmldoc/*.xml files are only read once, saving some time.
+
+// Note that each instance of Pythia is running independently of any other,
+// but with two important points to remember.
+// 1) By default all generate the same random number sequence,
+//    which has to be corrected if they are to generate the same
+//    physics, like the two beam-gas ones below.
+// 2) Interfaces to external Fortran programs are &quot;by definition&quot; static.
+//    Thus it is not a good idea to use LHAPDF5 to set different PDF&apos;s
+//    in different instances.
+
+#include &quot;Pythia8/Pythia.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+// Method to pick a number according to a Poissonian distribution.
+
+int poisson(double nAvg, Rndm&amp; rndm) {
+
+  // Set maximum to avoid overflow.
+  const int NMAX = 100;
+
+  // Random number.
+  double rPoisson = rndm.flat() * exp(nAvg);
+
+  // Initialize.
+  double rSum  = 0.;
+  double rTerm = 1.;
+
+  // Add to sum and check whether done.
+  for (int i = 0; i &lt; NMAX; ) {
+    rSum += rTerm;
+    if (rSum &gt; rPoisson) return i;
+
+    // Evaluate next term.
+    ++i;
+    rTerm *= nAvg / i;
+  }
+
+  // Emergency return.
+  return NMAX;
+}
+
+//==========================================================================
+
+int main() {
+
+  // Number of signal events to generate.
+  int nEvent = 100;
+
+  // Beam Energy.
+  double eBeam = 7000.;
+
+  // Average number of pileup events per signal event.
+  double nPileupAvg = 2.5;
+
+  // Average number of beam-gas events per signal ones, on two sides.
+  double nBeamAGasAvg = 0.5;
+  double nBeamBGasAvg = 0.5;
+
+  // Signal generator instance.
+  Pythia pythiaSignal;
+
+  // Switch off automatic event listing (illustrates settings inheritance).
+  pythiaSignal.readString(&quot;Next:numberShowInfo = 0&quot;);
+  pythiaSignal.readString(&quot;Next:numberShowProcess = 0&quot;);
+  pythiaSignal.readString(&quot;Next:numberShowEvent = 0&quot;);
+
+  // Switch off K0S decay (illustrates particle data inheritance).
+  pythiaSignal.readString(&quot;130:mayDecay = off&quot;);
+
+  // Background generator instances copies settings and particle data.
+  Pythia pythiaPileup(   pythiaSignal.settings, pythiaSignal.particleData);
+  Pythia pythiaBeamAGas( pythiaSignal.settings, pythiaSignal.particleData);
+  Pythia pythiaBeamBGas( pythiaSignal.settings, pythiaSignal.particleData);
+
+  // Switch off Lambda decay (illustrates particle data non-inheritance).
+  pythiaSignal.readString(&quot;3122:mayDecay = off&quot;);
+
+  // One object where all individual events are to be collected.
+  Event sumEvent;
+
+  // Initialize generator for signal processes.
+  pythiaSignal.readString(&quot;HardQCD:all = on&quot;);
+  pythiaSignal.readString(&quot;PhaseSpace:pTHatMin = 50.&quot;);
+  pythiaSignal.settings.parm(&quot;Beams:eCM&quot;, 2. * eBeam);
+
+  // If pythiaSignal fails to initialize, exit with error.
+  if (!pythiaSignal.init()) return 1;
+
+  // Initialize generator for pileup (background) processes.
+  pythiaPileup.readString(&quot;Random:setSeed = on&quot;);
+  pythiaPileup.readString(&quot;Random:seed = 10000002&quot;);
+  pythiaPileup.readString(&quot;SoftQCD:all = on&quot;);
+  pythiaPileup.settings.parm(&quot;Beams:eCM&quot;, 2. * eBeam);
+
+  // If pythiaPileup fails to initialize, exit with error.
+  if (!pythiaPileup.init()) return 1;
+
+  // Initialize generators for beam A - gas (background) processes.
+  pythiaBeamAGas.readString(&quot;Random:setSeed = on&quot;);
+  pythiaBeamAGas.readString(&quot;Random:seed = 10000003&quot;);
+  pythiaBeamAGas.readString(&quot;SoftQCD:all = on&quot;);
+  pythiaBeamAGas.readString(&quot;Beams:frameType = 2&quot;);
+  pythiaBeamAGas.settings.parm(&quot;Beams:eA&quot;, eBeam);
+  pythiaBeamAGas.settings.parm(&quot;Beams:eB&quot;, 0.);
+
+  // If pythiaBeamAGas fails to initialize, exit with error.
+  if (!pythiaBeamAGas.init()) return 1;
+
+  // Initialize generators for beam B - gas (background) processes.
+  pythiaBeamBGas.readString(&quot;Random:setSeed = on&quot;);
+  pythiaBeamBGas.readString(&quot;Random:seed = 10000004&quot;);
+  pythiaBeamBGas.readString(&quot;SoftQCD:all = on&quot;);
+  pythiaBeamBGas.readString(&quot;Beams:frameType = 2&quot;);
+  pythiaBeamBGas.settings.parm(&quot;Beams:eA&quot;, 0.);
+  pythiaBeamBGas.settings.parm(&quot;Beams:eB&quot;, eBeam);
+
+  // If pythiaBeamBGas fails to initialize, exit with error.
+  if (!pythiaBeamBGas.init()) return 1;
+
+  // Histograms: number of pileups, total charged multiplicity.
+  Hist nPileH(&quot;number of pileup events per signal event&quot;, 100, -0.5, 99.5);
+  Hist nAGH(&quot;number of beam A + gas events per signal event&quot;, 100, -0.5, 99.5);
+  Hist nBGH(&quot;number of beam B + gas events per signal event&quot;, 100, -0.5, 99.5);
+  Hist nChgH(&quot;number of charged multiplicity&quot;,100, -0.5, 1999.5);
+  Hist sumPZH(&quot;total pZ of system&quot;,100, -100000., 100000.);
+
+  // Loop over events.
+  for (int iEvent = 0; iEvent &lt; nEvent; ++iEvent) {
+
+    // Generate a signal event. Copy this event into sumEvent.
+    if (!pythiaSignal.next()) continue;
+    sumEvent = pythiaSignal.event;
+
+    // Select the number of pileup events to generate.
+    int nPileup = poisson(nPileupAvg, pythiaPileup.rndm);
+    nPileH.fill( nPileup );
+
+    // Generate a number of pileup events. Add them to sumEvent.
+    for (int iPileup = 0; iPileup &lt; nPileup; ++iPileup) {
+      pythiaPileup.next();
+      sumEvent += pythiaPileup.event;
+    }
+
+    // Select the number of beam A + gas events to generate.
+    int nBeamAGas = poisson(nBeamAGasAvg, pythiaBeamAGas.rndm);
+    nAGH.fill( nBeamAGas );
+
+    // Generate a number of beam A + gas events. Add them to sumEvent.
+    for (int iAG = 0; iAG &lt; nBeamAGas; ++iAG) {
+      pythiaBeamAGas.next();
+      sumEvent += pythiaBeamAGas.event;
+    }
+
+    // Select the number of beam B + gas events to generate.
+    int nBeamBGas = poisson(nBeamBGasAvg, pythiaBeamBGas.rndm);
+    nBGH.fill( nBeamBGas );
+
+    // Generate a number of beam B + gas events. Add them to sumEvent.
+    for (int iBG = 0; iBG &lt; nBeamBGas; ++iBG) {
+      pythiaBeamBGas.next();
+      sumEvent += pythiaBeamBGas.event;
+    }
+
+    // List first few events.
+    if (iEvent &lt; 1) {
+      pythiaSignal.info.list();
+      pythiaSignal.process.list();
+      sumEvent.list();
+    }
+
+    // Find charged multiplicity.
+    int nChg = 0;
+    for (int i = 0; i &lt; sumEvent.size(); ++i)
+      if (sumEvent[i].isFinal() &amp;&amp; sumEvent[i].isCharged()) ++nChg;
+    nChgH.fill( nChg );
+
+    // Fill net pZ - nonvanishing owing to beam + gas.
+    sumPZH.fill( sumEvent[0].pz() );
+
+  // End of event loop
+  }
+
+  // Statistics. Histograms.
+  pythiaSignal.stat();
+  pythiaPileup.stat();
+  pythiaBeamAGas.stat();
+  pythiaBeamBGas.stat();
+  cout &lt;&lt; nPileH &lt;&lt; nAGH &lt;&lt; nBGH &lt;&lt; nChgH &lt;&lt; sumPZH;
+
+  return 0;
+}
+</code></pre></body></html>

@@ -223,12 +223,10 @@ For neutrinos:
 <ul> 
 <li><code>NeutrinoPoint</code> is the only method, so there is no choice. 
 Analogously to <code>LeptonPoint</code> it gives the distribution of a 
-pointlike (i.e. unresolved) neutrino. A difference, however, is that 
-neutrinos always are lefthanded, so there is no need to average over 
-incoming spin states. Since the PYTHIA formalism assumes unpolarized 
-beams, and thus implicitly includes a 1/2 for incoming fermions, the 
-<code>NeutrinoPoint</code> PDF is normalized to 2 rather than 1 
-to compensate for this.</li> 
+pointlike (i.e. unresolved) neutrino. The fact that neutrinos are always 
+lefthanded, so that there is no need to average for spin states of incoming 
+fermions, is accounted in the relevant cross sections and also 
+<code>NeutrinoPoint</code> PDFs are normalized to 1.</li> 
 </ul> 
  
 <p/> 
@@ -249,4 +247,4 @@ the header files for explicit constructor descriptions.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

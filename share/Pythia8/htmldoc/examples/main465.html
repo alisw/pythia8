@@ -1,0 +1,103 @@
+<html><head><title>main465</title>
+<link rel="stylesheet" type="text/css" href="../pythia.css"/>
+<link rel="shortcut icon" href="../pythia32.gif"/></head><body><h2>main465</h2>
+Back to <a href="../ExampleKeywords.html" target="page">index.</a>
+<pre><code class="language-c++">
+// main465.cc is a part of the PYTHIA event generator.
+// Copyright (C) 2025 Torbjorn Sjostrand.
+// PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
+// Please respect the MCnet Guidelines, see GUIDELINES for details.
+
+// Authors:
+//            Marius Utheim
+
+// Keywords:
+//            <a href="../ExampleKeywords.html#rescattering">Rescattering</a>
+//            <a href="../ExampleKeywords.html#low+energy">Low&nbsp;energy</a>
+//            <a href="../ExampleKeywords.html#cross+sections">Cross&nbsp;sections</a>
+//            <a href="../ExampleKeywords.html#resonances">Resonances</a>
+
+// Calculate and plot resonance cross sections for the specified process.
+
+#include &quot;Pythia8/Pythia.h&quot;
+#include &quot;Pythia8Plugins/InputParser.h&quot;
+using namespace Pythia8;
+
+//==========================================================================
+
+int main(int argc, char* argv[]) {
+
+  // Set up command line options.
+  InputParser ip(&quot;Calculate resonance cross section for specified process.&quot;,
+    {&quot;./main465 -a 2212 -b 2212&quot;});
+  ip.add(&quot;a&quot;, &quot;0&quot;, &quot;ID for beam A.&quot;, {&quot;-ida&quot;});
+  ip.add(&quot;b&quot;, &quot;0&quot;, &quot;ID for beam B.&quot;, {&quot;-idb&quot;});
+  ip.add(&quot;n&quot;, &quot;300&quot;, &quot;Number of bins.&quot;, {&quot;-nbins&quot;});
+
+  // Initialize the parser and exit if necessary.
+  InputParser::Status status = ip.init(argc, argv);
+  if (status != InputParser::Valid) return status;
+
+  // Initialize Pythia.
+  Pythia pythia;
+  pythia.readFile(&quot;main465.cmnd&quot;);
+  if (!pythia.init()) {
+    cout &lt;&lt; &quot; Pythia failed to initialize.&quot; &lt;&lt; endl;
+    return 1;
+  }
+
+  int idA = ip.get&lt;int&gt;(&quot;a&quot;);
+  int idB = ip.get&lt;int&gt;(&quot;b&quot;);
+  if (idA == 0) idA = pythia.mode(&quot;Main:spareMode1&quot;);
+  if (idB == 0) idB = pythia.mode(&quot;Main:spareMode2&quot;);
+  double eMin = pythia.parm(&quot;Main:spareParm1&quot;);
+  double eMax = pythia.parm(&quot;Main:spareParm2&quot;);
+  if (eMin &lt; pythia.particleData.m0(idA) + pythia.particleData.m0(idB)) {
+    eMin = pythia.particleData.m0(idA) + pythia.particleData.m0(idB);
+    cout &lt;&lt; &quot;Warning, setting eMin to nominal mass sum of &quot; &lt;&lt; eMin &lt;&lt; &quot;.\n&quot;;
+  }
+  int nBin = ip.get&lt;int&gt;(&quot;n&quot;);
+
+  // Get possible resonances.
+  set&lt;int&gt; resonances = pythia.hadronWidths.getResonances(idA, idB);
+
+  if (resonances.size() == 0) {
+    cout &lt;&lt; &quot;No resonances for input particles &quot; &lt;&lt; idA &lt;&lt; &quot; &quot; &lt;&lt; idB &lt;&lt; endl;
+    return -1;
+  }
+
+  // Define plot.
+  HistPlot plt(&quot;plot465&quot;);
+  plt.frame(&quot;fig465&quot;, &quot;&quot;, &quot;$\\sqrt{s}$ [GeV]&quot;, &quot;$\\sigma$ [mb]&quot;);
+
+  // Plot all resonances.
+  for (int res : resonances) {
+    Hist sigRes = Hist::plotFunc( [&amp;](double eCM) {
+      return pythia.getSigmaPartial(idA, idB, eCM, res);
+    }, pythia.particleData.name(res), nBin, eMin, eMax);
+
+    plt.add(sigRes, &quot;-&quot;);
+  }
+
+  // Add total and miscellaneous cross sections at the end.
+  Hist sigTot = Hist::plotFunc(
+    [&amp;](double eCM) {
+      // type == 0 is equivalent to getSigmaTotal.
+      return pythia.getSigmaPartial(idA, idB, eCM, 0); },
+    &quot;Total&quot;, nBin, eMin, eMax);
+  Hist sigTotRes = Hist::plotFunc(
+    [&amp;](double eCM) { return pythia.getSigmaPartial(idA, idB, eCM, 9); },
+    &quot;Sum of resonances&quot;, nBin, eMin, eMax);
+  Hist sigOther = sigTot - sigTotRes;
+
+  plt.add(sigTotRes, &quot;-&quot;);
+  plt.add(sigOther, &quot;-&quot;, &quot;Other&quot;);
+  plt.add(sigTot, &quot;k-&quot;);
+
+  // Plot.
+  plt.plot();
+
+  // Done.
+  return 0;
+}
+</code></pre></body></html>

@@ -1,5 +1,5 @@
 // VinciaQED.h is a part of the PYTHIA event generator.
-// Copyright (C) 2024 Peter Skands, Torbjorn Sjostrand.
+// Copyright (C) 2025 Peter Skands, Torbjorn Sjostrand.
 // PYTHIA is licenced under the GNU GPL v2 or later, see COPYING for details.
 // Please respect the MCnet Guidelines, see GUIDELINES for details.
 
@@ -70,6 +70,8 @@ private:
   vector<int> iRecoil;
   // IDs.
   int idx, idy;
+  // Number of spin states.
+  int spinTypex, spinTypey;
   // Particle masses.
   double mx2, my2;
   // Particle energies.
@@ -120,8 +122,9 @@ class QEDsystem {
     int verboseIn) = 0;
   virtual void setVerbose(int verboseIn) { verbose = verboseIn; }
   // Prepare a parton system for evolution.
-  virtual void prepare(int iSysIn, Event &event, double q2CutIn,
-    bool isBelowHadIn, vector<double> evolutionWindowsIn, AlphaEM alIn) = 0;
+  virtual void prepare(const int iSysIn, Event &event, const double q2CutIn,
+    const int scaleRegionIn, const vector<double> evolutionWindowsIn,
+    AlphaEM alIn) = 0;
   // Build parton system.
   virtual void buildSystem(Event &event) = 0;
   // Generate a trial scale.
@@ -174,16 +177,17 @@ class QEDemitSystem : public QEDsystem {
 public:
 
   QEDemitSystem() : shh(-1.), cMat(0.), trialIsVec(false), beamAPtr(nullptr),
-    beamBPtr(nullptr), qedMode(-1), qedModeMPI(-1), useFullWkernel(false),
-    isBelowHad(false), emitBelowHad(false), q2Cut(-1.), isInit(false),
+    beamBPtr(nullptr), qedMode(-1), qedModeMPI(-1),
+    scaleRegion(0), emitBelowHad(false), q2Cut(-1.), isInit(false),
     TINYPDF(-1.), kMapTypeFinal(0) {;}
 
   // Initialise settings for current run.
-  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn)
-    override;
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    int verboseIn) override;
   // Prepare a parton system for photon emission evolution
-  void prepare(int iSysIn, Event &event, double q2CutIn, bool isBelowHadIn,
-    vector<double> evolutionWindowsIn, AlphaEM alIn) override;
+  void prepare(const int iSysIn, Event &event, const double q2CutIn,
+    const int scaleRegionIn, const vector<double> evolutionWindowsIn,
+    AlphaEM alIn) override;
   // Set up antenna pairing for incoherent mode.
   void buildSystem(Event &event) override;
   // Generate a trial scale.
@@ -225,13 +229,14 @@ public:
   QEDemitElemental* eleTrial{};
   bool trialIsVec;
 
-  // Pointers.
+  // Beam pointers.
   BeamParticle* beamAPtr{};
   BeamParticle* beamBPtr{};
 
   // Settings.
   int qedMode, qedModeMPI;
-  bool useFullWkernel, isBelowHad, emitBelowHad;
+  vector<bool> useSpinsQEDNow, useSpinsQED, useSpinsQEDHadDec;
+  int scaleRegion, emitBelowHad, isHadronDecay;
   double q2Cut;
 
   // Initialization.
@@ -294,15 +299,16 @@ public:
   QEDsplitSystem() :
     totIdWeight(-1.), hasTrial(false),
     q2Trial(-1.), zTrial(-1.), phiTrial(-1.), idTrial(0), nQuark(-1),
-    nLepton(-1), q2Max(-1.), q2Cut(-1.), isBelowHad(false),
+    nLepton(-1), q2Max(-1.), q2Cut(-1.), scaleRegion(0),
     beamAPtr(nullptr), beamBPtr(nullptr), isInit(false), kMapTypeFinal(0) {;}
 
   // Initialize.
-  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn)
-    override;
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    int verboseIn) override;
   // Prepare list of final-state photons - with recoilers - for splittings.
-  void prepare(int iSysIn, Event &event, double q2CutIn, bool isBelowHadIn,
-    vector<double> evolutionWindowsIn, AlphaEM alIn) override;
+  void prepare(const int iSysIn, Event &event, const double q2CutIn,
+    const int scaleRegionIn, const vector<double> evolutionWindowsIn,
+    AlphaEM alIn) override;
   // Build the splitting system.
   void buildSystem(Event &event) override;
   // Generate a scale for the system.
@@ -340,7 +346,7 @@ private:
   // Settings.
   int nQuark, nLepton;
   double q2Max, q2Cut;
-  bool isBelowHad;
+  int scaleRegion;
 
   // Pointers.
   BeamParticle*  beamAPtr;
@@ -367,15 +373,16 @@ public:
     iA(-1), iB(-1), isAPhot(false), isBPhot(false), hasTrial(false),
     iPhotTrial(-1), iSpecTrial(-1), q2Trial(-1.), zTrial(-1.), phiTrial(-1.),
     idTrial(-1), nQuark(-1), q2Cut(-1.),
-    isBelowHad(false), beamAPtr(nullptr), beamBPtr(nullptr),isInit(false),
+    scaleRegion(0), beamAPtr(nullptr), beamBPtr(nullptr),isInit(false),
     TINYPDF(-1.) {;}
 
   // Initialize.
-  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn, int verboseIn)
-    override;
+  void init(BeamParticle* beamAPtrIn, BeamParticle* beamBPtrIn,
+    int verboseIn) override;
   // Prepare for backwards-evolution of photons.
-  void prepare(int iSysIn, Event &event, double q2CutIn, bool isBelowHadIn,
-    vector<double> evolutionWindowsIn, AlphaEM alIn) override;
+  void prepare(const int iSysIn, Event &event, const double q2CutIn,
+    const int scaleRegionIn, const vector<double> evolutionWindowsIn,
+    AlphaEM alIn) override;
   // Build the system.
   void buildSystem(Event &event) override;
   // Generate a trial scale.
@@ -419,7 +426,12 @@ private:
   // Settings.
   int nQuark;
   double q2Cut;
-  bool isBelowHad;
+
+  // Scale Region determines what region and scale we are showering at.
+  // Scale Region = 0 is above the hadronisation scale.
+  // Scale Region = 1 is below the hadronisation scale.
+  // Scale Region = 2 is below the hadronisation scale and contains remanants.
+  int scaleRegion;
 
   // Pointers.
   BeamParticle*  beamAPtr;
@@ -458,15 +470,15 @@ public:
   virtual void load() {;}
 
   // Initialise settings for current run (called as part of Pythia::init()).
-  virtual void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0)
-    = 0;
+  virtual void init(BeamParticle* beamAPtrIn = nullptr,
+    BeamParticle* beamBPtrIn = nullptr) = 0;
   bool isInit() {return isInitSav;}
 
   // Select helicities for a system of particles.
   virtual bool polarise(vector<Particle>&) {return false;}
 
   // Prepare to shower a system.
-  virtual bool prepare(int iSysIn, Event &event, bool isBelowHadIn) = 0;
+  virtual bool prepare(int iSysIn, Event &event, int scaleRegionIn) = 0;
 
   // Update shower system each time something has changed in event.
   virtual void update(Event &event, int iSys) = 0;
@@ -543,7 +555,7 @@ public:
   void init(BeamParticle* beamAPtrIn = 0, BeamParticle* beamBPtrIn = 0)
     override;
   // Prepare to shower a system.
-  bool prepare(int iSysIn, Event& event, bool isBelowHadIn) override;
+  bool prepare(int iSysIn, Event& event, int scaleRegionIn) override;
   // Update QED shower system(s) each time something has changed in event.
   void update(Event& event, int iSys) override;
   // Set or change verbosity level, and propagate to QED systems.

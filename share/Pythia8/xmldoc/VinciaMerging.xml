@@ -56,10 +56,11 @@ to enable merging, no matter which merging scale definition is used.
  
 <p/> 
 MESS merging can generally replace CKKW-L merging with the 
-simple showers and is illustrated in the main program 
-<code>main280.cc</code>. However, also other 
-<aidx href="CKKWLMerging">tree-level merging main programs</aidx> can be used 
-with the modifications to the command files as outlined below. 
+simple showers and is illustrated in the command file 
+<code>main162mess.cmnd</code> for <code>main162.cc</code> 
+and <code>main164mess.cmnd</code> for <code>main164.cc</code>. 
+However, note that a few modifications to the command file are 
+needed compared to merging with the default shower, as outlined below. 
  
 <h3>Matrix Elements</h3> 
  
@@ -137,7 +138,7 @@ defined in terms of a <ei>kT</ei> cut by setting
  
 <p/> 
 and (optionally) specifying <code>Merging:ktType</code>, see 
-<aidx href="CKKWLMerging">CKKW-L Merging</aidx> for details.  In both cases, 
+<aloc href="CKKWLMerging">CKKW-L Merging</aloc> for details.  In both cases, 
 the merging scale should be specified through <code>Merging:TMS</code> 
 while for merging with a <ei>kT</ei> cut, also the <ei>D</ei> 
 parameter should be specified by <code>Merging:Dparameter</code>. 
@@ -228,4 +229,4 @@ are not supported in the sector merging at the moment.
  
 </chapter> 
  
-<!-- Copyright (C) 2024 Torbjorn Sjostrand --> 
+<!-- Copyright (C) 2025 Torbjorn Sjostrand --> 

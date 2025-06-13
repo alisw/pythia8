@@ -1,0 +1,9 @@
+! ATLAS tune AZ to the Z0/gamma* pTspectrum, June 2014.
+! See CERN-PH-EP-2014-075 [arXiv:1406.3660 [hep-ex]] for further details.
+! Previously set by "Tune:pp = 17".
+include                             = tunes/Tune4C.cmnd ! based on 4C tune
+PDF:pSet                            = LHAPDF6:CT10
+SpaceShower:alphaSvalue             = 0.1237
+SpaceShower:pT0Ref                  = 0.59  
+MultipartonInteractions:pT0Ref      = 2.18  
+BeamRemnants:primordialKThard       = 1.71  

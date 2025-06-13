@@ -1,0 +1,20 @@
+! This input file demonstrates MC@NLO matching in PYTHIA
+
+! Number of events.
+Main:numberOfEvents           = 1000
+
+! LHEF input.
+Beams:frameType               = 4
+Beams:LHEF                    = zProduction_Mcatnlo.lhe.gz
+
+! Settings needed for aMC@NLO matching with MadGraph5_aMC@NLO.
+! DO NOT CHANGE.
+PartonShowers:model           = 1
+TimeShower:globalRecoil       = on
+TimeShower:weightGluonToQuark = 1
+TimeShower:pTmaxMatch         = 1
+SpaceShower:pTmaxMatch        = 1
+TimeShower:pTmaxFudge         = 1.
+SpaceShower:pTmaxFudge        = 1.
+TimeShower:MEcorrections      = off
+SpaceShower:MEcorrections     = off
