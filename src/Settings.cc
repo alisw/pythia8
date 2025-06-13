@@ -725,6 +725,7 @@ bool Settings::readFile(istream& is, bool warn, int subrun) {
 
     // Check whether entering, leaving or inside commented-commands section.
     int    pos = line.find_first_not_of(" \n\t\v\b\r\f\a");
+    if (pos == string::npos) continue; // Skip empty lines.
     string sub = line.length() - pos > 2 ? line.substr(pos, 2) : "";
     if      (sub == "/*") isCommented = true;
     else if (sub == "*/") isCommented = false;
